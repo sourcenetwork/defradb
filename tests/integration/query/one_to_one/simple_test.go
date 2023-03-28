@@ -21,10 +21,10 @@ func TestQueryOneToOne(t *testing.T) {
 		{
 			Description: "One-to-one relation query with no filter",
 			Request: `query {
-						book {
+						Book {
 							name
 							rating
-							author {
+							Author {
 								name
 								age
 							}
@@ -52,7 +52,7 @@ func TestQueryOneToOne(t *testing.T) {
 				{
 					"name":   "Painted House",
 					"rating": 4.9,
-					"author": map[string]any{
+					"Author": map[string]any{
 						"name": "John Grisham",
 						"age":  uint64(65),
 					},
@@ -62,7 +62,7 @@ func TestQueryOneToOne(t *testing.T) {
 		{
 			Description: "One-to-one relation secondary direction, no filter",
 			Request: `query {
-						author {
+						Author {
 							name
 							age
 							published {
@@ -111,9 +111,9 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation primary direction, multiple records",
 		Request: `query {
-			book {
+			Book {
 				name
-				author {
+				Author {
 					name
 				}
 			}
@@ -153,13 +153,13 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"name": "Go Guide for Rust developers",
-				"author": map[string]any{
+				"Author": map[string]any{
 					"name": "Andrew Lone",
 				},
 			},
 			{
 				"name": "Painted House",
-				"author": map[string]any{
+				"Author": map[string]any{
 					"name": "John Grisham",
 				},
 			},
@@ -173,7 +173,7 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one-to-one relation secondary direction",
 		Request: `query {
-			author {
+			Author {
 				name
 				published {
 					name
@@ -227,7 +227,7 @@ func TestQueryOneToOneWithNilChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation primary direction, nil child",
 		Request: `query {
-			author {
+			Author {
 				name
 				published {
 					name
@@ -257,9 +257,9 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation primary direction, nil parent",
 		Request: `query {
-			book {
+			Book {
 				name
-				author {
+				Author {
 					name
 				}
 			}
@@ -275,7 +275,7 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"name":   "Painted House",
-				"author": nil,
+				"Author": nil,
 			},
 		},
 	}

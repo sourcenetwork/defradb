@@ -49,7 +49,7 @@ func TestQueryCommits(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
@@ -101,7 +101,7 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
@@ -141,5 +141,5 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

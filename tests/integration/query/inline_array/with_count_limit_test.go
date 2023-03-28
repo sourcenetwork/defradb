@@ -20,22 +20,22 @@ func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, limited count of integer array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteIntegers: {limit: 3})
+					Users {
+						name
+						_count(favouriteIntegers: {limit: 3})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 2,
 			},
 		},
@@ -48,22 +48,22 @@ func TestQueryInlineIntegerArrayWithCountWithLimit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, limited count of integer array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteIntegers: {limit: 3})
+					Users {
+						name
+						_count(favouriteIntegers: {limit: 3})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, -1, 1, 0]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 3,
 			},
 		},

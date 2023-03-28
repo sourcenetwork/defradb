@@ -53,7 +53,7 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
@@ -115,7 +115,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This is an odd test, but we need to make sure it works
@@ -170,7 +170,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
@@ -224,5 +224,5 @@ func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

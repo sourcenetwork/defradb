@@ -23,7 +23,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -38,7 +38,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
+						name
 					}
 				}`,
 				Results: []map[string]any{},
@@ -55,7 +55,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingCollectionProp(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -79,7 +79,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -103,7 +103,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -118,7 +118,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
+						name
 					}
 				}`,
 				Results: []map[string]any{},
@@ -135,7 +135,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -150,7 +150,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
+						name
 					}
 				}`,
 				Results: []map[string]any{},

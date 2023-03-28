@@ -20,7 +20,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockContainsString(t *testin
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter contains string",
 		Request: `query {
-					users(filter: {Name: {_nlike: "%Stormborn%"}}) {
+					Users(filter: {Name: {_nlike: "%Stormborn%"}}) {
 						Name
 					}
 				}`,
@@ -50,7 +50,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockAsPrefixString(t *testin
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with string as prefix",
 		Request: `query {
-					users(filter: {Name: {_nlike: "Viserys%"}}) {
+					Users(filter: {Name: {_nlike: "Viserys%"}}) {
 						Name
 					}
 				}`,
@@ -80,7 +80,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockAsSuffixString(t *testin
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with string as suffix",
 		Request: `query {
-					users(filter: {Name: {_nlike: "%Andals"}}) {
+					Users(filter: {Name: {_nlike: "%Andals"}}) {
 						Name
 					}
 				}`,
@@ -110,7 +110,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockExactString(t *testing.T
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with string as suffix",
 		Request: `query {
-					users(filter: {Name: {_nlike: "Daenerys Stormborn of House Targaryen, the First of Her Name"}}) {
+					Users(filter: {Name: {_nlike: "Daenerys Stormborn of House Targaryen, the First of Her Name"}}) {
 						Name
 					}
 				}`,
@@ -140,7 +140,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockContainsStringMuplitpleR
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with contains string mulitple results",
 		Request: `query {
-					users(filter: {Name: {_nlike: "%Targaryen%"}}) {
+					Users(filter: {Name: {_nlike: "%Targaryen%"}}) {
 						Name
 					}
 				}`,
@@ -166,7 +166,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasStartAndEnd(t *testin
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with string as start and end",
 		Request: `query {
-					users(filter: {Name: {_nlike: "Daenerys%Name"}}) {
+					Users(filter: {Name: {_nlike: "Daenerys%Name"}}) {
 						Name
 					}
 				}`,
@@ -196,7 +196,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with none of the strings",
 		Request: `query {
-					users(filter: {_and: [{Name: {_nlike: "%Baratheon%"}}, {Name: {_nlike: "%Stormborn%"}}]}) {
+					Users(filter: {_and: [{Name: {_nlike: "%Baratheon%"}}, {Name: {_nlike: "%Stormborn%"}}]}) {
 						Name
 					}
 				}`,
@@ -226,7 +226,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasEither(t *testing.T) 
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with either strings",
 		Request: `query {
-					users(filter: {_or: [{Name: {_nlike: "%Baratheon%"}}, {Name: {_nlike: "%Stormborn%"}}]}) {
+					Users(filter: {_or: [{Name: {_nlike: "%Baratheon%"}}, {Name: {_nlike: "%Stormborn%"}}]}) {
 						Name
 					}
 				}`,
@@ -259,7 +259,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockPropNotSet(t *testing.T)
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic not like-string filter with either strings",
 		Request: `query {
-					users(filter: {Name: {_nlike: "%King%"}}) {
+					Users(filter: {Name: {_nlike: "%King%"}}) {
 						Name
 					}
 				}`,

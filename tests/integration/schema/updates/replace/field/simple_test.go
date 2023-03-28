@@ -23,8 +23,8 @@ func TestSchemaUpdatesReplaceFieldErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -34,7 +34,7 @@ func TestSchemaUpdatesReplaceFieldErrors(t *testing.T) {
 						{ "op": "replace", "path": "/Users/Schema/Fields/2", "value": {"Name": "Fax", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "deleting an existing field is not supported. Name: Name, ID: 2",
+				ExpectedError: "deleting an existing field is not supported. Name: name, ID: 2",
 			},
 		},
 	}
@@ -48,8 +48,8 @@ func TestSchemaUpdatesReplaceFieldWithIDErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},

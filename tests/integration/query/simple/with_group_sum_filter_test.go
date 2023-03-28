@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
 					}
@@ -60,7 +60,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
 						_group {
@@ -116,7 +116,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on rendered, matching filtered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_sum(_group: {field: Age, filter: {Name: {_eq: "John"}}})
 						_group(filter: {Name: {_eq: "John"}}) {
@@ -165,7 +165,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered, different filtered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
 						_group(filter: {Name: {_eq: "John"}}) {
@@ -214,7 +214,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDiffere
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						S1: _sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
 						S2: _sum(_group: {field: Age, filter: {Age: {_lt: 26}}})

@@ -23,8 +23,8 @@ func TestSchemaUpdatesRemoveFieldErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -48,8 +48,8 @@ func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -73,8 +73,8 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -98,8 +98,8 @@ func TestSchemaUpdatesRemoveFieldIDErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -123,8 +123,8 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -148,8 +148,8 @@ func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -173,12 +173,12 @@ func TestSchemaUpdatesRemoveFieldSchemaErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Author {
-						Name: String
-						Book: [Book]
+						name: String
+						book: [Book]
 					}
 					type Book {
-						Name: String
-						Author: [Author]
+						name: String
+						author: [Author]
 					}
 				`,
 			},
@@ -202,12 +202,12 @@ func TestSchemaUpdatesRemoveFieldRelationNameErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Author {
-						Name: String
-						Book: [Book]
+						name: String
+						book: [Book]
 					}
 					type Book {
-						Name: String
-						Author: [Author]
+						name: String
+						author: [Author]
 					}
 				`,
 			},
@@ -231,12 +231,12 @@ func TestSchemaUpdatesRemoveFieldRelationTypeErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Author {
-						Name: String
-						Book: [Book]
+						name: String
+						book: [Book]
 					}
 					type Book {
-						Name: String
-						Author: [Author]
+						name: String
+						author: [Author]
 					}
 				`,
 			},

@@ -23,7 +23,7 @@ func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},

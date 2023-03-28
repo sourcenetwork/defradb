@@ -23,8 +23,8 @@ func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},

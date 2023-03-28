@@ -21,10 +21,10 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 		{
 			Description: "One-to-many relation query from one side",
 			Request: `query {
-						book {
+						Book {
 							name
 							rating
-							author {
+							Author {
 								name
 							}
 							reviewedBy {
@@ -75,7 +75,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 				{
 					"name":   "Painted House",
 					"rating": 4.9,
-					"author": map[string]any{
+					"Author": map[string]any{
 						"name": "John Grisham",
 					},
 					"reviewedBy": map[string]any{
@@ -86,7 +86,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 				{
 					"name":   "Theif Lord",
 					"rating": 4.8,
-					"author": map[string]any{
+					"Author": map[string]any{
 						"name": "Cornelia Funke",
 					},
 					"reviewedBy": map[string]any{
@@ -97,7 +97,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 				{
 					"name":   "A Time for Mercy",
 					"rating": 4.5,
-					"author": map[string]any{
+					"Author": map[string]any{
 						"name": "John Grisham",
 					},
 					"reviewedBy": map[string]any{
@@ -110,7 +110,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 		{
 			Description: "One-to-many relation query from many side",
 			Request: `query {
-				author {
+				Author {
 					name
 					age
 					written {
@@ -212,17 +212,17 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 		{
 			Description: "One-to-many relation query from one side",
 			Request: `query {
-						book {
+						Book {
 							name
 							rating
-							author {
+							Author {
 								name
 							}
 							reviewedBy {
 								name
 								age
 							}
-							price {
+							Price {
 								currency
 								value
 							}
@@ -285,14 +285,14 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				{
 					"name":   "Theif Lord",
 					"rating": 4.8,
-					"author": map[string]any{
+					"Author": map[string]any{
 						"name": "Cornelia Funke",
 					},
 					"reviewedBy": map[string]any{
 						"name": "John Grisham",
 						"age":  uint64(65),
 					},
-					"price": map[string]any{
+					"Price": map[string]any{
 						"currency": "GBP",
 						"value":    12.99,
 					},
@@ -300,14 +300,14 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				{
 					"name":   "A Time for Mercy",
 					"rating": 4.5,
-					"author": map[string]any{
+					"Author": map[string]any{
 						"name": "John Grisham",
 					},
 					"reviewedBy": map[string]any{
 						"name": "Cornelia Funke",
 						"age":  uint64(62),
 					},
-					"price": map[string]any{
+					"Price": map[string]any{
 						"currency": "SEK",
 						"value":    float64(129),
 					},
@@ -315,14 +315,14 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				{
 					"name":   "Painted House",
 					"rating": 4.9,
-					"author": map[string]any{
+					"Author": map[string]any{
 						"name": "John Grisham",
 					},
 					"reviewedBy": map[string]any{
 						"name": "Cornelia Funke",
 						"age":  uint64(62),
 					},
-					"price": map[string]any{
+					"Price": map[string]any{
 						"currency": "GBP",
 						"value":    12.99,
 					},
@@ -332,12 +332,12 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 		{
 			Description: "One-to-many relation query from many side",
 			Request: `query {
-				author {
+				Author {
 					name
 					age
 					written {
 						name
-						price {
+						Price {
 							value
 						}
 					}
@@ -413,13 +413,13 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 					"written": []map[string]any{
 						{
 							"name": "A Time for Mercy",
-							"price": map[string]any{
+							"Price": map[string]any{
 								"value": float64(129),
 							},
 						},
 						{
 							"name": "Painted House",
-							"price": map[string]any{
+							"Price": map[string]any{
 								"value": 12.99,
 							},
 						},
@@ -441,7 +441,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 					"written": []map[string]any{
 						{
 							"name": "Theif Lord",
-							"price": map[string]any{
+							"Price": map[string]any{
 								"value": 12.99,
 							},
 						},

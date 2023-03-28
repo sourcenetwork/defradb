@@ -23,14 +23,14 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			testUtils.SchemaPatch{
@@ -44,8 +44,8 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 				Request: `query {
 					Users {
 						_key
-						Name
-						Email
+						name
+						email
 					}
 				}`,
 				Results: []map[string]any{
@@ -68,14 +68,14 @@ func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			// We want to make sure that this works across database versions, so we tell
@@ -91,28 +91,28 @@ func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "Shahzad",
-					"Email": "sqlizded@yahoo.ca"
+					"name": "Shahzad",
+					"email": "sqlizded@yahoo.ca"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
 						_key
-						Name
-						Email
+						name
+						email
 					}
 				}`,
 				Results: []map[string]any{
 					{
 						"_key":  "bae-43deba43-f2bc-59f4-9056-fef661b22832",
-						"Name":  "John",
-						"Email": nil,
+						"name":  "John",
+						"email": nil,
 					},
 					{
 						"_key":  "bae-68926881-2eed-519b-b4eb-883b4a6624a6",
-						"Name":  "Shahzad",
-						"Email": "sqlizded@yahoo.ca",
+						"name":  "Shahzad",
+						"email": "sqlizded@yahoo.ca",
 					},
 				},
 			},

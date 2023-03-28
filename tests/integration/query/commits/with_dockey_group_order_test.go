@@ -53,5 +53,5 @@ func TestQueryCommitsOrderedAndGroupedByDocKey(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

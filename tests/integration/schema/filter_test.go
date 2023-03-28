@@ -21,7 +21,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						name: String
 					}
 				`,
@@ -58,20 +58,20 @@ func TestFilterForSimpleSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "users",
+									"name": "Users",
 									"args": append(
 										defaultUserArgsWithoutFilter,
 										map[string]any{
 											"name": "filter",
 											"type": map[string]any{
-												"name": "usersFilterArg",
+												"name": "UsersFilterArg",
 												"inputFields": []any{
 													map[string]any{
 														"name": "_and",
 														"type": map[string]any{
 															"name": nil,
 															"ofType": map[string]any{
-																"name": "usersFilterArg",
+																"name": "UsersFilterArg",
 															},
 														},
 													},
@@ -85,7 +85,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 													map[string]any{
 														"name": "_not",
 														"type": map[string]any{
-															"name":   "usersFilterArg",
+															"name":   "UsersFilterArg",
 															"ofType": nil,
 														},
 													},
@@ -94,7 +94,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 														"type": map[string]any{
 															"name": nil,
 															"ofType": map[string]any{
-																"name": "usersFilterArg",
+																"name": "UsersFilterArg",
 															},
 														},
 													},
@@ -137,7 +137,7 @@ var defaultUserArgsWithoutFilter = trimFields(
 		groupByArg,
 		limitArg,
 		offsetArg,
-		buildOrderArg("users", []argDef{
+		buildOrderArg("Users", []argDef{
 			{
 				fieldName: "name",
 				typeName:  "Ordering",
@@ -152,14 +152,14 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type book {
+					type Book {
 						name: String
-						author: author
+						author: Author
 					}
 
-					type author {
+					type Author {
 						age: Int
-						wrote: book @primary
+						wrote: Book @primary
 					}
 				`,
 			},
@@ -195,20 +195,20 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "book",
+									"name": "Book",
 									"args": append(
 										defaultBookArgsWithoutFilter,
 										map[string]any{
 											"name": "filter",
 											"type": map[string]any{
-												"name": "bookFilterArg",
+												"name": "BookFilterArg",
 												"inputFields": []any{
 													map[string]any{
 														"name": "_and",
 														"type": map[string]any{
 															"name": nil,
 															"ofType": map[string]any{
-																"name": "bookFilterArg",
+																"name": "BookFilterArg",
 															},
 														},
 													},
@@ -222,7 +222,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 													map[string]any{
 														"name": "_not",
 														"type": map[string]any{
-															"name":   "bookFilterArg",
+															"name":   "BookFilterArg",
 															"ofType": nil,
 														},
 													},
@@ -231,14 +231,14 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 														"type": map[string]any{
 															"name": nil,
 															"ofType": map[string]any{
-																"name": "bookFilterArg",
+																"name": "BookFilterArg",
 															},
 														},
 													},
 													map[string]any{
 														"name": "author",
 														"type": map[string]any{
-															"name":   "authorFilterArg",
+															"name":   "AuthorFilterArg",
 															"ofType": nil,
 														},
 													},
@@ -269,7 +269,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"book", "author"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
 }
 
 var testFilterForOneToOneSchemaArgProps = map[string]any{
@@ -288,10 +288,10 @@ var defaultBookArgsWithoutFilter = trimFields(
 		groupByArg,
 		limitArg,
 		offsetArg,
-		buildOrderArg("book", []argDef{
+		buildOrderArg("Book", []argDef{
 			{
 				fieldName: "author",
-				typeName:  "authorOrderArg",
+				typeName:  "AuthorOrderArg",
 			},
 			{
 				fieldName: "author_id",

@@ -22,12 +22,12 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with unknown cid and dockey",
 		Request: `query {
-					book (
+					Book (
 							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
-						author {
+						Author {
 							name
 						}
 					}
@@ -53,7 +53,7 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"name": "Painted House",
-				"author": map[string]any{
+				"Author": map[string]any{
 					"name": "John Grisham",
 				},
 			},
@@ -67,12 +67,12 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with  cid and dockey",
 		Request: `query {
-					book (
+					Book (
 							cid: "bafybeieby4hopjxof5cx7pkfrk7qvv7vy7s4i37mzdlcp2dk2m37jouycm"
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
-						author {
+						Author {
 							name
 						}
 					}
@@ -98,7 +98,7 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"name": "Painted House",
-				"author": map[string]any{
+				"Author": map[string]any{
 					"name": "John Grisham",
 				},
 			},
@@ -116,12 +116,12 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with child update and parent cid and dockey",
 		Request: `query {
-					book (
+					Book (
 							cid: "bafybeieby4hopjxof5cx7pkfrk7qvv7vy7s4i37mzdlcp2dk2m37jouycm",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
-						author {
+						Author {
 							name
 							age
 						}
@@ -157,7 +157,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"name": "Painted House",
-				"author": map[string]any{
+				"Author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(22),
 				},
@@ -172,13 +172,13 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
 		Request: `query {
-					book (
+					Book (
 							cid: "bafybeieby4hopjxof5cx7pkfrk7qvv7vy7s4i37mzdlcp2dk2m37jouycm",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
 						rating
-						author {
+						Author {
 							name
 						}
 					}
@@ -214,7 +214,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 			{
 				"name":   "Painted House",
 				"rating": float64(4.9),
-				"author": map[string]any{
+				"Author": map[string]any{
 					"name": "John Grisham",
 				},
 			},
@@ -228,13 +228,13 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
 		Request: `query {
-					book (
+					Book (
 							cid: "bafybeieutgrc67hwomdleoixikuygznnzmsrvvby6jloyqkkakfnnra2ha",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
 						rating
-						author {
+						Author {
 							name
 						}
 					}
@@ -270,7 +270,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
 			{
 				"name":   "Painted House",
 				"rating": float64(4.5),
-				"author": map[string]any{
+				"Author": map[string]any{
 					"name": "John Grisham",
 				},
 			},

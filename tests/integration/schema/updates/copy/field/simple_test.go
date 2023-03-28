@@ -23,8 +23,8 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -34,13 +34,13 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" }
 					]
 				`,
-				ExpectedError: "duplicate field. Name: Email",
+				ExpectedError: "duplicate field. Name: email",
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
+						email
 					}
 				}`,
 				Results: []map[string]any{},
@@ -57,8 +57,8 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -76,9 +76,9 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
-						Fax
+						name
+						email
+						fax
 					}
 				}`,
 				Results: []map[string]any{},

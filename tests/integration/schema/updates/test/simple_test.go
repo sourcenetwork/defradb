@@ -23,7 +23,7 @@ func TestSchemaUpdatesTestCollectionNameErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -47,7 +47,7 @@ func TestSchemaUpdatesTestCollectionNamePasses(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},

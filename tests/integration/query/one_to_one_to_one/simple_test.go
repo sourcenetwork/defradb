@@ -20,11 +20,11 @@ func TestQueryOneToOneToOne(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one-to-one relation primary direction",
 		Request: `query {
-			author {
+			Author {
 				name
 				published {
 					name
-					publisher {
+					Publisher {
 						name
 					}
 				}
@@ -72,7 +72,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 				"name": "John Grisham",
 				"published": map[string]any{
 					"name": "Painted House",
-					"publisher": map[string]any{
+					"Publisher": map[string]any{
 						"name": "Old Publisher",
 					},
 				},
@@ -81,7 +81,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 				"name": "Cornelia Funke",
 				"published": map[string]any{
 					"name": "Theif Lord",
-					"publisher": map[string]any{
+					"Publisher": map[string]any{
 						"name": "New Publisher",
 					},
 				},

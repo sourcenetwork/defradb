@@ -20,7 +20,7 @@ func TestQuerySimpleWithoutGroupByWithCountOnGroup(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query without group by, no children, count on non-existant group",
 		Request: `query {
-					users {
+					Users {
 						Age
 						_count(_group: {})
 					}
@@ -43,7 +43,7 @@ func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing
 	test := testUtils.RequestTestCase{
 		Description: "Simple query without group by, no children, count on inner non-existant group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_group {
 							Name
@@ -69,7 +69,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {})
 					}
@@ -109,7 +109,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCol
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered group, empty collection",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {})
 					}
@@ -124,7 +124,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on rendered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {})
 						_group {
@@ -180,7 +180,7 @@ func TestQuerySimpleWithGroupByNumberWithUndefinedField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, count on undefined field",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count
 					}
@@ -211,7 +211,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, aliased count on non-rendered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						Count: _count(_group: {})
 					}
@@ -253,7 +253,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChi
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, duplicated aliased count on non-rendered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						Count1: _count(_group: {})
 						Count2: _count(_group: {})

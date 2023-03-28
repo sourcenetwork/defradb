@@ -25,14 +25,14 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			testUtils.SchemaPatch{
@@ -48,19 +48,19 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Name": "Johnnn"
+					"name": "Johnnn"
 				}`,
 			},
 			testUtils.Request{
 				// Assert that Users is still Users
 				Request: `query {
 					Users {
-						Name
+						name
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "Johnnn",
+						"name": "Johnnn",
 					},
 				},
 			},
