@@ -70,3 +70,57 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 	}
 	simpleTests.ExecuteTestCase(t, test)
 }
+
+func TestMutationUpdateOneToOne(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One to one update mutation",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+				mutation {
+					update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-3d236f89-6a31-5add-a36a-27971a2eac76\"}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						book {
+							name
+							author {
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Painted House",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	simpleTests.ExecuteTestCase(t, test)
+}
