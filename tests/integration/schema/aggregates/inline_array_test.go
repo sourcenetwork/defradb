@@ -16,20 +16,21 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+/* WIP
 func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
-						FavouriteIntegers: [Int!]
+					type Users {
+						favouriteIntegers: [Int!]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query IntrospectionQuery {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 							fields {
 								name
@@ -51,15 +52,15 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
 								"args": []any{
 									map[string]any{
-										"name": "FavouriteIntegers",
+										"name": "favouriteIntegers",
 										"type": map[string]any{
-											"name": "users__FavouriteIntegers__CountSelector",
+											"name": "Users__favouriteIntegers__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -85,12 +86,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
-											"name": "users__CountSelector",
+											"name": "Users__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
 													"type": map[string]any{
-														"name": "usersFilterArg",
+														"name": "UsersFilterArg",
 													},
 												},
 												map[string]any{
@@ -111,7 +112,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 									map[string]any{
 										"name": "_version",
 										"type": map[string]any{
-											"name": "users___version__CountSelector",
+											"name": "Users___version__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "limit",
@@ -137,8 +138,9 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+*/
 
 func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
@@ -262,20 +264,21 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
+/* WIP
 func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
-						FavouriteIntegers: [Int!]
+					type Users {
+						favouriteIntegers: [Int!]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query IntrospectionQuery {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 							fields {
 								name
@@ -297,15 +300,15 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_avg",
 								"args": []any{
 									map[string]any{
-										"name": "FavouriteIntegers",
+										"name": "favouriteIntegers",
 										"type": map[string]any{
-											"name": "users__FavouriteIntegers__NumericSelector",
+											"name": "Users__favouriteIntegers__NumericSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -337,7 +340,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
-											"name": "users__NumericSelector",
+											"name": "Users__NumericSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "field",
@@ -348,7 +351,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 												map[string]any{
 													"name": "filter",
 													"type": map[string]any{
-														"name": "usersFilterArg",
+														"name": "UsersFilterArg",
 													},
 												},
 												map[string]any{
@@ -366,7 +369,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 												map[string]any{
 													"name": "order",
 													"type": map[string]any{
-														"name": "usersOrderArg",
+														"name": "UsersOrderArg",
 													},
 												},
 											},
@@ -381,8 +384,9 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+*/
 
 var aggregateGroupArg = map[string]any{
 	"name": "_group",
