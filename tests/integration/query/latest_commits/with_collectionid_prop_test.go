@@ -18,7 +18,7 @@ import (
 
 func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with collectionId property",
+		Description: "Simple latest commits query with collectionID property",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			updateCompaniesCollectionSchema(),
@@ -38,24 +38,24 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 						latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-							collectionId
+							collectionID
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"collectionId": int64(1),
+						"collectionID": int64(1),
 					},
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 						latestCommits(dockey: "bae-eed4b800-6704-5bcd-8250-5d2743820a7b") {
-							collectionId
+							collectionID
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"collectionId": int64(2),
+						"collectionID": int64(2),
 					},
 				},
 			},

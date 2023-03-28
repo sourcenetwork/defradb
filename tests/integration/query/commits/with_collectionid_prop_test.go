@@ -18,7 +18,7 @@ import (
 
 func TestQueryCommitsWithCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query with collectionId property",
+		Description: "Simple commits query with collectionID property",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			updateCompaniesCollectionSchema(),
@@ -38,24 +38,24 @@ func TestQueryCommitsWithCollectionID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 						commits {
-							collectionId
+							collectionID
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"collectionId": int64(1),
+						"collectionID": int64(1),
 					},
 					{
-						"collectionId": int64(1),
+						"collectionID": int64(1),
 					},
 					{
-						"collectionId": int64(1),
+						"collectionID": int64(1),
 					},
 					{
-						"collectionId": int64(2),
+						"collectionID": int64(2),
 					},
 					{
-						"collectionId": int64(2),
+						"collectionID": int64(2),
 					},
 				},
 			},

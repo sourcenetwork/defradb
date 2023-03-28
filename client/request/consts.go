@@ -47,7 +47,7 @@ const (
 	HeightFieldName          = "height"
 	CidFieldName             = "cid"
 	DockeyFieldName          = "dockey"
-	CollectionIDFieldName    = "collectionId"
+	CollectionIDFieldName    = "collectionID"
 	SchemaVersionIDFieldName = "schemaVersionId"
 	DeltaFieldName           = "delta"
 

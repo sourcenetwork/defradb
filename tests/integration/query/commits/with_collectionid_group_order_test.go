@@ -18,7 +18,7 @@ import (
 
 func TestQueryCommitsWithCollectionIDGroupedAndOrderedDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query with collectionId property grouped and ordered desc",
+		Description: "Simple commits query with collectionID property grouped and ordered desc",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			updateCompaniesCollectionSchema(),
@@ -37,16 +37,16 @@ func TestQueryCommitsWithCollectionIDGroupedAndOrderedDesc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-					commits(groupBy: [collectionId], order: {collectionId: DESC}) {
-						collectionId
+					commits(groupBy: [collectionID], order: {collectionID: DESC}) {
+						collectionID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"collectionId": int64(2),
+						"collectionID": int64(2),
 					},
 					{
-						"collectionId": int64(1),
+						"collectionID": int64(1),
 					},
 				},
 			},
@@ -58,7 +58,7 @@ func TestQueryCommitsWithCollectionIDGroupedAndOrderedDesc(t *testing.T) {
 
 func TestQueryCommitsWithCollectionIDGroupedAndOrderedAs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query with collectionId property grouped and ordered asc",
+		Description: "Simple commits query with collectionID property grouped and ordered asc",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			updateCompaniesCollectionSchema(),
@@ -77,16 +77,16 @@ func TestQueryCommitsWithCollectionIDGroupedAndOrderedAs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-					commits(groupBy: [collectionId], order: {collectionId: ASC}) {
-						collectionId
+					commits(groupBy: [collectionID], order: {collectionID: ASC}) {
+						collectionID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"collectionId": int64(1),
+						"collectionID": int64(1),
 					},
 					{
-						"collectionId": int64(2),
+						"collectionID": int64(2),
 					},
 				},
 			},

@@ -51,7 +51,7 @@ var (
 			"dockey": &gql.Field{
 				Type: gql.String,
 			},
-			"collectionId": &gql.Field{
+			"collectionID": &gql.Field{
 				Type: gql.Int,
 			},
 			"schemaVersionId": &gql.Field{
@@ -114,7 +114,7 @@ var (
 				"dockey": &gql.InputObjectFieldConfig{
 					Type: OrderingEnum,
 				},
-				"collectionId": &gql.InputObjectFieldConfig{
+				"collectionID": &gql.InputObjectFieldConfig{
 					Type: OrderingEnum,
 				},
 			},
@@ -128,7 +128,7 @@ var (
 				"height":       &gql.EnumValueConfig{Value: "height"},
 				"cid":          &gql.EnumValueConfig{Value: "cid"},
 				"dockey":       &gql.EnumValueConfig{Value: "dockey"},
-				"collectionId": &gql.EnumValueConfig{Value: "collectionId"},
+				"collectionID": &gql.EnumValueConfig{Value: "collectionID"},
 			},
 		},
 	)
