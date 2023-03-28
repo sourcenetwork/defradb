@@ -830,9 +830,6 @@ func (c *collection) save(
 		doc.SetHead(headNode.Cid())
 	})
 
-	cidStr := headNode.Cid().String()
-	cidStr = cidStr
-
 	return headNode.Cid(), nil
 }
 
