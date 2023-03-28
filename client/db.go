@@ -81,6 +81,7 @@ type Store interface {
 
 	GetCollectionByName(context.Context, string) (Collection, error)
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
+	GetCollectionByVersionID(context.Context, string) (Collection, error)
 	GetAllCollections(context.Context) ([]Collection, error)
 
 	ExecRequest(context.Context, string) *RequestResult

@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"strconv"
-
 	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -308,12 +306,13 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
 		request.DockeyFieldName, dockeyObj.DocKey)
 
-	collectionID, err := strconv.Atoi(dockeyObj.CollectionID)
+	collection, err := n.planner.db.GetCollectionByVersionID(n.planner.ctx, schemaVersionId)
 	if err != nil {
 		return core.Doc{}, nil, err
 	}
+
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-		request.CollectionIDFieldName, int64(collectionID))
+		request.CollectionIDFieldName, int64(collection.ID()))
 
 	heads := make([]*ipld.Link, 0)
 
