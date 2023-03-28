@@ -20,10 +20,10 @@ func TestQueryOneToManyWithTypeName(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with typename",
 		Request: `query {
-					book {
+					Book {
 						name
 						__typename
-						author {
+						Author {
 							name
 							__typename
 						}
@@ -50,10 +50,10 @@ func TestQueryOneToManyWithTypeName(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"name":       "Painted House",
-				"__typename": "book",
-				"author": map[string]any{
+				"__typename": "Book",
+				"Author": map[string]any{
 					"name":       "John Grisham",
-					"__typename": "author",
+					"__typename": "Author",
 				},
 			},
 		},

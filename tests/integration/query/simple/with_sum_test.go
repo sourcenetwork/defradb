@@ -34,7 +34,7 @@ func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 		Request: `query {
 					_sum(users: {})
 				}`,
-		ExpectedError: "Argument \"users\" has invalid value {}.\nIn field \"field\": Expected \"usersNumericFieldsArg!\", found null.",
+		ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"usersNumericFieldsArg!\", found null.",
 	}
 
 	executeTestCase(t, test)

@@ -39,7 +39,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
@@ -65,7 +65,7 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -93,11 +93,11 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and field id",
@@ -125,11 +125,11 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and field id",
@@ -157,5 +157,5 @@ func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

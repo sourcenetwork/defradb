@@ -45,7 +45,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and field id",
@@ -78,7 +78,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and composite field id",

@@ -21,7 +21,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 		{
 			Description: "One-to-many relation query from one side, order in opposite directions on children",
 			Request: `query {
-						author {
+						Author {
 							name
 							written (order: {rating: ASC}) {
 								name

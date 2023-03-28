@@ -23,7 +23,7 @@ func TestSchemaUpdatesReplaceCollectionErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -37,7 +37,7 @@ func TestSchemaUpdatesReplaceCollectionErrors(t *testing.T) {
 								"Schema": {
 									"Name": "Book",
 									"Fields": [
-										{"Name": "Name", "Kind": 11}
+										{"Name": "name", "Kind": 11}
 									]
 								} 
 							}

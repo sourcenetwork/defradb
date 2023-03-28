@@ -15,7 +15,7 @@ import (
 )
 
 const userCollectionGQLSchema = (`
-	type users {
+	type Users {
 		Name: String
 		Age: Int
 		Verified: Boolean

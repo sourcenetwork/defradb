@@ -147,7 +147,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						FavouriteFloats: [Float!]
 					}
 				`,
@@ -155,7 +155,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 							fields {
 								name
@@ -177,7 +177,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_sum",
@@ -185,7 +185,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 									map[string]any{
 										"name": "FavouriteFloats",
 										"type": map[string]any{
-											"name": "users__FavouriteFloats__NumericSelector",
+											"name": "Users__FavouriteFloats__NumericSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -217,7 +217,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
-											"name": "users__NumericSelector",
+											"name": "Users__NumericSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "field",
@@ -228,7 +228,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 												map[string]any{
 													"name": "filter",
 													"type": map[string]any{
-														"name": "usersFilterArg",
+														"name": "UsersFilterArg",
 													},
 												},
 												map[string]any{
@@ -246,7 +246,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 												map[string]any{
 													"name": "order",
 													"type": map[string]any{
-														"name": "usersOrderArg",
+														"name": "UsersOrderArg",
 													},
 												},
 											},
@@ -261,7 +261,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 /* WIP
@@ -391,12 +391,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 var aggregateGroupArg = map[string]any{
 	"name": "_group",
 	"type": map[string]any{
-		"name": "users__CountSelector",
+		"name": "Users__CountSelector",
 		"inputFields": []any{
 			map[string]any{
 				"name": "filter",
 				"type": map[string]any{
-					"name": "usersFilterArg",
+					"name": "UsersFilterArg",
 					"inputFields": []any{
 						map[string]any{
 							"name": "_and",
@@ -413,7 +413,7 @@ var aggregateGroupArg = map[string]any{
 						map[string]any{
 							"name": "_not",
 							"type": map[string]any{
-								"name": "usersFilterArg",
+								"name": "UsersFilterArg",
 							},
 						},
 						map[string]any{
@@ -446,7 +446,7 @@ var aggregateGroupArg = map[string]any{
 var aggregateVersionArg = map[string]any{
 	"name": "_version",
 	"type": map[string]any{
-		"name": "users___version__CountSelector",
+		"name": "Users___version__CountSelector",
 		"inputFields": []any{
 			map[string]any{
 				"name": "limit",
@@ -471,15 +471,20 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						Favourites: [Boolean]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
+<<<<<<< HEAD
 					query {
 						__type (name: "users") {
+=======
+					query IntrospectionQuery {
+						__type (name: "Users") {
+>>>>>>> WIP
 							name
 							fields {
 								name
@@ -507,7 +512,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
@@ -515,7 +520,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 									map[string]any{
 										"name": "Favourites",
 										"type": map[string]any{
-											"name": "users__Favourites__CountSelector",
+											"name": "Users__Favourites__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -589,7 +594,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) {
@@ -597,15 +602,20 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						Favourites: [Boolean!]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
+<<<<<<< HEAD
 					query {
 						__type (name: "users") {
+=======
+					query IntrospectionQuery {
+						__type (name: "Users") {
+>>>>>>> WIP
 							name
 							fields {
 								name
@@ -633,7 +643,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
@@ -641,7 +651,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 									map[string]any{
 										"name": "Favourites",
 										"type": map[string]any{
-											"name": "users__Favourites__CountSelector",
+											"name": "Users__Favourites__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -715,7 +725,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *testing.T) {
@@ -723,15 +733,20 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						Favourites: [Int]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
+<<<<<<< HEAD
 					query {
 						__type (name: "users") {
+=======
+					query IntrospectionQuery {
+						__type (name: "Users") {
+>>>>>>> WIP
 							name
 							fields {
 								name
@@ -759,7 +774,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
@@ -767,7 +782,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 									map[string]any{
 										"name": "Favourites",
 										"type": map[string]any{
-											"name": "users__Favourites__CountSelector",
+											"name": "Users__Favourites__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -865,7 +880,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) {
@@ -873,15 +888,20 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						Favourites: [Int!]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
+<<<<<<< HEAD
 					query {
 						__type (name: "users") {
+=======
+					query IntrospectionQuery {
+						__type (name: "Users") {
+>>>>>>> WIP
 							name
 							fields {
 								name
@@ -909,7 +929,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
@@ -917,7 +937,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 									map[string]any{
 										"name": "Favourites",
 										"type": map[string]any{
-											"name": "users__Favourites__CountSelector",
+											"name": "Users__Favourites__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -1015,7 +1035,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testing.T) {
@@ -1023,15 +1043,20 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						Favourites: [Float]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
+<<<<<<< HEAD
 					query {
 						__type (name: "users") {
+=======
+					query IntrospectionQuery {
+						__type (name: "Users") {
+>>>>>>> WIP
 							name
 							fields {
 								name
@@ -1059,7 +1084,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
@@ -1067,7 +1092,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 									map[string]any{
 										"name": "Favourites",
 										"type": map[string]any{
-											"name": "users__Favourites__CountSelector",
+											"name": "Users__Favourites__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -1165,7 +1190,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
@@ -1173,15 +1198,20 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						Favourites: [Float!]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
+<<<<<<< HEAD
 					query {
 						__type (name: "users") {
+=======
+					query IntrospectionQuery {
+						__type (name: "Users") {
+>>>>>>> WIP
 							name
 							fields {
 								name
@@ -1209,7 +1239,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
@@ -1217,7 +1247,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 									map[string]any{
 										"name": "Favourites",
 										"type": map[string]any{
-											"name": "users__Favourites__CountSelector",
+											"name": "Users__Favourites__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -1315,7 +1345,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *testing.T) {
@@ -1323,15 +1353,20 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						Favourites: [String]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
+<<<<<<< HEAD
 					query {
 						__type (name: "users") {
+=======
+					query IntrospectionQuery {
+						__type (name: "Users") {
+>>>>>>> WIP
 							name
 							fields {
 								name
@@ -1359,7 +1394,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
@@ -1367,7 +1402,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 									map[string]any{
 										"name": "Favourites",
 										"type": map[string]any{
-											"name": "users__Favourites__CountSelector",
+											"name": "Users__Favourites__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -1453,7 +1488,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
@@ -1461,15 +1496,20 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
+					type Users {
 						Favourites: [String!]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
+<<<<<<< HEAD
 					query {
 						__type (name: "users") {
+=======
+					query IntrospectionQuery {
+						__type (name: "Users") {
+>>>>>>> WIP
 							name
 							fields {
 								name
@@ -1497,7 +1537,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
@@ -1505,7 +1545,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 									map[string]any{
 										"name": "Favourites",
 										"type": map[string]any{
-											"name": "users__Favourites__CountSelector",
+											"name": "Users__Favourites__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -1591,5 +1631,5 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

@@ -20,7 +20,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with counts with and without filters",
 		Request: `query {
-				author {
+				Author {
 					name
 					_count(books: {filter: {score: {_gt: 3}}}, articles: {})
 				}
@@ -102,7 +102,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with counts with filters",
 		Request: `query {
-				author {
+				Author {
 					name
 					_count(books: {filter: {score: {_gt: 3}}}, articles: {filter: {rating: {_lt: 3}}})
 				}

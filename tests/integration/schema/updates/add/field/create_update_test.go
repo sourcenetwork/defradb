@@ -26,14 +26,14 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			// We want to make sure that this works across database versions, so we tell
@@ -69,14 +69,14 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Email": "ih8oraclelicensing@netscape.net"
+					"email": "ih8oraclelicensing@netscape.net"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
+						email
 						_version {
 							schemaVersionId
 						}
@@ -84,8 +84,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 				}`,
 				Results: []map[string]any{
 					{
-						"Name":  "John",
-						"Email": "ih8oraclelicensing@netscape.net",
+						"name":  "John",
+						"email": "ih8oraclelicensing@netscape.net",
 						"_version": []map[string]any{
 							{
 								// Update commit
@@ -114,14 +114,14 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			testUtils.SchemaPatch{
@@ -135,7 +135,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Email": "ih8oraclelicensing@netscape.net"
+					"email": "ih8oraclelicensing@netscape.net"
 				}`,
 			},
 			testUtils.Request{

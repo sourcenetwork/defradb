@@ -20,7 +20,7 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded latest commits query within object query",
 		Request: `query {
-					users {
+					Users {
 						Name
 						Age
 						_version {
@@ -70,7 +70,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded commits query within object query with schema version id",
 		Request: `query {
-					users {
+					Users {
 						Name
 						_version {
 							schemaVersionId
@@ -106,7 +106,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded commits query within object query with dockey",
 		Request: `query {
-					users {
+					Users {
 						Name
 						_key
 						_version {
@@ -142,7 +142,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded, aliased, latest commits query within object query",
 		Request: `query {
-					users {
+					Users {
 						Name
 						Age
 						_version {
