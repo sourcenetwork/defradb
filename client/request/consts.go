@@ -47,6 +47,7 @@ const (
 	HeightFieldName          = "height"
 	CidFieldName             = "cid"
 	DockeyFieldName          = "dockey"
+	CollectionIDFieldName    = "collectionID"
 	SchemaVersionIDFieldName = "schemaVersionId"
 	DeltaFieldName           = "delta"
 
@@ -88,6 +89,7 @@ var (
 		HeightFieldName,
 		CidFieldName,
 		DockeyFieldName,
+		CollectionIDFieldName,
 		SchemaVersionIDFieldName,
 		DeltaFieldName,
 	}

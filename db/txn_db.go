@@ -123,6 +123,26 @@ func (db *explicitTxnDB) GetCollectionBySchemaID(
 	return db.getCollectionBySchemaID(ctx, db.txn, schemaID)
 }
 
+// GetCollectionByVersionID returns an existing collection using the schema version hash ID.
+func (db *implicitTxnDB) GetCollectionByVersionID(
+	ctx context.Context, schemaVersionID string,
+) (client.Collection, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getCollectionByVersionID(ctx, txn, schemaVersionID)
+}
+
+// GetCollectionByVersionID returns an existing collection using the schema version hash ID.
+func (db *explicitTxnDB) GetCollectionByVersionID(
+	ctx context.Context, schemaVersionID string,
+) (client.Collection, error) {
+	return db.getCollectionByVersionID(ctx, db.txn, schemaVersionID)
+}
+
 // AddP2PCollection adds the given collection ID that the P2P system
 // subscribes to to the the persisted list. It will error if the provided
 // collection ID is invalid.

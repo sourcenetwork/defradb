@@ -20,14 +20,14 @@ import (
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions
 func MakeCollectionKey(col client.CollectionDescription) core.DataStoreKey {
 	return core.DataStoreKey{
-		CollectionId: col.IDString(),
+		CollectionID: col.IDString(),
 	}
 }
 
 // MakeIndexKey generates a key for the target dockey, using the collection/index description
 func MakeDocKey(col client.CollectionDescription, docKey string) core.DataStoreKey {
 	return core.DataStoreKey{
-		CollectionId: col.IDString(),
+		CollectionID: col.IDString(),
 		DocKey:       docKey,
 	}
 }

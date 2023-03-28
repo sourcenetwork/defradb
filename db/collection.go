@@ -364,7 +364,7 @@ func (db *db) validateUpdateCollection(
 // getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.
 //
 // Will return an error if the given key is empty, or not found.
-func (db *db) getCollectionByVersionId(
+func (db *db) getCollectionByVersionID(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaVersionId string,
@@ -406,7 +406,7 @@ func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name s
 	}
 
 	schemaVersionId := string(buf)
-	return db.getCollectionByVersionId(ctx, txn, schemaVersionId)
+	return db.getCollectionByVersionID(ctx, txn, schemaVersionId)
 }
 
 // getCollectionBySchemaID returns an existing collection using the schema hash ID.
@@ -426,7 +426,7 @@ func (db *db) getCollectionBySchemaID(
 	}
 
 	schemaVersionId := string(buf)
-	return db.getCollectionByVersionId(ctx, txn, schemaVersionId)
+	return db.getCollectionByVersionID(ctx, txn, schemaVersionId)
 }
 
 // getAllCollections gets all the currently defined collections.
@@ -452,7 +452,7 @@ func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn) ([]clien
 		}
 
 		schemaVersionId := string(res.Value)
-		col, err := db.getCollectionByVersionId(ctx, txn, schemaVersionId)
+		col, err := db.getCollectionByVersionID(ctx, txn, schemaVersionId)
 		if err != nil {
 			return nil, NewErrFailedToGetCollection(schemaVersionId, err)
 		}
@@ -1082,7 +1082,7 @@ func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryD
 
 func (c *collection) getDSKeyFromDockey(docKey client.DocKey) core.DataStoreKey {
 	return core.DataStoreKey{
-		CollectionId: fmt.Sprint(c.colID),
+		CollectionID: fmt.Sprint(c.colID),
 		DocKey:       docKey.String(),
 		InstanceType: core.ValueKey,
 	}
@@ -1095,7 +1095,7 @@ func (c *collection) tryGetFieldKey(key core.PrimaryDataStoreKey, fieldName stri
 	}
 
 	return core.DataStoreKey{
-		CollectionId: key.CollectionId,
+		CollectionID: key.CollectionId,
 		DocKey:       key.DocKey,
 		FieldId:      strconv.FormatUint(uint64(fieldId), 10),
 	}, true
