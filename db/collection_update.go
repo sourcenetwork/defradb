@@ -322,7 +322,7 @@ func (c *collection) applyMerge(
 		if err != nil {
 			return err
 		}
-		// links[mfield] = c
+
 		links = append(links, core.DAGLink{
 			Name: mfield,
 			Cid:  c.Cid(),
