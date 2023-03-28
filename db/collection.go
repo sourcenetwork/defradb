@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -767,8 +766,23 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			if c.isFieldNameRelationID(k) {
+			fieldDescription, valid := c.desc.GetField(k)
+			if !valid {
 				return cid.Undef, client.NewErrFieldNotExist(k)
+			}
+
+			relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fieldDescription)
+			if isSecondaryRelationID {
+				primaryId := val.Value().(string)
+
+				err = c.patchPrimaryDoc(ctx, txn, relationFieldDescription, primaryKey.DocKey, primaryId)
+				if err != nil {
+					return cid.Undef, err
+				}
+
+				// If this field was a secondary relation ID the related document will have been
+				// updated instead and we should discard this value
+				continue
 			}
 
 			node, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
@@ -1115,28 +1129,4 @@ func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
 		}
 	}
 	return uint32(0), false
-}
-
-// isFieldNameRelationID returns true if the given field is the id field backing a relationship.
-func (c *collection) isFieldNameRelationID(fieldName string) bool {
-	fieldDescription, valid := c.desc.GetField(fieldName)
-	if !valid {
-		return false
-	}
-
-	return c.isFieldDescriptionRelationID(&fieldDescription)
-}
-
-// isFieldDescriptionRelationID returns true if the given field is the id field backing a relationship.
-func (c *collection) isFieldDescriptionRelationID(fieldDescription *client.FieldDescription) bool {
-	if fieldDescription.RelationType == client.Relation_Type_INTERNAL_ID {
-		relationDescription, valid := c.desc.GetField(strings.TrimSuffix(fieldDescription.Name, "_id"))
-		if !valid {
-			return false
-		}
-		if !relationDescription.IsPrimaryRelation() {
-			return true
-		}
-	}
-	return false
 }

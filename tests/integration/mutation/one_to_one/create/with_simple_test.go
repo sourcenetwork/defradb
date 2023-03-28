@@ -18,27 +18,6 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
-// This test documents incorrect behaviour. It should be possible to create author then book,
-// linking in the second create step (like in [TestMutationCreateOneToOne]).
-// https://github.com/sourcenetwork/defradb/issues/1213
-func TestMutationCreateOneToOneWrongSide(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "One to one create mutation, from the wrong side",
-		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-							create_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-								_key
-							}
-						}`,
-				ExpectedError: "The given field does not exist",
-			},
-		},
-	}
-
-	simpleTests.ExecuteTestCase(t, test)
-}
-
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationCreateOneToOneNoChild(t *testing.T) {
@@ -129,6 +108,83 @@ func TestMutationCreateOneToOne(t *testing.T) {
 						"name": "John Grisham",
 						"published": map[string]any{
 							"name": "Painted House",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
+	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+
+	test := testUtils.TestCase{
+		Description: "One to one create mutation from secondary side",
+		Actions: []any{
+			testUtils.Request{
+				Request: `mutation {
+						create_author(data: "{\"name\": \"John Grisham\"}") {
+							_key
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_key": authorKey,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: fmt.Sprintf(
+					`mutation {
+						create_book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+							name
+						}
+					}`,
+					authorKey,
+				),
+				Results: []map[string]any{
+					{
+						"name": "Painted House",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						author {
+							name
+							published {
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+						"published": map[string]any{
+							"name": "Painted House",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						book {
+							name
+							author {
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Painted House",
+						"author": map[string]any{
+							"name": "John Grisham",
 						},
 					},
 				},
