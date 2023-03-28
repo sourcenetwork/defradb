@@ -1134,7 +1134,7 @@ func (c *collection) isFieldDescriptionRelationID(fieldDescription *client.Field
 		if !valid {
 			return false
 		}
-		if relationDescription.IsPrimaryRelation() {
+		if !relationDescription.IsPrimaryRelation() {
 			return true
 		}
 	}
