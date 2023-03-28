@@ -738,6 +738,15 @@ func (c *collection) save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) (cid.Cid, error) {
+	// NOTE: We delay the final Clean() call until we know
+	// the commit on the transaction is successful. If we didn't
+	// wait, and just did it here, then *if* the commit fails down
+	// the line, then we have no way to roll back the state
+	// side-effect on the document func called here.
+	txn.OnSuccess(func() {
+		doc.Clean()
+	})
+
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
@@ -771,15 +780,6 @@ func (c *collection) save(
 			} else {
 				docProperties[k] = val.Value()
 			}
-
-			// NOTE: We delay the final Clean() call until we know
-			// the commit on the transaction is successful. If we didn't
-			// wait, and just did it here, then *if* the commit fails down
-			// the line, then we have no way to roll back the state
-			// side-effect on the document func called here.
-			txn.OnSuccess(func() {
-				doc.Clean()
-			})
 
 			link := core.DAGLink{
 				Name: k,
