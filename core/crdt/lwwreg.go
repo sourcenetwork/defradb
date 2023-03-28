@@ -118,7 +118,7 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
 		Data:            value,
-		DocKey:          reg.key.WithValueFlag().Bytes(),
+		DocKey:          []byte(reg.key.DocKey),
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}
 }
