@@ -12,6 +12,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	cbor "github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
@@ -302,8 +304,21 @@ func (c *collection) applyMerge(
 			return client.NewErrFieldNotExist(mfield)
 		}
 
-		if c.isFieldDescriptionRelationID(&fd) {
-			return client.NewErrFieldNotExist(mfield)
+		relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fd)
+		if isSecondaryRelationID {
+			primaryId, err := getString(mval)
+			if err != nil {
+				return err
+			}
+
+			err = c.patchPrimaryDoc(ctx, txn, relationFieldDescription, keyStr, primaryId)
+			if err != nil {
+				return err
+			}
+
+			// If this field was a secondary relation ID the related document will have been
+			// updated instead and we should discard this merge item
+			continue
 		}
 
 		cborVal, err := validateFieldSchema(mval, fd)
@@ -365,6 +380,50 @@ func (c *collection) applyMerge(
 				)
 			},
 		)
+	}
+
+	return nil
+}
+
+// isSecondaryIDField returns true if the given field description represents a secondary relation field ID.
+func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (client.FieldDescription, bool) {
+	if fieldDesc.RelationType != client.Relation_Type_INTERNAL_ID {
+		return client.FieldDescription{}, false
+	}
+
+	relationFieldDescription, valid := c.Description().GetField(strings.TrimSuffix(fieldDesc.Name, "_id"))
+	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation()
+}
+
+// patchPrimaryDoc patches the primary document linked to from the given dockey via the given secondary
+// relationship field.
+func (c *collection) patchPrimaryDoc(
+	ctx context.Context,
+	txn datastore.Txn,
+	relationFieldDescription client.FieldDescription,
+	docKey string,
+	fieldValue string,
+) error {
+	primaryDockey, err := client.NewDocKeyFromString(fieldValue)
+	if err != nil {
+		return err
+	}
+
+	primaryCol, err := c.db.getCollectionByName(ctx, txn, relationFieldDescription.Schema)
+	if err != nil {
+		return err
+	}
+	primaryCol = primaryCol.WithTxn(txn)
+
+	primaryField, _ := primaryCol.Description().GetRelation(relationFieldDescription.RelationName)
+
+	_, err = primaryCol.UpdateWithKey(
+		ctx,
+		primaryDockey,
+		fmt.Sprintf(`{"%s": "%s"}`, primaryField.Name+"_id", docKey),
+	)
+	if err != nil {
+		return err
 	}
 
 	return nil
