@@ -57,7 +57,7 @@ type Key interface {
 
 // DataStoreKey is a type that represents a key in the database.
 type DataStoreKey struct {
-	CollectionId string
+	CollectionID string
 	InstanceType InstanceType
 	DocKey       string
 	FieldId      string
@@ -144,7 +144,7 @@ func NewDataStoreKey(key string) (DataStoreKey, error) {
 		return dataStoreKey, ErrInvalidKey
 	}
 
-	dataStoreKey.CollectionId = elements[0]
+	dataStoreKey.CollectionID = elements[0]
 	dataStoreKey.InstanceType = InstanceType(elements[1])
 	dataStoreKey.DocKey = elements[2]
 	if numberOfElements == 4 {
@@ -272,8 +272,8 @@ func (k HeadStoreKey) WithFieldId(fieldId string) HeadStoreKey {
 func (k DataStoreKey) ToString() string {
 	var result string
 
-	if k.CollectionId != "" {
-		result = result + "/" + k.CollectionId
+	if k.CollectionID != "" {
+		result = result + "/" + k.CollectionID
 	}
 	if k.InstanceType != "" {
 		result = result + "/" + string(k.InstanceType)
@@ -297,7 +297,7 @@ func (k DataStoreKey) ToDS() ds.Key {
 }
 
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
-	return k.CollectionId == other.CollectionId &&
+	return k.CollectionID == other.CollectionID &&
 		k.DocKey == other.DocKey &&
 		k.FieldId == other.FieldId &&
 		k.InstanceType == other.InstanceType
@@ -305,14 +305,14 @@ func (k DataStoreKey) Equal(other DataStoreKey) bool {
 
 func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	return PrimaryDataStoreKey{
-		CollectionId: k.CollectionId,
+		CollectionId: k.CollectionID,
 		DocKey:       k.DocKey,
 	}
 }
 
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
-		CollectionId: k.CollectionId,
+		CollectionID: k.CollectionId,
 		DocKey:       k.DocKey,
 	}
 }
@@ -506,8 +506,8 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 		newKey.InstanceType = InstanceType(bytesPrefixEnd([]byte(k.InstanceType)))
 		return newKey
 	}
-	if k.CollectionId != "" {
-		newKey.CollectionId = string(bytesPrefixEnd([]byte(k.CollectionId)))
+	if k.CollectionID != "" {
+		newKey.CollectionID = string(bytesPrefixEnd([]byte(k.CollectionID)))
 		return newKey
 	}
 	return newKey

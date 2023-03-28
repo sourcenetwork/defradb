@@ -30,13 +30,14 @@ var (
 	// 	Height: Int
 	// 	CID: String
 	// 	Dockey: String
+	// 	CollectionID: Int
 	// 	SchemaVersionID: String
 	// 	Delta: String
 	// 	Previous: [Commit]
 	//  Links: [Commit]
 	// }
 	//
-	// Any self referential type needs to be initalized
+	// Any self referential type needs to be initialized
 	// inside the init() func
 	CommitObject = gql.NewObject(gql.ObjectConfig{
 		Name: request.CommitTypeName,
@@ -49,6 +50,9 @@ var (
 			},
 			"dockey": &gql.Field{
 				Type: gql.String,
+			},
+			"collectionID": &gql.Field{
+				Type: gql.Int,
 			},
 			"schemaVersionId": &gql.Field{
 				Type: gql.String,
@@ -110,6 +114,9 @@ var (
 				"dockey": &gql.InputObjectFieldConfig{
 					Type: OrderingEnum,
 				},
+				"collectionID": &gql.InputObjectFieldConfig{
+					Type: OrderingEnum,
+				},
 			},
 		},
 	)
@@ -118,9 +125,10 @@ var (
 		gql.EnumConfig{
 			Name: "commitFields",
 			Values: gql.EnumValueConfigMap{
-				"height": &gql.EnumValueConfig{Value: "height"},
-				"cid":    &gql.EnumValueConfig{Value: "cid"},
-				"dockey": &gql.EnumValueConfig{Value: "dockey"},
+				"height":       &gql.EnumValueConfig{Value: "height"},
+				"cid":          &gql.EnumValueConfig{Value: "cid"},
+				"dockey":       &gql.EnumValueConfig{Value: "dockey"},
+				"collectionID": &gql.EnumValueConfig{Value: "collectionID"},
 			},
 		},
 	)
