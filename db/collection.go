@@ -1140,9 +1140,3 @@ func (c *collection) isFieldDescriptionRelationID(fieldDescription *client.Field
 	}
 	return false
 }
-
-// makeCollectionKey returns a formatted collection key for the system data store.
-// it assumes the name of the collection is non-empty.
-// func makeCollectionDataKey(collectionID uint32) core.Key {
-// 	return collectionNs.ChildString(name)
-// }
