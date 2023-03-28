@@ -12,6 +12,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	cbor "github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
@@ -302,8 +304,14 @@ func (c *collection) applyMerge(
 			return client.NewErrFieldNotExist(mfield)
 		}
 
-		if c.isFieldDescriptionRelationID(&fd) {
-			return client.NewErrFieldNotExist(mfield)
+		wasSecondaryRelationID, err := c.patchPrimaryDoc(ctx, fd, keyStr, mval)
+		if err != nil {
+			return err
+		}
+		if wasSecondaryRelationID {
+			// If this field was a secondary relationID the related document will have been
+			// updated instead and we should discard this merge item
+			continue
 		}
 
 		cborVal, err := validateFieldSchema(mval, fd)
@@ -368,6 +376,55 @@ func (c *collection) applyMerge(
 	}
 
 	return nil
+}
+
+// patchPrimaryDoc patches the primary document if the given field is the secondary side
+// of the relationship.
+//
+// It will return true if the primary document has been updated.
+func (c *collection) patchPrimaryDoc(
+	ctx context.Context,
+	fieldDesc client.FieldDescription,
+	docKey string,
+	fieldValue *fastjson.Value,
+) (bool, error) {
+	if fieldDesc.RelationType != client.Relation_Type_INTERNAL_ID {
+		return false, nil
+	}
+
+	relationDescription, valid := c.Description().GetField(strings.TrimSuffix(fieldDesc.Name, "_id"))
+	if !valid || relationDescription.IsPrimaryRelation() {
+		return false, nil
+	}
+
+	primaryId, err := getString(fieldValue)
+	if err != nil {
+		return false, err
+	}
+
+	primaryDockey, err := client.NewDocKeyFromString(primaryId)
+	if err != nil {
+		return false, err
+	}
+
+	primaryCol, err := c.db.getCollectionByName(ctx, c.txn, relationDescription.Schema)
+	if err != nil {
+		return false, err
+	}
+	primaryCol = primaryCol.WithTxn(c.txn)
+
+	primaryField, _ := primaryCol.Description().GetRelation(relationDescription.RelationName)
+
+	_, err = primaryCol.UpdateWithKey(
+		ctx,
+		primaryDockey,
+		fmt.Sprintf(`{"%s": "%s"}`, primaryField.Name+"_id", docKey),
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // validateFieldSchema takes a given value as an interface,
