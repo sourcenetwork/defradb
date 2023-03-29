@@ -72,6 +72,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			// ignore error, nothing we can do about it
 			// as printing an error about failing to print help
 			// is useless
+			//nolint:errcheck
 			cmd.Help()
 			return nil
 		} else if args[0] == "-" {
@@ -102,6 +103,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			return NewErrFailedToSendRequest(err)
 		}
 
+		//nolint:errcheck
 		defer res.Body.Close()
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
