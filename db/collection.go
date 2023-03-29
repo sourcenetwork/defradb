@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -738,6 +737,15 @@ func (c *collection) save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) (cid.Cid, error) {
+	// NOTE: We delay the final Clean() call until we know
+	// the commit on the transaction is successful. If we didn't
+	// wait, and just did it here, then *if* the commit fails down
+	// the line, then we have no way to roll back the state
+	// side-effect on the document func called here.
+	txn.OnSuccess(func() {
+		doc.Clean()
+	})
+
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
@@ -758,8 +766,23 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			if c.isFieldNameRelationID(k) {
+			fieldDescription, valid := c.desc.GetField(k)
+			if !valid {
 				return cid.Undef, client.NewErrFieldNotExist(k)
+			}
+
+			relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fieldDescription)
+			if isSecondaryRelationID {
+				primaryId := val.Value().(string)
+
+				err = c.patchPrimaryDoc(ctx, txn, relationFieldDescription, primaryKey.DocKey, primaryId)
+				if err != nil {
+					return cid.Undef, err
+				}
+
+				// If this field was a secondary relation ID the related document will have been
+				// updated instead and we should discard this value
+				continue
 			}
 
 			node, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
@@ -771,15 +794,6 @@ func (c *collection) save(
 			} else {
 				docProperties[k] = val.Value()
 			}
-
-			// NOTE: We delay the final Clean() call until we know
-			// the commit on the transaction is successful. If we didn't
-			// wait, and just did it here, then *if* the commit fails down
-			// the line, then we have no way to roll back the state
-			// side-effect on the document func called here.
-			txn.OnSuccess(func() {
-				doc.Clean()
-			})
 
 			link := core.DAGLink{
 				Name: k,
@@ -1116,33 +1130,3 @@ func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
 	}
 	return uint32(0), false
 }
-
-// isFieldNameRelationID returns true if the given field is the id field backing a relationship.
-func (c *collection) isFieldNameRelationID(fieldName string) bool {
-	fieldDescription, valid := c.desc.GetField(fieldName)
-	if !valid {
-		return false
-	}
-
-	return c.isFieldDescriptionRelationID(&fieldDescription)
-}
-
-// isFieldDescriptionRelationID returns true if the given field is the id field backing a relationship.
-func (c *collection) isFieldDescriptionRelationID(fieldDescription *client.FieldDescription) bool {
-	if fieldDescription.RelationType == client.Relation_Type_INTERNAL_ID {
-		relationDescription, valid := c.desc.GetField(strings.TrimSuffix(fieldDescription.Name, "_id"))
-		if !valid {
-			return false
-		}
-		if relationDescription.IsPrimaryRelation() {
-			return true
-		}
-	}
-	return false
-}
-
-// makeCollectionKey returns a formatted collection key for the system data store.
-// it assumes the name of the collection is non-empty.
-// func makeCollectionDataKey(collectionID uint32) core.Key {
-// 	return collectionNs.ChildString(name)
-// }

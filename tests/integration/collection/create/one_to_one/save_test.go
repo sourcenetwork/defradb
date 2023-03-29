@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
-func TestCollectionCreateSaveErrorsGivenRelationSetOnWrongSide(t *testing.T) {
+func TestCollectionCreateSaveErrorsNonExistantKeyViaSecondarySide(t *testing.T) {
 	doc, err := client.NewDocFromJSON(
 		[]byte(
 			`{
@@ -41,12 +41,15 @@ func TestCollectionCreateSaveErrorsGivenRelationSetOnWrongSide(t *testing.T) {
 				},
 			},
 		},
-		ExpectedError: "The given field does not exist",
+		ExpectedError: "no document for the given key exists",
 	}
 
 	executeTestCase(t, test)
 }
 
+// Note: This test should probably not pass, as it contains a
+// reference to a document that doesnt exist. It is doubly odd
+// given that saving from the secondary side errors as expected
 func TestCollectionCreateSaveCreatesDoc(t *testing.T) {
 	doc, err := client.NewDocFromJSON(
 		[]byte(
@@ -82,6 +85,39 @@ func TestCollectionCreateSaveCreatesDoc(t *testing.T) {
 					assert.Equal(t, "John", name)
 
 					return nil
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestCollectionCreateSaveFromSecondarySide(t *testing.T) {
+	doc, err := client.NewDocFromJSON(
+		[]byte(
+			`{
+				"name": "Painted House",
+				"author_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+			}`,
+		),
+	)
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+
+	test := testUtils.TestCase{
+		Docs: map[string][]string{
+			"author": {
+				`{
+					"name": "John Grisham"
+				}`,
+			},
+		},
+		CollectionCalls: map[string][]func(client.Collection) error{
+			"book": []func(c client.Collection) error{
+				func(c client.Collection) error {
+					return c.Save(context.Background(), doc)
 				},
 			},
 		},
