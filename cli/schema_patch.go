@@ -12,7 +12,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -21,25 +20,24 @@ import (
 	"github.com/spf13/cobra"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 var patchFile string
 
 var patchCmd = &cobra.Command{
 	Use:   "patch [schema]",
-	Short: "Update an existing schema type",
-	Long: `Update an existing schema.
+	Short: "Patch an existing schema type",
+	Long: `Patch an existing schema.
 
-Uses JSON PATCH formatting as an update DDL.
+Uses JSON PATCH formatting as a DDL.
 
-Example: update from an argument string:
+Example: patch from an argument string:
   defradb client schema patch '[{ "op": "add", "path": "...", "value": {...} }]'
 
-Example: update from file:
+Example: patch from file:
   defradb client schema patch -f patch.json
 
-Example: update from stdin:
+Example: patch from stdin:
   cat patch.json | defradb client schema patch -
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
@@ -54,13 +52,13 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			if err = cmd.Usage(); err != nil {
 				return err
 			}
-			return errors.New("too many arguments")
+			return ErrTooManyArgs
 		}
 
 		if patchFile != "" {
 			buf, err := os.ReadFile(patchFile)
 			if err != nil {
-				return errors.Wrap("failed to read patch file", err)
+				return NewFailedToReadFile(err)
 			}
 			patch = string(buf)
 		} else if isFileInfoPipe(fi) && (len(args) == 0 || args[0] != "-") {
@@ -71,18 +69,18 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			)
 			return nil
 		} else if len(args) == 0 {
-			err := cmd.Help()
-			if err != nil {
-				return errors.Wrap("failed to print help", err)
-			}
+			// ignore error, nothing we can do about it
+			// as printing an error about failing to print help
+			// is useless
+			cmd.Help()
 			return nil
 		} else if args[0] == "-" {
 			stdin, err := readStdin()
 			if err != nil {
-				return errors.Wrap("failed to read stdin", err)
+				return NewFailedToReadStdin(err)
 			}
 			if len(stdin) == 0 {
-				return errors.New("no patch in stdin provided")
+				return ErrEmptyStdin
 			} else {
 				patch = stdin
 			}
@@ -91,45 +89,40 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 		}
 
 		if patch == "" {
-			return errors.New("empty patch provided")
+			return ErrEmptyFile
 		}
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPatchPath)
 		if err != nil {
-			return errors.Wrap("join paths failed", err)
+			return err
 		}
 
 		res, err := http.Post(endpoint.String(), "text", strings.NewReader(patch))
 		if err != nil {
-			return errors.Wrap("failed to post patch", err)
+			return NewErrFailedToSendRequest(err)
 		}
 
-		defer func() {
-			if e := res.Body.Close(); e != nil {
-				err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
-			}
-		}()
-
+		defer res.Body.Close()
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return errors.Wrap("failed to read response body", err)
+			return NewErrFailedToReadResponseBody(err)
 		}
 
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
-			return errors.Wrap("failed to stat stdout", err)
+			return NewErrFailedToStatStdOut(err)
 		}
 		if isFileInfoPipe(stdout) {
 			cmd.Println(string(response))
 		} else {
 			graphlErr, err := hasGraphQLErrors(response)
 			if err != nil {
-				return errors.Wrap("failed to handle GraphQL errors", err)
+				return NewErrFailedToHandleGQLErrors(err)
 			}
 			if graphlErr {
 				indentedResult, err := indentJSON(response)
 				if err != nil {
-					return errors.Wrap("failed to pretty print result", err)
+					return NewErrFailedToPrettyPrintResponse(err)
 				}
 				log.FeedbackError(cmd.Context(), indentedResult)
 			} else {
@@ -141,7 +134,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				r := schemaResponse{}
 				err = json.Unmarshal(response, &r)
 				if err != nil {
-					return errors.Wrap("failed to unmarshal response", err)
+					return NewErrFailedToUnmarshalResponse(err)
 				}
 				log.FeedbackInfo(cmd.Context(), r.Data.Result)
 			}
