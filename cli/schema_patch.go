@@ -94,7 +94,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			return errors.New("empty patch provided")
 		}
 
-		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaLoadPath)
+		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPatchPath)
 		if err != nil {
 			return errors.Wrap("join paths failed", err)
 		}

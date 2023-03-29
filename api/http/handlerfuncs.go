@@ -181,6 +181,33 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	)
 }
 
+func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
+	patch, err := io.ReadAll(req.Body)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = db.PatchSchema(req.Context(), string(patch))
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("result", "success"),
+		http.StatusOK,
+	)
+}
+
 func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 	cidStr := chi.URLParam(req, "cid")
 
