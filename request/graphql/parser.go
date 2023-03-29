@@ -67,9 +67,7 @@ func (p *parser) IsIntrospection(request string) bool {
 	}
 
 	schema := p.schemaManager.Schema()
-
-	res := defrap.IsIntrospectionQuery(*schema, ast)
-	return res
+	return defrap.IsIntrospectionQuery(*schema, ast)
 }
 
 func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
