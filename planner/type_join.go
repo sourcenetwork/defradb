@@ -52,17 +52,9 @@ type typeIndexJoin struct {
 
 	p *Planner
 
-	// root        planNode
-	// subType     planNode
-	// subTypeName string
-
 	// actual join plan, could be one of several strategies
 	// based on the relationship of the sub types
 	joinPlan planNode
-
-	// doc map[string]any
-
-	// spans core.Spans
 }
 
 func (p *Planner) makeTypeIndexJoin(
