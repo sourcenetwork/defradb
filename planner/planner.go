@@ -438,16 +438,17 @@ func walkAndFindPlanType[T planNode](planNode planNode) (T, bool) {
 	return targetType, true
 }
 
-// explainRequest walks through the plan graph, and outputs the concrete planNodes that should
-// be executed, maintaing their order in the plan graph (does not actually execute them).
+// explainRequest explains the given request plan according to the type of explain request.
 func (p *Planner) explainRequest(
 	ctx context.Context,
-	planNode planNode,
+	plan planNode,
 	explainType request.ExplainType,
 ) ([]map[string]any, error) {
 	switch explainType {
 	case request.SimpleExplain:
-		explainGraph, err := buildSimpleExplainGraph(planNode)
+		// walks through the plan graph, and outputs the concrete planNodes that should
+		// be executed, maintaining their order in the plan graph (does not actually execute them).
+		explainGraph, err := buildSimpleExplainGraph(plan)
 		if err != nil {
 			return nil, err
 		}
@@ -459,6 +460,9 @@ func (p *Planner) explainRequest(
 		}
 
 		return explainResult, nil
+
+	case request.ExecuteExplain:
+		return nil, nil // TODO: Implementation in other commits.
 
 	default:
 		return nil, ErrUnknownExplainRequestType
