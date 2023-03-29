@@ -97,9 +97,7 @@ func (n *orderNode) Value() core.Doc {
 	return n.valueIter.Value()
 }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *orderNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+func (n *orderNode) simpleExplain() (map[string]any, error) {
 	orderings := []map[string]any{}
 
 	for _, element := range n.ordering {
@@ -127,6 +125,21 @@ func (n *orderNode) Explain(explainType request.ExplainType) (map[string]any, er
 	return map[string]any{
 		"orderings": orderings,
 	}, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *orderNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 func (n *orderNode) Next() (bool, error) {

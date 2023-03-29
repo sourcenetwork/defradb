@@ -171,10 +171,8 @@ func (n *groupNode) Next() (bool, error) {
 	return false, nil
 }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *groupNode) Explain(explainType request.ExplainType) (map[string]any, error) {
-	explainerMap := map[string]any{}
+func (n *groupNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{}
 
 	// Get the parent level groupBy attribute(s).
 	groupByFields := []string{}
@@ -184,11 +182,11 @@ func (n *groupNode) Explain(explainType request.ExplainType) (map[string]any, er
 			field.Name,
 		)
 	}
-	explainerMap["groupByFields"] = groupByFields
+	simpleExplainMap["groupByFields"] = groupByFields
 
 	// Get the inner group (child) selection attribute(s).
 	if len(n.childSelects) == 0 {
-		explainerMap["childSelects"] = nil
+		simpleExplainMap["childSelects"] = nil
 	} else {
 		childSelects := make([]map[string]any, 0, len(n.childSelects))
 		for _, child := range n.childSelects {
@@ -269,8 +267,23 @@ func (n *groupNode) Explain(explainType request.ExplainType) (map[string]any, er
 			childSelects = append(childSelects, childExplainGraph)
 		}
 
-		explainerMap["childSelects"] = childSelects
+		simpleExplainMap["childSelects"] = childSelects
 	}
 
-	return explainerMap, nil
+	return simpleExplainMap, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *groupNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }

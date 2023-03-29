@@ -149,37 +149,50 @@ func (n *sumNode) Close() error { return n.plan.Close() }
 
 func (n *sumNode) Source() planNode { return n.plan }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *sumNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+func (n *sumNode) simpleExplain() (map[string]any, error) {
 	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {
-		explainerMap := map[string]any{}
+		simpleExplainMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
 		if source.Filter == nil || source.Filter.ExternalConditions == nil {
-			explainerMap[filterLabel] = nil
+			simpleExplainMap[filterLabel] = nil
 		} else {
-			explainerMap[filterLabel] = source.Filter.ExternalConditions
+			simpleExplainMap[filterLabel] = source.Filter.ExternalConditions
 		}
 
 		// Add the main field name.
-		explainerMap[fieldNameLabel] = source.Field.Name
+		simpleExplainMap[fieldNameLabel] = source.Field.Name
 
 		// Add the child field name if it exists.
 		if source.ChildTarget.HasValue {
-			explainerMap[childFieldNameLabel] = source.ChildTarget.Name
+			simpleExplainMap[childFieldNameLabel] = source.ChildTarget.Name
 		} else {
-			explainerMap[childFieldNameLabel] = nil
+			simpleExplainMap[childFieldNameLabel] = nil
 		}
 
-		sourceExplanations[i] = explainerMap
+		sourceExplanations[i] = simpleExplainMap
 	}
 
 	return map[string]any{
 		sourcesLabel: sourceExplanations,
 	}, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *sumNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 func (n *sumNode) Next() (bool, error) {

@@ -122,9 +122,7 @@ func (n *createNode) Close() error {
 
 func (n *createNode) Source() planNode { return n.results }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+func (n *createNode) simpleExplain() (map[string]any, error) {
 	data := map[string]any{}
 	err := json.Unmarshal([]byte(n.newDocStr), &data)
 	if err != nil {
@@ -134,6 +132,21 @@ func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, e
 	return map[string]any{
 		dataLabel: data,
 	}, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {

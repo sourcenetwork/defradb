@@ -118,23 +118,21 @@ func (n *dagScanNode) Close() error {
 
 func (n *dagScanNode) Source() planNode { return nil }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *dagScanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
-	explainerMap := map[string]any{}
+func (n *dagScanNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{}
 
 	// Add the field attribute to the explanation if it exists.
 	if n.commitSelect.FieldName.HasValue() {
-		explainerMap["field"] = n.commitSelect.FieldName.Value()
+		simpleExplainMap["field"] = n.commitSelect.FieldName.Value()
 	} else {
-		explainerMap["field"] = nil
+		simpleExplainMap["field"] = nil
 	}
 
 	// Add the cid attribute to the explanation if it exists.
 	if n.commitSelect.Cid.HasValue() {
-		explainerMap["cid"] = n.commitSelect.Cid.Value()
+		simpleExplainMap["cid"] = n.commitSelect.Cid.Value()
 	} else {
-		explainerMap["cid"] = nil
+		simpleExplainMap["cid"] = nil
 	}
 
 	// Build the explanation of the spans attribute.
@@ -152,9 +150,24 @@ func (n *dagScanNode) Explain(explainType request.ExplainType) (map[string]any, 
 		}
 	}
 	// Add the built spans attribute, if it was valid.
-	explainerMap[spansLabel] = spansExplainer
+	simpleExplainMap[spansLabel] = spansExplainer
 
-	return explainerMap, nil
+	return simpleExplainMap, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *dagScanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return nil, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 func (n *dagScanNode) Next() (bool, error) {

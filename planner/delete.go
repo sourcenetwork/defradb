@@ -75,22 +75,35 @@ func (n *deleteNode) Source() planNode {
 	return n.source
 }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *deleteNode) Explain(explainType request.ExplainType) (map[string]any, error) {
-	explainerMap := map[string]any{}
+func (n *deleteNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{}
 
 	// Add the document id(s) that request wants to delete.
-	explainerMap[idsLabel] = n.ids
+	simpleExplainMap[idsLabel] = n.ids
 
 	// Add the filter attribute if it exists, otherwise have it nil.
 	if n.filter == nil || n.filter.ExternalConditions == nil {
-		explainerMap[filterLabel] = nil
+		simpleExplainMap[filterLabel] = nil
 	} else {
-		explainerMap[filterLabel] = n.filter.ExternalConditions
+		simpleExplainMap[filterLabel] = n.filter.ExternalConditions
 	}
 
-	return explainerMap, nil
+	return simpleExplainMap, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *deleteNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {

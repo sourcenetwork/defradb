@@ -81,15 +81,28 @@ func (n *limitNode) Next() (bool, error) {
 
 func (n *limitNode) Source() planNode { return n.plan }
 
-func (n *limitNode) Explain(explainType request.ExplainType) (map[string]any, error) {
-	exp := map[string]any{
+func (n *limitNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{
 		limitLabel:  n.limit,
 		offsetLabel: n.offset,
 	}
 
 	if n.limit == 0 {
-		exp[limitLabel] = nil
+		simpleExplainMap[limitLabel] = nil
 	}
 
-	return exp, nil
+	return simpleExplainMap, nil
+}
+
+func (n *limitNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return nil, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }

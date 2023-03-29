@@ -133,26 +133,39 @@ func (n *scanNode) explainSpans() []map[string]any {
 	return spansExplainer
 }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
-	explainerMap := map[string]any{}
+func (n *scanNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{}
 
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.ExternalConditions == nil {
-		explainerMap[filterLabel] = nil
+		simpleExplainMap[filterLabel] = nil
 	} else {
-		explainerMap[filterLabel] = n.filter.ExternalConditions
+		simpleExplainMap[filterLabel] = n.filter.ExternalConditions
 	}
 
 	// Add the collection attributes.
-	explainerMap[collectionNameLabel] = n.desc.Name
-	explainerMap[collectionIDLabel] = n.desc.IDString()
+	simpleExplainMap[collectionNameLabel] = n.desc.Name
+	simpleExplainMap[collectionIDLabel] = n.desc.IDString()
 
 	// Add the spans attribute.
-	explainerMap[spansLabel] = n.explainSpans()
+	simpleExplainMap[spansLabel] = n.explainSpans()
 
-	return explainerMap, nil
+	return simpleExplainMap, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 // Merge implements mergeNode
