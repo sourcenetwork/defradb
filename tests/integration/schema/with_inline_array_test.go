@@ -28,7 +28,7 @@ func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "users") {
 							name
 						}
@@ -65,7 +65,7 @@ func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "books") {
 							name
 						}

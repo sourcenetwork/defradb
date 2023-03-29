@@ -35,7 +35,7 @@ func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "Users") {
 							name
 							fields {
@@ -90,7 +90,7 @@ func TestSchemaUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenBadPatch(t *
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "Users") {
 							name
 							fields {

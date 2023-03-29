@@ -28,7 +28,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__schema {
 							queryType {
 								fields {
@@ -165,7 +165,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__schema {
 							queryType {
 								fields {
