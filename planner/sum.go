@@ -30,6 +30,13 @@ type sumNode struct {
 	isFloat           bool
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
+
+	execInfo sumExecInfo
+}
+
+type sumExecInfo struct {
+	// Total number of times sumNode was executed.
+	iterations uint64
 }
 
 func (p *Planner) Sum(
@@ -188,7 +195,9 @@ func (n *sumNode) Explain(explainType request.ExplainType) (map[string]any, erro
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return map[string]any{}, nil
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
@@ -196,6 +205,8 @@ func (n *sumNode) Explain(explainType request.ExplainType) (map[string]any, erro
 }
 
 func (n *sumNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	hasNext, err := n.plan.Next()
 	if err != nil || !hasNext {
 		return hasNext, err

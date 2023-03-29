@@ -74,6 +74,7 @@ func create3ArticleDocuments() []testUtils.CreateDoc {
 			Doc: `{
 
 					"name": "After Guantánamo, Another Injustice",
+					"pages": 100,
 					"author_id": "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138"
 				}`,
 		},
@@ -81,6 +82,7 @@ func create3ArticleDocuments() []testUtils.CreateDoc {
 			CollectionID: 0,
 			Doc: `{
 					"name": "To my dear readers",
+					"pages": 200,
 					"author_id": "bae-68cb395d-df73-5bcb-b623-615a140dee12"
 				}`,
 		},
@@ -88,6 +90,7 @@ func create3ArticleDocuments() []testUtils.CreateDoc {
 			CollectionID: 0,
 			Doc: `{
 					"name": "Twinklestar's Favourite Xmas Cookie",
+					"pages": 300,
 					"author_id": "bae-68cb395d-df73-5bcb-b623-615a140dee12"
 				}`,
 		},
