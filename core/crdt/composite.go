@@ -121,7 +121,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 	})
 	return &CompositeDAGDelta{
 		Data:            patch,
-		DocKey:          c.key.WithValueFlag().Bytes(),
+		DocKey:          []byte(c.key.DocKey),
 		SubDAGs:         links,
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
 	}

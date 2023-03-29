@@ -118,7 +118,7 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
 					},
 				},
 			},
@@ -150,7 +150,7 @@ func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+						"cid": "bafybeihalsnuslda2ccygeq45nmrhspcg2yae56vsw7podra37a7ugemly",
 					},
 				},
 			},

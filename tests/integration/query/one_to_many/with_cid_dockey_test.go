@@ -23,7 +23,7 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with unknown cid and dockey",
 		Request: `query {
 					book (
-							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",
+							cid: "bafybeigk2niv4i7waulivx7mqsfbdnilwobdwas3spadsvn5xttpjp2cs5",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -68,7 +68,7 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with  cid and dockey",
 		Request: `query {
 					book (
-							cid: "bafybeieby4hopjxof5cx7pkfrk7qvv7vy7s4i37mzdlcp2dk2m37jouycm"
+							cid: "bafybeidzkvlv3ydn6hbje3u3fvm2z7ec76t5o4skpf34euwyhqig7gdzdm",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -117,7 +117,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with child update and parent cid and dockey",
 		Request: `query {
 					book (
-							cid: "bafybeieby4hopjxof5cx7pkfrk7qvv7vy7s4i37mzdlcp2dk2m37jouycm",
+							cid: "bafybeidzkvlv3ydn6hbje3u3fvm2z7ec76t5o4skpf34euwyhqig7gdzdm",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -173,7 +173,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
 		Request: `query {
 					book (
-							cid: "bafybeieby4hopjxof5cx7pkfrk7qvv7vy7s4i37mzdlcp2dk2m37jouycm",
+							cid: "bafybeidzkvlv3ydn6hbje3u3fvm2z7ec76t5o4skpf34euwyhqig7gdzdm",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -229,7 +229,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
 		Request: `query {
 					book (
-							cid: "bafybeieutgrc67hwomdleoixikuygznnzmsrvvby6jloyqkkakfnnra2ha",
+							cid: "bafybeidrqnpqk2cecfzah2z6rfzljf3o6fr5t6g2sncplx3tfbddaarkm4",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name

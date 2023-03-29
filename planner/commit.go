@@ -299,12 +299,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 		return core.Doc{}, nil, ErrDeltaMissingDockey
 	}
 
-	dockeyObj, err := core.NewDataStoreKey(string(dockey))
-	if err != nil {
-		return core.Doc{}, nil, err
-	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-		request.DockeyFieldName, dockeyObj.DocKey)
+		request.DockeyFieldName, string(dockey))
 
 	collection, err := n.planner.db.GetCollectionByVersionID(n.planner.ctx, schemaVersionId)
 	if err != nil {
