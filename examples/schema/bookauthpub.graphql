@@ -1,20 +1,20 @@
-type book {
+type Book {
     name: String
     rating: Float
-    author: author
-    publisher: publisher
+    author: Author
+    publisher: Publisher
 }
 
-type author {
+type Author {
     name: String
     age: Int
     verified: Boolean
-    wrote: book @primary
+    wrote: Book @primary
 }
 
-type publisher {
+type Publisher {
     name: String
     address: String
     favouritePageNumbers: [Int!]
-    published: [book]
+    published: [Book]
 }
