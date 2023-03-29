@@ -395,8 +395,12 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (clie
 	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation()
 }
 
-// patchPrimaryDoc patches the primary document linked to from the given dockey via the given secondary
-// relationship field.
+// patchPrimaryDoc patches the (primary) document linked to from the document of the given dockey via the
+// given (secondary) relationship field description (hosted on the collection of the document matching the
+// given dockey).
+//
+// The given field value should be the string representation of the dockey of the primary document to be
+// patched.
 func (c *collection) patchPrimaryDoc(
 	ctx context.Context,
 	txn datastore.Txn,
