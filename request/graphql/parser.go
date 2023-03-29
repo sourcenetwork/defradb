@@ -12,9 +12,9 @@ package graphql
 
 import (
 	"context"
-	"strings"
 
 	gql "github.com/graphql-go/graphql"
+	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
 	"github.com/sourcenetwork/immutable"
@@ -46,9 +46,30 @@ func NewParser() (*parser, error) {
 	return p, nil
 }
 
+func buildAST(request string) (*ast.Document, error) {
+	source := source.NewSource(&source.Source{
+		Body: []byte(request),
+		Name: "GraphQL request",
+	})
+
+	ast, err := gqlp.Parse(gqlp.ParseParams{Source: source})
+	if err != nil {
+		return nil, err
+	}
+
+	return ast, nil
+}
+
 func (p *parser) IsIntrospection(request string) bool {
-	// todo: This needs to be done properly https://github.com/sourcenetwork/defradb/issues/911
-	return strings.Contains(request, "IntrospectionQuery")
+	ast, err := buildAST(request)
+	if err != nil {
+		return false
+	}
+
+	schema := p.schemaManager.Schema()
+
+	res := defrap.IsIntrospectionQuery(*schema, ast)
+	return res
 }
 
 func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
@@ -71,12 +92,7 @@ func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
 }
 
 func (p *parser) Parse(request string) (*request.Request, []error) {
-	source := source.NewSource(&source.Source{
-		Body: []byte(request),
-		Name: "GraphQL request",
-	})
-
-	ast, err := gqlp.Parse(gqlp.ParseParams{Source: source})
+	ast, err := buildAST(request)
 	if err != nil {
 		return nil, []error{err}
 	}
