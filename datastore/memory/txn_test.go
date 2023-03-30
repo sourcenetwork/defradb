@@ -707,9 +707,9 @@ func TestTxnWithConflict(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	tx := s.newTransaction(false)
+	tx := s.newTransaction(false, false)
 
-	tx2 := s.newTransaction(false)
+	tx2 := s.newTransaction(false, false)
 
 	err := tx.Put(ctx, testKey3, testValue3)
 	require.NoError(t, err)
@@ -732,9 +732,9 @@ func TestTxnWithConflictAfterDelete(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	tx := s.newTransaction(false)
+	tx := s.newTransaction(false, false)
 
-	tx2 := s.newTransaction(false)
+	tx2 := s.newTransaction(false, false)
 
 	err := tx.Put(ctx, testKey2, testValue3)
 	require.NoError(t, err)
@@ -757,9 +757,9 @@ func TestTxnWithConflictAfterGet(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	tx := s.newTransaction(false)
+	tx := s.newTransaction(false, false)
 
-	tx2 := s.newTransaction(false)
+	tx2 := s.newTransaction(false, false)
 
 	_, err := tx.Get(ctx, testKey2)
 	require.NoError(t, err)

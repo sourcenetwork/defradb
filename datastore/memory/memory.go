@@ -135,7 +135,7 @@ func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
 	if d.closed {
 		return ErrClosed
 	}
-	tx := d.newTransaction(false)
+	tx := d.newTransaction(false, true)
 	// An error can never happen at this stage so we explicitly ignore it
 	_ = tx.Delete(ctx, key)
 	return tx.Commit(ctx)
@@ -199,18 +199,24 @@ func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, 
 	if d.closed {
 		return nil, ErrClosed
 	}
-	return d.newTransaction(readOnly), nil
+	return d.newTransaction(readOnly, false), nil
 }
 
 // newTransaction returns a ds.Txn datastore.
-func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
+//
+// isInternal should be set to true if this transaction is created from within the
+// datastore and is already protected by stuff like locks.  Failure to correctly set
+// this to true may result in deadlocks.  Failure to correctly set it to false may lead
+// to other concurrency issues.
+func (d *Datastore) newTransaction(readOnly bool, isInternal bool) ds.Txn {
 	v := d.getVersion()
 	d.inFlightTxn.Set(dsTxn{v, v + 1, time.Now().Add(1 * time.Hour)})
 	return &basicTxn{
-		ops:       btree.NewBTreeG(byKeys),
-		ds:        d,
-		readOnly:  readOnly,
-		dsVersion: &v,
+		ops:        btree.NewBTreeG(byKeys),
+		ds:         d,
+		readOnly:   readOnly,
+		dsVersion:  &v,
+		isInternal: isInternal,
 	}
 }
 
@@ -221,7 +227,7 @@ func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err erro
 	if d.closed {
 		return ErrClosed
 	}
-	tx := d.newTransaction(false)
+	tx := d.newTransaction(false, true)
 	// An error can never happen at this stage so we explicitly ignore it
 	_ = tx.Put(ctx, key, value)
 	return tx.Commit(ctx)
