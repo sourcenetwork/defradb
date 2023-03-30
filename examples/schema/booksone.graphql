@@ -1,12 +1,12 @@
-type book {
+type Book {
     name: String
     rating: Float
-    author: author @primary
+    author: Author @primary
 }
 
-type author {
+type Author {
     name: String
     age: Int
     verified: Boolean
-    published: book
+    published: Book
 }
