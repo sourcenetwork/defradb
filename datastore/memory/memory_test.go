@@ -92,6 +92,8 @@ func TestCloseThroughContext(t *testing.T) {
 
 	cancel()
 
+	time.Sleep(time.Millisecond * 10)
+
 	<-s.closing
 
 	err := s.Close()
