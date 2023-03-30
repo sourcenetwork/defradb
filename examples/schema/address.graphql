@@ -1,4 +1,4 @@
-type address {
+type Address {
     street: String
     number: Int
     city: String
