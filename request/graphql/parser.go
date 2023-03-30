@@ -46,7 +46,7 @@ func NewParser() (*parser, error) {
 	return p, nil
 }
 
-func buildAST(request string) (*ast.Document, error) {
+func (p *parser) BuildRequestAST(request string) (*ast.Document, error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(request),
 		Name: "GraphQL request",
@@ -60,12 +60,7 @@ func buildAST(request string) (*ast.Document, error) {
 	return ast, nil
 }
 
-func (p *parser) IsIntrospection(request string) bool {
-	ast, err := buildAST(request)
-	if err != nil {
-		return false
-	}
-
+func (p *parser) IsIntrospection(ast *ast.Document) bool {
 	schema := p.schemaManager.Schema()
 	return defrap.IsIntrospectionQuery(*schema, ast)
 }
@@ -89,12 +84,7 @@ func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
 	return res
 }
 
-func (p *parser) Parse(request string) (*request.Request, []error) {
-	ast, err := buildAST(request)
-	if err != nil {
-		return nil, []error{err}
-	}
-
+func (p *parser) Parse(ast *ast.Document) (*request.Request, []error) {
 	schema := p.schemaManager.Schema()
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {

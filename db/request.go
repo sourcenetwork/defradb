@@ -21,11 +21,16 @@ import (
 // execRequest executes a request against the database.
 func (db *db) execRequest(ctx context.Context, request string, txn datastore.Txn) *client.RequestResult {
 	res := &client.RequestResult{}
-	if db.parser.IsIntrospection(request) {
-		return db.ExecIntrospection(request)
+	ast, err := db.parser.BuildRequestAST(request)
+	if err != nil {
+		res.GQL.Errors = []any{err.Error()}
+		return res
+	}
+	if db.parser.IsIntrospection(ast) {
+		return db.parser.ExecuteIntrospection(request)
 	}
 
-	parsedRequest, errors := db.parser.Parse(request)
+	parsedRequest, errors := db.parser.Parse(ast)
 	if len(errors) > 0 {
 		errorStrings := make([]any, len(errors))
 		for i, err := range errors {
