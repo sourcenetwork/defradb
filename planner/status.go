@@ -11,15 +11,14 @@
 package planner
 
 import (
-	"fmt"
-
 	dag "github.com/ipfs/go-merkledag"
+	"github.com/ugorji/go/codec"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
-	"github.com/ugorji/go/codec"
 )
 
 // A lazily loaded cache-node that allows retrieval of cached documents at arbitrary indexes.

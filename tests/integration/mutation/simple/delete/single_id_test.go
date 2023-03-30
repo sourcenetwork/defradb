@@ -11,10 +11,13 @@
 package delete
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
@@ -209,4 +212,65 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 	for _, test := range tests {
 		simpleTests.ExecuteTestCase(t, test)
 	}
+}
+
+func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery_Success(t *testing.T) {
+	jsonString := `{
+		"name": "John",
+		"age": 43
+	}`
+	doc, err := client.NewDocFromJSON([]byte(jsonString))
+	require.NoError(t, err)
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          jsonString,
+			},
+			testUtils.Request{
+				Request: fmt.Sprintf(`mutation {
+						delete_User(id: "%s") {
+							_status
+							_key
+						}
+					}`, doc.Key()),
+				Results: []map[string]any{
+					{
+						// Note: This should show a `Deleted` status but the order of the planNodes
+						// makes it so the status is requested prior to deleting. If the planNode ordering
+						// can be altered, this can change in the future.
+						"_status": "Active",
+						"_key":    doc.Key().String(),
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(showDeleted: true) {
+							_status
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_status": "Deleted",
+						"name":    "John",
+						"age":     uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
 }

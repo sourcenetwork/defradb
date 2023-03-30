@@ -13,8 +13,10 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
@@ -351,4 +353,73 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 	for _, test := range tests {
 		simpleTests.ExecuteTestCase(t, test)
 	}
+}
+
+func TestDeletionOfDocumentsWithFilterWithShowDeletedDocumentQuery_Success(t *testing.T) {
+	jsonString1 := `{
+		"name": "John",
+		"age": 43
+	}`
+	jsonString2 := `{
+		"name": "Andy",
+		"age": 74
+	}`
+	doc1, err := client.NewDocFromJSON([]byte(jsonString1))
+	require.NoError(t, err)
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          jsonString1,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          jsonString2,
+			},
+			testUtils.Request{
+				Request: `mutation {
+						delete_User(filter: {name: {_eq: "John"}}) {
+							_key
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_key": doc1.Key().String(),
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(showDeleted: true) {
+							_status
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_status": "Active",
+						"name":    "Andy",
+						"age":     uint64(74),
+					},
+					{
+						"_status": "Deleted",
+						"name":    "John",
+						"age":     uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
 }

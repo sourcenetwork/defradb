@@ -11,10 +11,13 @@
 package delete
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
@@ -337,4 +340,78 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 	for _, test := range tests {
 		simpleTests.ExecuteTestCase(t, test)
 	}
+}
+
+func TestDeletionOfMultipleDocumentsUsingSingleKeyWithShowDeletedDocumentQuery_Success(t *testing.T) {
+	jsonString1 := `{
+		"name": "John",
+		"age": 43
+	}`
+	jsonString2 := `{
+		"name": "Andy",
+		"age": 74
+	}`
+	doc1, err := client.NewDocFromJSON([]byte(jsonString1))
+	require.NoError(t, err)
+	doc2, err := client.NewDocFromJSON([]byte(jsonString2))
+	require.NoError(t, err)
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          jsonString1,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          jsonString2,
+			},
+			testUtils.Request{
+				Request: fmt.Sprintf(`mutation {
+						delete_User(ids: ["%s", "%s"]) {
+							_key
+						}
+					}`, doc1.Key(), doc2.Key()),
+				Results: []map[string]any{
+					{
+						"_key": doc2.Key().String(),
+					},
+					{
+						"_key": doc1.Key().String(),
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(showDeleted: true) {
+							_status
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_status": "Deleted",
+						"name":    "Andy",
+						"age":     uint64(74),
+					},
+					{
+						"_status": "Deleted",
+						"name":    "John",
+						"age":     uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
 }
