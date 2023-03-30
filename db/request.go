@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -22,12 +21,16 @@ import (
 // execRequest executes a request against the database.
 func (db *db) execRequest(ctx context.Context, request string, txn datastore.Txn) *client.RequestResult {
 	res := &client.RequestResult{}
-	// check if its Introspection request
-	if strings.Contains(request, "IntrospectionQuery") {
-		return db.ExecIntrospection(request)
+	ast, err := db.parser.BuildRequestAST(request)
+	if err != nil {
+		res.GQL.Errors = []any{err.Error()}
+		return res
+	}
+	if db.parser.IsIntrospection(ast) {
+		return db.parser.ExecuteIntrospection(request)
 	}
 
-	parsedRequest, errors := db.parser.Parse(request)
+	parsedRequest, errors := db.parser.Parse(ast)
 	if len(errors) > 0 {
 		errorStrings := make([]any, len(errors))
 		for i, err := range errors {
@@ -37,7 +40,7 @@ func (db *db) execRequest(ctx context.Context, request string, txn datastore.Txn
 		return res
 	}
 
-	pub, subRequest, err := db.checkForClientSubsciptions(parsedRequest)
+	pub, subRequest, err := db.checkForClientSubscriptions(parsedRequest)
 	if err != nil {
 		res.GQL.Errors = []any{err.Error()}
 		return res

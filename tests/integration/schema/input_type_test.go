@@ -37,7 +37,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "author") {
 							name
 							fields {

@@ -26,7 +26,7 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__schema {
 							queryType {
 								fields {
@@ -104,7 +104,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__schema {
 							queryType {
 								fields {
@@ -210,7 +210,7 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__schema {
 							queryType {
 								fields {
