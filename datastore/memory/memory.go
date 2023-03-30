@@ -57,18 +57,12 @@ func byKeys(a, b dsItem) bool {
 	}
 }
 
-type commit struct {
-	tx  *basicTxn
-	err chan error
-}
-
 // Datastore uses a btree for internal storage.
 type Datastore struct {
 	// Latest committed version.
 	version     *uint64
 	values      *btree.BTreeG[dsItem]
 	inFlightTxn *btree.BTreeG[dsTxn]
-	commit      chan commit
 
 	closing chan struct{}
 	closed  bool
@@ -87,10 +81,9 @@ func NewDatastore(ctx context.Context) *Datastore {
 		values:      btree.NewBTreeG(byKeys),
 		inFlightTxn: btree.NewBTreeG(byDSVersion),
 		closing:     make(chan struct{}),
-		commit:      make(chan commit),
 	}
 	go d.purgeOldVersions(ctx)
-	go d.commitHandler(ctx)
+	go d.handleContextDone(ctx)
 	return d
 }
 
@@ -124,7 +117,6 @@ func (d *Datastore) Close() error {
 
 	d.closed = true
 	close(d.closing)
-	close(d.commit)
 	return nil
 }
 
@@ -203,6 +195,11 @@ func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, 
 }
 
 // newTransaction returns a ds.Txn datastore.
+//
+// isInternal should be set to true if this transaction is created from within the
+// datastore and is already protected by stuff like locks.  Failure to correctly set
+// this to true may result in deadlocks.  Failure to correctly set it to false may lead
+// to other concurrency issues.
 func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
 	v := d.getVersion()
 	d.inFlightTxn.Set(dsTxn{v, v + 1, time.Now().Add(1 * time.Hour)})
@@ -211,6 +208,7 @@ func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
 		ds:        d,
 		readOnly:  readOnly,
 		dsVersion: &v,
+		closing:   d.closing,
 	}
 }
 
@@ -337,37 +335,11 @@ func (d *Datastore) executePurge(ctx context.Context) {
 	}
 }
 
-func (d *Datastore) commitHandler(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			// It is safe to ignore the error since the only error that could occur is if the
-			// datastore is already closed, in which case the purpose of the `Close` call is already covered.
-			_ = d.Close()
-			return
-		case c, open := <-d.commit:
-			if !open {
-				return
-			}
-			err := c.tx.checkForConflicts(ctx)
-			if err != nil {
-				c.err <- err
-				continue
-			}
-			iter := c.tx.ops.Iter()
-			v := d.nextVersion()
-			for iter.Next() {
-				if iter.Item().isGet {
-					continue
-				}
-				item := iter.Item()
-				item.version = v
-				d.values.Set(item)
-			}
-			iter.Release()
-			close(c.err)
-		}
-	}
+func (d *Datastore) handleContextDone(ctx context.Context) {
+	<-ctx.Done()
+	// It is safe to ignore the error since the only error that could occur is if the
+	// datastore is already closed, in which case the purpose of the `Close` call is already covered.
+	_ = d.Close()
 }
 
 func (d *Datastore) clearOldInFlightTxn(ctx context.Context) {

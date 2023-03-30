@@ -27,6 +27,8 @@ type basicTxn struct {
 	dsVersion *uint64
 	readOnly  bool
 	discarded bool
+
+	closing <-chan struct{}
 }
 
 var _ ds.Txn = (*basicTxn)(nil)
@@ -41,11 +43,10 @@ func (t *basicTxn) getTxnVersion() uint64 {
 
 // Delete implements ds.Delete.
 func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
+	if t.isClosed() {
 		return ErrClosed
 	}
+
 	if t.discarded {
 		return ErrTxnDiscarded
 	}
@@ -82,11 +83,10 @@ func (t *basicTxn) get(ctx context.Context, key ds.Key) dsItem {
 
 // Get implements ds.Get.
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
+	if t.isClosed() {
 		return nil, ErrClosed
 	}
+
 	if t.discarded {
 		return nil, ErrTxnDiscarded
 	}
@@ -99,11 +99,10 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 
 // GetSize implements ds.GetSize.
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
+	if t.isClosed() {
 		return 0, ErrClosed
 	}
+
 	if t.discarded {
 		return 0, ErrTxnDiscarded
 	}
@@ -116,11 +115,10 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 
 // Has implements ds.Has.
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
+	if t.isClosed() {
 		return false, ErrClosed
 	}
+
 	if t.discarded {
 		return false, ErrTxnDiscarded
 	}
@@ -133,11 +131,10 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 
 // Put implements ds.Put.
 func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
+	if t.isClosed() {
 		return ErrClosed
 	}
+
 	if t.discarded {
 		return ErrTxnDiscarded
 	}
@@ -151,14 +148,14 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 
 // Query implements ds.Query.
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
-		return nil, ErrClosed
-	}
 	if t.discarded {
 		return nil, ErrTxnDiscarded
 	}
+
+	if t.isClosed() {
+		return nil, ErrClosed
+	}
+
 	// best effort allocation
 	re := make([]dsq.Entry, 0, t.ds.values.Height()+t.ops.Height())
 	iter := t.ds.values.Iter()
@@ -235,26 +232,52 @@ func (t *basicTxn) Discard(ctx context.Context) {
 
 // Commit saves the operations to the underlying datastore.
 func (t *basicTxn) Commit(ctx context.Context) error {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
-		return ErrClosed
-	}
 	if t.discarded {
 		return ErrTxnDiscarded
 	}
 	defer t.Discard(ctx)
 
 	if !t.readOnly {
-		c := commit{
-			tx:  t,
-			err: make(chan error),
+		err := t.checkForConflicts(ctx)
+		if err != nil {
+			return err
 		}
-		t.ds.commit <- c
-		return <-c.err
+
+		if t.isClosed() {
+			return ErrClosed
+		}
+
+		iter := t.ops.Iter()
+		v := t.ds.nextVersion()
+		for iter.Next() {
+			if iter.Item().isGet {
+				continue
+			}
+			item := iter.Item()
+			item.version = v
+			t.ds.values.Set(item)
+		}
+		iter.Release()
 	}
 
+	if t.isClosed() {
+		return ErrClosed
+	}
 	return nil
+}
+
+// isClosed provides a very cheap means of checking whether the datastore is closed.
+//
+// It relies somewhat on the fact that closing the datastore changes nothing within
+// the transaction, and that returning an error is just a user-notification (the datastore
+// does no cleanup that can break anything within a transaction).
+func (t *basicTxn) isClosed() bool {
+	select {
+	case <-t.closing:
+		return true
+	default:
+		return false
+	}
 }
 
 func (t *basicTxn) checkForConflicts(ctx context.Context) error {
