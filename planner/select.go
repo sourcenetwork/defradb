@@ -246,6 +246,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 	origScan, ok := n.source.(*scanNode)
 	if ok {
 		origScan.filter = n.filter
+		origScan.showDeleted = n.selectReq.ShowDeleted
 		n.filter = nil
 
 		// If we have both a DocKey and a CID, then we need to run
@@ -337,6 +338,14 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 			} else {
 				//nolint:errcheck
 				n.addTypeIndexJoin(f) // @TODO: ISSUE#158
+			}
+		case *mapper.Field:
+			switch f.Name {
+			case request.StatusFieldName:
+				statusScanPlan := n.planner.Status(n, n.origSource)
+				if err := n.addSubPlan(f.Index, statusScanPlan); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}

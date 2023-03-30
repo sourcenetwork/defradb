@@ -43,6 +43,8 @@ type Select struct {
 	Filter  immutable.Option[Filter]
 
 	Fields []Selection
+
+	ShowDeleted bool
 }
 
 // Validate validates the Select.

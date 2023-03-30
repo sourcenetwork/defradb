@@ -72,7 +72,7 @@ func TestCollectionCreateSaveCreatesDoc(t *testing.T) {
 						return err
 					}
 
-					d, err := c.Get(context.Background(), doc.Key())
+					d, err := c.Get(context.Background(), doc.Key(), false)
 					if err != nil {
 						return err
 					}

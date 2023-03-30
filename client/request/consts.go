@@ -15,13 +15,14 @@ const (
 	// https://spec.graphql.org/October2021/#sec-Type-Name-Introspection
 	TypeNameFieldName = "__typename"
 
-	Cid       = "cid"
-	Data      = "data"
-	DocKey    = "dockey"
-	DocKeys   = "dockeys"
-	FieldName = "field"
-	Id        = "id"
-	Ids       = "ids"
+	Cid         = "cid"
+	Data        = "data"
+	DocKey      = "dockey"
+	DocKeys     = "dockeys"
+	FieldName   = "field"
+	Id          = "id"
+	Ids         = "ids"
+	ShowDeleted = "showDeleted"
 
 	FilterClause  = "filter"
 	GroupByClause = "groupBy"
@@ -34,6 +35,7 @@ const (
 	CountFieldName   = "_count"
 	KeyFieldName     = "_key"
 	GroupFieldName   = "_group"
+	StatusFieldName  = "_status"
 	SumFieldName     = "_sum"
 	VersionFieldName = "_version"
 
@@ -72,6 +74,7 @@ var (
 		SumFieldName:      true,
 		AverageFieldName:  true,
 		KeyFieldName:      true,
+		StatusFieldName:   true,
 	}
 
 	Aggregates = map[string]struct{}{

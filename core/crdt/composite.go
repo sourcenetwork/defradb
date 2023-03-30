@@ -41,6 +41,9 @@ type CompositeDAGDelta struct {
 	Data            []byte
 	DocKey          []byte
 	SubDAGs         []core.DAGLink
+	// Status represents the status of the document. By default it is `Active`.
+	// Alternatively, if can be set to `Deleted` or `Purged`.
+	Status client.DocumentStatus
 }
 
 // GetPriority gets the current priority for this delta.
@@ -63,7 +66,8 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 		Priority        uint64
 		Data            []byte
 		DocKey          []byte
-	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey})
+		Status          client.DocumentStatus
+	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey, delta.Status})
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +118,7 @@ func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 }
 
 // Set applies a delta to the composite DAG CRDT. TBD
-func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta {
+func (c CompositeDAG) Set(patch []byte, links []core.DAGLink, status client.DocumentStatus) *CompositeDAGDelta {
 	// make sure the links are sorted lexicographically by CID
 	sort.Slice(links, func(i, j int) bool {
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
@@ -124,6 +128,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 		DocKey:          []byte(c.key.DocKey),
 		SubDAGs:         links,
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
+		Status:          status,
 	}
 }
 

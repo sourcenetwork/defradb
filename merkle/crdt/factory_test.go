@@ -229,6 +229,6 @@ func TestCompositeRegisterFactoryFn(t *testing.T) {
 	merkleReg, ok := crdt.(*MerkleCompositeDAG)
 	assert.True(t, ok)
 
-	_, _, err := merkleReg.Set(ctx, []byte("hi"), []core.DAGLink{})
+	_, _, err := merkleReg.Set(ctx, []byte("hi"), []core.DAGLink{}, client.Active)
 	assert.NoError(t, err)
 }

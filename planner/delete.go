@@ -117,7 +117,7 @@ func (n *deleteNode) Explain(explainType request.ExplainType) (map[string]any, e
 	}
 }
 
-func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
+func (p *Planner) DeleteDocs(parsed *mapper.Mutation, status client.DocumentStatus) (planNode, error) {
 	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
 	if err != nil {
 		return nil, err
@@ -135,5 +135,6 @@ func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
 		collection: col.WithTxn(p.txn),
 		source:     slctNode,
 		docMapper:  docMapper{&parsed.DocumentMapping},
+		status:     status,
 	}, nil
 }

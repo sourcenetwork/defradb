@@ -129,7 +129,7 @@ func (c *collection) updateWithKey(
 		return nil, client.ErrInvalidUpdater
 	}
 
-	doc, err := c.Get(ctx, key)
+	doc, err := c.Get(ctx, key, false)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (c *collection) updateWithKeys(
 		DocKeys: make([]string, len(keys)),
 	}
 	for i, key := range keys {
-		doc, err := c.Get(ctx, key)
+		doc, err := c.Get(ctx, key, false)
 		if err != nil {
 			return nil, err
 		}
@@ -361,6 +361,7 @@ func (c *collection) applyMerge(
 		client.COMPOSITE,
 		buf,
 		links,
+		client.Active,
 	)
 	if err != nil {
 		return err

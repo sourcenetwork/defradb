@@ -639,11 +639,11 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	}
 
 	// check if doc already exists
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
-	if exists {
+	if exists || isDeleted {
 		return ErrDocumentAlreadyExists
 	}
 
@@ -676,11 +676,11 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
-	if !exists {
+	if !exists || isDeleted {
 		return client.ErrDocumentNotFound
 	}
 
@@ -716,18 +716,20 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 
 	// Check if document already exists with key
 	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
 
-	if exists {
-		err = c.update(ctx, txn, doc)
-	} else {
-		err = c.create(ctx, txn, doc)
-	}
-	if err != nil {
-		return err
+	if !isDeleted {
+		if exists {
+			err = c.update(ctx, txn, doc)
+		} else {
+			err = c.create(ctx, txn, doc)
+		}
+		if err != nil {
+			return err
+		}
 	}
 	return c.commitImplicitTxn(ctx, txn)
 }
@@ -819,6 +821,7 @@ func (c *collection) save(
 		client.COMPOSITE,
 		buf,
 		links,
+		client.Active,
 	)
 	if err != nil {
 		return cid.Undef, err
@@ -859,11 +862,11 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocKey(key)
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return false, err
 	}
-	if !exists {
+	if !exists || isDeleted {
 		return false, client.ErrDocumentNotFound
 	}
 
@@ -943,7 +946,7 @@ func (c *collection) Exists(ctx context.Context, key client.DocKey) (bool, error
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocKey(key)
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, _, err := c.exists(ctx, txn, primaryKey)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return false, err
 	}
@@ -955,8 +958,13 @@ func (c *collection) exists(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
-) (bool, error) {
-	return txn.Datastore().Has(ctx, key.ToDS())
+) (exists bool, isDeleted bool, err error) {
+	exists, err = txn.Datastore().Has(ctx, key.ToDS())
+	if err != nil {
+		return exists, isDeleted, err
+	}
+	isDeleted, err = txn.Datastore().Has(ctx, key.ToDataStoreKey().ToDeletedDataStoreKey().ToDS())
+	return exists, isDeleted, err
 }
 
 func (c *collection) saveDocValue(
@@ -1030,23 +1038,25 @@ func (c *collection) saveValueToMerkleCRDT(
 		if err != nil {
 			return nil, 0, err
 		}
-		var bytes []byte
-		var links []core.DAGLink
-		var ok bool
+
 		// parse args
-		if len(args) != 2 {
+		if len(args) != 3 {
 			return nil, 0, ErrUnknownCRDTArgument
 		}
-		bytes, ok = args[0].([]byte)
+		bytes, ok := args[0].([]byte)
 		if !ok {
 			return nil, 0, ErrUnknownCRDTArgument
 		}
-		links, ok = args[1].([]core.DAGLink)
+		links, ok := args[1].([]core.DAGLink)
+		if !ok {
+			return nil, 0, ErrUnknownCRDTArgument
+		}
+		status, ok := args[2].(client.DocumentStatus)
 		if !ok {
 			return nil, 0, ErrUnknownCRDTArgument
 		}
 		comp := merkleCRDT.(*crdt.MerkleCompositeDAG)
-		return comp.Set(ctx, bytes, links)
+		return comp.Set(ctx, bytes, links, status)
 	}
 	return nil, 0, ErrUnknownCRDT
 }

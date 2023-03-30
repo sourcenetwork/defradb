@@ -183,7 +183,7 @@ func getDocument(ctx context.Context, db client.DB, dockey client.DocKey) (*clie
 		return nil, err
 	}
 
-	doc, err := col.Get(ctx, dockey)
+	doc, err := col.Get(ctx, dockey, false)
 	if err != nil {
 		return nil, err
 	}

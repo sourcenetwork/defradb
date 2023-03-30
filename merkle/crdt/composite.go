@@ -91,11 +91,12 @@ func (m *MerkleCompositeDAG) Set(
 	ctx context.Context,
 	patch []byte,
 	links []core.DAGLink,
+	status client.DocumentStatus,
 ) (ipld.Node, uint64, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
-	delta := m.reg.Set(patch, links)
+	delta := m.reg.Set(patch, links, status)
 	nd, err := m.Publish(ctx, delta)
 	if err != nil {
 		return nil, 0, err

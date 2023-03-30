@@ -26,6 +26,7 @@ var (
 		"create": request.CreateObjects,
 		"update": request.UpdateObjects,
 		"delete": request.DeleteObjects,
+		"purge":  request.PurgeObjects,
 	}
 )
 

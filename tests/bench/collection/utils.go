@@ -72,7 +72,7 @@ func runCollectionBenchGetSync(b *testing.B,
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
-				collections[k].Get(ctx, dockeys[j][k]) //nolint:errcheck
+				collections[k].Get(ctx, dockeys[j][k], false) //nolint:errcheck
 			}
 		}
 	}
@@ -98,7 +98,7 @@ func runCollectionBenchGetAsync(b *testing.B,
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
 				wg.Add(1)
 				go func(ctx context.Context, col client.Collection, dockey client.DocKey) {
-					col.Get(ctx, dockey) //nolint:errcheck
+					col.Get(ctx, dockey, false) //nolint:errcheck
 					wg.Done()
 				}(ctx, collections[k], dockeys[j][k])
 			}

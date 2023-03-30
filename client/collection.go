@@ -103,28 +103,28 @@ type Collection interface {
 	// This operation will hard-delete all state relating to the given DocKey. This includes data, block, and head storage.
 	//
 	// Returns an ErrInvalidDeleteTarget if the target type is not supported.
-	DeleteWith(ctx context.Context, target any) (*DeleteResult, error)
+	DeleteWith(ctx context.Context, target any, status DocumentStatus) (*DeleteResult, error)
 	// DeleteWithFilter deletes documents matching the given filter.
 	//
 	// This operation will hard-delete all state relating to the given DocKey. This includes data, block, and head storage.
-	DeleteWithFilter(ctx context.Context, filter any) (*DeleteResult, error)
+	DeleteWithFilter(ctx context.Context, filter any, status DocumentStatus) (*DeleteResult, error)
 	// DeleteWithKey deletes using a DocKey to target a single document for delete.
 	//
 	// This operation will hard-delete all state relating to the given DocKey. This includes data, block, and head storage.
 	//
 	// Returns an ErrDocumentNotFound if a document matching the given DocKey is not found.
-	DeleteWithKey(context.Context, DocKey) (*DeleteResult, error)
+	DeleteWithKey(context.Context, DocKey, DocumentStatus) (*DeleteResult, error)
 	// DeleteWithKeys deletes documents matching the given DocKeys.
 	//
 	// This operation will hard-delete all state relating to the given DocKey. This includes data, block, and head storage.
 	//
 	// Returns an ErrDocumentNotFound if a document is not found for any given DocKey.
-	DeleteWithKeys(context.Context, []DocKey) (*DeleteResult, error)
+	DeleteWithKeys(context.Context, []DocKey, DocumentStatus) (*DeleteResult, error)
 
 	// Get returns the document with the given DocKey.
 	//
 	// Returns an ErrDocumentNotFound if a document matching the given DocKey is not found.
-	Get(context.Context, DocKey) (*Document, error)
+	Get(ctx context.Context, key DocKey, showDeleted bool) (*Document, error)
 
 	// WithTxn returns a new instance of the collection, with a transaction
 	// handle instead of a raw DB handle.

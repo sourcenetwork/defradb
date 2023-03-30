@@ -473,6 +473,20 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	return docMap, nil
 }
 
+type DocumentStatus uint8
+
+const (
+	Active DocumentStatus = iota + 1
+	Deleted
+	Purged
+)
+
+var DocumentStatusToString = map[DocumentStatus]string{
+	Active:  "Active",
+	Deleted: "Deleted",
+	Purged:  "Purged",
+}
+
 // loops through an object of the form map[string]any
 // and fills in the Document with each field it finds in the object.
 // Automatically handles sub objects and arrays.

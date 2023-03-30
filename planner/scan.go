@@ -41,6 +41,8 @@ type scanNode struct {
 	fields []*client.FieldDescription
 	docKey []byte
 
+	showDeleted bool
+
 	spans   core.Spans
 	reverse bool
 
@@ -112,6 +114,23 @@ func (n *scanNode) Next() (bool, error) {
 
 		if len(n.currentValue.Fields) == 0 {
 			return false, nil
+		}
+
+		if !n.showDeleted {
+			dockey, err := client.NewDocKeyFromString(string(n.docKey))
+			if err != nil {
+				return false, err
+			}
+			dsKey := core.DataStoreKeyFromDocKey(dockey)
+			dsKey.CollectionID = n.desc.IDString()
+			isDeleted, err := n.p.txn.Datastore().Has(n.p.ctx, dsKey.ToDeletedDataStoreKey().ToDS())
+			if err != nil {
+				return false, err
+			}
+
+			if isDeleted {
+				continue
+			}
 		}
 
 		passed, err := mapper.RunFilter(n.currentValue, n.filter)

@@ -692,7 +692,7 @@ func getDocuments(
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(ctx, doc.Key())
+			doc, err = collection.Get(ctx, doc.Key(), false)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway

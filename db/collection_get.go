@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/fetcher"
 )
 
-func (c *collection) Get(ctx context.Context, key client.DocKey) (*client.Document, error) {
+func (c *collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
 	// create txn
 	txn, err := c.getTxn(ctx, true)
 	if err != nil {
@@ -29,11 +29,11 @@ func (c *collection) Get(ctx context.Context, key client.DocKey) (*client.Docume
 	defer c.discardImplicitTxn(ctx, txn)
 	dsKey := c.getPrimaryKeyFromDocKey(key)
 
-	found, err := c.exists(ctx, txn, dsKey)
+	found, isDeleted, err := c.exists(ctx, txn, dsKey)
 	if err != nil {
 		return nil, err
 	}
-	if !found {
+	if !found || (isDeleted && !showDeleted) {
 		return nil, client.ErrDocumentNotFound
 	}
 

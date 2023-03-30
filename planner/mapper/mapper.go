@@ -537,6 +537,20 @@ func getRequestables(
 			})
 
 			mapping.Add(index, f.Name)
+		case *request.StatusSelect:
+			index := mapping.GetNextIndex()
+
+			fields = append(fields, &Field{
+				Index: index,
+				Name:  f.Name,
+			})
+
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
+			})
+
+			mapping.Add(index, f.Name)
 		default:
 			return nil, nil, client.NewErrUnhandledType("field", field)
 		}
@@ -856,12 +870,13 @@ func ToMutation(ctx context.Context, txn datastore.Txn, mutationRequest *request
 
 func toTargetable(index int, selectRequest *request.Select, docMap *core.DocumentMapping) Targetable {
 	return Targetable{
-		Field:   toField(index, selectRequest),
-		DocKeys: selectRequest.DocKeys,
-		Filter:  ToFilter(selectRequest.Filter, docMap),
-		Limit:   toLimit(selectRequest.Limit, selectRequest.Offset),
-		GroupBy: toGroupBy(selectRequest.GroupBy, docMap),
-		OrderBy: toOrderBy(selectRequest.OrderBy, docMap),
+		Field:       toField(index, selectRequest),
+		DocKeys:     selectRequest.DocKeys,
+		Filter:      ToFilter(selectRequest.Filter, docMap),
+		Limit:       toLimit(selectRequest.Limit, selectRequest.Offset),
+		GroupBy:     toGroupBy(selectRequest.GroupBy, docMap),
+		OrderBy:     toOrderBy(selectRequest.OrderBy, docMap),
+		ShowDeleted: selectRequest.ShowDeleted,
 	}
 }
 

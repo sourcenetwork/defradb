@@ -35,6 +35,7 @@ const (
 	errInvalidCRDTType               string = "only default or LWW (last writer wins) CRDT types are supported"
 	errCannotDeleteField             string = "deleting an existing field is not supported"
 	errFieldKindNotFound             string = "no type found for given name"
+	errInvalidDeleteStatus           string = "invalid delete status"
 )
 
 var (
@@ -211,5 +212,13 @@ func NewErrCannotDeleteField(name string, id client.FieldID) error {
 		errCannotDeleteField,
 		errors.NewKV("Name", name),
 		errors.NewKV("ID", id),
+	)
+}
+
+func NewErrInvalidDeleteStatus(status client.DocumentStatus) error {
+	return errors.New(
+		errInvalidDeleteStatus,
+		errors.NewKV("Expected", "Deleted or Purged"),
+		errors.NewKV("Actual", client.DocumentStatusToString[status]),
 	)
 }
