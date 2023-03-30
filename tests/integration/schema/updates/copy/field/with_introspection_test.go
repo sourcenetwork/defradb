@@ -39,7 +39,7 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "Users") {
 							name
 							fields {

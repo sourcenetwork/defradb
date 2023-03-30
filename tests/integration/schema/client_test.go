@@ -24,7 +24,7 @@ func TestIntrospectionExplainTypeDefined(t *testing.T) {
 		Actions: []any{
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__schema {
 							types {
 								kind

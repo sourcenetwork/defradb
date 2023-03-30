@@ -13,6 +13,7 @@ package core
 import (
 	"context"
 
+	"github.com/graphql-go/graphql/language/ast"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -34,14 +35,17 @@ type SchemaDefinition struct {
 // Parser represents the object responsible for handling stuff specific to a query language.
 // This includes schema and request parsing, and introspection.
 type Parser interface {
-	// Returns true if the given string is an introspection request.
-	IsIntrospection(request string) bool
+	// BuildRequestAST builds and return AST for the given request.
+	BuildRequestAST(request string) (*ast.Document, error)
+
+	// Returns true if the given request ast is an introspection request.
+	IsIntrospection(*ast.Document) bool
 
 	// Executes the given introspection request.
 	ExecuteIntrospection(request string) *client.RequestResult
 
 	// Parses the given request, returning a strongly typed model of that request.
-	Parse(request string) (*request.Request, []error)
+	Parse(*ast.Document) (*request.Request, []error)
 
 	// NewFilterFromString creates a new filter from a string.
 	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)

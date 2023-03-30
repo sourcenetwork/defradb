@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/planner"
 )
 
-func (db *db) checkForClientSubsciptions(r *request.Request) (
+func (db *db) checkForClientSubscriptions(r *request.Request) (
 	*events.Publisher[events.Update],
 	*request.ObjectSubscription,
 	error,
@@ -39,7 +39,7 @@ func (db *db) checkForClientSubsciptions(r *request.Request) (
 			return pub, subRequest, nil
 		}
 
-		return nil, nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubcriptionSelection", s)
+		return nil, nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", s)
 	}
 	return nil, nil, nil
 }

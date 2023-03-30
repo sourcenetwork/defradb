@@ -26,7 +26,7 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "users") {
 							name
 						}
@@ -96,7 +96,7 @@ func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "books") {
 							name
 						}
@@ -124,7 +124,7 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "users") {
 							name
 							fields {
@@ -179,7 +179,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "users") {
 							name
 							fields {

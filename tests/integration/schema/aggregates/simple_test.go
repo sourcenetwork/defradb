@@ -26,7 +26,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "users") {
 							name
 							fields {
@@ -122,7 +122,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "users") {
 							name
 							fields {
@@ -226,7 +226,7 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-					query IntrospectionQuery {
+					query {
 						__type (name: "users") {
 							name
 							fields {
