@@ -25,7 +25,7 @@ func IsIntrospectionQuery(schema gql.Schema, doc *ast.Document) bool {
 			continue
 		}
 
-		if astOpDef.Operation == "query" {
+		if astOpDef.Operation == ast.OperationTypeQuery {
 			for _, selection := range astOpDef.SelectionSet.Selections {
 				switch node := selection.(type) {
 				case *ast.Field:

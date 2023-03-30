@@ -41,7 +41,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document) (*request.Request, []err
 		}
 
 		switch astOpDef.Operation {
-		case "query":
+		case ast.OperationTypeQuery:
 			parsedQueryOpDef, errs := parseQueryOperationDefinition(schema, astOpDef)
 			if errs != nil {
 				return nil, errs
@@ -55,7 +55,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document) (*request.Request, []err
 
 			r.Queries = append(r.Queries, parsedQueryOpDef)
 
-		case "mutation":
+		case ast.OperationTypeMutation:
 			parsedMutationOpDef, err := parseMutationOperationDefinition(schema, astOpDef)
 			if err != nil {
 				return nil, []error{err}
@@ -69,7 +69,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document) (*request.Request, []err
 
 			r.Mutations = append(r.Mutations, parsedMutationOpDef)
 
-		case "subscription":
+		case ast.OperationTypeSubscription:
 			parsedSubscriptionOpDef, err := parseSubscriptionOperationDefinition(schema, astOpDef)
 			if err != nil {
 				return nil, []error{err}
