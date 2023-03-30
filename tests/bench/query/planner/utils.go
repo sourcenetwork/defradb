@@ -38,7 +38,8 @@ func runQueryParserBench(
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, errs := parser.Parse(query)
+		ast, _ := parser.BuildRequestAST(query)
+		_, errs := parser.Parse(ast)
 		if errs != nil {
 			return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 		}
@@ -65,7 +66,8 @@ func runMakePlanBench(
 		return err
 	}
 
-	q, errs := parser.Parse(query)
+	ast, _ := parser.BuildRequestAST(query)
+	q, errs := parser.Parse(ast)
 	if len(errs) > 0 {
 		return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 	}
