@@ -405,7 +405,7 @@ func (g *Generator) buildTypes(
 				Type: gql.NewList(schemaTypes.CommitObject),
 			}
 
-			// add _status field
+			// add _deleted field
 			fields[request.DeletedFieldName] = &gql.Field{Type: &gql.Scalar{}}
 
 			gqlType, ok := g.manager.schema.TypeMap()[collection.Name]

@@ -264,11 +264,6 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFound
 	}
 
-	_, err = c.delete(ctx, txn, key)
-	if err != nil {
-		return err
-	}
-
 	dsKey := key.ToDataStoreKey()
 
 	headset := clock.NewHeadSet(

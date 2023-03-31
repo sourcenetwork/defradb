@@ -16,6 +16,8 @@ import (
 	"sort"
 	"strings"
 
+	ds "github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
@@ -24,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -146,7 +149,12 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 // If it doesn't, it adds it to the store.
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
 	if delta.GetStatus().IsDeleted() {
-		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
+		c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
+		err := c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldId(""))
+		if err != nil {
+			return err
+		}
+		return c.deleteWithPrefix(ctx, c.key.WithPriorityFlag().WithFieldId(""))
 	}
 
 	// ensure object marker exists
@@ -157,6 +165,50 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 	if !exists {
 		// write object marker
 		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
+	}
+
+	return nil
+}
+
+func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKey) error {
+	val, err := c.store.Get(ctx, key.ToDS())
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+		return err
+	}
+	if !errors.Is(err, ds.ErrNotFound) {
+		err = c.store.Put(ctx, c.key.WithDeletedFlag().ToDS(), val)
+		if err != nil {
+			return err
+		}
+		err = c.store.Delete(ctx, key.ToDS())
+		if err != nil {
+			return err
+		}
+	}
+	q := query.Query{
+		Prefix: key.ToString(),
+	}
+	res, err := c.store.Query(ctx, q)
+	for e := range res.Next() {
+		if e.Error != nil {
+			return err
+		}
+		dsKey, err := core.NewDataStoreKey(e.Key)
+		if err != nil {
+			return err
+		}
+
+		if dsKey.InstanceType == core.ValueKey {
+			err = c.store.Put(ctx, dsKey.WithDeletedFlag().ToDS(), e.Value)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = c.store.Delete(ctx, dsKey.ToDS())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
