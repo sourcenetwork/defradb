@@ -392,21 +392,21 @@ func TestDeletionOfMultipleDocumentsUsingSingleKeyWithShowDeletedDocumentQuery_S
 			testUtils.Request{
 				Request: `query {
 						User(showDeleted: true) {
-							_status
+							_deleted
 							name
 							age
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"_status": "Deleted",
-						"name":    "Andy",
-						"age":     uint64(74),
+						"_deleted": true,
+						"name":     "Andy",
+						"age":      uint64(74),
 					},
 					{
-						"_status": "Deleted",
-						"name":    "John",
-						"age":     uint64(43),
+						"_deleted": true,
+						"name":     "John",
+						"age":      uint64(43),
 					},
 				},
 			},

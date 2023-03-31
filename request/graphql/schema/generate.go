@@ -406,7 +406,7 @@ func (g *Generator) buildTypes(
 			}
 
 			// add _status field
-			fields[request.StatusFieldName] = &gql.Field{Type: &gql.Scalar{}}
+			fields[request.DeletedFieldName] = &gql.Field{Type: &gql.Scalar{}}
 
 			gqlType, ok := g.manager.schema.TypeMap()[collection.Name]
 			if !ok {

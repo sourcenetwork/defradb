@@ -86,15 +86,13 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 				},
 			},
 			testUtils.Request{
-				// Note: At the moment, we can't ask for `_status` on Author as it will cause
-				// published to be empty.
 				Request: `query {
 						Author(showDeleted: true) {
-							_status
+							_deleted
 							name
 							age
 							published {
-								_status
+								_deleted
 								name
 								rating
 							}
@@ -102,14 +100,19 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 					}`,
 				Results: []map[string]any{
 					{
-						"_status": "Active",
-						"name":    "John",
-						"age":     uint64(30),
+						"_deleted": false,
+						"name":     "John",
+						"age":      uint64(30),
 						"published": []map[string]any{
 							{
-								"_status": "Active",
-								"name":    "John has a chamber of secrets",
-								"rating":  9.9,
+								"_deleted": true,
+								"name":     "John and the philosopher are stoned",
+								"rating":   9.9,
+							},
+							{
+								"_deleted": false,
+								"name":     "John has a chamber of secrets",
+								"rating":   9.9,
 							},
 						},
 					},

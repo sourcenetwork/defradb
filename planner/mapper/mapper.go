@@ -641,7 +641,7 @@ func getTopLevelInfo(
 		// the typeName index is dynamic, but the field indexes are not
 		mapping.SetTypeName(collectionName)
 
-		mapping.Add(mapping.GetNextIndex(), request.StatusFieldName)
+		mapping.Add(mapping.GetNextIndex(), request.DeletedFieldName)
 
 		return mapping, &desc, nil
 	}

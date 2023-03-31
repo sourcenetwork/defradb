@@ -239,7 +239,7 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery_Success(t
 			testUtils.Request{
 				Request: fmt.Sprintf(`mutation {
 						delete_User(id: "%s") {
-							_status
+							_deleted
 							_key
 						}
 					}`, doc.Key()),
@@ -248,24 +248,24 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery_Success(t
 						// Note: This should show a `Deleted` status but the order of the planNodes
 						// makes it so the status is requested prior to deleting. If the planNode ordering
 						// can be altered, this can change in the future.
-						"_status": "Active",
-						"_key":    doc.Key().String(),
+						"_deleted": false,
+						"_key":     doc.Key().String(),
 					},
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 						User(showDeleted: true) {
-							_status
+							_deleted
 							name
 							age
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"_status": "Deleted",
-						"name":    "John",
-						"age":     uint64(43),
+						"_deleted": true,
+						"name":     "John",
+						"age":      uint64(43),
 					},
 				},
 			},

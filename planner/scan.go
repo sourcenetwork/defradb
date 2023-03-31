@@ -117,8 +117,8 @@ func (n *scanNode) Next() (bool, error) {
 		}
 		n.documentMapping.SetFirstOfName(
 			&n.currentValue,
-			request.StatusFieldName,
-			client.DocumentStatusToString[n.currentValue.Status],
+			request.DeletedFieldName,
+			n.currentValue.Status.IsDeleted(),
 		)
 		passed, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {

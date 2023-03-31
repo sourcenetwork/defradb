@@ -35,7 +35,7 @@ const (
 	CountFieldName   = "_count"
 	KeyFieldName     = "_key"
 	GroupFieldName   = "_group"
-	StatusFieldName  = "_status"
+	DeletedFieldName = "_deleted"
 	SumFieldName     = "_sum"
 	VersionFieldName = "_version"
 
@@ -74,7 +74,7 @@ var (
 		SumFieldName:      true,
 		AverageFieldName:  true,
 		KeyFieldName:      true,
-		StatusFieldName:   true,
+		DeletedFieldName:  true,
 	}
 
 	Aggregates = map[string]struct{}{

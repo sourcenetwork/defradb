@@ -58,16 +58,16 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_status
+						_deleted
 						Name
 						Age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_status": "Active",
-						"Name":    "Andy",
-						"Age":     uint64(74),
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      uint64(74),
 					},
 				},
 			},
@@ -116,21 +116,21 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users(showDeleted: true) {
-						_status
+						_deleted
 						Name
 						Age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_status": "Active",
-						"Name":    "Andy",
-						"Age":     uint64(74),
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      uint64(74),
 					},
 					{
-						"_status": "Deleted",
-						"Name":    "John",
-						"Age":     uint64(43),
+						"_deleted": true,
+						"Name":     "John",
+						"Age":      uint64(43),
 					},
 				},
 			},
