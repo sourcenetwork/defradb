@@ -70,10 +70,9 @@ type Datastore struct {
 	inFlightTxn *btree.BTreeG[dsTxn]
 	commit      chan commit
 
-	closing   chan struct{}
-	closed    bool
-	closeLk   sync.RWMutex
-	closeOnce sync.Once
+	closing chan struct{}
+	closed  bool
+	closeLk sync.RWMutex
 }
 
 var _ ds.Datastore = (*Datastore)(nil)
@@ -117,15 +116,14 @@ func (d *Datastore) newBasicBatch() ds.Batch {
 }
 
 func (d *Datastore) Close() error {
-	d.closeOnce.Do(func() {
-		close(d.closing)
-	})
 	d.closeLk.Lock()
 	defer d.closeLk.Unlock()
 	if d.closed {
 		return ErrClosed
 	}
+
 	d.closed = true
+	close(d.closing)
 	close(d.commit)
 	return nil
 }
