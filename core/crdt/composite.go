@@ -42,7 +42,7 @@ type CompositeDAGDelta struct {
 	DocKey          []byte
 	SubDAGs         []core.DAGLink
 	// Status represents the status of the document. By default it is `Active`.
-	// Alternatively, if can be set to `Deleted` or `Purged`.
+	// Alternatively, if can be set to `Deleted`.
 	Status client.DocumentStatus
 }
 
@@ -56,6 +56,16 @@ func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
+// GetStatus gets the current document status for this delta.
+func (delta *CompositeDAGDelta) GetStatus() client.DocumentStatus {
+	return delta.Status
+}
+
+// SetStatus will set the document status for this delta.
+func (delta *CompositeDAGDelta) SetStatus(status client.DocumentStatus) {
+	delta.Status = status
+}
+
 // Marshal will serialize this delta to a byte array.
 func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
@@ -66,8 +76,8 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 		Priority        uint64
 		Data            []byte
 		DocKey          []byte
-		Status          client.DocumentStatus
-	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey, delta.Status})
+		Status          uint8
+	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey, delta.Status.UInt8()})
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +128,7 @@ func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 }
 
 // Set applies a delta to the composite DAG CRDT. TBD
-func (c CompositeDAG) Set(patch []byte, links []core.DAGLink, status client.DocumentStatus) *CompositeDAGDelta {
+func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta {
 	// make sure the links are sorted lexicographically by CID
 	sort.Slice(links, func(i, j int) bool {
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
@@ -128,7 +138,6 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink, status client.Docu
 		DocKey:          []byte(c.key.DocKey),
 		SubDAGs:         links,
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
-		Status:          status,
 	}
 }
 
@@ -136,6 +145,10 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink, status client.Docu
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
+	if delta.GetStatus().IsDeleted() {
+		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
+	}
+
 	// ensure object marker exists
 	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
 	if err != nil {
@@ -145,6 +158,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 		// write object marker
 		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
 	}
+
 	return nil
 }
 

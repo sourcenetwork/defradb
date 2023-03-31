@@ -61,7 +61,7 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse, n.showDeleted); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -115,24 +115,11 @@ func (n *scanNode) Next() (bool, error) {
 		if len(n.currentValue.Fields) == 0 {
 			return false, nil
 		}
-
-		if !n.showDeleted {
-			dockey, err := client.NewDocKeyFromString(string(n.docKey))
-			if err != nil {
-				return false, err
-			}
-			dsKey := core.DataStoreKeyFromDocKey(dockey)
-			dsKey.CollectionID = n.desc.IDString()
-			isDeleted, err := n.p.txn.Datastore().Has(n.p.ctx, dsKey.ToDeletedDataStoreKey().ToDS())
-			if err != nil {
-				return false, err
-			}
-
-			if isDeleted {
-				continue
-			}
-		}
-
+		n.documentMapping.SetFirstOfName(
+			&n.currentValue,
+			request.StatusFieldName,
+			client.DocumentStatusToString[n.currentValue.Status],
+		)
 		passed, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err

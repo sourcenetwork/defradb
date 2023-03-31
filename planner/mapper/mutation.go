@@ -17,7 +17,6 @@ const (
 	CreateObjects
 	UpdateObjects
 	DeleteObjects
-	PurgeObjects
 )
 
 // Mutation represents a request to mutate data stored in Defra.

@@ -218,7 +218,7 @@ func NewErrCannotDeleteField(name string, id client.FieldID) error {
 func NewErrInvalidDeleteStatus(status client.DocumentStatus) error {
 	return errors.New(
 		errInvalidDeleteStatus,
-		errors.NewKV("Expected", "Deleted or Purged"),
+		errors.NewKV("Expected", "Deleted"),
 		errors.NewKV("Actual", client.DocumentStatusToString[status]),
 	)
 }

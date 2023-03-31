@@ -537,20 +537,6 @@ func getRequestables(
 			})
 
 			mapping.Add(index, f.Name)
-		case *request.StatusSelect:
-			index := mapping.GetNextIndex()
-
-			fields = append(fields, &Field{
-				Index: index,
-				Name:  f.Name,
-			})
-
-			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
-				Index: index,
-				Key:   getRenderKey(&f.Field),
-			})
-
-			mapping.Add(index, f.Name)
 		default:
 			return nil, nil, client.NewErrUnhandledType("field", field)
 		}
@@ -654,6 +640,8 @@ func getTopLevelInfo(
 		// Setting the type name must be done after adding the fields, as
 		// the typeName index is dynamic, but the field indexes are not
 		mapping.SetTypeName(collectionName)
+
+		mapping.Add(mapping.GetNextIndex(), request.StatusFieldName)
 
 		return mapping, &desc, nil
 	}

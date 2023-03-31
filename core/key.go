@@ -124,13 +124,6 @@ type ReplicatorKey struct {
 
 var _ Key = (*ReplicatorKey)(nil)
 
-type DeletedDataStoreKey struct {
-	CollectionId string
-	DocKey       string
-}
-
-var _ Key = (*DeletedDataStoreKey)(nil)
-
 // Creates a new DataStoreKey from a string as best as it can,
 // splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
@@ -230,6 +223,12 @@ func (k DataStoreKey) WithValueFlag() DataStoreKey {
 func (k DataStoreKey) WithPriorityFlag() DataStoreKey {
 	newKey := k
 	newKey.InstanceType = PriorityKey
+	return newKey
+}
+
+func (k DataStoreKey) WithDeletedFlag() DataStoreKey {
+	newKey := k
+	newKey.InstanceType = DeletedKey
 	return newKey
 }
 
@@ -470,35 +469,6 @@ func (k ReplicatorKey) Bytes() []byte {
 }
 
 func (k ReplicatorKey) ToDS() ds.Key {
-	return ds.NewKey(k.ToString())
-}
-
-func (k DataStoreKey) ToDeletedDataStoreKey() DeletedDataStoreKey {
-	return DeletedDataStoreKey{
-		CollectionId: k.CollectionID,
-		DocKey:       k.DocKey,
-	}
-}
-
-func (k DeletedDataStoreKey) ToString() string {
-	result := ""
-
-	if k.CollectionId != "" {
-		result = result + "/" + k.CollectionId
-	}
-	result = result + "/" + string(DeletedKey)
-	if k.DocKey != "" {
-		result = result + "/" + k.DocKey
-	}
-
-	return result
-}
-
-func (k DeletedDataStoreKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
-func (k DeletedDataStoreKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 

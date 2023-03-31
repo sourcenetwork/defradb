@@ -96,7 +96,8 @@ func (m *MerkleCompositeDAG) Set(
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
-	delta := m.reg.Set(patch, links, status)
+	delta := m.reg.Set(patch, links)
+	delta.SetStatus(status)
 	nd, err := m.Publish(ctx, delta)
 	if err != nil {
 		return nil, 0, err

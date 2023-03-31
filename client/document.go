@@ -473,18 +473,30 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	return docMap, nil
 }
 
+// DocumentStatus represent the state of the document in the DAG store.
+// It can either be `Active“ or `Deleted`.
 type DocumentStatus uint8
 
 const (
-	Active DocumentStatus = iota + 1
-	Deleted
-	Purged
+	// Active is the default state of a document.
+	Active DocumentStatus = 1
+	// Deleted represents a document that has been marked as deleted. This means that the document
+	// can still be in the datastore but a normal request won't return it. The DAG store will still have all
+	// the associated links.
+	Deleted DocumentStatus = 2
 )
 
 var DocumentStatusToString = map[DocumentStatus]string{
 	Active:  "Active",
 	Deleted: "Deleted",
-	Purged:  "Purged",
+}
+
+func (dStatus DocumentStatus) UInt8() uint8 {
+	return uint8(dStatus)
+}
+
+func (dStatus DocumentStatus) IsDeleted() bool {
+	return dStatus > 1
 }
 
 // loops through an object of the form map[string]any

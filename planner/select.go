@@ -339,14 +339,6 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 				//nolint:errcheck
 				n.addTypeIndexJoin(f) // @TODO: ISSUE#158
 			}
-		case *mapper.Field:
-			switch f.Name {
-			case request.StatusFieldName:
-				statusScanPlan := n.planner.Status(n, n.origSource)
-				if err := n.addSubPlan(f.Index, statusScanPlan); err != nil {
-					return nil, err
-				}
-			}
 		}
 	}
 

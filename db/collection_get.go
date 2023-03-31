@@ -37,7 +37,7 @@ func (c *collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 		return nil, client.ErrDocumentNotFound
 	}
 
-	doc, err := c.get(ctx, txn, dsKey)
+	doc, err := c.get(ctx, txn, dsKey, showDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -48,12 +48,13 @@ func (c *collection) get(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
+	showDeleted bool,
 ) (*client.Document, error) {
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc
 	// initialize it with the primary index
-	err := df.Init(&c.desc, nil, false)
+	err := df.Init(&c.desc, nil, false, showDeleted)
 	if err != nil {
 		_ = df.Close()
 		return nil, err

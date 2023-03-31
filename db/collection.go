@@ -11,6 +11,7 @@
 package db
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -878,14 +879,13 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 	return deleted, c.commitImplicitTxn(ctx, txn)
 }
 
-// at the moment, delete only does data storage delete.
-// Dag, and head store will soon follow.
+// delete put the document in a deleted state
 func (c *collection) delete(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
 ) (bool, error) {
-	err := txn.Datastore().Delete(ctx, key.ToDS())
+	err := txn.Datastore().Put(ctx, key.ToDS(), []byte{base.DeletedObjectMarker})
 	if err != nil {
 		return false, err
 	}
@@ -902,17 +902,27 @@ func (c *collection) delete(
 	return c.deleteWithPrefix(ctx, txn, keyDS)
 }
 
-// deleteWithPrefix will delete all the keys using a prefix query set as the given key.
+// deleteWithPrefix will convert value instances to deleted instances
+// using a prefix query set as the given key.
 func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
 	q := query.Query{
-		Prefix:   key.ToString(),
-		KeysOnly: true,
+		Prefix: key.ToString(),
 	}
 
 	if key.InstanceType == core.ValueKey {
-		err := txn.Datastore().Delete(ctx, key.ToDS())
-		if err != nil {
+		val, err := txn.Datastore().Get(ctx, key.ToDS())
+		if err != nil && !errors.Is(err, ds.ErrNotFound) {
 			return false, err
+		}
+		if !errors.Is(err, ds.ErrNotFound) {
+			err = txn.Datastore().Put(ctx, key.WithDeletedFlag().ToDS(), val)
+			if err != nil {
+				return false, err
+			}
+			err = txn.Datastore().Delete(ctx, key.ToDS())
+			if err != nil {
+				return false, err
+			}
 		}
 	}
 
@@ -926,6 +936,13 @@ func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, ke
 		dsKey, err := core.NewDataStoreKey(e.Key)
 		if err != nil {
 			return false, err
+		}
+
+		if dsKey.InstanceType == core.ValueKey {
+			err = txn.Datastore().Put(ctx, dsKey.WithDeletedFlag().ToDS(), e.Value)
+			if err != nil {
+				return false, err
+			}
 		}
 
 		err = txn.Datastore().Delete(ctx, dsKey.ToDS())
@@ -959,12 +976,17 @@ func (c *collection) exists(
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
-	exists, err = txn.Datastore().Has(ctx, key.ToDS())
-	if err != nil {
-		return exists, isDeleted, err
+	val, err := txn.Datastore().Get(ctx, key.ToDS())
+	if err != nil && errors.Is(err, ds.ErrNotFound) {
+		return false, false, nil
+	} else if err != nil {
+		return false, false, err
 	}
-	isDeleted, err = txn.Datastore().Has(ctx, key.ToDataStoreKey().ToDeletedDataStoreKey().ToDS())
-	return exists, isDeleted, err
+	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
+		return true, true, nil
+	}
+
+	return true, false, nil
 }
 
 func (c *collection) saveDocValue(

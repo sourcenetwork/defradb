@@ -20,14 +20,11 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-libipfs/blocks"
 	dag "github.com/ipfs/go-merkledag"
-	"github.com/ugorji/go/codec"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/clock"
@@ -43,15 +40,14 @@ import (
 func (c *collection) DeleteWith(
 	ctx context.Context,
 	target any,
-	status client.DocumentStatus,
 ) (*client.DeleteResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
-		return c.DeleteWithFilter(ctx, t, status)
+		return c.DeleteWithFilter(ctx, t)
 	case client.DocKey:
-		return c.DeleteWithKey(ctx, t, status)
+		return c.DeleteWithKey(ctx, t)
 	case []client.DocKey:
-		return c.DeleteWithKeys(ctx, t, status)
+		return c.DeleteWithKeys(ctx, t)
 	default:
 		return nil, client.ErrInvalidDeleteTarget
 	}
@@ -61,7 +57,6 @@ func (c *collection) DeleteWith(
 func (c *collection) DeleteWithKey(
 	ctx context.Context,
 	key client.DocKey,
-	status client.DocumentStatus,
 ) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -71,7 +66,7 @@ func (c *collection) DeleteWithKey(
 	defer c.discardImplicitTxn(ctx, txn)
 
 	dsKey := c.getPrimaryKeyFromDocKey(key)
-	res, err := c.deleteWithKey(ctx, txn, dsKey, status)
+	res, err := c.deleteWithKey(ctx, txn, dsKey, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +78,6 @@ func (c *collection) DeleteWithKey(
 func (c *collection) DeleteWithKeys(
 	ctx context.Context,
 	keys []client.DocKey,
-	status client.DocumentStatus,
 ) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -92,7 +86,7 @@ func (c *collection) DeleteWithKeys(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithKeys(ctx, txn, keys, status)
+	res, err := c.deleteWithKeys(ctx, txn, keys, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +98,6 @@ func (c *collection) DeleteWithKeys(
 func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
-	status client.DocumentStatus,
 ) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -113,7 +106,7 @@ func (c *collection) DeleteWithFilter(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithFilter(ctx, txn, filter, status)
+	res, err := c.deleteWithFilter(ctx, txn, filter, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +240,7 @@ func newDagDeleter(bstore datastore.DAGStore) dagDeleter {
 
 func isDeleteStatus(status client.DocumentStatus) bool {
 	switch status {
-	case client.Deleted, client.Purged:
+	case client.Deleted:
 		return true
 	default:
 		return false
@@ -267,18 +260,16 @@ func (c *collection) applyDelete(
 	if err != nil {
 		return err
 	}
-	if !found {
+	if !found || isDeleted {
 		return client.ErrDocumentNotFound
 	}
 
-	dsKey := key.ToDataStoreKey()
-
-	if !isDeleted {
-		err = c.txn.Datastore().Put(ctx, dsKey.ToDeletedDataStoreKey().ToDS(), []byte{base.ObjectMarker})
-		if err != nil {
-			return err
-		}
+	_, err = c.delete(ctx, txn, key)
+	if err != nil {
+		return err
 	}
+
+	dsKey := key.ToDataStoreKey()
 
 	headset := clock.NewHeadSet(
 		txn.Headstore(),
@@ -289,52 +280,41 @@ func (c *collection) applyDelete(
 		return err
 	}
 
-	b, err := txn.DAGstore().Get(ctx, cids[0])
-	if err != nil {
-		return err
+	dagLinks := make([]core.DAGLink, len(cids))
+	for i, cid := range cids {
+		dagLinks[i] = core.DAGLink{
+			Name: core.HEAD,
+			Cid:  cid,
+		}
 	}
-	nd, err := dag.DecodeProtobuf(b.RawData())
-	if err != nil {
-		return err
-	}
-	delta := &crdt.CompositeDAGDelta{}
-	h := &codec.CborHandle{}
-	dec := codec.NewDecoderBytes(nd.Data(), h)
-	err = dec.Decode(delta)
+
+	headNode, priority, err := c.saveValueToMerkleCRDT(
+		ctx,
+		txn,
+		dsKey,
+		client.COMPOSITE,
+		[]byte{},
+		dagLinks,
+		status,
+	)
 	if err != nil {
 		return err
 	}
 
-	if delta.Status != status {
-		delta.Status = client.Deleted
-		headNode, priority, err := c.saveValueToMerkleCRDT(
-			ctx,
-			txn,
-			dsKey,
-			client.COMPOSITE,
-			delta.Data,
-			delta.SubDAGs,
-			status,
+	if c.db.events.Updates.HasValue() {
+		txn.OnSuccess(
+			func() {
+				c.db.events.Updates.Value().Publish(
+					events.Update{
+						DocKey:   key.DocKey,
+						Cid:      headNode.Cid(),
+						SchemaID: c.schemaID,
+						Block:    headNode,
+						Priority: priority,
+					},
+				)
+			},
 		)
-		if err != nil {
-			return err
-		}
-
-		if c.db.events.Updates.HasValue() {
-			txn.OnSuccess(
-				func() {
-					c.db.events.Updates.Value().Publish(
-						events.Update{
-							DocKey:   key.DocKey,
-							Cid:      headNode.Cid(),
-							SchemaID: c.schemaID,
-							Block:    headNode,
-							Priority: priority,
-						},
-					)
-				},
-			)
-		}
 	}
 
 	return nil

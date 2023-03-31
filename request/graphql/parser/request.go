@@ -173,10 +173,6 @@ func parseSelectFields(
 					return nil, err
 				}
 				selections[i] = s
-			} else if node.Name.Value == request.StatusFieldName {
-				selections[i] = &request.StatusSelect{
-					Field: *parseField(node),
-				}
 			} else if node.SelectionSet == nil { // regular field
 				selections[i] = parseField(node)
 			} else { // sub type with extra fields

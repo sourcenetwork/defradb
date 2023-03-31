@@ -90,6 +90,7 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 				// published to be empty.
 				Request: `query {
 						Author(showDeleted: true) {
+							_status
 							name
 							age
 							published {
@@ -101,14 +102,10 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 					}`,
 				Results: []map[string]any{
 					{
-						"name": "John",
-						"age":  uint64(30),
+						"_status": "Active",
+						"name":    "John",
+						"age":     uint64(30),
 						"published": []map[string]any{
-							{
-								"_status": "Deleted",
-								"name":    "John and the philosopher are stoned",
-								"rating":  9.9,
-							},
 							{
 								"_status": "Active",
 								"name":    "John has a chamber of secrets",

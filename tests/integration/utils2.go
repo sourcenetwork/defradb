@@ -360,6 +360,9 @@ func executeTestCase(
 		case CreateDoc:
 			documents = createDoc(ctx, t, testCase, collections, documents, action)
 
+		case DeleteDoc:
+			deleteDoc(ctx, t, testCase, collections, documents, action)
+
 		case UpdateDoc:
 			updateDoc(ctx, t, testCase, nodes, collections, documents, action)
 
@@ -772,6 +775,27 @@ func createDoc(
 	documents[action.CollectionID] = append(documents[action.CollectionID], doc)
 
 	return documents
+}
+
+// deleteDoc deletes a document using the collection api and caches it in the
+// given documents slice.
+func deleteDoc(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	nodeCollections [][]client.Collection,
+	documents [][]*client.Document,
+	action DeleteDoc,
+) {
+	doc := documents[action.CollectionID][action.DocID]
+
+	var expectedErrorRaised bool
+	for _, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+		_, err := collections[action.CollectionID].DeleteWithKey(ctx, doc.Key())
+		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // updateDoc updates a document using the collection api.

@@ -213,7 +213,6 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 // map of field/value pairs
 func (encdoc *encodedDocument) DecodeToDoc(mapping *core.DocumentMapping) (core.Doc, error) {
 	doc := mapping.NewDoc()
-
 	doc.SetKey(string(encdoc.Key))
 	for fieldDesc, prop := range encdoc.Properties {
 		_, val, err := prop.Decode()

@@ -26,7 +26,7 @@ import (
 // Fetcher is the interface for collecting documents from the underlying data store.
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool) error
+	Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool, showDeleted bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (*encodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
@@ -60,6 +60,8 @@ type DocumentFetcher struct {
 	kvResultsIter     dsq.Results
 	kvEnd             bool
 	isReadingDocument bool
+
+	deletedDocFetcher *DocumentFetcher
 }
 
 // Init implements DocumentFetcher.
@@ -67,6 +69,7 @@ func (df *DocumentFetcher) Init(
 	col *client.CollectionDescription,
 	fields []*client.FieldDescription,
 	reverse bool,
+	showDeleted bool,
 ) error {
 	if col.Schema.IsEmpty() {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "Schema")
@@ -96,11 +99,56 @@ func (df *DocumentFetcher) Init(
 	for _, field := range col.Schema.Fields {
 		df.schemaFields[uint32(field.ID)] = field
 	}
+	if showDeleted {
+		ddf := df.deletedDocFetcher
+		if ddf == nil {
+			ddf = new(DocumentFetcher)
+		}
+
+		ddf.col = col
+		ddf.fields = fields
+		ddf.reverse = reverse
+		ddf.initialized = true
+		ddf.isReadingDocument = false
+		ddf.doc = new(encodedDocument)
+
+		if ddf.kvResultsIter != nil {
+			if err := ddf.kvResultsIter.Close(); err != nil {
+				return err
+			}
+		}
+		ddf.kvResultsIter = nil
+		if ddf.kvIter != nil {
+			if err := ddf.kvIter.Close(); err != nil {
+				return err
+			}
+		}
+		ddf.kvIter = nil
+
+		ddf.schemaFields = make(map[uint32]client.FieldDescription)
+		for _, field := range col.Schema.Fields {
+			ddf.schemaFields[uint32(field.ID)] = field
+		}
+		df.deletedDocFetcher = ddf
+	}
+	return nil
+}
+
+func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
+	err := df.start(ctx, txn, spans, false)
+	if err != nil {
+		return err
+	}
+
+	if df.deletedDocFetcher != nil {
+		return df.deletedDocFetcher.start(ctx, txn, spans, true)
+	}
+
 	return nil
 }
 
 // Start implements DocumentFetcher.
-func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
+func (df *DocumentFetcher) start(ctx context.Context, txn datastore.Txn, spans core.Spans, withDeleted bool) error {
 	if df.col == nil {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "CollectionDescription")
 	}
@@ -109,13 +157,22 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 	}
 
 	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
-		start := base.MakeCollectionKey(*df.col).WithValueFlag()
+		start := base.MakeCollectionKey(*df.col)
+		if withDeleted {
+			start = start.WithDeletedFlag()
+		} else {
+			start = start.WithValueFlag()
+		}
 		df.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 	} else {
 		valueSpans := make([]core.Span, len(spans.Value))
 		for i, span := range spans.Value {
 			// We can only handle value keys, so here we ensure we only read value keys
-			valueSpans[i] = core.NewSpan(span.Start().WithValueFlag(), span.End().WithValueFlag())
+			if withDeleted {
+				valueSpans[i] = core.NewSpan(span.Start().WithDeletedFlag(), span.End().WithDeletedFlag())
+			} else {
+				valueSpans[i] = core.NewSpan(span.Start().WithValueFlag(), span.End().WithValueFlag())
+			}
 		}
 
 		spans := core.MergeAscending(valueSpans)
@@ -203,8 +260,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err erro
 	if err != nil {
 		return false, err
 	}
-
-	if df.kv != nil && df.kv.Key.InstanceType != core.ValueKey {
+	if df.kv != nil && (df.kv.Key.InstanceType != core.ValueKey && df.kv.Key.InstanceType != core.DeletedKey) {
 		// We can only ready value values, if we escape the collection's value keys
 		// then we must be done and can stop reading
 		spanDone = true
@@ -365,18 +421,38 @@ func (df *DocumentFetcher) FetchNextDoc(
 	ctx context.Context,
 	mapping *core.DocumentMapping,
 ) ([]byte, core.Doc, error) {
-	encdoc, err := df.FetchNext(ctx)
-	if err != nil {
-		return nil, core.Doc{}, err
+	var err error
+	var encdoc *encodedDocument
+	var status client.DocumentStatus
+	ddf := df.deletedDocFetcher
+	if ddf != nil {
+		if !ddf.kvEnd {
+			if df.kvEnd || ddf.kv.Key.DocKey < df.kv.Key.DocKey {
+				encdoc, err = ddf.FetchNext(ctx)
+				if err != nil {
+					return nil, core.Doc{}, err
+				}
+				status = client.Deleted
+			}
+		}
 	}
+
 	if encdoc == nil {
-		return nil, core.Doc{}, nil
+		encdoc, err = df.FetchNext(ctx)
+		if err != nil {
+			return nil, core.Doc{}, err
+		}
+		if encdoc == nil {
+			return nil, core.Doc{}, nil
+		}
+		status = client.Active
 	}
 
 	doc, err := encdoc.DecodeToDoc(mapping)
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
+	doc.Status = status
 	return encdoc.Key, doc, err
 }
 
@@ -395,5 +471,14 @@ func (df *DocumentFetcher) Close() error {
 		return nil
 	}
 
-	return df.kvResultsIter.Close()
+	err = df.kvResultsIter.Close()
+	if err != nil {
+		return err
+	}
+
+	if df.deletedDocFetcher != nil {
+		return df.deletedDocFetcher.Close()
+	}
+
+	return nil
 }
