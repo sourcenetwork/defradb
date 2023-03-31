@@ -15,8 +15,6 @@ import (
 	"fmt"
 
 	cid "github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
-	query "github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-libipfs/blocks"
 	dag "github.com/ipfs/go-merkledag"
@@ -214,7 +212,7 @@ func (c *collection) deleteWithFilter(
 		}
 
 		// Delete the document that is associated with this key we got from the filter.
-		err = c.applyFullDelete(ctx, txn, key)
+		err = c.applyDelete(ctx, txn, key, status)
 		if err != nil {
 			return nil, err
 		}
@@ -238,22 +236,13 @@ func newDagDeleter(bstore datastore.DAGStore) dagDeleter {
 	}
 }
 
-func isDeleteStatus(status client.DocumentStatus) bool {
-	switch status {
-	case client.Deleted:
-		return true
-	default:
-		return false
-	}
-}
-
 func (c *collection) applyDelete(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
 	status client.DocumentStatus,
 ) error {
-	if !isDeleteStatus(status) {
+	if !status.IsDeleted() {
 		return NewErrInvalidDeleteStatus(status)
 	}
 	found, isDeleted, err := c.exists(ctx, txn, key)
@@ -311,85 +300,6 @@ func (c *collection) applyDelete(
 			},
 		)
 	}
-
-	return nil
-}
-
-// applyFullDelete deletes from all the stores.
-//
-// Stores the deletion will act upon:
-//  1. Deleting the actual blocks (blockstore).
-//  2. Deleting datastore state.
-//  3. Deleting headstore state.
-//
-// Here is what our db stores look like:
-//
-//	/db
-//	-> block /blocks => /db/blocks
-//	-> datastore /data => /db/data
-//	-> headstore /heads => /db/heads
-//	-> systemstore /system => /db/system
-func (c *collection) applyFullDelete(
-	ctx context.Context,
-	txn datastore.Txn, dockey core.PrimaryDataStoreKey) error {
-	// Check the docKey we have been given to delete with actually has a corresponding
-	//  document (i.e. document actually exists in the collection).
-	found, _, err := c.exists(ctx, txn, dockey)
-	if err != nil {
-		return err
-	}
-	if !found {
-		return client.ErrDocumentNotFound
-	}
-
-	// 1. =========================== Delete blockstore state ===========================
-	// blocks: /db/blocks/CIQSDFKLJGHFKLGHGLHSKLHKJGS => KGLKJFHJKDLGKHDGLHGLFDHGLFDGKGHL
-
-	// Covert dockey to compositeKey as follows:
-	//  * dockey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs
-	//  => compositeKey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs/C
-	compositeKey := core.HeadStoreKey{
-		DocKey:  dockey.DocKey,
-		FieldId: core.COMPOSITE_NAMESPACE,
-	}
-	headset := clock.NewHeadSet(txn.Headstore(), compositeKey)
-
-	// Get all the heads (cids).
-	heads, _, err := headset.List(ctx)
-	if err != nil {
-		return NewErrFailedToGetHeads(err)
-	}
-
-	dagDel := newDagDeleter(txn.DAGstore())
-	// Delete DAG of all heads (and the heads themselves)
-	for _, head := range heads {
-		if err = dagDel.run(ctx, head); err != nil {
-			return err
-		}
-	} // ================================================ Successfully deleted the blocks
-
-	// 2. =========================== Delete datastore state ============================
-	_, err = c.delete(ctx, txn, dockey)
-	if err != nil {
-		return err
-	}
-	// ======================== Successfully deleted the datastore state of this document
-
-	// 3. =========================== Delete headstore state ===========================
-	headQuery := query.Query{
-		Prefix:   dockey.ToString(),
-		KeysOnly: true,
-	}
-	headResult, err := txn.Headstore().Query(ctx, headQuery)
-	for e := range headResult.Next() {
-		if e.Error != nil {
-			return err
-		}
-		err = txn.Headstore().Delete(ctx, ds.NewKey(e.Key))
-		if err != nil {
-			return err
-		}
-	} // ====================== Successfully deleted the headstore state of this document
 
 	return nil
 }

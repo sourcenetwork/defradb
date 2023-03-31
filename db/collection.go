@@ -963,11 +963,11 @@ func (c *collection) Exists(ctx context.Context, key client.DocKey) (bool, error
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocKey(key)
-	exists, _, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return false, err
 	}
-	return exists, c.commitImplicitTxn(ctx, txn)
+	return exists && !isDeleted, c.commitImplicitTxn(ctx, txn)
 }
 
 // check if a document exists with the given key
