@@ -92,7 +92,7 @@ func TestCloseThroughContext(t *testing.T) {
 
 	cancel()
 
-	<-s.closing
+	time.Sleep(time.Millisecond * 10)
 
 	err := s.Close()
 	require.ErrorIs(t, err, ErrClosed)
