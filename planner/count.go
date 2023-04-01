@@ -34,6 +34,13 @@ type countNode struct {
 
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
+
+	execInfo countExecInfo
+}
+
+type countExecInfo struct {
+	// Total number of times countNode was executed.
+	iterations uint64
 }
 
 func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select) (*countNode, error) {
@@ -93,7 +100,9 @@ func (n *countNode) Explain(explainType request.ExplainType) (map[string]any, er
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return nil, nil
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
@@ -101,6 +110,8 @@ func (n *countNode) Explain(explainType request.ExplainType) (map[string]any, er
 }
 
 func (n *countNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	hasValue, err := n.plan.Next()
 	if err != nil || !hasValue {
 		return hasValue, err
