@@ -12,6 +12,7 @@ package planner
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/iancoleman/strcase"
 
@@ -21,7 +22,11 @@ import (
 type explainablePlanNode interface {
 	planNode
 
-	// Explain returns the node scoped explain attributes (only used for simple explain as of now).
+	// Explain returns explain datapoints that are scoped to this node.
+	//
+	// It is possible that no datapoint is gathered for a certain node.
+	//
+	// Explain with type execute should NOT be called before the `Next()` has been called.
 	Explain(explainType request.ExplainType) (map[string]any, error)
 }
 
@@ -175,6 +180,148 @@ func buildSimpleExplainGraph(source planNode) (map[string]any, error) {
 	return explainGraph, nil
 }
 
+// collectExecuteExplainInfo structures and returns the already collected information
+// when the request was executed with the explain option.
+//
+// Note: Can only be called once the entire plan has been executed.
+func collectExecuteExplainInfo(executedPlan planNode) (map[string]any, error) {
+	excuteExplainInfo := map[string]any{}
+
+	if executedPlan == nil {
+		return excuteExplainInfo, nil
+	}
+
+	switch executedNode := executedPlan.(type) {
+	case MultiNode:
+		multiChildExplainGraph := []map[string]any{}
+		for _, childSource := range executedNode.Children() {
+			childExplainGraph, err := collectExecuteExplainInfo(childSource)
+			if err != nil {
+				return nil, err
+			}
+			multiChildExplainGraph = append(multiChildExplainGraph, childExplainGraph)
+		}
+		explainNodeLabelTitle := strcase.ToLowerCamel(executedNode.Kind())
+		excuteExplainInfo[explainNodeLabelTitle] = multiChildExplainGraph
+
+	case explainablePlanNode:
+		excuteExplainBuilder, err := executedNode.Explain(request.ExecuteExplain)
+		if err != nil {
+			return nil, err
+		}
+
+		if excuteExplainBuilder == nil {
+			excuteExplainBuilder = map[string]any{}
+		}
+
+		if next := executedNode.Source(); next != nil && next.Kind() != topLevelNodeKind {
+			nextExplainGraph, err := collectExecuteExplainInfo(next)
+			if err != nil {
+				return nil, err
+			}
+			for key, value := range nextExplainGraph {
+				excuteExplainBuilder[key] = value
+			}
+		}
+		explainNodeLabelTitle := strcase.ToLowerCamel(executedNode.Kind())
+		excuteExplainInfo[explainNodeLabelTitle] = excuteExplainBuilder
+
+	default:
+		var err error
+		excuteExplainInfo, err = collectExecuteExplainInfo(executedPlan.Source())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return excuteExplainInfo, nil
+}
+
+// executeAndExplainRequest executes the plan graph gathering the information/datapoints
+// during the execution. Then once the execution is complete returns the collected datapoints.
+//
+// Note: This function only fails if the collection of the datapoints goes wrong, otherwise
+// even if plan execution fails this function would return the collected datapoints.
+func (p *Planner) executeAndExplainRequest(
+	ctx context.Context,
+	plan planNode,
+) ([]map[string]any, error) {
+	executionSuccess := false
+	planExecutions := uint64(0)
+
+	if err := plan.Start(); err != nil {
+		return []map[string]any{
+			{
+				request.ExplainLabel: map[string]any{
+					"executionSuccess": executionSuccess,
+					"executionErrors":  []string{"plan failed to start"},
+					"planExecutions":   planExecutions,
+				},
+			},
+		}, nil
+	}
+
+	next, err := plan.Next()
+	planExecutions++
+	if err != nil {
+		return []map[string]any{
+			{
+				request.ExplainLabel: map[string]any{
+					"executionSuccess": executionSuccess,
+					"executionErrors": []string{
+						"failure at plan execution count: " + strconv.FormatUint(planExecutions, 10),
+						err.Error(),
+					},
+					"planExecutions": planExecutions,
+				},
+			},
+		}, nil
+	}
+
+	docs := []map[string]any{}
+	docMap := plan.DocumentMap()
+
+	for next {
+		copy := docMap.ToMap(plan.Value())
+		docs = append(docs, copy)
+
+		next, err = plan.Next()
+		planExecutions++
+
+		if err != nil {
+			return []map[string]any{
+				{
+					request.ExplainLabel: map[string]any{
+						"executionSuccess": executionSuccess,
+						"executionErrors": []string{
+							"failure at plan execution count: " + strconv.FormatUint(planExecutions, 10),
+							err.Error(),
+						},
+						"planExecutions":    planExecutions,
+						"sizeOfResultSoFar": len(docs),
+					},
+				},
+			}, nil
+		}
+	}
+	executionSuccess = true
+
+	executeExplain, err := collectExecuteExplainInfo(plan)
+	if err != nil {
+		return nil, NewErrFailedToCollectExecExplainInfo(err)
+	}
+
+	executeExplain["executionSuccess"] = executionSuccess
+	executeExplain["planExecutions"] = planExecutions
+	executeExplain["sizeOfResult"] = len(docs)
+
+	return []map[string]any{
+		{
+			request.ExplainLabel: executeExplain,
+		},
+	}, err
+}
+
 // explainRequest explains the given request plan according to the type of explain request.
 func (p *Planner) explainRequest(
 	ctx context.Context,
@@ -199,7 +346,7 @@ func (p *Planner) explainRequest(
 		return explainResult, nil
 
 	case request.ExecuteExplain:
-		return nil, nil // TODO: Implementation in other commits.
+		return p.executeAndExplainRequest(ctx, plan)
 
 	default:
 		return nil, ErrUnknownExplainRequestType

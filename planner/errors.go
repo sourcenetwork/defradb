@@ -13,8 +13,9 @@ package planner
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errUnknownDependency string = "given field does not exist"
-	errFailedToClosePlan string = "failed to close the plan"
+	errUnknownDependency              string = "given field does not exist"
+	errFailedToClosePlan              string = "failed to close the plan"
+	errFailedToCollectExecExplainInfo string = "failed to collect execution explain information"
 )
 
 var (
@@ -30,6 +31,7 @@ var (
 	ErrMissingChildValue                   = errors.New("expected child value, however none was yielded")
 	ErrUnknownRelationType                 = errors.New("failed sub selection, unknown relation type")
 	ErrUnknownExplainRequestType           = errors.New("can not explain request of unknown type")
+	ErrFailedToCollectExecExplainInfo      = errors.New(errFailedToCollectExecExplainInfo)
 	ErrUnknownDependency                   = errors.New(errUnknownDependency)
 )
 
@@ -39,4 +41,8 @@ func NewErrUnknownDependency(name string) error {
 
 func NewErrFailedToClosePlan(inner error, location string) error {
 	return errors.Wrap(errFailedToClosePlan, inner, errors.NewKV("Location", location))
+}
+
+func NewErrFailedToCollectExecExplainInfo(inner error) error {
+	return errors.Wrap(errFailedToCollectExecExplainInfo, inner)
 }
