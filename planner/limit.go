@@ -27,6 +27,13 @@ type limitNode struct {
 	limit    uint64
 	offset   uint64
 	rowIndex uint64
+
+	execInfo limitExecInfo
+}
+
+type limitExecInfo struct {
+	// Total number of times limitNode was executed.
+	iterations uint64
 }
 
 // Limit creates a new limitNode initalized from the parser.Limit object.
@@ -58,6 +65,8 @@ func (n *limitNode) Close() error           { return n.plan.Close() }
 func (n *limitNode) Value() core.Doc        { return n.plan.Value() }
 
 func (n *limitNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	// check if we're passed the limit
 	if n.limit != 0 && n.rowIndex >= n.limit+n.offset {
 		return false, nil
@@ -100,7 +109,9 @@ func (n *limitNode) Explain(explainType request.ExplainType) (map[string]any, er
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return nil, nil
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
