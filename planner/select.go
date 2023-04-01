@@ -119,6 +119,16 @@ type selectNode struct {
 
 	selectReq    *mapper.Select
 	groupSelects []*mapper.Select
+
+	execInfo selectExecInfo
+}
+
+type selectExecInfo struct {
+	// Total number of times selectNode was executed.
+	iterations uint64
+
+	// Total number of times top level select filter passed / matched.
+	filterMatches uint64
 }
 
 func (n *selectNode) Kind() string {
@@ -138,6 +148,8 @@ func (n *selectNode) Start() error {
 // remaining top level filtering, and
 // renders the doc.
 func (n *selectNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	for {
 		if hasNext, err := n.source.Next(); !hasNext {
 			return false, err
@@ -153,6 +165,8 @@ func (n *selectNode) Next() (bool, error) {
 			continue
 		}
 
+		n.execInfo.filterMatches++
+
 		if n.docKeys.HasValue() {
 			docKey := n.currentValue.GetKey()
 			for _, key := range n.docKeys.Value() {
@@ -160,6 +174,7 @@ func (n *selectNode) Next() (bool, error) {
 					return true, nil
 				}
 			}
+
 			continue
 		}
 
@@ -196,7 +211,10 @@ func (n *selectNode) Explain(explainType request.ExplainType) (map[string]any, e
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return map[string]any{}, nil
+		return map[string]any{
+			"iterations":    n.execInfo.iterations,
+			"filterMatches": n.execInfo.filterMatches,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
