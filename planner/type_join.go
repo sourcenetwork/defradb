@@ -55,6 +55,13 @@ type typeIndexJoin struct {
 	// actual join plan, could be one of several strategies
 	// based on the relationship of the sub types
 	joinPlan planNode
+
+	execInfo typeIndexJoinExecInfo
+}
+
+type typeIndexJoinExecInfo struct {
+	// Total number of times typeIndexJoin node was executed.
+	iterations uint64
 }
 
 func (p *Planner) makeTypeIndexJoin(
@@ -110,6 +117,8 @@ func (n *typeIndexJoin) Spans(spans core.Spans) {
 }
 
 func (n *typeIndexJoin) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	return n.joinPlan.Next()
 }
 
@@ -188,7 +197,9 @@ func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return map[string]any{}, nil
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
