@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/mapper"
@@ -44,6 +45,13 @@ type createNode struct {
 
 	returned bool
 	results  planNode
+
+	execInfo createExecInfo
+}
+
+type createExecInfo struct {
+	// Total number of times createNode was executed.
+	iterations uint64
 }
 
 func (n *createNode) Kind() string { return "createNode" }
@@ -62,6 +70,8 @@ func (n *createNode) Start() error {
 
 // Next only returns once.
 func (n *createNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	if n.err != nil {
 		return false, n.err
 	}
@@ -121,9 +131,7 @@ func (n *createNode) Close() error {
 
 func (n *createNode) Source() planNode { return n.results }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *createNode) Explain() (map[string]any, error) {
+func (n *createNode) simpleExplain() (map[string]any, error) {
 	data := map[string]any{}
 	err := json.Unmarshal([]byte(n.newDocStr), &data)
 	if err != nil {
@@ -133,6 +141,23 @@ func (n *createNode) Explain() (map[string]any, error) {
 	return map[string]any{
 		dataLabel: data,
 	}, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {

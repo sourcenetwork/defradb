@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -34,10 +35,22 @@ type updateNode struct {
 	isUpdating bool
 
 	results planNode
+
+	execInfo updateExecInfo
+}
+
+type updateExecInfo struct {
+	// Total number of times updateNode was executed.
+	iterations uint64
+
+	// Total number of successful updates.
+	updates uint64
 }
 
 // Next only returns once.
 func (n *updateNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	if n.isUpdating {
 		for {
 			next, err := n.results.Next()
@@ -57,6 +70,8 @@ func (n *updateNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
+
+			n.execInfo.updates++
 		}
 		n.isUpdating = false
 
@@ -96,19 +111,17 @@ func (n *updateNode) Close() error {
 
 func (n *updateNode) Source() planNode { return n.results }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *updateNode) Explain() (map[string]any, error) {
-	explainerMap := map[string]any{}
+func (n *updateNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{}
 
 	// Add the document id(s) that request wants to update.
-	explainerMap[idsLabel] = n.ids
+	simpleExplainMap[idsLabel] = n.ids
 
 	// Add the filter attribute if it exists, otherwise have it nil.
 	if n.filter == nil || n.filter.ExternalConditions == nil {
-		explainerMap[filterLabel] = nil
+		simpleExplainMap[filterLabel] = nil
 	} else {
-		explainerMap[filterLabel] = n.filter.ExternalConditions
+		simpleExplainMap[filterLabel] = n.filter.ExternalConditions
 	}
 
 	// Add the attribute that represents the patch to update with.
@@ -117,9 +130,27 @@ func (n *updateNode) Explain() (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	explainerMap[dataLabel] = data
+	simpleExplainMap[dataLabel] = data
 
-	return explainerMap, nil
+	return simpleExplainMap, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *updateNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+			"updates":    n.execInfo.updates,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
