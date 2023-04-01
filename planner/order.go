@@ -60,6 +60,13 @@ type orderNode struct {
 	// indicates if our underlying orderStrategy is still
 	// consuming and sorting data.
 	needSort bool
+
+	execInfo orderExecInfo
+}
+
+type orderExecInfo struct {
+	// Total number of times orderNode was executed.
+	iterations uint64
 }
 
 // OrderBy creates a new orderNode which returns the underlying
@@ -135,7 +142,9 @@ func (n *orderNode) Explain(explainType request.ExplainType) (map[string]any, er
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return map[string]any{}, nil
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
@@ -143,6 +152,8 @@ func (n *orderNode) Explain(explainType request.ExplainType) (map[string]any, er
 }
 
 func (n *orderNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	for n.needSort {
 		// make sure our orderStrategy is initialized
 		if n.orderStrategy == nil {
