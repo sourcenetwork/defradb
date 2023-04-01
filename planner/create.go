@@ -45,6 +45,13 @@ type createNode struct {
 
 	returned bool
 	results  planNode
+
+	execInfo createExecInfo
+}
+
+type createExecInfo struct {
+	// Total number of times createNode was executed.
+	iterations uint64
 }
 
 func (n *createNode) Kind() string { return "createNode" }
@@ -63,6 +70,8 @@ func (n *createNode) Start() error {
 
 // Next only returns once.
 func (n *createNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	if n.err != nil {
 		return false, n.err
 	}
@@ -142,7 +151,9 @@ func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, e
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return map[string]any{}, nil
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
