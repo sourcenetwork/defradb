@@ -28,9 +28,18 @@ type deleteNode struct {
 
 	filter *mapper.Filter
 	ids    []string
+
+	execInfo deleteExecInfo
+}
+
+type deleteExecInfo struct {
+	// Total number of times deleteNode was executed.
+	iterations uint64
 }
 
 func (n *deleteNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	next, err := n.source.Next()
 	if err != nil {
 		return false, err
@@ -99,7 +108,9 @@ func (n *deleteNode) Explain(explainType request.ExplainType) (map[string]any, e
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return map[string]any{}, nil
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
