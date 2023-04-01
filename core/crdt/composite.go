@@ -150,11 +150,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
 	if delta.GetStatus().IsDeleted() {
 		c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
-		err := c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldId(""))
-		if err != nil {
-			return err
-		}
-		return c.deleteWithPrefix(ctx, c.key.WithPriorityFlag().WithFieldId(""))
+		return c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldId(""))
 	}
 
 	// ensure object marker exists

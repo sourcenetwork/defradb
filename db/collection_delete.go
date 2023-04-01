@@ -14,16 +14,10 @@ import (
 	"context"
 	"fmt"
 
-	cid "github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-libipfs/blocks"
-	dag "github.com/ipfs/go-merkledag"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
@@ -226,16 +220,6 @@ func (c *collection) deleteWithFilter(
 	return results, nil
 }
 
-type dagDeleter struct {
-	bstore datastore.DAGStore
-}
-
-func newDagDeleter(bstore datastore.DAGStore) dagDeleter {
-	return dagDeleter{
-		bstore: bstore,
-	}
-}
-
 func (c *collection) applyDelete(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -245,11 +229,14 @@ func (c *collection) applyDelete(
 	if !status.IsDeleted() {
 		return NewErrInvalidDeleteStatus(status)
 	}
+	fmt.Println(key)
+
 	found, isDeleted, err := c.exists(ctx, txn, key)
 	if err != nil {
 		return err
 	}
 	if !found || isDeleted {
+		fmt.Println("not found")
 		return client.ErrDocumentNotFound
 	}
 
@@ -261,6 +248,8 @@ func (c *collection) applyDelete(
 	)
 	cids, _, err := headset.List(ctx)
 	if err != nil {
+		fmt.Println("headset err")
+
 		return err
 	}
 
@@ -282,12 +271,17 @@ func (c *collection) applyDelete(
 		status,
 	)
 	if err != nil {
+		fmt.Println("save crdt err")
+
 		return err
 	}
 
 	if c.db.events.Updates.HasValue() {
+		fmt.Println("before publish")
 		txn.OnSuccess(
 			func() {
+				fmt.Println("publish")
+
 				c.db.events.Updates.Value().Publish(
 					events.Update{
 						DocKey:   key.DocKey,
@@ -299,63 +293,6 @@ func (c *collection) applyDelete(
 				)
 			},
 		)
-	}
-
-	return nil
-}
-
-func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
-	// Validate the cid.
-	if targetCid == cid.Undef {
-		return nil
-	}
-
-	// Get the block using the cid.
-	block, err := d.bstore.Get(ctx, targetCid)
-	if errors.Is(err, ipld.ErrNotFound{Cid: targetCid}) {
-		// If we have multiple heads corresponding to a dockey, one of the heads
-		//  could have already deleted the parental dag chain.
-		// Example: in the diagram below, HEAD#1 with cid1 deleted (represented by `:x`)
-		//          all the parental nodes. Currently HEAD#2 goes to delete
-		//          itself (represented by `:d`) and it's parental nodes, but as we see
-		//          the parents were already deleted by HEAD#1 so we just stop there.
-		//
-		//                                     | --> (E:x) HEAD#1->cid1
-		// (A:x) --> (B:x) --> (C:x) --> (D:x) |
-		//                                     | --> (F:d) HEAD#2->cid2
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	// Attempt deleting the current block and it's links (in a mutally recursive fashion)
-	return d.delete(ctx, targetCid, block)
-}
-
-// (ipld.Block
-//	(ipldProtobufNode{
-//	                  Data: (cbor(crdt deltaPayload)),
-//	                  Links: (_head => parentCid, fieldName => fieldCid)))
-
-func (d dagDeleter) delete(
-	ctx context.Context,
-	targetCid cid.Cid,
-	targetBlock blocks.Block) error {
-	targetNode, err := dag.DecodeProtobuf(targetBlock.RawData())
-	if err != nil {
-		return err
-	}
-
-	// delete current block
-	if err := d.bstore.DeleteBlock(ctx, targetCid); err != nil {
-		return err
-	}
-
-	for _, link := range targetNode.Links() {
-		// Call run on all the links (eventually delete is called on them too.)
-		if err := d.run(ctx, link.Cid); err != nil {
-			return err
-		}
 	}
 
 	return nil

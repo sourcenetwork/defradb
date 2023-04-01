@@ -13,10 +13,8 @@ package delete
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
@@ -356,17 +354,6 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 }
 
 func TestDeletionOfDocumentsWithFilterWithShowDeletedDocumentQuery_Success(t *testing.T) {
-	jsonString1 := `{
-		"name": "John",
-		"age": 43
-	}`
-	jsonString2 := `{
-		"name": "Andy",
-		"age": 74
-	}`
-	doc1, err := client.NewDocFromJSON([]byte(jsonString1))
-	require.NoError(t, err)
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -379,11 +366,17 @@ func TestDeletionOfDocumentsWithFilterWithShowDeletedDocumentQuery_Success(t *te
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc:          jsonString1,
+				Doc: `{
+					"name": "John",
+					"age": 43
+				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc:          jsonString2,
+				Doc: `{
+					"name": "Andy",
+					"age": 74
+				}`,
 			},
 			testUtils.Request{
 				Request: `mutation {
@@ -393,7 +386,7 @@ func TestDeletionOfDocumentsWithFilterWithShowDeletedDocumentQuery_Success(t *te
 					}`,
 				Results: []map[string]any{
 					{
-						"_key": doc1.Key().String(),
+						"_key": "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef",
 					},
 				},
 			},

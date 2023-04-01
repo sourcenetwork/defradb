@@ -115,6 +115,9 @@ type DeleteDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Setting DontSync to true will prevent waiting for that delete.
+	DontSync bool
 }
 
 // UpdateDoc will attempt to update the given document in the given collection
@@ -142,6 +145,9 @@ type UpdateDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Setting DontSync to true will prevent waiting for that update.
+	DontSync bool
 }
 
 // Request represents a standard Defra (GQL) request.

@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"context"
 
+	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
@@ -23,6 +24,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -171,11 +174,18 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	// if the current priority is higher ignore put
 	// else if the current value is lexicographically
 	// greater than the new then ignore
-	valueK := reg.key.WithValueFlag()
+	key := reg.key.WithValueFlag()
+	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().ToDS())
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+		return err
+	}
+	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
+		key = key.WithDeletedFlag()
+	}
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(ctx, valueK.ToDS())
+		curValue, _ := reg.store.Get(ctx, key.ToDS())
 		// Do not use the first byte of the current value in the comparison.
 		// It's metadata that will falsify the result.
 		if len(curValue) > 0 {
@@ -188,7 +198,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
 	buf := append([]byte{byte(client.LWW_REGISTER)}, val...)
-	err = reg.store.Put(ctx, valueK.ToDS(), buf)
+	err = reg.store.Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}

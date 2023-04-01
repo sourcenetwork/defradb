@@ -13,8 +13,9 @@ package peer_test
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // The parent-child distinction in these tests is as much documentation and test
@@ -131,6 +132,274 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 						"_deleted": true,
 						"Name":     "John",
 						"Age":      uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithShowDeleted(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// Create John on all nodes
+				Doc: `{
+					"Name": "John",
+					"Age": 43
+				}`,
+			},
+			testUtils.CreateDoc{
+				// Create Andy on all nodes
+				Doc: `{
+					"Name": "Andy",
+					"Age": 74
+				}`,
+			},
+			testUtils.UpdateDoc{
+				// Update John's Age on the first node only
+				NodeID: immutable.Some(0),
+				DocID:  0,
+				Doc: `{
+					"Age": 60
+				}`,
+				DontSync: true,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.DeleteDoc{
+				NodeID: immutable.Some(0),
+				DocID:  0,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					Users(showDeleted: true) {
+						_deleted
+						Name
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      uint64(74),
+					},
+					{
+						"_deleted": true,
+						"Name":     "John",
+						"Age":      uint64(60),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWithShowDeleted(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// Create John on all nodes
+				Doc: `{
+					"Name": "John",
+					"Age": 43
+				}`,
+			},
+			testUtils.CreateDoc{
+				// Create Andy on all nodes
+				Doc: `{
+					"Name": "Andy",
+					"Age": 74
+				}`,
+			},
+			testUtils.UpdateDoc{
+				// Update John's Age on the first node only
+				NodeID: immutable.Some(0),
+				DocID:  0,
+				Doc: `{
+					"Age": 60
+				}`,
+				DontSync: true,
+			},
+			testUtils.UpdateDoc{
+				// Update John's Age on the first node only
+				NodeID: immutable.Some(0),
+				DocID:  0,
+				Doc: `{
+					"Age": 62
+				}`,
+				DontSync: true,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.DeleteDoc{
+				NodeID: immutable.Some(0),
+				DocID:  0,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					Users(showDeleted: true) {
+						_deleted
+						Name
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      uint64(74),
+					},
+					{
+						"_deleted": true,
+						"Name":     "John",
+						"Age":      uint64(62),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWithShowDeleted(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// Create John on all nodes
+				Doc: `{
+					"Name": "John",
+					"Age": 43
+				}`,
+			},
+			testUtils.CreateDoc{
+				// Create Andy on all nodes
+				Doc: `{
+					"Name": "Andy",
+					"Age": 74
+				}`,
+			},
+			testUtils.UpdateDoc{
+				// Update John's Age on the first node only
+				NodeID: immutable.Some(0),
+				DocID:  0,
+				Doc: `{
+					"Age": 60
+				}`,
+				DontSync: true,
+			},
+			testUtils.UpdateDoc{
+				// Update John's Age on the first node only
+				NodeID: immutable.Some(0),
+				DocID:  0,
+				Doc: `{
+					"Age": 62
+				}`,
+				DontSync: true,
+			},
+			testUtils.DeleteDoc{
+				NodeID:   immutable.Some(0),
+				DocID:    0,
+				DontSync: true,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.UpdateDoc{
+				// Update John's Age on the second node only
+				NodeID: immutable.Some(1),
+				DocID:  0,
+				Doc: `{
+					"Age": 66
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Users(showDeleted: true) {
+						_deleted
+						Name
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      uint64(74),
+					},
+					{
+						"_deleted": true,
+						"Name":     "John",
+						"Age":      uint64(62),
+					},
+				},
+			},
+			// The target node currently won't receive the pre-connection updates from the source.
+			// We should look into adding a head exchange mechanic on connect.
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users(showDeleted: true) {
+						_deleted
+						Name
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_deleted": false,
+						"Name":     "Andy",
+						"Age":      uint64(74),
+					},
+					{
+						"_deleted": false,
+						"Name":     "John",
+						"Age":      uint64(66),
 					},
 				},
 			},
