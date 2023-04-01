@@ -37,6 +37,13 @@ type dagScanNode struct {
 	fetcher      fetcher.HeadFetcher
 	spans        core.Spans
 	commitSelect *mapper.CommitSelect
+
+	execInfo dagScanExecInfo
+}
+
+type dagScanExecInfo struct {
+	// Total number of times dag scan was issued.
+	iterations uint64
 }
 
 func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
@@ -163,7 +170,9 @@ func (n *dagScanNode) Explain(explainType request.ExplainType) (map[string]any, 
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return nil, nil
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
@@ -171,6 +180,8 @@ func (n *dagScanNode) Explain(explainType request.ExplainType) (map[string]any, 
 }
 
 func (n *dagScanNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	var currentCid *cid.Cid
 	store := n.planner.txn.DAGstore()
 
