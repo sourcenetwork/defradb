@@ -36,6 +36,25 @@ type groupNode struct {
 
 	values       []core.Doc
 	currentIndex int
+
+	execInfo groupExecInfo
+}
+
+type groupExecInfo struct {
+	// Total number of times groupNode was executed.
+	iterations uint64
+
+	// Total number of groups.
+	groups uint64
+
+	// Total number of child selections (hidden and visible).
+	childSelections uint64
+
+	// Total number of child selections hidden before offset.
+	hiddenBeforeOffset uint64
+
+	// Total number of child selections hidden after offset and limit.
+	hiddenAfterLimit uint64
 }
 
 // Creates a new group node.
@@ -127,6 +146,8 @@ func (n *groupNode) Close() error {
 func (n *groupNode) Source() planNode { return n.dataSources[0].Source() }
 
 func (n *groupNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	if n.values == nil {
 		values, err := join(n.dataSources, n.groupByFields, n.documentMapping)
 		if err != nil {
@@ -136,7 +157,11 @@ func (n *groupNode) Next() (bool, error) {
 		n.values = values.values
 
 		for _, group := range n.values {
+			n.execInfo.groups++
+
 			for _, childSelect := range n.childSelects {
+				n.execInfo.childSelections++
+
 				subSelect := group.Fields[childSelect.Index]
 				if subSelect == nil {
 					// If the sub-select is nil we need to set it to an empty array and continue
@@ -151,11 +176,15 @@ func (n *groupNode) Next() (bool, error) {
 					// We must hide all child documents before the offset
 					for i := uint64(0); i < childSelect.Limit.Offset && i < l; i++ {
 						childDocs[i].Hidden = true
+
+						n.execInfo.hiddenBeforeOffset++
 					}
 
 					// We must hide all child documents after the offset plus limit
 					for i := childSelect.Limit.Limit + childSelect.Limit.Offset; i < l; i++ {
 						childDocs[i].Hidden = true
+
+						n.execInfo.hiddenAfterLimit++
 					}
 				}
 			}
@@ -273,6 +302,17 @@ func (n *groupNode) simpleExplain() (map[string]any, error) {
 	return simpleExplainMap, nil
 }
 
+func (n *groupNode) excuteExplain() map[string]any {
+	return map[string]any{
+		"iterations":            n.execInfo.iterations,
+		"groups":                n.execInfo.groups,
+		"childSelections":       n.execInfo.childSelections,
+		"hiddenBeforeOffset":    n.execInfo.hiddenBeforeOffset,
+		"hiddenAfterLimit":      n.execInfo.hiddenAfterLimit,
+		"hiddenChildSelections": n.execInfo.hiddenBeforeOffset + n.execInfo.hiddenAfterLimit,
+	}
+}
+
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *groupNode) Explain(explainType request.ExplainType) (map[string]any, error) {
@@ -281,7 +321,7 @@ func (n *groupNode) Explain(explainType request.ExplainType) (map[string]any, er
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return map[string]any{}, nil
+		return n.excuteExplain(), nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
