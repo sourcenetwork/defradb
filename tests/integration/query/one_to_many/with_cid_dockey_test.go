@@ -68,7 +68,7 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with  cid and dockey",
 		Request: `query {
 					book (
-							cid: "bafybeidzkvlv3ydn6hbje3u3fvm2z7ec76t5o4skpf34euwyhqig7gdzdm",
+							cid: "bafybeigxaaddfdl5rbg2l3fwudevxvvikq4punfaixtwvbb3eg7ow3gmc4",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -117,7 +117,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with child update and parent cid and dockey",
 		Request: `query {
 					book (
-							cid: "bafybeidzkvlv3ydn6hbje3u3fvm2z7ec76t5o4skpf34euwyhqig7gdzdm",
+							cid: "bafybeigxaaddfdl5rbg2l3fwudevxvvikq4punfaixtwvbb3eg7ow3gmc4",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -173,7 +173,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
 		Request: `query {
 					book (
-							cid: "bafybeidzkvlv3ydn6hbje3u3fvm2z7ec76t5o4skpf34euwyhqig7gdzdm",
+							cid: "bafybeigxaaddfdl5rbg2l3fwudevxvvikq4punfaixtwvbb3eg7ow3gmc4",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -229,7 +229,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
 		Request: `query {
 					book (
-							cid: "bafybeidrqnpqk2cecfzah2z6rfzljf3o6fr5t6g2sncplx3tfbddaarkm4",
+							cid: "bafybeidk624gkhspankyxy6zg3brivzmng55sadusttcuwuhk5gh3tvhfu",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name

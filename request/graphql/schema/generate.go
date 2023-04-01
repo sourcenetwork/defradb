@@ -406,7 +406,7 @@ func (g *Generator) buildTypes(
 			}
 
 			// add _deleted field
-			fields[request.DeletedFieldName] = &gql.Field{Type: &gql.Scalar{}}
+			fields[request.DeletedFieldName] = &gql.Field{Type: gql.Boolean}
 
 			gqlType, ok := g.manager.schema.TypeMap()[collection.Name]
 			if !ok {
