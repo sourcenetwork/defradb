@@ -19,6 +19,17 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
+type scanExecInfo struct {
+	// Total number of times scan was issued.
+	iterations uint64
+
+	// Total number of times attempted to fetch documents.
+	docFetches uint64
+
+	// Total number of documents that matched / passed the filter.
+	filterMatches uint64
+}
+
 // scans an index for records
 type scanNode struct {
 	documentIterator
@@ -38,6 +49,8 @@ type scanNode struct {
 	scanInitialized bool
 
 	fetcher fetcher.Fetcher
+
+	execInfo scanExecInfo
 }
 
 func (n *scanNode) Kind() string {
@@ -82,6 +95,8 @@ func (n *scanNode) initScan() error {
 // Returns true, if there is a result,
 // and false otherwise.
 func (n *scanNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	if n.spans.HasValue && len(n.spans.Value) == 0 {
 		return false, nil
 	}
@@ -93,6 +108,7 @@ func (n *scanNode) Next() (bool, error) {
 		if err != nil {
 			return false, err
 		}
+		n.execInfo.docFetches++
 
 		if len(n.currentValue.Fields) == 0 {
 			return false, nil
@@ -103,6 +119,7 @@ func (n *scanNode) Next() (bool, error) {
 			return false, err
 		}
 		if passed {
+			n.execInfo.filterMatches++
 			return true, nil
 		}
 	}
@@ -153,6 +170,14 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 	return simpleExplainMap, nil
 }
 
+func (n *scanNode) excuteExplain() map[string]any {
+	return map[string]any{
+		"iterations":    n.execInfo.iterations,
+		"docFetches":    n.execInfo.docFetches,
+		"filterMatches": n.execInfo.filterMatches,
+	}
+}
+
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
@@ -161,7 +186,7 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return map[string]any{}, nil
+		return n.excuteExplain(), nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
