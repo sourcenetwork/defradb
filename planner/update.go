@@ -35,10 +35,22 @@ type updateNode struct {
 	isUpdating bool
 
 	results planNode
+
+	execInfo updateExecInfo
+}
+
+type updateExecInfo struct {
+	// Total number of times updateNode was executed.
+	iterations uint64
+
+	// Total number of successful updates.
+	updates uint64
 }
 
 // Next only returns once.
 func (n *updateNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	if n.isUpdating {
 		for {
 			next, err := n.results.Next()
@@ -58,6 +70,8 @@ func (n *updateNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
+
+			n.execInfo.updates++
 		}
 		n.isUpdating = false
 
@@ -129,7 +143,10 @@ func (n *updateNode) Explain(explainType request.ExplainType) (map[string]any, e
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return nil, nil
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+			"updates":    n.execInfo.updates,
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
