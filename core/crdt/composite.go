@@ -149,7 +149,10 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 // If it doesn't, it adds it to the store.
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
 	if delta.GetStatus().IsDeleted() {
-		c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
+		err := c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
+		if err != nil {
+			return err
+		}
 		return c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldId(""))
 	}
 

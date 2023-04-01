@@ -229,14 +229,12 @@ func (c *collection) applyDelete(
 	if !status.IsDeleted() {
 		return NewErrInvalidDeleteStatus(status)
 	}
-	fmt.Println(key)
 
 	found, isDeleted, err := c.exists(ctx, txn, key)
 	if err != nil {
 		return err
 	}
 	if !found || isDeleted {
-		fmt.Println("not found")
 		return client.ErrDocumentNotFound
 	}
 
@@ -248,8 +246,6 @@ func (c *collection) applyDelete(
 	)
 	cids, _, err := headset.List(ctx)
 	if err != nil {
-		fmt.Println("headset err")
-
 		return err
 	}
 
@@ -271,17 +267,12 @@ func (c *collection) applyDelete(
 		status,
 	)
 	if err != nil {
-		fmt.Println("save crdt err")
-
 		return err
 	}
 
 	if c.db.events.Updates.HasValue() {
-		fmt.Println("before publish")
 		txn.OnSuccess(
 			func() {
-				fmt.Println("publish")
-
 				c.db.events.Updates.Value().Publish(
 					events.Update{
 						DocKey:   key.DocKey,
