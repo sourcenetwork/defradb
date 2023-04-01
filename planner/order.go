@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -59,6 +60,13 @@ type orderNode struct {
 	// indicates if our underlying orderStrategy is still
 	// consuming and sorting data.
 	needSort bool
+
+	execInfo orderExecInfo
+}
+
+type orderExecInfo struct {
+	// Total number of times orderNode was executed.
+	iterations uint64
 }
 
 // OrderBy creates a new orderNode which returns the underlying
@@ -96,9 +104,7 @@ func (n *orderNode) Value() core.Doc {
 	return n.valueIter.Value()
 }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *orderNode) Explain() (map[string]any, error) {
+func (n *orderNode) simpleExplain() (map[string]any, error) {
 	orderings := []map[string]any{}
 
 	for _, element := range n.ordering {
@@ -128,7 +134,26 @@ func (n *orderNode) Explain() (map[string]any, error) {
 	}, nil
 }
 
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *orderNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
+}
+
 func (n *orderNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	for n.needSort {
 		// make sure our orderStrategy is initialized
 		if n.orderStrategy == nil {

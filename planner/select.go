@@ -76,7 +76,7 @@ func (n *selectTopNode) Source() planNode { return n.planNode }
 
 // Explain method for selectTopNode returns no attributes but is used to
 // subscribe / opt-into being an explainablePlanNode.
-func (n *selectTopNode) Explain() (map[string]any, error) {
+func (n *selectTopNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	// No attributes are returned for selectTopNode.
 	return nil, nil
 }
@@ -119,6 +119,16 @@ type selectNode struct {
 
 	selectReq    *mapper.Select
 	groupSelects []*mapper.Select
+
+	execInfo selectExecInfo
+}
+
+type selectExecInfo struct {
+	// Total number of times selectNode was executed.
+	iterations uint64
+
+	// Total number of times top level select filter passed / matched.
+	filterMatches uint64
 }
 
 func (n *selectNode) Kind() string {
@@ -138,6 +148,8 @@ func (n *selectNode) Start() error {
 // remaining top level filtering, and
 // renders the doc.
 func (n *selectNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	for {
 		if hasNext, err := n.source.Next(); !hasNext {
 			return false, err
@@ -153,6 +165,8 @@ func (n *selectNode) Next() (bool, error) {
 			continue
 		}
 
+		n.execInfo.filterMatches++
+
 		if n.docKeys.HasValue() {
 			docKey := n.currentValue.GetKey()
 			for _, key := range n.docKeys.Value() {
@@ -160,6 +174,7 @@ func (n *selectNode) Next() (bool, error) {
 					return true, nil
 				}
 			}
+
 			continue
 		}
 
@@ -175,19 +190,35 @@ func (n *selectNode) Close() error {
 	return n.source.Close()
 }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *selectNode) Explain() (map[string]any, error) {
-	explainerMap := map[string]any{}
+func (n *selectNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{}
 
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.ExternalConditions == nil {
-		explainerMap[filterLabel] = nil
+		simpleExplainMap[filterLabel] = nil
 	} else {
-		explainerMap[filterLabel] = n.filter.ExternalConditions
+		simpleExplainMap[filterLabel] = n.filter.ExternalConditions
 	}
 
-	return explainerMap, nil
+	return simpleExplainMap, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *selectNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations":    n.execInfo.iterations,
+			"filterMatches": n.execInfo.filterMatches,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 // initSource is the main workhorse for recursively constructing

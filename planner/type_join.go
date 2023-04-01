@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -51,17 +52,16 @@ type typeIndexJoin struct {
 
 	p *Planner
 
-	// root        planNode
-	// subType     planNode
-	// subTypeName string
-
 	// actual join plan, could be one of several strategies
 	// based on the relationship of the sub types
 	joinPlan planNode
 
-	// doc map[string]any
+	execInfo typeIndexJoinExecInfo
+}
 
-	// spans core.Spans
+type typeIndexJoinExecInfo struct {
+	// Total number of times typeIndexJoin node was executed.
+	iterations uint64
 }
 
 func (p *Planner) makeTypeIndexJoin(
@@ -117,6 +117,8 @@ func (n *typeIndexJoin) Spans(spans core.Spans) {
 }
 
 func (n *typeIndexJoin) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	return n.joinPlan.Next()
 }
 
@@ -130,9 +132,7 @@ func (n *typeIndexJoin) Close() error {
 
 func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *typeIndexJoin) Explain() (map[string]any, error) {
+func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 	const (
 		joinTypeLabel               = "joinType"
 		joinDirectionLabel          = "direction"
@@ -143,23 +143,23 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		joinRootLabel               = "rootName"
 	)
 
-	explainerMap := map[string]any{}
+	simpleExplainMap := map[string]any{}
 
 	// Add the type attribute.
-	explainerMap[joinTypeLabel] = n.joinPlan.Kind()
+	simpleExplainMap[joinTypeLabel] = n.joinPlan.Kind()
 
 	switch joinType := n.joinPlan.(type) {
 	case *typeJoinOne:
 		// Add the direction attribute.
 		if joinType.primary {
-			explainerMap[joinDirectionLabel] = joinDirectionPrimaryLabel
+			simpleExplainMap[joinDirectionLabel] = joinDirectionPrimaryLabel
 		} else {
-			explainerMap[joinDirectionLabel] = joinDirectionSecondaryLabel
+			simpleExplainMap[joinDirectionLabel] = joinDirectionSecondaryLabel
 		}
 
 		// Add the attribute(s).
-		explainerMap[joinRootLabel] = joinType.subTypeFieldName
-		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
+		simpleExplainMap[joinRootLabel] = joinType.subTypeFieldName
+		simpleExplainMap[joinSubTypeNameLabel] = joinType.subTypeName
 
 		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
 		if err != nil {
@@ -167,12 +167,12 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		}
 
 		// Add the joined (subType) type's entire explain graph.
-		explainerMap[joinSubTypeLabel] = subTypeExplainGraph
+		simpleExplainMap[joinSubTypeLabel] = subTypeExplainGraph
 
 	case *typeJoinMany:
 		// Add the attribute(s).
-		explainerMap[joinRootLabel] = joinType.rootName
-		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
+		simpleExplainMap[joinRootLabel] = joinType.rootName
+		simpleExplainMap[joinSubTypeNameLabel] = joinType.subTypeName
 
 		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
 		if err != nil {
@@ -180,13 +180,30 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		}
 
 		// Add the joined (subType) type's entire explain graph.
-		explainerMap[joinSubTypeLabel] = subTypeExplainGraph
+		simpleExplainMap[joinSubTypeLabel] = subTypeExplainGraph
 
 	default:
-		return explainerMap, client.NewErrUnhandledType("join plan", n.joinPlan)
+		return simpleExplainMap, client.NewErrUnhandledType("join plan", n.joinPlan)
 	}
 
-	return explainerMap, nil
+	return simpleExplainMap, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 // Merge implements mergeNode
