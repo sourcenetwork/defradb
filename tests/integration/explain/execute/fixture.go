@@ -100,6 +100,8 @@ func create3BookDocuments() []testUtils.CreateDoc {
 			CollectionID: 1,
 			Doc: `{
 					"name": "Painted House",
+					"pages": 78,
+					"chapterPages": [1, 22, 33, 44, 55, 66],
 					"author_id": "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138"
 				}`,
 		},
@@ -107,6 +109,8 @@ func create3BookDocuments() []testUtils.CreateDoc {
 			CollectionID: 1,
 			Doc: `{
 					"name": "A Time for Mercy",
+					"pages": 333,
+					"chapterPages": [0, 22, 101, 321],
 					"author_id": "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138"
 				}`,
 		},
@@ -114,6 +118,7 @@ func create3BookDocuments() []testUtils.CreateDoc {
 			CollectionID: 1,
 			Doc: `{
 					"name": "Theif Lord",
+					"pages": 20,
 					"author_id": "bae-68cb395d-df73-5bcb-b623-615a140dee12"
 				}`,
 		},

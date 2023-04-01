@@ -26,6 +26,13 @@ type averageNode struct {
 	sumFieldIndex     int
 	countFieldIndex   int
 	virtualFieldIndex int
+
+	execInfo averageExecInfo
+}
+
+type averageExecInfo struct {
+	// Total number of times averageNode was executed.
+	iterations uint64
 }
 
 func (p *Planner) Average(
@@ -64,6 +71,8 @@ func (n *averageNode) Close() error           { return n.plan.Close() }
 func (n *averageNode) Source() planNode       { return n.plan }
 
 func (n *averageNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	hasNext, err := n.plan.Next()
 	if err != nil || !hasNext {
 		return hasNext, err
@@ -101,5 +110,16 @@ func (n *averageNode) SetPlan(p planNode) { n.plan = p }
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *averageNode) Explain(explainType request.ExplainType) (map[string]any, error) {
-	return map[string]any{}, nil
+	switch explainType {
+	case request.SimpleExplain:
+		return map[string]any{}, nil
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
