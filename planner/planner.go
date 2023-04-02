@@ -158,7 +158,7 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 		return p.UpdateDocs(stmt)
 
 	case mapper.DeleteObjects:
-		return p.DeleteDocs(stmt, client.Deleted)
+		return p.DeleteDocs(stmt)
 
 	default:
 		return nil, client.NewErrUnhandledType("mutation", stmt.Type)
