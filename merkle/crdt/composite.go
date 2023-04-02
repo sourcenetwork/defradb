@@ -86,20 +86,34 @@ func NewMerkleCompositeDAG(
 	}
 }
 
+// Delete sets the values of CompositeDAG for a delete.
+func (m *MerkleCompositeDAG) Delete(
+	ctx context.Context,
+	links []core.DAGLink,
+) (ipld.Node, uint64, error) {
+	// Set() call on underlying CompositeDAG CRDT
+	// persist/publish delta
+	log.Debug(ctx, "Applying delta-mutator 'Delete' on CompositeDAG")
+	delta := m.reg.Set([]byte{}, links)
+	delta.Status = client.Deleted
+	nd, err := m.Publish(ctx, delta)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return nd, delta.GetPriority(), nil
+}
+
 // Set sets the values of CompositeDAG. The value is always the object from the mutation operations.
 func (m *MerkleCompositeDAG) Set(
 	ctx context.Context,
 	patch []byte,
 	links []core.DAGLink,
-	status client.DocumentStatus,
 ) (ipld.Node, uint64, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
-	if status != 0 {
-		delta.Status = status
-	}
 	nd, err := m.Publish(ctx, delta)
 	if err != nil {
 		return nil, 0, err

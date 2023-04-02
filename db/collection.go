@@ -1013,9 +1013,11 @@ func (c *collection) saveValueToMerkleCRDT(
 			if !ok {
 				return nil, 0, ErrUnknownCRDTArgument
 			}
-			return comp.Set(ctx, bytes, links, status)
+			if status.IsDeleted() {
+				return comp.Delete(ctx, links)
+			}
 		}
-		return comp.Set(ctx, bytes, links, 0)
+		return comp.Set(ctx, bytes, links)
 	}
 	return nil, 0, ErrUnknownCRDT
 }
