@@ -59,16 +59,6 @@ func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
-// GetStatus gets the current document status for this delta.
-func (delta *CompositeDAGDelta) GetStatus() client.DocumentStatus {
-	return delta.Status
-}
-
-// SetStatus will set the document status for this delta.
-func (delta *CompositeDAGDelta) SetStatus(status client.DocumentStatus) {
-	delta.Status = status
-}
-
 // Marshal will serialize this delta to a byte array.
 func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
@@ -148,7 +138,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
-	if delta.GetStatus().IsDeleted() {
+	if dagDelta, ok := delta.(*CompositeDAGDelta); ok && dagDelta.Status.IsDeleted() {
 		err := c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
 		if err != nil {
 			return err

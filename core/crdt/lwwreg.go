@@ -53,20 +53,6 @@ func (delta *LWWRegDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
-// GetStatus gets the current document status for this delta.
-//
-// Currently a no-op
-func (delta *LWWRegDelta) GetStatus() client.DocumentStatus {
-	return 0
-}
-
-// SetStatus will set the document status for this delta.
-//
-// Currently a no-op
-func (delta *LWWRegDelta) SetStatus(status client.DocumentStatus) {
-	// No-op
-}
-
 // Marshal encodes the delta using CBOR.
 // for now le'ts do cbor (quick to implement)
 func (delta *LWWRegDelta) Marshal() ([]byte, error) {

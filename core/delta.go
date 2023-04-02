@@ -12,8 +12,6 @@ package core
 
 import (
 	cid "github.com/ipfs/go-cid"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 // Delta represents a delta-state update to delta-CRDT.
@@ -21,8 +19,6 @@ import (
 type Delta interface {
 	GetPriority() uint64
 	SetPriority(uint64)
-	GetStatus() client.DocumentStatus
-	SetStatus(client.DocumentStatus)
 	Marshal() ([]byte, error)
 	Value() any
 }
