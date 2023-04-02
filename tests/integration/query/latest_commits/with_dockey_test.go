@@ -38,7 +38,7 @@ func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeicjgxd46coc73ybx7cvdxk5c6pdbp5nbick4drrlbevgg7a7mhkzy",
+				"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
 				"links": []map[string]any{
 					{
 						"cid":  "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
@@ -75,7 +75,7 @@ func TestQueryLatestCommitsWithDocKeyWithSchemaVersionIdField(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":             "bafybeicjgxd46coc73ybx7cvdxk5c6pdbp5nbick4drrlbevgg7a7mhkzy",
+				"cid":             "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
 				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
 			},
 		},

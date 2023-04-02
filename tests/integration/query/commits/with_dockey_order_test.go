@@ -48,7 +48,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeigk3hiskvcflfgk5cuivr7dnwhwsjlh3vyfkqxyvkpnz72kf5zn7i",
+						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
 						"height": int64(2),
 					},
 					{
@@ -60,7 +60,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeicjgxd46coc73ybx7cvdxk5c6pdbp5nbick4drrlbevgg7a7mhkzy",
+						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
 						"height": int64(1),
 					},
 				},
@@ -107,7 +107,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeicjgxd46coc73ybx7cvdxk5c6pdbp5nbick4drrlbevgg7a7mhkzy",
+						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
 						"height": int64(1),
 					},
 					{
@@ -115,7 +115,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeigk3hiskvcflfgk5cuivr7dnwhwsjlh3vyfkqxyvkpnz72kf5zn7i",
+						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
 						"height": int64(2),
 					},
 				},
@@ -162,15 +162,15 @@ func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeigk3hiskvcflfgk5cuivr7dnwhwsjlh3vyfkqxyvkpnz72kf5zn7i",
-						"height": int64(2),
-					},
-					{
 						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeicjgxd46coc73ybx7cvdxk5c6pdbp5nbick4drrlbevgg7a7mhkzy",
+						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"height": int64(2),
+					},
+					{
+						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
 						"height": int64(1),
 					},
 				},
@@ -209,15 +209,15 @@ func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafybeicjgxd46coc73ybx7cvdxk5c6pdbp5nbick4drrlbevgg7a7mhkzy",
+						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeigk3hiskvcflfgk5cuivr7dnwhwsjlh3vyfkqxyvkpnz72kf5zn7i",
+						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
 						"height": int64(2),
 					},
 					{
@@ -286,7 +286,7 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeicjgxd46coc73ybx7cvdxk5c6pdbp5nbick4drrlbevgg7a7mhkzy",
+						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
 						"height": int64(1),
 					},
 					{
@@ -294,7 +294,7 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeigk3hiskvcflfgk5cuivr7dnwhwsjlh3vyfkqxyvkpnz72kf5zn7i",
+						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
 						"height": int64(2),
 					},
 					{
@@ -302,7 +302,7 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 						"height": int64(3),
 					},
 					{
-						"cid":    "bafybeihjmxcpf7ab7uzktqs7d7mt5hytrkchzsqz4j2ab3gwhqlpulbfsu",
+						"cid":    "bafybeid2arccjpsmmocarl6s3fe7ygstbdlpujlksuflukmun4bvf5g4oe",
 						"height": int64(3),
 					},
 					{
@@ -310,7 +310,7 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 						"height": int64(4),
 					},
 					{
-						"cid":    "bafybeicnmkwcoopkwy2cah3jyxmxjvsp65sl2e6d5mqb5ygfdyjvfbydhi",
+						"cid":    "bafybeifyiqii323sy5xvqkltdaj5wb4p2zsotepcmv6zqxfr73lky24qw4",
 						"height": int64(4),
 					},
 				},
