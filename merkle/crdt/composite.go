@@ -97,7 +97,9 @@ func (m *MerkleCompositeDAG) Set(
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
-	delta.SetStatus(status)
+	if status != 0 {
+		delta.Status = status
+	}
 	nd, err := m.Publish(ctx, delta)
 	if err != nil {
 		return nil, 0, err

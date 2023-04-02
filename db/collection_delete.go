@@ -114,7 +114,7 @@ func (c *collection) deleteWithKey(
 ) (*client.DeleteResult, error) {
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
-	err := c.applyDelete(ctx, txn, key, status)
+	err := c.applyDelete(ctx, txn, key)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (c *collection) deleteWithKeys(
 		dsKey := c.getPrimaryKeyFromDocKey(key)
 
 		// Apply the function that will perform the full deletion of this document.
-		err := c.applyDelete(ctx, txn, dsKey, status)
+		err := c.applyDelete(ctx, txn, dsKey)
 		if err != nil {
 			return nil, err
 		}
@@ -206,7 +206,7 @@ func (c *collection) deleteWithFilter(
 		}
 
 		// Delete the document that is associated with this key we got from the filter.
-		err = c.applyDelete(ctx, txn, key, status)
+		err = c.applyDelete(ctx, txn, key)
 		if err != nil {
 			return nil, err
 		}
@@ -224,18 +224,16 @@ func (c *collection) applyDelete(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
-	status client.DocumentStatus,
 ) error {
-	if !status.IsDeleted() {
-		return NewErrInvalidDeleteStatus(status)
-	}
-
 	found, isDeleted, err := c.exists(ctx, txn, key)
 	if err != nil {
 		return err
 	}
-	if !found || isDeleted {
+	if !found {
 		return client.ErrDocumentNotFound
+	}
+	if isDeleted {
+		return ErrDocumentDeleted
 	}
 
 	dsKey := key.ToDataStoreKey()
@@ -264,7 +262,7 @@ func (c *collection) applyDelete(
 		client.COMPOSITE,
 		[]byte{},
 		dagLinks,
-		status,
+		client.Deleted,
 	)
 	if err != nil {
 		return err
