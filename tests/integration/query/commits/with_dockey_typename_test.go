@@ -45,7 +45,7 @@ func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
 						"__typename": "Commit",
 					},
 					{
-						"cid":        "bafybeihalsnuslda2ccygeq45nmrhspcg2yae56vsw7podra37a7ugemly",
+						"cid":        "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
 						"__typename": "Commit",
 					},
 				},

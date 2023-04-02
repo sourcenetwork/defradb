@@ -641,6 +641,8 @@ func getTopLevelInfo(
 		// the typeName index is dynamic, but the field indexes are not
 		mapping.SetTypeName(collectionName)
 
+		mapping.Add(mapping.GetNextIndex(), request.DeletedFieldName)
+
 		return mapping, &desc, nil
 	}
 
@@ -856,12 +858,13 @@ func ToMutation(ctx context.Context, txn datastore.Txn, mutationRequest *request
 
 func toTargetable(index int, selectRequest *request.Select, docMap *core.DocumentMapping) Targetable {
 	return Targetable{
-		Field:   toField(index, selectRequest),
-		DocKeys: selectRequest.DocKeys,
-		Filter:  ToFilter(selectRequest.Filter, docMap),
-		Limit:   toLimit(selectRequest.Limit, selectRequest.Offset),
-		GroupBy: toGroupBy(selectRequest.GroupBy, docMap),
-		OrderBy: toOrderBy(selectRequest.OrderBy, docMap),
+		Field:       toField(index, selectRequest),
+		DocKeys:     selectRequest.DocKeys,
+		Filter:      ToFilter(selectRequest.Filter, docMap),
+		Limit:       toLimit(selectRequest.Limit, selectRequest.Offset),
+		GroupBy:     toGroupBy(selectRequest.GroupBy, docMap),
+		OrderBy:     toOrderBy(selectRequest.OrderBy, docMap),
+		ShowDeleted: selectRequest.ShowDeleted,
 	}
 }
 

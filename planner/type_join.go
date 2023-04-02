@@ -265,6 +265,7 @@ func (p *Planner) makeTypeJoinOne(
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
 		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
+		subType.ShowDeleted = parent.selectReq.ShowDeleted
 	}
 
 	selectPlan, err := p.SubSelect(subType)
@@ -454,6 +455,7 @@ func (p *Planner) makeTypeJoinMany(
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
 		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
+		subType.ShowDeleted = parent.selectReq.ShowDeleted
 	}
 
 	selectPlan, err := p.SubSelect(subType)

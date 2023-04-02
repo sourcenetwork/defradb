@@ -61,6 +61,7 @@ var DefaultFields = concat(
 		keyField,
 		versionField,
 		groupField,
+		deletedField,
 	},
 	aggregateFields,
 )
@@ -70,6 +71,14 @@ var keyField = Field{
 	"type": map[string]any{
 		"kind": "SCALAR",
 		"name": "ID",
+	},
+}
+
+var deletedField = Field{
+	"name": "_deleted",
+	"type": map[string]any{
+		"kind": "SCALAR",
+		"name": "Boolean",
 	},
 }
 
@@ -136,6 +145,13 @@ var dockeysArg = Field{
 			"kind": "NON_NULL",
 			"name": nil,
 		},
+	},
+}
+var showDeletedArg = Field{
+	"name": "showDeleted",
+	"type": map[string]any{
+		"name":        "Boolean",
+		"inputFields": nil,
 	},
 }
 

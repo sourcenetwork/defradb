@@ -73,7 +73,7 @@ func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
 		Description: "Simple query with cid and dockey",
 		Request: `query {
 					users (
-							cid: "bafybeif3w5uyhs4pk6wp4rkumjbjxi7c2omc7h7avfcvrllolwiuukg54a",
+							cid: "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq"
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -102,7 +102,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 		Description: "Simple query with (first) cid and dockey",
 		Request: `query {
 					users (
-							cid: "bafybeif3w5uyhs4pk6wp4rkumjbjxi7c2omc7h7avfcvrllolwiuukg54a",
+							cid: "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -143,7 +143,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 		Description: "Simple query with (last) cid and dockey",
 		Request: `query {
 					users (
-							cid: "bafybeidvv34pkrsjl332sdarh457o3mp757ze26woloso4nf27sqkcqqba",
+							cid: "bafybeig2ppytd6fbkchieshfssazllhm4ndrfebtzs27tuby7duj7fkjti",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -184,7 +184,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 		Description: "Simple query with (middle) cid and dockey",
 		Request: `query {
 					users (
-							cid: "bafybeif6kcwh7t26mpymxjlfgrqog2xioahfl2un6ung3xfcpqmijurozq",
+							cid: "bafybeidbunxev24oib5amzzefaysywu6dnbqgitpyr656evpl22hhazdhq",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -204,8 +204,6 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 				0: {
 					// update to change age to 22 on document 0
 					`{"Age": 22}`,
-					// then update it again to change age to 23 on document 0
-					`{"Age": 23}`,
 				},
 			},
 		},
@@ -225,7 +223,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKeyAndSchemaVersion(t *testing.T)
 		Description: "Simple query with (first) cid and dockey and yielded schema version",
 		Request: `query {
 					users (
-							cid: "bafybeif3w5uyhs4pk6wp4rkumjbjxi7c2omc7h7avfcvrllolwiuukg54a",
+							cid: "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name

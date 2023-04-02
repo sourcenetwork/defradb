@@ -94,6 +94,32 @@ type CreateDoc struct {
 	ExpectedError string
 }
 
+// DeleteDoc will attempt to delete the given document in the given collection
+// using the collection api.
+type DeleteDoc struct {
+	// NodeID may hold the ID (index) of a node to apply this create to.
+	//
+	// If a value is not provided the document will be created in all nodes.
+	NodeID immutable.Option[int]
+
+	// The collection in which this document should be deleted.
+	CollectionID int
+
+	// The index-identifier of the document within the collection.  This is based on
+	// the order in which it was created, not the ordering of the document within the
+	// database.
+	DocID int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+
+	// Setting DontSync to true will prevent waiting for that delete.
+	DontSync bool
+}
+
 // UpdateDoc will attempt to update the given document in the given collection
 // using the collection api.
 type UpdateDoc struct {
@@ -119,6 +145,9 @@ type UpdateDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Setting DontSync to true will prevent waiting for that update.
+	DontSync bool
 }
 
 // Request represents a standard Defra (GQL) request.

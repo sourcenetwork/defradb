@@ -246,6 +246,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 	origScan, ok := n.source.(*scanNode)
 	if ok {
 		origScan.filter = n.filter
+		origScan.showDeleted = n.selectReq.ShowDeleted
 		n.filter = nil
 
 		// If we have both a DocKey and a CID, then we need to run

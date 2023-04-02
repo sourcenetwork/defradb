@@ -352,3 +352,67 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 		simpleTests.ExecuteTestCase(t, test)
 	}
 }
+
+func TestDeletionOfDocumentsWithFilterWithShowDeletedDocumentQuery_Success(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 43
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Andy",
+					"age": 74
+				}`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+						delete_User(filter: {name: {_eq: "John"}}) {
+							_key
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(showDeleted: true) {
+							_deleted
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_deleted": false,
+						"name":     "Andy",
+						"age":      uint64(74),
+					},
+					{
+						"_deleted": true,
+						"name":     "John",
+						"age":      uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+}

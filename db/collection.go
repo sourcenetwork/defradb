@@ -11,6 +11,7 @@
 package db
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -639,12 +640,15 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	}
 
 	// check if doc already exists
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
 	if exists {
 		return ErrDocumentAlreadyExists
+	}
+	if isDeleted {
+		return ErrDocumentDeleted
 	}
 
 	// write value object marker if we have an empty doc
@@ -657,7 +661,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	}
 
 	// write data to DB via MerkleClock/CRDT
-	_, err = c.save(ctx, txn, doc)
+	_, err = c.save(ctx, txn, doc, true)
 	if err != nil {
 		return err
 	}
@@ -676,12 +680,15 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		return client.ErrDocumentNotFound
+	}
+	if isDeleted {
+		return ErrDocumentDeleted
 	}
 
 	err = c.update(ctx, txn, doc)
@@ -698,7 +705,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
 func (c *collection) update(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
-	_, err := c.save(ctx, txn, doc)
+	_, err := c.save(ctx, txn, doc, false)
 	if err != nil {
 		return err
 	}
@@ -716,18 +723,20 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 
 	// Check if document already exists with key
 	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
 
-	if exists {
-		err = c.update(ctx, txn, doc)
-	} else {
-		err = c.create(ctx, txn, doc)
-	}
-	if err != nil {
-		return err
+	if !isDeleted {
+		if exists {
+			err = c.update(ctx, txn, doc)
+		} else {
+			err = c.create(ctx, txn, doc)
+		}
+		if err != nil {
+			return err
+		}
 	}
 	return c.commitImplicitTxn(ctx, txn)
 }
@@ -736,6 +745,7 @@ func (c *collection) save(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
+	isCreate bool,
 ) (cid.Cid, error) {
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
@@ -819,6 +829,7 @@ func (c *collection) save(
 		client.COMPOSITE,
 		buf,
 		links,
+		client.Active,
 	)
 	if err != nil {
 		return cid.Undef, err
@@ -859,79 +870,22 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocKey(key)
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return false, err
 	}
-	if !exists {
+	if !exists || isDeleted {
 		return false, client.ErrDocumentNotFound
 	}
+	if isDeleted {
+		return false, ErrDocumentDeleted
+	}
 
-	// run delete, commit if successful
-	deleted, err := c.delete(ctx, txn, primaryKey)
+	err = c.applyDelete(ctx, txn, primaryKey)
 	if err != nil {
 		return false, err
 	}
-	return deleted, c.commitImplicitTxn(ctx, txn)
-}
-
-// at the moment, delete only does data storage delete.
-// Dag, and head store will soon follow.
-func (c *collection) delete(
-	ctx context.Context,
-	txn datastore.Txn,
-	key core.PrimaryDataStoreKey,
-) (bool, error) {
-	err := txn.Datastore().Delete(ctx, key.ToDS())
-	if err != nil {
-		return false, err
-	}
-
-	// delete value instance
-	keyDS := key.ToDataStoreKey()
-	keyDS.InstanceType = core.ValueKey
-	if _, err = c.deleteWithPrefix(ctx, txn, keyDS); err != nil {
-		return false, err
-	}
-
-	// delete priority instance
-	keyDS.InstanceType = core.PriorityKey
-	return c.deleteWithPrefix(ctx, txn, keyDS)
-}
-
-// deleteWithPrefix will delete all the keys using a prefix query set as the given key.
-func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
-	q := query.Query{
-		Prefix:   key.ToString(),
-		KeysOnly: true,
-	}
-
-	if key.InstanceType == core.ValueKey {
-		err := txn.Datastore().Delete(ctx, key.ToDS())
-		if err != nil {
-			return false, err
-		}
-	}
-
-	res, err := txn.Datastore().Query(ctx, q)
-
-	for e := range res.Next() {
-		if e.Error != nil {
-			return false, err
-		}
-
-		dsKey, err := core.NewDataStoreKey(e.Key)
-		if err != nil {
-			return false, err
-		}
-
-		err = txn.Datastore().Delete(ctx, dsKey.ToDS())
-		if err != nil {
-			return false, err
-		}
-	}
-
-	return true, nil
+	return true, c.commitImplicitTxn(ctx, txn)
 }
 
 // Exists checks if a given document exists with supplied DocKey.
@@ -943,11 +897,11 @@ func (c *collection) Exists(ctx context.Context, key client.DocKey) (bool, error
 	defer c.discardImplicitTxn(ctx, txn)
 
 	primaryKey := c.getPrimaryKeyFromDocKey(key)
-	exists, err := c.exists(ctx, txn, primaryKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return false, err
 	}
-	return exists, c.commitImplicitTxn(ctx, txn)
+	return exists && !isDeleted, c.commitImplicitTxn(ctx, txn)
 }
 
 // check if a document exists with the given key
@@ -955,8 +909,18 @@ func (c *collection) exists(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
-) (bool, error) {
-	return txn.Datastore().Has(ctx, key.ToDS())
+) (exists bool, isDeleted bool, err error) {
+	val, err := txn.Datastore().Get(ctx, key.ToDS())
+	if err != nil && errors.Is(err, ds.ErrNotFound) {
+		return false, false, nil
+	} else if err != nil {
+		return false, false, err
+	}
+	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
+		return true, true, nil
+	}
+
+	return true, false, nil
 }
 
 func (c *collection) saveDocValue(
@@ -1030,22 +994,29 @@ func (c *collection) saveValueToMerkleCRDT(
 		if err != nil {
 			return nil, 0, err
 		}
-		var bytes []byte
-		var links []core.DAGLink
-		var ok bool
+
 		// parse args
-		if len(args) != 2 {
+		if len(args) < 2 {
 			return nil, 0, ErrUnknownCRDTArgument
 		}
-		bytes, ok = args[0].([]byte)
+		bytes, ok := args[0].([]byte)
 		if !ok {
 			return nil, 0, ErrUnknownCRDTArgument
 		}
-		links, ok = args[1].([]core.DAGLink)
+		links, ok := args[1].([]core.DAGLink)
 		if !ok {
 			return nil, 0, ErrUnknownCRDTArgument
 		}
 		comp := merkleCRDT.(*crdt.MerkleCompositeDAG)
+		if len(args) > 2 {
+			status, ok := args[2].(client.DocumentStatus)
+			if !ok {
+				return nil, 0, ErrUnknownCRDTArgument
+			}
+			if status.IsDeleted() {
+				return comp.Delete(ctx, links)
+			}
+		}
 		return comp.Set(ctx, bytes, links)
 	}
 	return nil, 0, ErrUnknownCRDT
