@@ -101,6 +101,7 @@ func (vf *VersionedFetcher) Init(
 	col *client.CollectionDescription,
 	fields []*client.FieldDescription,
 	reverse bool,
+	showDeleted bool,
 ) error {
 	vf.col = col
 	vf.queuedCids = list.New()
@@ -108,7 +109,7 @@ func (vf *VersionedFetcher) Init(
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
-	return vf.DocumentFetcher.Init(col, fields, reverse)
+	return vf.DocumentFetcher.Init(col, fields, reverse, showDeleted)
 }
 
 // Start serializes the correct state according to the Key and CID.

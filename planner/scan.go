@@ -41,6 +41,8 @@ type scanNode struct {
 	fields []*client.FieldDescription
 	docKey []byte
 
+	showDeleted bool
+
 	spans   core.Spans
 	reverse bool
 
@@ -59,7 +61,7 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse, n.showDeleted); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -113,7 +115,11 @@ func (n *scanNode) Next() (bool, error) {
 		if len(n.currentValue.Fields) == 0 {
 			return false, nil
 		}
-
+		n.documentMapping.SetFirstOfName(
+			&n.currentValue,
+			request.DeletedFieldName,
+			n.currentValue.Status.IsDeleted(),
+		)
 		passed, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err

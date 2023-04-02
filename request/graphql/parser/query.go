@@ -111,7 +111,8 @@ func parseSelect(
 		astValue := argument.Value
 
 		// parse filter
-		if prop == request.FilterClause {
+		switch prop {
+		case request.FilterClause:
 			obj := astValue.(*ast.ObjectValue)
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
 			if !ok {
@@ -123,34 +124,34 @@ func parseSelect(
 			}
 
 			slct.Filter = filter
-		} else if prop == request.DocKey { // parse single dockey query field
+		case request.DocKey: // parse single dockey query field
 			val := astValue.(*ast.StringValue)
 			slct.DocKeys = immutable.Some([]string{val.Value})
-		} else if prop == request.DocKeys {
+		case request.DocKeys:
 			docKeyValues := astValue.(*ast.ListValue).Values
 			docKeys := make([]string, len(docKeyValues))
 			for i, value := range docKeyValues {
 				docKeys[i] = value.(*ast.StringValue).Value
 			}
 			slct.DocKeys = immutable.Some(docKeys)
-		} else if prop == request.Cid { // parse single CID query field
+		case request.Cid: // parse single CID query field
 			val := astValue.(*ast.StringValue)
 			slct.CID = immutable.Some(val.Value)
-		} else if prop == request.LimitClause { // parse limit/offset
+		case request.LimitClause: // parse limit/offset
 			val := astValue.(*ast.IntValue)
 			limit, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			slct.Limit = immutable.Some(limit)
-		} else if prop == request.OffsetClause { // parse limit/offset
+		case request.OffsetClause: // parse limit/offset
 			val := astValue.(*ast.IntValue)
 			offset, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			slct.Offset = immutable.Some(offset)
-		} else if prop == request.OrderClause { // parse order by
+		case request.OrderClause: // parse order by
 			obj := astValue.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
@@ -161,7 +162,7 @@ func parseSelect(
 					Conditions: cond,
 				},
 			)
-		} else if prop == request.GroupByClause {
+		case request.GroupByClause:
 			obj := astValue.(*ast.ListValue)
 			fields := make([]string, 0)
 			for _, v := range obj.Values {
@@ -173,6 +174,9 @@ func parseSelect(
 					Fields: fields,
 				},
 			)
+		case request.ShowDeleted:
+			val := astValue.(*ast.BooleanValue)
+			slct.ShowDeleted = val.Value
 		}
 	}
 

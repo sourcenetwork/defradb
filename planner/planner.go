@@ -464,7 +464,6 @@ func (p *Planner) executeRequest(
 			return nil, err
 		}
 	}
-
 	return docs, err
 }
 

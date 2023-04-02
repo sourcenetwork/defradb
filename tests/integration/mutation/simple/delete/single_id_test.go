@@ -210,3 +210,60 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 		simpleTests.ExecuteTestCase(t, test)
 	}
 }
+
+func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery_Success(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 43
+				}`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+						delete_User(id: "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef") {
+							_deleted
+							_key
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						// Note: This should show a `Deleted` status but the order of the planNodes
+						// makes it so the status is requested prior to deleting. If the planNode ordering
+						// can be altered, this can change in the future.
+						"_deleted": false,
+						"_key":     "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(showDeleted: true) {
+							_deleted
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_deleted": true,
+						"name":     "John",
+						"age":      uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+}

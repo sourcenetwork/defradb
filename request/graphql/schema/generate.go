@@ -401,9 +401,12 @@ func (g *Generator) buildTypes(
 			}
 
 			// add _version field
-			fields["_version"] = &gql.Field{
+			fields[request.VersionFieldName] = &gql.Field{
 				Type: gql.NewList(schemaTypes.CommitObject),
 			}
+
+			// add _deleted field
+			fields[request.DeletedFieldName] = &gql.Field{Type: gql.Boolean}
 
 			gqlType, ok := g.manager.schema.TypeMap()[collection.Name]
 			if !ok {
@@ -1128,6 +1131,7 @@ func (g *Generator) genTypeQueryableFieldList(
 			"filter":             schemaTypes.NewArgConfig(config.filter),
 			"groupBy":            schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
 			"order":              schemaTypes.NewArgConfig(config.order),
+			request.ShowDeleted:  schemaTypes.NewArgConfig(gql.Boolean),
 			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
 			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
 		},

@@ -338,3 +338,70 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 		simpleTests.ExecuteTestCase(t, test)
 	}
 }
+
+func TestDeletionOfMultipleDocumentsUsingSingleKeyWithShowDeletedDocumentQuery_Success(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 43
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Andy",
+					"age": 74
+				}`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+						delete_User(ids: ["bae-05de0e64-f300-55b3-8973-5fa79045a083", "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef"]){
+							_key
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-05de0e64-f300-55b3-8973-5fa79045a083",
+					},
+					{
+						"_key": "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(showDeleted: true) {
+							_deleted
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_deleted": true,
+						"name":     "Andy",
+						"age":      uint64(74),
+					},
+					{
+						"_deleted": true,
+						"name":     "John",
+						"age":      uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+}

@@ -150,12 +150,21 @@ func connectPeers(
 				sourceToTargetEvents[waitIndex] += 1
 			}
 
-		case UpdateDoc:
+		case DeleteDoc:
 			// Updates to existing docs should always sync (no-sub required)
-			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
+			if !action.DontSync && action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
 				targetToSourceEvents[waitIndex] += 1
 			}
-			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
+			if !action.DontSync && action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
+				sourceToTargetEvents[waitIndex] += 1
+			}
+
+		case UpdateDoc:
+			// Updates to existing docs should always sync (no-sub required)
+			if !action.DontSync && action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
+				targetToSourceEvents[waitIndex] += 1
+			}
+			if !action.DontSync && action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
 				sourceToTargetEvents[waitIndex] += 1
 			}
 
@@ -240,6 +249,16 @@ func configureReplicator(
 			}
 
 			currentdocID++
+
+		case DeleteDoc:
+			if _, shouldSyncFromTarget := docIDsSyncedToSource[action.DocID]; shouldSyncFromTarget &&
+				action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
+				targetToSourceEvents[waitIndex] += 1
+			}
+
+			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
+				sourceToTargetEvents[waitIndex] += 1
+			}
 
 		case UpdateDoc:
 			if _, shouldSyncFromTarget := docIDsSyncedToSource[action.DocID]; shouldSyncFromTarget &&

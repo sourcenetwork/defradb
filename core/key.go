@@ -36,6 +36,8 @@ const (
 	ValueKey = InstanceType("v")
 	// PriorityKey is a type that represents a priority instance.
 	PriorityKey = InstanceType("p")
+	// DeletedKey is a type that represents a deleted document.
+	DeletedKey = InstanceType("d")
 )
 
 const (
@@ -221,6 +223,12 @@ func (k DataStoreKey) WithValueFlag() DataStoreKey {
 func (k DataStoreKey) WithPriorityFlag() DataStoreKey {
 	newKey := k
 	newKey.InstanceType = PriorityKey
+	return newKey
+}
+
+func (k DataStoreKey) WithDeletedFlag() DataStoreKey {
+	newKey := k
+	newKey.InstanceType = DeletedKey
 	return newKey
 }
 

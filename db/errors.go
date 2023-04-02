@@ -58,6 +58,7 @@ var (
 	ErrInvalidFilter            = errors.New("invalid filter")
 	ErrInvalidOpPath            = errors.New("invalid patch op path")
 	ErrDocumentAlreadyExists    = errors.New("a document with the given dockey already exists")
+	ErrDocumentDeleted          = errors.New("a document with the given dockey has been deleted")
 	ErrUnknownCRDTArgument      = errors.New("invalid CRDT arguments")
 	ErrUnknownCRDT              = errors.New("unknown crdt")
 	ErrSchemaFirstFieldDocKey   = errors.New("collection schema first field must be a DocKey")

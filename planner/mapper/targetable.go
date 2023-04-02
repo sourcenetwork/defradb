@@ -150,16 +150,19 @@ type Targetable struct {
 	// An optional order clause, that can be specified to order results by property
 	// value
 	OrderBy *OrderBy
+
+	ShowDeleted bool
 }
 
 func (t *Targetable) cloneTo(index int) *Targetable {
 	return &Targetable{
-		Field:   *t.Field.cloneTo(index),
-		DocKeys: t.DocKeys,
-		Filter:  t.Filter,
-		Limit:   t.Limit,
-		GroupBy: t.GroupBy,
-		OrderBy: t.OrderBy,
+		Field:       *t.Field.cloneTo(index),
+		DocKeys:     t.DocKeys,
+		Filter:      t.Filter,
+		Limit:       t.Limit,
+		GroupBy:     t.GroupBy,
+		OrderBy:     t.OrderBy,
+		ShowDeleted: t.ShowDeleted,
 	}
 }
 

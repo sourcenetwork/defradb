@@ -248,7 +248,7 @@ func TestDBGetDocument(t *testing.T) {
 
 	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
-	doc, err = col.Get(ctx, key)
+	doc, err = col.Get(ctx, key, false)
 	assert.NoError(t, err)
 
 	// value check
@@ -277,7 +277,7 @@ func TestDBGetNotFoundDocument(t *testing.T) {
 
 	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
-	_, err = col.Get(ctx, key)
+	_, err = col.Get(ctx, key, false)
 	assert.EqualError(t, err, client.ErrDocumentNotFound.Error())
 }
 
