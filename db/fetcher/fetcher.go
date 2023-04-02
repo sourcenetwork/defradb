@@ -61,6 +61,9 @@ type DocumentFetcher struct {
 	kvEnd             bool
 	isReadingDocument bool
 
+	// Since deleted documents are stored under a different instance type than active documents,
+	// we use a parallel fetcher to be able to return the documents in the expected order.
+	// That being lexicographically ordered dockeys.
 	deletedDocFetcher *DocumentFetcher
 }
 
@@ -75,6 +78,26 @@ func (df *DocumentFetcher) Init(
 		return client.NewErrUninitializeProperty("DocumentFetcher", "Schema")
 	}
 
+	err := df.init(col, fields, reverse)
+	if err != nil {
+		return err
+	}
+
+	if showDeleted {
+		if df.deletedDocFetcher == nil {
+			df.deletedDocFetcher = new(DocumentFetcher)
+		}
+		return df.deletedDocFetcher.init(col, fields, reverse)
+	}
+
+	return nil
+}
+
+func (df *DocumentFetcher) init(
+	col *client.CollectionDescription,
+	fields []*client.FieldDescription,
+	reverse bool,
+) error {
 	df.col = col
 	df.fields = fields
 	df.reverse = reverse
@@ -98,38 +121,6 @@ func (df *DocumentFetcher) Init(
 	df.schemaFields = make(map[uint32]client.FieldDescription)
 	for _, field := range col.Schema.Fields {
 		df.schemaFields[uint32(field.ID)] = field
-	}
-	if showDeleted {
-		ddf := df.deletedDocFetcher
-		if ddf == nil {
-			ddf = new(DocumentFetcher)
-		}
-
-		ddf.col = col
-		ddf.fields = fields
-		ddf.reverse = reverse
-		ddf.initialized = true
-		ddf.isReadingDocument = false
-		ddf.doc = new(encodedDocument)
-
-		if ddf.kvResultsIter != nil {
-			if err := ddf.kvResultsIter.Close(); err != nil {
-				return err
-			}
-		}
-		ddf.kvResultsIter = nil
-		if ddf.kvIter != nil {
-			if err := ddf.kvIter.Close(); err != nil {
-				return err
-			}
-		}
-		ddf.kvIter = nil
-
-		ddf.schemaFields = make(map[uint32]client.FieldDescription)
-		for _, field := range col.Schema.Fields {
-			ddf.schemaFields[uint32(field.ID)] = field
-		}
-		df.deletedDocFetcher = ddf
 	}
 	return nil
 }
@@ -424,19 +415,36 @@ func (df *DocumentFetcher) FetchNextDoc(
 	var err error
 	var encdoc *encodedDocument
 	var status client.DocumentStatus
+
+	// If the deletedDocFetcher isn't nil, this means that the user requested to include the deleted documents
+	// in the query. To keep the active and deleted docs in lexicographic order of dockeys, we use the two distinct
+	// fetchers and fetch the one that has the next lowest (or highest if requested in reverse order) dockey value.
 	ddf := df.deletedDocFetcher
 	if ddf != nil {
+		// If we've reached the end of the deleted docs, we can skip to getting the next active docs.
 		if !ddf.kvEnd {
-			if df.kvEnd || ddf.kv.Key.DocKey < df.kv.Key.DocKey {
-				encdoc, err = ddf.FetchNext(ctx)
-				if err != nil {
-					return nil, core.Doc{}, err
+			if df.reverse {
+				if df.kvEnd || ddf.kv.Key.DocKey > df.kv.Key.DocKey {
+					encdoc, err = ddf.FetchNext(ctx)
+					if err != nil {
+						return nil, core.Doc{}, err
+					}
+					status = client.Deleted
 				}
-				status = client.Deleted
+			} else {
+				if df.kvEnd || ddf.kv.Key.DocKey < df.kv.Key.DocKey {
+					encdoc, err = ddf.FetchNext(ctx)
+					if err != nil {
+						return nil, core.Doc{}, err
+					}
+					status = client.Deleted
+				}
 			}
 		}
 	}
 
+	// At this point id encdoc is nil, it means that the next document to be
+	// returned will be from the active ones.
 	if encdoc == nil {
 		encdoc, err = df.FetchNext(ctx)
 		if err != nil {
