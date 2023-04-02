@@ -135,6 +135,5 @@ func (p *Planner) DeleteDocs(parsed *mapper.Mutation, status client.DocumentStat
 		collection: col.WithTxn(p.txn),
 		source:     slctNode,
 		docMapper:  docMapper{&parsed.DocumentMapping},
-		status:     status,
 	}, nil
 }
