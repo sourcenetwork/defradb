@@ -76,6 +76,16 @@ type SubscribeToCollection struct {
 	CollectionIDs []int
 }
 
+// UnsubscribeToCollection removes the given collections from the set of active subscriptions on
+// the given node.
+type UnsubscribeToCollection struct {
+	// NodeID is the node ID (index) of the node in which to remove the subscription.
+	NodeID int
+
+	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
+	CollectionIDs []int
+}
+
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
 // to complete before progressing.
 //
@@ -127,6 +137,20 @@ func connectPeers(
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
 			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionIDs...)
+
+		case UnsubscribeToCollection:
+			// This is order dependent, items should be added in the same action-loop that reads them
+			// as 'stuff' done before collection subscription should not be synced.
+			existingCollectionIndexes := nodeCollections[action.NodeID]
+			for _, collectionIndex := range action.CollectionIDs {
+				for i, existingCollectionIndex := range existingCollectionIndexes {
+					if collectionIndex == existingCollectionIndex {
+						// Remove the matching collection index from the set:
+						existingCollectionIndexes = append(existingCollectionIndexes[:i], existingCollectionIndexes[i+1:]...)
+					}
+				}
+			}
+			nodeCollections[action.NodeID] = existingCollectionIndexes
 
 		case CreateDoc:
 			sourceCollectionSubscribed := collectionSubscribedTo(nodeCollections, cfg.SourceNodeID, action.CollectionID)
@@ -317,6 +341,33 @@ func subscribeToCollection(
 	require.NoError(t, err)
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
+	// for the pubsub subscription and those functions can take a bit of time to complete,
+	// we need to make sure this has finished before progressing.
+	time.Sleep(100 * time.Millisecond)
+}
+
+// unsubscribeToCollection removes the given collections from subscriptions on the given nodes.
+//
+// Any errors generated during this process will result in a test failure.
+func unsubscribeToCollection(
+	ctx context.Context,
+	t *testing.T,
+	action UnsubscribeToCollection,
+	nodes []*node.Node,
+	collections [][]client.Collection,
+) {
+	n := nodes[action.NodeID]
+
+	schemaIDs := []string{}
+	for _, collectionIndex := range action.CollectionIDs {
+		col := collections[action.NodeID][collectionIndex]
+		schemaIDs = append(schemaIDs, col.SchemaID())
+	}
+
+	err := n.Peer.RemoveP2PCollections(schemaIDs)
+	require.NoError(t, err)
+
+	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
 	time.Sleep(100 * time.Millisecond)

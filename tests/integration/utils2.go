@@ -347,6 +347,9 @@ func executeTestCase(
 		case SubscribeToCollection:
 			subscribeToCollection(ctx, t, action, nodes, collections)
 
+		case UnsubscribeToCollection:
+			unsubscribeToCollection(ctx, t, action, nodes, collections)
+
 		case SchemaUpdate:
 			updateSchema(ctx, t, nodes, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
