@@ -72,8 +72,8 @@ type SubscribeToCollection struct {
 	// them to this node.
 	NodeID int
 
-	// CollectionID is the collection ID (index) of the collection to subscribe to.
-	CollectionID int
+	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
+	CollectionIDs []int
 }
 
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
@@ -126,7 +126,7 @@ func connectPeers(
 		case SubscribeToCollection:
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
-			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionID)
+			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionIDs...)
 
 		case CreateDoc:
 			sourceCollectionSubscribed := collectionSubscribedTo(nodeCollections, cfg.SourceNodeID, action.CollectionID)
@@ -306,9 +306,14 @@ func subscribeToCollection(
 	collections [][]client.Collection,
 ) {
 	n := nodes[action.NodeID]
-	col := collections[action.NodeID][action.CollectionID]
 
-	err := n.Peer.AddP2PCollections([]string{col.SchemaID()})
+	schemaIDs := []string{}
+	for _, collectionIndex := range action.CollectionIDs {
+		col := collections[action.NodeID][collectionIndex]
+		schemaIDs = append(schemaIDs, col.SchemaID())
+	}
+
+	err := n.Peer.AddP2PCollections(schemaIDs)
 	require.NoError(t, err)
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
