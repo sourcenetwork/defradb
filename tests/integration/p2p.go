@@ -95,7 +95,15 @@ type UnsubscribeToCollection struct {
 	NodeID int
 
 	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
+	//
+	// A [NonExistantCollectionID] may be provided to test non-existant collection IDs.
 	CollectionIDs []int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // GetAllP2PCollections gets the active subscriptions for the given node and compares them against the
@@ -165,6 +173,11 @@ func connectPeers(
 			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionIDs...)
 
 		case UnsubscribeToCollection:
+			if action.ExpectedError != "" {
+				// If the unsubscribe action is expected to error, then we should do nothing here.
+				continue
+			}
+
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
 			existingCollectionIndexes := nodeCollections[action.NodeID]
@@ -385,6 +398,7 @@ func subscribeToCollection(
 func unsubscribeToCollection(
 	ctx context.Context,
 	t *testing.T,
+	testCase TestCase,
 	action UnsubscribeToCollection,
 	nodes []*node.Node,
 	collections [][]client.Collection,
@@ -393,12 +407,18 @@ func unsubscribeToCollection(
 
 	schemaIDs := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistantCollectionID {
+			schemaIDs = append(schemaIDs, "NonExistantCollectionID")
+			continue
+		}
+
 		col := collections[action.NodeID][collectionIndex]
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
 	err := n.Peer.RemoveP2PCollections(schemaIDs)
-	require.NoError(t, err)
+	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,

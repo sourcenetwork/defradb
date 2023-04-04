@@ -348,7 +348,7 @@ func executeTestCase(
 			subscribeToCollection(ctx, t, testCase, action, nodes, collections)
 
 		case UnsubscribeToCollection:
-			unsubscribeToCollection(ctx, t, action, nodes, collections)
+			unsubscribeToCollection(ctx, t, testCase, action, nodes, collections)
 
 		case GetAllP2PCollections:
 			getAllP2PCollections(ctx, t, action, nodes, collections)

@@ -146,3 +146,55 @@ func TestP2PSubscribeAddAndRemoveMultiple(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users", "Giraffes"}, test)
 }
+
+func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.UnsubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0, testUtils.NonExistantCollectionID},
+				ExpectedError: "datastore: key not found",
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// John has been synced, as the unsubscribe errored and should not have affected
+				// the subscription to collection 0.
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
