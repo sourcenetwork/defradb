@@ -867,7 +867,7 @@ func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 		return nil, err
 	}
 
-	var p2pCols []client.P2PCollection
+	p2pCols := []client.P2PCollection{}
 	for _, colID := range collections {
 		col, err := store.GetCollectionBySchemaID(p.ctx, colID)
 		if err != nil {
