@@ -86,6 +86,16 @@ type UnsubscribeToCollection struct {
 	CollectionIDs []int
 }
 
+// GetAllP2PCollections gets the active subscriptions for the given node and compares them against the
+// expected results.
+type GetAllP2PCollections struct {
+	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
+	NodeID int
+
+	// ExpectedCollectionIDs are the collection IDs (indexes) of the collections expected.
+	ExpectedCollectionIDs []int
+}
+
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
 // to complete before progressing.
 //
@@ -371,6 +381,36 @@ func unsubscribeToCollection(
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
 	time.Sleep(100 * time.Millisecond)
+}
+
+// getAllP2PCollections gets all the active peer subscriptions and compares them against the
+// given expected results.
+//
+// Any errors generated during this process will result in a test failure.
+func getAllP2PCollections(
+	ctx context.Context,
+	t *testing.T,
+	action GetAllP2PCollections,
+	nodes []*node.Node,
+	collections [][]client.Collection,
+) {
+	expectedCollections := []client.P2PCollection{}
+	for _, collectionIndex := range action.ExpectedCollectionIDs {
+		col := collections[action.NodeID][collectionIndex]
+		expectedCollections = append(
+			expectedCollections,
+			client.P2PCollection{
+				ID:   col.SchemaID(),
+				Name: col.Name(),
+			},
+		)
+	}
+
+	n := nodes[action.NodeID]
+	cols, err := n.Peer.GetAllP2PCollections()
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedCollections, cols)
 }
 
 // waitForSync waits for all given wait channels to receive an item signaling completion.

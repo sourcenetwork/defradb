@@ -350,6 +350,9 @@ func executeTestCase(
 		case UnsubscribeToCollection:
 			unsubscribeToCollection(ctx, t, action, nodes, collections)
 
+		case GetAllP2PCollections:
+			getAllP2PCollections(ctx, t, action, nodes, collections)
+
 		case SchemaUpdate:
 			updateSchema(ctx, t, nodes, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
