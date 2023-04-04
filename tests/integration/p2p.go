@@ -61,6 +61,10 @@ type ConfigureReplicator struct {
 	TargetNodeID int
 }
 
+// NonExistantCollectionID can be used to represent a non-existant collection ID, it will be substituted
+// for a non-existant collection ID when used in actions that support this.
+const NonExistantCollectionID int = -1
+
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
 //
 // Changes made to subscribed collections in peers connected to this node will be synced from
@@ -73,7 +77,15 @@ type SubscribeToCollection struct {
 	NodeID int
 
 	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
+	//
+	// A [NonExistantCollectionID] may be provided to test non-existant collection IDs.
 	CollectionIDs []int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // UnsubscribeToCollection removes the given collections from the set of active subscriptions on
@@ -144,6 +156,10 @@ func connectPeers(
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
 		case SubscribeToCollection:
+			if action.ExpectedError != "" {
+				// If the subscription action is expected to error, then we should do nothing here.
+				continue
+			}
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
 			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionIDs...)
@@ -335,6 +351,7 @@ func configureReplicator(
 func subscribeToCollection(
 	ctx context.Context,
 	t *testing.T,
+	testCase TestCase,
 	action SubscribeToCollection,
 	nodes []*node.Node,
 	collections [][]client.Collection,
@@ -343,12 +360,18 @@ func subscribeToCollection(
 
 	schemaIDs := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistantCollectionID {
+			schemaIDs = append(schemaIDs, "NonExistantCollectionID")
+			continue
+		}
+
 		col := collections[action.NodeID][collectionIndex]
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
 	err := n.Peer.AddP2PCollections(schemaIDs)
-	require.NoError(t, err)
+	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,

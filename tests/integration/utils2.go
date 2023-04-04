@@ -345,7 +345,7 @@ func executeTestCase(
 			syncChans = append(syncChans, configureReplicator(ctx, t, testCase, action, nodes, nodeAddresses))
 
 		case SubscribeToCollection:
-			subscribeToCollection(ctx, t, action, nodes, collections)
+			subscribeToCollection(ctx, t, testCase, action, nodes, collections)
 
 		case UnsubscribeToCollection:
 			unsubscribeToCollection(ctx, t, action, nodes, collections)
