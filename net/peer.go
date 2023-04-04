@@ -775,15 +775,29 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 		}
 	}
 
+	// Ensure we can add all the collections to the store on the transaction
+	// before adding to topics.
 	for _, col := range collections {
 		err := store.AddP2PCollection(p.ctx, col)
 		if err != nil {
 			return err
 		}
+	}
+
+	// Add pubsub topics and remove them if we get an error.
+	addedTopics := []string{}
+	for _, col := range collections {
 		err = p.server.addPubSubTopic(col, true)
 		if err != nil {
+			for _, topic := range addedTopics {
+				e := p.server.removePubSubTopic(topic)
+				if e != nil {
+					return errors.WithStack(e, errors.NewKV("Cause", err))
+				}
+			}
 			return err
 		}
+		addedTopics = append(addedTopics, col)
 	}
 
 	return txn.Commit(p.ctx)
@@ -798,16 +812,38 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 	defer txn.Discard(p.ctx)
 	store := p.db.WithTxn(txn)
 
+	// first let's make sure the collections actually exists
+	for _, col := range collections {
+		_, err := store.GetCollectionBySchemaID(p.ctx, col)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Ensure we can remove all the collections to the store on the transaction
+	// before adding to topics.
 	for _, col := range collections {
 		err := store.RemoveP2PCollection(p.ctx, col)
 		if err != nil {
 			return err
 		}
+	}
+
+	// Remove pubsub topics and add them back if we get an error.
+	removedTopics := []string{}
+	for _, col := range collections {
 		err = p.server.removePubSubTopic(col)
 		if err != nil {
+			for _, topic := range removedTopics {
+				e := p.server.addPubSubTopic(topic, true)
+				if e != nil {
+					return errors.WithStack(e, errors.NewKV("Cause", err))
+				}
+			}
 			return err
 		}
 	}
+
 	return txn.Commit(p.ctx)
 }
 
