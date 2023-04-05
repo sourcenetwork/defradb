@@ -320,3 +320,45 @@ func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestP2PSubscribeAddNone(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
