@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package peer_test
+package subscribe_test
 
 import (
 	"testing"
@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
+func TestP2PSubscribeAddAndRemoveSingle(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -26,17 +26,8 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				// Patch the schema on the node that we will directly create a doc on
-				NodeID: immutable.Some(0),
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
-					]
 				`,
 			},
 			testUtils.ConnectPeers{
@@ -47,41 +38,34 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
+			testUtils.UnsubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"Name": "John",
-					"Email": "imnotyourbuddyguy@source.ca"
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"name": "Fred"
 				}`,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				NodeID: immutable.Some(0),
-				Request: `query {
-					Users {
-						Name
-						Email
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"Name":  "John",
-						"Email": "imnotyourbuddyguy@source.ca",
-					},
-				},
-			},
-			testUtils.Request{
-				// John should still be synced to the second node, even though it has
-				// not been updated to contain the new 'Email' field.
+				// John has not been synced, as it was removed from the subscription set
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
-						Name
+						name
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
+						"name": "Fred",
 					},
 				},
 			},
@@ -91,7 +75,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
-func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
+func TestP2PSubscribeAddAndRemoveMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -99,17 +83,80 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
+					}
+					type Giraffes {
+						name: String
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
-				// Patch the schema on the node that we will sync docs to
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0, 1},
+			},
+			testUtils.UnsubscribeToCollection{
+				NodeID: 1,
+				// Unsubscribe from Users, but remain subscribed to Giraffes
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID:       immutable.Some(0),
+				CollectionID: 1,
+				Doc: `{
+					"name": "Gillian"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// John the User has not been synced, as Users was removed from the subscription set.
 				NodeID: immutable.Some(1),
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
-					]
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{},
+			},
+			testUtils.Request{
+				// Gillian the Giraffe has still been synced, as it was not removed from the subscription set.
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Giraffes {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Gillian",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users", "Giraffes"}, test)
+}
+
+func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
 				`,
 			},
 			testUtils.ConnectPeers{
@@ -120,25 +167,29 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
+			testUtils.UnsubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0, testUtils.NonExistantCollectionID},
+				ExpectedError: "datastore: key not found",
+			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				// John should still be synced to the second node, even though it has
-				// been updated with a new 'Email' field that does not exist on the
-				// source node.
+				// John has been synced, as the unsubscribe errored and should not have affected
+				// the subscription to collection 0.
 				Request: `query {
 					Users {
-						Name
+						name
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
+						"name": "John",
 					},
 				},
 			},
@@ -148,7 +199,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
-func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) {
+func TestP2PSubscribeAddSingleAndRemoveNone(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -156,16 +207,8 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				// Patch the schema on all nodes
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
-					]
 				`,
 			},
 			testUtils.ConnectPeers{
@@ -176,25 +219,27 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) 
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
+			testUtils.UnsubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{},
+			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"Name": "John",
-					"Email": "imnotyourbuddyguy@source.ca"
+					"name": "John"
 				}`,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
+				// John has been synced, as nothing was removed from the subscription set
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name":  "John",
-						"Email": "imnotyourbuddyguy@source.ca",
+						"name": "John",
 					},
 				},
 			},
