@@ -125,7 +125,12 @@ func (s *Service) RemoveP2PCollections(
 ) (*pb.RemoveP2PCollectionsReply, error) {
 	log.Debug(ctx, "Received RemoveP2PCollections request")
 
-	return nil, s.peer.RemoveP2PCollections(req.Collections)
+	err := s.peer.RemoveP2PCollections(req.Collections)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.RemoveP2PCollectionsReply{}, nil
 }
 
 // GetAllP2PCollections handles the request to get all P2P collecctions from the stored list.
