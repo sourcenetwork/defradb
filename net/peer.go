@@ -758,7 +758,10 @@ type EvtPubSub struct {
 	Peer peer.ID
 }
 
-// AddP2PCollectionTopic adds the collectionID to the pubsup topics
+// AddP2PCollections adds the given collectionIDs to the pubsup topics.
+//
+// It will error if any of the given collectionIDs are invalid, in such a case some of the
+// changes to the server may still be applied.
 func (p *Peer) AddP2PCollections(collections []string) error {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
@@ -803,7 +806,10 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 	return txn.Commit(p.ctx)
 }
 
-// RemoveP2PCollectionTopics adds the collectionID from the pubsup topics
+// RemoveP2PCollections removes the given collectionIDs from the pubsup topics.
+//
+// It will error if any of the given collectionIDs are invalid, in such a case some of the
+// changes to the server may still be applied.
 func (p *Peer) RemoveP2PCollections(collections []string) error {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
@@ -861,7 +867,7 @@ func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 		return nil, err
 	}
 
-	var p2pCols []client.P2PCollection
+	p2pCols := []client.P2PCollection{}
 	for _, colID := range collections {
 		col, err := store.GetCollectionBySchemaID(p.ctx, colID)
 		if err != nil {

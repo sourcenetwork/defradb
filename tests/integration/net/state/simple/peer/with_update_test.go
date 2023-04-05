@@ -449,8 +449,8 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 				TargetNodeID: 1,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -516,8 +516,8 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 				TargetNodeID: 1,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),

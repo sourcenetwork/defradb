@@ -61,6 +61,10 @@ type ConfigureReplicator struct {
 	TargetNodeID int
 }
 
+// NonExistantCollectionID can be used to represent a non-existant collection ID, it will be substituted
+// for a non-existant collection ID when used in actions that support this.
+const NonExistantCollectionID int = -1
+
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
 //
 // Changes made to subscribed collections in peers connected to this node will be synced from
@@ -72,8 +76,44 @@ type SubscribeToCollection struct {
 	// them to this node.
 	NodeID int
 
-	// CollectionID is the collection ID (index) of the collection to subscribe to.
-	CollectionID int
+	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
+	//
+	// A [NonExistantCollectionID] may be provided to test non-existant collection IDs.
+	CollectionIDs []int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// UnsubscribeToCollection removes the given collections from the set of active subscriptions on
+// the given node.
+type UnsubscribeToCollection struct {
+	// NodeID is the node ID (index) of the node in which to remove the subscription.
+	NodeID int
+
+	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
+	//
+	// A [NonExistantCollectionID] may be provided to test non-existant collection IDs.
+	CollectionIDs []int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// GetAllP2PCollections gets the active subscriptions for the given node and compares them against the
+// expected results.
+type GetAllP2PCollections struct {
+	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
+	NodeID int
+
+	// ExpectedCollectionIDs are the collection IDs (indexes) of the collections expected.
+	ExpectedCollectionIDs []int
 }
 
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
@@ -124,9 +164,32 @@ func connectPeers(
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
 		case SubscribeToCollection:
+			if action.ExpectedError != "" {
+				// If the subscription action is expected to error, then we should do nothing here.
+				continue
+			}
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
-			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionID)
+			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionIDs...)
+
+		case UnsubscribeToCollection:
+			if action.ExpectedError != "" {
+				// If the unsubscribe action is expected to error, then we should do nothing here.
+				continue
+			}
+
+			// This is order dependent, items should be added in the same action-loop that reads them
+			// as 'stuff' done before collection subscription should not be synced.
+			existingCollectionIndexes := nodeCollections[action.NodeID]
+			for _, collectionIndex := range action.CollectionIDs {
+				for i, existingCollectionIndex := range existingCollectionIndexes {
+					if collectionIndex == existingCollectionIndex {
+						// Remove the matching collection index from the set:
+						existingCollectionIndexes = append(existingCollectionIndexes[:i], existingCollectionIndexes[i+1:]...)
+					}
+				}
+			}
+			nodeCollections[action.NodeID] = existingCollectionIndexes
 
 		case CreateDoc:
 			sourceCollectionSubscribed := collectionSubscribedTo(nodeCollections, cfg.SourceNodeID, action.CollectionID)
@@ -301,20 +364,96 @@ func configureReplicator(
 func subscribeToCollection(
 	ctx context.Context,
 	t *testing.T,
+	testCase TestCase,
 	action SubscribeToCollection,
 	nodes []*node.Node,
 	collections [][]client.Collection,
 ) {
 	n := nodes[action.NodeID]
-	col := collections[action.NodeID][action.CollectionID]
 
-	err := n.Peer.AddP2PCollections([]string{col.SchemaID()})
-	require.NoError(t, err)
+	schemaIDs := []string{}
+	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistantCollectionID {
+			schemaIDs = append(schemaIDs, "NonExistantCollectionID")
+			continue
+		}
+
+		col := collections[action.NodeID][collectionIndex]
+		schemaIDs = append(schemaIDs, col.SchemaID())
+	}
+
+	err := n.Peer.AddP2PCollections(schemaIDs)
+	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
 	time.Sleep(100 * time.Millisecond)
+}
+
+// unsubscribeToCollection removes the given collections from subscriptions on the given nodes.
+//
+// Any errors generated during this process will result in a test failure.
+func unsubscribeToCollection(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	action UnsubscribeToCollection,
+	nodes []*node.Node,
+	collections [][]client.Collection,
+) {
+	n := nodes[action.NodeID]
+
+	schemaIDs := []string{}
+	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistantCollectionID {
+			schemaIDs = append(schemaIDs, "NonExistantCollectionID")
+			continue
+		}
+
+		col := collections[action.NodeID][collectionIndex]
+		schemaIDs = append(schemaIDs, col.SchemaID())
+	}
+
+	err := n.Peer.RemoveP2PCollections(schemaIDs)
+	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
+	// for the pubsub subscription and those functions can take a bit of time to complete,
+	// we need to make sure this has finished before progressing.
+	time.Sleep(100 * time.Millisecond)
+}
+
+// getAllP2PCollections gets all the active peer subscriptions and compares them against the
+// given expected results.
+//
+// Any errors generated during this process will result in a test failure.
+func getAllP2PCollections(
+	ctx context.Context,
+	t *testing.T,
+	action GetAllP2PCollections,
+	nodes []*node.Node,
+	collections [][]client.Collection,
+) {
+	expectedCollections := []client.P2PCollection{}
+	for _, collectionIndex := range action.ExpectedCollectionIDs {
+		col := collections[action.NodeID][collectionIndex]
+		expectedCollections = append(
+			expectedCollections,
+			client.P2PCollection{
+				ID:   col.SchemaID(),
+				Name: col.Name(),
+			},
+		)
+	}
+
+	n := nodes[action.NodeID]
+	cols, err := n.Peer.GetAllP2PCollections()
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedCollections, cols)
 }
 
 // waitForSync waits for all given wait channels to receive an item signaling completion.
