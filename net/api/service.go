@@ -110,7 +110,12 @@ func (s *Service) AddP2PCollections(
 ) (*pb.AddP2PCollectionsReply, error) {
 	log.Debug(ctx, "Received AddP2PCollections request")
 
-	return nil, s.peer.AddP2PCollections(req.Collections)
+	err := s.peer.AddP2PCollections(req.Collections)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.AddP2PCollectionsReply{}, nil
 }
 
 // RemoveP2PCollections handles the request to remove P2P collecctions from the stored list.
@@ -120,7 +125,12 @@ func (s *Service) RemoveP2PCollections(
 ) (*pb.RemoveP2PCollectionsReply, error) {
 	log.Debug(ctx, "Received RemoveP2PCollections request")
 
-	return nil, s.peer.RemoveP2PCollections(req.Collections)
+	err := s.peer.RemoveP2PCollections(req.Collections)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.RemoveP2PCollectionsReply{}, nil
 }
 
 // GetAllP2PCollections handles the request to get all P2P collecctions from the stored list.
