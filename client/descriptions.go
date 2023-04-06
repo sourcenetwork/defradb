@@ -188,7 +188,14 @@ type FieldDescription struct {
 	//
 	// It is currently immutable.
 	Name string
-	ID   FieldID
+
+	// ID contains the internal ID of this field.
+	//
+	// Whilst this ID will typically match the field's index within the Schema's Fields
+	// slice, there is no guarentee that they will be the same.
+	//
+	// It is immutable.
+	ID FieldID
 
 	// The data type that this field holds.
 	//
