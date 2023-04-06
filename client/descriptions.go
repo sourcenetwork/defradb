@@ -204,8 +204,11 @@ type FieldDescription struct {
 
 	// Schema contains the schema name of the type this field contains if this field is
 	// a relation field.  Otherwise this will be empty.
-	Schema       string
-	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
+	Schema string
+
+	// RelationName the name of the relationship that this field represents if this field is
+	// a relation field.  Otherwise this will be empty.
+	RelationName string
 
 	// The CRDT Type of this field. If no type has been provided it will default to [LWW_REGISTER].
 	Typ          CType
