@@ -279,47 +279,6 @@ func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string) er
 	return db.patchSchema(ctx, db.txn, patchString)
 }
 
-// UpdateCollection updates the persisted collection description matching the name of the given
-// description, to the values in the given description.
-//
-// It will validate the given description using [ValidateUpdateCollection] before updating it.
-//
-// The collection (including the schema version ID) will only be updated if any changes have actually
-// been made, if the given description matches the current persisted description then no changes will be
-// applied.
-func (db *implicitTxnDB) UpdateCollection(
-	ctx context.Context,
-	desc client.CollectionDescription,
-) (client.Collection, error) {
-	txn, err := db.NewTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	col, err := db.updateCollection(ctx, txn, desc)
-	if err != nil {
-		return nil, err
-	}
-
-	return col, txn.Commit(ctx)
-}
-
-// UpdateCollection updates the persisted collection description matching the name of the given
-// description, to the values in the given description.
-//
-// It will validate the given description using [ValidateUpdateCollection] before updating it.
-//
-// The collection (including the schema version ID) will only be updated if any changes have actually
-// been made, if the given description matches the current persisted description then no changes will be
-// applied.
-func (db *explicitTxnDB) UpdateCollection(
-	ctx context.Context,
-	desc client.CollectionDescription,
-) (client.Collection, error) {
-	return db.updateCollection(ctx, db.txn, desc)
-}
-
 // ValidateUpdateCollection validates that the given collection description is a valid update.
 //
 // Will return true if the given desctiption differs from the current persisted state of the
