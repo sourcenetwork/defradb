@@ -41,6 +41,7 @@ type DB interface {
 	// WithTxn returns a new [client.Store] that respects the given transaction.
 	WithTxn(datastore.Txn) Store
 
+	// Root returns the underlying root store, within which all data managed by Defra is held.
 	Root() datastore.RootStore
 	Blockstore() blockstore.Blockstore
 
