@@ -147,6 +147,7 @@ type Store interface {
 	// this [Store].
 	GetAllCollections(context.Context) ([]Collection, error)
 
+	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(context.Context, string) *RequestResult
 }
 
