@@ -18,7 +18,7 @@ import (
 type CollectionDescription struct {
 	// Name contains the name of the collection.
 	//
-	// It is conceptually local to node hosting the DefraDB instance, but currently there
+	// It is conceptually local to the node hosting the DefraDB instance, but currently there
 	// is no means to update the local value so that it differs from the (global) schema name.
 	Name string
 
