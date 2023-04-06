@@ -155,6 +155,10 @@ type Store interface {
 //
 // It does not handle subscription channels. This object and its children are json serializable.
 type GQLResult struct {
+	// Errors contains any errors generated whilst attempting to execute the request.
+	//
+	// If there are values in this slice the request will likely not have run to completion
+	// and [Data] will be nil.
 	Errors []any `json:"errors,omitempty"`
 	Data   any   `json:"data"`
 }
