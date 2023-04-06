@@ -72,8 +72,15 @@ type SchemaDescription struct {
 	// It is generated on mutation of this schema and can be used to uniquely
 	// identify a schema at a specific version.
 	VersionID string
-	Name      string
-	Fields    []FieldDescription
+
+	// Name is the name of this Schema.
+	//
+	// It is currently used to define the Collection Name, and as such these two properties
+	// will currently share the same name.
+	//
+	// It is immutable.
+	Name   string
+	Fields []FieldDescription
 }
 
 // IsEmpty returns true if the SchemaDescription is empty and uninitialized
