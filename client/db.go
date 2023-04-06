@@ -66,6 +66,10 @@ type DB interface {
 	// Note: it does not copy the queue, just the reference to it.
 	Events() events.Events
 
+	// MaxTxnRetries returns the number of retries that this Defra instance has been configured to
+	// make in the event of a transaction conflict in certain scenarios.
+	//
+	// Currently this is only used within the P2P system and will not affect operations initiated by users.
 	MaxTxnRetries() int
 
 	PrintDump(ctx context.Context) error
