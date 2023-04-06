@@ -181,7 +181,7 @@ func (cfg *Config) validate() error {
 
 func (cfg *Config) paramsPreprocessing() error {
 	// We prefer using absolute paths.
-	if !filepath.IsAbs(cfg.Datastore.Badger.Path) {
+	if !filepath.IsAbs(cfg.v.GetString("datastore.badger.path")) {
 		cfg.v.Set("datastore.badger.path", filepath.Join(cfg.Rootdir, cfg.v.GetString("datastore.badger.path")))
 	}
 
