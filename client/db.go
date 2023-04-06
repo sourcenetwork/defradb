@@ -27,8 +27,17 @@ type DB interface {
 	// access to common database read and write operations.
 	Store
 
+	// NewTxn returns a new transaction on the root store that may be managed externally.
+	//
+	// It may be used with other functions in the client package. It is not threadsafe.
 	NewTxn(context.Context, bool) (datastore.Txn, error)
+
+	// NewConcurrentTxn returns a new transaction on the root store that may be managed externally.
+	//
+	// It may be used with other functions in the client package. It is threadsafe and mutliple threads/Go routines
+	// can safely operate on it concurrently.
 	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
+
 	// WithTxn returns a new [client.Store] that respects the given transaction.
 	WithTxn(datastore.Txn) Store
 
