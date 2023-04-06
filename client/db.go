@@ -78,6 +78,7 @@ type DB interface {
 	PrintDump(ctx context.Context) error
 }
 
+// Store contains the core Defra read-write operations.
 type Store interface {
 	// P2P holds the P2P related methods that must be implemented by the database.
 	P2P
