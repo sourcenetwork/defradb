@@ -142,6 +142,9 @@ type Store interface {
 	//
 	// If no matching collection is found an error will be returned.
 	GetCollectionByVersionID(context.Context, string) (Collection, error)
+
+	// GetAllCollections returns all the collections and their descriptions that currently exist within
+	// this [Store].
 	GetAllCollections(context.Context) ([]Collection, error)
 
 	ExecRequest(context.Context, string) *RequestResult
