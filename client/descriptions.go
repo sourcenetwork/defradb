@@ -211,6 +211,8 @@ type FieldDescription struct {
 	RelationName string
 
 	// The CRDT Type of this field. If no type has been provided it will default to [LWW_REGISTER].
+	//
+	// It is currently immutable.
 	Typ          CType
 	RelationType RelationType
 	// @todo: Add relation name for specifying target relation index
