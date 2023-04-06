@@ -66,5 +66,5 @@ var getAllP2PCollectionCmd = &cobra.Command{
 }
 
 func init() {
-	replicatorCmd.AddCommand(getAllP2PCollectionCmd)
+	p2pCollectionCmd.AddCommand(getAllP2PCollectionCmd)
 }
