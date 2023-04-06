@@ -60,6 +60,10 @@ type DB interface {
 	// the provided rootstore.
 	Close(context.Context)
 
+	// Events returns the database event queue.
+	//
+	// It may be used to monitor database events - a new event will be yielded for each mutation.
+	// Note: it does not copy the queue, just the reference to it.
 	Events() events.Events
 
 	MaxTxnRetries() int
