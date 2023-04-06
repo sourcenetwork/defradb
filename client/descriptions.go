@@ -218,11 +218,6 @@ type FieldDescription struct {
 	// RelationType contains the relationship type if this field is a relation field. Otherwise this
 	// will be empty.
 	RelationType RelationType
-	// @todo: Add relation name for specifying target relation index
-	// @body: If a type has two User sub objects, you need to specify the relation
-	// name used. By default the relation name is "rootType_subType". However,
-	// if you have two of the same sub types, then you need to specify to
-	// avoid collision.
 }
 
 // IsObject returns true if this field is an object type.
