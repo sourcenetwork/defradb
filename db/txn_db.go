@@ -209,8 +209,11 @@ func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collec
 	return db.getAllCollections(ctx, db.txn)
 }
 
-// AddSchema takes the provided schema in SDL format, and applies it to the database,
-// and creates the necessary collections, request types, etc.
+// AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
+// creating the necessary collections, request types, etc.
+//
+// All schema types provided must not exist prior to calling this, and they may not reference existing
+// types previously defined.
 func (db *implicitTxnDB) AddSchema(ctx context.Context, schemaString string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
@@ -226,8 +229,11 @@ func (db *implicitTxnDB) AddSchema(ctx context.Context, schemaString string) err
 	return txn.Commit(ctx)
 }
 
-// AddSchema takes the provided schema in SDL format, and applies it to the database,
-// and creates the necessary collections, request types, etc.
+// AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
+// creating the necessary collections, request types, etc.
+//
+// All schema types provided must not exist prior to calling this, and they may not reference existing
+// types previously defined.
 func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) error {
 	return db.addSchema(ctx, db.txn, schemaString)
 }
