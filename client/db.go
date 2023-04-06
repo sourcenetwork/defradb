@@ -72,6 +72,9 @@ type DB interface {
 	// Currently this is only used within the P2P system and will not affect operations initiated by users.
 	MaxTxnRetries() int
 
+	// PrintDump logs the entire contents of the rootstore (all the data managed by this Defra instance).
+	//
+	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
 }
 
