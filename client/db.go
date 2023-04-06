@@ -19,11 +19,11 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
-// DB is the primary public programmatic access point to the local Defra instance.
+// DB is the primary public programmatic access point to the local DefraDB instance.
 //
 // It should be contructed via the [db] package, via the [db.NewDB] function.
 type DB interface {
-	// Store contains Defra database functions protected by an internal, short-lived, transaction, allowing safe
+	// Store contains DefraDB functions protected by an internal, short-lived, transaction, allowing safe
 	// access to common database read and write operations.
 	Store
 
@@ -41,10 +41,10 @@ type DB interface {
 	// WithTxn returns a new [client.Store] that respects the given transaction.
 	WithTxn(datastore.Txn) Store
 
-	// Root returns the underlying root store, within which all data managed by Defra is held.
+	// Root returns the underlying root store, within which all data managed by DefraDB is held.
 	Root() datastore.RootStore
 
-	// Blockstore returns the blockstore, within which all blocks (commits) managed by Defra are held.
+	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
 	//
 	// It sits within the rootstore returned by [Root].
 	Blockstore() blockstore.Blockstore
@@ -66,19 +66,19 @@ type DB interface {
 	// Note: it does not copy the queue, just the reference to it.
 	Events() events.Events
 
-	// MaxTxnRetries returns the number of retries that this Defra instance has been configured to
+	// MaxTxnRetries returns the number of retries that this DefraDB instance has been configured to
 	// make in the event of a transaction conflict in certain scenarios.
 	//
 	// Currently this is only used within the P2P system and will not affect operations initiated by users.
 	MaxTxnRetries() int
 
-	// PrintDump logs the entire contents of the rootstore (all the data managed by this Defra instance).
+	// PrintDump logs the entire contents of the rootstore (all the data managed by this DefraDB instance).
 	//
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
 }
 
-// Store contains the core Defra read-write operations.
+// Store contains the core DefraDB read-write operations.
 type Store interface {
 	// P2P holds the P2P related methods that must be implemented by the database.
 	P2P
