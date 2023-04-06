@@ -79,7 +79,11 @@ type SchemaDescription struct {
 	// will currently share the same name.
 	//
 	// It is immutable.
-	Name   string
+	Name string
+
+	// Fields contains the fields within this Schema.
+	//
+	// Currently new fields may be added after initial declaration, but they cannot be removed.
 	Fields []FieldDescription
 }
 
