@@ -20,7 +20,11 @@ type CollectionDescription struct {
 	//
 	// It is conceptually local to node hosting the DefraDB instance, but currently there
 	// is no means to update the local value so that it differs from the (global) schema name.
-	Name   string
+	Name string
+
+	// ID is the local identifier of this collection.
+	//
+	// It is immutable.
 	ID     uint32
 	Schema SchemaDescription
 }
