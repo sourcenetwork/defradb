@@ -60,48 +60,6 @@ func (col CollectionDescription) GetRelation(name string) (FieldDescription, boo
 	return FieldDescription{}, false
 }
 
-// IndexDescription describes an Index on a Collection and its associated metadata.
-type IndexDescription struct {
-	Name     string
-	ID       uint32
-	Primary  bool
-	Unique   bool
-	FieldIDs []uint32
-
-	// Junction is a special field, it indicates if this Index is
-	// being used as a junction table for a Many-to-Many relation.
-	// A Junction index needs to index the DocKey from two different
-	// collections, so the usual method of storing the indexed fields
-	// in the FieldIDs property won't work, since thats scoped to the
-	// local schema.
-	//
-	// The Junction stores the DocKey of the type its assigned to,
-	// and the DocKey of the target relation type. Moreover, since
-	// we use a Composite Key Index system, the ordering of the keys
-	// affects how we can use in the index. The initial Junction
-	// Index for a type, needs to be assigned to the  "Primary"
-	// type in the Many-to-Many relation. This is usually the type
-	// that expects more reads from.
-	//
-	// Eg:
-	// A Book type can have many Categories,
-	// and Categories can belong to many Books.
-	//
-	// If we request Books more, then Categories directly, then
-	// we can set the Book type as the Primary type.
-	Junction bool
-
-	// RelationType is only used in the Index is a Junction Index.
-	// It specifies what the other type is in the Many-to-Many
-	// relationship.
-	RelationType string
-}
-
-// IDString returns the index ID as a string.
-func (index IndexDescription) IDString() string {
-	return fmt.Sprint(index.ID)
-}
-
 // SchemaDescription describes a Schema and its associated metadata.
 type SchemaDescription struct {
 	// SchemaID is the version agnostic identifier for this schema.
