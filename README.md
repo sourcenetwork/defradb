@@ -383,5 +383,6 @@ DefraDB's code is released under the [Business Source License (BSL)](licenses/BS
 - Shahzad Lone ([@shahzadlone](https://github.com/shahzadlone))
 - Orpheus Lummis ([@orpheuslummis](https://github.com/orpheuslummis))
 - Fred Carle ([@fredcarle](https://github.com/fredcarle))
+- Islam Aliev ([@islamaliev](https://github.com/islamaliev))
 
 You are invited to contribute to DefraDB. Follow the [Contributing guide](./CONTRIBUTING.md) to get started.
