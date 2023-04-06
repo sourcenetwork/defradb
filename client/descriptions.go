@@ -16,6 +16,10 @@ import (
 
 // CollectionDescription describes a Collection and all its associated metadata.
 type CollectionDescription struct {
+	// Name contains the name of the collection.
+	//
+	// It is conceptually local to node hosting the DefraDB instance, but currently there
+	// is no means to update the local value so that it differs from the (global) schema name.
 	Name   string
 	ID     uint32
 	Schema SchemaDescription
