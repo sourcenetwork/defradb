@@ -137,6 +137,10 @@ type Store interface {
 	//
 	// If no matching collection is found an error will be returned.
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
+
+	// GetCollectionBySchemaID attempts to retrieve a collection matching the given schema version ID.
+	//
+	// If no matching collection is found an error will be returned.
 	GetCollectionByVersionID(context.Context, string) (Collection, error)
 	GetAllCollections(context.Context) ([]Collection, error)
 
