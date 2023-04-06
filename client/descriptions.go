@@ -25,7 +25,9 @@ type CollectionDescription struct {
 	// ID is the local identifier of this collection.
 	//
 	// It is immutable.
-	ID     uint32
+	ID uint32
+
+	// Schema contains the data type information that this Collection uses.
 	Schema SchemaDescription
 }
 
