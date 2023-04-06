@@ -23,6 +23,8 @@ import (
 //
 // It should be contructed via the [db] package, via the [db.NewDB] function.
 type DB interface {
+	// Store contains Defra database functions protected by an internal, short-lived, transaction, allowing safe
+	// access to common database read and write operations.
 	Store
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
