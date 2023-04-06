@@ -1,4 +1,4 @@
-.vscode
+# Ignore defradb specific files.
 build/*
 cmd/defradb/defradb
 cmd/genclidocs/genclidocs
@@ -6,3 +6,38 @@ cmd/genmanpages/genmanpages
 coverage.txt
 tests/bench/*.log
 tests/bench/*.svg
+
+# Ignore OS X metadata files.
+.history
+**.DS_Store
+**.DS_Code
+
+# Ignore VS Code files.
+**.vscode
+**.vcs
+
+# Ignore IntelliJ IDEA.
+**.idea
+
+# Ignore vim swap files.
+**.swp
+
+# Ignore tfstate (this should be stored remotely in S3).
+*.tfstate
+**tfstate.*
+
+# Ignore .tfplan files (output of `terraform plan`).
+**.tfplan
+
+# Ignore local terraform installs.
+**.terraform
+**/.terraform/*
+
+# Ignore PEM (ssh and other cert/key) file(s).
+**.pem
+
+# If Terraform crashes, don't commit the crash log.
+crash.log
+
+# Ignore .zip files, such as Lambda Function code slugs.
+**.zip
