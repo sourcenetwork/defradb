@@ -151,6 +151,9 @@ type Store interface {
 	ExecRequest(context.Context, string) *RequestResult
 }
 
+// GQLResult represents the immediate results of a GQL request.
+//
+// It does not handle subscription channels. This object and its children are json serializable.
 type GQLResult struct {
 	Errors []any `json:"errors,omitempty"`
 	Data   any   `json:"data"`
