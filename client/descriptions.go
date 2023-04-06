@@ -184,6 +184,9 @@ func (f FieldID) String() string {
 
 // FieldDescription describes a field on a Schema and its associated metadata.
 type FieldDescription struct {
+	// Name contains the name of this field.
+	//
+	// It is currently immutable.
 	Name string
 	ID   FieldID
 
