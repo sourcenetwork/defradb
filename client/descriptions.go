@@ -200,8 +200,11 @@ type FieldDescription struct {
 	// The data type that this field holds.
 	//
 	// Must contain a valid value. It is currently immutable.
-	Kind         FieldKind
-	Schema       string // If the field is an OBJECT type, then it has a target schema
+	Kind FieldKind
+
+	// Schema contains the schema name of the type this field contains if this field is
+	// a relation field.  Otherwise this will be empty.
+	Schema       string
 	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
 
 	// The CRDT Type of this field. If no type has been provided it will default to [LWW_REGISTER].
