@@ -167,6 +167,7 @@ type GQLResult struct {
 	Data any `json:"data"`
 }
 
+// RequestResult represents the results of a GQL request.
 type RequestResult struct {
 	GQL GQLResult
 	Pub *events.Publisher[events.Update]
