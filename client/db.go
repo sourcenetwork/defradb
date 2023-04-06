@@ -169,6 +169,7 @@ type GQLResult struct {
 
 // RequestResult represents the results of a GQL request.
 type RequestResult struct {
+	// GQL contains the immediate results of the GQL request.
 	GQL GQLResult
 	Pub *events.Publisher[events.Update]
 }
