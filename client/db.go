@@ -83,6 +83,11 @@ type Store interface {
 	// P2P holds the P2P related methods that must be implemented by the database.
 	P2P
 
+	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
+	// creating the necessary collections, request types, etc.
+	//
+	// All schema types provided must not exist prior to calling this, and they may not reference existing
+	// types previously defined.
 	AddSchema(context.Context, string) error
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
