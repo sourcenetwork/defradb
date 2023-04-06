@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
-// DB is the primary public programatic access point to the local Defra instance.
+// DB is the primary public programmatic access point to the local Defra instance.
 //
 // It should be contructed via the [db] package, via the [db.NewDB] function.
 type DB interface {
