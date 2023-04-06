@@ -57,5 +57,5 @@ var removeP2PCollectionCmd = &cobra.Command{
 }
 
 func init() {
-	replicatorCmd.AddCommand(removeP2PCollectionCmd)
+	p2pCollectionCmd.AddCommand(removeP2PCollectionCmd)
 }
