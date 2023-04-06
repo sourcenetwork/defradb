@@ -908,8 +908,8 @@ github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.0-20230209220544-e16d5e34c4fc
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.0-20230209220544-e16d5e34c4fc/go.mod h1:3rOV6TxePSwADKpnwXBKpTjAA4QyjZBus13xc6VCtSw=
 github.com/sourcenetwork/graphql-go v0.7.10-0.20221119101706-0f80a1725ab7 h1:9v7Ld9hS60HAcw/ID/yierzEjtAwkenr/5i6rGSmiXI=
 github.com/sourcenetwork/graphql-go v0.7.10-0.20221119101706-0f80a1725ab7/go.mod h1:3Ty9EMes+aoxl8xS0CsuCGQZ4JEsOlC5yqQDLOKoBRw=
-github.com/sourcenetwork/immutable v0.2.1 h1:0SAnoiGm1XQG+xiG4gK4nmLFqTMRnQ5Y1N4WHL7vQtE=
-github.com/sourcenetwork/immutable v0.2.1/go.mod h1:4jpxObkIQw8pvlIRm4ndZqf3pH9ZjYEw/UYI6GZDJww=
+github.com/sourcenetwork/immutable v0.2.2 h1:Qjz1cCWhgjS6YkUTWb53R22wSYMEZhzBghhEzWaFi8c=
+github.com/sourcenetwork/immutable v0.2.2/go.mod h1:4jpxObkIQw8pvlIRm4ndZqf3pH9ZjYEw/UYI6GZDJww=
 github.com/spacemonkeygo/openssl v0.0.0-20181017203307-c2dcc5cca94a/go.mod h1:7AyxJNCJ7SBZ1MfVQCWD6Uqo2oubI2Eq2y2eqf+A5r0=
 github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572/go.mod h1:w0SWMsp6j9O/dk4/ZpIhL+3CkG8ofA2vuv7k+ltqUMc=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
