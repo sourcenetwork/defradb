@@ -128,6 +128,9 @@ type Store interface {
 	// collection. Will return an error if it fails validation.
 	ValidateUpdateCollection(context.Context, CollectionDescription) (bool, error)
 
+	// GetCollectionByName attempts to retrieve a collection matching the given name.
+	//
+	// If no matching collection is found an error will be returned.
 	GetCollectionByName(context.Context, string) (Collection, error)
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
 	GetCollectionByVersionID(context.Context, string) (Collection, error)
