@@ -171,5 +171,8 @@ type GQLResult struct {
 type RequestResult struct {
 	// GQL contains the immediate results of the GQL request.
 	GQL GQLResult
+
+	// Pub contains a pointer to an events stream which channels any subscription results
+	// if the request was a GQL subscription.
 	Pub *events.Publisher[events.Update]
 }
