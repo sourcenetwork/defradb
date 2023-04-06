@@ -279,34 +279,6 @@ func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string) er
 	return db.patchSchema(ctx, db.txn, patchString)
 }
 
-// ValidateUpdateCollection validates that the given collection description is a valid update.
-//
-// Will return true if the given desctiption differs from the current persisted state of the
-// collection. Will return an error if it fails validation.
-func (db *implicitTxnDB) ValidateUpdateCollection(
-	ctx context.Context,
-	proposedDesc client.CollectionDescription,
-) (bool, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return false, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.validateUpdateCollection(ctx, txn, proposedDesc)
-}
-
-// ValidateUpdateCollection validates that the given collection description is a valid update.
-//
-// Will return true if the given desctiption differs from the current persisted state of the
-// collection. Will return an error if it fails validation.
-func (db *explicitTxnDB) ValidateUpdateCollection(
-	ctx context.Context,
-	proposedDesc client.CollectionDescription,
-) (bool, error) {
-	return db.validateUpdateCollection(ctx, db.txn, proposedDesc)
-}
-
 // SetReplicator adds a new replicator to the database.
 func (db *implicitTxnDB) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	txn, err := db.NewTxn(ctx, false)

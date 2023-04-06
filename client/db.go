@@ -112,12 +112,6 @@ type Store interface {
 	// calling this if use of the new collection via GQL is desired (for example via [ExecRequest]).
 	CreateCollection(context.Context, CollectionDescription) (Collection, error)
 
-	// ValidateUpdateCollection validates that the given collection description is a valid update.
-	//
-	// Will return true if the given desctiption differs from the current persisted state of the
-	// collection. Will return an error if it fails validation.
-	ValidateUpdateCollection(context.Context, CollectionDescription) (bool, error)
-
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.
