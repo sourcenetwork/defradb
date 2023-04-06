@@ -106,12 +106,6 @@ type Store interface {
 	// [FieldKindStringToEnumMapping].
 	PatchSchema(context.Context, string) error
 
-	// CreateCollection creates a new collection using the given description.
-	//
-	// WARNING: It does not currently update the GQL types, and as such a database restart is required after
-	// calling this if use of the new collection via GQL is desired (for example via [ExecRequest]).
-	CreateCollection(context.Context, CollectionDescription) (Collection, error)
-
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.

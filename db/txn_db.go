@@ -31,32 +31,6 @@ type explicitTxnDB struct {
 	txn datastore.Txn
 }
 
-func (db *implicitTxnDB) CreateCollection(
-	ctx context.Context,
-	desc client.CollectionDescription,
-) (client.Collection, error) {
-	txn, err := db.NewTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	col, err := db.createCollection(ctx, txn, desc)
-	if err != nil {
-		return nil, err
-	}
-
-	err = txn.Commit(ctx)
-	return col, err
-}
-
-func (db *explicitTxnDB) CreateCollection(
-	ctx context.Context,
-	desc client.CollectionDescription,
-) (client.Collection, error) {
-	return db.createCollection(ctx, db.txn, desc)
-}
-
 // ExecRequest executes a request against the database.
 func (db *implicitTxnDB) ExecRequest(ctx context.Context, request string) *client.RequestResult {
 	txn, err := db.NewTxn(ctx, false)
