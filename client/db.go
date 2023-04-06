@@ -43,6 +43,10 @@ type DB interface {
 
 	// Root returns the underlying root store, within which all data managed by Defra is held.
 	Root() datastore.RootStore
+
+	// Blockstore returns the blockstore, within which all blocks (commits) managed by Defra are held.
+	//
+	// It sits within the rootstore returned by [Root].
 	Blockstore() blockstore.Blockstore
 
 	Close(context.Context)
