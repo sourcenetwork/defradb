@@ -49,6 +49,15 @@ type DB interface {
 	// It sits within the rootstore returned by [Root].
 	Blockstore() blockstore.Blockstore
 
+	// Close closes the database instance and releases any resources held.
+	//
+	// The behaviour of other functions in this package after this function has been called is undefined
+	// unless explicitly stated on the function in question.
+	//
+	// It does not explicitly clear any data from persisted storage, and a new [DB] instance may typically
+	// be created after calling this to resume operations on the prior data - this is however dependant on
+	// the behaviour of the rootstore provided on database instance creation, as this function will Close
+	// the provided rootstore.
 	Close(context.Context)
 
 	Events() events.Events
