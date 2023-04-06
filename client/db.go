@@ -21,7 +21,7 @@ import (
 
 // DB is the primary public programmatic access point to the local DefraDB instance.
 //
-// It should be contructed via the [db] package, via the [db.NewDB] function.
+// It should be constructed via the [db] package, via the [db.NewDB] function.
 type DB interface {
 	// Store contains DefraDB functions protected by an internal, short-lived, transaction, allowing safe
 	// access to common database read and write operations.
