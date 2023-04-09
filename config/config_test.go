@@ -478,9 +478,30 @@ func TestValidationInvalidLoggingConfig(t *testing.T) {
 	assert.ErrorIs(t, err, ErrInvalidLogLevel)
 }
 
-func TestValidationAddressBasic(t *testing.T) {
+func TestValidationAddressBasicIncomplete(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.API.Address = "localhost"
 	err := cfg.validate()
 	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
+}
+
+func TestValidationAddressLocalhostValid(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = "localhost:9876"
+	err := cfg.validate()
+	assert.NoError(t, err)
+}
+
+func TestValidationAddress0000Incomplete(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = "0.0.0.0"
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
+}
+
+func TestValidationAddress0000Valid(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = "0.0.0.0:9876"
+	err := cfg.validate()
+	assert.NoError(t, err)
 }

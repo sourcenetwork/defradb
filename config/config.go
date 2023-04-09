@@ -296,13 +296,13 @@ func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
 		return ErrInvalidDatabaseURL
 	}
-	ip := net.ParseIP(apicfg.Address)
-	if strings.HasPrefix(apicfg.Address, "localhost") || strings.HasPrefix(apicfg.Address, ":") || ip != nil {
-		_, err := net.ResolveTCPAddr("tcp", apicfg.Address)
-		if err != nil {
-			return NewErrInvalidDatabaseURL(err)
-		}
-	} else if ip == nil {
+	host, _, err := net.SplitHostPort(apicfg.Address)
+	if err != nil {
+		return NewErrInvalidDatabaseURL(err)
+	}
+	// Check if the host is an IP address or a valid hostname.
+	ip := net.ParseIP(host)
+	if ip == nil && !strings.HasPrefix(host, "localhost") {
 		return ErrInvalidDatabaseURL
 	}
 	return nil
