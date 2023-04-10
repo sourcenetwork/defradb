@@ -33,7 +33,7 @@ Execute queries, add schema types, and run debug routines.
 * [defradb client dump](defradb_client_dump.md)	 - Dump the contents of a database node-side
 * [defradb client peerid](defradb_client_peerid.md)	 - Get the peer ID of the DefraDB node
 * [defradb client ping](defradb_client_ping.md)	 - Ping to test connection to a node
-* [defradb client query](defradb_client_query.md)	 - Send a DefraDB GraphQL query
+* [defradb client query](defradb_client_query.md)	 - Send a DefraDB GraphQL query request
 * [defradb client rpc](defradb_client_rpc.md)	 - Interact with a DefraDB gRPC server
 * [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a running DefraDB instance
 
