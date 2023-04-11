@@ -57,6 +57,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"golang.org/x/net/idna"
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/logging"
@@ -300,12 +301,22 @@ func (apicfg *APIConfig) validate() error {
 	if err != nil {
 		return NewErrInvalidDatabaseURL(err)
 	}
-	// Check if the host is an IP address or a valid hostname.
+
 	ip := net.ParseIP(host)
-	if ip == nil && !strings.HasPrefix(host, "localhost") {
-		return ErrInvalidDatabaseURL
+	if ip == nil {
+		if !isValidDomainName(host) {
+			return ErrInvalidDatabaseURL
+		}
 	}
 	return nil
+}
+
+func isValidDomainName(domain string) bool {
+	asciiDomain, err := idna.ToASCII(domain)
+	if err != nil {
+		return false
+	}
+	return asciiDomain == domain
 }
 
 // AddressToURL provides the API address as URL.

@@ -505,3 +505,17 @@ func TestValidationAddress0000Valid(t *testing.T) {
 	err := cfg.validate()
 	assert.NoError(t, err)
 }
+
+func TestValidationAddressDomainValid(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = "example.com:9876"
+	err := cfg.validate()
+	assert.NoError(t, err)
+}
+
+func TestValidationAddressDomainWithSubdomainValid(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = "sub.example.com:9876"
+	err := cfg.validate()
+	assert.NoError(t, err)
+}
