@@ -222,7 +222,7 @@ func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
 						email: String!
 					}
 				`,
-				ExpectedError: "no type found for given name. Type: NonNull",
+				ExpectedError: "NonNull fields are not currently supported",
 			},
 		},
 	}

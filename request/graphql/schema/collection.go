@@ -228,6 +228,9 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 			return client.FieldKind_FOREIGN_OBJECT, nil
 		}
 
+	case *ast.NonNull:
+		return 0, ErrNonNullNotSupported
+
 	default:
 		return 0, NewErrTypeNotFound(t.String())
 	}
