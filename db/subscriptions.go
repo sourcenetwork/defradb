@@ -24,11 +24,11 @@ func (db *db) checkForClientSubscriptions(r *request.Request) (
 	*request.ObjectSubscription,
 	error,
 ) {
-	if !db.events.Updates.HasValue() {
-		return nil, nil, ErrSubscriptionsNotAllowed
-	}
-
 	if len(r.Subscription) > 0 && len(r.Subscription[0].Selections) > 0 {
+		if !db.events.Updates.HasValue() {
+			return nil, nil, ErrSubscriptionsNotAllowed
+		}
+
 		s := r.Subscription[0].Selections[0]
 		if subRequest, ok := s.(*request.ObjectSubscription); ok {
 			pub, err := events.NewPublisher(db.events.Updates.Value(), 5)
