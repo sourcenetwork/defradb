@@ -13,8 +13,8 @@ package cli
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errMissingArg                  string = "missing arguement"
-	errMissingArgs                 string = "missing arguements"
+	errMissingArg                  string = "missing argument"
+	errMissingArgs                 string = "missing arguments"
 	errTooManyArgs                 string = "too many arguments"
 	errEmptyStdin                  string = "empty stdin"
 	errEmptyFile                   string = "empty file"
