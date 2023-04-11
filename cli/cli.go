@@ -28,14 +28,18 @@ import (
 
 const badgerDatastoreName = "badger"
 
-// List of cobra errors indicating an error occurred in the way the command was invoked.
-// They are subject to change with new versions of cobra.
+// Errors with how the command is invoked by user
 var usageErrors = []string{
+	// cobra errors - subject to change with new versions of cobra
 	"flag needs an argument",
 	"invalid syntax",
 	"unknown flag",
 	"unknown shorthand flag",
-	"missing argument", // custom to defradb
+	"unknown command",
+	// custom defradb errors
+	errMissingArg,
+	errMissingArgs,
+	errTooManyArgs,
 }
 
 var log = logging.MustNewLogger("defra.cli")
