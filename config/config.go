@@ -101,6 +101,8 @@ func DefaultConfig() *Config {
 // Use on a Config struct already loaded with default values from DefaultConfig().
 // To be executed once at the beginning of the program.
 func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
+	var err error
+
 	// Use default logging configuration here, so that
 	// we can log errors in a consistent way even in the case of early failure.
 	defaultLogCfg := defaultLogConfig()
@@ -109,6 +111,12 @@ func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
 	}
 
 	if err := cfg.loadDefaultViper(); err != nil {
+		return err
+	}
+
+	// using absolute rootdir for robustness.
+	cfg.Rootdir, err = filepath.Abs(cfg.Rootdir)
+	if err != nil {
 		return err
 	}
 
@@ -180,9 +188,15 @@ func (cfg *Config) validate() error {
 }
 
 func (cfg *Config) paramsPreprocessing() error {
-	// We prefer using absolute paths.
+	// We prefer using absolute paths, relative to the rootdir.
 	if !filepath.IsAbs(cfg.v.GetString("datastore.badger.path")) {
 		cfg.v.Set("datastore.badger.path", filepath.Join(cfg.Rootdir, cfg.v.GetString("datastore.badger.path")))
+	}
+	if !filepath.IsAbs(cfg.v.GetString("api.privkeypath")) {
+		cfg.v.Set("api.privkeypath", filepath.Join(cfg.Rootdir, cfg.v.GetString("api.privkeypath")))
+	}
+	if !filepath.IsAbs(cfg.v.GetString("api.pubkeypath")) {
+		cfg.v.Set("api.pubkeypath", filepath.Join(cfg.Rootdir, cfg.v.GetString("api.pubkeypath")))
 	}
 
 	// log.logger configuration as a string
@@ -269,12 +283,11 @@ type APIConfig struct {
 }
 
 func defaultAPIConfig() *APIConfig {
-	rootDir := DefaultRootDir()
 	return &APIConfig{
 		Address:     "localhost:9181",
 		TLS:         false,
-		PubKeyPath:  filepath.Join(rootDir, "certs/server.key"),
-		PrivKeyPath: filepath.Join(rootDir, "certs/server.crt"),
+		PubKeyPath:  "certs/server.key",
+		PrivKeyPath: "certs/server.crt",
 		Email:       DefaultAPIEmail,
 	}
 }
