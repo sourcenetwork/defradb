@@ -20,6 +20,8 @@ import (
 	"strings"
 
 	badger "github.com/dgraph-io/badger/v3"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -287,9 +289,18 @@ func start(ctx context.Context) (*defraInstance, error) {
 			return nil, errors.Wrap("failed to parse RPC timeout duration", err)
 		}
 
-		server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle: rpcTimeoutDuration,
-		}))
+		server := grpc.NewServer(
+			grpc.UnaryInterceptor(
+				grpc_middleware.ChainUnaryServer(
+					grpc_recovery.UnaryServerInterceptor(),
+				),
+			),
+			grpc.KeepaliveParams(
+				keepalive.ServerParameters{
+					MaxConnectionIdle: rpcTimeoutDuration,
+				},
+			),
+		)
 		tcplistener, err := gonet.Listen("tcp", addr)
 		if err != nil {
 			return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", addr), err)
