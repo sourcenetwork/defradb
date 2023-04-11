@@ -53,12 +53,12 @@ func Execute() {
 	rootCmd.SilenceUsage = true
 	rootCmd.SilenceErrors = true
 	rootCmd.SetOut(os.Stdout)
-	err := rootCmd.ExecuteContext(ctx)
+	cmd, err := rootCmd.ExecuteContextC(ctx)
 	if err != nil {
 		for _, cobraError := range usageErrors {
 			if strings.HasPrefix(err.Error(), cobraError) {
 				log.FeedbackErrorE(ctx, "Usage error", err)
-				if usageErr := rootCmd.Usage(); usageErr != nil {
+				if usageErr := cmd.Usage(); usageErr != nil {
 					log.FeedbackFatalE(ctx, "error displaying usage help", usageErr)
 				}
 				os.Exit(1)
