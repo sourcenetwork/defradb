@@ -302,13 +302,16 @@ func (apicfg *APIConfig) validate() error {
 		return NewErrInvalidDatabaseURL(err)
 	}
 
-	if apicfg.TLS && port != "443" {
-		return ErrTLSPortMismatch
-	}
-
 	ip := net.ParseIP(host)
-	if ip == nil && !isValidDomainName(host) {
-		return ErrInvalidDatabaseURL
+	if ip == nil { // a domain name is used
+		if !isValidDomainName(host) {
+			return ErrInvalidDatabaseURL
+		} else if apicfg.TLS && port != "443" {
+			return ErrTLSPortMismatch
+			// if a non-localhost domain name is used, it needs to be with port 80
+		} else if host != "localhost" && !apicfg.TLS && port != "80" {
+			return ErrDomainNamePortNot80
+		}
 	}
 	return nil
 }

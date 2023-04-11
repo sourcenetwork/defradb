@@ -48,6 +48,7 @@ const (
 	errUnableToParseByteSize       string = "unable to parse byte size"
 	errInvalidDatastorePath        string = "invalid datastore path"
 	errTLSPortMismatch             string = "port must be 443 when TLS is enabled"
+	errDomainNamePortMismatch      string = "when a domain name is used without TLS, the port must be 80"
 )
 
 var (
@@ -84,6 +85,7 @@ var (
 	ErrInvalidLoggerConfig         = errors.New(errInvalidLoggerConfig)
 	ErrorInvalidDatastorePath      = errors.New(errInvalidDatastorePath)
 	ErrTLSPortMismatch             = errors.New(errTLSPortMismatch)
+	ErrDomainNamePortNot80         = errors.New(errDomainNamePortMismatch)
 )
 
 func NewErrFailedToWriteFile(inner error, path string) error {
@@ -208,8 +210,4 @@ func NewErrLoggerConfig(s string) error {
 
 func NewErrInvalidDatastorePath(path string) error {
 	return errors.New(errInvalidDatastorePath, errors.NewKV("path", path))
-}
-
-func NewErrTLSPortMismatch(err error) error {
-	return errors.Wrap(errTLSPortMismatch, err)
 }

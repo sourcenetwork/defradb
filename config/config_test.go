@@ -510,14 +510,14 @@ func TestValidationAddressDomainValid(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.API.Address = "example.com:9876"
 	err := cfg.validate()
-	assert.NoError(t, err)
+	assert.ErrorIs(t, err, ErrDomainNamePortNot80)
 }
 
-func TestValidationAddressDomainWithSubdomainValid(t *testing.T) {
+func TestValidationAddressDomainWithSubdomainWrongPort(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.API.Address = "sub.example.com:9876"
 	err := cfg.validate()
-	assert.NoError(t, err)
+	assert.ErrorIs(t, err, ErrDomainNamePortNot80)
 }
 
 func TestValidationAddressDomainWithSubdomainValidWithTLSWrongPort(t *testing.T) {
