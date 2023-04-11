@@ -108,6 +108,10 @@ func NewErrInvalidDatabaseURL(inner error) error {
 	return errors.Wrap(errInvalidDatabaseURL, inner)
 }
 
+func NewErrInvalidDatabaseURLWithExplanation(inner error, explanation string) error {
+	return errors.Wrap(errInvalidDatabaseURL, inner, errors.NewKV("explanation", explanation))
+}
+
 func NewErrLoggingConfigNotObtained(inner error) error {
 	return errors.Wrap(errLoggingConfigNotObtained, inner)
 }

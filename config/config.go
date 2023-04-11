@@ -297,16 +297,18 @@ func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
 		return ErrInvalidDatabaseURL
 	}
-	host, _, err := net.SplitHostPort(apicfg.Address)
+	host, port, err := net.SplitHostPort(apicfg.Address)
 	if err != nil {
 		return NewErrInvalidDatabaseURL(err)
+	}
+
+	if apicfg.TLS && port != "443" {
+		return NewErrInvalidDatabaseURLWithExplanation(err, "port must be 443 when TLS is enabled")
 	}
 
 	ip := net.ParseIP(host)
 	if ip == nil && !isValidDomainName(host) {
 		return ErrInvalidDatabaseURL
-
-		}
 	}
 	return nil
 }

@@ -519,3 +519,19 @@ func TestValidationAddressDomainWithSubdomainValid(t *testing.T) {
 	err := cfg.validate()
 	assert.NoError(t, err)
 }
+
+func TestValidationAddressDomainWithSubdomainValidWithTLSWrongPort(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = "sub.example.com:444"
+	cfg.API.TLS = true
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrInvalidDatabaseURL)
+}
+
+func TestValidationAddressDomainWithSubdomainValidWithTLSCorrectPort(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = "sub.example.com:443"
+	cfg.API.TLS = true
+	err := cfg.validate()
+	assert.NoError(t, err)
+}
