@@ -29,5 +29,6 @@ Interact with a DefraDB gRPC server.
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
+* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Interact with the P2P collection system
 * [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Interact with the replicator system
 

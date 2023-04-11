@@ -1,15 +1,33 @@
-## defradb client schema
+## defradb client schema patch
 
-Interact with the schema system of a running DefraDB instance
+Patch an existing schema type
 
 ### Synopsis
 
-Make changes, updates, or look for existing schema types to a DefraDB node.
+Patch an existing schema.
+
+Uses JSON PATCH formatting as a DDL.
+
+Example: patch from an argument string:
+  defradb client schema patch '[{ "op": "add", "path": "...", "value": {...} }]'
+
+Example: patch from file:
+  defradb client schema patch -f patch.json
+
+Example: patch from stdin:
+  cat patch.json | defradb client schema patch -
+
+To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.
+
+```
+defradb client schema patch [schema] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for schema
+  -f, --file string   File to load a patch from
+  -h, --help          help for patch
 ```
 
 ### Options inherited from parent commands
@@ -27,7 +45,5 @@ Make changes, updates, or look for existing schema types to a DefraDB node.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
-* [defradb client schema add](defradb_client_schema_add.md)	 - Add a new schema type to DefraDB
-* [defradb client schema patch](defradb_client_schema_patch.md)	 - Patch an existing schema type
+* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a running DefraDB instance
 
