@@ -23,7 +23,7 @@ const userCollectionGQLSchema = (`
 `)
 
 const companiesCollectionGQLSchema = (`
-	type companies {
+	type Companies {
 		Name: String
 	}
 `)

@@ -26,7 +26,7 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-							create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+							create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 								name
 							}
 						}`,
@@ -62,7 +62,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
-						create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
+						create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
 							name
 						}
 					}`,
@@ -126,7 +126,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-						create_author(data: "{\"name\": \"John Grisham\"}") {
+						create_Author(data: "{\"name\": \"John Grisham\"}") {
 							_key
 						}
 					}`,
