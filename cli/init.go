@@ -30,7 +30,7 @@ It covers three possible situations:
 - root dir exists and contains a config file
 */
 var initCmd = &cobra.Command{
-	Use:   "init [rootdir]",
+	Use:   "init",
 	Short: "Initialize DefraDB's root directory and configuration file",
 	Long:  "Initialize a directory for configuration and data at the given path.",
 	// Load a default configuration, considering env. variables and CLI flags.
@@ -41,15 +41,6 @@ var initCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg.Rootdir = config.DefaultRootDir()
-		if len(args) == 1 {
-			cfg.Rootdir = args[0]
-		} else if len(args) > 1 {
-			if err := cmd.Usage(); err != nil {
-				return err
-			}
-			return errors.New("init command requires one rootdir argument, or no argument")
-		}
 		if config.FolderExists(cfg.Rootdir) {
 			if cfg.ConfigFileExists() {
 				if reinitialize {
@@ -88,5 +79,10 @@ func init() {
 	initCmd.Flags().BoolVar(
 		&reinitialize, "reinitialize", false,
 		"Reinitialize the configuration file",
+	)
+
+	initCmd.Flags().StringVar(
+		&cfg.Rootdir, "rootdir", config.DefaultRootDir(),
+		"Directory for data and configuration to use",
 	)
 }

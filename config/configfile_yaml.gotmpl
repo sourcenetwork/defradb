@@ -1,8 +1,7 @@
 # DefraDB configuration (YAML)
 
-# NOTE: Paths below are relative to the DefraDB directory unless otherwise stated.
-# By default, the DefraDB directory is "$HOME/.defradb", but
-# can be changed via the $DEFRA_ROOTDIR env variable or --rootdir CLI flag.
+# The default DefraDB directory is "$HOME/.defradb". It can be changed via the --rootdir CLI flag.
+# Relative paths are interpreted as being rooted in the DefraDB directory.
 
 datastore:
     # Store can be badger | memory
@@ -10,8 +9,7 @@ datastore:
       # memory: in-memory version of badger
     store: {{ .Datastore.Store }}
     badger:
-        # The path to the database data file(s), relative paths here will be converted to absolute file paths
-        # on database start.
+        # The path to the database data file(s).
         path: {{ .Datastore.Badger.Path }}
         # Maximum file size of the value log files. The in-memory file size will be 2*valuelogfilesize.
         # Human friendly units can be used (ex: 500MB).

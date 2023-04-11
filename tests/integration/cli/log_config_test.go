@@ -77,7 +77,7 @@ func captureLogLines(t *testing.T, setup func(), predicate func()) []string {
 	// Set the default logger output path to a file in the temp dir
 	// so that production logs don't polute and confuse the tests
 	// os.Args = append(os.Args, "--logoutput", directory+"/log.txt")
-	os.Args = append(os.Args, "init", directory)
+	os.Args = append(os.Args, "init", "--rootdir", directory)
 
 	setup()
 	cli.Execute()

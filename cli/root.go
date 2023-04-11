@@ -16,10 +16,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 )
-
-var rootDirParam string
 
 var rootCmd = &cobra.Command{
 	Use:   "defradb",
@@ -35,9 +34,6 @@ See https://docs.source.network/BSL.txt for more information.
 	// Loads the rootDir containing the configuration file, otherwise warn about it and load a default configuration.
 	// This allows some subcommands (`init`, `start`) to override the PreRun to create a rootDir by default.
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-		if rootDirParam != "" {
-			cfg.Rootdir = rootDirParam
-		}
 		if cfg.ConfigFileExists() {
 			if err := cfg.LoadWithRootdir(true); err != nil {
 				return errors.Wrap("failed to load config", err)
@@ -55,8 +51,8 @@ See https://docs.source.network/BSL.txt for more information.
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(
-		&rootDirParam, "rootdir", "",
-		"Directory for data and configuration to use (default \"$HOME/.defradb\")",
+		&cfg.Rootdir, "rootdir", config.DefaultRootDir(),
+		"Directory for data and configuration to use",
 	)
 
 	rootCmd.PersistentFlags().String(

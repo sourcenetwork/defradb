@@ -45,14 +45,10 @@ var startCmd = &cobra.Command{
 	Long:  "Start a new instance of DefraDB node.",
 	// Load the root config if it exists, otherwise create it.
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-		if rootDirParam != "" {
-			cfg.Rootdir = rootDirParam
-		}
 		if cfg.ConfigFileExists() {
 			if err := cfg.LoadWithRootdir(true); err != nil {
 				return errors.Wrap("failed to load config", err)
 			}
-			log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
 		} else {
 			if err := cfg.LoadWithRootdir(false); err != nil {
 				return errors.Wrap("failed to load config", err)
@@ -65,10 +61,10 @@ var startCmd = &cobra.Command{
 				if err := cfg.CreateRootDirAndConfigFile(); err != nil {
 					return err
 				}
-
 			}
 		}
 		log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
+
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -219,11 +215,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 
 	var err error
 	if cfg.Datastore.Store == badgerDatastoreName {
-		log.FeedbackInfo(
-			ctx,
-			"Opening badger store",
-			logging.NewKV("Path", cfg.Datastore.Badger.Path),
-		)
+		log.FeedbackInfo(ctx, "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
 		rootstore, err = badgerds.NewDatastore(
 			cfg.Datastore.Badger.Path,
 			cfg.Datastore.Badger.Options,
