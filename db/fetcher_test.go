@@ -112,7 +112,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
@@ -149,7 +149,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
@@ -197,7 +197,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
@@ -241,7 +241,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
@@ -306,7 +306,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{

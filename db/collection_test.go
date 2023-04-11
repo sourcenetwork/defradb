@@ -16,11 +16,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func newTestCollectionWithSchema(ctx context.Context, db client.DB) (client.Collection, error) {
+func newTestCollectionWithSchema(
+	t *testing.T,
+	ctx context.Context,
+	db *implicitTxnDB,
+) (client.Collection, error) {
 	desc := client.CollectionDescription{
 		Name: "users",
 		Schema: client.SchemaDescription{
@@ -48,22 +53,27 @@ func newTestCollectionWithSchema(ctx context.Context, db client.DB) (client.Coll
 		},
 	}
 
-	col, err := db.CreateCollection(ctx, desc)
-	return col, err
-}
+	txn, err := db.NewTxn(ctx, false)
+	require.NoError(t, err)
 
-func createNewTestCollection(ctx context.Context, db client.DB) (client.Collection, error) {
-	return db.CreateCollection(ctx, client.CollectionDescription{
-		Name: "test",
-	})
+	col, err := db.createCollection(ctx, txn, desc)
+	if err != nil {
+		return col, err
+	}
+
+	return col, txn.Commit(ctx)
 }
 
 func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
+	txn, err := db.NewTxn(ctx, false)
+	require.NoError(t, err)
 
-	_, err = createNewTestCollection(ctx, db)
+	_, err = db.createCollection(ctx, txn, client.CollectionDescription{
+		Name: "test",
+	})
 	assert.Error(t, err)
 }
 
@@ -72,7 +82,7 @@ func TestNewCollectionWithSchema(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	schema := col.Schema()
@@ -94,10 +104,10 @@ func TestNewCollectionReturnsErrorGivenDuplicateSchema(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	_, err = newTestCollectionWithSchema(ctx, db)
+	_, err = newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
-	_, err = newTestCollectionWithSchema(ctx, db)
+	_, err = newTestCollectionWithSchema(t, ctx, db)
 	assert.Errorf(t, err, "collection already exists")
 }
 
@@ -105,6 +115,8 @@ func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
+	txn, err := db.NewTxn(ctx, false)
+	require.NoError(t, err)
 
 	desc := client.CollectionDescription{
 		Name: "users",
@@ -113,7 +125,7 @@ func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 		},
 	}
 
-	_, err = db.CreateCollection(ctx, desc)
+	_, err = db.createCollection(ctx, txn, desc)
 	assert.EqualError(
 		t,
 		err,
@@ -125,6 +137,8 @@ func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
+	txn, err := db.NewTxn(ctx, false)
+	require.NoError(t, err)
 
 	desc := client.CollectionDescription{
 		Name: "",
@@ -133,7 +147,7 @@ func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 		},
 	}
 
-	_, err = db.CreateCollection(ctx, desc)
+	_, err = db.createCollection(ctx, txn, desc)
 	assert.EqualError(
 		t,
 		err,
@@ -145,6 +159,8 @@ func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
+	txn, err := db.NewTxn(ctx, false)
+	require.NoError(t, err)
 
 	desc := client.CollectionDescription{
 		Name: "users",
@@ -159,7 +175,7 @@ func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
 		},
 	}
 
-	_, err = db.CreateCollection(ctx, desc)
+	_, err = db.createCollection(ctx, txn, desc)
 	assert.EqualError(t, err, "collection schema first field must be a DocKey")
 }
 
@@ -167,6 +183,8 @@ func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
+	txn, err := db.NewTxn(ctx, false)
+	require.NoError(t, err)
 
 	desc := client.CollectionDescription{
 		Name: "users",
@@ -185,7 +203,7 @@ func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
 		},
 	}
 
-	_, err = db.CreateCollection(ctx, desc)
+	_, err = db.createCollection(ctx, txn, desc)
 	assert.EqualError(t, err, "collection schema first field must be a DocKey")
 }
 
@@ -193,6 +211,8 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
+	txn, err := db.NewTxn(ctx, false)
+	require.NoError(t, err)
 
 	desc := client.CollectionDescription{
 		Name: "users",
@@ -211,7 +231,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
 		},
 	}
 
-	_, err = db.CreateCollection(ctx, desc)
+	_, err = db.createCollection(ctx, txn, desc)
 	assert.EqualError(
 		t,
 		err,
@@ -223,6 +243,8 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
+	txn, err := db.NewTxn(ctx, false)
+	require.NoError(t, err)
 
 	desc := client.CollectionDescription{
 		Name: "users",
@@ -240,7 +262,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
 		},
 	}
 
-	_, err = db.CreateCollection(ctx, desc)
+	_, err = db.createCollection(ctx, txn, desc)
 	assert.EqualError(
 		t,
 		err,
@@ -252,6 +274,8 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
+	txn, err := db.NewTxn(ctx, false)
+	require.NoError(t, err)
 
 	desc := client.CollectionDescription{
 		Name: "users",
@@ -269,7 +293,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
 		},
 	}
 
-	_, err = db.CreateCollection(ctx, desc)
+	_, err = db.createCollection(ctx, txn, desc)
 	assert.EqualError(
 		t,
 		err,
@@ -282,7 +306,7 @@ func TestGetCollectionByName(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	_, err = newTestCollectionWithSchema(ctx, db)
+	_, err = newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "users")

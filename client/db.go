@@ -106,31 +106,6 @@ type Store interface {
 	// [FieldKindStringToEnumMapping].
 	PatchSchema(context.Context, string) error
 
-	// CreateCollection creates a new collection using the given description.
-	//
-	// WARNING: It does not currently update the GQL types, and as such a database restart is required after
-	// calling this if use of the new collection via GQL is desired (for example via [ExecRequest]).
-	CreateCollection(context.Context, CollectionDescription) (Collection, error)
-
-	// UpdateCollection updates the persisted collection description matching the name of the given
-	// description, to the values in the given description.
-	//
-	// It will validate the given description using [ValidateUpdateCollection] before updating it.
-	//
-	// The collection (including the schema version ID) will only be updated if any changes have actually
-	// been made, if the given description matches the current persisted description then no changes will be
-	// applied.
-	//
-	// WARNING: It does not currently update the GQL types, and as such a database restart is required after
-	// calling this if use of the new collection via GQL is desired (for example via [ExecRequest]).
-	UpdateCollection(context.Context, CollectionDescription) (Collection, error)
-
-	// ValidateUpdateCollection validates that the given collection description is a valid update.
-	//
-	// Will return true if the given desctiption differs from the current persisted state of the
-	// collection. Will return an error if it fails validation.
-	ValidateUpdateCollection(context.Context, CollectionDescription) (bool, error)
-
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.
