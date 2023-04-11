@@ -303,9 +303,9 @@ func (apicfg *APIConfig) validate() error {
 	}
 
 	ip := net.ParseIP(host)
-	if ip == nil {
-		if !isValidDomainName(host) {
-			return ErrInvalidDatabaseURL
+	if ip == nil && !isValidDomainName(host) {
+		return ErrInvalidDatabaseURL
+
 		}
 	}
 	return nil
