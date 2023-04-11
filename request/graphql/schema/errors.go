@@ -36,6 +36,9 @@ var (
 	ErrRelationMissingTypes      = errors.New("relation is missing its defined types and fields")
 	ErrRelationInvalidType       = errors.New("relation has an invalid type to be finalize")
 	ErrMultipleRelationPrimaries = errors.New("relation can only have a single field set as primary")
+	// NonNull is the literal name of the GQL type, so we have to disable the linter
+	//nolint:revive
+	ErrNonNullNotSupported = errors.New("NonNull fields are not currently supported")
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
