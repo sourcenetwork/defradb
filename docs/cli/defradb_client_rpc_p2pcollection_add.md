@@ -1,20 +1,25 @@
-## defradb client schema
+## defradb client rpc p2pcollection add
 
-Interact with the schema system of a running DefraDB instance
+Add P2P collections
 
 ### Synopsis
 
-Make changes, updates, or look for existing schema types to a DefraDB node.
+Use this command if you wish to add new P2P collections to the pubsub topics
+
+```
+defradb client rpc p2pcollection add [collectionID] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for schema
+  -h, --help   help for add
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --addr string          gRPC endpoint address (default "0.0.0.0:9161")
       --logformat string     Log format to use. Options are csv, json (default "csv")
       --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
       --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
@@ -27,7 +32,5 @@ Make changes, updates, or look for existing schema types to a DefraDB node.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
-* [defradb client schema add](defradb_client_schema_add.md)	 - Add a new schema type to DefraDB
-* [defradb client schema patch](defradb_client_schema_patch.md)	 - Patch an existing schema type
+* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Interact with the P2P collection system
 

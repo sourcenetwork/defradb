@@ -212,3 +212,20 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
+
+func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						email: String!
+					}
+				`,
+				ExpectedError: "NonNull fields are not currently supported",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+}
