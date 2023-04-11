@@ -19,7 +19,12 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func newTestCollection(ctx context.Context, db client.DB, name string) (client.Collection, error) {
+func newTestCollection(
+	t *testing.T,
+	ctx context.Context,
+	db *implicitTxnDB,
+	name string,
+) client.Collection {
 	desc := client.CollectionDescription{
 		Name: name,
 		Schema: client.SchemaDescription{
@@ -37,7 +42,16 @@ func newTestCollection(ctx context.Context, db client.DB, name string) (client.C
 		},
 	}
 
-	return db.CreateCollection(ctx, desc)
+	txn, err := db.db.NewTxn(ctx, false)
+	require.NoError(t, err)
+
+	col, err := db.db.createCollection(ctx, txn, desc)
+	require.NoError(t, err)
+
+	err = txn.Commit(ctx)
+	require.NoError(t, err)
+
+	return col
 }
 
 func TestAddP2PCollection(t *testing.T) {
@@ -46,8 +60,7 @@ func TestAddP2PCollection(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close(ctx)
 
-	col, err := newTestCollection(ctx, db, "test")
-	require.NoError(t, err)
+	col := newTestCollection(t, ctx, db, "test")
 
 	err = db.AddP2PCollection(ctx, col.SchemaID())
 	require.NoError(t, err)
@@ -59,18 +72,15 @@ func TestGetAllP2PCollection(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close(ctx)
 
-	col1, err := newTestCollection(ctx, db, "test1")
-	require.NoError(t, err)
+	col1 := newTestCollection(t, ctx, db, "test1")
 	err = db.AddP2PCollection(ctx, col1.SchemaID())
 	require.NoError(t, err)
 
-	col2, err := newTestCollection(ctx, db, "test2")
-	require.NoError(t, err)
+	col2 := newTestCollection(t, ctx, db, "test2")
 	err = db.AddP2PCollection(ctx, col2.SchemaID())
 	require.NoError(t, err)
 
-	col3, err := newTestCollection(ctx, db, "test3")
-	require.NoError(t, err)
+	col3 := newTestCollection(t, ctx, db, "test3")
 	err = db.AddP2PCollection(ctx, col3.SchemaID())
 	require.NoError(t, err)
 
@@ -85,18 +95,15 @@ func TestRemoveP2PCollection(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close(ctx)
 
-	col1, err := newTestCollection(ctx, db, "test1")
-	require.NoError(t, err)
+	col1 := newTestCollection(t, ctx, db, "test1")
 	err = db.AddP2PCollection(ctx, col1.SchemaID())
 	require.NoError(t, err)
 
-	col2, err := newTestCollection(ctx, db, "test2")
-	require.NoError(t, err)
+	col2 := newTestCollection(t, ctx, db, "test2")
 	err = db.AddP2PCollection(ctx, col2.SchemaID())
 	require.NoError(t, err)
 
-	col3, err := newTestCollection(ctx, db, "test3")
-	require.NoError(t, err)
+	col3 := newTestCollection(t, ctx, db, "test3")
 	err = db.AddP2PCollection(ctx, col3.SchemaID())
 	require.NoError(t, err)
 
