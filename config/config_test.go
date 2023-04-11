@@ -525,7 +525,7 @@ func TestValidationAddressDomainWithSubdomainValidWithTLSWrongPort(t *testing.T)
 	cfg.API.Address = "sub.example.com:444"
 	cfg.API.TLS = true
 	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrInvalidDatabaseURL)
+	assert.ErrorIs(t, err, ErrTLSPortMismatch)
 }
 
 func TestValidationAddressDomainWithSubdomainValidWithTLSCorrectPort(t *testing.T) {

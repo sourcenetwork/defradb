@@ -303,7 +303,7 @@ func (apicfg *APIConfig) validate() error {
 	}
 
 	if apicfg.TLS && port != "443" {
-		return NewErrInvalidDatabaseURLWithExplanation(err, "port must be 443 when TLS is enabled")
+		return NewErrTLSPortMismatch(err)
 	}
 
 	ip := net.ParseIP(host)

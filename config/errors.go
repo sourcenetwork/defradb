@@ -47,6 +47,7 @@ const (
 	errLoadingConfig               string = "failed to load config"
 	errUnableToParseByteSize       string = "unable to parse byte size"
 	errInvalidDatastorePath        string = "invalid datastore path"
+	errTLSPortMismatch             string = "port must be 443 when TLS is enabled"
 )
 
 var (
@@ -82,6 +83,7 @@ var (
 	ErrUnableToParseByteSize       = errors.New(errUnableToParseByteSize)
 	ErrInvalidLoggerConfig         = errors.New(errInvalidLoggerConfig)
 	ErrorInvalidDatastorePath      = errors.New(errInvalidDatastorePath)
+	ErrTLSPortMismatch             = errors.New(errTLSPortMismatch)
 )
 
 func NewErrFailedToWriteFile(inner error, path string) error {
@@ -106,10 +108,6 @@ func NewErrNoDatabaseURLProvided(inner error) error {
 
 func NewErrInvalidDatabaseURL(inner error) error {
 	return errors.Wrap(errInvalidDatabaseURL, inner)
-}
-
-func NewErrInvalidDatabaseURLWithExplanation(inner error, explanation string) error {
-	return errors.Wrap(errInvalidDatabaseURL, inner, errors.NewKV("explanation", explanation))
 }
 
 func NewErrLoggingConfigNotObtained(inner error) error {
@@ -210,4 +208,8 @@ func NewErrLoggerConfig(s string) error {
 
 func NewErrInvalidDatastorePath(path string) error {
 	return errors.New(errInvalidDatastorePath, errors.NewKV("path", path))
+}
+
+func NewErrTLSPortMismatch(err error) error {
+	return errors.Wrap(errTLSPortMismatch, err)
 }
