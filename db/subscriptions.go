@@ -24,24 +24,26 @@ func (db *db) checkForClientSubscriptions(r *request.Request) (
 	*request.ObjectSubscription,
 	error,
 ) {
+	if len(r.Subscription) == 0 || len(r.Subscription[0].Selections) == 0 {
+		// This is not a subscription request and we have nothing to do here
+		return nil, nil, nil
+	}
+
 	if !db.events.Updates.HasValue() {
 		return nil, nil, ErrSubscriptionsNotAllowed
 	}
 
-	if len(r.Subscription) > 0 && len(r.Subscription[0].Selections) > 0 {
-		s := r.Subscription[0].Selections[0]
-		if subRequest, ok := s.(*request.ObjectSubscription); ok {
-			pub, err := events.NewPublisher(db.events.Updates.Value(), 5)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			return pub, subRequest, nil
+	s := r.Subscription[0].Selections[0]
+	if subRequest, ok := s.(*request.ObjectSubscription); ok {
+		pub, err := events.NewPublisher(db.events.Updates.Value(), 5)
+		if err != nil {
+			return nil, nil, err
 		}
 
-		return nil, nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", s)
+		return pub, subRequest, nil
 	}
-	return nil, nil, nil
+
+	return nil, nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", s)
 }
 
 func (db *db) handleSubscription(
