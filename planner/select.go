@@ -335,9 +335,18 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 					return nil, ErrGroupOutsideOfGroupBy
 				}
 				n.groupSelects = append(n.groupSelects, f)
+			} else if f.Name == request.LinksFieldName &&
+				(selectReq.Name == request.CommitsName || selectReq.Name == request.LatestCommitsName) &&
+				f.CollectionName == "" {
+				// no-op
+				// commit query link fields are always added and need no special treatment here
+				// WARNING: It is important to check collection name is nil and the parent select name
+				// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
 			} else {
-				//nolint:errcheck
-				n.addTypeIndexJoin(f) // @TODO: ISSUE#158
+				err := n.addTypeIndexJoin(f)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
