@@ -12,6 +12,7 @@ require (
 	github.com/go-errors/errors v1.4.2
 	github.com/gogo/protobuf v1.3.2
 	github.com/graphql-go/graphql v0.8.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/ipfs/go-blockservice v0.5.0
 	github.com/ipfs/go-cid v0.4.0
