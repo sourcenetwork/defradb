@@ -23,21 +23,21 @@ The project follows these methodologies:
 
 - **Issue-driven development**: Every pull request is linked to one or more issues.
 - **[Squash and merge](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges)**: Commits of a pull request are squashed into one before being merged onto the `develop` branch.
-- **[Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)**: Every commit message is in the `<type>: <description>` format, where "type" is one of `feat`, `fix`, `tools`, `docs`, `perf`, `refactor`, `test`, `ci`, `chore`.
+- **[Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)**: Every commit message is in the `<type>: <description>` format, where "type" is one of `feat`, `fix`, `tools`, `docs`, `refactor`, `test`, `ci`, `chore`, `bot`.
 
-Follow this basic development flow:
-1. Make changes.
-2. Write tests for the changed behavior, if applicable.
-3. Ensure that `make test` and `make lint` are passing.
 
 To create an issue:
 1. Go to [github.com/sourcenetwork/defradb/issues](https://github.com/sourcenetwork/defradb/issues), and click "New issue".
 2. Select the relevant issue type.
 3. Fill out the issue template.
 
-To submit a contribution:
+Follow this basic development flow:
+1. Make changes.
+2. Write tests for the changed behavior, if applicable.
+3. Ensure that `make test` and `make lint` are passing.
 
-1. Fork the repository and create a branch with your changes following the `<your-name>/<type>/<description>` convention, e.g., `octavio/feat/compression-lru-data`.
+To submit a contribution:
+1. Create a branch with your changes following the `<your-name>/<type>/<description>` convention, e.g., `octavio/feat/compression-lru-data`.
 2. Create a pull request targeting the `develop` branch. Link to the relevant existing issue(s), and create one if none exists. Follow the pull request template instructions and use a verb in the PR title to describe the code changes.
 3. Read and accept the Contributor License Agreement, if it's your first contribution.
 4. Request a review from the *database-team*. Discuss and adapt the pull request as needed.
