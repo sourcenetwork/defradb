@@ -49,7 +49,6 @@ var startCmd = &cobra.Command{
 			if err := cfg.LoadWithRootdir(true); err != nil {
 				return errors.Wrap("failed to load config", err)
 			}
-			log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
 		} else {
 			if err := cfg.LoadWithRootdir(false); err != nil {
 				return errors.Wrap("failed to load config", err)
@@ -216,11 +215,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 
 	var err error
 	if cfg.Datastore.Store == badgerDatastoreName {
-		log.FeedbackInfo(
-			ctx,
-			"Opening badger store",
-			logging.NewKV("Path", cfg.Datastore.Badger.Path),
-		)
+		log.FeedbackInfo(ctx, "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
 		rootstore, err = badgerds.NewDatastore(
 			cfg.Datastore.Badger.Path,
 			cfg.Datastore.Badger.Options,
