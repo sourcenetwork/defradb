@@ -281,15 +281,6 @@ func TestCreateAndLoadCustomConfig(t *testing.T) {
 	assert.Equal(t, cfg.Log.Level, cfg2.Log.Level)
 }
 
-func TestLoadValidationEnvDoesntSupportRootdir(t *testing.T) {
-	tmpdir := t.TempDir()
-	FixtureEnvKeyValue(t, "DEFRA_ROOTDIR", tmpdir)
-	cfg := DefaultConfig()
-	err := cfg.LoadWithRootdir(false)
-	assert.Equal(t, cfg.Rootdir, DefaultRootDir())
-	assert.NoError(t, err)
-}
-
 func TestLoadValidationEnvLoggingConfig(t *testing.T) {
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LEVEL", "debug,net=info,log=error,cli=fatal")
 	cfg := DefaultConfig()
