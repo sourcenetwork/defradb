@@ -303,7 +303,7 @@ func (apicfg *APIConfig) validate() error {
 	}
 
 	if apicfg.TLS && port != "443" {
-		return NewErrTLSPortMismatch(err)
+		return ErrTLSPortMismatch
 	}
 
 	ip := net.ParseIP(host)
