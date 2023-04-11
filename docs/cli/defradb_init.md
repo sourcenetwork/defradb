@@ -7,14 +7,15 @@ Initialize DefraDB's root directory and configuration file
 Initialize a directory for configuration and data at the given path.
 
 ```
-defradb init [rootdir] [flags]
+defradb init [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help           help for init
-      --reinitialize   Reinitialize the configuration file
+  -h, --help             help for init
+      --reinitialize     Reinitialize the configuration file
+      --rootdir string   Directory for data and configuration to use (default "$HOME/.defradb")
 ```
 
 ### Options inherited from parent commands
@@ -26,7 +27,6 @@ defradb init [rootdir] [flags]
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
-      --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
