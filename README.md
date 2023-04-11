@@ -28,13 +28,11 @@ Read the [Technical Overview](https://docsend.com/view/zwgut89ccaei7e2w/d/bx4vu9
 - [Licensing](#licensing)
 - [Contributors](#contributors)
 
-
-
 DISCLAIMER: At this early stage, DefraDB does not offer access control or data encryption, and the default configuration exposes the database to the network. The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, but please do not use it for production purposes until it has been thoroughly tested and developed.
 
 ## Install
 
-Install `defradb` by [downloading an executable binary](https://github.com/sourcenetwork/defradb/releases) or building it locally using the [Go toolchain](https://golang.org/):
+Install `defradb` by [downloading an executable](https://github.com/sourcenetwork/defradb/releases) or building it locally using the [Go toolchain](https://golang.org/):
 
 ```sh
 git clone git@github.com:sourcenetwork/defradb.git
@@ -48,7 +46,7 @@ In the following sections, we assume that `defradb` is included in your `PATH`. 
 export PATH=$PATH:$(go env GOPATH)/bin
 ```
 
-We recommend experimenting with queries using a native GraphQL client. GraphiQL is a popular option - [download and install it](https://www.electronjs.org/apps/graphiql).
+We recommend experimenting with queries using a native GraphQL client. GraphiQL is a popular option - [download and install it](https://altairgraphql.dev/#download).
 
 ## Start
 
@@ -64,7 +62,7 @@ In this document, we use the default configuration, which has the following beha
 - `client` command interacts with the locally running node
 - The GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql
 
-The GraphQL endpoint can be used with a GraphQL client (e.g., GraphiQL) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
+The GraphQL endpoint can be used with a GraphQL client (e.g., Altair) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
 
 ## Add a schema type
 
@@ -87,9 +85,9 @@ defradb client schema add '
 
 Find more examples of schema type definitions in the [examples/schema/](examples/schema/) folder.
 
-## Create a document instance
+## Create a document
 
-Submit a `mutation` request to create an instance of the `User` type:
+Submit a `mutation` request to create an docuement of the `User` type:
 
 ```shell
 defradb client query '
@@ -113,11 +111,11 @@ Expected response:
 }
 ```
 
-The document's `_key` is a unique identifier added to each document in a DefraDB node, determined by its schema and initial data.
+`_key` is the document's key, a unique identifier of the document, determined by its schema and initial data.
 
 ## Query documents
 
-Once you have populated your local node with data, you can query it:
+Once you have populated your node with data, you can query it:
 
 ```shell
 defradb client query '
@@ -179,24 +177,24 @@ It returns a structure similar to the following, which contains the update paylo
 {
   "data": [
     {
-      "cid": "bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm",
+      "cid": "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u",
       "delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
       "height": 1,
       "links": [
         {
-          "cid": "bafybeieelb43ol5e5jiick2p7k4p577ph72ecwcuowlhbops4hpz24zhz4",
+          "cid": "bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy",
           "name": "age"
         },
         {
-          "cid": "bafybeigwjkwz7eobh6pqjal4yfpsahnv74cxedxqnmhnmp3iojoc4xs25i",
+          "cid": "bafybeielahxy3r3ulykwoi5qalvkluojta4jlg6eyxvt7lbon3yd6ignby",
           "name": "name"
         },
         {
-          "cid": "bafybeigr72knx43euvxz34sqipjrfpcgibr7uuihko4aqxqutkkmzhqm24",
+          "cid": "bafybeia3tkpz52s3nx4uqadbm7t5tir6gagkvjkgipmxs2xcyzlkf4y4dm",
           "name": "points"
         },
         {
-          "cid": "bafybeig653zyvev625vkn5kveuhyzqnychvoqhyx52pznbre227olkzkpi",
+          "cid": "bafybeia4off4javopmxcdyvr6fgb5clo7m5bblxic5sqr2vd52s6khyksm",
           "name": "verified"
         }
       ]
@@ -210,7 +208,7 @@ Obtain a specific commit by its content identifier (`cid`):
 ```gql
 defradb client query '
   query {
-    commits(cid: "bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm") {
+    commits(cid: "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u") {
       cid
       delta
       height
@@ -229,22 +227,24 @@ DQL is compatible with GraphQL but features various extensions.
 
 Read its documentation at [docs.source.network](https://docs.source.network/query-specification/query-language-overview) to discover its filtering, ordering, limiting, relationships, variables, aggregate functions, and other useful features.
 
+
 ## Peer-to-peer data synchronization
+
 DefraDB leverages peer-to-peer networking for data exchange, synchronization, and replication of documents and commits.
 
-When starting a node for the first time, a key pair is generated and stored in its "root directory" (commonly `~/.defradb/`).
+When starting a node for the first time, a key pair is generated and stored in its "root directory" (`~/.defradb/` by default).
 
 Each node has a unique `Peer ID` generated from its public key. This ID allows other nodes to connect to it.
 
-There are two types of peer-to-peer relationships nodes support: **pubsub** peering and **replicator** peering.
+There are two types of peer-to-peer relationships supported: **pubsub** peering and **replicator** peering.
 
-Pubsub peering *passively* synchronizes data between nodes by broadcasting Document Commit updates with the document key (`DocKey`) as the topic. Nodes need to already be listening on the pubsub channel to receive updates. This is for when two nodes *already* have a shared document and want to keep both their changes in sync with one another.
+Pubsub peering *passively* synchronizes data between nodes by broadcasting *Document Commit* updates to the topic of the commit's document key. Nodes need to be listening on the pubsub channel to receive updates. This is for when two nodes *already* have share a document and want to keep them in sync.
 
 Replicator peering *actively* pushes changes from a specific collection *to* a target peer.
 
 ### Pubsub example
 
-Pubsub peers can be specified on the command line using the `--peers` flag, which accepts a comma-separated list of peer [multiaddresses](https://docs.libp2p.io/concepts/addressing/). For example, a node at `192.168.1.12` listening on 9000 with Peer ID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
+Pubsub peers can be specified on the command line using the `--peers` flag, which accepts a comma-separated list of peer [multiaddresses](https://docs.libp2p.io/concepts/addressing/). For example, a node at IP `192.168.1.12` listening on 9000 with Peer ID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
 
 Let's go through an example of two nodes (*nodeA* and *nodeB*) connecting with each other over pubsub, on the same machine.
 
@@ -254,7 +254,7 @@ Start *nodeA* with a default configuration:
 defradb start
 ```
 
-Obtain the Peer ID from its console output. In this example, we assume `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally it will be different.
+Obtain the Peer ID from its console output. In this example, we use `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally it will be different.
 
 For *nodeB*, we provide the following configuration:
 
@@ -274,10 +274,10 @@ This starts two nodes and connects them via pubsub networking.
 
 ### Collection subscription example
 
-It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
+It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `schemaVersionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
 
 ```shell
-defradb client rpc p2pcollection add --url localhost:9182 <collectionID>
+defradb client rpc p2pcollection add --url localhost:9182 bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske
 ```
 
 Multiple collection IDs can be added at once.
@@ -288,9 +288,7 @@ defradb client rpc p2pcollection add --url localhost:9182 <collection1ID> <colle
 
 ### Replicator example
 
-Replicator peering is established in one direction. For example, a *nodeA* can be given a *nodeB* to actively send updates to, but *nodeB* won't send updates in return. However, nodes broadcast updates of documents over document-specific pubsub topics, therefore *nodeB* while it won't replicate directly to *nodeA*, it will *passively*.
-
-Let's go through an example of *nodeA* actively replicating to *nodeB*:
+Replicator peering is targeted: it allows a node to actively send updates to another node. Let's go through an example of *nodeA* actively replicating to *nodeB*:
 
 Start *nodeA*:
 
@@ -309,13 +307,13 @@ defradb client schema add '
 '
 ```
 
-Start *nodeB*, that will be receiving updates:
+Start (or continue running from above) *nodeB*, that will be receiving updates:
 
 ```shell
 defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162
 ```
 
-Notice how we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
+Here we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
 
 In another terminal, add the same schema to *nodeB*:
 
@@ -331,16 +329,19 @@ defradb client schema add --url localhost:9182 '
 Set *nodeA* to actively replicate the "Article" collection to *nodeB*:
 
 ```shell
-defradb client rpc addreplicator "Article" /ip4/0.0.0.0/tcp/9172/p2p/<peerID_of_nodeB>
+defradb client rpc addreplicator "Article" /ip4/0.0.0.0/tcp/9172/p2p/
+defradb client rpc replicator set -c "Article" /ip4/0.0.0.0/tcp/9172/p2p/<peerID_of_nodeB>
+
 ```
 
 As we add or update documents in the "Article" collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
 
+
 ## Securing the HTTP API with TLS
 
-By default, DefraDB will expose the HTTP API at `http://localhost:9181/api/v0`. It's also possible to configure the API to use TLS with self signed certificates or Let's Encrypt.
+By default, DefraDB will expose its HTTP API at `http://localhost:9181/api/v0`. It's also possible to configure the API to use TLS with self-signed certificates or Let's Encrypt.
 
-To start defradb with self signed certificates placed under `~/.defradb/certs/` with `server.key`
+To start defradb with self-signed certificates placed under `~/.defradb/certs/` with `server.key`
 being the public key and `server.crt` being the private key, just do:
 ```shell
 defradb start --tls
@@ -350,18 +351,12 @@ The keys can be generated with your generator of choice or with `make tls-certs`
 
 Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs path="~/.defradb/certs"`.
 
-If not saved under `~/.defradb/certs` then the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be
-explicitly defined inaddition to the `--tls` flag or `tls` set to `true` in the config.
+If not saved under `~/.defradb/certs` then the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be explicitly defined in addition to the `--tls` flag or `tls` set to `true` in the config.
 
 Then to start the server with TLS, using your generated keys in custom path:
 ```shell
 defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-privkey.crt
 
-```
-
-Note the following example can sometimes not properly expand `~` and can cause problems:
-```shell
-defradb start --tls --pubkeypath="~/path-to-pubkey.key" --privkeypath="~/path-to-privkey.crt"
 ```
 
 DefraDB also comes with automatic HTTPS for deployments on the public web. To enable HTTPS,
@@ -375,11 +370,14 @@ Note: `sudo` is needed above for the redirection server (to bind port 80).
 A valid email address is necessary for the creation of the certificate, and is important to get notifications from the Certificate Authority - in case the certificate is about to expire, etc.
 
 
+## Community
+
+Discuss on [Discord](https://discord.source.network/) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [Twitter](https://twitter.com/sourcenetwrk).
+
+
 ## Licensing
 
 DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of it. For additional uses, such as deploying in production on a private network, please contact license@source.network for a licensing agreement. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete license before usage.
-
-
 
 ## Contributors
 
