@@ -49,6 +49,8 @@ const (
 	errInvalidDatastorePath        string = "invalid datastore path"
 	errTLSPortMismatch             string = "port must be 443 when TLS is enabled"
 	errDomainNamePortMismatch      string = "when a domain name is used without TLS, the port must be 80"
+	errMissingPortNumber           string = "missing port number"
+	errNoPortWithDomain            string = "cannot provide port with domain name"
 )
 
 var (
@@ -84,8 +86,8 @@ var (
 	ErrUnableToParseByteSize       = errors.New(errUnableToParseByteSize)
 	ErrInvalidLoggerConfig         = errors.New(errInvalidLoggerConfig)
 	ErrorInvalidDatastorePath      = errors.New(errInvalidDatastorePath)
-	ErrTLSPortMismatch             = errors.New(errTLSPortMismatch)
-	ErrDomainNamePortNot80         = errors.New(errDomainNamePortMismatch)
+	ErrMissingPortNumber           = errors.New(errMissingPortNumber)
+	ErrNoPortWithDomain            = errors.New(errNoPortWithDomain)
 )
 
 func NewErrFailedToWriteFile(inner error, path string) error {

@@ -506,32 +506,17 @@ func TestValidationAddress0000Valid(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestValidationAddressDomainValid(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.API.Address = "example.com:9876"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrDomainNamePortNot80)
-}
-
-func TestValidationAddressDomainWithSubdomainWrongPort(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.API.Address = "sub.example.com:9876"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrDomainNamePortNot80)
-}
-
-func TestValidationAddressDomainWithSubdomainValidWithTLSWrongPort(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.API.Address = "sub.example.com:444"
-	cfg.API.TLS = true
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrTLSPortMismatch)
-}
-
-func TestValidationAddressDomainWithSubdomainValidWithTLSCorrectPort(t *testing.T) {
+func TestValidationAddressDomainWithSubdomainValidWithTLSCorrectPortIsInvalid(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.API.Address = "sub.example.com:443"
 	cfg.API.TLS = true
 	err := cfg.validate()
-	assert.NoError(t, err)
+	assert.ErrorIs(t, err, ErrNoPortWithDomain)
+}
+
+func TestValidationAddressDomainWithSubdomainWrongPortIsInvalid(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = "sub.example.com:9876"
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrNoPortWithDomain)
 }

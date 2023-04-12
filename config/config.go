@@ -297,27 +297,31 @@ func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
 		return ErrInvalidDatabaseURL
 	}
-	host, port, err := net.SplitHostPort(apicfg.Address)
+
+	if apicfg.Address == "localhost" || net.ParseIP(apicfg.Address) != nil { //nolint:goconst
+		return ErrMissingPortNumber
+	}
+
+	if isValidDomainName(apicfg.Address) {
+		return nil
+	}
+
+	host, _, err := net.SplitHostPort(apicfg.Address)
 	if err != nil {
 		return NewErrInvalidDatabaseURL(err)
 	}
-
-	ip := net.ParseIP(host)
-	if ip == nil { // a domain name is used
-		if !isValidDomainName(host) {
-			return ErrInvalidDatabaseURL
-		} else if apicfg.TLS && port != "443" {
-			return ErrTLSPortMismatch
-			// if a non-localhost domain name is used, it needs to be with port 80
-		} else if host != "localhost" && !apicfg.TLS && port != "80" {
-			return ErrDomainNamePortNot80
-		}
+	if host == "localhost" {
+		return nil
 	}
+	if net.ParseIP(host) == nil {
+		return ErrNoPortWithDomain
+	}
+
 	return nil
 }
 
 func isValidDomainName(domain string) bool {
-	asciiDomain, err := idna.ToASCII(domain)
+	asciiDomain, err := idna.Registration.ToASCII(domain)
 	if err != nil {
 		return false
 	}
