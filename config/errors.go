@@ -47,6 +47,8 @@ const (
 	errLoadingConfig               string = "failed to load config"
 	errUnableToParseByteSize       string = "unable to parse byte size"
 	errInvalidDatastorePath        string = "invalid datastore path"
+	errMissingPortNumber           string = "missing port number"
+	errNoPortWithDomain            string = "cannot provide port with domain name"
 )
 
 var (
@@ -82,6 +84,8 @@ var (
 	ErrUnableToParseByteSize       = errors.New(errUnableToParseByteSize)
 	ErrInvalidLoggerConfig         = errors.New(errInvalidLoggerConfig)
 	ErrorInvalidDatastorePath      = errors.New(errInvalidDatastorePath)
+	ErrMissingPortNumber           = errors.New(errMissingPortNumber)
+	ErrNoPortWithDomain            = errors.New(errNoPortWithDomain)
 )
 
 func NewErrFailedToWriteFile(inner error, path string) error {

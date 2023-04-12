@@ -57,6 +57,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"golang.org/x/net/idna"
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/logging"
@@ -296,16 +297,35 @@ func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
 		return ErrInvalidDatabaseURL
 	}
-	ip := net.ParseIP(apicfg.Address)
-	if strings.HasPrefix(apicfg.Address, "localhost") || strings.HasPrefix(apicfg.Address, ":") || ip != nil {
-		_, err := net.ResolveTCPAddr("tcp", apicfg.Address)
-		if err != nil {
-			return NewErrInvalidDatabaseURL(err)
-		}
-	} else if ip == nil {
-		return ErrInvalidDatabaseURL
+
+	if apicfg.Address == "localhost" || net.ParseIP(apicfg.Address) != nil { //nolint:goconst
+		return ErrMissingPortNumber
 	}
+
+	if isValidDomainName(apicfg.Address) {
+		return nil
+	}
+
+	host, _, err := net.SplitHostPort(apicfg.Address)
+	if err != nil {
+		return NewErrInvalidDatabaseURL(err)
+	}
+	if host == "localhost" {
+		return nil
+	}
+	if net.ParseIP(host) == nil {
+		return ErrNoPortWithDomain
+	}
+
 	return nil
+}
+
+func isValidDomainName(domain string) bool {
+	asciiDomain, err := idna.Registration.ToASCII(domain)
+	if err != nil {
+		return false
+	}
+	return asciiDomain == domain
 }
 
 // AddressToURL provides the API address as URL.
