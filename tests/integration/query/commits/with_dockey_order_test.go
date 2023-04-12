@@ -44,23 +44,23 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"cid":    "bafybeiculvxijb7chmmmb2cad3k4e2zfug5tpehp4gqwayarh4yzlnft4m",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"cid":    "bafybeifh5fpsnusu6tedflmcglsm4rxsc2k3h35iqsbrcevfish6xrxftq",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid":    "bafybeiezqs7t2piarfu3g7s3bmjzok7zm4tpc5tgbp4sovdfvggrjfpjxa",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"cid":    "bafybeid32koipavfiznapnb7cbhbwqfi7vmbob6xj6tzj2w66utir4qv5y",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid":    "bafybeickezedvwqujfvdih25kcwpkxtekdy3ykaofxejtxmhqybw2pfrnq",
 						"height": int64(1),
 					},
 				},
@@ -99,23 +99,23 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid":    "bafybeiezqs7t2piarfu3g7s3bmjzok7zm4tpc5tgbp4sovdfvggrjfpjxa",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"cid":    "bafybeid32koipavfiznapnb7cbhbwqfi7vmbob6xj6tzj2w66utir4qv5y",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid":    "bafybeickezedvwqujfvdih25kcwpkxtekdy3ykaofxejtxmhqybw2pfrnq",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"cid":    "bafybeiculvxijb7chmmmb2cad3k4e2zfug5tpehp4gqwayarh4yzlnft4m",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"cid":    "bafybeifh5fpsnusu6tedflmcglsm4rxsc2k3h35iqsbrcevfish6xrxftq",
 						"height": int64(2),
 					},
 				},
@@ -154,23 +154,23 @@ func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
-						"height": int64(1),
-					},
-					{
-						"cid":    "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
-						"height": int64(1),
-					},
-					{
-						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"cid":    "bafybeifh5fpsnusu6tedflmcglsm4rxsc2k3h35iqsbrcevfish6xrxftq",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"cid":    "bafybeiezqs7t2piarfu3g7s3bmjzok7zm4tpc5tgbp4sovdfvggrjfpjxa",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafybeid32koipavfiznapnb7cbhbwqfi7vmbob6xj6tzj2w66utir4qv5y",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafybeiculvxijb7chmmmb2cad3k4e2zfug5tpehp4gqwayarh4yzlnft4m",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid":    "bafybeickezedvwqujfvdih25kcwpkxtekdy3ykaofxejtxmhqybw2pfrnq",
 						"height": int64(1),
 					},
 				},
@@ -209,23 +209,23 @@ func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid":    "bafybeickezedvwqujfvdih25kcwpkxtekdy3ykaofxejtxmhqybw2pfrnq",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"cid":    "bafybeiezqs7t2piarfu3g7s3bmjzok7zm4tpc5tgbp4sovdfvggrjfpjxa",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"cid":    "bafybeiculvxijb7chmmmb2cad3k4e2zfug5tpehp4gqwayarh4yzlnft4m",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"cid":    "bafybeid32koipavfiznapnb7cbhbwqfi7vmbob6xj6tzj2w66utir4qv5y",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid":    "bafybeiezqs7t2piarfu3g7s3bmjzok7zm4tpc5tgbp4sovdfvggrjfpjxa",
 						"height": int64(1),
 					},
 				},
@@ -278,39 +278,39 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 					 }`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid":    "bafybeiezqs7t2piarfu3g7s3bmjzok7zm4tpc5tgbp4sovdfvggrjfpjxa",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"cid":    "bafybeid32koipavfiznapnb7cbhbwqfi7vmbob6xj6tzj2w66utir4qv5y",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid":    "bafybeickezedvwqujfvdih25kcwpkxtekdy3ykaofxejtxmhqybw2pfrnq",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"cid":    "bafybeiculvxijb7chmmmb2cad3k4e2zfug5tpehp4gqwayarh4yzlnft4m",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"cid":    "bafybeiezqs7t2piarfu3g7s3bmjzok7zm4tpc5tgbp4sovdfvggrjfpjxa",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeidag5ogxiqsctdxktobw6gbq52pbfkmicp6np5ccuy6pjyvgobdxq",
+						"cid":    "bafybeibycdufs2ltfbhqqo6baq2bndj3b56bjb4fzijm3st7dbflbj5vhy",
 						"height": int64(3),
 					},
 					{
-						"cid":    "bafybeid2arccjpsmmocarl6s3fe7ygstbdlpujlksuflukmun4bvf5g4oe",
+						"cid":    "bafybeihbo6inadk6xuaashol2yahu474o7ns7s7ploq55a2qcngha6czde",
 						"height": int64(3),
 					},
 					{
-						"cid":    "bafybeiadnlnuu3gkfaf5fgib3iqfsntitb4pjrc5hffvmhpdjqgsxutc5q",
+						"cid":    "bafybeidqprfw43ydrkla7rkzoeyg5773vumgylxmg7rvabo4eb62mgdsmu",
 						"height": int64(4),
 					},
 					{
-						"cid":    "bafybeifyiqii323sy5xvqkltdaj5wb4p2zsotepcmv6zqxfr73lky24qw4",
+						"cid":    "bafybeicjqj6eax5otkqcydkrr5nvxwm25pxntnpwqk3mv2bvk4a4ntxsau",
 						"height": int64(4),
 					},
 				},

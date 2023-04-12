@@ -50,10 +50,10 @@ func TestQueryCommitsWithDockeyAndLimit(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeidag5ogxiqsctdxktobw6gbq52pbfkmicp6np5ccuy6pjyvgobdxq",
+						"cid": "bafybeibycdufs2ltfbhqqo6baq2bndj3b56bjb4fzijm3st7dbflbj5vhy",
 					},
 					{
-						"cid": "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"cid": "bafybeiculvxijb7chmmmb2cad3k4e2zfug5tpehp4gqwayarh4yzlnft4m",
 					},
 				},
 			},
