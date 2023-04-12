@@ -47,8 +47,6 @@ const (
 	errLoadingConfig               string = "failed to load config"
 	errUnableToParseByteSize       string = "unable to parse byte size"
 	errInvalidDatastorePath        string = "invalid datastore path"
-	errTLSPortMismatch             string = "port must be 443 when TLS is enabled"
-	errDomainNamePortMismatch      string = "when a domain name is used without TLS, the port must be 80"
 	errMissingPortNumber           string = "missing port number"
 	errNoPortWithDomain            string = "cannot provide port with domain name"
 )
