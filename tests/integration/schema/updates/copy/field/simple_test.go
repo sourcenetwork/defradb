@@ -69,7 +69,7 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 					[
 						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/3" },
 						{ "op": "remove", "path": "/Users/Schema/Fields/3/ID" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/3/Name", "value": "Fax" }
+						{ "op": "replace", "path": "/Users/Schema/Fields/3/Name", "value": "fax" }
 					]
 				`,
 			},

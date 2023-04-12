@@ -61,7 +61,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 			testUtils.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -127,7 +127,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 			testUtils.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -185,7 +185,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 				// Read the book (forward) that was deleted (in the non-commited transaction) in another transaction.
 				TransactionID: 1,
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -211,7 +211,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 			testUtils.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -275,7 +275,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 				// Read the book (backwards) that was deleted (in the non-commited transaction) in another transaction.
 				TransactionID: 1,
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -301,7 +301,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 			testUtils.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -362,7 +362,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 			testUtils.Request{
 				// Assert after transaction(s) have been commited.
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -423,7 +423,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 			testUtils.Request{
 				// Assert after transaction(s) have been commited.
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {

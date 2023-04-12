@@ -69,7 +69,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			testUtils.TransactionRequest2{
 				TransactionID: 0,
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -99,7 +99,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			testUtils.TransactionRequest2{
 				TransactionID: 1,
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -135,7 +135,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			testUtils.Request{
 				// Assert books -> publisher direction outside the transactions.
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -221,7 +221,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			testUtils.TransactionRequest2{
 				TransactionID: 0,
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -245,7 +245,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			testUtils.TransactionRequest2{
 				TransactionID: 1,
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -275,7 +275,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			testUtils.Request{
 				// Assert publishers -> books direction outside the transactions.
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
