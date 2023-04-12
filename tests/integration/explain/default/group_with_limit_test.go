@@ -22,7 +22,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 		Description: "Explain query with limit and offset on parent groupBy.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [name],
 				limit: 1,
 				offset: 1
@@ -120,7 +120,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 		Description: "Explain query with limit and offset on child groupBy.",
 
 		Request: `query @explain {
-			author(groupBy: [name]) {
+			Author(groupBy: [name]) {
 				name
 				_group(limit: 2, offset: 1) {
 					age
@@ -212,7 +212,7 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 		Description: "Explain query with limit on child groupBy (multiple rendered).",
 
 		Request: `query @explain {
-			author(groupBy: [name]) {
+			Author(groupBy: [name]) {
 				name
 				innerFirstGroup: _group(limit: 1, offset: 2) {
 					age
@@ -318,7 +318,7 @@ func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 		Description: "Explain query with limit on parent and child groupBy.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [name],
 				limit: 1
 			) {

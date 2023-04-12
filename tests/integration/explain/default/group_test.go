@@ -21,7 +21,7 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 		Description: "Explain a grouping on parent.",
 
 		Request: `query @explain {
-			author (groupBy: [age]) {
+			Author (groupBy: [age]) {
 				age
 				_group {
 					name
@@ -94,7 +94,7 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 		Description: "Explain a grouping by two fields.",
 
 		Request: `query @explain {
-			author (groupBy: [age, name]) {
+			Author (groupBy: [age, name]) {
 				age
 				_group {
 					name

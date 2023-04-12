@@ -21,7 +21,7 @@ func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				_key
 				TotalPages: _sum(
@@ -135,7 +135,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with a filter.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				TotalPages: _sum(
 					articles: {
@@ -263,7 +263,7 @@ func TestExplainQuerySumOfInlineArrayField_ShouldHaveEmptyChildField(t *testing.
 		Description: "Explain a simple sum query on an  inline array field (childFieldName is nil).",
 
 		Request: `query @explain {
-			book {
+			Book {
 				name
 				NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: _sum(chapterPages: {})
 			}
@@ -336,7 +336,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with many sources.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				TotalPages: _sum(
 					books: {field: pages},

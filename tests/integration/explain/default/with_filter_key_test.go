@@ -246,7 +246,7 @@ func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
 		Description: "Explain (default) request with a filter to match key.",
 
 		Request: `query @explain {
-			author(filter: {_key: {_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"}}) {
+			Author(filter: {_key: {_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"}}) {
 				name
 				age
 			}

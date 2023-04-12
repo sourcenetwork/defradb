@@ -22,7 +22,7 @@ func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
 		Description: "Explain a one-to-one join relation query, with alias.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				OnlyEmail: contact {
 					email
 				}
@@ -173,7 +173,7 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 		Description: "Explain two one-to-one join relation query.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				OnlyEmail: contact {
 					email
 				}
@@ -371,7 +371,7 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 		Description: "Explain query with two nested level deep one to one join.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				_key
 				name
 				contact {

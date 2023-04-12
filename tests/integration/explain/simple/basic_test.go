@@ -21,7 +21,7 @@ func TestSimpleExplainRequest(t *testing.T) {
 		Description: "Explain (simple) a basic request.",
 
 		Request: `query @explain(type: simple) {
-			author {
+			Author {
 				_key
 				name
 				age

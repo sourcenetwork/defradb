@@ -22,7 +22,7 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 		Description: "Explain (default) request with string equal (_eq) filter.",
 
 		Request: `query @explain {
-			author(filter: {name: {_eq: "Lone"}}) {
+			Author(filter: {name: {_eq: "Lone"}}) {
 				name
 				age
 			}
@@ -79,7 +79,7 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 		Description: "Explain (default) request with integer equal (_eq) filter.",
 
 		Request: `query @explain {
-			author(filter: {age: {_eq: 26}}) {
+			Author(filter: {age: {_eq: 26}}) {
 				name
 				age
 			}
@@ -193,7 +193,7 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 		Description: "Explain (default) request with logical compound (_and) filter.",
 
 		Request: `query @explain {
-			author(filter: {_and: [{age: {_gt: 20}}, {age: {_lt: 50}}]}) {
+			Author(filter: {_and: [{age: {_gt: 20}}, {age: {_lt: 50}}]}) {
 				name
 				age
 			}
@@ -263,7 +263,7 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 		Description: "Explain (default) request with logical compound (_or) filter.",
 
 		Request: `query @explain {
-			author(filter: {_or: [{age: {_eq: 55}}, {age: {_eq: 19}}]}) {
+			Author(filter: {_or: [{age: {_eq: 55}}, {age: {_eq: 19}}]}) {
 				name
 				age
 			}
@@ -333,7 +333,7 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 		Description: "Explain (default) request filtering values that match within (_in) a list.",
 
 		Request: `query @explain {
-			author(filter: {age: {_in: [19, 40, 55]}}) {
+			Author(filter: {age: {_in: [19, 40, 55]}}) {
 				name
 				age
 			}

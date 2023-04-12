@@ -21,7 +21,7 @@ func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 		Description: "Explain query with ordered parent groupBy.",
 
 		Request: `query @explain {
-			author(groupBy: [name], order: {name: DESC}) {
+			Author(groupBy: [name], order: {name: DESC}) {
 				name
 				_group {
 					age
@@ -118,7 +118,7 @@ func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 		Description: "Explain query with groupBy string, and child order ascending.",
 
 		Request: `query @explain {
-			author(groupBy: [name]) {
+			Author(groupBy: [name]) {
 				name
 				_group (order: {age: ASC}){
 					age
@@ -212,7 +212,7 @@ func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 		Description: "Explain query with parent groupBy order, and child order.",
 
 		Request: `query @explain {
-			author(groupBy: [name], order: {name: DESC}) {
+			Author(groupBy: [name], order: {name: DESC}) {
 				name
 				_group (order: {age: ASC}){
 					age
@@ -314,7 +314,7 @@ func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
 		Description: "Explain query with parent groupBy order, and child order.",
 
 		Request: `query @explain {
-			author(groupBy: [name]) {
+			Author(groupBy: [name]) {
 				name
 				_group (
 					groupBy: [verified],

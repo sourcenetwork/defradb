@@ -22,7 +22,7 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 		Description: "Explain one one-to-many relation query with count.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				numberOfBooks: _count(books: {})
 			}
