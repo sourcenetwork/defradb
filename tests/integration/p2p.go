@@ -155,7 +155,7 @@ func connectPeers(
 	// Boostrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
 	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
@@ -389,7 +389,7 @@ func subscribeToCollection(
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 }
 
 // unsubscribeToCollection removes the given collections from subscriptions on the given nodes.
@@ -423,7 +423,7 @@ func unsubscribeToCollection(
 	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 }
 
 // getAllP2PCollections gets all the active peer subscriptions and compares them against the
