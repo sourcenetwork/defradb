@@ -22,13 +22,9 @@ type simpleChannel[T any] struct {
 	isClosed        bool
 }
 
-type subscribeCommand[T any] struct {
-	subscriptionChannel Subscription[T]
-}
+type subscribeCommand[T any] Subscription[T]
 
-type unsubscribeCommand[T any] struct {
-	subscriptionChannel Subscription[T]
-}
+type unsubscribeCommand[T any] Subscription[T]
 
 type publishCommand[T any] struct {
 	item T
@@ -60,7 +56,7 @@ func (c *simpleChannel[T]) Subscribe() (Subscription[T], error) {
 	// It is important to set this buffer size too, else we may end up blocked in the handleChannel func
 	ch := make(chan T, c.eventBufferSize)
 
-	c.commandChannel <- subscribeCommand[T]{ch}
+	c.commandChannel <- subscribeCommand[T](ch)
 	return ch, nil
 }
 
@@ -68,7 +64,7 @@ func (c *simpleChannel[T]) Unsubscribe(ch Subscription[T]) {
 	if c.isClosed {
 		return
 	}
-	c.commandChannel <- unsubscribeCommand[T]{ch}
+	c.commandChannel <- unsubscribeCommand[T](ch)
 }
 
 func (c *simpleChannel[T]) Publish(item T) {
@@ -101,13 +97,13 @@ func (c *simpleChannel[T]) handleChannel() {
 			return
 
 		case subscribeCommand[T]:
-			c.subscribers = append(c.subscribers, command.subscriptionChannel)
+			c.subscribers = append(c.subscribers, command)
 
 		case unsubscribeCommand[T]:
 			var isFound bool
 			var index int
 			for i, subscriber := range c.subscribers {
-				if command.subscriptionChannel == subscriber {
+				if command == subscriber {
 					index = i
 					isFound = true
 					break
@@ -121,7 +117,7 @@ func (c *simpleChannel[T]) handleChannel() {
 			c.subscribers[index] = c.subscribers[len(c.subscribers)-1]
 			c.subscribers = c.subscribers[:len(c.subscribers)-1]
 
-			close(command.subscriptionChannel)
+			close(command)
 
 		case publishCommand[T]:
 			for _, subscriber := range c.subscribers {
