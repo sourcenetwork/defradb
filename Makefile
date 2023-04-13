@@ -186,6 +186,14 @@ test\:bench-short:
 test\:scripts:
 	@$(MAKE) -C ./tools/scripts/ test
 
+.PHONY: fix\:cids
+fix\:cids:
+	./tools/scripts/fix_failing_cids.sh "safe"
+
+.PHONY: fix\:cids-unsafe
+fix\:cids-unsafe:
+	./tools/scripts/fix_failing_cids.sh "unsafe"
+
 # Using go-acc to ensure integration tests are included.
 # Usage: `make test:coverage` or `make test:coverage path="{pathToPackage}"`
 # Example: `make test:coverage path="./api/..."`
