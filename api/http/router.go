@@ -25,13 +25,14 @@ const (
 	Version          string = "v0"
 	versionedAPIPath string = "/api/" + Version
 
-	RootPath       string = versionedAPIPath + ""
-	PingPath       string = versionedAPIPath + "/ping"
-	DumpPath       string = versionedAPIPath + "/debug/dump"
-	BlocksPath     string = versionedAPIPath + "/blocks"
-	GraphQLPath    string = versionedAPIPath + "/graphql"
-	SchemaLoadPath string = versionedAPIPath + "/schema/load"
-	PeerIDPath     string = versionedAPIPath + "/peerid"
+	RootPath        string = versionedAPIPath + ""
+	PingPath        string = versionedAPIPath + "/ping"
+	DumpPath        string = versionedAPIPath + "/debug/dump"
+	BlocksPath      string = versionedAPIPath + "/blocks"
+	GraphQLPath     string = versionedAPIPath + "/graphql"
+	SchemaLoadPath  string = versionedAPIPath + "/schema/load"
+	SchemaPatchPath string = versionedAPIPath + "/schema/patch"
+	PeerIDPath      string = versionedAPIPath + "/peerid"
 )
 
 func setRoutes(h *handler) *handler {
@@ -58,6 +59,7 @@ func setRoutes(h *handler) *handler {
 	h.Get(GraphQLPath, h.handle(execGQLHandler))
 	h.Post(GraphQLPath, h.handle(execGQLHandler))
 	h.Post(SchemaLoadPath, h.handle(loadSchemaHandler))
+	h.Post(SchemaPatchPath, h.handle(patchSchemaHandler))
 	h.Get(PeerIDPath, h.handle(peerIDHandler))
 
 	return h

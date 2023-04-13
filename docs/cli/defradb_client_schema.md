@@ -29,4 +29,5 @@ Make changes, updates, or look for existing schema types to a DefraDB node.
 
 * [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
 * [defradb client schema add](defradb_client_schema_add.md)	 - Add a new schema type to DefraDB
+* [defradb client schema patch](defradb_client_schema_patch.md)	 - Patch an existing schema type
 

@@ -30,7 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/query/graphql"
+	"github.com/sourcenetwork/defradb/request/graphql"
 )
 
 var (
@@ -39,8 +39,11 @@ var (
 
 // make sure we match our client interface
 var (
-	_ client.DB         = (*db)(nil)
 	_ client.Collection = (*collection)(nil)
+)
+
+const (
+	defaultMaxTxnRetries = 5
 )
 
 // DB is the main interface for interacting with the
@@ -56,6 +59,9 @@ type db struct {
 	events events.Events
 
 	parser core.Parser
+
+	// The maximum number of retries per transaction.
+	maxTxnRetries immutable.Option[int]
 
 	// The options used to init the database
 	options any
@@ -75,12 +81,19 @@ func WithUpdateEvents() Option {
 	}
 }
 
+// WithMaxRetries sets the maximum number of retries per transaction.
+func WithMaxRetries(num int) Option {
+	return func(db *db) {
+		db.maxTxnRetries = immutable.Some(num)
+	}
+}
+
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (client.DB, error) {
 	return newDB(ctx, rootstore, options...)
 }
 
-func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*db, error) {
+func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*implicitTxnDB, error) {
 	log.Debug(ctx, "Loading: internal datastores")
 	root := datastore.AsDSReaderWriter(rootstore)
 	multistore := datastore.MultiStoreFrom(root)
@@ -114,12 +127,25 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 		return nil, err
 	}
 
-	return db, nil
+	return &implicitTxnDB{db}, nil
 }
 
 // NewTxn creates a new transaction.
 func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
+}
+
+// NewConcurrentTxn creates a new transaction that supports concurrent API calls.
+func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, readonly)
+}
+
+// WithTxn returns a new [client.Store] that respects the given transaction.
+func (db *db) WithTxn(txn datastore.Txn) client.Store {
+	return &explicitTxnDB{
+		db:  db,
+		txn: txn,
+	}
 }
 
 // Root returns the root datastore.
@@ -142,8 +168,14 @@ func (db *db) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
 	log.Debug(ctx, "Checking if DB has already been initialized...")
-	exists, err := db.systemstore().Has(ctx, ds.NewKey("init"))
+	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
@@ -151,28 +183,45 @@ func (db *db) initialize(ctx context.Context) error {
 	// and finish initialization
 	if exists {
 		log.Debug(ctx, "DB has already been initialized, continuing")
-		return db.loadSchema(ctx)
+		err = db.loadSchema(ctx, txn)
+		if err != nil {
+			return err
+		}
+		// The query language types are only updated on successful commit
+		// so we must not forget to do so on success regardless of whether
+		// we have written to the datastores.
+		return txn.Commit(ctx)
 	}
 
 	log.Debug(ctx, "Opened a new DB, needs full initialization")
+
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence(ctx, core.COLLECTION)
+	_, err = db.getSequence(ctx, txn, core.COLLECTION)
 	if err != nil {
 		return err
 	}
 
-	err = db.systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
+	err = txn.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return txn.Commit(ctx)
 }
 
 // Events returns the events Channel.
 func (db *db) Events() events.Events {
 	return db.events
+}
+
+// MaxRetries returns the maximum number of retries per transaction.
+// Defaults to `defaultMaxTxnRetries` if not explicitely set
+func (db *db) MaxTxnRetries() int {
+	if db.maxTxnRetries.HasValue() {
+		return db.maxTxnRetries.Value()
+	}
+	return defaultMaxTxnRetries
 }
 
 // PrintDump prints the entire database to console.

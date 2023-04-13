@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -33,6 +34,13 @@ type countNode struct {
 
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
+
+	execInfo countExecInfo
+}
+
+type countExecInfo struct {
+	// Total number of times countNode was executed.
+	iterations uint64
 }
 
 func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select) (*countNode, error) {
@@ -60,25 +68,23 @@ func (n *countNode) Close() error { return n.plan.Close() }
 
 func (n *countNode) Source() planNode { return n.plan }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *countNode) Explain() (map[string]any, error) {
+func (n *countNode) simpleExplain() (map[string]any, error) {
 	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {
-		explainerMap := map[string]any{}
+		simpleExplainMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
 		if source.Filter == nil || source.Filter.ExternalConditions == nil {
-			explainerMap[filterLabel] = nil
+			simpleExplainMap[filterLabel] = nil
 		} else {
-			explainerMap[filterLabel] = source.Filter.ExternalConditions
+			simpleExplainMap[filterLabel] = source.Filter.ExternalConditions
 		}
 
 		// Add the main field name.
-		explainerMap[fieldNameLabel] = source.Field.Name
+		simpleExplainMap[fieldNameLabel] = source.Field.Name
 
-		sourceExplanations[i] = explainerMap
+		sourceExplanations[i] = simpleExplainMap
 	}
 
 	return map[string]any{
@@ -86,7 +92,26 @@ func (n *countNode) Explain() (map[string]any, error) {
 	}, nil
 }
 
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *countNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
+}
+
 func (n *countNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	hasValue, err := n.plan.Next()
 	if err != nil || !hasValue {
 		return hasValue, err

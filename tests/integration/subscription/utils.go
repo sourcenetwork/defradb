@@ -16,15 +16,27 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var userSchema = (`
-	type User {
-		name: String
-		age: Int
-		points: Float
-		verified: Boolean
-	}
-`)
-
-func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, userSchema, []string{"User"}, test)
+func execute(t *testing.T, test testUtils.TestCase) {
+	testUtils.ExecuteTestCase(
+		t,
+		[]string{"User"},
+		testUtils.TestCase{
+			Description: test.Description,
+			Actions: append(
+				[]any{
+					testUtils.SchemaUpdate{
+						Schema: `
+							type User {
+								name: String
+								age: Int
+								points: Float
+								verified: Boolean
+							}
+						`,
+					},
+				},
+				test.Actions...,
+			),
+		},
+	)
 }

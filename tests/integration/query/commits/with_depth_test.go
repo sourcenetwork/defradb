@@ -17,186 +17,205 @@ import (
 )
 
 func TestQueryCommitsWithDepth1(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with depth 1",
-		Query: `query {
-					commits(depth: 1) {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
-			},
-			{
-				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
-			},
-			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+			testUtils.Request{
+				Request: `query {
+						commits(depth: 1) {
+							cid
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+					},
+					{
+						"cid": "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+					},
+					{
+						"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with depth 1, and doc updates",
-		Query: `query {
-					commits(depth: 1) {
-						cid
-						height
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
 					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(depth: 1) {
+							cid
+							height
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						// "Age" field head
+						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"height": int64(2),
+					},
+					{
+						// "Name" field head (unchanged from create)
+						"cid":    "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"height": int64(2),
+					},
 				},
-			},
-		},
-		Results: []map[string]any{
-			{
-				"cid":    "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
-				"height": int64(2),
-			},
-			{
-				// "Name" field head (unchanged from create)
-				"cid":    "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
-				"height": int64(1),
-			},
-			{
-				// "Age" field head
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
-				"height": int64(2),
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with depth 2, and doc updates",
-		Query: `query {
-					commits(depth: 2) {
-						cid
-						height
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
 				}`,
 			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	23
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(depth: 2) {
+							cid
+							height
+						}
 					}`,
-					`{
-						"Age": 23
-					}`,
+				Results: []map[string]any{
+					{
+						// Composite head
+						"cid":    "bafybeidag5ogxiqsctdxktobw6gbq52pbfkmicp6np5ccuy6pjyvgobdxq",
+						"height": int64(3),
+					},
+					{
+						// Composite head -1
+						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"height": int64(2),
+					},
+					{
+						// "Name" field head (unchanged from create)
+						"cid":    "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"height": int64(1),
+					},
+					{
+						// "Age" field head
+						"cid":    "bafybeid2arccjpsmmocarl6s3fe7ygstbdlpujlksuflukmun4bvf5g4oe",
+						"height": int64(3),
+					},
+					{
+						// "Age" field head -1
+						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"height": int64(2),
+					},
 				},
 			},
 		},
-		Results: []map[string]any{
-			{
-				// Composite head
-				"cid":    "bafybeiaxjhz6dna7fyf7tqo5hooilwvaezswd5xfsmb2lfgcy7tpzklikm",
-				"height": int64(3),
-			},
-			{
-				// Composite head -1
-				"cid":    "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
-				"height": int64(2),
-			},
-			{
-				// "Name" field head (unchanged from create)
-				"cid":    "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
-				"height": int64(1),
-			},
-			{
-				// "Age" field head
-				"cid":    "bafybeid2tudsm4go5boq7yvz6pprtgaiddkazq2dip6c4fsqt3afhzexbq",
-				"height": int64(3),
-			},
-			{
-				// "Age" field head -1
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
-				"height": int64(2),
-			},
-		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with depth 1",
-		Query: `query {
-					commits(depth: 1) {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Fred",
-					"Age": 25
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"Fred",
+						"Age":	25
+					}`,
 			},
-			{
-				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
-			},
-			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
-			},
-			{
-				"cid": "bafybeiajhlicqju3thdnyemvparx35kg6vfb6sr3vuemhw7zjrulx2tkom",
-			},
-			{
-				"cid": "bafybeifl4q2htt4sozl5dnxjqkpstpqbpkurgqc56dnn2bvtsora3srl2q",
-			},
-			{
-				"cid": "bafybeigbxr6aavljpcfruccoxi43kxjb46locbb7mwupwzjxbz5whplydu",
+			testUtils.Request{
+				Request: `query {
+						commits(depth: 1) {
+							cid
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+					},
+					{
+						"cid": "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+					},
+					{
+						"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+					},
+					{
+						"cid": "bafybeifo3ujh2imjbx7d4g43eocureejdcclb2zpkzelwtt2omaxzxkxlm",
+					},
+					{
+						"cid": "bafybeih2tjbbltowuprpc7q7tx7jw7zwlso5s3yck3o5gmi3dsr54ooyey",
+					},
+					{
+						"cid": "bafybeicy3ugjnpvsr6w74lh5se4dzvfncshtz6n54uw2gjzbk42hmojigq",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }

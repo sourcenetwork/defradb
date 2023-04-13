@@ -11,8 +11,8 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 /*
@@ -51,25 +51,25 @@ type appendNode interface {
 
 // parallelNode implements the MultiNode interface. It
 // enables parallel execution of planNodes. This is needed
-// if a single query has multiple Select statements at the
-// same depth in the query.
+// if a single request has multiple Select statements at the
+// same depth in the request.
 // Eg:
-// user {
-//		_key
-// 		name
-// 		friends {
-// 			name
-// 		}
-// 		_version {
-// 			cid
-// 		}
-// }
+//
+//	user {
+//			_key
+//			name
+//			friends {
+//				name
+//			}
+//			_version {
+//				cid
+//			}
+//	}
 //
 // In this example, both the friends selection and the _version
 // selection require their own planNode sub graphs to complete.
 // However, they are entirely independent graphs, so they can
 // be executed in parallel.
-//
 type parallelNode struct { // serialNode?
 	documentIterator
 	docMapper
@@ -385,38 +385,38 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 			s.source = plan
 		case appendNode:
 			m := &parallelNode{
-				p:         s.p,
+				p:         s.planner,
 				docMapper: docMapper{src.DocumentMap()},
 			}
 			m.addChild(-1, src)
 			m.addChild(fieldIndex, plan)
 			s.source = m
 		default:
-			return errors.New("sub plan needs to be either a MergeNode or an AppendNode")
+			return client.NewErrUnhandledType("sub plan", plan)
 		}
 
 	// source is a mergeNode, like a TypeJoin
 	case mergeNode:
 		origScan, _ := walkAndFindPlanType[*scanNode](plan)
 		if origScan == nil {
-			return errors.New("failed to find original scan node in plan graph")
+			return ErrFailedToFindScanNode
 		}
 		// create our new multiscanner
 		multiscan := &multiScanNode{scanNode: origScan}
 		// replace our current source internal scanNode with our new multiscanner
-		if err := s.p.walkAndReplacePlan(src, origScan, multiscan); err != nil {
+		if err := s.planner.walkAndReplacePlan(src, origScan, multiscan); err != nil {
 			return err
 		}
 		// create multinode
 		multinode := &parallelNode{
-			p:         s.p,
+			p:         s.planner,
 			multiscan: multiscan,
 			docMapper: docMapper{src.DocumentMap()},
 		}
 		multinode.addChild(-1, src)
 		multiscan.addReader()
 		// replace our new node internal scanNode with our new multiscanner
-		if err := s.p.walkAndReplacePlan(plan, origScan, multiscan); err != nil {
+		if err := s.planner.walkAndReplacePlan(plan, origScan, multiscan); err != nil {
 			return err
 		}
 		// add our newly updated plan to the multinode
@@ -435,18 +435,18 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 		case mergeNode:
 			multiscan, sourceIsMultiscan := node.Source().(*multiScanNode)
 			if !sourceIsMultiscan {
-				return errors.New("merge node source must be a multiScanNode")
+				return client.NewErrUnexpectedType[*multiScanNode]("mergeNode", node.Source())
 			}
 
 			// replace our new node internal scanNode with our existing multiscanner
-			if err := s.p.walkAndReplacePlan(plan, multiscan.Source(), multiscan); err != nil {
+			if err := s.planner.walkAndReplacePlan(plan, multiscan.Source(), multiscan); err != nil {
 				return err
 			}
 			multiscan.addReader()
 			// add our newly updated plan to the multinode
 			node.addChild(fieldIndex, plan)
 		default:
-			return errors.New("sub plan needs to be either a MergeNode or an AppendNode")
+			return client.NewErrUnhandledType("sub plan", plan)
 		}
 	}
 	return nil

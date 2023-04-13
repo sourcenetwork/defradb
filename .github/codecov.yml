@@ -39,3 +39,4 @@ comment:
 ignore:
   - "tests"
   - "**/*_test.go"
+  - "**/*.pb.go"

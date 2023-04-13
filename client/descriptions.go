@@ -16,11 +16,19 @@ import (
 
 // CollectionDescription describes a Collection and all its associated metadata.
 type CollectionDescription struct {
-	Name   string
-	ID     uint32
+	// Name contains the name of the collection.
+	//
+	// It is conceptually local to the node hosting the DefraDB instance, but currently there
+	// is no means to update the local value so that it differs from the (global) schema name.
+	Name string
+
+	// ID is the local identifier of this collection.
+	//
+	// It is immutable.
+	ID uint32
+
+	// Schema contains the data type information that this Collection uses.
 	Schema SchemaDescription
-	// @todo: New system reserved indexes are NEGATIVE. Maybe we need a map here
-	Indexes []IndexDescription
 }
 
 // IDString returns the collection ID as a string.
@@ -52,60 +60,31 @@ func (col CollectionDescription) GetRelation(name string) (FieldDescription, boo
 	return FieldDescription{}, false
 }
 
-// GetPrimaryIndex returns the primary index of the collection.
-func (col CollectionDescription) GetPrimaryIndex() IndexDescription {
-	return col.Indexes[0]
-}
-
-// IndexDescription describes an Index on a Collection and its associated metadata.
-type IndexDescription struct {
-	Name     string
-	ID       uint32
-	Primary  bool
-	Unique   bool
-	FieldIDs []uint32
-
-	// Junction is a special field, it indicates if this Index is
-	// being used as a junction table for a Many-to-Many relation.
-	// A Junction index needs to index the DocKey from two different
-	// collections, so the usual method of storing the indexed fields
-	// in the FieldIDs property won't work, since thats scoped to the
-	// local schema.
-	//
-	// The Junction stores the DocKey of the type its assigned to,
-	// and the DocKey of the target relation type. Moreover, since
-	// we use a Composite Key Index system, the ordering of the keys
-	// affects how we can use in the index. The initial Junction
-	// Index for a type, needs to be assigned to the  "Primary"
-	// type in the Many-to-Many relation. This is usually the type
-	// that expects more reads from.
-	//
-	// Eg:
-	// A Book type can have many Categories,
-	// and Categories can belong to many Books.
-	//
-	// If we query more for Books, then Categories directly, then
-	// we can set the Book type as the Primary type.
-	Junction bool
-	// RelationType is only used in the Index is a Junction Index.
-	// It specifies what the other type is in the Many-to-Many
-	// relationship.
-	RelationType string
-}
-
-// IDString returns the index ID as a string.
-func (index IndexDescription) IDString() string {
-	return fmt.Sprint(index.ID)
-}
-
 // SchemaDescription describes a Schema and its associated metadata.
 type SchemaDescription struct {
-	ID   uint32
+	// SchemaID is the version agnostic identifier for this schema.
+	//
+	// It remains constant throughout the lifetime of this schema.
+	SchemaID string
+
+	// VersionID is the version-specific identifier for this schema.
+	//
+	// It is generated on mutation of this schema and can be used to uniquely
+	// identify a schema at a specific version.
+	VersionID string
+
+	// Name is the name of this Schema.
+	//
+	// It is currently used to define the Collection Name, and as such these two properties
+	// will currently share the same name.
+	//
+	// It is immutable.
 	Name string
-	Key  []byte // DocKey for versioned source schema
-	// Schema schema.Schema
-	FieldIDs []uint32
-	Fields   []FieldDescription
+
+	// Fields contains the fields within this Schema.
+	//
+	// Currently new fields may be added after initial declaration, but they cannot be removed.
+	Fields []FieldDescription
 }
 
 // IsEmpty returns true if the SchemaDescription is empty and uninitialized
@@ -136,18 +115,14 @@ const (
 	FieldKind_INT_ARRAY    FieldKind = 5
 	FieldKind_FLOAT        FieldKind = 6
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
-	FieldKind_DECIMAL      FieldKind = 8
+	_                      FieldKind = 8 // safe to repurpose (was never used)
 	_                      FieldKind = 9 // safe to repurpose (previoulsy old field)
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
-	FieldKind_BYTES        FieldKind = 13
-
-	// Embedded object within the type
-	FieldKind_OBJECT FieldKind = 14
-
-	// Array of embedded objects
-	FieldKind_OBJECT_ARRAY FieldKind = 15
+	_                      FieldKind = 13 // safe to repurpose (was never used)
+	_                      FieldKind = 14 // safe to repurpose (was never used)
+	_                      FieldKind = 15 // safe to repurpose (was never used)
 
 	// Embedded object, but accessed via foreign keys
 	FieldKind_FOREIGN_OBJECT FieldKind = 16
@@ -160,6 +135,30 @@ const (
 	FieldKind_NILLABLE_FLOAT_ARRAY  FieldKind = 20
 	FieldKind_NILLABLE_STRING_ARRAY FieldKind = 21
 )
+
+// FieldKindStringToEnumMapping maps string representations of [FieldKind] values to
+// their enum values.
+//
+// It is currently used to by [db.PatchSchema] to allow string representations of
+// [FieldKind] to be provided instead of their raw int values.  This useage may expand
+// in the future.  They currently roughly correspond to the GQL field types, but this
+// equality is not guarenteed.
+var FieldKindStringToEnumMapping = map[string]FieldKind{
+	"ID":         FieldKind_DocKey,
+	"Boolean":    FieldKind_BOOL,
+	"[Boolean]":  FieldKind_NILLABLE_BOOL_ARRAY,
+	"[Boolean!]": FieldKind_BOOL_ARRAY,
+	"Integer":    FieldKind_INT,
+	"[Integer]":  FieldKind_NILLABLE_INT_ARRAY,
+	"[Integer!]": FieldKind_INT_ARRAY,
+	"DateTime":   FieldKind_DATETIME,
+	"Float":      FieldKind_FLOAT,
+	"[Float]":    FieldKind_NILLABLE_FLOAT_ARRAY,
+	"[Float!]":   FieldKind_FLOAT_ARRAY,
+	"String":     FieldKind_STRING,
+	"[String]":   FieldKind_NILLABLE_STRING_ARRAY,
+	"[String!]":  FieldKind_STRING_ARRAY,
+}
 
 // RelationType describes the type of relation between two types.
 type RelationType uint8
@@ -185,23 +184,45 @@ func (f FieldID) String() string {
 
 // FieldDescription describes a field on a Schema and its associated metadata.
 type FieldDescription struct {
-	Name         string
-	ID           FieldID
-	Kind         FieldKind
-	Schema       string // If the field is an OBJECT type, then it has a target schema
-	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
-	Typ          CType
+	// Name contains the name of this field.
+	//
+	// It is currently immutable.
+	Name string
+
+	// ID contains the internal ID of this field.
+	//
+	// Whilst this ID will typically match the field's index within the Schema's Fields
+	// slice, there is no guarentee that they will be the same.
+	//
+	// It is immutable.
+	ID FieldID
+
+	// The data type that this field holds.
+	//
+	// Must contain a valid value. It is currently immutable.
+	Kind FieldKind
+
+	// Schema contains the schema name of the type this field contains if this field is
+	// a relation field.  Otherwise this will be empty.
+	Schema string
+
+	// RelationName the name of the relationship that this field represents if this field is
+	// a relation field.  Otherwise this will be empty.
+	RelationName string
+
+	// The CRDT Type of this field. If no type has been provided it will default to [LWW_REGISTER].
+	//
+	// It is currently immutable.
+	Typ CType
+
+	// RelationType contains the relationship type if this field is a relation field. Otherwise this
+	// will be empty.
 	RelationType RelationType
-	// @todo: Add relation name for specifying target relation index
-	// @body: If a type has two User sub objects, you need to specify the relation
-	// name used. By default the relation name is "rootType_subType". However,
-	// if you have two of the same sub types, then you need to specify to
-	// avoid collision.
 }
 
 // IsObject returns true if this field is an object type.
 func (f FieldDescription) IsObject() bool {
-	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT) ||
+	return (f.Kind == FieldKind_FOREIGN_OBJECT) ||
 		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
@@ -212,7 +233,7 @@ func (f FieldDescription) IsObjectArray() bool {
 
 // IsPrimaryRelation returns true if this field is a relation, and is the primary side.
 func (f FieldDescription) IsPrimaryRelation() bool {
-	return f.RelationType > 0 && f.RelationType&Relation_Type_Primary == 0
+	return f.RelationType > 0 && f.RelationType&Relation_Type_Primary != 0
 }
 
 // IsSet returns true if the target relation type is set.

@@ -26,7 +26,7 @@ import (
 // Fetcher is the interface for collecting documents from the underlying data store.
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool) error
+	Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool, showDeleted bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (*encodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
@@ -60,6 +60,11 @@ type DocumentFetcher struct {
 	kvResultsIter     dsq.Results
 	kvEnd             bool
 	isReadingDocument bool
+
+	// Since deleted documents are stored under a different instance type than active documents,
+	// we use a parallel fetcher to be able to return the documents in the expected order.
+	// That being lexicographically ordered dockeys.
+	deletedDocFetcher *DocumentFetcher
 }
 
 // Init implements DocumentFetcher.
@@ -67,11 +72,32 @@ func (df *DocumentFetcher) Init(
 	col *client.CollectionDescription,
 	fields []*client.FieldDescription,
 	reverse bool,
+	showDeleted bool,
 ) error {
 	if col.Schema.IsEmpty() {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "Schema")
 	}
 
+	err := df.init(col, fields, reverse)
+	if err != nil {
+		return err
+	}
+
+	if showDeleted {
+		if df.deletedDocFetcher == nil {
+			df.deletedDocFetcher = new(DocumentFetcher)
+		}
+		return df.deletedDocFetcher.init(col, fields, reverse)
+	}
+
+	return nil
+}
+
+func (df *DocumentFetcher) init(
+	col *client.CollectionDescription,
+	fields []*client.FieldDescription,
+	reverse bool,
+) error {
 	df.col = col
 	df.fields = fields
 	df.reverse = reverse
@@ -99,8 +125,21 @@ func (df *DocumentFetcher) Init(
 	return nil
 }
 
-// Start implements DocumentFetcher.
 func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
+	err := df.start(ctx, txn, spans, false)
+	if err != nil {
+		return err
+	}
+
+	if df.deletedDocFetcher != nil {
+		return df.deletedDocFetcher.start(ctx, txn, spans, true)
+	}
+
+	return nil
+}
+
+// Start implements DocumentFetcher.
+func (df *DocumentFetcher) start(ctx context.Context, txn datastore.Txn, spans core.Spans, withDeleted bool) error {
 	if df.col == nil {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "CollectionDescription")
 	}
@@ -109,13 +148,22 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 	}
 
 	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
-		start := base.MakeCollectionKey(*df.col).WithValueFlag()
+		start := base.MakeCollectionKey(*df.col)
+		if withDeleted {
+			start = start.WithDeletedFlag()
+		} else {
+			start = start.WithValueFlag()
+		}
 		df.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 	} else {
 		valueSpans := make([]core.Span, len(spans.Value))
 		for i, span := range spans.Value {
 			// We can only handle value keys, so here we ensure we only read value keys
-			valueSpans[i] = core.NewSpan(span.Start().WithValueFlag(), span.End().WithValueFlag())
+			if withDeleted {
+				valueSpans[i] = core.NewSpan(span.Start().WithDeletedFlag(), span.End().WithDeletedFlag())
+			} else {
+				valueSpans[i] = core.NewSpan(span.Start().WithValueFlag(), span.End().WithValueFlag())
+			}
 		}
 
 		spans := core.MergeAscending(valueSpans)
@@ -203,8 +251,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err erro
 	if err != nil {
 		return false, err
 	}
-
-	if df.kv != nil && df.kv.Key.InstanceType != core.ValueKey {
+	if df.kv != nil && (df.kv.Key.InstanceType != core.ValueKey && df.kv.Key.InstanceType != core.DeletedKey) {
 		// We can only ready value values, if we escape the collection's value keys
 		// then we must be done and can stop reading
 		spanDone = true
@@ -365,18 +412,55 @@ func (df *DocumentFetcher) FetchNextDoc(
 	ctx context.Context,
 	mapping *core.DocumentMapping,
 ) ([]byte, core.Doc, error) {
-	encdoc, err := df.FetchNext(ctx)
-	if err != nil {
-		return nil, core.Doc{}, err
+	var err error
+	var encdoc *encodedDocument
+	var status client.DocumentStatus
+
+	// If the deletedDocFetcher isn't nil, this means that the user requested to include the deleted documents
+	// in the query. To keep the active and deleted docs in lexicographic order of dockeys, we use the two distinct
+	// fetchers and fetch the one that has the next lowest (or highest if requested in reverse order) dockey value.
+	ddf := df.deletedDocFetcher
+	if ddf != nil {
+		// If we've reached the end of the deleted docs, we can skip to getting the next active docs.
+		if !ddf.kvEnd {
+			if df.reverse {
+				if df.kvEnd || ddf.kv.Key.DocKey > df.kv.Key.DocKey {
+					encdoc, err = ddf.FetchNext(ctx)
+					if err != nil {
+						return nil, core.Doc{}, err
+					}
+					status = client.Deleted
+				}
+			} else {
+				if df.kvEnd || ddf.kv.Key.DocKey < df.kv.Key.DocKey {
+					encdoc, err = ddf.FetchNext(ctx)
+					if err != nil {
+						return nil, core.Doc{}, err
+					}
+					status = client.Deleted
+				}
+			}
+		}
 	}
+
+	// At this point id encdoc is nil, it means that the next document to be
+	// returned will be from the active ones.
 	if encdoc == nil {
-		return nil, core.Doc{}, nil
+		encdoc, err = df.FetchNext(ctx)
+		if err != nil {
+			return nil, core.Doc{}, err
+		}
+		if encdoc == nil {
+			return nil, core.Doc{}, nil
+		}
+		status = client.Active
 	}
 
 	doc, err := encdoc.DecodeToDoc(mapping)
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
+	doc.Status = status
 	return encdoc.Key, doc, err
 }
 
@@ -395,5 +479,14 @@ func (df *DocumentFetcher) Close() error {
 		return nil
 	}
 
-	return df.kvResultsIter.Close()
+	err = df.kvResultsIter.Close()
+	if err != nil {
+		return err
+	}
+
+	if df.deletedDocFetcher != nil {
+		return df.deletedDocFetcher.Close()
+	}
+
+	return nil
 }

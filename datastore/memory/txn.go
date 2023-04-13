@@ -12,6 +12,7 @@ package memory
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 
 	ds "github.com/ipfs/go-datastore"
@@ -27,6 +28,9 @@ type basicTxn struct {
 	dsVersion *uint64
 	readOnly  bool
 	discarded bool
+
+	closed  bool
+	closeLk sync.RWMutex
 }
 
 var _ ds.Txn = (*basicTxn)(nil)
@@ -41,6 +45,12 @@ func (t *basicTxn) getTxnVersion() uint64 {
 
 // Delete implements ds.Delete.
 func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
+	t.closeLk.RLock()
+	defer t.closeLk.RUnlock()
+	if t.closed {
+		return ErrClosed
+	}
+
 	if t.discarded {
 		return ErrTxnDiscarded
 	}
@@ -77,6 +87,12 @@ func (t *basicTxn) get(ctx context.Context, key ds.Key) dsItem {
 
 // Get implements ds.Get.
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
+	t.closeLk.RLock()
+	defer t.closeLk.RUnlock()
+	if t.closed {
+		return nil, ErrClosed
+	}
+
 	if t.discarded {
 		return nil, ErrTxnDiscarded
 	}
@@ -89,6 +105,12 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 
 // GetSize implements ds.GetSize.
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
+	t.closeLk.RLock()
+	defer t.closeLk.RUnlock()
+	if t.closed {
+		return 0, ErrClosed
+	}
+
 	if t.discarded {
 		return 0, ErrTxnDiscarded
 	}
@@ -101,6 +123,12 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 
 // Has implements ds.Has.
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
+	t.ds.closeLk.RLock()
+	defer t.ds.closeLk.RUnlock()
+	if t.ds.closed {
+		return false, ErrClosed
+	}
+
 	if t.discarded {
 		return false, ErrTxnDiscarded
 	}
@@ -113,6 +141,12 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 
 // Put implements ds.Put.
 func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
+	t.closeLk.RLock()
+	defer t.closeLk.RUnlock()
+	if t.closed {
+		return ErrClosed
+	}
+
 	if t.discarded {
 		return ErrTxnDiscarded
 	}
@@ -126,6 +160,12 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 
 // Query implements ds.Query.
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
+	t.closeLk.RLock()
+	defer t.closeLk.RUnlock()
+	if t.ds.closed {
+		return nil, ErrClosed
+	}
+
 	if t.discarded {
 		return nil, ErrTxnDiscarded
 	}
@@ -205,18 +245,19 @@ func (t *basicTxn) Discard(ctx context.Context) {
 
 // Commit saves the operations to the underlying datastore.
 func (t *basicTxn) Commit(ctx context.Context) error {
+	t.closeLk.RLock()
+	defer t.closeLk.RUnlock()
+	if t.closed {
+		return ErrClosed
+	}
+
 	if t.discarded {
 		return ErrTxnDiscarded
 	}
 	defer t.Discard(ctx)
 
 	if !t.readOnly {
-		c := commit{
-			tx:  t,
-			err: make(chan error),
-		}
-		t.ds.commit <- c
-		return <-c.err
+		return t.ds.commit(ctx, t)
 	}
 
 	return nil
@@ -246,4 +287,10 @@ func (t *basicTxn) clearInFlightTxn(ctx context.Context) {
 		},
 	)
 	t.ds.clearOldInFlightTxn(ctx)
+}
+
+func (t *basicTxn) close() {
+	t.closeLk.Lock()
+	defer t.closeLk.Unlock()
+	t.closed = true
 }

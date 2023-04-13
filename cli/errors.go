@@ -13,8 +13,13 @@ package cli
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errMissingArg                  string = "missing arguement"
-	errMissingArgs                 string = "missing arguements"
+	errMissingArg                  string = "missing argument"
+	errMissingArgs                 string = "missing arguments"
+	errTooManyArgs                 string = "too many arguments"
+	errEmptyStdin                  string = "empty stdin"
+	errEmptyFile                   string = "empty file"
+	errFailedToReadFile            string = "failed to read file"
+	errFailedToReadStdin           string = "failed to read stdin"
 	errFailedToCreateRPCClient     string = "failed to create RPC client"
 	errFailedToAddReplicator       string = "failed to add replicator, request failed"
 	errFailedToJoinEndpoint        string = "failed to join endpoint"
@@ -23,6 +28,7 @@ const (
 	errFailedToStatStdOut          string = "failed to stat stdout"
 	errFailedToHandleGQLErrors     string = "failed to handle GraphQL errors"
 	errFailedToPrettyPrintResponse string = "failed to pretty print response"
+	errFailedToUnmarshalResponse   string = "failed to unmarshal response"
 )
 
 // Errors returnable from this package.
@@ -32,6 +38,11 @@ const (
 var (
 	ErrMissingArg                  = errors.New(errMissingArg)
 	ErrMissingArgs                 = errors.New(errMissingArgs)
+	ErrTooManyArgs                 = errors.New(errTooManyArgs)
+	ErrEmptyFile                   = errors.New(errEmptyFile)
+	ErrEmptyStdin                  = errors.New(errEmptyStdin)
+	ErrFailedToReadFile            = errors.New(errFailedToReadFile)
+	ErrFailedToReadStdin           = errors.New(errFailedToReadStdin)
 	ErrFailToWrapRPCClient         = errors.New(errFailedToCreateRPCClient)
 	ErrFailedToAddReplicator       = errors.New(errFailedToAddReplicator)
 	ErrFailedToJoinEndpoint        = errors.New(errFailedToJoinEndpoint)
@@ -40,6 +51,7 @@ var (
 	ErrFailedToStatStdOut          = errors.New(errFailedToStatStdOut)
 	ErrFailedToHandleGQLErrors     = errors.New(errFailedToHandleGQLErrors)
 	ErrFailedToPrettyPrintResponse = errors.New(errFailedToPrettyPrintResponse)
+	ErrFailedToUnmarshalResponse   = errors.New(errFailedToUnmarshalResponse)
 )
 
 func NewErrMissingArg(name string) error {
@@ -48,6 +60,14 @@ func NewErrMissingArg(name string) error {
 
 func NewErrMissingArgs(count int, provided int) error {
 	return errors.New(errMissingArgs, errors.NewKV("Required", count), errors.NewKV("Provided", provided))
+}
+
+func NewFailedToReadFile(inner error) error {
+	return errors.Wrap(errFailedToReadFile, inner)
+}
+
+func NewFailedToReadStdin(inner error) error {
+	return errors.Wrap(errFailedToReadStdin, inner)
 }
 
 func NewErrFailedToCreateRPCClient(inner error) error {
@@ -80,4 +100,8 @@ func NewErrFailedToHandleGQLErrors(inner error) error {
 
 func NewErrFailedToPrettyPrintResponse(inner error) error {
 	return errors.Wrap(errFailedToPrettyPrintResponse, inner)
+}
+
+func NewErrFailedToUnmarshalResponse(inner error) error {
+	return errors.Wrap(errFailedToUnmarshalResponse, inner)
 }

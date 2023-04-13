@@ -15,7 +15,7 @@ import (
 )
 
 // ObjectSubscription is a field on the SubscriptionType
-// of a graphql query. It includes all the possible
+// of a graphql request. It includes all the possible
 // arguments
 type ObjectSubscription struct {
 	Field

@@ -11,11 +11,9 @@
 package planner
 
 import (
-	"fmt"
-
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -28,6 +26,13 @@ type averageNode struct {
 	sumFieldIndex     int
 	countFieldIndex   int
 	virtualFieldIndex int
+
+	execInfo averageExecInfo
+}
+
+type averageExecInfo struct {
+	// Total number of times averageNode was executed.
+	iterations uint64
 }
 
 func (p *Planner) Average(
@@ -43,7 +48,7 @@ func (p *Planner) Average(
 		case request.SumFieldName:
 			sumField = dependency
 		default:
-			return nil, errors.New(fmt.Sprintf("Unknown dependency, name: %s", dependency.Name))
+			return nil, NewErrUnknownDependency(dependency.Name)
 		}
 	}
 
@@ -66,6 +71,8 @@ func (n *averageNode) Close() error           { return n.plan.Close() }
 func (n *averageNode) Source() planNode       { return n.plan }
 
 func (n *averageNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	hasNext, err := n.plan.Next()
 	if err != nil || !hasNext {
 		return hasNext, err
@@ -76,7 +83,7 @@ func (n *averageNode) Next() (bool, error) {
 	countProp := n.currentValue.Fields[n.countFieldIndex]
 	typedCount, isInt := countProp.(int)
 	if !isInt {
-		return false, errors.New(fmt.Sprintf("Expected count to be int but was: %T", countProp))
+		return false, client.NewErrUnexpectedType[int]("count", countProp)
 	}
 	count := typedCount
 
@@ -92,7 +99,7 @@ func (n *averageNode) Next() (bool, error) {
 	case int64:
 		n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / float64(count)
 	default:
-		return false, errors.New(fmt.Sprintf("Expected sum to be either float64 or int64 or int but was: %T", sumProp))
+		return false, client.NewErrUnhandledType("sum", sumProp)
 	}
 
 	return true, nil
@@ -102,6 +109,17 @@ func (n *averageNode) SetPlan(p planNode) { n.plan = p }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *averageNode) Explain() (map[string]any, error) {
-	return map[string]any{}, nil
+func (n *averageNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return map[string]any{}, nil
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }

@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithInvalidCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with cid",
-		Query: `query {
+		Request: `query {
 					users (cid: "any non-nil string value - this will be ignored") {
 						Name
 					}
@@ -32,7 +32,7 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "failed to propagate VersionFetcher span, invalid CID: selected encoding not supported",
+		ExpectedError: "invalid cid: selected encoding not supported",
 	}
 
 	executeTestCase(t, test)

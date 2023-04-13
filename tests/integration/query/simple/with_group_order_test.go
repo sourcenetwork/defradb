@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, and child order ascending",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group (order: {Age: ASC}){
@@ -82,9 +82,9 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 }
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, and child order descending",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group (order: {Age: DESC}){
@@ -147,9 +147,9 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 }
 
 func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupOrder(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, and child order ascending",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name], order: {Name: DESC}) {
 						Name
 						_group (order: {Age: ASC}){
@@ -212,9 +212,9 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, with child order desc",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group (groupBy: [Verified]){
@@ -314,9 +314,9 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenInnerOrderDescending(
 	t *testing.T,
 ) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, with child order desc",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group (groupBy: [Verified], order: {Verified: ASC}){

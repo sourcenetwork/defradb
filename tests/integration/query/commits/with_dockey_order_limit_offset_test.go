@@ -17,48 +17,58 @@ import (
 )
 
 func TestQueryCommitsWithDockeyAndOrderAndLimitAndOffset(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey, order, limit and offset",
-		Query: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: ASC}, limit: 2, offset: 4) {
-						cid
-						height
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
 				}`,
 			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	23
+				}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	24
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: ASC}, limit: 2, offset: 4) {
+							cid
+							height
+						}
 					}`,
-					`{
-						"Age": 23
-					}`,
-					`{
-						"Age": 24
-					}`,
+				Results: []map[string]any{
+					{
+						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"height": int64(2),
+					},
+					{
+						"cid":    "bafybeidag5ogxiqsctdxktobw6gbq52pbfkmicp6np5ccuy6pjyvgobdxq",
+						"height": int64(3),
+					},
 				},
-			},
-		},
-		Results: []map[string]any{
-			{
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
-				"height": int64(2),
-			},
-			{
-				"cid":    "bafybeiaxjhz6dna7fyf7tqo5hooilwvaezswd5xfsmb2lfgcy7tpzklikm",
-				"height": int64(3),
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }

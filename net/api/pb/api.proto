@@ -34,6 +34,33 @@ message GetAllReplicatorReply {
    
 }
 
+message AddP2PCollectionsRequest {
+    repeated string collections = 1;
+}
+
+message AddP2PCollectionsReply {
+    string err = 1;
+}
+
+message RemoveP2PCollectionsRequest {
+    repeated string collections = 1;
+}
+
+message RemoveP2PCollectionsReply {
+    string err = 1;
+}
+
+message GetAllP2PCollectionsRequest {}
+
+message GetAllP2PCollectionsReply {
+    message Collection {
+        string id = 1;
+        string name = 2;
+    }
+    repeated Collection collections = 1;
+}
+
+
 // Service is the peer-to-peer network API for document sync
 service Service {
     // SetReplicator for this peer
@@ -44,4 +71,10 @@ service Service {
 
     // DeleteReplicator for this peer
     rpc GetAllReplicators(GetAllReplicatorRequest) returns (GetAllReplicatorReply) {}
+
+    rpc AddP2PCollections(AddP2PCollectionsRequest) returns (AddP2PCollectionsReply) {}
+    
+    rpc RemoveP2PCollections(RemoveP2PCollectionsRequest) returns (RemoveP2PCollectionsReply) {}
+    
+    rpc GetAllP2PCollections(GetAllP2PCollectionsRequest) returns (GetAllP2PCollectionsReply) {}
 }

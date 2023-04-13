@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithTypeName(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with typename",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						__typename
@@ -44,9 +44,9 @@ func TestQuerySimpleWithTypeName(t *testing.T) {
 }
 
 func TestQuerySimpleWithAliasedTypeName(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with aliased typename",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						__typename

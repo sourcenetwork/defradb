@@ -77,39 +77,43 @@ func (n *valuesNode) Source() planNode { return nil }
 
 // SortAll actually sorts all the data within the docContainer object
 func (n *valuesNode) SortAll() {
-	sort.Sort(n)
+	sort.Stable(n)
 }
 
-// Less implements the golang sort.Sort interface.
-// It compares the values the ith and jth index
-// within the docContainer.
-// returns true if i < j.
-// returns false if i > j.
+// Less implements the golang sort.Interface.
+// Less reports whether the elements within the docContainer at index i must sort before the element with index j.
+// Returns true if docs[i] < docs[j].
+// Returns false if docs[i] >= docs[j].
+// If both Less(i, j) and Less(j, i) are false, then the elements at index i and j are considered equal.
 func (n *valuesNode) Less(i, j int) bool {
 	da, db := n.docs.At(i), n.docs.At(j)
 	return n.docValueLess(da, db)
 }
 
-// docValueLess extracts and compare field values of a document
-func (n *valuesNode) docValueLess(da, db core.Doc) bool {
-	var ra, rb any
+// docValueLess extracts and compare field values of a document, returns true only if strictly less when ASC,
+// and true if greater than or equal when DESC, otherwise returns false.
+func (n *valuesNode) docValueLess(docA, docB core.Doc) bool {
 	for _, order := range n.ordering {
-		if order.Direction == mapper.ASC {
-			ra = getDocProp(da, order.FieldIndexes)
-			rb = getDocProp(db, order.FieldIndexes)
-		} else if order.Direction == mapper.DESC { // redundant, just else
-			ra = getDocProp(db, order.FieldIndexes)
-			rb = getDocProp(da, order.FieldIndexes)
-		}
+		compare := base.Compare(
+			getDocProp(docA, order.FieldIndexes),
+			getDocProp(docB, order.FieldIndexes),
+		)
 
-		if c := base.Compare(ra, rb); c < 0 {
-			return true
-		} else if c > 0 {
-			return false
+		if order.Direction == mapper.DESC {
+			if compare > 0 {
+				return true
+			} else {
+				return false
+			}
+		} else { // Otherwise assume order.Direction == mapper.ASC
+			if compare < 0 {
+				return true
+			} else {
+				return false
+			}
 		}
 	}
-
-	return true
+	return false
 }
 
 // Swap implements the golang sort.Sort interface.

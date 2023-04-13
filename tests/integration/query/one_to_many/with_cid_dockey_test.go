@@ -19,11 +19,11 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
 func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with unknown cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
-							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",
+							cid: "bafybeigk2niv4i7waulivx7mqsfbdnilwobdwas3spadsvn5xttpjp2cs5",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -64,11 +64,11 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 }
 
 func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with  cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
-							cid: "bafybeigcxmx2mbkmmkujm6vv4eoa57vfg2a22sum4p46empn6fcqkzpdma",
+							cid: "bafybeigfnum2ezpq2usyfmfhijwxkoxz47yvli7liggy4pcqk4qbzh3fw4",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -113,11 +113,11 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 // parent creation without explicit child cid, which is also not tied
 // to parent state).
 func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with child update and parent cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
-							cid: "bafybeigcxmx2mbkmmkujm6vv4eoa57vfg2a22sum4p46empn6fcqkzpdma",
+							cid: "bafybeigfnum2ezpq2usyfmfhijwxkoxz47yvli7liggy4pcqk4qbzh3fw4",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -169,11 +169,11 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 }
 
 func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
-							cid: "bafybeigcxmx2mbkmmkujm6vv4eoa57vfg2a22sum4p46empn6fcqkzpdma",
+							cid: "bafybeigfnum2ezpq2usyfmfhijwxkoxz47yvli7liggy4pcqk4qbzh3fw4",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
@@ -225,11 +225,11 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 }
 
 func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
-							cid: "bafybeifc33ql7a5vna3epx55lm2dwyhmq7souodlhnsrfwhz6gfqcb6wje",
+							cid: "bafybeibewpigspo7jtiknsv22u3qrncpdcq7ppdp6gwl7wd3azmtg5ophe",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name

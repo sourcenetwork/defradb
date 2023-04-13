@@ -16,6 +16,7 @@ package core
 import (
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
@@ -32,6 +33,7 @@ type Doc struct {
 	Hidden bool
 
 	Fields DocFields
+	Status client.DocumentStatus
 }
 
 // GetKey returns the DocKey for this document.
@@ -145,7 +147,9 @@ func (source *DocumentMapping) CloneWithoutRender() *DocumentMapping {
 	}
 
 	for i, childMapping := range source.ChildMappings {
-		result.ChildMappings[i] = childMapping.CloneWithoutRender()
+		if childMapping != nil {
+			result.ChildMappings[i] = childMapping.CloneWithoutRender()
+		}
 	}
 
 	return &result

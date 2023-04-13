@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndAverageOfUndefined(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with average on unspecified field",
-		Query: `query {
+		Request: `query {
 					users (groupBy: [Name]) {
 						Name
 						_avg
@@ -40,9 +40,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndAverageOfUndefined(t
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageOnEmptyCollection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, average on non-rendered group, empty collection",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_avg(_group: {field: Age})
@@ -55,9 +55,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageO
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, average on non-rendered group integer value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age})
@@ -96,9 +96,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilAverage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, average on non-rendered group nil and integer values",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age})
@@ -136,9 +136,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilAverage(t *t
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfInt(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, and average of average on int",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: _avg})
@@ -219,9 +219,9 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfI
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatAverage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, average on non-rendered group float (default) value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: HeightM})
@@ -258,9 +258,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatAvera
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatAverage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, average on non-rendered group float value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: HeightM})
@@ -298,9 +298,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatAverage(t 
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfFloat(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, and average of average on float",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: _avg})
@@ -381,9 +381,9 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfAverageOfFloat(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, and average of average of average of float",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: _avg})

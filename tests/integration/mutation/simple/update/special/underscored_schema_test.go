@@ -22,14 +22,14 @@ var myUserSchema = (`
 	}
 `)
 
-func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, myUserSchema, []string{"my_user"}, test)
+func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
+	testUtils.ExecuteRequestTestCase(t, myUserSchema, []string{"my_user"}, test)
 }
 
 func TestMutationUpdateUnderscoredSchema(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple update of schema with underscored name",
-		Query: `mutation {
+		Request: `mutation {
 			update_my_user(data: "{\"name\": \"Fred\"}") {
 				_key
 				name

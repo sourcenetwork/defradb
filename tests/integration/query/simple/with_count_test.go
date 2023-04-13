@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, count on undefined",
-		Query: `query {
+		Request: `query {
 					_count
 				}`,
 		ExpectedError: "aggregate must be provided with a property to aggregate",
@@ -29,9 +29,9 @@ func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
 }
 
 func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, count on empty",
-		Query: `query {
+		Request: `query {
 					_count(users: {})
 				}`,
 		Results: []map[string]any{
@@ -45,9 +45,9 @@ func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 }
 
 func TestQuerySimpleWithCount(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, count",
-		Query: `query {
+		Request: `query {
 					_count(users: {})
 				}`,
 		Docs: map[int][]string{

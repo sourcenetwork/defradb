@@ -17,98 +17,106 @@ import (
 )
 
 func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and cid",
-		Query: `query {
-					commits(
-						dockey: "bae-not-this-doc",
-						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
-					) {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(
+							dockey: "bae-not-this-doc",
+							cid: "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny"
+						) {
+							cid
+						}
+					}`,
+				Results: []map[string]any{},
 			},
 		},
-		Results: []map[string]any{},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and cid",
-		Query: `query {
-					commits(
-						dockey: "bae-not-this-doc",
-						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
-					) {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
 					}`,
-				},
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(
+							dockey: "bae-not-this-doc",
+							cid: "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny"
+						) {
+							cid
+						}
+					}`,
+				Results: []map[string]any{},
 			},
 		},
-		Results: []map[string]any{},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and cid",
-		Query: `query {
-					commits(
-						dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
-					) {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
 					}`,
-				},
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(
+							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+							cid: "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu"
+						) {
+							cid
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }

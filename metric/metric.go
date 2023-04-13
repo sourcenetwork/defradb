@@ -21,7 +21,6 @@ import (
 
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 	"go.opentelemetry.io/otel/metric/unit"
 	otelMetric "go.opentelemetry.io/otel/sdk/metric"
 )
@@ -75,8 +74,8 @@ func (m *Meter) Close(ctx context.Context) error {
 func (m *Meter) GetSyncHistogram(
 	name string,
 	unit unit.Unit,
-) (syncint64.Histogram, error) {
-	return m.meter.SyncInt64().Histogram(
+) (instrument.Int64Histogram, error) {
+	return m.meter.Int64Histogram(
 		name,
 		instrument.WithUnit(unit),
 	)
@@ -86,8 +85,8 @@ func (m *Meter) GetSyncHistogram(
 func (m *Meter) GetSyncCounter(
 	name string,
 	unit unit.Unit,
-) (syncint64.Counter, error) {
-	return m.meter.SyncInt64().Counter(
+) (instrument.Int64Counter, error) {
+	return m.meter.Int64Counter(
 		name,
 		instrument.WithUnit(unit),
 	)

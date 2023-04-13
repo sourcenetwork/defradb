@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"context"
 
+	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
@@ -23,6 +24,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -34,9 +37,10 @@ var (
 // LWWRegDelta is a single delta operation for an LWWRegister
 // @todo: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
-	Priority uint64
-	Data     []byte
-	DocKey   []byte
+	SchemaVersionID string
+	Priority        uint64
+	Data            []byte
+	DocKey          []byte
 }
 
 // GetPriority gets the current priority for this delta.
@@ -56,10 +60,11 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
 	err := enc.Encode(struct {
-		Priority uint64
-		Data     []byte
-		DocKey   []byte
-	}{delta.Priority, delta.Data, delta.DocKey})
+		SchemaVersionID string
+		Priority        uint64
+		Data            []byte
+		DocKey          []byte
+	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey})
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +79,22 @@ func (delta *LWWRegDelta) Value() any {
 // of an arbitrary data type that ensures convergence.
 type LWWRegister struct {
 	baseCRDT
+
+	// schemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at time of commit.
+	schemaVersionKey core.CollectionSchemaVersionKey
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID.
-func NewLWWRegister(store datastore.DSReaderWriter, key core.DataStoreKey) LWWRegister {
+func NewLWWRegister(
+	store datastore.DSReaderWriter,
+	schemaVersionKey core.CollectionSchemaVersionKey,
+	key core.DataStoreKey,
+) LWWRegister {
 	return LWWRegister{
-		baseCRDT: newBaseCRDT(store, key),
+		baseCRDT:         newBaseCRDT(store, key),
+		schemaVersionKey: schemaVersionKey,
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -105,8 +120,9 @@ func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
-		Data:   value,
-		DocKey: reg.key.Bytes(),
+		Data:            value,
+		DocKey:          []byte(reg.key.DocKey),
+		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}
 }
 
@@ -144,11 +160,23 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	// if the current priority is higher ignore put
 	// else if the current value is lexicographically
 	// greater than the new then ignore
-	valueK := reg.key.WithValueFlag()
+	key := reg.key.WithValueFlag()
+	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().ToDS())
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+		return err
+	}
+	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
+		key = key.WithDeletedFlag()
+	}
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(ctx, valueK.ToDS())
+		curValue, _ := reg.store.Get(ctx, key.ToDS())
+		// Do not use the first byte of the current value in the comparison.
+		// It's metadata that will falsify the result.
+		if len(curValue) > 0 {
+			curValue = curValue[1:]
+		}
 		if bytes.Compare(curValue, val) >= 0 {
 			return nil
 		}
@@ -156,7 +184,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
 	buf := append([]byte{byte(client.LWW_REGISTER)}, val...)
-	err = reg.store.Put(ctx, valueK.ToDS(), buf)
+	err = reg.store.Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}

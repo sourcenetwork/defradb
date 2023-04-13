@@ -15,13 +15,14 @@ const (
 	// https://spec.graphql.org/October2021/#sec-Type-Name-Introspection
 	TypeNameFieldName = "__typename"
 
-	Cid       = "cid"
-	Data      = "data"
-	DocKey    = "dockey"
-	DocKeys   = "dockeys"
-	FieldName = "field"
-	Id        = "id"
-	Ids       = "ids"
+	Cid         = "cid"
+	Data        = "data"
+	DocKey      = "dockey"
+	DocKeys     = "dockeys"
+	FieldName   = "field"
+	Id          = "id"
+	Ids         = "ids"
+	ShowDeleted = "showDeleted"
 
 	FilterClause  = "filter"
 	GroupByClause = "groupBy"
@@ -32,21 +33,25 @@ const (
 
 	AverageFieldName = "_avg"
 	CountFieldName   = "_count"
-	DocKeyFieldName  = "_key"
+	KeyFieldName     = "_key"
 	GroupFieldName   = "_group"
+	DeletedFieldName = "_deleted"
 	SumFieldName     = "_sum"
 	VersionFieldName = "_version"
 
 	ExplainLabel = "explain"
 
-	LatestCommitsQueryName = "latestCommits"
-	CommitsQueryName       = "commits"
+	LatestCommitsName = "latestCommits"
+	CommitsName       = "commits"
 
-	CommitTypeName  = "Commit"
-	LinksFieldName  = "links"
-	HeightFieldName = "height"
-	CidFieldName    = "cid"
-	DeltaFieldName  = "delta"
+	CommitTypeName           = "Commit"
+	LinksFieldName           = "links"
+	HeightFieldName          = "height"
+	CidFieldName             = "cid"
+	DockeyFieldName          = "dockey"
+	CollectionIDFieldName    = "collectionID"
+	SchemaVersionIDFieldName = "schemaVersionId"
+	DeltaFieldName           = "delta"
 
 	LinksNameFieldName = "name"
 	LinksCidFieldName  = "cid"
@@ -68,7 +73,8 @@ var (
 		CountFieldName:    true,
 		SumFieldName:      true,
 		AverageFieldName:  true,
-		DocKeyFieldName:   true,
+		KeyFieldName:      true,
+		DeletedFieldName:  true,
 	}
 
 	Aggregates = map[string]struct{}{
@@ -78,13 +84,16 @@ var (
 	}
 
 	CommitQueries = map[string]struct{}{
-		LatestCommitsQueryName: {},
-		CommitsQueryName:       {},
+		LatestCommitsName: {},
+		CommitsName:       {},
 	}
 
 	VersionFields = []string{
 		HeightFieldName,
 		CidFieldName,
+		DockeyFieldName,
+		CollectionIDFieldName,
+		SchemaVersionIDFieldName,
 		DeltaFieldName,
 	}
 

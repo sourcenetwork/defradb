@@ -12,6 +12,7 @@ package memory
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -24,6 +25,7 @@ type dsTxn struct {
 	dsVersion  uint64
 	txnVersion uint64
 	expiresAt  time.Time
+	txn        *basicTxn
 }
 
 func byDSVersion(a, b dsTxn) bool {
@@ -56,19 +58,17 @@ func byKeys(a, b dsItem) bool {
 	}
 }
 
-type commit struct {
-	tx  *basicTxn
-	err chan error
-}
-
 // Datastore uses a btree for internal storage.
 type Datastore struct {
 	// Latest committed version.
 	version     *uint64
 	values      *btree.BTreeG[dsItem]
 	inFlightTxn *btree.BTreeG[dsTxn]
-	close       chan struct{}
-	commit      chan commit
+
+	closing  chan struct{}
+	closed   bool
+	closeLk  sync.RWMutex
+	commitLk sync.Mutex
 }
 
 var _ ds.Datastore = (*Datastore)(nil)
@@ -82,11 +82,10 @@ func NewDatastore(ctx context.Context) *Datastore {
 		version:     &v,
 		values:      btree.NewBTreeG(byKeys),
 		inFlightTxn: btree.NewBTreeG(byDSVersion),
-		close:       make(chan struct{}),
-		commit:      make(chan commit),
+		closing:     make(chan struct{}),
 	}
 	go d.purgeOldVersions(ctx)
-	go d.commitHandler(ctx)
+	go d.handleContextDone(ctx)
 	return d
 }
 
@@ -112,17 +111,35 @@ func (d *Datastore) newBasicBatch() ds.Batch {
 }
 
 func (d *Datastore) Close() error {
-	d.close <- struct{}{}
+	d.closeLk.Lock()
+	defer d.closeLk.Unlock()
+	if d.closed {
+		return ErrClosed
+	}
+
+	d.closed = true
+	close(d.closing)
+
+	iter := d.inFlightTxn.Iter()
+
+	for iter.Next() {
+		iter.Item().txn.close()
+	}
+	iter.Release()
+
 	return nil
 }
 
 // Delete implements ds.Delete.
 func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
-	tx := d.newTransaction(false)
-	err = tx.Delete(ctx, key)
-	if err != nil {
-		return err
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return ErrClosed
 	}
+	tx := d.newTransaction(false)
+	// An error can never happen at this stage so we explicitly ignore it
+	_ = tx.Delete(ctx, key)
 	return tx.Commit(ctx)
 }
 
@@ -140,6 +157,11 @@ func (d *Datastore) get(ctx context.Context, key ds.Key, version uint64) dsItem 
 
 // Get implements ds.Get.
 func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return nil, ErrClosed
+	}
 	result := d.get(ctx, key, d.getVersion())
 	if result.key == "" || result.isDeleted {
 		return nil, ds.ErrNotFound
@@ -149,6 +171,11 @@ func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err erro
 
 // GetSize implements ds.GetSize.
 func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return 0, ErrClosed
+	}
 	result := d.get(ctx, key, d.getVersion())
 	if result.key == "" || result.isDeleted {
 		return 0, ds.ErrNotFound
@@ -158,39 +185,64 @@ func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err erro
 
 // Has implements ds.Has.
 func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return false, ErrClosed
+	}
 	result := d.get(ctx, key, d.getVersion())
 	return result.key != "" && !result.isDeleted, nil
 }
 
 // NewTransaction return a ds.Txn datastore based on Datastore.
 func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return nil, ErrClosed
+	}
 	return d.newTransaction(readOnly), nil
 }
 
 // newTransaction returns a ds.Txn datastore.
+//
+// isInternal should be set to true if this transaction is created from within the
+// datastore and is already protected by stuff like locks.  Failure to correctly set
+// this to true may result in deadlocks.  Failure to correctly set it to false may lead
+// to other concurrency issues.
 func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
 	v := d.getVersion()
-	d.inFlightTxn.Set(dsTxn{v, v + 1, time.Now().Add(1 * time.Hour)})
-	return &basicTxn{
+	txn := &basicTxn{
 		ops:       btree.NewBTreeG(byKeys),
 		ds:        d,
 		readOnly:  readOnly,
 		dsVersion: &v,
 	}
+
+	d.inFlightTxn.Set(dsTxn{v, v + 1, time.Now().Add(1 * time.Hour), txn})
+	return txn
 }
 
 // Put implements ds.Put.
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
-	tx := d.newTransaction(false)
-	err = tx.Put(ctx, key, value)
-	if err != nil {
-		return err
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return ErrClosed
 	}
+	tx := d.newTransaction(false)
+	// An error can never happen at this stage so we explicitly ignore it
+	_ = tx.Put(ctx, key, value)
 	return tx.Commit(ctx)
 }
 
 // Query implements ds.Query.
 func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return nil, ErrClosed
+	}
 	re := make([]dsq.Entry, 0, d.values.Height())
 	iter := d.values.Iter()
 	for iter.Next() {
@@ -225,6 +277,11 @@ func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error)
 
 // Sync implements ds.Sync.
 func (d *Datastore) Sync(ctx context.Context, prefix ds.Key) error {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return ErrClosed
+	}
 	return nil
 }
 
@@ -238,7 +295,7 @@ func (d *Datastore) purgeOldVersions(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-d.close:
+		case <-d.closing:
 			return
 		case <-time.After(time.Until(nextCompression)):
 			d.executePurge(ctx)
@@ -260,7 +317,6 @@ func (d *Datastore) executePurge(ctx context.Context) {
 		iter := d.values.Iter()
 		iter.Next()
 		item := iter.Item()
-
 		// fast forward to last inserted version and delete versions before it
 		total := 0
 		for iter.Next() {
@@ -290,34 +346,41 @@ func (d *Datastore) executePurge(ctx context.Context) {
 	}
 }
 
-func (d *Datastore) commitHandler(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case c, open := <-d.commit:
-			if !open {
-				return
-			}
-			err := c.tx.checkForConflicts(ctx)
-			if err != nil {
-				c.err <- err
-				continue
-			}
-			iter := c.tx.ops.Iter()
-			v := d.nextVersion()
-			for iter.Next() {
-				if iter.Item().isGet {
-					continue
-				}
-				item := iter.Item()
-				item.version = v
-				d.values.Set(item)
-			}
-			iter.Release()
-			close(c.err)
-		}
+func (d *Datastore) handleContextDone(ctx context.Context) {
+	<-ctx.Done()
+	// It is safe to ignore the error since the only error that could occur is if the
+	// datastore is already closed, in which case the purpose of the `Close` call is already covered.
+	_ = d.Close()
+}
+
+// commit commits the given transaction to the datastore.
+//
+// WARNING: This is a notable bottleneck, as commits can only be commited one at a time (handled internally).
+// This is to ensure correct, threadsafe, mututation of the datastore version.
+func (d *Datastore) commit(ctx context.Context, t *basicTxn) error {
+	d.commitLk.Lock()
+	defer d.commitLk.Unlock()
+
+	// The commitLk scope must include checkForConflicts, and it must be a write lock. The datastore version
+	// cannot be allowed to change between here and the release of the iterator, else the check for conflicts
+	// will be stale and potentially out of date.
+	err := t.checkForConflicts(ctx)
+	if err != nil {
+		return err
 	}
+
+	iter := t.ops.Iter()
+	v := t.ds.nextVersion()
+	for iter.Next() {
+		if iter.Item().isGet {
+			continue
+		}
+		item := iter.Item()
+		item.version = v
+		t.ds.values.Set(item)
+	}
+	iter.Release()
+	return nil
 }
 
 func (d *Datastore) clearOldInFlightTxn(ctx context.Context) {
@@ -335,11 +398,6 @@ func (d *Datastore) clearOldInFlightTxn(ctx context.Context) {
 			if now.After(iter.Item().expiresAt) {
 				itemsToDelete = append(itemsToDelete, iter.Item())
 				total++
-			}
-			// we don't want to delete more than 1000 items at a time
-			// to prevent loading too much into memory
-			if total >= 1000 {
-				break
 			}
 		}
 		iter.Release()

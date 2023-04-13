@@ -311,12 +311,39 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 	}
 }
 
-// WaitForPushLogEvent listens to the event channel for a push log event from a given peer.
-func (n *Node) WaitForPushLogEvent(id peer.ID) error {
+// WaitForPushLogByPeerEvent listens to the event channel for a push log event by a given peer.
+//
+// By refers to the log creator. It can be different than the log sender.
+//
+// It will block the calling thread until an event is yielded to an internal channel. This
+// event is not necessarily the next event and is dependent on the number of concurrent callers
+// (each event will only notify a single caller, not all of them).
+func (n *Node) WaitForPushLogByPeerEvent(id peer.ID) error {
 	for {
 		select {
 		case evt := <-n.pushLogEvent:
-			if evt.Peer != id {
+			if evt.ByPeer != id {
+				continue
+			}
+			return nil
+		case <-time.After(evtWaitTimeout):
+			return errors.New("waiting for pushlog timed out")
+		}
+	}
+}
+
+// WaitForPushLogFromPeerEvent listens to the event channel for a push log event from a given peer.
+//
+// From refers to the log sender. It can be different that the log creator.
+//
+// It will block the calling thread until an event is yielded to an internal channel. This
+// event is not necessarily the next event and is dependent on the number of concurrent callers
+// (each event will only notify a single caller, not all of them).
+func (n *Node) WaitForPushLogFromPeerEvent(id peer.ID) error {
+	for {
+		select {
+		case evt := <-n.pushLogEvent:
+			if evt.FromPeer != id {
 				continue
 			}
 			return nil

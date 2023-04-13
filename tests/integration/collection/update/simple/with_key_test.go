@@ -84,7 +84,7 @@ func TestUpdateWithKey(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.Key())
+						d, err := c.Get(ctx, doc.Key(), false)
 						if err != nil {
 							return err
 						}
@@ -116,7 +116,7 @@ func TestUpdateWithKey(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.Key())
+						d, err := c.Get(ctx, doc.Key(), false)
 						if err != nil {
 							return err
 						}

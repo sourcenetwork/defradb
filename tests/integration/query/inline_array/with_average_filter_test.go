@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered average of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteIntegers: {filter: {_gt: 0}})
@@ -45,9 +45,9 @@ func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with filter, average of populated nillable integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(TestScores: {filter: {_gt: -1}})
@@ -73,9 +73,9 @@ func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered average of float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteFloats: {filter: {_lt: 9}})
@@ -101,9 +101,9 @@ func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableFloatArrayWithAverageWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered average of nillable float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(PageRatings: {filter: {_lt: 9}})

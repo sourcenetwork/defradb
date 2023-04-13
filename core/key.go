@@ -18,6 +18,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -35,15 +36,18 @@ const (
 	ValueKey = InstanceType("v")
 	// PriorityKey is a type that represents a priority instance.
 	PriorityKey = InstanceType("p")
+	// DeletedKey is a type that represents a deleted document.
+	DeletedKey = InstanceType("d")
 )
 
 const (
-	COLLECTION        = "/collection/names"
-	COLLECTION_SCHEMA = "/collection/schema"
-	SCHEMA            = "/schema"
-	SEQ               = "/seq"
-	PRIMARY_KEY       = "/pk"
-	REPLICATOR        = "/replicator/id"
+	COLLECTION                = "/collection/names"
+	COLLECTION_SCHEMA         = "/collection/schema"
+	COLLECTION_SCHEMA_VERSION = "/collection/version"
+	SEQ                       = "/seq"
+	PRIMARY_KEY               = "/pk"
+	REPLICATOR                = "/replicator/id"
+	P2P_COLLECTION            = "/p2p/collection"
 )
 
 // Key is an interface that represents a key in the database.
@@ -55,7 +59,7 @@ type Key interface {
 
 // DataStoreKey is a type that represents a key in the database.
 type DataStoreKey struct {
-	CollectionId string
+	CollectionID string
 	InstanceType InstanceType
 	DocKey       string
 	FieldId      string
@@ -78,23 +82,35 @@ type HeadStoreKey struct {
 
 var _ Key = (*HeadStoreKey)(nil)
 
+// CollectionKey points to the current/'head' SchemaVersionId for
+// the collection of the given name.
 type CollectionKey struct {
 	CollectionName string
 }
 
 var _ Key = (*CollectionKey)(nil)
 
+// CollectionSchemaKey points to the current/'head' SchemaVersionId for
+// the collection of the given schema id.
 type CollectionSchemaKey struct {
 	SchemaId string
 }
 
 var _ Key = (*CollectionSchemaKey)(nil)
 
-type SchemaKey struct {
-	SchemaName string
+// CollectionSchemaVersionKey points to schema of a collection at a given
+// version.
+type CollectionSchemaVersionKey struct {
+	SchemaVersionId string
 }
 
-var _ Key = (*SchemaKey)(nil)
+var _ Key = (*CollectionSchemaVersionKey)(nil)
+
+type P2PCollectionKey struct {
+	CollectionID string
+}
+
+var _ Key = (*P2PCollectionKey)(nil)
 
 type SequenceKey struct {
 	SequenceName string
@@ -109,7 +125,7 @@ type ReplicatorKey struct {
 var _ Key = (*ReplicatorKey)(nil)
 
 // Creates a new DataStoreKey from a string as best as it can,
-// splitting the input using '/' as a field deliminater.  It assumes
+// splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
 //
 // /[CollectionId]/[InstanceType]/[DocKey]/[FieldId]
@@ -130,7 +146,7 @@ func NewDataStoreKey(key string) (DataStoreKey, error) {
 		return dataStoreKey, ErrInvalidKey
 	}
 
-	dataStoreKey.CollectionId = elements[0]
+	dataStoreKey.CollectionID = elements[0]
 	dataStoreKey.InstanceType = InstanceType(elements[1])
 	dataStoreKey.DocKey = elements[2]
 	if numberOfElements == 4 {
@@ -190,10 +206,8 @@ func NewCollectionSchemaKey(schemaId string) CollectionSchemaKey {
 	return CollectionSchemaKey{SchemaId: schemaId}
 }
 
-// NewSchemaKey returns a formatted schema key for the system data store.
-// It assumes the name of the schema is non-empty.
-func NewSchemaKey(name string) SchemaKey {
-	return SchemaKey{SchemaName: name}
+func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersionKey {
+	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
 }
 
 func NewSequenceKey(name string) SequenceKey {
@@ -209,6 +223,12 @@ func (k DataStoreKey) WithValueFlag() DataStoreKey {
 func (k DataStoreKey) WithPriorityFlag() DataStoreKey {
 	newKey := k
 	newKey.InstanceType = PriorityKey
+	return newKey
+}
+
+func (k DataStoreKey) WithDeletedFlag() DataStoreKey {
+	newKey := k
+	newKey.InstanceType = DeletedKey
 	return newKey
 }
 
@@ -260,8 +280,8 @@ func (k HeadStoreKey) WithFieldId(fieldId string) HeadStoreKey {
 func (k DataStoreKey) ToString() string {
 	var result string
 
-	if k.CollectionId != "" {
-		result = result + "/" + k.CollectionId
+	if k.CollectionID != "" {
+		result = result + "/" + k.CollectionID
 	}
 	if k.InstanceType != "" {
 		result = result + "/" + string(k.InstanceType)
@@ -285,7 +305,7 @@ func (k DataStoreKey) ToDS() ds.Key {
 }
 
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
-	return k.CollectionId == other.CollectionId &&
+	return k.CollectionID == other.CollectionID &&
 		k.DocKey == other.DocKey &&
 		k.FieldId == other.FieldId &&
 		k.InstanceType == other.InstanceType
@@ -293,14 +313,14 @@ func (k DataStoreKey) Equal(other DataStoreKey) bool {
 
 func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	return PrimaryDataStoreKey{
-		CollectionId: k.CollectionId,
+		CollectionId: k.CollectionID,
 		DocKey:       k.DocKey,
 	}
 }
 
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
-		CollectionId: k.CollectionId,
+		CollectionID: k.CollectionId,
 		DocKey:       k.DocKey,
 	}
 }
@@ -363,21 +383,21 @@ func (k CollectionSchemaKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-func (k SchemaKey) ToString() string {
-	result := SCHEMA
+func (k CollectionSchemaVersionKey) ToString() string {
+	result := COLLECTION_SCHEMA_VERSION
 
-	if k.SchemaName != "" {
-		result = result + "/" + k.SchemaName
+	if k.SchemaVersionId != "" {
+		result = result + "/" + k.SchemaVersionId
 	}
 
 	return result
 }
 
-func (k SchemaKey) Bytes() []byte {
+func (k CollectionSchemaVersionKey) Bytes() []byte {
 	return []byte(k.ToString())
 }
 
-func (k SchemaKey) ToDS() ds.Key {
+func (k CollectionSchemaVersionKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
@@ -396,6 +416,37 @@ func (k SequenceKey) Bytes() []byte {
 }
 
 func (k SequenceKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+// New
+func NewP2PCollectionKey(collectionID string) P2PCollectionKey {
+	return P2PCollectionKey{CollectionID: collectionID}
+}
+
+func NewP2PCollectionKeyFromString(key string) (P2PCollectionKey, error) {
+	keyArr := strings.Split(key, "/")
+	if len(keyArr) != 4 {
+		return P2PCollectionKey{}, errors.WithStack(ErrInvalidKey, errors.NewKV("Key", key))
+	}
+	return NewP2PCollectionKey(keyArr[3]), nil
+}
+
+func (k P2PCollectionKey) ToString() string {
+	result := P2P_COLLECTION
+
+	if k.CollectionID != "" {
+		result = result + "/" + k.CollectionID
+	}
+
+	return result
+}
+
+func (k P2PCollectionKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k P2PCollectionKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
@@ -463,8 +514,8 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 		newKey.InstanceType = InstanceType(bytesPrefixEnd([]byte(k.InstanceType)))
 		return newKey
 	}
-	if k.CollectionId != "" {
-		newKey.CollectionId = string(bytesPrefixEnd([]byte(k.CollectionId)))
+	if k.CollectionID != "" {
+		newKey.CollectionID = string(bytesPrefixEnd([]byte(k.CollectionID)))
 		return newKey
 	}
 	return newKey

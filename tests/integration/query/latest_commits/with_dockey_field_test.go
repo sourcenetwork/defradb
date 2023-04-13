@@ -19,9 +19,9 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (it looks totally broken to me).
 func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and field name",
-		Query: `query {
+		Request: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
 						cid
 						links {
@@ -47,9 +47,9 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and field id",
-		Query: `query {
+		Request: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
 						cid
 						links {
@@ -68,7 +68,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":   "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+				"cid":   "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
 				"links": []map[string]any{},
 			},
 		},
@@ -80,9 +80,9 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and composite field id",
-		Query: `query {
+		Request: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {
 						cid
 						links {
@@ -101,14 +101,14 @@ func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
 				"links": []map[string]any{
 					{
-						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+						"cid":  "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
 						"name": "Age",
 					},
 					{
-						"cid":  "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+						"cid":  "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
 						"name": "Name",
 					},
 				},

@@ -50,6 +50,7 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
 		Cid:      &pb.ProtoCid{Cid: evt.Cid},
 		SchemaID: []byte(evt.SchemaID),
+		Creator:  s.peer.host.ID().String(),
 		Log: &pb.Document_Log{
 			Block: evt.Block.RawData(),
 		},

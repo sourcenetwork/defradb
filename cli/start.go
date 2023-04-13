@@ -20,9 +20,10 @@ import (
 	"strings"
 
 	badger "github.com/dgraph-io/badger/v3"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
@@ -46,26 +47,26 @@ var startCmd = &cobra.Command{
 	Long:  "Start a new instance of DefraDB node.",
 	// Load the root config if it exists, otherwise create it.
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-		rootDir, exists, err := config.GetRootDir(rootDirParam)
-		if err != nil {
-			return errors.Wrap("failed to get root dir", err)
-		}
-		if !exists {
-			err = config.CreateRootDirWithDefaultConfig(rootDir)
-			if err != nil {
-				return errors.Wrap("failed to create root dir", err)
+		if cfg.ConfigFileExists() {
+			if err := cfg.LoadWithRootdir(true); err != nil {
+				return errors.Wrap("failed to load config", err)
+			}
+		} else {
+			if err := cfg.LoadWithRootdir(false); err != nil {
+				return errors.Wrap("failed to load config", err)
+			}
+			if config.FolderExists(cfg.Rootdir) {
+				if err := cfg.WriteConfigFile(); err != nil {
+					return err
+				}
+			} else {
+				if err := cfg.CreateRootDirAndConfigFile(); err != nil {
+					return err
+				}
 			}
 		}
-		err = cfg.Load(rootDir)
-		if err != nil {
-			return errors.Wrap("failed to load config", err)
-		}
+		log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
 
-		// parse loglevel overrides
-		if err := parseAndConfigLog(cmd.Context(), cfg.Log, cmd); err != nil {
-			return err
-		}
-		log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -85,16 +86,25 @@ func init() {
 		"peers", cfg.Net.Peers,
 		"List of peers to connect to",
 	)
-	err := viper.BindPFlag("net.peers", startCmd.Flags().Lookup("peers"))
+	err := cfg.BindFlag("net.peers", startCmd.Flags().Lookup("peers"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.peers", err)
+	}
+
+	startCmd.Flags().Int(
+		"max-txn-retries", cfg.Datastore.MaxTxnRetries,
+		"Specify the maximum number of retries per transaction",
+	)
+	err = cfg.BindFlag("datastore.maxtxnretries", startCmd.Flags().Lookup("max-txn-retries"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind datastore.maxtxnretries", err)
 	}
 
 	startCmd.Flags().String(
 		"store", cfg.Datastore.Store,
 		"Specify the datastore to use (supported: badger, memory)",
 	)
-	err = viper.BindPFlag("datastore.store", startCmd.Flags().Lookup("store"))
+	err = cfg.BindFlag("datastore.store", startCmd.Flags().Lookup("store"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind datastore.store", err)
 	}
@@ -103,7 +113,7 @@ func init() {
 		&cfg.Datastore.Badger.ValueLogFileSize, "valuelogfilesize",
 		"Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize",
 	)
-	err = viper.BindPFlag("datastore.badger.valuelogfilesize", startCmd.Flags().Lookup("valuelogfilesize"))
+	err = cfg.BindFlag("datastore.badger.valuelogfilesize", startCmd.Flags().Lookup("valuelogfilesize"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind datastore.badger.valuelogfilesize", err)
 	}
@@ -112,7 +122,7 @@ func init() {
 		"p2paddr", cfg.Net.P2PAddress,
 		"Listener address for the p2p network (formatted as a libp2p MultiAddr)",
 	)
-	err = viper.BindPFlag("net.p2paddress", startCmd.Flags().Lookup("p2paddr"))
+	err = cfg.BindFlag("net.p2paddress", startCmd.Flags().Lookup("p2paddr"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.p2paddress", err)
 	}
@@ -121,7 +131,7 @@ func init() {
 		"tcpaddr", cfg.Net.TCPAddress,
 		"Listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)",
 	)
-	err = viper.BindPFlag("net.tcpaddress", startCmd.Flags().Lookup("tcpaddr"))
+	err = cfg.BindFlag("net.tcpaddress", startCmd.Flags().Lookup("tcpaddr"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.tcpaddress", err)
 	}
@@ -130,7 +140,7 @@ func init() {
 		"no-p2p", cfg.Net.P2PDisabled,
 		"Disable the peer-to-peer network synchronization system",
 	)
-	err = viper.BindPFlag("net.p2pdisabled", startCmd.Flags().Lookup("no-p2p"))
+	err = cfg.BindFlag("net.p2pdisabled", startCmd.Flags().Lookup("no-p2p"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.p2pdisabled", err)
 	}
@@ -139,7 +149,7 @@ func init() {
 		"tls", cfg.API.TLS,
 		"Enable serving the API over https",
 	)
-	err = viper.BindPFlag("api.tls", startCmd.Flags().Lookup("tls"))
+	err = cfg.BindFlag("api.tls", startCmd.Flags().Lookup("tls"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind api.tls", err)
 	}
@@ -148,7 +158,7 @@ func init() {
 		"pubkeypath", cfg.API.PubKeyPath,
 		"Path to the public key for tls",
 	)
-	err = viper.BindPFlag("api.pubkeypath", startCmd.Flags().Lookup("pubkeypath"))
+	err = cfg.BindFlag("api.pubkeypath", startCmd.Flags().Lookup("pubkeypath"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind api.pubkeypath", err)
 	}
@@ -157,7 +167,7 @@ func init() {
 		"privkeypath", cfg.API.PrivKeyPath,
 		"Path to the private key for tls",
 	)
-	err = viper.BindPFlag("api.privkeypath", startCmd.Flags().Lookup("privkeypath"))
+	err = cfg.BindFlag("api.privkeypath", startCmd.Flags().Lookup("privkeypath"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind api.privkeypath", err)
 	}
@@ -166,7 +176,7 @@ func init() {
 		"email", cfg.API.Email,
 		"Email address used by the CA for notifications",
 	)
-	err = viper.BindPFlag("api.email", startCmd.Flags().Lookup("email"))
+	err = cfg.BindFlag("api.email", startCmd.Flags().Lookup("email"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind api.email", err)
 	}
@@ -207,11 +217,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 
 	var err error
 	if cfg.Datastore.Store == badgerDatastoreName {
-		log.FeedbackInfo(
-			ctx,
-			"Opening badger store",
-			logging.NewKV("Path", cfg.Datastore.Badger.Path),
-		)
+		log.FeedbackInfo(ctx, "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
 		rootstore, err = badgerds.NewDatastore(
 			cfg.Datastore.Badger.Path,
 			cfg.Datastore.Badger.Options,
@@ -228,6 +234,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 
 	options := []db.Option{
 		db.WithUpdateEvents(),
+		db.WithMaxRetries(cfg.Datastore.MaxTxnRetries),
 	}
 
 	db, err := db.NewDB(ctx, rootstore, options...)
@@ -282,9 +289,18 @@ func start(ctx context.Context) (*defraInstance, error) {
 			return nil, errors.Wrap("failed to parse RPC timeout duration", err)
 		}
 
-		server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle: rpcTimeoutDuration,
-		}))
+		server := grpc.NewServer(
+			grpc.UnaryInterceptor(
+				grpc_middleware.ChainUnaryServer(
+					grpc_recovery.UnaryServerInterceptor(),
+				),
+			),
+			grpc.KeepaliveParams(
+				keepalive.ServerParameters{
+					MaxConnectionIdle: rpcTimeoutDuration,
+				},
+			),
+		)
 		tcplistener, err := gonet.Listen("tcp", addr)
 		if err != nil {
 			return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", addr), err)
@@ -301,14 +317,9 @@ func start(ctx context.Context) (*defraInstance, error) {
 		}()
 	}
 
-	rootDir, _, err := config.GetRootDir(rootDirParam)
-	if err != nil {
-		return nil, errors.Wrap("failed to get root dir", err)
-	}
-
 	sOpt := []func(*httpapi.Server){
 		httpapi.WithAddress(cfg.API.Address),
-		httpapi.WithRootDir(rootDir),
+		httpapi.WithRootDir(cfg.Rootdir),
 	}
 
 	if n != nil {
@@ -334,7 +345,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 		log.FeedbackInfo(
 			ctx,
 			fmt.Sprintf(
-				"Providing HTTP API at %s%s. Use the GraphQL query endpoint at %s%s/graphql ",
+				"Providing HTTP API at %s%s. Use the GraphQL request endpoint at %s%s/graphql ",
 				cfg.API.AddressToURL(),
 				httpapi.RootPath,
 				cfg.API.AddressToURL(),

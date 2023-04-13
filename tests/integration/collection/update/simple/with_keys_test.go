@@ -103,7 +103,7 @@ func TestUpdateWithKeys(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc1.Key())
+						d, err := c.Get(ctx, doc1.Key(), false)
 						if err != nil {
 							return err
 						}
@@ -115,7 +115,7 @@ func TestUpdateWithKeys(t *testing.T) {
 
 						assert.Equal(t, "John", name)
 
-						d2, err := c.Get(ctx, doc2.Key())
+						d2, err := c.Get(ctx, doc2.Key(), false)
 						if err != nil {
 							return err
 						}
@@ -150,7 +150,7 @@ func TestUpdateWithKeys(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc1.Key())
+						d, err := c.Get(ctx, doc1.Key(), false)
 						if err != nil {
 							return err
 						}
@@ -162,7 +162,7 @@ func TestUpdateWithKeys(t *testing.T) {
 
 						assert.Equal(t, uint64(40), name)
 
-						d2, err := c.Get(ctx, doc2.Key())
+						d2, err := c.Get(ctx, doc2.Key(), false)
 						if err != nil {
 							return err
 						}

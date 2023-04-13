@@ -9,12 +9,6 @@ type compatLogger struct {
 	skipLogger zap.SugaredLogger
 }
 
-// Warning is for compatibility
-// Deprecated: use Warn(args ...any) instead
-func (logger *compatLogger) Warning(args ...any) {
-	logger.skipLogger.Warn(args...)
-}
-
 // Warningf is for compatibility
 // Deprecated: use Warnf(format string, args ...any) instead
 func (logger *compatLogger) Warningf(format string, args ...any) {

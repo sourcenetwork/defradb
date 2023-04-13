@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"sync"
 
-	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/ipfs/go-libipfs/blocks"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -36,30 +36,16 @@ import (
 // of CRDT blocks
 func (p *Peer) processLog(
 	ctx context.Context,
+	txn datastore.Txn,
 	col client.Collection,
 	dockey core.DataStoreKey,
 	c cid.Cid,
 	field string,
 	nd ipld.Node,
-	getter ipld.NodeGetter) ([]cid.Cid, error) {
+	getter ipld.NodeGetter,
+	removeChildren bool,
+) ([]cid.Cid, error) {
 	log.Debug(ctx, "Running processLog")
-
-	txn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	// KEEPING FOR REFERENCE FOR NOW
-	// check if we already have this block
-	// exists, err := txn.DAGstore().Has(ctx, c)
-	// if err != nil {
-	// 	return nil, errors.Wrap("failed to check for existing block %s", c, err)
-	// }
-	// if exists {
-	// 	log.Debugf("Already have block %s locally, skipping.", c)
-	// 	return nil, nil
-	// }
 
 	crdt, err := initCRDTForType(ctx, txn, col, dockey, field)
 	if err != nil {
@@ -77,22 +63,23 @@ func (p *Peer) processLog(
 		logging.NewKV("DocKey", dockey),
 		logging.NewKV("CID", c),
 	)
-	height := delta.GetPriority()
 
 	if err := txn.DAGstore().Put(ctx, nd); err != nil {
 		return nil, err
 	}
 
 	ng := p.createNodeGetter(crdt, getter)
-	cids, err := crdt.Clock().ProcessNode(ctx, ng, c, height, delta, nd)
+	cids, err := crdt.Clock().ProcessNode(ctx, ng, c, delta.GetPriority(), delta, nd)
 	if err != nil {
 		return nil, err
 	}
 
-	// mark this obj as done
-	p.queuedChildren.Remove(c)
+	if removeChildren {
+		// mark this obj as done
+		p.queuedChildren.Remove(c)
+	}
 
-	return cids, txn.Commit(ctx)
+	return cids, nil
 }
 
 func initCRDTForType(
@@ -124,7 +111,13 @@ func initCRDTForType(
 		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
-	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), events.EmptyUpdateChannel, ctype, key)
+	return crdt.DefaultFactory.InstanceWithStores(
+		txn,
+		core.NewCollectionSchemaVersionKey(col.Schema().VersionID),
+		events.EmptyUpdateChannel,
+		ctype,
+		key,
+	)
 }
 
 func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
@@ -147,6 +140,7 @@ func (p *Peer) createNodeGetter(
 
 func (p *Peer) handleChildBlocks(
 	session *sync.WaitGroup,
+	txn datastore.Txn,
 	col client.Collection,
 	dockey core.DataStoreKey,
 	field string,
@@ -204,6 +198,7 @@ func (p *Peer) handleChildBlocks(
 			session:    session,
 			nodeGetter: getter,
 			node:       cNode,
+			txn:        txn,
 		}
 
 		select {

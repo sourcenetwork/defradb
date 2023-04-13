@@ -17,125 +17,145 @@ import (
 )
 
 func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and unknown field",
-		Query: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "not a field") {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "not a field") {
+							cid
+						}
+					}`,
+				Results: []map[string]any{},
 			},
 		},
-		Results: []map[string]any{},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and unknown field id",
-		Query: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "999999") {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "999999") {
+							cid
+						}
+					}`,
+				Results: []map[string]any{},
 			},
 		},
-		Results: []map[string]any{},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (should return all commits for dockey-field).
 func TestQueryCommitsWithDockeyAndField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and field",
-		Query: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
+							cid
+						}
+					}`,
+				Results: []map[string]any{},
 			},
 		},
-		Results: []map[string]any{},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and field id",
-		Query: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
+							cid
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and field id",
-		Query: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {
+							cid
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
