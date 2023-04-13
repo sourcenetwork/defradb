@@ -16,6 +16,9 @@ type simpleChannel[T any] struct {
 	//
 	// It is important that all stuff gets sent through this single channel to ensure
 	// that the order of operations is preserved.
+	//
+	// WARNING: This does mean that non-event commands can block the database if the buffer
+	// size is breached (e.g. if many subscribe commands occupy the buffer).
 	commandChannel  chan any
 	eventBufferSize int
 	hasClosedChan   chan struct{}
