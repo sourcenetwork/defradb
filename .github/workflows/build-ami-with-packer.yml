@@ -16,7 +16,7 @@ on:
 
 env:
   PACKER_LOG: 1
-  # RELEASE_VERSION: v0.4.0
+  # RELEASE_VERSION: v0.5.0
 
 jobs:
   build-ami-with-packer:
