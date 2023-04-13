@@ -18,6 +18,7 @@ type simpleChannel[T any] struct {
 	// that the order of operations is preserved.
 	commandChannel  chan any
 	eventBufferSize int
+	hasClosedChan   chan struct{}
 	isClosed        bool
 }
 
@@ -42,6 +43,7 @@ type closeCommand struct{}
 func NewSimpleChannel[T any](commandBufferSize int, eventBufferSize int) Channel[T] {
 	c := simpleChannel[T]{
 		commandChannel:  make(chan any, commandBufferSize),
+		hasClosedChan:   make(chan struct{}),
 		eventBufferSize: eventBufferSize,
 	}
 
@@ -82,6 +84,9 @@ func (c *simpleChannel[T]) Close() {
 	}
 	c.isClosed = true
 	c.commandChannel <- closeCommand{}
+
+	// Wait for the close command to be handled, in order, before returning
+	<-c.hasClosedChan
 }
 
 func (c *simpleChannel[T]) handleChannel() {
@@ -92,6 +97,7 @@ func (c *simpleChannel[T]) handleChannel() {
 				close(subscriber)
 			}
 			close(c.commandChannel)
+			close(c.hasClosedChan)
 			return
 
 		case subscribeCommand[T]:
