@@ -25,13 +25,52 @@ func TestNewTransaction(t *testing.T) {
 	s := NewDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NotNil(t, tx)
 	require.NoError(t, err)
+}
+
+func TestNewTransactionWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := NewDatastore(ctx)
+
+	err := s.Close()
+	require.NoError(t, err)
+	_, err = s.NewTransaction(ctx, false)
+	require.ErrorIs(t, err, ErrClosed)
+}
+
+func TestTxnDeleteOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = s.Close()
+	require.NoError(t, err)
+
+	err = tx.Delete(ctx, testKey1)
+	require.ErrorIs(t, err, ErrClosed)
+}
+
+func TestTxnDeleteOperationWithDiscardedTxn(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	defer func() {
+		err := s.Close()
+		require.NoError(t, err)
+	}()
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	tx.Discard(ctx)
+
+	err = tx.Delete(ctx, testKey1)
+	require.ErrorIs(t, err, ErrTxnDiscarded)
 }
 
 func TestTxnGetOperation(t *testing.T) {
@@ -39,9 +78,7 @@ func TestTxnGetOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -51,14 +88,26 @@ func TestTxnGetOperation(t *testing.T) {
 	require.Equal(t, testValue1, resp)
 }
 
+func TestTxnGetOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = s.Close()
+	require.NoError(t, err)
+
+	_, err = tx.Get(ctx, testKey1)
+	require.ErrorIs(t, err, ErrClosed)
+}
+
 func TestTxnGetOperationAfterPut(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -76,9 +125,7 @@ func TestTxnGetOperationAfterDelete(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -95,9 +142,7 @@ func TestTxnGetOperationAfterDeleteReadOnly(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, true)
 	require.NoError(t, err)
@@ -111,9 +156,7 @@ func TestTxnGetOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -127,9 +170,7 @@ func TestTxnDeleteAndCommitOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -152,9 +193,7 @@ func TestTxnGetSizeOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -164,14 +203,43 @@ func TestTxnGetSizeOperation(t *testing.T) {
 	require.Equal(t, len(testValue1), resp)
 }
 
+func TestTxnGetSizeOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = s.Close()
+	require.NoError(t, err)
+
+	_, err = tx.GetSize(ctx, testKey1)
+	require.ErrorIs(t, err, ErrClosed)
+}
+
+func TestTxnGetSizeOperationWithDiscardedTxn(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	defer func() {
+		err := s.Close()
+		require.NoError(t, err)
+	}()
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	tx.Discard(ctx)
+
+	_, err = tx.GetSize(ctx, testKey1)
+	require.ErrorIs(t, err, ErrTxnDiscarded)
+}
+
 func TestTxnGetSizeOfterPutOperation(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -189,9 +257,7 @@ func TestTxnGetSizeOperationAfterDelete(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -208,9 +274,7 @@ func TestTxnGetSizeOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -224,9 +288,7 @@ func TestTxnHasOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -236,14 +298,43 @@ func TestTxnHasOperation(t *testing.T) {
 	require.Equal(t, true, resp)
 }
 
+func TestTxnHasOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = s.Close()
+	require.NoError(t, err)
+
+	_, err = tx.Has(ctx, testKey1)
+	require.ErrorIs(t, err, ErrClosed)
+}
+
+func TestTxnHasOperationWithDiscardedTxn(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	defer func() {
+		err := s.Close()
+		require.NoError(t, err)
+	}()
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	tx.Discard(ctx)
+
+	_, err = tx.Has(ctx, testKey1)
+	require.ErrorIs(t, err, ErrTxnDiscarded)
+}
+
 func TestTxnHasOperationNotFound(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -258,9 +349,7 @@ func TestTxnHasOfterPutOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -278,9 +367,7 @@ func TestTxnHasOperationAfterDelete(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -298,9 +385,7 @@ func TestTxnPutAndCommitOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -316,14 +401,43 @@ func TestTxnPutAndCommitOperation(t *testing.T) {
 	require.Equal(t, true, resp)
 }
 
+func TestTxnPutOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = s.Close()
+	require.NoError(t, err)
+
+	err = tx.Put(ctx, testKey1, testValue1)
+	require.ErrorIs(t, err, ErrClosed)
+}
+
+func TestTxnPutOperationWithDiscardedTxn(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	defer func() {
+		err := s.Close()
+		require.NoError(t, err)
+	}()
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	tx.Discard(ctx)
+
+	err = tx.Put(ctx, testKey1, testValue1)
+	require.ErrorIs(t, err, ErrTxnDiscarded)
+}
+
 func TestTxnPutAndCommitOperationReadOnly(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, true)
 	require.NoError(t, err)
@@ -343,9 +457,7 @@ func TestTxnPutOperationReadOnly(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, true)
 	require.NoError(t, err)
@@ -359,9 +471,7 @@ func TestTxnQueryOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -396,14 +506,49 @@ func TestTxnQueryOperation(t *testing.T) {
 	require.Equal(t, testValue3, result.Entry.Value)
 }
 
+func TestTxnQueryOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = s.Close()
+	require.NoError(t, err)
+
+	_, err = tx.Query(ctx, dsq.Query{
+		Limit:  1,
+		Offset: 1,
+	})
+	require.ErrorIs(t, err, ErrClosed)
+}
+
+func TestTxnQueryOperationWithDiscardedTxn(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	defer func() {
+		err := s.Close()
+		require.NoError(t, err)
+	}()
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	tx.Discard(ctx)
+
+	_, err = tx.Query(ctx, dsq.Query{
+		Limit:  1,
+		Offset: 1,
+	})
+	require.ErrorIs(t, err, ErrTxnDiscarded)
+}
+
 func TestTxnQueryOperationInTwoConcurentTxn(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -446,9 +591,7 @@ func TestTxnQueryOperationWithAddedItems(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 
 	err := s.Put(ctx, testKey3, testValue3)
@@ -513,9 +656,7 @@ func TestTxnQueryWithOnlyOneOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	tx, err := s.NewTransaction(ctx, false)
 	require.NoError(t, err)
@@ -539,9 +680,7 @@ func TestTxnDiscardOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 	v := s.nextVersion()
 	tx := &basicTxn{
@@ -565,9 +704,7 @@ func TestTxnWithConflict(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 
 	tx := s.newTransaction(false)
@@ -592,9 +729,7 @@ func TestTxnWithConflictAfterDelete(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 
 	tx := s.newTransaction(false)
@@ -619,9 +754,7 @@ func TestTxnWithConflictAfterGet(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	defer func() {
 		err := s.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 
 	tx := s.newTransaction(false)
@@ -639,4 +772,35 @@ func TestTxnWithConflictAfterGet(t *testing.T) {
 
 	err = tx.Commit(ctx)
 	require.ErrorIs(t, err, ErrTxnConflict)
+}
+
+func TestTxnCommitWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	err = s.Close()
+	require.NoError(t, err)
+
+	err = tx.Commit(ctx)
+	require.ErrorIs(t, err, ErrClosed)
+}
+
+func TestTxnCommitWithDiscardedTxn(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	defer func() {
+		err := s.Close()
+		require.NoError(t, err)
+	}()
+
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+
+	tx.Discard(ctx)
+
+	err = tx.Commit(ctx)
+	require.ErrorIs(t, err, ErrTxnDiscarded)
 }

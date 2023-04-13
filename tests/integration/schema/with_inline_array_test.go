@@ -12,61 +12,73 @@ package schema
 
 import (
 	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
-	test := QueryTestCase{
-		Schema: []string{
-			`
-				type users {
-					FavouriteIntegers: [Int!]
-				}
-			`,
-		},
-		IntrospectionQuery: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-				}
-			}
-		`,
-		ExpectedData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						FavouriteIntegers: [Int!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "users") {
+							name
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+					},
+				},
 			},
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
-	test := QueryTestCase{
-		Schema: []string{
-			`
-				type users {
-					FavouriteIntegers: [Int!]
-				}
-			`,
-			`
-				type books {
-					PageNumbers: [Int!]
-				}
-			`,
-		},
-		IntrospectionQuery: `
-			query IntrospectionQuery {
-				__type (name: "books") {
-					name
-				}
-			}
-		`,
-		ExpectedData: map[string]any{
-			"__type": map[string]any{
-				"name": "books",
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						FavouriteIntegers: [Int!]
+					}
+				`,
+			},
+			testUtils.SchemaUpdate{
+				Schema: `
+					type books {
+						PageNumbers: [Int!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "books") {
+							name
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "books",
+					},
+				},
 			},
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users", "books"}, test)
 }

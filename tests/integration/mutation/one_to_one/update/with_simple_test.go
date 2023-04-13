@@ -17,50 +17,176 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
-func TestMutationUpdateOneToOneWrongSide(t *testing.T) {
-	test := testUtils.QueryTestCase{
+// Note: This test should probably not pass, as it contains a
+// reference to a document that doesnt exist.
+func TestMutationUpdateOneToOneNoChild(t *testing.T) {
+	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
-		Query: `mutation {
-					update_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-						_key
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "Theif Lord"
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John"
 				}`,
 			},
+			testUtils.Request{
+				Request: `mutation {
+							update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+								name
+							}
+						}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+				},
+			},
 		},
-		ExpectedError: "The given field does not exist",
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpdateOneToOne(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One to one update mutation",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+				mutation {
+					update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-3d236f89-6a31-5add-a36a-27971a2eac76\"}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						book {
+							name
+							author {
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Painted House",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						author {
+							name
+							published {
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+						"published": map[string]any{
+							"name": "Painted House",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	simpleTests.ExecuteTestCase(t, test)
 }
 
-// Note: This test should probably not pass, as it contains a
-// reference to a document that doesnt exist.
-func TestMutationUpdateOneToOneNoChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "One to one create mutation, from the wrong side",
-		Query: `mutation {
-					update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One to one create mutation, from the secondary side",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+				mutation {
+					update_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed\"}") {
 						name
 					}
 				}`,
-		Docs: map[int][]string{
-			1: {
-				`{
-					"name": "John"
-				}`,
+				Results: []map[string]any{
+					{
+						"name": "Painted House",
+					},
+				},
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
+			testUtils.Request{
+				Request: `
+					query {
+						book {
+							name
+							author {
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Painted House",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						author {
+							name
+							published {
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+						"published": map[string]any{
+							"name": "Painted House",
+						},
+					},
+				},
 			},
 		},
 	}
-
 	simpleTests.ExecuteTestCase(t, test)
 }

@@ -16,9 +16,11 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
-	"github.com/sourcenetwork/defradb/query/graphql"
+	"github.com/sourcenetwork/defradb/request/graphql"
+	gqlSchema "github.com/sourcenetwork/defradb/request/graphql/schema"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
@@ -36,7 +38,8 @@ func runQueryParserBench(
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, errs := parser.Parse(query)
+		ast, _ := parser.BuildRequestAST(query)
+		_, errs := parser.Parse(ast)
 		if errs != nil {
 			return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 		}
@@ -63,7 +66,8 @@ func runMakePlanBench(
 		return err
 	}
 
-	q, errs := parser.Parse(query)
+	ast, _ := parser.BuildRequestAST(query)
+	q, errs := parser.Parse(ast)
 	if len(errs) > 0 {
 		return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 	}
@@ -74,7 +78,7 @@ func runMakePlanBench(
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		planner := planner.New(ctx, db, txn)
+		planner := planner.New(ctx, db.WithTxn(txn), txn)
 		_, err := planner.MakePlan(q)
 		if err != nil {
 			return errors.Wrap("failed to make plan", err)
@@ -97,10 +101,30 @@ func buildParser(
 	if err != nil {
 		return nil, err
 	}
-	err = parser.AddSchema(ctx, schema)
+
+	collectionDescriptions, err := gqlSchema.FromString(ctx, schema)
+	if err != nil {
+		return nil, err
+	}
+
+	err = parser.SetSchema(ctx, &dummyTxn{}, collectionDescriptions)
 	if err != nil {
 		return nil, err
 	}
 
 	return parser, nil
 }
+
+var _ datastore.Txn = (*dummyTxn)(nil)
+
+type dummyTxn struct{}
+
+func (*dummyTxn) Rootstore() datastore.DSReaderWriter   { return nil }
+func (*dummyTxn) Datastore() datastore.DSReaderWriter   { return nil }
+func (*dummyTxn) Headstore() datastore.DSReaderWriter   { return nil }
+func (*dummyTxn) DAGstore() datastore.DAGStore          { return nil }
+func (*dummyTxn) Systemstore() datastore.DSReaderWriter { return nil }
+func (*dummyTxn) Commit(ctx context.Context) error      { return nil }
+func (*dummyTxn) Discard(ctx context.Context)           {}
+func (*dummyTxn) OnSuccess(fn func())                   {}
+func (*dummyTxn) OnError(fn func())                     {}

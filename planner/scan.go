@@ -12,11 +12,23 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
+
+type scanExecInfo struct {
+	// Total number of times scan was issued.
+	iterations uint64
+
+	// Total number of times attempted to fetch documents.
+	docFetches uint64
+
+	// Total number of documents that matched / passed the filter.
+	filterMatches uint64
+}
 
 // scans an index for records
 type scanNode struct {
@@ -29,6 +41,8 @@ type scanNode struct {
 	fields []*client.FieldDescription
 	docKey []byte
 
+	showDeleted bool
+
 	spans   core.Spans
 	reverse bool
 
@@ -37,6 +51,8 @@ type scanNode struct {
 	scanInitialized bool
 
 	fetcher fetcher.Fetcher
+
+	execInfo scanExecInfo
 }
 
 func (n *scanNode) Kind() string {
@@ -45,7 +61,7 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse, n.showDeleted); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -81,6 +97,8 @@ func (n *scanNode) initScan() error {
 // Returns true, if there is a result,
 // and false otherwise.
 func (n *scanNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	if n.spans.HasValue && len(n.spans.Value) == 0 {
 		return false, nil
 	}
@@ -92,16 +110,22 @@ func (n *scanNode) Next() (bool, error) {
 		if err != nil {
 			return false, err
 		}
+		n.execInfo.docFetches++
 
 		if len(n.currentValue.Fields) == 0 {
 			return false, nil
 		}
-
+		n.documentMapping.SetFirstOfName(
+			&n.currentValue,
+			request.DeletedFieldName,
+			n.currentValue.Status.IsDeleted(),
+		)
 		passed, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err
 		}
 		if passed {
+			n.execInfo.filterMatches++
 			return true, nil
 		}
 	}
@@ -132,26 +156,47 @@ func (n *scanNode) explainSpans() []map[string]any {
 	return spansExplainer
 }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *scanNode) Explain() (map[string]any, error) {
-	explainerMap := map[string]any{}
+func (n *scanNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{}
 
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.ExternalConditions == nil {
-		explainerMap[filterLabel] = nil
+		simpleExplainMap[filterLabel] = nil
 	} else {
-		explainerMap[filterLabel] = n.filter.ExternalConditions
+		simpleExplainMap[filterLabel] = n.filter.ExternalConditions
 	}
 
 	// Add the collection attributes.
-	explainerMap[collectionNameLabel] = n.desc.Name
-	explainerMap[collectionIDLabel] = n.desc.IDString()
+	simpleExplainMap[collectionNameLabel] = n.desc.Name
+	simpleExplainMap[collectionIDLabel] = n.desc.IDString()
 
 	// Add the spans attribute.
-	explainerMap[spansLabel] = n.explainSpans()
+	simpleExplainMap[spansLabel] = n.explainSpans()
 
-	return explainerMap, nil
+	return simpleExplainMap, nil
+}
+
+func (n *scanNode) excuteExplain() map[string]any {
+	return map[string]any{
+		"iterations":    n.execInfo.iterations,
+		"docFetches":    n.execInfo.docFetches,
+		"filterMatches": n.execInfo.filterMatches,
+	}
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return n.excuteExplain(), nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 // Merge implements mergeNode

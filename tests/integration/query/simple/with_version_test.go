@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Embedded latest commits query within object query",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						Age
@@ -46,14 +46,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeiedurl3ntgwpork7xmgf7szju2gj2w5kmg2fyvicd4sodmpds5wii",
+						"cid": "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+								"cid":  "bafybeibelbquwus6f4lek2uclnmt5o525qbg46pzgxkjmrfjg3hwg63r4i",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeicabeba6ve745cusbcgo72ugwvnzflgwg7lij642jv6tgis4u2gni",
+								"cid":  "bafybeih7josq7krvco7jc5z2mhiox4dge77zyn3v7gmemfjkkh3xkqwpni",
 								"name": "Name",
 							},
 						},
@@ -66,10 +66,82 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Embedded commits query within object query with schema version id",
+		Request: `query {
+					users {
+						Name
+						_version {
+							schemaVersionId
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"_version": []map[string]any{
+					{
+						"schemaVersionId": "bafkreicl25inntuxlx4fbbcwb2tzbja4iyvujjwhk25pen7ljjdzcpgup4",
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
+	const dockey = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+
+	test := testUtils.RequestTestCase{
+		Description: "Embedded commits query within object query with dockey",
+		Request: `query {
+					users {
+						Name
+						_key
+						_version {
+							dockey
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"_key": dockey,
+				"_version": []map[string]any{
+					{
+						"dockey": dockey,
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Embedded, aliased, latest commits query within object query",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						Age
@@ -99,14 +171,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeiedurl3ntgwpork7xmgf7szju2gj2w5kmg2fyvicd4sodmpds5wii",
+						"cid": "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+								"cid":  "bafybeibelbquwus6f4lek2uclnmt5o525qbg46pzgxkjmrfjg3hwg63r4i",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeicabeba6ve745cusbcgo72ugwvnzflgwg7lij642jv6tgis4u2gni",
+								"cid":  "bafybeih7josq7krvco7jc5z2mhiox4dge77zyn3v7gmemfjkkh3xkqwpni",
 								"name": "Name",
 							},
 						},

@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, count with filter",
-		Query: `query {
+		Request: `query {
 					_count(users: {filter: {Age: {_gt: 26}}})
 				}`,
 		Docs: map[int][]string{
@@ -49,9 +49,9 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 }
 
 func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, count with datetime filter",
-		Query: `query {
+		Request: `query {
 					_count(users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56.647Z"}}})
 				}`,
 		Docs: map[int][]string{

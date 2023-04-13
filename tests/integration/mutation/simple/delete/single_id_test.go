@@ -18,7 +18,7 @@ import (
 )
 
 func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Simple delete mutation where one element exists.",
@@ -32,10 +32,10 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`,
 				},
 			},
-			TransactionalQueries: []testUtils.TransactionQuery{
+			TransactionalRequests: []testUtils.TransactionRequest{
 				{
 					TransactionId: 0,
-					Query: `mutation {
+					Request: `mutation {
 								delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 									_key
 								}
@@ -48,7 +48,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				{
 					TransactionId: 0,
-					Query: `query {
+					Request: `query {
 								user(dockey: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 									_key
 								}
@@ -72,7 +72,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`,
 				},
 			},
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 							FancyKey: _key
 						}
@@ -87,7 +87,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 		},
 		{
 			Description: "Delete an updated document and return an aliased _key name.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 							MyTestKey: _key
 						}
@@ -128,9 +128,9 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 }
 
 func TestDeleteWithUnknownIdEmptyCollection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Deletion using id that doesn't exist, where the collection is empty.",
-		Query: `mutation {
+		Request: `mutation {
 					delete_user(id: "bae-028383cc-d6ba-5df7-959f-2bdce3536a05") {
 						_key
 					}
@@ -142,9 +142,9 @@ func TestDeleteWithUnknownIdEmptyCollection(t *testing.T) {
 }
 
 func TestDeleteWithUnknownId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Deletion using id that doesn't exist, where the collection is non-empty.",
-		Query: `mutation {
+		Request: `mutation {
 					delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca811") {
 						_key
 					}
@@ -165,10 +165,10 @@ func TestDeleteWithUnknownId(t *testing.T) {
 }
 
 func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Deletion of a document without sub selection, should give error.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810")
 					}`,
 			Docs: map[int][]string{
@@ -187,7 +187,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 
 		{
 			Description: "Deletion of a document without _key sub-selection.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 						}
 					}`,
@@ -209,4 +209,61 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 	for _, test := range tests {
 		simpleTests.ExecuteTestCase(t, test)
 	}
+}
+
+func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery_Success(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 43
+				}`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+						delete_User(id: "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef") {
+							_deleted
+							_key
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						// Note: This should show a `Deleted` status but the order of the planNodes
+						// makes it so the status is requested prior to deleting. If the planNode ordering
+						// can be altered, this can change in the future.
+						"_deleted": false,
+						"_key":     "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(showDeleted: true) {
+							_deleted
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_deleted": true,
+						"name":     "John",
+						"age":      uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
 }

@@ -46,7 +46,7 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInst
 	assert.Equal(
 		t,
 		DataStoreKey{
-			CollectionId: collectionId,
+			CollectionID: collectionId,
 			DocKey:       docKey,
 			FieldId:      fieldId,
 			InstanceType: InstanceType(instanceType)},
@@ -77,7 +77,7 @@ func TestNewDataStoreKey_GivenAShortObjectMarker(t *testing.T) {
 	assert.Equal(
 		t,
 		DataStoreKey{
-			CollectionId: collectionId,
+			CollectionID: collectionId,
 			DocKey:       docKey,
 			InstanceType: InstanceType(instanceType)},
 		result)

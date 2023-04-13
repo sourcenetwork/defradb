@@ -78,12 +78,12 @@ func dumpHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 type gqlRequest struct {
-	Query string `json:"query"`
+	Request string `json:"query"`
 }
 
 func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
-	query := req.URL.Query().Get("query")
-	if query == "" {
+	request := req.URL.Query().Get("query")
+	if request == "" {
 		// extract the media type from the content-type header
 		contentType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
 		// mime.ParseMediaType will return an error (mime: no media type)
@@ -91,7 +91,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		// This however is not a failing condition as not setting the content-type header
 		// should still make for a valid request and hit our default switch case.
 		if err != nil && err.Error() != "mime: no media type" {
-			handleErr(req.Context(), rw, err, http.StatusBadRequest)
+			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -105,7 +105,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			query = gqlReq.Query
+			request = gqlReq.Request
 
 		case contentTypeFormURLEncoded:
 			handleErr(
@@ -126,16 +126,16 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 			}
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
-				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusBadRequest)
+				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 				return
 			}
-			query = string(body)
+			request = string(body)
 		}
 	}
 
-	// if at this point query is still empty, return an error
-	if query == "" {
-		handleErr(req.Context(), rw, ErrMissingGQLQuery, http.StatusBadRequest)
+	// if at this point request is still empty, return an error
+	if request == "" {
+		handleErr(req.Context(), rw, ErrMissingGQLRequest, http.StatusBadRequest)
 		return
 	}
 
@@ -144,7 +144,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
-	result := db.ExecQuery(req.Context(), query)
+	result := db.ExecRequest(req.Context(), request)
 
 	if result.Pub != nil {
 		subscriptionHandler(result.Pub, rw, req)
@@ -157,7 +157,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	sdl, err := io.ReadAll(req.Body)
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -169,7 +169,7 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 
 	err = db.AddSchema(req.Context(), string(sdl))
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -177,7 +177,34 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		req.Context(),
 		rw,
 		simpleDataResponse("result", "success"),
-		http.StatusBadRequest,
+		http.StatusOK,
+	)
+}
+
+func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
+	patch, err := io.ReadAll(req.Body)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = db.PatchSchema(req.Context(), string(patch))
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("result", "success"),
+		http.StatusOK,
 	)
 }
 
@@ -207,13 +234,13 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 
 	block, err := db.Blockstore().Get(req.Context(), cID)
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
 	nd, err := dag.DecodeProtobuf(block.RawData())
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 

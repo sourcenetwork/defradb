@@ -27,8 +27,6 @@ func newTestCollectionDescription() client.CollectionDescription {
 		Name: "users",
 		ID:   uint32(1),
 		Schema: client.SchemaDescription{
-			ID:       uint32(1),
-			FieldIDs: []uint32{1, 2, 3},
 			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
@@ -49,21 +47,13 @@ func newTestCollectionDescription() client.CollectionDescription {
 				},
 			},
 		},
-		Indexes: []client.IndexDescription{
-			{
-				Name:    "primary",
-				ID:      uint32(0),
-				Primary: true,
-				Unique:  true,
-			},
-		},
 	}
 }
 
 func newTestFetcher() (*fetcher.DocumentFetcher, error) {
 	df := new(fetcher.DocumentFetcher)
 	desc := newTestCollectionDescription()
-	err := df.Init(&desc, nil, false)
+	err := df.Init(&desc, nil, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +112,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
@@ -143,7 +133,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, false)
+	err = df.Init(&desc, nil, false, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -159,7 +149,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
@@ -188,7 +178,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, false)
+	err = df.Init(&desc, nil, false, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -207,7 +197,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
@@ -220,7 +210,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, false)
+	err = df.Init(&desc, nil, false, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -251,7 +241,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
@@ -272,7 +262,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, false)
+	err = df.Init(&desc, nil, false, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -316,7 +306,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
@@ -329,7 +319,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, false)
+	err = df.Init(&desc, nil, false, false)
 	assert.NoError(t, err)
 
 	// create a span for our document we wish to find

@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 type dataMap = map[string]any
@@ -57,9 +56,9 @@ var bookAuthorGQLSchema = (`
 
 `)
 
-// TODO: This should be resolved in ISSUE#953 (github.com/sourcenetwork/defradb).
-func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(
+// TODO: This should be resolved in https://github.com/sourcenetwork/defradb/issues/953.
+func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
+	testUtils.ExecuteRequestTestCase(
 		t,
 		bookAuthorGQLSchema,
 		[]string{"article", "book", "author", "authorContact", "contactAddress"},
@@ -67,11 +66,12 @@ func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
 	)
 }
 
-func executeExplainTestCase(t *testing.T, test explainUtils.ExplainRequestTestCase) {
-	explainUtils.ExecuteExplainRequestTestCase(
-		t,
-		bookAuthorGQLSchema,
-		[]string{"article", "book", "author", "authorContact", "contactAddress"},
-		test,
-	)
-}
+// TODO: This comment is removed in PR that resolves https://github.com/sourcenetwork/defradb/issues/953
+//func executeExplainTestCase(t *testing.T, test explainUtils.ExplainRequestTestCase) {
+//	explainUtils.ExecuteExplainRequestTestCase(
+//		t,
+//		bookAuthorGQLSchema,
+//		[]string{"article", "book", "author", "authorContact", "contactAddress"},
+//		test,
+//	)
+//}

@@ -172,10 +172,10 @@ func TestExecGQLWithEmptyBody(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "missing GraphQL query")
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "missing GraphQL request")
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "missing GraphQL query", errResponse.Errors[0].Message)
+	assert.Equal(t, "missing GraphQL request", errResponse.Errors[0].Message)
 }
 
 type mockReadCloser struct {
@@ -201,13 +201,13 @@ func TestExecGQLWithMockBody(t *testing.T) {
 		Method:         "POST",
 		Path:           GraphQLPath,
 		Body:           &mockReadCloser,
-		ExpectedStatus: 400,
+		ExpectedStatus: 500,
 		ResponseData:   &errResponse,
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "error reading")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "error reading", errResponse.Errors[0].Message)
 }
 
@@ -228,14 +228,14 @@ mutation {
 		Method:         "POST",
 		Path:           GraphQLPath,
 		Body:           buf,
-		ExpectedStatus: 400,
+		ExpectedStatus: 500,
 		Headers:        map[string]string{"Content-Type": contentTypeJSON + "; this-is-wrong"},
 		ResponseData:   &errResponse,
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "mime: invalid media parameter")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "mime: invalid media parameter", errResponse.Errors[0].Message)
 }
 
@@ -565,13 +565,13 @@ func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 		Method:         "POST",
 		Path:           SchemaLoadPath,
 		Body:           &mockReadCloser,
-		ExpectedStatus: 400,
+		ExpectedStatus: 500,
 		ResponseData:   &errResponse,
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "error reading")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "error reading", errResponse.Errors[0].Message)
 }
 
@@ -630,13 +630,13 @@ types user {
 		Method:         "POST",
 		Path:           SchemaLoadPath,
 		Body:           buf,
-		ExpectedStatus: 400,
+		ExpectedStatus: 500,
 		ResponseData:   &errResponse,
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "Syntax Error GraphQL (2:1) Unexpected Name")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(
 		t,
 		"Syntax Error GraphQL (2:1) Unexpected Name \"types\"\n\n1: \n2: types user {\n   ^\n3: \\u0009name: String\n",
@@ -666,7 +666,7 @@ type user {
 		Method:         "POST",
 		Path:           SchemaLoadPath,
 		Body:           buf,
-		ExpectedStatus: 400,
+		ExpectedStatus: 200,
 		ResponseData:   &resp,
 	})
 
@@ -759,13 +759,13 @@ func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
 		Method:         "GET",
 		Path:           BlocksPath + "/bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm",
 		Body:           nil,
-		ExpectedStatus: 400,
+		ExpectedStatus: 500,
 		ResponseData:   &errResponse,
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "ipld: could not find bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "ipld: could not find bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm", errResponse.Errors[0].Message)
 }
 

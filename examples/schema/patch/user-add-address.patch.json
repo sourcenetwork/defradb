@@ -1,0 +1,3 @@
+[
+    { "op": "add", "path": "/User/Schema/Fields/-", "value": {"Name": "address", "Kind": "String"} }
+]

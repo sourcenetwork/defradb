@@ -25,7 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
-func newMemoryDB(ctx context.Context) (*db, error) {
+func newMemoryDB(ctx context.Context) (*implicitTxnDB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
@@ -49,31 +49,11 @@ func TestNewDB(t *testing.T) {
 	}
 }
 
-func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
-	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	if err != nil {
-		t.Error(err)
-	}
-
-	db, err := NewDB(ctx, rootstore)
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, err = db.CreateCollection(ctx, client.CollectionDescription{
-		Name: "test",
-	})
-
-	assert.Error(t, err)
-}
-
 func TestDBSaveSimpleDocument(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -115,7 +95,7 @@ func TestDBUpdateDocument(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -165,7 +145,7 @@ func TestDBUpdateNonExistingDocument(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -188,7 +168,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -231,7 +211,7 @@ func TestDBGetDocument(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -248,7 +228,7 @@ func TestDBGetDocument(t *testing.T) {
 
 	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
-	doc, err = col.Get(ctx, key)
+	doc, err = col.Get(ctx, key, false)
 	assert.NoError(t, err)
 
 	// value check
@@ -272,12 +252,12 @@ func TestDBGetNotFoundDocument(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
-	_, err = col.Get(ctx, key)
+	_, err = col.Get(ctx, key, false)
 	assert.EqualError(t, err, client.ErrDocumentNotFound.Error())
 }
 
@@ -285,7 +265,7 @@ func TestDBDeleteDocument(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -311,7 +291,7 @@ func TestDBDeleteNotFoundDocument(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
@@ -325,7 +305,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -405,7 +385,7 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(t, ctx, db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{

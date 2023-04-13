@@ -16,40 +16,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+func TestSimpleExplainRequest(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Explain (simple) a basic request.",
 
-		Description: "Explain a query by providing the directive on wrong location (field).",
-
-		Query: `query {
-			author @explain {
-				_key
-				name
-				age
-			}
-		}`,
-
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-			},
-		},
-
-		Results: []dataMap{},
-
-		ExpectedError: "Directive \"explain\" may not be used on FIELD.",
-	}
-	executeTestCase(t, test)
-}
-
-func TestExplainQuerySimple(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Explain a query with no filter",
-
-		Query: `query @explain {
+		Request: `query @explain(type: simple) {
 			author {
 				_key
 				name
@@ -62,104 +33,6 @@ func TestExplainQuerySimple(t *testing.T) {
 				`{
 					"name": "John",
 					"age": 21
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"filter":         nil,
-								"collectionID":   "3",
-								"collectionName": "author",
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainQuerySimpleWithAlias(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Explain a query with alias, no filter",
-
-		Query: `query @explain {
-			author {
-				username: name
-				age: age
-			}
-		}`,
-
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"filter":         nil,
-								"collectionID":   "3",
-								"collectionName": "author",
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Explain a query with no filter, mutiple rows",
-
-		Query: `query @explain {
-			author {
-				name
-				age
-			}
-		}`,
-
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"age": 27
 				}`,
 			},
 		},

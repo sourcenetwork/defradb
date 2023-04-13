@@ -11,5 +11,6 @@
 package base
 
 const (
-	ObjectMarker = byte(0xff) // @todo: Investigate object marker values
+	ObjectMarker        = byte(0xff) // @todo: Investigate object marker values
+	DeletedObjectMarker = byte(0xfe)
 )

@@ -21,8 +21,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
 )
 
-// This test documents undesirable behaviour which should be corrected in
-// https://github.com/sourcenetwork/defradb/issues/867
 func TestEventsSimpleWithDelete(t *testing.T) {
 	doc1, err := client.NewDocFromJSON(
 		[]byte(
@@ -52,7 +50,9 @@ func TestEventsSimpleWithDelete(t *testing.T) {
 			{
 				DocKey: immutable.Some(docKey1),
 			},
-			// No update to reflect the delete
+			{
+				DocKey: immutable.Some(docKey1),
+			},
 		},
 	}
 

@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of bool array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(LikedIndexes: {filter: {_eq: true}})
@@ -45,9 +45,9 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with filter, count of nillable bool array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(IndexLikesDislikes: {filter: {_eq: true}})
@@ -73,9 +73,9 @@ func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(FavouriteIntegers: {filter: {_gt: 0}})
@@ -101,9 +101,9 @@ func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(TestScores: {filter: {_gt: 0}})
@@ -129,9 +129,9 @@ func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(FavouriteIntegers: {filter: {_and: [{_gt: -2}, {_lt: 2}]}})
@@ -156,9 +156,9 @@ func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *
 }
 
 func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(FavouriteFloats: {filter: {_lt: 9}})
@@ -184,9 +184,9 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of nillable float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(PageRatings: {filter: {_lt: 9}})
@@ -212,9 +212,9 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of string array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(PreferredStrings: {filter: {_in: ["", "the first"]}})
@@ -240,9 +240,9 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of string array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(PageHeaders: {filter: {_in: ["", "the first", "empty string"]}})

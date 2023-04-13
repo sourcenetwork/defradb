@@ -19,9 +19,9 @@ import (
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendingAndLimitOnChild(
 	t *testing.T,
 ) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, asc. order & limit on sub",
-		Query: `query {
+		Request: `query {
 			author(filter: {age: {_gt: 63}}) {
 				name
 				age
@@ -86,9 +86,9 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortDescendingAndLimitOnChild(
 	t *testing.T,
 ) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, desc. order & limit on sub",
-		Query: `query {
+		Request: `query {
 			author(filter: {age: {_gt: 63}}) {
 				name
 				age

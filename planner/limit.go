@@ -11,6 +11,7 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -26,6 +27,13 @@ type limitNode struct {
 	limit    uint64
 	offset   uint64
 	rowIndex uint64
+
+	execInfo limitExecInfo
+}
+
+type limitExecInfo struct {
+	// Total number of times limitNode was executed.
+	iterations uint64
 }
 
 // Limit creates a new limitNode initalized from the parser.Limit object.
@@ -57,6 +65,8 @@ func (n *limitNode) Close() error           { return n.plan.Close() }
 func (n *limitNode) Value() core.Doc        { return n.plan.Value() }
 
 func (n *limitNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	// check if we're passed the limit
 	if n.limit != 0 && n.rowIndex >= n.limit+n.offset {
 		return false, nil
@@ -80,15 +90,30 @@ func (n *limitNode) Next() (bool, error) {
 
 func (n *limitNode) Source() planNode { return n.plan }
 
-func (n *limitNode) Explain() (map[string]any, error) {
-	exp := map[string]any{
+func (n *limitNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{
 		limitLabel:  n.limit,
 		offsetLabel: n.offset,
 	}
 
 	if n.limit == 0 {
-		exp[limitLabel] = nil
+		simpleExplainMap[limitLabel] = nil
 	}
 
-	return exp, nil
+	return simpleExplainMap, nil
+}
+
+func (n *limitNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }

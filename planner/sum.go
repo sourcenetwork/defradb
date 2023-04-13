@@ -11,15 +11,12 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -33,6 +30,13 @@ type sumNode struct {
 	isFloat           bool
 	virtualFieldIndex int
 	aggregateMapping  []mapper.AggregateTarget
+
+	execInfo sumExecInfo
+}
+
+type sumExecInfo struct {
+	// Total number of times sumNode was executed.
+	iterations uint64
 }
 
 func (p *Planner) Sum(
@@ -80,10 +84,7 @@ func (p *Planner) isValueFloat(
 
 		fieldDescription, fieldDescriptionFound := parentDescription.GetField(source.Name)
 		if !fieldDescriptionFound {
-			return false, errors.New(fmt.Sprintf(
-				"Unable to find field description for field: %s",
-				source.Name,
-			))
+			return false, client.NewErrFieldNotExist(source.Name)
 		}
 		return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
 			fieldDescription.Kind == client.FieldKind_FLOAT ||
@@ -98,7 +99,7 @@ func (p *Planner) isValueFloat(
 
 	child, isChildSelect := parent.FieldAt(source.Index).AsSelect()
 	if !isChildSelect {
-		return false, errors.New("expected child select but none was found")
+		return false, ErrMissingChildSelect
 	}
 
 	if _, isAggregate := request.Aggregates[source.ChildTarget.Name]; isAggregate {
@@ -131,8 +132,7 @@ func (p *Planner) isValueFloat(
 
 	fieldDescription, fieldDescriptionFound := childCollectionDescription.GetField(source.ChildTarget.Name)
 	if !fieldDescriptionFound {
-		return false,
-			errors.New(fmt.Sprintf("Unable to find child field description for field: %s", source.ChildTarget.Name))
+		return false, client.NewErrFieldNotExist(source.ChildTarget.Name)
 	}
 
 	return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
@@ -156,32 +156,30 @@ func (n *sumNode) Close() error { return n.plan.Close() }
 
 func (n *sumNode) Source() planNode { return n.plan }
 
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *sumNode) Explain() (map[string]any, error) {
+func (n *sumNode) simpleExplain() (map[string]any, error) {
 	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {
-		explainerMap := map[string]any{}
+		simpleExplainMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
 		if source.Filter == nil || source.Filter.ExternalConditions == nil {
-			explainerMap[filterLabel] = nil
+			simpleExplainMap[filterLabel] = nil
 		} else {
-			explainerMap[filterLabel] = source.Filter.ExternalConditions
+			simpleExplainMap[filterLabel] = source.Filter.ExternalConditions
 		}
 
 		// Add the main field name.
-		explainerMap[fieldNameLabel] = source.Field.Name
+		simpleExplainMap[fieldNameLabel] = source.Field.Name
 
 		// Add the child field name if it exists.
 		if source.ChildTarget.HasValue {
-			explainerMap[childFieldNameLabel] = source.ChildTarget.Name
+			simpleExplainMap[childFieldNameLabel] = source.ChildTarget.Name
 		} else {
-			explainerMap[childFieldNameLabel] = nil
+			simpleExplainMap[childFieldNameLabel] = nil
 		}
 
-		sourceExplanations[i] = explainerMap
+		sourceExplanations[i] = simpleExplainMap
 	}
 
 	return map[string]any{
@@ -189,7 +187,26 @@ func (n *sumNode) Explain() (map[string]any, error) {
 	}, nil
 }
 
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *sumNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations": n.execInfo.iterations,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
+}
+
 func (n *sumNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	hasNext, err := n.plan.Next()
 	if err != nil || !hasNext {
 		return hasNext, err

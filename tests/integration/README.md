@@ -21,7 +21,7 @@ structure looks like currently:
 
 ### Data Format Change Detection
 
-Any test using the `ExecuteQueryTestCase` function in `tests/integration/utils.go` can also be used to assert that no undocumented breaking changes have been made in the active branch when compared to a target branch (default `develop`).
+Any test using the `ExecuteRequestTestCase` function in `tests/integration/utils.go` can also be used to assert that no undocumented breaking changes have been made in the active branch when compared to a target branch (default `develop`).
 
 If the environment variable `DEFRA_DETECT_DATABASE_CHANGES` has been set, the test suite will run in this data format change detection mode instead of the standard test execution mode.  There is a CI build step that performs executes the tests in this mode for open pull requests.
 

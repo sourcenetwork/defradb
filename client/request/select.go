@@ -25,15 +25,15 @@ const (
 )
 
 // Select is a complex Field with strong typing.
-// It is used for sub-types in a query.
-// Includes fields, and query arguments like filters, limits, etc.
+// It is used for sub-types in a request.
+// Includes fields, and request arguments like filters, limits, etc.
 type Select struct {
 	Field
 
 	DocKeys immutable.Option[[]string]
 	CID     immutable.Option[string]
 
-	// Root is the top level query parsed type
+	// Root is the top level type of parsed request
 	Root SelectionType
 
 	Limit   immutable.Option[uint64]
@@ -43,6 +43,8 @@ type Select struct {
 	Filter  immutable.Option[Filter]
 
 	Fields []Selection
+
+	ShowDeleted bool
 }
 
 // Validate validates the Select.

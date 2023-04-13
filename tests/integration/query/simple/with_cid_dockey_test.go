@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with invalid cid and invalid dockey",
-		Query: `query {
+		Request: `query {
 					users (
 							cid: "any non-nil string value - this will be ignored",
 							dockey: "invalid docKey"
@@ -35,7 +35,7 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "invalid CID",
+		ExpectedError: "invalid cid: selected encoding not supported",
 	}
 
 	executeTestCase(t, test)
@@ -44,9 +44,9 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
 func TestQuerySimpleWithUnknownCidAndInvalidDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with unknown cid and invalid dockey",
-		Query: `query {
+		Request: `query {
 					users (
 							cid: "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
 							dockey: "invalid docKey"
@@ -69,11 +69,11 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocKey(t *testing.T) {
 }
 
 func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with cid and dockey",
-		Query: `query {
+		Request: `query {
 					users (
-							cid: "bafybeiedurl3ntgwpork7xmgf7szju2gj2w5kmg2fyvicd4sodmpds5wii",
+							cid: "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq"
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -98,11 +98,11 @@ func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
 }
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with (first) cid and dockey",
-		Query: `query {
+		Request: `query {
 					users (
-							cid: "bafybeiedurl3ntgwpork7xmgf7szju2gj2w5kmg2fyvicd4sodmpds5wii",
+							cid: "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -139,11 +139,11 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 }
 
 func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with (last) cid and dockey",
-		Query: `query {
+		Request: `query {
 					users (
-							cid: "bafybeidi7fulzloeohozz3dydibbjwo4iwklhayj3sgsbnf2bzlemflpx4",
+							cid: "bafybeig2ppytd6fbkchieshfssazllhm4ndrfebtzs27tuby7duj7fkjti",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -180,15 +180,57 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 }
 
 func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with (middle) cid and dockey",
-		Query: `query {
+		Request: `query {
 					users (
-							cid: "bafybeigrxjx7gdsmldahelwomylni6hbnx3fn4yqkvx3a3yvlm2l2l5gcm",
+							cid: "bafybeidbunxev24oib5amzzefaysywu6dnbqgitpyr656evpl22hhazdhq",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
 						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Updates: map[int]map[int][]string{
+			0: {
+				0: {
+					// update to change age to 22 on document 0
+					`{"Age": 22}`,
+				},
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"Age":  uint64(22),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithUpdateAndFirstCidAndDocKeyAndSchemaVersion(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with (first) cid and dockey and yielded schema version",
+		Request: `query {
+					users (
+							cid: "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq",
+							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+						) {
+						Name
+						Age
+						_version {
+							schemaVersionId
+						}
 					}
 				}`,
 		Docs: map[int][]string{
@@ -212,7 +254,12 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"Age":  uint64(22),
+				"Age":  uint64(21),
+				"_version": []map[string]any{
+					{
+						"schemaVersionId": "bafkreicl25inntuxlx4fbbcwb2tzbja4iyvujjwhk25pen7ljjdzcpgup4",
+					},
+				},
 			},
 		},
 	}

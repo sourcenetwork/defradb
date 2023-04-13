@@ -26,6 +26,10 @@ import (
 // and they are always the same type as each other.
 // @todo: Handle list/slice/array fields
 func Compare(a, b any) int {
+	if a == nil || b == nil {
+		return compareNil(a, b)
+	}
+
 	switch v := a.(type) {
 	case bool:
 		return compareBool(v, b.(bool))
@@ -46,6 +50,15 @@ func Compare(a, b any) int {
 	default:
 		return 0
 	}
+}
+
+func compareNil(a, b any) int {
+	if a == nil && b == nil {
+		return 0
+	} else if b == nil && a != nil { // a > b (1 > nil)
+		return 1
+	}
+	return -1
 }
 
 func compareBool(a, b bool) int {

@@ -16,6 +16,8 @@ import (
 	"sort"
 	"strings"
 
+	ds "github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
@@ -24,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -33,10 +36,17 @@ var (
 
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
 type CompositeDAGDelta struct {
-	SchemaID string
-	Priority uint64
-	Data     []byte
-	SubDAGs  []core.DAGLink
+	// SchemaVersionID is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at time of commit.
+	SchemaVersionID string
+	Priority        uint64
+	Data            []byte
+	DocKey          []byte
+	SubDAGs         []core.DAGLink
+	// Status represents the status of the document. By default it is `Active`.
+	// Alternatively, if can be set to `Deleted`.
+	Status client.DocumentStatus
 }
 
 // GetPriority gets the current priority for this delta.
@@ -55,10 +65,12 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
 	err := enc.Encode(struct {
-		SchemaID string
-		Priority uint64
-		Data     []byte
-	}{delta.SchemaID, delta.Priority, delta.Data})
+		SchemaVersionID string
+		Priority        uint64
+		Data            []byte
+		DocKey          []byte
+		Status          uint8
+	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey, delta.Status.UInt8()})
 	if err != nil {
 		return nil, err
 	}
@@ -75,28 +87,26 @@ func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 	return delta.SubDAGs
 }
 
-// GetSchemaID returns the schema ID for this delta.
-func (delta *CompositeDAGDelta) GetSchemaID() string {
-	return delta.SchemaID
-}
-
 // CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	store    datastore.DSReaderWriter
-	key      core.DataStoreKey
-	schemaID string
+	store datastore.DSReaderWriter
+	key   core.DataStoreKey
+	// schemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at time of commit.
+	schemaVersionKey core.CollectionSchemaVersionKey
 }
 
 func NewCompositeDAG(
 	store datastore.DSReaderWriter,
-	schemaID string,
+	schemaVersionKey core.CollectionSchemaVersionKey,
 	namespace core.Key,
 	key core.DataStoreKey,
 ) CompositeDAG {
 	return CompositeDAG{
-		store:    store,
-		key:      key,
-		schemaID: schemaID,
+		store:            store,
+		key:              key,
+		schemaVersionKey: schemaVersionKey,
 	}
 }
 
@@ -117,9 +127,10 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 	return &CompositeDAGDelta{
-		Data:     patch,
-		SubDAGs:  links,
-		SchemaID: c.schemaID,
+		Data:            patch,
+		DocKey:          []byte(c.key.DocKey),
+		SubDAGs:         links,
+		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
 	}
 }
 
@@ -127,6 +138,14 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
+	if dagDelta, ok := delta.(*CompositeDAGDelta); ok && dagDelta.Status.IsDeleted() {
+		err := c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
+		if err != nil {
+			return err
+		}
+		return c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldId(""))
+	}
+
 	// ensure object marker exists
 	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
 	if err != nil {
@@ -136,6 +155,51 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 		// write object marker
 		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
 	}
+
+	return nil
+}
+
+func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKey) error {
+	val, err := c.store.Get(ctx, key.ToDS())
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+		return err
+	}
+	if !errors.Is(err, ds.ErrNotFound) {
+		err = c.store.Put(ctx, c.key.WithDeletedFlag().ToDS(), val)
+		if err != nil {
+			return err
+		}
+		err = c.store.Delete(ctx, key.ToDS())
+		if err != nil {
+			return err
+		}
+	}
+	q := query.Query{
+		Prefix: key.ToString(),
+	}
+	res, err := c.store.Query(ctx, q)
+	for e := range res.Next() {
+		if e.Error != nil {
+			return err
+		}
+		dsKey, err := core.NewDataStoreKey(e.Key)
+		if err != nil {
+			return err
+		}
+
+		if dsKey.InstanceType == core.ValueKey {
+			err = c.store.Put(ctx, dsKey.WithDeletedFlag().ToDS(), e.Value)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = c.store.Delete(ctx, dsKey.ToDS())
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

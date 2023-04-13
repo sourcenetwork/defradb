@@ -71,7 +71,7 @@ func (k *Operator) Equal(other connor.FilterKey) bool {
 }
 
 // Filter represents a series of conditions that may reduce the number of
-// records that a query returns.
+// records that a request returns.
 type Filter struct {
 	// The filter conditions that must pass in order for a record to be returned.
 	Conditions map[connor.FilterKey]any
@@ -87,9 +87,9 @@ func NewFilter() *Filter {
 }
 
 // Limit represents a limit-offset pairing that controls how many
-// and which records will be returned from a query.
+// and which records will be returned from a request.
 type Limit struct {
-	// The maximum number of records that can be returned from a query.
+	// The maximum number of records that can be returned from a request.
 	Limit uint64
 
 	// The offset from which counting towards the Limit will begin.
@@ -97,7 +97,7 @@ type Limit struct {
 	Offset uint64
 }
 
-// GroupBy represents a grouping instruction on a query.
+// GroupBy represents a grouping instruction on a request.
 type GroupBy struct {
 	// The indexes of fields by which documents should be grouped. Ordered.
 	Fields []Field
@@ -110,7 +110,7 @@ const (
 	DESC SortDirection = "DESC"
 )
 
-// OrderCondition represents a single property by which query results should
+// OrderCondition represents a single property by which request results should
 // be ordered, and the direction in which they should be ordered.
 type OrderCondition struct {
 	// A chain of field indexes by which the property to sort by may be found.
@@ -150,16 +150,19 @@ type Targetable struct {
 	// An optional order clause, that can be specified to order results by property
 	// value
 	OrderBy *OrderBy
+
+	ShowDeleted bool
 }
 
 func (t *Targetable) cloneTo(index int) *Targetable {
 	return &Targetable{
-		Field:   *t.Field.cloneTo(index),
-		DocKeys: t.DocKeys,
-		Filter:  t.Filter,
-		Limit:   t.Limit,
-		GroupBy: t.GroupBy,
-		OrderBy: t.OrderBy,
+		Field:       *t.Field.cloneTo(index),
+		DocKeys:     t.DocKeys,
+		Filter:      t.Filter,
+		Limit:       t.Limit,
+		GroupBy:     t.GroupBy,
+		OrderBy:     t.OrderBy,
+		ShowDeleted: t.ShowDeleted,
 	}
 }
 

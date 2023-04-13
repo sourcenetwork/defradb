@@ -38,13 +38,12 @@ var (
 // to a specific version in the documents history graph, and return the fetched
 // state at that point exactly.
 //
-// Given the following Document state graph
-//
+// Given the following Document state graph:
 // {} --> V1 --> V2 --> V3 --> V4
+//
 //		  ^					   ^
 //		  |					   |
-// 	Target Version		 Current State
-//
+//	Target Version		 Current State
 //
 // A regular DocumentFetcher fetches and returns the state at V4, but the
 // VersionsedFetcher would step backwards through the update graph, recompose
@@ -55,19 +54,18 @@ var (
 // in the MerkleDAG, until we reach the initial (genesis) state.
 //
 // Transient/Ephemeral datastores are intanciated for the lifetime of the
-// traversal query, on a per object basis. This should be a basic map based
+// traversal query request, on a per object basis. This should be a basic map based
 // ds.Datastore, abstracted into a DSReaderWriter.
 //
 // The goal of the VersionedFetcher is to implement the same external API/Interface as
 // the DocumentFetcher, and to have it return the encoded/decoded document as
 // defined in the version, so that it can be used as a drop in replacement within
-// the scanNode query planner system.
+// the scanNode request planner system.
 //
 // Current limitations:
-// - We can only return a single record from an VersionedFetcher
-// 	 instance.
-// - We can't query into related sub objects (at the moment, as related objects
-//   ids aren't in the state graphs.
+// - We can only return a single record from an VersionedFetcher instance.
+// - We can't request related sub objects (at the moment, as related objects
+// ids aren't in the state graphs.
 // - Probably more...
 //
 // Future optimizations:
@@ -103,6 +101,7 @@ func (vf *VersionedFetcher) Init(
 	col *client.CollectionDescription,
 	fields []*client.FieldDescription,
 	reverse bool,
+	showDeleted bool,
 ) error {
 	vf.col = col
 	vf.queuedCids = list.New()
@@ -110,7 +109,7 @@ func (vf *VersionedFetcher) Init(
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
-	return vf.DocumentFetcher.Init(col, fields, reverse)
+	return vf.DocumentFetcher.Init(col, fields, reverse, showDeleted)
 }
 
 // Start serializes the correct state according to the Key and CID.
@@ -377,7 +376,13 @@ func (vf *VersionedFetcher) processNode(
 		if err != nil {
 			return err
 		}
-		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, "", events.EmptyUpdateChannel, ctype, key)
+		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(
+			vf.store,
+			core.CollectionSchemaVersionKey{},
+			events.EmptyUpdateChannel,
+			ctype,
+			key,
+		)
 		if err != nil {
 			return err
 		}

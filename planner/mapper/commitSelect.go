@@ -30,6 +30,9 @@ type CommitSelect struct {
 
 	// The parent Cid for which commit information has been requested.
 	Cid immutable.Option[string]
+
+	// The SchemaVersionID at the time of commit.
+	SchemaVersionID immutable.Option[string]
 }
 
 func (s *CommitSelect) CloneTo(index int) Requestable {

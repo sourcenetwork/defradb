@@ -24,6 +24,24 @@ var userCollectionGQLSchema = (`
 	}
 `)
 
-func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, userCollectionGQLSchema, []string{"users"}, test)
+const companiesCollectionGQLSchema = (`
+	type companies {
+		Name: String
+	}
+`)
+
+func updateUserCollectionSchema() testUtils.SchemaUpdate {
+	return testUtils.SchemaUpdate{
+		Schema: userCollectionGQLSchema,
+	}
+}
+
+func updateCompaniesCollectionSchema() testUtils.SchemaUpdate {
+	return testUtils.SchemaUpdate{
+		Schema: companiesCollectionGQLSchema,
+	}
+}
+
+func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
+	testUtils.ExecuteRequestTestCase(t, userCollectionGQLSchema, []string{"users"}, test)
 }

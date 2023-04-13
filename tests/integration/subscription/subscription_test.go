@@ -17,19 +17,12 @@ import (
 )
 
 func TestSubscriptionWithCreateMutations(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Subscription with user creations",
-		Query: `subscription {
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
 					User {
-						_key
-						name
-						age
-					}
-				}`,
-		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
-			{
-				Query: `mutation {
-					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -41,17 +34,6 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 						"age":  uint64(27),
 						"name": "John",
 					},
-				},
-			},
-			{
-				Query: `mutation {
-					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
-						_key
-						name
-						age
-					}
-				}`,
-				Results: []map[string]any{
 					{
 						"_key": "bae-18def051-7f0f-5dc9-8a69-2a5e423f6b55",
 						"age":  uint64(31),
@@ -59,26 +41,43 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 					},
 				},
 			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Addo",
+					},
+				},
+			},
 		},
 	}
 
-	executeTestCase(t, test)
+	execute(t, test)
 }
 
 func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Subscription with filter and one user creation",
-		Query: `subscription {
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
 					User(filter: {age: {_lt: 30}}) {
-						_key
-						name
-						age
-					}
-				}`,
-		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
-			{
-				Query: `mutation {
-					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -92,53 +91,63 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 					},
 				},
 			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
 		},
 	}
 
-	executeTestCase(t, test)
+	execute(t, test)
 }
 
 func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Subscription with filter and one user creation outside of the filter",
-		Query: `subscription {
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
 					User(filter: {age: {_gt: 30}}) {
 						_key
 						name
 						age
 					}
 				}`,
-		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
-			{
-				Query: `mutation {
+				Results: []map[string]any{},
+			},
+			testUtils.Request{
+				Request: `mutation {
 					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
-						_key
 						name
-						age
 					}
 				}`,
-				ExpectedTimout: true,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	execute(t, test)
 }
 
 func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.TestCase{
 		Description: "Subscription with filter and user creation in and outside of the filter",
-		Query: `subscription {
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
 					User(filter: {age: {_lt: 30}}) {
-						_key
-						name
-						age
-					}
-				}`,
-		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
-			{
-				Query: `mutation {
-					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -152,56 +161,65 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 					},
 				},
 			},
-			{
-				Query: `mutation {
-					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
-						_key
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						name
-						age
 					}
 				}`,
-				ExpectedTimout: true,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Addo",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	execute(t, test)
 }
 
 func TestSubscriptionWithUpdateMutations(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Subscription with user creations",
-		Query: `subscription {
-					User {
-						_key
-						name
-						age
-						points
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+	test := testUtils.TestCase{
+		Description: "Subscription with user creations and single mutation",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "John",
 					"age": 27,
 					"verified": true,
 					"points": 42.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Addo",
 					"age": 35,
 					"verified": true,
 					"points": 50
 				}`,
 			},
-		},
-		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
-			{
-				Query: `mutation {
-					update_User(filter: {name: {_eq: "John"}}, data: "{\"points\": 45}") {
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User {
 						_key
 						name
 						age
+						points
 					}
 				}`,
 				Results: []map[string]any{
@@ -213,46 +231,53 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 					},
 				},
 			},
+			testUtils.Request{
+				Request: `mutation {
+					update_User(filter: {name: {_eq: "John"}}, data: "{\"points\": 45}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
 		},
 	}
 
-	executeTestCase(t, test)
+	execute(t, test)
 }
 
 func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Subscription with user creations",
-		Query: `subscription {
-					User {
-						_key
-						name
-						age
-						points
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+	test := testUtils.TestCase{
+		Description: "Subscription with user creations and mutations for all",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "John",
 					"age": 27,
 					"verified": true,
 					"points": 42.1
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Addo",
 					"age": 31,
 					"verified": true,
 					"points": 50
 				}`,
 			},
-		},
-		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
-			{
-				Query: `mutation {
-					update_User(data: "{\"points\": 55}") {
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User {
 						_key
 						name
 						age
+						points
 					}
 				}`,
 				Results: []map[string]any{
@@ -270,8 +295,23 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 					},
 				},
 			},
+			testUtils.Request{
+				Request: `mutation {
+					update_User(data: "{\"points\": 55}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+					{
+						"name": "Addo",
+					},
+				},
+			},
 		},
 	}
 
-	executeTestCase(t, test)
+	execute(t, test)
 }

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Feature request
+    url: https://github.com/sourcenetwork/defradb/discussions/new?category=feature-request
+    about: To request a new feature or improvement.
+  - name: Discussion
+    url: https://github.com/sourcenetwork/defradb/discussions
+    about: To discuss DefraDB or ask questions.

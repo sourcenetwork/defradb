@@ -13,7 +13,6 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -121,8 +120,17 @@ func (p *topLevelNode) Children() []planNode {
 	return p.children
 }
 
-func (n *topLevelNode) Explain() (map[string]any, error) {
-	return map[string]any{}, nil
+func (n *topLevelNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return map[string]any{}, nil
+
+	case request.ExecuteExplain:
+		return map[string]any{}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 func (n *topLevelNode) Next() (bool, error) {
@@ -164,7 +172,7 @@ func (n *topLevelNode) Next() (bool, error) {
 				return false, err
 			}
 			if !hasChild {
-				return false, errors.New("expected child value, however none was yielded")
+				return false, ErrMissingChildValue
 			}
 
 			n.currentValue = child.Value()

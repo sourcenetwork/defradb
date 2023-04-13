@@ -138,10 +138,14 @@ func WithAddress(addr string) func(*Server) {
 		// If the address is not localhost, we check to see if it's a valid IP address.
 		// If it's not a valid IP, we assume that it's a domain name to be used with TLS.
 		if !strings.HasPrefix(addr, "localhost:") && !strings.HasPrefix(addr, ":") {
-			ip := net.ParseIP(addr)
+			host, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				host = addr
+			}
+			ip := net.ParseIP(host)
 			if ip == nil {
 				s.Addr = httpPort
-				s.options.domain = immutable.Some(addr)
+				s.options.domain = immutable.Some(host)
 			}
 		}
 	}

@@ -28,15 +28,15 @@ var sameFieldNameGQLSchema = (`
 	}
 `)
 
-func executeSameFieldNameTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, sameFieldNameGQLSchema, []string{"book", "author"}, test)
+func executeSameFieldNameTestCase(t *testing.T, test testUtils.RequestTestCase) {
+	testUtils.ExecuteRequestTestCase(t, sameFieldNameGQLSchema, []string{"book", "author"}, test)
 }
 
 func TestQueryOneToManyWithSameFieldName(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from one side, same field name",
-			Query: `query {
+			Request: `query {
 						book {
 							name
 							relationship1 {
@@ -70,7 +70,7 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 		},
 		{
 			Description: "One-to-many relation query from many side, same field name",
-			Query: `query {
+			Request: `query {
 						author {
 							name
 							relationship1 {

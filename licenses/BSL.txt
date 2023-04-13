@@ -7,18 +7,28 @@ Parameters
 Licensor:                   Democratized Data (D2) Foundation
 
 
-Licensed Work:              DefraDB v0.3.1
-                            The Licensed Work is (c) 2022 D2 Foundation.
+Licensed Work:              DefraDB v0.5.0
+                            The Licensed Work is (c) 2023 D2 Foundation.
 
 
-Additional Use Grant:       You may only use the Licensed Work for an
-                            application that is connected  to the SourceHub
-                            mainnet or another protocol connected to the
-                            SourceHub by way of the Inter-Blockchain
+Additional Use Grant:       You may only use the Licensed Work for the 
+                            following conditions
+                            
+                            For an application that is connected  to the 
+                            SourceHub mainnet or another protocol connected 
+                            to the SourceHub by way of the Inter-Blockchain
                             Communication (IBC) protocol. 
 
+                            A non-profit project in both a production and
+                            pre-production state.
 
-Change Date:                2026-12-23
+                            A for-profit project in a pre-production state
+                            only.
+
+                            
+
+
+Change Date:                2027-04-12
 
 
 Change License:             Apache License, Version 2.0

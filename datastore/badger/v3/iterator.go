@@ -22,7 +22,6 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	goprocess "github.com/jbenet/goprocess"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
@@ -55,7 +54,8 @@ func (t *txn) GetIterator(q dsq.Query) (iterable.Iterator, error) {
 			opt.Reverse = true
 			reversedOrder = true
 		default:
-			return nil, client.NewErrUnhandledType("Order format", orderType)
+			// to avoid circlar dependencies in tests we define the error locally.
+			return nil, ErrOrderType(orderType)
 		}
 	}
 

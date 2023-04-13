@@ -102,3 +102,57 @@ func marshalPeerID(id libpeer.ID) []byte {
 	b, _ := id.Marshal() // This will never return an error
 	return b
 }
+
+// RemoveP2PCollections handles the request to add P2P collecctions to the stored list.
+func (s *Service) AddP2PCollections(
+	ctx context.Context,
+	req *pb.AddP2PCollectionsRequest,
+) (*pb.AddP2PCollectionsReply, error) {
+	log.Debug(ctx, "Received AddP2PCollections request")
+
+	err := s.peer.AddP2PCollections(req.Collections)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.AddP2PCollectionsReply{}, nil
+}
+
+// RemoveP2PCollections handles the request to remove P2P collecctions from the stored list.
+func (s *Service) RemoveP2PCollections(
+	ctx context.Context,
+	req *pb.RemoveP2PCollectionsRequest,
+) (*pb.RemoveP2PCollectionsReply, error) {
+	log.Debug(ctx, "Received RemoveP2PCollections request")
+
+	err := s.peer.RemoveP2PCollections(req.Collections)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.RemoveP2PCollectionsReply{}, nil
+}
+
+// GetAllP2PCollections handles the request to get all P2P collecctions from the stored list.
+func (s *Service) GetAllP2PCollections(
+	ctx context.Context,
+	req *pb.GetAllP2PCollectionsRequest,
+) (*pb.GetAllP2PCollectionsReply, error) {
+	log.Debug(ctx, "Received GetAllP2PCollections request")
+	collections, err := s.peer.GetAllP2PCollections()
+	if err != nil {
+		return nil, err
+	}
+
+	var pbCols []*pb.GetAllP2PCollectionsReply_Collection
+	for _, col := range collections {
+		pbCols = append(pbCols, &pb.GetAllP2PCollectionsReply_Collection{
+			Id:   col.ID,
+			Name: col.Name,
+		})
+	}
+
+	return &pb.GetAllP2PCollectionsReply{
+		Collections: pbCols,
+	}, nil
+}

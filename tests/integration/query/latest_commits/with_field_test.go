@@ -20,9 +20,9 @@ import (
 // desired behaviour (should return all latest commits for given
 // field in the collection).
 func TestQueryLatestCommitsWithField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with field",
-		Query: `query {
+		Request: `query {
 					latestCommits (field: "Age") {
 						cid
 						links {
@@ -49,9 +49,9 @@ func TestQueryLatestCommitsWithField(t *testing.T) {
 // desired behaviour (should return all latest commits for given
 // field in the collection).
 func TestQueryLatestCommitsWithFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with field",
-		Query: `query {
+		Request: `query {
 					latestCommits (field: "1") {
 						cid
 						links {

@@ -61,25 +61,17 @@ type ExpectedUpdate struct {
 	Priority immutable.Option[uint64]
 }
 
-type dbInfo interface {
-	DB() client.DB
-}
-
 const eventTimeout = 100 * time.Millisecond
 
-func ExecuteQueryTestCase(
+func ExecuteRequestTestCase(
 	t *testing.T,
 	schema string,
 	testCase TestCase,
 ) {
-	var err error
 	ctx := context.Background()
 
-	var dbi dbInfo
-	dbi, err = testUtils.NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
+	db, err := testUtils.NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
 	require.NoError(t, err)
-
-	db := dbi.DB()
 
 	err = db.AddSchema(ctx, schema)
 	require.NoError(t, err)

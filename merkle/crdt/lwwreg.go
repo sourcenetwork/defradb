@@ -25,12 +25,13 @@ import (
 
 var (
 	lwwFactoryFn = MerkleCRDTFactory(
-		func(mstore datastore.MultiStore, _ string, _ events.UpdateChannel) MerkleCRDTInitFn {
+		func(mstore datastore.MultiStore, schemaID core.CollectionSchemaVersionKey, _ events.UpdateChannel) MerkleCRDTInitFn {
 			return func(key core.DataStoreKey) MerkleCRDT {
 				return NewMerkleLWWRegister(
 					mstore.Datastore(),
 					mstore.Headstore(),
 					mstore.DAGstore(),
+					schemaID,
 					core.DataStoreKey{},
 					key,
 				)
@@ -60,9 +61,10 @@ func NewMerkleLWWRegister(
 	datastore datastore.DSReaderWriter,
 	headstore datastore.DSReaderWriter,
 	dagstore datastore.DAGStore,
+	schemaVersionKey core.CollectionSchemaVersionKey,
 	ns, key core.DataStoreKey,
 ) *MerkleLWWRegister {
-	register := corecrdt.NewLWWRegister(datastore, key /* stuff like namespace and ID */)
+	register := corecrdt.NewLWWRegister(datastore, schemaVersionKey, key /* stuff like namespace and ID */)
 	clk := clock.NewMerkleClock(headstore, dagstore, key.ToHeadStoreKey(), register)
 
 	// newBaseMerkleCRDT(clock, register)

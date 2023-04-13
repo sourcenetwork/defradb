@@ -1,4 +1,4 @@
-type user {
+type User {
     name: String
     age: Int
     verified: Boolean

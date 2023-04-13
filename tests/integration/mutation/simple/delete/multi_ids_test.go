@@ -18,7 +18,7 @@ import (
 )
 
 func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Simple multi-key delete mutation with one key that exists.",
@@ -32,10 +32,10 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 					}`,
 				},
 			},
-			TransactionalQueries: []testUtils.TransactionQuery{
+			TransactionalRequests: []testUtils.TransactionRequest{
 				{
 					TransactionId: 0,
-					Query: `mutation {
+					Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
 							_key
 						}
@@ -48,7 +48,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 				},
 				{
 					TransactionId: 0,
-					Query: `query {
+					Request: `query {
 						user(dockeys: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
 							_key
 						}
@@ -60,7 +60,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 
 		{
 			Description: "Delete multiple documents that exist, when given multiple keys.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 							_key
 						}
@@ -94,7 +94,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 
 		{
 			Description: "Delete multiple documents that exist, when given multiple keys with alias.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 							AliasKey: _key
 						}
@@ -128,7 +128,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 
 		{
 			Description: "Delete multiple documents that exist, where an update happens too.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 							AliasKey: _key
 						}
@@ -178,9 +178,9 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 }
 
 func TestDeleteWithEmptyIdsSet(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Deletion of using ids, empty ids set.",
-		Query: `mutation {
+		Request: `mutation {
 					delete_user(ids: []) {
 						_key
 					}
@@ -201,9 +201,9 @@ func TestDeleteWithEmptyIdsSet(t *testing.T) {
 }
 
 func TestDeleteWithSingleUnknownIds(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Deletion of using ids, single unknown item.",
-		Query: `mutation {
+		Request: `mutation {
 					delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
 						_key
 					}
@@ -214,9 +214,9 @@ func TestDeleteWithSingleUnknownIds(t *testing.T) {
 }
 
 func TestDeleteWithMultipleUnknownIds(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Deletion of using ids, multiple unknown items.",
-		Query: `mutation {
+		Request: `mutation {
 					delete_user(ids: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
 						_key
 					}
@@ -227,9 +227,9 @@ func TestDeleteWithMultipleUnknownIds(t *testing.T) {
 }
 
 func TestDeleteWithUnknownAndKnownIds(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Deletion of using ids, known and unknown items.",
-		Query: `mutation {
+		Request: `mutation {
 					delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
 						_key
 					}
@@ -254,9 +254,9 @@ func TestDeleteWithUnknownAndKnownIds(t *testing.T) {
 }
 
 func TestDeleteWithKnownIdsAndEmptyFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Deletion of using ids and filter, known id and empty filter.",
-		Query: `mutation {
+		Request: `mutation {
 					delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"], filter: {}) {
 						_key
 					}
@@ -281,10 +281,10 @@ func TestDeleteWithKnownIdsAndEmptyFilter(t *testing.T) {
 }
 
 func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Delete multiple documents that exist without sub selection, should give error.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"])
 					}`,
 			Docs: map[int][]string{
@@ -309,7 +309,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 
 		{
 			Description: "Delete multiple documents that exist without _key sub-selection.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 						}
 					}`,
@@ -337,4 +337,71 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 	for _, test := range tests {
 		simpleTests.ExecuteTestCase(t, test)
 	}
+}
+
+func TestDeletionOfMultipleDocumentsUsingSingleKeyWithShowDeletedDocumentQuery_Success(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 43
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Andy",
+					"age": 74
+				}`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+						delete_User(ids: ["bae-05de0e64-f300-55b3-8973-5fa79045a083", "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef"]){
+							_key
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-05de0e64-f300-55b3-8973-5fa79045a083",
+					},
+					{
+						"_key": "bae-07e5c44c-ee88-5c92-85ad-fb3148c48bef",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						User(showDeleted: true) {
+							_deleted
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_deleted": true,
+						"name":     "Andy",
+						"age":      uint64(74),
+					},
+					{
+						"_deleted": true,
+						"name":     "John",
+						"age":      uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
 }
