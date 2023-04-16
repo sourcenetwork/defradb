@@ -70,8 +70,8 @@ build {
     inline = [
       "/usr/bin/cloud-init status --wait",
       "sudo apt-get update && sudo apt-get install make build-essential -y",
-      "curl -OL https://golang.org/dl/go1.18.5.linux-amd64.tar.gz",
-      "rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.18.5.linux-amd64.tar.gz",
+      "curl -OL https://golang.org/dl/go1.19.8.linux-amd64.tar.gz",
+      "rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.19.8.linux-amd64.tar.gz",
       "export PATH=$PATH:/usr/local/go/bin",
       "git clone \"https://git:$ONLY_DEFRADB_REPO_CI_PAT@$DEFRADB_GIT_REPO\"",
       "cd ./defradb || { printf \"\\\ncd into defradb failed.\\\n\" && exit 2; }",
