@@ -36,7 +36,7 @@ func (db *implicitTxnDB) ExecRequest(ctx context.Context, request string) *clien
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		res := &client.RequestResult{}
-		res.GQL.Errors = []any{err.Error()}
+		res.GQL.Errors = []error{err}
 		return res
 	}
 	defer txn.Discard(ctx)
@@ -44,7 +44,7 @@ func (db *implicitTxnDB) ExecRequest(ctx context.Context, request string) *clien
 	res := db.execRequest(ctx, request, txn)
 
 	if err := txn.Commit(ctx); err != nil {
-		res.GQL.Errors = []any{err.Error()}
+		res.GQL.Errors = []error{err}
 		return res
 	}
 

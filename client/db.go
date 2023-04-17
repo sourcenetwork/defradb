@@ -137,7 +137,7 @@ type GQLResult struct {
 	//
 	// If there are values in this slice the request will likely not have run to completion
 	// and [Data] will be nil.
-	Errors []any `json:"errors,omitempty"`
+	Errors []error `json:"errors,omitempty"`
 
 	// Data contains the resultant data produced by the GQL request.
 	//
