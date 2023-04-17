@@ -41,7 +41,14 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db  *db
+	db *db
+
+	// txn represents any externally provided [datastore.Txn] for which any
+	// operation on this [collection] instance should be scoped to.
+	//
+	// If this has no value, operations requiring a transaction should use an
+	// implicit internally managed transaction, which only lives for duration
+	// of the operation in question.
 	txn immutable.Option[datastore.Txn]
 
 	colID uint32
