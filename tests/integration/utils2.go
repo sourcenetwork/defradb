@@ -367,7 +367,7 @@ func executeTestCase(
 			documents = createDoc(ctx, t, testCase, nodes, collections, documents, action)
 
 		case DeleteDoc:
-			deleteDoc(ctx, t, testCase, collections, documents, action)
+			deleteDoc(ctx, t, testCase, nodes, collections, documents, action)
 
 		case UpdateDoc:
 			updateDoc(ctx, t, testCase, nodes, collections, documents, action)
@@ -796,6 +796,7 @@ func deleteDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
+	nodes []*node.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action DeleteDoc,
@@ -803,8 +804,17 @@ func deleteDoc(
 	doc := documents[action.CollectionID][action.DocID]
 
 	var expectedErrorRaised bool
-	for _, collections := range getNodeCollections(action.NodeID, nodeCollections) {
-		_, err := collections[action.CollectionID].DeleteWithKey(ctx, doc.Key())
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+		err := withRetry(
+			ctx,
+			actionNodes,
+			nodeID,
+			func() error {
+				_, err := collections[action.CollectionID].DeleteWithKey(ctx, doc.Key())
+				return err
+			},
+		)
 		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
 	}
 
