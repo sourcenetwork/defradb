@@ -229,3 +229,24 @@ func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Dogs {
+						name: String
+						user: Users
+					}
+					type Users {
+						Dogs: [Dogs!]
+					}
+				`,
+				ExpectedError: "no type found for given name. Type: Dogs",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Dogs", "Users"}, test)
+}
