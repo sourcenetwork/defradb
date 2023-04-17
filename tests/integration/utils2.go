@@ -364,7 +364,7 @@ func executeTestCase(
 			collections = getCollections(ctx, t, nodes, collectionNames)
 
 		case CreateDoc:
-			documents = createDoc(ctx, t, testCase, collections, documents, action)
+			documents = createDoc(ctx, t, testCase, nodes, collections, documents, action)
 
 		case DeleteDoc:
 			deleteDoc(ctx, t, testCase, collections, documents, action)
@@ -752,6 +752,7 @@ func createDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
+	nodes []*node.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action CreateDoc,
@@ -759,14 +760,20 @@ func createDoc(
 	// All the docs should be identical, and we only need 1 copy so taking the last
 	// is okay.
 	var doc *client.Document
-	for _, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		var err error
 		doc, err = client.NewDocFromJSON([]byte(action.Doc))
 		if AssertError(t, testCase.Description, err, action.ExpectedError) {
 			return nil
 		}
 
-		err = collections[action.CollectionID].Save(ctx, doc)
+		err = withRetry(
+			ctx,
+			actionNodes,
+			nodeID,
+			func() error { return collections[action.CollectionID].Save(ctx, doc) },
+		)
 		if AssertError(t, testCase.Description, err, action.ExpectedError) {
 			return nil
 		}
