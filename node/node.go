@@ -170,9 +170,15 @@ func NewNode(
 	}
 
 	n := &Node{
-		pubSubEvent:  make(chan net.EvtPubSub),
-		pushLogEvent: make(chan net.EvtReceivedPushLog),
-		peerEvent:    make(chan event.EvtPeerConnectednessChanged),
+		// WARNING: The current usage of these channels means that consumers of them
+		// (the WaitForFoo funcs) can recieve events that occured before the WaitForFoo
+		// function call.  This is tolerable at the moment as they are only used for
+		// test, but we should resolve this when we can (e.g. via using subscribe-like
+		// mechanics, potentially via use of a ring-buffer based [events.Channel]
+		// implementation): https://github.com/sourcenetwork/defradb/issues/1358.
+		pubSubEvent:  make(chan net.EvtPubSub, 20),
+		pushLogEvent: make(chan net.EvtReceivedPushLog, 20),
+		peerEvent:    make(chan event.EvtPeerConnectednessChanged, 20),
 		Peer:         peer,
 		host:         h,
 		dht:          ddht,
@@ -241,7 +247,12 @@ func (n *Node) subscribeToPeerConnectionEvents() {
 	}
 	go func() {
 		for e := range sub.Out() {
-			n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+			select {
+			case n.peerEvent <- e.(event.EvtPeerConnectednessChanged):
+			default:
+				<-n.peerEvent
+				n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+			}
 		}
 	}()
 }
@@ -257,7 +268,12 @@ func (n *Node) subscribeToPubSubEvents() {
 	}
 	go func() {
 		for e := range sub.Out() {
-			n.pubSubEvent <- e.(net.EvtPubSub)
+			select {
+			case n.pubSubEvent <- e.(net.EvtPubSub):
+			default:
+				<-n.pubSubEvent
+				n.pubSubEvent <- e.(net.EvtPubSub)
+			}
 		}
 	}()
 }
@@ -273,7 +289,12 @@ func (n *Node) subscribeToPushLogEvents() {
 	}
 	go func() {
 		for e := range sub.Out() {
-			n.pushLogEvent <- e.(net.EvtReceivedPushLog)
+			select {
+			case n.pushLogEvent <- e.(net.EvtReceivedPushLog):
+			default:
+				<-n.pushLogEvent
+				n.pushLogEvent <- e.(net.EvtReceivedPushLog)
+			}
 		}
 	}()
 }
