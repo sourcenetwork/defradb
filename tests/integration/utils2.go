@@ -970,7 +970,7 @@ func executeSubscriptionRequest(
 
 	go func() {
 		data := []map[string]any{}
-		errs := []any{}
+		errs := []error{}
 
 		allActionsAreDone := false
 		expectedDataRecieved := len(action.Results) == 0
@@ -1047,7 +1047,7 @@ func AssertError(t *testing.T, description string, err error, expectedError stri
 func AssertErrors(
 	t *testing.T,
 	description string,
-	errs []any,
+	errs []error,
 	expectedError string,
 ) bool {
 	if expectedError == "" {
@@ -1055,7 +1055,7 @@ func AssertErrors(
 	} else {
 		for _, e := range errs {
 			// This is always a string at the moment, add support for other types as and when needed
-			errorString := e.(string)
+			errorString := e.Error()
 			if !strings.Contains(errorString, expectedError) {
 				// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
 				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))

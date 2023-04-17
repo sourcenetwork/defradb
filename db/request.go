@@ -23,7 +23,7 @@ func (db *db) execRequest(ctx context.Context, request string, txn datastore.Txn
 	res := &client.RequestResult{}
 	ast, err := db.parser.BuildRequestAST(request)
 	if err != nil {
-		res.GQL.Errors = []any{err.Error()}
+		res.GQL.Errors = []error{err}
 		return res
 	}
 	if db.parser.IsIntrospection(ast) {
@@ -32,17 +32,13 @@ func (db *db) execRequest(ctx context.Context, request string, txn datastore.Txn
 
 	parsedRequest, errors := db.parser.Parse(ast)
 	if len(errors) > 0 {
-		errorStrings := make([]any, len(errors))
-		for i, err := range errors {
-			errorStrings[i] = err.Error()
-		}
-		res.GQL.Errors = errorStrings
+		res.GQL.Errors = errors
 		return res
 	}
 
 	pub, subRequest, err := db.checkForClientSubscriptions(parsedRequest)
 	if err != nil {
-		res.GQL.Errors = []any{err.Error()}
+		res.GQL.Errors = []error{err}
 		return res
 	}
 
@@ -56,7 +52,7 @@ func (db *db) execRequest(ctx context.Context, request string, txn datastore.Txn
 
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {
-		res.GQL.Errors = []any{err.Error()}
+		res.GQL.Errors = []error{err}
 		return res
 	}
 
