@@ -243,7 +243,7 @@ func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 						Dogs: [Dogs!]
 					}
 				`,
-				ExpectedError: "no type found for given name. Type: Dogs",
+				ExpectedError: "NonNull variants for type are not supported. Type: Dogs",
 			},
 		},
 	}
