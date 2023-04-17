@@ -23,6 +23,7 @@ import (
 	"github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	mh "github.com/multiformats/go-multihash"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -41,7 +42,7 @@ var _ client.Collection = (*collection)(nil)
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
 	db  *db
-	txn datastore.Txn
+	txn immutable.Option[datastore.Txn]
 
 	colID uint32
 
@@ -562,7 +563,7 @@ func (c *collection) SchemaID() string {
 func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 	return &collection{
 		db:       c.db,
-		txn:      txn,
+		txn:      immutable.Some(txn),
 		desc:     c.desc,
 		colID:    c.colID,
 		schemaID: c.schemaID,
@@ -1026,8 +1027,8 @@ func (c *collection) saveValueToMerkleCRDT(
 // If the collection already has a txn, return the existing one.
 // Otherwise, create a new implicit transaction.
 func (c *collection) getTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
-	if c.txn != nil {
-		return c.txn, nil
+	if c.txn.HasValue() {
+		return c.txn.Value(), nil
 	}
 	return c.db.NewTxn(ctx, readonly)
 }
@@ -1039,13 +1040,13 @@ func (c *collection) getTxn(ctx context.Context, readonly bool) (datastore.Txn, 
 //
 // Explicit transactions are provided to the collection object via the "WithTxn(...)" function.
 func (c *collection) discardImplicitTxn(ctx context.Context, txn datastore.Txn) {
-	if c.txn == nil {
+	if !c.txn.HasValue() {
 		txn.Discard(ctx)
 	}
 }
 
 func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) error {
-	if c.txn == nil {
+	if !c.txn.HasValue() {
 		return txn.Commit(ctx)
 	}
 	return nil
