@@ -227,5 +227,26 @@ func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Dogs {
+						name: String
+						user: Users
+					}
+					type Users {
+						Dogs: [Dogs!]
+					}
+				`,
+				ExpectedError: "NonNull variants for type are not supported. Type: Dogs",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Dogs", "Users"}, test)
 }
