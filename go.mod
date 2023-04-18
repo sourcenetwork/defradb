@@ -14,7 +14,7 @@ require (
 	github.com/graphql-go/graphql v0.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/iancoleman/strcase v0.2.0
-	github.com/ipfs/go-blockservice v0.5.0
+	github.com/ipfs/go-blockservice v0.5.1
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-datastore v0.6.0
 	github.com/ipfs/go-ipfs-blockstore v1.3.0
