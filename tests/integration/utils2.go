@@ -769,7 +769,6 @@ func createDoc(
 		}
 
 		err = withRetry(
-			ctx,
 			actionNodes,
 			nodeID,
 			func() error { return collections[action.CollectionID].Save(ctx, doc) },
@@ -807,7 +806,6 @@ func deleteDoc(
 	actionNodes := getNodes(action.NodeID, nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		err := withRetry(
-			ctx,
 			actionNodes,
 			nodeID,
 			func() error {
@@ -842,7 +840,6 @@ func updateDoc(
 	actionNodes := getNodes(action.NodeID, nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		err := withRetry(
-			ctx,
 			actionNodes,
 			nodeID,
 			func() error { return collections[action.CollectionID].Save(ctx, doc) },
@@ -861,7 +858,6 @@ func updateDoc(
 // about this in our tests so we just retry a few times until it works (or the
 // retry limit is breached - important incase this is a different error)
 func withRetry(
-	ctx context.Context,
 	nodes []*node.Node,
 	nodeID int,
 	action func() error,
