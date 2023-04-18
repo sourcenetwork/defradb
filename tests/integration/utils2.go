@@ -364,10 +364,10 @@ func executeTestCase(
 			collections = getCollections(ctx, t, nodes, collectionNames)
 
 		case CreateDoc:
-			documents = createDoc(ctx, t, testCase, collections, documents, action)
+			documents = createDoc(ctx, t, testCase, nodes, collections, documents, action)
 
 		case DeleteDoc:
-			deleteDoc(ctx, t, testCase, collections, documents, action)
+			deleteDoc(ctx, t, testCase, nodes, collections, documents, action)
 
 		case UpdateDoc:
 			updateDoc(ctx, t, testCase, nodes, collections, documents, action)
@@ -752,6 +752,7 @@ func createDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
+	nodes []*node.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action CreateDoc,
@@ -759,14 +760,19 @@ func createDoc(
 	// All the docs should be identical, and we only need 1 copy so taking the last
 	// is okay.
 	var doc *client.Document
-	for _, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		var err error
 		doc, err = client.NewDocFromJSON([]byte(action.Doc))
 		if AssertError(t, testCase.Description, err, action.ExpectedError) {
 			return nil
 		}
 
-		err = collections[action.CollectionID].Save(ctx, doc)
+		err = withRetry(
+			actionNodes,
+			nodeID,
+			func() error { return collections[action.CollectionID].Save(ctx, doc) },
+		)
 		if AssertError(t, testCase.Description, err, action.ExpectedError) {
 			return nil
 		}
@@ -789,6 +795,7 @@ func deleteDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
+	nodes []*node.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action DeleteDoc,
@@ -796,8 +803,16 @@ func deleteDoc(
 	doc := documents[action.CollectionID][action.DocID]
 
 	var expectedErrorRaised bool
-	for _, collections := range getNodeCollections(action.NodeID, nodeCollections) {
-		_, err := collections[action.CollectionID].DeleteWithKey(ctx, doc.Key())
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error {
+				_, err := collections[action.CollectionID].DeleteWithKey(ctx, doc.Key())
+				return err
+			},
+		)
 		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
 	}
 
@@ -824,22 +839,38 @@ func updateDoc(
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
-		// If a P2P-sync commit for the given document is already in progress this
-		// Save call can fail as the transaction will conflict. We dont want to worry
-		// about this in our tests so we just retry a few times until it works (or the
-		// retry limit is breached - important incase this is a different error)
-		for i := 0; i < actionNodes[nodeID].MaxTxnRetries(); i++ {
-			err = collections[action.CollectionID].Save(ctx, doc)
-			if err != nil && errors.Is(err, badgerds.ErrTxnConflict) {
-				time.Sleep(100 * time.Millisecond)
-				continue
-			}
-			break
-		}
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error { return collections[action.CollectionID].Save(ctx, doc) },
+		)
 		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
 	}
 
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+// withRetry attempts to perform the given action, retrying up to a DB-defined
+// maximum attempt count if a transaction conflict error is returned.
+//
+// If a P2P-sync commit for the given document is already in progress this
+// Save call can fail as the transaction will conflict. We dont want to worry
+// about this in our tests so we just retry a few times until it works (or the
+// retry limit is breached - important incase this is a different error)
+func withRetry(
+	nodes []*node.Node,
+	nodeID int,
+	action func() error,
+) error {
+	for i := 0; i < nodes[nodeID].MaxTxnRetries(); i++ {
+		err := action()
+		if err != nil && errors.Is(err, badgerds.ErrTxnConflict) {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		return err
+	}
+	return nil
 }
 
 // executeTransactionRequest executes the given transactional request.
