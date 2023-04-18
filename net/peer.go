@@ -370,6 +370,7 @@ func (p *Peer) setReplicator(
 	for _, col := range collections {
 		if reps, exists := p.replicators[col.SchemaID()]; exists {
 			if _, exists := reps[pid]; exists {
+				p.mu.Unlock()
 				return pid, errors.New(fmt.Sprintf(
 					"Replicator already exists for %s with ID %s",
 					col.Name(),
