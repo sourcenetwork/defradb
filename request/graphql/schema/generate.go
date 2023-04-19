@@ -296,7 +296,6 @@ func (g *Generator) createExpandedFieldSingle(
 ) (*gql.Field, error) {
 	typeName := t.Name()
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
 		Name: f.Name,
 		Type: t,
 		Args: gql.FieldConfigArgument{
@@ -313,7 +312,6 @@ func (g *Generator) createExpandedFieldList(
 ) (*gql.Field, error) {
 	typeName := t.Name()
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
 		Name: f.Name,
 		Type: gql.NewList(t),
 		Args: gql.FieldConfigArgument{
@@ -888,7 +886,6 @@ func (g *Generator) genTypeMutationFields(
 
 func (g *Generator) genTypeMutationCreateField(obj *gql.Object) (*gql.Field, error) {
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
 		Name: "create_" + obj.Name(),
 		Type: obj,
 		Args: gql.FieldConfigArgument{
@@ -903,7 +900,6 @@ func (g *Generator) genTypeMutationUpdateField(
 	filter *gql.InputObject,
 ) (*gql.Field, error) {
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
 		Name: "update_" + obj.Name(),
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
@@ -921,7 +917,6 @@ func (g *Generator) genTypeMutationDeleteField(
 	filter *gql.InputObject,
 ) (*gql.Field, error) {
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
 		Name: "delete_" + obj.Name(),
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
@@ -1121,7 +1116,6 @@ func (g *Generator) genTypeQueryableFieldList(
 	g.manager.schema.TypeMap()[config.order.Name()] = config.order
 
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
 		Name: name,
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
