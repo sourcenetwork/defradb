@@ -74,3 +74,111 @@ var (
 		client.FieldKind_FOREIGN_OBJECT_ARRAY:  client.NONE_CRDT,
 	}
 )
+
+const (
+	dockeyArgDescription string = `
+An optional dockey parameter for this field. Only documents with
+ the given dockey will be returned.  If no documents match, the result
+ will be null/empty.
+`
+	dockeysArgDescription string = `
+An optional set of dockeys for this field. Only documents with a dockey
+ matching an dockey in the given set will be returned.  If no documents match,
+ the result will be null/empty. If an empty set is provided, this argument will
+ be ignored.
+`
+	cidArgDescription string = `
+An optional value that specifies the commit ID of the document to return.
+ This CID does not need to be the most recent for a document, if it
+ corresponds to an older version of a document the document will be returned
+ at the state it was in at the time of that commit. If a matching commit is
+ not found then an empty set will be returned.
+`
+	singleFieldFilterArgDescription string = `
+An optional filter for this join, if the related record does
+ not meet the filter criteria the host record will still be returned,
+ but the value of this field will be null.
+`
+	listFieldFilterArgDescription string = `
+An optional filter for this join, if none of the related records do
+ not meet the filter criteria the host record will still be returned,
+ but the value of this field will be empty.
+`
+	selectFilterArgDescription string = `
+An optional filter for this select, only documents matching the given criteria
+ will be returned.
+`
+	aggregateFilterArgDescription string = `
+An optional filter for this aggregate, only documents matching the given criteria
+ will be aggregated.
+`
+	showDeletedArgDescription string = `
+An optional value that specifies as to whether deleted documents may be
+ returned. This argument will propagate down through any child selects/joins.
+`
+	createDocumentDescription string = `
+Creates a single document of this type using the data provided.
+`
+	createDataArgDescription string = `
+The json representation of the document you wish to create. Required.
+`
+	updateDocumentsDescription string = `
+Updates documents in this collection using the data provided. Only documents
+ matching any provided criteria will be updated, if no criteria are provided
+ the update will be applied to all documents in the collection.
+`
+	updateIDArgDescription string = `
+An optional dockey value that will limit the update to the document with
+ a matching dockey. If no matching document is found, the operation will
+ succeed, but no documents will be updated.
+`
+	updateIDsArgDescription string = `
+An optional set of dockey values that will limit the update to documents
+ with a matching dockey. If no matching documents are found, the operation will
+ succeed, but no documents will be updated.
+`
+	updateFilterArgDescription string = `
+An optional filter for this update that will limit the update to the documents
+ matching the given criteria. If no matching documents are found, the operation
+ will succeed, but no documents will be updated.
+`
+	updateDataArgDescription string = `
+The json representation of the fields to update and their new values. Required.
+ Fields not explicitly mentioned here will not be updated.
+`
+	deleteDocumentsDescription string = `
+Deletes documents in this collection matching any provided criteria. If no
+ criteria are provided all documents in the collection will be deleted.
+`
+	deleteIDArgDescription string = `
+An optional dockey value that will limit the delete to the document with
+ a matching dockey. If no matching document is found, the operation will
+ succeed, but no documents will be deleted.
+`
+	deleteIDsArgDescription string = `
+An optional set of dockey values that will limit the delete to documents with
+ a matching dockey. If no matching documents are found, the operation will
+ succeed, but no documents will be deleted. If an empty set is provided, no
+ documents will be deleted.
+`
+	deleteFilterArgDescription string = `
+An optional filter for this delete that will limit the delete to documents
+ matching the given criteria. If no matching documents are found, the operation
+ will succeed, but no documents will be deleted.
+`
+	keyFieldDescription string = `
+The immutable primary key (dockey) value for this document.
+`
+	groupFieldDescription string = `
+The group field may be used to return a set of records belonging to the group.
+ It must be used alongside a 'groupBy' argument on the parent selector. It may
+ contain any field on the type being grouped, including those used by the
+ groupBy.
+`
+	deletedFieldDescription string = `
+Indicates as to whether or not this document has been deleted.
+`
+	versionFieldDescription string = `
+Returns the head commit for this document.
+`
+)
