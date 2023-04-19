@@ -16,6 +16,49 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestQuerySimpleWithEmptyOrder(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with empty order",
+		Request: `query {
+					users(order: {}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Bob",
+				"Age":  uint64(32),
+			},
+			{
+				"Name": "John",
+				"Age":  uint64(21),
+			},
+			{
+				"Name": "Carlo",
+				"Age":  uint64(55),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic order ASC",
