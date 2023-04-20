@@ -923,7 +923,6 @@ func (g *Generator) genTypeMutationDeleteField(
 			"id":     schemaTypes.NewArgConfig(gql.ID),
 			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID)),
 			"filter": schemaTypes.NewArgConfig(filter),
-			// "data":   newArgConfig(gql.String),
 		},
 	}
 	return field, nil
