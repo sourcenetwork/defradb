@@ -13,12 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with basic filter (name)",
+func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with string equal (_eq) filter.",
 
 		Request: `query @explain {
 			author(filter: {name: {_eq: "Lone"}}) {
@@ -44,27 +45,24 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"collectionID":   "3",
-								"collectionName": "author",
-								"filter": dataMap{
-									"name": dataMap{
-										"_eq": "Lone",
-									},
-								},
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
-								},
-							},
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter": dataMap{
+						"name": dataMap{
+							"_eq": "Lone",
+						},
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
 						},
 					},
 				},
@@ -72,69 +70,13 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-		{
-			Description: "Explain query with basic filter(name), no results",
+func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-			Request: `query @explain {
-				author(filter: {name: {_eq: "Bob"}}) {
-					name
-					age
-				}
-			}`,
-
-			Docs: map[int][]string{
-				2: {
-					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-					`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-				},
-			},
-
-			Results: []dataMap{
-				{
-					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter": dataMap{
-										"name": dataMap{
-											"_eq": "Bob",
-										},
-									},
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
-}
-
-func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with basic filter(age)",
+		Description: "Explain (default) request with integer equal (_eq) filter.",
 
 		Request: `query @explain {
 			author(filter: {age: {_eq: 26}}) {
@@ -160,27 +102,24 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"collectionID":   "3",
-								"collectionName": "author",
-								"filter": dataMap{
-									"age": dataMap{
-										"_eq": int(26),
-									},
-								},
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
-								},
-							},
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter": dataMap{
+						"age": dataMap{
+							"_eq": int(26),
+						},
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
 						},
 					},
 				},
@@ -188,116 +127,56 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-		{
-			Description: "Explain query with basic filter(age), greater than",
+func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-			Request: `query @explain {
+		Description: "Explain (default) request with greater than (_gt) filter.",
+
+		Request: `query @explain {
 				author(filter: {age: {_gt: 20}}) {
 					name
 					age
 				}
 			}`,
 
-			Docs: map[int][]string{
-				2: {
-					// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-					`{
+		Docs: map[int][]string{
+			2: {
+				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
+				`{
 						"name": "Lone",
 						"age":  26,
 						"verified": false
 					}`,
-					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-					`{
+				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
+				`{
 						"name":     "Shahzad Lone",
 						"age":      27,
 						"verified": true
 					}`,
-				},
-			},
-
-			Results: []dataMap{
-				{
-					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter": dataMap{
-										"age": dataMap{
-											"_gt": int(20),
-										},
-									},
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
 			},
 		},
 
-		{
-			Description: "Explain query with basic filter(age), and aliased, multiple results",
+		ExpectedPatterns: []dataMap{basicPattern},
 
-			Request: `query @explain {
-				author(filter: {age: {_gt: 20}}) {
-					name
-					Alias: age
-					_key
-				}
-			}`,
-
-			Docs: map[int][]string{
-				2: {
-					// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-					`{
-						"name": "Lone",
-						"age":  26,
-						"verified": false
-					}`,
-					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-					`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-				},
-			},
-
-			Results: []dataMap{
-				{
-					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter": dataMap{
-										"age": dataMap{
-											"_gt": int(20),
-										},
-									},
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter": dataMap{
+						"age": dataMap{
+							"_gt": int(20),
+						},
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
 						},
 					},
 				},
@@ -305,14 +184,13 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with logical compound filter (and)",
+func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with logical compound (_and) filter.",
 
 		Request: `query @explain {
 			author(filter: {_and: [{age: {_gt: 20}}, {age: {_lt: 50}}]}) {
@@ -342,36 +220,33 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"collectionID":   "3",
-								"collectionName": "author",
-								"filter": dataMap{
-									"_and": []any{
-										dataMap{
-											"age": dataMap{
-												"_gt": int(20),
-											},
-										},
-										dataMap{
-											"age": dataMap{
-												"_lt": int(50),
-											},
-										},
-									},
-								},
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter": dataMap{
+						"_and": []any{
+							dataMap{
+								"age": dataMap{
+									"_gt": int(20),
 								},
 							},
+							dataMap{
+								"age": dataMap{
+									"_lt": int(50),
+								},
+							},
+						},
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
 						},
 					},
 				},
@@ -379,12 +254,13 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with logical compound filter (or)",
+func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with logical compound (_or) filter.",
 
 		Request: `query @explain {
 			author(filter: {_or: [{age: {_eq: 55}}, {age: {_eq: 19}}]}) {
@@ -414,36 +290,33 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"collectionID":   "3",
-								"collectionName": "author",
-								"filter": dataMap{
-									"_or": []any{
-										dataMap{
-											"age": dataMap{
-												"_eq": int(55),
-											},
-										},
-										dataMap{
-											"age": dataMap{
-												"_eq": int(19),
-											},
-										},
-									},
-								},
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter": dataMap{
+						"_or": []any{
+							dataMap{
+								"age": dataMap{
+									"_eq": int(55),
 								},
 							},
+							dataMap{
+								"age": dataMap{
+									"_eq": int(19),
+								},
+							},
+						},
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
 						},
 					},
 				},
@@ -451,12 +324,13 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with special filter (or)",
+func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request filtering values that match within (_in) a list.",
 
 		Request: `query @explain {
 			author(filter: {age: {_in: [19, 40, 55]}}) {
@@ -486,31 +360,28 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"collectionID":   "3",
-								"collectionName": "author",
-								"filter": dataMap{
-									"age": dataMap{
-										"_in": []any{
-											int(19),
-											int(40),
-											int(55),
-										},
-									},
-								},
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
-								},
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter": dataMap{
+						"age": dataMap{
+							"_in": []any{
+								int(19),
+								int(40),
+								int(55),
 							},
+						},
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
 						},
 					},
 				},
@@ -518,5 +389,5 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
