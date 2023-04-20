@@ -74,19 +74,6 @@ var (
 		},
 	})
 
-	// Delta represents a Delta State update for a CRDT
-	// type Delta {
-	// 	Payload: String
-	// }
-	DeltaObject = gql.NewObject(gql.ObjectConfig{
-		Name: "Delta",
-		Fields: gql.Fields{
-			"payload": &gql.Field{
-				Type: gql.String,
-			},
-		},
-	})
-
 	// CommitLink is a named DAG link between commits.
 	// This is primary used for CompositeDAG CRDTs
 	CommitLinkObject = gql.NewObject(gql.ObjectConfig{
