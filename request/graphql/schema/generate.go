@@ -928,7 +928,6 @@ func (g *Generator) genTypeMutationDeleteField(
 	return field, nil
 }
 
-// enum {Type.Name}Fields { ... }
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 	enumFieldsCfg := gql.EnumConfig{
 		Name:   genTypeName(obj, "Fields"),
