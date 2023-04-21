@@ -37,6 +37,7 @@ func TestMutationCreateSimpleErrorsGivenNonExistantField(t *testing.T) {
 				ExpectedError: "The given field does not exist. Name: fieldDoesNotExist",
 			},
 			testUtils.Request{
+				// Ensure that no documents have been written.
 				Request: `
 					query {
 						Users {
@@ -44,11 +45,7 @@ func TestMutationCreateSimpleErrorsGivenNonExistantField(t *testing.T) {
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-					},
-				},
+				Results: []map[string]any{},
 			},
 		},
 	}
