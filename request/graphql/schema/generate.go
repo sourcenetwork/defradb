@@ -371,6 +371,14 @@ func (g *Generator) buildTypes(
 			fields[request.KeyFieldName] = &gql.Field{Type: gql.ID}
 
 			for _, field := range fieldDescriptions {
+				if field.Name == request.KeyFieldName {
+					// The `_key` field is included in the fieldDescriptions,
+					// but we do not wish to override the standard definition
+					// with the collection held definition (particularly the
+					// description)
+					continue
+				}
+
 				var ttype gql.Type
 				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
 					var ok bool
