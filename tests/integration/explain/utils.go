@@ -123,14 +123,23 @@ func ExecuteExplainRequestTestCase(
 
 	// Must have a non-empty request.
 	if explainTest.Request == "" {
-		assert.Fail(t, "Explain test must have a non-empty request.", explainTest.Description)
+		require.Fail(t, "Explain test must have a non-empty request.", explainTest.Description)
 	}
 
 	// If no expected results are provided, then it's invalid use of this explain testing setup.
-	if explainTest.ExpectedFullGraph == nil &&
+	if explainTest.ExpectedError == "" &&
 		explainTest.ExpectedPatterns == nil &&
-		explainTest.ExpectedTargets == nil {
-		assert.Fail(t, "Atleast one expected explain parameter must be provided.", explainTest.Description)
+		explainTest.ExpectedTargets == nil &&
+		explainTest.ExpectedFullGraph == nil {
+		require.Fail(t, "Atleast one expected explain parameter must be provided.", explainTest.Description)
+	}
+
+	// If we expect an error, then all other expected results should be empty (they shouldn't be provided).
+	if explainTest.ExpectedError != "" &&
+		(explainTest.ExpectedFullGraph != nil ||
+			explainTest.ExpectedPatterns != nil ||
+			explainTest.ExpectedTargets != nil) {
+		require.Fail(t, "Expected error should not have other expected results with it.", explainTest.Description)
 	}
 
 	ctx := context.Background()

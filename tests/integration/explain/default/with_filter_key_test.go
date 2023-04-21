@@ -13,101 +13,52 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-		{
-			Description: "Explain query with basic filter (key by DocKey arg)",
+func TestDefaultExplainRequestWithDocKeyFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-			Request: `query @explain {
-				author(dockey: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
-					name
-					age
-				}
-			}`,
+		Description: "Explain (default) request with dockey filter.",
 
-			Docs: map[int][]string{
-				2: {
-					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-					`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-				},
-			},
+		Request: `query @explain {
+			author(dockey: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
+				name
+				age
+			}
+		}`,
 
-			Results: []dataMap{
-				{
-					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+		Docs: map[int][]string{
+			2: {
+				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
+				`{
+					"name": "Lone",
+					"age":  26,
+					"verified": false
+				}`,
+				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
+				`{
+					"name":     "Shahzad Lone",
+					"age":      27,
+					"verified": true
+				}`,
 			},
 		},
 
-		{
-			Description: "Explain query with basic filter (key by DocKey arg), partial results",
+		ExpectedPatterns: []dataMap{basicPattern},
 
-			Request: `query @explain {
-				author(dockey: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
-					name
-					age
-				}
-			}`,
-
-			Docs: map[int][]string{
-				2: {
-					// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-					`{
-						"name": "Lone",
-						"age":  26,
-						"verified": false
-					}`,
-					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-					`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-				},
-			},
-
-			Results: []dataMap{
-				{
-					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-										},
-									},
-								},
-							},
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter":         nil,
+					"spans": []dataMap{
+						{
+							"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
 						},
 					},
 				},
@@ -115,168 +66,108 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-		{
-			Description: "Explain query with basic filter (single key by DocKeys arg)",
+func TestDefaultExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-			Request: `query @explain {
-				author(dockeys: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
-					name
-					age
-				}
-			}`,
+		Description: "Explain (default) request with dockeys filter using one key.",
 
-			Docs: map[int][]string{
-				2: {
-					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-					`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-				},
+		Request: `query @explain {
+			author(dockeys: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
+				name
+				age
+			}
+		}`,
+
+		Docs: map[int][]string{
+			2: {
+				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
+				`{
+					"name":     "Shahzad Lone",
+					"age":      27,
+					"verified": true
+				}`,
 			},
+		},
 
-			Results: []dataMap{
-				{
-					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-										},
-									},
-								},
-							},
+		ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter":         nil,
+					"spans": []dataMap{
+						{
+							"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
 						},
 					},
 				},
 			},
 		},
+	}
 
-		{
-			Description: "Explain query with basic filter (duplicate key by DocKeys arg), partial results",
+	runExplainTest(t, test)
+}
 
-			Request: `query @explain {
-				author(dockeys: [
+func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with dockeys filter using multiple but duplicate keys.",
+
+		Request: `query @explain {
+			author(
+				dockeys: [
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				]) {
-					name
-					age
-				}
-			}`,
+				]
+			) {
+				name
+				age
+			}
+		}`,
 
-			Docs: map[int][]string{
-				2: {
-					// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-					`{
-						"name": "Lone",
-						"age":  26,
-						"verified": false
-					}`,
-					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-					`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-				},
-			},
-
-			Results: []dataMap{
-				{
-					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-										},
-										{
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+		Docs: map[int][]string{
+			2: {
+				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
+				`{
+					"name": "Lone",
+					"age":  26,
+					"verified": false
+				}`,
+				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
+				`{
+					"name":     "Shahzad Lone",
+					"age":      27,
+					"verified": true
+				}`,
 			},
 		},
 
-		{
-			Description: "Explain query with basic filter (multiple key by DocKeys arg), partial results",
+		ExpectedPatterns: []dataMap{basicPattern},
 
-			Request: `query @explain {
-				author(dockeys: [
-					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-					"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
-				]) {
-					name
-					age
-				}
-			}`,
-
-			Docs: map[int][]string{
-				2: {
-					// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-					`{
-						"name": "Lone",
-						"age":  26,
-						"verified": false
-					}`,
-					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-					`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-				},
-			},
-
-			Results: []dataMap{
-				{
-					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-										},
-										{
-											"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-											"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
-										},
-									},
-								},
-							},
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter":         nil,
+					"spans": []dataMap{
+						{
+							"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+						},
+						{
+							"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
 						},
 					},
 				},
@@ -284,14 +175,75 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	runExplainTest(t, test)
 }
 
-func TestExplainSimpleFilterWithMatchingKey(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain with basic filter with matching key.",
+func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with dockeys filter using multiple unique keys.",
+
+		Request: `query @explain {
+			author(
+				dockeys: [
+					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+					"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
+				]
+			) {
+				name
+				age
+			}
+		}`,
+
+		Docs: map[int][]string{
+			2: {
+				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
+				`{
+					"name": "Lone",
+					"age":  26,
+					"verified": false
+				}`,
+				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
+				`{
+					"name":     "Shahzad Lone",
+					"age":      27,
+					"verified": true
+				}`,
+			},
+		},
+
+		ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter":         nil,
+					"spans": []dataMap{
+						{
+							"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+						},
+						{
+							"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+							"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	runExplainTest(t, test)
+}
+
+func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with a filter to match key.",
 
 		Request: `query @explain {
 			author(filter: {_key: {_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"}}) {
@@ -317,27 +269,24 @@ func TestExplainSimpleFilterWithMatchingKey(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"collectionID":   "3",
-								"collectionName": "author",
-								"filter": dataMap{
-									"_key": dataMap{
-										"_eq": "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-									},
-								},
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
-								},
-							},
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter": dataMap{
+						"_key": dataMap{
+							"_eq": "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+						},
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
 						},
 					},
 				},
@@ -345,5 +294,5 @@ func TestExplainSimpleFilterWithMatchingKey(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }

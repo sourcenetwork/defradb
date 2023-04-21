@@ -67,11 +67,21 @@ func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
 	)
 }
 
-func executeExplainTestCase(t *testing.T, test explainUtils.ExplainRequestTestCase) {
+func runExplainTest(t *testing.T, test explainUtils.ExplainRequestTestCase) {
 	explainUtils.ExecuteExplainRequestTestCase(
 		t,
 		bookAuthorGQLSchema,
 		[]string{"article", "book", "author", "authorContact", "contactAddress"},
 		test,
 	)
+}
+
+var basicPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"selectNode": dataMap{
+				"scanNode": dataMap{},
+			},
+		},
+	},
 }
