@@ -140,6 +140,9 @@ func connectPeers(
 	nodes []*node.Node,
 	addresses []string,
 ) chan struct{} {
+	// If we have some database actions prior to connecting the peers, we want to ensure that they had time to
+	// complete before we connect. Otherwise we might wrongly catch them in our wait function.
+	time.Sleep(100 * time.Millisecond)
 	sourceNode := nodes[cfg.SourceNodeID]
 	targetNode := nodes[cfg.TargetNodeID]
 	targetAddress := addresses[cfg.TargetNodeID]
@@ -239,7 +242,9 @@ func connectPeers(
 	}
 
 	nodeSynced := make(chan struct{})
-	go func() {
+	ready := make(chan struct{})
+	go func(ready chan struct{}) {
+		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
@@ -251,7 +256,9 @@ func connectPeers(
 			}
 			nodeSynced <- struct{}{}
 		}
-	}()
+	}(ready)
+	// Ensure that the wait routine is ready to receive events before we continue.
+	<-ready
 
 	return nodeSynced
 }
@@ -285,6 +292,9 @@ func configureReplicator(
 	nodes []*node.Node,
 	addresses []string,
 ) chan struct{} {
+	// If we have some database actions prior to configuring the replicator, we want to ensure that they had time to
+	// complete before the configuration. Otherwise we might wrongly catch them in our wait function.
+	time.Sleep(100 * time.Millisecond)
 	sourceNode := nodes[cfg.SourceNodeID]
 	targetNode := nodes[cfg.TargetNodeID]
 	targetAddress := addresses[cfg.TargetNodeID]
@@ -307,7 +317,7 @@ func configureReplicator(
 				docIDsSyncedToSource[currentdocID] = struct{}{}
 			}
 
-			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
+			if !action.NodeID.HasValue() || action.NodeID.Value() == cfg.SourceNodeID {
 				sourceToTargetEvents[waitIndex] += 1
 			}
 
@@ -341,7 +351,9 @@ func configureReplicator(
 	}
 
 	nodeSynced := make(chan struct{})
-	go func() {
+	ready := make(chan struct{})
+	go func(ready chan struct{}) {
+		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
@@ -353,7 +365,9 @@ func configureReplicator(
 			}
 			nodeSynced <- struct{}{}
 		}
-	}()
+	}(ready)
+	// Ensure that the wait routine is ready to receive events before we continue.
+	<-ready
 
 	return nodeSynced
 }
