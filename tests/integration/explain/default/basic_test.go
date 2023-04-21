@@ -13,17 +13,16 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain a query by providing the directive on wrong location (field).",
+		Description: "Explain (default) a request by providing the directive on wrong location (field).",
 
 		Request: `query {
 			author @explain {
-				_key
 				name
 				age
 			}
@@ -40,16 +39,17 @@ func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
 
 		ExpectedError: "Directive \"explain\" may not be used on FIELD.",
 	}
-	executeTestCase(t, test)
+
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySimple(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a query with no filter",
+func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) a basic request.",
 
 		Request: `query @explain {
 			author {
-				_key
 				name
 				age
 			}
@@ -64,7 +64,7 @@ func TestExplainQuerySimple(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -88,12 +88,13 @@ func TestExplainQuerySimple(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySimpleWithAlias(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a query with alias, no filter",
+func TestDefaultExplainWithAlias(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) a basic request with alias, no filter",
 
 		Request: `query @explain {
 			author {
@@ -111,80 +112,8 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"filter":         nil,
-								"collectionID":   "3",
-								"collectionName": "author",
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		ExpectedPatterns: []dataMap{basicPattern},
 	}
 
-	executeTestCase(t, test)
-}
-
-func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a query with no filter, mutiple rows",
-
-		Request: `query @explain {
-			author {
-				name
-				age
-			}
-		}`,
-
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"age": 27
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"filter":         nil,
-								"collectionID":   "3",
-								"collectionName": "author",
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
