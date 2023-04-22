@@ -317,6 +317,8 @@ func configureReplicator(
 				docIDsSyncedToSource[currentdocID] = struct{}{}
 			}
 
+			// A document created on the source or one that is created on all nodes will be sent to the target even
+			// it already has it. It will create a `received push log` event on the target which we need to wait for.
 			if !action.NodeID.HasValue() || action.NodeID.Value() == cfg.SourceNodeID {
 				sourceToTargetEvents[waitIndex] += 1
 			}

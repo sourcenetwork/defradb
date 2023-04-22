@@ -767,6 +767,8 @@ type EvtPubSub struct {
 //
 // It will error if any of the given collectionIDs are invalid, in such a case some of the
 // changes to the server may still be applied.
+//
+// WARNING: Calling this on collections with a large number of documents may take a long time to process.
 func (p *Peer) AddP2PCollections(collections []string) error {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
@@ -839,6 +841,8 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 //
 // It will error if any of the given collectionIDs are invalid, in such a case some of the
 // changes to the server may still be applied.
+//
+// WARNING: Calling this on collections with a large number of documents may take a long time to process.
 func (p *Peer) RemoveP2PCollections(collections []string) error {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
