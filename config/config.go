@@ -287,20 +287,22 @@ func (dbcfg DatastoreConfig) validate() error {
 
 // APIConfig configures the API endpoints.
 type APIConfig struct {
-	Address     string
-	TLS         bool
-	PubKeyPath  string
-	PrivKeyPath string
-	Email       string
+	Address        string
+	TLS            bool
+	AllowedOrigins []string
+	PubKeyPath     string
+	PrivKeyPath    string
+	Email          string
 }
 
 func defaultAPIConfig() *APIConfig {
 	return &APIConfig{
-		Address:     "localhost:9181",
-		TLS:         false,
-		PubKeyPath:  "certs/server.key",
-		PrivKeyPath: "certs/server.crt",
-		Email:       DefaultAPIEmail,
+		Address:        "localhost:9181",
+		TLS:            false,
+		AllowedOrigins: []string{"*"},
+		PubKeyPath:     "certs/server.key",
+		PrivKeyPath:    "certs/server.crt",
+		Email:          DefaultAPIEmail,
 	}
 }
 
