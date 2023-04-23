@@ -25,9 +25,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ipfs/boxo/ipns"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
-	"github.com/ipfs/go-ipns"
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"

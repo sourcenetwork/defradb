@@ -18,9 +18,9 @@ import (
 	"context"
 	"sync"
 
+	blockstore "github.com/ipfs/boxo/blockstore"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"

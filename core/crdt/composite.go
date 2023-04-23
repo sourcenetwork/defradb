@@ -16,10 +16,10 @@ import (
 	"sort"
 	"strings"
 
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
-	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
 
 	"github.com/sourcenetwork/defradb/client"

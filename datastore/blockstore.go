@@ -13,13 +13,13 @@ package datastore
 import (
 	"context"
 
+	blockstore "github.com/ipfs/boxo/blockstore"
+	dshelp "github.com/ipfs/boxo/datastore/dshelp"
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-libipfs/blocks"
 
 	"github.com/sourcenetwork/defradb/errors"
 )
