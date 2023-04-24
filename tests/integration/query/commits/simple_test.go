@@ -143,3 +143,88 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestQueryCommitsWithFieldNameField(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple commits query yielding fieldName",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits {
+							fieldName
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"fieldName": "age",
+					},
+					{
+						"fieldName": "name",
+					},
+					{
+						"fieldName": nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple commits query yielding fieldName",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits {
+							fieldName
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"fieldName": "age",
+					},
+					{
+						"fieldName": "age",
+					},
+					{
+						"fieldName": "name",
+					},
+					{
+						"fieldName": nil,
+					},
+					{
+						"fieldName": nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}

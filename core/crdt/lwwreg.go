@@ -39,6 +39,7 @@ type LWWRegDelta struct {
 	Priority        uint64
 	Data            []byte
 	DocKey          []byte
+	FieldName       string
 }
 
 // GetPriority gets the current priority for this delta.
@@ -62,7 +63,8 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 		Priority        uint64
 		Data            []byte
 		DocKey          []byte
-	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey})
+		FieldName       string
+	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey, delta.FieldName})
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +84,8 @@ type LWWRegister struct {
 	//
 	// It can be used to identify the collection datastructure state at time of commit.
 	schemaVersionKey core.CollectionSchemaVersionKey
+
+	fieldName string
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID.
@@ -89,10 +93,12 @@ func NewLWWRegister(
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
+	fieldName string,
 ) LWWRegister {
 	return LWWRegister{
 		baseCRDT:         newBaseCRDT(store, key),
 		schemaVersionKey: schemaVersionKey,
+		fieldName:        fieldName,
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -120,6 +126,7 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	return &LWWRegDelta{
 		Data:            value,
 		DocKey:          []byte(reg.key.DocKey),
+		FieldName:       reg.fieldName,
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}
 }

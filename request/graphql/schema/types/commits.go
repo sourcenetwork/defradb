@@ -67,6 +67,10 @@ var (
 				Description: commitSchemaVersionIDFieldDescription,
 				Type:        gql.String,
 			},
+			"fieldName": &gql.Field{
+				Description: commitFieldNameFieldDescription,
+				Type:        gql.String,
+			},
 			"delta": &gql.Field{
 				Description: commitDeltaFieldDescription,
 				Type:        gql.String,

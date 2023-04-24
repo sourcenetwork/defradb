@@ -317,6 +317,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta["Data"])
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, delta["FieldName"])
 
 	dockey, ok := delta["DocKey"].([]byte)
 	if !ok {

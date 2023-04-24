@@ -117,6 +117,7 @@ func initCRDTForType(
 		events.EmptyUpdateChannel,
 		ctype,
 		key,
+		field,
 	)
 }
 
