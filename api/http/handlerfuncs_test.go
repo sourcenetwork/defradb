@@ -325,7 +325,7 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 		) {_key}
 	}"
 }`
-	// remote line returns and tabulation from formatted statement
+	// remove line returns and tabulation from formatted statement
 	stmt = strings.ReplaceAll(strings.ReplaceAll(stmt, "\t", ""), "\n", "")
 
 	buf := bytes.NewBuffer([]byte(stmt))
@@ -357,17 +357,18 @@ func TestExecGQLHandlerContentTypeJSONWithError(t *testing.T) {
 
 	// add document
 	stmt := `
-{
-	"query": "mutation {
-		create_user(
-			data: \"{
-				\\\"age\\\": 31,
-				\\\"notAField\\\": true
-			}\"
-		) {_key}
-	}"
-}`
-	// remote line returns and tabulation from formatted statement
+	{
+		"query": "mutation {
+			create_user(
+				data: \"{
+					\\\"age\\\": 31,
+					\\\"notAField\\\": true
+				}\"
+			) {_key}
+		}"
+	}`
+
+	// remove line returns and tabulation from formatted statement
 	stmt = strings.ReplaceAll(strings.ReplaceAll(stmt, "\t", ""), "\n", "")
 
 	buf := bytes.NewBuffer([]byte(stmt))
