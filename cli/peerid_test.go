@@ -34,6 +34,8 @@ func setTestingAddresses(cfg *config.Config) {
 }
 
 func TestGetPeerIDCmd(t *testing.T) {
+	cfg := config.DefaultConfig()
+	peerIDCmd := MakePeerIDCommand(cfg)
 	dir := t.TempDir()
 	ctx := context.Background()
 	cfg.Datastore.Store = "memory"
@@ -41,7 +43,7 @@ func TestGetPeerIDCmd(t *testing.T) {
 	cfg.Net.P2PDisabled = false
 	setTestingAddresses(cfg)
 
-	di, err := start(ctx)
+	di, err := start(ctx, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,6 +72,8 @@ func TestGetPeerIDCmd(t *testing.T) {
 }
 
 func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
+	cfg := config.DefaultConfig()
+	peerIDCmd := MakePeerIDCommand(cfg)
 	dir := t.TempDir()
 	ctx := context.Background()
 	cfg.Datastore.Store = "memory"
@@ -77,7 +81,7 @@ func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
 	cfg.Net.P2PDisabled = true
 	setTestingAddresses(cfg)
 
-	di, err := start(ctx)
+	di, err := start(ctx, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
