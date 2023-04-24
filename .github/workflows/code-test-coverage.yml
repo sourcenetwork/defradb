@@ -12,9 +12,11 @@ name: Code Test Coverage Workflow
 
 on:
   pull_request:
+    branches:
+      - master
+      - develop
 
   push:
-
 
 jobs:
   code-test-coverage:

@@ -12,6 +12,9 @@ name: Detect Change Workflow
 
 on:
   pull_request:
+    branches:
+      - master
+      - develop
 
   push:
     tags:

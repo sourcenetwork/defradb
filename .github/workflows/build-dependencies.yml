@@ -12,6 +12,9 @@ name: Build Dependencies Workflow
 
 on:
   pull_request:
+    branches:
+      - master
+      - develop
 
   push:
     tags:
