@@ -30,10 +30,12 @@ var (
 		Name: "Ordering",
 		Values: gql.EnumValueConfigMap{
 			"ASC": &gql.EnumValueConfig{
-				Value: 0,
+				Description: ascOrderDescription,
+				Value:       0,
 			},
 			"DESC": &gql.EnumValueConfig{
-				Value: 1,
+				Description: descOrderDescription,
+				Value:       1,
 			},
 		},
 	})
@@ -74,7 +76,8 @@ var (
 	// PrimaryDirective @primary is used to indicate the primary
 	// side of a one-to-one relationship.
 	PrimaryDirective = gql.NewDirective(gql.DirectiveConfig{
-		Name: PrimaryLabel,
+		Name:        PrimaryLabel,
+		Description: primaryDirectiveDescription,
 		Locations: []string{
 			gql.DirectiveLocationFieldDefinition,
 		},
@@ -85,10 +88,12 @@ var (
 	// if you don't want to use the default generated relationship
 	// name.
 	RelationDirective = gql.NewDirective(gql.DirectiveConfig{
-		Name: RelationLabel,
+		Name:        RelationLabel,
+		Description: relationDirectiveDescription,
 		Args: gql.FieldConfigArgument{
 			"name": &gql.ArgumentConfig{
-				Type: gql.String,
+				Description: relationDirectiveNameArgDescription,
+				Type:        gql.String,
 			},
 		},
 		Locations: []string{
@@ -97,8 +102,9 @@ var (
 	})
 )
 
-func NewArgConfig(t gql.Type) *gql.ArgumentConfig {
+func NewArgConfig(t gql.Type, description string) *gql.ArgumentConfig {
 	return &gql.ArgumentConfig{
-		Type: t,
+		Type:        t,
+		Description: description,
 	}
 }
