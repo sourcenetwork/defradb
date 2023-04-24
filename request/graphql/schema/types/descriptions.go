@@ -18,7 +18,7 @@ An optional set of field-orders which may be used to sort the results. An
 	GroupByArgDescription string = `
 An optional set of fields for which to group the contents of this field by.
  If this argument is provided, only fields used to group may be rendered in
- he immediate child selector.  Additional fields may be selected by using
+ the immediate child selector.  Additional fields may be selected by using
  the '_group' selector within the immediate child selector. If an empty set
  is provided, the restrictions mentioned still apply, although all results
  will appear within the same group.
@@ -35,8 +35,8 @@ An optional value that skips the given number of results that would have
 	commitDescription string = `
 Commit represents an individual commit to a MerkleCRDT, every mutation to a
  document will result in a new commit per modified field, and one composite
- commit composed of the field level commits and the prior composite commit
- (in the case of an update).
+ commit composed of the field level commits and, in the case of an update,
+ the prior composite commit.
 `
 	commitDockeyArgDescription string = `
 An optional dockey parameter for this commit query. Only commits for a document
@@ -82,7 +82,7 @@ The ID of the schema version that this commit was committed against. This ID all
  to determine the state of the data model at the time of commit.
 `
 	commitDeltaFieldDescription string = `
-The CBOR encoded representation of the new value that saved as part of this commit.
+The CBOR encoded representation of the value that is saved as part of this commit.
 `
 	commitLinkNameFieldDescription string = `
 The Name of the field that this linked commit mutated.
@@ -94,11 +94,11 @@ The CID of this linked commit.
 These are the set of fields supported for grouping by in a commits query.
 `
 	commitsQueryDescription string = `
-Returns a set of commits matching any provided criteria, if no arguments are
+Returns a set of commits matching any provided criteria. If no arguments are
  provided all commits in the system will be returned.
 `
 	latestCommitsQueryDescription string = `
-Returns a set of head commits matching any provided criteria, if no arguments are
+Returns a set of head commits matching any provided criteria. If no arguments are
  provided all head commits in the system will be returned. If no 'field' argument
  is provided only composite commits will be returned. This is equivalent to
  a 'commits' query with Depth: 1, and a differing 'field' default value.
@@ -214,7 +214,7 @@ Sort the results in descending order, e.g. c,b,a,3,2,1,null.
 Indicate the primary side of a one-to-one relationship.
 `
 	relationDirectiveDescription string = `
-Allows the explicit definition of relationship attributes, instead of using the system generated
+Allows the explicit definition of relationship attributes instead of using the system generated
  defaults.
 `
 	relationDirectiveNameArgDescription string = `

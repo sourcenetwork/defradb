@@ -83,7 +83,7 @@ An optional dockey parameter for this field. Only documents with
 `
 	dockeysArgDescription string = `
 An optional set of dockeys for this field. Only documents with a dockey
- matching an dockey in the given set will be returned.  If no documents match,
+ matching a dockey in the given set will be returned.  If no documents match,
  the result will be null/empty. If an empty set is provided, this argument will
  be ignored.
 `
@@ -100,9 +100,9 @@ An optional filter for this join, if the related record does
  but the value of this field will be null.
 `
 	listFieldFilterArgDescription string = `
-An optional filter for this join, if none of the related records do
- not meet the filter criteria the host record will still be returned,
- but the value of this field will be empty.
+An optional filter for this join, if none of the related records meet the filter
+ criteria the host record will still be returned, but the value of this field will
+ be empty.
 `
 	selectFilterArgDescription string = `
 An optional filter for this select, only documents matching the given criteria
