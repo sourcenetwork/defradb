@@ -16,6 +16,39 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestQuerySimpleWithLimit0(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with limit 0",
+		Request: `query {
+					users(limit: 0) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Bob",
+			},
+			{
+				"Name": "John",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithLimit(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{

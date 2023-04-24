@@ -405,3 +405,61 @@ func TestDeletionOfMultipleDocumentsUsingSingleKeyWithShowDeletedDocumentQuery_S
 
 	testUtils.ExecuteTestCase(t, []string{"User"}, test)
 }
+
+func TestDeletionOfMultipleDocumentsUsingEmptySet(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 43
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Andy",
+					"age": 74
+				}`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+						delete_User(ids: []){
+							_key
+						}
+					}`,
+				Results: []map[string]any{},
+			},
+			testUtils.Request{
+				// Make sure no documents have been deleted
+				Request: `query {
+						User {
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Andy",
+						"age":  uint64(74),
+					},
+					{
+						"name": "John",
+						"age":  uint64(43),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+}

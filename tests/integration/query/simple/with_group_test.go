@@ -16,6 +16,45 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with group by empty set, children",
+		Request: `query {
+					users(groupBy: []) {
+						_group {
+							Name
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"_group": []map[string]any{
+					{
+						"Name": "Bob",
+					},
+					{
+						"Name": "John",
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children",

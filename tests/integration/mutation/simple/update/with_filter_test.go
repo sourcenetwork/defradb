@@ -231,3 +231,29 @@ func TestSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 
 	ExecuteTestCase(t, test)
 }
+
+func TestSimpleMutationUpdateWithNonExistantId(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple update mutation with non existant id",
+		Request: `mutation {
+					update_user(id: "bae-does-not-exist", data: "{\"points\": 59}") {
+						_key
+						name
+						points
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"name": "John",
+					"age": 27,
+					"verified": true,
+					"points": 42.1
+				}`,
+			},
+		},
+		Results: []map[string]any{},
+	}
+
+	ExecuteTestCase(t, test)
+}
