@@ -42,6 +42,9 @@ func (db *implicitTxnDB) ExecRequest(ctx context.Context, request string) *clien
 	defer txn.Discard(ctx)
 
 	res := db.execRequest(ctx, request, txn)
+	if len(res.GQL.Errors) > 0 {
+		return res
+	}
 
 	if err := txn.Commit(ctx); err != nil {
 		res.GQL.Errors = []error{err}

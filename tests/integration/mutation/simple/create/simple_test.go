@@ -17,6 +17,42 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
+func TestMutationCreateSimpleErrorsGivenNonExistantField(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple create mutation with non existant field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+							create_Users(data: "{\"name\": \"John\",\"fieldDoesNotExist\": 27}") {
+								_key
+							}
+						}`,
+				ExpectedError: "The given field does not exist. Name: fieldDoesNotExist",
+			},
+			testUtils.Request{
+				// Ensure that no documents have been written.
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+				Results: []map[string]any{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
 func TestMutationCreateSimple(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation",
