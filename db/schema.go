@@ -33,7 +33,7 @@ func (db *db) addSchema(
 		return nil, err
 	}
 
-	newDescriptions, err := db.parser.ParseSDL(ctx, schemaString)
+	newDescriptions, _, err := db.parser.ParseSDL(ctx, schemaString)
 	if err != nil {
 		return nil, err
 	}

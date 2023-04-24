@@ -24,7 +24,11 @@ import (
 )
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
-func FromString(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
+func FromString(ctx context.Context, schemaString string) (
+	[]client.CollectionDescription,
+	[]client.IndexDescription,
+	error,
+) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(schemaString),
 	})
@@ -35,27 +39,32 @@ func FromString(ctx context.Context, schemaString string) ([]client.CollectionDe
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	desc, err := fromAst(ctx, doc)
-	return desc, err
+	return fromAst(ctx, doc)
 }
 
 // fromAst parses a GQL AST into a set of collection descriptions.
-func fromAst(ctx context.Context, doc *ast.Document) ([]client.CollectionDescription, error) {
+func fromAst(ctx context.Context, doc *ast.Document) (
+	[]client.CollectionDescription,
+	[]client.IndexDescription,
+	error,
+) {
 	relationManager := NewRelationManager()
 	descriptions := []client.CollectionDescription{}
+	indexes := []client.IndexDescription{}
 
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
-			description, err := fromAstDefinition(ctx, relationManager, defType)
+			description, colIndexes, err := fromAstDefinition(ctx, relationManager, defType)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			descriptions = append(descriptions, description)
+			indexes = append(indexes, colIndexes...)
 
 		default:
 			// Do nothing, ignore it and continue
@@ -68,10 +77,10 @@ func fromAst(ctx context.Context, doc *ast.Document) ([]client.CollectionDescrip
 	// after all the collections have been processed.
 	err := finalizeRelations(relationManager, descriptions)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return descriptions, nil
+	return descriptions, indexes, nil
 }
 
 // fromAstDefinition parses a AST object definition into a set of collection descriptions.
@@ -79,7 +88,7 @@ func fromAstDefinition(
 	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.ObjectDefinition,
-) (client.CollectionDescription, error) {
+) (client.CollectionDescription, []client.IndexDescription, error) {
 	fieldDescriptions := []client.FieldDescription{
 		{
 			Name: request.KeyFieldName,
@@ -89,63 +98,12 @@ func fromAstDefinition(
 	}
 
 	for _, field := range def.Fields {
-		kind, err := astTypeToKind(field.Type)
+		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def)
 		if err != nil {
-			return client.CollectionDescription{}, err
+			return client.CollectionDescription{}, nil, err
 		}
 
-		schema := ""
-		relationName := ""
-		relationType := client.RelationType(0)
-
-		if kind == client.FieldKind_FOREIGN_OBJECT || kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
-			if kind == client.FieldKind_FOREIGN_OBJECT {
-				schema = field.Type.(*ast.Named).Name.Value
-				relationType = client.Relation_Type_ONE
-				if _, exists := findDirective(field, "primary"); exists {
-					relationType |= client.Relation_Type_Primary
-				}
-
-				// An _id field is added for every 1-N relationship from this object.
-				fieldDescriptions = append(fieldDescriptions, client.FieldDescription{
-					Name:         fmt.Sprintf("%s_id", field.Name.Value),
-					Kind:         client.FieldKind_DocKey,
-					Typ:          defaultCRDTForFieldKind[client.FieldKind_DocKey],
-					RelationType: client.Relation_Type_INTERNAL_ID,
-				})
-			} else if kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
-				schema = field.Type.(*ast.List).Type.(*ast.Named).Name.Value
-				relationType = client.Relation_Type_MANY
-			}
-
-			relationName, err = getRelationshipName(field, def.Name.Value, schema)
-			if err != nil {
-				return client.CollectionDescription{}, err
-			}
-
-			// Register the relationship so that the relationship manager can evaluate
-			// relationsip properties dependent on both collections in the relationship.
-			_, err := relationManager.RegisterSingle(
-				relationName,
-				schema,
-				field.Name.Value,
-				relationType,
-			)
-			if err != nil {
-				return client.CollectionDescription{}, err
-			}
-		}
-
-		fieldDescription := client.FieldDescription{
-			Name:         field.Name.Value,
-			Kind:         kind,
-			Typ:          defaultCRDTForFieldKind[kind],
-			Schema:       schema,
-			RelationName: relationName,
-			RelationType: relationType,
-		}
-
-		fieldDescriptions = append(fieldDescriptions, fieldDescription)
+		fieldDescriptions = append(fieldDescriptions, tmpFieldsDescriptions...)
 	}
 
 	// sort the fields lexicographically
@@ -159,13 +117,123 @@ func fromAstDefinition(
 		return fieldDescriptions[i].Name < fieldDescriptions[j].Name
 	})
 
+	indexDescriptions := []client.IndexDescription{}
+	for _, directive := range def.Directives {
+		if directive.Name.Value == "index" {
+			index, err := indexFromAST(directive)
+			if err != nil {
+				return client.CollectionDescription{}, nil, err
+			}
+			indexDescriptions = append(indexDescriptions, index)
+		}
+	}
+
 	return client.CollectionDescription{
 		Name: def.Name.Value,
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,
 			Fields: fieldDescriptions,
 		},
-	}, nil
+	}, indexDescriptions, nil
+}
+
+func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
+	desc := client.IndexDescription{}
+	var directions *ast.ListValue
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case "name":
+			desc.Name = arg.Value.(*ast.StringValue).Value
+		case "fields":
+			for _, field := range arg.Value.(*ast.ListValue).Values {
+				desc.Fields = append(desc.Fields, client.IndexedFieldDescription{
+					Name: field.(*ast.StringValue).Value,
+				})
+				break
+			}
+		case "directions":
+			directions = arg.Value.(*ast.ListValue)
+		case "unique":
+			desc.IsUnique = arg.Value.(*ast.BooleanValue).Value
+		}
+	}
+	if directions != nil {
+		dirVal := directions.Values[0].(*ast.EnumValue).Value
+		if dirVal == "ASC" {
+			desc.Fields[0].Direction = client.Ascending
+		} else if dirVal == "DESC" {
+			desc.Fields[0].Direction = client.Descending
+		}
+	} else {
+		desc.Fields[0].Direction = client.Ascending
+	}
+	return desc, nil
+}
+
+func fieldsFromAST(field *ast.FieldDefinition,
+	relationManager *RelationManager,
+	def *ast.ObjectDefinition,
+) ([]client.FieldDescription, error) {
+	kind, err := astTypeToKind(field.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	schema := ""
+	relationName := ""
+	relationType := client.RelationType(0)
+
+	fieldDescriptions := []client.FieldDescription{}
+
+	if kind == client.FieldKind_FOREIGN_OBJECT || kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+		if kind == client.FieldKind_FOREIGN_OBJECT {
+			schema = field.Type.(*ast.Named).Name.Value
+			relationType = client.Relation_Type_ONE
+			if _, exists := findDirective(field, "primary"); exists {
+				relationType |= client.Relation_Type_Primary
+			}
+
+			// An _id field is added for every 1-N relationship from this object.
+			fieldDescriptions = append(fieldDescriptions, client.FieldDescription{
+				Name:         fmt.Sprintf("%s_id", field.Name.Value),
+				Kind:         client.FieldKind_DocKey,
+				Typ:          defaultCRDTForFieldKind[client.FieldKind_DocKey],
+				RelationType: client.Relation_Type_INTERNAL_ID,
+			})
+		} else if kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+			schema = field.Type.(*ast.List).Type.(*ast.Named).Name.Value
+			relationType = client.Relation_Type_MANY
+		}
+
+		relationName, err = getRelationshipName(field, def.Name.Value, schema)
+		if err != nil {
+			return nil, err
+		}
+
+		// Register the relationship so that the relationship manager can evaluate
+		// relationsip properties dependent on both collections in the relationship.
+		_, err := relationManager.RegisterSingle(
+			relationName,
+			schema,
+			field.Name.Value,
+			relationType,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	fieldDescription := client.FieldDescription{
+		Name:         field.Name.Value,
+		Kind:         kind,
+		Typ:          defaultCRDTForFieldKind[kind],
+		Schema:       schema,
+		RelationName: relationName,
+		RelationType: relationType,
+	}
+
+	fieldDescriptions = append(fieldDescriptions, fieldDescription)
+	return fieldDescriptions, nil
 }
 
 func astTypeToKind(t ast.Type) (client.FieldKind, error) {

@@ -103,7 +103,11 @@ func (p *parser) Parse(ast *ast.Document) (*request.Request, []error) {
 	return query, nil
 }
 
-func (p *parser) ParseSDL(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
+func (p *parser) ParseSDL(ctx context.Context, schemaString string) (
+	[]client.CollectionDescription,
+	[]client.IndexDescription,
+	error,
+) {
 	return schema.FromString(ctx, schemaString)
 }
 

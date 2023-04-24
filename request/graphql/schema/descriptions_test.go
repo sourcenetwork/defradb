@@ -581,7 +581,7 @@ func TestSingleSimpleType(t *testing.T) {
 func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
 	ctx := context.Background()
 
-	descs, err := FromString(ctx, testcase.sdl)
+	descs, _, err := FromString(ctx, testcase.sdl)
 	assert.NoError(t, err, testcase.description)
 	assert.Equal(t, len(descs), len(testcase.targetDescs), testcase.description)
 
