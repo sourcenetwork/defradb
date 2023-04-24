@@ -371,9 +371,7 @@ func TestExecGQLHandlerContentTypeJSONWithError(t *testing.T) {
 	stmt = strings.ReplaceAll(strings.ReplaceAll(stmt, "\t", ""), "\n", "")
 
 	buf := bytes.NewBuffer([]byte(stmt))
-	resp := struct {
-		Errors []struct{}
-	}{}
+	resp := GQLResult{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -385,7 +383,7 @@ func TestExecGQLHandlerContentTypeJSONWithError(t *testing.T) {
 		ResponseData:   &resp,
 	})
 
-	assert.Contains(t, resp.Errors, struct{}{})
+	assert.Contains(t, resp.Errors, "The given field does not exist. Name: notAField")
 	assert.Len(t, resp.Errors, 1)
 }
 
