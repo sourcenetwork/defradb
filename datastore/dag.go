@@ -11,7 +11,7 @@
 package datastore
 
 import (
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	blockstore "github.com/ipfs/boxo/blockstore"
 )
 
 // DAGStore is the interface to the underlying BlockStore and BlockService.

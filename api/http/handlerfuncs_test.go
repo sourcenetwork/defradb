@@ -23,8 +23,8 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v3"
+	dshelp "github.com/ipfs/boxo/datastore/dshelp"
 	"github.com/ipfs/go-cid"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
