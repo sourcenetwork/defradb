@@ -12,6 +12,9 @@ name: Start Binary Workflow
 
 on:
   pull_request:
+    branches:
+      - master
+      - develop
 
   push:
     tags:

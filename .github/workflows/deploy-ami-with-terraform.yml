@@ -28,6 +28,9 @@ on:
       - completed
 
   pull_request:
+    branches:
+      - master
+      - develop
 
 jobs:
   deploy-ami-with-terraform:
