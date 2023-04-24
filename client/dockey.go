@@ -15,9 +15,9 @@ import (
 	"encoding/binary"
 	"strings"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/ipfs/go-cid"
 	mbase "github.com/multiformats/go-multibase"
-	uuid "github.com/satori/go.uuid"
 )
 
 // DocKey versions.
