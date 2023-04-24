@@ -11,9 +11,20 @@
 // defradb is a decentralized peer-to-peer, user-centric, privacy-focused document database.
 package main
 
-import "github.com/sourcenetwork/defradb/cli"
+import (
+	"context"
+	"os"
+
+	"github.com/sourcenetwork/defradb/cli"
+	"github.com/sourcenetwork/defradb/config"
+)
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
-	cli.Execute()
+	cfg := config.DefaultConfig()
+	ctx := context.Background()
+	defraCmd := cli.NewDefraCommand(cfg)
+	if err := defraCmd.Execute(ctx); err != nil {
+		os.Exit(1)
+	}
 }

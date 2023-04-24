@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra/doc"
 
 	"github.com/sourcenetwork/defradb/cli"
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -33,8 +34,9 @@ func main() {
 	if err != nil {
 		log.FatalE(context.Background(), "Creating the filesystem path failed", err)
 	}
-	cli.RootCmd.DisableAutoGenTag = true
-	err = doc.GenMarkdownTree(cli.RootCmd, *path)
+	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
+	defraCmd.RootCmd.DisableAutoGenTag = true
+	err = doc.GenMarkdownTree(defraCmd.RootCmd, *path)
 	if err != nil {
 		log.FatalE(context.Background(), "Generating cmd docs failed", err)
 	}
