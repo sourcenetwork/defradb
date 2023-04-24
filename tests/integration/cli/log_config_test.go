@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package cli
+package clitest
 
 import (
 	"bufio"
@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/cli"
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -80,7 +81,11 @@ func captureLogLines(t *testing.T, setup func(), predicate func()) []string {
 	os.Args = append(os.Args, "init", "--rootdir", directory)
 
 	setup()
-	cli.Execute()
+	cfg := config.DefaultConfig()
+	defraCmd := cli.NewDefraCommand(cfg)
+	if err := defraCmd.Execute(context.Background()); err != nil {
+		t.Fatal(err)
+	}
 	predicate()
 	log1.Flush()
 	log2.Flush()
@@ -88,7 +93,7 @@ func captureLogLines(t *testing.T, setup func(), predicate func()) []string {
 
 	w.Close()
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 	logLines, err := parseLines(&buf)
 	if err != nil {
 		t.Fatal(err)
