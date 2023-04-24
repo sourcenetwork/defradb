@@ -10,7 +10,11 @@
 
 name: Code Test Coverage Workflow
 
-on: [push]
+on:
+  pull_request:
+
+  push:
+
 
 jobs:
   code-test-coverage:
