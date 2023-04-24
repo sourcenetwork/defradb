@@ -19,6 +19,7 @@ const (
 )
 
 var (
+	ErrDeltaMissingSchemaVersionID         = errors.New("commit Delta missing schema version id")
 	ErrDeltaMissingPriority                = errors.New("commit Delta missing priority key")
 	ErrDeltaMissingDockey                  = errors.New("commit Delta missing dockey")
 	ErrFailedToFindScanNode                = errors.New("failed to find original scan node in plan graph")

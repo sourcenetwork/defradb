@@ -310,10 +310,10 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	schemaVersionId, ok := delta["SchemaVersionID"].(string)
-	if ok {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-			request.SchemaVersionIDFieldName, schemaVersionId)
+	if !ok {
+		return core.Doc{}, nil, ErrDeltaMissingSchemaVersionID
 	}
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta["Data"])
