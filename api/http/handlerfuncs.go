@@ -151,7 +151,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	sendJSON(req.Context(), rw, result.GQL, http.StatusOK)
+	sendJSON(req.Context(), rw, newGQLResult(result.GQL), http.StatusOK)
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
