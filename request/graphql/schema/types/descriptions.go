@@ -158,51 +158,51 @@ These are the set of filter operators available for use when filtering on ID
  values.
 `
 	eqOperatorDescription string = `
-The equality operator, if the target matches the value the check will pass.
+The equality operator - if the target matches the value the check will pass.
 `
 	neOperatorDescription string = `
-The inequality operator, if the target does not matches the value the check will pass.
+The inequality operator - if the target does not matches the value the check will pass.
 `
 	inOperatorDescription string = `
-The contains operator, if the target value is within the given set the check will pass.
+The contains operator - if the target value is within the given set the check will pass.
 `
 	ninOperatorDescription string = `
-The does not contains operator, if the target value is not within the given set the
+The does not contains operator - if the target value is not within the given set the
  check will pass.
 `
 	gtOperatorDescription string = `
-The greater than operator, if the target value is greater than the given value the
+The greater than operator - if the target value is greater than the given value the
  check will pass.
 `
 	geOperatorDescription string = `
-The greater than or equal to operator, if the target value is greater than or equal to the
+The greater than or equal to operator - if the target value is greater than or equal to the
  given value the check will pass.
 `
 	ltOperatorDescription string = `
-The less than operator, if the target value is less than the given value the check will pass.
+The less than operator - if the target value is less than the given value the check will pass.
 `
 	leOperatorDescription string = `
-The less than or equal to operator, if the target value is less than or equal to the
+The less than or equal to operator - if the target value is less than or equal to the
  given value the check will pass.
 `
 	likeStringOperatorDescription string = `
-The like operator, if the target value contains the given sub-string the check will pass. '%'
+The like operator - if the target value contains the given sub-string the check will pass. '%'
  characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
  ending in 'Ritchie'.
 `
 	nlikeStringOperatorDescription string = `
-The not-like operator, if the target value does not contain the given sub-string the check will
+The not-like operator - if the target value does not contain the given sub-string the check will
  pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
  the string 'Quentin Tarantino'.
 `
 	AndOperatorDescription string = `
-The and operator, all checks within this clause must pass in order for this check to pass.
+The and operator - all checks within this clause must pass in order for this check to pass.
 `
 	OrOperatorDescription string = `
-The or operator, only one check within this clause must pass in order for this check to pass.
+The or operator - only one check within this clause must pass in order for this check to pass.
 `
 	NotOperatorDescription string = `
-The negative operator, this check will only pass if all checks within it fail.
+The negative operator - this check will only pass if all checks within it fail.
 `
 	ascOrderDescription string = `
 Sort the results in ascending order, e.g. null,1,2,3,a,b,c.
