@@ -18,10 +18,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	dshelp "github.com/ipfs/boxo/datastore/dshelp"
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
-	dag "github.com/ipfs/go-merkledag"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
