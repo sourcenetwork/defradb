@@ -52,6 +52,7 @@ const (
 	CollectionIDFieldName    = "collectionID"
 	SchemaVersionIDFieldName = "schemaVersionId"
 	FieldNameFieldName       = "fieldName"
+	FieldIDFieldName         = "fieldId"
 	DeltaFieldName           = "delta"
 
 	LinksNameFieldName = "name"
@@ -96,6 +97,7 @@ var (
 		CollectionIDFieldName,
 		SchemaVersionIDFieldName,
 		FieldNameFieldName,
+		FieldIDFieldName,
 		DeltaFieldName,
 	}
 

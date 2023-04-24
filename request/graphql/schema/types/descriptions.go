@@ -85,6 +85,10 @@ The ID of the schema version that this commit was committed against. This ID all
 The name of the field that this commit was committed against. If this is a composite field
  the value will be null.
 `
+	commitFieldIDFieldDescription string = `
+The id of the field that this commit was committed against. If this is a composite field
+ the value will be "C".
+`
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.
 `
