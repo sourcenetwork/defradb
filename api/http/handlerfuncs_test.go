@@ -347,6 +347,48 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 	assert.Contains(t, users[0].Key, "bae-")
 }
 
+func TestExecGQLHandlerContentTypeJSONWithError(t *testing.T) {
+	ctx := context.Background()
+	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
+
+	// load schema
+	testLoadSchema(t, ctx, defra)
+
+	// add document
+	stmt := `
+{
+	"query": "mutation {
+		create_user(
+			data: \"{
+				\\\"age\\\": 31,
+				\\\"notAField\\\": true
+			}\"
+		) {_key}
+	}"
+}`
+	// remote line returns and tabulation from formatted statement
+	stmt = strings.ReplaceAll(strings.ReplaceAll(stmt, "\t", ""), "\n", "")
+
+	buf := bytes.NewBuffer([]byte(stmt))
+	resp := struct {
+		Errors []struct{}
+	}{}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             defra,
+		Method:         "POST",
+		Path:           GraphQLPath,
+		Body:           buf,
+		Headers:        map[string]string{"Content-Type": contentTypeJSON},
+		ExpectedStatus: 200,
+		ResponseData:   &resp,
+	})
+
+	assert.Contains(t, resp.Errors, struct{}{})
+	assert.Len(t, resp.Errors, 1)
+}
+
 func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
