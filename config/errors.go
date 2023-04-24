@@ -49,6 +49,7 @@ const (
 	errInvalidDatastorePath        string = "invalid datastore path"
 	errMissingPortNumber           string = "missing port number"
 	errNoPortWithDomain            string = "cannot provide port with domain name"
+	errInvalidRootDir              string = "invalid root directory"
 )
 
 var (
@@ -86,6 +87,7 @@ var (
 	ErrorInvalidDatastorePath      = errors.New(errInvalidDatastorePath)
 	ErrMissingPortNumber           = errors.New(errMissingPortNumber)
 	ErrNoPortWithDomain            = errors.New(errNoPortWithDomain)
+	ErrorInvalidRootDir            = errors.New(errInvalidRootDir)
 )
 
 func NewErrFailedToWriteFile(inner error, path string) error {
@@ -210,4 +212,8 @@ func NewErrLoggerConfig(s string) error {
 
 func NewErrInvalidDatastorePath(path string) error {
 	return errors.New(errInvalidDatastorePath, errors.NewKV("path", path))
+}
+
+func NewErrInvalidRootDir(path string) error {
+	return errors.New(errInvalidRootDir, errors.NewKV("path", path))
 }
