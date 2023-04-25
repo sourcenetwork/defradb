@@ -34,6 +34,9 @@ See https://docs.source.network/BSL.txt for more information.
 		// Loads the rootDir containing the configuration file, otherwise warn about it and load a default configuration.
 		// This allows some subcommands (`init`, `start`) to override the PreRun to create a rootDir by default.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
+				return err
+			}
 			if cfg.ConfigFileExists() {
 				if err := cfg.LoadWithRootdir(true); err != nil {
 					return errors.Wrap("failed to load config", err)

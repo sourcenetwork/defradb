@@ -10,13 +10,26 @@
 
 package clitest
 
-/* WIP client rpc replicator getall is broken currently
+import (
+	"fmt"
+	"testing"
+)
+
 func TestReplicatorGetAllEmpty(t *testing.T) {
-conf := NewDefraNodeDefaultConfig(t)
+	conf := NewDefraNodeDefaultConfig(t)
+	portTCP, err := findFreePortInRange(49152, 65535)
+	if err != nil {
+		t.Fatal(err)
+	}
+	conf.GRPCAddr = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", portTCP)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	stopDefra := runDefraNode(t, conf)
 	defer stopDefra()
 
-	_, stderr := runDefraCommand(t, conf, []string{"client", "rpc", "replicator", "getall"})
+	tcpAddr := fmt.Sprintf("localhost:%d", portTCP)
+	_, stderr := runDefraCommand(t, conf, []string{"client", "--addr", tcpAddr, "rpc", "replicator", "getall"})
 	assertContainsSubstring(t, stderr, "No replicator found")
 }
-*/

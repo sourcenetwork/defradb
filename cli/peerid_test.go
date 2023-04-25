@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -27,10 +28,26 @@ import (
 // setTestingAddresses overrides the config addresses to be the ones reserved for testing.
 // Used to ensure the tests don't fail due to address clashes with the running server (with default config).
 func setTestingAddresses(cfg *config.Config) {
-	cfg.API.Address = "localhost:9182"
-	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/9172"
-	cfg.Net.TCPAddress = "/ip4/0.0.0.0/tcp/9162"
-	cfg.Net.RPCAddress = "0.0.0.0:9162"
+	portAPI, err := findFreePortInRange(49152, 65535)
+	if err != nil {
+		panic(err)
+	}
+	portTCP, err := findFreePortInRange(49152, 65535)
+	if err != nil {
+		panic(err)
+	}
+	portP2P, err := findFreePortInRange(49152, 65535)
+	if err != nil {
+		panic(err)
+	}
+	portRPC, err := findFreePortInRange(49152, 65535)
+	if err != nil {
+		panic(err)
+	}
+	cfg.API.Address = fmt.Sprintf("localhost:%d", portAPI)
+	cfg.Net.P2PAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", portP2P)
+	cfg.Net.TCPAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", portTCP)
+	cfg.Net.RPCAddress = fmt.Sprintf("0.0.0.0:%d", portRPC)
 }
 
 func TestGetPeerIDCmd(t *testing.T) {

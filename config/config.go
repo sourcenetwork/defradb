@@ -127,7 +127,7 @@ func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
 		return err
 	}
 
-	if err := cfg.loadRootDirFromFlagOrDefault(); err != nil {
+	if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
 		return err
 	}
 
@@ -156,9 +156,8 @@ func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
 	return nil
 }
 
-func (cfg *Config) loadRootDirFromFlagOrDefault() error {
+func (cfg *Config) LoadRootDirFromFlagOrDefault() error {
 	if cfg.Rootdir == "" {
-		// Check CLI flag
 		rootdir := cfg.v.GetString(RootdirKey)
 		if rootdir != "" {
 			return cfg.setRootdir(rootdir)
