@@ -11,6 +11,7 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -124,7 +125,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 				handleErr(req.Context(), rw, ErrBodyEmpty, http.StatusBadRequest)
 				return
 			}
-			body, err := io.ReadAll(req.Body)
+			body, err := readWithLimit(req.Body, rw)
 			if err != nil {
 				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 				return
@@ -155,7 +156,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
-	sdl, err := io.ReadAll(req.Body)
+	sdl, err := readWithLimit(req.Body, rw)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
@@ -182,7 +183,7 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
-	patch, err := io.ReadAll(req.Body)
+	patch, err := readWithLimit(req.Body, rw)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
@@ -321,4 +322,20 @@ func subscriptionHandler(pub *events.Publisher[events.Update], rw http.ResponseW
 			flusher.Flush()
 		}
 	}
+}
+
+// maxBytes is an arbitrary limit to prevent unbounded message bodies being sent and read.
+const maxBytes int64 = 100 * (1 << (10 * 2)) // 100MB
+
+// readWithLimit reads from the reader until either EoF or the maximum number of bytes have been read.
+func readWithLimit(reader io.ReadCloser, rw http.ResponseWriter) ([]byte, error) {
+	reader = http.MaxBytesReader(rw, reader, maxBytes)
+
+	var buf bytes.Buffer
+	_, err := io.Copy(&buf, reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
