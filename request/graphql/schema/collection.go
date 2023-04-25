@@ -176,7 +176,6 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 				desc.Fields = append(desc.Fields, client.IndexedFieldDescription{
 					Name: fieldVal.Value,
 				})
-				break
 			}
 		case "directions":
 			var ok bool
@@ -198,17 +197,21 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 		return client.IndexDescription{}, ErrIndexMissingFields
 	}
 	if directions != nil {
-		dirVal, ok := directions.Values[0].(*ast.EnumValue)
-		if !ok {
-			return client.IndexDescription{}, ErrIndexWithInvalidArg
-		}
-		if dirVal.Value == "ASC" {
-			desc.Fields[0].Direction = client.Ascending
-		} else if dirVal.Value == "DESC" {
-			desc.Fields[0].Direction = client.Descending
+		for i := range desc.Fields {
+			dirVal, ok := directions.Values[i].(*ast.EnumValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			if dirVal.Value == "ASC" {
+				desc.Fields[i].Direction = client.Ascending
+			} else if dirVal.Value == "DESC" {
+				desc.Fields[i].Direction = client.Descending
+			}
 		}
 	} else {
-		desc.Fields[0].Direction = client.Ascending
+		for i := range desc.Fields {
+			desc.Fields[i].Direction = client.Ascending
+		}
 	}
 	return desc, nil
 }

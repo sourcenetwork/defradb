@@ -23,11 +23,7 @@ func TestSingleIndex(t *testing.T) {
 	cases := []indexTestCase{
 		{
 			description: "Index with a single field",
-			sdl: `
-			type user @index(fields: ["name"]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: ["name"]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Name: "",
@@ -40,11 +36,7 @@ func TestSingleIndex(t *testing.T) {
 		},
 		{
 			description: "Index with a name",
-			sdl: `
-			type user @index(name: "userIndex", fields: ["name"]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(name: "userIndex", fields: ["name"]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Name: "userIndex",
@@ -56,11 +48,7 @@ func TestSingleIndex(t *testing.T) {
 		},
 		{
 			description: "Unique index",
-			sdl: `
-			type user @index(fields: ["name"], unique: true) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: ["name"], unique: true) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -72,11 +60,7 @@ func TestSingleIndex(t *testing.T) {
 		},
 		{
 			description: "Index explicitly not unique",
-			sdl: `
-			type user @index(fields: ["name"], unique: false) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: ["name"], unique: false) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -88,11 +72,7 @@ func TestSingleIndex(t *testing.T) {
 		},
 		{
 			description: "Index with explicit ascending field",
-			sdl: `
-			type user @index(fields: ["name"], directions: [ASC]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: ["name"], directions: [ASC]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
@@ -102,15 +82,35 @@ func TestSingleIndex(t *testing.T) {
 		},
 		{
 			description: "Index with descending field",
-			sdl: `
-			type user @index(fields: ["name"], directions: [DESC]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: ["name"], directions: [DESC]) {}`,
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Descending}},
+				},
+			},
+		},
+		{
+			description: "Index with 2 fields",
+			sdl:         `type user @index(fields: ["name", "age"]) {}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+						{Name: "age", Direction: client.Ascending},
+					},
+				},
+			},
+		},
+		{
+			description: "Index with 2 fields and 2 directions",
+			sdl:         `type user @index(fields: ["name", "age"], directions: [ASC, DESC]) {}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+						{Name: "age", Direction: client.Descending},
+					},
 				},
 			},
 		},
@@ -125,110 +125,62 @@ func TestInvalidIndexSyntax(t *testing.T) {
 	cases := []invalidIndexTestCase{
 		{
 			description: "missing 'fields' argument",
-			sdl: `
-			type user @index(name: "userIndex", unique: true) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(name: "userIndex", unique: true) {}`,
 			expectedErr: errIndexMissingFields,
 		},
 		{
 			description: "unknown argument",
-			sdl: `
-			type user @index(unknown: "something", fields: ["name"]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(unknown: "something", fields: ["name"]) {}`,
 			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "index name starts with a number",
-			sdl: `
-			type user @index(name: "1_user_name", fields: ["name"]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(name: "1_user_name", fields: ["name"]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "index with empty name",
-			sdl: `
-			type user @index(name: "", fields: ["name"]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(name: "", fields: ["name"]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "index name with spaces",
-			sdl: `
-			type user @index(name: "user name", fields: ["name"]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(name: "user name", fields: ["name"]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "index name with special symbols",
-			sdl: `
-			type user @index(name: "user!name", fields: ["name"]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(name: "user!name", fields: ["name"]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "invalid 'unique' value type",
-			sdl: `
-			type user @index(fields: ["name"], unique: "true") {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: ["name"], unique: "true") {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "invalid 'fields' value type (not a list)",
-			sdl: `
-			type user @index(fields: "name") {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: "name") {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "invalid 'fields' value type (not a string list)",
-			sdl: `
-			type user @index(fields: [1]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: [1]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "invalid 'directions' value type (not a list)",
-			sdl: `
-			type user @index(fields: ["name"], directions: "ASC") {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: ["name"], directions: "ASC") {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "invalid 'directions' value type (not a string list)",
-			sdl: `
-			type user @index(fields: ["name"], directions: [1]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: ["name"], directions: [1]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "invalid 'directions' value type (invalid element value)",
-			sdl: `
-			type user @index(fields: ["name"], directions: ["direction"]) {
-				name: String
-			}
-			`,
+			sdl:         `type user @index(fields: ["name"], directions: ["direction"]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 	}
