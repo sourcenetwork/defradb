@@ -11,11 +11,13 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	dshelp "github.com/ipfs/boxo/datastore/dshelp"
@@ -124,7 +126,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 				handleErr(req.Context(), rw, ErrBodyEmpty, http.StatusBadRequest)
 				return
 			}
-			body, err := io.ReadAll(req.Body)
+			body, err := readWithTimeout(req.Context(), req.Body, time.Second)
 			if err != nil {
 				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 				return
@@ -155,7 +157,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
-	sdl, err := io.ReadAll(req.Body)
+	sdl, err := readWithTimeout(req.Context(), req.Body, time.Second)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
@@ -182,7 +184,7 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
-	patch, err := io.ReadAll(req.Body)
+	patch, err := readWithTimeout(req.Context(), req.Body, time.Second)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
@@ -319,6 +321,35 @@ func subscriptionHandler(pub *events.Publisher[events.Update], rw http.ResponseW
 			}
 			fmt.Fprintf(rw, "data: %s\n\n", b)
 			flusher.Flush()
+		}
+	}
+}
+
+// readWithTimeout reads from the reader until either EoF or the given maxDuration has been reached.
+func readWithTimeout(ctx context.Context, reader io.Reader, maxDuration time.Duration) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(ctx, maxDuration)
+	defer cancel()
+
+	result := []byte{}
+	// This is arbitrary, and I like powers of two for this kind of stuff
+	const bufSize int = 2 ^ 8
+	buf := make([]byte, bufSize)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+
+		default:
+			n, err := reader.Read(buf)
+			isEoF := errors.Is(err, io.EOF)
+			if !isEoF && err != nil {
+				return nil, err
+			}
+
+			result = append(result, buf[:n]...)
+			if isEoF {
+				return result, nil
+			}
 		}
 	}
 }
