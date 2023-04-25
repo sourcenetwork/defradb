@@ -159,7 +159,11 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case "name":
-			desc.Name = arg.Value.(*ast.StringValue).Value
+			nameVal, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			desc.Name = nameVal.Value
 			if !isValidIndexName(desc.Name) {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
@@ -184,11 +188,11 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
 		case "unique":
-			if boolVal, ok := arg.Value.(*ast.BooleanValue); !ok {
+			boolVal, ok := arg.Value.(*ast.BooleanValue)
+			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
-			} else {
-				desc.IsUnique = boolVal.Value
 			}
+			desc.IsUnique = boolVal.Value
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
@@ -197,6 +201,9 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 		return client.IndexDescription{}, ErrIndexMissingFields
 	}
 	if directions != nil {
+		if len(directions.Values) != len(desc.Fields) {
+			return client.IndexDescription{}, ErrIndexWithInvalidArg
+		}
 		for i := range desc.Fields {
 			dirVal, ok := directions.Values[i].(*ast.EnumValue)
 			if !ok {

@@ -134,6 +134,11 @@ func TestInvalidIndexSyntax(t *testing.T) {
 			expectedErr: errIndexUnknownArgument,
 		},
 		{
+			description: "invalid index name type",
+			sdl:         `type user @index(name: 1, fields: ["name"]) {}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
 			description: "index name starts with a number",
 			sdl:         `type user @index(name: "1_user_name", fields: ["name"]) {}`,
 			expectedErr: errIndexInvalidArgument,
@@ -181,6 +186,16 @@ func TestInvalidIndexSyntax(t *testing.T) {
 		{
 			description: "invalid 'directions' value type (invalid element value)",
 			sdl:         `type user @index(fields: ["name"], directions: ["direction"]) {}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "fewer directions than fields",
+			sdl:         `type user @index(fields: ["name", "age"], directions: [ASC]) {}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "more directions than fields",
+			sdl:         `type user @index(fields: ["name"], directions: [ASC, DESC]) {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 	}
