@@ -51,6 +51,11 @@ type server struct {
 
 	pubSubEmitter  event.Emitter
 	pushLogEmitter event.Emitter
+
+	// docQueue is used to track which documents are currently being processed.
+	// This is used to prevent multiple concurrent processing of the same document and
+	// limit unecessary transaction conflicts.
+	docQueue *docQueue
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
@@ -68,6 +73,9 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
 		topics: make(map[string]pubsubTopic),
 		db:     db,
+		docQueue: &docQueue{
+			docs: make(map[string]chan struct{}),
+		},
 	}
 
 	cred := insecure.NewCredentials()
@@ -78,20 +86,30 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 
 	s.opts = append(defaultOpts, opts...)
 	if s.peer.ps != nil {
+		colMap, err := p.loadP2PCollections(p.ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		// Get all DocKeys across all collections in the DB
 		log.Debug(p.ctx, "Getting all existing DocKey...")
-		keyResults, err := s.listAllDocKeys()
+		cols, err := s.db.GetAllCollections(s.peer.ctx)
 		if err != nil {
-			return nil, errors.Wrap("failed to get DocKeys for pubsub topic registration", err)
+			return nil, err
 		}
 
 		i := 0
-		if keyResults != nil {
-			for key := range keyResults {
-				if key.Err != nil {
-					log.ErrorE(p.ctx, "Failed to get a key to register pubsub topic", key.Err)
-					continue
-				}
+		for _, col := range cols {
+			// If we subscribed to the collection, we skip subscribing to the collection's dockeys.
+			if _, ok := colMap[col.SchemaID()]; ok {
+				continue
+			}
+			keyChan, err := col.GetAllDocKeys(p.ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			for key := range keyChan {
 				log.Debug(
 					p.ctx,
 					"Registering existing DocKey pubsub topic",
@@ -140,6 +158,38 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 	return nil, nil
 }
 
+type docQueue struct {
+	docs map[string]chan struct{}
+	mu   sync.Mutex
+}
+
+// add adds a docKey to the queue. If the docKey is already in the queue, it will
+// wait for the docKey to be removed from the queue. For every add call, done must
+// be called to remove the docKey from the queue. Otherwise, subsequent add calls will
+// block forever.
+func (dq *docQueue) add(docKey string) {
+	dq.mu.Lock()
+	done, ok := dq.docs[docKey]
+	if !ok {
+		dq.docs[docKey] = make(chan struct{})
+	}
+	dq.mu.Unlock()
+	if ok {
+		<-done
+		dq.add(docKey)
+	}
+}
+
+func (dq *docQueue) done(docKey string) {
+	dq.mu.Lock()
+	defer dq.mu.Unlock()
+	done, ok := dq.docs[docKey]
+	if ok {
+		delete(dq.docs, docKey)
+		close(done)
+	}
+}
+
 // PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
@@ -150,6 +200,26 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 	// parse request object
 	cid := req.Body.Cid.Cid
+
+	s.docQueue.add(req.Body.DocKey.String())
+	defer func() {
+		s.docQueue.done(req.Body.DocKey.String())
+		if s.pushLogEmitter != nil {
+			byPeer, err := libpeer.Decode(req.Body.Creator)
+			if err != nil {
+				log.Info(ctx, "could not decode the peer id of the log creator", logging.NewKV("Error", err.Error()))
+			}
+			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
+				FromPeer: pid,
+				ByPeer:   byPeer,
+			})
+			if err != nil {
+				// logging instead of returning an error because the event bus should
+				// not break the PushLog execution.
+				log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err.Error()))
+			}
+		}
+	}()
 
 	// make sure were not processing twice
 	if canVisit := s.peer.queuedChildren.Visit(cid); !canVisit {
@@ -235,24 +305,15 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return &pb.PushLogReply{}, txnErr
 		}
 
-		if s.pushLogEmitter != nil {
-			byPeer, err := libpeer.Decode(req.Body.Creator)
+		// Once processed, subscribe to the dockey topic on the pubsub network unless we already
+		// suscribe to the collection.
+		if !s.hasPubSubTopic(col.SchemaID()) {
+			err = s.addPubSubTopic(docKey.DocKey, true)
 			if err != nil {
-				log.Info(ctx, "could not decode the peer id of the log creator", logging.NewKV("Error", err.Error()))
-			}
-			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
-				FromPeer: pid,
-				ByPeer:   byPeer,
-			})
-			if err != nil {
-				// logging instead of returning an error because the event bus should
-				// not break the PushLog execution.
-				log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err.Error()))
+				return nil, err
 			}
 		}
-
-		// Once processed, subscribe to the dockey topic on the pubsub network.
-		return &pb.PushLogReply{}, s.addPubSubTopic(docKey.DocKey, true)
+		return &pb.PushLogReply{}, nil
 	}
 
 	return &pb.PushLogReply{}, client.NewErrMaxTxnRetries(txnErr)
@@ -298,6 +359,14 @@ func (s *server) addPubSubTopic(topic string, subscribe bool) error {
 		subscribed: subscribe,
 	}
 	return nil
+}
+
+// hasPubSubTopic checks if we are subscribed to a topic.
+func (s *server) hasPubSubTopic(topic string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, ok := s.topics[topic]
+	return ok
 }
 
 // removePubSubTopic unsubscribes to a topic
@@ -406,48 +475,6 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 			log.Info(s.peer.ctx, "could not emit pubsub event", logging.NewKV("Error", err.Error()))
 		}
 	}
-}
-
-func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
-	// get all collections
-	cols, err := s.db.GetAllCollections(s.peer.ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(cols) == 0 {
-		return nil, nil
-	}
-
-	keyCh := make(chan client.DocKeysResult)
-
-	var wg sync.WaitGroup
-	wg.Add(1) // add an init blocker on close routine
-	go func() {
-		wg.Wait()
-		close(keyCh)
-	}()
-
-	for _, col := range cols {
-		resCh, err := col.GetAllDocKeys(s.peer.ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		// run a goroutine for each channel we get from the GetAllDocKeys func for each
-		// collection. Pipe the results from res to keys, and handle potentially
-		// closed channel edge cases
-		wg.Add(1)
-		go func(colName string) {
-			for res := range resCh {
-				keyCh <- res
-			}
-			wg.Done()
-		}(col.Name())
-	}
-	wg.Done() // cleanup the init blocker on close routine
-
-	return keyCh, nil
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.

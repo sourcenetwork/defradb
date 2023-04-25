@@ -15,7 +15,7 @@ import (
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
-	dag "github.com/ipfs/go-merkledag"
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"

@@ -11,14 +11,12 @@
 package crdt
 
 import (
-	// "time"
-
 	"bytes"
 	"context"
 
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
-	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
 
 	"github.com/sourcenetwork/defradb/client"
