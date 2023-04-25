@@ -25,6 +25,8 @@ BUILD_FLAGS=-trimpath -ldflags "\
 -X 'github.com/sourcenetwork/defradb/version.GitCommitDate=$(VERSION_GITCOMMITDATE)'"
 endif
 
+TEST_FLAGS=-race -shuffle=on -timeout 60s
+
 default:
 	@go run $(BUILD_FLAGS) cmd/defradb/main.go
 
@@ -143,12 +145,12 @@ endif
 
 .PHONY: test
 test:
-	gotestsum --format pkgname -- ./... -race -shuffle=on
+	gotestsum --format pkgname -- ./... $(TEST_FLAGS)
 
 # Only build the tests (don't execute them).
 .PHONY: test\:build
 test\:build:
-	gotestsum --format pkgname -- ./... -race -shuffle=on -run=nope
+	gotestsum --format pkgname -- ./... $(TEST_FLAGS) -run=nope
 
 .PHONY: test\:ci
 test\:ci:
@@ -156,15 +158,15 @@ test\:ci:
 
 .PHONY: test\:go
 test\:go:
-	go test ./... -race -shuffle=on
+	go test ./... $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
-	gotestsum --format testname -- ./... -race -shuffle=on
+	gotestsum --format testname -- ./... $(TEST_FLAGS)
 
 .PHONY: test\:verbose
 test\:verbose:
-	gotestsum --format standard-verbose -- ./... -race -shuffle=on
+	gotestsum --format standard-verbose -- ./... $(TEST_FLAGS)
 
 .PHONY: test\:watch
 test\:watch:
