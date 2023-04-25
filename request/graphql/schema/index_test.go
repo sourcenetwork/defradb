@@ -121,6 +121,123 @@ func TestSingleIndex(t *testing.T) {
 	}
 }
 
+func TestInvalidIndexSyntax(t *testing.T) {
+	cases := []invalidIndexTestCase{
+		{
+			description: "missing 'fields' argument",
+			sdl: `
+			type user @index(name: "userIndex", unique: true) {
+				name: String
+			}
+			`,
+			expectedErr: errIndexMissingFields,
+		},
+		{
+			description: "unknown argument",
+			sdl: `
+			type user @index(unknown: "something", fields: ["name"]) {
+				name: String
+			}
+			`,
+			expectedErr: errIndexUnknownArgument,
+		},
+		{
+			description: "index name starts with a number",
+			sdl: `
+			type user @index(name: "1_user_name", fields: ["name"]) {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "index with empty name",
+			sdl: `
+			type user @index(name: "", fields: ["name"]) {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "index name with spaces",
+			sdl: `
+			type user @index(name: "user name", fields: ["name"]) {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "index name with special symbols",
+			sdl: `
+			type user @index(name: "user!name", fields: ["name"]) {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "invalid 'unique' value type",
+			sdl: `
+			type user @index(fields: ["name"], unique: "true") {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "invalid 'fields' value type (not a list)",
+			sdl: `
+			type user @index(fields: "name") {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "invalid 'fields' value type (not a string list)",
+			sdl: `
+			type user @index(fields: [1]) {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "invalid 'directions' value type (not a list)",
+			sdl: `
+			type user @index(fields: ["name"], directions: "ASC") {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "invalid 'directions' value type (not a string list)",
+			sdl: `
+			type user @index(fields: ["name"], directions: [1]) {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "invalid 'directions' value type (invalid element value)",
+			sdl: `
+			type user @index(fields: ["name"], directions: ["direction"]) {
+				name: String
+			}
+			`,
+			expectedErr: errIndexInvalidArgument,
+		},
+	}
+
+	for _, test := range cases {
+		parseInvalidIndexAndTest(t, test)
+	}
+}
+
 func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 	ctx := context.Background()
 
@@ -133,8 +250,21 @@ func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 	}
 }
 
+func parseInvalidIndexAndTest(t *testing.T, testCase invalidIndexTestCase) {
+	ctx := context.Background()
+
+	_, _, err := FromString(ctx, testCase.sdl)
+	assert.EqualError(t, err, testCase.expectedErr, testCase.description)
+}
+
 type indexTestCase struct {
 	description        string
 	sdl                string
 	targetDescriptions []client.IndexDescription
+}
+
+type invalidIndexTestCase struct {
+	description string
+	sdl         string
+	expectedErr string
 }

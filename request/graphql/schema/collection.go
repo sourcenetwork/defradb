@@ -137,6 +137,22 @@ func fromAstDefinition(
 	}, indexDescriptions, nil
 }
 
+func isValidIndexName(name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+	if name[0] != '_' && (name[0] < 'a' || name[0] > 'z') && (name[0] < 'A' || name[0] > 'Z') {
+		return false
+	}
+	for i := 1; i < len(name); i++ {
+		c := name[i]
+		if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' {
+			return false
+		}
+	}
+	return true
+}
+
 func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 	desc := client.IndexDescription{}
 	var directions *ast.ListValue
@@ -144,24 +160,51 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 		switch arg.Name.Value {
 		case "name":
 			desc.Name = arg.Value.(*ast.StringValue).Value
+			if !isValidIndexName(desc.Name) {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
 		case "fields":
-			for _, field := range arg.Value.(*ast.ListValue).Values {
+			fieldsVal, ok := arg.Value.(*ast.ListValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			for _, field := range fieldsVal.Values {
+				fieldVal, ok := field.(*ast.StringValue)
+				if !ok {
+					return client.IndexDescription{}, ErrIndexWithInvalidArg
+				}
 				desc.Fields = append(desc.Fields, client.IndexedFieldDescription{
-					Name: field.(*ast.StringValue).Value,
+					Name: fieldVal.Value,
 				})
 				break
 			}
 		case "directions":
-			directions = arg.Value.(*ast.ListValue)
+			var ok bool
+			directions, ok = arg.Value.(*ast.ListValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
 		case "unique":
-			desc.IsUnique = arg.Value.(*ast.BooleanValue).Value
+			if boolVal, ok := arg.Value.(*ast.BooleanValue); !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			} else {
+				desc.IsUnique = boolVal.Value
+			}
+		default:
+			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
 	}
+	if len(desc.Fields) == 0 {
+		return client.IndexDescription{}, ErrIndexMissingFields
+	}
 	if directions != nil {
-		dirVal := directions.Values[0].(*ast.EnumValue).Value
-		if dirVal == "ASC" {
+		dirVal, ok := directions.Values[0].(*ast.EnumValue)
+		if !ok {
+			return client.IndexDescription{}, ErrIndexWithInvalidArg
+		}
+		if dirVal.Value == "ASC" {
 			desc.Fields[0].Direction = client.Ascending
-		} else if dirVal == "DESC" {
+		} else if dirVal.Value == "DESC" {
 			desc.Fields[0].Direction = client.Descending
 		}
 	} else {
