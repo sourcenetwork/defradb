@@ -324,7 +324,7 @@ func subscriptionHandler(pub *events.Publisher[events.Update], rw http.ResponseW
 }
 
 // maxBytes is an arbitrary limit to prevent unbounded message bodies being sent and read.
-const maxBytes int64 = 131072 //2 ^ 17
+const maxBytes int64 = 100 * (1 << (10 * 2)) // 100MB
 
 // readWithLimit reads from the reader until either EoF or the maximum number of bytes have been read.
 func readWithLimit(reader io.ReadCloser, rw http.ResponseWriter) ([]byte, error) {
