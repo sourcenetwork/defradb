@@ -11,6 +11,7 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -329,5 +330,12 @@ const maxBytes int64 = 100 * (1 << (10 * 2)) // 100MB
 // readWithLimit reads from the reader until either EoF or the maximum number of bytes have been read.
 func readWithLimit(reader io.ReadCloser, rw http.ResponseWriter) ([]byte, error) {
 	reader = http.MaxBytesReader(rw, reader, maxBytes)
-	return io.ReadAll(reader)
+
+	var buf bytes.Buffer
+	_, err := io.Copy(&buf, reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
