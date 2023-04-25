@@ -77,7 +77,8 @@ func TestReadConfigFileForLogger(t *testing.T) {
 	assert.True(t, cfg.ConfigFileExists())
 
 	cfgFromFile := DefaultConfig()
-	cfgFromFile.Rootdir = tmpdir
+	err = cfgFromFile.setRootdir(tmpdir)
+	assert.NoError(t, err)
 	err = cfgFromFile.LoadWithRootdir(true)
 	assert.NoError(t, err)
 
@@ -93,12 +94,13 @@ func TestReadConfigFileForDatastore(t *testing.T) {
 	tmpdir := t.TempDir()
 
 	cfg := DefaultConfig()
-	cfg.Rootdir = tmpdir
+	err := cfg.setRootdir(tmpdir)
+	assert.NoError(t, err)
 	cfg.Datastore.Store = "badger"
 	cfg.Datastore.Badger.Path = "dataPath"
 	cfg.Datastore.Badger.ValueLogFileSize = 512 * MiB
 
-	err := cfg.WriteConfigFile()
+	err = cfg.WriteConfigFile()
 	assert.NoError(t, err)
 
 	configPath := filepath.Join(tmpdir, DefaultConfigFileName)
@@ -106,7 +108,8 @@ func TestReadConfigFileForDatastore(t *testing.T) {
 	assert.NoError(t, err)
 
 	cfgFromFile := DefaultConfig()
-	cfgFromFile.Rootdir = tmpdir
+	err = cfgFromFile.setRootdir(tmpdir)
+	assert.NoError(t, err)
 	err = cfgFromFile.LoadWithRootdir(true)
 	assert.NoError(t, err)
 
@@ -114,12 +117,14 @@ func TestReadConfigFileForDatastore(t *testing.T) {
 	assert.Equal(t, filepath.Join(tmpdir, cfg.Datastore.Badger.Path), cfgFromFile.Datastore.Badger.Path)
 	assert.Equal(t, cfg.Datastore.Badger.ValueLogFileSize, cfgFromFile.Datastore.Badger.ValueLogFileSize)
 }
+
 func TestConfigFileExists(t *testing.T) {
 	cfg := DefaultConfig()
-	cfg.Rootdir = t.TempDir()
+	err := cfg.setRootdir(t.TempDir())
+	assert.NoError(t, err)
 	assert.False(t, cfg.ConfigFileExists())
 
-	err := cfg.WriteConfigFile()
+	err = cfg.WriteConfigFile()
 	assert.NoError(t, err)
 	assert.True(t, cfg.ConfigFileExists())
 }

@@ -14,12 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var replicatorCmd = &cobra.Command{
-	Use:   "replicator",
-	Short: "Interact with the replicator system",
-	Long:  "Add, delete, or get the list of persisted replicators",
-}
-
-func init() {
-	rpcCmd.AddCommand(replicatorCmd)
+func MakeReplicatorCommand() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "replicator",
+		Short: "Interact with the replicator system",
+		Long:  "Add, delete, or get the list of persisted replicators",
+	}
+	return cmd
 }

@@ -8,17 +8,6 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package cli
+package clitest
 
-import (
-	"github.com/spf13/cobra"
-)
-
-func MakeP2PCollectionCommand() *cobra.Command {
-	var cmd = &cobra.Command{
-		Use:   "p2pcollection",
-		Short: "Interact with the P2P collection system",
-		Long:  "Add, delete, or get the list of P2P collections",
-	}
-	return cmd
-}
+// TBD

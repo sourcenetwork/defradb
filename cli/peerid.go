@@ -20,82 +20,82 @@ import (
 	"github.com/spf13/cobra"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-var peerIDCmd = &cobra.Command{
-	Use:   "peerid",
-	Short: "Get the peer ID of the DefraDB node",
-	RunE: func(cmd *cobra.Command, _ []string) (err error) {
-		stdout, err := os.Stdout.Stat()
-		if err != nil {
-			return errors.Wrap("failed to stat stdout", err)
-		}
-		if !isFileInfoPipe(stdout) {
-			log.FeedbackInfo(cmd.Context(), "Requesting peer ID...")
-		}
-
-		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.PeerIDPath)
-		if err != nil {
-			return errors.Wrap("failed to join endpoint", err)
-		}
-
-		res, err := http.Get(endpoint.String())
-		if err != nil {
-			return errors.Wrap("failed to request peer ID", err)
-		}
-
-		defer func() {
-			if e := res.Body.Close(); e != nil {
-				err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
+func MakePeerIDCommand(cfg *config.Config) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "peerid",
+		Short: "Get the peer ID of the DefraDB node",
+		RunE: func(cmd *cobra.Command, _ []string) (err error) {
+			stdout, err := os.Stdout.Stat()
+			if err != nil {
+				return errors.Wrap("failed to stat stdout", err)
 			}
-		}()
+			if !isFileInfoPipe(stdout) {
+				log.FeedbackInfo(cmd.Context(), "Requesting peer ID...")
+			}
 
-		response, err := io.ReadAll(res.Body)
-		if err != nil {
-			return errors.Wrap("failed to read response body", err)
-		}
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.PeerIDPath)
+			if err != nil {
+				return errors.Wrap("failed to join endpoint", err)
+			}
 
-		if res.StatusCode == http.StatusNotFound {
-			r := httpapi.ErrorResponse{}
+			res, err := http.Get(endpoint.String())
+			if err != nil {
+				return errors.Wrap("failed to request peer ID", err)
+			}
+
+			defer func() {
+				if e := res.Body.Close(); e != nil {
+					err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
+				}
+			}()
+
+			response, err := io.ReadAll(res.Body)
+			if err != nil {
+				return errors.Wrap("failed to read response body", err)
+			}
+
+			if res.StatusCode == http.StatusNotFound {
+				r := httpapi.ErrorResponse{}
+				err = json.Unmarshal(response, &r)
+				if err != nil {
+					return errors.Wrap("parsing of response failed", err)
+				}
+				if len(r.Errors) > 0 {
+					if isFileInfoPipe(stdout) {
+						b, err := json.Marshal(r.Errors[0])
+						if err != nil {
+							return errors.Wrap("mashalling error response failed", err)
+						}
+						cmd.Println(string(b))
+					} else {
+						log.FeedbackInfo(cmd.Context(), r.Errors[0].Message)
+					}
+					return nil
+				}
+				return errors.New("no peer ID available. P2P might be disabled")
+			}
+
+			r := httpapi.DataResponse{}
 			err = json.Unmarshal(response, &r)
 			if err != nil {
 				return errors.Wrap("parsing of response failed", err)
 			}
-			if len(r.Errors) > 0 {
-				if isFileInfoPipe(stdout) {
-					b, err := json.Marshal(r.Errors[0])
-					if err != nil {
-						return errors.Wrap("mashalling error response failed", err)
-					}
-					cmd.Println(string(b))
-				} else {
-					log.FeedbackInfo(cmd.Context(), r.Errors[0].Message)
+			if isFileInfoPipe(stdout) {
+				b, err := json.Marshal(r.Data)
+				if err != nil {
+					return errors.Wrap("mashalling data response failed", err)
 				}
-				return nil
+				cmd.Println(string(b))
+			} else if data, ok := r.Data.(map[string]any); ok {
+				log.FeedbackInfo(cmd.Context(), data["peerID"].(string))
 			}
-			return errors.New("no peer ID available. P2P might be disabled")
-		}
 
-		r := httpapi.DataResponse{}
-		err = json.Unmarshal(response, &r)
-		if err != nil {
-			return errors.Wrap("parsing of response failed", err)
-		}
-		if isFileInfoPipe(stdout) {
-			b, err := json.Marshal(r.Data)
-			if err != nil {
-				return errors.Wrap("mashalling data response failed", err)
-			}
-			cmd.Println(string(b))
-		} else if data, ok := r.Data.(map[string]any); ok {
-			log.FeedbackInfo(cmd.Context(), data["peerID"].(string))
-		}
-
-		return nil
-	},
-}
-
-func init() {
-	clientCmd.AddCommand(peerIDCmd)
+			return nil
+		},
+	}
+	return cmd
 }

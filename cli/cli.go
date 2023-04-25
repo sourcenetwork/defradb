@@ -21,10 +21,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 )
+
+var log = logging.MustNewLogger("defra.cli")
 
 const badgerDatastoreName = "badger"
 
@@ -42,30 +46,87 @@ var usageErrors = []string{
 	errTooManyArgs,
 }
 
-var log = logging.MustNewLogger("defra.cli")
+type DefraCommand struct {
+	RootCmd *cobra.Command
+	Cfg     *config.Config
+}
 
-var cfg = config.DefaultConfig()
-var RootCmd = rootCmd
+// NewDefraCommand returns the root command instanciated with its tree of subcommands.
+func NewDefraCommand(cfg *config.Config) DefraCommand {
+	rootCmd := MakeRootCommand(cfg)
+	rpcCmd := MakeRPCCommand(cfg)
+	blocksCmd := MakeBlocksCommand()
+	schemaCmd := MakeSchemaCommand()
+	clientCmd := MakeClientCommand()
+	rpcReplicatorCmd := MakeReplicatorCommand()
+	p2pCollectionCmd := MakeP2PCollectionCommand()
+	p2pCollectionCmd.AddCommand(
+		MakeP2PCollectionAddCommand(cfg),
+		MakeP2PCollectionRemoveCommand(cfg),
+		MakeP2PCollectionGetallCommand(cfg),
+	)
+	rpcReplicatorCmd.AddCommand(
+		MakeReplicatorGetallCommand(cfg),
+		MakeReplicatorSetCommand(cfg),
+		MakeReplicatorDeleteCommand(cfg),
+	)
+	rpcCmd.AddCommand(
+		rpcReplicatorCmd,
+		p2pCollectionCmd,
+	)
+	blocksCmd.AddCommand(
+		MakeBlocksGetCommand(cfg),
+	)
+	schemaCmd.AddCommand(
+		MakeSchemaAddCommand(cfg),
+		MakeSchemaPatchCommand(cfg),
+	)
+	clientCmd.AddCommand(
+		MakeDumpCommand(cfg),
+		MakePingCommand(cfg),
+		MakeRequestCommand(cfg),
+		MakePeerIDCommand(cfg),
+		schemaCmd,
+		rpcCmd,
+		blocksCmd,
+	)
+	rootCmd.AddCommand(
+		clientCmd,
+		MakeStartCommand(cfg),
+		MakeServerDumpCmd(cfg),
+		MakeVersionCommand(),
+		MakeInitCommand(cfg),
+	)
 
-func Execute() {
-	ctx := context.Background()
+	return DefraCommand{rootCmd, cfg}
+}
+
+func (defraCmd *DefraCommand) Execute(ctx context.Context) error {
 	// Silence cobra's default output to control usage and error display.
-	rootCmd.SilenceUsage = true
-	rootCmd.SilenceErrors = true
-	rootCmd.SetOut(os.Stdout)
-	cmd, err := rootCmd.ExecuteContextC(ctx)
+	defraCmd.RootCmd.SilenceUsage = true
+	defraCmd.RootCmd.SilenceErrors = true
+	defraCmd.RootCmd.SetOut(os.Stdout)
+	cmd, err := defraCmd.RootCmd.ExecuteContextC(ctx)
 	if err != nil {
+		// Intentional cancellation.
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return nil
+		}
+		// User error.
 		for _, cobraError := range usageErrors {
 			if strings.HasPrefix(err.Error(), cobraError) {
 				log.FeedbackErrorE(ctx, "Usage error", err)
 				if usageErr := cmd.Usage(); usageErr != nil {
 					log.FeedbackFatalE(ctx, "error displaying usage help", usageErr)
 				}
-				os.Exit(1)
+				return err
 			}
 		}
-		log.FeedbackFatalE(ctx, "Execution error", err)
+		// Internal error.
+		log.FeedbackErrorE(ctx, "Execution error", err)
+		return err
 	}
+	return nil
 }
 
 func isFileInfoPipe(fi os.FileInfo) bool {
