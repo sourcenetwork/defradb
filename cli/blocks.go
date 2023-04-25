@@ -14,11 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var blocksCmd = &cobra.Command{
-	Use:   "blocks",
-	Short: "Interact with the database's blockstore",
-}
+func MakeBlocksCommand() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "blocks",
+		Short: "Interact with the database's blockstore",
+	}
 
-func init() {
-	clientCmd.AddCommand(blocksCmd)
+	return cmd
 }
