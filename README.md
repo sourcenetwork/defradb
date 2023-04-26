@@ -375,6 +375,19 @@ Note: `sudo` is needed above for the redirection server (to bind port 80).
 
 A valid email address is necessary for the creation of the certificate, and is important to get notifications from the Certificate Authority - in case the certificate is about to expire, etc.
 
+## Supporting CORS
+
+When accessing DefraDB through a frontend interface, you may be confronted with a CORS error. That is because, by default, DefraDB will not have any allowed origins set. To specify which origins should be allowed to access your DefraDB endpoint, you can specify them when starting the database:
+```shell
+defradb start --allowedorigins=https://yourdomain.com
+```
+
+If running a frontend app locally on localhost, allowed origins must be set with the port of the app:
+```shell
+defradb start --allowedorigins=http://localhost:3000
+```
+
+The catch-all `*` is also a valid origin. 
 
 ## Community
 
