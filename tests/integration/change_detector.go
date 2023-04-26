@@ -64,7 +64,7 @@ func detectDbChangesInit(repository string, targetBranch string) {
 		return
 	}
 
-	defraTempDir := path.Join(os.TempDir(), "defra")
+	defraTempDir := path.Join(os.TempDir(), "defradb")
 
 	latestTargetCommitHash := getLatestCommit(repository, targetBranch)
 	detectDbChangesCodeDir = path.Join(defraTempDir, latestTargetCommitHash, "code")
