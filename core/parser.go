@@ -53,7 +53,7 @@ type Parser interface {
 	// ParseSDL parses an SDL string into a set of collection descriptions and indexes.
 	ParseSDL(ctx context.Context, schemaString string) (
 		[]client.CollectionDescription,
-		[]client.IndexDescription,
+		[][]client.IndexDescription,
 		error,
 	)
 

@@ -26,7 +26,7 @@ import (
 // FromString parses a GQL SDL string into a set of collection descriptions.
 func FromString(ctx context.Context, schemaString string) (
 	[]client.CollectionDescription,
-	[]client.IndexDescription,
+	[][]client.IndexDescription,
 	error,
 ) {
 	source := source.NewSource(&source.Source{
@@ -48,12 +48,12 @@ func FromString(ctx context.Context, schemaString string) (
 // fromAst parses a GQL AST into a set of collection descriptions.
 func fromAst(ctx context.Context, doc *ast.Document) (
 	[]client.CollectionDescription,
-	[]client.IndexDescription,
+	[][]client.IndexDescription,
 	error,
 ) {
 	relationManager := NewRelationManager()
 	descriptions := []client.CollectionDescription{}
-	indexes := []client.IndexDescription{}
+	indexes := [][]client.IndexDescription{}
 
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
@@ -64,7 +64,7 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 			}
 
 			descriptions = append(descriptions, description)
-			indexes = append(indexes, colIndexes...)
+			indexes = append(indexes, colIndexes)
 
 		default:
 			// Do nothing, ignore it and continue

@@ -107,7 +107,7 @@ func buildParser(
 		return nil, err
 	}
 
-	collectionDescriptions, err := gqlSchema.FromString(ctx, schema)
+	collectionDescriptions, _, err := gqlSchema.FromString(ctx, schema)
 	if err != nil {
 		return nil, err
 	}
