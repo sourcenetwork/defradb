@@ -118,15 +118,7 @@ func SetupDatabaseUsingTargetBranch(
 	t *testing.T,
 	collectionNames []string,
 ) client.DB {
-	currentTestPackage, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	targetTestPackage := detectDbChangesCodeDir + "/tests/integration/" + strings.Split(
-		currentTestPackage,
-		"/tests/integration/",
-	)[1]
+	targetTestPackage := detectDbChangesCodeDir + "/tests/integration/" + getTestPackagePath()
 
 	// If we are checking for database changes, and we are not seting up the database,
 	// then we must be in the main test process, and need to create a new process
@@ -185,6 +177,20 @@ func SetupDatabaseUsingTargetBranch(
 		}
 	}
 	return refreshedDb
+}
+
+// getTestPackagePath returns the path to the package currently under test, relative
+// to `./tests/integration/`
+func getTestPackagePath() string {
+	currentTestPackage, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	return strings.Split(
+		currentTestPackage,
+		"/tests/integration/",
+	)[1]
 }
 
 func checkIfDatabaseFormatChangesAreDocumented() bool {
