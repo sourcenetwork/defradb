@@ -299,7 +299,7 @@ func defaultAPIConfig() *APIConfig {
 	return &APIConfig{
 		Address:        "localhost:9181",
 		TLS:            false,
-		AllowedOrigins: []string{"*"},
+		AllowedOrigins: []string{},
 		PubKeyPath:     "certs/server.key",
 		PrivKeyPath:    "certs/server.crt",
 		Email:          DefaultAPIEmail,
