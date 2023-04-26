@@ -97,6 +97,7 @@ func fromAstDefinition(
 		},
 	}
 
+	indexDescriptions := []client.IndexDescription{}
 	for _, field := range def.Fields {
 		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def)
 		if err != nil {
@@ -104,6 +105,16 @@ func fromAstDefinition(
 		}
 
 		fieldDescriptions = append(fieldDescriptions, tmpFieldsDescriptions...)
+
+		for _, directive := range field.Directives {
+			if directive.Name.Value == "index" {
+				index, err := fieldIndexFromAST(field, directive)
+				if err != nil {
+					return client.CollectionDescription{}, nil, err
+				}
+				indexDescriptions = append(indexDescriptions, index)
+			}
+		}
 	}
 
 	// sort the fields lexicographically
@@ -117,7 +128,6 @@ func fromAstDefinition(
 		return fieldDescriptions[i].Name < fieldDescriptions[j].Name
 	})
 
-	indexDescriptions := []client.IndexDescription{}
 	for _, directive := range def.Directives {
 		if directive.Name.Value == "index" {
 			index, err := indexFromAST(directive)
@@ -151,6 +161,39 @@ func isValidIndexName(name string) bool {
 		}
 	}
 	return true
+}
+
+func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (client.IndexDescription, error) {
+	desc := client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{
+			{
+				Name:      field.Name.Value,
+				Direction: client.Ascending,
+			},
+		},
+	}
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case "name":
+			nameVal, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			desc.Name = nameVal.Value
+			if !isValidIndexName(desc.Name) {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+		case "unique":
+			boolVal, ok := arg.Value.(*ast.BooleanValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			desc.IsUnique = boolVal.Value
+		default:
+			return client.IndexDescription{}, ErrIndexWithUnknownArg
+		}
+	}
+	return desc, nil
 }
 
 func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {

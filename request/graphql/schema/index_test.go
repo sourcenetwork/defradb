@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func TestSingleIndex(t *testing.T) {
+func TestStructIndex(t *testing.T) {
 	cases := []indexTestCase{
 		{
 			description: "Index with a single field",
@@ -121,7 +121,7 @@ func TestSingleIndex(t *testing.T) {
 	}
 }
 
-func TestInvalidIndexSyntax(t *testing.T) {
+func TestInvalidStructIndex(t *testing.T) {
 	cases := []invalidIndexTestCase{
 		{
 			description: "missing 'fields' argument",
@@ -205,14 +205,147 @@ func TestInvalidIndexSyntax(t *testing.T) {
 	}
 }
 
+func TestFieldIndex(t *testing.T) {
+	cases := []indexTestCase{
+		{
+			description: "field index",
+			sdl: `type user {
+				name: String @index
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Name: "",
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+					},
+					IsUnique: false,
+				},
+			},
+		},
+		{
+			description: "field index with name",
+			sdl: `type user {
+				name: String @index(name: "nameIndex")
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Name: "nameIndex",
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+					},
+					IsUnique: false,
+				},
+			},
+		},
+		{
+			description: "unique field index",
+			sdl: `type user {
+				name: String @index(unique: true)
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+					},
+					IsUnique: true,
+				},
+			},
+		},
+		{
+			description: "field index explicitly not unique",
+			sdl: `type user {
+				name: String @index(unique: false)
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+					},
+					IsUnique: false,
+				},
+			},
+		},
+	}
+
+	for _, test := range cases {
+		parseIndexAndTest(t, test)
+	}
+}
+
+func TestInvalidFieldIndex(t *testing.T) {
+	cases := []invalidIndexTestCase{
+		{
+			description: "forbidden 'field' argument",
+			sdl: `type user {
+				name: String @index(field: "name") 
+			}`,
+			expectedErr: errIndexUnknownArgument,
+		},
+		{
+			description: "forbidden 'direction' argument",
+			sdl: `type user {
+				name: String @index(direction: ASC) 
+			}`,
+			expectedErr: errIndexUnknownArgument,
+		},
+		{
+			description: "invalid field index name type",
+			sdl: `type user {
+				name: String @index(name: 1) 
+			}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "field index name starts with a number",
+			sdl: `type user {
+				name: String @index(name: "1_user_name") 
+			}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "field index with empty name",
+			sdl: `type user {
+				name: String @index(name: "") 
+			}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "field index name with spaces",
+			sdl: `type user {
+				name: String @index(name: "user name") 
+			}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "field index name with special symbols",
+			sdl: `type user {
+				name: String @index(name: "user!name") 
+			}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "invalid 'unique' value type",
+			sdl: `type user {
+				name: String @index(unique: "true") 
+			}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+	}
+
+	for _, test := range cases {
+		parseInvalidIndexAndTest(t, test)
+	}
+}
+
 func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 	ctx := context.Background()
 
-	_, indexes, err := FromString(ctx, testCase.sdl)
+	_, colIndexes, err := FromString(ctx, testCase.sdl)
 	assert.NoError(t, err, testCase.description)
-	assert.Equal(t, len(indexes), len(testCase.targetDescriptions), testCase.description)
+	assert.Equal(t, len(colIndexes), 1, testCase.description)
+	assert.Equal(t, len(colIndexes[0]), len(testCase.targetDescriptions), testCase.description)
 
-	for i, d := range indexes {
+	for i, d := range colIndexes[0] {
 		assert.Equal(t, testCase.targetDescriptions[i], d, testCase.description)
 	}
 }
