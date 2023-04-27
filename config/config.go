@@ -322,7 +322,7 @@ func (apicfg *APIConfig) validate() error {
 		return ErrInvalidDatabaseURL
 	}
 
-	if (host == "localhost" || host == "::1" || host == "0.0.0.0") && port == "" {
+	if (host == "localhost" || host == "::1" || host == "0.0.0.0") && port == "" { //nolint:goconst
 		return ErrMissingPortNumber
 	}
 
