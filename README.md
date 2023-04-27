@@ -379,7 +379,7 @@ A valid email address is necessary for the creation of the certificate, and is i
 
 When accessing DefraDB through a frontend interface, you may be confronted with a CORS error. That is because, by default, DefraDB will not have any allowed origins set. To specify which origins should be allowed to access your DefraDB endpoint, you can specify them when starting the database:
 ```shell
-defradb start --allowe-dorigins=https://yourdomain.com
+defradb start --allowed-origins=https://yourdomain.com
 ```
 
 If running a frontend app locally on localhost, allowed origins must be set with the port of the app:
