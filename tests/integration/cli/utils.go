@@ -34,7 +34,8 @@ import (
 	"github.com/sourcenetwork/defradb/config"
 )
 
-const COMMAND_TIMEOUT_SECONDS = 2
+const COMMAND_TIMEOUT_SECONDS = 2 * time.Second
+const SUBCOMMAND_TIME_BUFFER_SECONDS = 1 * time.Second
 
 type DefraNodeConfig struct {
 	rootDir  string
@@ -85,18 +86,21 @@ func runDefraNode(t *testing.T, conf DefraNodeConfig) func() []string {
 
 	cfg := config.DefaultConfig()
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
+	ready := make(chan struct{})
+	go func(ready chan struct{}) {
 		defraCmd := cli.NewDefraCommand(cfg)
 		defraCmd.RootCmd.SetArgs(
 			append([]string{"start"}, args...),
 		)
+		ready <- struct{}{}
 		err := defraCmd.Execute(ctx)
 		assert.NoError(t, err)
-	}()
-	time.Sleep(1 * time.Second) // time buffer for it to start
+	}(ready)
+	<-ready
+	time.Sleep(SUBCOMMAND_TIME_BUFFER_SECONDS)
 	cancelAndOutput := func() []string {
 		cancel()
-		time.Sleep(1 * time.Second) // time buffer for it to stop
+		time.Sleep(SUBCOMMAND_TIME_BUFFER_SECONDS)
 		lines, err := readLoglines(t, conf.logPath)
 		assert.NoError(t, err)
 		return lines
@@ -115,7 +119,7 @@ func runDefraCommand(t *testing.T, conf DefraNodeConfig, args []string) (stdout,
 		args = append(args, "--rootdir", t.TempDir())
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), COMMAND_TIMEOUT_SECONDS*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), COMMAND_TIMEOUT_SECONDS)
 	defer cancel()
 
 	stdout, stderr = captureOutput(func() {
