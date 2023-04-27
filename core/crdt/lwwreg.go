@@ -19,7 +19,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ugorji/go/codec"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"

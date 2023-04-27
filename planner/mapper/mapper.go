@@ -18,10 +18,10 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/request"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 

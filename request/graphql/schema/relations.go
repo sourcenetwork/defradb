@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 )
 
 // RelationManager keeps track of all the relations that exist

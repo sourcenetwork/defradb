@@ -19,7 +19,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 )
 

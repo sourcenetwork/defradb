@@ -19,8 +19,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
-
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb"
 )
 
 type handler struct {

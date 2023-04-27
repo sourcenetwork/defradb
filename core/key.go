@@ -17,7 +17,7 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/errors"
 )
 

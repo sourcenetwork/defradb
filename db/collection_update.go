@@ -19,9 +19,9 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/planner"

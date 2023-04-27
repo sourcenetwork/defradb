@@ -16,8 +16,8 @@ package core
 import (
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
+	client "github.com/sourcenetwork/defradb"
+	"github.com/sourcenetwork/defradb/core/request"
 )
 
 // DocKeyFieldIndex is the index of the key field in a document.

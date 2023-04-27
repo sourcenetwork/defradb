@@ -1,6 +1,6 @@
 package connor
 
-import "github.com/sourcenetwork/defradb/client"
+import "github.com/sourcenetwork/defradb"
 
 // in will determine whether a value exists within the
 // condition's array of available values.

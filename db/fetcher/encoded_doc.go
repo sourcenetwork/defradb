@@ -16,7 +16,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/core"
 )
 

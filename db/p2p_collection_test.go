@@ -14,9 +14,8 @@ import (
 	"context"
 	"testing"
 
+	client "github.com/sourcenetwork/defradb"
 	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func newTestCollection(

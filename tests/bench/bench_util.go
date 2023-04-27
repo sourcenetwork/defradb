@@ -23,7 +23,7 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"

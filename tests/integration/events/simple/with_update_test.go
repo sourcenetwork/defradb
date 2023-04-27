@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
 )
 

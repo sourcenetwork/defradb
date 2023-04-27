@@ -18,7 +18,7 @@ import (
 	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"

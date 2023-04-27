@@ -20,8 +20,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/request"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 

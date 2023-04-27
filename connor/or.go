@@ -1,6 +1,6 @@
 package connor
 
-import "github.com/sourcenetwork/defradb/client"
+import "github.com/sourcenetwork/defradb"
 
 // or is an operator which allows the evaluation of
 // of a number of conditions, matching if any of them match.

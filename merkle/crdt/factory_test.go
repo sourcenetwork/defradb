@@ -17,7 +17,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"

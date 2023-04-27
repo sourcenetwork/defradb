@@ -20,8 +20,8 @@ import (
 	gqls "github.com/graphql-go/graphql/language/source"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
+	client "github.com/sourcenetwork/defradb"
+	"github.com/sourcenetwork/defradb/core/request"
 )
 
 // type condition

@@ -16,7 +16,7 @@ import (
 
 	"github.com/iancoleman/strcase"
 
-	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/core/request"
 )
 
 type explainablePlanNode interface {

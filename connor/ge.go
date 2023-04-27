@@ -3,7 +3,7 @@ package connor
 import (
 	"time"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/connor/numbers"
 )
 

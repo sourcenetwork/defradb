@@ -14,7 +14,7 @@ import (
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 
-	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/core/request"
 )
 
 // parseSubscriptionOperationDefinition parses the individual GraphQL

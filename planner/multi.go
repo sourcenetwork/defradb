@@ -11,7 +11,7 @@
 package planner
 
 import (
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/core"
 )
 

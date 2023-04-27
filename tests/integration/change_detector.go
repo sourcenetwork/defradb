@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 )
 
 func IsDetectingDbChanges() bool {

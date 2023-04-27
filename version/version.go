@@ -17,8 +17,8 @@ import (
 	"fmt"
 	"strings"
 
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core/net"
 )
 

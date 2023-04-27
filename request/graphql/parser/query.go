@@ -15,11 +15,10 @@ import (
 
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
-
-	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/core/request"
 )
 
 // parseQueryOperationDefinition parses the individual GraphQL

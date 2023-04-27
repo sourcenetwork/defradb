@@ -16,9 +16,8 @@ import (
 
 	gql "github.com/graphql-go/graphql"
 
-	"github.com/sourcenetwork/defradb/client"
-
-	"github.com/sourcenetwork/defradb/client/request"
+	client "github.com/sourcenetwork/defradb"
+	"github.com/sourcenetwork/defradb/core/request"
 	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
 )
 

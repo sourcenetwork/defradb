@@ -13,7 +13,7 @@ package request
 import (
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 )
 
 // SelectionType is the type of selection.

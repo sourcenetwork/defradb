@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 	netutils "github.com/sourcenetwork/defradb/net/utils"

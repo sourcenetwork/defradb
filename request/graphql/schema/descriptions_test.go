@@ -14,9 +14,8 @@ import (
 	"context"
 	"testing"
 
+	client "github.com/sourcenetwork/defradb"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestSingleSimpleType(t *testing.T) {

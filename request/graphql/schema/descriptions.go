@@ -13,7 +13,7 @@ package schema
 import (
 	gql "github.com/graphql-go/graphql"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 )
 
 var (

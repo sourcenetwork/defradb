@@ -13,7 +13,7 @@ package base
 import (
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/core"
 )
 

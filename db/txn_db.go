@@ -13,7 +13,7 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 

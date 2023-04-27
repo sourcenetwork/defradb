@@ -11,7 +11,7 @@
 package db
 
 import (
-	"github.com/sourcenetwork/defradb/client"
+	client "github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/errors"
 )
 

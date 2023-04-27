@@ -11,8 +11,8 @@
 package planner
 
 import (
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/request"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 

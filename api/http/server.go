@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"golang.org/x/crypto/acme/autocert"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
