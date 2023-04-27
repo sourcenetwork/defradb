@@ -31,7 +31,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.test.net")
+	log = logging.MustNewLogger("test.net")
 )
 
 const (

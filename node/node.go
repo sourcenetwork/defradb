@@ -50,7 +50,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.node")
+	log = logging.MustNewLogger("node")
 )
 
 const evtWaitTimeout = 10 * time.Second

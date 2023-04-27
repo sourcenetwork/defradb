@@ -34,7 +34,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.db")
+	log = logging.MustNewLogger("db")
 )
 
 // make sure we match our client interface

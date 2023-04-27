@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.tests.integration.explain")
+	log = logging.MustNewLogger("tests.integration.explain")
 
 	allPlanNodeNames = map[string]struct{}{
 		// Not a planNode but need it here as this is root of the explain graph.
