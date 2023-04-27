@@ -12,7 +12,7 @@ require (
 	github.com/go-errors/errors v1.4.2
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/gogo/protobuf v1.3.2
-	github.com/graphql-go/graphql v0.8.0
+	github.com/graphql-go/graphql v0.8.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/ipfs/boxo v0.8.1
@@ -198,6 +198,6 @@ require (
 
 // SourceNetwork fork og graphql-go
 replace (
-	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20221119101706-0f80a1725ab7
+	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20230427183824-8343db738835
 	github.com/textileio/go-libp2p-pubsub-rpc => github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.0-20230209220544-e16d5e34c4fc
 )
