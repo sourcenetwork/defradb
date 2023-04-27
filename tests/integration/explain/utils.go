@@ -154,37 +154,21 @@ func ExecuteExplainRequestTestCase(
 		log.Info(ctx, explainTest.Description, logging.NewKV("Database", dbi.name))
 
 		if testUtils.DetectDbChanges {
-			if testUtils.SetupOnly {
-				setupDatabase(
-					ctx,
-					t,
-					dbi,
-					schema,
-					collectionNames,
-					explainTest.Description,
-					explainTest.ExpectedError,
-					explainTest.Docs,
-					immutable.None[map[int]map[int][]string](),
-				)
-				dbi.db.Close(ctx)
-				return
-			}
-
-			dbi.db.Close(ctx)
-			db = testUtils.SetupDatabaseUsingTargetBranch(ctx, t, collectionNames)
-		} else {
-			setupDatabase(
-				ctx,
-				t,
-				dbi,
-				schema,
-				collectionNames,
-				explainTest.Description,
-				explainTest.ExpectedError,
-				explainTest.Docs,
-				immutable.None[map[int]map[int][]string](),
-			)
+			t.SkipNow()
+			return
 		}
+
+		setupDatabase(
+			ctx,
+			t,
+			dbi,
+			schema,
+			collectionNames,
+			explainTest.Description,
+			explainTest.ExpectedError,
+			explainTest.Docs,
+			immutable.None[map[int]map[int][]string](),
+		)
 
 		result := db.ExecRequest(ctx, explainTest.Request)
 		if assertExplainRequestResults(
