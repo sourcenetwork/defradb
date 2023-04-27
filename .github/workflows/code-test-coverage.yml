@@ -42,8 +42,10 @@ jobs:
         with:
           fail_ci_if_error: true
           files: ./coverage.txt
-          flags: defra-tests
+          flags: defradb-tests
           name: codecov-umbrella
           verbose: true
+          functionalities: 'fixes'
+          os: 'linux'
           # path_to_write_report: ./coverage/codecov_report.txt
           # directory: ./coverage/reports/

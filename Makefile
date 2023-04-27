@@ -195,10 +195,10 @@ test\:scripts:
 test\:coverage:
 	@$(MAKE) deps:coverage
 ifeq ($(path),)
-	go-acc ./... --output=coverage.txt --covermode=atomic -- -coverpkg=./...
+	go-acc ./... --output=coverage.txt --covermode=atomic -- -failfast -coverpkg=./...
 	@echo "Show coverage information for each function in ./..."
 else
-	go-acc $(path) --output=coverage.txt --covermode=atomic -- -coverpkg=$(path)
+	go-acc $(path) --output=coverage.txt --covermode=atomic -- -failfast -coverpkg=$(path)
 	@echo "Show coverage information for each function in" path=$(path)
 endif
 	go tool cover -func coverage.txt | grep total | awk '{print $$3}'
