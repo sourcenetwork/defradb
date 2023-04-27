@@ -155,12 +155,12 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	}
 
 	cmd.Flags().StringArray(
-		"allowedorigins", cfg.API.AllowedOrigins,
+		"allowed-origins", cfg.API.AllowedOrigins,
 		"List of origins to allow for CORS requests",
 	)
-	err = cfg.BindFlag("api.allowedorigins", cmd.Flags().Lookup("allowedorigins"))
+	err = cfg.BindFlag("api.allowed-origins", cmd.Flags().Lookup("allowed-origins"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.allowedorigins", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind api.allowed-origins", err)
 	}
 
 	cmd.Flags().String(

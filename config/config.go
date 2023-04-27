@@ -289,7 +289,7 @@ func (dbcfg DatastoreConfig) validate() error {
 type APIConfig struct {
 	Address        string
 	TLS            bool
-	AllowedOrigins []string
+	AllowedOrigins []string `mapstructure:"allowed-origins"`
 	PubKeyPath     string
 	PrivKeyPath    string
 	Email          string
