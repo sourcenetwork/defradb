@@ -305,6 +305,11 @@ func defaultAPIConfig() *APIConfig {
 }
 
 func (apicfg *APIConfig) validate() error {
+	const (
+		zeroIP    = "0.0.0.0"
+		zeroIP6   = "::"
+		localhost = "localhost"
+	)
 	if apicfg.Address == "" {
 		return ErrInvalidDatabaseURL
 	}
@@ -312,7 +317,7 @@ func (apicfg *APIConfig) validate() error {
 	host, port, err := net.SplitHostPort(apicfg.Address)
 	if err != nil {
 		host = strings.TrimSpace(apicfg.Address)
-		if isValidDomainName(host) && host != "localhost" && host != "0.0.0.0" {
+		if isValidDomainName(host) && host != localhost && host != zeroIP && host != zeroIP6 {
 			return nil
 		}
 		return ErrMissingPortNumber
@@ -322,7 +327,7 @@ func (apicfg *APIConfig) validate() error {
 		return ErrInvalidDatabaseURL
 	}
 
-	if (host == "localhost" || host == "::1" || host == "0.0.0.0") && port == "" { //nolint:goconst
+	if (host == localhost || host == "::1" || host == zeroIP || host == zeroIP6) && port == "" {
 		return ErrMissingPortNumber
 	}
 
