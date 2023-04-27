@@ -13,10 +13,12 @@ package cli
 import (
 	"context"
 	"fmt"
+	"net"
 	gonet "net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 
 	badger "github.com/dgraph-io/badger/v3"
@@ -55,10 +57,16 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 				if err := cfg.LoadWithRootdir(true); err != nil {
 					return config.NewErrLoadingConfig(err)
 				}
+				if err := validateURL(*cfg); err != nil {
+					return err
+				}
 				log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
 			} else {
 				if err := cfg.LoadWithRootdir(false); err != nil {
 					return config.NewErrLoadingConfig(err)
+				}
+				if err := validateURL(*cfg); err != nil {
+					return err
 				}
 				if config.FolderExists(cfg.Rootdir) {
 					if err := cfg.WriteConfigFile(); err != nil {
@@ -386,4 +394,36 @@ func wait(ctx context.Context, di *defraInstance) error {
 		di.close(ctx)
 		return ctx.Err()
 	}
+}
+
+// Additional validation for the API.Address parameter for the start command,
+// which ensures that the port of the URL is 443 or empty, if we're using TLS.
+// For the case in which we're not using TLS, the port can be any valid port but not empty.
+func validateURL(cfg config.Config) error {
+	url := cfg.API.Address
+
+	_, port, err := net.SplitHostPort(url)
+	if err != nil {
+		if strings.Contains(err.Error(), "missing port in address") && cfg.API.TLS {
+			// If we're using TLS, the port can be empty
+		} else {
+			return config.NewErrInvalidDatabaseURL(err)
+		}
+	}
+
+	if cfg.API.TLS {
+		if port != "443" && port != "" {
+			return config.NewErrInvalidPortForTLS(port)
+		}
+	} else {
+		// If we're not using TLS, the port should be any valid port but not empty
+		if port == "" {
+			return config.ErrMissingPortNumber
+		}
+		if _, err := strconv.Atoi(port); err != nil {
+			return config.NewErrInvalidPort(port)
+		}
+	}
+
+	return nil
 }

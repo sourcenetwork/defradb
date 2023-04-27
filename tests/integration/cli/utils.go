@@ -108,9 +108,9 @@ func runDefraNode(t *testing.T, conf DefraNodeConfig) func() []string {
 func runDefraCommand(t *testing.T, conf DefraNodeConfig, args []string) (stdout, stderr []string) {
 	t.Helper()
 	cfg := config.DefaultConfig()
-	args = append([]string{
-		"--url", conf.APIURL,
-	}, args...)
+	if !contains(args, "--url") {
+		args = append(args, "--url", conf.APIURL)
+	}
 	if !contains(args, "--rootdir") {
 		args = append(args, "--rootdir", t.TempDir())
 	}

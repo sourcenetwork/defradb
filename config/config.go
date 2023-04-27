@@ -309,23 +309,21 @@ func (apicfg *APIConfig) validate() error {
 		return ErrInvalidDatabaseURL
 	}
 
-	if apicfg.Address == "localhost" || net.ParseIP(apicfg.Address) != nil { //nolint:goconst
+	host, port, err := net.SplitHostPort(apicfg.Address)
+	if err != nil {
+		host = strings.TrimSpace(apicfg.Address)
+		if isValidDomainName(host) && host != "localhost" && host != "0.0.0.0" {
+			return nil
+		}
 		return ErrMissingPortNumber
 	}
 
-	if isValidDomainName(apicfg.Address) {
-		return nil
+	if !isValidDomainName(host) && !isValidIPAddress(host) {
+		return ErrInvalidDatabaseURL
 	}
 
-	host, _, err := net.SplitHostPort(apicfg.Address)
-	if err != nil {
-		return NewErrInvalidDatabaseURL(err)
-	}
-	if host == "localhost" {
-		return nil
-	}
-	if net.ParseIP(host) == nil {
-		return ErrNoPortWithDomain
+	if (host == "localhost" || host == "::1" || host == "0.0.0.0") && port == "" {
+		return ErrMissingPortNumber
 	}
 
 	return nil
@@ -337,6 +335,11 @@ func isValidDomainName(domain string) bool {
 		return false
 	}
 	return asciiDomain == domain
+}
+
+func isValidIPAddress(ip string) bool {
+	parsedIP := net.ParseIP(ip)
+	return parsedIP != nil
 }
 
 // AddressToURL provides the API address as URL.

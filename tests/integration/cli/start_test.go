@@ -13,6 +13,8 @@ package clitest
 import (
 	"fmt"
 	"testing"
+
+	"github.com/sourcenetwork/defradb/config"
 )
 
 func TestStartCommandBasic(t *testing.T) {
@@ -34,8 +36,8 @@ func TestStartCommandWithTLSIncomplete(t *testing.T) {
 		"--url", conf.APIURL,
 		"--tcpaddr", conf.GRPCAddr,
 	})
-	assertContainsSubstring(t, stderr, "Starting DefraDB service...")
 	assertContainsSubstring(t, stderr, "Error")
+	assertContainsSubstring(t, stderr, config.ErrInvalidPortForTLS.Error())
 }
 
 func TestStartCommandWithStoreMemory(t *testing.T) {

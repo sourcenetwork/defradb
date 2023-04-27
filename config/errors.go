@@ -48,8 +48,9 @@ const (
 	errUnableToParseByteSize       string = "unable to parse byte size"
 	errInvalidDatastorePath        string = "invalid datastore path"
 	errMissingPortNumber           string = "missing port number"
-	errNoPortWithDomain            string = "cannot provide port with domain name"
 	errInvalidRootDir              string = "invalid root directory"
+	errInvalidPortForTLS           string = "invalid port for TLS"
+	errinvalidPort                 string = "invalid port"
 )
 
 var (
@@ -86,8 +87,9 @@ var (
 	ErrInvalidLoggerConfig         = errors.New(errInvalidLoggerConfig)
 	ErrorInvalidDatastorePath      = errors.New(errInvalidDatastorePath)
 	ErrMissingPortNumber           = errors.New(errMissingPortNumber)
-	ErrNoPortWithDomain            = errors.New(errNoPortWithDomain)
-	ErrorInvalidRootDir            = errors.New(errInvalidRootDir)
+	ErrInvalidRootDir              = errors.New(errInvalidRootDir)
+	ErrInvalidPortForTLS           = errors.New(errInvalidPortForTLS)
+	ErrInvalidPort                 = errors.New(errinvalidPort)
 )
 
 func NewErrFailedToWriteFile(inner error, path string) error {
@@ -216,4 +218,12 @@ func NewErrInvalidDatastorePath(path string) error {
 
 func NewErrInvalidRootDir(path string) error {
 	return errors.New(errInvalidRootDir, errors.NewKV("path", path))
+}
+
+func NewErrInvalidPortForTLS(port string) error {
+	return errors.New(errInvalidPortForTLS, errors.NewKV("port", port))
+}
+
+func NewErrInvalidPort(port string) error {
+	return errors.New(errinvalidPort, errors.NewKV("port", port))
 }

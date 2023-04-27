@@ -514,18 +514,3 @@ func TestValidationAddress0000Valid(t *testing.T) {
 	err := cfg.validate()
 	assert.NoError(t, err)
 }
-
-func TestValidationAddressDomainWithSubdomainValidWithTLSCorrectPortIsInvalid(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.API.Address = "sub.example.com:443"
-	cfg.API.TLS = true
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrNoPortWithDomain)
-}
-
-func TestValidationAddressDomainWithSubdomainWrongPortIsInvalid(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.API.Address = "sub.example.com:9876"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrNoPortWithDomain)
-}
