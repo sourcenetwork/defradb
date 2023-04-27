@@ -154,6 +154,15 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 		log.FeedbackFatalE(context.Background(), "Could not bind api.tls", err)
 	}
 
+	cmd.Flags().StringArray(
+		"allowed-origins", cfg.API.AllowedOrigins,
+		"List of origins to allow for CORS requests",
+	)
+	err = cfg.BindFlag("api.allowed-origins", cmd.Flags().Lookup("allowed-origins"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.allowed-origins", err)
+	}
+
 	cmd.Flags().String(
 		"pubkeypath", cfg.API.PubKeyPath,
 		"Path to the public key for tls",
@@ -319,6 +328,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	sOpt := []func(*httpapi.Server){
 		httpapi.WithAddress(cfg.API.Address),
 		httpapi.WithRootDir(cfg.Rootdir),
+		httpapi.WithAllowedOrigins(cfg.API.AllowedOrigins...),
 	}
 
 	if n != nil {
