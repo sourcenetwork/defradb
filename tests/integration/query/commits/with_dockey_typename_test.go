@@ -24,28 +24,28 @@ func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							cid
 							__typename
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":        "bafybeifh5fpsnusu6tedflmcglsm4rxsc2k3h35iqsbrcevfish6xrxftq",
+						"cid":        "bafybeid4q6fhbbchwife54qqumb2rof6lui7d5njbkylkradmewqdibhjm",
 						"__typename": "Commit",
 					},
 					{
-						"cid":        "bafybeid32koipavfiznapnb7cbhbwqfi7vmbob6xj6tzj2w66utir4qv5y",
+						"cid":        "bafybeid435xjpnucmhshryyg3bfzf7be7hotq4m2kfw77yn7utd5yyimiq",
 						"__typename": "Commit",
 					},
 					{
-						"cid":        "bafybeickezedvwqujfvdih25kcwpkxtekdy3ykaofxejtxmhqybw2pfrnq",
+						"cid":        "bafybeic267ibnl45al5ekxpqorsbwv2xghsuxm4dpdi47ojhl7yuvdonuy",
 						"__typename": "Commit",
 					},
 				},

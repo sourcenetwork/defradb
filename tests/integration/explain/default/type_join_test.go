@@ -128,7 +128,7 @@ func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
 									"scanNode": dataMap{
 										"filter":         nil,
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"spans": []dataMap{
 											{
 												"start": "/3",
@@ -145,7 +145,7 @@ func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
 											"scanNode": dataMap{
 												"filter":         nil,
 												"collectionID":   "4",
-												"collectionName": "authorContact",
+												"collectionName": "AuthorContact",
 												"spans": []dataMap{
 													{
 														"start": "/4",
@@ -285,7 +285,7 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 											"scanNode": dataMap{
 												"filter":         nil,
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"spans": []dataMap{
 													{
 														"start": "/3",
@@ -302,7 +302,7 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 													"scanNode": dataMap{
 														"filter":         nil,
 														"collectionID":   "4",
-														"collectionName": "authorContact",
+														"collectionName": "AuthorContact",
 														"spans": []dataMap{
 															{
 																"start": "/4",
@@ -324,7 +324,7 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 											"scanNode": dataMap{
 												"filter":         nil,
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"spans": []dataMap{
 													{
 														"start": "/3",
@@ -341,7 +341,7 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 													"scanNode": dataMap{
 														"filter":         nil,
 														"collectionID":   "4",
-														"collectionName": "authorContact",
+														"collectionName": "AuthorContact",
 														"spans": []dataMap{
 															{
 																"start": "/4",
@@ -482,7 +482,7 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 									"scanNode": dataMap{
 										"filter":         nil,
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"spans": []dataMap{
 											{
 												"start": "/3",
@@ -504,7 +504,7 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 													"scanNode": dataMap{
 														"filter":         nil,
 														"collectionID":   "4",
-														"collectionName": "authorContact",
+														"collectionName": "AuthorContact",
 														"spans": []dataMap{
 															{
 																"start": "/4",
@@ -521,7 +521,7 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 															"scanNode": dataMap{
 																"filter":         nil,
 																"collectionID":   "5",
-																"collectionName": "contactAddress",
+																"collectionName": "ContactAddress",
 																"spans": []dataMap{
 																	{
 																		"start": "/5",

@@ -187,7 +187,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testi
 								"filter": nil,
 								"typeIndexJoin": dataMap{
 									"joinType": "typeJoinMany",
-									"rootName": "Author",
+									"rootName": "author",
 									"root": dataMap{
 										"scanNode": dataMap{
 											"filter":         nil,
@@ -274,7 +274,7 @@ func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T
 													},
 												},
 											},
-											"rootName": "Author",
+											"rootName": "author",
 											"subType": dataMap{
 												"selectTopNode": dataMap{
 													"selectNode": dataMap{
@@ -316,7 +316,7 @@ func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T
 													},
 												},
 											},
-											"rootName": "Author",
+											"rootName": "author",
 											"subType": dataMap{
 												"selectTopNode": dataMap{
 													"selectNode": dataMap{

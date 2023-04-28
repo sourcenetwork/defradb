@@ -27,7 +27,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 			Book (order: {rating: ASC, publisher: {yearOpened: DESC}}) {
 				name
 				rating
-				Publisher{
+				publisher{
 					name
 					yearOpened
 				}
@@ -37,7 +37,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 					{
 						"name":   "Sooley",
 						"rating": 3.2,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of Sooley",
 							"yearOpened": uint64(1999),
 						},
@@ -45,7 +45,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 					{
 						"name":   "The Rooster Bar",
 						"rating": 4.0,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of The Rooster Bar",
 							"yearOpened": uint64(2022),
 						},
@@ -53,12 +53,12 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 					{
 						"name":      "The Associate",
 						"rating":    4.2,
-						"Publisher": nil,
+						"publisher": nil,
 					},
 					{
 						"name":   "A Time for Mercy",
 						"rating": 4.5,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of A Time for Mercy",
 							"yearOpened": uint64(2013),
 						},
@@ -66,7 +66,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 					{
 						"name":   "Theif Lord",
 						"rating": 4.8,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of Theif Lord",
 							"yearOpened": uint64(2020),
 						},
@@ -74,7 +74,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 					{
 						"name":   "Painted House",
 						"rating": 4.9,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of Painted House",
 							"yearOpened": uint64(1995),
 						},
@@ -98,7 +98,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 			Book (order: {publisher: {yearOpened: DESC}, rating: ASC}) {
 				name
 				rating
-				Publisher{
+				publisher{
 					name
 					yearOpened
 				}
@@ -108,7 +108,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 					{
 						"name":   "The Rooster Bar",
 						"rating": 4.0,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of The Rooster Bar",
 							"yearOpened": uint64(2022),
 						},
@@ -116,7 +116,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 					{
 						"name":   "Theif Lord",
 						"rating": 4.8,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of Theif Lord",
 							"yearOpened": uint64(2020),
 						},
@@ -124,7 +124,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 					{
 						"name":   "A Time for Mercy",
 						"rating": 4.5,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of A Time for Mercy",
 							"yearOpened": uint64(2013),
 						},
@@ -132,7 +132,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 					{
 						"name":   "Sooley",
 						"rating": 3.2,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of Sooley",
 							"yearOpened": uint64(1999),
 						},
@@ -140,7 +140,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 					{
 						"name":   "Painted House",
 						"rating": 4.9,
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name":       "Only Publisher of Painted House",
 							"yearOpened": uint64(1995),
 						},
@@ -148,7 +148,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 					{
 						"name":      "The Associate",
 						"rating":    4.2,
-						"Publisher": nil,
+						"publisher": nil,
 					},
 				},
 			},

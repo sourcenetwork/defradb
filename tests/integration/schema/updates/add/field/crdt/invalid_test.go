@@ -23,17 +23,17 @@ func TestSchemaUpdatesAddFieldCRDTInvalidErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 2, "Typ":99} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":99} }
 					]
 				`,
-				ExpectedError: "only default or LWW (last writer wins) CRDT types are supported. Name: Foo, CRDTType: 99",
+				ExpectedError: "only default or LWW (last writer wins) CRDT types are supported. Name: foo, CRDTType: 99",
 			},
 		},
 	}

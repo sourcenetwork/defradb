@@ -23,7 +23,7 @@ func TestQueryOneToManyWithTypeName(t *testing.T) {
 					Book {
 						name
 						__typename
-						Author {
+						author {
 							name
 							__typename
 						}
@@ -51,7 +51,7 @@ func TestQueryOneToManyWithTypeName(t *testing.T) {
 			{
 				"name":       "Painted House",
 				"__typename": "Book",
-				"Author": map[string]any{
+				"author": map[string]any{
 					"name":       "John Grisham",
 					"__typename": "Author",
 				},

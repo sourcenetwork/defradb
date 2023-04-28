@@ -56,10 +56,10 @@ func TestSchemaUpdatesReplaceFieldWithIDErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/Users/Schema/Fields/2", "value": {"ID":2, "Name": "Fax", "Kind": 11} }
+						{ "op": "replace", "path": "/Users/Schema/Fields/2", "value": {"ID":2, "Name": "fax", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "mutating an existing field is not supported. ID: 2, ProposedName: Fax",
+				ExpectedError: "mutating an existing field is not supported. ID: 2, ProposedName: fax",
 			},
 		},
 	}

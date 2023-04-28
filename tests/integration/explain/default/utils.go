@@ -39,7 +39,7 @@ var bookAuthorGQLSchema = (`
 		verified: Boolean
 		books: [Book]
 		articles: [Article]
-		contact: authorContact
+		contact: AuthorContact
 	}
 
 	type AuthorContact {

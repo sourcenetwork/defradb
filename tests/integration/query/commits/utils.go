@@ -16,15 +16,15 @@ import (
 
 const userCollectionGQLSchema = (`
 	type Users {
-		Name: String
-		Age: Int
-		Verified: Boolean
+		name: String
+		age: Int
+		verified: Boolean
 	}
 `)
 
 const companiesCollectionGQLSchema = (`
 	type Companies {
-		Name: String
+		name: String
 	}
 `)
 

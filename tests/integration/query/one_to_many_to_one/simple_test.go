@@ -101,10 +101,10 @@ func TestQueryOneToOneRelations(t *testing.T) {
 				Request: `query {
 					Book {
 						name
-						Author {
+						author {
 							name
 						}
-						Publisher {
+						publisher {
 							name
 						}
 					}
@@ -112,26 +112,26 @@ func TestQueryOneToOneRelations(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "The Associate",
-						"Author": map[string]any{
+						"author": map[string]any{
 							"name": "John Grisham",
 						},
-						"Publisher": nil,
+						"publisher": nil,
 					},
 					{
 						"name": "The Rooster Bar",
-						"Author": map[string]any{
+						"author": map[string]any{
 							"name": "Cornelia Funke",
 						},
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name": "Only Publisher of The Rooster Bar",
 						},
 					},
 					{
 						"name": "Theif Lord",
-						"Author": map[string]any{
+						"author": map[string]any{
 							"name": "John Grisham",
 						},
-						"Publisher": map[string]any{
+						"publisher": map[string]any{
 							"name": "Only Publisher of Theif Lord",
 						},
 					},

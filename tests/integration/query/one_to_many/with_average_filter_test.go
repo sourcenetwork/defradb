@@ -62,7 +62,7 @@ func TestQueryOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.
 										"filter": nil,
 										"typeIndexJoin": dataMap{
 											"joinType": "typeJoinMany",
-											"rootName": "Author",
+											"rootName": "author",
 											"root": dataMap{
 												"scanNode": dataMap{
 													"filter":         nil,

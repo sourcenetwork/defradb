@@ -55,7 +55,7 @@ func TestExplainAscendingOrderQueryOnParent(t *testing.T) {
 								"scanNode": dataMap{
 									"filter":         nil,
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"spans": []dataMap{
 										{
 											"start": "/3",
@@ -121,7 +121,7 @@ func TestExplainQueryWithMultiOrderFieldsOnParent(t *testing.T) {
 								"scanNode": dataMap{
 									"filter":         nil,
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"spans": []dataMap{
 										{
 											"start": "/3",
@@ -213,7 +213,7 @@ func TestExplainQueryWithOrderFieldOnChild(t *testing.T) {
 								"root": dataMap{
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
@@ -239,7 +239,7 @@ func TestExplainQueryWithOrderFieldOnChild(t *testing.T) {
 												"filter": nil,
 												"scanNode": dataMap{
 													"collectionID":   "1",
-													"collectionName": "article",
+													"collectionName": "Article",
 													"filter":         nil,
 													"spans": []dataMap{
 														{
@@ -331,7 +331,7 @@ func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
 									"root": dataMap{
 										"scanNode": dataMap{
 											"collectionID":   "3",
-											"collectionName": "author",
+											"collectionName": "Author",
 											"filter":         nil,
 											"spans": []dataMap{
 												{
@@ -357,7 +357,7 @@ func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
 													"filter": nil,
 													"scanNode": dataMap{
 														"collectionID":   "1",
-														"collectionName": "article",
+														"collectionName": "Article",
 														"filter":         nil,
 														"spans": []dataMap{
 															{
@@ -454,7 +454,7 @@ func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
 									"root": dataMap{
 										"scanNode": dataMap{
 											"collectionID":   "3",
-											"collectionName": "author",
+											"collectionName": "Author",
 											"filter":         nil,
 											"spans": []dataMap{
 												{
@@ -471,7 +471,7 @@ func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
 												"filter": nil,
 												"scanNode": dataMap{
 													"collectionID":   "1",
-													"collectionName": "article",
+													"collectionName": "Article",
 													"filter":         nil,
 													"spans": []dataMap{
 														{

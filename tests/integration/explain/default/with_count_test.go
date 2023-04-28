@@ -102,7 +102,7 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 										"scanNode": dataMap{
 											"filter":         nil,
 											"collectionID":   "3",
-											"collectionName": "author",
+											"collectionName": "Author",
 											"spans": []dataMap{
 												{
 													"start": "/3",
@@ -119,7 +119,7 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 												"scanNode": dataMap{
 													"filter":         nil,
 													"collectionID":   "2",
-													"collectionName": "book",
+													"collectionName": "Book",
 													"spans": []dataMap{
 														{
 															"start": "/2",

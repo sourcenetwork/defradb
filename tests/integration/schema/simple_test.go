@@ -156,7 +156,7 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: NotAType
+						name: NotAType
 					}
 				`,
 				ExpectedError: "no type found for given name",
@@ -173,7 +173,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -197,7 +197,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 						"name": "Users",
 						"fields": DefaultFields.Append(
 							Field{
-								"name": "Name",
+								"name": "name",
 								"type": map[string]any{
 									"kind": "SCALAR",
 									"name": "String",

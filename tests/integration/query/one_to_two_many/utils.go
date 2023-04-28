@@ -20,7 +20,7 @@ var bookAuthorGQLSchema = (`
 	type Book {
 		name: String
 		rating: Float
-		Price: Price
+		price: Price
 		author: Author @relation(name: "written_books")
 		reviewedBy: Author @relation(name: "reviewed_books")
 	}

@@ -478,13 +478,8 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-<<<<<<< HEAD
-					query {
-						__type (name: "users") {
-=======
 					query IntrospectionQuery {
 						__type (name: "Users") {
->>>>>>> WIP
 							name
 							fields {
 								name
@@ -609,13 +604,8 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-<<<<<<< HEAD
-					query {
-						__type (name: "users") {
-=======
 					query IntrospectionQuery {
 						__type (name: "Users") {
->>>>>>> WIP
 							name
 							fields {
 								name
@@ -740,13 +730,8 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-<<<<<<< HEAD
-					query {
-						__type (name: "users") {
-=======
 					query IntrospectionQuery {
 						__type (name: "Users") {
->>>>>>> WIP
 							name
 							fields {
 								name
@@ -895,13 +880,8 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-<<<<<<< HEAD
-					query {
-						__type (name: "users") {
-=======
 					query IntrospectionQuery {
 						__type (name: "Users") {
->>>>>>> WIP
 							name
 							fields {
 								name
@@ -1050,13 +1030,8 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-<<<<<<< HEAD
-					query {
-						__type (name: "users") {
-=======
 					query IntrospectionQuery {
 						__type (name: "Users") {
->>>>>>> WIP
 							name
 							fields {
 								name
@@ -1205,13 +1180,8 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-<<<<<<< HEAD
-					query {
-						__type (name: "users") {
-=======
 					query IntrospectionQuery {
 						__type (name: "Users") {
->>>>>>> WIP
 							name
 							fields {
 								name
@@ -1360,13 +1330,8 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-<<<<<<< HEAD
-					query {
-						__type (name: "users") {
-=======
 					query IntrospectionQuery {
 						__type (name: "Users") {
->>>>>>> WIP
 							name
 							fields {
 								name
@@ -1503,13 +1468,8 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
-<<<<<<< HEAD
-					query {
-						__type (name: "users") {
-=======
 					query IntrospectionQuery {
 						__type (name: "Users") {
->>>>>>> WIP
 							name
 							fields {
 								name

@@ -24,7 +24,7 @@ func TestQueryOneToMany(t *testing.T) {
 						Book {
 							name
 							rating
-							Author {
+							author {
 								name
 								age
 							}
@@ -52,7 +52,7 @@ func TestQueryOneToMany(t *testing.T) {
 				{
 					"name":   "Painted House",
 					"rating": 4.9,
-					"Author": map[string]any{
+					"author": map[string]any{
 						"name": "John Grisham",
 						"age":  uint64(65),
 					},
@@ -147,7 +147,7 @@ func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
 						Book {
 							name
 							rating
-							Author {
+							author {
 								name
 								age
 							}

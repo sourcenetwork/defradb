@@ -64,14 +64,14 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
 				DocKey: immutable.Some(docKey1),
-				Cid:    immutable.Some("bafybeiduhusqoizl5lmbszxkk42nqw4uxyvwxul45n2sszr6srwpdpmrdi"),
+				Cid:    immutable.Some("bafybeic3qo5jhvzdg2h33o7iu2fo3gvrerbxmhl3irulxsf324wyypfesa"),
 			},
 			{
 				DocKey: immutable.Some(docKey2),
 			},
 			{
 				DocKey: immutable.Some(docKey1),
-				Cid:    immutable.Some("bafybeife6ovwym6sr5aoz5w2eih6uhjva5ac7gsehkqx4z3bzlzuvp7cqy"),
+				Cid:    immutable.Some("bafybeidr2ebwfanzdtrqkjsvcaepwdyxv4y5cwndjtcwzibmfuk6xud3nm"),
 			},
 		},
 	}

@@ -81,7 +81,7 @@ func TestUpdateOneToOneSavesGivenNewRelationValue(t *testing.T) {
 
 	err = doc.SetWithJSON(
 		[]byte(
-			`{G˝˝
+			`{
 				"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 			}`,
 		),
@@ -135,19 +135,19 @@ func TestUpdateOneToOneSaveFromSecondarySide(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Docs: map[string][]string{
-			"author": {
+			"Author": {
 				`{
 					"name": "John Grisham"
 				}`,
 			},
-			"book": {
+			"Book": {
 				`{
 					"name": "Painted House"
 				}`,
 			},
 		},
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"book": []func(c client.Collection) error{
+			"Book": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					return c.Save(context.Background(), doc)
 				},

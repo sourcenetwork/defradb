@@ -24,7 +24,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 				name
 				published {
 					name
-					Publisher {
+					publisher {
 						name
 					}
 				}
@@ -72,7 +72,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 				"name": "John Grisham",
 				"published": map[string]any{
 					"name": "Painted House",
-					"Publisher": map[string]any{
+					"publisher": map[string]any{
 						"name": "Old Publisher",
 					},
 				},
@@ -81,7 +81,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 				"name": "Cornelia Funke",
 				"published": map[string]any{
 					"name": "Theif Lord",
-					"Publisher": map[string]any{
+					"publisher": map[string]any{
 						"name": "New Publisher",
 					},
 				},

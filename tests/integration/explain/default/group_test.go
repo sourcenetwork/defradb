@@ -57,7 +57,7 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 							"groupByFields": []string{"age"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -69,7 +69,7 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -130,7 +130,7 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 							"groupByFields": []string{"age", "name"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -142,7 +142,7 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{

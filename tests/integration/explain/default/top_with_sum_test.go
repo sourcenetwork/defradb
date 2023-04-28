@@ -22,14 +22,14 @@ func TestExplainTopLevelSumQuery(t *testing.T) {
 
 		Request: `query @explain {
 			_sum(
-				author: {
+				Author: {
 					field: age
 				}
 			)
 		}`,
 
 		Docs: map[int][]string{
-			//authors
+			//Authors
 			2: {
 				`{
 					"name": "John",
@@ -54,7 +54,7 @@ func TestExplainTopLevelSumQuery(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
@@ -70,7 +70,7 @@ func TestExplainTopLevelSumQuery(t *testing.T) {
 							"sumNode": dataMap{
 								"sources": []dataMap{
 									{
-										"fieldName":      "author",
+										"fieldName":      "Author",
 										"childFieldName": "age",
 										"filter":         nil,
 									},
@@ -92,7 +92,7 @@ func TestExplainTopLevelSumQueryWithFilter(t *testing.T) {
 
 		Request: `query @explain {
 			_sum(
-				author: {
+				Author: {
 					field: age,
 					filter: {
 						age: {
@@ -104,7 +104,7 @@ func TestExplainTopLevelSumQueryWithFilter(t *testing.T) {
 		}`,
 
 		Docs: map[int][]string{
-			//authors
+			//Authors
 			2: {
 				`{
 					"name": "John",
@@ -134,7 +134,7 @@ func TestExplainTopLevelSumQueryWithFilter(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter": dataMap{
 											"age": dataMap{
 												"_gt": int(26),
@@ -154,7 +154,7 @@ func TestExplainTopLevelSumQueryWithFilter(t *testing.T) {
 							"sumNode": dataMap{
 								"sources": []dataMap{
 									{
-										"fieldName":      "author",
+										"fieldName":      "Author",
 										"childFieldName": "age",
 										"filter": dataMap{
 											"age": dataMap{

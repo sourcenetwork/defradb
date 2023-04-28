@@ -60,7 +60,7 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 							"groupByFields": []string{"age"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -72,7 +72,7 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
 											"_gt": int(63),
@@ -137,7 +137,7 @@ func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 							"groupByFields": []string{"age"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -154,7 +154,7 @@ func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 								"scanNode": dataMap{
 									"filter":         nil,
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"spans": []dataMap{
 										{
 											"start": "/3",

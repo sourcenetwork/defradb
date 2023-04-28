@@ -94,7 +94,7 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 									"groupNode": dataMap{
 										"childSelects": []dataMap{
 											{
-												"collectionName": "author",
+												"collectionName": "Author",
 												"docKeys":        nil,
 												"groupBy":        nil,
 												"limit":          nil,
@@ -111,7 +111,7 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 											"filter": nil,
 											"scanNode": dataMap{
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"filter":         nil,
 												"spans": []dataMap{
 													{
@@ -208,7 +208,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 									"groupNode": dataMap{
 										"childSelects": []dataMap{
 											{
-												"collectionName": "author",
+												"collectionName": "Author",
 												"groupBy":        []string{"verified", "name"},
 												"docKeys":        nil,
 												"filter":         nil,
@@ -221,7 +221,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 											"filter": nil,
 											"scanNode": dataMap{
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"filter":         nil,
 												"spans": []dataMap{
 													{
@@ -321,7 +321,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 									"groupNode": dataMap{
 										"childSelects": []dataMap{
 											{
-												"collectionName": "author",
+												"collectionName": "Author",
 												"groupBy":        []string{"verified", "name"},
 												"docKeys":        nil,
 												"filter":         nil,
@@ -334,7 +334,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 											"filter": nil,
 											"scanNode": dataMap{
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"filter":         nil,
 												"spans": []dataMap{
 													{
@@ -435,7 +435,7 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 									"groupNode": dataMap{
 										"childSelects": []dataMap{
 											{
-												"collectionName": "author",
+												"collectionName": "Author",
 												"groupBy":        []string{"verified", "name"},
 												"docKeys":        nil,
 												"filter":         nil,
@@ -448,7 +448,7 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 											"filter": nil,
 											"scanNode": dataMap{
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"filter":         nil,
 												"spans": []dataMap{
 													{

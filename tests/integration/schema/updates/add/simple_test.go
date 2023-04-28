@@ -30,10 +30,10 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/-", "value": {"Name": "Books"} }
+						{ "op": "add", "path": "/-", "value": {"Name": "books"} }
 					]
 				`,
-				ExpectedError: "unknown collection, adding collections via patch is not supported. Name: Books",
+				ExpectedError: "unknown collection, adding collections via patch is not supported. Name: books",
 			},
 			testUtils.Request{
 				Request: `query {
@@ -110,7 +110,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Foo/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Foo/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "add operation does not apply: doc is missing path",
@@ -142,7 +142,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Foo/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Foo/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "add operation does not apply: doc is missing path",

@@ -26,10 +26,10 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						NewestPublishersBook: Book(order: {publisher: {yearOpened: DESC}}, limit: 1) {
+						NewestPublishersBook: book(order: {publisher: {yearOpened: DESC}}, limit: 1) {
 							name
 						}
-						OldestPublishersBook: Book(order: {publisher: {yearOpened: ASC}}, limit: 1) {
+						OldestPublishersBook: book(order: {publisher: {yearOpened: ASC}}, limit: 1) {
 							name
 						}
 					}

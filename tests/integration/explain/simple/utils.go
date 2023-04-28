@@ -44,7 +44,7 @@ var bookAuthorGQLSchema = (`
 	type AuthorContact {
 		cell: String
 		email: String
-		author: author
+		author: Author
 		address: ContactAddress
 	}
 

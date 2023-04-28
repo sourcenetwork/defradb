@@ -24,7 +24,7 @@ func TestQueryOneToOne(t *testing.T) {
 						Book {
 							name
 							rating
-							Author {
+							author {
 								name
 								age
 							}
@@ -52,7 +52,7 @@ func TestQueryOneToOne(t *testing.T) {
 				{
 					"name":   "Painted House",
 					"rating": 4.9,
-					"Author": map[string]any{
+					"author": map[string]any{
 						"name": "John Grisham",
 						"age":  uint64(65),
 					},
@@ -113,7 +113,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 		Request: `query {
 			Book {
 				name
-				Author {
+				author {
 					name
 				}
 			}
@@ -153,13 +153,13 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"name": "Go Guide for Rust developers",
-				"Author": map[string]any{
+				"author": map[string]any{
 					"name": "Andrew Lone",
 				},
 			},
 			{
 				"name": "Painted House",
-				"Author": map[string]any{
+				"author": map[string]any{
 					"name": "John Grisham",
 				},
 			},
@@ -259,7 +259,7 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 		Request: `query {
 			Book {
 				name
-				Author {
+				author {
 					name
 				}
 			}
@@ -275,7 +275,7 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"name":   "Painted House",
-				"Author": nil,
+				"author": nil,
 			},
 		},
 	}

@@ -108,14 +108,14 @@ func TestCollectionCreateSaveFromSecondarySide(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Docs: map[string][]string{
-			"author": {
+			"Author": {
 				`{
 					"name": "John Grisham"
 				}`,
 			},
 		},
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"book": []func(c client.Collection) error{
+			"Book": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					return c.Save(context.Background(), doc)
 				},

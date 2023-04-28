@@ -140,7 +140,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"filter":         nil,
 									"groupBy":        nil,
@@ -153,7 +153,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -223,7 +223,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -236,7 +236,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
 											"_eq": int(20),

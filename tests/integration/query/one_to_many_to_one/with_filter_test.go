@@ -100,8 +100,8 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 				Request: `query {
 					Author (filter: {book: {publisher: {yearOpened: {_gt: 2021}}}}) {
 						name
-						Book {
-							Publisher {
+						book {
+							publisher {
 								yearOpened
 							}
 						}
@@ -110,9 +110,9 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "Cornelia Funke",
-						"Book": []map[string]any{
+						"book": []map[string]any{
 							{
-								"Publisher": map[string]any{
+								"publisher": map[string]any{
 									"yearOpened": uint64(2022),
 								},
 							},
@@ -177,7 +177,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 					Author {
 						name
 						s1: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
-						Publishers2020: Book(filter: {publisher: {yearOpened: {_ge: 2020}}}) {
+						books2020: book(filter: {publisher: {yearOpened: {_ge: 2020}}}) {
 							name
 						}
 					}
@@ -186,21 +186,21 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 					{
 						"name": "John Grisham",
 						"s1":   4.5,
-						"Publishers2020": []map[string]any{
+						"books2020": []map[string]any{
 							{
 								"name": "Theif Lord",
 							},
 						},
 					},
 					{
-						"name":           "Not a Writer",
-						"s1":             0.0,
-						"Publishers2020": []map[string]any{},
+						"name":      "Not a Writer",
+						"s1":        0.0,
+						"books2020": []map[string]any{},
 					},
 					{
 						"name": "Cornelia Funke",
 						"s1":   0.0,
-						"Publishers2020": []map[string]any{
+						"books2020": []map[string]any{
 							{
 								"name": "The Rooster Bar",
 							},

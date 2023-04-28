@@ -27,7 +27,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 					Author {
 						name
 						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
-						NewestPublishersBook: Book(order: {publisher: {yearOpened: DESC}}, limit: 2) {
+						NewestPublishersBook: book(order: {publisher: {yearOpened: DESC}}, limit: 2) {
 							name
 						}
 					}
@@ -77,7 +77,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 					Author {
 						name
 						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
-						NewestPublishersBook: Book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
+						NewestPublishersBook: book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
 							name
 						}
 					}
@@ -170,7 +170,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 					Author {
 						name
 						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
-						OldestPublishersBook: Book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
+						OldestPublishersBook: book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
 							name
 						}
 					}

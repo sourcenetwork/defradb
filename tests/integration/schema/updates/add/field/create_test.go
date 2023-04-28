@@ -36,7 +36,7 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -50,9 +50,9 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_key":  "bae-43deba43-f2bc-59f4-9056-fef661b22832",
-						"Name":  "John",
-						"Email": nil,
+						"_key":  "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
+						"name":  "John",
+						"email": nil,
 					},
 				},
 			},
@@ -84,7 +84,7 @@ func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -105,14 +105,14 @@ func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_key":  "bae-43deba43-f2bc-59f4-9056-fef661b22832",
-						"name":  "John",
-						"email": nil,
-					},
-					{
-						"_key":  "bae-68926881-2eed-519b-b4eb-883b4a6624a6",
+						"_key":  "bae-1ff978e7-b6ab-5ca7-8344-7fdcff65f94e",
 						"name":  "Shahzad",
 						"email": "sqlizded@yahoo.ca",
+					},
+					{
+						"_key":  "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
+						"name":  "John",
+						"email": nil,
 					},
 				},
 			},

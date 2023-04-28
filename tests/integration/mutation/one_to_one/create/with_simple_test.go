@@ -49,7 +49,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-						create_book(data: "{\"name\": \"Painted House\"}") {
+						create_Book(data: "{\"name\": \"Painted House\"}") {
 							_key
 						}
 					}`,
@@ -77,7 +77,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						book {
+						Book {
 							name
 							author {
 								name
@@ -96,7 +96,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						author {
+						Author {
 							name
 							published {
 								name
@@ -139,7 +139,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
-						create_book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
 							name
 						}
 					}`,
@@ -154,7 +154,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						author {
+						Author {
 							name
 							published {
 								name

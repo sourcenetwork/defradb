@@ -80,7 +80,7 @@ func TestSchemaUpdatesTestCollectionNameDoesNotChangeVersionID(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			testUtils.SchemaPatch{

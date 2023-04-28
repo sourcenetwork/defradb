@@ -23,7 +23,7 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 					Book {
 						name
 						rating
-						Author(filter: {age: {_eq: 65}}) {
+						author(filter: {age: {_eq: 65}}) {
 							name
 							age
 						}
@@ -51,7 +51,7 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"Author": map[string]any{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(65),
 				},
@@ -69,7 +69,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 					Book(filter: {name: {_eq: "Painted House"}}) {
 						name
 						rating
-						Author {
+						author {
 							name
 							age
 						}
@@ -97,7 +97,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"Author": map[string]any{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(65),
 				},
@@ -115,7 +115,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 					Book(filter: {author: {verified: {_eq: true}}}) {
 						name
 						rating
-						Author {
+						author {
 							name
 							age
 						}
@@ -143,7 +143,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"Author": map[string]any{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(65),
 				},
@@ -161,7 +161,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 					Book(filter: {author: {published: {rating: {_eq: 4.9}}}}) {
 						name
 						rating
-						Author {
+						author {
 							name
 							age
 						}
@@ -201,7 +201,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"Author": map[string]any{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(65),
 				},
