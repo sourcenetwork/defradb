@@ -1027,7 +1027,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 				} else { // objects (relations)
 					fieldType := field.Type
 					if l, isList := field.Type.(*gql.List); isList {
-						// Filtering by inline array value is currently not supported
+						// We want the FilterArg for the object, not the list of objects.
 						fieldType = l.OfType
 					}
 					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(fieldType, "FilterArg")]
