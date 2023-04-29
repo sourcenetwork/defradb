@@ -14,12 +14,20 @@ message DeleteReplicatorRequest {
     bytes peerID = 1;
 }
 
+/*
+peerID: a peer ID, encoded in base58
+*/
 message DeleteReplicatorReply {
     bytes peerID = 1;
 }
 
 message GetAllReplicatorRequest {}
 
+/*
+id: a peer ID, encoded in base58
+addrs: a multiaddr
+schemas: list of collection IDs
+*/
 message GetAllReplicatorReply {
     message Replicators {
         message Info {
@@ -52,6 +60,11 @@ message RemoveP2PCollectionsReply {
 
 message GetAllP2PCollectionsRequest {}
 
+/*
+id: a peer ID, encoded in base58
+name: a peer name
+TBD
+*/
 message GetAllP2PCollectionsReply {
     message Collection {
         string id = 1;
