@@ -369,7 +369,7 @@ func (p *Peer) setReplicator(
 			if _, exists := reps[pid]; exists {
 				p.mu.Unlock()
 				return pid, errors.New(fmt.Sprintf(
-					"Replicator already exists for %s with ID %s",
+					"Replicator already exists for %s with PeerID %s",
 					col.Name(),
 					pid,
 				))
