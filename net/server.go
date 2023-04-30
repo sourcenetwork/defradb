@@ -196,7 +196,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-	log.Debug(ctx, "Received a PushLog request", logging.NewKV("PID", pid))
+	log.Debug(ctx, "Received a PushLog request", logging.NewKV("PeerID", pid))
 
 	// parse request object
 	cid := req.Body.Cid.Cid
@@ -438,7 +438,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 	log.Debug(
 		s.peer.ctx,
 		"Handling new pubsub message",
-		logging.NewKV("SenderId", from),
+		logging.NewKV("SenderID", from),
 		logging.NewKV("Topic", topic),
 	)
 	req := new(pb.PushLogRequest)

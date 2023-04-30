@@ -208,7 +208,7 @@ func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 				log.Info(n.ctx, "Cannot connect to peer", logging.NewKV("Error", err))
 				return
 			}
-			log.Info(n.ctx, "Connected", logging.NewKV("Peer ID", pinfo.ID))
+			log.Info(n.ctx, "Connected", logging.NewKV("PeerID", pinfo.ID))
 			atomic.AddUint64(&connected, 1)
 		}(pinfo)
 	}
