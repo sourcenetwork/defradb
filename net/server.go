@@ -207,7 +207,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		if s.pushLogEmitter != nil {
 			byPeer, err := libpeer.Decode(req.Body.Creator)
 			if err != nil {
-				log.Info(ctx, "could not decode the peer id of the log creator", logging.NewKV("Error", err.Error()))
+				log.Info(ctx, "could not decode the PeerID of the log creator", logging.NewKV("Error", err.Error()))
 			}
 			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
 				FromPeer: pid,
@@ -494,7 +494,7 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 	}
 	pid, err := libpeer.Decode(ctxPeer.Addr.String())
 	if err != nil {
-		return "", errors.Wrap("parsing stream peer id", err)
+		return "", errors.Wrap("parsing stream PeerID", err)
 	}
 	return pid, nil
 }

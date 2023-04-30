@@ -45,13 +45,8 @@ func MakeReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 			if err != nil {
 				return errors.Wrap("could not parse peer address", err)
 			}
-
-			if len(col) != 0 {
-
-			} else {
-				if !fullRep {
-					return errors.New("must run with either --full or --collection")
-				}
+			if len(col) == 0 && !fullRep {
+				return errors.New("must run with either --full or --collection")
 			}
 
 			cred := insecure.NewCredentials()
