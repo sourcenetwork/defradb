@@ -128,7 +128,7 @@ func init() {
 	SetupOnly = getBool(setupOnlyValue)
 
 	if !repositorySpecified {
-		repositoryValue = "git@github.com:sourcenetwork/defradb.git"
+		repositoryValue = "https://github.com/sourcenetwork/defradb.git"
 	}
 
 	if !targetBranchSpecified {
