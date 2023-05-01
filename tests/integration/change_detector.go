@@ -14,15 +14,17 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path"
 	"runtime"
 	"strings"
 	"testing"
-
-	"github.com/sourcenetwork/defradb/client"
+	"time"
 )
+
+var skip bool
 
 func IsDetectingDbChanges() bool {
 	return DetectDbChanges
@@ -33,6 +35,10 @@ func DetectDbChangesPreTestChecks(
 	t *testing.T,
 	collectionNames []string,
 ) bool {
+	if skip {
+		t.SkipNow()
+	}
+
 	if previousTestCaseTestName == t.Name() {
 		// The database format changer currently only supports running the first test
 		//  case, if a second case is detected we return early
@@ -69,6 +75,16 @@ func detectDbChangesInit(repository string, targetBranch string) {
 
 	latestTargetCommitHash := getLatestCommit(repository, targetBranch)
 	detectDbChangesCodeDir = path.Join(changeDetectorTempDir, "code", latestTargetCommitHash)
+	rand.Seed(time.Now().Unix())
+	randNumber := rand.Int()
+	dbsDir := path.Join(changeDetectorTempDir, "dbs", fmt.Sprint(randNumber))
+
+	testPackagePath, isIntegrationTest := getTestPackagePath()
+	if !isIntegrationTest {
+		skip = true
+		return
+	}
+	rootDatabaseDir = path.Join(dbsDir, strings.ReplaceAll(testPackagePath, "/", "_"))
 
 	_, err := os.Stat(detectDbChangesCodeDir)
 	// Warning - there is a race condition here, where if running multiple packages in
@@ -111,14 +127,12 @@ func detectDbChangesInit(repository string, targetBranch string) {
 	}
 
 	areDatabaseFormatChangesDocumented = checkIfDatabaseFormatChangesAreDocumented()
-}
+	if areDatabaseFormatChangesDocumented {
+		// Dont bother doing anything if the changes are documented
+		return
+	}
 
-func SetupDatabaseUsingTargetBranch(
-	ctx context.Context,
-	t *testing.T,
-	collectionNames []string,
-) client.DB {
-	targetTestPackage := detectDbChangesCodeDir + "/tests/integration/" + getTestPackagePath()
+	targetTestPackage := detectDbChangesCodeDir + "/tests/integration/" + testPackagePath
 
 	// If we are checking for database changes, and we are not seting up the database,
 	// then we must be in the main test process, and need to create a new process
@@ -128,69 +142,41 @@ func SetupDatabaseUsingTargetBranch(
 		"go",
 		"test",
 		"./...",
-		"--run",
-		fmt.Sprintf("^%s$", t.Name()),
 		"-v",
 	)
-
-	path := t.TempDir()
 
 	goTestCmd.Dir = targetTestPackage
 	goTestCmd.Env = os.Environ()
 	goTestCmd.Env = append(
 		goTestCmd.Env,
 		setupOnlyEnvName+"=true",
-		fileBadgerPathEnvName+"="+path,
+		rootDBFilePathEnvName+"="+rootDatabaseDir,
 	)
 	out, err := goTestCmd.Output()
-
 	if err != nil {
-		// If file is not found - this must be a new test and
-		// doesn't exist in the target branch, so we pass it
-		// because the child process tries to run the test, but
-		// if it doesnt find it, the parent test should pass (not panic).
-		if strings.Contains(err.Error(), ": no such file or directory") {
-			t.SkipNow()
-		} else {
-			// Only log the output if there is an error different from above,
-			// logging child test runs confuses the go test runner making it
-			// think there are no tests in the parent run (it will still
-			// run everything though)!
-			log.ErrorE(ctx, string(out), err)
-			panic(err)
-		}
-	}
-
-	refreshedDb, err := newBadgerFileDB(ctx, t, path)
-	if err != nil {
+		log.ErrorE(context.TODO(), string(out), err)
 		panic(err)
 	}
-
-	_, err = refreshedDb.GetCollectionByName(ctx, collectionNames[0])
-	if err != nil {
-		if err.Error() == "datastore: key not found" {
-			// If collection is not found - this must be a new test and
-			// doesn't exist in the target branch, so we pass it
-			t.SkipNow()
-		} else {
-			panic(err)
-		}
-	}
-	return refreshedDb
 }
 
 // getTestPackagePath returns the path to the package currently under test, relative
-// to `./tests/integration/`
-func getTestPackagePath() string {
+// to `./tests/integration/`. Will return an empty string and false if the tests
+// are not within that directory.
+func getTestPackagePath() (string, bool) {
 	currentTestPackage, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 
-	return strings.Split(
+	splitPath := strings.Split(
 		currentTestPackage,
 		"/tests/integration/",
-	)[1]
+	)
+
+	if len(splitPath) != 2 {
+		return "", false
+	}
+	return splitPath[1], true
 }
 
 func checkIfDatabaseFormatChangesAreDocumented() bool {
