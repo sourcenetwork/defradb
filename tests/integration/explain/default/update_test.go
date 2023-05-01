@@ -13,13 +13,25 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+var updatePattern = dataMap{
+	"explain": dataMap{
+		"updateNode": dataMap{
+			"selectTopNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
+				},
+			},
+		},
+	},
+}
 
-		Description: "Explain simple update mutation with boolean equals filter, multiple rows",
+func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) mutation request with update using boolean filter.",
 
 		Request: `mutation @explain {
 			update_author(
@@ -53,38 +65,39 @@ func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{updatePattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"updateNode": dataMap{
-						"data": dataMap{
-							"age": float64(59),
+				TargetNodeName:    "updateNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"data": dataMap{
+						"age": float64(59),
+					},
+					"filter": dataMap{
+						"verified": dataMap{
+							"_eq": true,
 						},
-						"filter": dataMap{
-							"verified": dataMap{
-								"_eq": true,
-							},
+					},
+					"ids": []string(nil),
+				},
+			},
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter": dataMap{
+						"verified": dataMap{
+							"_eq": true,
 						},
-						"ids": []string(nil),
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter": dataMap{
-										"verified": dataMap{
-											"_eq": true,
-										},
-									},
-									"spans": []dataMap{
-										{
-											"end":   "/4",
-											"start": "/3",
-										},
-									},
-								},
-							},
+					},
+					"spans": []dataMap{
+						{
+							"end":   "/4",
+							"start": "/3",
 						},
 					},
 				},
@@ -92,13 +105,13 @@ func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainSimpleMutationUpdateWithIdInFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain simple update mutation with id in filter, multiple rows",
+		Description: "Explain (default) mutation request with update using ids.",
 
 		Request: `mutation @explain {
 			update_author(
@@ -131,37 +144,38 @@ func TestExplainSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{updatePattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"updateNode": dataMap{
-						"data": dataMap{
-							"age": float64(59),
+				TargetNodeName:    "updateNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"data": dataMap{
+						"age": float64(59),
+					},
+					"filter": nil,
+					"ids": []string{
+						"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+						"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+					},
+				},
+			},
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter":         nil,
+					"spans": []dataMap{
+						{
+							"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
+							"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 						},
-						"filter": nil,
-						"ids": []string{
-							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-						},
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
-											"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-										},
-										{
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-										},
-									},
-								},
-							},
+						{
+							"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+							"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 						},
 					},
 				},
@@ -169,13 +183,13 @@ func TestExplainSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain simple update mutation with id equals filter, multiple rows but single match",
+		Description: "Explain (default) mutation request with update using id.",
 
 		Request: `mutation @explain {
 			update_author(
@@ -205,32 +219,33 @@ func TestExplainSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{updatePattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"updateNode": dataMap{
-						"data": dataMap{
-							"age": float64(59),
-						},
-						"filter": nil,
-						"ids": []string{
-							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-						},
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
-											"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-										},
-									},
-								},
-							},
+				TargetNodeName:    "updateNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"data": dataMap{
+						"age": float64(59),
+					},
+					"filter": nil,
+					"ids": []string{
+						"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+					},
+				},
+			},
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter":         nil,
+					"spans": []dataMap{
+						{
+							"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+							"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
 						},
 					},
 				},
@@ -238,13 +253,13 @@ func TestExplainSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain simple update mutation with ids and filter, multiple rows",
+		Description: "Explain (default) mutation request with update using both ids and filter.",
 
 		Request: `mutation @explain {
 			update_author(
@@ -282,45 +297,46 @@ func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{updatePattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"updateNode": dataMap{
-						"data": dataMap{
-							"age": float64(59),
+				TargetNodeName:    "updateNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"data": dataMap{
+						"age": float64(59),
+					},
+					"filter": dataMap{
+						"verified": dataMap{
+							"_eq": true,
 						},
-						"filter": dataMap{
-							"verified": dataMap{
-								"_eq": true,
-							},
+					},
+					"ids": []string{
+						"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+						"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+					},
+				},
+			},
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter": dataMap{
+						"verified": dataMap{
+							"_eq": true,
 						},
-						"ids": []string{
-							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+							"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
 						},
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter": dataMap{
-										"verified": dataMap{
-											"_eq": true,
-										},
-									},
-									"spans": []dataMap{
-										{
-											"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
-											"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-										},
-										{
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-										},
-									},
-								},
-							},
+						{
+							"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
 						},
 					},
 				},
@@ -328,5 +344,5 @@ func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
