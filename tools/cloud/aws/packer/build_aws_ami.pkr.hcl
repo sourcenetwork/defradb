@@ -58,7 +58,7 @@ build {
   sources = [
     "source.amazon-ebs.ubuntu-lts"
   ]
-  
+
   provisioner "shell" {
     environment_vars = ["COMMIT_TO_DEPLOY=${var.commit}", "DEFRADB_GIT_REPO=github.com/sourcenetwork/defradb.git"]
     pause_before = "10s"
@@ -79,11 +79,14 @@ build {
       "export GOBIN=\"$GOPATH/bin\"",
       "export PATH=\"$GOBIN:$GOROOT/bin:$PATH\"",
       "defradb version || { printf \"\\\ndefradb installed but not working properly.\\\n\" && exit 6; }",
-      "printf \"\\\ndefradb successfully installed.\\\n\"",
-      "sudo /usr/sbin/sshd -o \"PasswordAuthentication no\" -o \"PermitRootLogin without-password\" ",
-      "sudo shred -u /etc/ssh/*_key /etc/ssh/*_key.pub",
+      "printf \"\\\nDefraDB successfully installed.\\\n\"",
       "cd ..",
-      "sudo rm -rf ./defradb"
+      "sudo rm -rf ./defradb",
+      "sudo /usr/sbin/sshd -o \"PasswordAuthentication no\" -o \"PermitRootLogin without-password\" ",
+      "sudo shred --zero --force --verbose --remove --iterations=5 /etc/ssh/*_key* /etc/ssh/*.pub || true",
+      "sudo shred --zero --force --verbose --remove --iterations=5 /home/*/.ssh/*_key* /home/*/.ssh/*.pub || true",
+      "sudo shred --zero --force --verbose --remove --iterations=5 /root/.ssh/authorized_keys",
+      "printf \"\\\nPacker build succeeded!.\\\n\""
       ]
   }
 
