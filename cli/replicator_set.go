@@ -67,7 +67,12 @@ func MakeReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 			if err != nil {
 				return errors.Wrap("failed to add replicator, request failed", err)
 			}
-			log.FeedbackInfo(ctx, "Successfully added replicator", logging.NewKV("PeerID", pid), logging.NewKV("Collections", col))
+			log.FeedbackInfo(
+				ctx,
+				"Successfully added replicator",
+				logging.NewKV("PeerID", pid),
+				logging.NewKV("Collections", col),
+			)
 			return nil
 		},
 	}
