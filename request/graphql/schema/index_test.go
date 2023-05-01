@@ -30,7 +30,7 @@ func TestStructIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					IsUnique: false,
+					Unique: false,
 				},
 			},
 		},
@@ -54,7 +54,7 @@ func TestStructIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					IsUnique: true,
+					Unique: true,
 				},
 			},
 		},
@@ -66,7 +66,7 @@ func TestStructIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					IsUnique: false,
+					Unique: false,
 				},
 			},
 		},
@@ -218,7 +218,7 @@ func TestFieldIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					IsUnique: false,
+					Unique: false,
 				},
 			},
 		},
@@ -233,7 +233,7 @@ func TestFieldIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					IsUnique: false,
+					Unique: false,
 				},
 			},
 		},
@@ -247,7 +247,7 @@ func TestFieldIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					IsUnique: true,
+					Unique: true,
 				},
 			},
 		},
@@ -261,7 +261,7 @@ func TestFieldIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					IsUnique: false,
+					Unique: false,
 				},
 			},
 		},

@@ -188,7 +188,7 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			desc.IsUnique = boolVal.Value
+			desc.Unique = boolVal.Value
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
@@ -235,7 +235,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			desc.IsUnique = boolVal.Value
+			desc.Unique = boolVal.Value
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}

@@ -44,6 +44,7 @@ const (
 	COLLECTION                = "/collection/names"
 	COLLECTION_SCHEMA         = "/collection/schema"
 	COLLECTION_SCHEMA_VERSION = "/collection/version"
+	COLLECTION_INDEX          = "/collection/index"
 	SEQ                       = "/seq"
 	PRIMARY_KEY               = "/pk"
 	REPLICATOR                = "/replicator/id"
@@ -105,6 +106,13 @@ type CollectionSchemaVersionKey struct {
 }
 
 var _ Key = (*CollectionSchemaVersionKey)(nil)
+
+type CollectionIndexKey struct {
+	CollectionID string
+	IndexName    string
+}
+
+var _ Key = (*CollectionIndexKey)(nil)
 
 type P2PCollectionKey struct {
 	CollectionID string
@@ -208,6 +216,10 @@ func NewCollectionSchemaKey(schemaId string) CollectionSchemaKey {
 
 func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersionKey {
 	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
+}
+
+func NewCollectionIndexKey(colID, name string) CollectionIndexKey {
+	return CollectionIndexKey{CollectionID: colID}
 }
 
 func NewSequenceKey(name string) SequenceKey {
@@ -398,6 +410,27 @@ func (k CollectionSchemaVersionKey) Bytes() []byte {
 }
 
 func (k CollectionSchemaVersionKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k CollectionIndexKey) ToString() string {
+	result := COLLECTION_INDEX
+
+	if k.CollectionID != "" {
+		result = result + "/" + k.CollectionID
+	}
+	if k.IndexName != "" {
+		result = result + "/" + k.IndexName
+	}
+
+	return result
+}
+
+func (k CollectionIndexKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k CollectionIndexKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 

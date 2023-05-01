@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -99,6 +100,30 @@ func (c *collection) createIndex(
 	}
 	if desc.Name == "" {
 		desc.Name = generateIndexName(c, desc.Fields)
+	}
+
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	indexKey := core.NewCollectionIndexKey(c.Name(), desc.Name)
+	exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, ErrIndexWithNameAlreadyExists
+	}
+
+	buf, err := json.Marshal(desc)
+	if err != nil {
+		return nil, err
+	}
+
+	err = txn.Systemstore().Put(ctx, indexKey.ToDS(), buf)
+	if err != nil {
+		return nil, err
 	}
 	colIndex := NewCollectionIndex(c, desc)
 	return colIndex, nil

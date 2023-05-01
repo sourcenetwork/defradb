@@ -196,7 +196,8 @@ func (db *db) createCollectionIndex(
 	collectionName string,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	col, _ := db.getCollectionByName(ctx, txn, collectionName)
+	col, _ := db.getCollectionByName(ctx, txn, collectionName) // TODO: test error
+	col = col.WithTxn(txn)
 	return col.CreateIndex(ctx, desc)
 }
 

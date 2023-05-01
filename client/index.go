@@ -13,7 +13,7 @@ type IndexedFieldDescription struct {
 }
 
 type IndexDescription struct {
-	Name     string
-	Fields   []IndexedFieldDescription
-	IsUnique bool
+	Name   string
+	Fields []IndexedFieldDescription
+	Unique bool
 }
