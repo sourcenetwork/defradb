@@ -189,6 +189,17 @@ func (db *db) createCollection(
 	return col, nil
 }
 
+// createCollectionIndex creates a new collection index and saves it to the database in its system store.
+func (db *db) createCollectionIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionName string,
+	desc client.IndexDescription,
+) (client.IndexDescription, error) {
+	col, _ := db.getCollectionByName(ctx, txn, collectionName)
+	return col.CreateIndex(ctx, desc)
+}
+
 // updateCollection updates the persisted collection description matching the name of the given
 // description, to the values in the given description.
 //

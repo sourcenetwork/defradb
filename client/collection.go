@@ -136,6 +136,15 @@ type Collection interface {
 
 	// GetAllDocKeys returns all the document keys that exist in the collection.
 	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)
+
+	// CreateIndex creates a new index on the collection.
+	CreateIndex(ctx context.Context, desc IndexDescription) (IndexDescription, error)
+
+	// DropIndex drops an index from the collection.
+	DropIndex(ctx context.Context, indexName string) error
+
+	// GetIndexes returns all the indexes that exist on the collection.
+	GetIndexes(ctx context.Context) ([]IndexDescription, error)
 }
 
 // DocKeysResult wraps the result of an attempt at a DocKey retrieval operation.

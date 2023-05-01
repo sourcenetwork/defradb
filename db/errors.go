@@ -16,27 +16,32 @@ import (
 )
 
 const (
-	errFailedToGetHeads              string = "failed to get document heads"
-	errFailedToCreateCollectionQuery string = "failed to create collection prefix query"
-	errFailedToGetCollection         string = "failed to get collection"
-	errDocVerification               string = "the document verification failed"
-	errAddingP2PCollection           string = "cannot add collection ID"
-	errRemovingP2PCollection         string = "cannot remove collection ID"
-	errAddCollectionWithPatch        string = "unknown collection, adding collections via patch is not supported"
-	errCollectionIDDoesntMatch       string = "CollectionID does not match existing"
-	errSchemaIDDoesntMatch           string = "SchemaID does not match existing"
-	errCannotModifySchemaName        string = "modifying the schema name is not supported"
-	errCannotSetVersionID            string = "setting the VersionID is not supported. It is updated automatically"
-	errCannotSetFieldID              string = "explicitly setting a field ID value is not supported"
-	errCannotAddRelationalField      string = "the adding of new relation fields is not yet supported"
-	errDuplicateField                string = "duplicate field"
-	errCannotMutateField             string = "mutating an existing field is not supported"
-	errCannotMoveField               string = "moving fields is not currently supported"
-	errInvalidCRDTType               string = "only default or LWW (last writer wins) CRDT types are supported"
-	errCannotDeleteField             string = "deleting an existing field is not supported"
-	errFieldKindNotFound             string = "no type found for given name"
+	errFailedToGetHeads               string = "failed to get document heads"
+	errFailedToCreateCollectionQuery  string = "failed to create collection prefix query"
+	errFailedToGetCollection          string = "failed to get collection"
+	errDocVerification                string = "the document verification failed"
+	errAddingP2PCollection            string = "cannot add collection ID"
+	errRemovingP2PCollection          string = "cannot remove collection ID"
+	errAddCollectionWithPatch         string = "unknown collection, adding collections via patch is not supported"
+	errCollectionIDDoesntMatch        string = "CollectionID does not match existing"
+	errSchemaIDDoesntMatch            string = "SchemaID does not match existing"
+	errCannotModifySchemaName         string = "modifying the schema name is not supported"
+	errCannotSetVersionID             string = "setting the VersionID is not supported. It is updated automatically"
+	errCannotSetFieldID               string = "explicitly setting a field ID value is not supported"
+	errCannotAddRelationalField       string = "the adding of new relation fields is not yet supported"
+	errDuplicateField                 string = "duplicate field"
+	errCannotMutateField              string = "mutating an existing field is not supported"
+	errCannotMoveField                string = "moving fields is not currently supported"
+	errInvalidCRDTType                string = "only default or LWW (last writer wins) CRDT types are supported"
+	errCannotDeleteField              string = "deleting an existing field is not supported"
+	errFieldKindNotFound              string = "no type found for given name"
 	errDocumentAlreadyExists         string = "a document with the given dockey already exists"
 	errDocumentDeleted               string = "a document with the given dockey has been deleted"
+	errIndexMissingFields             string = "index missing fields"
+	errIndexFieldMissingName          string = "index field missing name"
+	errIndexFieldMissingDirection     string = "index field missing direction"
+	errIndexSingleFieldWrongDirection string = "wrong direction for index with a single field"
+	errIndexWithNameAlreadyExists     string = "index with name already exists"
 )
 
 var (
@@ -54,36 +59,41 @@ var (
 	ErrInvalidMergeValueType   = errors.New(
 		"the type of value in the merge patch doesn't match the schema",
 	)
-	ErrMissingDocFieldToUpdate  = errors.New("missing document field to update")
-	ErrDocMissingKey            = errors.New("document is missing key")
-	ErrMergeSubTypeNotSupported = errors.New("merge doesn't support sub types yet")
-	ErrInvalidFilter            = errors.New("invalid filter")
-	ErrInvalidOpPath            = errors.New("invalid patch op path")
-	ErrDocumentAlreadyExists    = errors.New(errDocumentAlreadyExists)
-	ErrDocumentDeleted          = errors.New(errDocumentDeleted)
-	ErrUnknownCRDTArgument      = errors.New("invalid CRDT arguments")
-	ErrUnknownCRDT              = errors.New("unknown crdt")
-	ErrSchemaFirstFieldDocKey   = errors.New("collection schema first field must be a DocKey")
-	ErrCollectionAlreadyExists  = errors.New("collection already exists")
-	ErrCollectionNameEmpty      = errors.New("collection name can't be empty")
-	ErrSchemaIdEmpty            = errors.New("schema ID can't be empty")
-	ErrSchemaVersionIdEmpty     = errors.New("schema version ID can't be empty")
-	ErrKeyEmpty                 = errors.New("key cannot be empty")
-	ErrAddingP2PCollection      = errors.New(errAddingP2PCollection)
-	ErrRemovingP2PCollection    = errors.New(errRemovingP2PCollection)
-	ErrAddCollectionWithPatch   = errors.New(errAddCollectionWithPatch)
-	ErrCollectionIDDoesntMatch  = errors.New(errCollectionIDDoesntMatch)
-	ErrSchemaIDDoesntMatch      = errors.New(errSchemaIDDoesntMatch)
-	ErrCannotModifySchemaName   = errors.New(errCannotModifySchemaName)
-	ErrCannotSetVersionID       = errors.New(errCannotSetVersionID)
-	ErrCannotSetFieldID         = errors.New(errCannotSetFieldID)
-	ErrCannotAddRelationalField = errors.New(errCannotAddRelationalField)
-	ErrDuplicateField           = errors.New(errDuplicateField)
-	ErrCannotMutateField        = errors.New(errCannotMutateField)
-	ErrCannotMoveField          = errors.New(errCannotMoveField)
-	ErrInvalidCRDTType          = errors.New(errInvalidCRDTType)
-	ErrCannotDeleteField        = errors.New(errCannotDeleteField)
-	ErrFieldKindNotFound        = errors.New(errFieldKindNotFound)
+	ErrMissingDocFieldToUpdate        = errors.New("missing document field to update")
+	ErrDocMissingKey                  = errors.New("document is missing key")
+	ErrMergeSubTypeNotSupported       = errors.New("merge doesn't support sub types yet")
+	ErrInvalidFilter                  = errors.New("invalid filter")
+	ErrInvalidOpPath                  = errors.New("invalid patch op path")
+	ErrDocumentAlreadyExists          = errors.New(errDocumentAlreadyExists)
+	ErrDocumentDeleted                = errors.New(errDocumentDeleted)
+	ErrUnknownCRDTArgument            = errors.New("invalid CRDT arguments")
+	ErrUnknownCRDT                    = errors.New("unknown crdt")
+	ErrSchemaFirstFieldDocKey         = errors.New("collection schema first field must be a DocKey")
+	ErrCollectionAlreadyExists        = errors.New("collection already exists")
+	ErrCollectionNameEmpty            = errors.New("collection name can't be empty")
+	ErrSchemaIdEmpty                  = errors.New("schema ID can't be empty")
+	ErrSchemaVersionIdEmpty           = errors.New("schema version ID can't be empty")
+	ErrKeyEmpty                       = errors.New("key cannot be empty")
+	ErrAddingP2PCollection            = errors.New(errAddingP2PCollection)
+	ErrRemovingP2PCollection          = errors.New(errRemovingP2PCollection)
+	ErrAddCollectionWithPatch         = errors.New(errAddCollectionWithPatch)
+	ErrCollectionIDDoesntMatch        = errors.New(errCollectionIDDoesntMatch)
+	ErrSchemaIDDoesntMatch            = errors.New(errSchemaIDDoesntMatch)
+	ErrCannotModifySchemaName         = errors.New(errCannotModifySchemaName)
+	ErrCannotSetVersionID             = errors.New(errCannotSetVersionID)
+	ErrCannotSetFieldID               = errors.New(errCannotSetFieldID)
+	ErrCannotAddRelationalField       = errors.New(errCannotAddRelationalField)
+	ErrDuplicateField                 = errors.New(errDuplicateField)
+	ErrCannotMutateField              = errors.New(errCannotMutateField)
+	ErrCannotMoveField                = errors.New(errCannotMoveField)
+	ErrInvalidCRDTType                = errors.New(errInvalidCRDTType)
+	ErrCannotDeleteField              = errors.New(errCannotDeleteField)
+	ErrFieldKindNotFound              = errors.New(errFieldKindNotFound)
+	ErrIndexMissingFields             = errors.New(errIndexMissingFields)
+	ErrIndexFieldMissingName          = errors.New(errIndexFieldMissingName)
+	ErrIndexFieldMissingDirection     = errors.New(errIndexFieldMissingDirection)
+	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
+	ErrIndexWithNameAlreadyExists     = errors.New(errIndexWithNameAlreadyExists)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
