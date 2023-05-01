@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"reflect"
 	"strings"
 	"syscall"
@@ -39,6 +40,7 @@ const (
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
+	rootDBFilePathEnvName      = "DEFRA_TEST_ROOT"
 	inMemoryEnvName            = "DEFRA_IN_MEMORY"
 	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
@@ -78,6 +80,7 @@ var (
 const subscriptionTimeout = 1 * time.Second
 
 var databaseDir string
+var rootDatabaseDir string
 
 /*
 If this is set to true the integration test suite will instead of its normal profile do
@@ -111,6 +114,7 @@ func init() {
 	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
 	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
 	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
+	rootDatabaseDir, _ = os.LookupEnv(rootDBFilePathEnvName)
 	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
 	inMemoryStoreValue, _ := os.LookupEnv(inMemoryEnvName)
 	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
@@ -195,14 +199,16 @@ func NewInMemoryDB(ctx context.Context) (client.DB, error) {
 }
 
 func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
-	var path string
-	if databaseDir == "" {
-		path = t.TempDir()
+	var dbPath string
+	if databaseDir != "" {
+		dbPath = databaseDir
+	} else if rootDatabaseDir != "" {
+		dbPath = path.Join(rootDatabaseDir, t.Name())
 	} else {
-		path = databaseDir
+		dbPath = t.TempDir()
 	}
 
-	return newBadgerFileDB(ctx, t, path)
+	return newBadgerFileDB(ctx, t, dbPath)
 }
 
 func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB, error) {
@@ -571,15 +577,8 @@ func getStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		var db client.DB
-		if DetectDbChanges && !SetupOnly {
-			// Setup the database using the target branch, and then refresh the current instance
-			db = SetupDatabaseUsingTargetBranch(ctx, t, collectionNames)
-		} else {
-			var err error
-			db, err = GetDatabase(ctx, t, dbt)
-			require.Nil(t, err)
-		}
+		db, err := GetDatabase(ctx, t, dbt)
+		require.Nil(t, err)
 
 		return []*node.Node{
 			{
