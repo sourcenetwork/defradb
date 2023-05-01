@@ -45,25 +45,8 @@ func MakeReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 			if err != nil {
 				return errors.Wrap("could not parse peer address", err)
 			}
-
-			if len(col) != 0 {
-				log.FeedbackInfo(
-					cmd.Context(),
-					"Adding replicator for collection",
-					logging.NewKV("PeerAddress", peerAddr),
-					logging.NewKV("Collection", col),
-					logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
-				)
-			} else {
-				if !fullRep {
-					return errors.New("must run with either --full or --collection")
-				}
-				log.FeedbackInfo(
-					cmd.Context(),
-					"Adding full replicator",
-					logging.NewKV("PeerAddress", peerAddr),
-					logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
-				)
+			if len(col) == 0 && !fullRep {
+				return errors.New("must run with either --full or --collection")
 			}
 
 			cred := insecure.NewCredentials()
@@ -84,7 +67,12 @@ func MakeReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 			if err != nil {
 				return errors.Wrap("failed to add replicator, request failed", err)
 			}
-			log.FeedbackInfo(ctx, "Successfully added replicator", logging.NewKV("PID", pid))
+			log.FeedbackInfo(
+				ctx,
+				"Successfully added replicator",
+				logging.NewKV("PeerID", pid),
+				logging.NewKV("Collections", col),
+			)
 			return nil
 		},
 	}

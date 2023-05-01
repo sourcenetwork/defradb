@@ -369,7 +369,7 @@ func (p *Peer) setReplicator(
 			if _, exists := reps[pid]; exists {
 				p.mu.Unlock()
 				return pid, errors.New(fmt.Sprintf(
-					"Replicator already exists for %s with ID %s",
+					"Replicator already exists for %s with PeerID %s",
 					col.Name(),
 					pid,
 				))
@@ -442,7 +442,7 @@ func (p *Peer) pushToReplicator(
 				"Failed to get heads",
 				err,
 				logging.NewKV("DocKey", key.Key.String()),
-				logging.NewKV("PID", pid),
+				logging.NewKV("PeerID", pid),
 				logging.NewKV("Collection", collection.Name()))
 			continue
 		}
@@ -452,7 +452,7 @@ func (p *Peer) pushToReplicator(
 			if err != nil {
 				log.ErrorE(ctx, "Failed to get block", err,
 					logging.NewKV("CID", c),
-					logging.NewKV("PID", pid),
+					logging.NewKV("PeerID", pid),
 					logging.NewKV("Collection", collection.Name()))
 				continue
 			}
@@ -477,7 +477,7 @@ func (p *Peer) pushToReplicator(
 					"Failed to replicate log",
 					err,
 					logging.NewKV("CID", c),
-					logging.NewKV("PID", pid),
+					logging.NewKV("PeerID", pid),
 				)
 			}
 		}
@@ -707,7 +707,7 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 						err,
 						logging.NewKV("DocKey", lg.DocKey),
 						logging.NewKV("CID", lg.Cid),
-						logging.NewKV("PeerId", peerID))
+						logging.NewKV("PeerID", peerID))
 				}
 			}(pid)
 		}

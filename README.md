@@ -240,7 +240,7 @@ DefraDB leverages peer-to-peer networking for data exchange, synchronization, an
 
 When starting a node for the first time, a key pair is generated and stored in its "root directory" (`~/.defradb/` by default).
 
-Each node has a unique `Peer ID` generated from its public key. This ID allows other nodes to connect to it.
+Each node has a unique `PeerID` generated from its public key. This ID allows other nodes to connect to it.
 
 There are two types of peer-to-peer relationships supported: **pubsub** peering and **replicator** peering.
 
@@ -250,7 +250,7 @@ Replicator peering *actively* pushes changes from a specific collection *to* a t
 
 ### Pubsub example
 
-Pubsub peers can be specified on the command line using the `--peers` flag, which accepts a comma-separated list of peer [multiaddresses](https://docs.libp2p.io/concepts/addressing/). For example, a node at IP `192.168.1.12` listening on 9000 with Peer ID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
+Pubsub peers can be specified on the command line using the `--peers` flag, which accepts a comma-separated list of peer [multiaddresses](https://docs.libp2p.io/concepts/addressing/). For example, a node at IP `192.168.1.12` listening on 9000 with PeerID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
 
 Let's go through an example of two nodes (*nodeA* and *nodeB*) connecting with each other over pubsub, on the same machine.
 
@@ -260,7 +260,7 @@ Start *nodeA* with a default configuration:
 defradb start
 ```
 
-Obtain the Peer ID from its console output. In this example, we use `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally it will be different.
+Obtain the PeerID from its console output. In this example, we use `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally it will be different.
 
 For *nodeB*, we provide the following configuration:
 

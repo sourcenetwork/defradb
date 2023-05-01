@@ -184,7 +184,7 @@ func (db *db) createCollection(
 		ctx,
 		"Created collection",
 		logging.NewKV("Name", col.Name()),
-		logging.NewKV("ID", col.SchemaID),
+		logging.NewKV("SchemaID", col.SchemaID()),
 	)
 	return col, nil
 }
