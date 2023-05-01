@@ -17,7 +17,6 @@ import (
 )
 
 func TestNewUnexpectedType(t *testing.T) {
-	t.Parallel()
 	someString := "defradb"
 	someLocation := "foo"
 	err := NewErrUnexpectedType[int](someLocation, someString)
