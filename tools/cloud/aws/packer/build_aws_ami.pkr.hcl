@@ -13,10 +13,6 @@ variable "ami_prefix" {
   default = "source-defradb"
 }
 
-variable "github_pat" {
-  default = env("ONLY_DEFRADB_REPO_CI_PAT")
-}
-
 variable "commit" {
   default = env("COMMIT_TO_DEPLOY")
 }
@@ -64,7 +60,7 @@ build {
   ]
   
   provisioner "shell" {
-    environment_vars = ["COMMIT_TO_DEPLOY=${var.commit}", "DEFRADB_GIT_REPO=github.com/sourcenetwork/defradb.git", "ONLY_DEFRADB_REPO_CI_PAT=${var.github_pat}"]
+    environment_vars = ["COMMIT_TO_DEPLOY=${var.commit}", "DEFRADB_GIT_REPO=github.com/sourcenetwork/defradb.git"]
     pause_before = "10s"
     remote_folder = "/home/ubuntu"
     inline = [
@@ -73,7 +69,7 @@ build {
       "curl -OL https://golang.org/dl/go1.19.8.linux-amd64.tar.gz",
       "rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.19.8.linux-amd64.tar.gz",
       "export PATH=$PATH:/usr/local/go/bin",
-      "git clone \"https://git:$ONLY_DEFRADB_REPO_CI_PAT@$DEFRADB_GIT_REPO\"",
+      "git clone \"https://git@$DEFRADB_GIT_REPO\"",
       "cd ./defradb || { printf \"\\\ncd into defradb failed.\\\n\" && exit 2; }",
       "git checkout $COMMIT_TO_DEPLOY || { printf \"\\\nchecking out commit failed.\\\n\" && exit 3; }",
       "make deps:modules",
