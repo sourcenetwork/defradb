@@ -37,6 +37,7 @@ func newTestMerkleClock() *MerkleClock {
 }
 
 func TestNewMerkleClock(t *testing.T) {
+	t.Parallel()
 	s := newDS()
 	rw := datastore.AsDSReaderWriter(s)
 	multistore := datastore.MultiStoreFrom(rw)
@@ -53,6 +54,7 @@ func TestNewMerkleClock(t *testing.T) {
 }
 
 func TestMerkleClockPutBlock(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
@@ -74,6 +76,7 @@ func TestMerkleClockPutBlock(t *testing.T) {
 }
 
 func TestMerkleClockPutBlockWithHeads(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
@@ -105,6 +108,7 @@ func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 }
 
 func TestMerkleClockAddDAGNode(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
@@ -119,6 +123,7 @@ func TestMerkleClockAddDAGNode(t *testing.T) {
 }
 
 func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{

@@ -19,6 +19,7 @@ import (
 )
 
 func TestErrorIs(t *testing.T) {
+	t.Parallel()
 	const errorMessage string = "gndjdhs"
 
 	err := New(errorMessage)
@@ -27,6 +28,7 @@ func TestErrorIs(t *testing.T) {
 }
 
 func TestErrorIsDefraError(t *testing.T) {
+	t.Parallel()
 	const errorMessage string = "gndjdhs"
 
 	err := New(errorMessage)
@@ -35,6 +37,7 @@ func TestErrorIsDefraError(t *testing.T) {
 }
 
 func TestErrorWithStack(t *testing.T) {
+	t.Parallel()
 	errorMessage := "gndjdhs"
 	err := errors.New(errorMessage)
 
@@ -55,6 +58,7 @@ func TestErrorWithStack(t *testing.T) {
 }
 
 func TestErrorWrap(t *testing.T) {
+	t.Parallel()
 	const errorMessage1 string = "gndjdhs"
 	const errorMessage2 string = "nhdfbgshna"
 
@@ -65,6 +69,7 @@ func TestErrorWrap(t *testing.T) {
 }
 
 func TestErrorUnwrap(t *testing.T) {
+	t.Parallel()
 	const errorMessage1 string = "gndjdhs"
 	const errorMessage2 string = "nhdfbgshna"
 
@@ -77,6 +82,7 @@ func TestErrorUnwrap(t *testing.T) {
 }
 
 func TestErrorAs(t *testing.T) {
+	t.Parallel()
 	const errorMessage1 string = "gndjdhs"
 	const errorMessage2 string = "nhdfbgshna"
 
@@ -91,6 +97,7 @@ func TestErrorAs(t *testing.T) {
 }
 
 func TestErrorFmts(t *testing.T) {
+	t.Parallel()
 	const errorMessage string = "gndjdhs"
 
 	err := New(errorMessage)
@@ -100,6 +107,7 @@ func TestErrorFmts(t *testing.T) {
 }
 
 func TestErrorFmtq(t *testing.T) {
+	t.Parallel()
 	const errorMessage string = "gndjdhs"
 
 	err := New(errorMessage)
@@ -109,6 +117,7 @@ func TestErrorFmtq(t *testing.T) {
 }
 
 func TestErrorFmtvWithoutStacktrace(t *testing.T) {
+	t.Parallel()
 	const errorMessage string = "gndjdhs"
 
 	err := New(errorMessage)
@@ -118,6 +127,7 @@ func TestErrorFmtvWithoutStacktrace(t *testing.T) {
 }
 
 func TestErrorFmtsWithKvp(t *testing.T) {
+	t.Parallel()
 	const errorMessage string = "gndjdhs"
 
 	err := New(errorMessage, NewKV("Kv1", 1))
@@ -127,6 +137,7 @@ func TestErrorFmtsWithKvp(t *testing.T) {
 }
 
 func TestErrorFmtsWithManyKvps(t *testing.T) {
+	t.Parallel()
 	const errorMessage string = "gndjdhs"
 
 	err := New(errorMessage, NewKV("Kv1", 1), NewKV("Kv2", "2"))
@@ -136,6 +147,7 @@ func TestErrorFmtsWithManyKvps(t *testing.T) {
 }
 
 func TestErrorFmtvWithStacktrace(t *testing.T) {
+	t.Parallel()
 	const errorMessage string = "gndjdhs"
 
 	err := New(errorMessage)
@@ -155,6 +167,7 @@ func TestErrorFmtvWithStacktrace(t *testing.T) {
 }
 
 func TestErrorFmtvWithStacktraceAndKvps(t *testing.T) {
+	t.Parallel()
 	const errorMessage string = "gndjdhs"
 
 	err := New(errorMessage, NewKV("Kv1", 1), NewKV("Kv2", "2"))

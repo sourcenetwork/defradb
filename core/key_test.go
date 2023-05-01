@@ -17,6 +17,7 @@ import (
 )
 
 func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
+	t.Parallel()
 	inputString := ""
 
 	result, err := NewDataStoreKey(inputString)
@@ -31,6 +32,7 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
 func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInstanceType_GivenFourItemsWithType(
 	t *testing.T,
 ) {
+	t.Parallel()
 	instanceType := "anyType"
 	fieldId := "f1"
 	docKey := "docKey"
@@ -55,6 +57,7 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInst
 }
 
 func TestNewDataStoreKey_ReturnsEmptyStruct_GivenAStringWithMissingElements(t *testing.T) {
+	t.Parallel()
 	inputString := "/0/v"
 
 	_, err := NewDataStoreKey(inputString)
@@ -63,6 +66,7 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenAStringWithMissingElements(t *t
 }
 
 func TestNewDataStoreKey_GivenAShortObjectMarker(t *testing.T) {
+	t.Parallel()
 	instanceType := "anyType"
 	docKey := "docKey"
 	collectionId := "1"
@@ -85,6 +89,7 @@ func TestNewDataStoreKey_GivenAShortObjectMarker(t *testing.T) {
 }
 
 func TestNewDataStoreKey_GivenAStringWithExtraPrefixes(t *testing.T) {
+	t.Parallel()
 	instanceType := "anyType"
 	fieldId := "f1"
 	docKey := "docKey"
@@ -97,6 +102,7 @@ func TestNewDataStoreKey_GivenAStringWithExtraPrefixes(t *testing.T) {
 }
 
 func TestNewDataStoreKey_GivenAStringWithExtraSuffix(t *testing.T) {
+	t.Parallel()
 	instanceType := "anyType"
 	fieldId := "f1"
 	docKey := "docKey"

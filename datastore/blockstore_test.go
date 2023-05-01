@@ -43,6 +43,7 @@ func newSHA256CidV1(data []byte) (cid.Cid, error) {
 }
 
 func TestBStoreGet(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	dsRW := AsDSReaderWriter(rootstore)
@@ -65,6 +66,7 @@ func TestBStoreGet(t *testing.T) {
 }
 
 func TestBStoreGetWithUndefinedCID(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	dsRW := AsDSReaderWriter(rootstore)
@@ -85,6 +87,7 @@ func TestBStoreGetWithUndefinedCID(t *testing.T) {
 }
 
 func TestBStoreGetWithStoreClosed(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	dsRW := AsDSReaderWriter(rootstore)
@@ -108,6 +111,7 @@ func TestBStoreGetWithStoreClosed(t *testing.T) {
 }
 
 func TestBStoreGetWithReHash(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	dsRW := AsDSReaderWriter(rootstore)
@@ -132,6 +136,7 @@ func TestBStoreGetWithReHash(t *testing.T) {
 }
 
 func TestPutMany(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	dsRW := AsDSReaderWriter(rootstore)
@@ -155,6 +160,7 @@ func TestPutMany(t *testing.T) {
 }
 
 func TestPutManyWithExists(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	dsRW := AsDSReaderWriter(rootstore)
@@ -181,6 +187,7 @@ func TestPutManyWithExists(t *testing.T) {
 }
 
 func TestPutManyWithStoreClosed(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	dsRW := AsDSReaderWriter(rootstore)

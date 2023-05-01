@@ -18,6 +18,7 @@ import (
 )
 
 func TestNewDefraVersion(t *testing.T) {
+	t.Parallel()
 	dv, err := NewDefraVersion()
 	assert.NoError(t, err)
 
@@ -35,6 +36,7 @@ func TestNewDefraVersion(t *testing.T) {
 }
 
 func TestDefraVersionString(t *testing.T) {
+	t.Parallel()
 	dv := defraVersion{
 		Release:    "test-release",
 		Commit:     "abc123def456",
@@ -45,6 +47,7 @@ func TestDefraVersionString(t *testing.T) {
 }
 
 func TestDefraVersionStringFull(t *testing.T) {
+	t.Parallel()
 	dv := defraVersion{
 		Release:        "test-release",
 		Commit:         "abc123def456",
@@ -65,6 +68,7 @@ func TestDefraVersionStringFull(t *testing.T) {
 }
 
 func TestDefraVersion_JSON(t *testing.T) {
+	t.Parallel()
 	dv1 := defraVersion{
 		Release:        "test-release",
 		Commit:         "abc123def456",

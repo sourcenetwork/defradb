@@ -19,6 +19,7 @@ import (
 )
 
 func TestSimpleOneToOneFromSingle(t *testing.T) {
+	t.Parallel()
 	rm := NewRelationManager()
 
 	/*
@@ -50,6 +51,7 @@ func TestSimpleOneToOneFromSingle(t *testing.T) {
 }
 
 func TestSimpleOneToOnePrimaryFromSingle(t *testing.T) {
+	t.Parallel()
 	rm := NewRelationManager()
 
 	/*

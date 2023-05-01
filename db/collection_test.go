@@ -65,6 +65,7 @@ func newTestCollectionWithSchema(
 }
 
 func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -78,6 +79,7 @@ func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
 }
 
 func TestNewCollectionWithSchema(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -100,6 +102,7 @@ func TestNewCollectionWithSchema(t *testing.T) {
 }
 
 func TestNewCollectionReturnsErrorGivenDuplicateSchema(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -112,6 +115,7 @@ func TestNewCollectionReturnsErrorGivenDuplicateSchema(t *testing.T) {
 }
 
 func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -134,6 +138,7 @@ func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 }
 
 func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -156,6 +161,7 @@ func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 }
 
 func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -180,6 +186,7 @@ func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
 }
 
 func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -208,6 +215,7 @@ func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
 }
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -240,6 +248,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
 }
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -271,6 +280,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
 }
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -302,6 +312,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
 }
 
 func TestGetCollectionByName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -327,6 +338,7 @@ func TestGetCollectionByName(t *testing.T) {
 }
 
 func TestGetCollectionByNameReturnsErrorGivenNonExistantCollection(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -336,6 +348,7 @@ func TestGetCollectionByNameReturnsErrorGivenNonExistantCollection(t *testing.T)
 }
 
 func TestGetCollectionByNameReturnsErrorGivenEmptyString(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)

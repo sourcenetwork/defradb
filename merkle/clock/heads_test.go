@@ -57,6 +57,7 @@ func newHeadSet() *heads {
 }
 
 func TestHeadsWrite(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
@@ -68,6 +69,7 @@ func TestHeadsWrite(t *testing.T) {
 }
 
 func TestHeadsReplaceEmpty(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
@@ -80,6 +82,7 @@ func TestHeadsReplaceEmpty(t *testing.T) {
 }
 
 func TestHeadsReplaceNonEmpty(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
@@ -102,6 +105,7 @@ func TestHeadsReplaceNonEmpty(t *testing.T) {
 // Add() is an exposed function so to ensure the public API doesnt
 // break we'll include it
 func TestHeadsAdd(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
@@ -113,6 +117,7 @@ func TestHeadsAdd(t *testing.T) {
 }
 
 func TestHeaddsList(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()

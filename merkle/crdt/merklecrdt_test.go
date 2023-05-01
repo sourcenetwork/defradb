@@ -40,6 +40,7 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, datastore.DSReaderWriter) {
 }
 
 func TestMerkleCRDTPublish(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	bCRDT, store := newTestBaseMerkleCRDT()
 	delta := &corecrdt.LWWRegDelta{

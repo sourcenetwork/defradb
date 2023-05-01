@@ -24,6 +24,7 @@ import (
 )
 
 func TestSetReplicator(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
@@ -41,6 +42,7 @@ func TestSetReplicator(t *testing.T) {
 }
 
 func TestGetAllReplicatorsWith2Addition(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
@@ -87,6 +89,7 @@ func TestGetAllReplicatorsWith2Addition(t *testing.T) {
 }
 
 func TestGetAllReplicatorsWith2AdditionsOnSamePeer(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
@@ -122,6 +125,7 @@ func TestGetAllReplicatorsWith2AdditionsOnSamePeer(t *testing.T) {
 }
 
 func TestDeleteSchemaForReplicator(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
@@ -155,6 +159,7 @@ func TestDeleteSchemaForReplicator(t *testing.T) {
 }
 
 func TestDeleteAllSchemasForReplicator(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
@@ -183,6 +188,7 @@ func TestDeleteAllSchemasForReplicator(t *testing.T) {
 }
 
 func TestDeleteReplicatorWith2Addition(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)

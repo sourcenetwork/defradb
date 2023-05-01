@@ -20,6 +20,7 @@ import (
 )
 
 func TestSingleSimpleType(t *testing.T) {
+	t.Parallel()
 	cases := []descriptionTestCase{
 		{
 			description: "Single simple type",

@@ -22,6 +22,7 @@ import (
 )
 
 func TestAsDSReaderWriterNonIterable(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
@@ -38,6 +39,7 @@ func TestAsDSReaderWriterNonIterable(t *testing.T) {
 }
 
 func TestAsDSReaderWriterIterable(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	store := shim{

@@ -18,6 +18,7 @@ import (
 )
 
 func TestSimplePushIsNotBlockedWithoutSubscribers(t *testing.T) {
+	t.Parallel()
 	s := NewSimpleChannel[int](0, 0)
 
 	s.Publish(1)
@@ -27,6 +28,7 @@ func TestSimplePushIsNotBlockedWithoutSubscribers(t *testing.T) {
 }
 
 func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
+	t.Parallel()
 	s := NewSimpleChannel[int](0, 0)
 	ch, err := s.Subscribe()
 	assert.Nil(t, err)
@@ -40,6 +42,7 @@ func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
 }
 
 func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
+	t.Parallel()
 	s := NewSimpleChannel[int](0, 0)
 	input1 := 1
 	input2 := 2
@@ -67,6 +70,7 @@ func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
 }
 
 func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.T) {
+	t.Parallel()
 	s := NewSimpleChannel[int](0, 2)
 	input1 := 1
 	input2 := 2
@@ -94,6 +98,7 @@ func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.
 }
 
 func TestSimpleSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
+	t.Parallel()
 	s := NewSimpleChannel[int](0, 0)
 	ch, err := s.Subscribe()
 	assert.Nil(t, err)

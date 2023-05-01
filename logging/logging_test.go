@@ -26,6 +26,7 @@ import (
 )
 
 func TestLogWritesFatalMessageToLogAndKillsProcess(t *testing.T) {
+	t.Parallel()
 	logMessage := "test log message"
 
 	if os.Getenv("OS_EXIT") == "1" {
@@ -67,6 +68,7 @@ func TestLogWritesFatalMessageToLogAndKillsProcess(t *testing.T) {
 }
 
 func TestLogWritesFatalMessageWithStackTraceToLogAndKillsProcessGivenStackTraceEnabled(t *testing.T) {
+	t.Parallel()
 	logMessage := "test log message"
 
 	if os.Getenv("OS_EXIT") == "1" {
@@ -109,6 +111,7 @@ func TestLogWritesFatalMessageWithStackTraceToLogAndKillsProcessGivenStackTraceE
 }
 
 func TestLogWritesFatalEMessageToLogAndKillsProcess(t *testing.T) {
+	t.Parallel()
 	logMessage := "test log message"
 
 	if os.Getenv("OS_EXIT") == "1" {

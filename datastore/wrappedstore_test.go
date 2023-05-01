@@ -26,6 +26,7 @@ import (
 var prefixKey = ds.NewKey("mystore")
 
 func TestGetIterator(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
@@ -43,6 +44,7 @@ func (t *testOrder) Compare(a, b query.Entry) int {
 }
 
 func TestGetIteratorWithInvalidOrderType(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
@@ -62,6 +64,7 @@ func TestGetIteratorWithInvalidOrderType(t *testing.T) {
 }
 
 func TestQuery(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
@@ -73,6 +76,7 @@ func TestQuery(t *testing.T) {
 }
 
 func TestQueryWithStoreClosed(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
@@ -89,6 +93,7 @@ func TestQueryWithStoreClosed(t *testing.T) {
 }
 
 func TestIteratePrefix(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
@@ -103,6 +108,7 @@ func TestIteratePrefix(t *testing.T) {
 }
 
 func TestIteratePrefixWithStoreClosed(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)

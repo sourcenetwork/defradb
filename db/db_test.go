@@ -35,6 +35,7 @@ func newMemoryDB(ctx context.Context) (*implicitTxnDB, error) {
 }
 
 func TestNewDB(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
@@ -50,6 +51,7 @@ func TestNewDB(t *testing.T) {
 }
 
 func TestDBSaveSimpleDocument(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -92,6 +94,7 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 }
 
 func TestDBUpdateDocument(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -142,6 +145,7 @@ func TestDBUpdateDocument(t *testing.T) {
 }
 
 func TestDBUpdateNonExistingDocument(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -165,6 +169,7 @@ func TestDBUpdateNonExistingDocument(t *testing.T) {
 }
 
 func TestDBUpdateExistingDocument(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -208,6 +213,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 }
 
 func TestDBGetDocument(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -249,6 +255,7 @@ func TestDBGetDocument(t *testing.T) {
 }
 
 func TestDBGetNotFoundDocument(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -262,6 +269,7 @@ func TestDBGetNotFoundDocument(t *testing.T) {
 }
 
 func TestDBDeleteDocument(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -288,6 +296,7 @@ func TestDBDeleteDocument(t *testing.T) {
 }
 
 func TestDBDeleteNotFoundDocument(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -302,6 +311,7 @@ func TestDBDeleteNotFoundDocument(t *testing.T) {
 }
 
 func TestDocumentMerkleDAG(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -382,6 +392,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 
 // collection with schema
 func TestDBSchemaSaveSimpleDocument(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)

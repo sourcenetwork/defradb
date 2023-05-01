@@ -37,6 +37,7 @@ var (
 )
 
 func TestNewFromJSON(t *testing.T) {
+	t.Parallel()
 	doc, err := NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
@@ -90,6 +91,7 @@ func TestNewFromJSON(t *testing.T) {
 }
 
 func TestSetWithJSON(t *testing.T) {
+	t.Parallel()
 	doc, err := NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)

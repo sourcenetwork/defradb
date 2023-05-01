@@ -45,6 +45,7 @@ func setupLoadedLWWRegster(ctx context.Context) LWWRegister {
 }
 
 func TestLWWRegisterAddDelta(t *testing.T) {
+	t.Parallel()
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
 
@@ -54,6 +55,7 @@ func TestLWWRegisterAddDelta(t *testing.T) {
 }
 
 func TestLWWRegisterInitialMerge(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
@@ -76,6 +78,7 @@ func TestLWWRegisterInitialMerge(t *testing.T) {
 }
 
 func TestLWWReisterFollowupMerge(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	lww := setupLoadedLWWRegster(ctx)
 	addDelta := lww.Set([]byte("test2"))
@@ -93,6 +96,7 @@ func TestLWWReisterFollowupMerge(t *testing.T) {
 }
 
 func TestLWWRegisterOldMerge(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	lww := setupLoadedLWWRegster(ctx)
 	addDelta := lww.Set([]byte("test-1"))
@@ -110,6 +114,7 @@ func TestLWWRegisterOldMerge(t *testing.T) {
 }
 
 func TestLWWRegisterDeltaInit(t *testing.T) {
+	t.Parallel()
 	delta := &LWWRegDelta{
 		Data: []byte("test"),
 	}
@@ -118,6 +123,7 @@ func TestLWWRegisterDeltaInit(t *testing.T) {
 }
 
 func TestLWWRegisterDeltaGetPriority(t *testing.T) {
+	t.Parallel()
 	delta := &LWWRegDelta{
 		Data:     []byte("test"),
 		Priority: uint64(10),
@@ -133,6 +139,7 @@ func TestLWWRegisterDeltaGetPriority(t *testing.T) {
 }
 
 func TestLWWRegisterDeltaSetPriority(t *testing.T) {
+	t.Parallel()
 	delta := &LWWRegDelta{
 		Data: []byte("test"),
 	}
@@ -149,6 +156,7 @@ func TestLWWRegisterDeltaSetPriority(t *testing.T) {
 }
 
 func TestLWWRegisterDeltaMarshal(t *testing.T) {
+	t.Parallel()
 	delta := &LWWRegDelta{
 		Data:     []byte("test"),
 		Priority: uint64(10),
@@ -220,6 +228,7 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 }
 
 func TestLWWRegisterDeltaDecode(t *testing.T) {
+	t.Parallel()
 	delta := &LWWRegDelta{
 		Data:     []byte("test"),
 		Priority: uint64(10),

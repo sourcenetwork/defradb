@@ -21,6 +21,7 @@ import (
 )
 
 func TestMetricSyncHistogram(t *testing.T) {
+	t.Parallel()
 	meter := NewMeter()
 	meter.Register("HistogramOnly")
 	workDuration, err := meter.GetSyncHistogram(
@@ -87,6 +88,7 @@ func TestMetricSyncHistogram(t *testing.T) {
 }
 
 func TestMetricSyncCounter(t *testing.T) {
+	t.Parallel()
 	meter := NewMeter()
 	meter.Register("CounterOnly")
 	stuffCounter, err := meter.GetSyncCounter(
@@ -131,6 +133,7 @@ func TestMetricSyncCounter(t *testing.T) {
 }
 
 func TestMetricWithCounterAndHistogramIntrumentOnOneMeter(t *testing.T) {
+	t.Parallel()
 	meter := NewMeter()
 
 	meter.Register("CounterAndHistogram")

@@ -17,6 +17,7 @@ import (
 )
 
 func TestMergeAscending_ReturnsEmpty_GivenEmpty(t *testing.T) {
+	t.Parallel()
 	input := []Span{}
 
 	result := MergeAscending(input)
@@ -25,6 +26,7 @@ func TestMergeAscending_ReturnsEmpty_GivenEmpty(t *testing.T) {
 }
 
 func TestMergeAscending_ReturnsSingle_GivenSingle(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	input := []Span{NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1))}
@@ -37,6 +39,7 @@ func TestMergeAscending_ReturnsSingle_GivenSingle(t *testing.T) {
 }
 
 func TestMergeAscending_ReturnsSecondBeforeFirst_GivenKeysInReverseOrder(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k4"
 	end1 := "/p/0/0/k5"
 	start2 := "/p/0/0/k1"
@@ -57,6 +60,7 @@ func TestMergeAscending_ReturnsSecondBeforeFirst_GivenKeysInReverseOrder(t *test
 }
 
 func TestMergeAscending_ReturnsItemsInOrder_GivenKeysInMixedOrder(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k7"
@@ -83,6 +87,7 @@ func TestMergeAscending_ReturnsItemsInOrder_GivenKeysInMixedOrder(t *testing.T) 
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqualToStart(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k4"
 	start2 := "/p/0/0/k1"
@@ -100,6 +105,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqualToStart(t *testing
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentToStart(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k4"
 	start2 := "/p/0/0/k1"
@@ -117,6 +123,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentToStart(t *test
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithin(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k4"
 	start2 := "/p/0/0/k1"
@@ -134,6 +141,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithin(t *testing.T) {
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithin(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1.1"
 	end1 := "/p/0/0/k3"
 	start2 := "/p/0/0/k1"
@@ -151,6 +159,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithin(t *testing.T) 
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithinEndPrefix(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k4"
 	start2 := "/p/0/0/k1"
@@ -168,6 +177,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithinEndPrefix(t *test
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithinEndPrefix(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1.1"
 	end1 := "/p/0/0/k3"
 	start2 := "/p/0/0/k1"
@@ -185,6 +195,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithinEndPrefix(t *te
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqual(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k4"
 	start2 := "/p/0/0/k1"
@@ -202,6 +213,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqual(t *testing.T) {
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndBefore(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k5"
 	start2 := "/p/0/0/k1"
@@ -219,6 +231,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndBefore(t *te
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndGreater(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k4"
 	start2 := "/p/0/0/k1"
@@ -236,6 +249,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndGreater(t *t
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndEqual(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1.1"
 	end1 := "/p/0/0/k3"
 	start2 := "/p/0/0/k1"
@@ -253,6 +267,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndEqual(t *testing.T) {
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndBefore(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1.1"
 	end1 := "/p/0/0/k3"
 	start2 := "/p/0/0/k1"
@@ -270,6 +285,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndBefore(t *
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndAfter(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1.1"
 	end1 := "/p/0/0/k3"
 	start2 := "/p/0/0/k1"
@@ -287,6 +303,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndAfter(t *t
 }
 
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenSpanCoveringMiddleSpans(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k6"
@@ -318,6 +335,7 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenSpanCoveringMiddleSpans(t 
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithin(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k1"
@@ -335,6 +353,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithin(t *testing.T) {
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithinEndPrefix(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k1"
@@ -352,6 +371,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithinEndPrefix(t *testi
 }
 
 func TestMergeAscending_ReturnsSingle_GivenDuplicates(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	input := []Span{
@@ -367,6 +387,7 @@ func TestMergeAscending_ReturnsSingle_GivenDuplicates(t *testing.T) {
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithin(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k1.2"
@@ -384,6 +405,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithin(t *testing.T) {
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithinEndPrefix(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k1.2"
@@ -401,6 +423,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithinEndPrefix(t *test
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndEqual(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k1.2"
@@ -418,6 +441,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndEqual(t *testing.T) {
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndBefore(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k3"
 	start2 := "/p/0/0/k1.2"
@@ -435,6 +459,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndBefore(t *te
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndAfter(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k3"
 	start2 := "/p/0/0/k1.2"
@@ -454,6 +479,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndAfter(t *tes
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualEndAfterSpanCoveringMiddleSpans(
 	t *testing.T,
 ) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -487,6 +513,7 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualEndAfterSpanCove
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartWithinEndAfterSpanCoveringMiddleSpans(
 	t *testing.T,
 ) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -519,6 +546,7 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartWithinEndAfterSpanCov
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualToEndEndAfterSpanCoveringMiddleSpans(
 	t *testing.T,
 ) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -551,6 +579,7 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualToEndEndAfterSpa
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndBeforeEndEndAfterSpanCoveringMiddleSpans(
 	t *testing.T,
 ) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -583,6 +612,7 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndBeforeEndE
 func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndAfterEndEndAfterSpanCoveringMiddleSpans(
 	t *testing.T,
 ) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -613,6 +643,7 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndAfterEndEn
 }
 
 func TestMergeAscending_ReturnsTwoItems_GivenSecondItemAfterFirst(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -632,6 +663,7 @@ func TestMergeAscending_ReturnsTwoItems_GivenSecondItemAfterFirst(t *testing.T) 
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndEqual(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k6"
 	start2 := "/p/0/0/k5"
@@ -651,6 +683,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndEqual(t *
 func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAdjacentAndAfter(
 	t *testing.T,
 ) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k6"
 	start2 := "/p/0/0/k5"
@@ -668,6 +701,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAdjacentA
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAfter(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k6"
 	start2 := "/p/0/0/k5"
@@ -685,6 +719,7 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAfter(t *
 }
 
 func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndAfterEndEndAfter(t *testing.T) {
+	t.Parallel()
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k6"
 	start2 := "/p/0/0/k7"

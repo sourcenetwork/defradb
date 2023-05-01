@@ -23,6 +23,7 @@ import (
 )
 
 func TestNewConcurrentTxnFrom(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
@@ -36,6 +37,7 @@ func TestNewConcurrentTxnFrom(t *testing.T) {
 }
 
 func TestNewConcurrentTxnFromWithStoreClosed(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
@@ -49,6 +51,7 @@ func TestNewConcurrentTxnFromWithStoreClosed(t *testing.T) {
 }
 
 func TestNewConcurrentTxnFromNonIterable(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
@@ -60,6 +63,7 @@ func TestNewConcurrentTxnFromNonIterable(t *testing.T) {
 }
 
 func TestNewConcurrentTxnFromNonIterableWithStoreClosed(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
@@ -71,6 +75,7 @@ func TestNewConcurrentTxnFromNonIterableWithStoreClosed(t *testing.T) {
 }
 
 func TestConcurrentTxnSync(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
@@ -85,6 +90,7 @@ func TestConcurrentTxnSync(t *testing.T) {
 }
 
 func TestConcurrentTxnClose(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)

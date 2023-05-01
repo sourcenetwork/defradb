@@ -33,6 +33,7 @@ func exampleBaseCRDT() baseCRDT {
 }
 
 func TestBaseCRDTNew(t *testing.T) {
+	t.Parallel()
 	base := newBaseCRDT(newDS(), core.DataStoreKey{})
 	if base.store == nil {
 		t.Error("newBaseCRDT needs to init store")
@@ -40,6 +41,7 @@ func TestBaseCRDTNew(t *testing.T) {
 }
 
 func TestBaseCRDTvalueKey(t *testing.T) {
+	t.Parallel()
 	base := exampleBaseCRDT()
 	vk := base.key.WithDocKey("mykey").WithValueFlag()
 	if vk.ToString() != "/v/mykey" {
@@ -48,6 +50,7 @@ func TestBaseCRDTvalueKey(t *testing.T) {
 }
 
 func TestBaseCRDTprioryKey(t *testing.T) {
+	t.Parallel()
 	base := exampleBaseCRDT()
 	pk := base.key.WithDocKey("mykey").WithPriorityFlag()
 	if pk.ToString() != "/p/mykey" {
@@ -56,6 +59,7 @@ func TestBaseCRDTprioryKey(t *testing.T) {
 }
 
 func TestBaseCRDTSetGetPriority(t *testing.T) {
+	t.Parallel()
 	base := exampleBaseCRDT()
 	ctx := context.Background()
 	err := base.setPriority(ctx, base.key.WithDocKey("mykey"), 10)

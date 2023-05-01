@@ -18,7 +18,7 @@ import (
 )
 
 func TestNewPublisher(t *testing.T) {
-	ch := startEventChanel()
+	ch := startEventChannel()
 
 	pub, err := NewPublisher(ch, 0)
 	if err != nil {
@@ -28,14 +28,14 @@ func TestNewPublisher(t *testing.T) {
 }
 
 func TestNewPublisherWithError(t *testing.T) {
-	ch := startEventChanel()
+	ch := startEventChannel()
 	ch.Close()
 	_, err := NewPublisher(ch, 0)
 	assert.Error(t, err)
 }
 
 func TestPublisherToStream(t *testing.T) {
-	ch := startEventChanel()
+	ch := startEventChannel()
 
 	pub, err := NewPublisher(ch, 1)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestPublisherToStream(t *testing.T) {
 
 func TestPublisherToStreamWithTimeout(t *testing.T) {
 	clientTimeout = 1 * time.Second
-	ch := startEventChanel()
+	ch := startEventChannel()
 
 	pub, err := NewPublisher(ch, 0)
 	if err != nil {
@@ -76,6 +76,6 @@ func TestPublisherToStreamWithTimeout(t *testing.T) {
 	assert.Equal(t, false, open)
 }
 
-func startEventChanel() Channel[int] {
+func startEventChannel() Channel[int] {
 	return New[int](0, 0)
 }

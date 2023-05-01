@@ -55,6 +55,7 @@ func newTestCollection(
 }
 
 func TestAddP2PCollection(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
@@ -67,6 +68,7 @@ func TestAddP2PCollection(t *testing.T) {
 }
 
 func TestGetAllP2PCollection(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
@@ -90,6 +92,7 @@ func TestGetAllP2PCollection(t *testing.T) {
 }
 
 func TestRemoveP2PCollection(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
