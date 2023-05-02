@@ -12,11 +12,13 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -198,4 +200,24 @@ func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
 	newDesc3, err := f.createCollectionIndex(desc3)
 	assert.NoError(t, err)
 	assert.Equal(t, newDesc3.Name, name+"_3")
+}
+
+func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	name := "users_age_ASC"
+	desc := client.IndexDescription{
+		Name:   name,
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	}
+	_, err := f.createCollectionIndex(desc)
+	assert.NoError(t, err)
+
+	key := core.NewCollectionIndexKey(f.collection.Name(), name)
+	data, err := f.txn.Systemstore().Get(f.ctx, key.ToDS())
+	assert.NoError(t, err)
+	var deserialized client.IndexDescription
+	err = json.Unmarshal(data, &deserialized)
+	assert.NoError(t, err)
+	assert.Equal(t, deserialized, desc)
 }
