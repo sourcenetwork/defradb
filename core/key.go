@@ -418,9 +418,9 @@ func (k CollectionIndexKey) ToString() string {
 
 	if k.CollectionID != "" {
 		result = result + "/" + k.CollectionID
-	}
-	if k.IndexName != "" {
-		result = result + "/" + k.IndexName
+		if k.IndexName != "" {
+			result = result + "/" + k.IndexName
+		}
 	}
 
 	return result

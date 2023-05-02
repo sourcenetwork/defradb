@@ -107,3 +107,23 @@ func TestNewDataStoreKey_GivenAStringWithExtraSuffix(t *testing.T) {
 
 	assert.ErrorIs(t, ErrInvalidKey, err)
 }
+
+func TestNewIndexKey_IfEmptyParam_ReturnPrefix(t *testing.T) {
+	key := NewCollectionIndexKey("", "")
+	assert.Equal(t, "/collection/index", key.ToString())
+}
+
+func TestNewIndexKey_ParamsAreGiven_ReturnFullKey(t *testing.T) {
+	key := NewCollectionIndexKey("col", "idx")
+	assert.Equal(t, "/collection/index/col/idx", key.ToString())
+}
+
+func TestNewIndexKey_InNoCollectionName_ReturnJustPrefix(t *testing.T) {
+	key := NewCollectionIndexKey("", "idx")
+	assert.Equal(t, "/collection/index", key.ToString())
+}
+
+func TestNewIndexKey_InNoIndexName_ReturnWithoutIndexName(t *testing.T) {
+	key := NewCollectionIndexKey("col", "")
+	assert.Equal(t, "/collection/index/col", key.ToString())
+}
