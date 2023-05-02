@@ -157,7 +157,7 @@ func TestCreateIndex_IfSingleFieldInDescOrder_ReturnError(t *testing.T) {
 	assert.EqualError(t, err, errIndexSingleFieldWrongDirection)
 }
 
-func TestCreateIndex_IndexWithNameAlreadyExists_ReturnError(t *testing.T) {
+func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	name := "some_index_name"
@@ -173,4 +173,29 @@ func TestCreateIndex_IndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	assert.NoError(t, err)
 	_, err = f.createCollectionIndex(desc2)
 	assert.EqualError(t, err, errIndexWithNameAlreadyExists)
+}
+
+func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	name := "users_age_ASC"
+	desc1 := client.IndexDescription{
+		Name:   name,
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	}
+	desc2 := client.IndexDescription{
+		Name:   name + "_2",
+		Fields: []client.IndexedFieldDescription{{Name: "weight"}},
+	}
+	desc3 := client.IndexDescription{
+		Name:   "",
+		Fields: []client.IndexedFieldDescription{{Name: "age"}},
+	}
+	_, err := f.createCollectionIndex(desc1)
+	assert.NoError(t, err)
+	_, err = f.createCollectionIndex(desc2)
+	assert.NoError(t, err)
+	newDesc3, err := f.createCollectionIndex(desc3)
+	assert.NoError(t, err)
+	assert.Equal(t, newDesc3.Name, name+"_3")
 }

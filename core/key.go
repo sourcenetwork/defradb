@@ -219,7 +219,7 @@ func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersi
 }
 
 func NewCollectionIndexKey(colID, name string) CollectionIndexKey {
-	return CollectionIndexKey{CollectionID: colID}
+	return CollectionIndexKey{CollectionID: colID, IndexName: name}
 }
 
 func NewSequenceKey(name string) SequenceKey {

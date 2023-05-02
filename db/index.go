@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -57,7 +58,7 @@ func validateIndexDescriptionFields(fields []client.IndexedFieldDescription) err
 	return nil
 }
 
-func generateIndexName(col client.Collection, fields []client.IndexedFieldDescription) string {
+func generateIndexName(col client.Collection, fields []client.IndexedFieldDescription, inc int) string {
 	sb := strings.Builder{}
 	direction := "ASC"
 	//if fields[0].Direction == client.Descending {
@@ -68,6 +69,10 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 	sb.WriteString(strings.ToLower(fields[0].Name))
 	sb.WriteByte('_')
 	sb.WriteString(direction)
+	if inc > 1 {
+		sb.WriteByte('_')
+		sb.WriteString(strconv.Itoa(inc))
+	}
 	return sb.String()
 }
 
@@ -98,25 +103,18 @@ func (c *collection) createIndex(
 	if err != nil {
 		return nil, err
 	}
-	if desc.Name == "" {
-		desc.Name = generateIndexName(c, desc.Fields)
-	}
 
-	txn, err := c.getTxn(ctx, false)
+	indexKey, err := c.processIndexName(ctx, &desc)
 	if err != nil {
 		return nil, err
-	}
-
-	indexKey := core.NewCollectionIndexKey(c.Name(), desc.Name)
-	exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, ErrIndexWithNameAlreadyExists
 	}
 
 	buf, err := json.Marshal(desc)
+	if err != nil {
+		return nil, err
+	}
+
+	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
@@ -127,4 +125,41 @@ func (c *collection) createIndex(
 	}
 	colIndex := NewCollectionIndex(c, desc)
 	return colIndex, nil
+}
+
+func (c *collection) processIndexName(
+	ctx context.Context,
+	desc *client.IndexDescription,
+) (core.CollectionIndexKey, error) {
+	txn, err := c.getTxn(ctx, true)
+	if err != nil {
+		return core.CollectionIndexKey{}, err
+	}
+
+	var indexKey core.CollectionIndexKey
+	if desc.Name == "" {
+		nameIncrement := 1
+		for {
+			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
+			indexKey = core.NewCollectionIndexKey(c.Name(), desc.Name)
+			exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
+			if err != nil {
+				return core.CollectionIndexKey{}, err
+			}
+			if !exists {
+				break
+			}
+			nameIncrement++
+		}
+	} else {
+		indexKey = core.NewCollectionIndexKey(c.Name(), desc.Name)
+		exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
+		if err != nil {
+			return core.CollectionIndexKey{}, err
+		}
+		if exists {
+			return core.CollectionIndexKey{}, ErrIndexWithNameAlreadyExists
+		}
+	}
+	return indexKey, nil
 }
