@@ -127,3 +127,31 @@ func TestNewIndexKey_InNoIndexName_ReturnWithoutIndexName(t *testing.T) {
 	key := NewCollectionIndexKey("col", "")
 	assert.Equal(t, "/collection/index/col", key.ToString())
 }
+
+func TestNewIndexKeyFromString_IfInvalidString_ReturnError(t *testing.T) {
+	for _, key := range []string{
+		"",
+		"/collection",
+		"/collection/index",
+		"/collection/index/col/idx/extra",
+		"/wrong/index/col/idx",
+		"/collection/wrong/col/idx",
+	} {
+		_, err := NewCollectionIndexKeyFromString(key)
+		assert.ErrorIs(t, err, ErrInvalidKey)
+	}
+}
+
+func TestNewIndexKeyFromString_IfOnlyCollectionName_ReturnKey(t *testing.T) {
+	key, err := NewCollectionIndexKeyFromString("/collection/index/col")
+	assert.NoError(t, err)
+	assert.Equal(t, key.CollectionID, "col")
+	assert.Equal(t, key.IndexName, "")
+}
+
+func TestNewIndexKeyFromString_IfFullKeyString_ReturnKey(t *testing.T) {
+	key, err := NewCollectionIndexKeyFromString("/collection/index/col/idx")
+	assert.NoError(t, err)
+	assert.Equal(t, key.CollectionID, "col")
+	assert.Equal(t, key.IndexName, "idx")
+}

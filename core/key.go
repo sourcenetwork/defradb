@@ -222,6 +222,18 @@ func NewCollectionIndexKey(colID, name string) CollectionIndexKey {
 	return CollectionIndexKey{CollectionID: colID, IndexName: name}
 }
 
+func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
+	keyArr := strings.Split(key, "/")
+	if len(keyArr) < 4 || len(keyArr) > 5 || keyArr[1] != "collection" || keyArr[2] != "index" {
+		return CollectionIndexKey{}, errors.WithStack(ErrInvalidKey, errors.NewKV("Key", key))
+	}
+	result := CollectionIndexKey{CollectionID: keyArr[3]}
+	if len(keyArr) == 5 {
+		result.IndexName = keyArr[4]
+	}
+	return result, nil
+}
+
 func NewSequenceKey(name string) SequenceKey {
 	return SequenceKey{SequenceName: name}
 }
