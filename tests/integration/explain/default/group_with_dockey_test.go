@@ -21,7 +21,7 @@ func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
 		Description: "Explain query with a dockeys filter on inner _group.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [age]
 			) {
 				age
@@ -61,7 +61,7 @@ func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        []string{"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"},
 									"filter":         nil,
 									"groupBy":        nil,
@@ -74,7 +74,7 @@ func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{

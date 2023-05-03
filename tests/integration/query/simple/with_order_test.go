@@ -20,7 +20,7 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with empty order",
 		Request: `query {
-					users(order: {}) {
+					Users(order: {}) {
 						Name
 					}
 				}`,

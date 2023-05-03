@@ -53,7 +53,7 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"name": dataMap{
 							"_eq": "Lone",
@@ -110,7 +110,7 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"age": dataMap{
 							"_eq": int(26),
@@ -136,7 +136,7 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 		Description: "Explain (default) request with greater than (_gt) filter.",
 
 		Request: `query @explain {
-				author(filter: {age: {_gt: 20}}) {
+				Author(filter: {age: {_gt: 20}}) {
 					name
 					age
 				}
@@ -167,7 +167,7 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"age": dataMap{
 							"_gt": int(20),
@@ -228,7 +228,7 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"_and": []any{
 							dataMap{
@@ -298,7 +298,7 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"_or": []any{
 							dataMap{
@@ -368,7 +368,7 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"age": dataMap{
 							"_in": []any{

@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by empty set, children",
 		Request: `query {
-					users(groupBy: []) {
+					Users(groupBy: []) {
 						_group {
 							Name
 						}

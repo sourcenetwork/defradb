@@ -20,7 +20,7 @@ func TestQuerySimpleWithLimit0(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with limit 0",
 		Request: `query {
-					users(limit: 0) {
+					Users(limit: 0) {
 						Name
 					}
 				}`,

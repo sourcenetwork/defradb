@@ -236,7 +236,7 @@ func TestSimpleMutationUpdateWithNonExistantId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with non existant id",
 		Request: `mutation {
-					update_user(id: "bae-does-not-exist", data: "{\"points\": 59}") {
+					update_User(id: "bae-does-not-exist", data: "{\"points\": 59}") {
 						_key
 						name
 						points
