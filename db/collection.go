@@ -201,6 +201,43 @@ func (db *db) createCollectionIndex(
 	return col.CreateIndex(ctx, desc)
 }
 
+// getAllCollectionIndexes returns all the indexes in the database.
+func (db *db) getAllCollectionIndexes(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.CollectionIndexDescription, error) {
+	prefix := core.NewCollectionIndexKey("", "")
+	q, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix: prefix.ToString(),
+	})
+	if err != nil {
+		return nil, NewErrFailedToCreateCollectionQuery(err)
+	}
+	defer func() {
+		if err := q.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close collection query", err)
+		}
+	}()
+
+	indexes := make([]client.CollectionIndexDescription, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			return nil, err
+		}
+
+		var colDesk client.IndexDescription
+		err = json.Unmarshal(res.Value, &colDesk)
+		indexKey, err := core.NewCollectionIndexKeyFromString(res.Key)
+		err = err
+		indexes = append(indexes, client.CollectionIndexDescription{
+			CollectionName: indexKey.CollectionID,
+			Index:          colDesk,
+		})
+	}
+
+	return indexes, nil
+}
+
 // updateCollection updates the persisted collection description matching the name of the given
 // description, to the values in the given description.
 //

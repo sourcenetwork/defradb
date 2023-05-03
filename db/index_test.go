@@ -16,10 +16,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+)
+
+const (
+	usersColName    = "Users"
+	productsColName = "Products"
 )
 
 type indexTestFixture struct {
@@ -27,23 +33,47 @@ type indexTestFixture struct {
 	db         *implicitTxnDB
 	txn        datastore.Txn
 	collection client.Collection
+	t          *testing.T
 }
 
 func (f *indexTestFixture) createCollectionIndex(
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	return f.db.createCollectionIndex(f.ctx, f.txn, f.collection.Name(), desc)
+	return f.createCollectionIndexFor(f.collection.Name(), desc)
 }
 
-func newIndexTestFixture(t *testing.T) *indexTestFixture {
-	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
-	assert.NoError(t, err)
-	txn, err := db.NewTxn(ctx, false)
-	assert.NoError(t, err)
+func (f *indexTestFixture) createCollectionIndexFor(
+	collectionName string,
+	desc client.IndexDescription,
+) (client.IndexDescription, error) {
+	newDesc, err := f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
+	//if err != nil {
+	//return newDesc, err
+	//}
+	//f.txn, err = f.db.NewTxn(f.ctx, false)
+	//assert.NoError(f.t, err)
+	return newDesc, err
+}
 
-	desc := client.CollectionDescription{
-		Name: "Users",
+func (f *indexTestFixture) getAllCollectionIndexes() ([]client.CollectionIndexDescription, error) {
+	return f.db.getAllCollectionIndexes(f.ctx, f.txn)
+}
+
+func (f *indexTestFixture) createCollection(
+	desc client.CollectionDescription,
+) client.Collection {
+	col, err := f.db.createCollection(f.ctx, f.txn, desc)
+	assert.NoError(f.t, err)
+	err = f.txn.Commit(f.ctx)
+	assert.NoError(f.t, err)
+	f.txn, err = f.db.NewTxn(f.ctx, false)
+	assert.NoError(f.t, err)
+	return col
+}
+
+func getUsersCollectionDesc() client.CollectionDescription {
+	return client.CollectionDescription{
+		Name: usersColName,
 		Schema: client.SchemaDescription{
 			Fields: []client.FieldDescription{
 				{
@@ -68,20 +98,47 @@ func newIndexTestFixture(t *testing.T) *indexTestFixture {
 			},
 		},
 	}
+}
 
-	col, err := db.createCollection(ctx, txn, desc)
+func getProductsCollectionDesc() client.CollectionDescription {
+	return client.CollectionDescription{
+		Name: productsColName,
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
+				{
+					Name: "_key",
+					Kind: client.FieldKind_DocKey,
+				},
+				{
+					Name: "price",
+					Kind: client.FieldKind_FLOAT,
+					Typ:  client.LWW_REGISTER,
+				},
+				{
+					Name: "description",
+					Kind: client.FieldKind_STRING,
+					Typ:  client.LWW_REGISTER,
+				},
+			},
+		},
+	}
+}
+
+func newIndexTestFixture(t *testing.T) *indexTestFixture {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
-	//err = txn.Commit(ctx)
-	//assert.NoError(t, err)
-
-	return &indexTestFixture{
-		ctx:        ctx,
-		db:         db,
-		txn:        txn,
-		collection: col,
+	f := &indexTestFixture{
+		ctx: ctx,
+		db:  db,
+		txn: txn,
+		t:   t,
 	}
-
+	f.collection = f.createCollection(getUsersCollectionDesc())
+	return f
 }
 
 func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
@@ -220,4 +277,39 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	err = json.Unmarshal(data, &deserialized)
 	assert.NoError(t, err)
 	assert.Equal(t, deserialized, desc)
+}
+
+// test if non-existing property is given for index
+// test if collection exists before creating an index for it
+
+func TestGetIndexes_ShouldReturnListOfExistingIndexes(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	usersIndexDesc := client.IndexDescription{
+		Name:   "users_name_index",
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	}
+	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
+	assert.NoError(t, err)
+
+	f.createCollection(getProductsCollectionDesc())
+	productsIndexDesc := client.IndexDescription{
+		Name:   "products_description_index",
+		Fields: []client.IndexedFieldDescription{{Name: "price"}},
+	}
+	_, err = f.createCollectionIndexFor(productsColName, productsIndexDesc)
+	assert.NoError(t, err)
+
+	indexes, err := f.getAllCollectionIndexes()
+	assert.NoError(t, err)
+
+	require.Equal(t, len(indexes), 2)
+	usersIndexIndex := 0
+	if indexes[0].CollectionName != usersColName {
+		usersIndexIndex = 1
+	}
+	assert.Equal(t, indexes[usersIndexIndex].Index, usersIndexDesc)
+	assert.Equal(t, indexes[usersIndexIndex].CollectionName, usersColName)
+	assert.Equal(t, indexes[1-usersIndexIndex].Index, productsIndexDesc)
+	assert.Equal(t, indexes[1-usersIndexIndex].CollectionName, productsColName)
 }

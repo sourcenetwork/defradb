@@ -17,3 +17,8 @@ type IndexDescription struct {
 	Fields []IndexedFieldDescription
 	Unique bool
 }
+
+type CollectionIndexDescription struct {
+	CollectionName string
+	Index          IndexDescription
+}
