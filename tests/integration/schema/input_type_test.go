@@ -10,30 +10,35 @@
 
 package schema
 
-/* WIP "AuthorFilterArg" vs "authorFilterArg".
+import (
+	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
 func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Book {
+					type book {
 						name: String
 						rating: Float
-						author: Author
+						author: author
 					}
 
-					type Author {
+					type author {
 						name: String
 						age: Int
 						verified: Boolean
-						wrote: Book @primary
+						wrote: book @primary
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "Author") {
+						__type (name: "author") {
 							name
 							fields {
 								name
@@ -63,7 +68,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "Author",
+						"name": "author",
 						"fields": []any{
 							map[string]any{
 								// Asserting only on group, because it is the field that contains `order` info we are
@@ -75,7 +80,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 									map[string]any{
 										"name": "order",
 										"type": map[string]any{
-											"name":   "AuthorOrderArg",
+											"name":   "authorOrderArg",
 											"ofType": nil,
 											"inputFields": []any{
 												map[string]any{
@@ -110,7 +115,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 												map[string]any{
 													"name": "wrote",
 													"type": map[string]any{
-														"name":   "BookOrderArg",
+														"name":   "bookOrderArg",
 														"ofType": nil,
 													},
 												},
@@ -133,7 +138,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
+	testUtils.ExecuteTestCase(t, []string{"book", "author"}, test)
 }
 
 var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any{
@@ -152,7 +157,7 @@ var defaultGroupArgsWithoutOrder = trimFields(
 	fields{
 		dockeyArg,
 		dockeysArg,
-		buildFilterArg("Author", []argDef{
+		buildFilterArg("author", []argDef{
 			{
 				fieldName: "age",
 				typeName:  "IntOperatorBlock",
@@ -167,7 +172,7 @@ var defaultGroupArgsWithoutOrder = trimFields(
 			},
 			{
 				fieldName: "wrote",
-				typeName:  "BookFilterArg",
+				typeName:  "bookFilterArg",
 			},
 			{
 				fieldName: "wrote_id",
@@ -180,4 +185,3 @@ var defaultGroupArgsWithoutOrder = trimFields(
 	},
 	testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps,
 )
-*/
