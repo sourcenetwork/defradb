@@ -267,6 +267,9 @@ func (db *db) getCollectionIndexes(
 
 		var colDesk client.IndexDescription
 		err = json.Unmarshal(res.Value, &colDesk)
+		if err != nil {
+			return nil, NewErrInvalidStoredIndex(err)
+		}
 		indexes = append(indexes, colDesk)
 	}
 

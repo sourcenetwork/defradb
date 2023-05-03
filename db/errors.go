@@ -42,6 +42,8 @@ const (
 	errIndexFieldMissingDirection     string = "index field missing direction"
 	errIndexSingleFieldWrongDirection string = "wrong direction for index with a single field"
 	errIndexWithNameAlreadyExists     string = "index with name already exists"
+	errCollectionDoesntExist          string = "collection with name doesn't exist"
+	errInvalidStoredIndex             string = "invalid stored index"
 )
 
 var (
@@ -94,6 +96,7 @@ var (
 	ErrIndexFieldMissingDirection     = errors.New(errIndexFieldMissingDirection)
 	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
 	ErrIndexWithNameAlreadyExists     = errors.New(errIndexWithNameAlreadyExists)
+	ErrCollectionDoesntExist          = errors.New(errCollectionDoesntExist)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -106,6 +109,12 @@ func NewErrFailedToGetHeads(inner error) error {
 // to create a collection failed.
 func NewErrFailedToCreateCollectionQuery(inner error) error {
 	return errors.Wrap(errFailedToCreateCollectionQuery, inner)
+}
+
+// NewErrInvalidStoredIndex returns a new error indicating that the stored
+// index in the database is invalid.
+func NewErrInvalidStoredIndex(inner error) error {
+	return errors.Wrap(errInvalidStoredIndex, inner)
 }
 
 // NewErrFailedToGetCollection returns a new error indicating that the collection could not be obtained.

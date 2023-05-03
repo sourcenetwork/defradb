@@ -377,3 +377,14 @@ func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	_, err = f.getCollectionIndexes(usersColName)
 	assert.Error(t, err)
 }
+
+func TestGetCollectionIndexes_InvalidIndexIsStored_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
+	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
+	assert.NoError(t, err)
+
+	_, err = f.getCollectionIndexes(usersColName)
+	assert.Error(t, err)
+}
