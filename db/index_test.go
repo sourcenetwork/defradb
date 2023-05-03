@@ -204,7 +204,8 @@ func TestCreateIndex_IfNameIsNotSpecified_GenerateWithLowerCase(t *testing.T) {
 		},
 	}
 	f.collection.Description().Schema.Fields[1].Name = "Name"
-	newDesc, _ := f.createCollectionIndex(desc)
+	newDesc, err := f.createCollectionIndex(desc)
+	assert.NoError(t, err)
 	assert.Equal(t, newDesc.Name, "users_name_ASC")
 }
 
@@ -298,8 +299,28 @@ func TestCreateIndex_IfStorageFails_ReturnError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// test if non-existing property is given for index
-// test if collection exists before creating an index for it
+func TestCreateIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	desc := client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{{Name: "price"}},
+	}
+
+	_, err := f.createCollectionIndexFor(productsColName, desc)
+	assert.Error(t, err)
+}
+
+func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	const prop = "non_existing_property"
+	desc := client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{{Name: prop}},
+	}
+
+	_, err := f.createCollectionIndex(desc)
+	assert.ErrorIs(t, err, NewErrNonExistingFieldForIndex(prop))
+}
 
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
@@ -386,5 +407,5 @@ func TestGetCollectionIndexes_InvalidIndexIsStored_ReturnError(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = f.getCollectionIndexes(usersColName)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
 }

@@ -104,6 +104,11 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
+	err = c.checkExistingFields(ctx, desc.Fields)
+	if err != nil {
+		return nil, err
+	}
+
 	indexKey, err := c.processIndexName(ctx, &desc)
 	if err != nil {
 		return nil, err
@@ -125,6 +130,27 @@ func (c *collection) createIndex(
 	}
 	colIndex := NewCollectionIndex(c, desc)
 	return colIndex, nil
+}
+
+func (c *collection) checkExistingFields(
+	ctx context.Context,
+	fields []client.IndexedFieldDescription,
+) error {
+	collectionFields := c.Description().Schema.Fields
+	for _, field := range fields {
+		found := false
+		fieldLower := strings.ToLower(field.Name)
+		for _, colField := range collectionFields {
+			if fieldLower == strings.ToLower(colField.Name) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return NewErrNonExistingFieldForIndex(field.Name)
+		}
+	}
+	return nil
 }
 
 func (c *collection) processIndexName(
