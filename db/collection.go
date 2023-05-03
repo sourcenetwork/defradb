@@ -238,6 +238,38 @@ func (db *db) getAllCollectionIndexes(
 	return indexes, nil
 }
 
+func (db *db) getCollectionIndexes(
+	ctx context.Context,
+	txn datastore.Txn,
+	colName string,
+) ([]client.IndexDescription, error) {
+	prefix := core.NewCollectionIndexKey(colName, "")
+	q, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix: prefix.ToString(),
+	})
+	if err != nil {
+		//return nil, NewErrFailedToCreateCollectionQuery(err)
+	}
+	defer func() {
+		if err := q.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close collection query", err)
+		}
+	}()
+
+	indexes := make([]client.IndexDescription, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			return nil, err
+		}
+
+		var colDesk client.IndexDescription
+		err = json.Unmarshal(res.Value, &colDesk)
+		indexes = append(indexes, colDesk)
+	}
+
+	return indexes, nil
+}
+
 // updateCollection updates the persisted collection description matching the name of the given
 // description, to the values in the given description.
 //
