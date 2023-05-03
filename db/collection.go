@@ -196,7 +196,10 @@ func (db *db) createCollectionIndex(
 	collectionName string,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	col, _ := db.getCollectionByName(ctx, txn, collectionName) // TODO: test error
+	col, err := db.getCollectionByName(ctx, txn, collectionName) // TODO: test error
+	if err != nil {
+		return client.IndexDescription{}, err
+	}
 	col = col.WithTxn(txn)
 	return col.CreateIndex(ctx, desc)
 }
@@ -248,7 +251,7 @@ func (db *db) getCollectionIndexes(
 		Prefix: prefix.ToString(),
 	})
 	if err != nil {
-		//return nil, NewErrFailedToCreateCollectionQuery(err)
+		return nil, NewErrFailedToCreateCollectionQuery(err)
 	}
 	defer func() {
 		if err := q.Close(); err != nil {

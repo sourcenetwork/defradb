@@ -283,6 +283,21 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	assert.Equal(t, deserialized, desc)
 }
 
+func TestCreateIndex_IfStorageFails_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	name := "users_age_ASC"
+	desc := client.IndexDescription{
+		Name:   name,
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	}
+
+	f.db.Close(f.ctx)
+
+	_, err := f.createCollectionIndex(desc)
+	assert.Error(t, err)
+}
+
 // test if non-existing property is given for index
 // test if collection exists before creating an index for it
 
@@ -345,4 +360,20 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	assert.NoError(t, err)
 	require.Equal(t, len(productIndexes), 1)
 	assert.Equal(t, productIndexes[0], productsIndexDesc)
+}
+
+func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	usersIndexDesc := client.IndexDescription{
+		Name:   "users_name_index",
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	}
+	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
+	assert.NoError(t, err)
+
+	f.db.Close(f.ctx)
+
+	_, err = f.getCollectionIndexes(usersColName)
+	assert.Error(t, err)
 }
