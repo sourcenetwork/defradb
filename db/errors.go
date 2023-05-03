@@ -43,7 +43,8 @@ const (
 	errIndexSingleFieldWrongDirection string = "wrong direction for index with a single field"
 	errIndexWithNameAlreadyExists     string = "index with name already exists"
 	errInvalidStoredIndex             string = "invalid stored index"
-	errNonExistingFieldForIndex    string = "creating an index on a non-existing property"
+	errInvalidStoredIndexKey          string = "invalid stored index key"
+	errNonExistingFieldForIndex       string = "creating an index on a non-existing property"
 )
 
 var (
@@ -116,10 +117,16 @@ func NewErrInvalidStoredIndex(inner error) error {
 	return errors.Wrap(errInvalidStoredIndex, inner)
 }
 
+// NewErrInvalidStoredIndexKey returns a new error indicating that the stored
+// index in the database is invalid.
+func NewErrInvalidStoredIndexKey(key string) error {
+	return errors.New(errInvalidStoredIndexKey, errors.NewKV("Key", key))
+}
+
 // NewErrNonExistingFieldForIndex returns a new error indicating the attempt to create an index
-// on a non-existing property.
-func NewErrNonExistingFieldForIndex(prop string) error {
-	return errors.New(errNonExistingFieldForIndex, errors.NewKV("Property", prop))
+// on a non-existing field.
+func NewErrNonExistingFieldForIndex(field string) error {
+	return errors.New(errNonExistingFieldForIndex, errors.NewKV("Field", field))
 }
 
 // NewErrFailedToGetCollection returns a new error indicating that the collection could not be obtained.

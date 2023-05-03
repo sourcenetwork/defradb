@@ -230,8 +230,13 @@ func (db *db) getAllCollectionIndexes(
 
 		var colDesk client.IndexDescription
 		err = json.Unmarshal(res.Value, &colDesk)
+		if err != nil {
+			return nil, NewErrInvalidStoredIndex(err)
+		}
 		indexKey, err := core.NewCollectionIndexKeyFromString(res.Key)
-		err = err
+		if err != nil {
+			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
+		}
 		indexes = append(indexes, client.CollectionIndexDescription{
 			CollectionName: indexKey.CollectionID,
 			Index:          colDesk,

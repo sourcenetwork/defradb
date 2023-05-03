@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -399,7 +400,7 @@ func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestGetCollectionIndexes_InvalidIndexIsStored_ReturnError(t *testing.T) {
+func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
@@ -408,4 +409,34 @@ func TestGetCollectionIndexes_InvalidIndexIsStored_ReturnError(t *testing.T) {
 
 	_, err = f.getCollectionIndexes(usersColName)
 	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+}
+
+func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
+	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
+	assert.NoError(t, err)
+
+	_, err = f.getAllIndexes()
+	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+}
+
+func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
+	key := ds.NewKey(indexKey.ToString() + "/invalid")
+	desc := client.IndexDescription{
+		Name: "some_index_name",
+		Fields: []client.IndexedFieldDescription{
+			{Name: "name", Direction: client.Ascending},
+		},
+	}
+	descData, _ := json.Marshal(desc)
+	err := f.txn.Systemstore().Put(f.ctx, key, descData)
+	assert.NoError(t, err)
+
+	_, err = f.getAllIndexes()
+	assert.ErrorIs(t, err, NewErrInvalidStoredIndexKey(key.String()))
 }
