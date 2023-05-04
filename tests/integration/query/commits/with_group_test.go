@@ -226,3 +226,113 @@ func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple all commits query, group by fieldName",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [fieldName]) {
+							fieldName
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"fieldName": "age",
+					},
+					{
+						"fieldName": "name",
+					},
+					{
+						"fieldName": nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple all commits query, group by fieldName",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [fieldName]) {
+							fieldName
+							_group {
+								height
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"fieldName": "age",
+						"_group": []map[string]any{
+							{
+								"height": int64(2),
+							},
+							{
+								"height": int64(1),
+							},
+						},
+					},
+					{
+						"fieldName": "name",
+						"_group": []map[string]any{
+							{
+								"height": int64(1),
+							},
+						},
+					},
+					{
+						"fieldName": nil,
+						"_group": []map[string]any{
+							{
+								"height": int64(2),
+							},
+							{
+								"height": int64(1),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
