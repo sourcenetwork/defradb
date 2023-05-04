@@ -26,7 +26,7 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-							create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+							create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 								name
 							}
 						}`,
@@ -49,7 +49,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-						create_book(data: "{\"name\": \"Painted House\"}") {
+						create_Book(data: "{\"name\": \"Painted House\"}") {
 							_key
 						}
 					}`,
@@ -62,7 +62,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
-						create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
+						create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
 							name
 						}
 					}`,
@@ -77,7 +77,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						book {
+						Book {
 							name
 							author {
 								name
@@ -96,7 +96,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						author {
+						Author {
 							name
 							published {
 								name
@@ -126,7 +126,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-						create_author(data: "{\"name\": \"John Grisham\"}") {
+						create_Author(data: "{\"name\": \"John Grisham\"}") {
 							_key
 						}
 					}`,
@@ -139,7 +139,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
-						create_book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
 							name
 						}
 					}`,
@@ -154,7 +154,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						author {
+						Author {
 							name
 							published {
 								name
@@ -173,7 +173,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						book {
+						Book {
 							name
 							author {
 								name

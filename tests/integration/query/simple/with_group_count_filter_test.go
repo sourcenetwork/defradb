@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Age: {_gt: 26}}})
 					}
@@ -60,7 +60,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, filtered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Age: {_gt: 26}}})
 						_group {
@@ -116,7 +116,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, matching filtered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Name: {_eq: "John"}}})
 						_group(filter: {Name: {_eq: "John"}}) {
@@ -165,7 +165,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, different group filter",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Age: {_gt: 26}}})
 						_group(filter: {Name: {_eq: "John"}}) {
@@ -214,7 +214,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountsWithDiffe
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, multiple counts on non-rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						C1: _count(_group: {filter: {Age: {_gt: 26}}})
 						C2: _count(_group: {filter: {Age: {_lt: 26}}})

@@ -24,115 +24,115 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 		{
 			Description: "Simple update mutation with boolean array, replace with nil",
 			Request: `mutation {
-						update_users(data: "{\"LikedIndexes\": null}") {
-							Name
-							LikedIndexes
+						update_Users(data: "{\"likedIndexes\": null}") {
+							name
+							likedIndexes
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"LikedIndexes": [true, true, false, true]
+						"name": "John",
+						"likedIndexes": [true, true, false, true]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":         "John",
-					"LikedIndexes": nil,
+					"name":         "John",
+					"likedIndexes": nil,
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with boolean array, replace with empty",
 			Request: `mutation {
-						update_users(data: "{\"LikedIndexes\": []}") {
-							Name
-							LikedIndexes
+						update_Users(data: "{\"likedIndexes\": []}") {
+							name
+							likedIndexes
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"LikedIndexes": [true, true, false, true]
+						"name": "John",
+						"likedIndexes": [true, true, false, true]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":         "John",
-					"LikedIndexes": []bool{},
+					"name":         "John",
+					"likedIndexes": []bool{},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with boolean array, replace with same size",
 			Request: `mutation {
-						update_users(data: "{\"LikedIndexes\": [true, false, true, false]}") {
-							Name
-							LikedIndexes
+						update_Users(data: "{\"likedIndexes\": [true, false, true, false]}") {
+							name
+							likedIndexes
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"LikedIndexes": [true, true, false, true]
+						"name": "John",
+						"likedIndexes": [true, true, false, true]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":         "John",
-					"LikedIndexes": []bool{true, false, true, false},
+					"name":         "John",
+					"likedIndexes": []bool{true, false, true, false},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with boolean array, replace with smaller size",
 			Request: `mutation {
-						update_users(data: "{\"LikedIndexes\": [false, true]}") {
-							Name
-							LikedIndexes
+						update_Users(data: "{\"likedIndexes\": [false, true]}") {
+							name
+							likedIndexes
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"LikedIndexes": [true, true, false, true]
+						"name": "John",
+						"likedIndexes": [true, true, false, true]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":         "John",
-					"LikedIndexes": []bool{false, true},
+					"name":         "John",
+					"likedIndexes": []bool{false, true},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with boolean array, replace with larger size",
 			Request: `mutation {
-						update_users(data: "{\"LikedIndexes\": [true, false, true, false, true, true]}") {
-							Name
-							LikedIndexes
+						update_Users(data: "{\"likedIndexes\": [true, false, true, false, true, true]}") {
+							name
+							likedIndexes
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"LikedIndexes": [true, true, false, true]
+						"name": "John",
+						"likedIndexes": [true, true, false, true]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":         "John",
-					"LikedIndexes": []bool{true, false, true, false, true, true},
+					"name":         "John",
+					"likedIndexes": []bool{true, false, true, false, true, true},
 				},
 			},
 		},
@@ -147,23 +147,23 @@ func TestMutationInlineArrayWithNillableBooleans(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, booleans",
 		Request: `mutation {
-					update_users(data: "{\"IndexLikesDislikes\": [true, true, false, true, null]}") {
-						Name
-						IndexLikesDislikes
+					update_Users(data: "{\"indexLikesDislikes\": [true, true, false, true, null]}") {
+						name
+						indexLikesDislikes
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"IndexLikesDislikes": [true, true, false, true]
+					"name": "John",
+					"indexLikesDislikes": [true, true, false, true]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"IndexLikesDislikes": []immutable.Option[bool]{
+				"name": "John",
+				"indexLikesDislikes": []immutable.Option[bool]{
 					immutable.Some(true),
 					immutable.Some(true),
 					immutable.Some(false),
@@ -182,138 +182,138 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 		{
 			Description: "Simple update mutation with integer array, replace with nil",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteIntegers\": null}") {
-							Name
-							FavouriteIntegers
+						update_Users(data: "{\"favouriteIntegers\": null}") {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteIntegers": [1, 2, 3, 5, 8]
+						"name": "John",
+						"favouriteIntegers": [1, 2, 3, 5, 8]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": nil,
+					"name":              "John",
+					"favouriteIntegers": nil,
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with empty",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteIntegers\": []}") {
-							Name
-							FavouriteIntegers
+						update_Users(data: "{\"favouriteIntegers\": []}") {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteIntegers": [1, 2, 3, 5, 8]
+						"name": "John",
+						"favouriteIntegers": [1, 2, 3, 5, 8]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": []int64{},
+					"name":              "John",
+					"favouriteIntegers": []int64{},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with same size, positive values",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteIntegers\": [8, 5, 3, 2, 1]}") {
-							Name
-							FavouriteIntegers
+						update_Users(data: "{\"favouriteIntegers\": [8, 5, 3, 2, 1]}") {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteIntegers": [1, 2, 3, 5, 8]
+						"name": "John",
+						"favouriteIntegers": [1, 2, 3, 5, 8]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": []int64{8, 5, 3, 2, 1},
+					"name":              "John",
+					"favouriteIntegers": []int64{8, 5, 3, 2, 1},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with same size, positive to mixed values",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteIntegers\": [-1, 2, -3, 5, -8]}") {
-							Name
-							FavouriteIntegers
+						update_Users(data: "{\"favouriteIntegers\": [-1, 2, -3, 5, -8]}") {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteIntegers": [1, 2, 3, 5, 8]
+						"name": "John",
+						"favouriteIntegers": [1, 2, 3, 5, 8]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": []int64{-1, 2, -3, 5, -8},
+					"name":              "John",
+					"favouriteIntegers": []int64{-1, 2, -3, 5, -8},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with smaller size, positive values",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteIntegers\": [1, 2, 3]}") {
-							Name
-							FavouriteIntegers
+						update_Users(data: "{\"favouriteIntegers\": [1, 2, 3]}") {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteIntegers": [1, 2, 3, 5, 8]
+						"name": "John",
+						"favouriteIntegers": [1, 2, 3, 5, 8]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": []int64{1, 2, 3},
+					"name":              "John",
+					"favouriteIntegers": []int64{1, 2, 3},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with larger size, positive values",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteIntegers\": [1, 2, 3, 5, 8, 13, 21]}") {
-							Name
-							FavouriteIntegers
+						update_Users(data: "{\"favouriteIntegers\": [1, 2, 3, 5, 8, 13, 21]}") {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteIntegers": [1, 2, 3, 5, 8]
+						"name": "John",
+						"favouriteIntegers": [1, 2, 3, 5, 8]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": []int64{1, 2, 3, 5, 8, 13, 21},
+					"name":              "John",
+					"favouriteIntegers": []int64{1, 2, 3, 5, 8, 13, 21},
 				},
 			},
 		},
@@ -328,23 +328,23 @@ func TestMutationInlineArrayWithNillableInts(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable ints",
 		Request: `mutation {
-					update_users(data: "{\"TestScores\": [null, 2, 3, null, 8]}") {
-						Name
-						TestScores
+					update_Users(data: "{\"testScores\": [null, 2, 3, null, 8]}") {
+						name
+						testScores
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"TestScores": [1, null, 3]
+					"name": "John",
+					"testScores": [1, null, 3]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"TestScores": []immutable.Option[int64]{
+				"name": "John",
+				"testScores": []immutable.Option[int64]{
 					immutable.None[int64](),
 					immutable.Some[int64](2),
 					immutable.Some[int64](3),
@@ -363,115 +363,115 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 		{
 			Description: "Simple update mutation with float array, replace with nil",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteFloats\": null}") {
-							Name
-							FavouriteFloats
+						update_Users(data: "{\"favouriteFloats\": null}") {
+							name
+							favouriteFloats
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteFloats": [3.1425, 0.00000000001, 10]
+						"name": "John",
+						"favouriteFloats": [3.1425, 0.00000000001, 10]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":            "John",
-					"FavouriteFloats": nil,
+					"name":            "John",
+					"favouriteFloats": nil,
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with float array, replace with empty",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteFloats\": []}") {
-							Name
-							FavouriteFloats
+						update_Users(data: "{\"favouriteFloats\": []}") {
+							name
+							favouriteFloats
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteFloats": [3.1425, 0.00000000001, 10]
+						"name": "John",
+						"favouriteFloats": [3.1425, 0.00000000001, 10]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":            "John",
-					"FavouriteFloats": []float64{},
+					"name":            "John",
+					"favouriteFloats": []float64{},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with float array, replace with same size",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteFloats\": [3.1425, -0.00000000001, 1000000]}") {
-							Name
-							FavouriteFloats
+						update_Users(data: "{\"favouriteFloats\": [3.1425, -0.00000000001, 1000000]}") {
+							name
+							favouriteFloats
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteFloats": [3.1425, 0.00000000001, 10]
+						"name": "John",
+						"favouriteFloats": [3.1425, 0.00000000001, 10]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":            "John",
-					"FavouriteFloats": []float64{3.1425, -0.00000000001, 1000000},
+					"name":            "John",
+					"favouriteFloats": []float64{3.1425, -0.00000000001, 1000000},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with float array, replace with smaller size",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteFloats\": [3.14]}") {
-							Name
-							FavouriteFloats
+						update_Users(data: "{\"favouriteFloats\": [3.14]}") {
+							name
+							favouriteFloats
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteFloats": [3.1425, 0.00000000001, 10]
+						"name": "John",
+						"favouriteFloats": [3.1425, 0.00000000001, 10]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":            "John",
-					"FavouriteFloats": []float64{3.14},
+					"name":            "John",
+					"favouriteFloats": []float64{3.14},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with float array, replace with larger size",
 			Request: `mutation {
-						update_users(data: "{\"FavouriteFloats\": [3.1425, 0.00000000001, -10, 6.626070]}") {
-							Name
-							FavouriteFloats
+						update_Users(data: "{\"favouriteFloats\": [3.1425, 0.00000000001, -10, 6.626070]}") {
+							name
+							favouriteFloats
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteFloats": [3.1425, 0.00000000001, 10]
+						"name": "John",
+						"favouriteFloats": [3.1425, 0.00000000001, 10]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":            "John",
-					"FavouriteFloats": []float64{3.1425, 0.00000000001, -10, 6.626070},
+					"name":            "John",
+					"favouriteFloats": []float64{3.1425, 0.00000000001, -10, 6.626070},
 				},
 			},
 		},
@@ -486,23 +486,23 @@ func TestMutationInlineArrayWithNillableFloats(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable floats",
 		Request: `mutation {
-					update_users(data: "{\"PageRatings\": [3.1425, -0.00000000001, null, 10]}") {
-						Name
-						PageRatings
+					update_Users(data: "{\"pageRatings\": [3.1425, -0.00000000001, null, 10]}") {
+						name
+						pageRatings
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"PageRatings": [3.1425, null, -0.00000000001, 10]
+					"name": "John",
+					"pageRatings": [3.1425, null, -0.00000000001, 10]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"PageRatings": []immutable.Option[float64]{
+				"name": "John",
+				"pageRatings": []immutable.Option[float64]{
 					immutable.Some(3.1425),
 					immutable.Some(-0.00000000001),
 					immutable.None[float64](),
@@ -520,115 +520,115 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 		{
 			Description: "Simple update mutation with string array, replace with nil",
 			Request: `mutation {
-						update_users(data: "{\"PreferredStrings\": null}") {
-							Name
-							PreferredStrings
+						update_Users(data: "{\"preferredStrings\": null}") {
+							name
+							preferredStrings
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"PreferredStrings": ["", "the previous", "the first", "empty string"]
+						"name": "John",
+						"preferredStrings": ["", "the previous", "the first", "empty string"]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":             "John",
-					"PreferredStrings": nil,
+					"name":             "John",
+					"preferredStrings": nil,
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with string array, replace with empty",
 			Request: `mutation {
-						update_users(data: "{\"PreferredStrings\": []}") {
-							Name
-							PreferredStrings
+						update_Users(data: "{\"preferredStrings\": []}") {
+							name
+							preferredStrings
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"PreferredStrings": ["", "the previous", "the first", "empty string"]
+						"name": "John",
+						"preferredStrings": ["", "the previous", "the first", "empty string"]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":             "John",
-					"PreferredStrings": []string{},
+					"name":             "John",
+					"preferredStrings": []string{},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with string array, replace with same size",
 			Request: `mutation {
-						update_users(data: "{\"PreferredStrings\": [null, \"the previous\", \"the first\", \"null string\"]}") {
-							Name
-							PreferredStrings
+						update_Users(data: "{\"preferredStrings\": [null, \"the previous\", \"the first\", \"null string\"]}") {
+							name
+							preferredStrings
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"PreferredStrings": ["", "the previous", "the first", "empty string"]
+						"name": "John",
+						"preferredStrings": ["", "the previous", "the first", "empty string"]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":             "John",
-					"PreferredStrings": []string{"", "the previous", "the first", "null string"},
+					"name":             "John",
+					"preferredStrings": []string{"", "the previous", "the first", "null string"},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with string array, replace with smaller size",
 			Request: `mutation {
-						update_users(data: "{\"PreferredStrings\": [\"\", \"the first\"]}") {
-							Name
-							PreferredStrings
+						update_Users(data: "{\"preferredStrings\": [\"\", \"the first\"]}") {
+							name
+							preferredStrings
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"PreferredStrings": ["", "the previous", "the first", "empty string"]
+						"name": "John",
+						"preferredStrings": ["", "the previous", "the first", "empty string"]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":             "John",
-					"PreferredStrings": []string{"", "the first"},
+					"name":             "John",
+					"preferredStrings": []string{"", "the first"},
 				},
 			},
 		},
 		{
 			Description: "Simple update mutation with string array, replace with larger size",
 			Request: `mutation {
-						update_users(data: "{\"PreferredStrings\": [\"\", \"the previous\", \"the first\", \"empty string\", \"blank string\", \"hitchi\"]}") {
-							Name
-							PreferredStrings
+						update_Users(data: "{\"preferredStrings\": [\"\", \"the previous\", \"the first\", \"empty string\", \"blank string\", \"hitchi\"]}") {
+							name
+							preferredStrings
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"PreferredStrings": ["", "the previous", "the first", "empty string"]
+						"name": "John",
+						"preferredStrings": ["", "the previous", "the first", "empty string"]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name": "John",
-					"PreferredStrings": []string{
+					"name": "John",
+					"preferredStrings": []string{
 						"",
 						"the previous",
 						"the first",
@@ -650,23 +650,23 @@ func TestMutationInlineArrayWithNillableStrings(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable strings",
 		Request: `mutation {
-					update_users(data: "{\"PageHeaders\": [\"\", \"the previous\", null, \"empty string\", \"blank string\", \"hitchi\"]}") {
-						Name
-						PageHeaders
+					update_Users(data: "{\"pageHeaders\": [\"\", \"the previous\", null, \"empty string\", \"blank string\", \"hitchi\"]}") {
+						name
+						pageHeaders
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"PageHeaders": ["", "the previous", "the first", "empty string", null]
+					"name": "John",
+					"pageHeaders": ["", "the previous", "the first", "empty string", null]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"PageHeaders": []immutable.Option[string]{
+				"name": "John",
+				"pageHeaders": []immutable.Option[string]{
 					immutable.Some(""),
 					immutable.Some("the previous"),
 					immutable.None[string](),

@@ -17,20 +17,20 @@ import (
 )
 
 var bookAuthorGQLSchema = `
-	type book {
+	type Book {
 		name: String
 		rating: Float
-		author: author
+		author: Author
 	}
 
-	type author {
+	type Author {
 		name: String
 		age: Int
 		verified: Boolean
-		published: book @primary
+		published: Book @primary
 	}
 `
 
 func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(t, bookAuthorGQLSchema, []string{"book", "author"}, test)
+	testUtils.ExecuteRequestTestCase(t, bookAuthorGQLSchema, []string{"Book", "Author"}, test)
 }

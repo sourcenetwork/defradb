@@ -21,11 +21,11 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 		Description: "Explain top-level count query.",
 
 		Request: `query @explain {
-			_count(author: {})
+			_count(Author: {})
 		}`,
 
 		Docs: map[int][]string{
-			//authors
+			//Authors
 			2: {
 				`{
 					"name": "John",
@@ -50,7 +50,7 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
@@ -66,7 +66,7 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 							"countNode": dataMap{
 								"sources": []dataMap{
 									{
-										"fieldName": "author",
+										"fieldName": "Author",
 										"filter":    nil,
 									},
 								},
@@ -87,7 +87,7 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 
 		Request: `query @explain {
 			_count(
-				author: {
+				Author: {
 					filter: {
 						age: {
 							_gt: 26
@@ -98,7 +98,7 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 		}`,
 
 		Docs: map[int][]string{
-			//authors
+			//Authors
 			2: {
 				`{
 					"name": "John",
@@ -128,7 +128,7 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter": dataMap{
 											"age": dataMap{
 												"_gt": int(26),
@@ -148,7 +148,7 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 							"countNode": dataMap{
 								"sources": []dataMap{
 									{
-										"fieldName": "author",
+										"fieldName": "Author",
 										"filter": dataMap{
 											"age": dataMap{
 												"_gt": int(26),

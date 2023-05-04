@@ -21,7 +21,7 @@ func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
 		Description: "Invalid type of explain request should error.",
 
 		Request: `query @explain(type: invalid) {
-			author {
+			Author {
 				_key
 				name
 				age

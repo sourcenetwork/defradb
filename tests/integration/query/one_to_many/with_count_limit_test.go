@@ -20,7 +20,7 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count and limit",
 		Request: `query {
-				author {
+				Author {
 					name
 					_count(published: {})
 					published(limit: 1) {
@@ -92,7 +92,7 @@ func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count and limit",
 		Request: `query {
-				author {
+				Author {
 					name
 					_count(published: {limit: 2})
 					published(limit: 1) {
@@ -169,7 +169,7 @@ func TestQueryOneToManyWithCountWithLimit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with limit",
 		Request: `query {
-				author {
+				Author {
 					name
 					_count(published: {limit: 1})
 				}

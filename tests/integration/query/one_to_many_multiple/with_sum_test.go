@@ -20,7 +20,7 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoins(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum",
 		Request: `query {
-				author {
+				Author {
 					name
 					_sum(books: {field: score}, articles: {field: rating})
 				}

@@ -22,7 +22,7 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 		Description: "Explain one one-to-many relation query with count.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				numberOfBooks: _count(books: {})
 			}
@@ -102,7 +102,7 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 										"scanNode": dataMap{
 											"filter":         nil,
 											"collectionID":   "3",
-											"collectionName": "author",
+											"collectionName": "Author",
 											"spans": []dataMap{
 												{
 													"start": "/3",
@@ -119,7 +119,7 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 												"scanNode": dataMap{
 													"filter":         nil,
 													"collectionID":   "2",
-													"collectionName": "book",
+													"collectionName": "Book",
 													"spans": []dataMap{
 														{
 															"start": "/2",

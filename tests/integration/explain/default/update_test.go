@@ -34,7 +34,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 		Description: "Explain (default) mutation request with update using boolean filter.",
 
 		Request: `mutation @explain {
-			update_author(
+			update_Author(
 				filter: {
 					verified: {
 						_eq: true
@@ -88,7 +88,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"verified": dataMap{
 							"_eq": true,
@@ -114,7 +114,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 		Description: "Explain (default) mutation request with update using ids.",
 
 		Request: `mutation @explain {
-			update_author(
+			update_Author(
 				ids: [
 					"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
@@ -166,7 +166,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         nil,
 					"spans": []dataMap{
 						{
@@ -192,7 +192,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 		Description: "Explain (default) mutation request with update using id.",
 
 		Request: `mutation @explain {
-			update_author(
+			update_Author(
 				id: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 				data: "{\"age\": 59}"
 			) {
@@ -240,7 +240,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         nil,
 					"spans": []dataMap{
 						{
@@ -262,7 +262,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 		Description: "Explain (default) mutation request with update using both ids and filter.",
 
 		Request: `mutation @explain {
-			update_author(
+			update_Author(
 				filter: {
 					verified: {
 						_eq: true
@@ -323,7 +323,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"verified": dataMap{
 							"_eq": true,

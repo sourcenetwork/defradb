@@ -22,7 +22,7 @@ func TestExplainTopLevelAverageQuery(t *testing.T) {
 
 		Request: `query @explain {
 			_avg(
-				author: {
+				Author: {
 					field: age
 				}
 			)
@@ -54,7 +54,7 @@ func TestExplainTopLevelAverageQuery(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter": dataMap{
 											"age": dataMap{
 												"_ne": nil,
@@ -75,7 +75,7 @@ func TestExplainTopLevelAverageQuery(t *testing.T) {
 								"sources": []dataMap{
 									{
 										"childFieldName": "age",
-										"fieldName":      "author",
+										"fieldName":      "Author",
 										"filter": dataMap{
 											"age": dataMap{
 												"_ne": nil,
@@ -89,7 +89,7 @@ func TestExplainTopLevelAverageQuery(t *testing.T) {
 							"countNode": dataMap{
 								"sources": []dataMap{
 									{
-										"fieldName": "author",
+										"fieldName": "Author",
 										"filter": dataMap{
 											"age": dataMap{
 												"_ne": nil,
@@ -117,7 +117,7 @@ func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 
 		Request: `query @explain {
 			_avg(
-				author: {
+				Author: {
 					field: age,
 					filter: {
 						age: {
@@ -159,7 +159,7 @@ func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter": dataMap{
 											"age": dataMap{
 												"_ne": nil,
@@ -181,7 +181,7 @@ func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 								"sources": []dataMap{
 									{
 										"childFieldName": "age",
-										"fieldName":      "author",
+										"fieldName":      "Author",
 										"filter": dataMap{
 											"age": dataMap{
 												"_gt": int(26),
@@ -196,7 +196,7 @@ func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 							"countNode": dataMap{
 								"sources": []dataMap{
 									{
-										"fieldName": "author",
+										"fieldName": "Author",
 										"filter": dataMap{
 											"age": dataMap{
 												"_gt": int(26),

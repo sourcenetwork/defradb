@@ -21,7 +21,7 @@ func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
 		Description: "Explain a simple query using average on array field.",
 
 		Request: `query @explain {
-			book {
+			Book {
 				name
 				_avg(chapterPages: {})
 			}
@@ -65,7 +65,7 @@ func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
 										"filter": nil,
 										"scanNode": dataMap{
 											"collectionID":   "2",
-											"collectionName": "book",
+											"collectionName": "Book",
 											"filter":         nil,
 											"spans": []dataMap{
 												{
@@ -92,7 +92,7 @@ func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 		Description: "Explain a average query on joined field.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				_avg(books: {field: pages})
 			}
@@ -178,7 +178,7 @@ func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 											"root": dataMap{
 												"scanNode": dataMap{
 													"collectionID":   "3",
-													"collectionName": "author",
+													"collectionName": "Author",
 													"filter":         nil,
 													"spans": []dataMap{
 														{
@@ -195,7 +195,7 @@ func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 														"filter": nil,
 														"scanNode": dataMap{
 															"collectionID":   "2",
-															"collectionName": "book",
+															"collectionName": "Book",
 															"filter": dataMap{
 																"pages": dataMap{
 																	"_ne": nil,
@@ -230,7 +230,7 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 		Description: "Explain a average query on multiple joined fields with filter.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				_avg(
 					books: {field: pages},
@@ -363,7 +363,7 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 													"root": dataMap{
 														"scanNode": dataMap{
 															"collectionID":   "3",
-															"collectionName": "author",
+															"collectionName": "Author",
 															"filter":         nil,
 															"spans": []dataMap{
 																{
@@ -380,7 +380,7 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 																"filter": nil,
 																"scanNode": dataMap{
 																	"collectionID":   "2",
-																	"collectionName": "book",
+																	"collectionName": "Book",
 																	"filter": dataMap{
 																		"pages": dataMap{
 																			"_ne": nil,
@@ -405,7 +405,7 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 													"root": dataMap{
 														"scanNode": dataMap{
 															"collectionID":   "3",
-															"collectionName": "author",
+															"collectionName": "Author",
 															"filter":         nil,
 															"spans": []dataMap{
 																{
@@ -422,7 +422,7 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 																"filter": nil,
 																"scanNode": dataMap{
 																	"collectionID":   "1",
-																	"collectionName": "article",
+																	"collectionName": "Article",
 																	"filter": dataMap{
 																		"pages": dataMap{
 																			"_gt": int(3),

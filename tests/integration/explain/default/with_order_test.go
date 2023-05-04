@@ -21,7 +21,7 @@ func TestExplainAscendingOrderQueryOnParent(t *testing.T) {
 		Description: "Explain An Ascending Order Query On Parent Field.",
 
 		Request: `query @explain {
-			author(order: {age: ASC}) {
+			Author(order: {age: ASC}) {
 				name
 				age
 			}
@@ -55,7 +55,7 @@ func TestExplainAscendingOrderQueryOnParent(t *testing.T) {
 								"scanNode": dataMap{
 									"filter":         nil,
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"spans": []dataMap{
 										{
 											"start": "/3",
@@ -87,7 +87,7 @@ func TestExplainQueryWithMultiOrderFieldsOnParent(t *testing.T) {
 		Description: "Explain Query With Multiple Order Fields on the Parent.",
 
 		Request: `query @explain {
-			author(order: {name: ASC, age: DESC}) {
+			Author(order: {name: ASC, age: DESC}) {
 				name
 				age
 			}
@@ -121,7 +121,7 @@ func TestExplainQueryWithMultiOrderFieldsOnParent(t *testing.T) {
 								"scanNode": dataMap{
 									"filter":         nil,
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"spans": []dataMap{
 										{
 											"start": "/3",
@@ -159,7 +159,7 @@ func TestExplainQueryWithOrderFieldOnChild(t *testing.T) {
 		Description: "Explain Query With Order Field On A Child.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				articles(order: {name: DESC}) {
 					name
@@ -213,7 +213,7 @@ func TestExplainQueryWithOrderFieldOnChild(t *testing.T) {
 								"root": dataMap{
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
@@ -239,7 +239,7 @@ func TestExplainQueryWithOrderFieldOnChild(t *testing.T) {
 												"filter": nil,
 												"scanNode": dataMap{
 													"collectionID":   "1",
-													"collectionName": "article",
+													"collectionName": "Article",
 													"filter":         nil,
 													"spans": []dataMap{
 														{
@@ -268,7 +268,7 @@ func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
 		Description: "Explain A Query With Order On Parent and An Order on Child.",
 
 		Request: `query @explain {
-			author(order: {name: ASC}) {
+			Author(order: {name: ASC}) {
 				name
 				articles(order: {name: DESC}) {
 					name
@@ -331,7 +331,7 @@ func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
 									"root": dataMap{
 										"scanNode": dataMap{
 											"collectionID":   "3",
-											"collectionName": "author",
+											"collectionName": "Author",
 											"filter":         nil,
 											"spans": []dataMap{
 												{
@@ -357,7 +357,7 @@ func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
 													"filter": nil,
 													"scanNode": dataMap{
 														"collectionID":   "1",
-														"collectionName": "article",
+														"collectionName": "Article",
 														"filter":         nil,
 														"spans": []dataMap{
 															{
@@ -387,7 +387,7 @@ func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
 		Description: "Explain Query Where The Parent Is Ordered By It's Child.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				order: {
 					articles: {name: ASC}
 				}
@@ -454,7 +454,7 @@ func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
 									"root": dataMap{
 										"scanNode": dataMap{
 											"collectionID":   "3",
-											"collectionName": "author",
+											"collectionName": "Author",
 											"filter":         nil,
 											"spans": []dataMap{
 												{
@@ -471,7 +471,7 @@ func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
 												"filter": nil,
 												"scanNode": dataMap{
 													"collectionID":   "1",
-													"collectionName": "article",
+													"collectionName": "Article",
 													"filter":         nil,
 													"spans": []dataMap{
 														{

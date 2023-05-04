@@ -21,7 +21,7 @@ func TestSimpleMutationUpdateWithBooleanFilterWhereResultFilteredOut(t *testing.
 		Description: "Simple update mutation with boolean equals filter",
 		// The update will result in a record that no longer matches the filter
 		Request: `mutation {
-					update_user(filter: {verified: {_eq: true}}, data: "{\"verified\":false}") {
+					update_User(filter: {verified: {_eq: true}}, data: "{\"verified\":false}") {
 						_key
 						name
 						points
@@ -49,7 +49,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 		{
 			Description: "Simple update mutation with boolean equals filter",
 			Request: `mutation {
-						update_user(filter: {verified: {_eq: true}}, data: "{\"points\": 59}") {
+						update_User(filter: {verified: {_eq: true}}, data: "{\"points\": 59}") {
 							_key
 							name
 							points
@@ -76,7 +76,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 		{
 			Description: "Simple update mutation with boolean equals filter, multiple rows but single match",
 			Request: `mutation {
-						update_user(filter: {verified: {_eq: true}}, data: "{\"points\": 59}") {
+						update_User(filter: {verified: {_eq: true}}, data: "{\"points\": 59}") {
 							_key
 							name
 							points
@@ -109,7 +109,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 		{
 			Description: "Simple update mutation with boolean equals filter, multiple rows",
 			Request: `mutation {
-						update_user(filter: {verified: {_eq: true}}, data: "{\"points\": 59}") {
+						update_User(filter: {verified: {_eq: true}}, data: "{\"points\": 59}") {
 							_key
 							name
 							points
@@ -155,7 +155,7 @@ func TestSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with id in filter, multiple rows",
 		Request: `mutation {
-					update_user(ids: ["bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", "bae-958c9334-73cf-5695-bf06-cf06826babfa"], data: "{\"points\": 59}") {
+					update_User(ids: ["bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", "bae-958c9334-73cf-5695-bf06-cf06826babfa"], data: "{\"points\": 59}") {
 						_key
 						name
 						points
@@ -198,7 +198,7 @@ func TestSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with id equals filter, multiple rows but single match",
 		Request: `mutation {
-					update_user(id: "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", data: "{\"points\": 59}") {
+					update_User(id: "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", data: "{\"points\": 59}") {
 						_key
 						name
 						points
@@ -236,7 +236,7 @@ func TestSimpleMutationUpdateWithNonExistantId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with non existant id",
 		Request: `mutation {
-					update_user(id: "bae-does-not-exist", data: "{\"points\": 59}") {
+					update_User(id: "bae-does-not-exist", data: "{\"points\": 59}") {
 						_key
 						name
 						points

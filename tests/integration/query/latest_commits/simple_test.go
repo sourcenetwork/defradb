@@ -33,8 +33,8 @@ func TestQueryLatestCommits(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},

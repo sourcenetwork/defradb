@@ -34,7 +34,7 @@ func TestDefaultExplainRequestWithOnlyLimit(t *testing.T) {
 		Description: "Explain (default) request with only limit.",
 
 		Request: `query @explain {
-			author(limit: 2) {
+			Author(limit: 2) {
 				name
 			}
 		}`,
@@ -95,7 +95,7 @@ func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
 		Description: "Explain (default) request with only offset.",
 
 		Request: `query @explain {
-			author(offset: 2) {
+			Author(offset: 2) {
 				name
 			}
 		}`,
@@ -156,7 +156,7 @@ func TestDefaultExplainRequestWithLimitAndOffset(t *testing.T) {
 		Description: "Explain (default) request with limit and offset.",
 
 		Request: `query @explain {
-			author(limit: 3, offset: 1) {
+			Author(limit: 3, offset: 1) {
 				name
 			}
 		}`,

@@ -22,7 +22,7 @@ func TestDefaultExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.
 		Description: "Explain (default) multation request with delete having no sub-selection.",
 
 		Request: `mutation @explain {
-				delete_author(ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"])
+				delete_Author(ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"])
 			}`,
 
 		Docs: map[int][]string{
@@ -42,7 +42,7 @@ func TestDefaultExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.
 			},
 		},
 
-		ExpectedError: "Field \"delete_author\" of type \"[author]\" must have a sub selection.",
+		ExpectedError: "Field \"delete_Author\" of type \"[Author]\" must have a sub selection.",
 	}
 
 	runExplainTest(t, test)

@@ -34,7 +34,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 		Description: "Explain (default) mutation request with delete using filter.",
 
 		Request: `mutation @explain {
-				delete_author(filter: {name: {_eq: "Shahzad"}}) {
+				delete_Author(filter: {name: {_eq: "Shahzad"}}) {
 					_key
 				}
 			}`,
@@ -70,7 +70,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"name": dataMap{
 							"_eq": "Shahzad",
@@ -96,7 +96,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 		Description: "Explain (default) mutation request with delete using filter to match everything.",
 
 		Request: `mutation @explain {
-				delete_author(filter: {}) {
+				delete_Author(filter: {}) {
 					DeletedKeyByFilter: _key
 				}
 			}`,
@@ -148,7 +148,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         dataMap{},
 					"spans": []dataMap{
 						{
@@ -170,7 +170,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 		Description: "Explain (default) mutation request with delete using id.",
 
 		Request: `mutation @explain {
-				delete_author(id: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
+				delete_Author(id: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
 					_key
 				}
 			}`,
@@ -205,7 +205,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         nil,
 					"spans": []dataMap{
 						{
@@ -227,7 +227,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 		Description: "Explain (default) mutation request with delete using ids.",
 
 		Request: `mutation @explain {
-				delete_author(ids: [
+				delete_Author(ids: [
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 					"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
 				]) {
@@ -272,7 +272,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         nil,
 					"spans": []dataMap{
 						{
@@ -298,7 +298,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 		Description: "Explain (default) mutation request with delete using no ids.",
 
 		Request: `mutation @explain {
-				delete_author(ids: []) {
+				delete_Author(ids: []) {
 					_key
 				}
 			}`,
@@ -330,7 +330,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         nil,
 					"spans":          []dataMap{},
 				},
@@ -347,7 +347,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 		Description: "Explain (default) mutation request with delete using filter and ids.",
 
 		Request: `mutation @explain {
-				delete_author(
+				delete_Author(
 				    ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "test"],
 				    filter: {
 					    _and: [
@@ -404,7 +404,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"_and": []any{
 							dataMap{

@@ -23,8 +23,8 @@ func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -34,7 +34,7 @@ func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 						{ "op": "move", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/-" }
 					]
 				`,
-				ExpectedError: "moving fields is not currently supported. Name: Name, ProposedIndex: 1, ExistingIndex: 2",
+				ExpectedError: "moving fields is not currently supported. Name: name, ProposedIndex: 1, ExistingIndex: 2",
 			},
 		},
 	}

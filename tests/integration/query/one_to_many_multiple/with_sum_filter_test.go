@@ -20,7 +20,7 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithAndWithoutFilter(t *tes
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sums with and without filters",
 		Request: `query {
-				author {
+				Author {
 					name
 					_sum(books: {field: score, filter: {score: {_gt: 3}}}, articles: {field: rating})
 				}
@@ -102,7 +102,7 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithFilters(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sums with filters",
 		Request: `query {
-				author {
+				Author {
 					name
 					_sum(books: {field: score, filter: {score: {_gt: 3}}}, articles: {field: rating, filter: {rating: {_lt: 3}}})
 				}
