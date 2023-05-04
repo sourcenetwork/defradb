@@ -162,6 +162,10 @@ var (
 					Value:       "fieldName",
 					Description: commitFieldNameFieldDescription,
 				},
+				"fieldId": &gql.EnumValueConfig{
+					Value:       "fieldId",
+					Description: commitFieldIDFieldDescription,
+				},
 			},
 		},
 	)
