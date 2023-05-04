@@ -143,6 +143,9 @@ type Collection interface {
 	// DropIndex drops an index from the collection.
 	DropIndex(ctx context.Context, indexName string) error
 
+	// DropAllIndexes drops all indexes from the collection.
+	DropAllIndexes(ctx context.Context) error
+
 	// GetIndexes returns all the indexes that exist on the collection.
 	GetIndexes(ctx context.Context) ([]IndexDescription, error)
 }

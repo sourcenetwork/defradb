@@ -217,6 +217,19 @@ func (db *db) dropCollectionIndex(
 	return col.DropIndex(ctx, indexName)
 }
 
+func (db *db) dropAllCollectionIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionName string,
+) error {
+	col, err := db.getCollectionByName(ctx, txn, collectionName)
+	if err != nil {
+		return NewErrCollectionDoesntExist(collectionName)
+	}
+	col = col.WithTxn(txn)
+	return col.DropAllIndexes(ctx)
+}
+
 // getAllCollectionIndexes returns all the indexes in the database.
 func (db *db) getAllCollectionIndexes(
 	ctx context.Context,

@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	ds "github.com/ipfs/go-datastore"
+
+	"github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -95,6 +98,36 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 		return err
 	}
 	return txn.Systemstore().Delete(ctx, key.ToDS())
+}
+
+func (c *collection) DropAllIndexes(ctx context.Context) error {
+	prefix := core.NewCollectionIndexKey(c.Name(), "")
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	q, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix: prefix.ToString(),
+	})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := q.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close collection query", err)
+		}
+	}()
+
+	for res := range q.Next() {
+		if res.Error != nil {
+			return res.Error
+		}
+		err = txn.Systemstore().Delete(ctx, ds.NewKey(res.Key))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {

@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -127,6 +128,31 @@ func (f *indexTestFixture) createUserCollectionIndex() client.IndexDescription {
 
 func (f *indexTestFixture) dropIndex(colName, indexName string) error {
 	return f.db.dropCollectionIndex(f.ctx, f.txn, colName, indexName)
+}
+
+func (f *indexTestFixture) dropAllIndexes(colName string) error {
+	return f.db.dropAllCollectionIndex(f.ctx, f.txn, colName)
+}
+
+func (f *indexTestFixture) countIndexPrefixes(colName, indexName string) int {
+	prefix := core.NewCollectionIndexKey(usersColName, indexName)
+	q, err := f.txn.Systemstore().Query(f.ctx, query.Query{
+		Prefix: prefix.ToString(),
+	})
+	assert.NoError(f.t, err)
+	defer func() {
+		err := q.Close()
+		assert.NoError(f.t, err)
+	}()
+
+	count := 0
+	for res := range q.Next() {
+		if res.Error != nil {
+			assert.NoError(f.t, err)
+		}
+		count++
+	}
+	return count
 }
 
 func (f *indexTestFixture) createCollectionIndexFor(
@@ -371,6 +397,36 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	assert.Equal(t, indexes[1-usersIndexIndex].CollectionName, productsColName)
 }
 
+func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
+	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
+	assert.NoError(t, err)
+
+	_, err = f.getAllIndexes()
+	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+}
+
+func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
+	key := ds.NewKey(indexKey.ToString() + "/invalid")
+	desc := client.IndexDescription{
+		Name: "some_index_name",
+		Fields: []client.IndexedFieldDescription{
+			{Name: "name", Direction: client.Ascending},
+		},
+	}
+	descData, _ := json.Marshal(desc)
+	err := f.txn.Systemstore().Put(f.ctx, key, descData)
+	assert.NoError(t, err)
+
+	_, err = f.getAllIndexes()
+	assert.ErrorIs(t, err, NewErrInvalidStoredIndexKey(key.String()))
+}
+
 func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 
@@ -421,37 +477,7 @@ func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
 }
 
-func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-
-	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
-	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
-	assert.NoError(t, err)
-
-	_, err = f.getAllIndexes()
-	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
-}
-
-func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-
-	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
-	key := ds.NewKey(indexKey.ToString() + "/invalid")
-	desc := client.IndexDescription{
-		Name: "some_index_name",
-		Fields: []client.IndexedFieldDescription{
-			{Name: "name", Direction: client.Ascending},
-		},
-	}
-	descData, _ := json.Marshal(desc)
-	err := f.txn.Systemstore().Put(f.ctx, key, descData)
-	assert.NoError(t, err)
-
-	_, err = f.getAllIndexes()
-	assert.ErrorIs(t, err, NewErrInvalidStoredIndexKey(key.String()))
-}
-
-func TestDropIndex_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
+func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 	desc := f.createUserCollectionIndex()
 
@@ -463,9 +489,53 @@ func TestDropIndex_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestDropIndex_IfStorageFails_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	desc := f.createUserCollectionIndex()
+
+	f.db.Close(f.ctx)
+
+	err := f.dropIndex(productsColName, desc.Name)
+	assert.Error(t, err)
+}
+
 func TestDropIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	err := f.dropIndex(productsColName, "any_name")
 	assert.ErrorIs(t, err, NewErrCollectionDoesntExist(usersColName))
+}
+
+func TestDropAllIndex_ShouldDeleteAllIndexes(t *testing.T) {
+	f := newIndexTestFixture(t)
+	_, err := f.createCollectionIndexFor(usersColName, client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{
+			{Name: "name", Direction: client.Ascending},
+		},
+	})
+	assert.NoError(f.t, err)
+
+	_, err = f.createCollectionIndexFor(usersColName, client.IndexDescription{
+		Fields: []client.IndexedFieldDescription{
+			{Name: "age", Direction: client.Ascending},
+		},
+	})
+	assert.NoError(f.t, err)
+
+	assert.Equal(t, f.countIndexPrefixes(usersColName, ""), 2)
+
+	err = f.dropAllIndexes(usersColName)
+	assert.NoError(t, err)
+
+	assert.Equal(t, f.countIndexPrefixes(usersColName, ""), 0)
+}
+
+func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndex()
+
+	f.db.Close(f.ctx)
+
+	err := f.dropAllIndexes(usersColName)
+	assert.Error(t, err)
 }
