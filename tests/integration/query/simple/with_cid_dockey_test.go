@@ -204,6 +204,8 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 				0: {
 					// update to change age to 22 on document 0
 					`{"Age": 22}`,
+					// then update it again to change age to 23 on document 0
+					`{"Age": 23}`,
 				},
 			},
 		},
