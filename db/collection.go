@@ -196,12 +196,25 @@ func (db *db) createCollectionIndex(
 	collectionName string,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	col, err := db.getCollectionByName(ctx, txn, collectionName) // TODO: test error
+	col, err := db.getCollectionByName(ctx, txn, collectionName)
 	if err != nil {
-		return client.IndexDescription{}, err
+		return client.IndexDescription{}, NewErrCollectionDoesntExist(collectionName)
 	}
 	col = col.WithTxn(txn)
 	return col.CreateIndex(ctx, desc)
+}
+
+func (db *db) dropCollectionIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionName, indexName string,
+) error {
+	col, err := db.getCollectionByName(ctx, txn, collectionName)
+	if err != nil {
+		return NewErrCollectionDoesntExist(collectionName)
+	}
+	col = col.WithTxn(txn)
+	return col.DropIndex(ctx, indexName)
 }
 
 // getAllCollectionIndexes returns all the indexes in the database.

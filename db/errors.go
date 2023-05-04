@@ -45,6 +45,7 @@ const (
 	errInvalidStoredIndex             string = "invalid stored index"
 	errInvalidStoredIndexKey          string = "invalid stored index key"
 	errNonExistingFieldForIndex       string = "creating an index on a non-existing property"
+	errCollectionDoesntExisting       string = "collection with given name doesn't exist"
 )
 
 var (
@@ -127,6 +128,11 @@ func NewErrInvalidStoredIndexKey(key string) error {
 // on a non-existing field.
 func NewErrNonExistingFieldForIndex(field string) error {
 	return errors.New(errNonExistingFieldForIndex, errors.NewKV("Field", field))
+}
+
+// NewErrCollectionDoesntExist returns a new error indicating the collection doesn't exist.
+func NewErrCollectionDoesntExist(colName string) error {
+	return errors.New(errCollectionDoesntExisting, errors.NewKV("Collection", colName))
 }
 
 // NewErrFailedToGetCollection returns a new error indicating that the collection could not be obtained.

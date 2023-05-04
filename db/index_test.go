@@ -113,6 +113,22 @@ func (f *indexTestFixture) createCollectionIndex(
 	return f.createCollectionIndexFor(f.collection.Name(), desc)
 }
 
+func (f *indexTestFixture) createUserCollectionIndex() client.IndexDescription {
+	desc := client.IndexDescription{
+		Name: "some_index_name",
+		Fields: []client.IndexedFieldDescription{
+			{Name: "name", Direction: client.Ascending},
+		},
+	}
+	newDesc, err := f.createCollectionIndexFor(f.collection.Name(), desc)
+	assert.NoError(f.t, err)
+	return newDesc
+}
+
+func (f *indexTestFixture) dropIndex(colName, indexName string) error {
+	return f.db.dropCollectionIndex(f.ctx, f.txn, colName, indexName)
+}
+
 func (f *indexTestFixture) createCollectionIndexFor(
 	collectionName string,
 	desc client.IndexDescription,
@@ -308,19 +324,19 @@ func TestCreateIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 	}
 
 	_, err := f.createCollectionIndexFor(productsColName, desc)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, NewErrCollectionDoesntExist(usersColName))
 }
 
 func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
-	const prop = "non_existing_property"
+	const field = "non_existing_field"
 	desc := client.IndexDescription{
-		Fields: []client.IndexedFieldDescription{{Name: prop}},
+		Fields: []client.IndexedFieldDescription{{Name: field}},
 	}
 
 	_, err := f.createCollectionIndex(desc)
-	assert.ErrorIs(t, err, NewErrNonExistingFieldForIndex(prop))
+	assert.ErrorIs(t, err, NewErrNonExistingFieldForIndex(field))
 }
 
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
@@ -386,17 +402,11 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 
 func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
-
-	usersIndexDesc := client.IndexDescription{
-		Name:   "users_name_index",
-		Fields: []client.IndexedFieldDescription{{Name: "name"}},
-	}
-	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
-	assert.NoError(t, err)
+	f.createUserCollectionIndex()
 
 	f.db.Close(f.ctx)
 
-	_, err = f.getCollectionIndexes(usersColName)
+	_, err := f.getCollectionIndexes(usersColName)
 	assert.Error(t, err)
 }
 
@@ -439,4 +449,23 @@ func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 
 	_, err = f.getAllIndexes()
 	assert.ErrorIs(t, err, NewErrInvalidStoredIndexKey(key.String()))
+}
+
+func TestDropIndex_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	desc := f.createUserCollectionIndex()
+
+	err := f.dropIndex(usersColName, desc.Name)
+	assert.NoError(t, err)
+
+	indexKey := core.NewCollectionIndexKey(usersColName, desc.Name)
+	_, err = f.txn.Systemstore().Get(f.ctx, indexKey.ToDS())
+	assert.Error(t, err)
+}
+
+func TestDropIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	err := f.dropIndex(productsColName, "any_name")
+	assert.ErrorIs(t, err, NewErrCollectionDoesntExist(usersColName))
 }

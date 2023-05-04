@@ -88,7 +88,13 @@ func (c *collection) CreateIndex(
 }
 
 func (c *collection) DropIndex(ctx context.Context, indexName string) error {
-	return nil
+	key := core.NewCollectionIndexKey(c.Name(), indexName)
+
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	return txn.Systemstore().Delete(ctx, key.ToDS())
 }
 
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
