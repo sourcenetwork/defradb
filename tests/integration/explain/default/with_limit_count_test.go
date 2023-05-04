@@ -21,7 +21,7 @@ func TestExplainQueryWithMultipleConflictingInnerLimits(t *testing.T) {
 		Description: "Explain Query With multiple conflicting inner limit nodes.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				numberOfArts: _count(articles: {})
 				articles(limit: 2) {
 					name
@@ -197,7 +197,7 @@ func TestExplainQueryWithMultipleConflictingInnerLimitsAndOuterLimit(t *testing.
 		Description: "Explain Query With multiple conflicting inner limit nodes and an outer limit.",
 
 		Request: `query @explain {
-			author(limit: 3, offset: 1) {
+			Author(limit: 3, offset: 1) {
 				numberOfArts: _count(articles: {})
 				articles(limit: 2) {
 					name

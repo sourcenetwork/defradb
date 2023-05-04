@@ -22,7 +22,7 @@ func TestDefaultExplainRequestWithDocKeyFilter(t *testing.T) {
 		Description: "Explain (default) request with dockey filter.",
 
 		Request: `query @explain {
-			author(dockey: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
+			Author(dockey: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
 				name
 				age
 			}
@@ -53,7 +53,7 @@ func TestDefaultExplainRequestWithDocKeyFilter(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         nil,
 					"spans": []dataMap{
 						{
@@ -75,7 +75,7 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
 		Description: "Explain (default) request with dockeys filter using one key.",
 
 		Request: `query @explain {
-			author(dockeys: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
+			Author(dockeys: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
 				name
 				age
 			}
@@ -100,7 +100,7 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         nil,
 					"spans": []dataMap{
 						{
@@ -122,7 +122,7 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *
 		Description: "Explain (default) request with dockeys filter using multiple but duplicate keys.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				dockeys: [
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
@@ -158,7 +158,7 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         nil,
 					"spans": []dataMap{
 						{
@@ -184,7 +184,7 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testin
 		Description: "Explain (default) request with dockeys filter using multiple unique keys.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				dockeys: [
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 					"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
@@ -220,7 +220,7 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testin
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter":         nil,
 					"spans": []dataMap{
 						{
@@ -246,7 +246,7 @@ func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
 		Description: "Explain (default) request with a filter to match key.",
 
 		Request: `query @explain {
-			author(filter: {_key: {_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"}}) {
+			Author(filter: {_key: {_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"}}) {
 				name
 				age
 			}
@@ -277,7 +277,7 @@ func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
 				IncludeChildNodes: true, // should be last node, so will have no child nodes.
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
-					"collectionName": "author",
+					"collectionName": "Author",
 					"filter": dataMap{
 						"_key": dataMap{
 							"_eq": "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",

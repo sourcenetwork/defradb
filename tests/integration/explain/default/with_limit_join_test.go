@@ -70,7 +70,7 @@ func TestExplainQueryWithOnlyLimitOnChild(t *testing.T) {
 		Description: "change Explain Query With Only Limit On Child.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				articles(limit: 1) {
 					name
@@ -192,7 +192,7 @@ func TestExplainQueryWithOnlyOffsetOnChild(t *testing.T) {
 		Description: "Explain Query With Only Offset On Child.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				articles(offset: 2) {
 					name
@@ -314,7 +314,7 @@ func TestExplainQueryWithBothLimitAndOffsetOnChild(t *testing.T) {
 		Description: "Explain Query With Both Limit And Offset On Child.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				articles(limit: 2, offset: 2) {
 					name
@@ -436,7 +436,7 @@ func TestExplainQueryWithLimitOnChildAndBothLimitAndOffsetOnParent(t *testing.T)
 		Description: "Explain Query With Limit On Child And Both Limit And Offset On Parent.",
 
 		Request: `query @explain {
-			author(limit: 3, offset: 1) {
+			Author(limit: 3, offset: 1) {
 				name
 				articles(limit: 2) {
 					name

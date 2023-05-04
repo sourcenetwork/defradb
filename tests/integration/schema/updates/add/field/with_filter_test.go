@@ -23,21 +23,21 @@ func TestSchemaUpdatesAddFieldSimpleWithFilter(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (filter: {Name: {_eq: "John"}}) {
-						Name
+					Users (filter: {name: {_eq: "John"}}) {
+						name
 					}
 				}`,
 				Results: []map[string]any{},
@@ -54,14 +54,14 @@ func TestSchemaUpdatesAddFieldSimpleWithFilterOnPopulatedDatabase(t *testing.T) 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			// We want to make sure that this works across database versions, so we tell
@@ -70,19 +70,19 @@ func TestSchemaUpdatesAddFieldSimpleWithFilterOnPopulatedDatabase(t *testing.T) 
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (filter: {Name: {_eq: "John"}}) {
-						Name
+					Users (filter: {name: {_eq: "John"}}) {
+						name
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
+						"name": "John",
 					},
 				},
 			},

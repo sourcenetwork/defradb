@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumWithL
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, limited sum on non-rendered group integer value",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: Age, limit: 2})
 					}

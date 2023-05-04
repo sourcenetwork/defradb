@@ -25,22 +25,22 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArray(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 18} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 18} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{},
@@ -57,35 +57,35 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithCreate(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 18} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 18} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": [true, false, null]
+					"name": "John",
+					"foo": [true, false, null]
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo":  []immutable.Option[bool]{immutable.Some(true), immutable.Some(false), immutable.None[bool]()},
+						"name": "John",
+						"foo":  []immutable.Option[bool]{immutable.Some(true), immutable.Some(false), immutable.None[bool]()},
 					},
 				},
 			},
@@ -101,35 +101,35 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArraySubstitutionWithCreate(t *tes
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "[Boolean]"} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": "[Boolean]"} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": [true, false, null]
+					"name": "John",
+					"foo": [true, false, null]
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo":  []immutable.Option[bool]{immutable.Some(true), immutable.Some(false), immutable.None[bool]()},
+						"name": "John",
+						"foo":  []immutable.Option[bool]{immutable.Some(true), immutable.Some(false), immutable.None[bool]()},
 					},
 				},
 			},

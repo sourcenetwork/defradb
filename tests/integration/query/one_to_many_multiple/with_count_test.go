@@ -20,7 +20,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count",
 		Request: `query {
-				author {
+				Author {
 					name
 					numberOfBooks: _count(books: {})
 					numberOfArticles: _count(articles: {})
@@ -94,7 +94,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count",
 		Request: `query {
-				author {
+				Author {
 					name
 					_count(books: {}, articles: {})
 				}

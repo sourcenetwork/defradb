@@ -21,27 +21,27 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 						}
 					}
 				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
@@ -49,20 +49,20 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.SetupComplete{},
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 				ExpectedError: "schema type already exists",
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
@@ -70,15 +70,15 @@ func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
-					type users {}
+					type Users {}
+					type Users {}
 				`,
 				ExpectedError: "schema type already exists",
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
@@ -86,32 +86,32 @@ func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
-					type books {}
+					type Books {}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "books") {
+						__type (name: "Books") {
 							name
 						}
 					}
 				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
-						"name": "books",
+						"name": "Books",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users", "books"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users", "Books"}, test)
 }
 
 func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
@@ -119,13 +119,13 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 							fields {
 								name
@@ -139,7 +139,7 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
-						"name":   "users",
+						"name":   "Users",
 						"fields": DefaultFields.Tidy(),
 					},
 				},
@@ -147,7 +147,7 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
@@ -155,8 +155,8 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
-						Name: NotAType
+					type Users {
+						name: NotAType
 					}
 				`,
 				ExpectedError: "no type found for given name",
@@ -164,7 +164,7 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
@@ -172,15 +172,15 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
-						Name: String
+					type Users {
+						name: String
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 							fields {
 								name
@@ -194,10 +194,10 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": DefaultFields.Append(
 							Field{
-								"name": "Name",
+								"name": "name",
 								"type": map[string]any{
 									"kind": "SCALAR",
 									"name": "String",
@@ -210,7 +210,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {

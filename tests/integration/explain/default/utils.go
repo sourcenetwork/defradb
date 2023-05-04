@@ -20,39 +20,39 @@ import (
 type dataMap = map[string]any
 
 var bookAuthorGQLSchema = (`
-	type article {
+	type Article {
 		name: String
-		author: author
+		author: Author
 		pages: Int
 	}
 
-	type book {
+	type Book {
 		name: String
-		author: author
+		author: Author
 		pages: Int
 		chapterPages: [Int!]
 	}
 
-	type author {
+	type Author {
 		name: String
 		age: Int
 		verified: Boolean
-		books: [book]
-		articles: [article]
-		contact: authorContact
+		books: [Book]
+		articles: [Article]
+		contact: AuthorContact
 	}
 
-	type authorContact {
+	type AuthorContact {
 		cell: String
 		email: String
-		author: author
-		address: contactAddress
+		author: Author
+		address: ContactAddress
 	}
 
-	type contactAddress {
+	type ContactAddress {
 		city: String
 		country: String
-		contact: authorContact
+		contact: AuthorContact
 	}
 
 `)
@@ -62,7 +62,7 @@ func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
 	testUtils.ExecuteRequestTestCase(
 		t,
 		bookAuthorGQLSchema,
-		[]string{"article", "book", "author", "authorContact", "contactAddress"},
+		[]string{"Article", "Book", "Author", "AuthorContact", "ContactAddress"},
 		test,
 	)
 }
@@ -71,7 +71,7 @@ func runExplainTest(t *testing.T, test explainUtils.ExplainRequestTestCase) {
 	explainUtils.ExecuteExplainRequestTestCase(
 		t,
 		bookAuthorGQLSchema,
-		[]string{"article", "book", "author", "authorContact", "contactAddress"},
+		[]string{"Article", "Book", "Author", "AuthorContact", "ContactAddress"},
 		test,
 	)
 }

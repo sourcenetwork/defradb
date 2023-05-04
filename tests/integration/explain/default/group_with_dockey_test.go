@@ -21,7 +21,7 @@ func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
 		Description: "Explain query with a dockeys filter on inner _group.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [age]
 			) {
 				age
@@ -61,7 +61,7 @@ func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        []string{"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"},
 									"filter":         nil,
 									"groupBy":        nil,
@@ -74,7 +74,7 @@ func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -99,7 +99,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 		Description: "Explain query with a dockey on parent groupBy.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [age],
 				dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
 			) {
@@ -140,7 +140,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"filter":         nil,
 									"groupBy":        nil,
@@ -153,7 +153,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -178,7 +178,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 		Description: "Explain query with a dockeys and filter on parent groupBy.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [age],
 				filter: {age: {_eq: 20}},
 				dockeys: [
@@ -223,7 +223,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -236,7 +236,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
 											"_eq": int(20),

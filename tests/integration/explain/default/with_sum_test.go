@@ -21,7 +21,7 @@ func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				_key
 				TotalPages: _sum(
@@ -89,7 +89,7 @@ func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
 									"root": dataMap{
 										"scanNode": dataMap{
 											"collectionID":   "3",
-											"collectionName": "author",
+											"collectionName": "Author",
 											"filter":         nil,
 											"spans": []dataMap{
 												{
@@ -106,7 +106,7 @@ func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
 												"filter": nil,
 												"scanNode": dataMap{
 													"collectionID":   "2",
-													"collectionName": "book",
+													"collectionName": "Book",
 													"filter":         nil,
 													"spans": []dataMap{
 														{
@@ -135,7 +135,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with a filter.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				TotalPages: _sum(
 					articles: {
@@ -213,7 +213,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 									"root": dataMap{
 										"scanNode": dataMap{
 											"collectionID":   "3",
-											"collectionName": "author",
+											"collectionName": "Author",
 											"filter":         nil,
 											"spans": []dataMap{
 												{
@@ -230,7 +230,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 												"filter": nil,
 												"scanNode": dataMap{
 													"collectionID":   "1",
-													"collectionName": "article",
+													"collectionName": "Article",
 													"filter": dataMap{
 														"name": dataMap{
 															"_eq": "To my dear readers",
@@ -263,7 +263,7 @@ func TestExplainQuerySumOfInlineArrayField_ShouldHaveEmptyChildField(t *testing.
 		Description: "Explain a simple sum query on an  inline array field (childFieldName is nil).",
 
 		Request: `query @explain {
-			book {
+			Book {
 				name
 				NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: _sum(chapterPages: {})
 			}
@@ -311,7 +311,7 @@ func TestExplainQuerySumOfInlineArrayField_ShouldHaveEmptyChildField(t *testing.
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "2",
-									"collectionName": "book",
+									"collectionName": "Book",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -336,7 +336,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with many sources.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				TotalPages: _sum(
 					books: {field: pages},
@@ -431,7 +431,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
 											"root": dataMap{
 												"scanNode": dataMap{
 													"collectionID":   "3",
-													"collectionName": "author",
+													"collectionName": "Author",
 													"filter":         nil,
 													"spans": []dataMap{
 														{
@@ -448,7 +448,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
 														"filter": nil,
 														"scanNode": dataMap{
 															"collectionID":   "2",
-															"collectionName": "book",
+															"collectionName": "Book",
 															"filter":         nil,
 															"spans": []dataMap{
 																{
@@ -469,7 +469,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
 											"root": dataMap{
 												"scanNode": dataMap{
 													"collectionID":   "3",
-													"collectionName": "author",
+													"collectionName": "Author",
 													"filter":         nil,
 													"spans": []dataMap{
 														{
@@ -486,7 +486,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
 														"filter": nil,
 														"scanNode": dataMap{
 															"collectionID":   "1",
-															"collectionName": "article",
+															"collectionName": "Article",
 															"filter":         nil,
 															"spans": []dataMap{
 																{

@@ -22,7 +22,7 @@ func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 		Description: "Explain (default) a request by providing the directive on wrong location (field).",
 
 		Request: `query {
-			author @explain {
+			Author @explain {
 				name
 				age
 			}
@@ -49,7 +49,7 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 		Description: "Explain (default) a basic request.",
 
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				age
 			}
@@ -73,7 +73,7 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 							"scanNode": dataMap{
 								"filter":         nil,
 								"collectionID":   "3",
-								"collectionName": "author",
+								"collectionName": "Author",
 								"spans": []dataMap{
 									{
 										"start": "/3",
@@ -97,7 +97,7 @@ func TestDefaultExplainWithAlias(t *testing.T) {
 		Description: "Explain (default) a basic request with alias, no filter",
 
 		Request: `query @explain {
-			author {
+			Author {
 				username: name
 				age: age
 			}

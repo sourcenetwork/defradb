@@ -21,7 +21,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 		{
 			Description: "One-to-many relation query from one side",
 			Request: `query {
-						book {
+						Book {
 							name
 							rating
 							author {
@@ -110,7 +110,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 		{
 			Description: "One-to-many relation query from many side",
 			Request: `query {
-				author {
+				Author {
 					name
 					age
 					written {
@@ -212,7 +212,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 		{
 			Description: "One-to-many relation query from one side",
 			Request: `query {
-						book {
+						Book {
 							name
 							rating
 							author {
@@ -332,7 +332,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 		{
 			Description: "One-to-many relation query from many side",
 			Request: `query {
-				author {
+				Author {
 					name
 					age
 					written {

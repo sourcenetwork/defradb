@@ -17,11 +17,11 @@ import (
 )
 
 var userCollectionGQLSchema = (`
-	type users {
-		Name: String
-		Age: Int
-		HeightM: Float
-		Verified: Boolean
+	type Users {
+		name: String
+		age: Int
+		heightM: Float
+		verified: Boolean
 	}
 `)
 

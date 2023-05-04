@@ -24,8 +24,8 @@ func TestUpdateSaveErrorsGivenUnknownField(t *testing.T) {
 	doc, err := client.NewDocFromJSON(
 		[]byte(
 			`{
-				"Name": "John",
-				"Age": 21
+				"name": "John",
+				"age": 21
 			}`,
 		),
 	)
@@ -46,15 +46,15 @@ func TestUpdateSaveErrorsGivenUnknownField(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Docs: map[string][]string{
-			"users": {
+			"Users": {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"users": []func(c client.Collection) error{
+			"Users": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					return c.Save(context.Background(), doc)
 				},

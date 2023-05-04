@@ -24,7 +24,7 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -33,7 +33,7 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 					[
 						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" },
 						{ "op": "remove", "path": "/Users/Schema/Fields/2/ID" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "Fax" }
+						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "fax" }
 					]
 				`,
 			},
@@ -57,7 +57,7 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 						"name": "Users",
 						"fields": introspectionUtils.DefaultFields.Append(
 							introspectionUtils.Field{
-								"name": "Name",
+								"name": "name",
 								"type": map[string]any{
 									"kind": "SCALAR",
 									"name": "String",
@@ -65,7 +65,7 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 							},
 						).Append(
 							introspectionUtils.Field{
-								"name": "Fax",
+								"name": "fax",
 								"type": map[string]any{
 									"kind": "SCALAR",
 									"name": "String",

@@ -24,35 +24,35 @@ func TestQueryCommitsWithCid(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Age":	22
+					"age":	22
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 						commits(
-							cid: "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu"
+							cid: "bafybeidgiwk6kqpswcdnp5jmjgch6g2aqkrwqoiqcanxuxt3ne3huma7oi"
 						) {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid": "bafybeidgiwk6kqpswcdnp5jmjgch6g2aqkrwqoiqcanxuxt3ne3huma7oi",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
@@ -64,28 +64,28 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
 						commits(
-							cid: "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu"
+							cid: "bafybeic267ibnl45al5ekxpqorsbwv2xghsuxm4dpdi47ojhl7yuvdonuy"
 						) {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid": "bafybeic267ibnl45al5ekxpqorsbwv2xghsuxm4dpdi47ojhl7yuvdonuy",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithInvalidCid(t *testing.T) {
@@ -96,8 +96,8 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
@@ -113,7 +113,7 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
@@ -124,8 +124,8 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
@@ -141,7 +141,7 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithUnknownCid(t *testing.T) {
@@ -152,8 +152,8 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
@@ -169,5 +169,5 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

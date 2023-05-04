@@ -22,7 +22,7 @@ func TestQueryOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with average",
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				_avg(published: {field: rating})
 				published(filter: {rating: {_ne: null}}){
@@ -67,7 +67,7 @@ func TestQueryOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.
 												"scanNode": dataMap{
 													"filter":         nil,
 													"collectionID":   "2",
-													"collectionName": "author",
+													"collectionName": "Author",
 													"spans": []dataMap{
 														{
 															"start": "/2",
@@ -88,7 +88,7 @@ func TestQueryOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.
 																},
 															},
 															"collectionID":   "1",
-															"collectionName": "book",
+															"collectionName": "Book",
 															"spans": []dataMap{
 																{
 																	"start": "/1",

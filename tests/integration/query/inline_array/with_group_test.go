@@ -20,34 +20,34 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, mixed integers, group by string",
 		Request: `query {
-					users (groupBy: [Name]) {
-						Name
+					Users (groupBy: [name]) {
+						name
 						_group {
-							FavouriteIntegers
+							favouriteIntegers
 						}
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, -1, 1, 0]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [1, -2, 1, -1, 0]
+					"name": "Shahzad",
+					"favouriteIntegers": [1, -2, 1, -1, 0]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				"_group": []map[string]any{
 					{
-						"FavouriteIntegers": []int64{-1, 2, -1, 1, 0},
+						"favouriteIntegers": []int64{1, -2, 1, -1, 0},
 					},
 					{
-						"FavouriteIntegers": []int64{1, -2, 1, -1, 0},
+						"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 					},
 				},
 			},
@@ -61,46 +61,47 @@ func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, mixed integers, group by array",
 		Request: `query {
-					users (groupBy: [FavouriteIntegers]) {
-						FavouriteIntegers
+					Users (groupBy: [favouriteIntegers]) {
+						favouriteIntegers
 						_group {
-							Name
+							name
 						}
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Andy",
-					"FavouriteIntegers": [-1, 2, -1, 1, 0]
+					"name": "Andy",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, -1, 1, 0]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 				`{
-					"Name": "John",
-					"FavouriteIntegers": [1, 2, 3]
+					"name": "John",
+					"favouriteIntegers": [1, 2, 3]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"FavouriteIntegers": []int64{-1, 2, -1, 1, 0},
+				"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 				"_group": []map[string]any{
 					{
-						"Name": "Shahzad",
+						"name": "Andy",
 					},
 					{
-						"Name": "Andy",
+
+						"name": "Shahzad",
 					},
 				},
 			},
 			{
-				"FavouriteIntegers": []int64{1, 2, 3},
+				"favouriteIntegers": []int64{1, 2, 3},
 				"_group": []map[string]any{
 					{
-						"Name": "John",
+						"name": "John",
 					},
 				},
 			},

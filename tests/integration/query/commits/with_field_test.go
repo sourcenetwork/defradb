@@ -26,8 +26,8 @@ func TestQueryCommitsWithField(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
@@ -41,11 +41,11 @@ func TestQueryCommitsWithField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with field id",
@@ -54,8 +54,8 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
@@ -66,18 +66,18 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid": "bafybeid4q6fhbbchwife54qqumb2rof6lui7d5njbkylkradmewqdibhjm",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and field id",
@@ -86,8 +86,8 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
@@ -98,18 +98,18 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid": "bafybeic267ibnl45al5ekxpqorsbwv2xghsuxm4dpdi47ojhl7yuvdonuy",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and field id",
@@ -118,8 +118,8 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
@@ -131,13 +131,13 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":             "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
-						"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
+						"cid":             "bafybeic267ibnl45al5ekxpqorsbwv2xghsuxm4dpdi47ojhl7yuvdonuy",
+						"schemaVersionId": "bafkreicihc56up4gzd4pf6lsmg5fc7dugyuigoaywgtjwy5c2suvj5zhtm",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

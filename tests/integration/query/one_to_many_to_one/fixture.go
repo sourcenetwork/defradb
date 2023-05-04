@@ -56,7 +56,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 0,
-			// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04, Has written 1 book
+			// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04, Has written 1 Book
 			Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -65,7 +65,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 0,
-			// Has written no book
+			// Has written no Book
 			Doc: `{
 					"name": "Not a Writer",
 					"age": 6,
@@ -75,7 +75,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		// Books
 		{
 			CollectionID: 1,
-			// "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935", Has 1 publisher
+			// "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935", Has 1 Publisher
 			Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
@@ -84,7 +84,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 1,
-			// "bae-b8091c4f-7594-5d7a-98e8-272aadcedfdf", Has 1 publisher
+			// "bae-b8091c4f-7594-5d7a-98e8-272aadcedfdf", Has 1 Publisher
 			Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
@@ -93,7 +93,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 1,
-			// "bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca", Has no publisher.
+			// "bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca", Has no Publisher.
 			Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
@@ -102,7 +102,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 1,
-			// "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d", Has 1 publisher
+			// "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d", Has 1 Publisher
 			Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
@@ -111,7 +111,7 @@ func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 1,
-			// "bae-c674e3b0-ebb6-5b89-bfa3-d1128288d21a", Has 1 publisher
+			// "bae-c674e3b0-ebb6-5b89-bfa3-d1128288d21a", Has 1 Publisher
 			Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
