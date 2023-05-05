@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 
 	badger "github.com/dgraph-io/badger/v3"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -384,7 +385,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 func wait(ctx context.Context, di *defraInstance) error {
 	// setup signal handlers
 	signalCh := make(chan os.Signal, 1)
-	signal.Notify(signalCh, os.Interrupt)
+	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case <-ctx.Done():
