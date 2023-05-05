@@ -251,7 +251,7 @@ func (db *db) getAllCollectionIndexes(
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
 		indexes = append(indexes, client.CollectionIndexDescription{
-			CollectionName: indexKey.CollectionID,
+			CollectionName: indexKey.CollectionName,
 			Index:          colDesk,
 		})
 	}

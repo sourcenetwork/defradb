@@ -108,8 +108,8 @@ type CollectionSchemaVersionKey struct {
 var _ Key = (*CollectionSchemaVersionKey)(nil)
 
 type CollectionIndexKey struct {
-	CollectionID string
-	IndexName    string
+	CollectionName string
+	IndexName      string
 }
 
 var _ Key = (*CollectionIndexKey)(nil)
@@ -219,7 +219,7 @@ func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersi
 }
 
 func NewCollectionIndexKey(colID, name string) CollectionIndexKey {
-	return CollectionIndexKey{CollectionID: colID, IndexName: name}
+	return CollectionIndexKey{CollectionName: colID, IndexName: name}
 }
 
 func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
@@ -227,7 +227,7 @@ func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 	if len(keyArr) < 4 || len(keyArr) > 5 || keyArr[1] != "collection" || keyArr[2] != "index" {
 		return CollectionIndexKey{}, ErrInvalidKey
 	}
-	result := CollectionIndexKey{CollectionID: keyArr[3]}
+	result := CollectionIndexKey{CollectionName: keyArr[3]}
 	if len(keyArr) == 5 {
 		result.IndexName = keyArr[4]
 	}
@@ -428,8 +428,8 @@ func (k CollectionSchemaVersionKey) ToDS() ds.Key {
 func (k CollectionIndexKey) ToString() string {
 	result := COLLECTION_INDEX
 
-	if k.CollectionID != "" {
-		result = result + "/" + k.CollectionID
+	if k.CollectionName != "" {
+		result = result + "/" + k.CollectionName
 		if k.IndexName != "" {
 			result = result + "/" + k.IndexName
 		}
