@@ -227,6 +227,12 @@ func (c *collection) updateWithFilter(
 	if err != nil {
 		return nil, err
 	}
+
+	err = selectionPlan.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	if err = selectionPlan.Start(); err != nil {
 		return nil, err
 	}

@@ -382,6 +382,7 @@ func (vf *VersionedFetcher) processNode(
 			events.EmptyUpdateChannel,
 			ctype,
 			key,
+			fieldName,
 		)
 		if err != nil {
 			return err

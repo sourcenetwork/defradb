@@ -67,6 +67,14 @@ var (
 				Description: commitSchemaVersionIDFieldDescription,
 				Type:        gql.String,
 			},
+			"fieldName": &gql.Field{
+				Description: commitFieldNameFieldDescription,
+				Type:        gql.String,
+			},
+			"fieldId": &gql.Field{
+				Type:        gql.String,
+				Description: commitFieldIDFieldDescription,
+			},
 			"delta": &gql.Field{
 				Description: commitDeltaFieldDescription,
 				Type:        gql.String,
@@ -149,6 +157,14 @@ var (
 				"collectionID": &gql.EnumValueConfig{
 					Value:       "collectionID",
 					Description: commitCollectionIDFieldDescription,
+				},
+				"fieldName": &gql.EnumValueConfig{
+					Value:       "fieldName",
+					Description: commitFieldNameFieldDescription,
+				},
+				"fieldId": &gql.EnumValueConfig{
+					Value:       "fieldId",
+					Description: commitFieldIDFieldDescription,
 				},
 			},
 		},
