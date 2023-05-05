@@ -17,6 +17,7 @@ import (
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -310,13 +311,39 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	schemaVersionId, ok := delta["SchemaVersionID"].(string)
-	if ok {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-			request.SchemaVersionIDFieldName, schemaVersionId)
+	if !ok {
+		return core.Doc{}, nil, ErrDeltaMissingSchemaVersionID
+	}
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
+
+	fieldName, ok := delta["FieldName"]
+	if !ok {
+		return core.Doc{}, nil, ErrDeltaMissingFieldName
+	}
+
+	var fieldID string
+	switch fieldName {
+	case "":
+		fieldID = core.COMPOSITE_NAMESPACE
+		fieldName = nil
+
+	default:
+		c, err := n.planner.db.GetCollectionByVersionID(n.planner.ctx, schemaVersionId)
+		if err != nil {
+			return core.Doc{}, nil, err
+		}
+
+		field, ok := c.Description().GetField(fieldName.(string))
+		if !ok {
+			return core.Doc{}, nil, client.NewErrFieldNotExist(fieldName.(string))
+		}
+		fieldID = field.ID.String()
 	}
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta["Data"])
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
 
 	dockey, ok := delta["DocKey"].([]byte)
 	if !ok {
