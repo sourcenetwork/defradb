@@ -383,3 +383,133 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				NodeID: immutable.Some(0),
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.SchemaUpdate{
+				// Add the same schema to the second node but with the age and name fields in
+				// a different order.
+				NodeID: immutable.Some(1),
+				Schema: `
+					type Users {
+						age: Int
+						name: String
+					}
+				`,
+			},
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				// Create John on the first (source) node only, and allow the value to sync
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// The document should have been synced, and should contain the same values
+				// including dockey and schema version id.
+				Request: `query {
+					Users {
+						_key
+						age
+						name
+						_version {
+							schemaVersionId
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"age":  uint64(21),
+						"name": "John",
+						"_version": []map[string]any{
+							{
+								"schemaVersionId": "bafkreidovoxkxttybaew2qraoelormm63ilutzms7wlwmcr3xru44hfnta",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				NodeID: immutable.Some(0),
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.SchemaUpdate{
+				// Add the same schema to the second node but with the age and name fields in
+				// a different order.
+				NodeID: immutable.Some(1),
+				Schema: `
+					type Users {
+						age: Int
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// Create the document directly and indepentently on each node.
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.Request{
+				// Assert that the dockey and schema version id are the same across all nodes,
+				// even though the schema field order is different.
+				Request: `query {
+					Users {
+						_key
+						_version {
+							schemaVersionId
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"_version": []map[string]any{
+							{
+								"schemaVersionId": "bafkreidovoxkxttybaew2qraoelormm63ilutzms7wlwmcr3xru44hfnta",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
