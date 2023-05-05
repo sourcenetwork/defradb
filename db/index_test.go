@@ -131,7 +131,8 @@ func (f *indexTestFixture) dropIndex(colName, indexName string) error {
 }
 
 func (f *indexTestFixture) dropAllIndexes(colName string) error {
-	return f.db.dropAllCollectionIndex(f.ctx, f.txn, colName)
+	col := (f.collection.WithTxn(f.txn)).(*collection)
+	return col.dropAllIndexes(f.ctx)
 }
 
 func (f *indexTestFixture) countIndexPrefixes(colName, indexName string) int {

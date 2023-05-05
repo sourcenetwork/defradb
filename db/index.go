@@ -100,7 +100,7 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 	return txn.Systemstore().Delete(ctx, key.ToDS())
 }
 
-func (c *collection) DropAllIndexes(ctx context.Context) error {
+func (c *collection) dropAllIndexes(ctx context.Context) error {
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
