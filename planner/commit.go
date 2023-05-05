@@ -71,8 +71,8 @@ func (n *dagScanNode) Init() error {
 		if n.commitSelect.DocKey.HasValue() {
 			key := core.DataStoreKey{}.WithDocKey(n.commitSelect.DocKey.Value())
 
-			if n.commitSelect.FieldName.HasValue() {
-				field := n.commitSelect.FieldName.Value()
+			if n.commitSelect.FieldIDName.HasValue() {
+				field := n.commitSelect.FieldIDName.Value()
 				key = key.WithFieldId(field)
 			}
 
@@ -80,7 +80,7 @@ func (n *dagScanNode) Init() error {
 		}
 	}
 
-	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.spans, n.commitSelect.FieldName)
+	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.spans, n.commitSelect.FieldIDName)
 }
 
 func (n *dagScanNode) Start() error {
@@ -105,8 +105,8 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	copy(headSetSpans.Value, spans.Value)
 
 	var fieldId string
-	if n.commitSelect.FieldName.HasValue() {
-		fieldId = n.commitSelect.FieldName.Value()
+	if n.commitSelect.FieldIDName.HasValue() {
+		fieldId = n.commitSelect.FieldIDName.Value()
 	} else {
 		fieldId = core.COMPOSITE_NAMESPACE
 	}
@@ -130,10 +130,10 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the field attribute to the explanation if it exists.
-	if n.commitSelect.FieldName.HasValue() {
-		simpleExplainMap["field"] = n.commitSelect.FieldName.Value()
+	if n.commitSelect.FieldIDName.HasValue() {
+		simpleExplainMap[request.FieldIDName] = n.commitSelect.FieldIDName.Value()
 	} else {
-		simpleExplainMap["field"] = nil
+		simpleExplainMap[request.FieldIDName] = nil
 	}
 
 	// Add the cid attribute to the explanation if it exists.

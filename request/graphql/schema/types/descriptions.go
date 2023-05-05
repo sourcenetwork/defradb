@@ -43,7 +43,7 @@ An optional dockey parameter for this commit query. Only commits for a document
  with a matching dockey will be returned.  If no documents match, the result
  set will be empty.
 `
-	commitFieldArgDescription string = `
+	commitFieldIDArgDescription string = `
 An optional field ID parameter for this commit query. Only commits for a fields
  matching this ID will be returned. Specifying 'C' will limit the results to 
  composite (document level) commits only, otherwise field IDs are numeric. If no

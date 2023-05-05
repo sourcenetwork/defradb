@@ -20,6 +20,7 @@ const (
 	DocKey      = "dockey"
 	DocKeys     = "dockeys"
 	FieldName   = "field"
+	FieldIDName = "fieldId"
 	Id          = "id"
 	Ids         = "ids"
 	ShowDeleted = "showDeleted"
