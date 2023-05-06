@@ -309,7 +309,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 		// Once processed, subscribe to the dockey topic on the pubsub network unless we already
 		// suscribe to the collection.
-		if !s.hasPubSubTopic(col.SchemaID()) {
+		if !s.hasPubSubTopic(newTopic(collectionPrefix, col.SchemaID())) {
 			err = s.addPubSubTopic(newTopic(dockeyPrefix, docKey.DocKey), true)
 			if err != nil {
 				return nil, err

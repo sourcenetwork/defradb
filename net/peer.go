@@ -258,7 +258,7 @@ func (p *Peer) RegisterNewDocument(
 	// register topic
 	if err := p.server.addPubSubTopic(
 		newTopic(dockeyPrefix, dockey.String()),
-		!p.server.hasPubSubTopic(schemaID),
+		!p.server.hasPubSubTopic(newTopic(collectionPrefix, schemaID)),
 	); err != nil {
 		log.ErrorE(
 			p.ctx,
