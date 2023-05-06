@@ -15,6 +15,7 @@ package net
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -362,17 +363,18 @@ func (s *server) addPubSubTopic(topic string, subscribe bool) error {
 	return nil
 }
 
-// getAllPubSubTopic returns all the topics we are subscribed to. If a prefix is provided,
+// getAllPubSubTopic returns all the topics we are subscribed to in lexicographic order. If a prefix is provided,
 // it returns all the topics that start with the prefix.
 func (s *server) getAllPubSubTopics(prefix string) []string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	topics := []string{}
-	for topic, _ := range s.topics {
+	for topic := range s.topics {
 		if strings.HasPrefix(topic, prefix) {
 			topics = append(topics, topic)
 		}
 	}
+	sort.Strings(topics)
 	return topics
 }
 
