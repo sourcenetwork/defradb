@@ -893,6 +893,7 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 		if err != nil {
 			return p.rollbackRemovePubSubTopics(removedTopics, err)
 		}
+		removedTopics = append(removedTopics, col)
 	}
 
 	if err = txn.Commit(p.ctx); err != nil {
