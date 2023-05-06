@@ -139,7 +139,7 @@ func (s *Service) GetAllP2PCollections(
 	req *pb.GetAllP2PCollectionsRequest,
 ) (*pb.GetAllP2PCollectionsReply, error) {
 	log.Debug(ctx, "Received GetAllP2PCollections request")
-	collections, err := s.peer.GetAllP2PCollections()
+	collections, err := s.peer.GetAllP2PCollectionsFromStore()
 	if err != nil {
 		return nil, err
 	}

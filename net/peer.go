@@ -15,6 +15,7 @@ package net
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -255,7 +256,10 @@ func (p *Peer) RegisterNewDocument(
 	)
 
 	// register topic
-	if err := p.server.addPubSubTopic(dockey.String(), !p.server.hasPubSubTopic(schemaID)); err != nil {
+	if err := p.server.addPubSubTopic(
+		newTopic(dockeyPrefix, dockey.String()),
+		!p.server.hasPubSubTopic(schemaID),
+	); err != nil {
 		log.ErrorE(
 			p.ctx,
 			"Failed to create new pubsub topic",
@@ -279,7 +283,7 @@ func (p *Peer) RegisterNewDocument(
 		Body: body,
 	}
 
-	return p.server.publishLog(p.ctx, schemaID, req)
+	return p.server.publishLog(p.ctx, newTopic(collectionPrefix, schemaID), req)
 }
 
 // SetReplicator adds a target peer node as a replication destination for documents in our DB.
@@ -611,7 +615,7 @@ func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, err
 	}
 	colMap := make(map[string]struct{})
 	for _, col := range collections {
-		err := p.server.addPubSubTopic(col, true)
+		err := p.server.addPubSubTopic(newTopic(collectionPrefix, col), true)
 		if err != nil {
 			return nil, err
 		}
@@ -667,11 +671,11 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(p.ctx, evt)
 
-	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
+	if err := p.server.publishLog(p.ctx, newTopic(dockeyPrefix, evt.DocKey), req); err != nil {
 		return errors.Wrap(fmt.Sprintf("can't publish log %s for dockey %s", evt.Cid, evt.DocKey), err)
 	}
 
-	if err := p.server.publishLog(p.ctx, evt.SchemaID, req); err != nil {
+	if err := p.server.publishLog(p.ctx, newTopic(collectionPrefix, evt.SchemaID), req); err != nil {
 		return errors.Wrap(fmt.Sprintf("can't publish log %s for schemaID %s", evt.Cid, evt.SchemaID), err)
 	}
 
@@ -819,11 +823,12 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 	// Add pubsub topics and remove them if we get an error.
 	addedTopics := []string{}
 	for _, col := range collections {
-		err = p.server.addPubSubTopic(col, true)
+		topic := newTopic(collectionPrefix, col)
+		err = p.server.addPubSubTopic(topic, true)
 		if err != nil {
 			return p.rollbackAddPubSubTopics(addedTopics, err)
 		}
-		addedTopics = append(addedTopics, col)
+		addedTopics = append(addedTopics, topic)
 	}
 
 	if err = txn.Commit(p.ctx); err != nil {
@@ -838,7 +843,7 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 			return err
 		}
 		for key := range keyChan {
-			err := p.server.removePubSubTopic(key.Key.String())
+			err := p.server.removePubSubTopic(newTopic(dockeyPrefix, key.Key.String()))
 			if err != nil {
 				log.Info(
 					p.ctx,
@@ -889,11 +894,12 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 	// Remove pubsub topics and add them back if we get an error.
 	removedTopics := []string{}
 	for _, col := range collections {
-		err = p.server.removePubSubTopic(col)
+		topic := newTopic(collectionPrefix, col)
+		err = p.server.removePubSubTopic(topic)
 		if err != nil {
 			return p.rollbackRemovePubSubTopics(removedTopics, err)
 		}
-		removedTopics = append(removedTopics, col)
+		removedTopics = append(removedTopics, topic)
 	}
 
 	if err = txn.Commit(p.ctx); err != nil {
@@ -908,7 +914,7 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 			return err
 		}
 		for key := range keyChan {
-			err := p.server.addPubSubTopic(key.Key.String(), true)
+			err := p.server.addPubSubTopic(newTopic(dockeyPrefix, key.Key.String()), true)
 			if err != nil {
 				log.Info(
 					p.ctx,
@@ -923,9 +929,9 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 	return nil
 }
 
-// GetAllP2PCollections gets all the collectionIDs that have been added to the
+// GetAllP2PCollectionsFromStore gets all the collectionIDs that have been added to the
 // pubsub topics from the system store.
-func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
+func (p *Peer) GetAllP2PCollectionsFromStore() ([]client.P2PCollection, error) {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
 		return nil, err
@@ -940,6 +946,34 @@ func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 
 	p2pCols := []client.P2PCollection{}
 	for _, colID := range collections {
+		col, err := store.GetCollectionBySchemaID(p.ctx, colID)
+		if err != nil {
+			return nil, err
+		}
+		p2pCols = append(p2pCols, client.P2PCollection{
+			ID:   colID,
+			Name: col.Name(),
+		})
+	}
+
+	return p2pCols, txn.Commit(p.ctx)
+}
+
+// GetAllP2PCollectionsFromServer gets all the collectionIDs that have been added to the
+// pubsub topics from the system store.
+func (p *Peer) GetAllP2PCollectionsFromServer() ([]client.P2PCollection, error) {
+	txn, err := p.db.NewTxn(p.ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(p.ctx)
+	store := p.db.WithTxn(txn)
+
+	topics := p.server.getAllPubSubTopics(collectionPrefix)
+
+	p2pCols := []client.P2PCollection{}
+	for _, topic := range topics {
+		colID := strings.TrimPrefix(topic, collectionPrefix)
 		col, err := store.GetCollectionBySchemaID(p.ctx, colID)
 		if err != nil {
 			return nil, err

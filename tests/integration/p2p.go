@@ -466,7 +466,7 @@ func getAllP2PCollections(
 	}
 
 	n := nodes[action.NodeID]
-	cols, err := n.Peer.GetAllP2PCollections()
+	cols, err := n.Peer.GetAllP2PCollectionsFromServer()
 	require.NoError(t, err)
 
 	assert.Equal(t, expectedCollections, cols)

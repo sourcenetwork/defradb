@@ -15,6 +15,7 @@ package net
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
@@ -115,7 +116,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 					"Registering existing DocKey pubsub topic",
 					logging.NewKV("DocKey", key.Key.String()),
 				)
-				if err := s.addPubSubTopic(key.Key.String(), true); err != nil {
+				if err := s.addPubSubTopic(newTopic(dockeyPrefix, key.Key.String()), true); err != nil {
 					return nil, err
 				}
 				i++
@@ -308,7 +309,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		// Once processed, subscribe to the dockey topic on the pubsub network unless we already
 		// suscribe to the collection.
 		if !s.hasPubSubTopic(col.SchemaID()) {
-			err = s.addPubSubTopic(docKey.DocKey, true)
+			err = s.addPubSubTopic(newTopic(dockeyPrefix, docKey.DocKey), true)
 			if err != nil {
 				return nil, err
 			}
@@ -359,6 +360,20 @@ func (s *server) addPubSubTopic(topic string, subscribe bool) error {
 		subscribed: subscribe,
 	}
 	return nil
+}
+
+// getAllPubSubTopic returns all the topics we are subscribed to. If a prefix is provided,
+// it returns all the topics that start with the prefix.
+func (s *server) getAllPubSubTopics(prefix string) []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	topics := []string{}
+	for topic, _ := range s.topics {
+		if strings.HasPrefix(topic, prefix) {
+			topics = append(topics, topic)
+		}
+	}
+	return topics
 }
 
 // hasPubSubTopic checks if we are subscribed to a topic.
@@ -497,6 +512,15 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 		return "", errors.Wrap("parsing stream PeerID", err)
 	}
 	return pid, nil
+}
+
+const (
+	dockeyPrefix     = "d/"
+	collectionPrefix = "c/"
+)
+
+func newTopic(prefix, topic string) string {
+	return prefix + topic
 }
 
 // KEEPING AS REFERENCE
