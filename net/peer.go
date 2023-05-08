@@ -15,6 +15,7 @@ package net
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -685,10 +686,10 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 	// push to each peer (replicator)
 	peers := make(map[string]struct{})
-	for _, peer := range p.ps.ListPeers(lg.DocKey) {
+	for _, peer := range p.ps.ListPeers(newTopic(dockeyPrefix, lg.DocKey)) {
 		peers[peer.String()] = struct{}{}
 	}
-	for _, peer := range p.ps.ListPeers(lg.SchemaID) {
+	for _, peer := range p.ps.ListPeers(newTopic(collectionPrefix, lg.SchemaID)) {
 		peers[peer.String()] = struct{}{}
 	}
 
@@ -969,10 +970,13 @@ func (p *Peer) GetAllP2PCollectionsFromServer() ([]client.P2PCollection, error) 
 	defer txn.Discard(p.ctx)
 	store := p.db.WithTxn(txn)
 
-	topics := p.server.getAllPubSubTopics(collectionPrefix)
-
+	topics := p.ps.GetTopics()
+	sort.Strings(topics)
 	p2pCols := []client.P2PCollection{}
 	for _, topic := range topics {
+		if strings.Contains(topic, "_response") {
+			continue
+		}
 		colID := strings.TrimPrefix(topic, collectionPrefix)
 		col, err := store.GetCollectionBySchemaID(p.ctx, colID)
 		if err != nil {
