@@ -351,6 +351,53 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	}
 }
 
+// NewIndexDataStoreKey creates a new IndexDataStoreKey from a string as best as it can,
+// splitting the input using '/' as a field deliminator.  It assumes
+// that the input string is in the following format:
+//
+// /[CollectionID]/[IndexID]/[FieldID](/[FieldID]...)
+//
+// Any properties before the above (assuming a '/' deliminator) are ignored
+func NewIndexDataStoreKey(key string) (IndexDataStoreKey, error) {
+	indexKey := IndexDataStoreKey{}
+	if key == "" {
+		return indexKey, ErrEmptyKey
+	}
+
+	if !strings.HasPrefix(key, "/") {
+		return indexKey, ErrInvalidKey
+	}
+
+	elements := strings.Split(key[1:], "/")
+
+	// With less than 3 elements, we know it's an invalid key
+	if len(elements) < 3 {
+		return indexKey, ErrInvalidKey
+	}
+
+	_, err := strconv.Atoi(elements[0])
+	if err != nil {
+		return IndexDataStoreKey{}, ErrInvalidKey
+	}
+	indexKey.CollectionID = elements[0]
+
+	_, err = strconv.Atoi(elements[1])
+	if err != nil {
+		return IndexDataStoreKey{}, ErrInvalidKey
+	}
+	indexKey.IndexID = elements[1]
+
+	for i := 2; i < len(elements); i++ {
+		_, err = strconv.Atoi(elements[i])
+		if err != nil {
+			return IndexDataStoreKey{}, ErrInvalidKey
+		}
+		indexKey.FieldValues = append(indexKey.FieldValues, elements[i])
+	}
+
+	return indexKey, nil
+}
+
 func (k *IndexDataStoreKey) Bytes() []byte {
 	return []byte(k.ToString())
 }

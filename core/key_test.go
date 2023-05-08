@@ -370,3 +370,41 @@ func TestIndexDatastoreKey_EqualFalse(t *testing.T) {
 		assert.False(t, c[0].Equal(c[1]), "case %d", i)
 	}
 }
+
+func TestNewIndexDataStoreKey_ValidKey(t *testing.T) {
+	str, err := NewIndexDataStoreKey("/1/2/3")
+	assert.NoError(t, err)
+	assert.Equal(t, str, IndexDataStoreKey{
+		CollectionID: "1",
+		IndexID:      "2",
+		FieldValues:  []string{"3"},
+	})
+
+	str, err = NewIndexDataStoreKey("/1/2/3/4")
+	assert.NoError(t, err)
+	assert.Equal(t, str, IndexDataStoreKey{
+		CollectionID: "1",
+		IndexID:      "2",
+		FieldValues:  []string{"3", "4"},
+	})
+}
+
+func TestNewIndexDataStoreKey_InvalidKey(t *testing.T) {
+	keys := []string{
+		"",
+		"/",
+		"/1",
+		"/1/2",
+		" /1/2/3",
+		"/1/2/3 ",
+		"1/2/3",
+		"/a/2/3",
+		"/1/b/3",
+		"/1/2/c",
+		"/1/2/3/d",
+	}
+	for i, key := range keys {
+		_, err := NewIndexDataStoreKey(key)
+		assert.Error(t, err, "case %d: %s", i, key)
+	}
+}
