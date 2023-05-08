@@ -67,7 +67,7 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 			testUtils.Request{
 				// Assert that the version ID remains the same
 				Request: `query {
-					commits (field: "C") {
+					commits (fieldId: "C") {
 						schemaVersionId
 					}
 				}`,

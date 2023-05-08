@@ -22,7 +22,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and field name",
 		Request: `query {
-					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", field: "age") {
+					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "age") {
 						cid
 						links {
 							cid
@@ -50,7 +50,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and field id",
 		Request: `query {
-					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", field: "1") {
+					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "1") {
 						cid
 						links {
 							cid
@@ -83,7 +83,7 @@ func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and composite field id",
 		Request: `query {
-					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", field: "C") {
+					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "C") {
 						cid
 						links {
 							cid

@@ -30,7 +30,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", field: "not a field") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "not a field") {
 							cid
 						}
 					}`,
@@ -56,7 +56,7 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", field: "999999") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "999999") {
 							cid
 						}
 					}`,
@@ -84,7 +84,7 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", field: "Age") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "Age") {
 							cid
 						}
 					}`,
@@ -112,7 +112,7 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", field: "1") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "1") {
 							cid
 						}
 					}`,
@@ -144,7 +144,7 @@ func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", field: "C") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "C") {
 							cid
 						}
 					}`,
