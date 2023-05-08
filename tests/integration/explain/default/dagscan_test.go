@@ -22,7 +22,7 @@ func TestExplainCommitsDagScan(t *testing.T) {
 		Description: "Explain commits query.",
 
 		Request: `query @explain {
-			commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", field: "1") {
+			commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
 				links {
 					cid
 				}
@@ -54,8 +54,8 @@ func TestExplainCommitsDagScan(t *testing.T) {
 						"selectNode": dataMap{
 							"filter": nil,
 							"dagScanNode": dataMap{
-								"cid":   nil,
-								"field": "1",
+								"cid":     nil,
+								"fieldId": "1",
 								"spans": []dataMap{
 									{
 										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
@@ -111,8 +111,8 @@ func TestExplainCommitsDagScanWithoutField(t *testing.T) {
 						"selectNode": dataMap{
 							"filter": nil,
 							"dagScanNode": dataMap{
-								"cid":   nil,
-								"field": nil,
+								"cid":     nil,
+								"fieldId": nil,
 								"spans": []dataMap{
 									{
 										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
@@ -136,7 +136,7 @@ func TestExplainLatestCommitsDagScan(t *testing.T) {
 		Description: "Explain latestCommits query.",
 
 		Request: `query @explain {
-			latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", field: "1") {
+			latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
 				cid
 				links {
 					cid
@@ -169,8 +169,8 @@ func TestExplainLatestCommitsDagScan(t *testing.T) {
 						"selectNode": dataMap{
 							"filter": nil,
 							"dagScanNode": dataMap{
-								"cid":   nil,
-								"field": "1",
+								"cid":     nil,
+								"fieldId": "1",
 								"spans": []dataMap{
 									{
 										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
@@ -227,8 +227,8 @@ func TestExplainLatestCommitsDagScanWithoutField(t *testing.T) {
 						"selectNode": dataMap{
 							"filter": nil,
 							"dagScanNode": dataMap{
-								"cid":   nil,
-								"field": "C",
+								"cid":     nil,
+								"fieldId": "C",
 								"spans": []dataMap{
 									{
 										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
@@ -252,7 +252,7 @@ func TestExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
 		Description: "Explain latestCommits query without DocKey.",
 
 		Request: `query @explain {
-			latestCommits(field: "1") {
+			latestCommits(fieldId: "1") {
 				cid
 				links {
 					cid

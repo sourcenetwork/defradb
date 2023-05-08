@@ -175,10 +175,10 @@ var (
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey": NewArgConfig(gql.ID, commitDockeyArgDescription),
-			"field":  NewArgConfig(gql.String, commitFieldArgDescription),
-			"order":  NewArgConfig(CommitsOrderArg, OrderArgDescription),
-			"cid":    NewArgConfig(gql.ID, commitCIDArgDescription),
+			"dockey":            NewArgConfig(gql.ID, commitDockeyArgDescription),
+			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
+			"order":             NewArgConfig(CommitsOrderArg, OrderArgDescription),
+			"cid":               NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
@@ -198,8 +198,8 @@ var (
 		Description: latestCommitsQueryDescription,
 		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey": NewArgConfig(gql.NewNonNull(gql.ID), commitDockeyArgDescription),
-			"field":  NewArgConfig(gql.String, commitFieldArgDescription),
+			"dockey":            NewArgConfig(gql.NewNonNull(gql.ID), commitDockeyArgDescription),
+			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
 		},
 	}
 )

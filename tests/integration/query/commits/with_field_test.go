@@ -32,7 +32,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits (field: "Age") {
+						commits (fieldId: "Age") {
 							cid
 						}
 					}`,
@@ -60,7 +60,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits (field: "1") {
+						commits (fieldId: "1") {
 							cid
 						}
 					}`,
@@ -92,7 +92,7 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(field: "C") {
+						commits(fieldId: "C") {
 							cid
 						}
 					}`,
@@ -124,7 +124,7 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(field: "C") {
+						commits(fieldId: "C") {
 							cid
 							schemaVersionId
 						}
