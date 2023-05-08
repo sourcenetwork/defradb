@@ -13,6 +13,7 @@ package core
 import (
 	"testing"
 
+	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -154,4 +155,218 @@ func TestNewIndexKeyFromString_IfFullKeyString_ReturnKey(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, key.CollectionName, "col")
 	assert.Equal(t, key.IndexName, "idx")
+}
+
+func TestIndexDatastoreKey_ToString(t *testing.T) {
+	cases := []struct {
+		Key      IndexDataStoreKey
+		Expected string
+	}{
+		{
+			Key:      IndexDataStoreKey{},
+			Expected: "",
+		},
+		{
+			Key: IndexDataStoreKey{
+				CollectionID: "1",
+			},
+			Expected: "/1",
+		},
+		{
+			Key: IndexDataStoreKey{
+				CollectionID: "1",
+				IndexID:      "2",
+			},
+			Expected: "/1/2",
+		},
+		{
+			Key: IndexDataStoreKey{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"3"},
+			},
+			Expected: "/1/2/3",
+		},
+		{
+			Key: IndexDataStoreKey{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"3", "4"},
+			},
+			Expected: "/1/2/3/4",
+		},
+		{
+			Key: IndexDataStoreKey{
+				CollectionID: "1",
+				FieldValues:  []string{"3"},
+			},
+			Expected: "/1",
+		},
+		{
+			Key: IndexDataStoreKey{
+				IndexID:     "2",
+				FieldValues: []string{"3"},
+			},
+			Expected: "",
+		},
+		{
+			Key: IndexDataStoreKey{
+				FieldValues: []string{"3"},
+			},
+			Expected: "",
+		},
+		{
+			Key: IndexDataStoreKey{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"", ""},
+			},
+			Expected: "/1/2",
+		},
+		{
+			Key: IndexDataStoreKey{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"", "3"},
+			},
+			Expected: "/1/2",
+		},
+		{
+			Key: IndexDataStoreKey{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"3", "", "4"},
+			},
+			Expected: "/1/2/3",
+		},
+	}
+	for i, c := range cases {
+		assert.Equal(t, c.Key.ToString(), c.Expected, "case %d", i)
+	}
+}
+
+func TestIndexDatastoreKey_Bytes(t *testing.T) {
+	key := IndexDataStoreKey{
+		CollectionID: "1",
+		IndexID:      "2",
+		FieldValues:  []string{"3", "4"},
+	}
+	assert.Equal(t, key.Bytes(), []byte("/1/2/3/4"))
+}
+
+func TestIndexDatastoreKey_ToDS(t *testing.T) {
+	key := IndexDataStoreKey{
+		CollectionID: "1",
+		IndexID:      "2",
+		FieldValues:  []string{"3", "4"},
+	}
+	assert.Equal(t, key.ToDS(), ds.NewKey("/1/2/3/4"))
+}
+
+func TestIndexDatastoreKey_EqualTrue(t *testing.T) {
+	cases := [][]IndexDataStoreKey{
+		{
+			{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"3", "4"},
+			},
+			{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"3", "4"},
+			},
+		},
+		{
+			{
+				CollectionID: "1",
+				FieldValues:  []string{"3", "4"},
+			},
+			{
+				CollectionID: "1",
+				FieldValues:  []string{"3", "4"},
+			},
+		},
+		{
+			{
+				CollectionID: "1",
+			},
+			{
+				CollectionID: "1",
+			},
+		},
+	}
+
+	for i, c := range cases {
+		assert.True(t, c[0].Equal(c[1]), "case %d", i)
+	}
+}
+
+func TestIndexDatastoreKey_EqualFalse(t *testing.T) {
+	cases := [][]IndexDataStoreKey{
+		{
+			{
+				CollectionID: "1",
+			},
+			{
+				CollectionID: "2",
+			},
+		},
+		{
+			{
+				CollectionID: "1",
+				IndexID:      "2",
+			},
+			{
+				CollectionID: "1",
+				IndexID:      "3",
+			},
+		},
+		{
+			{
+				CollectionID: "1",
+			},
+			{
+				IndexID: "1",
+			},
+		},
+		{
+			{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"4", "3"},
+			},
+			{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"3", "4"},
+			},
+		},
+		{
+			{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"3"},
+			},
+			{
+				CollectionID: "1",
+				IndexID:      "2",
+				FieldValues:  []string{"3", "4"},
+			},
+		},
+		{
+			{
+				CollectionID: "1",
+				FieldValues:  []string{"3", "", "4"},
+			},
+			{
+				CollectionID: "1",
+				FieldValues:  []string{"3", "4"},
+			},
+		},
+	}
+
+	for i, c := range cases {
+		assert.False(t, c[0].Equal(c[1]), "case %d", i)
+	}
 }

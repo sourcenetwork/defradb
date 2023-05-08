@@ -68,6 +68,15 @@ type DataStoreKey struct {
 
 var _ Key = (*DataStoreKey)(nil)
 
+// IndexDataStoreKey is a type that represents a key of an indexed document in the database.
+type IndexDataStoreKey struct {
+	CollectionID string
+	IndexID      string
+	FieldValues  []string
+}
+
+var _ Key = (*IndexDataStoreKey)(nil)
+
 type PrimaryDataStoreKey struct {
 	CollectionId string
 	DocKey       string
@@ -340,6 +349,54 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 		CollectionId: k.CollectionID,
 		DocKey:       k.DocKey,
 	}
+}
+
+func (k *IndexDataStoreKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k *IndexDataStoreKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k *IndexDataStoreKey) ToString() string {
+	sb := strings.Builder{}
+
+	if k.CollectionID == "" {
+		return ""
+	}
+	sb.WriteByte('/')
+	sb.WriteString(k.CollectionID)
+
+	if k.IndexID == "" {
+		return sb.String()
+	}
+	sb.WriteByte('/')
+	sb.WriteString(k.IndexID)
+
+	for _, v := range k.FieldValues {
+		if v == "" {
+			break
+		}
+		sb.WriteByte('/')
+		sb.WriteString(v)
+	}
+
+	return sb.String()
+}
+
+func (k IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
+	if k.CollectionID != other.CollectionID ||
+		k.IndexID != other.IndexID ||
+		len(k.FieldValues) != len(other.FieldValues) {
+		return false
+	}
+	for i := range k.FieldValues {
+		if k.FieldValues[i] != other.FieldValues[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
