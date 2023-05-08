@@ -831,11 +831,11 @@ func ToCommitSelect(
 		return nil, err
 	}
 	return &CommitSelect{
-		Select:      *underlyingSelect,
-		DocKey:      selectRequest.DocKey,
-		FieldIDName: selectRequest.FieldID,
-		Depth:       selectRequest.Depth,
-		Cid:         selectRequest.Cid,
+		Select:  *underlyingSelect,
+		DocKey:  selectRequest.DocKey,
+		FieldID: selectRequest.FieldID,
+		Depth:   selectRequest.Depth,
+		Cid:     selectRequest.Cid,
 	}, nil
 }
 
