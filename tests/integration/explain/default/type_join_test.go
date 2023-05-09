@@ -13,13 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain a one-to-one join relation query, with alias.",
+		Description: "Explain (default) request with a 1-to-1 join.",
 
 		Request: `query @explain {
 			Author {
@@ -114,7 +114,7 @@ func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -164,13 +164,13 @@ func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainRequestWithMultipleOneToOneJoins(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain two one-to-one join relation query.",
+		Description: "Explain (default) request with multiple (two) 1-to-1 joins.",
 
 		Request: `query @explain {
 			Author {
@@ -269,7 +269,7 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -362,13 +362,13 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain query with two nested level deep one to one join.",
+		Description: "Explain (default) request with two level deep nested joins.",
 
 		Request: `query @explain {
 			Author {
@@ -468,7 +468,7 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -544,5 +544,5 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
