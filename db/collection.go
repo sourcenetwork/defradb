@@ -779,7 +779,23 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 
-	return err
+	return c.indexNewDoc(ctx, txn, doc)
+}
+
+func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
+	colIndexKey := core.NewCollectionIndexKey(c.desc.Name, "user_name")
+	indexData, err := txn.Systemstore().Get(ctx, colIndexKey.ToDS())
+	err = err
+	var indexDesc client.IndexDescription
+	err = json.Unmarshal(indexData, &indexDesc)
+	err = err
+	colIndex := NewCollectionIndex(c, indexDesc)
+	docDataStoreKey := c.getDSKeyFromDockey(doc.Key())
+	fieldVal, err := doc.Get("name")
+	err = err
+	err = colIndex.Save(ctx, txn, docDataStoreKey, fieldVal)
+	err = err
+	return nil
 }
 
 // Update an existing document with the new values.

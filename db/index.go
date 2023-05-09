@@ -11,10 +11,11 @@ import (
 	"github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 type CollectionIndex interface {
-	Save(core.DataStoreKey, client.Value) error
+	Save(context.Context, datastore.Txn, core.DataStoreKey, any) error
 	Name() string
 	Description() client.IndexDescription
 }
@@ -31,7 +32,21 @@ type collectionSimpleIndex struct {
 	desc       client.IndexDescription
 }
 
-func (c *collectionSimpleIndex) Save(core.DataStoreKey, client.Value) error {
+var _ CollectionIndex = (*collectionSimpleIndex)(nil)
+
+func (c *collectionSimpleIndex) Save(
+	ctx context.Context,
+	txn datastore.Txn,
+	key core.DataStoreKey,
+	val any,
+) error {
+	data := val.(string)
+	indexDataStoreKey := core.IndexDataStoreKey{}
+	indexDataStoreKey.CollectionID = strconv.Itoa(int(c.collection.ID()))
+	indexDataStoreKey.IndexID = "1"
+	indexDataStoreKey.FieldValues = []string{data, key.DocKey}
+	err := txn.Datastore().Put(ctx, indexDataStoreKey.ToDS(), []byte{})
+	err = err
 	return nil
 }
 

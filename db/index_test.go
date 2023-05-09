@@ -94,9 +94,9 @@ func getProductsCollectionDesc() client.CollectionDescription {
 func newIndexTestFixture(t *testing.T) *indexTestFixture {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	txn, err := db.NewTxn(ctx, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	f := &indexTestFixture{
 		ctx: ctx,
@@ -114,15 +114,16 @@ func (f *indexTestFixture) createCollectionIndex(
 	return f.createCollectionIndexFor(f.collection.Name(), desc)
 }
 
-func (f *indexTestFixture) createUserCollectionIndex() client.IndexDescription {
+func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
 	desc := client.IndexDescription{
-		Name: "some_index_name",
+		Name: "user_name",
 		Fields: []client.IndexedFieldDescription{
 			{Name: "name", Direction: client.Ascending},
 		},
 	}
 	newDesc, err := f.createCollectionIndexFor(f.collection.Name(), desc)
-	assert.NoError(f.t, err)
+	require.NoError(f.t, err)
+	f.commitTxn()
 	return newDesc
 }
 
@@ -154,6 +155,14 @@ func (f *indexTestFixture) countIndexPrefixes(colName, indexName string) int {
 		count++
 	}
 	return count
+}
+
+func (f *indexTestFixture) commitTxn() {
+	err := f.txn.Commit(f.ctx)
+	require.NoError(f.t, err)
+	txn, err := f.db.NewTxn(f.ctx, false)
+	require.NoError(f.t, err)
+	f.txn = txn
 }
 
 func (f *indexTestFixture) createCollectionIndexFor(
@@ -459,7 +468,7 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 
 func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
-	f.createUserCollectionIndex()
+	f.createUserCollectionIndexOnName()
 
 	f.db.Close(f.ctx)
 
@@ -480,7 +489,7 @@ func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 
 func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
-	desc := f.createUserCollectionIndex()
+	desc := f.createUserCollectionIndexOnName()
 
 	err := f.dropIndex(usersColName, desc.Name)
 	assert.NoError(t, err)
@@ -492,7 +501,7 @@ func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 
 func TestDropIndex_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
-	desc := f.createUserCollectionIndex()
+	desc := f.createUserCollectionIndexOnName()
 
 	f.db.Close(f.ctx)
 
@@ -533,7 +542,7 @@ func TestDropAllIndex_ShouldDeleteAllIndexes(t *testing.T) {
 
 func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
-	f.createUserCollectionIndex()
+	f.createUserCollectionIndexOnName()
 
 	f.db.Close(f.ctx)
 
