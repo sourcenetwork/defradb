@@ -13,12 +13,25 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainAscendingOrderQueryOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain An Ascending Order Query On Parent Field.",
+var orderPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"orderNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
+				},
+			},
+		},
+	},
+}
+
+func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with ascending order on parent.",
 
 		Request: `query @explain {
 			Author(order: {age: ASC}) {
@@ -45,32 +58,18 @@ func TestExplainAscendingOrderQueryOnParent(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{orderPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"filter":         nil,
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-							"orderings": []dataMap{
-								{
-									"direction": "ASC",
-									"fields": []string{
-										"age",
-									},
-								},
+				TargetNodeName:    "orderNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"orderings": []dataMap{
+						{
+							"direction": "ASC",
+							"fields": []string{
+								"age",
 							},
 						},
 					},
@@ -79,12 +78,13 @@ func TestExplainAscendingOrderQueryOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQueryWithMultiOrderFieldsOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain Query With Multiple Order Fields on the Parent.",
+func TestDefaultExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with multiple order fields on parent.",
 
 		Request: `query @explain {
 			Author(order: {name: ASC, age: DESC}) {
@@ -111,38 +111,24 @@ func TestExplainQueryWithMultiOrderFieldsOnParent(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{orderPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"filter":         nil,
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
+				TargetNodeName:    "orderNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"orderings": []dataMap{
+						{
+							"direction": "ASC",
+							"fields": []string{
+								"name",
 							},
-							"orderings": []dataMap{
-								{
-									"direction": "ASC",
-									"fields": []string{
-										"name",
-									},
-								},
-								{
-									"direction": "DESC",
-									"fields": []string{
-										"age",
-									},
-								},
+						},
+						{
+							"direction": "DESC",
+							"fields": []string{
+								"age",
 							},
 						},
 					},
@@ -151,346 +137,5 @@ func TestExplainQueryWithMultiOrderFieldsOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
-}
-
-func TestExplainQueryWithOrderFieldOnChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain Query With Order Field On A Child.",
-
-		Request: `query @explain {
-			Author {
-				name
-				articles(order: {name: DESC}) {
-					name
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"typeIndexJoin": dataMap{
-								"joinType": "typeJoinMany",
-								"rootName": "author",
-								"root": dataMap{
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "Author",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
-											},
-										},
-									},
-								},
-								"subTypeName": "articles",
-								"subType": dataMap{
-									"selectTopNode": dataMap{
-										"orderNode": dataMap{
-											"orderings": []dataMap{
-												{
-													"direction": "DESC",
-													"fields": []string{
-														"name",
-													},
-												},
-											},
-											"selectNode": dataMap{
-												"filter": nil,
-												"scanNode": dataMap{
-													"collectionID":   "1",
-													"collectionName": "Article",
-													"filter":         nil,
-													"spans": []dataMap{
-														{
-															"start": "/1",
-															"end":   "/2",
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain A Query With Order On Parent and An Order on Child.",
-
-		Request: `query @explain {
-			Author(order: {name: ASC}) {
-				name
-				articles(order: {name: DESC}) {
-					name
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
-							"orderings": []dataMap{
-								{
-									"direction": "ASC",
-									"fields": []string{
-										"name",
-									},
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"typeIndexJoin": dataMap{
-									"joinType": "typeJoinMany",
-									"rootName": "author",
-									"root": dataMap{
-										"scanNode": dataMap{
-											"collectionID":   "3",
-											"collectionName": "Author",
-											"filter":         nil,
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
-												},
-											},
-										},
-									},
-									"subTypeName": "articles",
-									"subType": dataMap{
-										"selectTopNode": dataMap{
-											"orderNode": dataMap{
-												"orderings": []dataMap{
-													{
-														"direction": "DESC",
-														"fields": []string{
-															"name",
-														},
-													},
-												},
-												"selectNode": dataMap{
-													"filter": nil,
-													"scanNode": dataMap{
-														"collectionID":   "1",
-														"collectionName": "Article",
-														"filter":         nil,
-														"spans": []dataMap{
-															{
-																"start": "/1",
-																"end":   "/2",
-															},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain Query Where The Parent Is Ordered By It's Child.",
-
-		Request: `query @explain {
-			Author(
-				order: {
-					articles: {name: ASC}
-				}
-			) {
-				articles {
-				    name
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
-							"orderings": []dataMap{
-								{
-									"direction": "ASC",
-									"fields": []string{
-										"articles",
-										"name",
-									},
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"typeIndexJoin": dataMap{
-									"joinType": "typeJoinMany",
-									"rootName": "author",
-									"root": dataMap{
-										"scanNode": dataMap{
-											"collectionID":   "3",
-											"collectionName": "Author",
-											"filter":         nil,
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
-												},
-											},
-										},
-									},
-									"subTypeName": "articles",
-									"subType": dataMap{
-										"selectTopNode": dataMap{
-											"selectNode": dataMap{
-												"filter": nil,
-												"scanNode": dataMap{
-													"collectionID":   "1",
-													"collectionName": "Article",
-													"filter":         nil,
-													"spans": []dataMap{
-														{
-															"start": "/1",
-															"end":   "/2",
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
