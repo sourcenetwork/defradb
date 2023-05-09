@@ -826,12 +826,9 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 		addedTopics = append(addedTopics, col)
 	}
 
-	if err = txn.Commit(p.ctx); err != nil {
-		return p.rollbackAddPubSubTopics(addedTopics, err)
-	}
-
-	// If adding the collection topics succeeds, we remove the collections' documents
+	// After adding the collection topics, we remove the collections' documents
 	// from the pubsub topics to avoid receiving duplicate events.
+	removedTopics := []string{}
 	for _, col := range storeCollections {
 		keyChan, err := col.GetAllDocKeys(p.ctx)
 		if err != nil {
@@ -840,14 +837,15 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 		for key := range keyChan {
 			err := p.server.removePubSubTopic(key.Key.String())
 			if err != nil {
-				log.Info(
-					p.ctx,
-					"Failed to remove doc from pubsub topic",
-					logging.NewKV("DocKey", key.Key.String()),
-					logging.NewKV("Cause", err),
-				)
+				return p.rollbackRemovePubSubTopics(removedTopics, err)
 			}
+			removedTopics = append(removedTopics, key.Key.String())
 		}
+	}
+
+	if err = txn.Commit(p.ctx); err != nil {
+		err = p.rollbackRemovePubSubTopics(removedTopics, err)
+		return p.rollbackAddPubSubTopics(addedTopics, err)
 	}
 
 	return nil
@@ -896,12 +894,9 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 		removedTopics = append(removedTopics, col)
 	}
 
-	if err = txn.Commit(p.ctx); err != nil {
-		return p.rollbackRemovePubSubTopics(removedTopics, err)
-	}
-
-	// If removing the collection topics succeeds, we add back the collections' documents
+	// After removing the collection topics, we add back the collections' documents
 	// to the pubsub topics.
+	addedTopics := []string{}
 	for _, col := range storeCollections {
 		keyChan, err := col.GetAllDocKeys(p.ctx)
 		if err != nil {
@@ -910,14 +905,15 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 		for key := range keyChan {
 			err := p.server.addPubSubTopic(key.Key.String(), true)
 			if err != nil {
-				log.Info(
-					p.ctx,
-					"Failed to add doc to pubsub topic",
-					logging.NewKV("DocKey", key.Key.String()),
-					logging.NewKV("Cause", err),
-				)
+				return p.rollbackAddPubSubTopics(addedTopics, err)
 			}
+			addedTopics = append(addedTopics, key.Key.String())
 		}
+	}
+
+	if err = txn.Commit(p.ctx); err != nil {
+		err = p.rollbackAddPubSubTopics(addedTopics, err)
+		return p.rollbackRemovePubSubTopics(removedTopics, err)
 	}
 
 	return nil
