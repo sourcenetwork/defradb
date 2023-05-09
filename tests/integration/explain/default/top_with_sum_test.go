@@ -13,12 +13,30 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainTopLevelSumQuery(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain top-level sum query.",
+var topLevelSumPattern = dataMap{
+	"explain": dataMap{
+		"topLevelNode": []dataMap{
+			{
+				"selectTopNode": dataMap{
+					"selectNode": dataMap{
+						"scanNode": dataMap{},
+					},
+				},
+			},
+			{
+				"sumNode": dataMap{},
+			},
+		},
+	},
+}
+
+func TestDefaultExplainTopLevelSumRequest(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) top-level sum request.",
 
 		Request: `query @explain {
 			_sum(
@@ -44,38 +62,33 @@ func TestExplainTopLevelSumQuery(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{topLevelSumPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"topLevelNode": []dataMap{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "Author",
+					"filter":         nil,
+					"spans": []dataMap{
 						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "Author",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
-											},
-										},
-									},
-								},
-							},
+							"start": "/3",
+							"end":   "/4",
 						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "sumNode",
+				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
 						{
-							"sumNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName":      "Author",
-										"childFieldName": "age",
-										"filter":         nil,
-									},
-								},
-							},
+							"fieldName":      "Author",
+							"childFieldName": "age",
+							"filter":         nil,
 						},
 					},
 				},
@@ -83,12 +96,13 @@ func TestExplainTopLevelSumQuery(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainTopLevelSumQueryWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain top-level sum query with filter.",
+func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) top-level sum request with filter.",
 
 		Request: `query @explain {
 			_sum(
@@ -124,44 +138,39 @@ func TestExplainTopLevelSumQueryWithFilter(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{topLevelSumPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"topLevelNode": []dataMap{
-						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "Author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_gt": int(26),
-											},
-										},
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
-											},
-										},
-									},
-								},
-							},
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "Author",
+					"filter": dataMap{
+						"age": dataMap{
+							"_gt": int(26),
 						},
+					},
+					"spans": []dataMap{
 						{
-							"sumNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName":      "Author",
-										"childFieldName": "age",
-										"filter": dataMap{
-											"age": dataMap{
-												"_gt": int(26),
-											},
-										},
-									},
+							"start": "/3",
+							"end":   "/4",
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "sumNode",
+				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"fieldName":      "Author",
+							"childFieldName": "age",
+							"filter": dataMap{
+								"age": dataMap{
+									"_gt": int(26),
 								},
 							},
 						},
@@ -171,5 +180,5 @@ func TestExplainTopLevelSumQueryWithFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
