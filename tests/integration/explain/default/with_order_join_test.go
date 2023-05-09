@@ -16,6 +16,35 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
+// Note: This fixture would end up in type_join_test.go (as this used for order, limit, etc.).
+var normalTypeJoinPattern = dataMap{
+	"root": dataMap{
+		"scanNode": dataMap{},
+	},
+	"subType": dataMap{
+		"selectTopNode": dataMap{
+			"selectNode": dataMap{
+				"scanNode": dataMap{},
+			},
+		},
+	},
+}
+
+var orderTypeJoinPattern = dataMap{
+	"root": dataMap{
+		"scanNode": dataMap{},
+	},
+	"subType": dataMap{
+		"selectTopNode": dataMap{
+			"orderNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
+				},
+			},
+		},
+	},
+}
+
 func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
@@ -64,57 +93,28 @@ func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 			},
 		},
 
-		ExpectedFullGraph: []dataMap{
+		ExpectedPatterns: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"selectNode": dataMap{
-							"filter": nil,
-							"typeIndexJoin": dataMap{
-								"joinType": "typeJoinMany",
-								"rootName": "author",
-								"root": dataMap{
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "Author",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
-											},
-										},
-									},
-								},
-								"subTypeName": "articles",
-								"subType": dataMap{
-									"selectTopNode": dataMap{
-										"orderNode": dataMap{
-											"orderings": []dataMap{
-												{
-													"direction": "DESC",
-													"fields": []string{
-														"name",
-													},
-												},
-											},
-											"selectNode": dataMap{
-												"filter": nil,
-												"scanNode": dataMap{
-													"collectionID":   "1",
-													"collectionName": "Article",
-													"filter":         nil,
-													"spans": []dataMap{
-														{
-															"start": "/1",
-															"end":   "/2",
-														},
-													},
-												},
-											},
-										},
-									},
-								},
+							"typeIndexJoin": orderTypeJoinPattern,
+						},
+					},
+				},
+			},
+		},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName:    "orderNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"orderings": []dataMap{
+						{
+							"direction": "DESC",
+							"fields": []string{
+								"name",
 							},
 						},
 					},
@@ -174,67 +174,46 @@ func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T
 			},
 		},
 
-		ExpectedFullGraph: []dataMap{
+		ExpectedPatterns: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"orderNode": dataMap{
-							"orderings": []dataMap{
-								{
-									"direction": "ASC",
-									"fields": []string{
-										"name",
-									},
-								},
-							},
 							"selectNode": dataMap{
-								"filter": nil,
-								"typeIndexJoin": dataMap{
-									"joinType": "typeJoinMany",
-									"rootName": "author",
-									"root": dataMap{
-										"scanNode": dataMap{
-											"collectionID":   "3",
-											"collectionName": "Author",
-											"filter":         nil,
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
-												},
-											},
-										},
-									},
-									"subTypeName": "articles",
-									"subType": dataMap{
-										"selectTopNode": dataMap{
-											"orderNode": dataMap{
-												"orderings": []dataMap{
-													{
-														"direction": "DESC",
-														"fields": []string{
-															"name",
-														},
-													},
-												},
-												"selectNode": dataMap{
-													"filter": nil,
-													"scanNode": dataMap{
-														"collectionID":   "1",
-														"collectionName": "Article",
-														"filter":         nil,
-														"spans": []dataMap{
-															{
-																"start": "/1",
-																"end":   "/2",
-															},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
+								"typeIndexJoin": orderTypeJoinPattern,
+							},
+						},
+					},
+				},
+			},
+		},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName:    "orderNode",
+				OccurancesToSkip:  0,
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"orderings": []dataMap{
+						{
+							"direction": "ASC",
+							"fields": []string{
+								"name",
+							},
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "orderNode",
+				OccurancesToSkip:  1,
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"orderings": []dataMap{
+						{
+							"direction": "DESC",
+							"fields": []string{
+								"name",
 							},
 						},
 					},
@@ -297,58 +276,31 @@ func TestDefaultExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T
 			},
 		},
 
-		ExpectedFullGraph: []dataMap{
+		ExpectedPatterns: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"orderNode": dataMap{
-							"orderings": []dataMap{
-								{
-									"direction": "ASC",
-									"fields": []string{
-										"articles",
-										"name",
-									},
-								},
-							},
 							"selectNode": dataMap{
-								"filter": nil,
-								"typeIndexJoin": dataMap{
-									"joinType": "typeJoinMany",
-									"rootName": "author",
-									"root": dataMap{
-										"scanNode": dataMap{
-											"collectionID":   "3",
-											"collectionName": "Author",
-											"filter":         nil,
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
-												},
-											},
-										},
-									},
-									"subTypeName": "articles",
-									"subType": dataMap{
-										"selectTopNode": dataMap{
-											"selectNode": dataMap{
-												"filter": nil,
-												"scanNode": dataMap{
-													"collectionID":   "1",
-													"collectionName": "Article",
-													"filter":         nil,
-													"spans": []dataMap{
-														{
-															"start": "/1",
-															"end":   "/2",
-														},
-													},
-												},
-											},
-										},
-									},
-								},
+								"typeIndexJoin": normalTypeJoinPattern,
+							},
+						},
+					},
+				},
+			},
+		},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName:    "orderNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"orderings": []dataMap{
+						{
+							"direction": "ASC",
+							"fields": []string{
+								"articles",
+								"name",
 							},
 						},
 					},
