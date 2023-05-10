@@ -16,9 +16,10 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainQueryWithMultipleConflictingInnerLimits(t *testing.T) {
+func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
-		Description: "Explain Query With multiple conflicting inner limit nodes.",
+
+		Description: "Explain (default) request with limit on related child with count.",
 
 		Request: `query @explain {
 			Author {
@@ -128,34 +129,10 @@ func TestExplainQueryWithMultipleConflictingInnerLimits(t *testing.T) {
 							"selectNode": dataMap{
 								"parallelNode": []dataMap{
 									{
-										"typeIndexJoin": dataMap{
-											"root": dataMap{
-												"scanNode": dataMap{},
-											},
-											"subType": dataMap{
-												"selectTopNode": dataMap{
-													"limitNode": dataMap{
-														"selectNode": dataMap{
-															"scanNode": dataMap{},
-														},
-													},
-												},
-											},
-										},
+										"typeIndexJoin": limitTypeJoinPattern,
 									},
 									{
-										"typeIndexJoin": dataMap{
-											"root": dataMap{
-												"scanNode": dataMap{},
-											},
-											"subType": dataMap{
-												"selectTopNode": dataMap{
-													"selectNode": dataMap{
-														"scanNode": dataMap{},
-													},
-												},
-											},
-										},
+										"typeIndexJoin": normalTypeJoinPattern,
 									},
 								},
 							},
@@ -192,9 +169,10 @@ func TestExplainQueryWithMultipleConflictingInnerLimits(t *testing.T) {
 	runExplainTest(t, test)
 }
 
-func TestExplainQueryWithMultipleConflictingInnerLimitsAndOuterLimit(t *testing.T) {
+func TestDefaultExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
-		Description: "Explain Query With multiple conflicting inner limit nodes and an outer limit.",
+
+		Description: "Explain (default) request with limit args on parent and related child with count.",
 
 		Request: `query @explain {
 			Author(limit: 3, offset: 1) {
@@ -305,34 +283,10 @@ func TestExplainQueryWithMultipleConflictingInnerLimitsAndOuterLimit(t *testing.
 								"selectNode": dataMap{
 									"parallelNode": []dataMap{
 										{
-											"typeIndexJoin": dataMap{
-												"root": dataMap{
-													"scanNode": dataMap{},
-												},
-												"subType": dataMap{
-													"selectTopNode": dataMap{
-														"limitNode": dataMap{
-															"selectNode": dataMap{
-																"scanNode": dataMap{},
-															},
-														},
-													},
-												},
-											},
+											"typeIndexJoin": limitTypeJoinPattern,
 										},
 										{
-											"typeIndexJoin": dataMap{
-												"root": dataMap{
-													"scanNode": dataMap{},
-												},
-												"subType": dataMap{
-													"selectTopNode": dataMap{
-														"selectNode": dataMap{
-															"scanNode": dataMap{},
-														},
-													},
-												},
-											},
+											"typeIndexJoin": normalTypeJoinPattern,
 										},
 									},
 								},
