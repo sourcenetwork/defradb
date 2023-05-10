@@ -13,12 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a simple sum query of a One-to-Many realted sub-type.",
+func TestDefaultExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with sum on a one-to-many joined field.",
 
 		Request: `query @explain {
 			Author {
@@ -69,7 +70,7 @@ func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -127,12 +128,13 @@ func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a simple sum query of a One-to-Many realted sub-type with a filter.",
+func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with sum on a one-to-many joined field, with filter.",
 
 		Request: `query @explain {
 			Author {
@@ -189,7 +191,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -255,85 +257,13 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySumOfInlineArrayField_ShouldHaveEmptyChildField(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a simple sum query on an  inline array field (childFieldName is nil).",
+func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithManySources(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Request: `query @explain {
-			Book {
-				name
-				NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: _sum(chapterPages: {})
-			}
-		}`,
-
-		Docs: map[int][]string{
-			// books
-			1: {
-				`{
-					"name": "Painted House",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 77,
-					"chapterPages": [1, 22, 33, 44, 55, 66]
-				}`, // sum of chapterPages == 221
-
-				`{
-					"name": "A Time for Mercy",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 55,
-					"chapterPages": [1, 22]
-				}`, // sum of chapterPages == 23
-
-				`{
-					"name": "Theif Lord",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 321,
-					"chapterPages": [10, 50, 100, 200, 300]
-				}`, // sum of chapterPages == 660
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"sumNode": dataMap{
-							"sources": []dataMap{
-								{
-									"fieldName":      "chapterPages",
-									"childFieldName": nil,
-									"filter":         nil,
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "2",
-									"collectionName": "Book",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/2",
-											"end":   "/3",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a simple sum query of a One-to-Many realted sub-type with many sources.",
+		Description: "Explain (default) request with sum on a one-to-many joined field with many sources.",
 
 		Request: `query @explain {
 			Author {
@@ -403,7 +333,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -509,5 +439,79 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
+}
+
+func TestDefaultExplainRequestWithSumOnInlineArrayField_ChildFieldWillBeEmpty(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with sum on an inline array field.",
+
+		Request: `query @explain {
+			Book {
+				name
+				NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: _sum(chapterPages: {})
+			}
+		}`,
+
+		Docs: map[int][]string{
+			// books
+			1: {
+				`{
+					"name": "Painted House",
+					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
+					"pages": 77,
+					"chapterPages": [1, 22, 33, 44, 55, 66]
+				}`, // sum of chapterPages == 221
+
+				`{
+					"name": "A Time for Mercy",
+					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
+					"pages": 55,
+					"chapterPages": [1, 22]
+				}`, // sum of chapterPages == 23
+
+				`{
+					"name": "Theif Lord",
+					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
+					"pages": 321,
+					"chapterPages": [10, 50, 100, 200, 300]
+				}`, // sum of chapterPages == 660
+			},
+		},
+
+		ExpectedFullGraph: []dataMap{
+			{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"sumNode": dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName":      "chapterPages",
+									"childFieldName": nil,
+									"filter":         nil,
+								},
+							},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "2",
+									"collectionName": "Book",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/2",
+											"end":   "/3",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	runExplainTest(t, test)
 }
