@@ -16,35 +16,15 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-var normalTypeJoinPattern = dataMap{
-	"root": dataMap{
-		"scanNode": dataMap{},
-	},
-	"subType": dataMap{
-		"selectTopNode": dataMap{
-			"selectNode": dataMap{
-				"scanNode": dataMap{},
-			},
-		},
-	},
-}
-
-func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
+func TestDefaultExplainRequestWithAOneToManyJoin(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain (default) request with 2 single joins and 1 many join.",
+		Description: "Explain (default) request with a 1-to-M join.",
 
 		Request: `query @explain {
 			Author {
-				OnlyEmail: contact {
-					email
-				}
 				articles {
 					name
-				}
-				contact {
-					cell
-					email
 				}
 			}
 		}`,
@@ -139,17 +119,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"selectNode": dataMap{
-							"parallelNode": []dataMap{
-								{
-									"typeIndexJoin": normalTypeJoinPattern,
-								},
-								{
-									"typeIndexJoin": normalTypeJoinPattern,
-								},
-								{
-									"typeIndexJoin": normalTypeJoinPattern,
-								},
-							},
+							"typeIndexJoin": normalTypeJoinPattern,
 						},
 					},
 				},
@@ -157,68 +127,8 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 		},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			// 1st join's assertions.
 			{
 				TargetNodeName:    "typeIndexJoin",
-				OccurancesToSkip:  0,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"direction":   "primary",
-					"joinType":    "typeJoinOne",
-					"rootName":    "author",
-					"subTypeName": "contact",
-				},
-			},
-			{
-				// Note: `root` is not a node but is a special case because for typeIndexJoin we
-				//       restructure to show both `root` and `subType` at the same level.
-				TargetNodeName:    "root",
-				OccurancesToSkip:  0,
-				IncludeChildNodes: true, // We care about checking children nodes.
-				ExpectedAttributes: dataMap{
-					"scanNode": dataMap{
-						"filter":         nil,
-						"collectionID":   "3",
-						"collectionName": "Author",
-						"spans": []dataMap{
-							{
-								"start": "/3",
-								"end":   "/4",
-							},
-						},
-					},
-				},
-			},
-			{
-				// Note: `subType` is not a node but is a special case because for typeIndexJoin we
-				//       restructure to show both `root` and `subType` at the same level.
-				TargetNodeName:    "subType",
-				OccurancesToSkip:  0,
-				IncludeChildNodes: true, // We care about checking children nodes.
-				ExpectedAttributes: dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"filter":         nil,
-								"collectionID":   "4",
-								"collectionName": "AuthorContact",
-								"spans": []dataMap{
-									{
-										"start": "/4",
-										"end":   "/5",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-
-			// 2nd join's assertions (the one to many join).
-			{
-				TargetNodeName:    "typeIndexJoin",
-				OccurancesToSkip:  1,
 				IncludeChildNodes: false,
 				ExpectedAttributes: dataMap{
 					"joinType":    "typeJoinMany",
@@ -230,7 +140,6 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 				// Note: `root` is not a node but is a special case because for typeIndexJoin we
 				//       restructure to show both `root` and `subType` at the same level.
 				TargetNodeName:    "root",
-				OccurancesToSkip:  1,
 				IncludeChildNodes: true, // We care about checking children nodes.
 				ExpectedAttributes: dataMap{
 					"scanNode": dataMap{
@@ -250,7 +159,6 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 				// Note: `subType` is not a node but is a special case because for typeIndexJoin we
 				//       restructure to show both `root` and `subType` at the same level.
 				TargetNodeName:    "subType",
-				OccurancesToSkip:  1,
 				IncludeChildNodes: true, // We care about checking children nodes.
 				ExpectedAttributes: dataMap{
 					"selectTopNode": dataMap{
@@ -267,56 +175,6 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 									},
 								},
 							},
-						},
-					},
-				},
-			},
-
-			// 3rd join's assertions (should be same as 1st one, so after `typeIndexJoin` lets just
-			// assert that the `scanNode`s are valid only.
-			{
-				TargetNodeName:    "typeIndexJoin",
-				OccurancesToSkip:  2,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"direction":   "primary",
-					"joinType":    "typeJoinOne",
-					"rootName":    "author",
-					"subTypeName": "contact",
-				},
-			},
-			{
-				// Note: `root` is not a node but is a special case because for typeIndexJoin we
-				//       restructure to show both `root` and `subType` at the same level.
-				TargetNodeName:    "scanNode",
-				OccurancesToSkip:  4,    // As we encountered 2 `scanNode`s per join.
-				IncludeChildNodes: true, // Shouldn't have any.
-				ExpectedAttributes: dataMap{
-					"filter":         nil,
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"spans": []dataMap{
-						{
-							"start": "/3",
-							"end":   "/4",
-						},
-					},
-				},
-			},
-			{
-				// Note: `subType` is not a node but is a special case because for typeIndexJoin we
-				//       restructure to show both `root` and `subType` at the same level.
-				TargetNodeName:    "scanNode",
-				OccurancesToSkip:  5,    // As we encountered 2 `scanNode`s per join + 1 in the `root` above.
-				IncludeChildNodes: true, // Shouldn't have any.
-				ExpectedAttributes: dataMap{
-					"filter":         nil,
-					"collectionID":   "4",
-					"collectionName": "AuthorContact",
-					"spans": []dataMap{
-						{
-							"start": "/4",
-							"end":   "/5",
 						},
 					},
 				},
