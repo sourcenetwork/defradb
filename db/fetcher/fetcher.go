@@ -13,6 +13,7 @@ package fetcher
 import (
 	"bytes"
 	"context"
+	"strings"
 
 	dsq "github.com/ipfs/go-datastore/query"
 
@@ -285,25 +286,79 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err erro
 // - Returns true if the entire iterator/span is exhausted
 // - Returns a kv pair instead of internally updating
 func (df *DocumentFetcher) nextKV() (iterDone bool, kv *KeyValue, err error) {
-	res, available := df.kvResultsIter.NextSync()
-	if !available {
-		return true, nil, nil
-	}
-	err = res.Error
-	if err != nil {
-		return true, nil, err
-	}
-
-	dsKey, err := core.NewDataStoreKey(res.Key)
-	if err != nil {
-		return true, nil, err
+	done, dsKey, res, err := df.nextKVRaw()
+	if done || err != nil {
+		return done, nil, err
 	}
 
 	kv = &KeyValue{
 		Key:   dsKey,
-		Value: res.Value, // @todo: Implement lazy fetching (again)
+		Value: res.Value,
 	}
 	return false, kv, nil
+}
+
+// seekKV will seek through results/iterator until it reaches
+// the target key, or if the target key doesn't exist, the
+// next smallest key that is greater than the target.
+func (df *DocumentFetcher) seekKV(key string) (bool, *KeyValue, error) {
+	// make sure the current kv is *before* the target key
+	switch strings.Compare(df.kv.Key.ToString(), key) {
+	case 0:
+		// equal, we should just return the kv state
+		return df.kvEnd, df.kv, nil
+	case 1:
+		// greater, error
+		return false, nil, NewErrFailedToSeek(key, nil)
+	}
+
+	for {
+		done, dsKey, res, err := df.nextKVRaw()
+		if done || err != nil {
+			// format the kv just in case we're done
+			// it won't be used if an error is returned
+			kv := &KeyValue{
+				Key:   dsKey,
+				Value: res.Value,
+			}
+			return done, kv, err
+		}
+
+		switch strings.Compare(dsKey.ToString(), key) {
+		case -1:
+			// before, so lets seek again
+			continue
+		case 0, 1:
+			// equal or greater (first), return a formatted kv
+			kv := &KeyValue{
+				Key:   dsKey,
+				Value: res.Value, // @todo make lazy
+			}
+			return false, kv, nil
+		}
+	}
+}
+
+// nextKV is a lower-level utility compared to nextKey. The differences are as follows:
+// - It directly interacts with the KVIterator.
+// - Returns true if the entire iterator/span is exhausted
+// - Returns a kv pair instead of internally updating
+func (df *DocumentFetcher) nextKVRaw() (iterDone bool, dsKey core.DataStoreKey, res dsq.Result, err error) {
+	res, available := df.kvResultsIter.NextSync()
+	if !available {
+		return true, dsKey, res, nil
+	}
+	err = res.Error
+	if err != nil {
+		return true, dsKey, res, err
+	}
+
+	dsKey, err = core.NewDataStoreKey(res.Key)
+	if err != nil {
+		return true, dsKey, res, err
+	}
+
+	return false, dsKey, res, nil
 }
 
 // processKV continuously processes the key value pairs we've received
