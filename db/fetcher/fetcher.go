@@ -34,6 +34,12 @@ type Fetcher interface {
 	Close() error
 }
 
+// KeyValue is a KV store response containing the resulting core.Key and byte array value.
+type KeyValue struct {
+	Key   core.DataStoreKey
+	Value []byte
+}
+
 var (
 	_ Fetcher = (*DocumentFetcher)(nil)
 )
@@ -55,7 +61,7 @@ type DocumentFetcher struct {
 	decodedDoc  *client.Document
 	initialized bool
 
-	kv                *core.KeyValue
+	kv                *KeyValue
 	kvIter            iterable.Iterator
 	kvResultsIter     dsq.Results
 	kvEnd             bool
@@ -226,7 +232,7 @@ func (df *DocumentFetcher) KVEnd() bool {
 	return df.kvEnd
 }
 
-func (df *DocumentFetcher) KV() *core.KeyValue {
+func (df *DocumentFetcher) KV() *KeyValue {
 	return df.kv
 }
 
@@ -234,11 +240,11 @@ func (df *DocumentFetcher) NextKey(ctx context.Context) (docDone bool, err error
 	return df.nextKey(ctx)
 }
 
-func (df *DocumentFetcher) NextKV() (iterDone bool, kv *core.KeyValue, err error) {
+func (df *DocumentFetcher) NextKV() (iterDone bool, kv *KeyValue, err error) {
 	return df.nextKV()
 }
 
-func (df *DocumentFetcher) ProcessKV(kv *core.KeyValue) error {
+func (df *DocumentFetcher) ProcessKV(kv *KeyValue) error {
 	return df.processKV(kv)
 }
 
@@ -278,7 +284,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err erro
 // - It directly interacts with the KVIterator.
 // - Returns true if the entire iterator/span is exhausted
 // - Returns a kv pair instead of internally updating
-func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
+func (df *DocumentFetcher) nextKV() (iterDone bool, kv *KeyValue, err error) {
 	res, available := df.kvResultsIter.NextSync()
 	if !available {
 		return true, nil, nil
@@ -293,16 +299,16 @@ func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error
 		return true, nil, err
 	}
 
-	kv = &core.KeyValue{
+	kv = &KeyValue{
 		Key:   dsKey,
-		Value: res.Value,
+		Value: res.Value, // @todo: Implement lazy fetching (again)
 	}
 	return false, kv, nil
 }
 
 // processKV continuously processes the key value pairs we've received
 // and step by step constructs the current encoded document
-func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
+func (df *DocumentFetcher) processKV(kv *KeyValue) error {
 	// skip MerkleCRDT meta-data priority key-value pair
 	// implement here <--
 	// instance := kv.Key.Name()

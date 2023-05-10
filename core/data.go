@@ -156,12 +156,6 @@ func NewSpans(spans ...Span) Spans {
 	}
 }
 
-// KeyValue is a KV store response containing the resulting core.Key and byte array value.
-type KeyValue struct {
-	Key   DataStoreKey
-	Value []byte
-}
-
 // HeadKeyValue is a KV store response containing the resulting core.HeadStoreKey
 // and byte array value.
 type HeadKeyValue struct {
