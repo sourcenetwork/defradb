@@ -137,6 +137,21 @@ func (p *Peer) Start() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	// reconnect to known peers
+	for _, id := range p.host.Peerstore().PeersWithAddrs() {
+		go func(id peer.ID) {
+			addr := p.host.Peerstore().PeerInfo(id)
+			err := p.host.Connect(p.ctx, addr)
+			if err != nil {
+				log.Info(
+					p.ctx,
+					"Failed to reconnect to peer`",
+					logging.NewKV("peer", id),
+				)
+			}
+		}(id)
+	}
+
 	p2plistener, err := gostream.Listen(p.host, corenet.Protocol)
 	if err != nil {
 		return err
