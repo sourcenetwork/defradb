@@ -22,30 +22,39 @@ func TestQueryOneToOneToOne(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
+					type Publisher {
+						name: String
+						printed: Book @primary
+					}
+
 					type Book {
 						name: String
-						rating: Float
-						author: Author
-						publisher: Publisher @primary
+						publisher: Publisher
+						author: Author @primary
 					}
 
 					type Author {
 						name: String
-						age: Int
-						verified: Boolean
-						published: Book @primary
-					}
-
-					type Publisher {
-						name: String
-						address: String
-						yearOpened: Int
-						printed: Book
+						published: Book
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
+				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
+				Doc: `{
+					"name": "Old Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
+				Doc: `{
+					"name": "New Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
 				Doc: `{
 					"name": "Painted House",
@@ -53,7 +62,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 				}`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
+				CollectionID: 1,
 				// "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
 				Doc: `{
 					"name": "Theif Lord",
@@ -61,40 +70,26 @@ func TestQueryOneToOneToOne(t *testing.T) {
 				}`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 1,
+				CollectionID: 2,
 				Doc: `{
 					"name": "John Grisham",
 					"published_id": "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
 				}`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 1,
+				CollectionID: 2,
 				Doc: `{
 					"name": "Cornelia Funke",
 					"published_id": "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
 				}`,
 			},
-			testUtils.CreateDoc{
-				CollectionID: 2,
-				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
-				Doc: `{
-					"name": "Old Publisher"
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 2,
-				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
-				Doc: `{
-					"name": "New Publisher"
-				}`,
-			},
 			testUtils.Request{
 				Request: `query {
-					Author {
+					Publisher {
 						name
-						published {
+						printed {
 							name
-							publisher {
+							author {
 								name
 							}
 						}
@@ -102,20 +97,20 @@ func TestQueryOneToOneToOne(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "John Grisham",
-						"published": map[string]any{
+						"name": "Old Publisher",
+						"printed": map[string]any{
 							"name": "Painted House",
-							"publisher": map[string]any{
-								"name": "Old Publisher",
+							"author": map[string]any{
+								"name": "John Grisham",
 							},
 						},
 					},
 					{
-						"name": "Cornelia Funke",
-						"published": map[string]any{
+						"name": "New Publisher",
+						"printed": map[string]any{
 							"name": "Theif Lord",
-							"publisher": map[string]any{
-								"name": "New Publisher",
+							"author": map[string]any{
+								"name": "Cornelia Funke",
 							},
 						},
 					},
@@ -124,5 +119,5 @@ func TestQueryOneToOneToOne(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Publisher", "Book", "Author"}, test)
 }
