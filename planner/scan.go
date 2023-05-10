@@ -38,7 +38,8 @@ type scanNode struct {
 	p    *Planner
 	desc client.CollectionDescription
 
-	fields []*client.FieldDescription
+	fields []client.FieldDescription
+	docKey []byte
 
 	showDeleted bool
 
@@ -46,6 +47,7 @@ type scanNode struct {
 	reverse bool
 
 	filter *mapper.Filter
+	slct   *mapper.Select
 
 	scanInitialized bool
 
@@ -60,7 +62,7 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse, n.showDeleted); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.filter, n.reverse, n.showDeleted); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -68,6 +70,17 @@ func (n *scanNode) Init() error {
 
 func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 	n.desc = desc
+	for _, r := range n.slct.Fields {
+		fd, ok := n.desc.GetField(r.GetName())
+		if !ok {
+			// skip fields that are not part of the
+			// schema description. The scanner (and fetcher)
+			// is only responsible for basic fields
+			continue
+		}
+		n.fields = append(n.fields, fd)
+	}
+
 	return nil
 }
 
@@ -211,6 +224,7 @@ func (p *Planner) Scan(parsed *mapper.Select) *scanNode {
 	return &scanNode{
 		p:         p,
 		fetcher:   f,
+		slct:      parsed,
 		docMapper: docMapper{parsed.DocumentMapping},
 	}
 }

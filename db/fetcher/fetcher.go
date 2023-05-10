@@ -22,12 +22,14 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/planner/mapper"
+	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
 
 // Fetcher is the interface for collecting documents from the underlying data store.
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool, showDeleted bool) error
+	Init(col *client.CollectionDescription, fields []client.FieldDescription, filter *mapper.Filter, reverse bool, showDeleted bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (EncodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
@@ -55,8 +57,11 @@ type DocumentFetcher struct {
 	order        []dsq.Order
 	curSpanIndex int
 
-	schemaFields map[uint32]client.FieldDescription
-	fields       []*client.FieldDescription
+	filter *mapper.Filter
+
+	filterFields map[uint32]client.FieldDescription
+	selectFields map[uint32]client.FieldDescription
+	// allfields       map[uint32]*client.FieldDescription
 
 	doc         *encodedDocument
 	decodedDoc  *client.Document
@@ -77,7 +82,8 @@ type DocumentFetcher struct {
 // Init implements DocumentFetcher.
 func (df *DocumentFetcher) Init(
 	col *client.CollectionDescription,
-	fields []*client.FieldDescription,
+	fields []client.FieldDescription,
+	filter *mapper.Filter,
 	reverse bool,
 	showDeleted bool,
 ) error {
@@ -102,11 +108,10 @@ func (df *DocumentFetcher) Init(
 
 func (df *DocumentFetcher) init(
 	col *client.CollectionDescription,
-	fields []*client.FieldDescription,
+	fields []client.FieldDescription,
 	reverse bool,
 ) error {
 	df.col = col
-	df.fields = fields
 	df.reverse = reverse
 	df.initialized = true
 	df.isReadingDocument = false
@@ -125,10 +130,19 @@ func (df *DocumentFetcher) init(
 	}
 	df.kvIter = nil
 
-	df.schemaFields = make(map[uint32]client.FieldDescription)
-	for _, field := range col.Schema.Fields {
-		df.schemaFields[uint32(field.ID)] = field
+	df.selectFields = make(map[uint32]client.FieldDescription, len(fields))
+	for _, field := range fields {
+		df.selectFields[uint32(field.ID)] = field
 	}
+
+	if df.filter != nil {
+		parsedfilterFields := parser.ParseFilterFieldsForDescription(df.filter.ExternalConditions, df.col.Schema)
+		df.filterFields = make(map[uint32]client.FieldDescription, len(parsedfilterFields))
+		for _, field := range parsedfilterFields {
+			df.filterFields[uint32(field.ID)] = field
+		}
+	}
+
 	return nil
 }
 
@@ -389,7 +403,7 @@ func (df *DocumentFetcher) processKV(kv *KeyValue) error {
 	if err != nil {
 		return err
 	}
-	fieldDesc, exists := df.schemaFields[fieldID]
+	fieldDesc, exists := df.selectFields[fieldID]
 	if !exists {
 		return NewErrFieldIdNotFound(fieldID)
 	}

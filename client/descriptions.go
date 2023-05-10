@@ -118,6 +118,18 @@ func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
 	return uint32(0)
 }
 
+// GetField returns the field of the given name.
+func (sd SchemaDescription) GetField(name string) (FieldDescription, bool) {
+	if !sd.IsEmpty() {
+		for _, field := range sd.Fields {
+			if field.Name == name {
+				return field, true
+			}
+		}
+	}
+	return FieldDescription{}, false
+}
+
 // FieldKind describes the type of a field.
 type FieldKind uint8
 

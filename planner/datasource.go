@@ -43,7 +43,7 @@ func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, erro
 	}
 
 	scan := p.Scan(parsed)
-	err = scan.initCollection(colDesc)
+	err = scan.initCollection(colDesc) // @todo: Should `initCollection` be merged into `p.Scan(...)`
 	if err != nil {
 		return planSource{}, err
 	}
