@@ -16,6 +16,22 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
+var averageTypeIndexJoinPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"averageNode": dataMap{
+				"countNode": dataMap{
+					"sumNode": dataMap{
+						"selectNode": dataMap{
+							"typeIndexJoin": normalTypeJoinPattern,
+						},
+					},
+				},
+			},
+		},
+	},
+}
+
 func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
@@ -72,23 +88,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 			},
 		},
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"averageNode": dataMap{
-							"countNode": dataMap{
-								"sumNode": dataMap{
-									"selectNode": dataMap{
-										"typeIndexJoin": normalTypeJoinPattern,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		ExpectedPatterns: []dataMap{averageTypeIndexJoinPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
