@@ -9,6 +9,7 @@ import (
 	"github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -77,6 +78,23 @@ func (f *indexTestFixture) getPrefixFromDataStore(prefix string) [][]byte {
 	return keys
 }
 
+func (f *indexTestFixture) mockTxn() *mocks.MultiStoreTxn {
+	mockedTxn := mocks.NewTxnWithMultistore(f.t)
+
+	indexDesc := getUsersIndexDescOnName()
+	indexDescData, err := json.Marshal(indexDesc)
+	require.NoError(f.t, err)
+
+	systemStoreOn := mockedTxn.MockSystemstore.EXPECT()
+	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
+	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, indexDesc.Name)
+	systemStoreOn.Get(mock.Anything, colIndexKey.ToDS()).Return(indexDescData, nil)
+	systemStoreOn.Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
+
+	f.txn = mockedTxn
+	return mockedTxn
+}
+
 func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
@@ -99,14 +117,14 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	key := f.getNonUniqueDocIndexKey(doc, "name")
 
 	mockTxn := f.mockTxn()
-	mockTxn.EXPECT().Rootstore().Unset()
-	expect := mockTxn.MockDatastore.EXPECT()
-	expect.Put(mock.Anything, mock.Anything, mock.Anything).Unset()
-	expect.Put(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
-	expect.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	dataStoreOn := mockTxn.MockDatastore.EXPECT()
+	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Unset()
+	dataStoreOn.Put(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
+	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
-	require.Error(f.t, err)
+	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
 }
 
 func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
@@ -128,4 +146,38 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	key := f.getNonUniqueIndexKey("name")
 	prefixes := f.getPrefixFromDataStore(key.ToString())
 	assert.Len(t, prefixes, 0)
+}
+
+func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T) {
+	f := newIndexTestFixture(t)
+	indexDesc := f.createUserCollectionIndexOnName()
+
+	doc := f.newUserDoc("John", 21)
+
+	mockTxn := f.mockTxn()
+	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
+	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
+	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, indexDesc.Name)
+	systemStoreOn.Get(mock.Anything, colIndexKey.ToDS()).Return([]byte("invalid"), nil)
+	systemStoreOn.Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
+
+	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
+	require.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+}
+
+func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
+	f := newIndexTestFixture(t)
+	indexDesc := f.createUserCollectionIndexOnName()
+
+	doc := f.newUserDoc("John", 21)
+
+	mockTxn := f.mockTxn()
+	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
+	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
+	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, indexDesc.Name)
+	systemStoreOn.Get(mock.Anything, colIndexKey.ToDS()).Return([]byte{}, errors.New("error"))
+	systemStoreOn.Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
+
+	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
+	require.ErrorIs(t, err, NewErrFailedToReadStoredIndexDesc(nil))
 }

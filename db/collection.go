@@ -785,17 +785,21 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
 	colIndexKey := core.NewCollectionIndexKey(c.desc.Name, "user_name")
 	indexData, err := txn.Systemstore().Get(ctx, colIndexKey.ToDS())
-	err = err
+	if err != nil {
+		return NewErrFailedToReadStoredIndexDesc(err)
+	}
 	var indexDesc client.IndexDescription
 	err = json.Unmarshal(indexData, &indexDesc)
-	err = err
-	colIndex := NewCollectionIndex(c, indexDesc)
-	docDataStoreKey := c.getDSKeyFromDockey(doc.Key())
+	if err != nil {
+		return NewErrInvalidStoredIndex(err)
+	}
 	fieldVal, err := doc.Get("name")
 	// if new doc doesn't have the index field, we don't need to index it
 	if err != nil {
 		return nil
 	}
+	colIndex := NewCollectionIndex(c, indexDesc)
+	docDataStoreKey := c.getDSKeyFromDockey(doc.Key())
 	return colIndex.Save(ctx, txn, docDataStoreKey, fieldVal)
 }
 

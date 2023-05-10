@@ -23,12 +23,13 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/mocks"
 )
 
 const (
 	usersColName    = "Users"
 	productsColName = "Products"
+
+	testUsersColIndexName = "user_name"
 )
 
 type indexTestFixture struct {
@@ -115,23 +116,20 @@ func (f *indexTestFixture) createCollectionIndex(
 	return f.createCollectionIndexFor(f.users.Name(), desc)
 }
 
-func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
-	desc := client.IndexDescription{
-		Name: "user_name",
+func getUsersIndexDescOnName() client.IndexDescription {
+	return client.IndexDescription{
+		Name: testUsersColIndexName,
 		Fields: []client.IndexedFieldDescription{
 			{Name: "name", Direction: client.Ascending},
 		},
 	}
-	newDesc, err := f.createCollectionIndexFor(f.users.Name(), desc)
+}
+
+func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
+	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
 	f.commitTxn()
 	return newDesc
-}
-
-func (f *indexTestFixture) mockTxn() *mocks.MultiStoreTxn {
-	mockTxn := mocks.NewTxnWithMultistore(f.t)
-	f.txn = mockTxn
-	return mockTxn
 }
 
 func (f *indexTestFixture) dropIndex(colName, indexName string) error {
