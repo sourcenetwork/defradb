@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/datastore/mocks"
 )
 
 const (
@@ -31,11 +32,11 @@ const (
 )
 
 type indexTestFixture struct {
-	ctx        context.Context
-	db         *implicitTxnDB
-	txn        datastore.Txn
-	collection client.Collection
-	t          *testing.T
+	ctx   context.Context
+	db    *implicitTxnDB
+	txn   datastore.Txn
+	users client.Collection
+	t     *testing.T
 }
 
 func getUsersCollectionDesc() client.CollectionDescription {
@@ -104,14 +105,14 @@ func newIndexTestFixture(t *testing.T) *indexTestFixture {
 		txn: txn,
 		t:   t,
 	}
-	f.collection = f.createCollection(getUsersCollectionDesc())
+	f.users = f.createCollection(getUsersCollectionDesc())
 	return f
 }
 
 func (f *indexTestFixture) createCollectionIndex(
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	return f.createCollectionIndexFor(f.collection.Name(), desc)
+	return f.createCollectionIndexFor(f.users.Name(), desc)
 }
 
 func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
@@ -121,10 +122,16 @@ func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescrip
 			{Name: "name", Direction: client.Ascending},
 		},
 	}
-	newDesc, err := f.createCollectionIndexFor(f.collection.Name(), desc)
+	newDesc, err := f.createCollectionIndexFor(f.users.Name(), desc)
 	require.NoError(f.t, err)
 	f.commitTxn()
 	return newDesc
+}
+
+func (f *indexTestFixture) mockTxn() *mocks.MultiStoreTxn {
+	mockTxn := mocks.NewTxnWithMultistore(f.t)
+	f.txn = mockTxn
+	return mockTxn
 }
 
 func (f *indexTestFixture) dropIndex(colName, indexName string) error {
@@ -132,7 +139,7 @@ func (f *indexTestFixture) dropIndex(colName, indexName string) error {
 }
 
 func (f *indexTestFixture) dropAllIndexes(colName string) error {
-	col := (f.collection.WithTxn(f.txn)).(*collection)
+	col := (f.users.WithTxn(f.txn)).(*collection)
 	return col.dropAllIndexes(f.ctx)
 }
 
@@ -256,7 +263,7 @@ func TestCreateIndex_IfNameIsNotSpecified_GenerateWithLowerCase(t *testing.T) {
 			{Name: "Name", Direction: client.Ascending},
 		},
 	}
-	f.collection.Description().Schema.Fields[1].Name = "Name"
+	f.users.Description().Schema.Fields[1].Name = "Name"
 	newDesc, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
 	assert.Equal(t, newDesc.Name, "users_name_ASC")
@@ -328,7 +335,7 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	_, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
 
-	key := core.NewCollectionIndexKey(f.collection.Name(), name)
+	key := core.NewCollectionIndexKey(f.users.Name(), name)
 	data, err := f.txn.Systemstore().Get(f.ctx, key.ToDS())
 	assert.NoError(t, err)
 	var deserialized client.IndexDescription

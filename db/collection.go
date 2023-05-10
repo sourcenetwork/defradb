@@ -793,9 +793,7 @@ func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *cl
 	docDataStoreKey := c.getDSKeyFromDockey(doc.Key())
 	fieldVal, err := doc.Get("name")
 	err = err
-	err = colIndex.Save(ctx, txn, docDataStoreKey, fieldVal)
-	err = err
-	return nil
+	return colIndex.Save(ctx, txn, docDataStoreKey, fieldVal)
 }
 
 // Update an existing document with the new values.

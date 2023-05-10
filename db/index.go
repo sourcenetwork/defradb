@@ -45,9 +45,7 @@ func (c *collectionSimpleIndex) Save(
 	indexDataStoreKey.CollectionID = strconv.Itoa(int(c.collection.ID()))
 	indexDataStoreKey.IndexID = "1"
 	indexDataStoreKey.FieldValues = []string{data, key.DocKey}
-	err := txn.Datastore().Put(ctx, indexDataStoreKey.ToDS(), []byte{})
-	err = err
-	return nil
+	return txn.Datastore().Put(ctx, indexDataStoreKey.ToDS(), []byte{})
 }
 
 func (c *collectionSimpleIndex) Name() string {

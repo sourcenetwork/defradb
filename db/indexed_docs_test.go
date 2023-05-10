@@ -2,12 +2,14 @@ package db
 
 import (
 	"encoding/json"
+	"errors"
 	"strconv"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,19 +19,19 @@ type userDoc struct {
 	Weight float64 `json:"weight"`
 }
 
-func (f *indexTestFixture) createUserDoc(name string, age int) *client.Document {
+func (f *indexTestFixture) saveToUsers(doc *client.Document) {
+	err := f.users.Create(f.ctx, doc)
+	require.NoError(f.t, err)
+	f.txn, err = f.db.NewTxn(f.ctx, false)
+	require.NoError(f.t, err)
+}
+
+func (f *indexTestFixture) newUserDoc(name string, age int) *client.Document {
 	d := userDoc{Name: name, Age: age, Weight: 154.1}
 	data, err := json.Marshal(d)
 	require.NoError(f.t, err)
 
 	doc, err := client.NewDocFromJSON(data)
-	if err != nil {
-		f.t.Error(err)
-		return nil
-	}
-	err = f.collection.Create(f.ctx, doc)
-	require.NoError(f.t, err)
-	f.txn, err = f.db.NewTxn(f.ctx, false)
 	require.NoError(f.t, err)
 	return doc
 }
@@ -38,7 +40,7 @@ func (f *indexTestFixture) getNonUniqueDocIndex(
 	doc *client.Document,
 	fieldName string,
 ) core.IndexDataStoreKey {
-	colDesc := f.collection.Description()
+	colDesc := f.users.Description()
 	field, ok := colDesc.GetField(fieldName)
 	require.True(f.t, ok)
 
@@ -48,7 +50,7 @@ func (f *indexTestFixture) getNonUniqueDocIndex(
 	require.True(f.t, ok)
 
 	key := core.IndexDataStoreKey{
-		CollectionID: strconv.Itoa(int(f.collection.ID())),
+		CollectionID: strconv.Itoa(int(f.users.ID())),
 		IndexID:      strconv.Itoa(int(field.ID)),
 		FieldValues:  []string{fieldStrVal, doc.Key().String()},
 	}
@@ -59,11 +61,30 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
 
-	doc := f.createUserDoc("John", 21)
+	doc := f.newUserDoc("John", 21)
+	f.saveToUsers(doc)
 
 	key := f.getNonUniqueDocIndex(doc, "name")
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
+}
+
+func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	doc := f.newUserDoc("John", 21)
+	key := f.getNonUniqueDocIndex(doc, "name")
+
+	mockTxn := f.mockTxn()
+	mockTxn.EXPECT().Rootstore().Unset()
+	expect := mockTxn.MockDatastore.EXPECT()
+	expect.Put(mock.Anything, mock.Anything, mock.Anything).Unset()
+	expect.Put(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
+	expect.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
+	require.Error(f.t, err)
 }
