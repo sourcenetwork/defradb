@@ -16,6 +16,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
@@ -257,7 +258,7 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
 	}
 
 	for r := range results.Next() {
-		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
+		fmt.Println(r.Key, r.Value)
 	}
 
 	return results.Close()
