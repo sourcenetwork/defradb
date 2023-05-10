@@ -16,58 +16,38 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-var limitOnlyOnJoinPattern = dataMap{
-	"explain": dataMap{
+var normalTypeJoinPattern = dataMap{
+	"root": dataMap{
+		"scanNode": dataMap{},
+	},
+	"subType": dataMap{
 		"selectTopNode": dataMap{
 			"selectNode": dataMap{
-				"typeIndexJoin": dataMap{
-					"root": dataMap{
-						"scanNode": dataMap{},
-					},
-					"subType": dataMap{
-						"selectTopNode": dataMap{
-							"limitNode": dataMap{
-								"selectNode": dataMap{
-									"scanNode": dataMap{},
-								},
-							},
-						},
-					},
-				},
+				"scanNode": dataMap{},
 			},
 		},
 	},
 }
 
-var limitOnParentAndOnJoinPattern = dataMap{
-	"explain": dataMap{
+var limitTypeJoinPattern = dataMap{
+	"root": dataMap{
+		"scanNode": dataMap{},
+	},
+	"subType": dataMap{
 		"selectTopNode": dataMap{
 			"limitNode": dataMap{
 				"selectNode": dataMap{
-					"typeIndexJoin": dataMap{
-						"root": dataMap{
-							"scanNode": dataMap{},
-						},
-						"subType": dataMap{
-							"selectTopNode": dataMap{
-								"limitNode": dataMap{
-									"selectNode": dataMap{
-										"scanNode": dataMap{},
-									},
-								},
-							},
-						},
-					},
+					"scanNode": dataMap{},
 				},
 			},
 		},
 	},
 }
 
-func TestExplainQueryWithOnlyLimitOnChild(t *testing.T) {
+func TestDefaultExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "change Explain Query With Only Limit On Child.",
+		Description: "Explain (default) request with only limit on related child.",
 
 		Request: `query @explain {
 			Author {
@@ -169,7 +149,17 @@ func TestExplainQueryWithOnlyLimitOnChild(t *testing.T) {
 			},
 		},
 
-		ExpectedPatterns: []dataMap{limitOnlyOnJoinPattern},
+		ExpectedPatterns: []dataMap{
+			{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"typeIndexJoin": limitTypeJoinPattern,
+						},
+					},
+				},
+			},
+		},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
@@ -186,10 +176,10 @@ func TestExplainQueryWithOnlyLimitOnChild(t *testing.T) {
 	runExplainTest(t, test)
 }
 
-func TestExplainQueryWithOnlyOffsetOnChild(t *testing.T) {
+func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain Query With Only Offset On Child.",
+		Description: "Explain (default) request with only offset on related child.",
 
 		Request: `query @explain {
 			Author {
@@ -291,7 +281,17 @@ func TestExplainQueryWithOnlyOffsetOnChild(t *testing.T) {
 			},
 		},
 
-		ExpectedPatterns: []dataMap{limitOnlyOnJoinPattern},
+		ExpectedPatterns: []dataMap{
+			{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"typeIndexJoin": limitTypeJoinPattern,
+						},
+					},
+				},
+			},
+		},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
@@ -308,10 +308,10 @@ func TestExplainQueryWithOnlyOffsetOnChild(t *testing.T) {
 	runExplainTest(t, test)
 }
 
-func TestExplainQueryWithBothLimitAndOffsetOnChild(t *testing.T) {
+func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain Query With Both Limit And Offset On Child.",
+		Description: "Explain (default) request with both limit and offset on related child.",
 
 		Request: `query @explain {
 			Author {
@@ -413,7 +413,17 @@ func TestExplainQueryWithBothLimitAndOffsetOnChild(t *testing.T) {
 			},
 		},
 
-		ExpectedPatterns: []dataMap{limitOnlyOnJoinPattern},
+		ExpectedPatterns: []dataMap{
+			{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"typeIndexJoin": limitTypeJoinPattern,
+						},
+					},
+				},
+			},
+		},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
@@ -430,10 +440,10 @@ func TestExplainQueryWithBothLimitAndOffsetOnChild(t *testing.T) {
 	runExplainTest(t, test)
 }
 
-func TestExplainQueryWithLimitOnChildAndBothLimitAndOffsetOnParent(t *testing.T) {
+func TestDefaultExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnParent(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain Query With Limit On Child And Both Limit And Offset On Parent.",
+		Description: "Explain (default) request with limit on related child & both limit + offset on parent.",
 
 		Request: `query @explain {
 			Author(limit: 3, offset: 1) {
@@ -535,7 +545,19 @@ func TestExplainQueryWithLimitOnChildAndBothLimitAndOffsetOnParent(t *testing.T)
 			},
 		},
 
-		ExpectedPatterns: []dataMap{limitOnParentAndOnJoinPattern},
+		ExpectedPatterns: []dataMap{
+			{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"limitNode": dataMap{
+							"selectNode": dataMap{
+								"typeIndexJoin": limitTypeJoinPattern,
+							},
+						},
+					},
+				},
+			},
+		},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
