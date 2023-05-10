@@ -792,7 +792,10 @@ func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *cl
 	colIndex := NewCollectionIndex(c, indexDesc)
 	docDataStoreKey := c.getDSKeyFromDockey(doc.Key())
 	fieldVal, err := doc.Get("name")
-	err = err
+	// if new doc doesn't have the index field, we don't need to index it
+	if err != nil {
+		return nil
+	}
 	return colIndex.Save(ctx, txn, docDataStoreKey, fieldVal)
 }
 
