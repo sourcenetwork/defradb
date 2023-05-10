@@ -16,20 +16,6 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-// Note: This fixture would end up in type_join_test.go (as this used for order, limit, etc.).
-var normalTypeJoinPattern = dataMap{
-	"root": dataMap{
-		"scanNode": dataMap{},
-	},
-	"subType": dataMap{
-		"selectTopNode": dataMap{
-			"selectNode": dataMap{
-				"scanNode": dataMap{},
-			},
-		},
-	},
-}
-
 var orderTypeJoinPattern = dataMap{
 	"root": dataMap{
 		"scanNode": dataMap{},
