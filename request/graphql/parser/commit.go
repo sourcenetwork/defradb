@@ -39,7 +39,15 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 			commit.Cid = immutable.Some(raw.Value)
 		} else if prop == request.FieldIDName {
 			raw := argument.Value.(*ast.StringValue)
-			commit.FieldID = immutable.Some(raw.Value)
+			if raw.Value == core.COMPOSITE_NAMESPACE {
+				commit.FieldID = immutable.Some(core.COMPOSITE_NAMESPACE_ID)
+			} else {
+				fid, err := strconv.ParseUint(raw.Value, 10, 16)
+				if err != nil {
+					return nil, err
+				}
+				commit.FieldID = immutable.Some(uint16(fid))
+			}
 		} else if prop == request.OrderClause {
 			obj := argument.Value.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
@@ -96,7 +104,7 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 
 		if !commit.FieldID.HasValue() {
 			// latest commits defaults to composite commits only at the moment
-			commit.FieldID = immutable.Some(core.COMPOSITE_NAMESPACE)
+			commit.FieldID = immutable.Some(core.COMPOSITE_NAMESPACE_ID)
 		}
 	}
 

@@ -25,6 +25,7 @@ const (
 	errVFetcherFailedToDecodeNode   string = "(version fetcher) failed to decode protobuf"
 	errVFetcherFailedToGetDagLink   string = "(version fetcher) failed to get node link from DAG"
 	errFailedToGetDagNode           string = "failed to get DAG Node"
+	// errSeekTargetBeforeCurrentState string = "cannot seek to target that is behind the current state"
 )
 
 var (
@@ -42,7 +43,7 @@ var (
 )
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.
-func NewErrFieldIdNotFound(fieldId uint32) error {
+func NewErrFieldIdNotFound(fieldId uint16) error {
 	return errors.New(errFieldIdNotFound, errors.NewKV("FieldId", fieldId))
 }
 

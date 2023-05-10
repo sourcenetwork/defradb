@@ -23,7 +23,7 @@ type CommitSelect struct {
 	DocKey immutable.Option[string]
 
 	// The field for which commits have been requested.
-	FieldID immutable.Option[string]
+	FieldID immutable.Option[uint16]
 
 	// The maximum depth to yield results for.
 	Depth immutable.Option[uint64]

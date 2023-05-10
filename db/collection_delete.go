@@ -246,7 +246,7 @@ func (c *collection) applyDelete(
 
 	headset := clock.NewHeadSet(
 		txn.Headstore(),
-		dsKey.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
+		dsKey.WithFieldId(core.COMPOSITE_NAMESPACE_ID).ToHeadStoreKey(),
 	)
 	cids, _, err := headset.List(ctx)
 	if err != nil {

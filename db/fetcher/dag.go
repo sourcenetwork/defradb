@@ -26,7 +26,7 @@ import (
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
 type HeadFetcher struct {
 	spans   core.Spans
-	fieldId immutable.Option[string]
+	fieldId immutable.Option[uint16]
 
 	kvIter dsq.Results
 }
@@ -35,7 +35,7 @@ func (hf *HeadFetcher) Start(
 	ctx context.Context,
 	txn datastore.Txn,
 	spans core.Spans,
-	fieldId immutable.Option[string],
+	fieldId immutable.Option[uint16],
 ) error {
 	if len(spans.Value) == 0 {
 		spans = core.NewSpans(

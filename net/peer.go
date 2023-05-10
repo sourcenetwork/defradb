@@ -433,7 +433,7 @@ func (p *Peer) pushToReplicator(
 		dockey := core.DataStoreKeyFromDocKey(key.Key)
 		headset := clock.NewHeadSet(
 			txn.Headstore(),
-			dockey.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
+			dockey.WithFieldId(core.COMPOSITE_NAMESPACE_ID).ToHeadStoreKey(),
 		)
 		cids, priority, err := headset.List(ctx)
 		if err != nil {

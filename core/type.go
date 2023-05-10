@@ -11,6 +11,7 @@
 package core
 
 const (
-	COMPOSITE_NAMESPACE = "C"
-	HEAD                = "_head"
+	COMPOSITE_NAMESPACE_ID = compositeFieldID
+	COMPOSITE_NAMESPACE    = "C"
+	HEAD                   = "_head"
 )

@@ -48,7 +48,7 @@ type DocumentFetcher struct {
 	order        []dsq.Order
 	curSpanIndex int
 
-	schemaFields map[uint32]client.FieldDescription
+	schemaFields map[uint16]client.FieldDescription
 	fields       []*client.FieldDescription
 
 	doc         *encodedDocument
@@ -118,9 +118,9 @@ func (df *DocumentFetcher) init(
 	}
 	df.kvIter = nil
 
-	df.schemaFields = make(map[uint32]client.FieldDescription)
+	df.schemaFields = make(map[uint16]client.FieldDescription)
 	for _, field := range col.Schema.Fields {
-		df.schemaFields[uint32(field.ID)] = field
+		df.schemaFields[uint16(field.ID)] = field
 	}
 	return nil
 }
@@ -325,13 +325,9 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	}
 
 	// extract the FieldID and update the encoded doc properties map
-	fieldID, err := kv.Key.FieldID()
-	if err != nil {
-		return err
-	}
-	fieldDesc, exists := df.schemaFields[fieldID]
+	fieldDesc, exists := df.schemaFields[kv.Key.FieldId]
 	if !exists {
-		return NewErrFieldIdNotFound(fieldID)
+		return NewErrFieldIdNotFound(kv.Key.FieldId)
 	}
 
 	// @todo: Secondary Index might not have encoded FieldIDs

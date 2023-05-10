@@ -93,7 +93,7 @@ type VersionedFetcher struct {
 
 	col *client.CollectionDescription
 	// @todo index  *client.IndexDescription
-	mCRDTs map[uint32]crdt.MerkleCRDT
+	mCRDTs map[uint16]crdt.MerkleCRDT
 }
 
 // Init initializes the VersionedFetcher.
@@ -105,7 +105,7 @@ func (vf *VersionedFetcher) Init(
 ) error {
 	vf.col = col
 	vf.queuedCids = list.New()
-	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)
+	vf.mCRDTs = make(map[uint16]crdt.MerkleCRDT)
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
@@ -350,7 +350,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 
 		fieldID := vf.col.Schema.GetFieldKey(l.Name)
-		if fieldID == uint32(0) {
+		if fieldID == 0 {
 			return client.NewErrFieldNotExist(l.Name)
 		}
 		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
@@ -364,7 +364,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 }
 
 func (vf *VersionedFetcher) processNode(
-	crdtIndex uint32,
+	crdtIndex uint16,
 	nd format.Node,
 	ctype client.CType,
 	fieldName string,

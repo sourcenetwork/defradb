@@ -99,15 +99,15 @@ func initCRDTForType(
 		).WithInstanceInfo(
 			docKey,
 		).WithFieldId(
-			core.COMPOSITE_NAMESPACE,
+			core.COMPOSITE_NAMESPACE_ID,
 		)
 	} else {
 		fd, ok := description.GetField(field)
 		if !ok {
-			return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, docKey))
+			return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, docKey.DocKey))
 		}
 		ctype = fd.Typ
-		fieldID := fd.ID.String()
+		fieldID := uint16(fd.ID)
 		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))

@@ -50,10 +50,10 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 
 // GetFieldByID searches for a field with the given ID. If such a field is found it
 // will return it and true, if it is not found it will return false.
-func (col CollectionDescription) GetFieldByID(id string) (FieldDescription, bool) {
+func (col CollectionDescription) GetFieldByID(id uint16) (FieldDescription, bool) {
 	if !col.Schema.IsEmpty() {
 		for _, field := range col.Schema.Fields {
-			if field.ID.String() == id {
+			if uint16(field.ID) == id {
 				return field, true
 			}
 		}
@@ -106,13 +106,13 @@ func (sd SchemaDescription) IsEmpty() bool {
 }
 
 // GetFieldKey returns the field ID for the given field name.
-func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
+func (sd SchemaDescription) GetFieldKey(fieldName string) uint16 {
 	for _, field := range sd.Fields {
 		if field.Name == fieldName {
-			return uint32(field.ID)
+			return uint16(field.ID)
 		}
 	}
-	return uint32(0)
+	return 0
 }
 
 // FieldKind describes the type of a field.
@@ -189,7 +189,7 @@ const (
 )
 
 // FieldID is a unique identifier for a field in a schema.
-type FieldID uint32
+type FieldID uint16
 
 func (f FieldID) String() string {
 	return fmt.Sprint(uint32(f))
