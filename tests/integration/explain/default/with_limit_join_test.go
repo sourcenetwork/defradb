@@ -16,19 +16,6 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-var normalTypeJoinPattern = dataMap{
-	"root": dataMap{
-		"scanNode": dataMap{},
-	},
-	"subType": dataMap{
-		"selectTopNode": dataMap{
-			"selectNode": dataMap{
-				"scanNode": dataMap{},
-			},
-		},
-	},
-}
-
 var limitTypeJoinPattern = dataMap{
 	"root": dataMap{
 		"scanNode": dataMap{},
