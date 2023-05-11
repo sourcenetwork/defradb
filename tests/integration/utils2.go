@@ -384,6 +384,9 @@ func executeTestCase(
 		case IntrospectionRequest:
 			assertIntrospectionResults(ctx, t, testCase.Description, db, action)
 
+		case ClientIntrospectionRequest:
+			assertClientIntrospectionResults(ctx, t, testCase.Description, db, action)
+
 		case WaitForSync:
 			waitForSync(t, testCase, action, syncChans)
 
@@ -1177,6 +1180,54 @@ func assertIntrospectionResults(
 	}
 
 	return false
+}
+
+// Asserts that the client introspection results conform to our expectations.
+func assertClientIntrospectionResults(
+	ctx context.Context,
+	t *testing.T,
+	description string,
+	db client.DB,
+	action ClientIntrospectionRequest,
+) bool {
+	result := db.ExecRequest(ctx, action.Request)
+
+	if AssertErrors(t, description, result.GQL.Errors, action.ExpectedError) {
+		return true
+	}
+	resultantData := result.GQL.Data.(map[string]any)
+
+	if len(resultantData) == 0 {
+		return false
+	}
+
+	// Iterate through all types, validating each type definition.
+	// Inspired from https://github.com/graphql/graphql-js/blob/d75872f5e64eb3ad212521b1054d8a1d298a8a89/src/utilities/buildClientSchema.ts#L180, which is one way that clients do validate the schema.
+	types := resultantData["__schema"].(map[string]any)["types"].([]any)
+
+	for _, typeData := range types {
+		typeDef := typeData.(map[string]any)
+		kind := typeDef["kind"].(string)
+
+		switch kind {
+		case "SCALAR", "INTERFACE", "UNION", "ENUM":
+			// No validation for these types in this test
+		case "OBJECT":
+			fields := typeDef["fields"]
+			if fields == nil {
+				t.Errorf("Fields are missing for OBJECT type %v", typeDef["name"])
+			}
+		case "INPUT_OBJECT":
+			inputFields := typeDef["inputFields"]
+			if inputFields == nil {
+				t.Errorf("InputFields are missing for INPUT_OBJECT type %v", typeDef["name"])
+			}
+		default:
+			// t.Errorf("Unknown type kind: %v", kind)
+		}
+	}
+
+	return true
 }
 
 // Asserts that the `actual` contains the given `contains` value according to the logic

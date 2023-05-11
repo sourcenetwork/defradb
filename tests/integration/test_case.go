@@ -251,3 +251,14 @@ type IntrospectionRequest struct {
 	// contains this string.
 	ExpectedError string
 }
+
+type ClientIntrospectionRequest struct {
+	// The introspection request to use when fetching schema state.
+	Request string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
