@@ -138,11 +138,14 @@ func (p *Peer) Start() error {
 	defer p.mu.Unlock()
 
 	// reconnect to known peers
+	var wg sync.WaitGroup
 	for _, id := range p.host.Peerstore().PeersWithAddrs() {
 		if id == p.host.ID() {
 			continue
 		}
+		wg.Add(1)
 		go func(id peer.ID) {
+			defer wg.Done()
 			addr := p.host.Peerstore().PeerInfo(id)
 			err := p.host.Connect(p.ctx, addr)
 			if err != nil {
@@ -155,6 +158,7 @@ func (p *Peer) Start() error {
 			}
 		}(id)
 	}
+	wg.Wait()
 
 	p2plistener, err := gostream.Listen(p.host, corenet.Protocol)
 	if err != nil {
