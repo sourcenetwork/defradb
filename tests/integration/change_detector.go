@@ -134,6 +134,16 @@ func detectDbChangesInit(repository string, targetBranch string) {
 
 	targetTestPackage := detectDbChangesCodeDir + "/tests/integration/" + testPackagePath
 
+	_, err = os.Stat(targetTestPackage)
+	if os.IsNotExist(err) {
+		// This is a new test package, and thus the change detector is not applicable
+		// as the tests do not exist in the target branch.
+		skip = true
+		return
+	} else if err != nil {
+		panic(err)
+	}
+
 	// If we are checking for database changes, and we are not seting up the database,
 	// then we must be in the main test process, and need to create a new process
 	// setting up the database for this test using the old branch We should not setup
