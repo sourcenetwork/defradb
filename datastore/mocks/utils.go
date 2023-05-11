@@ -32,12 +32,8 @@ func prepareRootStore(t *testing.T) *DSReaderWriter {
 func prepareHeadStore(t *testing.T) *DSReaderWriter {
 	headStore := NewDSReaderWriter(t)
 
-	queryResults := NewResults(t)
-	resultChan := make(chan query.Result)
-	close(resultChan)
-	queryResults.EXPECT().Next().Return(resultChan).Maybe()
-	queryResults.EXPECT().Close().Return(nil).Maybe()
-	headStore.EXPECT().Query(mock.Anything, mock.Anything).Return(queryResults, nil).Maybe()
+	headStore.EXPECT().Query(mock.Anything, mock.Anything).
+		Return(NewQueryResultsWithValues(t), nil).Maybe()
 
 	headStore.EXPECT().Get(mock.Anything, mock.Anything).Return([]byte{}, ds.ErrNotFound).Maybe()
 	headStore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
@@ -78,4 +74,16 @@ func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 	txn.EXPECT().Systemstore().Return(result.MockSystemstore).Maybe()
 
 	return result
+}
+
+func NewQueryResultsWithValues(t *testing.T, entries ...[]byte) *Results {
+	queryResults := NewResults(t)
+	resultChan := make(chan query.Result, len(entries))
+	for _, entry := range entries {
+		resultChan <- query.Result{Entry: query.Entry{Value: entry}}
+	}
+	close(resultChan)
+	queryResults.EXPECT().Next().Return(resultChan).Maybe()
+	queryResults.EXPECT().Close().Return(nil).Maybe()
+	return queryResults
 }

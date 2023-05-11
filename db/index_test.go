@@ -30,6 +30,7 @@ const (
 	productsColName = "Products"
 
 	testUsersColIndexName = "user_name"
+	testUsersColIndexAge  = "user_age"
 )
 
 type indexTestFixture struct {
@@ -125,8 +126,24 @@ func getUsersIndexDescOnName() client.IndexDescription {
 	}
 }
 
+func getUsersIndexDescOnAge() client.IndexDescription {
+	return client.IndexDescription{
+		Name: testUsersColIndexAge,
+		Fields: []client.IndexedFieldDescription{
+			{Name: "age", Direction: client.Ascending},
+		},
+	}
+}
+
 func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
 	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
+	require.NoError(f.t, err)
+	f.commitTxn()
+	return newDesc
+}
+
+func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
+	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
 	f.commitTxn()
 	return newDesc

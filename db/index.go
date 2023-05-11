@@ -24,40 +24,58 @@ func NewCollectionIndex(
 	collection client.Collection,
 	desc client.IndexDescription,
 ) CollectionIndex {
-	return &collectionSimpleIndex{collection: collection, desc: desc}
+	index := &collectionSimpleIndex{collection: collection, desc: desc}
+	schema := collection.Description().Schema
+	fieldID := schema.GetFieldKey(desc.Fields[0].Name)
+	field := schema.Fields[fieldID]
+	if field.Kind == client.FieldKind_STRING {
+		index.convertFunc = func(val any) ([]byte, error) {
+			return []byte(val.(string)), nil
+		}
+	} else if field.Kind == client.FieldKind_INT {
+		index.convertFunc = func(val any) ([]byte, error) {
+			intVal := val.(int64)
+			return []byte(strconv.FormatInt(intVal, 10)), nil
+		}
+	} else {
+		panic("there is no test for this case")
+	}
+	return index
 }
 
 type collectionSimpleIndex struct {
-	collection client.Collection
-	desc       client.IndexDescription
+	collection  client.Collection
+	desc        client.IndexDescription
+	convertFunc func(any) ([]byte, error)
 }
 
 var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 
-func (c *collectionSimpleIndex) Save(
+func (i *collectionSimpleIndex) Save(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	val any,
 ) error {
-	data := val.(string)
+	data, err := i.convertFunc(val)
+	err = err
 	indexDataStoreKey := core.IndexDataStoreKey{}
-	indexDataStoreKey.CollectionID = strconv.Itoa(int(c.collection.ID()))
+	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
 	indexDataStoreKey.IndexID = "1"
-	indexDataStoreKey.FieldValues = []string{data, key.DocKey}
-	err := txn.Datastore().Put(ctx, indexDataStoreKey.ToDS(), []byte{})
+	indexDataStoreKey.FieldValues = []string{string(data), key.DocKey}
+	err = txn.Datastore().Put(ctx, indexDataStoreKey.ToDS(), []byte{})
 	if err != nil {
 		return NewErrFailedToStoreIndexedField("name", err)
 	}
 	return nil
 }
 
-func (c *collectionSimpleIndex) Name() string {
-	return c.desc.Name
+func (i *collectionSimpleIndex) Name() string {
+	return i.desc.Name
 }
 
-func (c *collectionSimpleIndex) Description() client.IndexDescription {
-	return c.desc
+func (i *collectionSimpleIndex) Description() client.IndexDescription {
+	return i.desc
 }
 
 func validateIndexDescriptionFields(fields []client.IndexedFieldDescription) error {

@@ -3,6 +3,7 @@ package db
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -38,14 +39,10 @@ func (f *indexTestFixture) newUserDoc(name string, age int) *client.Document {
 	return doc
 }
 
-func (f *indexTestFixture) getNonUniqueIndexKey(fieldName string) core.IndexDataStoreKey {
-	colDesc := f.users.Description()
-	field, ok := colDesc.GetField(fieldName)
-	require.True(f.t, ok)
-
+func (f *indexTestFixture) getNonUniqueIndexKey() core.IndexDataStoreKey {
 	key := core.IndexDataStoreKey{
 		CollectionID: strconv.Itoa(int(f.users.ID())),
-		IndexID:      strconv.Itoa(int(field.ID)),
+		IndexID:      strconv.Itoa(1),
 	}
 	return key
 }
@@ -54,12 +51,11 @@ func (f *indexTestFixture) getNonUniqueDocIndexKey(
 	doc *client.Document,
 	fieldName string,
 ) core.IndexDataStoreKey {
-	key := f.getNonUniqueIndexKey(fieldName)
+	key := f.getNonUniqueIndexKey()
 
 	fieldVal, err := doc.Get(fieldName)
 	require.NoError(f.t, err)
-	fieldStrVal, ok := fieldVal.(string)
-	require.True(f.t, ok)
+	fieldStrVal := fmt.Sprintf("%v", fieldVal)
 
 	key.FieldValues = []string{fieldStrVal, doc.Key().String()}
 
@@ -81,14 +77,23 @@ func (f *indexTestFixture) getPrefixFromDataStore(prefix string) [][]byte {
 func (f *indexTestFixture) mockTxn() *mocks.MultiStoreTxn {
 	mockedTxn := mocks.NewTxnWithMultistore(f.t)
 
-	indexDesc := getUsersIndexDescOnName()
-	indexDescData, err := json.Marshal(indexDesc)
+	indexOnNameDescData, err := json.Marshal(getUsersIndexDescOnName())
 	require.NoError(f.t, err)
 
 	systemStoreOn := mockedTxn.MockSystemstore.EXPECT()
+
+	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, "")
+	matchPrefixFunc := func(q query.Query) bool { return q.Prefix == colIndexKey.ToDS().String() }
+
+	systemStoreOn.Query(mock.Anything, mock.Anything).Unset()
+	systemStoreOn.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).Maybe().
+		Return(mocks.NewQueryResultsWithValues(f.t, indexOnNameDescData), nil)
+	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
+		Return(mocks.NewQueryResultsWithValues(f.t), nil)
+
 	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
-	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, indexDesc.Name)
-	systemStoreOn.Get(mock.Anything, colIndexKey.ToDS()).Return(indexDescData, nil)
+	colIndexOnNameKey := core.NewCollectionIndexKey(f.users.Description().Name, testUsersColIndexName)
+	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Return(indexOnNameDescData, nil)
 	systemStoreOn.Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
 
 	f.txn = mockedTxn
@@ -143,7 +148,7 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	err = f.users.Create(f.ctx, doc)
 	require.NoError(f.t, err)
 
-	key := f.getNonUniqueIndexKey("name")
+	key := f.getNonUniqueIndexKey()
 	prefixes := f.getPrefixFromDataStore(key.ToString())
 	assert.Len(t, prefixes, 0)
 }
@@ -167,17 +172,31 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 
 func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 	f := newIndexTestFixture(t)
-	indexDesc := f.createUserCollectionIndexOnName()
+	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
 
 	mockTxn := f.mockTxn()
 	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
 	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
-	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, indexDesc.Name)
+	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexKey.ToDS()).Return([]byte{}, errors.New("error"))
 	systemStoreOn.Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
 
 	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
 	require.ErrorIs(t, err, NewErrFailedToReadStoredIndexDesc(nil))
+}
+
+func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnAge()
+
+	doc := f.newUserDoc("John", 21)
+	f.saveToUsers(doc)
+
+	key := f.getNonUniqueDocIndexKey(doc, "age")
+
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
 }
