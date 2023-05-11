@@ -113,7 +113,7 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 					"collectionName": "Author",
 					"filter": dataMap{
 						"age": dataMap{
-							"_eq": int(26),
+							"_eq": int32(26),
 						},
 					},
 					"spans": []dataMap{
@@ -170,7 +170,7 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 					"collectionName": "Author",
 					"filter": dataMap{
 						"age": dataMap{
-							"_gt": int(20),
+							"_gt": int32(20),
 						},
 					},
 					"spans": []dataMap{
@@ -233,12 +233,12 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 						"_and": []any{
 							dataMap{
 								"age": dataMap{
-									"_gt": int(20),
+									"_gt": int32(20),
 								},
 							},
 							dataMap{
 								"age": dataMap{
-									"_lt": int(50),
+									"_lt": int32(50),
 								},
 							},
 						},
@@ -303,12 +303,12 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 						"_or": []any{
 							dataMap{
 								"age": dataMap{
-									"_eq": int(55),
+									"_eq": int32(55),
 								},
 							},
 							dataMap{
 								"age": dataMap{
-									"_eq": int(19),
+									"_eq": int32(19),
 								},
 							},
 						},
@@ -372,9 +372,9 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 					"filter": dataMap{
 						"age": dataMap{
 							"_in": []any{
-								int(19),
-								int(40),
-								int(55),
+								int32(19),
+								int32(40),
+								int32(55),
 							},
 						},
 					},
