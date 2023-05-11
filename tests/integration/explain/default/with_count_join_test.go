@@ -16,115 +16,89 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-var averageTypeIndexJoinPattern = dataMap{
+var countTypeIndexJoinPattern = dataMap{
 	"explain": dataMap{
 		"selectTopNode": dataMap{
-			"averageNode": dataMap{
-				"countNode": dataMap{
-					"sumNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": normalTypeJoinPattern,
-						},
-					},
+			"countNode": dataMap{
+				"selectNode": dataMap{
+					"typeIndexJoin": normalTypeJoinPattern,
 				},
 			},
 		},
 	},
 }
 
-func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
+func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain (default) request with average on joined/related field.",
+		Description: "Explain (default) request with count on a one-to-many joined field.",
 
 		Request: `query @explain {
 			Author {
 				name
-				_avg(books: {field: pages})
+				numberOfBooks: _count(books: {})
 			}
 		}`,
 
 		Docs: map[int][]string{
-			// books
+			//articles
+			0: {
+				`{
+					"name": "After Guantánamo, Another Injustice",
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`,
+				`{
+					"name": "To my dear readers",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					}`,
+				`{
+					"name": "Twinklestar's Favourite Xmas Cookie",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+				}`,
+			},
+			//books
 			1: {
 				`{
 					"name": "Painted House",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 22
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 				}`,
 				`{
 					"name": "A Time for Mercy",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 178
-				}`,
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`,
 				`{
 					"name": "Theif Lord",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 321
-				 }`,
-				`{
-					"name": "Incomplete book",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 79
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
 				}`,
 			},
-
-			// authors
+			//authors
 			2: {
-				// _key: "bae-25fafcc7-f251-58c1-9495-ead73e676fb8"
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 				`{
 					"name": "John Grisham",
 					"age": 65,
-					"verified": true,
-					"contact_id": "bae-1fe427b8-ab8d-56c3-9df2-826a6ce86fed"
+					"verified": true
 				}`,
-				// _key: "bae-3dddb519-3612-5e43-86e5-49d6295d4f84"
+				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
 				`{
 					"name": "Cornelia Funke",
 					"age": 62,
-					"verified": false,
-					"contact_id": "bae-c0960a29-b704-5c37-9c2e-59e1249e4559"
+					"verified": false
 				}`,
 			},
 		},
 
-		ExpectedPatterns: []dataMap{averageTypeIndexJoinPattern},
+		ExpectedPatterns: []dataMap{countTypeIndexJoinPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:     "averageNode",
-				IncludeChildNodes:  false,
-				ExpectedAttributes: dataMap{}, // no attributes
-			},
 			{
 				TargetNodeName:    "countNode",
 				IncludeChildNodes: false,
 				ExpectedAttributes: dataMap{
 					"sources": []dataMap{
 						{
+							"filter":    nil,
 							"fieldName": "books",
-							"filter": dataMap{
-								"pages": dataMap{
-									"_ne": nil,
-								},
-							},
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "sumNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"childFieldName": "pages",
-							"fieldName":      "books",
-							"filter": dataMap{
-								"pages": dataMap{
-									"_ne": nil,
-								},
-							},
 						},
 					},
 				},
@@ -139,13 +113,13 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 				},
 			},
 			{
-				TargetNodeName:    "scanNode", // inside of root type
+				TargetNodeName:    "scanNode", // inside of root
 				OccurancesToSkip:  0,
 				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 				ExpectedAttributes: dataMap{
+					"filter":         nil,
 					"collectionID":   "3",
 					"collectionName": "Author",
-					"filter":         nil,
 					"spans": []dataMap{
 						{
 							"start": "/3",
@@ -159,13 +133,9 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 				OccurancesToSkip:  1,
 				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 				ExpectedAttributes: dataMap{
+					"filter":         nil,
 					"collectionID":   "2",
 					"collectionName": "Book",
-					"filter": dataMap{
-						"pages": dataMap{
-							"_ne": nil,
-						},
-					},
 					"spans": []dataMap{
 						{
 							"start": "/2",
@@ -180,17 +150,17 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 	runExplainTest(t, test)
 }
 
-func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testing.T) {
+func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain (default) request with average on multiple joined fields with filter.",
+		Description: "Explain (default) request with count on a one-to-many joined field with many sources.",
 
 		Request: `query @explain {
 			Author {
 				name
-				_avg(
-					books: {field: pages},
-					articles: {field: pages, filter: {pages: {_gt: 3}}}
+				numberOfBooks: _count(
+					books: {}
+					articles: {}
 				)
 			}
 		}`,
@@ -220,26 +190,17 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 				`{
 					"name": "Painted House",
 					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 22,
-					"chapterPages": [1, 20]
+					"pages": 22
 				}`,
 				`{
 					"name": "A Time for Mercy",
 					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 178,
-					"chapterPages": [1, 11, 30, 50, 80, 120, 150]
+					"pages": 101
 				}`,
 				`{
 					"name": "Theif Lord",
 					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 321,
-					"chapterPages": [22, 211, 310]
-				}`,
-				`{
-					"name": "Incomplete book",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 79,
-					"chapterPages": [1, 22, 33, 44, 55, 66]
+					"pages": 321
 				}`,
 			},
 
@@ -266,18 +227,14 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"averageNode": dataMap{
-							"countNode": dataMap{
-								"sumNode": dataMap{
-									"selectNode": dataMap{
-										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
-											},
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
-											},
-										},
+						"countNode": dataMap{
+							"selectNode": dataMap{
+								"parallelNode": []dataMap{
+									{
+										"typeIndexJoin": normalTypeJoinPattern,
+									},
+									{
+										"typeIndexJoin": normalTypeJoinPattern,
 									},
 								},
 							},
@@ -289,58 +246,18 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				TargetNodeName:     "averageNode",
-				IncludeChildNodes:  false,
-				ExpectedAttributes: dataMap{}, // no attributes
-			},
-			{
 				TargetNodeName:    "countNode",
 				IncludeChildNodes: false,
 				ExpectedAttributes: dataMap{
 					"sources": []dataMap{
 						{
+							"filter":    nil,
 							"fieldName": "books",
-							"filter": dataMap{
-								"pages": dataMap{
-									"_ne": nil,
-								},
-							},
 						},
+
 						{
+							"filter":    nil,
 							"fieldName": "articles",
-							"filter": dataMap{
-								"pages": dataMap{
-									"_gt": int(3),
-									"_ne": nil,
-								},
-							},
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "sumNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"childFieldName": "pages",
-							"fieldName":      "books",
-							"filter": dataMap{
-								"pages": dataMap{
-									"_ne": nil,
-								},
-							},
-						},
-						{
-							"childFieldName": "pages",
-							"fieldName":      "articles",
-							"filter": dataMap{
-								"pages": dataMap{
-									"_gt": int(3),
-									"_ne": nil,
-								},
-							},
 						},
 					},
 				},
@@ -378,11 +295,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 				ExpectedAttributes: dataMap{
 					"collectionID":   "2",
 					"collectionName": "Book",
-					"filter": dataMap{
-						"pages": dataMap{
-							"_ne": nil,
-						},
-					},
+					"filter":         nil,
 					"spans": []dataMap{
 						{
 							"start": "/2",
@@ -424,12 +337,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 				ExpectedAttributes: dataMap{
 					"collectionID":   "1",
 					"collectionName": "Article",
-					"filter": dataMap{
-						"pages": dataMap{
-							"_gt": int(3),
-							"_ne": nil,
-						},
-					},
+					"filter":         nil,
 					"spans": []dataMap{
 						{
 							"start": "/1",
