@@ -139,13 +139,12 @@ func connectPeers(
 	cfg ConnectPeers,
 	nodes []*node.Node,
 	addresses []string,
-	restartChan chan struct{},
 ) chan struct{} {
 	// If we have some database actions prior to connecting the peers, we want to ensure that they had time to
 	// complete before we connect. Otherwise we might wrongly catch them in our wait function.
 	time.Sleep(100 * time.Millisecond)
-	sourceNode := func() *node.Node { return nodes[cfg.SourceNodeID] }
-	targetNode := func() *node.Node { return nodes[cfg.TargetNodeID] }
+	sourceNode := nodes[cfg.SourceNodeID]
+	targetNode := nodes[cfg.TargetNodeID]
 	targetAddress := addresses[cfg.TargetNodeID]
 
 	log.Info(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
@@ -154,23 +153,29 @@ func connectPeers(
 		t.Fatal(fmt.Sprintf("failed to parse bootstrap peers %v", targetAddress), err)
 	}
 	log.Info(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
-	sourceNode().Boostrap(addrs)
+	sourceNode.Boostrap(addrs)
 
 	// Boostrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(100 * time.Millisecond)
+	return setupPeerWaitSync(ctx, t, testCase, cfg, sourceNode, targetNode)
+}
 
+func setupPeerWaitSync(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	cfg ConnectPeers,
+	sourceNode *node.Node,
+	targetNode *node.Node,
+) chan struct{} {
 	nodeCollections := map[int][]int{}
-	restartEvents := []int{0}
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
 	waitIndex := 0
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
-		case Restart:
-			restartEvents[waitIndex] += 1
-
 		case SubscribeToCollection:
 			if action.ExpectedError != "" {
 				// If the subscription action is expected to error, then we should do nothing here.
@@ -243,7 +248,6 @@ func connectPeers(
 			waitIndex += 1
 			targetToSourceEvents = append(targetToSourceEvents, 0)
 			sourceToTargetEvents = append(sourceToTargetEvents, 0)
-			restartEvents = append(restartEvents, 0)
 		}
 	}
 
@@ -252,16 +256,12 @@ func connectPeers(
 	go func(ready chan struct{}) {
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
-			for i := 0; i < restartEvents[waitIndex]; i++ {
-				// this wont work for complex config - need events simple chan stuff...
-				<-restartChan
-			}
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode().WaitForPushLogByPeerEvent(targetNode().PeerID())
+				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
 				require.NoError(t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode().WaitForPushLogByPeerEvent(sourceNode().PeerID())
+				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
 				require.NoError(t, err)
 			}
 			nodeSynced <- struct{}{}
@@ -301,21 +301,30 @@ func configureReplicator(
 	cfg ConfigureReplicator,
 	nodes []*node.Node,
 	addresses []string,
-	restartChan chan struct{},
 ) chan struct{} {
 	// If we have some database actions prior to configuring the replicator, we want to ensure that they had time to
 	// complete before the configuration. Otherwise we might wrongly catch them in our wait function.
 	time.Sleep(100 * time.Millisecond)
-	sourceNode := func() *node.Node { return nodes[cfg.SourceNodeID] }
-	targetNode := func() *node.Node { return nodes[cfg.TargetNodeID] }
+	sourceNode := nodes[cfg.SourceNodeID]
+	targetNode := nodes[cfg.TargetNodeID]
 	targetAddress := addresses[cfg.TargetNodeID]
 
 	addr, err := ma.NewMultiaddr(targetAddress)
 	require.NoError(t, err)
 
-	_, err = sourceNode().Peer.SetReplicator(ctx, addr)
+	_, err = sourceNode.Peer.SetReplicator(ctx, addr)
 	require.NoError(t, err)
+	return setupRepicatorWaitSync(ctx, t, testCase, cfg, sourceNode, targetNode)
+}
 
+func setupRepicatorWaitSync(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	cfg ConfigureReplicator,
+	sourceNode *node.Node,
+	targetNode *node.Node,
+) chan struct{} {
 	restartEvents := []int{0}
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -373,17 +382,12 @@ func configureReplicator(
 	go func(ready chan struct{}) {
 		ready <- struct{}{} //need to wait for restart or old node instances will be waited on
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
-			for i := 0; i < restartEvents[waitIndex]; i++ {
-				// this wont work for complex config - need events simple chan stuff...
-				<-restartChan
-			}
-
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode().WaitForPushLogByPeerEvent(targetNode().PeerID())
+				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
 				require.NoError(t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode().WaitForPushLogByPeerEvent(sourceNode().PeerID())
+				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
 				require.NoError(t, err)
 			}
 			nodeSynced <- struct{}{}

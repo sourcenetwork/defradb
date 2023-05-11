@@ -299,14 +299,13 @@ func executeTestCase(
 	allActionsDone := make(chan struct{})
 	resultsChans := []chan func(){}
 	syncChans := []chan struct{}{}
-	restartChan := make(chan struct{}, 1)
 	nodeAddresses := []string{}
 	// The actions responsible for configuring the node
 	nodeActions := []ConfigureNode{}
 	nodes, dbPaths := getStartingNodes(ctx, t, dbt, collectionNames, testCase)
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
-	defer closeNodes(ctx, t, &nodes)
+	defer closeNodes(ctx, t, nodes)
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
@@ -337,19 +336,19 @@ func executeTestCase(
 			nodeActions = append(nodeActions, action)
 
 		case Restart:
-			restartNodes(ctx, t, dbt, &nodes, dbPaths, nodeAddresses, nodeActions)
+			syncChans = append(
+				syncChans,
+				restartNodes(ctx, t, testCase, dbt, nodes, dbPaths, nodeAddresses, nodeActions)...,
+			)
 
 			// If the db was restarted we need to refresh the collection definitions.
 			collections = getCollections(ctx, t, nodes, collectionNames)
-			restartChan <- struct{}{}
-
-			//todo - need to sort out the sync chans! They ref the node
 
 		case ConnectPeers:
-			syncChans = append(syncChans, connectPeers(ctx, t, testCase, action, nodes, nodeAddresses, restartChan))
+			syncChans = append(syncChans, connectPeers(ctx, t, testCase, action, nodes, nodeAddresses))
 
 		case ConfigureReplicator:
-			syncChans = append(syncChans, configureReplicator(ctx, t, testCase, action, nodes, nodeAddresses, restartChan))
+			syncChans = append(syncChans, configureReplicator(ctx, t, testCase, action, nodes, nodeAddresses))
 
 		case SubscribeToCollection:
 			subscribeToCollection(ctx, t, testCase, action, nodes, collections)
@@ -433,9 +432,9 @@ func executeTestCase(
 func closeNodes(
 	ctx context.Context,
 	t *testing.T,
-	nodes *[]*node.Node,
+	nodes []*node.Node,
 ) {
-	for _, node := range *nodes {
+	for _, node := range nodes {
 		if node.Peer != nil {
 			err := node.Close()
 			require.NoError(t, err)
@@ -599,20 +598,21 @@ func getStartingNodes(
 func restartNodes(
 	ctx context.Context,
 	t *testing.T,
+	testCase TestCase,
 	dbt DatabaseType,
-	nodesPointer *[]*node.Node,
+	nodes []*node.Node,
 	dbPaths []string,
 	nodeAddresses []string,
 	configureActions []ConfigureNode,
-) {
+) []chan struct{} {
 	//todo - dont do all this inline here, and handle p2p
 	if dbt == badgerIMType || dbt == defraIMType {
-		return
+		return nil
 	}
-	closeNodes(ctx, t, nodesPointer)
+	closeNodes(ctx, t, nodes)
 
-	nodes := *nodesPointer
-	for i := range nodes {
+	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
+	for i := len(nodes) - 1; i >= 0; i-- {
 		originalPath := databaseDir
 		databaseDir = dbPaths[i]
 		db, _, err := GetDatabase(ctx, t, dbt)
@@ -644,12 +644,25 @@ func restartNodes(
 			require.NoError(t, err)
 		}
 
-		nodes[i] = n
-		//address := fmt.Sprintf("%s/p2p/%s", n.ListenAddrs()[0].String(), n.PeerID())
-		// need options.ListenAddrs = cfg.Net.P2PAddress
-		// peerID might be a problem
-
+		*nodes[i] = *n
 	}
+
+	syncChans := []chan struct{}{}
+	for _, tc := range testCase.Actions {
+		switch action := tc.(type) {
+		case ConnectPeers:
+			syncChans = append(syncChans, setupPeerWaitSync(
+				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+			))
+		case ConfigureReplicator:
+			syncChans = append(syncChans, setupRepicatorWaitSync(
+				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+			))
+		}
+	}
+	// Give the nodes a chance to connect to each other and learn about each other's subscrivbed topics.
+	time.Sleep(100 * time.Millisecond)
+	return syncChans
 }
 
 // getCollections returns all the collections of the given names, preserving order.
