@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,18 +13,30 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainQueryOneToManyWithACount(t *testing.T) {
-	test := testUtils.RequestTestCase{
+var countPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"countNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
+				},
+			},
+		},
+	},
+}
 
-		Description: "Explain one one-to-many relation query with count.",
+func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with count on an inline array field.",
 
 		Request: `query @explain {
-			Author {
+			Book {
 				name
-				numberOfBooks: _count(books: {})
+				_count(chapterPages: {})
 			}
 		}`,
 
@@ -76,62 +88,32 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 			},
 		},
 
-		// ----> selectTopNode                (explainable but no-attributes)
-		//    ----> countNode                 (explainable)
-		//        ----> selectNode            (explainable)
-		//             ----> typeIndexJoin    (explainable)
-		//                 ----> typeJoinMany (non-explainable)
-		//                     ----> scanNode (explainable)
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{countPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"countNode": dataMap{
-							"sources": []dataMap{
-								{
-									"filter":    nil,
-									"fieldName": "books",
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"typeIndexJoin": dataMap{
-									"joinType": "typeJoinMany",
-									"rootName": "author",
-									"root": dataMap{
-										"scanNode": dataMap{
-											"filter":         nil,
-											"collectionID":   "3",
-											"collectionName": "Author",
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
-												},
-											},
-										},
-									},
-									"subTypeName": "books",
-									"subType": dataMap{
-										"selectTopNode": dataMap{
-											"selectNode": dataMap{
-												"filter": nil,
-												"scanNode": dataMap{
-													"filter":         nil,
-													"collectionID":   "2",
-													"collectionName": "Book",
-													"spans": []dataMap{
-														{
-															"start": "/2",
-															"end":   "/3",
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+				TargetNodeName:    "countNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"filter":    nil,
+							"fieldName": "chapterPages",
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"filter":         nil,
+					"collectionID":   "2",
+					"collectionName": "Book",
+					"spans": []dataMap{
+						{
+							"start": "/2",
+							"end":   "/3",
 						},
 					},
 				},
@@ -139,5 +121,5 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
