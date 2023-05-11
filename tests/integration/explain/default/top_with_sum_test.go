@@ -149,7 +149,7 @@ func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
 					"collectionName": "Author",
 					"filter": dataMap{
 						"age": dataMap{
-							"_gt": int(26),
+							"_gt": int32(26),
 						},
 					},
 					"spans": []dataMap{
@@ -170,7 +170,7 @@ func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
 							"childFieldName": "age",
 							"filter": dataMap{
 								"age": dataMap{
-									"_gt": int(26),
+									"_gt": int32(26),
 								},
 							},
 						},

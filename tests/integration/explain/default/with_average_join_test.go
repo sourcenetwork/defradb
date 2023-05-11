@@ -310,7 +310,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 							"fieldName": "articles",
 							"filter": dataMap{
 								"pages": dataMap{
-									"_gt": int(3),
+									"_gt": int32(3),
 									"_ne": nil,
 								},
 							},
@@ -337,7 +337,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 							"fieldName":      "articles",
 							"filter": dataMap{
 								"pages": dataMap{
-									"_gt": int(3),
+									"_gt": int32(3),
 									"_ne": nil,
 								},
 							},
@@ -426,7 +426,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 					"collectionName": "Article",
 					"filter": dataMap{
 						"pages": dataMap{
-							"_gt": int(3),
+							"_gt": int32(3),
 							"_ne": nil,
 						},
 					},
