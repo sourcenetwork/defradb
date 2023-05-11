@@ -382,7 +382,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 						"_and": []any{
 							dataMap{
 								"age": dataMap{
-									"_lt": int(26),
+									"_lt": int32(26),
 								},
 							},
 							dataMap{
@@ -409,7 +409,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 						"_and": []any{
 							dataMap{
 								"age": dataMap{
-									"_lt": int(26),
+									"_lt": int32(26),
 								},
 							},
 							dataMap{
