@@ -75,7 +75,7 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 									"collectionName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_gt": int(63),
+											"_gt": int32(63),
 										},
 									},
 									"spans": []dataMap{
@@ -144,7 +144,7 @@ func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 									"orderBy":        nil,
 									"filter": dataMap{
 										"age": dataMap{
-											"_gt": int(63),
+											"_gt": int32(63),
 										},
 									},
 								},

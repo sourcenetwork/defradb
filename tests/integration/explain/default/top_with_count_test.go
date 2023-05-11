@@ -143,7 +143,7 @@ func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
 					"collectionName": "Author",
 					"filter": dataMap{
 						"age": dataMap{
-							"_gt": int(26),
+							"_gt": int32(26),
 						},
 					},
 					"spans": []dataMap{
@@ -163,7 +163,7 @@ func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
 							"fieldName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
-									"_gt": int(26),
+									"_gt": int32(26),
 								},
 							},
 						},
