@@ -1202,7 +1202,8 @@ func assertClientIntrospectionResults(
 	}
 
 	// Iterate through all types, validating each type definition.
-	// Inspired from https://github.com/graphql/graphql-js/blob/d75872f5e64eb3ad212521b1054d8a1d298a8a89/src/utilities/buildClientSchema.ts#L180, which is one way that clients do validate the schema.
+	// Inspired from buildClientSchema.ts from graphql-js,
+	// which is one way that clients do validate the schema.
 	types := resultantData["__schema"].(map[string]any)["types"].([]any)
 
 	for _, typeData := range types {
