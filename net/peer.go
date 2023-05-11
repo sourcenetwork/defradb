@@ -231,6 +231,10 @@ func (p *Peer) Close() error {
 		log.ErrorE(p.ctx, "Error closing block service", err)
 	}
 
+	if err := p.host.Close(); err != nil {
+		log.ErrorE(p.ctx, "Error closing host", err)
+	}
+
 	p.cancel()
 	return nil
 }
