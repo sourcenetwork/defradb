@@ -252,6 +252,9 @@ type IntrospectionRequest struct {
 	ExpectedError string
 }
 
+// ClientIntrospectionRequest represents a GraphQL client introspection request.
+// The GraphQL clients usually use this to fetch the schema state with a default introspection
+// query they provide.
 type ClientIntrospectionRequest struct {
 	// The introspection request to use when fetching schema state.
 	Request string
