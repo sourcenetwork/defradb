@@ -22,6 +22,13 @@ type userDoc struct {
 	Weight float64 `json:"weight"`
 }
 
+type productDoc struct {
+	ID        int     `json:"id"`
+	Price     float64 `json:"price"`
+	Category  string  `json:"category"`
+	Available bool    `json:"available"`
+}
+
 func (f *indexTestFixture) saveToUsers(doc *client.Document) {
 	err := f.users.Create(f.ctx, doc)
 	require.NoError(f.t, err)
@@ -39,9 +46,32 @@ func (f *indexTestFixture) newUserDoc(name string, age int) *client.Document {
 	return doc
 }
 
-func (f *indexTestFixture) getNonUniqueIndexKey() core.IndexDataStoreKey {
+func (f *indexTestFixture) newProdDoc(id int, price float64, cat string) *client.Document {
+	d := productDoc{ID: id, Price: price, Category: cat}
+	data, err := json.Marshal(d)
+	require.NoError(f.t, err)
+
+	doc, err := client.NewDocFromJSON(data)
+	require.NoError(f.t, err)
+	return doc
+}
+
+func (f *indexTestFixture) getNonUniqueIndexKey(colName string) core.IndexDataStoreKey {
+	cols, err := f.db.getAllCollections(f.ctx, f.txn)
+	require.NoError(f.t, err)
+	colID := -1
+	for _, col := range cols {
+		if col.Name() == colName {
+			colID = int(col.ID())
+			break
+		}
+	}
+	if colID == -1 {
+		panic(errors.New("collection not found"))
+	}
+
 	key := core.IndexDataStoreKey{
-		CollectionID: strconv.Itoa(int(f.users.ID())),
+		CollectionID: strconv.Itoa(colID),
 		IndexID:      strconv.Itoa(1),
 	}
 	return key
@@ -49,9 +79,9 @@ func (f *indexTestFixture) getNonUniqueIndexKey() core.IndexDataStoreKey {
 
 func (f *indexTestFixture) getNonUniqueDocIndexKey(
 	doc *client.Document,
-	fieldName string,
+	colName, fieldName string,
 ) core.IndexDataStoreKey {
-	key := f.getNonUniqueIndexKey()
+	key := f.getNonUniqueIndexKey(colName)
 
 	fieldVal, err := doc.Get(fieldName)
 	require.NoError(f.t, err)
@@ -107,7 +137,7 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	doc := f.newUserDoc("John", 21)
 	f.saveToUsers(doc)
 
-	key := f.getNonUniqueDocIndexKey(doc, "name")
+	key := f.getNonUniqueDocIndexKey(doc, usersColName, usersNameFieldName)
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -119,7 +149,7 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
-	key := f.getNonUniqueDocIndexKey(doc, "name")
+	key := f.getNonUniqueDocIndexKey(doc, usersColName, usersNameFieldName)
 
 	mockTxn := f.mockTxn()
 
@@ -148,7 +178,7 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	err = f.users.Create(f.ctx, doc)
 	require.NoError(f.t, err)
 
-	key := f.getNonUniqueIndexKey()
+	key := f.getNonUniqueIndexKey(usersColName)
 	prefixes := f.getPrefixFromDataStore(key.ToString())
 	assert.Len(t, prefixes, 0)
 }
@@ -194,9 +224,40 @@ func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 	doc := f.newUserDoc("John", 21)
 	f.saveToUsers(doc)
 
-	key := f.getNonUniqueDocIndexKey(doc, "age")
+	key := f.getNonUniqueDocIndexKey(doc, usersColName, usersAgeFieldName)
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+}
+
+func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t *testing.T) {
+	f := newIndexTestFixtureBare(t)
+	users := f.createCollection(getUsersCollectionDesc())
+	products := f.createCollection(getProductsCollectionDesc())
+
+	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
+	require.NoError(f.t, err)
+	_, err = f.createCollectionIndexFor(products.Name(), getProductsIndexDescOnCategory())
+	require.NoError(f.t, err)
+	f.commitTxn()
+
+	userDoc := f.newUserDoc("John", 21)
+	prodDoc := f.newProdDoc(1, 3, "games")
+
+	err = users.Create(f.ctx, userDoc)
+	require.NoError(f.t, err)
+	err = products.Create(f.ctx, prodDoc)
+	require.NoError(f.t, err)
+	f.commitTxn()
+
+	userDocKey := f.getNonUniqueDocIndexKey(userDoc, usersColName, usersNameFieldName)
+	prodDocKey := f.getNonUniqueDocIndexKey(prodDoc, productsColName, productsCategoryFieldName)
+
+	data, err := f.txn.Datastore().Get(f.ctx, userDocKey.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+	data, err = f.txn.Datastore().Get(f.ctx, prodDocKey.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 }

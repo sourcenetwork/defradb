@@ -62,8 +62,7 @@ func (i *collectionSimpleIndex) Save(
 	data, err := i.convertFunc(val)
 	err = err
 	indexDataStoreKey := core.IndexDataStoreKey{}
-	//indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
-	indexDataStoreKey.CollectionID = strconv.Itoa(int(1))
+	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
 	indexDataStoreKey.IndexID = "1"
 	indexDataStoreKey.FieldValues = []string{string(data), key.DocKey}
 	err = txn.Datastore().Put(ctx, indexDataStoreKey.ToDS(), []byte{})

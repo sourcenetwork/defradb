@@ -33,19 +33,22 @@ const (
 	usersAgeFieldName    = "age"
 	usersWeightFieldName = "weight"
 
-	productsPriceFieldName = "price"
-	productsDescFieldName  = "description"
+	productsIDFieldName        = "id"
+	productsPriceFieldName     = "price"
+	productsCategoryFieldName  = "category"
+	productsAvailableFieldName = "available"
 
 	testUsersColIndexName = "user_name"
 	testUsersColIndexAge  = "user_age"
 )
 
 type indexTestFixture struct {
-	ctx   context.Context
-	db    *implicitTxnDB
-	txn   datastore.Txn
-	users client.Collection
-	t     *testing.T
+	ctx      context.Context
+	db       *implicitTxnDB
+	txn      datastore.Txn
+	users    client.Collection
+	products client.Collection
+	t        *testing.T
 }
 
 func getUsersCollectionDesc() client.CollectionDescription {
@@ -87,13 +90,23 @@ func getProductsCollectionDesc() client.CollectionDescription {
 					Kind: client.FieldKind_DocKey,
 				},
 				{
+					Name: productsIDFieldName,
+					Kind: client.FieldKind_INT,
+					Typ:  client.LWW_REGISTER,
+				},
+				{
 					Name: productsPriceFieldName,
 					Kind: client.FieldKind_FLOAT,
 					Typ:  client.LWW_REGISTER,
 				},
 				{
-					Name: productsDescFieldName,
+					Name: productsCategoryFieldName,
 					Kind: client.FieldKind_STRING,
+					Typ:  client.LWW_REGISTER,
+				},
+				{
+					Name: productsAvailableFieldName,
+					Kind: client.FieldKind_BOOL,
 					Typ:  client.LWW_REGISTER,
 				},
 			},
@@ -142,6 +155,15 @@ func getUsersIndexDescOnAge() client.IndexDescription {
 		Name: testUsersColIndexAge,
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersAgeFieldName, Direction: client.Ascending},
+		},
+	}
+}
+
+func getProductsIndexDescOnCategory() client.IndexDescription {
+	return client.IndexDescription{
+		Name: testUsersColIndexAge,
+		Fields: []client.IndexedFieldDescription{
+			{Name: productsCategoryFieldName, Direction: client.Ascending},
 		},
 	}
 }
