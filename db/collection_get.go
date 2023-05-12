@@ -47,14 +47,14 @@ func (c *collection) get(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
-	fields []*client.FieldDescription,
+	fields []client.FieldDescription,
 	showDeleted bool,
 ) (*client.Document, error) {
 	// create a new document fetcher
 	df := c.newFetcher()
 	desc := &c.desc
 	// initialize it with the primary index
-	err := df.Init(&c.desc, fields, false, showDeleted)
+	err := df.Init(&c.desc, fields, nil, nil, false, showDeleted)
 	if err != nil {
 		_ = df.Close()
 		return nil, err
