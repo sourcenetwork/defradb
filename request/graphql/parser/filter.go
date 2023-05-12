@@ -200,11 +200,11 @@ func parseFilterFieldsForDescriptionMap(conditions map[string]any, schema client
 	fields := make([]client.FieldDescription, 0)
 	for k, v := range conditions {
 		switch k {
-		case "$or", "$and":
+		case "_or", "_and":
 			conds := v.([]any)
 			parsedFileds := parseFilterFieldsForDescriptionSlice(conds, schema)
 			fields = append(fields, parsedFileds...)
-		case "$not":
+		case "_not":
 			conds := v.(map[string]any)
 			parsedFileds := parseFilterFieldsForDescriptionMap(conds, schema)
 			fields = append(fields, parsedFileds...)
