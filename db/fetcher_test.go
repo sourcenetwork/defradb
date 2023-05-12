@@ -54,7 +54,7 @@ func newTestCollectionDescription() client.CollectionDescription {
 func newTestFetcher() (*fetcher.DocumentFetcher, error) {
 	df := new(fetcher.DocumentFetcher)
 	desc := newTestCollectionDescription()
-	err := df.Init(&desc, nil, nil, nil, false, false)
+	err := df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, nil, nil, false, false)
+	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -179,7 +179,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, nil, nil, false, false)
+	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -211,7 +211,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, nil, nil, false, false)
+	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -263,7 +263,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, nil, nil, false, false)
+	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -320,7 +320,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, nil, nil, nil, false, false)
+	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	// create a span for our document we wish to find

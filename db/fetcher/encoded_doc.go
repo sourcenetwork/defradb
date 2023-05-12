@@ -196,7 +196,7 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
 	mapping *core.DocumentMapping
-	doc     core.Doc
+	doc     *core.Doc
 
 	key        []byte
 	Properties []*encProperty
@@ -222,7 +222,8 @@ func (encdoc *encodedDocument) Reset() {
 	encdoc.Properties = make([]*encProperty, 0)
 	encdoc.key = nil
 	if encdoc.mapping != nil {
-		encdoc.doc = encdoc.mapping.NewDoc()
+		doc := encdoc.mapping.NewDoc()
+		encdoc.doc = &doc
 	}
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
@@ -260,6 +261,13 @@ func (encdoc *encodedDocument) decodeToDocForFilter() (core.Doc, error) {
 }
 
 func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
+	if encdoc.mapping == nil {
+		return core.Doc{}, ErrMissingMapper
+	}
+	if encdoc.doc == nil {
+		doc := encdoc.mapping.NewDoc()
+		encdoc.doc = &doc
+	}
 	encdoc.doc.SetKey(string(encdoc.key))
 	for _, prop := range encdoc.Properties {
 		if encdoc.doc.Fields[prop.Desc.ID] != nil { // used cached decoded fields
@@ -274,5 +282,5 @@ func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
 		}
 		encdoc.doc.Fields[prop.Desc.ID] = val
 	}
-	return encdoc.doc, nil
+	return *encdoc.doc, nil
 }
