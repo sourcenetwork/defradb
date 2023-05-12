@@ -46,6 +46,7 @@ func TestAddSchemaWithDuplicateType(t *testing.T) {
 
 	_ = stopDefra()
 
-	assertContainsSubstring(t, stdout1, `{"data":{"result":"success"}}`)
+	jsonReponse := `{"data":{"collections":[{"name":"Post","id":"bafkreicgpbla5wlogpinnm32arcqzptusdc5tzdznipqrf6nkroav6b25a"}],"result":"success"}}`
+	assertContainsSubstring(t, stdout1, jsonReponse)
 	assertContainsSubstring(t, stdout2, `schema type already exists. Name: Post`)
 }
