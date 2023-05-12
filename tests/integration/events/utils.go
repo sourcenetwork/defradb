@@ -73,7 +73,7 @@ func ExecuteRequestTestCase(
 	db, err := testUtils.NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
 	require.NoError(t, err)
 
-	err = db.AddSchema(ctx, schema)
+	_, err = db.AddSchema(ctx, schema)
 	require.NoError(t, err)
 
 	setupDatabase(ctx, t, db, testCase)

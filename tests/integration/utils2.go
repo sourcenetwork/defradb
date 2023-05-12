@@ -709,7 +709,7 @@ func updateSchema(
 	action SchemaUpdate,
 ) {
 	for _, node := range getNodes(action.NodeID, nodes) {
-		err := node.DB.AddSchema(ctx, action.Schema)
+		_, err := node.DB.AddSchema(ctx, action.Schema)
 		expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
