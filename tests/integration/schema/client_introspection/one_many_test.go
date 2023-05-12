@@ -35,8 +35,10 @@ func TestClientIntrospectionWithOneToManySchema(t *testing.T) {
 			testUtils.ClientIntrospectionRequest{
 				Request: clientIntrospectionQuery,
 				// TODO: this should pass without error.
-				// https://github.com/sourcenetwork/defradb/issues/1463
+				// https://github.com/sourcenetwork/defradb/issues/1502
 				ExpectedError: "Unknown kind of type: ",
+				// TODO: this should pass without error.
+				// https://github.com/sourcenetwork/defradb/issues/1463
 				// ExpectedError: "InputFields are missing",
 			},
 		},
