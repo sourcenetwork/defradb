@@ -102,6 +102,7 @@ func (vf *VersionedFetcher) Init(
 	col *client.CollectionDescription,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
+	docmapper *core.DocumentMapping,
 	reverse bool,
 	showDeleted bool,
 ) error {
@@ -111,7 +112,7 @@ func (vf *VersionedFetcher) Init(
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
-	return vf.DocumentFetcher.Init(col, fields, filter, reverse, showDeleted)
+	return vf.DocumentFetcher.Init(col, fields, filter, docmapper, reverse, showDeleted)
 }
 
 // Start serializes the correct state according to the Key and CID.

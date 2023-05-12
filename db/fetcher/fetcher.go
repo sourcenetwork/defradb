@@ -15,6 +15,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/bits-and-blooms/bitset"
 	dsq "github.com/ipfs/go-datastore/query"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -29,7 +30,7 @@ import (
 // Fetcher is the interface for collecting documents from the underlying data store.
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, fields []client.FieldDescription, filter *mapper.Filter, reverse bool, showDeleted bool) error
+	Init(col *client.CollectionDescription, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (EncodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
@@ -57,14 +58,18 @@ type DocumentFetcher struct {
 	order        []dsq.Order
 	curSpanIndex int
 
-	filter *mapper.Filter
+	filter  *mapper.Filter
+	mapping *core.DocumentMapping
 
 	filterFields map[uint32]client.FieldDescription
 	selectFields map[uint32]client.FieldDescription
 	// allfields       map[uint32]*client.FieldDescription
 
-	doc         *encodedDocument
-	decodedDoc  *client.Document
+	// static bitsets
+	filterSet *bitset.BitSet
+
+	doc *encodedDocument
+
 	initialized bool
 
 	kv                *KeyValue
@@ -84,6 +89,7 @@ func (df *DocumentFetcher) Init(
 	col *client.CollectionDescription,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
+	docmapper *core.DocumentMapping,
 	reverse bool,
 	showDeleted bool,
 ) error {
@@ -91,7 +97,7 @@ func (df *DocumentFetcher) Init(
 		return client.NewErrUninitializeProperty("DocumentFetcher", "Schema")
 	}
 
-	err := df.init(col, fields, reverse)
+	err := df.init(col, fields, filter, docmapper, reverse)
 	if err != nil {
 		return err
 	}
@@ -100,7 +106,7 @@ func (df *DocumentFetcher) Init(
 		if df.deletedDocFetcher == nil {
 			df.deletedDocFetcher = new(DocumentFetcher)
 		}
-		return df.deletedDocFetcher.init(col, fields, reverse)
+		return df.deletedDocFetcher.init(col, fields, filter, docmapper, reverse)
 	}
 
 	return nil
@@ -109,13 +115,18 @@ func (df *DocumentFetcher) Init(
 func (df *DocumentFetcher) init(
 	col *client.CollectionDescription,
 	fields []client.FieldDescription,
+	filter *mapper.Filter,
+	docMapper *core.DocumentMapping,
 	reverse bool,
 ) error {
 	df.col = col
 	df.reverse = reverse
 	df.initialized = true
+	df.filter = filter
 	df.isReadingDocument = false
+	df.mapping = docMapper
 	df.doc = new(encodedDocument)
+	df.doc.mapping = df.mapping
 
 	if df.kvResultsIter != nil {
 		if err := df.kvResultsIter.Close(); err != nil {
@@ -131,6 +142,7 @@ func (df *DocumentFetcher) init(
 	df.kvIter = nil
 
 	df.selectFields = make(map[uint32]client.FieldDescription, len(fields))
+	// @todo: We can probably make this size more accurate, this is an upper bound
 	for _, field := range fields {
 		df.selectFields[uint32(field.ID)] = field
 	}
@@ -138,8 +150,10 @@ func (df *DocumentFetcher) init(
 	if df.filter != nil {
 		parsedfilterFields := parser.ParseFilterFieldsForDescription(df.filter.ExternalConditions, df.col.Schema)
 		df.filterFields = make(map[uint32]client.FieldDescription, len(parsedfilterFields))
+		df.filterSet = bitset.New(uint(len(col.Schema.Fields)))
 		for _, field := range parsedfilterFields {
 			df.filterFields[uint32(field.ID)] = field
+			df.filterSet.Set(uint(field.ID))
 		}
 	}
 
@@ -239,7 +253,7 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 	}
 	df.curSpanIndex = nextSpanIndex
 
-	_, err = df.nextKey(ctx)
+	_, _, err = df.nextKey(ctx, false)
 	return err == nil, err
 }
 
@@ -251,8 +265,8 @@ func (df *DocumentFetcher) KV() *KeyValue {
 	return df.kv
 }
 
-func (df *DocumentFetcher) NextKey(ctx context.Context) (docDone bool, err error) {
-	return df.nextKey(ctx)
+func (df *DocumentFetcher) NextKey(ctx context.Context, withSeek bool) (spanDone bool, docDone bool, err error) {
+	return df.nextKey(ctx, withSeek)
 }
 
 func (df *DocumentFetcher) NextKV() (iterDone bool, kv *KeyValue, err error) {
@@ -264,14 +278,30 @@ func (df *DocumentFetcher) ProcessKV(kv *KeyValue) error {
 }
 
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
-// It returns true if the current doc is completed
-func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err error) {
-	// get the next kv from nextKV()
-	spanDone, df.kv, err = df.nextKV()
-	// handle any internal errors
-	if err != nil {
-		return false, err
+// It returns true if the current doc is completed.
+// The first call to nextKey CANNOT have seekNext be true (ErrFailedToSeek)
+func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone bool, docDone bool, err error) {
+	// safety against seekNext on first call
+	if seekNext && df.kv == nil {
+		return false, false, ErrFailedToSeek
 	}
+
+	if seekNext {
+		curKey := df.kv.Key
+		curKey.FieldId = "" // clear field so prefixEnd applies to dockey
+		spanDone, df.kv, err = df.seekKV(curKey.PrefixEnd().ToString())
+		// handle any internal errors
+		if err != nil {
+			return false, false, err
+		}
+	} else {
+		spanDone, df.kv, err = df.nextKV()
+		// handle any internal errors
+		if err != nil {
+			return false, false, err
+		}
+	}
+
 	if df.kv != nil && (df.kv.Key.InstanceType != core.ValueKey && df.kv.Key.InstanceType != core.DeletedKey) {
 		// We can only ready value values, if we escape the collection's value keys
 		// then we must be done and can stop reading
@@ -280,19 +310,19 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err erro
 
 	df.kvEnd = spanDone
 	if df.kvEnd {
-		_, err := df.startNextSpan(ctx)
+		moreSpans, err := df.startNextSpan(ctx)
 		if err != nil {
-			return false, err
+			return false, false, err
 		}
-		return true, nil
+		return !moreSpans, true, nil
 	}
 
 	// check if we've crossed document boundries
-	if df.doc.Key() != nil && df.kv.Key.DocKey != string(df.doc.Key()) {
+	if (df.doc.key != nil && df.kv.Key.DocKey != string(df.doc.key)) || seekNext {
 		df.isReadingDocument = false
-		return true, nil
+		return false, true, nil
 	}
-	return false, nil
+	return false, false, nil
 }
 
 // nextKV is a lower-level utility compared to nextKey. The differences are as follows:
@@ -329,13 +359,7 @@ func (df *DocumentFetcher) seekKV(key string) (bool, *KeyValue, error) {
 	for {
 		done, dsKey, res, err := df.nextKVRaw()
 		if done || err != nil {
-			// format the kv just in case we're done
-			// it won't be used if an error is returned
-			kv := &KeyValue{
-				Key:   dsKey,
-				Value: res.Value,
-			}
-			return done, kv, err
+			return done, nil, err
 		}
 
 		switch strings.Compare(dsKey.ToString(), key) {
@@ -390,7 +414,17 @@ func (df *DocumentFetcher) processKV(kv *KeyValue) error {
 
 	if !df.isReadingDocument {
 		df.isReadingDocument = true
-		df.doc.Reset([]byte(kv.Key.DocKey))
+		df.doc.Reset()
+
+		// re-init doc state
+		// @todo: convert to util method
+		if df.filterSet != nil {
+			df.doc.filterSet = bitset.New(df.filterSet.Len())
+			if df.filterSet.Test(0) {
+				df.doc.filterSet.Set(0) // mark dockey as set
+			}
+		}
+		df.doc.key = []byte(kv.Key.DocKey)
 	}
 
 	// we have to skip the object marker
@@ -408,16 +442,25 @@ func (df *DocumentFetcher) processKV(kv *KeyValue) error {
 		return NewErrFieldIdNotFound(fieldID)
 	}
 
+	ufid := uint(fieldID)
+
+	property := &encProperty{
+		Desc: fieldDesc,
+		Raw:  kv.Value,
+	}
+
+	if df.filterSet != nil && df.filterSet.Test(ufid) {
+		df.doc.filterSet.Set(ufid)
+		property.Filter = true
+	}
+
 	// @todo: Secondary Index might not have encoded FieldIDs
 	// @body: Need to generalized the processKV, and overall Fetcher architecture
 	// to better handle dynamic use cases beyond primary indexes. If a
 	// secondary index is provided, we need to extract the indexed/implicit fields
 	// from the KV pair.
-	df.doc.properties[fieldDesc] = &encProperty{
-		Desc: fieldDesc,
-		Raw:  kv.Value,
-	}
-	// @todo: Extract Index implicit/stored keys
+	df.doc.Properties = append(df.doc.Properties, property) // @todo see if we can avoid the append/copy
+
 	return nil
 }
 
@@ -444,12 +487,52 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, erro
 			return nil, err
 		}
 
-		end, err := df.nextKey(ctx)
+		// check if we need to seek
+		seek := false
+		if df.filter != nil {
+			if df.filterSet.Equal(df.doc.filterSet) {
+				filterDoc, err := df.doc.decodeToDocForFilter()
+				if err != nil {
+					return nil, err
+				}
+
+				// run filter
+				passed, err := mapper.RunFilter(filterDoc, df.filter)
+				if err != nil {
+					return nil, err
+				}
+
+				// if we don't pass the filter
+				// theres no point in collecting other select fields
+				// so we seek to the next doc
+				seek = !passed
+			}
+		}
+
+		spansDone, docDone, err := df.nextKey(ctx, seek)
 		if err != nil {
 			return nil, err
 		}
-		if end {
-			return df.doc, nil
+		if docDone {
+			// run filter
+			decodedDoc, err := df.doc.DecodeToDoc()
+			if err != nil {
+				return nil, err
+			}
+			passed, err := mapper.RunFilter(decodedDoc, df.filter)
+			if err != nil {
+				return nil, err
+			}
+
+			if passed {
+				return df.doc, nil
+			}
+
+			if !spansDone {
+				continue
+			}
+
+			return nil, nil
 		}
 
 		// // crossed document kv boundary?
@@ -472,12 +555,12 @@ func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Docume
 		return nil, nil
 	}
 
-	df.decodedDoc, err = encdoc.Decode()
+	decodedDoc, err := encdoc.Decode()
 	if err != nil {
 		return nil, err
 	}
 
-	return df.decodedDoc, nil
+	return decodedDoc, nil
 }
 
 // FetchNextDoc returns the next document as a core.Doc.
@@ -530,7 +613,7 @@ func (df *DocumentFetcher) FetchNextDoc(
 		status = client.Active
 	}
 
-	doc, err := encdoc.DecodeToDoc(mapping)
+	doc, err := encdoc.DecodeToDoc()
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
