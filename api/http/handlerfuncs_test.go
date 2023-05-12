@@ -713,7 +713,15 @@ type user {
 
 	switch v := resp.Data.(type) {
 	case map[string]any:
-		assert.Equal(t, "success", v["result"])
+		assert.Equal(t, map[string]any{
+			"result": "success",
+			"collections": []any{
+				map[string]any{
+					"name": "user",
+					"id":   "bafkreigrucdl7x3lsa4xwgz2bn7lbqmiwkifnspgx7hlkpaal3o55325bq",
+				},
+			},
+		}, v)
 
 	default:
 		t.Fatalf("data should be of type map[string]any but got %T\n%v", resp.Data, v)
@@ -1024,7 +1032,7 @@ type user {
 	verified: Boolean 
 	points: Float
 }`
-	err := db.AddSchema(ctx, stmt)
+	_, err := db.AddSchema(ctx, stmt)
 	if err != nil {
 		t.Fatal(err)
 	}
