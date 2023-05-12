@@ -30,7 +30,8 @@ func TestAddSchemaFromFile(t *testing.T) {
 
 	nodeLog := stopDefra()
 
-	assert.Contains(t, stdout, `{"data":{"result":"success"}}`)
+	jsonReponse := `{"data":{"collections":[{"name":"User","id":"bafkreib5hb7mr7ecbdufd7mvv6va6mpxukjai7hpnqkhxonnw7lzwfqlja"}],"result":"success"}}`
+	assert.Contains(t, stdout, jsonReponse)
 	assertNotContainsSubstring(t, nodeLog, "ERROR")
 }
 
