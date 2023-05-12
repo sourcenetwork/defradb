@@ -27,7 +27,7 @@ type scanExecInfo struct {
 	docFetches uint64
 
 	// Total number of documents that matched / passed the filter.
-	filterMatches uint64
+	// filterMatches uint64
 }
 
 // scans an index for records
@@ -62,7 +62,7 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.fields, n.filter, n.reverse, n.showDeleted); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.filter, n.slct.DocumentMapping, n.reverse, n.showDeleted); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -115,23 +115,32 @@ func (n *scanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	// keep scanning until we find a doc that passes the filter
-	for {
-		var err error
-		_, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
-		if err != nil {
-			return false, err
-		}
-		n.execInfo.docFetches++
+	var err error
+	n.docKey, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
+	if err != nil {
+		return false, err
+	}
+	// @question: Should this be after the length check?
+	n.execInfo.docFetches++
 
-		if len(n.currentValue.Fields) == 0 {
-			return false, nil
-		}
-		n.documentMapping.SetFirstOfName(
-			&n.currentValue,
-			request.DeletedFieldName,
-			n.currentValue.Status.IsDeleted(),
-		)
+	if len(n.currentValue.Fields) == 0 {
+		return false, nil
+	}
+	n.documentMapping.SetFirstOfName(
+		&n.currentValue,
+		request.DeletedFieldName,
+		n.currentValue.Status.IsDeleted(),
+	)
+
+	// Keeping for refence as there is an outstanding
+	// question.
+	//
+	// Don't need to run filter here anymore since the
+	// fetcher will run the filter for us
+	//
+	// Question: How do we want to handle `info.filterMatches`
+	// now? @shahzadlone
+	/*
 		passed, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err
@@ -140,7 +149,9 @@ func (n *scanNode) Next() (bool, error) {
 			n.execInfo.filterMatches++
 			return true, nil
 		}
-	}
+	*/
+
+	return true, nil
 }
 
 func (n *scanNode) Spans(spans core.Spans) {
@@ -190,9 +201,9 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 
 func (n *scanNode) excuteExplain() map[string]any {
 	return map[string]any{
-		"iterations":    n.execInfo.iterations,
-		"docFetches":    n.execInfo.docFetches,
-		"filterMatches": n.execInfo.filterMatches,
+		"iterations": n.execInfo.iterations,
+		"docFetches": n.execInfo.docFetches,
+		// "filterMatches": n.execInfo.filterMatches,
 	}
 }
 
