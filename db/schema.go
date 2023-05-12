@@ -23,7 +23,11 @@ import (
 
 // addSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, request types, etc.
-func (db *db) addSchema(ctx context.Context, txn datastore.Txn, schemaString string) ([]client.CollectionDescription, error) {
+func (db *db) addSchema(
+	ctx context.Context,
+	txn datastore.Txn,
+	schemaString string,
+) ([]client.CollectionDescription, error) {
 	existingDescriptions, err := db.getCollectionDescriptions(ctx, txn)
 	if err != nil {
 		return nil, err
