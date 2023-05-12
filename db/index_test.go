@@ -29,6 +29,13 @@ const (
 	usersColName    = "Users"
 	productsColName = "Products"
 
+	usersNameFieldName   = "name"
+	usersAgeFieldName    = "age"
+	usersWeightFieldName = "weight"
+
+	productsPriceFieldName = "price"
+	productsDescFieldName  = "description"
+
 	testUsersColIndexName = "user_name"
 	testUsersColIndexAge  = "user_age"
 )
@@ -51,17 +58,17 @@ func getUsersCollectionDesc() client.CollectionDescription {
 					Kind: client.FieldKind_DocKey,
 				},
 				{
-					Name: "name",
+					Name: usersNameFieldName,
 					Kind: client.FieldKind_STRING,
 					Typ:  client.LWW_REGISTER,
 				},
 				{
-					Name: "age",
+					Name: usersAgeFieldName,
 					Kind: client.FieldKind_INT,
 					Typ:  client.LWW_REGISTER,
 				},
 				{
-					Name: "weight",
+					Name: usersWeightFieldName,
 					Kind: client.FieldKind_FLOAT,
 					Typ:  client.LWW_REGISTER,
 				},
@@ -80,12 +87,12 @@ func getProductsCollectionDesc() client.CollectionDescription {
 					Kind: client.FieldKind_DocKey,
 				},
 				{
-					Name: "price",
+					Name: productsPriceFieldName,
 					Kind: client.FieldKind_FLOAT,
 					Typ:  client.LWW_REGISTER,
 				},
 				{
-					Name: "description",
+					Name: productsDescFieldName,
 					Kind: client.FieldKind_STRING,
 					Typ:  client.LWW_REGISTER,
 				},
@@ -94,19 +101,23 @@ func getProductsCollectionDesc() client.CollectionDescription {
 	}
 }
 
-func newIndexTestFixture(t *testing.T) *indexTestFixture {
+func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
 
-	f := &indexTestFixture{
+	return &indexTestFixture{
 		ctx: ctx,
 		db:  db,
 		txn: txn,
 		t:   t,
 	}
+}
+
+func newIndexTestFixture(t *testing.T) *indexTestFixture {
+	f := newIndexTestFixtureBare(t)
 	f.users = f.createCollection(getUsersCollectionDesc())
 	return f
 }
@@ -121,7 +132,7 @@ func getUsersIndexDescOnName() client.IndexDescription {
 	return client.IndexDescription{
 		Name: testUsersColIndexName,
 		Fields: []client.IndexedFieldDescription{
-			{Name: "name", Direction: client.Ascending},
+			{Name: usersNameFieldName, Direction: client.Ascending},
 		},
 	}
 }
@@ -130,7 +141,7 @@ func getUsersIndexDescOnAge() client.IndexDescription {
 	return client.IndexDescription{
 		Name: testUsersColIndexAge,
 		Fields: []client.IndexedFieldDescription{
-			{Name: "age", Direction: client.Ascending},
+			{Name: usersAgeFieldName, Direction: client.Ascending},
 		},
 	}
 }
@@ -235,7 +246,7 @@ func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	desc := client.IndexDescription{
 		Name: "some_index_name",
 		Fields: []client.IndexedFieldDescription{
-			{Name: "name", Direction: client.Ascending},
+			{Name: usersNameFieldName, Direction: client.Ascending},
 		},
 	}
 	resultDesc, err := f.createCollectionIndex(desc)
@@ -262,7 +273,7 @@ func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 
 	desc := client.IndexDescription{
 		Name:   "some_index_name",
-		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
 	newDesc, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
@@ -270,18 +281,25 @@ func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 }
 
 func TestCreateIndex_IfNameIsNotSpecified_GenerateWithLowerCase(t *testing.T) {
-	f := newIndexTestFixture(t)
+	f := newIndexTestFixtureBare(t)
+	colDesc := getUsersCollectionDesc()
+	const colName = "UsErS"
+	const fieldName = "NaMe"
+	colDesc.Name = colName
+	colDesc.Schema.Name = colName // Which one should we use?
+	colDesc.Schema.Fields[1].Name = fieldName
+	f.users = f.createCollection(colDesc)
 
 	desc := client.IndexDescription{
 		Name: "",
 		Fields: []client.IndexedFieldDescription{
-			{Name: "Name", Direction: client.Ascending},
+			{Name: fieldName, Direction: client.Ascending},
 		},
 	}
-	f.users.Description().Schema.Fields[1].Name = "Name"
+
 	newDesc, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
-	assert.Equal(t, newDesc.Name, "users_name_ASC")
+	assert.Equal(t, newDesc.Name, colName+"_"+fieldName+"_ASC")
 }
 
 func TestCreateIndex_IfSingleFieldInDescOrder_ReturnError(t *testing.T) {
@@ -289,7 +307,7 @@ func TestCreateIndex_IfSingleFieldInDescOrder_ReturnError(t *testing.T) {
 
 	desc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
-			{Name: "name", Direction: client.Descending},
+			{Name: usersNameFieldName, Direction: client.Descending},
 		},
 	}
 	_, err := f.createCollectionIndex(desc)
@@ -302,11 +320,11 @@ func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	name := "some_index_name"
 	desc1 := client.IndexDescription{
 		Name:   name,
-		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
 	desc2 := client.IndexDescription{
 		Name:   name,
-		Fields: []client.IndexedFieldDescription{{Name: "age"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersAgeFieldName}},
 	}
 	_, err := f.createCollectionIndex(desc1)
 	assert.NoError(t, err)
@@ -317,18 +335,18 @@ func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
 	f := newIndexTestFixture(t)
 
-	name := "users_age_ASC"
+	name := usersColName + "_" + usersAgeFieldName + "_ASC"
 	desc1 := client.IndexDescription{
 		Name:   name,
-		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
 	desc2 := client.IndexDescription{
 		Name:   name + "_2",
-		Fields: []client.IndexedFieldDescription{{Name: "weight"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersWeightFieldName}},
 	}
 	desc3 := client.IndexDescription{
 		Name:   "",
-		Fields: []client.IndexedFieldDescription{{Name: "age"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersAgeFieldName}},
 	}
 	_, err := f.createCollectionIndex(desc1)
 	assert.NoError(t, err)
@@ -345,7 +363,7 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	name := "users_age_ASC"
 	desc := client.IndexDescription{
 		Name:   name,
-		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
 	_, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
@@ -365,7 +383,7 @@ func TestCreateIndex_IfStorageFails_ReturnError(t *testing.T) {
 	name := "users_age_ASC"
 	desc := client.IndexDescription{
 		Name:   name,
-		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
 
 	f.db.Close(f.ctx)
@@ -378,7 +396,7 @@ func TestCreateIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	desc := client.IndexDescription{
-		Fields: []client.IndexedFieldDescription{{Name: "price"}},
+		Fields: []client.IndexedFieldDescription{{Name: productsPriceFieldName}},
 	}
 
 	_, err := f.createCollectionIndexFor(productsColName, desc)
@@ -402,7 +420,7 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 
 	usersIndexDesc := client.IndexDescription{
 		Name:   "users_name_index",
-		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
 	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
 	assert.NoError(t, err)
@@ -410,7 +428,7 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	f.createCollection(getProductsCollectionDesc())
 	productsIndexDesc := client.IndexDescription{
 		Name:   "products_description_index",
-		Fields: []client.IndexedFieldDescription{{Name: "price"}},
+		Fields: []client.IndexedFieldDescription{{Name: productsPriceFieldName}},
 	}
 	_, err = f.createCollectionIndexFor(productsColName, productsIndexDesc)
 	assert.NoError(t, err)
@@ -448,7 +466,7 @@ func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 	desc := client.IndexDescription{
 		Name: "some_index_name",
 		Fields: []client.IndexedFieldDescription{
-			{Name: "name", Direction: client.Ascending},
+			{Name: usersNameFieldName, Direction: client.Ascending},
 		},
 	}
 	descData, _ := json.Marshal(desc)
@@ -464,7 +482,7 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 
 	usersIndexDesc := client.IndexDescription{
 		Name:   "users_name_index",
-		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
 	}
 	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
 	assert.NoError(t, err)
@@ -472,7 +490,7 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	f.createCollection(getProductsCollectionDesc())
 	productsIndexDesc := client.IndexDescription{
 		Name:   "products_description_index",
-		Fields: []client.IndexedFieldDescription{{Name: "price"}},
+		Fields: []client.IndexedFieldDescription{{Name: productsPriceFieldName}},
 	}
 	_, err = f.createCollectionIndexFor(productsColName, productsIndexDesc)
 	assert.NoError(t, err)
@@ -542,14 +560,14 @@ func TestDropAllIndex_ShouldDeleteAllIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	_, err := f.createCollectionIndexFor(usersColName, client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
-			{Name: "name", Direction: client.Ascending},
+			{Name: usersNameFieldName, Direction: client.Ascending},
 		},
 	})
 	assert.NoError(f.t, err)
 
 	_, err = f.createCollectionIndexFor(usersColName, client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
-			{Name: "age", Direction: client.Ascending},
+			{Name: usersAgeFieldName, Direction: client.Ascending},
 		},
 	})
 	assert.NoError(f.t, err)

@@ -37,6 +37,8 @@ func NewCollectionIndex(
 			intVal := val.(int64)
 			return []byte(strconv.FormatInt(intVal, 10)), nil
 		}
+	} else if field.Kind == client.FieldKind_FLOAT {
+		// TODO: test
 	} else {
 		panic("there is no test for this case")
 	}
@@ -60,7 +62,8 @@ func (i *collectionSimpleIndex) Save(
 	data, err := i.convertFunc(val)
 	err = err
 	indexDataStoreKey := core.IndexDataStoreKey{}
-	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
+	//indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
+	indexDataStoreKey.CollectionID = strconv.Itoa(int(1))
 	indexDataStoreKey.IndexID = "1"
 	indexDataStoreKey.FieldValues = []string{string(data), key.DocKey}
 	err = txn.Datastore().Put(ctx, indexDataStoreKey.ToDS(), []byte{})
@@ -102,9 +105,9 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 	//if fields[0].Direction == client.Descending {
 	//direction = "DESC"
 	//}
-	sb.WriteString(strings.ToLower(col.Name()))
+	sb.WriteString(col.Name())
 	sb.WriteByte('_')
-	sb.WriteString(strings.ToLower(fields[0].Name))
+	sb.WriteString(fields[0].Name)
 	sb.WriteByte('_')
 	sb.WriteString(direction)
 	if inc > 1 {
