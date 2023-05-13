@@ -42,9 +42,7 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode struct {
-	config.Config
-}
+type ConfigureNode func() config.Config
 
 // Restart is an action that will close and then start node(s).
 //

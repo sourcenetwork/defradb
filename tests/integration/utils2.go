@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/datastore/memory"
@@ -301,7 +302,7 @@ func executeTestCase(
 	syncChans := []chan struct{}{}
 	nodeAddresses := []string{}
 	// The actions responsible for configuring the node
-	nodeActions := []ConfigureNode{}
+	nodeConfigs := []config.Config{}
 	nodes, dbPaths := getStartingNodes(ctx, t, dbt, collectionNames, testCase)
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
@@ -328,17 +329,17 @@ func executeTestCase(
 				t.SkipNow()
 				return
 			}
-
-			node, address, path := configureNode(ctx, t, dbt, action)
+			cfg := action()
+			node, address, path := configureNode(ctx, t, dbt, cfg)
 			nodes = append(nodes, node)
 			nodeAddresses = append(nodeAddresses, address)
 			dbPaths = append(dbPaths, path)
-			nodeActions = append(nodeActions, action)
+			nodeConfigs = append(nodeConfigs, cfg)
 
 		case Restart:
 			syncChans = append(
 				syncChans,
-				restartNodes(ctx, t, testCase, dbt, nodes, dbPaths, nodeAddresses, nodeActions)...,
+				restartNodes(ctx, t, testCase, dbt, nodes, dbPaths, nodeAddresses, nodeConfigs)...,
 			)
 
 			// If the db was restarted we need to refresh the collection definitions.
@@ -603,7 +604,7 @@ func restartNodes(
 	nodes []*node.Node,
 	dbPaths []string,
 	nodeAddresses []string,
-	configureActions []ConfigureNode,
+	configureActions []config.Config,
 ) []chan struct{} {
 	//todo - dont do all this inline here, and handle p2p
 	if dbt == badgerIMType || dbt == defraIMType {
@@ -644,7 +645,7 @@ func restartNodes(
 			require.NoError(t, err)
 		}
 
-		*nodes[i] = *n
+		nodes[i] = n
 	}
 
 	syncChans := []chan struct{}{}
@@ -702,7 +703,7 @@ func configureNode(
 	ctx context.Context,
 	t *testing.T,
 	dbt DatabaseType,
-	cfg ConfigureNode,
+	cfg config.Config,
 ) (*node.Node, string, string) {
 	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
 	// And affects where libp2p(?) stores some values on the file system, even when using
