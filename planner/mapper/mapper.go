@@ -12,9 +12,11 @@ package mapper
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -60,6 +62,9 @@ func toSelect(
 		return nil, err
 	}
 
+	fmt.Println("requestable aggregates:")
+	spew.Dump(aggregates)
+
 	// Needs to be done before resolving aggregates, else filter conversion may fail there
 	filterDependencies, err := resolveFilterDependencies(
 		descriptionsRepo, collectionName, selectRequest.Filter, mapping, fields)
@@ -75,6 +80,8 @@ func toSelect(
 	}
 
 	aggregates = appendUnderlyingAggregates(aggregates, mapping)
+	fmt.Println("ALL requestable aggregates:")
+	spew.Dump(aggregates)
 	fields, err = resolveAggregates(
 		selectRequest,
 		aggregates,
@@ -83,6 +90,8 @@ func toSelect(
 		desc,
 		descriptionsRepo,
 	)
+	fmt.Println("resolved aggregates:")
+	spew.Dump(fields)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +214,7 @@ func resolveAggregates(
 			var hasHost bool
 			var convertedFilter *Filter
 			if childIsMapped {
-				fieldDesc, isField := desc.GetField(target.hostExternalName)
+				fieldDesc, isField := desc.Schema.GetField(target.hostExternalName)
 				if isField && !fieldDesc.IsObject() {
 					var order *OrderBy
 					if target.order.HasValue() && len(target.order.Value().Conditions) > 0 {
@@ -280,6 +289,7 @@ func resolveAggregates(
 				if !childIsMapped {
 					// If the child was not mapped, the filter will not have been converted yet
 					// so we must do that now.
+					fmt.Println("converted aggregate conditions:", target.filter.Value().Conditions)
 					convertedFilter = ToFilter(target.filter, mapping.ChildMappings[index])
 				}
 
@@ -617,7 +627,7 @@ func getCollectionName(
 			return "", err
 		}
 
-		hostFieldDesc, parentHasField := parentDescription.GetField(selectRequest.Name)
+		hostFieldDesc, parentHasField := parentDescription.Schema.GetField(selectRequest.Name)
 		if parentHasField && hostFieldDesc.RelationType != 0 {
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
@@ -880,6 +890,7 @@ func ToMutation(ctx context.Context, txn datastore.Txn, mutationRequest *request
 }
 
 func toTargetable(index int, selectRequest *request.Select, docMap *core.DocumentMapping) Targetable {
+	fmt.Println("targetable conditions:", selectRequest.Filter.Value().Conditions)
 	return Targetable{
 		Field:       toField(index, selectRequest),
 		DocKeys:     selectRequest.DocKeys,
@@ -912,6 +923,8 @@ func ToFilter(source immutable.Option[request.Filter], mapping *core.DocumentMap
 		conditions[key] = clause
 	}
 
+	// panic("hj")
+	fmt.Println("FILTER CONDITIONS:", source.Value().Conditions)
 	return &Filter{
 		Conditions:         conditions,
 		ExternalConditions: source.Value().Conditions,

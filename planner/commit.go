@@ -333,7 +333,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 			return core.Doc{}, nil, err
 		}
 
-		field, ok := c.Description().GetField(fieldName.(string))
+		field, ok := c.Description().Schema.GetField(fieldName.(string))
 		if !ok {
 			return core.Doc{}, nil, client.NewErrFieldNotExist(fieldName.(string))
 		}

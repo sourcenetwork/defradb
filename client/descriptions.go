@@ -39,18 +39,6 @@ func (col CollectionDescription) IDString() string {
 	return fmt.Sprint(col.ID)
 }
 
-// GetField returns the field of the given name.
-func (col CollectionDescription) GetField(name string) (FieldDescription, bool) {
-	if !col.Schema.IsEmpty() {
-		for _, field := range col.Schema.Fields {
-			if field.Name == name {
-				return field, true
-			}
-		}
-	}
-	return FieldDescription{}, false
-}
-
 // GetFieldByID searches for a field with the given ID. If such a field is found it
 // will return it and true, if it is not found it will return false.
 func (col CollectionDescription) GetFieldByID(id FieldID) (FieldDescription, bool) {

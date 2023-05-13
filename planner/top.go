@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
@@ -191,9 +193,12 @@ func (p *Planner) Top(m *mapper.Select) (*topLevelNode, error) {
 
 	aggregateChildren := []planNode{}
 	aggregateChildIndexes := []int{}
+	fmt.Println("top level select")
 	for _, field := range m.Fields {
+		fmt.Printf("top level select fields: %T %+v\n", field, field)
 		switch f := field.(type) {
 		case *mapper.Aggregate:
+			fmt.Println("handling top aggregate")
 			var child planNode
 			var err error
 			switch field.GetName() {

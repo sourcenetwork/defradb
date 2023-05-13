@@ -79,7 +79,7 @@ func (p *Planner) makeTypeIndexJoin(
 	var err error
 
 	desc := parent.sourceInfo.collectionDescription
-	typeFieldDesc, ok := desc.GetField(subType.Name)
+	typeFieldDesc, ok := desc.Schema.GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -286,7 +286,7 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.Schema.GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -482,7 +482,7 @@ func (p *Planner) makeTypeJoinMany(
 		return nil, err
 	}
 
-	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.Schema.GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}

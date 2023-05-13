@@ -59,14 +59,27 @@ type DocumentFetcher struct {
 	order        []dsq.Order
 	curSpanIndex int
 
-	filter  *mapper.Filter
-	mapping *core.DocumentMapping
+	filter *mapper.Filter
 
 	filterFields map[uint32]client.FieldDescription
 	selectFields map[uint32]client.FieldDescription
 	// allfields       map[uint32]*client.FieldDescription
 
-	// static bitsets
+	// static bitset to which stores the IDs of fields
+	// needed for filtering.
+	//
+	// This is compared against the encdoc.filterSet which
+	// is a dynamic bitset, that gets updated as fields are
+	// added to the encdoc, and cleared on reset.
+	//
+	// We compare the two bitsets to determine if we've collected
+	// all the necessary fields to run the filter.
+	//
+	// This is *much* more effecient for comparison then most (any?)
+	// other approach.
+	//
+	// When proper seek() is added, this will also be responsible
+	// for effectiently finding the next field to seek to.
 	filterSet *bitset.BitSet
 
 	doc *encodedDocument
@@ -94,6 +107,7 @@ func (df *DocumentFetcher) Init(
 	reverse bool,
 	showDeleted bool,
 ) error {
+	fmt.Println("CALLING FETCHER INIT")
 	if col.Schema.IsEmpty() {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "Schema")
 	}
@@ -128,11 +142,10 @@ func (df *DocumentFetcher) init(
 	df.initialized = true
 	df.filter = filter
 	df.isReadingDocument = false
-	df.mapping = docMapper
 	df.doc = new(encodedDocument)
-	df.doc.mapping = df.mapping
+	df.doc.mapping = docMapper
 
-	if df.filter != nil && df.mapping == nil {
+	if df.filter != nil && docMapper == nil {
 		return ErrMissingMapper
 	}
 
@@ -471,7 +484,7 @@ func (df *DocumentFetcher) processKV(kv *KeyValue) error {
 
 	ufid := uint(fieldID)
 
-	property := &encProperty{
+	property := encProperty{
 		Desc: fieldDesc,
 		Raw:  kv.Value,
 	}

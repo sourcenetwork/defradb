@@ -11,12 +11,15 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/planner/mapper"
+	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
 
 type scanExecInfo struct {
@@ -70,18 +73,74 @@ func (n *scanNode) Init() error {
 
 func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 	n.desc = desc
-	for _, r := range n.slct.Fields {
-		fd, ok := n.desc.GetField(r.GetName())
-		if !ok {
-			// skip fields that are not part of the
-			// schema description. The scanner (and fetcher)
-			// is only responsible for basic fields
-			continue
+	// panic("hi")
+	fmt.Printf("init collection: %T %+v\n", n.slct, n.slct)
+	n.initFields(n.slct.Fields)
+	if n.slct.OrderBy != nil {
+		for _, cond := range n.slct.OrderBy.Conditions {
+			for _, index := range cond.FieldIndexes {
+				name, _ := n.docMapper.documentMapping.TryToFindNameFromIndex(index)
+				n.tryAddField(name)
+			}
 		}
-		n.fields = append(n.fields, fd)
 	}
-
 	return nil
+}
+
+func (n *scanNode) initFields(fields []mapper.Requestable) {
+	for _, r := range fields {
+		fmt.Printf("scan field: %T %+v\n", r, r)
+
+		// add all the possible base level fields the fetcher is responsible
+		// for, including those that are needed by higher level aggregates
+		// or grouping alls, which them selves might have further dependants
+		switch requestable := r.(type) {
+		// field is simple as its just a base level field
+		case *mapper.Field:
+			n.tryAddField(requestable.GetName())
+		// select might have its own select fields and filters fields
+		// @todo: Might need to check that these are sub selects
+		// are _groups
+		case *mapper.Select:
+			if requestable.Targetable.Filter != nil {
+				fieldDescs := parser.ParseFilterFieldsForDescription(
+					requestable.Targetable.Filter.ExternalConditions,
+					n.desc.Schema,
+				)
+				for _, fd := range fieldDescs {
+					n.tryAddField(fd.Name)
+				}
+			}
+			n.initFields(requestable.Fields)
+		// aggregate might have its own target fields and filter fields
+		case *mapper.Aggregate:
+			for _, target := range requestable.AggregateTargets {
+				if target.Filter != nil {
+					fieldDescs := parser.ParseFilterFieldsForDescription(
+						target.Filter.ExternalConditions,
+						n.desc.Schema,
+					)
+					for _, fd := range fieldDescs {
+						n.tryAddField(fd.Name)
+					}
+				}
+				n.tryAddField(target.ChildTarget.Name)
+			}
+		}
+	}
+}
+
+func (n *scanNode) tryAddField(fieldName string) bool {
+	fmt.Println("try add field:", fieldName)
+	fd, ok := n.desc.Schema.GetField(fieldName)
+	if !ok {
+		// skip fields that are not part of the
+		// schema description. The scanner (and fetcher)
+		// is only responsible for basic fields
+		return false
+	}
+	n.fields = append(n.fields, fd)
+	return true
 }
 
 // Start starts the internal logic of the scanner
@@ -126,6 +185,9 @@ func (n *scanNode) Next() (bool, error) {
 	if len(n.currentValue.Fields) == 0 {
 		return false, nil
 	}
+
+	fmt.Println("decoded next doc:", n.currentValue.Fields)
+
 	n.documentMapping.SetFirstOfName(
 		&n.currentValue,
 		request.DeletedFieldName,
@@ -226,6 +288,8 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 func (n *scanNode) Merge() bool { return true }
 
 func (p *Planner) Scan(parsed *mapper.Select) *scanNode {
+	// panic("scan")
+	fmt.Println("CREATING SCANNER + FETCHER")
 	var f fetcher.Fetcher
 	if parsed.Cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)

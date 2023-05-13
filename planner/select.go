@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 
@@ -156,6 +158,9 @@ func (n *selectNode) Next() (bool, error) {
 		}
 
 		n.currentValue = n.source.Value()
+		if n.filter != nil {
+			fmt.Println("select filter:", n.filter.ExternalConditions)
+		}
 		passes, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err
@@ -480,6 +485,8 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("select top level aggregates:", aggregates)
 
 	groupPlan, err := p.GroupBy(groupBy, selectReq, s.groupSelects)
 	if err != nil {

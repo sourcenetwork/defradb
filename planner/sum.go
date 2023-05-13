@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -43,6 +45,7 @@ func (p *Planner) Sum(
 	field *mapper.Aggregate,
 	parent *mapper.Select,
 ) (*sumNode, error) {
+	// panic("sum")
 	isFloat := false
 	for _, target := range field.AggregateTargets {
 		isTargetFloat, err := p.isValueFloat(parent, &target)
@@ -82,7 +85,7 @@ func (p *Planner) isValueFloat(
 			return false, err
 		}
 
-		fieldDescription, fieldDescriptionFound := parentDescription.GetField(source.Name)
+		fieldDescription, fieldDescriptionFound := parentDescription.Schema.GetField(source.Name)
 		if !fieldDescriptionFound {
 			return false, client.NewErrFieldNotExist(source.Name)
 		}
@@ -130,7 +133,7 @@ func (p *Planner) isValueFloat(
 		return false, err
 	}
 
-	fieldDescription, fieldDescriptionFound := childCollectionDescription.GetField(source.ChildTarget.Name)
+	fieldDescription, fieldDescriptionFound := childCollectionDescription.Schema.GetField(source.ChildTarget.Name)
 	if !fieldDescriptionFound {
 		return false, client.NewErrFieldNotExist(source.ChildTarget.Name)
 	}
@@ -330,9 +333,11 @@ func sumItems[T any](
 	less func(T, T) bool,
 	toFloat func(T) float64,
 ) (float64, error) {
+	fmt.Println("summing items")
 	items := enumerable.New(source)
 	if aggregateTarget.Filter != nil {
 		items = enumerable.Where(items, func(item T) (bool, error) {
+			fmt.Println("enumeration filter:", aggregateTarget.Filter.ExternalConditions)
 			return mapper.RunFilter(item, aggregateTarget.Filter)
 		})
 	}
