@@ -803,7 +803,10 @@ func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *cl
 		}
 		colIndex := NewCollectionIndex(c, indexDesc)
 		docDataStoreKey := c.getDSKeyFromDockey(doc.Key())
-		return colIndex.Save(ctx, txn, docDataStoreKey, fieldVal)
+		err = colIndex.Save(ctx, txn, docDataStoreKey, fieldVal)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

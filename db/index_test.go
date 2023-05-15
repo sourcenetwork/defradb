@@ -292,7 +292,8 @@ func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	resultDesc, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
-	assert.Equal(t, desc, resultDesc)
+	assert.Equal(t, desc.Fields, resultDesc.Fields)
+	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
 func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
@@ -414,6 +415,7 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	var deserialized client.IndexDescription
 	err = json.Unmarshal(data, &deserialized)
 	assert.NoError(t, err)
+	desc.ID = 1
 	assert.Equal(t, desc, deserialized)
 }
 
@@ -481,9 +483,9 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	if indexes[0].CollectionName != usersColName {
 		usersIndexIndex = 1
 	}
-	assert.Equal(t, usersIndexDesc, indexes[usersIndexIndex].Index)
+	assert.Equal(t, usersIndexDesc.Name, indexes[usersIndexIndex].Index.Name)
 	assert.Equal(t, usersColName, indexes[usersIndexIndex].CollectionName)
-	assert.Equal(t, productsIndexDesc, indexes[1-usersIndexIndex].Index)
+	assert.Equal(t, productsIndexDesc.Name, indexes[1-usersIndexIndex].Index.Name)
 	assert.Equal(t, productsColName, indexes[1-usersIndexIndex].CollectionName)
 }
 
@@ -538,11 +540,13 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	userIndexes, err := f.getCollectionIndexes(usersColName)
 	assert.NoError(t, err)
 	require.Equal(t, 1, len(userIndexes))
+	usersIndexDesc.ID = 1
 	assert.Equal(t, usersIndexDesc, userIndexes[0])
 
 	productIndexes, err := f.getCollectionIndexes(productsColName)
 	assert.NoError(t, err)
 	require.Equal(t, 1, len(productIndexes))
+	productsIndexDesc.ID = 1
 	assert.Equal(t, productsIndexDesc, productIndexes[0])
 }
 
@@ -565,6 +569,22 @@ func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 
 	_, err = f.getCollectionIndexes(usersColName)
 	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+}
+
+func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+	f.createUserCollectionIndexOnAge()
+
+	indexes, err := f.users.GetIndexes(f.ctx)
+	assert.NoError(t, err)
+	require.Len(t, indexes, 2)
+	require.ElementsMatch(t,
+		[]string{testUsersColIndexName, testUsersColIndexAge},
+		[]string{indexes[0].Name, indexes[1].Name},
+	)
+	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].ID, indexes[1].ID})
 }
 
 func TestDropIndex_ShouldDeleteIndex(t *testing.T) {

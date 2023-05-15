@@ -150,7 +150,9 @@ func (f *indexTestFixture) getPrefixFromDataStore(prefix string) [][]byte {
 func (f *indexTestFixture) mockTxn() *mocks.MultiStoreTxn {
 	mockedTxn := mocks.NewTxnWithMultistore(f.t)
 
-	indexOnNameDescData, err := json.Marshal(getUsersIndexDescOnName())
+	desc := getUsersIndexDescOnName()
+	desc.ID = 1
+	indexOnNameDescData, err := json.Marshal(desc)
 	require.NoError(f.t, err)
 
 	systemStoreOn := mockedTxn.MockSystemstore.EXPECT()
@@ -179,8 +181,9 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 
 	doc := f.newUserDoc("John", 21)
 	f.saveToUsers(doc)
+	//f.commitTxn()
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -192,7 +195,7 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
-	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
 	mockTxn := f.mockTxn()
 
@@ -267,7 +270,7 @@ func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 	doc := f.newUserDoc("John", 21)
 	f.saveToUsers(doc)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)

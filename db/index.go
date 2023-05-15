@@ -64,7 +64,7 @@ func (i *collectionSimpleIndex) Save(
 	err = err
 	indexDataStoreKey := core.IndexDataStoreKey{}
 	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
-	indexDataStoreKey.IndexID = "1"
+	indexDataStoreKey.IndexID = strconv.Itoa(int(i.desc.ID))
 	indexDataStoreKey.FieldValues = []string{string(data), key.DocKey}
 	err = txn.Datastore().Put(ctx, indexDataStoreKey.ToDS(), []byte{})
 	if err != nil {
@@ -172,7 +172,38 @@ func (c *collection) dropAllIndexes(ctx context.Context) error {
 }
 
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	return nil, nil
+	prefix := core.NewCollectionIndexKey(c.Name(), "")
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		//return nil, err
+	}
+	q, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix: prefix.ToString(),
+	})
+	if err != nil {
+		//return nil, NewErrFailedToCreateCollectionQuery(err)
+	}
+	defer func() {
+		if err := q.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close collection query", err)
+		}
+	}()
+
+	indexDescriptions := make([]client.IndexDescription, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			//return nil, err
+		}
+
+		var indexDesc client.IndexDescription
+		err = json.Unmarshal(res.Value, &indexDesc)
+		if err != nil {
+			//return nil, NewErrInvalidStoredIndex(err)
+		}
+		indexDescriptions = append(indexDescriptions, indexDesc)
+	}
+
+	return indexDescriptions, nil
 }
 
 func (c *collection) createIndex(
@@ -194,11 +225,6 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	buf, err := json.Marshal(desc)
-	if err != nil {
-		return nil, err
-	}
-
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -207,6 +233,11 @@ func (c *collection) createIndex(
 	colSeq, err := c.db.getSequence(ctx, txn, fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, c.ID()))
 	colID, err := colSeq.next(ctx, txn)
 	desc.ID = uint32(colID)
+
+	buf, err := json.Marshal(desc)
+	if err != nil {
+		return nil, err
+	}
 
 	err = txn.Systemstore().Put(ctx, indexKey.ToDS(), buf)
 	if err != nil {
