@@ -25,16 +25,20 @@ import (
 )
 
 func MakeRequestCommand(cfg *config.Config) *cobra.Command {
+	var filePath string
 	var cmd = &cobra.Command{
 		Use:   "query [query request]",
 		Short: "Send a DefraDB GraphQL query request",
 		Long: `Send a DefraDB GraphQL query request to the database.
 
 A query request can be sent as a single argument. Example command:
-defradb client query 'query { ... }'
+  defradb client query 'query { ... }'
+
+Do a query request from a file by using the '-f' flag. Example command:
+  defradb client query -f request.graphql
 
 Or it can be sent via stdin by using the '-' special syntax. Example command:
-cat request.graphql | defradb client query -
+  cat request.graphql | defradb client query -
 
 A GraphQL client such as GraphiQL (https://github.com/graphql/graphiql) can be used to interact
 with the database more conveniently.
@@ -48,14 +52,18 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				return err
 			}
 
-			if len(args) > 1 {
+			if filePath != "" {
+				bytes, err := os.ReadFile(filePath)
+				if err != nil {
+					return ErrFailedToReadFile
+				}
+				request = string(bytes)
+			} else if len(args) > 1 {
 				if err = cmd.Usage(); err != nil {
 					return err
 				}
 				return errors.New("too many arguments")
-			}
-
-			if isFileInfoPipe(fi) && (len(args) == 0 || args[0] != "-") {
+			} else if isFileInfoPipe(fi) && (len(args) == 0 || args[0] != "-") {
 				log.FeedbackInfo(
 					cmd.Context(),
 					"Run 'defradb client query -' to read from stdin. Example: 'cat my.graphql | defradb client query -').",
@@ -136,5 +144,6 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 		},
 	}
 
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "File containing the query request")
 	return cmd
 }

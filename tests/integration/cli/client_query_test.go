@@ -64,3 +64,39 @@ func TestRequestWithErrorNoField(t *testing.T) {
 
 	assertContainsSubstring(t, stdout, `Cannot query field \"nonexistent\"`)
 }
+
+func TestRequestQueryFromFile(t *testing.T) {
+	conf := NewDefraNodeDefaultConfig(t)
+	stopDefra := runDefraNode(t, conf)
+	defer stopDefra()
+
+	fname := schemaFileFixture(t, "schema.graphql", `
+		type User123 {
+			XYZ: String
+		}`)
+	stdout, _ := runDefraCommand(t, conf, []string{"client", "schema", "add", "-f", fname})
+	assertContainsSubstring(t, stdout, "success")
+
+	fname = schemaFileFixture(t, "query.graphql", `
+		query {
+			__schema {
+				types {
+					name
+					fields {
+						name
+						type {
+							name
+							kind
+						}
+					}
+				}
+			}
+		}`)
+	stdout, _ = runDefraCommand(t, conf, []string{"client", "query", "-f", fname})
+
+	assertContainsSubstring(t, stdout, "Query")
+
+	// Check that the User type is correctly returned
+	assertContainsSubstring(t, stdout, "User123")
+	assertContainsSubstring(t, stdout, "XYZ")
+}
