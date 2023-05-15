@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.netapi")
+	log = logging.MustNewLogger("netapi")
 )
 
 type Service struct {
