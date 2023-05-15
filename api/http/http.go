@@ -15,4 +15,4 @@ package http
 
 import "github.com/sourcenetwork/defradb/logging"
 
-var log = logging.MustNewLogger("defra.http")
+var log = logging.MustNewLogger("http")

@@ -64,7 +64,7 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var log = logging.MustNewLogger("defra.config")
+var log = logging.MustNewLogger("config")
 
 const (
 	DefaultAPIEmail = "example@example.com"

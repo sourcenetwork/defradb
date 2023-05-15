@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.planner")
+	log = logging.MustNewLogger("planner")
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.

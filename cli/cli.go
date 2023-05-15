@@ -28,7 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-var log = logging.MustNewLogger("defra.cli")
+var log = logging.MustNewLogger("cli")
 
 const badgerDatastoreName = "badger"
 

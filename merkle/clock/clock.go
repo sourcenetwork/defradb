@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.merkleclock")
+	log = logging.MustNewLogger("merkleclock")
 )
 
 // MerkleClock is a MerkleCRDT clock that can be used to read/write events (deltas) to the clock.

@@ -57,7 +57,7 @@ const (
 )
 
 var (
-	log            = logging.MustNewLogger("defra.tests.integration")
+	log            = logging.MustNewLogger("tests.integration")
 	badgerInMemory bool
 	badgerFile     bool
 	inMemoryStore  bool
