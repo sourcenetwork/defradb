@@ -96,7 +96,7 @@ func TestLoggerKeyValueOutput(t *testing.T) {
 	// check that everything is as expected
 	assert.Equal(t, "{\"data\":{\"response\":\"pong\"}}", rec2.Body.String())
 	assert.Equal(t, "INFO", kv["level"])
-	assert.Equal(t, "defra.http", kv["logger"])
+	assert.Equal(t, "http", kv["logger"])
 	assert.Equal(t, "Request", kv["msg"])
 	assert.Equal(t, "GET", kv["Method"])
 	assert.Equal(t, "/ping", kv["Path"])

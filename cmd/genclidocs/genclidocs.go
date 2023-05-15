@@ -25,7 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-var log = logging.MustNewLogger("defra.genclidocs")
+var log = logging.MustNewLogger("genclidocs")
 
 func main() {
 	path := flag.String("o", "docs/cmd", "path to write the cmd docs to")
