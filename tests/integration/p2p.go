@@ -325,7 +325,6 @@ func setupRepicatorWaitSync(
 	sourceNode *node.Node,
 	targetNode *node.Node,
 ) chan struct{} {
-	restartEvents := []int{0}
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
 	docIDsSyncedToSource := map[int]struct{}{}
@@ -333,9 +332,6 @@ func setupRepicatorWaitSync(
 	currentdocID := 0
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
-		case Restart:
-			restartEvents[waitIndex] += 1
-
 		case CreateDoc:
 			if !action.NodeID.HasValue() || action.NodeID.Value() == cfg.SourceNodeID {
 				docIDsSyncedToSource[currentdocID] = struct{}{}
@@ -373,14 +369,13 @@ func setupRepicatorWaitSync(
 			waitIndex += 1
 			targetToSourceEvents = append(targetToSourceEvents, 0)
 			sourceToTargetEvents = append(sourceToTargetEvents, 0)
-			restartEvents = append(restartEvents, 0)
 		}
 	}
 
 	nodeSynced := make(chan struct{})
 	ready := make(chan struct{})
 	go func(ready chan struct{}) {
-		ready <- struct{}{} //need to wait for restart or old node instances will be waited on
+		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())

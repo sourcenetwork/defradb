@@ -44,15 +44,8 @@ type SetupComplete struct{}
 // effected on all nodes.
 type ConfigureNode func() config.Config
 
-// Restart is an action that will close and then start node(s).
-//
-// If no nodes are explicitly configured, all configured nodes will be restarted.
-type Restart struct {
-	// NodeID may hold the ID (index) of a node to apply this update to.
-	//
-	// If a value is not provided the update will be applied to all nodes.
-	NodeID immutable.Option[int]
-}
+// Restart is an action that will close and then start all nodes.
+type Restart struct{}
 
 // SchemaUpdate is an action that will update the database schema.
 type SchemaUpdate struct {

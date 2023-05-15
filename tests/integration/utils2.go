@@ -337,12 +337,15 @@ func executeTestCase(
 			nodeConfigs = append(nodeConfigs, cfg)
 
 		case Restart:
+			// Append the new syncChans on top of the previous - the old syncChans will be closed
+			// gracefully as part of the node closure.
 			syncChans = append(
 				syncChans,
 				restartNodes(ctx, t, testCase, dbt, nodes, dbPaths, nodeAddresses, nodeConfigs)...,
 			)
 
-			// If the db was restarted we need to refresh the collection definitions.
+			// If the db was restarted we need to refresh the collection definitions as the old instances
+			// will reference the old (closed) database instances.
 			collections = getCollections(ctx, t, nodes, collectionNames)
 
 		case ConnectPeers:
@@ -531,7 +534,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case SchemaUpdate, CreateDoc, UpdateDoc:
+		case SchemaUpdate, CreateDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -606,7 +609,6 @@ func restartNodes(
 	nodeAddresses []string,
 	configureActions []config.Config,
 ) []chan struct{} {
-	//todo - dont do all this inline here, and handle p2p
 	if dbt == badgerIMType || dbt == defraIMType {
 		return nil
 	}
@@ -621,6 +623,8 @@ func restartNodes(
 		databaseDir = originalPath
 
 		if len(configureActions) == 0 {
+			// If there are no explicit node configuration actions the node will be
+			// basic (i.e. no P2P stuff) and can be yielded now.
 			nodes[i] = &node.Node{
 				DB: db,
 			}
@@ -628,8 +632,10 @@ func restartNodes(
 		}
 
 		cfg := configureActions[i]
-		var n *node.Node
+		// We need to make sure the node is configured with its old address, otherwise
+		// a new one may be selected and reconnnection to it will fail.
 		cfg.Net.P2PAddress = strings.Split(nodeAddresses[i], "/p2p/")[0]
+		var n *node.Node
 		n, err = node.NewNode(
 			ctx,
 			db,
@@ -661,8 +667,10 @@ func restartNodes(
 			))
 		}
 	}
+
 	// Give the nodes a chance to connect to each other and learn about each other's subscrivbed topics.
 	time.Sleep(100 * time.Millisecond)
+
 	return syncChans
 }
 
