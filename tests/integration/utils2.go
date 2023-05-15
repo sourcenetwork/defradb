@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/datastore/memory"
@@ -184,7 +185,7 @@ func NewInMemoryDB(ctx context.Context) (client.DB, error) {
 	return db, nil
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, string, error) {
 	var dbPath string
 	if databaseDir != "" {
 		dbPath = databaseDir
@@ -194,7 +195,8 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 		dbPath = t.TempDir()
 	}
 
-	return newBadgerFileDB(ctx, t, dbPath)
+	db, err := newBadgerFileDB(ctx, t, dbPath)
+	return db, dbPath, err
 }
 
 func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB, error) {
@@ -230,31 +232,31 @@ func GetDatabaseTypes() []DatabaseType {
 	return databases
 }
 
-func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB, error) {
+func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB, string, error) {
 	switch dbt {
 	case badgerIMType:
 		db, err := NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return db, nil
+		return db, "", nil
 
 	case badgerFileType:
-		db, err := NewBadgerFileDB(ctx, t)
+		db, path, err := NewBadgerFileDB(ctx, t)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return db, nil
+		return db, path, nil
 
 	case defraIMType:
 		db, err := NewInMemoryDB(ctx)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return db, nil
+		return db, "", nil
 	}
 
-	return nil, nil
+	return nil, "", nil
 }
 
 // ExecuteTestCase executes the given TestCase against the configured database
@@ -299,10 +301,12 @@ func executeTestCase(
 	resultsChans := []chan func(){}
 	syncChans := []chan struct{}{}
 	nodeAddresses := []string{}
-	nodes := getStartingNodes(ctx, t, dbt, collectionNames, testCase)
+	// The actions responsible for configuring the node
+	nodeConfigs := []config.Config{}
+	nodes, dbPaths := getStartingNodes(ctx, t, dbt, collectionNames, testCase)
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
-	defer closeNodes(ctx, t, &nodes)
+	defer closeNodes(ctx, t, nodes)
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
@@ -325,10 +329,24 @@ func executeTestCase(
 				t.SkipNow()
 				return
 			}
-
-			node, address := configureNode(ctx, t, dbt, action)
+			cfg := action()
+			node, address, path := configureNode(ctx, t, dbt, cfg)
 			nodes = append(nodes, node)
 			nodeAddresses = append(nodeAddresses, address)
+			dbPaths = append(dbPaths, path)
+			nodeConfigs = append(nodeConfigs, cfg)
+
+		case Restart:
+			// Append the new syncChans on top of the previous - the old syncChans will be closed
+			// gracefully as part of the node closure.
+			syncChans = append(
+				syncChans,
+				restartNodes(ctx, t, testCase, dbt, nodes, dbPaths, nodeAddresses, nodeConfigs)...,
+			)
+
+			// If the db was restarted we need to refresh the collection definitions as the old instances
+			// will reference the old (closed) database instances.
+			collections = getCollections(ctx, t, nodes, collectionNames)
 
 		case ConnectPeers:
 			syncChans = append(syncChans, connectPeers(ctx, t, testCase, action, nodes, nodeAddresses))
@@ -418,9 +436,9 @@ func executeTestCase(
 func closeNodes(
 	ctx context.Context,
 	t *testing.T,
-	nodes *[]*node.Node,
+	nodes []*node.Node,
 ) {
-	for _, node := range *nodes {
+	for _, node := range nodes {
 		if node.Peer != nil {
 			err := node.Close()
 			require.NoError(t, err)
@@ -516,7 +534,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case SchemaUpdate, CreateDoc, UpdateDoc:
+		case SchemaUpdate, CreateDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -555,7 +573,7 @@ func getStartingNodes(
 	dbt DatabaseType,
 	collectionNames []string,
 	testCase TestCase,
-) []*node.Node {
+) ([]*node.Node, []string) {
 	hasExplicitNode := false
 	for _, action := range testCase.Actions {
 		switch action.(type) {
@@ -566,17 +584,94 @@ func getStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		db, err := GetDatabase(ctx, t, dbt)
+		db, path, err := GetDatabase(ctx, t, dbt)
 		require.Nil(t, err)
 
 		return []*node.Node{
-			{
+				{
+					DB: db,
+				},
+			}, []string{
+				path,
+			}
+	}
+
+	return []*node.Node{}, []string{}
+}
+
+func restartNodes(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	dbt DatabaseType,
+	nodes []*node.Node,
+	dbPaths []string,
+	nodeAddresses []string,
+	configureActions []config.Config,
+) []chan struct{} {
+	if dbt == badgerIMType || dbt == defraIMType {
+		return nil
+	}
+	closeNodes(ctx, t, nodes)
+
+	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
+	for i := len(nodes) - 1; i >= 0; i-- {
+		originalPath := databaseDir
+		databaseDir = dbPaths[i]
+		db, _, err := GetDatabase(ctx, t, dbt)
+		require.Nil(t, err)
+		databaseDir = originalPath
+
+		if len(configureActions) == 0 {
+			// If there are no explicit node configuration actions the node will be
+			// basic (i.e. no P2P stuff) and can be yielded now.
+			nodes[i] = &node.Node{
 				DB: db,
-			},
+			}
+			continue
+		}
+
+		cfg := configureActions[i]
+		// We need to make sure the node is configured with its old address, otherwise
+		// a new one may be selected and reconnnection to it will fail.
+		cfg.Net.P2PAddress = strings.Split(nodeAddresses[i], "/p2p/")[0]
+		var n *node.Node
+		n, err = node.NewNode(
+			ctx,
+			db,
+			cfg.NodeConfig(),
+		)
+		require.NoError(t, err)
+
+		if err := n.Start(); err != nil {
+			closeErr := n.Close()
+			if closeErr != nil {
+				t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
+			}
+			require.NoError(t, err)
+		}
+
+		nodes[i] = n
+	}
+
+	syncChans := []chan struct{}{}
+	for _, tc := range testCase.Actions {
+		switch action := tc.(type) {
+		case ConnectPeers:
+			syncChans = append(syncChans, setupPeerWaitSync(
+				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+			))
+		case ConfigureReplicator:
+			syncChans = append(syncChans, setupRepicatorWaitSync(
+				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+			))
 		}
 	}
 
-	return []*node.Node{}
+	// Give the nodes a chance to connect to each other and learn about each other's subscrivbed topics.
+	time.Sleep(100 * time.Millisecond)
+
+	return syncChans
 }
 
 // getCollections returns all the collections of the given names, preserving order.
@@ -616,14 +711,14 @@ func configureNode(
 	ctx context.Context,
 	t *testing.T,
 	dbt DatabaseType,
-	cfg ConfigureNode,
-) (*node.Node, string) {
+	cfg config.Config,
+) (*node.Node, string, string) {
 	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
 	// And affects where libp2p(?) stores some values on the file system, even when using
 	// an in memory store.
 	cfg.Datastore.Badger.Path = t.TempDir()
 
-	db, err := GetDatabase(ctx, t, dbt) //disable change dector, or allow it?
+	db, path, err := GetDatabase(ctx, t, dbt) //disable change dector, or allow it?
 	require.NoError(t, err)
 
 	var n *node.Node
@@ -645,7 +740,7 @@ func configureNode(
 
 	address := fmt.Sprintf("%s/p2p/%s", n.ListenAddrs()[0].String(), n.PeerID())
 
-	return n, address
+	return n, address, path
 }
 
 func getDocuments(
