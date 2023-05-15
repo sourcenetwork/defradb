@@ -56,38 +56,81 @@ func (f *indexTestFixture) newProdDoc(id int, price float64, cat string) *client
 	return doc
 }
 
-func (f *indexTestFixture) getNonUniqueIndexKey(colName string) core.IndexDataStoreKey {
-	cols, err := f.db.getAllCollections(f.ctx, f.txn)
-	require.NoError(f.t, err)
-	colID := -1
+type indexKeyBuilder struct {
+	f         *indexTestFixture
+	colName   string
+	fieldName string
+	doc       *client.Document
+	isUnique  bool
+}
+
+func newIndexKeyBuilder(f *indexTestFixture) *indexKeyBuilder {
+	return &indexKeyBuilder{f: f}
+}
+
+func (b *indexKeyBuilder) Col(colName string) *indexKeyBuilder {
+	b.colName = colName
+	return b
+}
+
+func (b *indexKeyBuilder) Field(fieldName string) *indexKeyBuilder {
+	b.fieldName = fieldName
+	return b
+}
+
+func (b *indexKeyBuilder) Doc(doc *client.Document) *indexKeyBuilder {
+	b.doc = doc
+	return b
+}
+
+func (b *indexKeyBuilder) Unique() *indexKeyBuilder {
+	b.isUnique = true
+	return b
+}
+
+func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
+	key := core.IndexDataStoreKey{}
+
+	if b.colName == "" {
+		return key
+	}
+
+	cols, err := b.f.db.getAllCollections(b.f.ctx, b.f.txn)
+	require.NoError(b.f.t, err)
+	var collection client.Collection
 	for _, col := range cols {
-		if col.Name() == colName {
-			colID = int(col.ID())
+		if col.Name() == b.colName {
+			collection = col
 			break
 		}
 	}
-	if colID == -1 {
+	if collection == nil {
 		panic(errors.New("collection not found"))
 	}
+	key.CollectionID = strconv.Itoa(int(collection.ID()))
 
-	key := core.IndexDataStoreKey{
-		CollectionID: strconv.Itoa(colID),
-		IndexID:      strconv.Itoa(1),
+	if b.fieldName == "" {
+		return key
 	}
-	return key
-}
 
-func (f *indexTestFixture) getNonUniqueDocIndexKey(
-	doc *client.Document,
-	colName, fieldName string,
-) core.IndexDataStoreKey {
-	key := f.getNonUniqueIndexKey(colName)
+	indexes, err := collection.GetIndexes(b.f.ctx)
+	require.NoError(b.f.t, err)
+	for _, index := range indexes {
+		if index.Fields[0].Name == b.fieldName {
+			key.IndexID = strconv.Itoa(int(index.ID))
+			break
+		}
+	}
 
-	fieldVal, err := doc.Get(fieldName)
-	require.NoError(f.t, err)
+	if b.doc == nil {
+		return key
+	}
+
+	fieldVal, err := b.doc.Get(b.fieldName)
+	require.NoError(b.f.t, err)
 	fieldStrVal := fmt.Sprintf("%v", fieldVal)
 
-	key.FieldValues = []string{fieldStrVal, doc.Key().String()}
+	key.FieldValues = []string{fieldStrVal, b.doc.Key().String()}
 
 	return key
 }
@@ -137,7 +180,7 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	doc := f.newUserDoc("John", 21)
 	f.saveToUsers(doc)
 
-	key := f.getNonUniqueDocIndexKey(doc, usersColName, usersNameFieldName)
+	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -149,7 +192,7 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
-	key := f.getNonUniqueDocIndexKey(doc, usersColName, usersNameFieldName)
+	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Build()
 
 	mockTxn := f.mockTxn()
 
@@ -178,7 +221,7 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	err = f.users.Create(f.ctx, doc)
 	require.NoError(f.t, err)
 
-	key := f.getNonUniqueIndexKey(usersColName)
+	key := newIndexKeyBuilder(f).Col(usersColName).Build()
 	prefixes := f.getPrefixFromDataStore(key.ToString())
 	assert.Len(t, prefixes, 0)
 }
@@ -224,7 +267,7 @@ func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 	doc := f.newUserDoc("John", 21)
 	f.saveToUsers(doc)
 
-	key := f.getNonUniqueDocIndexKey(doc, usersColName, usersAgeFieldName)
+	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -251,13 +294,32 @@ func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t
 	require.NoError(f.t, err)
 	f.commitTxn()
 
-	userDocKey := f.getNonUniqueDocIndexKey(userDoc, usersColName, usersNameFieldName)
-	prodDocKey := f.getNonUniqueDocIndexKey(prodDoc, productsColName, productsCategoryFieldName)
+	userDocKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(userDoc).Build()
+	prodDocKey := newIndexKeyBuilder(f).Col(productsColName).Field(productsCategoryFieldName).Doc(prodDoc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, userDocKey.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 	data, err = f.txn.Datastore().Get(f.ctx, prodDocKey.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+}
+
+func TestNonUnique_IfMultipleIndexes_StoreIndexWithIndexID(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+	f.createUserCollectionIndexOnAge()
+
+	doc := f.newUserDoc("John", 21)
+	f.saveToUsers(doc)
+
+	nameKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+	ageKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, nameKey.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+	data, err = f.txn.Datastore().Get(f.ctx, ageKey.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 }

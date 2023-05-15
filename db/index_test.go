@@ -12,7 +12,9 @@ package db
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -262,6 +264,22 @@ func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
 	assert.EqualError(t, err, errIndexMissingFields)
 }
 
+func TestCreateIndex_IfIndexDescriptionIDIsNotZero_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	for _, id := range []uint32{1, 20, 999} {
+		desc := client.IndexDescription{
+			Name: "some_index_name",
+			ID:   id,
+			Fields: []client.IndexedFieldDescription{
+				{Name: usersNameFieldName, Direction: client.Ascending},
+			},
+		}
+		_, err := f.createCollectionIndex(desc)
+		assert.ErrorIs(t, err, NewErrNonZeroIndexIDProvided(0))
+	}
+}
+
 func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 
@@ -273,8 +291,8 @@ func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	}
 	resultDesc, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
-	assert.Equal(t, resultDesc.Name, desc.Name)
-	assert.Equal(t, resultDesc, desc)
+	assert.Equal(t, desc.Name, resultDesc.Name)
+	assert.Equal(t, desc, resultDesc)
 }
 
 func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
@@ -299,7 +317,7 @@ func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	}
 	newDesc, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
-	assert.Equal(t, newDesc.Fields[0].Direction, client.Ascending)
+	assert.Equal(t, client.Ascending, newDesc.Fields[0].Direction)
 }
 
 func TestCreateIndex_IfNameIsNotSpecified_GenerateWithLowerCase(t *testing.T) {
@@ -321,7 +339,7 @@ func TestCreateIndex_IfNameIsNotSpecified_GenerateWithLowerCase(t *testing.T) {
 
 	newDesc, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
-	assert.Equal(t, newDesc.Name, colName+"_"+fieldName+"_ASC")
+	assert.Equal(t, colName+"_"+fieldName+"_ASC", newDesc.Name)
 }
 
 func TestCreateIndex_IfSingleFieldInDescOrder_ReturnError(t *testing.T) {
@@ -376,7 +394,7 @@ func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
 	assert.NoError(t, err)
 	newDesc3, err := f.createCollectionIndex(desc3)
 	assert.NoError(t, err)
-	assert.Equal(t, newDesc3.Name, name+"_3")
+	assert.Equal(t, name+"_3", newDesc3.Name)
 }
 
 func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
@@ -396,7 +414,7 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	var deserialized client.IndexDescription
 	err = json.Unmarshal(data, &deserialized)
 	assert.NoError(t, err)
-	assert.Equal(t, deserialized, desc)
+	assert.Equal(t, desc, deserialized)
 }
 
 func TestCreateIndex_IfStorageFails_ReturnError(t *testing.T) {
@@ -458,15 +476,15 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	indexes, err := f.getAllIndexes()
 	assert.NoError(t, err)
 
-	require.Equal(t, len(indexes), 2)
+	require.Equal(t, 2, len(indexes))
 	usersIndexIndex := 0
 	if indexes[0].CollectionName != usersColName {
 		usersIndexIndex = 1
 	}
-	assert.Equal(t, indexes[usersIndexIndex].Index, usersIndexDesc)
-	assert.Equal(t, indexes[usersIndexIndex].CollectionName, usersColName)
-	assert.Equal(t, indexes[1-usersIndexIndex].Index, productsIndexDesc)
-	assert.Equal(t, indexes[1-usersIndexIndex].CollectionName, productsColName)
+	assert.Equal(t, usersIndexDesc, indexes[usersIndexIndex].Index)
+	assert.Equal(t, usersColName, indexes[usersIndexIndex].CollectionName)
+	assert.Equal(t, productsIndexDesc, indexes[1-usersIndexIndex].Index)
+	assert.Equal(t, productsColName, indexes[1-usersIndexIndex].CollectionName)
 }
 
 func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
@@ -519,13 +537,13 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 
 	userIndexes, err := f.getCollectionIndexes(usersColName)
 	assert.NoError(t, err)
-	require.Equal(t, len(userIndexes), 1)
-	assert.Equal(t, userIndexes[0], usersIndexDesc)
+	require.Equal(t, 1, len(userIndexes))
+	assert.Equal(t, usersIndexDesc, userIndexes[0])
 
 	productIndexes, err := f.getCollectionIndexes(productsColName)
 	assert.NoError(t, err)
-	require.Equal(t, len(productIndexes), 1)
-	assert.Equal(t, productIndexes[0], productsIndexDesc)
+	require.Equal(t, 1, len(productIndexes))
+	assert.Equal(t, productsIndexDesc, productIndexes[0])
 }
 
 func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {
@@ -594,12 +612,12 @@ func TestDropAllIndex_ShouldDeleteAllIndexes(t *testing.T) {
 	})
 	assert.NoError(f.t, err)
 
-	assert.Equal(t, f.countIndexPrefixes(usersColName, ""), 2)
+	assert.Equal(t, 2, f.countIndexPrefixes(usersColName, ""))
 
 	err = f.dropAllIndexes(usersColName)
 	assert.NoError(t, err)
 
-	assert.Equal(t, f.countIndexPrefixes(usersColName, ""), 0)
+	assert.Equal(t, 0, f.countIndexPrefixes(usersColName, ""))
 }
 
 func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
@@ -610,4 +628,34 @@ func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
 
 	err := f.dropAllIndexes(usersColName)
 	assert.Error(t, err)
+}
+
+func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCollection(t *testing.T) {
+	f := newIndexTestFixtureBare(t)
+	users := f.createCollection(getUsersCollectionDesc())
+	products := f.createCollection(getProductsCollectionDesc())
+
+	makeIndex := func(fieldName string) client.IndexDescription {
+		return client.IndexDescription{
+			Fields: []client.IndexedFieldDescription{
+				{Name: fieldName, Direction: client.Ascending},
+			},
+		}
+	}
+
+	createIndexAndAssert := func(col client.Collection, fieldName string, expectedID uint32) {
+		desc, err := f.createCollectionIndexFor(col.Name(), makeIndex(fieldName))
+		require.NoError(t, err)
+		assert.Equal(t, expectedID, desc.ID)
+		seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, col.ID()))
+		storedSeqKey, err := f.txn.Systemstore().Get(f.ctx, seqKey.ToDS())
+		assert.NoError(t, err)
+		storedSeqVal := binary.BigEndian.Uint64(storedSeqKey)
+		assert.Equal(t, expectedID, uint32(storedSeqVal))
+	}
+
+	createIndexAndAssert(users, usersNameFieldName, 1)
+	createIndexAndAssert(users, usersAgeFieldName, 2)
+	createIndexAndAssert(products, productsIDFieldName, 1)
+	createIndexAndAssert(products, productsCategoryFieldName, 2)
 }

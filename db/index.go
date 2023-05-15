@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -80,19 +81,22 @@ func (i *collectionSimpleIndex) Description() client.IndexDescription {
 	return i.desc
 }
 
-func validateIndexDescriptionFields(fields []client.IndexedFieldDescription) error {
-	if len(fields) == 0 {
+func validateIndexDescription(desc client.IndexDescription) error {
+	if desc.ID != 0 {
+		return NewErrNonZeroIndexIDProvided(desc.ID)
+	}
+	if len(desc.Fields) == 0 {
 		return ErrIndexMissingFields
 	}
-	if len(fields) == 1 && fields[0].Direction == client.Descending {
+	if len(desc.Fields) == 1 && desc.Fields[0].Direction == client.Descending {
 		return ErrIndexSingleFieldWrongDirection
 	}
-	for i := range fields {
-		if fields[i].Name == "" {
+	for i := range desc.Fields {
+		if desc.Fields[i].Name == "" {
 			return ErrIndexFieldMissingName
 		}
-		if fields[i].Direction == "" {
-			fields[i].Direction = client.Ascending
+		if desc.Fields[i].Direction == "" {
+			desc.Fields[i].Direction = client.Ascending
 		}
 	}
 	return nil
@@ -175,7 +179,7 @@ func (c *collection) createIndex(
 	ctx context.Context,
 	desc client.IndexDescription,
 ) (CollectionIndex, error) {
-	err := validateIndexDescriptionFields(desc.Fields)
+	err := validateIndexDescription(desc)
 	if err != nil {
 		return nil, err
 	}
@@ -199,6 +203,10 @@ func (c *collection) createIndex(
 	if err != nil {
 		return nil, err
 	}
+
+	colSeq, err := c.db.getSequence(ctx, txn, fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, c.ID()))
+	colID, err := colSeq.next(ctx, txn)
+	desc.ID = uint32(colID)
 
 	err = txn.Systemstore().Put(ctx, indexKey.ToDS(), buf)
 	if err != nil {

@@ -14,6 +14,7 @@ type IndexedFieldDescription struct {
 
 type IndexDescription struct {
 	Name   string
+	ID     uint32
 	Fields []IndexedFieldDescription
 	Unique bool
 }

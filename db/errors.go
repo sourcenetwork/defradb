@@ -38,6 +38,7 @@ const (
 	errDocumentAlreadyExists         string = "a document with the given dockey already exists"
 	errDocumentDeleted               string = "a document with the given dockey has been deleted"
 	errIndexMissingFields             string = "index missing fields"
+	errNonZeroIndexIDProvided         string = "non-zero index ID provided"
 	errIndexFieldMissingName          string = "index field missing name"
 	errIndexFieldMissingDirection     string = "index field missing direction"
 	errIndexSingleFieldWrongDirection string = "wrong direction for index with a single field"
@@ -146,6 +147,11 @@ func NewErrFailedToStoreIndexedField(fieldName string, inner error) error {
 // could not be read.
 func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
+}
+
+// NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was provided.
+func NewErrNonZeroIndexIDProvided(indexID uint32) error {
+	return errors.New(errNonZeroIndexIDProvided, errors.NewKV("ID", indexID))
 }
 
 // NewErrFailedToGetCollection returns a new error indicating that the collection could not be obtained.
