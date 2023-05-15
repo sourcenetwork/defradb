@@ -342,10 +342,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 	// clean up
 	for _, n := range nodes {
-		n.DB.Close(ctx)
 		if err := n.Close(); err != nil {
 			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err.Error()))
 		}
+		n.DB.Close(ctx)
 	}
 }
 

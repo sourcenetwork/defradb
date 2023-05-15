@@ -75,7 +75,8 @@ type Node struct {
 	// receives an event when a pushLog request has been processed.
 	pushLogEvent chan net.EvtReceivedPushLog
 
-	ctx context.Context
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // NewNode creates a new network node instance of DefraDB, wired into libp2p.
@@ -155,6 +156,8 @@ func NewNode(
 		}
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+
 	peer, err := net.NewPeer(
 		ctx,
 		db,
@@ -166,6 +169,7 @@ func NewNode(
 		options.GRPCDialOptions,
 	)
 	if err != nil {
+		cancel()
 		return nil, fin.Cleanup(err)
 	}
 
@@ -185,6 +189,7 @@ func NewNode(
 		pubsub:       ps,
 		DB:           db,
 		ctx:          ctx,
+		cancel:       cancel,
 	}
 
 	n.subscribeToPeerConnectionEvents()
@@ -313,6 +318,8 @@ func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 			return nil
 		case <-time.After(evtWaitTimeout):
 			return errors.New("waiting for peer connection timed out")
+		case <-n.ctx.Done():
+			return nil
 		}
 	}
 }
@@ -328,6 +335,8 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 			return nil
 		case <-time.After(evtWaitTimeout):
 			return errors.New("waiting for pubsub timed out")
+		case <-n.ctx.Done():
+			return nil
 		}
 	}
 }
@@ -349,6 +358,8 @@ func (n *Node) WaitForPushLogByPeerEvent(id peer.ID) error {
 			return nil
 		case <-time.After(evtWaitTimeout):
 			return errors.New("waiting for pushlog timed out")
+		case <-n.ctx.Done():
+			return nil
 		}
 	}
 }
@@ -370,6 +381,8 @@ func (n *Node) WaitForPushLogFromPeerEvent(id peer.ID) error {
 			return nil
 		case <-time.After(evtWaitTimeout):
 			return errors.New("waiting for pushlog timed out")
+		case <-n.ctx.Done():
+			return nil
 		}
 	}
 }
@@ -430,5 +443,6 @@ func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, er
 
 // Close closes the node and all its services.
 func (n Node) Close() error {
+	n.cancel()
 	return n.Peer.Close()
 }
