@@ -159,7 +159,17 @@ func connectPeers(
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(100 * time.Millisecond)
+	return setupPeerWaitSync(ctx, t, testCase, cfg, sourceNode, targetNode)
+}
 
+func setupPeerWaitSync(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	cfg ConnectPeers,
+	sourceNode *node.Node,
+	targetNode *node.Node,
+) chan struct{} {
 	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -304,7 +314,17 @@ func configureReplicator(
 
 	_, err = sourceNode.Peer.SetReplicator(ctx, addr)
 	require.NoError(t, err)
+	return setupRepicatorWaitSync(ctx, t, testCase, cfg, sourceNode, targetNode)
+}
 
+func setupRepicatorWaitSync(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	cfg ConfigureReplicator,
+	sourceNode *node.Node,
+	targetNode *node.Node,
+) chan struct{} {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
 	docIDsSyncedToSource := map[int]struct{}{}
@@ -497,12 +517,11 @@ func waitForSync(
 const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
 
 func RandomNetworkingConfig() ConfigureNode {
-	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = randomMultiaddr
-	cfg.Net.RPCAddress = "0.0.0.0:0"
-	cfg.Net.TCPAddress = randomMultiaddr
-
-	return ConfigureNode{
-		Config: *cfg,
+	return func() config.Config {
+		cfg := config.DefaultConfig()
+		cfg.Net.P2PAddress = randomMultiaddr
+		cfg.Net.RPCAddress = "0.0.0.0:0"
+		cfg.Net.TCPAddress = randomMultiaddr
+		return *cfg
 	}
 }

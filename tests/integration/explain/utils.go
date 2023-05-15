@@ -475,7 +475,7 @@ func getDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	for _, dbt := range testUtils.GetDatabaseTypes() {
-		db, err := testUtils.GetDatabase(ctx, t, dbt)
+		db, _, err := testUtils.GetDatabase(ctx, t, dbt)
 		if err != nil {
 			return nil, err
 		}
