@@ -23,6 +23,6 @@ Interact with the database's blockstore
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
-* [defradb client blocks get](defradb_client_blocks_get.md)	 - Get a block by its CID from the blockstore.
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client blocks get](defradb_client_blocks_get.md)	 - Get a block by its CID from the blockstore
 

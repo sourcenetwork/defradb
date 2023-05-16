@@ -6,10 +6,7 @@ DefraDB Edge Database
 
 DefraDB is the edge database to power the user-centric future.
 
-Start a database node, issue a request to a local or remote node, and much more.
-
-DefraDB is released under the BSL license, (c) 2022 Democratized Data Foundation.
-See https://docs.source.network/BSL.txt for more information.
+Start a database node, interact with a local or remote node, and much more.
 
 
 ### Options
@@ -28,9 +25,9 @@ See https://docs.source.network/BSL.txt for more information.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb init](defradb_init.md)	 - Initialize DefraDB's root directory and configuration file
 * [defradb server-dump](defradb_server-dump.md)	 - Dumps the state of the entire database
-* [defradb start](defradb_start.md)	 - Start a DefraDB node
+* [defradb start](defradb_start.md)	 - Start a database node
 * [defradb version](defradb_version.md)	 - Display the version information of DefraDB and its components
 

@@ -6,7 +6,7 @@ Patch an existing schema type
 
 Patch an existing schema.
 
-Uses JSON PATCH formatting as a DDL.
+Uses JSON Patch to modify schema types.
 
 Example: patch from an argument string:
   defradb client schema patch '[{ "op": "add", "path": "...", "value": {...} }]'
@@ -45,5 +45,5 @@ defradb client schema patch [schema] [flags]
 
 ### SEE ALSO
 
-* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a running DefraDB instance
+* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
 

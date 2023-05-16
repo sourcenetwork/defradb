@@ -1,15 +1,15 @@
 ## defradb client rpc
 
-Interact with a DefraDB gRPC server
+Interact with a DefraDB node via RPC
 
 ### Synopsis
 
-Interact with a DefraDB gRPC server.
+Interact with a DefraDB node via RPC.
 
 ### Options
 
 ```
-      --addr string   gRPC endpoint address (default "0.0.0.0:9161")
+      --addr string   RPC endpoint address (default "0.0.0.0:9161")
   -h, --help          help for rpc
 ```
 
@@ -28,7 +28,7 @@ Interact with a DefraDB gRPC server.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
-* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Interact with the P2P collection system
-* [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Interact with the replicator system
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the p2p collection system
+* [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Configure the replicator system
 

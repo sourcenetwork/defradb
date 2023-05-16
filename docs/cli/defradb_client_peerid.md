@@ -1,6 +1,10 @@
 ## defradb client peerid
 
-Get the PeerID of the DefraDB node
+Get the PeerID of the node
+
+### Synopsis
+
+Get the PeerID of the node.
 
 ```
 defradb client peerid [flags]
@@ -27,5 +31,5 @@ defradb client peerid [flags]
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 

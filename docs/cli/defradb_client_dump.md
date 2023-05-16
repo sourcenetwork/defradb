@@ -27,5 +27,5 @@ defradb client dump [flags]
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 

@@ -1,10 +1,10 @@
 ## defradb client schema add
 
-Add a new schema type to DefraDB
+Add new schema
 
 ### Synopsis
 
-Add a new schema type to DefraDB.
+Add new schema.
 
 Example: add from an argument string:
   defradb client schema add 'type Foo { ... }'
@@ -43,5 +43,5 @@ defradb client schema add [schema] [flags]
 
 ### SEE ALSO
 
-* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a running DefraDB instance
+* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
 

@@ -26,8 +26,9 @@ import (
 func MakeP2PCollectionAddCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "add [collectionID]",
-		Short: "Add P2P collections",
-		Long:  `Use this command if you wish to add new P2P collections to the pubsub topics`,
+		Short: "Add p2p collections",
+		Long: `Add p2p collections to the synchronized pubsub topics.
+The collections are synchronized between nodes of a pubsub network.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
 				return errors.New("must specify at least one collectionID")
@@ -38,7 +39,7 @@ func MakeP2PCollectionAddCommand(cfg *config.Config) *cobra.Command {
 			cred := insecure.NewCredentials()
 			client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
 			if err != nil {
-				return errors.Wrap("failed to create RPC client", err)
+				return ErrFailedToCreateRPCClient
 			}
 
 			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
