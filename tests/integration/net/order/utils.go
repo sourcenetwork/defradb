@@ -128,7 +128,8 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 }
 
 func seedSchema(ctx context.Context, db client.DB) error {
-	return db.AddSchema(ctx, userCollectionGQLSchema)
+	_, err := db.AddSchema(ctx, userCollectionGQLSchema)
+	return err
 }
 
 func seedDocument(ctx context.Context, db client.DB, document string) (client.DocKey, error) {

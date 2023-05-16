@@ -155,6 +155,11 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(req.Context(), rw, newGQLResult(result.GQL), http.StatusOK)
 }
 
+type collectionResponse struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
+
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	sdl, err := readWithLimit(req.Body, rw)
 	if err != nil {
@@ -168,16 +173,29 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = db.AddSchema(req.Context(), string(sdl))
+	colDescs, err := db.AddSchema(req.Context(), string(sdl))
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
+	colResp := make([]collectionResponse, len(colDescs))
+	for i, desc := range colDescs {
+		col, err := db.GetCollectionByName(req.Context(), desc.Name)
+		if err != nil {
+			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+			return
+		}
+		colResp[i] = collectionResponse{
+			Name: col.Name(),
+			ID:   col.SchemaID(),
+		}
+	}
+
 	sendJSON(
 		req.Context(),
 		rw,
-		simpleDataResponse("result", "success"),
+		simpleDataResponse("result", "success", "collections", colResp),
 		http.StatusOK,
 	)
 }

@@ -88,7 +88,7 @@ type Store interface {
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(context.Context, string) error
+	AddSchema(context.Context, string) ([]CollectionDescription, error)
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
 	// present in the database.

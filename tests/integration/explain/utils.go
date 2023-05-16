@@ -506,7 +506,7 @@ func setupDatabase(
 	updates immutable.Option[map[int]map[int][]string],
 ) {
 	db := dbi.db
-	err := db.AddSchema(ctx, schema)
+	_, err := db.AddSchema(ctx, schema)
 	if testUtils.AssertError(t, description, err, expectedError) {
 		return
 	}
