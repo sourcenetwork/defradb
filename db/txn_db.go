@@ -191,19 +191,22 @@ func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collec
 //
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
-func (db *implicitTxnDB) AddSchema(ctx context.Context, schemaString string) error {
+func (db *implicitTxnDB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	err = db.addSchema(ctx, txn, schemaString)
+	cols, err := db.addSchema(ctx, txn, schemaString)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return txn.Commit(ctx)
+	if err := txn.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return cols, nil
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
@@ -211,7 +214,7 @@ func (db *implicitTxnDB) AddSchema(ctx context.Context, schemaString string) err
 //
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
-func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) error {
+func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
 	return db.addSchema(ctx, db.txn, schemaString)
 }
 
