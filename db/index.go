@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	ds "github.com/ipfs/go-datastore"
 
@@ -13,12 +14,64 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 type CollectionIndex interface {
 	Save(context.Context, datastore.Txn, core.DataStoreKey, any) error
 	Name() string
 	Description() client.IndexDescription
+}
+
+func getFieldValConverter(kind client.FieldKind) func(any) ([]byte, error) {
+	switch kind {
+	case client.FieldKind_STRING:
+		return func(val any) ([]byte, error) {
+			return []byte(val.(string)), nil
+		}
+	case client.FieldKind_INT:
+		return func(val any) ([]byte, error) {
+			intVal, ok := val.(int64)
+			if !ok {
+				return nil, errors.New("invalid int value")
+			}
+			return []byte(strconv.FormatInt(intVal, 10)), nil
+		}
+	case client.FieldKind_FLOAT:
+		return func(val any) ([]byte, error) {
+			floatVal, ok := val.(float64)
+			if !ok {
+				return nil, errors.New("invalid float value")
+			}
+			return []byte(strconv.FormatFloat(floatVal, 'f', -1, 64)), nil
+		}
+	case client.FieldKind_BOOL:
+		return func(val any) ([]byte, error) {
+			boolVal, ok := val.(bool)
+			if !ok {
+				return nil, errors.New("invalid bool value")
+			}
+			var intVal int64 = 0
+			if boolVal {
+				intVal = 1
+			}
+			return []byte(strconv.FormatInt(intVal, 10)), nil
+		}
+	case client.FieldKind_DATETIME:
+		return func(val any) ([]byte, error) {
+			timeStrVal, ok := val.(string)
+			if !ok {
+				return nil, errors.New("invalid datetime value")
+			}
+			_, err := time.Parse(time.RFC3339, timeStrVal)
+			if err != nil {
+				return nil, err
+			}
+			return []byte(timeStrVal), nil
+		}
+	default:
+		panic("there is no test for this case")
+	}
 }
 
 func NewCollectionIndex(
@@ -29,20 +82,7 @@ func NewCollectionIndex(
 	schema := collection.Description().Schema
 	fieldID := schema.GetFieldKey(desc.Fields[0].Name)
 	field := schema.Fields[fieldID]
-	if field.Kind == client.FieldKind_STRING {
-		index.convertFunc = func(val any) ([]byte, error) {
-			return []byte(val.(string)), nil
-		}
-	} else if field.Kind == client.FieldKind_INT {
-		index.convertFunc = func(val any) ([]byte, error) {
-			intVal := val.(int64)
-			return []byte(strconv.FormatInt(intVal, 10)), nil
-		}
-	} else if field.Kind == client.FieldKind_FLOAT {
-		// TODO: test
-	} else {
-		panic("there is no test for this case")
-	}
+	index.convertFunc = getFieldValConverter(field.Kind)
 	return index
 }
 
@@ -61,14 +101,17 @@ func (i *collectionSimpleIndex) Save(
 	val any,
 ) error {
 	data, err := i.convertFunc(val)
-	err = err
+	if err != nil {
+		return NewErrCanNotIndexInvalidFieldValue(err)
+	}
 	indexDataStoreKey := core.IndexDataStoreKey{}
 	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
 	indexDataStoreKey.IndexID = strconv.Itoa(int(i.desc.ID))
 	indexDataStoreKey.FieldValues = []string{string(data), key.DocKey}
-	err = txn.Datastore().Put(ctx, indexDataStoreKey.ToDS(), []byte{})
+	keyStr := indexDataStoreKey.ToDS()
+	err = txn.Datastore().Put(ctx, keyStr, []byte{})
 	if err != nil {
-		return NewErrFailedToStoreIndexedField("name", err)
+		return NewErrFailedToStoreIndexedField(indexDataStoreKey.IndexID, err)
 	}
 	return nil
 }

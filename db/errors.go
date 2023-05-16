@@ -49,6 +49,7 @@ const (
 	errCollectionDoesntExisting       string = "collection with given name doesn't exist"
 	errFailedToStoreIndexedField      string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc    string = "failed to read stored index description"
+	errCanNotIndexInvalidFieldValue   string = "can not index invalid field value"
 )
 
 var (
@@ -147,6 +148,12 @@ func NewErrFailedToStoreIndexedField(fieldName string, inner error) error {
 // could not be read.
 func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
+}
+
+// NewErrCanNotIndexInvalidFieldValue returns a new error indicating that the field value is invalid 
+// and cannot be indexed.
+func NewErrCanNotIndexInvalidFieldValue(inner error) error {
+	return errors.Wrap(errCanNotIndexInvalidFieldValue, inner)
 }
 
 // NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was provided.

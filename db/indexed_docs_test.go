@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/client"
@@ -56,11 +57,15 @@ func (f *indexTestFixture) newProdDoc(id int, price float64, cat string) *client
 	return doc
 }
 
+// indexKeyBuilder is a helper for building index keys that can be turned into a string.
+// The format of the non-unique index key is: "/<collection_id>/<index_id>/<value>/<doc_id>"
+// Example: "/5/1/12/bae-61cd6879-63ca-5ca9-8731-470a3c1dac69"
 type indexKeyBuilder struct {
 	f         *indexTestFixture
 	colName   string
 	fieldName string
 	doc       *client.Document
+	values    []string
 	isUnique  bool
 }
 
@@ -73,13 +78,27 @@ func (b *indexKeyBuilder) Col(colName string) *indexKeyBuilder {
 	return b
 }
 
+// Field sets the field name for the index key.
+// If the field name is not set, the index key will contain only collection id.
+// When building a key it will it will find the field id to use in the key.
 func (b *indexKeyBuilder) Field(fieldName string) *indexKeyBuilder {
 	b.fieldName = fieldName
 	return b
 }
 
+// Doc sets the document for the index key.
+// For non-unique index keys, it will try to find the field value in the document
+// corresponding to the field name set in the builder.
+// As the last value in the index key, it will use the document id.
 func (b *indexKeyBuilder) Doc(doc *client.Document) *indexKeyBuilder {
 	b.doc = doc
+	return b
+}
+
+// Values sets the values for the index key.
+// It will override the field values stored in the document.
+func (b *indexKeyBuilder) Values(values ...string) *indexKeyBuilder {
+	b.values = values
 	return b
 }
 
@@ -122,15 +141,20 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 		}
 	}
 
-	if b.doc == nil {
-		return key
+	if b.doc != nil {
+		var fieldStrVal string
+		if len(b.values) == 0 {
+			fieldVal, err := b.doc.Get(b.fieldName)
+			require.NoError(b.f.t, err)
+			fieldStrVal = fmt.Sprintf("%v", fieldVal)
+		} else {
+			fieldStrVal = b.values[0]
+		}
+
+		key.FieldValues = []string{fieldStrVal, b.doc.Key().String()}
+	} else if len(b.values) > 0 {
+		key.FieldValues = b.values
 	}
-
-	fieldVal, err := b.doc.Get(b.fieldName)
-	require.NoError(b.f.t, err)
-	fieldStrVal := fmt.Sprintf("%v", fieldVal)
-
-	key.FieldValues = []string{fieldStrVal, b.doc.Key().String()}
 
 	return key
 }
@@ -325,4 +349,89 @@ func TestNonUnique_IfMultipleIndexes_StoreIndexWithIndexID(t *testing.T) {
 	data, err = f.txn.Datastore().Get(f.ctx, ageKey.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
+}
+
+func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
+	f := newIndexTestFixtureBare(t)
+
+	now := time.Now()
+	nowStr := now.Format(time.RFC3339)
+
+	testCase := []struct {
+		Name       string
+		FieldKind  client.FieldKind
+		FieldVal   any
+		ShouldFail bool
+		Stored     string
+	}{
+		{Name: "invalid int", FieldKind: client.FieldKind_INT, FieldVal: "invalid", ShouldFail: true},
+		{Name: "invalid float", FieldKind: client.FieldKind_FLOAT, FieldVal: "invalid", ShouldFail: true},
+		{Name: "invalid bool", FieldKind: client.FieldKind_BOOL, FieldVal: "invalid", ShouldFail: true},
+		{Name: "invalid datetime", FieldKind: client.FieldKind_DATETIME, FieldVal: nowStr[1:], ShouldFail: true},
+
+		{Name: "valid int", FieldKind: client.FieldKind_INT, FieldVal: 12, Stored: "12"},
+		{Name: "valid float", FieldKind: client.FieldKind_FLOAT, FieldVal: 36.654, Stored: "36.654"},
+		{Name: "valid bool true", FieldKind: client.FieldKind_BOOL, FieldVal: true, Stored: "1"},
+		{Name: "valid bool false", FieldKind: client.FieldKind_BOOL, FieldVal: false, Stored: "0"},
+		{Name: "valid datetime string", FieldKind: client.FieldKind_DATETIME, FieldVal: nowStr, Stored: nowStr},
+	}
+
+	for i, tc := range testCase {
+		desc := client.CollectionDescription{
+			Name: "testTypeCol" + strconv.Itoa(i),
+			Schema: client.SchemaDescription{
+				Fields: []client.FieldDescription{
+					{
+						Name: "_key",
+						Kind: client.FieldKind_DocKey,
+					},
+					{
+						Name: "field",
+						Kind: tc.FieldKind,
+						Typ:  client.LWW_REGISTER,
+					},
+				},
+			},
+		}
+
+		collection := f.createCollection(desc)
+
+		indexDesc := client.IndexDescription{
+			Fields: []client.IndexedFieldDescription{
+				{Name: "field", Direction: client.Ascending},
+			},
+		}
+
+		_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
+		require.NoError(f.t, err)
+		f.commitTxn()
+
+		d := struct {
+			Field any `json:"field"`
+		}{Field: tc.FieldVal}
+		data, err := json.Marshal(d)
+		require.NoError(f.t, err)
+		doc, err := client.NewDocFromJSON(data)
+		require.NoError(f.t, err)
+
+		err = collection.Create(f.ctx, doc)
+		f.commitTxn()
+		if tc.ShouldFail {
+			require.ErrorIs(f.t, err, NewErrCanNotIndexInvalidFieldValue(nil), "test case: %s", tc.Name)
+		} else {
+			assertMsg := fmt.Sprintf("test case: %s", tc.Name)
+			require.NoError(f.t, err, assertMsg)
+
+			keyBuilder := newIndexKeyBuilder(f).Col(collection.Name()).Field("field").Doc(doc)
+			if tc.Stored != "" {
+				keyBuilder.Values(tc.Stored)
+			}
+			key := keyBuilder.Build()
+
+			keyStr := key.ToDS()
+			data, err := f.txn.Datastore().Get(f.ctx, keyStr)
+			require.NoError(t, err, assertMsg)
+			assert.Len(t, data, 0, assertMsg)
+		}
+	}
 }
