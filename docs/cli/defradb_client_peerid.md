@@ -1,6 +1,6 @@
 ## defradb client peerid
 
-Get the peer ID of the DefraDB node
+Get the PeerID of the DefraDB node
 
 ```
 defradb client peerid [flags]
@@ -21,7 +21,7 @@ defradb client peerid [flags]
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
-      --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
+      --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
