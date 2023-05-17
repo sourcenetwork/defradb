@@ -192,8 +192,8 @@ func (f *indexTestFixture) mockTxn() *mocks.MultiStoreTxn {
 
 	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
 	colIndexOnNameKey := core.NewCollectionIndexKey(f.users.Description().Name, testUsersColIndexName)
-	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Return(indexOnNameDescData, nil)
-	systemStoreOn.Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
+	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
+	systemStoreOn.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
 
 	f.txn = mockedTxn
 	return mockedTxn

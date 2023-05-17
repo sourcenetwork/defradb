@@ -214,7 +214,11 @@ func (c *collection) dropAllIndexes(ctx context.Context) error {
 	return nil
 }
 
-func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+func (c *collection) getIndexes(ctx context.Context) ([]CollectionIndex, error) {
+	if c.isIndexCached {
+		return c.indexes, nil
+	}
+
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -224,7 +228,7 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 		Prefix: prefix.ToString(),
 	})
 	if err != nil {
-		//return nil, NewErrFailedToCreateCollectionQuery(err)
+		return nil, NewErrFailedToCreateCollectionQuery(err)
 	}
 	defer func() {
 		if err := q.Close(); err != nil {
@@ -232,18 +236,34 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 		}
 	}()
 
-	indexDescriptions := make([]client.IndexDescription, 0)
+	indexes := make([]CollectionIndex, 0)
 	for res := range q.Next() {
 		if res.Error != nil {
-			//return nil, err
+			return nil, res.Error
 		}
 
 		var indexDesc client.IndexDescription
 		err = json.Unmarshal(res.Value, &indexDesc)
 		if err != nil {
-			//return nil, NewErrInvalidStoredIndex(err)
+			return nil, NewErrInvalidStoredIndex(err)
 		}
-		indexDescriptions = append(indexDescriptions, indexDesc)
+		colIndex := NewCollectionIndex(c, indexDesc)
+		indexes = append(indexes, colIndex)
+	}
+
+	c.indexes = indexes
+	c.isIndexCached = true
+	return indexes, nil
+}
+
+func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+	indexes, err := c.getIndexes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	indexDescriptions := make([]client.IndexDescription, 0, len(indexes))
+	for _, index := range indexes {
+		indexDescriptions = append(indexDescriptions, index.Description())
 	}
 
 	return indexDescriptions, nil

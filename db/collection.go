@@ -56,6 +56,9 @@ type collection struct {
 	schemaID string
 
 	desc client.CollectionDescription
+
+	isIndexCached bool
+	indexes       []CollectionIndex
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
@@ -674,11 +677,13 @@ func (c *collection) SchemaID() string {
 // handle instead of a raw DB handle.
 func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 	return &collection{
-		db:       c.db,
-		txn:      immutable.Some(txn),
-		desc:     c.desc,
-		colID:    c.colID,
-		schemaID: c.schemaID,
+		db:            c.db,
+		txn:           immutable.Some(txn),
+		desc:          c.desc,
+		colID:         c.colID,
+		schemaID:      c.schemaID,
+		isIndexCached: c.isIndexCached,
+		indexes:       c.indexes,
 	}
 }
 

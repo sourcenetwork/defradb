@@ -20,11 +20,14 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/datastore/mocks"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
@@ -548,6 +551,117 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	require.Equal(t, 1, len(productIndexes))
 	productsIndexDesc.ID = 1
 	assert.Equal(t, productsIndexDesc, productIndexes[0])
+}
+
+func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+
+	indexes, err := f.users.GetIndexes(f.ctx)
+	assert.NoError(t, err)
+
+	require.Equal(t, 1, len(indexes))
+	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
+}
+
+func TestCollectionGetIndexes_IfCalledAgain_ShouldReturnCached(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+
+	_, err := f.users.GetIndexes(f.ctx)
+	require.NoError(t, err)
+
+	mockedTxn := mocks.NewTxnWithMultistore(f.t)
+
+	indexes, err := f.users.WithTxn(mockedTxn).GetIndexes(f.ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(indexes))
+	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
+}
+
+func TestCollectionGetIndexes_ShouldCloseQueryIterator(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+
+	mockedTxn := f.mockTxn()
+
+	mockedTxn.MockSystemstore = mocks.NewDSReaderWriter(f.t)
+	mockedTxn.EXPECT().Systemstore().Unset()
+	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
+	queryResults := mocks.NewQueryResultsWithValues(f.t)
+	queryResults.EXPECT().Close().Unset()
+	queryResults.EXPECT().Close().Return(nil)
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
+		Return(queryResults, nil)
+
+	_, err := f.users.WithTxn(mockedTxn).GetIndexes(f.ctx)
+	assert.NoError(t, err)
+}
+
+func TestCollectionGetIndexes_IfSystemStoreFails_ShouldNotCache(t *testing.T) {
+	testErr := errors.New("test error")
+
+	testCases := []struct {
+		Name               string
+		ExpectedError      error
+		GetMockSystemstore func(t *testing.T) *mocks.DSReaderWriter
+	}{
+		{
+			Name:          "Query fails",
+			ExpectedError: testErr,
+			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
+				store := mocks.NewDSReaderWriter(t)
+				store.EXPECT().Query(mock.Anything, mock.Anything).Unset()
+				store.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
+				return store
+			},
+		},
+		{
+			Name:          "Query iterator fails",
+			ExpectedError: testErr,
+			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
+				store := mocks.NewDSReaderWriter(t)
+				store.EXPECT().Query(mock.Anything, mock.Anything).
+					Return(mocks.NewQueryResultsWithResults(t, query.Result{Error: testErr}), nil)
+				return store
+			},
+		},
+		{
+			Name:          "Query iterator returns invalid value",
+			ExpectedError: NewErrInvalidStoredIndex(nil),
+			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
+				store := mocks.NewDSReaderWriter(t)
+				store.EXPECT().Query(mock.Anything, mock.Anything).
+					Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
+				return store
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		f := newIndexTestFixture(t)
+
+		f.createUserCollectionIndexOnName()
+
+		mockedTxn := f.mockTxn()
+
+		mockedTxn.MockSystemstore = testCase.GetMockSystemstore(t)
+		mockedTxn.EXPECT().Systemstore().Unset()
+		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
+
+		_, err := f.users.WithTxn(mockedTxn).GetIndexes(f.ctx)
+		require.ErrorIs(t, err, testCase.ExpectedError)
+
+		indexes, err := f.users.GetIndexes(f.ctx)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, len(indexes))
+		assert.Equal(t, testUsersColIndexName, indexes[0].Name)
+	}
 }
 
 func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {

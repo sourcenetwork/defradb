@@ -56,7 +56,7 @@ func prepareDAGStore(t *testing.T) *DAGStore {
 
 func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 	txn := NewTxn(t)
-	txn.EXPECT().OnSuccess(mock.Anything)
+	txn.EXPECT().OnSuccess(mock.Anything).Maybe()
 
 	result := &MultiStoreTxn{
 		Txn:             txn,
@@ -76,11 +76,19 @@ func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 	return result
 }
 
-func NewQueryResultsWithValues(t *testing.T, entries ...[]byte) *Results {
+func NewQueryResultsWithValues(t *testing.T, values ...[]byte) *Results {
+	results := make([]query.Result, len(values))
+	for i, value := range values {
+		results[i] = query.Result{Entry: query.Entry{Value: value}}
+	}
+	return NewQueryResultsWithResults(t, results...)
+}
+
+func NewQueryResultsWithResults(t *testing.T, results ...query.Result) *Results {
 	queryResults := NewResults(t)
-	resultChan := make(chan query.Result, len(entries))
-	for _, entry := range entries {
-		resultChan <- query.Result{Entry: query.Entry{Value: entry}}
+	resultChan := make(chan query.Result, len(results))
+	for _, result := range results {
+		resultChan <- result
 	}
 	close(resultChan)
 	queryResults.EXPECT().Next().Return(resultChan).Maybe()
