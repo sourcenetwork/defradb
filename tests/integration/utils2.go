@@ -1145,7 +1145,7 @@ func AssertError(t *testing.T, description string, err error, expectedError stri
 	}
 
 	if expectedError == "" {
-		assert.NoError(t, err, description)
+		require.NoError(t, err, description)
 		return false
 	} else {
 		if !strings.Contains(err.Error(), expectedError) {
@@ -1165,7 +1165,7 @@ func AssertErrors(
 	expectedError string,
 ) bool {
 	if expectedError == "" {
-		assert.Empty(t, errs, description)
+		require.Empty(t, errs, description)
 	} else {
 		for _, e := range errs {
 			// This is always a string at the moment, add support for other types as and when needed
