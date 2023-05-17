@@ -12,6 +12,9 @@ name: Run Tests Workflow
 
 on:
   pull_request:
+    branches:
+      - master
+      - develop
 
   push:
 
