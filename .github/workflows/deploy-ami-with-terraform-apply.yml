@@ -1,0 +1,69 @@
+# Copyright 2023 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Deploy AMI With Terraform Apply Workflow
+
+on:
+  workflow_run:
+    workflows: ["Build AMI With Packer Workflow"]
+    types: 
+      - completed
+
+
+env:
+  # Verbosity setting for Terraform logs (has to be named `TF_LOG`).
+  TF_LOG: INFO
+
+  # Set environment type: dev, test, prod
+  ENVIRONMENT_TYPE: "dev"
+
+  # Credentials for deployment to AWS.
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_AMI_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_AMI_SECRET_ACCESS_KEY }}
+
+
+jobs:
+  deploy-ami-with-terraform-apply:
+    name: Deploy ami with terraform apply job
+
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: tools/cloud/aws/terraform
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Terraform action setup
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.7
+
+      - name: Terraform format
+        run: terraform fmt -check
+
+      - name: Terraform initialization
+        run: terraform init -backend-config="workspaces/${ENVIRONMENT_TYPE}-backend.conf"
+
+      - name: Terraform workspace
+        # Select workspace if it exists, otherwise create a new workspace.
+        run: terraform workspace select ${ENVIRONMENT_TYPE} || terraform workspace new ${ENVIRONMENT_TYPE}
+
+      - name: Terraform validation
+        run: terraform validate -no-color
+
+      - name: List workspaces 
+        run: ls workspaces
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false -var-file="workspaces/source-ec2-${ENVIRONMENT_TYPE}.tfvars"
