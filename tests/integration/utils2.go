@@ -658,18 +658,19 @@ func restartNodes(
 	for _, tc := range testCase.Actions {
 		switch action := tc.(type) {
 		case ConnectPeers:
+			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
+			time.Sleep(100 * time.Millisecond)
 			syncChans = append(syncChans, setupPeerWaitSync(
 				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
 			))
 		case ConfigureReplicator:
+			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
+			time.Sleep(100 * time.Millisecond)
 			syncChans = append(syncChans, setupRepicatorWaitSync(
 				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
 			))
 		}
 	}
-
-	// Give the nodes a chance to connect to each other and learn about each other's subscrivbed topics.
-	time.Sleep(100 * time.Millisecond)
 
 	return syncChans
 }
