@@ -359,8 +359,10 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 	testCase := []struct {
 		Name       string
 		FieldKind  client.FieldKind
+		// FieldVal is the value the index will receive for serialization
 		FieldVal   any
 		ShouldFail bool
+		// Stored is the value that is stored as part of the index value key
 		Stored     string
 	}{
 		{Name: "invalid int", FieldKind: client.FieldKind_INT, FieldVal: "invalid", ShouldFail: true},

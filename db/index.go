@@ -18,7 +18,7 @@ import (
 )
 
 type CollectionIndex interface {
-	Save(context.Context, datastore.Txn, core.DataStoreKey, any) error
+	Save(context.Context, datastore.Txn, *client.Document) error
 	Name() string
 	Description() client.IndexDescription
 }
@@ -97,17 +97,22 @@ var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 func (i *collectionSimpleIndex) Save(
 	ctx context.Context,
 	txn datastore.Txn,
-	key core.DataStoreKey,
-	val any,
+	doc *client.Document,
 ) error {
-	data, err := i.convertFunc(val)
+	indexedFieldName := i.desc.Fields[0].Name
+	fieldVal, err := doc.Get(indexedFieldName)
+	if err != nil {
+		return nil
+	}
+
+	data, err := i.convertFunc(fieldVal)
 	if err != nil {
 		return NewErrCanNotIndexInvalidFieldValue(err)
 	}
 	indexDataStoreKey := core.IndexDataStoreKey{}
 	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
 	indexDataStoreKey.IndexID = strconv.Itoa(int(i.desc.ID))
-	indexDataStoreKey.FieldValues = []string{string(data), key.DocKey}
+	indexDataStoreKey.FieldValues = []string{string(data), doc.Key().String()}
 	keyStr := indexDataStoreKey.ToDS()
 	err = txn.Datastore().Put(ctx, keyStr, []byte{})
 	if err != nil {

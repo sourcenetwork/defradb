@@ -553,6 +553,27 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	assert.Equal(t, productsIndexDesc, productIndexes[0])
 }
 
+func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	f.db.Close(f.ctx)
+
+	_, err := f.getCollectionIndexes(usersColName)
+	assert.Error(t, err)
+}
+
+func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
+	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
+	assert.NoError(t, err)
+
+	_, err = f.getCollectionIndexes(usersColName)
+	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+}
+
 func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 
@@ -686,27 +707,6 @@ func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
 
 	require.Equal(t, 1, len(indexes))
 	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
-}
-
-func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-	f.createUserCollectionIndexOnName()
-
-	f.db.Close(f.ctx)
-
-	_, err := f.getCollectionIndexes(usersColName)
-	assert.Error(t, err)
-}
-
-func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-
-	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
-	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
-	assert.NoError(t, err)
-
-	_, err = f.getCollectionIndexes(usersColName)
-	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
 }
 
 func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {

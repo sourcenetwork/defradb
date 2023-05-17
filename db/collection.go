@@ -793,13 +793,7 @@ func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *cl
 		return err
 	}
 	for _, index := range indexes {
-		indexedFieldName := index.Description().Fields[0].Name
-		fieldVal, err := doc.Get(indexedFieldName)
-		if err != nil {
-			return nil
-		}
-		docDataStoreKey := c.getDSKeyFromDockey(doc.Key())
-		err = index.Save(ctx, txn, docDataStoreKey, fieldVal)
+		err = index.Save(ctx, txn, doc)
 		if err != nil {
 			return err
 		}
