@@ -192,7 +192,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 			case typeString:
 				return client.FieldKind_STRING_ARRAY, nil
 			default:
-				return 0, NewErrTypeNotFound(innerAstTypeVal.Type.(*ast.Named).Name.Value)
+				return 0, NewErrNonNullForTypeNotSupported(innerAstTypeVal.Type.(*ast.Named).Name.Value)
 			}
 
 		default:

@@ -16,12 +16,45 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestQuerySimpleWithLimit0(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with limit 0",
+		Request: `query {
+					Users(limit: 0) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Bob",
+			},
+			{
+				"Name": "John",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithLimit(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with basic limit",
 			Request: `query {
-						users(limit: 1) {
+						Users(limit: 1) {
 							Name
 							Age
 						}
@@ -48,7 +81,7 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 		{
 			Description: "Simple query with basic limit, more rows",
 			Request: `query {
-						users(limit: 2) {
+						Users(limit: 2) {
 							Name
 							Age
 						}
@@ -96,7 +129,7 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 		{
 			Description: "Simple query with basic limit & offset",
 			Request: `query {
-						users(limit: 1, offset: 1) {
+						Users(limit: 1, offset: 1) {
 							Name
 							Age
 						}
@@ -123,7 +156,7 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 		{
 			Description: "Simple query with basic limit & offset, more rows",
 			Request: `query {
-						users(limit: 2, offset: 2) {
+						Users(limit: 2, offset: 2) {
 							Name
 							Age
 						}
@@ -171,7 +204,7 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 		{
 			Description: "Simple query with offset only",
 			Request: `query {
-						users(offset: 1) {
+						Users(offset: 1) {
 							Name
 							Age
 						}
@@ -198,7 +231,7 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 		{
 			Description: "Simple query with offset only, more rows",
 			Request: `query {
-						users(offset: 2) {
+						Users(offset: 2) {
 							Name
 							Age
 						}

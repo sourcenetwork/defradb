@@ -63,7 +63,7 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 		ctx, "Pushing log",
 		logging.NewKV("DocKey", dockey),
 		logging.NewKV("CID", evt.Cid),
-		logging.NewKV("PID", pid))
+		logging.NewKV("PeerID", pid))
 
 	client, err := s.dial(pid) // grpc dial over p2p stream
 	if err != nil {

@@ -34,7 +34,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04, Has written 1 book
+				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04, Has written 1 Book
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -44,7 +44,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 			// Books
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935", Has 1 publisher
+				// "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935", Has 1 Publisher
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
@@ -53,7 +53,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-afdd1769-b056-5bb1-b743-116a347b4b87", Has 1 publisher
+				// "bae-afdd1769-b056-5bb1-b743-116a347b4b87", Has 1 Publisher
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
@@ -62,7 +62,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-fbba03cf-c77c-5850-a6a4-0d9992d489e1", Has no publisher.
+				// "bae-fbba03cf-c77c-5850-a6a4-0d9992d489e1", Has no Publisher.
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,

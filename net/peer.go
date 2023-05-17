@@ -18,14 +18,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs/go-blockservice"
+	"github.com/ipfs/boxo/bitswap"
+	"github.com/ipfs/boxo/bitswap/network"
+	"github.com/ipfs/boxo/blockservice"
+	exchange "github.com/ipfs/boxo/exchange"
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	exchange "github.com/ipfs/go-ipfs-exchange-interface"
 	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-libipfs/bitswap"
-	"github.com/ipfs/go-libipfs/bitswap/network"
-	dag "github.com/ipfs/go-merkledag"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -125,10 +125,7 @@ func NewPeer(
 	if err != nil {
 		return nil, err
 	}
-	err = p.loadP2PCollections(p.ctx)
-	if err != nil {
-		return nil, err
-	}
+
 	p.setupBlockService()
 	p.setupDAGService()
 
@@ -139,6 +136,29 @@ func NewPeer(
 func (p *Peer) Start() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+
+	// reconnect to known peers
+	var wg sync.WaitGroup
+	for _, id := range p.host.Peerstore().PeersWithAddrs() {
+		if id == p.host.ID() {
+			continue
+		}
+		wg.Add(1)
+		go func(id peer.ID) {
+			defer wg.Done()
+			addr := p.host.Peerstore().PeerInfo(id)
+			err := p.host.Connect(p.ctx, addr)
+			if err != nil {
+				log.Info(
+					p.ctx,
+					"Failure while reconnecting to a known peer",
+					logging.NewKV("peer", id),
+					logging.NewKV("error", err),
+				)
+			}
+		}(id)
+	}
+	wg.Wait()
 
 	p2plistener, err := gostream.Listen(p.host, corenet.Protocol)
 	if err != nil {
@@ -211,6 +231,10 @@ func (p *Peer) Close() error {
 		log.ErrorE(p.ctx, "Error closing block service", err)
 	}
 
+	if err := p.host.Close(); err != nil {
+		log.ErrorE(p.ctx, "Error closing host", err)
+	}
+
 	p.cancel()
 	return nil
 }
@@ -258,7 +282,7 @@ func (p *Peer) RegisterNewDocument(
 	)
 
 	// register topic
-	if err := p.server.addPubSubTopic(dockey.String(), true); err != nil {
+	if err := p.server.addPubSubTopic(dockey.String(), !p.server.hasPubSubTopic(schemaID)); err != nil {
 		log.ErrorE(
 			p.ctx,
 			"Failed to create new pubsub topic",
@@ -370,8 +394,9 @@ func (p *Peer) setReplicator(
 	for _, col := range collections {
 		if reps, exists := p.replicators[col.SchemaID()]; exists {
 			if _, exists := reps[pid]; exists {
+				p.mu.Unlock()
 				return pid, errors.New(fmt.Sprintf(
-					"Replicator already exists for %s with ID %s",
+					"Replicator already exists for %s with PeerID %s",
 					col.Name(),
 					pid,
 				))
@@ -444,7 +469,7 @@ func (p *Peer) pushToReplicator(
 				"Failed to get heads",
 				err,
 				logging.NewKV("DocKey", key.Key.String()),
-				logging.NewKV("PID", pid),
+				logging.NewKV("PeerID", pid),
 				logging.NewKV("Collection", collection.Name()))
 			continue
 		}
@@ -454,7 +479,7 @@ func (p *Peer) pushToReplicator(
 			if err != nil {
 				log.ErrorE(ctx, "Failed to get block", err,
 					logging.NewKV("CID", c),
-					logging.NewKV("PID", pid),
+					logging.NewKV("PeerID", pid),
 					logging.NewKV("Collection", collection.Name()))
 				continue
 			}
@@ -479,7 +504,7 @@ func (p *Peer) pushToReplicator(
 					"Failed to replicate log",
 					err,
 					logging.NewKV("CID", c),
-					logging.NewKV("PID", pid),
+					logging.NewKV("PeerID", pid),
 				)
 			}
 		}
@@ -606,20 +631,21 @@ func (p *Peer) loadReplicators(ctx context.Context) error {
 	return nil
 }
 
-func (p *Peer) loadP2PCollections(ctx context.Context) error {
+func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, error) {
 	collections, err := p.db.GetAllP2PCollections(ctx)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
-		return err
+		return nil, err
 	}
-
+	colMap := make(map[string]struct{})
 	for _, col := range collections {
 		err := p.server.addPubSubTopic(col, true)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		colMap[col] = struct{}{}
 	}
 
-	return nil
+	return colMap, nil
 }
 
 func (p *Peer) handleDocCreateLog(evt events.Update) error {
@@ -628,10 +654,16 @@ func (p *Peer) handleDocCreateLog(evt events.Update) error {
 		return errors.Wrap("failed to get DocKey from broadcast message", err)
 	}
 
+	// We need to register the document before pushing to the replicators if we want to
+	// ensure that we have subscribed to the topic.
+	err = p.RegisterNewDocument(p.ctx, dockey, evt.Cid, evt.Block, evt.SchemaID)
+	if err != nil {
+		return err
+	}
 	// push to each peer (replicator)
 	p.pushLogToReplicators(p.ctx, evt)
 
-	return p.RegisterNewDocument(p.ctx, dockey, evt.Cid, evt.Block, evt.SchemaID)
+	return nil
 }
 
 func (p *Peer) handleDocUpdateLog(evt events.Update) error {
@@ -702,7 +734,7 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 						err,
 						logging.NewKV("DocKey", lg.DocKey),
 						logging.NewKV("CID", lg.Cid),
-						logging.NewKV("PeerId", peerID))
+						logging.NewKV("PeerID", peerID))
 				}
 			}(pid)
 		}
@@ -758,10 +790,32 @@ type EvtPubSub struct {
 	Peer peer.ID
 }
 
+// rollbackAddPubSubTopics removes the given topics from the pubsub system.
+func (p *Peer) rollbackAddPubSubTopics(topics []string, cause error) error {
+	for _, topic := range topics {
+		if err := p.server.removePubSubTopic(topic); err != nil {
+			return errors.WithStack(err, errors.NewKV("Cause", cause))
+		}
+	}
+	return cause
+}
+
+// rollbackRemovePubSubTopics adds back the given topics from the pubsub system.
+func (p *Peer) rollbackRemovePubSubTopics(topics []string, cause error) error {
+	for _, topic := range topics {
+		if err := p.server.addPubSubTopic(topic, true); err != nil {
+			return errors.WithStack(err, errors.NewKV("Cause", cause))
+		}
+	}
+	return cause
+}
+
 // AddP2PCollections adds the given collectionIDs to the pubsup topics.
 //
 // It will error if any of the given collectionIDs are invalid, in such a case some of the
 // changes to the server may still be applied.
+//
+// WARNING: Calling this on collections with a large number of documents may take a long time to process.
 func (p *Peer) AddP2PCollections(collections []string) error {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
@@ -771,11 +825,13 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 	store := p.db.WithTxn(txn)
 
 	// first let's make sure the collections actually exists
+	storeCollections := []client.Collection{}
 	for _, col := range collections {
-		_, err := store.GetCollectionBySchemaID(p.ctx, col)
+		storeCol, err := store.GetCollectionBySchemaID(p.ctx, col)
 		if err != nil {
 			return err
 		}
+		storeCollections = append(storeCollections, storeCol)
 	}
 
 	// Ensure we can add all the collections to the store on the transaction
@@ -792,24 +848,42 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 	for _, col := range collections {
 		err = p.server.addPubSubTopic(col, true)
 		if err != nil {
-			for _, topic := range addedTopics {
-				e := p.server.removePubSubTopic(topic)
-				if e != nil {
-					return errors.WithStack(e, errors.NewKV("Cause", err))
-				}
-			}
-			return err
+			return p.rollbackAddPubSubTopics(addedTopics, err)
 		}
 		addedTopics = append(addedTopics, col)
 	}
 
-	return txn.Commit(p.ctx)
+	// After adding the collection topics, we remove the collections' documents
+	// from the pubsub topics to avoid receiving duplicate events.
+	removedTopics := []string{}
+	for _, col := range storeCollections {
+		keyChan, err := col.GetAllDocKeys(p.ctx)
+		if err != nil {
+			return err
+		}
+		for key := range keyChan {
+			err := p.server.removePubSubTopic(key.Key.String())
+			if err != nil {
+				return p.rollbackRemovePubSubTopics(removedTopics, err)
+			}
+			removedTopics = append(removedTopics, key.Key.String())
+		}
+	}
+
+	if err = txn.Commit(p.ctx); err != nil {
+		err = p.rollbackRemovePubSubTopics(removedTopics, err)
+		return p.rollbackAddPubSubTopics(addedTopics, err)
+	}
+
+	return nil
 }
 
 // RemoveP2PCollections removes the given collectionIDs from the pubsup topics.
 //
 // It will error if any of the given collectionIDs are invalid, in such a case some of the
 // changes to the server may still be applied.
+//
+// WARNING: Calling this on collections with a large number of documents may take a long time to process.
 func (p *Peer) RemoveP2PCollections(collections []string) error {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
@@ -819,11 +893,13 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 	store := p.db.WithTxn(txn)
 
 	// first let's make sure the collections actually exists
+	storeCollections := []client.Collection{}
 	for _, col := range collections {
-		_, err := store.GetCollectionBySchemaID(p.ctx, col)
+		storeCol, err := store.GetCollectionBySchemaID(p.ctx, col)
 		if err != nil {
 			return err
 		}
+		storeCollections = append(storeCollections, storeCol)
 	}
 
 	// Ensure we can remove all the collections to the store on the transaction
@@ -840,30 +916,48 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 	for _, col := range collections {
 		err = p.server.removePubSubTopic(col)
 		if err != nil {
-			for _, topic := range removedTopics {
-				e := p.server.addPubSubTopic(topic, true)
-				if e != nil {
-					return errors.WithStack(e, errors.NewKV("Cause", err))
-				}
-			}
+			return p.rollbackRemovePubSubTopics(removedTopics, err)
+		}
+		removedTopics = append(removedTopics, col)
+	}
+
+	// After removing the collection topics, we add back the collections' documents
+	// to the pubsub topics.
+	addedTopics := []string{}
+	for _, col := range storeCollections {
+		keyChan, err := col.GetAllDocKeys(p.ctx)
+		if err != nil {
 			return err
+		}
+		for key := range keyChan {
+			err := p.server.addPubSubTopic(key.Key.String(), true)
+			if err != nil {
+				return p.rollbackAddPubSubTopics(addedTopics, err)
+			}
+			addedTopics = append(addedTopics, key.Key.String())
 		}
 	}
 
-	return txn.Commit(p.ctx)
+	if err = txn.Commit(p.ctx); err != nil {
+		err = p.rollbackAddPubSubTopics(addedTopics, err)
+		return p.rollbackRemovePubSubTopics(removedTopics, err)
+	}
+
+	return nil
 }
 
-// GetAllP2PCollections gets all the collectionIDs from the pubsup topics
+// GetAllP2PCollections gets all the collectionIDs that have been added to the
+// pubsub topics from the system store.
 func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
 		return nil, err
 	}
+	defer txn.Discard(p.ctx)
 	store := p.db.WithTxn(txn)
 
 	collections, err := p.db.GetAllP2PCollections(p.ctx)
 	if err != nil {
-		txn.Discard(p.ctx)
 		return nil, err
 	}
 
@@ -871,7 +965,6 @@ func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 	for _, colID := range collections {
 		col, err := store.GetCollectionBySchemaID(p.ctx, colID)
 		if err != nil {
-			txn.Discard(p.ctx)
 			return nil, err
 		}
 		p2pCols = append(p2pCols, client.P2PCollection{

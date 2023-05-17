@@ -21,29 +21,29 @@ func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
-						FavouriteIntegers: [Int!]
+					type Users {
+						favouriteIntegers: [Int!]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 						}
 					}
 				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
@@ -51,34 +51,34 @@ func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {
-						FavouriteIntegers: [Int!]
+					type Users {
+						favouriteIntegers: [Int!]
 					}
 				`,
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
-					type books {
-						PageNumbers: [Int!]
+					type Books {
+						pageNumbers: [Int!]
 					}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "books") {
+						__type (name: "Books") {
 							name
 						}
 					}
 				`,
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
-						"name": "books",
+						"name": "Books",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users", "books"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users", "Books"}, test)
 }

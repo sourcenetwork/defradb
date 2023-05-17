@@ -20,7 +20,7 @@ func TestQueryOneToManyWithChildDocKeys(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with child dockeys",
 		Request: `query {
-					author {
+					Author {
 						name
 						published (
 								dockeys: ["bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d", "bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca"]

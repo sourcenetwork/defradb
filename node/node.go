@@ -25,9 +25,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ipfs/boxo/ipns"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
-	"github.com/ipfs/go-ipns"
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
@@ -50,7 +50,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.node")
+	log = logging.MustNewLogger("node")
 )
 
 const evtWaitTimeout = 10 * time.Second
@@ -75,7 +75,8 @@ type Node struct {
 	// receives an event when a pushLog request has been processed.
 	pushLogEvent chan net.EvtReceivedPushLog
 
-	ctx context.Context
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // NewNode creates a new network node instance of DefraDB, wired into libp2p.
@@ -155,6 +156,8 @@ func NewNode(
 		}
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+
 	peer, err := net.NewPeer(
 		ctx,
 		db,
@@ -166,19 +169,27 @@ func NewNode(
 		options.GRPCDialOptions,
 	)
 	if err != nil {
+		cancel()
 		return nil, fin.Cleanup(err)
 	}
 
 	n := &Node{
-		pubSubEvent:  make(chan net.EvtPubSub),
-		pushLogEvent: make(chan net.EvtReceivedPushLog),
-		peerEvent:    make(chan event.EvtPeerConnectednessChanged),
+		// WARNING: The current usage of these channels means that consumers of them
+		// (the WaitForFoo funcs) can recieve events that occured before the WaitForFoo
+		// function call.  This is tolerable at the moment as they are only used for
+		// test, but we should resolve this when we can (e.g. via using subscribe-like
+		// mechanics, potentially via use of a ring-buffer based [events.Channel]
+		// implementation): https://github.com/sourcenetwork/defradb/issues/1358.
+		pubSubEvent:  make(chan net.EvtPubSub, 20),
+		pushLogEvent: make(chan net.EvtReceivedPushLog, 20),
+		peerEvent:    make(chan event.EvtPeerConnectednessChanged, 20),
 		Peer:         peer,
 		host:         h,
 		dht:          ddht,
 		pubsub:       ps,
 		DB:           db,
 		ctx:          ctx,
+		cancel:       cancel,
 	}
 
 	n.subscribeToPeerConnectionEvents()
@@ -202,7 +213,7 @@ func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 				log.Info(n.ctx, "Cannot connect to peer", logging.NewKV("Error", err))
 				return
 			}
-			log.Info(n.ctx, "Connected", logging.NewKV("Peer ID", pinfo.ID))
+			log.Info(n.ctx, "Connected", logging.NewKV("PeerID", pinfo.ID))
 			atomic.AddUint64(&connected, 1)
 		}(pinfo)
 	}
@@ -241,7 +252,12 @@ func (n *Node) subscribeToPeerConnectionEvents() {
 	}
 	go func() {
 		for e := range sub.Out() {
-			n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+			select {
+			case n.peerEvent <- e.(event.EvtPeerConnectednessChanged):
+			default:
+				<-n.peerEvent
+				n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+			}
 		}
 	}()
 }
@@ -257,7 +273,12 @@ func (n *Node) subscribeToPubSubEvents() {
 	}
 	go func() {
 		for e := range sub.Out() {
-			n.pubSubEvent <- e.(net.EvtPubSub)
+			select {
+			case n.pubSubEvent <- e.(net.EvtPubSub):
+			default:
+				<-n.pubSubEvent
+				n.pubSubEvent <- e.(net.EvtPubSub)
+			}
 		}
 	}()
 }
@@ -273,7 +294,12 @@ func (n *Node) subscribeToPushLogEvents() {
 	}
 	go func() {
 		for e := range sub.Out() {
-			n.pushLogEvent <- e.(net.EvtReceivedPushLog)
+			select {
+			case n.pushLogEvent <- e.(net.EvtReceivedPushLog):
+			default:
+				<-n.pushLogEvent
+				n.pushLogEvent <- e.(net.EvtReceivedPushLog)
+			}
 		}
 	}()
 }
@@ -292,6 +318,8 @@ func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 			return nil
 		case <-time.After(evtWaitTimeout):
 			return errors.New("waiting for peer connection timed out")
+		case <-n.ctx.Done():
+			return nil
 		}
 	}
 }
@@ -307,6 +335,8 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 			return nil
 		case <-time.After(evtWaitTimeout):
 			return errors.New("waiting for pubsub timed out")
+		case <-n.ctx.Done():
+			return nil
 		}
 	}
 }
@@ -328,6 +358,8 @@ func (n *Node) WaitForPushLogByPeerEvent(id peer.ID) error {
 			return nil
 		case <-time.After(evtWaitTimeout):
 			return errors.New("waiting for pushlog timed out")
+		case <-n.ctx.Done():
+			return nil
 		}
 	}
 }
@@ -349,6 +381,8 @@ func (n *Node) WaitForPushLogFromPeerEvent(id peer.ID) error {
 			return nil
 		case <-time.After(evtWaitTimeout):
 			return errors.New("waiting for pushlog timed out")
+		case <-n.ctx.Done():
+			return nil
 		}
 	}
 }
@@ -409,5 +443,6 @@ func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, er
 
 // Close closes the node and all its services.
 func (n Node) Close() error {
+	n.cancel()
 	return n.Peer.Close()
 }

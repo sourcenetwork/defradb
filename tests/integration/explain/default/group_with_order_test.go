@@ -21,7 +21,7 @@ func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 		Description: "Explain query with ordered parent groupBy.",
 
 		Request: `query @explain {
-			author(groupBy: [name], order: {name: DESC}) {
+			Author(groupBy: [name], order: {name: DESC}) {
 				name
 				_group {
 					age
@@ -80,7 +80,7 @@ func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 								"groupByFields": []string{"name"},
 								"childSelects": []dataMap{
 									{
-										"collectionName": "author",
+										"collectionName": "Author",
 										"docKeys":        nil,
 										"orderBy":        nil,
 										"groupBy":        nil,
@@ -92,7 +92,7 @@ func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
@@ -118,7 +118,7 @@ func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 		Description: "Explain query with groupBy string, and child order ascending.",
 
 		Request: `query @explain {
-			author(groupBy: [name]) {
+			Author(groupBy: [name]) {
 				name
 				_group (order: {age: ASC}){
 					age
@@ -170,7 +170,7 @@ func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 							"groupByFields": []string{"name"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"orderBy": []dataMap{
 										{
 											"direction": "ASC",
@@ -187,7 +187,7 @@ func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -212,7 +212,7 @@ func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 		Description: "Explain query with parent groupBy order, and child order.",
 
 		Request: `query @explain {
-			author(groupBy: [name], order: {name: DESC}) {
+			Author(groupBy: [name], order: {name: DESC}) {
 				name
 				_group (order: {age: ASC}){
 					age
@@ -271,7 +271,7 @@ func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 								"groupByFields": []string{"name"},
 								"childSelects": []dataMap{
 									{
-										"collectionName": "author",
+										"collectionName": "Author",
 										"orderBy": []dataMap{
 											{
 												"direction": "ASC",
@@ -288,7 +288,7 @@ func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
@@ -314,7 +314,7 @@ func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
 		Description: "Explain query with parent groupBy order, and child order.",
 
 		Request: `query @explain {
-			author(groupBy: [name]) {
+			Author(groupBy: [name]) {
 				name
 				_group (
 					groupBy: [verified],
@@ -372,7 +372,7 @@ func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
 							"groupByFields": []string{"name"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"orderBy": []dataMap{
 										{
 											"direction": "ASC",
@@ -389,7 +389,7 @@ func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{

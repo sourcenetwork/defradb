@@ -29,6 +29,7 @@ var (
 			mstore datastore.MultiStore,
 			schemaID core.CollectionSchemaVersionKey,
 			uCh events.UpdateChannel,
+			fieldName string,
 		) MerkleCRDTInitFn {
 			return func(key core.DataStoreKey) MerkleCRDT {
 				return NewMerkleCompositeDAG(
@@ -39,6 +40,7 @@ var (
 					uCh,
 					core.DataStoreKey{},
 					key,
+					fieldName,
 				)
 			}
 		},
@@ -69,12 +71,14 @@ func NewMerkleCompositeDAG(
 	uCh events.UpdateChannel,
 	ns,
 	key core.DataStoreKey,
+	fieldName string,
 ) *MerkleCompositeDAG {
 	compositeDag := corecrdt.NewCompositeDAG(
 		datastore,
 		schemaVersionKey,
 		ns,
 		key, /* stuff like namespace and ID */
+		fieldName,
 	)
 
 	clock := clock.NewMerkleClock(headstore, dagstore, key.ToHeadStoreKey(), compositeDag)

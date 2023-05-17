@@ -15,7 +15,7 @@ Example: add from file:
 Example: add from stdin:
   cat schema.graphql | defradb client schema add -
 
-To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.
+Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
 defradb client schema add [schema] [flags]
@@ -37,7 +37,7 @@ defradb client schema add [schema] [flags]
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
-      --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
+      --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 

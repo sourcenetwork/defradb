@@ -16,11 +16,54 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestQuerySimpleWithEmptyOrder(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with empty order",
+		Request: `query {
+					Users(order: {}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Bob",
+				"Age":  uint64(32),
+			},
+			{
+				"Name": "John",
+				"Age":  uint64(21),
+			},
+			{
+				"Name": "Carlo",
+				"Age":  uint64(55),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic order ASC",
 		Request: `query {
-					users(order: {Age: ASC}) {
+					Users(order: {Age: ASC}) {
 						Name
 						Age
 					}
@@ -72,7 +115,7 @@ func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic order ASC",
 		Request: `query {
-					users(order: {CreatedAt: ASC}) {
+					Users(order: {CreatedAt: ASC}) {
 						Name
 						Age
 					}
@@ -128,7 +171,7 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic order DESC",
 		Request: `query {
-					users(order: {Age: DESC}) {
+					Users(order: {Age: DESC}) {
 						Name
 						Age
 					}
@@ -180,7 +223,7 @@ func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic order DESC",
 		Request: `query {
-					users(order: {CreatedAt: DESC}) {
+					Users(order: {CreatedAt: DESC}) {
 						Name
 						Age
 					}
@@ -236,7 +279,7 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with compound order",
 		Request: `query {
-					users(order: {Age: DESC, Verified: ASC}) {
+					Users(order: {Age: DESC, Verified: ASC}) {
 						Name
 						Age
 						Verified

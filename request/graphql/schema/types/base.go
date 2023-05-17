@@ -16,262 +16,336 @@ import (
 
 // BooleanOperatorBlock filter block for boolean types.
 var BooleanOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "BooleanOperatorBlock",
+	Name:        "BooleanOperatorBlock",
+	Description: booleanOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.Boolean,
+			Description: eqOperatorDescription,
+			Type:        gql.Boolean,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.Boolean,
+			Description: neOperatorDescription,
+			Type:        gql.Boolean,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.Boolean),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.Boolean),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.Boolean),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.Boolean),
 		},
 	},
 })
 
 // NotNullBooleanOperatorBlock filter block for boolean! types.
 var NotNullBooleanOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "NotNullBooleanOperatorBlock",
+	Name:        "NotNullBooleanOperatorBlock",
+	Description: notNullBooleanOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.Boolean,
+			Description: eqOperatorDescription,
+			Type:        gql.Boolean,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.Boolean,
+			Description: neOperatorDescription,
+			Type:        gql.Boolean,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Boolean)),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.Boolean)),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Boolean)),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.Boolean)),
 		},
 	},
 })
 
 // DateTimeOperatorBlock filter block for DateTime types.
 var DateTimeOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "DateTimeOperatorBlock",
+	Name:        "DateTimeOperatorBlock",
+	Description: dateTimeOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.DateTime,
+			Description: eqOperatorDescription,
+			Type:        gql.DateTime,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.DateTime,
+			Description: neOperatorDescription,
+			Type:        gql.DateTime,
 		},
 		"_gt": &gql.InputObjectFieldConfig{
-			Type: gql.DateTime,
+			Description: gtOperatorDescription,
+			Type:        gql.DateTime,
 		},
 		"_ge": &gql.InputObjectFieldConfig{
-			Type: gql.DateTime,
+			Description: geOperatorDescription,
+			Type:        gql.DateTime,
 		},
 		"_lt": &gql.InputObjectFieldConfig{
-			Type: gql.DateTime,
+			Description: ltOperatorDescription,
+			Type:        gql.DateTime,
 		},
 		"_le": &gql.InputObjectFieldConfig{
-			Type: gql.DateTime,
+			Description: leOperatorDescription,
+			Type:        gql.DateTime,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.DateTime),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.DateTime),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.DateTime),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.DateTime),
 		},
 	},
 })
 
 // FloatOperatorBlock filter block for Float types.
 var FloatOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "FloatOperatorBlock",
+	Name:        "FloatOperatorBlock",
+	Description: floatOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: eqOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: neOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_gt": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: gtOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_ge": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: geOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_lt": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: ltOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_le": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: leOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.Float),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.Float),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.Float),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.Float),
 		},
 	},
 })
 
 // NotNullFloatOperatorBlock filter block for Float! types.
 var NotNullFloatOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "NotNullFloatOperatorBlock",
+	Name:        "NotNullFloatOperatorBlock",
+	Description: notNullFloatOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: eqOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: neOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_gt": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: gtOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_ge": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: geOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_lt": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: ltOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_le": &gql.InputObjectFieldConfig{
-			Type: gql.Float,
+			Description: leOperatorDescription,
+			Type:        gql.Float,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Float)),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.Float)),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Float)),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.Float)),
 		},
 	},
 })
 
 // IntOperatorBlock filter block for Int types.
 var IntOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "IntOperatorBlock",
+	Name:        "IntOperatorBlock",
+	Description: intOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: eqOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: neOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_gt": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: gtOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_ge": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: geOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_lt": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: ltOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_le": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: leOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.Int),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.Int),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.Int),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.Int),
 		},
 	},
 })
 
 // NotNullIntOperatorBlock filter block for Int! types.
 var NotNullIntOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "NotNullIntOperatorBlock",
+	Name:        "NotNullIntOperatorBlock",
+	Description: notNullIntOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: eqOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: neOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_gt": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: gtOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_ge": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: geOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_lt": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: ltOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_le": &gql.InputObjectFieldConfig{
-			Type: gql.Int,
+			Description: leOperatorDescription,
+			Type:        gql.Int,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Int)),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.Int)),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Int)),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.Int)),
 		},
 	},
 })
 
 // StringOperatorBlock filter block for string types.
 var StringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "StringOperatorBlock",
+	Name:        "StringOperatorBlock",
+	Description: stringOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.String,
+			Description: eqOperatorDescription,
+			Type:        gql.String,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.String,
+			Description: neOperatorDescription,
+			Type:        gql.String,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.String),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.String),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.String),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.String),
 		},
 		"_like": &gql.InputObjectFieldConfig{
-			Type: gql.String,
+			Description: likeStringOperatorDescription,
+			Type:        gql.String,
 		},
 		"_nlike": &gql.InputObjectFieldConfig{
-			Type: gql.String,
+			Description: nlikeStringOperatorDescription,
+			Type:        gql.String,
 		},
 	},
 })
 
 // NotNullstringOperatorBlock filter block for string! types.
 var NotNullstringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "NotNullStringOperatorBlock",
+	Name:        "NotNullStringOperatorBlock",
+	Description: notNullStringOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.String,
+			Description: eqOperatorDescription,
+			Type:        gql.String,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.String,
+			Description: neOperatorDescription,
+			Type:        gql.String,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.String)),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.String)),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.String)),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.String)),
 		},
 		"_like": &gql.InputObjectFieldConfig{
-			Type: gql.String,
+			Description: likeStringOperatorDescription,
+			Type:        gql.String,
 		},
 		"_nlike": &gql.InputObjectFieldConfig{
-			Type: gql.String,
+			Description: nlikeStringOperatorDescription,
+			Type:        gql.String,
 		},
 	},
 })
 
 // IdOperatorBlock filter block for ID types.
 var IdOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
-	Name: "IDOperatorBlock",
+	Name:        "IDOperatorBlock",
+	Description: idOperatorBlockDescription,
 	Fields: gql.InputObjectConfigFieldMap{
 		"_eq": &gql.InputObjectFieldConfig{
-			Type: gql.ID,
+			Description: eqOperatorDescription,
+			Type:        gql.ID,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.ID,
+			Description: neOperatorDescription,
+			Type:        gql.ID,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.ID)),
+			Description: inOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.ID)),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.ID)),
+			Description: ninOperatorDescription,
+			Type:        gql.NewList(gql.NewNonNull(gql.ID)),
 		},
 	},
 })

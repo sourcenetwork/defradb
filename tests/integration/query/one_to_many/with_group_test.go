@@ -21,7 +21,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 		{
 			Description: "One-to-many relation query from many side with group inside of join",
 			Request: `query {
-				author {
+				Author {
 					name
 					age
 					published (groupBy: [rating]){
@@ -126,7 +126,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 		{
 			Description: "One-to-many relation query from many side with parent level group",
 			Request: `query {
-				author (groupBy: [age]) {
+				Author (groupBy: [age]) {
 					age
 					_group {
 						name
@@ -256,7 +256,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumberWithNonGroupFieldsSelected(t *tes
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with group inside of join and invalid field",
 		Request: `query {
-			author {
+			Author {
 				name
 				age
 				published (groupBy: [rating]){

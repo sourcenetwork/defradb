@@ -21,11 +21,11 @@ func TestMutationInvalidMutation(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple invalid mutation",
 		Request: `mutation {
-			dostuff_user(data: "") {
+			dostuff_User(data: "") {
 				_key
 			}
 		}`,
-		ExpectedError: "Cannot query field \"dostuff_user\" on type \"Mutation\".",
+		ExpectedError: "Cannot query field \"dostuff_User\" on type \"Mutation\".",
 	}
 
 	simpleTests.ExecuteTestCase(t, test)

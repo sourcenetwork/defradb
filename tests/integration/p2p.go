@@ -140,6 +140,9 @@ func connectPeers(
 	nodes []*node.Node,
 	addresses []string,
 ) chan struct{} {
+	// If we have some database actions prior to connecting the peers, we want to ensure that they had time to
+	// complete before we connect. Otherwise we might wrongly catch them in our wait function.
+	time.Sleep(100 * time.Millisecond)
 	sourceNode := nodes[cfg.SourceNodeID]
 	targetNode := nodes[cfg.TargetNodeID]
 	targetAddress := addresses[cfg.TargetNodeID]
@@ -156,7 +159,17 @@ func connectPeers(
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(100 * time.Millisecond)
+	return setupPeerWaitSync(ctx, t, testCase, cfg, sourceNode, targetNode)
+}
 
+func setupPeerWaitSync(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	cfg ConnectPeers,
+	sourceNode *node.Node,
+	targetNode *node.Node,
+) chan struct{} {
 	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -239,7 +252,9 @@ func connectPeers(
 	}
 
 	nodeSynced := make(chan struct{})
-	go func() {
+	ready := make(chan struct{})
+	go func(ready chan struct{}) {
+		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
@@ -251,7 +266,9 @@ func connectPeers(
 			}
 			nodeSynced <- struct{}{}
 		}
-	}()
+	}(ready)
+	// Ensure that the wait routine is ready to receive events before we continue.
+	<-ready
 
 	return nodeSynced
 }
@@ -285,6 +302,9 @@ func configureReplicator(
 	nodes []*node.Node,
 	addresses []string,
 ) chan struct{} {
+	// If we have some database actions prior to configuring the replicator, we want to ensure that they had time to
+	// complete before the configuration. Otherwise we might wrongly catch them in our wait function.
+	time.Sleep(100 * time.Millisecond)
 	sourceNode := nodes[cfg.SourceNodeID]
 	targetNode := nodes[cfg.TargetNodeID]
 	targetAddress := addresses[cfg.TargetNodeID]
@@ -294,7 +314,17 @@ func configureReplicator(
 
 	_, err = sourceNode.Peer.SetReplicator(ctx, addr)
 	require.NoError(t, err)
+	return setupRepicatorWaitSync(ctx, t, testCase, cfg, sourceNode, targetNode)
+}
 
+func setupRepicatorWaitSync(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	cfg ConfigureReplicator,
+	sourceNode *node.Node,
+	targetNode *node.Node,
+) chan struct{} {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
 	docIDsSyncedToSource := map[int]struct{}{}
@@ -307,7 +337,9 @@ func configureReplicator(
 				docIDsSyncedToSource[currentdocID] = struct{}{}
 			}
 
-			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
+			// A document created on the source or one that is created on all nodes will be sent to the target even
+			// it already has it. It will create a `received push log` event on the target which we need to wait for.
+			if !action.NodeID.HasValue() || action.NodeID.Value() == cfg.SourceNodeID {
 				sourceToTargetEvents[waitIndex] += 1
 			}
 
@@ -341,7 +373,9 @@ func configureReplicator(
 	}
 
 	nodeSynced := make(chan struct{})
-	go func() {
+	ready := make(chan struct{})
+	go func(ready chan struct{}) {
+		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
@@ -353,7 +387,9 @@ func configureReplicator(
 			}
 			nodeSynced <- struct{}{}
 		}
-	}()
+	}(ready)
+	// Ensure that the wait routine is ready to receive events before we continue.
+	<-ready
 
 	return nodeSynced
 }
@@ -481,12 +517,11 @@ func waitForSync(
 const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
 
 func RandomNetworkingConfig() ConfigureNode {
-	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = randomMultiaddr
-	cfg.Net.RPCAddress = "0.0.0.0:0"
-	cfg.Net.TCPAddress = randomMultiaddr
-
-	return ConfigureNode{
-		Config: *cfg,
+	return func() config.Config {
+		cfg := config.DefaultConfig()
+		cfg.Net.P2PAddress = randomMultiaddr
+		cfg.Net.RPCAddress = "0.0.0.0:0"
+		cfg.Net.TCPAddress = randomMultiaddr
+		return *cfg
 	}
 }

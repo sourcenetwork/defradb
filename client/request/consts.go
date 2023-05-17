@@ -20,6 +20,7 @@ const (
 	DocKey      = "dockey"
 	DocKeys     = "dockeys"
 	FieldName   = "field"
+	FieldIDName = "fieldId"
 	Id          = "id"
 	Ids         = "ids"
 	ShowDeleted = "showDeleted"
@@ -51,6 +52,8 @@ const (
 	DockeyFieldName          = "dockey"
 	CollectionIDFieldName    = "collectionID"
 	SchemaVersionIDFieldName = "schemaVersionId"
+	FieldNameFieldName       = "fieldName"
+	FieldIDFieldName         = "fieldId"
 	DeltaFieldName           = "delta"
 
 	LinksNameFieldName = "name"
@@ -94,6 +97,8 @@ var (
 		DockeyFieldName,
 		CollectionIDFieldName,
 		SchemaVersionIDFieldName,
+		FieldNameFieldName,
+		FieldIDFieldName,
 		DeltaFieldName,
 	}
 

@@ -17,29 +17,29 @@ import (
 )
 
 var bookAuthorGQLSchema = (`
-	type book {
+	type Book {
 		name: String
 		rating: Float
-		price: price
-		author: author @relation(name: "written_books")
-		reviewedBy: author @relation(name: "reviewed_books")
+		price: Price
+		author: Author @relation(name: "written_books")
+		reviewedBy: Author @relation(name: "reviewed_books")
 	}
 
-	type author {
+	type Author {
 		name: String
 		age: Int
 		verified: Boolean
-		written: [book] @relation(name: "written_books")
-		reviewed: [book] @relation(name: "reviewed_books")
+		written: [Book] @relation(name: "written_books")
+		reviewed: [Book] @relation(name: "reviewed_books")
 	}
 
-	type price {
+	type Price {
 		currency: String
 		value: Float
-		books: [book]
+		books: [Book]
 	}
 `)
 
 func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(t, bookAuthorGQLSchema, []string{"book", "author", "price"}, test)
+	testUtils.ExecuteRequestTestCase(t, bookAuthorGQLSchema, []string{"Book", "Author", "Price"}, test)
 }

@@ -20,7 +20,7 @@ func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne DateTime filter",
 		Request: `query {
-					users(filter: {CreatedAt: {_ne: "2017-07-23T03:46:56.647Z"}}) {
+					Users(filter: {CreatedAt: {_ne: "2017-07-23T03:46:56.647Z"}}) {
 						Name
 					}
 				}`,
@@ -52,7 +52,7 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne DateTime nil filter",
 		Request: `query {
-					users(filter: {CreatedAt: {_ne: null}}) {
+					Users(filter: {CreatedAt: {_ne: null}}) {
 						Name
 					}
 				}`,

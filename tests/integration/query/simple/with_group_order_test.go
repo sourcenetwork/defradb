@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, and child order ascending",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_group (order: {Age: ASC}){
 							Age
@@ -85,7 +85,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, and child order descending",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_group (order: {Age: DESC}){
 							Age
@@ -150,7 +150,7 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, and child order ascending",
 		Request: `query {
-					users(groupBy: [Name], order: {Name: DESC}) {
+					Users(groupBy: [Name], order: {Name: DESC}) {
 						Name
 						_group (order: {Age: ASC}){
 							Age
@@ -215,7 +215,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, with child order desc",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_group (groupBy: [Verified]){
 							Verified
@@ -317,7 +317,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, with child order desc",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_group (groupBy: [Verified], order: {Verified: ASC}){
 							Verified

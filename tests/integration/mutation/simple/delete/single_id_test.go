@@ -36,7 +36,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				{
 					TransactionId: 0,
 					Request: `mutation {
-								delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+								delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 									_key
 								}
 							}`,
@@ -49,7 +49,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				{
 					TransactionId: 0,
 					Request: `query {
-								user(dockey: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+								User(dockey: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 									_key
 								}
 							}`,
@@ -73,14 +73,14 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 			},
 			Request: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-							FancyKey: _key
+						delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+							fancyKey: _key
 						}
 					}`,
 
 			Results: []map[string]any{
 				{
-					"FancyKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+					"fancyKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
 				},
 			},
 			ExpectedError: "",
@@ -88,8 +88,8 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 		{
 			Description: "Delete an updated document and return an aliased _key name.",
 			Request: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-							MyTestKey: _key
+						delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+							myTestKey: _key
 						}
 					}`,
 			Docs: map[int][]string{
@@ -115,7 +115,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 			},
 			Results: []map[string]any{
 				{
-					"MyTestKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+					"myTestKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
 				},
 			},
 			ExpectedError: "",
@@ -131,7 +131,7 @@ func TestDeleteWithUnknownIdEmptyCollection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Deletion using id that doesn't exist, where the collection is empty.",
 		Request: `mutation {
-					delete_user(id: "bae-028383cc-d6ba-5df7-959f-2bdce3536a05") {
+					delete_User(id: "bae-028383cc-d6ba-5df7-959f-2bdce3536a05") {
 						_key
 					}
 				}`,
@@ -145,7 +145,7 @@ func TestDeleteWithUnknownId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Deletion using id that doesn't exist, where the collection is non-empty.",
 		Request: `mutation {
-					delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca811") {
+					delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca811") {
 						_key
 					}
 				}`,
@@ -169,7 +169,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 		{
 			Description: "Deletion of a document without sub selection, should give error.",
 			Request: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810")
+						delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810")
 					}`,
 			Docs: map[int][]string{
 				0: {
@@ -182,13 +182,13 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 				},
 			},
 			Results:       []map[string]any{},
-			ExpectedError: "Field \"delete_user\" of type \"[user]\" must have a sub selection.",
+			ExpectedError: "Field \"delete_User\" of type \"[User]\" must have a sub selection.",
 		},
 
 		{
 			Description: "Deletion of a document without _key sub-selection.",
 			Request: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+						delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 						}
 					}`,
 			Docs: map[int][]string{
@@ -202,7 +202,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 				},
 			},
 			Results:       []map[string]any{},
-			ExpectedError: "Syntax Error GraphQL request (2:67) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(id: \"bae-8ca944fd-260e-5a44-b88f-326d9faca810\") {\n                                                                     ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
+			ExpectedError: "Syntax Error GraphQL request (2:67) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_User(id: \"bae-8ca944fd-260e-5a44-b88f-326d9faca810\") {\n                                                                     ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
 		},
 	}
 

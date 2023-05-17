@@ -64,10 +64,11 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var log = logging.MustNewLogger("defra.config")
+var log = logging.MustNewLogger("config")
 
 const (
 	DefaultAPIEmail = "example@example.com"
+	RootdirKey      = "rootdircli"
 	defraEnvPrefix  = "DEFRA"
 	logLevelDebug   = "debug"
 	logLevelInfo    = "info"
@@ -85,16 +86,33 @@ type Config struct {
 	v         *viper.Viper
 }
 
-// DefaultConfig returns the default configuration.
+// DefaultConfig returns the default configuration (or panics).
 func DefaultConfig() *Config {
-	return &Config{
+	cfg := &Config{
 		Datastore: defaultDatastoreConfig(),
 		API:       defaultAPIConfig(),
 		Net:       defaultNetConfig(),
 		Log:       defaultLogConfig(),
-		Rootdir:   DefaultRootDir(),
+		Rootdir:   "",
 		v:         viper.New(),
 	}
+
+	cfg.v.SetEnvPrefix(defraEnvPrefix)
+	cfg.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	cfg.v.SetConfigName(DefaultConfigFileName)
+	cfg.v.SetConfigType(configType)
+
+	// Load default values in viper.
+	b, err := cfg.toBytes()
+	if err != nil {
+		panic(err)
+	}
+	if err = cfg.v.ReadConfig(bytes.NewReader(b)); err != nil {
+		panic(NewErrReadingConfigFile(err))
+	}
+
+	return cfg
 }
 
 // LoadWithRootdir loads a Config with parameters from defaults, config file, environment variables, and CLI flags.
@@ -102,8 +120,6 @@ func DefaultConfig() *Config {
 // Use on a Config struct already loaded with default values from DefaultConfig().
 // To be executed once at the beginning of the program.
 func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
-	var err error
-
 	// Use default logging configuration here, so that
 	// we can log errors in a consistent way even in the case of early failure.
 	defaultLogCfg := defaultLogConfig()
@@ -111,18 +127,11 @@ func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
 		return err
 	}
 
-	if err := cfg.loadDefaultViper(); err != nil {
-		return err
-	}
-
-	// using absolute rootdir for robustness.
-	cfg.Rootdir, err = filepath.Abs(cfg.Rootdir)
-	if err != nil {
+	if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
 		return err
 	}
 
 	if withRootdir {
-		cfg.v.AddConfigPath(cfg.Rootdir)
 		if err := cfg.v.ReadInConfig(); err != nil {
 			return NewErrReadingConfigFile(err)
 		}
@@ -147,28 +156,30 @@ func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
 	return nil
 }
 
-func (cfg *Config) loadDefaultViper() error {
-	// for our DEFRA_ env vars
-	cfg.v.SetEnvPrefix(defraEnvPrefix)
-	cfg.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	// for now, only one type with a specific filename supported
-	cfg.v.SetConfigName(DefaultConfigFileName)
-	// To support a minimal configuration, we load and bind the default config first.
-	cfg.v.SetConfigType(configType)
-	/*
-		We load the default config into the viper instance, from a default template, so that viper
-		can detect the environment variables that are set. This is because viper only detects environment
-		variables that are present in the config file (`AutomaticEnv`). So we load the default config into viper,
-		and then overwrite it with the actual config file.
-	*/
-	defaultConfig := DefaultConfig()
-	defaultConfigBytes, err := defaultConfig.toBytes()
+func (cfg *Config) LoadRootDirFromFlagOrDefault() error {
+	if cfg.Rootdir == "" {
+		rootdir := cfg.v.GetString(RootdirKey)
+		if rootdir != "" {
+			return cfg.setRootdir(rootdir)
+		}
+
+		return cfg.setRootdir(DefaultRootDir())
+	}
+
+	return nil
+}
+
+func (cfg *Config) setRootdir(rootdir string) error {
+	var err error
+	if rootdir == "" {
+		return NewErrInvalidRootDir(rootdir)
+	}
+	// using absolute rootdir for robustness.
+	cfg.Rootdir, err = filepath.Abs(rootdir)
 	if err != nil {
 		return err
 	}
-	if err = cfg.v.ReadConfig(bytes.NewReader(defaultConfigBytes)); err != nil {
-		return NewErrReadingConfigFile(err)
-	}
+	cfg.v.AddConfigPath(cfg.Rootdir)
 	return nil
 }
 
@@ -276,20 +287,22 @@ func (dbcfg DatastoreConfig) validate() error {
 
 // APIConfig configures the API endpoints.
 type APIConfig struct {
-	Address     string
-	TLS         bool
-	PubKeyPath  string
-	PrivKeyPath string
-	Email       string
+	Address        string
+	TLS            bool
+	AllowedOrigins []string `mapstructure:"allowed-origins"`
+	PubKeyPath     string
+	PrivKeyPath    string
+	Email          string
 }
 
 func defaultAPIConfig() *APIConfig {
 	return &APIConfig{
-		Address:     "localhost:9181",
-		TLS:         false,
-		PubKeyPath:  "certs/server.key",
-		PrivKeyPath: "certs/server.crt",
-		Email:       DefaultAPIEmail,
+		Address:        "localhost:9181",
+		TLS:            false,
+		AllowedOrigins: []string{},
+		PubKeyPath:     "certs/server.key",
+		PrivKeyPath:    "certs/server.crt",
+		Email:          DefaultAPIEmail,
 	}
 }
 
@@ -713,13 +726,22 @@ func (cfg *Config) BindFlag(key string, flag *pflag.Flag) error {
 	return cfg.v.BindPFlag(key, flag)
 }
 
-// ToJSON serializes the config to a JSON string.
+// ToJSON serializes the config to a JSON byte array.
 func (c *Config) ToJSON() ([]byte, error) {
 	jsonbytes, err := json.Marshal(c)
 	if err != nil {
 		return []byte{}, NewErrConfigToJSONFailed(err)
 	}
 	return jsonbytes, nil
+}
+
+// String serializes the config to a JSON string.
+func (c *Config) String() string {
+	jsonbytes, err := c.ToJSON()
+	if err != nil {
+		return fmt.Sprintf("failed to convert config to string: %s", err)
+	}
+	return string(jsonbytes)
 }
 
 func (c *Config) toBytes() ([]byte, error) {

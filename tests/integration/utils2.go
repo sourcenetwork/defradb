@@ -14,9 +14,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"reflect"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 
@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/datastore/memory"
@@ -39,6 +40,7 @@ const (
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
+	rootDBFilePathEnvName      = "DEFRA_TEST_ROOT"
 	inMemoryEnvName            = "DEFRA_IN_MEMORY"
 	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
@@ -46,19 +48,6 @@ const (
 	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
 	documentationDirectoryName = "data_format_changes"
 )
-
-// The integration tests open many files. This increases the limits on the number of open files of
-// the process to fix this issue. This is done by default in Go 1.19.
-func init() {
-	var lim syscall.Rlimit
-	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &lim); err == nil && lim.Cur != lim.Max {
-		lim.Cur = lim.Max
-		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &lim)
-		if err != nil {
-			log.ErrorE(context.Background(), "error setting rlimit", err)
-		}
-	}
-}
 
 type DatabaseType string
 
@@ -69,7 +58,7 @@ const (
 )
 
 var (
-	log            = logging.MustNewLogger("defra.tests.integration")
+	log            = logging.MustNewLogger("tests.integration")
 	badgerInMemory bool
 	badgerFile     bool
 	inMemoryStore  bool
@@ -78,6 +67,7 @@ var (
 const subscriptionTimeout = 1 * time.Second
 
 var databaseDir string
+var rootDatabaseDir string
 
 /*
 If this is set to true the integration test suite will instead of its normal profile do
@@ -111,6 +101,7 @@ func init() {
 	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
 	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
 	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
+	rootDatabaseDir, _ = os.LookupEnv(rootDBFilePathEnvName)
 	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
 	inMemoryStoreValue, _ := os.LookupEnv(inMemoryEnvName)
 	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
@@ -124,7 +115,7 @@ func init() {
 	SetupOnly = getBool(setupOnlyValue)
 
 	if !repositorySpecified {
-		repositoryValue = "git@github.com:sourcenetwork/defradb.git"
+		repositoryValue = "https://github.com/sourcenetwork/defradb.git"
 	}
 
 	if !targetBranchSpecified {
@@ -194,15 +185,18 @@ func NewInMemoryDB(ctx context.Context) (client.DB, error) {
 	return db, nil
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
-	var path string
-	if databaseDir == "" {
-		path = t.TempDir()
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, string, error) {
+	var dbPath string
+	if databaseDir != "" {
+		dbPath = databaseDir
+	} else if rootDatabaseDir != "" {
+		dbPath = path.Join(rootDatabaseDir, t.Name())
 	} else {
-		path = databaseDir
+		dbPath = t.TempDir()
 	}
 
-	return newBadgerFileDB(ctx, t, path)
+	db, err := newBadgerFileDB(ctx, t, dbPath)
+	return db, dbPath, err
 }
 
 func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB, error) {
@@ -238,31 +232,31 @@ func GetDatabaseTypes() []DatabaseType {
 	return databases
 }
 
-func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB, error) {
+func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB, string, error) {
 	switch dbt {
 	case badgerIMType:
 		db, err := NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return db, nil
+		return db, "", nil
 
 	case badgerFileType:
-		db, err := NewBadgerFileDB(ctx, t)
+		db, path, err := NewBadgerFileDB(ctx, t)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return db, nil
+		return db, path, nil
 
 	case defraIMType:
 		db, err := NewInMemoryDB(ctx)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return db, nil
+		return db, "", nil
 	}
 
-	return nil, nil
+	return nil, "", nil
 }
 
 // ExecuteTestCase executes the given TestCase against the configured database
@@ -307,10 +301,12 @@ func executeTestCase(
 	resultsChans := []chan func(){}
 	syncChans := []chan struct{}{}
 	nodeAddresses := []string{}
-	nodes := getStartingNodes(ctx, t, dbt, collectionNames, testCase)
+	// The actions responsible for configuring the node
+	nodeConfigs := []config.Config{}
+	nodes, dbPaths := getStartingNodes(ctx, t, dbt, collectionNames, testCase)
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
-	defer closeNodes(ctx, t, &nodes)
+	defer closeNodes(ctx, t, nodes)
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
@@ -333,10 +329,24 @@ func executeTestCase(
 				t.SkipNow()
 				return
 			}
-
-			node, address := configureNode(ctx, t, dbt, action)
+			cfg := action()
+			node, address, path := configureNode(ctx, t, dbt, cfg)
 			nodes = append(nodes, node)
 			nodeAddresses = append(nodeAddresses, address)
+			dbPaths = append(dbPaths, path)
+			nodeConfigs = append(nodeConfigs, cfg)
+
+		case Restart:
+			// Append the new syncChans on top of the previous - the old syncChans will be closed
+			// gracefully as part of the node closure.
+			syncChans = append(
+				syncChans,
+				restartNodes(ctx, t, testCase, dbt, nodes, dbPaths, nodeAddresses, nodeConfigs)...,
+			)
+
+			// If the db was restarted we need to refresh the collection definitions as the old instances
+			// will reference the old (closed) database instances.
+			collections = getCollections(ctx, t, nodes, collectionNames)
 
 		case ConnectPeers:
 			syncChans = append(syncChans, connectPeers(ctx, t, testCase, action, nodes, nodeAddresses))
@@ -364,10 +374,10 @@ func executeTestCase(
 			collections = getCollections(ctx, t, nodes, collectionNames)
 
 		case CreateDoc:
-			documents = createDoc(ctx, t, testCase, collections, documents, action)
+			documents = createDoc(ctx, t, testCase, nodes, collections, documents, action)
 
 		case DeleteDoc:
-			deleteDoc(ctx, t, testCase, collections, documents, action)
+			deleteDoc(ctx, t, testCase, nodes, collections, documents, action)
 
 		case UpdateDoc:
 			updateDoc(ctx, t, testCase, nodes, collections, documents, action)
@@ -391,6 +401,9 @@ func executeTestCase(
 
 		case IntrospectionRequest:
 			assertIntrospectionResults(ctx, t, testCase.Description, db, action)
+
+		case ClientIntrospectionRequest:
+			assertClientIntrospectionResults(ctx, t, testCase.Description, db, action)
 
 		case WaitForSync:
 			waitForSync(t, testCase, action, syncChans)
@@ -423,9 +436,9 @@ func executeTestCase(
 func closeNodes(
 	ctx context.Context,
 	t *testing.T,
-	nodes *[]*node.Node,
+	nodes []*node.Node,
 ) {
-	for _, node := range *nodes {
+	for _, node := range nodes {
 		if node.Peer != nil {
 			err := node.Close()
 			require.NoError(t, err)
@@ -521,7 +534,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case SchemaUpdate, CreateDoc, UpdateDoc:
+		case SchemaUpdate, CreateDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -560,7 +573,7 @@ func getStartingNodes(
 	dbt DatabaseType,
 	collectionNames []string,
 	testCase TestCase,
-) []*node.Node {
+) ([]*node.Node, []string) {
 	hasExplicitNode := false
 	for _, action := range testCase.Actions {
 		switch action.(type) {
@@ -571,24 +584,94 @@ func getStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		var db client.DB
-		if DetectDbChanges && !SetupOnly {
-			// Setup the database using the target branch, and then refresh the current instance
-			db = SetupDatabaseUsingTargetBranch(ctx, t, collectionNames)
-		} else {
-			var err error
-			db, err = GetDatabase(ctx, t, dbt)
-			require.Nil(t, err)
-		}
+		db, path, err := GetDatabase(ctx, t, dbt)
+		require.Nil(t, err)
 
 		return []*node.Node{
-			{
+				{
+					DB: db,
+				},
+			}, []string{
+				path,
+			}
+	}
+
+	return []*node.Node{}, []string{}
+}
+
+func restartNodes(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	dbt DatabaseType,
+	nodes []*node.Node,
+	dbPaths []string,
+	nodeAddresses []string,
+	configureActions []config.Config,
+) []chan struct{} {
+	if dbt == badgerIMType || dbt == defraIMType {
+		return nil
+	}
+	closeNodes(ctx, t, nodes)
+
+	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
+	for i := len(nodes) - 1; i >= 0; i-- {
+		originalPath := databaseDir
+		databaseDir = dbPaths[i]
+		db, _, err := GetDatabase(ctx, t, dbt)
+		require.Nil(t, err)
+		databaseDir = originalPath
+
+		if len(configureActions) == 0 {
+			// If there are no explicit node configuration actions the node will be
+			// basic (i.e. no P2P stuff) and can be yielded now.
+			nodes[i] = &node.Node{
 				DB: db,
-			},
+			}
+			continue
+		}
+
+		cfg := configureActions[i]
+		// We need to make sure the node is configured with its old address, otherwise
+		// a new one may be selected and reconnnection to it will fail.
+		cfg.Net.P2PAddress = strings.Split(nodeAddresses[i], "/p2p/")[0]
+		var n *node.Node
+		n, err = node.NewNode(
+			ctx,
+			db,
+			cfg.NodeConfig(),
+		)
+		require.NoError(t, err)
+
+		if err := n.Start(); err != nil {
+			closeErr := n.Close()
+			if closeErr != nil {
+				t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
+			}
+			require.NoError(t, err)
+		}
+
+		nodes[i] = n
+	}
+
+	syncChans := []chan struct{}{}
+	for _, tc := range testCase.Actions {
+		switch action := tc.(type) {
+		case ConnectPeers:
+			syncChans = append(syncChans, setupPeerWaitSync(
+				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+			))
+		case ConfigureReplicator:
+			syncChans = append(syncChans, setupRepicatorWaitSync(
+				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+			))
 		}
 	}
 
-	return []*node.Node{}
+	// Give the nodes a chance to connect to each other and learn about each other's subscrivbed topics.
+	time.Sleep(100 * time.Millisecond)
+
+	return syncChans
 }
 
 // getCollections returns all the collections of the given names, preserving order.
@@ -628,14 +711,14 @@ func configureNode(
 	ctx context.Context,
 	t *testing.T,
 	dbt DatabaseType,
-	cfg ConfigureNode,
-) (*node.Node, string) {
+	cfg config.Config,
+) (*node.Node, string, string) {
 	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
 	// And affects where libp2p(?) stores some values on the file system, even when using
 	// an in memory store.
 	cfg.Datastore.Badger.Path = t.TempDir()
 
-	db, err := GetDatabase(ctx, t, dbt) //disable change dector, or allow it?
+	db, path, err := GetDatabase(ctx, t, dbt) //disable change dector, or allow it?
 	require.NoError(t, err)
 
 	var n *node.Node
@@ -657,7 +740,7 @@ func configureNode(
 
 	address := fmt.Sprintf("%s/p2p/%s", n.ListenAddrs()[0].String(), n.PeerID())
 
-	return n, address
+	return n, address, path
 }
 
 func getDocuments(
@@ -724,7 +807,7 @@ func updateSchema(
 	action SchemaUpdate,
 ) {
 	for _, node := range getNodes(action.NodeID, nodes) {
-		err := node.DB.AddSchema(ctx, action.Schema)
+		_, err := node.DB.AddSchema(ctx, action.Schema)
 		expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -752,6 +835,7 @@ func createDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
+	nodes []*node.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action CreateDoc,
@@ -759,14 +843,19 @@ func createDoc(
 	// All the docs should be identical, and we only need 1 copy so taking the last
 	// is okay.
 	var doc *client.Document
-	for _, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		var err error
 		doc, err = client.NewDocFromJSON([]byte(action.Doc))
 		if AssertError(t, testCase.Description, err, action.ExpectedError) {
 			return nil
 		}
 
-		err = collections[action.CollectionID].Save(ctx, doc)
+		err = withRetry(
+			actionNodes,
+			nodeID,
+			func() error { return collections[action.CollectionID].Save(ctx, doc) },
+		)
 		if AssertError(t, testCase.Description, err, action.ExpectedError) {
 			return nil
 		}
@@ -789,6 +878,7 @@ func deleteDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
+	nodes []*node.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action DeleteDoc,
@@ -796,8 +886,16 @@ func deleteDoc(
 	doc := documents[action.CollectionID][action.DocID]
 
 	var expectedErrorRaised bool
-	for _, collections := range getNodeCollections(action.NodeID, nodeCollections) {
-		_, err := collections[action.CollectionID].DeleteWithKey(ctx, doc.Key())
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error {
+				_, err := collections[action.CollectionID].DeleteWithKey(ctx, doc.Key())
+				return err
+			},
+		)
 		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
 	}
 
@@ -824,22 +922,38 @@ func updateDoc(
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
-		// If a P2P-sync commit for the given document is already in progress this
-		// Save call can fail as the transaction will conflict. We dont want to worry
-		// about this in our tests so we just retry a few times until it works (or the
-		// retry limit is breached - important incase this is a different error)
-		for i := 0; i < actionNodes[nodeID].MaxTxnRetries(); i++ {
-			err = collections[action.CollectionID].Save(ctx, doc)
-			if err != nil && errors.Is(err, badgerds.ErrTxnConflict) {
-				time.Sleep(100 * time.Millisecond)
-				continue
-			}
-			break
-		}
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error { return collections[action.CollectionID].Save(ctx, doc) },
+		)
 		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
 	}
 
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+// withRetry attempts to perform the given action, retrying up to a DB-defined
+// maximum attempt count if a transaction conflict error is returned.
+//
+// If a P2P-sync commit for the given document is already in progress this
+// Save call can fail as the transaction will conflict. We dont want to worry
+// about this in our tests so we just retry a few times until it works (or the
+// retry limit is breached - important incase this is a different error)
+func withRetry(
+	nodes []*node.Node,
+	nodeID int,
+	action func() error,
+) error {
+	for i := 0; i < nodes[nodeID].MaxTxnRetries(); i++ {
+		err := action()
+		if err != nil && errors.Is(err, badgerds.ErrTxnConflict) {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		return err
+	}
+	return nil
 }
 
 // executeTransactionRequest executes the given transactional request.
@@ -970,7 +1084,7 @@ func executeSubscriptionRequest(
 
 	go func() {
 		data := []map[string]any{}
-		errs := []any{}
+		errs := []error{}
 
 		allActionsAreDone := false
 		expectedDataRecieved := len(action.Results) == 0
@@ -1047,7 +1161,7 @@ func AssertError(t *testing.T, description string, err error, expectedError stri
 func AssertErrors(
 	t *testing.T,
 	description string,
-	errs []any,
+	errs []error,
 	expectedError string,
 ) bool {
 	if expectedError == "" {
@@ -1055,7 +1169,7 @@ func AssertErrors(
 	} else {
 		for _, e := range errs {
 			// This is always a string at the moment, add support for other types as and when needed
-			errorString := e.(string)
+			errorString := e.Error()
 			if !strings.Contains(errorString, expectedError) {
 				// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
 				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
@@ -1161,6 +1275,55 @@ func assertIntrospectionResults(
 	}
 
 	return false
+}
+
+// Asserts that the client introspection results conform to our expectations.
+func assertClientIntrospectionResults(
+	ctx context.Context,
+	t *testing.T,
+	description string,
+	db client.DB,
+	action ClientIntrospectionRequest,
+) bool {
+	result := db.ExecRequest(ctx, action.Request)
+
+	if AssertErrors(t, description, result.GQL.Errors, action.ExpectedError) {
+		return true
+	}
+	resultantData := result.GQL.Data.(map[string]any)
+
+	if len(resultantData) == 0 {
+		return false
+	}
+
+	// Iterate through all types, validating each type definition.
+	// Inspired from buildClientSchema.ts from graphql-js,
+	// which is one way that clients do validate the schema.
+	types := resultantData["__schema"].(map[string]any)["types"].([]any)
+
+	for _, typeData := range types {
+		typeDef := typeData.(map[string]any)
+		kind := typeDef["kind"].(string)
+
+		switch kind {
+		case "SCALAR", "INTERFACE", "UNION", "ENUM":
+			// No validation for these types in this test
+		case "OBJECT":
+			fields := typeDef["fields"]
+			if fields == nil {
+				t.Errorf("Fields are missing for OBJECT type %v", typeDef["name"])
+			}
+		case "INPUT_OBJECT":
+			inputFields := typeDef["inputFields"]
+			if inputFields == nil {
+				t.Errorf("InputFields are missing for INPUT_OBJECT type %v", typeDef["name"])
+			}
+		default:
+			// t.Errorf("Unknown type kind: %v", kind)
+		}
+	}
+
+	return true
 }
 
 // Asserts that the `actual` contains the given `contains` value according to the logic

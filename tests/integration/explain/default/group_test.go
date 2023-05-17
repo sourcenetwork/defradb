@@ -21,7 +21,7 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 		Description: "Explain a grouping on parent.",
 
 		Request: `query @explain {
-			author (groupBy: [age]) {
+			Author (groupBy: [age]) {
 				age
 				_group {
 					name
@@ -57,7 +57,7 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 							"groupByFields": []string{"age"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -69,7 +69,7 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -94,7 +94,7 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 		Description: "Explain a grouping by two fields.",
 
 		Request: `query @explain {
-			author (groupBy: [age, name]) {
+			Author (groupBy: [age, name]) {
 				age
 				_group {
 					name
@@ -130,7 +130,7 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 							"groupByFields": []string{"age", "name"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -142,7 +142,7 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{

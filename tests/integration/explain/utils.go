@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.tests.integration.explain")
+	log = logging.MustNewLogger("tests.integration.explain")
 
 	allPlanNodeNames = map[string]struct{}{
 		// Not a planNode but need it here as this is root of the explain graph.
@@ -123,14 +123,23 @@ func ExecuteExplainRequestTestCase(
 
 	// Must have a non-empty request.
 	if explainTest.Request == "" {
-		assert.Fail(t, "Explain test must have a non-empty request.", explainTest.Description)
+		require.Fail(t, "Explain test must have a non-empty request.", explainTest.Description)
 	}
 
 	// If no expected results are provided, then it's invalid use of this explain testing setup.
-	if explainTest.ExpectedFullGraph == nil &&
+	if explainTest.ExpectedError == "" &&
 		explainTest.ExpectedPatterns == nil &&
-		explainTest.ExpectedTargets == nil {
-		assert.Fail(t, "Atleast one expected explain parameter must be provided.", explainTest.Description)
+		explainTest.ExpectedTargets == nil &&
+		explainTest.ExpectedFullGraph == nil {
+		require.Fail(t, "Atleast one expected explain parameter must be provided.", explainTest.Description)
+	}
+
+	// If we expect an error, then all other expected results should be empty (they shouldn't be provided).
+	if explainTest.ExpectedError != "" &&
+		(explainTest.ExpectedFullGraph != nil ||
+			explainTest.ExpectedPatterns != nil ||
+			explainTest.ExpectedTargets != nil) {
+		require.Fail(t, "Expected error should not have other expected results with it.", explainTest.Description)
 	}
 
 	ctx := context.Background()
@@ -145,37 +154,21 @@ func ExecuteExplainRequestTestCase(
 		log.Info(ctx, explainTest.Description, logging.NewKV("Database", dbi.name))
 
 		if testUtils.DetectDbChanges {
-			if testUtils.SetupOnly {
-				setupDatabase(
-					ctx,
-					t,
-					dbi,
-					schema,
-					collectionNames,
-					explainTest.Description,
-					explainTest.ExpectedError,
-					explainTest.Docs,
-					immutable.None[map[int]map[int][]string](),
-				)
-				dbi.db.Close(ctx)
-				return
-			}
-
-			dbi.db.Close(ctx)
-			db = testUtils.SetupDatabaseUsingTargetBranch(ctx, t, collectionNames)
-		} else {
-			setupDatabase(
-				ctx,
-				t,
-				dbi,
-				schema,
-				collectionNames,
-				explainTest.Description,
-				explainTest.ExpectedError,
-				explainTest.Docs,
-				immutable.None[map[int]map[int][]string](),
-			)
+			t.SkipNow()
+			return
 		}
+
+		setupDatabase(
+			ctx,
+			t,
+			dbi,
+			schema,
+			collectionNames,
+			explainTest.Description,
+			explainTest.ExpectedError,
+			explainTest.Docs,
+			immutable.None[map[int]map[int][]string](),
+		)
 
 		result := db.ExecRequest(ctx, explainTest.Request)
 		if assertExplainRequestResults(
@@ -482,7 +475,7 @@ func getDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	for _, dbt := range testUtils.GetDatabaseTypes() {
-		db, err := testUtils.GetDatabase(ctx, t, dbt)
+		db, _, err := testUtils.GetDatabase(ctx, t, dbt)
 		if err != nil {
 			return nil, err
 		}
@@ -513,7 +506,7 @@ func setupDatabase(
 	updates immutable.Option[map[int]map[int][]string],
 ) {
 	db := dbi.db
-	err := db.AddSchema(ctx, schema)
+	_, err := db.AddSchema(ctx, schema)
 	if testUtils.AssertError(t, description, err, expectedError) {
 		return
 	}

@@ -11,6 +11,7 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,10 +19,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	dshelp "github.com/ipfs/boxo/datastore/dshelp"
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
-	dag "github.com/ipfs/go-merkledag"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
@@ -124,7 +125,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 				handleErr(req.Context(), rw, ErrBodyEmpty, http.StatusBadRequest)
 				return
 			}
-			body, err := io.ReadAll(req.Body)
+			body, err := readWithLimit(req.Body, rw)
 			if err != nil {
 				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 				return
@@ -151,11 +152,16 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	sendJSON(req.Context(), rw, result.GQL, http.StatusOK)
+	sendJSON(req.Context(), rw, newGQLResult(result.GQL), http.StatusOK)
+}
+
+type collectionResponse struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
-	sdl, err := io.ReadAll(req.Body)
+	sdl, err := readWithLimit(req.Body, rw)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
@@ -167,22 +173,35 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = db.AddSchema(req.Context(), string(sdl))
+	colDescs, err := db.AddSchema(req.Context(), string(sdl))
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
+	colResp := make([]collectionResponse, len(colDescs))
+	for i, desc := range colDescs {
+		col, err := db.GetCollectionByName(req.Context(), desc.Name)
+		if err != nil {
+			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+			return
+		}
+		colResp[i] = collectionResponse{
+			Name: col.Name(),
+			ID:   col.SchemaID(),
+		}
+	}
+
 	sendJSON(
 		req.Context(),
 		rw,
-		simpleDataResponse("result", "success"),
+		simpleDataResponse("result", "success", "collections", colResp),
 		http.StatusOK,
 	)
 }
 
 func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
-	patch, err := io.ReadAll(req.Body)
+	patch, err := readWithLimit(req.Body, rw)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
@@ -321,4 +340,20 @@ func subscriptionHandler(pub *events.Publisher[events.Update], rw http.ResponseW
 			flusher.Flush()
 		}
 	}
+}
+
+// maxBytes is an arbitrary limit to prevent unbounded message bodies being sent and read.
+const maxBytes int64 = 100 * (1 << (10 * 2)) // 100MB
+
+// readWithLimit reads from the reader until either EoF or the maximum number of bytes have been read.
+func readWithLimit(reader io.ReadCloser, rw http.ResponseWriter) ([]byte, error) {
+	reader = http.MaxBytesReader(rw, reader, maxBytes)
+
+	var buf bytes.Buffer
+	_, err := io.Copy(&buf, reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }

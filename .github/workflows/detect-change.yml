@@ -41,13 +41,6 @@ jobs:
           make deps:modules
           make deps:test
 
-      # We need SSH Authorization because change detection needs use `ls-remote` like:
-      #  git ls-remote git@github.com:sourcenetwork/defradb.git refs/heads/develop
-      - uses: webfactory/ssh-agent@v0.7.0
-        with:
-            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-            log-public-key: false
-
       - name: Run detection for changes
         run: make test:changes
 

@@ -23,8 +23,8 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v3"
+	dshelp "github.com/ipfs/boxo/datastore/dshelp"
 	"github.com/ipfs/go-cid"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -325,7 +325,7 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 		) {_key}
 	}"
 }`
-	// remote line returns and tabulation from formatted statement
+	// remove line returns and tabulation from formatted statement
 	stmt = strings.ReplaceAll(strings.ReplaceAll(stmt, "\t", ""), "\n", "")
 
 	buf := bytes.NewBuffer([]byte(stmt))
@@ -345,6 +345,47 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 	})
 
 	assert.Contains(t, users[0].Key, "bae-")
+}
+
+func TestExecGQLHandlerContentTypeJSONWithError(t *testing.T) {
+	ctx := context.Background()
+	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
+
+	// load schema
+	testLoadSchema(t, ctx, defra)
+
+	// add document
+	stmt := `
+	{
+		"query": "mutation {
+			create_user(
+				data: \"{
+					\\\"age\\\": 31,
+					\\\"notAField\\\": true
+				}\"
+			) {_key}
+		}"
+	}`
+
+	// remove line returns and tabulation from formatted statement
+	stmt = strings.ReplaceAll(strings.ReplaceAll(stmt, "\t", ""), "\n", "")
+
+	buf := bytes.NewBuffer([]byte(stmt))
+	resp := GQLResult{}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             defra,
+		Method:         "POST",
+		Path:           GraphQLPath,
+		Body:           buf,
+		Headers:        map[string]string{"Content-Type": contentTypeJSON},
+		ExpectedStatus: 200,
+		ResponseData:   &resp,
+	})
+
+	assert.Contains(t, resp.Errors, "The given field does not exist. Name: notAField")
+	assert.Len(t, resp.Errors, 1)
 }
 
 func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
@@ -672,7 +713,15 @@ type user {
 
 	switch v := resp.Data.(type) {
 	case map[string]any:
-		assert.Equal(t, "success", v["result"])
+		assert.Equal(t, map[string]any{
+			"result": "success",
+			"collections": []any{
+				map[string]any{
+					"name": "user",
+					"id":   "bafkreigrucdl7x3lsa4xwgz2bn7lbqmiwkifnspgx7hlkpaal3o55325bq",
+				},
+			},
+		}, v)
 
 	default:
 		t.Fatalf("data should be of type map[string]any but got %T\n%v", resp.Data, v)
@@ -896,10 +945,10 @@ func TestPeerIDHandlerWithNoPeerIDInContext(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no peer ID available. P2P might be disabled")
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no PeerID available. P2P might be disabled")
 	assert.Equal(t, http.StatusNotFound, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Not Found", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "no peer ID available. P2P might be disabled", errResponse.Errors[0].Message)
+	assert.Equal(t, "no PeerID available. P2P might be disabled", errResponse.Errors[0].Message)
 }
 
 func testRequest(opt testOptions) {
@@ -983,7 +1032,7 @@ type user {
 	verified: Boolean 
 	points: Float
 }`
-	err := db.AddSchema(ctx, stmt)
+	_, err := db.AddSchema(ctx, stmt)
 	if err != nil {
 		t.Fatal(err)
 	}

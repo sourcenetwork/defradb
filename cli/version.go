@@ -20,42 +20,40 @@ import (
 	"github.com/sourcenetwork/defradb/version"
 )
 
-var format string
-var full bool
-
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Display the version information of DefraDB and its components",
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		dv, err := version.NewDefraVersion()
-		if err != nil {
-			return err
-		}
-		switch format {
-		case "json":
-			var buf bytes.Buffer
-			dvj, err := json.Marshal(dv)
+func MakeVersionCommand() *cobra.Command {
+	var format string
+	var full bool
+	var cmd = &cobra.Command{
+		Use:   "version",
+		Short: "Display the version information of DefraDB and its components",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			dv, err := version.NewDefraVersion()
 			if err != nil {
 				return err
 			}
-			err = json.Indent(&buf, dvj, "", "    ")
-			if err != nil {
-				return err
+			switch format {
+			case "json":
+				var buf bytes.Buffer
+				dvj, err := json.Marshal(dv)
+				if err != nil {
+					return err
+				}
+				err = json.Indent(&buf, dvj, "", "    ")
+				if err != nil {
+					return err
+				}
+				cmd.Println(buf.String())
+			default:
+				if full {
+					cmd.Println(dv.StringFull())
+				} else {
+					cmd.Println(dv.String())
+				}
 			}
-			cmd.Println(buf.String())
-		default:
-			if full {
-				cmd.Println(dv.StringFull())
-			} else {
-				cmd.Println(dv.String())
-			}
-		}
-		return nil
-	},
-}
-
-func init() {
-	versionCmd.Flags().StringVarP(&format, "format", "f", "", "Version output format. Options are text, json")
-	versionCmd.Flags().BoolVarP(&full, "full", "", false, "Display the full version information")
-	rootCmd.AddCommand(versionCmd)
+			return nil
+		},
+	}
+	cmd.Flags().StringVarP(&format, "format", "f", "", "Version output format. Options are text, json")
+	cmd.Flags().BoolVarP(&full, "full", "", false, "Display the full version information")
+	return cmd
 }

@@ -23,17 +23,17 @@ func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "test", "path": "/Users/Schema/Fields/1/Name", "value": "Email" }
+						{ "op": "test", "path": "/Users/Schema/Fields/1/name", "value": "Email" }
 					]
 				`,
-				ExpectedError: "testing value /Users/Schema/Fields/1/Name failed: test failed",
+				ExpectedError: "testing value /Users/Schema/Fields/1/name failed: test failed",
 			},
 		},
 	}
@@ -47,14 +47,14 @@ func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "test", "path": "/Users/Schema/Fields/1/Name", "value": "Name" }
+						{ "op": "test", "path": "/Users/Schema/Fields/1/Name", "value": "name" }
 					]
 				`,
 			},
@@ -70,14 +70,14 @@ func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "test", "path": "/Users/Schema/Fields/1", "value": {"Name": "Name", "Kind": 11} }
+						{ "op": "test", "path": "/Users/Schema/Fields/1", "value": {"Name": "name", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "testing value /Users/Schema/Fields/1 failed: test failed",
@@ -94,14 +94,14 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "test", "path": "/Users/Schema/Fields/1", "value": {"ID":1, "Name": "Name", "Kind": 11} }
+						{ "op": "test", "path": "/Users/Schema/Fields/1", "value": {"ID":1, "Name": "name", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "testing value /Users/Schema/Fields/1 failed: test failed",

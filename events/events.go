@@ -41,8 +41,8 @@ var _ Channel[int] = (*simpleChannel[int])(nil)
 //
 // At the moment this will always return a new simpleChannel, however that may change in
 // the future as this feature gets fleshed out.
-func New[T any](subscriberBufferSize int, eventBufferSize int) Channel[T] {
-	return NewSimpleChannel[T](subscriberBufferSize, eventBufferSize)
+func New[T any](commandBufferSize int, eventBufferSize int) Channel[T] {
+	return NewSimpleChannel[T](commandBufferSize, eventBufferSize)
 }
 
 // Events hold the supported event types

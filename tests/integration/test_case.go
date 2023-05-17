@@ -42,9 +42,10 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode struct {
-	config.Config
-}
+type ConfigureNode func() config.Config
+
+// Restart is an action that will close and then start all nodes.
+type Restart struct{}
 
 // SchemaUpdate is an action that will update the database schema.
 type SchemaUpdate struct {
@@ -244,6 +245,20 @@ type IntrospectionRequest struct {
 	// corresponding result-array (inner maps are not traversed beyond the array,
 	// the full array-item must match exactly).
 	ContainsData map[string]any
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// ClientIntrospectionRequest represents a GraphQL client introspection request.
+// The GraphQL clients usually use this to fetch the schema state with a default introspection
+// query they provide.
+type ClientIntrospectionRequest struct {
+	// The introspection request to use when fetching schema state.
+	Request string
 
 	// Any error expected from the action. Optional.
 	//

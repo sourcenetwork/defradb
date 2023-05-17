@@ -23,7 +23,7 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -31,15 +31,15 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Schema/Name", "value": "Users" },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
+						email
 					}
 				}`,
 				Results: []map[string]any{},
@@ -56,7 +56,7 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -64,7 +64,7 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Schema/Name", "value": "Author" },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"name": "Email", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "test failed",
@@ -72,11 +72,11 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
+						email
 					}
 				}`,
-				ExpectedError: "Cannot query field \"Email\" on type \"Users\"",
+				ExpectedError: "Cannot query field \"email\" on type \"Users\"",
 			},
 		},
 	}

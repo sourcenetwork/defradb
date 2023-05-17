@@ -14,7 +14,7 @@ import (
 	"context"
 )
 
-var log = MustNewLogger("defra.logging")
+var log = MustNewLogger("logging")
 
 // KV is a key-value pair used to pass structured data to loggers.
 type KV struct {

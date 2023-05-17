@@ -17,5 +17,5 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.net")
+	log = logging.MustNewLogger("net")
 )

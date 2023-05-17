@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on non-rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age, filter: {Age: {_gt: 26}}})
 					}
@@ -60,7 +60,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age, filter: {Age: {_gt: 26}}})
 						_group {
@@ -116,7 +116,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56.647Z"}}})
 						_group {
@@ -175,7 +175,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on rendered, matching filtered group",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age, filter: {Age: {_gt: 33}}})
 						_group(filter: {Age: {_gt: 33}}) {
@@ -224,7 +224,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on rendered, matching datetime filtered group",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2016-07-23T03:46:56.647Z"}}})
 						_group(filter: {CreatedAt: {_gt: "2016-07-23T03:46:56.647Z"}}) {
@@ -276,7 +276,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on non-rendered, different filtered group",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age, filter: {Age: {_gt: 33}}})
 						_group(filter: {Age: {_lt: 33}}) {
@@ -329,7 +329,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDif
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on non-rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						A1: _avg(_group: {field: Age, filter: {Age: {_gt: 26}}})
 						A2: _avg(_group: {field: Age, filter: {Age: {_lt: 26}}})
@@ -373,7 +373,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average with filter on non-rendered, unfiltered group",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age, filter: {Age: {_lt: 33}}})
 					}

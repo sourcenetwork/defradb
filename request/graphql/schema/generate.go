@@ -148,7 +148,8 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 			if _, isAggregate := request.Aggregates[def.Name]; isAggregate {
 				for name, aggregateTarget := range def.Args {
 					expandedField := &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()[name+"FilterArg"],
+						Description: aggregateFilterArgDescription,
+						Type:        g.manager.schema.TypeMap()[name+"FilterArg"],
 					}
 					aggregateTarget.Type.(*gql.InputObject).AddFieldConfig(request.FilterClause, expandedField)
 				}
@@ -281,7 +282,8 @@ func (g *Generator) createExpandedFieldAggregate(
 		if filterType, canHaveFilter := g.manager.schema.TypeMap()[filterTypeName]; canHaveFilter {
 			// Sometimes a filter is not permitted, for example when aggregating `_version`
 			expandedField := &gql.InputObjectFieldConfig{
-				Type: filterType,
+				Description: aggregateFilterArgDescription,
+				Type:        filterType,
 			}
 			aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
 		}
@@ -296,11 +298,14 @@ func (g *Generator) createExpandedFieldSingle(
 ) (*gql.Field, error) {
 	typeName := t.Name()
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
-		Name: f.Name,
-		Type: t,
+		Name:        f.Name,
+		Description: f.Description,
+		Type:        t,
 		Args: gql.FieldConfigArgument{
-			"filter": schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
+			"filter": schemaTypes.NewArgConfig(
+				g.manager.schema.TypeMap()[typeName+"FilterArg"],
+				singleFieldFilterArgDescription,
+			),
 		},
 	}
 	return field, nil
@@ -313,19 +318,26 @@ func (g *Generator) createExpandedFieldList(
 ) (*gql.Field, error) {
 	typeName := t.Name()
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
-		Name: f.Name,
-		Type: gql.NewList(t),
+		Name:        f.Name,
+		Description: f.Description,
+		Type:        gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			"dockey":  schemaTypes.NewArgConfig(gql.String),
-			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
-			"filter":  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
+			"dockey":  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
+			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
+			"filter": schemaTypes.NewArgConfig(
+				g.manager.schema.TypeMap()[typeName+"FilterArg"],
+				listFieldFilterArgDescription,
+			),
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
+				schemaTypes.GroupByArgDescription,
 			),
-			"order":              schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
-			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
-			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
+			"order": schemaTypes.NewArgConfig(
+				g.manager.schema.TypeMap()[typeName+"OrderArg"],
+				schemaTypes.OrderArgDescription,
+			),
+			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int, schemaTypes.LimitArgDescription),
+			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int, schemaTypes.OffsetArgDescription),
 		},
 	}
 
@@ -370,9 +382,20 @@ func (g *Generator) buildTypes(
 			fields := gql.Fields{}
 
 			// automatically add the _key: ID field to the type
-			fields[request.KeyFieldName] = &gql.Field{Type: gql.ID}
+			fields[request.KeyFieldName] = &gql.Field{
+				Description: keyFieldDescription,
+				Type:        gql.ID,
+			}
 
 			for _, field := range fieldDescriptions {
+				if field.Name == request.KeyFieldName {
+					// The `_key` field is included in the fieldDescriptions,
+					// but we do not wish to override the standard definition
+					// with the collection held definition (particularly the
+					// description)
+					continue
+				}
+
 				var ttype gql.Type
 				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
 					var ok bool
@@ -402,11 +425,15 @@ func (g *Generator) buildTypes(
 
 			// add _version field
 			fields[request.VersionFieldName] = &gql.Field{
-				Type: gql.NewList(schemaTypes.CommitObject),
+				Description: versionFieldDescription,
+				Type:        gql.NewList(schemaTypes.CommitObject),
 			}
 
 			// add _deleted field
-			fields[request.DeletedFieldName] = &gql.Field{Type: gql.Boolean}
+			fields[request.DeletedFieldName] = &gql.Field{
+				Description: deletedFieldDescription,
+				Type:        gql.Boolean,
+			}
 
 			gqlType, ok := g.manager.schema.TypeMap()[collection.Name]
 			if !ok {
@@ -414,7 +441,8 @@ func (g *Generator) buildTypes(
 			}
 
 			fields[request.GroupFieldName] = &gql.Field{
-				Type: gql.NewList(gqlType),
+				Description: groupFieldDescription,
+				Type:        gql.NewList(gqlType),
 			}
 
 			return fields, nil
@@ -503,13 +531,14 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 
 func genTopLevelCount(topLevelCountInputs map[string]*gql.InputObject) *gql.Field {
 	topLevelCountField := gql.Field{
-		Name: request.CountFieldName,
-		Type: gql.Int,
-		Args: gql.FieldConfigArgument{},
+		Name:        request.CountFieldName,
+		Description: schemaTypes.CountFieldDescription,
+		Type:        gql.Int,
+		Args:        gql.FieldConfigArgument{},
 	}
 
 	for name, inputObject := range topLevelCountInputs {
-		topLevelCountField.Args[name] = schemaTypes.NewArgConfig(inputObject)
+		topLevelCountField.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
 	}
 
 	return &topLevelCountField
@@ -517,20 +546,22 @@ func genTopLevelCount(topLevelCountInputs map[string]*gql.InputObject) *gql.Fiel
 
 func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.InputObject) []*gql.Field {
 	topLevelSumField := gql.Field{
-		Name: request.SumFieldName,
-		Type: gql.Float,
-		Args: gql.FieldConfigArgument{},
+		Name:        request.SumFieldName,
+		Description: schemaTypes.SumFieldDescription,
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
 	}
 
 	topLevelAverageField := gql.Field{
-		Name: request.AverageFieldName,
-		Type: gql.Float,
-		Args: gql.FieldConfigArgument{},
+		Name:        request.AverageFieldName,
+		Description: schemaTypes.AverageFieldDescription,
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
 	}
 
 	for name, inputObject := range topLevelNumericAggInputs {
-		topLevelSumField.Args[name] = schemaTypes.NewArgConfig(inputObject)
-		topLevelAverageField.Args[name] = schemaTypes.NewArgConfig(inputObject)
+		topLevelSumField.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
+		topLevelAverageField.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
 	}
 
 	return []*gql.Field{&topLevelSumField, &topLevelAverageField}
@@ -541,11 +572,11 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 
 	for _, field := range obj.Fields() {
 		// Only lists can be counted
-		if _, isList := field.Type.(*gql.List); !isList {
+		listType, isList := field.Type.(*gql.List)
+		if !isList {
 			continue
 		}
-
-		inputObjectName := genObjectCountName(field.Type.Name())
+		inputObjectName := genObjectCountName(listType.OfType.Name())
 		countableObject, isSubTypeCountableCollection := g.manager.schema.TypeMap()[inputObjectName]
 		if !isSubTypeCountableCollection {
 			inputObjectName = genNumericInlineArrayCountName(obj.Name(), field.Name)
@@ -560,13 +591,14 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	}
 
 	field := gql.Field{
-		Name: request.CountFieldName,
-		Type: gql.Int,
-		Args: gql.FieldConfigArgument{},
+		Name:        request.CountFieldName,
+		Description: schemaTypes.CountFieldDescription,
+		Type:        gql.Int,
+		Args:        gql.FieldConfigArgument{},
 	}
 
 	for name, inputObject := range childTypesByFieldName {
-		field.Args[name] = schemaTypes.NewArgConfig(inputObject)
+		field.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
 	}
 
 	return field, nil
@@ -586,7 +618,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
-			inputObjectName = genNumericObjectSelectorName(field.Type.Name())
+			inputObjectName = genNumericObjectSelectorName(listType.OfType.Name())
 		}
 
 		subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[inputObjectName]
@@ -599,13 +631,14 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 	}
 
 	field := gql.Field{
-		Name: request.SumFieldName,
-		Type: gql.Float,
-		Args: gql.FieldConfigArgument{},
+		Name:        request.SumFieldName,
+		Description: schemaTypes.SumFieldDescription,
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
 	}
 
 	for name, inputObject := range childTypesByFieldName {
-		field.Args[name] = schemaTypes.NewArgConfig(inputObject)
+		field.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
 	}
 
 	return field, nil
@@ -625,7 +658,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
-			inputObjectName = genNumericObjectSelectorName(field.Type.Name())
+			inputObjectName = genNumericObjectSelectorName(listType.OfType.Name())
 		}
 
 		subAverageType, isSubTypeAveragable := g.manager.schema.TypeMap()[inputObjectName]
@@ -638,13 +671,14 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 	}
 
 	field := gql.Field{
-		Name: request.AverageFieldName,
-		Type: gql.Float,
-		Args: gql.FieldConfigArgument{},
+		Name:        request.AverageFieldName,
+		Description: schemaTypes.AverageFieldDescription,
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
 	}
 
 	for name, inputObject := range childTypesByFieldName {
-		field.Args[name] = schemaTypes.NewArgConfig(inputObject)
+		field.Args[name] = schemaTypes.NewArgConfig(inputObject, inputObject.Description())
 	}
 
 	return field, nil
@@ -667,15 +701,15 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 				Fields: gql.InputObjectConfigFieldMap{
 					request.LimitClause: &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
-						Description: "The maximum number of child items to aggregate.",
+						Description: schemaTypes.LimitArgDescription,
 					},
 					request.OffsetClause: &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
-						Description: "The index from which to start aggregating items.",
+						Description: schemaTypes.OffsetArgDescription,
 					},
 					request.OrderClause: &gql.InputObjectFieldConfig{
 						Type:        g.manager.schema.TypeMap()["Ordering"],
-						Description: "The order in which to aggregate items.",
+						Description: schemaTypes.OrderArgDescription,
 					},
 				},
 			})
@@ -700,11 +734,11 @@ func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			request.LimitClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
-				Description: "The maximum number of child items to count.",
+				Description: schemaTypes.LimitArgDescription,
 			},
 			request.OffsetClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
-				Description: "The index from which to start counting items.",
+				Description: schemaTypes.OffsetArgDescription,
 			},
 		},
 	})
@@ -728,11 +762,11 @@ func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObjec
 			Fields: gql.InputObjectConfigFieldMap{
 				request.LimitClause: &gql.InputObjectFieldConfig{
 					Type:        gql.Int,
-					Description: "The maximum number of child items to count.",
+					Description: schemaTypes.LimitArgDescription,
 				},
 				request.OffsetClause: &gql.InputObjectFieldConfig{
 					Type:        gql.Int,
-					Description: "The index from which to start counting items.",
+					Description: schemaTypes.OffsetArgDescription,
 				},
 			},
 		})
@@ -802,15 +836,15 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 			},
 			request.LimitClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
-				Description: "The maximum number of child items to aggregate.",
+				Description: schemaTypes.LimitArgDescription,
 			},
 			request.OffsetClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
-				Description: "The index from which to start aggregating items.",
+				Description: schemaTypes.OffsetArgDescription,
 			},
 			request.OrderClause: &gql.InputObjectFieldConfig{
 				Type:        g.manager.schema.TypeMap()[genTypeName(obj, "OrderArg")],
-				Description: "The order in which to aggregate items.",
+				Description: schemaTypes.OrderArgDescription,
 			},
 		}, nil
 	}
@@ -823,8 +857,9 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 
 func appendCommitChildGroupField() {
 	schemaTypes.CommitObject.Fields()[request.GroupFieldName] = &gql.FieldDefinition{
-		Name: request.GroupFieldName,
-		Type: gql.NewList(schemaTypes.CommitObject),
+		Name:        request.GroupFieldName,
+		Description: groupFieldDescription,
+		Type:        gql.NewList(schemaTypes.CommitObject),
 	}
 }
 
@@ -888,11 +923,11 @@ func (g *Generator) genTypeMutationFields(
 
 func (g *Generator) genTypeMutationCreateField(obj *gql.Object) (*gql.Field, error) {
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
-		Name: "create_" + obj.Name(),
-		Type: obj,
+		Name:        "create_" + obj.Name(),
+		Description: createDocumentDescription,
+		Type:        obj,
 		Args: gql.FieldConfigArgument{
-			"data": schemaTypes.NewArgConfig(gql.String),
+			"data": schemaTypes.NewArgConfig(gql.String, createDataArgDescription),
 		},
 	}
 	return field, nil
@@ -903,14 +938,14 @@ func (g *Generator) genTypeMutationUpdateField(
 	filter *gql.InputObject,
 ) (*gql.Field, error) {
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
-		Name: "update_" + obj.Name(),
-		Type: gql.NewList(obj),
+		Name:        "update_" + obj.Name(),
+		Description: updateDocumentsDescription,
+		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     schemaTypes.NewArgConfig(gql.ID),
-			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID)),
-			"filter": schemaTypes.NewArgConfig(filter),
-			"data":   schemaTypes.NewArgConfig(gql.String),
+			"id":     schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
+			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
+			"filter": schemaTypes.NewArgConfig(filter, updateFilterArgDescription),
+			"data":   schemaTypes.NewArgConfig(gql.String, updateDataArgDescription),
 		},
 	}
 	return field, nil
@@ -921,20 +956,18 @@ func (g *Generator) genTypeMutationDeleteField(
 	filter *gql.InputObject,
 ) (*gql.Field, error) {
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
-		Name: "delete_" + obj.Name(),
-		Type: gql.NewList(obj),
+		Name:        "delete_" + obj.Name(),
+		Description: deleteDocumentsDescription,
+		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     schemaTypes.NewArgConfig(gql.ID),
-			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID)),
-			"filter": schemaTypes.NewArgConfig(filter),
-			// "data":   newArgConfig(gql.String),
+			"id":     schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
+			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
+			"filter": schemaTypes.NewArgConfig(filter, deleteFilterArgDescription),
 		},
 	}
 	return field, nil
 }
 
-// enum {Type.Name}Fields { ... }
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 	enumFieldsCfg := gql.EnumConfig{
 		Name:   genTypeName(obj, "Fields"),
@@ -959,15 +992,17 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 		func() (gql.InputObjectConfigFieldMap, error) {
 			fields := gql.InputObjectConfigFieldMap{}
 
-			// conditionals
-			compoundListType := &gql.InputObjectFieldConfig{
-				Type: gql.NewList(selfRefType),
+			fields["_and"] = &gql.InputObjectFieldConfig{
+				Description: schemaTypes.AndOperatorDescription,
+				Type:        gql.NewList(selfRefType),
 			}
-
-			fields["_and"] = compoundListType
-			fields["_or"] = compoundListType
+			fields["_or"] = &gql.InputObjectFieldConfig{
+				Description: schemaTypes.OrOperatorDescription,
+				Type:        gql.NewList(selfRefType),
+			}
 			fields["_not"] = &gql.InputObjectFieldConfig{
-				Type: selfRefType,
+				Description: schemaTypes.NotOperatorDescription,
+				Type:        selfRefType,
 			}
 
 			// generate basic filter operator blocks
@@ -990,7 +1025,12 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 						Type: operatorType,
 					}
 				} else { // objects (relations)
-					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(field.Type, "FilterArg")]
+					fieldType := field.Type
+					if l, isList := field.Type.(*gql.List); isList {
+						// We want the FilterArg for the object, not the list of objects.
+						fieldType = l.OfType
+					}
+					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(fieldType, "FilterArg")]
 					if !isFilterable {
 						filterType = &gql.InputObjectField{}
 					}
@@ -1121,19 +1161,22 @@ func (g *Generator) genTypeQueryableFieldList(
 	g.manager.schema.TypeMap()[config.order.Name()] = config.order
 
 	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
-		Name: name,
-		Type: gql.NewList(obj),
+		Name:        name,
+		Description: obj.Description(),
+		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"dockey":             schemaTypes.NewArgConfig(gql.String),
-			"dockeys":            schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
-			"cid":                schemaTypes.NewArgConfig(gql.String),
-			"filter":             schemaTypes.NewArgConfig(config.filter),
-			"groupBy":            schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
-			"order":              schemaTypes.NewArgConfig(config.order),
-			request.ShowDeleted:  schemaTypes.NewArgConfig(gql.Boolean),
-			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
-			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
+			"dockey":  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
+			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
+			"cid":     schemaTypes.NewArgConfig(gql.String, cidArgDescription),
+			"filter":  schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
+			"groupBy": schemaTypes.NewArgConfig(
+				gql.NewList(gql.NewNonNull(config.groupBy)),
+				schemaTypes.GroupByArgDescription,
+			),
+			"order":              schemaTypes.NewArgConfig(config.order, schemaTypes.OrderArgDescription),
+			request.ShowDeleted:  schemaTypes.NewArgConfig(gql.Boolean, showDeletedArgDescription),
+			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int, schemaTypes.LimitArgDescription),
+			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int, schemaTypes.OffsetArgDescription),
 		},
 	}
 

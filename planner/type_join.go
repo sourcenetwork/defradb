@@ -325,7 +325,6 @@ func (n *typeJoinOne) Start() error {
 
 func (n *typeJoinOne) Spans(spans core.Spans) {
 	n.root.Spans(spans)
-	n.subType.Spans(spans)
 }
 
 func (n *typeJoinOne) Next() (bool, error) {
@@ -509,7 +508,6 @@ func (n *typeJoinMany) Start() error {
 
 func (n *typeJoinMany) Spans(spans core.Spans) {
 	n.root.Spans(spans)
-	n.subType.Spans(spans)
 }
 
 func (n *typeJoinMany) Next() (bool, error) {

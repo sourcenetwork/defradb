@@ -22,12 +22,13 @@ import (
 	"github.com/spf13/cobra/doc"
 
 	"github.com/sourcenetwork/defradb/cli"
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
 const defaultPerm os.FileMode = 0o777
 
-var log = logging.MustNewLogger("defra.genmanpages")
+var log = logging.MustNewLogger("genmanpages")
 
 func main() {
 	dirFlag := flag.String("o", "build/man", "Directory in which to generate DefraDB man pages")
@@ -45,7 +46,8 @@ func genRootManPages(dir string) {
 	if err != nil {
 		log.FatalE(ctx, "Failed to create directory", err, logging.NewKV("dir", dir))
 	}
-	err = doc.GenManTree(cli.RootCmd, header, dir)
+	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
+	err = doc.GenManTree(defraCmd.RootCmd, header, dir)
 	if err != nil {
 		log.FatalE(ctx, "Failed generation of man pages", err)
 	}

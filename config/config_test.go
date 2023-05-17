@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var envVarsDifferentThanDefault = map[string]string{
+var envVarsDifferent = map[string]string{
 	"DEFRA_DATASTORE_STORE":       "memory",
 	"DEFRA_DATASTORE_BADGER_PATH": "defra_data",
 	"DEFRA_API_ADDRESS":           "localhost:9999",
@@ -73,9 +73,10 @@ func FixtureEnvVars(t *testing.T, envVars map[string]string) {
 	})
 }
 
-func TestDefaultConfig(t *testing.T) {
+func TestConfigValidateBasic(t *testing.T) {
 	cfg := DefaultConfig()
-	assert.NotNil(t, cfg)
+	assert.NoError(t, cfg.validate())
+
 	err := cfg.validate()
 	assert.NoError(t, err)
 	// asserting equality of some unlikely-to-change default values
@@ -115,9 +116,10 @@ func TestLoadIncorrectValuesFromConfigFile(t *testing.T) {
 
 	for _, tc := range testcases {
 		cfg = DefaultConfig()
-		cfg.Rootdir = t.TempDir()
+		err := cfg.setRootdir(t.TempDir())
+		assert.NoError(t, err)
 		tc.setter()
-		err := cfg.WriteConfigFile()
+		err = cfg.WriteConfigFile()
 		assert.NoError(t, err)
 		err = cfg.LoadWithRootdir(true)
 		assert.ErrorIs(t, err, tc.err)
@@ -133,16 +135,19 @@ func TestJSONSerialization(t *testing.T) {
 
 	assert.NoError(t, errUnmarshal)
 	assert.NoError(t, errSerialize)
-	for _, v := range m {
-		assert.NotEmpty(t, v)
+	for k, v := range m {
+		if k != "Rootdir" { // Rootdir is not serialized
+			assert.NotEmpty(t, v)
+		}
 	}
 }
 
 func TestLoadValidationDefaultsConfigFileEnv(t *testing.T) {
 	tmpdir := t.TempDir()
 	cfg := DefaultConfig()
-	cfg.Rootdir = tmpdir
-	FixtureEnvVars(t, envVarsDifferentThanDefault)
+	err := cfg.setRootdir(tmpdir)
+	assert.NoError(t, err)
+	FixtureEnvVars(t, envVarsDifferent)
 	errWriteConfig := cfg.WriteConfigFile()
 
 	errLoad := cfg.LoadWithRootdir(true)
@@ -155,7 +160,7 @@ func TestLoadValidationDefaultsConfigFileEnv(t *testing.T) {
 
 func TestLoadDefaultsEnv(t *testing.T) {
 	cfg := DefaultConfig()
-	FixtureEnvVars(t, envVarsDifferentThanDefault)
+	FixtureEnvVars(t, envVarsDifferent)
 
 	err := cfg.LoadWithRootdir(false)
 
@@ -166,7 +171,7 @@ func TestLoadDefaultsEnv(t *testing.T) {
 
 func TestEnvVariablesAllConsidered(t *testing.T) {
 	cfg := DefaultConfig()
-	FixtureEnvVars(t, envVarsDifferentThanDefault)
+	FixtureEnvVars(t, envVarsDifferent)
 
 	err := cfg.LoadWithRootdir(false)
 
@@ -187,8 +192,9 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 
 func TestLoadNonExistingConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
-	cfg.Rootdir = t.TempDir()
-	err := cfg.LoadWithRootdir(true)
+	err := cfg.setRootdir(t.TempDir())
+	assert.NoError(t, err)
+	err = cfg.LoadWithRootdir(true)
 	assert.ErrorIs(t, err, ErrReadingConfigFile)
 }
 
@@ -203,7 +209,8 @@ func TestLoadInvalidConfigFile(t *testing.T) {
 	)
 	assert.NoError(t, errWrite)
 
-	cfg.Rootdir = tmpdir
+	err := cfg.setRootdir(tmpdir)
+	assert.NoError(t, err)
 	errLoad := cfg.LoadWithRootdir(true)
 	assert.ErrorIs(t, errLoad, ErrReadingConfigFile)
 }
@@ -262,19 +269,21 @@ func TestCreateAndLoadCustomConfig(t *testing.T) {
 	testdir := t.TempDir()
 
 	cfg := DefaultConfig()
-	cfg.Rootdir = testdir
+	err := cfg.setRootdir(testdir)
+	assert.NoError(t, err)
 	// a few valid but non-default changes
 	cfg.Net.PubSubEnabled = false
 	cfg.Log.Level = "fatal"
 
-	err := cfg.CreateRootDirAndConfigFile()
+	err = cfg.CreateRootDirAndConfigFile()
 	assert.NoError(t, err)
 
 	assert.True(t, cfg.ConfigFileExists())
 
 	// check that the config file loads properly
 	cfg2 := DefaultConfig()
-	cfg2.Rootdir = testdir
+	err = cfg2.setRootdir(testdir)
+	assert.NoError(t, err)
 	err = cfg2.LoadWithRootdir(true)
 	assert.NoError(t, err)
 	assert.Equal(t, cfg.Net.PubSubEnabled, cfg2.Net.PubSubEnabled)
