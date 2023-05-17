@@ -232,6 +232,7 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
 }
 
+// @todo: should store as nil value?
 func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
@@ -255,16 +256,14 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 
 func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T) {
 	f := newIndexTestFixture(t)
-	indexDesc := f.createUserCollectionIndexOnName()
+	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
 
-	mockTxn := f.mockTxn()
+	mockTxn := f.mockTxn().ClearSystemStore()
 	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
-	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
-	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, indexDesc.Name)
-	systemStoreOn.Get(mock.Anything, colIndexKey.ToDS()).Return([]byte("invalid"), nil)
-	systemStoreOn.Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
+	systemStoreOn.Query(mock.Anything, mock.Anything).
+		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
 
 	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
 	require.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
@@ -276,15 +275,15 @@ func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 
 	doc := f.newUserDoc("John", 21)
 
-	mockTxn := f.mockTxn()
+	testErr := errors.New("test error")
+
+	mockTxn := f.mockTxn().ClearSystemStore()
 	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
-	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
-	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, testUsersColIndexName)
-	systemStoreOn.Get(mock.Anything, colIndexKey.ToDS()).Return([]byte{}, errors.New("error"))
-	systemStoreOn.Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
+	systemStoreOn.Query(mock.Anything, mock.Anything).
+		Return(nil, testErr)
 
 	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
-	require.ErrorIs(t, err, NewErrFailedToReadStoredIndexDesc(nil))
+	require.ErrorIs(t, err, testErr)
 }
 
 func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {

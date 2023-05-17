@@ -788,27 +788,18 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 }
 
 func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
-	indexes, err := c.db.getCollectionIndexes(ctx, txn, c.desc.Name)
-	err = err
+	indexes, err := c.getIndexes(ctx, txn)
+	if err != nil {
+		return err
+	}
 	for _, index := range indexes {
-		indexedFieldName := index.Fields[0].Name
+		indexedFieldName := index.Description().Fields[0].Name
 		fieldVal, err := doc.Get(indexedFieldName)
 		if err != nil {
 			return nil
 		}
-		colIndexKey := core.NewCollectionIndexKey(c.desc.Name, index.Name)
-		indexData, err := txn.Systemstore().Get(ctx, colIndexKey.ToDS())
-		if err != nil {
-			return NewErrFailedToReadStoredIndexDesc(err)
-		}
-		var indexDesc client.IndexDescription
-		err = json.Unmarshal(indexData, &indexDesc)
-		if err != nil {
-			return NewErrInvalidStoredIndex(err)
-		}
-		colIndex := NewCollectionIndex(c, indexDesc)
 		docDataStoreKey := c.getDSKeyFromDockey(doc.Key())
-		err = colIndex.Save(ctx, txn, docDataStoreKey, fieldVal)
+		err = index.Save(ctx, txn, docDataStoreKey, fieldVal)
 		if err != nil {
 			return err
 		}

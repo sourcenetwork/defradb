@@ -10,6 +10,7 @@ import (
 
 type MultiStoreTxn struct {
 	*Txn
+	t               *testing.T
 	MockRootstore   *DSReaderWriter
 	MockDatastore   *DSReaderWriter
 	MockHeadstore   *DSReaderWriter
@@ -60,6 +61,7 @@ func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 
 	result := &MultiStoreTxn{
 		Txn:             txn,
+		t:               t,
 		MockRootstore:   prepareRootStore(t),
 		MockDatastore:   prepareDataStore(t),
 		MockHeadstore:   prepareHeadStore(t),
@@ -74,6 +76,13 @@ func NewTxnWithMultistore(t *testing.T) *MultiStoreTxn {
 	txn.EXPECT().Systemstore().Return(result.MockSystemstore).Maybe()
 
 	return result
+}
+
+func (txn *MultiStoreTxn) ClearSystemStore() *MultiStoreTxn {
+	txn.MockSystemstore = NewDSReaderWriter(txn.t)
+	txn.EXPECT().Systemstore().Unset()
+	txn.EXPECT().Systemstore().Return(txn.MockSystemstore).Maybe()
+	return txn
 }
 
 func NewQueryResultsWithValues(t *testing.T, values ...[]byte) *Results {

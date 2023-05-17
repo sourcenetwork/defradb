@@ -214,15 +214,18 @@ func (c *collection) dropAllIndexes(ctx context.Context) error {
 	return nil
 }
 
-func (c *collection) getIndexes(ctx context.Context) ([]CollectionIndex, error) {
+func (c *collection) getIndexes(ctx context.Context, txn datastore.Txn) ([]CollectionIndex, error) {
 	if c.isIndexCached {
 		return c.indexes, nil
 	}
 
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
-	txn, err := c.getTxn(ctx, false)
-	if err != nil {
-		return nil, err
+	if txn == nil {
+		var err error
+		txn, err = c.getTxn(ctx, true)
+		if err != nil {
+			return nil, err
+		}
 	}
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix: prefix.ToString(),
@@ -257,7 +260,7 @@ func (c *collection) getIndexes(ctx context.Context) ([]CollectionIndex, error) 
 }
 
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	indexes, err := c.getIndexes(ctx)
+	indexes, err := c.getIndexes(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
