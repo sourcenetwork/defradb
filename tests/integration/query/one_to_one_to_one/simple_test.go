@@ -17,77 +17,425 @@ import (
 )
 
 func TestQueryOneToOneToOne(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one-to-one relation primary direction",
-		Request: `query {
-			author {
-				name
-				published {
-					name
-					publisher {
-						name
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Publisher {
+						name: String
+						printed: Book @primary
 					}
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: {
+
+					type Book {
+						name: String
+						publisher: Publisher
+						author: Author @primary
+					}
+
+					type Author {
+						name: String
+						published: Book
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
+				Doc: `{
+					"name": "Old Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
+				Doc: `{
+					"name": "New Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
-				`{
+				Doc: `{
 					"name": "Painted House",
 					"publisher_id": "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
 				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
-				`{
+				Doc: `{
 					"name": "Theif Lord",
 					"publisher_id": "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
 				}`,
 			},
-			//authors
-			1: {
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
 					"name": "John Grisham",
 					"published_id": "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
 					"name": "Cornelia Funke",
 					"published_id": "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
 				}`,
 			},
-			// publishers
-			2: {
-				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
-				`{
-					"name": "Old Publisher"
+			testUtils.Request{
+				Request: `query {
+					Publisher {
+						name
+						printed {
+							name
+							author {
+								name
+							}
+						}
+					}
 				}`,
-				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
-				`{
-					"name": "New Publisher"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"published": map[string]any{
-					"name": "Painted House",
-					"publisher": map[string]any{
+				Results: []map[string]any{
+					{
 						"name": "Old Publisher",
+						"printed": map[string]any{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+						},
 					},
-				},
-			},
-			{
-				"name": "Cornelia Funke",
-				"published": map[string]any{
-					"name": "Theif Lord",
-					"publisher": map[string]any{
+					{
 						"name": "New Publisher",
+						"printed": map[string]any{
+							"name": "Theif Lord",
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"Publisher", "Book", "Author"}, test)
+}
+
+func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one-to-one relation, secondary then primary direction",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Publisher {
+						name: String
+						printed: Book
+					}
+
+					type Book {
+						name: String
+						publisher: Publisher @primary
+						author: Author @primary
+					}
+
+					type Author {
+						name: String
+						published: Book
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
+				Doc: `{
+					"name": "Old Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
+				Doc: `{
+					"name": "New Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
+				Doc: `{
+					"name": "Painted House",
+					"publisher_id": "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
+				Doc: `{
+					"name": "Theif Lord",
+					"publisher_id": "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+					"name": "Cornelia Funke",
+					"published_id": "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Publisher {
+						name
+						printed {
+							name
+							author {
+								name
+							}
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Old Publisher",
+						"printed": map[string]any{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+						},
+					},
+					{
+						"name": "New Publisher",
+						"printed": map[string]any{
+							"name": "Theif Lord",
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Publisher", "Book", "Author"}, test)
+}
+
+func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one-to-one relation, primary then secondary direction",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Publisher {
+						name: String
+						printed: Book @primary
+					}
+
+					type Book {
+						name: String
+						publisher: Publisher
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
+				Doc: `{
+					"name": "Old Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
+				Doc: `{
+					"name": "New Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
+				Doc: `{
+					"name": "Painted House",
+					"publisher_id": "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
+				Doc: `{
+					"name": "Theif Lord",
+					"publisher_id": "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+					"name": "Cornelia Funke",
+					"published_id": "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Publisher {
+						name
+						printed {
+							name
+							author {
+								name
+							}
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Old Publisher",
+						"printed": map[string]any{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+						},
+					},
+					{
+						"name": "New Publisher",
+						"printed": map[string]any{
+							"name": "Theif Lord",
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Publisher", "Book", "Author"}, test)
+}
+
+func TestQueryOneToOneToOneSecondary(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one-to-one relation, secondary direction",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Publisher {
+						name: String
+						printed: Book
+					}
+
+					type Book {
+						name: String
+						publisher: Publisher  @primary
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
+				Doc: `{
+					"name": "Old Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
+				Doc: `{
+					"name": "New Publisher"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
+				Doc: `{
+					"name": "Painted House",
+					"publisher_id": "bae-1f4cc394-08a8-5825-87b9-b02de2f25f7d"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
+				Doc: `{
+					"name": "Theif Lord",
+					"publisher_id": "bae-a3cd6fac-13c0-5c8f-970b-0ce7abbb49a5"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-a6cdabfc-17dd-5662-b213-c596ee4c3292"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+					"name": "Cornelia Funke",
+					"published_id": "bae-bc198c5f-6238-5b50-8072-68dec9c7a16b"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Publisher {
+						name
+						printed {
+							name
+							author {
+								name
+							}
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Old Publisher",
+						"printed": map[string]any{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+						},
+					},
+					{
+						"name": "New Publisher",
+						"printed": map[string]any{
+							"name": "Theif Lord",
+							"author": map[string]any{
+								"name": "Cornelia Funke",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Publisher", "Book", "Author"}, test)
 }

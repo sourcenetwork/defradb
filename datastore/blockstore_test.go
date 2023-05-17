@@ -14,9 +14,9 @@ import (
 	"context"
 	"testing"
 
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-libipfs/blocks"
 	mh "github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/require"
 

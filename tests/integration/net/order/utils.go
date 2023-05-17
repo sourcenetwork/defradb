@@ -31,7 +31,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.test.net")
+	log = logging.MustNewLogger("test.net")
 )
 
 const (
@@ -128,7 +128,8 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 }
 
 func seedSchema(ctx context.Context, db client.DB) error {
-	return db.AddSchema(ctx, userCollectionGQLSchema)
+	_, err := db.AddSchema(ctx, userCollectionGQLSchema)
+	return err
 }
 
 func seedDocument(ctx context.Context, db client.DB, document string) (client.DocKey, error) {
@@ -342,10 +343,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 	// clean up
 	for _, n := range nodes {
-		n.DB.Close(ctx)
 		if err := n.Close(); err != nil {
 			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err.Error()))
 		}
+		n.DB.Close(ctx)
 	}
 }
 

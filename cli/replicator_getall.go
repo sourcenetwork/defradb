@@ -17,66 +17,65 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	netclient "github.com/sourcenetwork/defradb/net/api/client"
 )
 
-var getAllReplicatorsCmd = &cobra.Command{
-	Use:   "getall",
-	Short: "Get all replicators",
-	Long: `Use this command if you wish to get all the replicators
-for the p2p data sync system.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 0 {
-			if err := cmd.Usage(); err != nil {
-				return err
+func MakeReplicatorGetallCommand(cfg *config.Config) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "getall",
+		Short: "Get all replicators",
+		Long:  `Use this command if you wish to get all the replicators for the p2p data sync system.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				if err := cmd.Usage(); err != nil {
+					return err
+				}
+				return errors.New("must specify no argument")
 			}
-			return errors.New("must specify no argument")
-		}
 
-		log.FeedbackInfo(
-			cmd.Context(),
-			"Getting all replicators",
-			logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
-		)
+			log.FeedbackInfo(
+				cmd.Context(),
+				"Getting all replicators",
+				logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
+			)
 
-		cred := insecure.NewCredentials()
-		client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
-		if err != nil {
-			return errors.Wrap("failed to create RPC client", err)
-		}
-
-		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
-		if err != nil {
-			return errors.Wrap("failed to parse RPC timeout duration", err)
-		}
-
-		ctx, cancel := context.WithTimeout(cmd.Context(), rpcTimeoutDuration)
-		defer cancel()
-
-		reps, err := client.GetAllReplicators(ctx)
-		if err != nil {
-			return errors.Wrap("failed to get replicators, request failed", err)
-		}
-		if len(reps) > 0 {
-			log.FeedbackInfo(ctx, "Successfully got all replicators")
-			for _, rep := range reps {
-				log.FeedbackInfo(
-					ctx,
-					rep.Info.ID.String(),
-					logging.NewKV("Schemas", rep.Schemas),
-					logging.NewKV("Addrs", rep.Info.Addrs),
-				)
+			cred := insecure.NewCredentials()
+			client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
+			if err != nil {
+				return errors.Wrap("failed to create RPC client", err)
 			}
-		} else {
-			log.FeedbackInfo(ctx, "No replicator found")
-		}
 
-		return nil
-	},
-}
+			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
+			if err != nil {
+				return errors.Wrap("failed to parse RPC timeout duration", err)
+			}
 
-func init() {
-	replicatorCmd.AddCommand(getAllReplicatorsCmd)
+			ctx, cancel := context.WithTimeout(cmd.Context(), rpcTimeoutDuration)
+			defer cancel()
+
+			reps, err := client.GetAllReplicators(ctx)
+			if err != nil {
+				return errors.Wrap("failed to get replicators, request failed", err)
+			}
+			if len(reps) > 0 {
+				log.FeedbackInfo(ctx, "Successfully got all replicators")
+				for _, rep := range reps {
+					log.FeedbackInfo(
+						ctx,
+						rep.Info.ID.String(),
+						logging.NewKV("Schemas", rep.Schemas),
+						logging.NewKV("Addrs", rep.Info.Addrs),
+					)
+				}
+			} else {
+				log.FeedbackInfo(ctx, "No replicator found")
+			}
+
+			return nil
+		},
+	}
+	return cmd
 }

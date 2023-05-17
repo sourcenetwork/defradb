@@ -17,11 +17,47 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
+func TestMutationCreateSimpleErrorsGivenNonExistantField(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple create mutation with non existant field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+							create_Users(data: "{\"name\": \"John\",\"fieldDoesNotExist\": 27}") {
+								_key
+							}
+						}`,
+				ExpectedError: "The given field does not exist. Name: fieldDoesNotExist",
+			},
+			testUtils.Request{
+				// Ensure that no documents have been written.
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+				Results: []map[string]any{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
 func TestMutationCreateSimple(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation",
 		Request: `mutation {
-					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -43,7 +79,7 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation where document already exists.",
 		Request: `mutation {
-					create_user(data: "{\"name\": \"John\",\"age\": 27}") {
+					create_User(data: "{\"name\": \"John\",\"age\": 27}") {
 						_key
 						name
 						age
@@ -67,7 +103,7 @@ func TestMutationCreateSimpleDoesNotCreateDocEmptyData(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation with empty data param.",
 		Request: `mutation {
-					create_user(data: "") {
+					create_User(data: "") {
 						_key
 						name
 						age

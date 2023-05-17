@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query group by and parent typename",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						__typename
 					}
@@ -35,7 +35,7 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name":       "John",
-				"__typename": "users",
+				"__typename": "Users",
 			},
 		},
 	}
@@ -47,7 +47,7 @@ func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query group by and child typename",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_group {
 							__typename
@@ -66,7 +66,7 @@ func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 				"Name": "John",
 				"_group": []map[string]any{
 					{
-						"__typename": "users",
+						"__typename": "Users",
 					},
 				},
 			},

@@ -16,7 +16,7 @@ on:
 
 env:
   PACKER_LOG: 1
-  # RELEASE_VERSION: v0.4.0
+  # RELEASE_VERSION: v0.5.0
 
 jobs:
   build-ami-with-packer:
@@ -52,8 +52,8 @@ jobs:
 
       - name: Run `packer validate`
         id: validate
-        run: "packer validate -var \"github_pat=${{ secrets.ONLY_DEFRADB_REPO_CI_PAT }}\" -var \"commit=${{ env.RELEASE_VERSION }}\" ./tools/cloud/aws/packer/build_aws_ami.pkr.hcl"
+        run: "packer validate -var \"commit=${{ env.RELEASE_VERSION }}\" ./tools/cloud/aws/packer/build_aws_ami.pkr.hcl"
 
       - name: Run `packer build`
         id: build
-        run: "packer build -var \"github_pat=${{ secrets.ONLY_DEFRADB_REPO_CI_PAT }}\" -var \"commit=${{ env.RELEASE_VERSION }}\" ./tools/cloud/aws/packer/build_aws_ami.pkr.hcl"
+        run: "packer build -var \"commit=${{ env.RELEASE_VERSION }}\" ./tools/cloud/aws/packer/build_aws_ami.pkr.hcl"

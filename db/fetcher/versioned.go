@@ -14,10 +14,10 @@ import (
 	"container/list"
 	"context"
 
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	format "github.com/ipfs/go-ipld-format"
-	dag "github.com/ipfs/go-merkledag"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -382,6 +382,7 @@ func (vf *VersionedFetcher) processNode(
 			events.EmptyUpdateChannel,
 			ctype,
 			key,
+			fieldName,
 		)
 		if err != nil {
 			return err

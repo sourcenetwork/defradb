@@ -24,8 +24,8 @@ func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
@@ -39,7 +39,7 @@ func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithDockey(t *testing.T) {
@@ -50,32 +50,32 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid": "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
 					},
 					{
-						"cid": "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"cid": "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
 					},
 					{
-						"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
@@ -86,13 +86,13 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							cid
 							links {
 								cid
@@ -102,23 +102,23 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":   "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid":   "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
 						"links": []map[string]any{},
 					},
 					{
-						"cid":   "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"cid":   "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
 						"links": []map[string]any{},
 					},
 					{
-						"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
-								"name": "Age",
+								"cid":  "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
+								"name": "age",
 							},
 							{
-								"cid":  "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
-								"name": "Name",
+								"cid":  "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
+								"name": "name",
 							},
 						},
 					},
@@ -127,7 +127,7 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
@@ -138,43 +138,43 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Age":	22
+					"age":	22
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							cid
 							height
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"cid":    "bafybeibvzg7f2p772ev3srlzt4w5jjwlo3nw4chtd6ewuvbrnlidzqtmr4",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid":    "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"cid":    "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"cid":    "bafybeiahsvsfxvytbmyek7mjzh666y2qz2jlfse4fdgwzx4lnunuukurcm",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid":    "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
 						"height": int64(1),
 					},
 				},
@@ -182,7 +182,7 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -196,20 +196,20 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Age":	22
+					"age":	22
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							cid
 							links {
 								cid
@@ -219,45 +219,45 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+						"cid": "bafybeibvzg7f2p772ev3srlzt4w5jjwlo3nw4chtd6ewuvbrnlidzqtmr4",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+								"cid":  "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
 								"name": "_head",
 							},
 						},
 					},
 					{
-						"cid":   "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid":   "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
 						"links": []map[string]any{},
 					},
 					{
-						"cid":   "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"cid":   "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
 						"links": []map[string]any{},
 					},
 					{
-						"cid": "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+						"cid": "bafybeiahsvsfxvytbmyek7mjzh666y2qz2jlfse4fdgwzx4lnunuukurcm",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
-								"name": "Age",
+								"cid":  "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
+								"name": "_head",
 							},
 							{
-								"cid":  "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
-								"name": "_head",
+								"cid":  "bafybeibvzg7f2p772ev3srlzt4w5jjwlo3nw4chtd6ewuvbrnlidzqtmr4",
+								"name": "age",
 							},
 						},
 					},
 					{
-						"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
-								"name": "Age",
+								"cid":  "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
+								"name": "age",
 							},
 							{
-								"cid":  "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
-								"name": "Name",
+								"cid":  "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
+								"name": "name",
 							},
 						},
 					},
@@ -266,5 +266,5 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

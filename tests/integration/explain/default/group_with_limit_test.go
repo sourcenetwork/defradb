@@ -22,7 +22,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 		Description: "Explain query with limit and offset on parent groupBy.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [name],
 				limit: 1,
 				offset: 1
@@ -81,7 +81,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 								"groupByFields": []string{"name"},
 								"childSelects": []dataMap{
 									{
-										"collectionName": "author",
+										"collectionName": "Author",
 										"orderBy":        nil,
 										"docKeys":        nil,
 										"groupBy":        nil,
@@ -93,7 +93,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
@@ -120,7 +120,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 		Description: "Explain query with limit and offset on child groupBy.",
 
 		Request: `query @explain {
-			author(groupBy: [name]) {
+			Author(groupBy: [name]) {
 				name
 				_group(limit: 2, offset: 1) {
 					age
@@ -171,7 +171,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"limit": dataMap{
 										"limit":  uint64(2),
 										"offset": uint64(1),
@@ -187,7 +187,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -212,7 +212,7 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 		Description: "Explain query with limit on child groupBy (multiple rendered).",
 
 		Request: `query @explain {
-			author(groupBy: [name]) {
+			Author(groupBy: [name]) {
 				name
 				innerFirstGroup: _group(limit: 1, offset: 2) {
 					age
@@ -266,7 +266,7 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"limit": dataMap{
 										"limit":  uint64(1),
 										"offset": uint64(2),
@@ -277,7 +277,7 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 									"orderBy": nil,
 								},
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"limit": dataMap{
 										"limit":  uint64(2),
 										"offset": uint64(0),
@@ -293,7 +293,7 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -318,7 +318,7 @@ func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 		Description: "Explain query with limit on parent and child groupBy.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [name],
 				limit: 1
 			) {
@@ -376,7 +376,7 @@ func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 								"groupByFields": []string{"name"},
 								"childSelects": []dataMap{
 									{
-										"collectionName": "author",
+										"collectionName": "Author",
 										"limit": dataMap{
 											"limit":  uint64(2),
 											"offset": uint64(0),
@@ -391,7 +391,7 @@ func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"collectionID":   "3",
-										"collectionName": "author",
+										"collectionName": "Author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{

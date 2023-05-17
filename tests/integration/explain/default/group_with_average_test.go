@@ -21,7 +21,7 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 		Description: "Explain a groupBy with average on an field.",
 
 		Request: `query @explain {
-			author (groupBy: [name]) {
+			Author (groupBy: [name]) {
 				name
 				_avg(_group: {field: age})
 			}
@@ -94,7 +94,7 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 									"groupNode": dataMap{
 										"childSelects": []dataMap{
 											{
-												"collectionName": "author",
+												"collectionName": "Author",
 												"docKeys":        nil,
 												"groupBy":        nil,
 												"limit":          nil,
@@ -111,7 +111,7 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 											"filter": nil,
 											"scanNode": dataMap{
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"filter":         nil,
 												"spans": []dataMap{
 													{
@@ -139,7 +139,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 		Description: "Explain a groupBy with average of inside the inner group (on a field).",
 
 		Request: `query @explain {
-			author (groupBy: [name]) {
+			Author (groupBy: [name]) {
 				name
 				_avg(_group: {field: _avg})
 				_group(groupBy: [verified]) {
@@ -208,7 +208,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 									"groupNode": dataMap{
 										"childSelects": []dataMap{
 											{
-												"collectionName": "author",
+												"collectionName": "Author",
 												"groupBy":        []string{"verified", "name"},
 												"docKeys":        nil,
 												"filter":         nil,
@@ -221,7 +221,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 											"filter": nil,
 											"scanNode": dataMap{
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"filter":         nil,
 												"spans": []dataMap{
 													{
@@ -249,7 +249,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 		Description: "Explain a groupBy with average of inside the inner group with nested groupBy.",
 
 		Request: `query @explain {
-			author (groupBy: [name]) {
+			Author (groupBy: [name]) {
 				name
 				_avg(_group: {field: _avg})
 				_group(groupBy: [verified]) {
@@ -321,7 +321,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 									"groupNode": dataMap{
 										"childSelects": []dataMap{
 											{
-												"collectionName": "author",
+												"collectionName": "Author",
 												"groupBy":        []string{"verified", "name"},
 												"docKeys":        nil,
 												"filter":         nil,
@@ -334,7 +334,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 											"filter": nil,
 											"scanNode": dataMap{
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"filter":         nil,
 												"spans": []dataMap{
 													{
@@ -362,7 +362,7 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 		Description: "Explain a groupBy with average of inside the inner group with nested groupBy with and average.",
 
 		Request: `query @explain {
-			author (groupBy: [name]) {
+			Author (groupBy: [name]) {
 				name
 				_avg(_group: {field: _avg})
 				_group(groupBy: [verified]) {
@@ -435,7 +435,7 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 									"groupNode": dataMap{
 										"childSelects": []dataMap{
 											{
-												"collectionName": "author",
+												"collectionName": "Author",
 												"groupBy":        []string{"verified", "name"},
 												"docKeys":        nil,
 												"filter":         nil,
@@ -448,7 +448,7 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 											"filter": nil,
 											"scanNode": dataMap{
 												"collectionID":   "3",
-												"collectionName": "author",
+												"collectionName": "Author",
 												"filter":         nil,
 												"spans": []dataMap{
 													{

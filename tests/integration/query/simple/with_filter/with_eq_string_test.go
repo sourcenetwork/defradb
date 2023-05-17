@@ -20,7 +20,7 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic filter (Name)",
 		Request: `query {
-					users(filter: {Name: {_eq: "John"}}) {
+					Users(filter: {Name: {_eq: "John"}}) {
 						Name
 						Age
 					}
@@ -52,7 +52,7 @@ func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic string nil filter",
 		Request: `query {
-					users(filter: {Name: {_eq: null}}) {
+					Users(filter: {Name: {_eq: null}}) {
 						Name
 						Age
 					}
@@ -88,7 +88,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 		{
 			Description: "Simple query with basic filter and selection",
 			Request: `query {
-						users(filter: {Name: {_eq: "John"}}) {
+						Users(filter: {Name: {_eq: "John"}}) {
 							Name
 						}
 					}`,
@@ -113,7 +113,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 		{
 			Description: "Simple query with basic filter and selection (diff from filter)",
 			Request: `query {
-						users(filter: {Name: {_eq: "John"}}) {
+						Users(filter: {Name: {_eq: "John"}}) {
 							Age
 						}
 					}`,
@@ -138,7 +138,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 		{
 			Description: "Simple query with basic filter(name), no results",
 			Request: `query {
-						users(filter: {Name: {_eq: "Bob"}}) {
+						Users(filter: {Name: {_eq: "Bob"}}) {
 							Name
 							Age
 						}

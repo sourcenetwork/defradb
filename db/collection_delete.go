@@ -168,6 +168,12 @@ func (c *collection) deleteWithFilter(
 	if err != nil {
 		return nil, err
 	}
+
+	err = selectionPlan.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	if err := selectionPlan.Start(); err != nil {
 		return nil, err
 	}

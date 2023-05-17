@@ -32,9 +32,9 @@ func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average on undefined field",
 		Request: `query {
-					_avg(users: {})
+					_avg(Users: {})
 				}`,
-		ExpectedError: "Argument \"users\" has invalid value {}.\nIn field \"field\": Expected \"usersNumericFieldsArg!\", found null.",
+		ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
 	}
 
 	executeTestCase(t, test)
@@ -44,7 +44,7 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average on empty",
 		Request: `query {
-					_avg(users: {field: Age})
+					_avg(Users: {field: Age})
 				}`,
 		Results: []map[string]any{
 			{
@@ -60,7 +60,7 @@ func TestQuerySimpleWithAverage(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average",
 		Request: `query {
-					_avg(users: {field: Age})
+					_avg(Users: {field: Age})
 				}`,
 		Docs: map[int][]string{
 			0: {

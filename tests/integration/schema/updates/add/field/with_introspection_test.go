@@ -29,7 +29,7 @@ func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Name", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "name", "Kind": 11} }
 					]
 				`,
 			},
@@ -53,7 +53,7 @@ func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
 						"name": "Users",
 						"fields": introspectionUtils.DefaultFields.Append(
 							introspectionUtils.Field{
-								"name": "Name",
+								"name": "name",
 								"type": map[string]any{
 									"kind": "SCALAR",
 									"name": "String",
@@ -82,8 +82,8 @@ func TestSchemaUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenBadPatch(t *
 				// [Name] should not be added to the GQL types.
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Name", "Kind": 11} },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 111} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "name", "Kind": 11} },
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 111} }
 					]
 				`,
 				ExpectedError: "no type found for given name. Type: 111",

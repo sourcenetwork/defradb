@@ -14,12 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var p2pCollectionCmd = &cobra.Command{
-	Use:   "p2pcollection",
-	Short: "Interact with the P2P collection system",
-	Long:  "Add, delete, or get the list of P2P collections",
-}
-
-func init() {
-	rpcCmd.AddCommand(p2pCollectionCmd)
+func MakeP2PCollectionCommand() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "p2pcollection",
+		Short: "Interact with the P2P collection system",
+		Long:  "Add, delete, or get the list of P2P collections",
+	}
+	return cmd
 }

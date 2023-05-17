@@ -16,12 +16,90 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Explain query with a dockeys filter on inner _group.",
+
+		Request: `query @explain {
+			Author(
+				groupBy: [age]
+			) {
+				age
+				_group(dockeys: ["bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"]) {
+					name
+				}
+			}
+		}`,
+
+		Docs: map[int][]string{
+			//authors
+			2: {
+				// dockey: "bae-21a6ad4a-1cd8-5613-807c-a90c7c12f880"
+				`{
+					"name": "John Grisham",
+					"age": 12
+				}`,
+
+				// dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
+				`{
+					"name": "Cornelia Funke",
+					"age": 20
+				}`,
+
+				// dockey: "bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
+				`{
+					"name": "John's Twin",
+					"age": 65
+				}`,
+			},
+		},
+
+		Results: []dataMap{
+			{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"groupNode": dataMap{
+							"childSelects": []dataMap{
+								{
+									"collectionName": "Author",
+									"docKeys":        []string{"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"},
+									"filter":         nil,
+									"groupBy":        nil,
+									"limit":          nil,
+									"orderBy":        nil,
+								},
+							},
+							"groupByFields": []string{"age"},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "3",
+									"collectionName": "Author",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/3",
+											"end":   "/4",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain query with a dockey on parent groupBy.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [age],
 				dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
 			) {
@@ -62,7 +140,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"filter":         nil,
 									"groupBy":        nil,
@@ -75,7 +153,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter":         nil,
 									"spans": []dataMap{
 										{
@@ -100,7 +178,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 		Description: "Explain query with a dockeys and filter on parent groupBy.",
 
 		Request: `query @explain {
-			author(
+			Author(
 				groupBy: [age],
 				filter: {age: {_eq: 20}},
 				dockeys: [
@@ -145,7 +223,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 						"groupNode": dataMap{
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -158,10 +236,10 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_eq": int(20),
+											"_eq": int32(20),
 										},
 									},
 									"spans": []dataMap{

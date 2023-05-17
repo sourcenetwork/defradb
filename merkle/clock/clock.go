@@ -16,8 +16,8 @@ package clock
 import (
 	"context"
 
+	dshelp "github.com/ipfs/boxo/datastore/dshelp"
 	cid "github.com/ipfs/go-cid"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.merkleclock")
+	log = logging.MustNewLogger("merkleclock")
 )
 
 // MerkleClock is a MerkleCRDT clock that can be used to read/write events (deltas) to the clock.

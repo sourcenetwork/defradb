@@ -15,9 +15,9 @@ import (
 	"encoding/binary"
 	"strings"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/ipfs/go-cid"
 	mbase "github.com/multiformats/go-multibase"
-	uuid "github.com/satori/go.uuid"
 )
 
 // DocKey versions.
@@ -42,7 +42,7 @@ type DocKey struct {
 	cid     cid.Cid
 }
 
-// NewDocKeyV0 creates a new dockey identified by the root data CID, peer ID, and namespaced by the versionNS.
+// NewDocKeyV0 creates a new dockey identified by the root data CID,peerID, and namespaced by the versionNS.
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	return DocKey{
 		version: DocKeyV0,

@@ -19,9 +19,13 @@ import (
 var (
 	// Helper only for `commit` below.
 	commitCountFieldArg = gql.NewEnum(gql.EnumConfig{
-		Name: "commitCountFieldArg",
+		Name:        "commitCountFieldArg",
+		Description: CountFieldDescription,
 		Values: gql.EnumValueConfigMap{
-			"links": &gql.EnumValueConfig{Value: "links"},
+			"links": &gql.EnumValueConfig{
+				Description: commitLinksDescription,
+				Value:       "links",
+			},
 		},
 	})
 
@@ -40,31 +44,48 @@ var (
 	// Any self referential type needs to be initialized
 	// inside the init() func
 	CommitObject = gql.NewObject(gql.ObjectConfig{
-		Name: request.CommitTypeName,
+		Name:        request.CommitTypeName,
+		Description: commitDescription,
 		Fields: gql.Fields{
 			"height": &gql.Field{
-				Type: gql.Int,
+				Description: commitHeightFieldDescription,
+				Type:        gql.Int,
 			},
 			"cid": &gql.Field{
-				Type: gql.String,
+				Description: commitCIDFieldDescription,
+				Type:        gql.String,
 			},
 			"dockey": &gql.Field{
-				Type: gql.String,
+				Description: commitDockeyFieldDescription,
+				Type:        gql.String,
 			},
 			"collectionID": &gql.Field{
-				Type: gql.Int,
+				Description: commitCollectionIDFieldDescription,
+				Type:        gql.Int,
 			},
 			"schemaVersionId": &gql.Field{
-				Type: gql.String,
+				Description: commitSchemaVersionIDFieldDescription,
+				Type:        gql.String,
+			},
+			"fieldName": &gql.Field{
+				Description: commitFieldNameFieldDescription,
+				Type:        gql.String,
+			},
+			"fieldId": &gql.Field{
+				Type:        gql.String,
+				Description: commitFieldIDFieldDescription,
 			},
 			"delta": &gql.Field{
-				Type: gql.String,
+				Description: commitDeltaFieldDescription,
+				Type:        gql.String,
 			},
 			"links": &gql.Field{
-				Type: gql.NewList(CommitLinkObject),
+				Description: commitLinksDescription,
+				Type:        gql.NewList(CommitLinkObject),
 			},
 			"_count": &gql.Field{
-				Type: gql.Int,
+				Description: CountFieldDescription,
+				Type:        gql.Int,
 				Args: gql.FieldConfigArgument{
 					"field": &gql.ArgumentConfig{
 						Type: commitCountFieldArg,
@@ -74,48 +95,43 @@ var (
 		},
 	})
 
-	// Delta represents a Delta State update for a CRDT
-	// type Delta {
-	// 	Payload: String
-	// }
-	DeltaObject = gql.NewObject(gql.ObjectConfig{
-		Name: "Delta",
-		Fields: gql.Fields{
-			"payload": &gql.Field{
-				Type: gql.String,
-			},
-		},
-	})
-
 	// CommitLink is a named DAG link between commits.
 	// This is primary used for CompositeDAG CRDTs
 	CommitLinkObject = gql.NewObject(gql.ObjectConfig{
-		Name: "CommitLink",
+		Name:        "CommitLink",
+		Description: commitLinksDescription,
 		Fields: gql.Fields{
 			"name": &gql.Field{
-				Type: gql.String,
+				Description: commitLinkNameFieldDescription,
+				Type:        gql.String,
 			},
 			"cid": &gql.Field{
-				Type: gql.String,
+				Description: commitLinkCIDFieldDescription,
+				Type:        gql.String,
 			},
 		},
 	})
 
 	CommitsOrderArg = gql.NewInputObject(
 		gql.InputObjectConfig{
-			Name: "commitsOrderArg",
+			Name:        "commitsOrderArg",
+			Description: OrderArgDescription,
 			Fields: gql.InputObjectConfigFieldMap{
 				"height": &gql.InputObjectFieldConfig{
-					Type: OrderingEnum,
+					Description: commitHeightFieldDescription,
+					Type:        OrderingEnum,
 				},
 				"cid": &gql.InputObjectFieldConfig{
-					Type: OrderingEnum,
+					Description: commitCIDFieldDescription,
+					Type:        OrderingEnum,
 				},
 				"dockey": &gql.InputObjectFieldConfig{
-					Type: OrderingEnum,
+					Description: commitDockeyFieldDescription,
+					Type:        OrderingEnum,
 				},
 				"collectionID": &gql.InputObjectFieldConfig{
-					Type: OrderingEnum,
+					Description: commitCollectionIDFieldDescription,
+					Type:        OrderingEnum,
 				},
 			},
 		},
@@ -123,43 +139,67 @@ var (
 
 	commitFields = gql.NewEnum(
 		gql.EnumConfig{
-			Name: "commitFields",
+			Name:        "commitFields",
+			Description: commitFieldsEnumDescription,
 			Values: gql.EnumValueConfigMap{
-				"height":       &gql.EnumValueConfig{Value: "height"},
-				"cid":          &gql.EnumValueConfig{Value: "cid"},
-				"dockey":       &gql.EnumValueConfig{Value: "dockey"},
-				"collectionID": &gql.EnumValueConfig{Value: "collectionID"},
+				"height": &gql.EnumValueConfig{
+					Value:       "height",
+					Description: commitHeightFieldDescription,
+				},
+				"cid": &gql.EnumValueConfig{
+					Value:       "cid",
+					Description: commitCIDFieldDescription,
+				},
+				"dockey": &gql.EnumValueConfig{
+					Value:       "dockey",
+					Description: commitDockeyFieldDescription,
+				},
+				"collectionID": &gql.EnumValueConfig{
+					Value:       "collectionID",
+					Description: commitCollectionIDFieldDescription,
+				},
+				"fieldName": &gql.EnumValueConfig{
+					Value:       "fieldName",
+					Description: commitFieldNameFieldDescription,
+				},
+				"fieldId": &gql.EnumValueConfig{
+					Value:       "fieldId",
+					Description: commitFieldIDFieldDescription,
+				},
 			},
 		},
 	)
 
 	QueryCommits = &gql.Field{
-		Name: "commits",
-		Type: gql.NewList(CommitObject),
+		Name:        "commits",
+		Description: commitsQueryDescription,
+		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey": NewArgConfig(gql.ID),
-			"field":  NewArgConfig(gql.String),
-			"order":  NewArgConfig(CommitsOrderArg),
-			"cid":    NewArgConfig(gql.ID),
+			"dockey":            NewArgConfig(gql.ID, commitDockeyArgDescription),
+			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
+			"order":             NewArgConfig(CommitsOrderArg, OrderArgDescription),
+			"cid":               NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
 						commitFields,
 					),
 				),
+				GroupByArgDescription,
 			),
-			request.LimitClause:  NewArgConfig(gql.Int),
-			request.OffsetClause: NewArgConfig(gql.Int),
-			request.DepthClause:  NewArgConfig(gql.Int),
+			request.LimitClause:  NewArgConfig(gql.Int, LimitArgDescription),
+			request.OffsetClause: NewArgConfig(gql.Int, OffsetArgDescription),
+			request.DepthClause:  NewArgConfig(gql.Int, commitDepthArgDescription),
 		},
 	}
 
 	QueryLatestCommits = &gql.Field{
-		Name: "latestCommits",
-		Type: gql.NewList(CommitObject),
+		Name:        "latestCommits",
+		Description: latestCommitsQueryDescription,
+		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey": NewArgConfig(gql.NewNonNull(gql.ID)),
-			"field":  NewArgConfig(gql.String),
+			"dockey":            NewArgConfig(gql.NewNonNull(gql.ID), commitDockeyArgDescription),
+			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
 		},
 	}
 )

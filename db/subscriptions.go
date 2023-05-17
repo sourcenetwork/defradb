@@ -65,7 +65,7 @@ func (db *db) handleSubscription(
 		result, err := p.RunSubscriptionRequest(ctx, s)
 		if err != nil {
 			pub.Publish(client.GQLResult{
-				Errors: []any{err.Error()},
+				Errors: []error{err},
 			})
 			continue
 		}

@@ -19,70 +19,64 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-var reinitialize bool
-
 /*
-The `init` command initializes the configuration file and root directory..
+The `init` command initializes the configuration file and root directory.
 
 It covers three possible situations:
 - root dir doesn't exist
 - root dir exists and doesn't contain a config file
 - root dir exists and contains a config file
 */
-var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Initialize DefraDB's root directory and configuration file",
-	Long:  "Initialize a directory for configuration and data at the given path.",
-	// Load a default configuration, considering env. variables and CLI flags.
-	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-		if err := cfg.LoadWithRootdir(false); err != nil {
-			return errors.Wrap("failed to load configuration", err)
-		}
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if config.FolderExists(cfg.Rootdir) {
-			if cfg.ConfigFileExists() {
-				if reinitialize {
-					if err := cfg.DeleteConfigFile(); err != nil {
-						return err
-					}
-					if err := cfg.WriteConfigFile(); err != nil {
-						return err
+func MakeInitCommand(cfg *config.Config) *cobra.Command {
+	var reinitialize bool
+	var cmd = &cobra.Command{
+		Use:   "init",
+		Short: "Initialize DefraDB's root directory and configuration file",
+		Long:  "Initialize a directory for configuration and data at the given path.",
+		// Load a default configuration, considering env. variables and CLI flags.
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			if err := cfg.LoadWithRootdir(false); err != nil {
+				return errors.Wrap("failed to load configuration", err)
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if config.FolderExists(cfg.Rootdir) {
+				if cfg.ConfigFileExists() {
+					if reinitialize {
+						if err := cfg.DeleteConfigFile(); err != nil {
+							return err
+						}
+						if err := cfg.WriteConfigFile(); err != nil {
+							return err
+						}
+					} else {
+						log.FeedbackError(
+							cmd.Context(),
+							fmt.Sprintf(
+								"Configuration file already exists at %v. Consider using --reinitialize",
+								cfg.ConfigFilePath(),
+							),
+						)
 					}
 				} else {
-					log.FeedbackError(
-						cmd.Context(),
-						fmt.Sprintf(
-							"Configuration file already exists at %v. Consider using --reinitialize",
-							cfg.ConfigFilePath(),
-						),
-					)
+					if err := cfg.WriteConfigFile(); err != nil {
+						return errors.Wrap("failed to create configuration file", err)
+					}
 				}
 			} else {
-				if err := cfg.WriteConfigFile(); err != nil {
-					return errors.Wrap("failed to create configuration file", err)
+				if err := cfg.CreateRootDirAndConfigFile(); err != nil {
+					return err
 				}
 			}
-		} else {
-			if err := cfg.CreateRootDirAndConfigFile(); err != nil {
-				return err
-			}
-		}
-		return nil
-	},
-}
+			return nil
+		},
+	}
 
-func init() {
-	rootCmd.AddCommand(initCmd)
-
-	initCmd.Flags().BoolVar(
+	cmd.Flags().BoolVar(
 		&reinitialize, "reinitialize", false,
 		"Reinitialize the configuration file",
 	)
 
-	initCmd.Flags().StringVar(
-		&cfg.Rootdir, "rootdir", config.DefaultRootDir(),
-		"Directory for data and configuration to use",
-	)
+	return cmd
 }

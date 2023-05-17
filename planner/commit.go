@@ -12,11 +12,12 @@ package planner
 
 import (
 	"github.com/fxamacker/cbor/v2"
+	dag "github.com/ipfs/boxo/ipld/merkledag"
+	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-libipfs/blocks"
-	dag "github.com/ipfs/go-merkledag"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -70,8 +71,8 @@ func (n *dagScanNode) Init() error {
 		if n.commitSelect.DocKey.HasValue() {
 			key := core.DataStoreKey{}.WithDocKey(n.commitSelect.DocKey.Value())
 
-			if n.commitSelect.FieldName.HasValue() {
-				field := n.commitSelect.FieldName.Value()
+			if n.commitSelect.FieldID.HasValue() {
+				field := n.commitSelect.FieldID.Value()
 				key = key.WithFieldId(field)
 			}
 
@@ -79,7 +80,7 @@ func (n *dagScanNode) Init() error {
 		}
 	}
 
-	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.spans, n.commitSelect.FieldName)
+	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.spans, n.commitSelect.FieldID)
 }
 
 func (n *dagScanNode) Start() error {
@@ -104,8 +105,8 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	copy(headSetSpans.Value, spans.Value)
 
 	var fieldId string
-	if n.commitSelect.FieldName.HasValue() {
-		fieldId = n.commitSelect.FieldName.Value()
+	if n.commitSelect.FieldID.HasValue() {
+		fieldId = n.commitSelect.FieldID.Value()
 	} else {
 		fieldId = core.COMPOSITE_NAMESPACE
 	}
@@ -129,10 +130,10 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the field attribute to the explanation if it exists.
-	if n.commitSelect.FieldName.HasValue() {
-		simpleExplainMap["field"] = n.commitSelect.FieldName.Value()
+	if n.commitSelect.FieldID.HasValue() {
+		simpleExplainMap[request.FieldIDName] = n.commitSelect.FieldID.Value()
 	} else {
-		simpleExplainMap["field"] = nil
+		simpleExplainMap[request.FieldIDName] = nil
 	}
 
 	// Add the cid attribute to the explanation if it exists.
@@ -310,13 +311,39 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	schemaVersionId, ok := delta["SchemaVersionID"].(string)
-	if ok {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-			request.SchemaVersionIDFieldName, schemaVersionId)
+	if !ok {
+		return core.Doc{}, nil, ErrDeltaMissingSchemaVersionID
+	}
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
+
+	fieldName, ok := delta["FieldName"]
+	if !ok {
+		return core.Doc{}, nil, ErrDeltaMissingFieldName
+	}
+
+	var fieldID string
+	switch fieldName {
+	case "":
+		fieldID = core.COMPOSITE_NAMESPACE
+		fieldName = nil
+
+	default:
+		c, err := n.planner.db.GetCollectionByVersionID(n.planner.ctx, schemaVersionId)
+		if err != nil {
+			return core.Doc{}, nil, err
+		}
+
+		field, ok := c.Description().GetField(fieldName.(string))
+		if !ok {
+			return core.Doc{}, nil, client.NewErrFieldNotExist(fieldName.(string))
+		}
+		fieldID = field.ID.String()
 	}
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta["Data"])
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
 
 	dockey, ok := delta["DocKey"].([]byte)
 	if !ok {

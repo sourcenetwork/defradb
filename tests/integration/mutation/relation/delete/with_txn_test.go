@@ -45,7 +45,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 				// Delete a linked book that exists.
 				TransactionID: 0,
 				Request: `mutation {
-			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
+			        delete_Book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
 			            _key
 			        }
 			    }`,
@@ -61,7 +61,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 			testUtils.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -111,7 +111,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 				// Delete a linked book that exists.
 				TransactionID: 0,
 				Request: `mutation {
-			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
+			        delete_Book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
 			            _key
 			        }
 			    }`,
@@ -127,7 +127,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 			testUtils.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -171,7 +171,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 				// Delete a linked book that exists.
 				TransactionID: 0,
 				Request: `mutation {
-			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
+			        delete_Book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
 			            _key
 			        }
 			    }`,
@@ -185,7 +185,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 				// Read the book (forward) that was deleted (in the non-commited transaction) in another transaction.
 				TransactionID: 1,
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -211,7 +211,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 			testUtils.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -261,7 +261,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 				// Delete a linked book that exists in transaction 0.
 				TransactionID: 0,
 				Request: `mutation {
-			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
+			        delete_Book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
 			            _key
 			        }
 			    }`,
@@ -275,7 +275,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 				// Read the book (backwards) that was deleted (in the non-commited transaction) in another transaction.
 				TransactionID: 1,
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -301,7 +301,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 			testUtils.Request{
 				// Assert after transaction(s) have been commited, to ensure the book was deleted.
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -346,7 +346,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 				// book gets correctly unlinked too.
 				TransactionID: 0,
 				Request: `mutation {
-			        delete_publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
+			        delete_Publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
 			            _key
 			        }
 			    }`,
@@ -362,7 +362,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 			testUtils.Request{
 				// Assert after transaction(s) have been commited.
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -407,7 +407,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 				// book gets correctly unlinked too.
 				TransactionID: 0,
 				Request: `mutation {
-			        delete_publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
+			        delete_Publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
 			            _key
 			        }
 			    }`,
@@ -423,7 +423,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 			testUtils.Request{
 				// Assert after transaction(s) have been commited.
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {

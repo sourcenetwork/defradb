@@ -21,7 +21,7 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 		Description: "Explain a grouping with filter on parent.",
 
 		Request: `query @explain {
-			author (
+			Author (
 				groupBy: [age],
 				filter: {age: {_gt: 63}}
 			) {
@@ -60,7 +60,7 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 							"groupByFields": []string{"age"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
@@ -72,10 +72,10 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_gt": int(63),
+											"_gt": int32(63),
 										},
 									},
 									"spans": []dataMap{
@@ -101,7 +101,7 @@ func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 		Description: "Explain a grouping with filter on the inner group selection.",
 
 		Request: `query @explain {
-			author (groupBy: [age]) {
+			Author (groupBy: [age]) {
 				age
 				_group(filter: {age: {_gt: 63}}) {
 					name
@@ -137,14 +137,14 @@ func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 							"groupByFields": []string{"age"},
 							"childSelects": []dataMap{
 								{
-									"collectionName": "author",
+									"collectionName": "Author",
 									"docKeys":        nil,
 									"groupBy":        nil,
 									"limit":          nil,
 									"orderBy":        nil,
 									"filter": dataMap{
 										"age": dataMap{
-											"_gt": int(63),
+											"_gt": int32(63),
 										},
 									},
 								},
@@ -154,7 +154,7 @@ func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 								"scanNode": dataMap{
 									"filter":         nil,
 									"collectionID":   "3",
-									"collectionName": "author",
+									"collectionName": "Author",
 									"spans": []dataMap{
 										{
 											"start": "/3",

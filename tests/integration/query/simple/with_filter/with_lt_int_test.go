@@ -20,7 +20,7 @@ func TestQuerySimpleWithIntLessThanFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic lt int filter with greater value",
 		Request: `query {
-					users(filter: {Age: {_lt: 22}}) {
+					Users(filter: {Age: {_lt: 22}}) {
 						Name
 					}
 				}`,
@@ -50,7 +50,7 @@ func TestQuerySimpleWithIntLessThanFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic lt int filter with null value",
 		Request: `query {
-					users(filter: {Age: {_lt: null}}) {
+					Users(filter: {Age: {_lt: null}}) {
 						Name
 					}
 				}`,

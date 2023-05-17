@@ -20,22 +20,22 @@ func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of nil integer array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteIntegers: {})
+					Users {
+						name
+						_count(favouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"FavouriteIntegers": null
+					"name": "John",
+					"favouriteIntegers": null
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "John",
+				"name":   "John",
 				"_count": 0,
 			},
 		},
@@ -48,22 +48,22 @@ func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of empty integer array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteIntegers: {})
+					Users {
+						name
+						_count(favouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"FavouriteIntegers": []
+					"name": "John",
+					"favouriteIntegers": []
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "John",
+				"name":   "John",
 				"_count": 0,
 			},
 		},
@@ -76,22 +76,22 @@ func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of integer array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteIntegers: {})
+					Users {
+						name
+						_count(favouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, -1, 1, 0]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 5,
 			},
 		},
@@ -104,22 +104,22 @@ func TestQueryInlineNillableBoolArrayWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of nillable bool array",
 		Request: `query {
-					users {
-						Name
-						_count(IndexLikesDislikes: {})
+					Users {
+						name
+						_count(indexLikesDislikes: {})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"IndexLikesDislikes": [true, true, false, null]
+					"name": "John",
+					"indexLikesDislikes": [true, true, false, null]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "John",
+				"name":   "John",
 				"_count": 4,
 			},
 		},

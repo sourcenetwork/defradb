@@ -13,7 +13,7 @@ package client
 import (
 	"context"
 
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	blockstore "github.com/ipfs/boxo/blockstore"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
@@ -88,7 +88,7 @@ type Store interface {
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(context.Context, string) error
+	AddSchema(context.Context, string) ([]CollectionDescription, error)
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
 	// present in the database.
@@ -137,7 +137,7 @@ type GQLResult struct {
 	//
 	// If there are values in this slice the request will likely not have run to completion
 	// and [Data] will be nil.
-	Errors []any `json:"errors,omitempty"`
+	Errors []error `json:"errors,omitempty"`
 
 	// Data contains the resultant data produced by the GQL request.
 	//

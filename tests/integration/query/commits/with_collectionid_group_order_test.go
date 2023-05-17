@@ -25,14 +25,14 @@ func TestQueryCommitsWithCollectionIDGroupedAndOrderedDesc(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
-						"Name":	"Source"
+						"name":	"Source"
 					}`,
 			},
 			testUtils.Request{
@@ -53,7 +53,7 @@ func TestQueryCommitsWithCollectionIDGroupedAndOrderedDesc(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users", "companies"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users", "Companies"}, test)
 }
 
 func TestQueryCommitsWithCollectionIDGroupedAndOrderedAs(t *testing.T) {
@@ -65,14 +65,14 @@ func TestQueryCommitsWithCollectionIDGroupedAndOrderedAs(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
-						"Name":	"Source"
+						"name":	"Source"
 					}`,
 			},
 			testUtils.Request{
@@ -93,5 +93,5 @@ func TestQueryCommitsWithCollectionIDGroupedAndOrderedAs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users", "companies"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users", "Companies"}, test)
 }

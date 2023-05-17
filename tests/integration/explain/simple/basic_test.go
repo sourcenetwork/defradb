@@ -21,7 +21,7 @@ func TestSimpleExplainRequest(t *testing.T) {
 		Description: "Explain (simple) a basic request.",
 
 		Request: `query @explain(type: simple) {
-			author {
+			Author {
 				_key
 				name
 				age
@@ -46,7 +46,7 @@ func TestSimpleExplainRequest(t *testing.T) {
 							"scanNode": dataMap{
 								"filter":         nil,
 								"collectionID":   "3",
-								"collectionName": "author",
+								"collectionName": "Author",
 								"spans": []dataMap{
 									{
 										"start": "/3",

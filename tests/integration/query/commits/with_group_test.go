@@ -24,15 +24,15 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Age":	22
+					"age":	22
 				}`,
 			},
 			testUtils.Request{
@@ -53,7 +53,7 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
@@ -64,15 +64,15 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Age":	22
+					"age":	22
 				}`,
 			},
 			testUtils.Request{
@@ -89,10 +89,10 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						"height": int64(2),
 						"_group": []map[string]any{
 							{
-								"cid": "bafybeiepww5b67jrrliuiy27erfjuivwnjca5ptdpbxrrjrqkh3b2hckyy",
+								"cid": "bafybeibvzg7f2p772ev3srlzt4w5jjwlo3nw4chtd6ewuvbrnlidzqtmr4",
 							},
 							{
-								"cid": "bafybeiebail45ch3n5rh7myumqn2jfeefnynba2ldwiesge3ddq5hu6olq",
+								"cid": "bafybeiahsvsfxvytbmyek7mjzh666y2qz2jlfse4fdgwzx4lnunuukurcm",
 							},
 						},
 					},
@@ -100,13 +100,13 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						"height": int64(1),
 						"_group": []map[string]any{
 							{
-								"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+								"cid": "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
 							},
 							{
-								"cid": "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+								"cid": "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
 							},
 							{
-								"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+								"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
 							},
 						},
 					},
@@ -115,7 +115,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This is an odd test, but we need to make sure it works
@@ -127,8 +127,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
@@ -142,7 +142,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid": "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
 						"_group": []map[string]any{
 							{
 								"height": int64(1),
@@ -150,7 +150,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 						},
 					},
 					{
-						"cid": "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
+						"cid": "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
 						"_group": []map[string]any{
 							{
 								"height": int64(1),
@@ -158,7 +158,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 						},
 					},
 					{
-						"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
 						"_group": []map[string]any{
 							{
 								"height": int64(1),
@@ -170,7 +170,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
@@ -181,29 +181,29 @@ func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"Fred",
-						"Age":	25
+						"name":	"Fred",
+						"age":	25
 					}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Age":	22
+					"age":	22
 				}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        1,
 				Doc: `{
-					"Age":	26
+					"age":	26
 				}`,
 			},
 			testUtils.Request{
@@ -214,15 +214,235 @@ func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+						"dockey": "bae-72f3dc53-1846-55d5-915c-28c4e83cc891",
 					},
 					{
-						"dockey": "bae-b2103437-f5bd-52b6-99b1-5970412c5201",
+						"dockey": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple all commits query, group by fieldName",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [fieldName]) {
+							fieldName
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"fieldName": "age",
+					},
+					{
+						"fieldName": "name",
+					},
+					{
+						"fieldName": nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple all commits query, group by fieldName",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [fieldName]) {
+							fieldName
+							_group {
+								height
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"fieldName": "age",
+						"_group": []map[string]any{
+							{
+								"height": int64(2),
+							},
+							{
+								"height": int64(1),
+							},
+						},
+					},
+					{
+						"fieldName": "name",
+						"_group": []map[string]any{
+							{
+								"height": int64(1),
+							},
+						},
+					},
+					{
+						"fieldName": nil,
+						"_group": []map[string]any{
+							{
+								"height": int64(2),
+							},
+							{
+								"height": int64(1),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestQueryCommitsWithGroupByFieldID(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple all commits query, group by fieldId",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [fieldId]) {
+							fieldId
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"fieldId": "1",
+					},
+					{
+						"fieldId": "2",
+					},
+					{
+						"fieldId": "C",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestQueryCommitsWithGroupByFieldIDWithChild(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple all commits query, group by fieldId",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [fieldId]) {
+							fieldId
+							_group {
+								height
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"fieldId": "1",
+						"_group": []map[string]any{
+							{
+								"height": int64(2),
+							},
+							{
+								"height": int64(1),
+							},
+						},
+					},
+					{
+						"fieldId": "2",
+						"_group": []map[string]any{
+							{
+								"height": int64(1),
+							},
+						},
+					},
+					{
+						"fieldId": "C",
+						"_group": []map[string]any{
+							{
+								"height": int64(2),
+							},
+							{
+								"height": int64(1),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

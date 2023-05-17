@@ -13,10 +13,9 @@ package clock
 import (
 	"context"
 
-	// pb "github.com/ipfs/go-ds-crdt/pb"
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
-	dag "github.com/ipfs/go-merkledag"
 	mh "github.com/multiformats/go-multihash"
 
 	"github.com/sourcenetwork/defradb/core"

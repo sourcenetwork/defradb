@@ -13,15 +13,15 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := explainUtils.ExplainRequestTestCase{
 		Description: "Invalid type of explain request should error.",
 
 		Request: `query @explain(type: invalid) {
-			author {
+			Author {
 				_key
 				name
 				age
@@ -40,5 +40,5 @@ func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
 		ExpectedError: "Argument \"type\" has invalid value invalid.\nExpected type \"ExplainType\", found invalid.",
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }

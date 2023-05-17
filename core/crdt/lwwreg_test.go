@@ -15,10 +15,10 @@ import (
 	"reflect"
 	"testing"
 
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
-	dag "github.com/ipfs/go-merkledag"
 	mh "github.com/multiformats/go-multihash"
 	"github.com/ugorji/go/codec"
 
@@ -33,7 +33,7 @@ func newMockStore() datastore.DSReaderWriter {
 func setupLWWRegister() LWWRegister {
 	store := newMockStore()
 	key := core.DataStoreKey{DocKey: "AAAA-BBBB"}
-	return NewLWWRegister(store, core.CollectionSchemaVersionKey{}, key)
+	return NewLWWRegister(store, core.CollectionSchemaVersionKey{}, key, "")
 }
 
 func setupLoadedLWWRegster(ctx context.Context) LWWRegister {

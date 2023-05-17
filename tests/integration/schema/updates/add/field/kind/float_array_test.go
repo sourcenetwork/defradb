@@ -23,22 +23,22 @@ func TestSchemaUpdatesAddFieldKindFloatArray(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 7} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 7} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{},
@@ -55,35 +55,35 @@ func TestSchemaUpdatesAddFieldKindFloatArrayWithCreate(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 7} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 7} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": [3.1, -8.1, 0]
+					"name": "John",
+					"foo": [3.1, -8.1, 0]
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo":  []float64{3.1, -8.1, 0},
+						"name": "John",
+						"foo":  []float64{3.1, -8.1, 0},
 					},
 				},
 			},
@@ -99,35 +99,35 @@ func TestSchemaUpdatesAddFieldKindFloatArraySubstitutionWithCreate(t *testing.T)
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "[Float!]"} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": "[Float!]"} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": [3.1, -8.1, 0]
+					"name": "John",
+					"foo": [3.1, -8.1, 0]
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo":  []float64{3.1, -8.1, 0},
+						"name": "John",
+						"foo":  []float64{3.1, -8.1, 0},
 					},
 				},
 			},

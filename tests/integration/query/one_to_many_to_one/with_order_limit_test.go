@@ -44,7 +44,7 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 						},
 						"OldestPublishersBook": []map[string]any{
 							{
-								"name": "The Associate", // oldest because has no publisher.
+								"name": "The Associate", // oldest because has no Publisher.
 							},
 						},
 					},

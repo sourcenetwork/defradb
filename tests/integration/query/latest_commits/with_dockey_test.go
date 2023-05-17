@@ -20,7 +20,7 @@ func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey",
 		Request: `query {
-					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 						cid
 						links {
 							cid
@@ -31,22 +31,22 @@ func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+				"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
 				"links": []map[string]any{
 					{
-						"cid":  "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
-						"name": "Age",
+						"cid":  "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
+						"name": "age",
 					},
 					{
-						"cid":  "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
-						"name": "Name",
+						"cid":  "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
+						"name": "name",
 					},
 				},
 			},
@@ -60,7 +60,7 @@ func TestQueryLatestCommitsWithDocKeyWithSchemaVersionIdField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and schema versiion id field",
 		Request: `query {
-					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 						cid
 						schemaVersionId
 					}
@@ -68,15 +68,15 @@ func TestQueryLatestCommitsWithDocKeyWithSchemaVersionIdField(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"cid":             "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
-				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
+				"cid":             "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
+				"schemaVersionId": "bafkreicihc56up4gzd4pf6lsmg5fc7dugyuigoaywgtjwy5c2suvj5zhtm",
 			},
 		},
 	}
