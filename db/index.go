@@ -222,7 +222,7 @@ func (c *collection) getIndexes(ctx context.Context) ([]CollectionIndex, error) 
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
-		//return nil, err
+		return nil, err
 	}
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix: prefix.ToString(),

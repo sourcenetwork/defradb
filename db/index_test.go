@@ -664,6 +664,30 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ShouldNotCache(t *testing.T) {
 	}
 }
 
+func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+
+	testErr := errors.New("test error")
+
+	workingRootStore := f.db.rootstore
+	mockedRootStore := mocks.NewRootStore(t)
+	f.db.rootstore = mockedRootStore
+	mockedRootStore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
+
+	_, err := f.users.GetIndexes(f.ctx)
+	require.ErrorIs(t, err, testErr)
+
+	f.db.rootstore = workingRootStore
+
+	indexes, err := f.users.GetIndexes(f.ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(indexes))
+	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
+}
+
 func TestGetCollectionIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
