@@ -46,6 +46,23 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
 
     steps:
+      - name: Stop and notify the use of unprivileged flow or missing tokens
+        if: env.AWS_ACCESS_KEY_ID == '' || env.AWS_SECRET_ACCESS_KEY == ''
+        # Note: Fail this step, as we don't want unprivileged access doing these changes.
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let unprivileged_warning =
+            'Warning: you made changes to files that require privileged access, this means' +
+            ' you are either using the fork-flow, or are missing some secrets.\n' +
+            'Solution: please use branch-flow, or add the missing secrets. If you are not' +
+            ' an internal developer, please reach out to a maintainer for assistance.\n' +
+            'Note: the files that were changed also require manual testing' +
+            ' using our organization AWS account, and using manual triggers on' +
+            ' some of our workflows (that are not triggered normally).\n' +
+            'Pushed by: @${{ github.actor }}, SHA: \`${{ github.event.pull_request.head.sha }}\`\n';
+            core.setFailed(unprivileged_warning)
+
       - name: Checkout code into the directory
         uses: actions/checkout@v3
 
@@ -110,7 +127,7 @@ jobs:
               body: terraform_plan_output
             })
 
-      - name: Terraform plan status
+      - name: Terraform plan failure
         if: steps.terraform-plan.outcome == 'failure'
         run: exit 1
 
