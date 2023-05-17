@@ -16,16 +16,24 @@ on:
       - master
       - develop
     paths:
-      - '.github/workflows/**'
+      - '.github/workflows/preview-ami-with-terraform-plan.yml'
+      - '.github/workflows/build-then-deploy-ami.yml'
       - 'tools/cloud/aws/**'
 
 
 env:
-  # Verbosity setting for Terraform logs (has to be named `TF_LOG`).
+  # Verbosity setting for terraform logs (has to be named `TF_LOG`).
   TF_LOG: INFO
+
+  # Directory containing terraform config files.
+  TF_DIR: 'tools/cloud/aws/terraform'
 
   # Set environment type: dev, test, prod
   ENVIRONMENT_TYPE: "dev"
+
+  # Even though we don't see these being used directly, terraform needs these set.
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_AMI_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_AMI_SECRET_ACCESS_KEY }}
 
 
 jobs:
@@ -35,7 +43,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: tools/cloud/aws/terraform
+        working-directory: ${{ env.TF_DIR }}
 
     steps:
       - name: Checkout code into the directory
@@ -67,29 +75,39 @@ jobs:
         run: terraform plan -no-color -input=false -var-file="workspaces/source-ec2-${ENVIRONMENT_TYPE}.tfvars"
         continue-on-error: true
 
-      - name: Update pull request
+      - name: Comment results on pull request
         uses: actions/github-script@v6
         env:
-          PLAN: "terraform\n${{ steps.terraform-plan.outputs.stdout }}"
+          TERRAFORM_PLAN_OUTPUT: "Terraform Plan Output:\n${{ steps.terraform-plan.outputs.stdout }}\n"
 
         with:
           github-token: ${{ secrets.ONLY_DEFRADB_REPO_CI_PAT }} # Must have pull request write perms.
           script: |
-            const output = `#### Terraform Format and Style \`${{ steps.terraform-format.outcome }}\`
+            const terraform_plan_output = `
+            #### Terraform Format and Style \`${{ steps.terraform-format.outcome }}\`
             #### Terraform Initialization \`${{ steps.terraform-initialization.outcome }}\`
             #### Terraform Validation \`${{ steps.terraform-validation.outcome }}\`
             #### Terraform Plan \`${{ steps.terraform-plan.outcome }}\`
-            <details><summary>Show Plan</summary>
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
+
+            <details>
+
+              <summary>Show Plan</summary>
+
+              \`\`\`\n
+              ${process.env.TERRAFORM_PLAN_OUTPUT}
+              \`\`\`\n
+
             </details>
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            ***Pushed By: @${{ github.actor }}***
+            ***SHA: \`${{ github.event.pull_request.head.sha }}\`***
+            `;
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: output
+              body: terraform_plan_output
             })
 
       - name: Terraform plan status
