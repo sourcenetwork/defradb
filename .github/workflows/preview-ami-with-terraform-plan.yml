@@ -1,0 +1,135 @@
+# Copyright 2023 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Preview AMI With Terraform Plan Workflow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - '.github/workflows/preview-ami-with-terraform-plan.yml'
+      - '.github/workflows/build-then-deploy-ami.yml'
+      - 'tools/cloud/aws/**'
+
+
+env:
+  # Verbosity setting for terraform logs (has to be named `TF_LOG`).
+  TF_LOG: INFO
+
+  # Directory containing terraform config files.
+  TF_DIR: 'tools/cloud/aws/terraform'
+
+  # Set environment type: dev, test, prod
+  ENVIRONMENT_TYPE: "dev"
+
+  # Even though we don't see these being used directly, terraform needs these set.
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_AMI_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_AMI_SECRET_ACCESS_KEY }}
+
+
+jobs:
+  preview-ami-with-terraform-plan:
+    name: Preview ami with terraform plan job
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+
+    steps:
+      - name: Stop and notify the use of unprivileged flow or missing tokens
+        if: env.AWS_ACCESS_KEY_ID == '' || env.AWS_SECRET_ACCESS_KEY == ''
+        # Note: Fail this step, as we don't want unprivileged access doing these changes.
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let unprivileged_warning =
+            'Warning: you made changes to files that require privileged access, this means' +
+            ' you are either using the fork-flow, or are missing some secrets.\n' +
+            'Solution: please use branch-flow, or add the missing secrets. If you are not' +
+            ' an internal developer, please reach out to a maintainer for assistance.\n' +
+            'Note: the files that were changed also require manual testing' +
+            ' using our organization AWS account, and using manual triggers on' +
+            ' some of our workflows (that are not triggered normally).\n' +
+            'Pushed by: @${{ github.actor }}, SHA: \`${{ github.event.pull_request.head.sha }}\`\n';
+            core.setFailed(unprivileged_warning)
+
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Terraform action setup
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.7
+
+      - name: Terraform format
+        id: terraform-format
+        run: terraform fmt -check
+
+      - name: Terraform initialization
+        id: terraform-initialization
+        run: terraform init -backend-config="workspaces/${ENVIRONMENT_TYPE}-backend.conf"
+
+      - name: Terraform workspace
+        # Select workspace if it exists, otherwise create a new workspace.
+        run: terraform workspace select ${ENVIRONMENT_TYPE} || terraform workspace new ${ENVIRONMENT_TYPE}
+
+      - name: Terraform validation
+        id: terraform-validation
+        run: terraform validate -no-color
+
+      - name: Terraform plan
+        id: terraform-plan
+        run: terraform plan -no-color -input=false -var-file="workspaces/source-ec2-${ENVIRONMENT_TYPE}.tfvars"
+        continue-on-error: true
+
+      - name: Comment results on pull request
+        uses: actions/github-script@v6
+        env:
+          TERRAFORM_PLAN_OUTPUT: "Terraform Plan Output:\n${{ steps.terraform-plan.outputs.stdout }}\n"
+
+        with:
+          github-token: ${{ secrets.ONLY_DEFRADB_REPO_CI_PAT }} # Must have pull request write perms.
+          script: |
+            const terraform_plan_output = `
+            #### Terraform Format and Style \`${{ steps.terraform-format.outcome }}\`
+            #### Terraform Initialization \`${{ steps.terraform-initialization.outcome }}\`
+            #### Terraform Validation \`${{ steps.terraform-validation.outcome }}\`
+            #### Terraform Plan \`${{ steps.terraform-plan.outcome }}\`
+
+            <details>
+
+              <summary>Show Plan</summary>
+
+              \`\`\`\n
+              ${process.env.TERRAFORM_PLAN_OUTPUT}
+              \`\`\`\n
+
+            </details>
+
+            ***Pushed By: @${{ github.actor }}***
+            ***SHA: \`${{ github.event.pull_request.head.sha }}\`***
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: terraform_plan_output
+            })
+
+      - name: Terraform plan failure
+        if: steps.terraform-plan.outcome == 'failure'
+        run: exit 1
+
+      - name: List workspaces 
+        run: ls workspaces
