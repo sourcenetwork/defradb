@@ -385,7 +385,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 func wait(ctx context.Context, di *defraInstance) error {
 	// setup signal handlers
 	signalCh := make(chan os.Signal, 1)
-	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 
 	select {
 	case <-ctx.Done():
