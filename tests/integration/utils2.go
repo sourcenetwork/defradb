@@ -341,7 +341,7 @@ func executeTestCase(
 			// gracefully as part of the node closure.
 			syncChans = append(
 				syncChans,
-				restartNodes(ctx, t, testCase, dbt, nodes, dbPaths, nodeAddresses, nodeConfigs)...,
+				restartNodes(ctx, t, testCase, dbt, i, nodes, dbPaths, nodeAddresses, nodeConfigs)...,
 			)
 
 			// If the db was restarted we need to refresh the collection definitions as the old instances
@@ -604,6 +604,7 @@ func restartNodes(
 	t *testing.T,
 	testCase TestCase,
 	dbt DatabaseType,
+	actionIndex int,
 	nodes []*node.Node,
 	dbPaths []string,
 	nodeAddresses []string,
@@ -654,22 +655,37 @@ func restartNodes(
 		nodes[i] = n
 	}
 
+	// The index of the action after the last wait action before the current restart action.
+	// We wish to resume the wait clock from this point onwards.
+	waitGroupStartIndex := 0
+actionLoop:
+	for i := actionIndex; i >= 0; i-- {
+		switch testCase.Actions[i].(type) {
+		case WaitForSync:
+			// +1 as we do not wish to resume from the wait itself, but the next action
+			// following it. This may be the current restart action.
+			waitGroupStartIndex = i + 1
+			break actionLoop
+		}
+	}
+
 	syncChans := []chan struct{}{}
 	for _, tc := range testCase.Actions {
 		switch action := tc.(type) {
 		case ConnectPeers:
+			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
+			time.Sleep(100 * time.Millisecond)
 			syncChans = append(syncChans, setupPeerWaitSync(
-				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+				ctx, t, testCase, waitGroupStartIndex, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
 			))
 		case ConfigureReplicator:
+			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
+			time.Sleep(100 * time.Millisecond)
 			syncChans = append(syncChans, setupRepicatorWaitSync(
-				ctx, t, testCase, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+				ctx, t, testCase, waitGroupStartIndex, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
 			))
 		}
 	}
-
-	// Give the nodes a chance to connect to each other and learn about each other's subscrivbed topics.
-	time.Sleep(100 * time.Millisecond)
 
 	return syncChans
 }
