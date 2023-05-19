@@ -176,6 +176,9 @@ func (c *collection) CreateIndex(
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
+	if c.isIndexCached {
+		c.indexes = append(c.indexes, index)
+	}
 	return index.Description(), nil
 }
 
@@ -186,7 +189,19 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 	if err != nil {
 		return err
 	}
-	return txn.Systemstore().Delete(ctx, key.ToDS())
+	err = txn.Systemstore().Delete(ctx, key.ToDS())
+	if err != nil {
+		return err
+	}
+	if c.isIndexCached {
+		for i := range c.indexes {
+			if c.indexes[i].Name() == indexName {
+				c.indexes = append(c.indexes[:i], c.indexes[i+1:]...)
+				break
+			}
+		}
+	}
+	return nil
 }
 
 func (c *collection) dropAllIndexes(ctx context.Context) error {

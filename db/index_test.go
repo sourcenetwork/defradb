@@ -725,6 +725,49 @@ func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].ID, indexes[1].ID})
 }
 
+func TestCollectionGetIndexes_IfIndexIsCreated_ShouldUpdateCache(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+
+	indexes, err := f.users.GetIndexes(f.ctx)
+	assert.NoError(t, err)
+	assert.Len(t, indexes, 1)
+
+	_, err = f.users.CreateIndex(f.ctx, getUsersIndexDescOnAge())
+	assert.NoError(t, err)
+
+	indexes, err = f.users.GetIndexes(f.ctx)
+	assert.NoError(t, err)
+	assert.Len(t, indexes, 2)
+}
+
+func TestCollectionGetIndexes_IfIndexIsDropped_ShouldUpdateCache(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+	f.createUserCollectionIndexOnAge()
+
+	indexes, err := f.users.GetIndexes(f.ctx)
+	assert.NoError(t, err)
+	assert.Len(t, indexes, 2)
+
+	err = f.users.DropIndex(f.ctx, testUsersColIndexName)
+	assert.NoError(t, err)
+
+	indexes, err = f.users.GetIndexes(f.ctx)
+	assert.NoError(t, err)
+	assert.Len(t, indexes, 1)
+	assert.Equal(t, indexes[0].Name, testUsersColIndexAge)
+
+	err = f.users.DropIndex(f.ctx, testUsersColIndexAge)
+	assert.NoError(t, err)
+
+	indexes, err = f.users.GetIndexes(f.ctx)
+	assert.NoError(t, err)
+	assert.Len(t, indexes, 0)
+}
+
 func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 	desc := f.createUserCollectionIndexOnName()
