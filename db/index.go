@@ -317,6 +317,9 @@ func (c *collection) createIndex(
 	}
 
 	colSeq, err := c.db.getSequence(ctx, txn, fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, c.ID()))
+	if err != nil {
+		return nil, err
+	}
 	colID, err := colSeq.next(ctx, txn)
 	desc.ID = uint32(colID)
 

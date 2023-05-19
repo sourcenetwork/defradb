@@ -45,15 +45,16 @@ const (
 
 	testUsersColIndexName = "user_name"
 	testUsersColIndexAge  = "user_age"
+	
+	userColVersionID = "bafkreiefzlx2xsfaxixs24hcqwwqpa3nuqbutkapasymk3d5v4fxa4rlhy"
 )
 
 type indexTestFixture struct {
-	ctx      context.Context
-	db       *implicitTxnDB
-	txn      datastore.Txn
-	users    client.Collection
-	products client.Collection
-	t        *testing.T
+	ctx   context.Context
+	db    *implicitTxnDB
+	txn   datastore.Txn
+	users client.Collection
+	t     *testing.T
 }
 
 func getUsersCollectionDesc() client.CollectionDescription {
@@ -520,6 +521,23 @@ func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 
 	_, err = f.getAllIndexes()
 	assert.ErrorIs(t, err, NewErrInvalidStoredIndexKey(key.String()))
+}
+
+func TestGetIndexes_IfFailsToReadNextSeqNumber_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	testErr := errors.New("test error")
+
+	mockedTxn := f.mockTxn()
+	onSystemStore := mockedTxn.MockSystemstore.EXPECT()
+	f.resetSystemStoreStubs(onSystemStore)
+
+	seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, f.users.ID()))
+	onSystemStore.Get(f.ctx, seqKey.ToDS()).Return(nil, testErr)
+	f.stubSystemStore(onSystemStore)
+
+	_, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
+	assert.ErrorIs(t, err, testErr)
 }
 
 func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) {

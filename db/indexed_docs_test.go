@@ -174,29 +174,48 @@ func (f *indexTestFixture) getPrefixFromDataStore(prefix string) [][]byte {
 func (f *indexTestFixture) mockTxn() *mocks.MultiStoreTxn {
 	mockedTxn := mocks.NewTxnWithMultistore(f.t)
 
+	systemStoreOn := mockedTxn.MockSystemstore.EXPECT()
+	f.resetSystemStoreStubs(systemStoreOn)
+	f.stubSystemStore(systemStoreOn)
+
+	f.txn = mockedTxn
+	return mockedTxn
+}
+
+func (*indexTestFixture) resetSystemStoreStubs(systemStoreOn *mocks.DSReaderWriter_Expecter) {
+	systemStoreOn.Query(mock.Anything, mock.Anything).Unset()
+	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
+}
+
+func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_Expecter) {
 	desc := getUsersIndexDescOnName()
 	desc.ID = 1
 	indexOnNameDescData, err := json.Marshal(desc)
 	require.NoError(f.t, err)
 
-	systemStoreOn := mockedTxn.MockSystemstore.EXPECT()
-
 	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, "")
 	matchPrefixFunc := func(q query.Query) bool { return q.Prefix == colIndexKey.ToDS().String() }
 
-	systemStoreOn.Query(mock.Anything, mock.Anything).Unset()
 	systemStoreOn.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).Maybe().
 		Return(mocks.NewQueryResultsWithValues(f.t, indexOnNameDescData), nil)
 	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(f.t), nil)
 
-	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
+	colKey := core.NewCollectionKey(f.users.Name())
+	systemStoreOn.Get(mock.Anything, colKey.ToDS()).Maybe().Return([]byte(userColVersionID), nil)
+
+	colVersionIDKey := core.NewCollectionSchemaVersionKey(userColVersionID)
+	colDesc := getUsersCollectionDesc()
+	colDesc.ID = 1
+	colDescBytes, err := json.Marshal(colDesc)
+	require.NoError(f.t, err)
+	systemStoreOn.Get(mock.Anything, colVersionIDKey.ToDS()).Maybe().Return(colDescBytes, nil)
+
 	colIndexOnNameKey := core.NewCollectionIndexKey(f.users.Description().Name, testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
 	systemStoreOn.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
 
-	f.txn = mockedTxn
-	return mockedTxn
+	systemStoreOn.Has(mock.Anything, mock.Anything).Maybe().Return(false, nil)
 }
 
 func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
@@ -357,13 +376,13 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 	nowStr := now.Format(time.RFC3339)
 
 	testCase := []struct {
-		Name       string
-		FieldKind  client.FieldKind
+		Name      string
+		FieldKind client.FieldKind
 		// FieldVal is the value the index will receive for serialization
 		FieldVal   any
 		ShouldFail bool
 		// Stored is the value that is stored as part of the index value key
-		Stored     string
+		Stored string
 	}{
 		{Name: "invalid int", FieldKind: client.FieldKind_INT, FieldVal: "invalid", ShouldFail: true},
 		{Name: "invalid float", FieldKind: client.FieldKind_FLOAT, FieldVal: "invalid", ShouldFail: true},
