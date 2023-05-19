@@ -185,6 +185,7 @@ func (f *indexTestFixture) mockTxn() *mocks.MultiStoreTxn {
 func (*indexTestFixture) resetSystemStoreStubs(systemStoreOn *mocks.DSReaderWriter_Expecter) {
 	systemStoreOn.Query(mock.Anything, mock.Anything).Unset()
 	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
+	systemStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Unset()
 }
 
 func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_Expecter) {
@@ -207,13 +208,22 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	colVersionIDKey := core.NewCollectionSchemaVersionKey(userColVersionID)
 	colDesc := getUsersCollectionDesc()
 	colDesc.ID = 1
+	for i := range colDesc.Schema.Fields {
+		colDesc.Schema.Fields[i].ID = client.FieldID(i)
+	}
 	colDescBytes, err := json.Marshal(colDesc)
 	require.NoError(f.t, err)
 	systemStoreOn.Get(mock.Anything, colVersionIDKey.ToDS()).Maybe().Return(colDescBytes, nil)
 
 	colIndexOnNameKey := core.NewCollectionIndexKey(f.users.Description().Name, testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
+
+	sequenceKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, f.users.ID()))
+	systemStoreOn.Get(mock.Anything, sequenceKey.ToDS()).Maybe().Return([]byte{0, 0, 0, 0, 0, 0, 0, 1}, nil)
+
 	systemStoreOn.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
+
+	systemStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
 
 	systemStoreOn.Has(mock.Anything, mock.Anything).Maybe().Return(false, nil)
 }

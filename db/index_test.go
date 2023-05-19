@@ -45,7 +45,7 @@ const (
 
 	testUsersColIndexName = "user_name"
 	testUsersColIndexAge  = "user_age"
-	
+
 	userColVersionID = "bafkreiefzlx2xsfaxixs24hcqwwqpa3nuqbutkapasymk3d5v4fxa4rlhy"
 )
 
@@ -523,21 +523,41 @@ func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 	assert.ErrorIs(t, err, NewErrInvalidStoredIndexKey(key.String()))
 }
 
-func TestGetIndexes_IfFailsToReadNextSeqNumber_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-
+func TestGetIndexes_IfFailsToReadSeqNumber_ReturnError(t *testing.T) {
 	testErr := errors.New("test error")
 
-	mockedTxn := f.mockTxn()
-	onSystemStore := mockedTxn.MockSystemstore.EXPECT()
-	f.resetSystemStoreStubs(onSystemStore)
+	testCases := []struct {
+		Name            string
+		StubSystemStore func(*mocks.DSReaderWriter_Expecter, core.Key)
+	}{
+		{
+			Name: "Read Sequence Number",
+			StubSystemStore: func(onSystemStore *mocks.DSReaderWriter_Expecter, seqKey core.Key) {
+				onSystemStore.Get(mock.Anything, seqKey.ToDS()).Return(nil, testErr)
+			},
+		},
+		{
+			Name: "Increment Sequence Number",
+			StubSystemStore: func(onSystemStore *mocks.DSReaderWriter_Expecter, seqKey core.Key) {
+				onSystemStore.Put(mock.Anything, seqKey.ToDS(), mock.Anything).Return(testErr)
+			},
+		},
+	}
 
-	seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, f.users.ID()))
-	onSystemStore.Get(f.ctx, seqKey.ToDS()).Return(nil, testErr)
-	f.stubSystemStore(onSystemStore)
+	for _, tc := range testCases {
+		f := newIndexTestFixture(t)
 
-	_, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
-	assert.ErrorIs(t, err, testErr)
+		mockedTxn := f.mockTxn()
+		onSystemStore := mockedTxn.MockSystemstore.EXPECT()
+		f.resetSystemStoreStubs(onSystemStore)
+
+		seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, f.users.ID()))
+		tc.StubSystemStore(onSystemStore, seqKey)
+		f.stubSystemStore(onSystemStore)
+
+		_, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
+		assert.ErrorIs(t, err, testErr)
+	}
 }
 
 func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) {

@@ -321,6 +321,9 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 	colID, err := colSeq.next(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
 	desc.ID = uint32(colID)
 
 	buf, err := json.Marshal(desc)
