@@ -18,6 +18,7 @@ import (
 )
 
 const testValuePrefix = "v"
+const testNilValue = "n"
 
 type userDoc struct {
 	Name   string  `json:"name"`
@@ -466,4 +467,26 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 			assert.Len(t, data, 0, assertMsg)
 		}
 	}
+}
+
+func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	docJSON, err := json.Marshal(struct {
+		Age int `json:"age"`
+	}{Age: 44})
+	require.NoError(f.t, err)
+
+	doc, err := client.NewDocFromJSON(docJSON)
+	require.NoError(f.t, err)
+
+	f.saveToUsers(doc)
+
+	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
+		Values(testNilValue).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
 }

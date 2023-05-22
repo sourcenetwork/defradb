@@ -17,7 +17,10 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-const indexFieldValuePrefix = "v"
+const (
+	indexFieldValuePrefix = "v"
+	indexFieldNilValue    = "n"
+)
 
 type CollectionIndex interface {
 	Save(context.Context, datastore.Txn, *client.Document) error
@@ -103,21 +106,28 @@ func (i *collectionSimpleIndex) Save(
 ) error {
 	indexedFieldName := i.desc.Fields[0].Name
 	fieldVal, err := doc.Get(indexedFieldName)
+	isNil := false
 	if err != nil {
-		return nil
+		isNil = errors.Is(err, client.ErrFieldNotExist)
+		if !isNil {
+			return nil
+		}
 	}
 
-	data, err := i.convertFunc(fieldVal)
-	if err != nil {
-		return NewErrCanNotIndexInvalidFieldValue(err)
+	storeValue := ""
+	if isNil {
+		storeValue = indexFieldNilValue
+	} else {
+		data, err := i.convertFunc(fieldVal)
+		if err != nil {
+			return NewErrCanNotIndexInvalidFieldValue(err)
+		}
+		storeValue = indexFieldValuePrefix + string(data)
 	}
 	indexDataStoreKey := core.IndexDataStoreKey{}
 	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
 	indexDataStoreKey.IndexID = strconv.Itoa(int(i.desc.ID))
-	indexDataStoreKey.FieldValues = []string{
-		indexFieldValuePrefix + string(data),
-		indexFieldValuePrefix + doc.Key().String(),
-	}
+	indexDataStoreKey.FieldValues = []string{storeValue, indexFieldValuePrefix + doc.Key().String()}
 	keyStr := indexDataStoreKey.ToDS()
 	err = txn.Datastore().Put(ctx, keyStr, []byte{})
 	if err != nil {
