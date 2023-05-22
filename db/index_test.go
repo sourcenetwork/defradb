@@ -461,6 +461,36 @@ func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 	assert.ErrorIs(t, err, NewErrNonExistingFieldForIndex(field))
 }
 
+func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCollection(t *testing.T) {
+	f := newIndexTestFixtureBare(t)
+	users := f.createCollection(getUsersCollectionDesc())
+	products := f.createCollection(getProductsCollectionDesc())
+
+	makeIndex := func(fieldName string) client.IndexDescription {
+		return client.IndexDescription{
+			Fields: []client.IndexedFieldDescription{
+				{Name: fieldName, Direction: client.Ascending},
+			},
+		}
+	}
+
+	createIndexAndAssert := func(col client.Collection, fieldName string, expectedID uint32) {
+		desc, err := f.createCollectionIndexFor(col.Name(), makeIndex(fieldName))
+		require.NoError(t, err)
+		assert.Equal(t, expectedID, desc.ID)
+		seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, col.ID()))
+		storedSeqKey, err := f.txn.Systemstore().Get(f.ctx, seqKey.ToDS())
+		assert.NoError(t, err)
+		storedSeqVal := binary.BigEndian.Uint64(storedSeqKey)
+		assert.Equal(t, expectedID, uint32(storedSeqVal))
+	}
+
+	createIndexAndAssert(users, usersNameFieldName, 1)
+	createIndexAndAssert(users, usersAgeFieldName, 2)
+	createIndexAndAssert(products, productsIDFieldName, 1)
+	createIndexAndAssert(products, productsCategoryFieldName, 2)
+}
+
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 
@@ -867,34 +897,4 @@ func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
 
 	err := f.dropAllIndexes(usersColName)
 	assert.Error(t, err)
-}
-
-func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCollection(t *testing.T) {
-	f := newIndexTestFixtureBare(t)
-	users := f.createCollection(getUsersCollectionDesc())
-	products := f.createCollection(getProductsCollectionDesc())
-
-	makeIndex := func(fieldName string) client.IndexDescription {
-		return client.IndexDescription{
-			Fields: []client.IndexedFieldDescription{
-				{Name: fieldName, Direction: client.Ascending},
-			},
-		}
-	}
-
-	createIndexAndAssert := func(col client.Collection, fieldName string, expectedID uint32) {
-		desc, err := f.createCollectionIndexFor(col.Name(), makeIndex(fieldName))
-		require.NoError(t, err)
-		assert.Equal(t, expectedID, desc.ID)
-		seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, col.ID()))
-		storedSeqKey, err := f.txn.Systemstore().Get(f.ctx, seqKey.ToDS())
-		assert.NoError(t, err)
-		storedSeqVal := binary.BigEndian.Uint64(storedSeqKey)
-		assert.Equal(t, expectedID, uint32(storedSeqVal))
-	}
-
-	createIndexAndAssert(users, usersNameFieldName, 1)
-	createIndexAndAssert(users, usersAgeFieldName, 2)
-	createIndexAndAssert(products, productsIDFieldName, 1)
-	createIndexAndAssert(products, productsCategoryFieldName, 2)
 }
