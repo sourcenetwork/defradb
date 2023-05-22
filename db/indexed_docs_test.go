@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testValuePrefix = "v"
+
 type userDoc struct {
 	Name   string  `json:"name"`
 	Age    int     `json:"age"`
@@ -146,12 +148,12 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 		if len(b.values) == 0 {
 			fieldVal, err := b.doc.Get(b.fieldName)
 			require.NoError(b.f.t, err)
-			fieldStrVal = fmt.Sprintf("%v", fieldVal)
+			fieldStrVal = fmt.Sprintf("%s%v", testValuePrefix, fieldVal)
 		} else {
 			fieldStrVal = b.values[0]
 		}
 
-		key.FieldValues = []string{fieldStrVal, b.doc.Key().String()}
+		key.FieldValues = []string{fieldStrVal, testValuePrefix + b.doc.Key().String()}
 	} else if len(b.values) > 0 {
 		key.FieldValues = b.values
 	}
@@ -454,7 +456,7 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 
 			keyBuilder := newIndexKeyBuilder(f).Col(collection.Name()).Field("field").Doc(doc)
 			if tc.Stored != "" {
-				keyBuilder.Values(tc.Stored)
+				keyBuilder.Values(testValuePrefix + tc.Stored)
 			}
 			key := keyBuilder.Build()
 

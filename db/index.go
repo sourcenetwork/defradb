@@ -17,6 +17,8 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
+const indexFieldValuePrefix = "v"
+
 type CollectionIndex interface {
 	Save(context.Context, datastore.Txn, *client.Document) error
 	Name() string
@@ -112,7 +114,10 @@ func (i *collectionSimpleIndex) Save(
 	indexDataStoreKey := core.IndexDataStoreKey{}
 	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
 	indexDataStoreKey.IndexID = strconv.Itoa(int(i.desc.ID))
-	indexDataStoreKey.FieldValues = []string{string(data), doc.Key().String()}
+	indexDataStoreKey.FieldValues = []string{
+		indexFieldValuePrefix + string(data),
+		indexFieldValuePrefix + doc.Key().String(),
+	}
 	keyStr := indexDataStoreKey.ToDS()
 	err = txn.Datastore().Put(ctx, keyStr, []byte{})
 	if err != nil {

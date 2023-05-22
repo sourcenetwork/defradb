@@ -114,7 +114,7 @@ func TestNewIndexKey_IfEmptyParam_ReturnPrefix(t *testing.T) {
 	assert.Equal(t, "/collection/index", key.ToString())
 }
 
-func TestNewIndexKey_ParamsAreGiven_ReturnFullKey(t *testing.T) {
+func TestNewIndexKey_IfParamsAreGiven_ReturnFullKey(t *testing.T) {
 	key := NewCollectionIndexKey("col", "idx")
 	assert.Equal(t, "/collection/index/col/idx", key.ToString())
 }
