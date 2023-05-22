@@ -407,6 +407,7 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 		{Name: "valid bool true", FieldKind: client.FieldKind_BOOL, FieldVal: true, Stored: "1"},
 		{Name: "valid bool false", FieldKind: client.FieldKind_BOOL, FieldVal: false, Stored: "0"},
 		{Name: "valid datetime string", FieldKind: client.FieldKind_DATETIME, FieldVal: nowStr, Stored: nowStr},
+		{Name: "valid empty string", FieldKind: client.FieldKind_STRING, FieldVal: "", Stored: ""},
 	}
 
 	for i, tc := range testCase {
