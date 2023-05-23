@@ -24,6 +24,7 @@ const (
 
 type CollectionIndex interface {
 	Save(context.Context, datastore.Txn, *client.Document) error
+	RemoveAll(context.Context, datastore.Txn) error
 	Name() string
 	Description() client.IndexDescription
 }
@@ -136,6 +137,35 @@ func (i *collectionSimpleIndex) Save(
 	return nil
 }
 
+func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
+	prefixKey := core.IndexDataStoreKey{}
+	prefixKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
+	prefixKey.IndexID = strconv.Itoa(int(i.desc.ID))
+	q, err := txn.Datastore().Query(ctx, query.Query{
+		Prefix: prefixKey.ToString(),
+	})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := q.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close collection query", err)
+		}
+	}()
+
+	for res := range q.Next() {
+		if res.Error != nil {
+			return res.Error
+		}
+		err = txn.Datastore().Delete(ctx, ds.NewKey(res.Key))
+		if err != nil {
+			return NewCanNotDeleteIndexedField(err)
+		}
+	}
+
+	return nil
+}
+
 func (i *collectionSimpleIndex) Name() string {
 	return i.desc.Name
 }
@@ -204,18 +234,25 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 	if err != nil {
 		return err
 	}
+	_, err = c.getIndexes(ctx, txn)
+	if err != nil {
+		return err
+	}
+	for i := range c.indexes {
+		if c.indexes[i].Name() == indexName {
+			err = c.indexes[i].RemoveAll(ctx, txn)
+			if err != nil {
+				return err
+			}
+			c.indexes = append(c.indexes[:i], c.indexes[i+1:]...)
+			break
+		}
+	}
 	err = txn.Systemstore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return err
 	}
-	if c.isIndexCached {
-		for i := range c.indexes {
-			if c.indexes[i].Name() == indexName {
-				c.indexes = append(c.indexes[:i], c.indexes[i+1:]...)
-				break
-			}
-		}
-	}
+
 	return nil
 }
 

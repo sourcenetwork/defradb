@@ -50,6 +50,7 @@ const (
 	errFailedToStoreIndexedField      string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc    string = "failed to read stored index description"
 	errCanNotIndexInvalidFieldValue   string = "can not index invalid field value"
+	errCanNotDeleteIndexedField       string = "can not delete indexed field"
 )
 
 var (
@@ -150,10 +151,15 @@ func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
 }
 
-// NewErrCanNotIndexInvalidFieldValue returns a new error indicating that the field value is invalid 
+// NewErrCanNotIndexInvalidFieldValue returns a new error indicating that the field value is invalid
 // and cannot be indexed.
 func NewErrCanNotIndexInvalidFieldValue(inner error) error {
 	return errors.Wrap(errCanNotIndexInvalidFieldValue, inner)
+}
+
+// NewCanNotDeleteIndexedField returns a new error a failed attempt to delete an indexed field 
+func NewCanNotDeleteIndexedField(inner error) error {
+	return errors.Wrap(errCanNotDeleteIndexedField, inner)
 }
 
 // NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was provided.

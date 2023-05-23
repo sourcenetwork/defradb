@@ -43,8 +43,9 @@ const (
 	productsCategoryFieldName  = "category"
 	productsAvailableFieldName = "available"
 
-	testUsersColIndexName = "user_name"
-	testUsersColIndexAge  = "user_age"
+	testUsersColIndexName   = "user_name"
+	testUsersColIndexAge    = "user_age"
+	testUsersColIndexWeight = "user_weight"
 
 	userColVersionID = "bafkreiefzlx2xsfaxixs24hcqwwqpa3nuqbutkapasymk3d5v4fxa4rlhy"
 )
@@ -161,6 +162,15 @@ func getUsersIndexDescOnAge() client.IndexDescription {
 		Name: testUsersColIndexAge,
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersAgeFieldName, Direction: client.Ascending},
+		},
+	}
+}
+
+func getUsersIndexDescOnWeight() client.IndexDescription {
+	return client.IndexDescription{
+		Name: testUsersColIndexWeight,
+		Fields: []client.IndexedFieldDescription{
+			{Name: usersWeightFieldName, Direction: client.Ascending},
 		},
 	}
 }
@@ -863,6 +873,21 @@ func TestDropIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 
 	err := f.dropIndex(productsColName, "any_name")
 	assert.ErrorIs(t, err, NewErrCollectionDoesntExist(usersColName))
+}
+
+func TestDropIndex_IfFailsToQuerySystemStorage_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	desc := f.createUserCollectionIndexOnName()
+
+	testErr := errors.New("test error")
+
+	mockTxn := f.mockTxn().ClearSystemStore()
+	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
+	systemStoreOn.Query(mock.Anything, mock.Anything).Return(nil, testErr)
+	f.stubSystemStore(systemStoreOn)
+
+	err := f.dropIndex(usersColName, desc.Name)
+	require.ErrorIs(t, err, testErr)
 }
 
 func TestDropAllIndex_ShouldDeleteAllIndexes(t *testing.T) {

@@ -33,8 +33,8 @@ type productDoc struct {
 	Available bool    `json:"available"`
 }
 
-func (f *indexTestFixture) saveToUsers(doc *client.Document) {
-	err := f.users.Create(f.ctx, doc)
+func (f *indexTestFixture) saveDocToCollection(doc *client.Document, col client.Collection) {
+	err := col.Create(f.ctx, doc)
 	require.NoError(f.t, err)
 	f.txn, err = f.db.NewTxn(f.ctx, false)
 	require.NoError(f.t, err)
@@ -229,6 +229,8 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	systemStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
 
 	systemStoreOn.Has(mock.Anything, mock.Anything).Maybe().Return(false, nil)
+
+	systemStoreOn.Delete(mock.Anything, mock.Anything).Maybe().Return(nil)
 }
 
 func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
@@ -236,7 +238,7 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
-	f.saveToUsers(doc)
+	f.saveDocToCollection(doc, f.users)
 	//f.commitTxn()
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
@@ -323,7 +325,7 @@ func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 	f.createUserCollectionIndexOnAge()
 
 	doc := f.newUserDoc("John", 21)
-	f.saveToUsers(doc)
+	f.saveDocToCollection(doc, f.users)
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
 
@@ -369,7 +371,7 @@ func TestNonUnique_IfMultipleIndexes_StoreIndexWithIndexID(t *testing.T) {
 	f.createUserCollectionIndexOnAge()
 
 	doc := f.newUserDoc("John", 21)
-	f.saveToUsers(doc)
+	f.saveDocToCollection(doc, f.users)
 
 	nameKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 	ageKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
@@ -482,7 +484,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	doc, err := client.NewDocFromJSON(docJSON)
 	require.NoError(f.t, err)
 
-	f.saveToUsers(doc)
+	f.saveDocToCollection(doc, f.users)
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
 		Values(testNilValue).Build()
@@ -490,4 +492,109 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
+}
+
+func TestNonUnique_IfIndexIsDropped_ShouldDeleteStoredIndexedFields(t *testing.T) {
+	f := newIndexTestFixtureBare(t)
+	users := f.createCollection(getUsersCollectionDesc())
+	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
+	require.NoError(f.t, err)
+	_, err = f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnAge())
+	require.NoError(f.t, err)
+	_, err = f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnWeight())
+	require.NoError(f.t, err)
+	f.commitTxn()
+
+	f.saveDocToCollection(f.newUserDoc("John", 21), users)
+	f.saveDocToCollection(f.newUserDoc("Islam", 23), users)
+
+	products := f.createCollection(getProductsCollectionDesc())
+	_, err = f.createCollectionIndexFor(products.Name(), getProductsIndexDescOnCategory())
+	require.NoError(f.t, err)
+	f.commitTxn()
+
+	f.saveDocToCollection(f.newProdDoc(1, 55, "games"), products)
+
+	userNameKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Build()
+	userAgeKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Build()
+	userWeightKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersWeightFieldName).Build()
+	prodCatKey := newIndexKeyBuilder(f).Col(productsColName).Field(productsCategoryFieldName).Build()
+
+	err = f.dropIndex(usersColName, testUsersColIndexAge)
+	require.NoError(f.t, err)
+
+	assert.Len(t, f.getPrefixFromDataStore(userNameKey.ToString()), 2)
+	assert.Len(t, f.getPrefixFromDataStore(userAgeKey.ToString()), 0)
+	assert.Len(t, f.getPrefixFromDataStore(userWeightKey.ToString()), 2)
+	assert.Len(t, f.getPrefixFromDataStore(prodCatKey.ToString()), 1)
+}
+
+func TestNonUnique_IfUponDroppingIndexFailsToQueryDataStorage_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	testErr := errors.New("test error")
+
+	mockedTxn := f.mockTxn()
+	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
+	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).Unset()
+	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
+	mockedTxn.EXPECT().Datastore().Unset()
+	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
+
+	err := f.dropIndex(usersColName, testUsersColIndexName)
+	require.ErrorIs(t, err, testErr)
+}
+
+func TestNonUnique_IfUponDroppingIndexQueryIteratorFails_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	testErr := errors.New("test error")
+
+	mockedTxn := f.mockTxn()
+	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
+	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).
+		Return(mocks.NewQueryResultsWithResults(t, query.Result{Error: testErr}), nil)
+	mockedTxn.EXPECT().Datastore().Unset()
+	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
+
+	err := f.dropIndex(usersColName, testUsersColIndexName)
+	require.ErrorIs(t, err, testErr)
+}
+
+func TestNonUnique_IfUponDroppingIndex_ShouldCloseQueryIterator(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	mockedTxn := f.mockTxn()
+
+	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(f.t)
+	mockedTxn.EXPECT().Datastore().Unset()
+	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore).Maybe()
+	queryResults := mocks.NewQueryResultsWithValues(f.t)
+	queryResults.EXPECT().Close().Unset()
+	queryResults.EXPECT().Close().Return(nil)
+	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).
+		Return(queryResults, nil)
+
+	err := f.dropIndex(usersColName, testUsersColIndexName)
+	assert.NoError(t, err)
+}
+
+func TestNonUnique_IfUponDroppingIndexDatastoreFailsToDelete_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	mockedTxn := f.mockTxn()
+	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
+	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).
+		Return(mocks.NewQueryResultsWithValues(t, []byte{}), nil)
+	mockedTxn.MockDatastore.EXPECT().Delete(mock.Anything, mock.Anything).
+		Return(errors.New("error"))
+	mockedTxn.EXPECT().Datastore().Unset()
+	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
+
+	err := f.dropIndex(usersColName, testUsersColIndexName)
+	require.ErrorIs(t, err, NewCanNotDeleteIndexedField(nil))
 }
