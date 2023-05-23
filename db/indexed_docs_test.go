@@ -494,7 +494,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	assert.Len(t, data, 0)
 }
 
-func TestNonUnique_IfIndexIsDropped_ShouldDeleteStoredIndexedFields(t *testing.T) {
+func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	users := f.createCollection(getUsersCollectionDesc())
 	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
@@ -529,7 +529,7 @@ func TestNonUnique_IfIndexIsDropped_ShouldDeleteStoredIndexedFields(t *testing.T
 	assert.Len(t, f.getPrefixFromDataStore(prodCatKey.ToString()), 1)
 }
 
-func TestNonUnique_IfUponDroppingIndexFailsToQueryDataStorage_ReturnError(t *testing.T) {
+func TestNonUniqueDrop_IfFailsToQueryDataStorage_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
 
@@ -546,7 +546,7 @@ func TestNonUnique_IfUponDroppingIndexFailsToQueryDataStorage_ReturnError(t *tes
 	require.ErrorIs(t, err, testErr)
 }
 
-func TestNonUnique_IfUponDroppingIndexQueryIteratorFails_ReturnError(t *testing.T) {
+func TestNonUniqueDrop_IfQueryIteratorFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
 
@@ -563,7 +563,7 @@ func TestNonUnique_IfUponDroppingIndexQueryIteratorFails_ReturnError(t *testing.
 	require.ErrorIs(t, err, testErr)
 }
 
-func TestNonUnique_IfUponDroppingIndex_ShouldCloseQueryIterator(t *testing.T) {
+func TestNonUniqueDrop_ShouldCloseQueryIterator(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
 
@@ -582,7 +582,7 @@ func TestNonUnique_IfUponDroppingIndex_ShouldCloseQueryIterator(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestNonUnique_IfUponDroppingIndexDatastoreFailsToDelete_ReturnError(t *testing.T) {
+func TestNonUniqueDrop_IfDatastoreFailsToDelete_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
 
