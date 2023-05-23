@@ -286,6 +286,33 @@ func (c *collection) dropAllIndexes(ctx context.Context) error {
 	return nil
 }
 
+func deserializePrefix[T any](ctx context.Context, prefix string, storage ds.Read) ([]T, error) {
+	q, err := storage.Query(ctx, query.Query{Prefix: prefix})
+	if err != nil {
+		return nil, NewErrFailedToCreateCollectionQuery(err)
+	}
+	defer func() {
+		if err := q.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close collection query", err)
+		}
+	}()
+
+	elements := make([]T, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			return nil, res.Error
+		}
+
+		var element T
+		err = json.Unmarshal(res.Value, &element)
+		if err != nil {
+			return nil, NewErrInvalidStoredIndex(err)
+		}
+		elements = append(elements, element)
+	}
+	return elements, nil
+}
+
 func (c *collection) getIndexes(ctx context.Context, txn datastore.Txn) ([]CollectionIndex, error) {
 	if c.isIndexCached {
 		return c.indexes, nil
@@ -299,36 +326,18 @@ func (c *collection) getIndexes(ctx context.Context, txn datastore.Txn) ([]Colle
 			return nil, err
 		}
 	}
-	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: prefix.ToString(),
-	})
+	indexes, err := deserializePrefix[client.IndexDescription](ctx, prefix.ToString(), txn.Systemstore())
 	if err != nil {
-		return nil, NewErrFailedToCreateCollectionQuery(err)
+		return nil, err
 	}
-	defer func() {
-		if err := q.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close collection query", err)
-		}
-	}()
-
-	indexes := make([]CollectionIndex, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
-			return nil, res.Error
-		}
-
-		var indexDesc client.IndexDescription
-		err = json.Unmarshal(res.Value, &indexDesc)
-		if err != nil {
-			return nil, NewErrInvalidStoredIndex(err)
-		}
-		colIndex := NewCollectionIndex(c, indexDesc)
-		indexes = append(indexes, colIndex)
+	colIndexes := make([]CollectionIndex, 0, len(indexes))
+	for _, index := range indexes {
+		colIndexes = append(colIndexes, NewCollectionIndex(c, index))
 	}
 
-	c.indexes = indexes
+	c.indexes = colIndexes
 	c.isIndexCached = true
-	return indexes, nil
+	return colIndexes, nil
 }
 
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
