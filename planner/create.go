@@ -171,7 +171,7 @@ func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
 		p:         p,
 		newDocStr: parsed.Data,
 		results:   results,
-		docMapper: docMapper{&parsed.DocumentMapping},
+		docMapper: docMapper{parsed.DocumentMapping},
 	}
 
 	// get collection

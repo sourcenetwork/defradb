@@ -212,7 +212,7 @@ func (p *Planner) Scan(parsed *mapper.Select) *scanNode {
 	return &scanNode{
 		p:         p,
 		fetcher:   f,
-		docMapper: docMapper{&parsed.DocumentMapping},
+		docMapper: docMapper{parsed.DocumentMapping},
 	}
 }
 

@@ -46,7 +46,7 @@ func (p *Planner) Limit(parsed *mapper.Select, n *mapper.Limit) (*limitNode, err
 		limit:     n.Limit,
 		offset:    n.Offset,
 		rowIndex:  0,
-		docMapper: docMapper{&parsed.DocumentMapping},
+		docMapper: docMapper{parsed.DocumentMapping},
 	}, nil
 }
 

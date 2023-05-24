@@ -48,7 +48,7 @@ func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select) (*countNod
 		p:                 p,
 		virtualFieldIndex: field.Index,
 		aggregateMapping:  field.AggregateTargets,
-		docMapper:         docMapper{&field.DocumentMapping},
+		docMapper:         docMapper{field.DocumentMapping},
 	}, nil
 }
 

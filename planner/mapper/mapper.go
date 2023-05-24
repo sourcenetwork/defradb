@@ -97,7 +97,7 @@ func toSelect(
 
 	return &Select{
 		Targetable:      toTargetable(thisIndex, selectRequest, mapping),
-		DocumentMapping: *mapping,
+		DocumentMapping: mapping,
 		Cid:             selectRequest.CID,
 		CollectionName:  collectionName,
 		Fields:          fields,
@@ -142,7 +142,7 @@ func resolveOrderDependencies(
 				return err
 			}
 			*existingFields = append(*existingFields, innerSelect)
-			mapping.SetChildAt(index, &innerSelect.DocumentMapping)
+			mapping.SetChildAt(index, innerSelect.DocumentMapping)
 		}
 	}
 
@@ -271,7 +271,7 @@ func resolveAggregates(
 						OrderBy: toOrderBy(target.order, childMapping),
 					},
 					CollectionName:  childCollectionName,
-					DocumentMapping: *childMapping,
+					DocumentMapping: childMapping,
 					Fields:          childFields,
 				}
 
@@ -326,7 +326,7 @@ func resolveAggregates(
 
 		newAggregate := Aggregate{
 			Field:            aggregate.field,
-			DocumentMapping:  *mapping,
+			DocumentMapping:  mapping,
 			AggregateTargets: aggregateTargets,
 		}
 		fields = append(fields, &newAggregate)
@@ -514,7 +514,7 @@ func getRequestables(
 				return nil, nil, err
 			}
 			fields = append(fields, innerSelect)
-			mapping.SetChildAt(index, &innerSelect.DocumentMapping)
+			mapping.SetChildAt(index, innerSelect.DocumentMapping)
 
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
 				Index: index,
@@ -732,7 +732,7 @@ func resolveInnerFilterDependencies(
 					},
 				},
 				CollectionName:  childCollectionName,
-				DocumentMapping: *childMapping,
+				DocumentMapping: childMapping,
 			}
 
 			newFields = append(newFields, dummyJoin)
