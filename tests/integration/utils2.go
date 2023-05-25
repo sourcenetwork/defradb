@@ -303,7 +303,7 @@ func executeTestCase(
 	nodeAddresses := []string{}
 	// The actions responsible for configuring the node
 	nodeConfigs := []config.Config{}
-	nodes, dbPaths := getStartingNodes(ctx, t, dbt, collectionNames, testCase)
+	nodes, dbPaths := getStartingNodes(ctx, t, dbt, testCase)
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
 	defer closeNodes(ctx, t, nodes)
@@ -549,6 +549,8 @@ ActionLoop:
 		} else if firstNonSetupIndex > -1 {
 			// -1 to exclude this index
 			endIndex = firstNonSetupIndex - 1
+		} else {
+			startIndex = endIndex
 		}
 	} else {
 		if setupCompleteIndex > -1 {
@@ -557,6 +559,8 @@ ActionLoop:
 		} else if firstNonSetupIndex > -1 {
 			// We must not set this to -1 :)
 			startIndex = firstNonSetupIndex
+		} else {
+			startIndex = endIndex
 		}
 	}
 
@@ -571,7 +575,6 @@ func getStartingNodes(
 	ctx context.Context,
 	t *testing.T,
 	dbt DatabaseType,
-	collectionNames []string,
 	testCase TestCase,
 ) ([]*node.Node, []string) {
 	hasExplicitNode := false

@@ -405,7 +405,7 @@ func (p *Planner) SelectFromSource(
 		source:     source,
 		origSource: source,
 		selectReq:  selectReq,
-		docMapper:  docMapper{&selectReq.DocumentMapping},
+		docMapper:  docMapper{selectReq.DocumentMapping},
 		filter:     selectReq.Filter,
 		docKeys:    selectReq.DocKeys,
 	}
@@ -452,7 +452,7 @@ func (p *Planner) SelectFromSource(
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
-		docMapper:  docMapper{&selectReq.DocumentMapping},
+		docMapper:  docMapper{selectReq.DocumentMapping},
 	}
 	return top, nil
 }
@@ -464,7 +464,7 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 		filter:    selectReq.Filter,
 		docKeys:   selectReq.DocKeys,
 		selectReq: selectReq,
-		docMapper: docMapper{&selectReq.DocumentMapping},
+		docMapper: docMapper{selectReq.DocumentMapping},
 	}
 	limit := selectReq.Limit
 	orderBy := selectReq.OrderBy
@@ -496,7 +496,7 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
-		docMapper:  docMapper{&selectReq.DocumentMapping},
+		docMapper:  docMapper{selectReq.DocumentMapping},
 	}
 	return top, nil
 }

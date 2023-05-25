@@ -56,7 +56,7 @@ func (p *Planner) Average(
 		sumFieldIndex:     sumField.Index,
 		countFieldIndex:   countField.Index,
 		virtualFieldIndex: field.Index,
-		docMapper:         docMapper{&field.DocumentMapping},
+		docMapper:         docMapper{field.DocumentMapping},
 	}, nil
 }
 

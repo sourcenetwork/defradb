@@ -61,7 +61,7 @@ func (p *Planner) Sum(
 		isFloat:           isFloat,
 		aggregateMapping:  field.AggregateTargets,
 		virtualFieldIndex: field.Index,
-		docMapper:         docMapper{&field.DocumentMapping},
+		docMapper:         docMapper{field.DocumentMapping},
 	}, nil
 }
 

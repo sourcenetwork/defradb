@@ -186,7 +186,7 @@ func (n *topLevelNode) Next() (bool, error) {
 // Top creates a new topLevelNode using the given Select.
 func (p *Planner) Top(m *mapper.Select) (*topLevelNode, error) {
 	node := topLevelNode{
-		docMapper: docMapper{&m.DocumentMapping},
+		docMapper: docMapper{m.DocumentMapping},
 	}
 
 	aggregateChildren := []planNode{}
