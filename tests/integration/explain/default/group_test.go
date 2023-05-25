@@ -16,6 +16,18 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
+var groupPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"groupNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
+				},
+			},
+		},
+	},
+}
+
 func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
@@ -50,37 +62,16 @@ func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
 			},
 		},
 
-		ExpectedFullGraph: []dataMap{
+		ExpectedPatterns: []dataMap{groupPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"groupNode": dataMap{
-							"groupByFields": []string{"age"},
-							"childSelects": []dataMap{
-								{
-									"collectionName": "Author",
-									"docKeys":        nil,
-									"groupBy":        nil,
-									"limit":          nil,
-									"orderBy":        nil,
-									"filter":         nil,
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-						},
+				TargetNodeName:    "groupNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"groupByFields": []string{"age"},
+					"childSelects": []dataMap{
+						emptyChildSelectsAttributeForAuthor,
 					},
 				},
 			},
@@ -124,37 +115,16 @@ func TestDefaultExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
 			},
 		},
 
-		ExpectedFullGraph: []dataMap{
+		ExpectedPatterns: []dataMap{groupPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"groupNode": dataMap{
-							"groupByFields": []string{"age", "name"},
-							"childSelects": []dataMap{
-								{
-									"collectionName": "Author",
-									"docKeys":        nil,
-									"groupBy":        nil,
-									"limit":          nil,
-									"orderBy":        nil,
-									"filter":         nil,
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-						},
+				TargetNodeName:    "groupNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"groupByFields": []string{"age", "name"},
+					"childSelects": []dataMap{
+						emptyChildSelectsAttributeForAuthor,
 					},
 				},
 			},

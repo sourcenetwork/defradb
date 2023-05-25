@@ -13,7 +13,6 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -57,16 +56,6 @@ var bookAuthorGQLSchema = (`
 
 `)
 
-// TODO: This should be resolved in ISSUE#953 (github.com/sourcenetwork/defradb).
-func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(
-		t,
-		bookAuthorGQLSchema,
-		[]string{"Article", "Book", "Author", "AuthorContact", "ContactAddress"},
-		test,
-	)
-}
-
 func runExplainTest(t *testing.T, test explainUtils.ExplainRequestTestCase) {
 	explainUtils.ExecuteExplainRequestTestCase(
 		t,
@@ -84,4 +73,13 @@ var basicPattern = dataMap{
 			},
 		},
 	},
+}
+
+var emptyChildSelectsAttributeForAuthor = dataMap{
+	"collectionName": "Author",
+	"docKeys":        nil,
+	"filter":         nil,
+	"groupBy":        nil,
+	"limit":          nil,
+	"orderBy":        nil,
 }
