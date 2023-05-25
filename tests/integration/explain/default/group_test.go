@@ -13,12 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainSimpleGroupByOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a grouping on parent.",
+func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by on parent.",
 
 		Request: `query @explain {
 			Author (groupBy: [age]) {
@@ -49,7 +50,7 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -86,12 +87,13 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a grouping by two fields.",
+func TestDefaultExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by two fields on parent.",
 
 		Request: `query @explain {
 			Author (groupBy: [age, name]) {
@@ -122,7 +124,7 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -159,5 +161,5 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }

@@ -13,12 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with ordered parent groupBy.",
+func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with order (descending) on parent groupBy.",
 
 		Request: `query @explain {
 			Author(groupBy: [name], order: {name: DESC}) {
@@ -65,7 +66,7 @@ func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -110,12 +111,13 @@ func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with groupBy string, and child order ascending.",
+func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with order (ascending) on inner _group selection.",
 
 		Request: `query @explain {
 			Author(groupBy: [name]) {
@@ -162,7 +164,7 @@ func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -204,12 +206,13 @@ func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with parent groupBy order, and child order.",
+func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with order on parent groupBy and inner _group selection.",
 
 		Request: `query @explain {
 			Author(groupBy: [name], order: {name: DESC}) {
@@ -256,7 +259,7 @@ func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -306,12 +309,13 @@ func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with parent groupBy order, and child order.",
+func TestDefaultExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsInnerGroupSelection(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with order on nested parent groupBy and on nested parent's inner _group.",
 
 		Request: `query @explain {
 			Author(groupBy: [name]) {
@@ -364,7 +368,7 @@ func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -406,5 +410,5 @@ func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }

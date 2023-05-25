@@ -13,13 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain query with limit and offset on parent groupBy.",
+		Description: "Explain (default) request with limit and offset on parent groupBy.",
 
 		Request: `query @explain {
 			Author(
@@ -70,7 +70,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -111,13 +111,13 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain query with limit and offset on child groupBy.",
+		Description: "Explain (default) request with limit and offset on inner _group selection.",
 
 		Request: `query @explain {
 			Author(groupBy: [name]) {
@@ -164,7 +164,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -204,12 +204,13 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with limit on child groupBy (multiple rendered).",
+func TestDefaultExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with limit and offset on multiple inner _group selections.",
 
 		Request: `query @explain {
 			Author(groupBy: [name]) {
@@ -259,7 +260,7 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -310,12 +311,13 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with limit on parent and child groupBy.",
+func TestDefaultExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with limit and offset on parent groupBy and inner _group selection.",
 
 		Request: `query @explain {
 			Author(
@@ -365,7 +367,7 @@ func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -409,5 +411,5 @@ func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }

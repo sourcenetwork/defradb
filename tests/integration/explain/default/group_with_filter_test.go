@@ -13,12 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainGroupByWithFilterOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a grouping with filter on parent.",
+func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with filter on parent groupBy.",
 
 		Request: `query @explain {
 			Author (
@@ -52,7 +53,7 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -93,12 +94,13 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a grouping with filter on the inner group selection.",
+func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with filter on the inner _group selection.",
 
 		Request: `query @explain {
 			Author (groupBy: [age]) {
@@ -129,7 +131,7 @@ func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -170,5 +172,5 @@ func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }

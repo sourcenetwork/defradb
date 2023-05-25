@@ -13,12 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a groupBy with average on an field.",
+func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by with average on inner field.",
 
 		Request: `query @explain {
 			Author (groupBy: [name]) {
@@ -63,7 +64,7 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -131,12 +132,13 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a groupBy with average of inside the inner group (on a field).",
+func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by with average of the inner group on a field.",
 
 		Request: `query @explain {
 			Author (groupBy: [name]) {
@@ -185,7 +187,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -241,12 +243,13 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a groupBy with average of inside the inner group with nested groupBy.",
+func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGroupBy(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by with average of the inner group on a field and nested group-by.",
 
 		Request: `query @explain {
 			Author (groupBy: [name]) {
@@ -298,7 +301,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -354,12 +357,13 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAverage(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a groupBy with average of inside the inner group with nested groupBy with and average.",
+func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWithAverage(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with average inside the inner _group and nested groupBy with average.",
 
 		Request: `query @explain {
 			Author (groupBy: [name]) {
@@ -412,7 +416,7 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -468,5 +472,5 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }

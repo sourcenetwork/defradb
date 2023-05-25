@@ -13,12 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with a dockeys filter on inner _group.",
+func TestDefaultExplainRequestWithDockeysOnInnerGroupSelection(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with dockeys on inner _group.",
 
 		Request: `query @explain {
 			Author(
@@ -54,7 +55,7 @@ func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -91,12 +92,13 @@ func TestExplainQueryWithDockeysFilterOnInnerGroupBy(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with a dockey on parent groupBy.",
+func TestDefaultExplainRequestWithDockeyOnParentGroupBy(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with a dockey on parent groupBy.",
 
 		Request: `query @explain {
 			Author(
@@ -133,7 +135,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -170,12 +172,13 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with a dockeys and filter on parent groupBy.",
+func TestDefaultExplainRequestWithDockeysAndFilterOnParentGroupBy(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with dockeys and filter on parent groupBy.",
 
 		Request: `query @explain {
 			Author(
@@ -216,7 +219,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -261,5 +264,5 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
