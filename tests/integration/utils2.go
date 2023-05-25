@@ -558,7 +558,7 @@ ActionLoop:
 			// We must not set this to -1 :)
 			startIndex = firstNonSetupIndex
 		} else {
-			// if we down't have any non-mutation actions, just use the last action
+			// if we don't have any non-mutation actions, just use the last action
 			startIndex = endIndex
 		}
 	}
