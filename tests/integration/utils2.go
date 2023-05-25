@@ -549,8 +549,6 @@ ActionLoop:
 		} else if firstNonSetupIndex > -1 {
 			// -1 to exclude this index
 			endIndex = firstNonSetupIndex - 1
-		} else {
-			startIndex = endIndex
 		}
 	} else {
 		if setupCompleteIndex > -1 {
@@ -560,6 +558,7 @@ ActionLoop:
 			// We must not set this to -1 :)
 			startIndex = firstNonSetupIndex
 		} else {
+			// if we down't have any non-mutation actions, just use the last action
 			startIndex = endIndex
 		}
 	}
