@@ -53,7 +53,7 @@ func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
 		visitedNodes: make(map[string]bool),
 		queuedCids:   []*cid.Cid{},
 		commitSelect: commitSelect,
-		docMapper:    docMapper{&commitSelect.DocumentMapping},
+		docMapper:    docMapper{commitSelect.DocumentMapping},
 	}
 }
 

@@ -160,7 +160,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 		ids:        parsed.DocKeys.Value(),
 		isUpdating: true,
 		patch:      parsed.Data,
-		docMapper:  docMapper{&parsed.DocumentMapping},
+		docMapper:  docMapper{parsed.DocumentMapping},
 	}
 
 	// get collection
