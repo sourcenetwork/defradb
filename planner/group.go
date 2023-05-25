@@ -91,7 +91,7 @@ func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects
 		childSelects:  childSelects,
 		groupByFields: n.Fields,
 		dataSources:   dataSources,
-		docMapper:     docMapper{&parsed.DocumentMapping},
+		docMapper:     docMapper{parsed.DocumentMapping},
 	}
 	return &groupNodeObj, nil
 }

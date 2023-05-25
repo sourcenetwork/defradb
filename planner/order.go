@@ -82,7 +82,7 @@ func (p *Planner) OrderBy(parsed *mapper.Select, n *mapper.OrderBy) (*orderNode,
 		p:         p,
 		ordering:  n.Conditions,
 		needSort:  true,
-		docMapper: docMapper{&parsed.DocumentMapping},
+		docMapper: docMapper{parsed.DocumentMapping},
 	}, nil
 }
 
