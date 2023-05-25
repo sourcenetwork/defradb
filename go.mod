@@ -31,7 +31,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/multiformats/go-multiaddr v0.9.0
 	github.com/multiformats/go-multibase v0.2.0
-	github.com/multiformats/go-multihash v0.2.1
+	github.com/multiformats/go-multihash v0.2.2
 	github.com/multiformats/go-varint v0.0.7
 	github.com/pkg/errors v0.9.1
 	github.com/sourcenetwork/immutable v0.2.2
