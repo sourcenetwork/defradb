@@ -30,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
@@ -873,12 +874,42 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
+func (c *collection) updateIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	f := new(fetcher.DocumentFetcher)
+	fields := make([]*client.FieldDescription, len(c.desc.Schema.Fields))
+	for i, field := range c.desc.Schema.Fields {
+		fields[i] = &field
+	}
+	err := f.Init(&c.desc, fields, false, false)
+	err = err
+
+	docKey := base.MakeDocKey(c.Description(), doc.Key().String())
+	err = f.Start(ctx, txn, core.NewSpans(core.NewSpan(docKey, docKey.PrefixEnd())))
+	oldDoc, err := f.FetchNextDecoded(ctx)
+	_, err = c.getIndexes(ctx, txn)
+	for _, index := range c.indexes {
+		err = index.Update(ctx, txn, oldDoc, doc)
+	}
+	err = f.Close()
+	return nil
+}
+
 func (c *collection) save(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
 	isCreate bool,
 ) (cid.Cid, error) {
+	if !isCreate {
+		err := c.updateIndex(ctx, txn, doc)
+		if err != nil {
+			return cid.Undef, err
+		}
+	}
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
 	// wait, and just did it here, then *if* the commit fails down

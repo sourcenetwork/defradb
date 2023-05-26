@@ -24,6 +24,7 @@ const (
 
 type CollectionIndex interface {
 	Save(context.Context, datastore.Txn, *client.Document) error
+	Update(context.Context, datastore.Txn, *client.Document, *client.Document) error
 	RemoveAll(context.Context, datastore.Txn) error
 	Name() string
 	Description() client.IndexDescription
@@ -100,18 +101,14 @@ type collectionSimpleIndex struct {
 
 var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 
-func (i *collectionSimpleIndex) Save(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc *client.Document,
-) error {
+func (i *collectionSimpleIndex) getDocKey(doc *client.Document) (core.IndexDataStoreKey, error) {
 	indexedFieldName := i.desc.Fields[0].Name
 	fieldVal, err := doc.Get(indexedFieldName)
 	isNil := false
 	if err != nil {
 		isNil = errors.Is(err, client.ErrFieldNotExist)
 		if !isNil {
-			return nil
+			return core.IndexDataStoreKey{}, nil // @todo: test
 		}
 	}
 
@@ -121,7 +118,7 @@ func (i *collectionSimpleIndex) Save(
 	} else {
 		data, err := i.convertFunc(fieldVal)
 		if err != nil {
-			return NewErrCanNotIndexInvalidFieldValue(err)
+			return core.IndexDataStoreKey{}, NewErrCanNotIndexInvalidFieldValue(err)
 		}
 		storeValue = indexFieldValuePrefix + string(data)
 	}
@@ -129,11 +126,35 @@ func (i *collectionSimpleIndex) Save(
 	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
 	indexDataStoreKey.IndexID = strconv.Itoa(int(i.desc.ID))
 	indexDataStoreKey.FieldValues = []string{storeValue, indexFieldValuePrefix + doc.Key().String()}
-	keyStr := indexDataStoreKey.ToDS()
-	err = txn.Datastore().Put(ctx, keyStr, []byte{})
+	return indexDataStoreKey, nil
+}
+
+func (i *collectionSimpleIndex) Save(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	key, err := i.getDocKey(doc)
 	if err != nil {
-		return NewErrFailedToStoreIndexedField(indexDataStoreKey.IndexID, err)
+		return err
 	}
+	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+	if err != nil {
+		return NewErrFailedToStoreIndexedField(key.IndexID, err)
+	}
+	return nil
+}
+
+func (i *collectionSimpleIndex) Update(
+	ctx context.Context,
+	txn datastore.Txn,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	key, err := i.getDocKey(oldDoc)
+	err = err
+	err = txn.Datastore().Delete(ctx, key.ToDS())
+	i.Save(ctx, txn, newDoc)
 	return nil
 }
 

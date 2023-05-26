@@ -598,3 +598,49 @@ func TestNonUniqueDrop_IfDatastoreFailsToDelete_ReturnError(t *testing.T) {
 	err := f.dropIndex(usersColName, testUsersColIndexName)
 	require.ErrorIs(t, err, NewCanNotDeleteIndexedField(nil))
 }
+
+func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	cases := []struct {
+		Name     string
+		NewValue string
+		Exec     func(doc *client.Document) error
+	}{
+		{
+			Name:     "update",
+			NewValue: "Islam",
+			Exec: func(doc *client.Document) error {
+				return f.users.Update(f.ctx, doc)
+			},
+		},
+		{
+			Name:     "save",
+			NewValue: "Andy",
+			Exec: func(doc *client.Document) error {
+				return f.users.Save(f.ctx, doc)
+			},
+		},
+	}
+
+	doc := f.newUserDoc("John", 21)
+	f.saveDocToCollection(doc, f.users)
+
+	for _, tc := range cases {
+		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+
+		err := doc.Set(usersNameFieldName, tc.NewValue)
+		require.NoError(t, err)
+		err = tc.Exec(doc)
+		require.NoError(t, err)
+		f.commitTxn()
+
+		newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+
+		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+		require.Error(t, err)
+		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+		require.NoError(t, err)
+	}
+}
