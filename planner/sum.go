@@ -171,7 +171,6 @@ func (n *sumNode) simpleExplain() (map[string]any, error) {
 			var targetMap *core.DocumentMapping
 			if source.Index < len(n.documentMapping.ChildMappings) &&
 				n.documentMapping.ChildMappings[source.Index] != nil {
-
 				targetMap = n.documentMapping.ChildMappings[source.Index]
 			} else {
 				targetMap = n.documentMapping
