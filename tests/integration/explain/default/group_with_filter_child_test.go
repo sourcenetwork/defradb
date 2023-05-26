@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -16,18 +16,15 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestDefaultExplainRequestWithDockeyOnParentGroupBy(t *testing.T) {
+func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain (default) request with a dockey on parent groupBy.",
+		Description: "Explain (default) request with filter on the inner _group selection.",
 
 		Request: `query @explain {
-			Author(
-				groupBy: [age],
-				dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
-			) {
+			Author (groupBy: [age]) {
 				age
-				_group {
+				_group(filter: {age: {_gt: 63}}) {
 					name
 				}
 			}
@@ -36,97 +33,16 @@ func TestDefaultExplainRequestWithDockeyOnParentGroupBy(t *testing.T) {
 		Docs: map[int][]string{
 			//authors
 			2: {
-				// dockey: "bae-21a6ad4a-1cd8-5613-807c-a90c7c12f880"
-				`{
-					"name": "John Grisham",
-					"age": 12
-				}`,
-
-				// dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
-				`{
-					"name": "Cornelia Funke",
-					"age": 20
-				}`,
-
-				// dockey: "bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
-				`{
-					"name": "John's Twin",
-					"age": 65
-				}`,
-			},
-		},
-
-		ExpectedPatterns: []dataMap{groupPattern},
-
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"age"},
-					"childSelects": []dataMap{
-						emptyChildSelectsAttributeForAuthor,
-					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"filter":         nil,
-					"spans": []dataMap{
-						{
-							"start": "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
-							"end":   "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2255",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	runExplainTest(t, test)
-}
-
-func TestDefaultExplainRequestWithDockeysAndFilterOnParentGroupBy(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
-
-		Description: "Explain (default) request with dockeys and filter on parent groupBy.",
-
-		Request: `query @explain {
-			Author(
-				groupBy: [age],
-				filter: {age: {_eq: 20}},
-				dockeys: [
-					"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
-					"bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
-				]
-			) {
-				age
-				_group {
-					name
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// dockey: "bae-21a6ad4a-1cd8-5613-807c-a90c7c12f880"
 				`{
                      "name": "John Grisham",
-                     "age": 12
+                     "age": 65
                  }`,
 
-				// dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
 				`{
                      "name": "Cornelia Funke",
-                     "age": 20
+                     "age": 62
                  }`,
 
-				// dockey: "bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
 				`{
                      "name": "John's Twin",
                      "age": 65
@@ -143,7 +59,18 @@ func TestDefaultExplainRequestWithDockeysAndFilterOnParentGroupBy(t *testing.T) 
 				ExpectedAttributes: dataMap{
 					"groupByFields": []string{"age"},
 					"childSelects": []dataMap{
-						emptyChildSelectsAttributeForAuthor,
+						{
+							"collectionName": "Author",
+							"docKeys":        nil,
+							"filter": dataMap{
+								"age": dataMap{
+									"_gt": int32(63),
+								},
+							},
+							"groupBy": nil,
+							"limit":   nil,
+							"orderBy": nil,
+						},
 					},
 				},
 			},
@@ -151,21 +78,99 @@ func TestDefaultExplainRequestWithDockeysAndFilterOnParentGroupBy(t *testing.T) 
 				TargetNodeName:    "scanNode",
 				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 				ExpectedAttributes: dataMap{
+					"filter":         nil,
 					"collectionID":   "3",
 					"collectionName": "Author",
-					"filter": dataMap{
-						"age": dataMap{
-							"_eq": int32(20),
-						},
-					},
 					"spans": []dataMap{
 						{
-							"start": "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
-							"end":   "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2255",
+							"start": "/3",
+							"end":   "/4",
 						},
+					},
+				},
+			},
+		},
+	}
+
+	runExplainTest(t, test)
+}
+
+func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with filter on parent groupBy and on the inner _group selection.",
+
+		Request: `query @explain {
+			Author (
+				groupBy: [age],
+				filter: {age: {_gt: 62}}
+			) {
+				age
+				_group(filter: {age: {_gt: 63}}) {
+					name
+				}
+			}
+		}`,
+
+		Docs: map[int][]string{
+			//authors
+			2: {
+				`{
+                     "name": "John Grisham",
+                     "age": 65
+                 }`,
+
+				`{
+                     "name": "Cornelia Funke",
+                     "age": 62
+                 }`,
+
+				`{
+                     "name": "John's Twin",
+                     "age": 65
+                 }`,
+			},
+		},
+
+		ExpectedPatterns: []dataMap{groupPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName:    "groupNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"groupByFields": []string{"age"},
+					"childSelects": []dataMap{
 						{
-							"start": "/3/bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed",
-							"end":   "/3/bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeee",
+							"collectionName": "Author",
+							"docKeys":        nil,
+							"filter": dataMap{
+								"age": dataMap{
+									"_gt": int32(63),
+								},
+							},
+							"groupBy": nil,
+							"limit":   nil,
+							"orderBy": nil,
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"filter": dataMap{
+						"age": dataMap{
+							"_gt": int32(62),
+						},
+					},
+					"collectionID":   "3",
+					"collectionName": "Author",
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
 						},
 					},
 				},

@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -16,18 +16,17 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
+func TestDefaultExplainRequestWithDockeysOnInnerGroupSelection(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
-		Description: "Explain (default) request with filter on parent groupBy.",
+		Description: "Explain (default) request with dockeys on inner _group.",
 
 		Request: `query @explain {
-			Author (
-				groupBy: [age],
-				filter: {age: {_gt: 63}}
+			Author(
+				groupBy: [age]
 			) {
 				age
-				_group {
+				_group(dockeys: ["bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"]) {
 					name
 				}
 			}
@@ -36,20 +35,23 @@ func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 		Docs: map[int][]string{
 			//authors
 			2: {
+				// dockey: "bae-21a6ad4a-1cd8-5613-807c-a90c7c12f880"
 				`{
-                     "name": "John Grisham",
-                     "age": 65
-                 }`,
+					"name": "John Grisham",
+					"age": 12
+				}`,
 
+				// dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
 				`{
-                     "name": "Cornelia Funke",
-                     "age": 62
-                 }`,
+					"name": "Cornelia Funke",
+					"age": 20
+				}`,
 
+				// dockey: "bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
 				`{
-                     "name": "John's Twin",
-                     "age": 65
-                 }`,
+					"name": "John's Twin",
+					"age": 65
+				}`,
 			},
 		},
 
@@ -62,7 +64,14 @@ func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 				ExpectedAttributes: dataMap{
 					"groupByFields": []string{"age"},
 					"childSelects": []dataMap{
-						emptyChildSelectsAttributeForAuthor,
+						{
+							"collectionName": "Author",
+							"docKeys":        []string{"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"},
+							"filter":         nil,
+							"groupBy":        nil,
+							"limit":          nil,
+							"orderBy":        nil,
+						},
 					},
 				},
 			},
@@ -72,11 +81,7 @@ func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 				ExpectedAttributes: dataMap{
 					"collectionID":   "3",
 					"collectionName": "Author",
-					"filter": dataMap{
-						"age": dataMap{
-							"_gt": int32(63),
-						},
-					},
+					"filter":         nil,
 					"spans": []dataMap{
 						{
 							"start": "/3",

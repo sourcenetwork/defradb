@@ -13,12 +13,25 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainSimpleGroupByOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a grouping on parent.",
+var groupPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"groupNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
+				},
+			},
+		},
+	},
+}
+
+func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by on parent.",
 
 		Request: `query @explain {
 			Author (groupBy: [age]) {
@@ -49,49 +62,29 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{groupPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"groupNode": dataMap{
-							"groupByFields": []string{"age"},
-							"childSelects": []dataMap{
-								{
-									"collectionName": "Author",
-									"docKeys":        nil,
-									"groupBy":        nil,
-									"limit":          nil,
-									"orderBy":        nil,
-									"filter":         nil,
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-						},
+				TargetNodeName:    "groupNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"groupByFields": []string{"age"},
+					"childSelects": []dataMap{
+						emptyChildSelectsAttributeForAuthor,
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a grouping by two fields.",
+func TestDefaultExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by two fields on parent.",
 
 		Request: `query @explain {
 			Author (groupBy: [age, name]) {
@@ -122,42 +115,21 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{groupPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"groupNode": dataMap{
-							"groupByFields": []string{"age", "name"},
-							"childSelects": []dataMap{
-								{
-									"collectionName": "Author",
-									"docKeys":        nil,
-									"groupBy":        nil,
-									"limit":          nil,
-									"orderBy":        nil,
-									"filter":         nil,
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-						},
+				TargetNodeName:    "groupNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"groupByFields": []string{"age", "name"},
+					"childSelects": []dataMap{
+						emptyChildSelectsAttributeForAuthor,
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
