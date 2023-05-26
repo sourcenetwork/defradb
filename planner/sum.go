@@ -163,10 +163,10 @@ func (n *sumNode) simpleExplain() (map[string]any, error) {
 		simpleExplainMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
-		if source.Filter == nil || source.Filter.ExternalConditions == nil {
+		if source.Filter == nil {
 			simpleExplainMap[filterLabel] = nil
 		} else {
-			simpleExplainMap[filterLabel] = source.Filter.ExternalConditions
+			simpleExplainMap[filterLabel] = source.Filter.ToMap(n.documentMapping)
 		}
 
 		// Add the main field name.
