@@ -391,3 +391,210 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 
 	runExplainTest(t, test)
 }
+
+func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request filtering values that match within (_in) a list.",
+
+		Request: `query @explain {
+			Author(filter: { name: { _eq: "John Grisham"}, books: {name: {_eq: "Painted House"}}}) {
+				name
+				age
+			}
+		}`,
+
+		Docs: map[int][]string{
+			//articles
+			0: {
+				`{
+					"name": "After Guantánamo, Another Injustice",
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`,
+				`{
+					"name": "To my dear readers",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					}`,
+				`{
+					"name": "Twinklestar's Favourite Xmas Cookie",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+				}`,
+			},
+			//books
+			1: {
+				`{
+					"name": "Painted House",
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`,
+				`{
+					"name": "A Time for Mercy",
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`,
+				`{
+					"name": "Theif Lord",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+				}`,
+			},
+			//authors
+			2: {
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				`{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				`{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+		},
+
+		// @shahzadlone: Do I need this?
+		// ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName: "selectNode",
+				ExpectedAttributes: dataMap{
+					"filter": dataMap{
+						"books": dataMap{
+							"name": dataMap{
+								"_eq": "Painted House",
+							},
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "Author",
+					"filter": dataMap{
+						"name": dataMap{
+							"_eq": "John Grisham",
+						},
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	runExplainTest(t, test)
+}
+
+func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request filtering values that match within (_in) a list.",
+
+		Request: `query @explain {
+			Author(filter: { name: {_eq: "Cornelia Funke"}, articles: {name: {_eq: "To my dear readers"}}, books: {name: {_eq: "Theif Lord"}}}) {
+				name
+				age
+			}
+		}`,
+
+		Docs: map[int][]string{
+			//articles
+			0: {
+				`{
+					"name": "After Guantánamo, Another Injustice",
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`,
+				`{
+					"name": "To my dear readers",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					}`,
+				`{
+					"name": "Twinklestar's Favourite Xmas Cookie",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+				}`,
+			},
+			//books
+			1: {
+				`{
+					"name": "Painted House",
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`,
+				`{
+					"name": "A Time for Mercy",
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`,
+				`{
+					"name": "Theif Lord",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+				}`,
+			},
+			//authors
+			2: {
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				`{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				`{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+		},
+
+		// @shahzadlone: Do I need this?
+		// ExpectedPatterns: []dataMap{basicPattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
+			{
+				TargetNodeName: "selectNode",
+				ExpectedAttributes: dataMap{
+					"filter": dataMap{
+						"articles": dataMap{
+							"name": dataMap{
+								"_eq": "To my dear readers",
+							},
+						},
+						"books": dataMap{
+							"name": dataMap{
+								"_eq": "Theif Lord",
+							},
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "scanNode",
+				IncludeChildNodes: true, // should be last node, so will have no child nodes.
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "Author",
+					"filter": dataMap{
+						"name": dataMap{
+							"_eq": "Cornelia Funke",
+						},
+					},
+					"spans": []dataMap{
+						{
+							"start": "/3",
+							"end":   "/4",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	runExplainTest(t, test)
+}
