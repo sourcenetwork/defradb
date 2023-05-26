@@ -392,6 +392,27 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 	runExplainTest(t, test)
 }
 
+var singleTypeJoinPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"selectNode": dataMap{
+				"typeIndexJoin": dataMap{
+					"root": dataMap{
+						"scanNode": dataMap{},
+					},
+					"subType": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"scanNode": dataMap{},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+}
+
 func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 	test := explainUtils.ExplainRequestTestCase{
 
@@ -452,8 +473,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 			},
 		},
 
-		// @shahzadlone: Do I need this?
-		// ExpectedPatterns: []dataMap{basicPattern},
+		ExpectedPatterns: []dataMap{singleTypeJoinPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
@@ -491,6 +511,45 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 	}
 
 	runExplainTest(t, test)
+}
+
+var multiTypeJoinPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"selectNode": dataMap{
+				"parallelNode": []dataMap{
+					{
+						"typeIndexJoin": dataMap{
+							"root": dataMap{
+								"scanNode": dataMap{},
+							},
+							"subType": dataMap{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"scanNode": dataMap{},
+									},
+								},
+							},
+						},
+					},
+					{
+						"typeIndexJoin": dataMap{
+							"root": dataMap{
+								"scanNode": dataMap{},
+							},
+							"subType": dataMap{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"scanNode": dataMap{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
 }
 
 func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
@@ -553,8 +612,7 @@ func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 			},
 		},
 
-		// @shahzadlone: Do I need this?
-		// ExpectedPatterns: []dataMap{basicPattern},
+		ExpectedPatterns: []dataMap{multiTypeJoinPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
