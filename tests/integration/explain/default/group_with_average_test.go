@@ -13,12 +13,31 @@ package test_explain_default
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a groupBy with average on an field.",
+var groupAveragePattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"averageNode": dataMap{
+				"countNode": dataMap{
+					"sumNode": dataMap{
+						"groupNode": dataMap{
+							"selectNode": dataMap{
+								"scanNode": dataMap{},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+}
+
+func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by with average on inner field.",
 
 		Request: `query @explain {
 			Author (groupBy: [name]) {
@@ -63,65 +82,62 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{groupAveragePattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"averageNode": dataMap{
-							"countNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName": "_group",
-										"filter": dataMap{
-											"age": dataMap{
-												"_ne": nil,
-											},
-										},
-									},
+				TargetNodeName:    "groupNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"groupByFields": []string{"name"},
+					"childSelects": []dataMap{
+						{
+							"collectionName": "Author",
+							"docKeys":        nil,
+							"groupBy":        nil,
+							"limit":          nil,
+							"orderBy":        nil,
+							"filter": dataMap{
+								"age": dataMap{
+									"_ne": nil,
 								},
-								"sumNode": dataMap{
-									"sources": []dataMap{
-										{
-											"childFieldName": "age",
-											"fieldName":      "_group",
-											"filter": dataMap{
-												"age": dataMap{
-													"_ne": nil,
-												},
-											},
-										},
-									},
-									"groupNode": dataMap{
-										"childSelects": []dataMap{
-											{
-												"collectionName": "Author",
-												"docKeys":        nil,
-												"groupBy":        nil,
-												"limit":          nil,
-												"orderBy":        nil,
-												"filter": dataMap{
-													"age": dataMap{
-														"_ne": nil,
-													},
-												},
-											},
-										},
-										"groupByFields": []string{"name"},
-										"selectNode": dataMap{
-											"filter": nil,
-											"scanNode": dataMap{
-												"collectionID":   "3",
-												"collectionName": "Author",
-												"filter":         nil,
-												"spans": []dataMap{
-													{
-														"start": "/3",
-														"end":   "/4",
-													},
-												},
-											},
-										},
-									},
+							},
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:     "averageNode",
+				IncludeChildNodes:  false,
+				ExpectedAttributes: dataMap{}, // no attributes
+			},
+			{
+				TargetNodeName:    "countNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"fieldName": "_group",
+							"filter": dataMap{
+								"age": dataMap{
+									"_ne": nil,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "sumNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"childFieldName": "age",
+							"fieldName":      "_group",
+							"filter": dataMap{
+								"age": dataMap{
+									"_ne": nil,
 								},
 							},
 						},
@@ -131,12 +147,13 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a groupBy with average of inside the inner group (on a field).",
+func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by with average of the inner _group on a field.",
 
 		Request: `query @explain {
 			Author (groupBy: [name]) {
@@ -185,55 +202,52 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{groupAveragePattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"averageNode": dataMap{
-							"countNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName": "_group",
-										"filter":    nil,
-									},
-								},
-								"sumNode": dataMap{
-									"sources": []dataMap{
-										{
-											"childFieldName": "_avg",
-											"fieldName":      "_group",
-											"filter":         nil,
-										},
-									},
-									"groupNode": dataMap{
-										"childSelects": []dataMap{
-											{
-												"collectionName": "Author",
-												"groupBy":        []string{"verified", "name"},
-												"docKeys":        nil,
-												"filter":         nil,
-												"limit":          nil,
-												"orderBy":        nil,
-											},
-										},
-										"groupByFields": []string{"name"},
-										"selectNode": dataMap{
-											"filter": nil,
-											"scanNode": dataMap{
-												"collectionID":   "3",
-												"collectionName": "Author",
-												"filter":         nil,
-												"spans": []dataMap{
-													{
-														"start": "/3",
-														"end":   "/4",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+				TargetNodeName:    "groupNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"groupByFields": []string{"name"},
+					"childSelects": []dataMap{
+						{
+							"collectionName": "Author",
+							"groupBy":        []string{"verified", "name"},
+							"docKeys":        nil,
+							"limit":          nil,
+							"orderBy":        nil,
+							"filter":         nil,
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:     "averageNode",
+				IncludeChildNodes:  false,
+				ExpectedAttributes: dataMap{}, // no attributes
+			},
+			{
+				TargetNodeName:    "countNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"fieldName": "_group",
+							"filter":    nil,
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "sumNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"childFieldName": "_avg",
+							"fieldName":      "_group",
+							"filter":         nil,
 						},
 					},
 				},
@@ -241,12 +255,13 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a groupBy with average of inside the inner group with nested groupBy.",
+func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGroupBy(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with group-by with average of the inner _group on a field and nested group-by.",
 
 		Request: `query @explain {
 			Author (groupBy: [name]) {
@@ -298,55 +313,52 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{groupAveragePattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"averageNode": dataMap{
-							"countNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName": "_group",
-										"filter":    nil,
-									},
-								},
-								"sumNode": dataMap{
-									"sources": []dataMap{
-										{
-											"childFieldName": "_avg",
-											"fieldName":      "_group",
-											"filter":         nil,
-										},
-									},
-									"groupNode": dataMap{
-										"childSelects": []dataMap{
-											{
-												"collectionName": "Author",
-												"groupBy":        []string{"verified", "name"},
-												"docKeys":        nil,
-												"filter":         nil,
-												"limit":          nil,
-												"orderBy":        nil,
-											},
-										},
-										"groupByFields": []string{"name"},
-										"selectNode": dataMap{
-											"filter": nil,
-											"scanNode": dataMap{
-												"collectionID":   "3",
-												"collectionName": "Author",
-												"filter":         nil,
-												"spans": []dataMap{
-													{
-														"start": "/3",
-														"end":   "/4",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+				TargetNodeName:    "groupNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"groupByFields": []string{"name"},
+					"childSelects": []dataMap{
+						{
+							"collectionName": "Author",
+							"groupBy":        []string{"verified", "name"},
+							"docKeys":        nil,
+							"limit":          nil,
+							"orderBy":        nil,
+							"filter":         nil,
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:     "averageNode",
+				IncludeChildNodes:  false,
+				ExpectedAttributes: dataMap{}, // no attributes
+			},
+			{
+				TargetNodeName:    "countNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"fieldName": "_group",
+							"filter":    nil,
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "sumNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"childFieldName": "_avg",
+							"fieldName":      "_group",
+							"filter":         nil,
 						},
 					},
 				},
@@ -354,12 +366,13 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
 
-func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAverage(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a groupBy with average of inside the inner group with nested groupBy with and average.",
+func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWithAverage(t *testing.T) {
+	test := explainUtils.ExplainRequestTestCase{
+
+		Description: "Explain (default) request with average inside the inner _group and nested groupBy with average.",
 
 		Request: `query @explain {
 			Author (groupBy: [name]) {
@@ -412,55 +425,52 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedPatterns: []dataMap{groupAveragePattern},
+
+		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"averageNode": dataMap{
-							"countNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName": "_group",
-										"filter":    nil,
-									},
-								},
-								"sumNode": dataMap{
-									"sources": []dataMap{
-										{
-											"childFieldName": "_avg",
-											"fieldName":      "_group",
-											"filter":         nil,
-										},
-									},
-									"groupNode": dataMap{
-										"childSelects": []dataMap{
-											{
-												"collectionName": "Author",
-												"groupBy":        []string{"verified", "name"},
-												"docKeys":        nil,
-												"filter":         nil,
-												"limit":          nil,
-												"orderBy":        nil,
-											},
-										},
-										"groupByFields": []string{"name"},
-										"selectNode": dataMap{
-											"filter": nil,
-											"scanNode": dataMap{
-												"collectionID":   "3",
-												"collectionName": "Author",
-												"filter":         nil,
-												"spans": []dataMap{
-													{
-														"start": "/3",
-														"end":   "/4",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+				TargetNodeName:    "groupNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"groupByFields": []string{"name"},
+					"childSelects": []dataMap{
+						{
+							"collectionName": "Author",
+							"groupBy":        []string{"verified", "name"},
+							"docKeys":        nil,
+							"limit":          nil,
+							"orderBy":        nil,
+							"filter":         nil,
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:     "averageNode",
+				IncludeChildNodes:  false,
+				ExpectedAttributes: dataMap{}, // no attributes
+			},
+			{
+				TargetNodeName:    "countNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"fieldName": "_group",
+							"filter":    nil,
+						},
+					},
+				},
+			},
+			{
+				TargetNodeName:    "sumNode",
+				IncludeChildNodes: false,
+				ExpectedAttributes: dataMap{
+					"sources": []dataMap{
+						{
+							"childFieldName": "_avg",
+							"fieldName":      "_group",
+							"filter":         nil,
 						},
 					},
 				},
@@ -468,5 +478,5 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 		},
 	}
 
-	executeTestCase(t, test)
+	runExplainTest(t, test)
 }
