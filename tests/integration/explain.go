@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package tests
 
 import (
 	"context"
@@ -22,13 +22,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
-
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 var (
-	log = logging.MustNewLogger("tests.integration.explain")
-
 	allPlanNodeNames = map[string]struct{}{
 		// Not a planNode but need it here as this is root of the explain graph.
 		"explain": {},
@@ -107,7 +103,7 @@ type ExplainRequestTestCase struct {
 }
 
 type databaseInfo struct {
-	name testUtils.DatabaseType
+	name DatabaseType
 	db   client.DB
 }
 
@@ -117,7 +113,7 @@ func ExecuteExplainRequestTestCase(
 	collectionNames []string,
 	explainTest ExplainRequestTestCase,
 ) {
-	if testUtils.DetectDbChanges && testUtils.DetectDbChangesPreTestChecks(t, collectionNames) {
+	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames) {
 		return
 	}
 
@@ -144,7 +140,7 @@ func ExecuteExplainRequestTestCase(
 
 	ctx := context.Background()
 	dbs, err := getDatabases(ctx, t)
-	if testUtils.AssertError(t, explainTest.Description, err, explainTest.ExpectedError) {
+	if AssertError(t, explainTest.Description, err, explainTest.ExpectedError) {
 		return
 	}
 	require.NotEmpty(t, dbs)
@@ -153,7 +149,7 @@ func ExecuteExplainRequestTestCase(
 		db := dbi.db
 		log.Info(ctx, explainTest.Description, logging.NewKV("Database", dbi.name))
 
-		if testUtils.DetectDbChanges {
+		if DetectDbChanges {
 			t.SkipNow()
 			return
 		}
@@ -195,7 +191,7 @@ func assertExplainRequestResults(
 	explainTest ExplainRequestTestCase,
 ) bool {
 	// Check expected error matches actual error.
-	if testUtils.AssertErrors(
+	if AssertErrors(
 		t,
 		explainTest.Description,
 		actualResult.Errors,
@@ -474,8 +470,8 @@ func copyMap(originalMap map[string]any) map[string]any {
 func getDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
-	for _, dbt := range testUtils.GetDatabaseTypes() {
-		db, _, err := testUtils.GetDatabase(ctx, t, dbt)
+	for _, dbt := range GetDatabaseTypes() {
+		db, _, err := GetDatabase(ctx, t, dbt)
 		if err != nil {
 			return nil, err
 		}
@@ -507,14 +503,14 @@ func setupDatabase(
 ) {
 	db := dbi.db
 	_, err := db.AddSchema(ctx, schema)
-	if testUtils.AssertError(t, description, err, expectedError) {
+	if AssertError(t, description, err, expectedError) {
 		return
 	}
 
 	collections := []client.Collection{}
 	for _, collectionName := range collectionNames {
 		col, err := db.GetCollectionByName(ctx, collectionName)
-		if testUtils.AssertError(t, description, err, expectedError) {
+		if AssertError(t, description, err, expectedError) {
 			return
 		}
 		collections = append(collections, col)
@@ -531,11 +527,11 @@ func setupDatabase(
 
 		for documentIndex, docStr := range docs {
 			doc, err := client.NewDocFromJSON([]byte(docStr))
-			if testUtils.AssertError(t, description, err, expectedError) {
+			if AssertError(t, description, err, expectedError) {
 				return
 			}
 			err = collections[collectionIndex].Save(ctx, doc)
-			if testUtils.AssertError(t, description, err, expectedError) {
+			if AssertError(t, description, err, expectedError) {
 				return
 			}
 
@@ -545,11 +541,11 @@ func setupDatabase(
 				if hasDocumentUpdates {
 					for _, u := range documentUpdates {
 						err = doc.SetWithJSON([]byte(u))
-						if testUtils.AssertError(t, description, err, expectedError) {
+						if AssertError(t, description, err, expectedError) {
 							return
 						}
 						err = collections[collectionIndex].Save(ctx, doc)
-						if testUtils.AssertError(t, description, err, expectedError) {
+						if AssertError(t, description, err, expectedError) {
 							return
 						}
 					}
