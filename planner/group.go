@@ -236,10 +236,10 @@ func (n *groupNode) simpleExplain() (map[string]any, error) {
 				childExplainGraph["docKeys"] = nil
 			}
 
-			if c.Filter == nil || c.Filter.ExternalConditions == nil {
+			if c.Filter == nil {
 				childExplainGraph[filterLabel] = nil
 			} else {
-				childExplainGraph[filterLabel] = c.Filter.ExternalConditions
+				childExplainGraph[filterLabel] = c.Filter.ToMap(n.documentMapping)
 			}
 
 			if c.Limit != nil {

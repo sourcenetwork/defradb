@@ -228,12 +228,17 @@ func splitFilterByType(filter *mapper.Filter, subType int) (*mapper.Filter, *map
 
 	keyFound, sub := removeConditionIndex(conditionKey, filter.Conditions)
 	if !keyFound {
-		return filter, &mapper.Filter{}
+		return filter, nil
 	}
 
 	// create new splitup filter
 	// our schema ensures that if sub exists, its of type map[string]any
 	splitF := &mapper.Filter{Conditions: map[connor.FilterKey]any{conditionKey: sub}}
+
+	// check if we have any remaining filters
+	if len(filter.Conditions) == 0 {
+		return nil, splitF
+	}
 	return filter, splitF
 }
 
@@ -264,7 +269,15 @@ func (p *Planner) makeTypeJoinOne(
 ) (*typeJoinOne, error) {
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
-		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
+		var parentfilter *mapper.Filter
+		scan.filter, parentfilter = splitFilterByType(scan.filter, subType.Index)
+		if parentfilter != nil {
+			if parent.filter == nil {
+				parent.filter = new(mapper.Filter)
+			}
+			parent.filter.Conditions = mergeFilterConditions(
+				parent.filter.Conditions, parentfilter.Conditions)
+		}
 		subType.ShowDeleted = parent.selectReq.ShowDeleted
 	}
 
@@ -453,7 +466,15 @@ func (p *Planner) makeTypeJoinMany(
 ) (*typeJoinMany, error) {
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
-		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
+		var parentfilter *mapper.Filter
+		scan.filter, parentfilter = splitFilterByType(scan.filter, subType.Index)
+		if parentfilter != nil {
+			if parent.filter == nil {
+				parent.filter = new(mapper.Filter)
+			}
+			parent.filter.Conditions = mergeFilterConditions(
+				parent.filter.Conditions, parentfilter.Conditions)
+		}
 		subType.ShowDeleted = parent.selectReq.ShowDeleted
 	}
 
@@ -574,19 +595,11 @@ func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]
 	switch node := plan.(type) {
 	case *scanNode:
 		filter := node.filter
-		if filter == nil {
+		if filter == nil && len(filterCondition) > 0 {
 			filter = mapper.NewFilter()
 		}
 
-		// merge filter conditions
-		for k, v := range filterCondition {
-			indexKey, isIndexKey := k.(*mapper.PropertyIndex)
-			if !isIndexKey {
-				continue
-			}
-			removeConditionIndex(indexKey, filter.Conditions)
-			filter.Conditions[k] = v
-		}
+		filter.Conditions = mergeFilterConditions(filter.Conditions, filterCondition)
 
 		node.filter = filter
 	case nil:
@@ -595,6 +608,23 @@ func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]
 		return appendFilterToScanNode(node.Source(), filterCondition)
 	}
 	return nil
+}
+
+// merge into dest with src, return dest
+func mergeFilterConditions(dest map[connor.FilterKey]any, src map[connor.FilterKey]any) map[connor.FilterKey]any {
+	if dest == nil {
+		dest = make(map[connor.FilterKey]any)
+	}
+	// merge filter conditions
+	for k, v := range src {
+		indexKey, isIndexKey := k.(*mapper.PropertyIndex)
+		if !isIndexKey {
+			continue
+		}
+		removeConditionIndex(indexKey, dest)
+		dest[k] = v
+	}
+	return dest
 }
 
 func removeConditionIndex(

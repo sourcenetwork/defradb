@@ -86,6 +86,52 @@ func NewFilter() *Filter {
 	}
 }
 
+func (f *Filter) ToMap(mapping *core.DocumentMapping) map[string]any {
+	return filterObjectToMap(mapping, f.Conditions)
+}
+
+func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]any) map[string]any {
+	outmap := make(map[string]any)
+	if obj == nil {
+		return nil
+	}
+	for k, v := range obj {
+		switch keyType := k.(type) {
+		case *PropertyIndex:
+
+			subObj := v.(map[connor.FilterKey]any)
+			outkey, _ := mapping.TryToFindNameFromIndex(keyType.Index)
+			if childMapping, ok := tryGetChildMapping(mapping, keyType.Index); !ok {
+				outmap[outkey] = filterObjectToMap(mapping, subObj)
+			} else {
+				outmap[outkey] = filterObjectToMap(childMapping, subObj)
+			}
+
+		case *Operator:
+			switch keyType.Operation {
+			case "_and", "_or":
+				v := v.([]any)
+				logicMapEntries := make([]any, len(v))
+				for i, item := range v {
+					itemMap := item.(map[connor.FilterKey]any)
+					logicMapEntries[i] = filterObjectToMap(mapping, itemMap)
+				}
+				outmap[keyType.Operation] = logicMapEntries
+			default:
+				outmap[keyType.Operation] = v
+			}
+		}
+	}
+	return outmap
+}
+
+func tryGetChildMapping(mapping *core.DocumentMapping, index int) (*core.DocumentMapping, bool) {
+	if index <= len(mapping.ChildMappings)-1 {
+		return mapping.ChildMappings[index], true
+	}
+	return nil, false
+}
+
 // Limit represents a limit-offset pairing that controls how many
 // and which records will be returned from a request.
 type Limit struct {
