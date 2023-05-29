@@ -399,6 +399,9 @@ func executeTestCase(
 		case Request:
 			executeRequest(ctx, t, nodes, testCase.Description, action)
 
+		case ExplainRequest:
+			executeExplainRequest(ctx, t, testCase.Description, db, action)
+
 		case IntrospectionRequest:
 			assertIntrospectionResults(ctx, t, testCase.Description, db, action)
 
