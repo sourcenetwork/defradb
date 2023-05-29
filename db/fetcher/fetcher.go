@@ -28,7 +28,7 @@ import (
 type Fetcher interface {
 	Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool, showDeleted bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
-	FetchNext(ctx context.Context) (*encodedDocument, error)
+	FetchNext(ctx context.Context) (EncodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
 	FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, error)
 	Close() error
@@ -267,7 +267,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err erro
 	}
 
 	// check if we've crossed document boundries
-	if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
+	if df.doc.Key() != nil && df.kv.Key.DocKey != string(df.doc.Key()) {
 		df.isReadingDocument = false
 		return true, nil
 	}
@@ -315,8 +315,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 
 	if !df.isReadingDocument {
 		df.isReadingDocument = true
-		df.doc.Reset()
-		df.doc.Key = []byte(kv.Key.DocKey)
+		df.doc.Reset([]byte(kv.Key.DocKey))
 	}
 
 	// we have to skip the object marker
@@ -349,7 +348,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 
 // FetchNext returns a raw binary encoded document. It iterates over all the relevant
 // keypairs from the underlying store and constructs the document.
-func (df *DocumentFetcher) FetchNext(ctx context.Context) (*encodedDocument, error) {
+func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
 	if df.kvEnd {
 		return nil, nil
 	}
@@ -413,7 +412,7 @@ func (df *DocumentFetcher) FetchNextDoc(
 	mapping *core.DocumentMapping,
 ) ([]byte, core.Doc, error) {
 	var err error
-	var encdoc *encodedDocument
+	var encdoc EncodedDocument
 	var status client.DocumentStatus
 
 	// If the deletedDocFetcher isn't nil, this means that the user requested to include the deleted documents
@@ -461,7 +460,7 @@ func (df *DocumentFetcher) FetchNextDoc(
 		return nil, core.Doc{}, err
 	}
 	doc.Status = status
-	return encdoc.Key, doc, err
+	return encdoc.Key(), doc, err
 }
 
 // Close closes the DocumentFetcher.
