@@ -40,5 +40,5 @@ func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
 		ExpectedError: "Argument \"type\" has invalid value invalid.\nExpected type \"ExplainType\", found invalid.",
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

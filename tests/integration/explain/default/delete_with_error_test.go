@@ -45,5 +45,5 @@ func TestDefaultExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.
 		ExpectedError: "Field \"delete_Author\" of type \"[Author]\" must have a sub selection.",
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

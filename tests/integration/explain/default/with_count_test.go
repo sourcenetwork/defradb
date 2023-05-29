@@ -121,5 +121,5 @@ func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

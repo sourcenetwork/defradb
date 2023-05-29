@@ -94,7 +94,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testin
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T) {
@@ -175,7 +175,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsInnerGroupSelection(t *testing.T) {
@@ -262,5 +262,5 @@ func TestDefaultExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsIn
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

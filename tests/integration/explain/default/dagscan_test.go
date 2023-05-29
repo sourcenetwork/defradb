@@ -77,7 +77,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
@@ -131,7 +131,7 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
@@ -186,7 +186,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
@@ -241,7 +241,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
@@ -261,7 +261,7 @@ func TestDefaultExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
 		ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
@@ -281,5 +281,5 @@ func TestDefaultExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testin
 		ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

@@ -87,7 +87,7 @@ func TestDefaultExplainRequestWithDockeyOnParentGroupBy(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithDockeysAndFilterOnParentGroupBy(t *testing.T) {
@@ -173,5 +173,5 @@ func TestDefaultExplainRequestWithDockeysAndFilterOnParentGroupBy(t *testing.T) 
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

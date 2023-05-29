@@ -183,7 +183,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
@@ -400,5 +400,5 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

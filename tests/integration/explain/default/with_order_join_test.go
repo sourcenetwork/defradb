@@ -109,7 +109,7 @@ func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) {
@@ -208,7 +208,7 @@ func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T) {
@@ -295,5 +295,5 @@ func TestDefaultExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

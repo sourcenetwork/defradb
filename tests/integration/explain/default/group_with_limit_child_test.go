@@ -92,7 +92,7 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t *testing.T) {
@@ -185,5 +185,5 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
