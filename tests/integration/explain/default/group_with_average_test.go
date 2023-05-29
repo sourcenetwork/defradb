@@ -147,7 +147,7 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.T) {
@@ -255,7 +255,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGroupBy(t *testing.T) {
@@ -366,7 +366,7 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGro
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWithAverage(t *testing.T) {
@@ -478,5 +478,5 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWith
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

@@ -131,7 +131,7 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
@@ -239,5 +239,5 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

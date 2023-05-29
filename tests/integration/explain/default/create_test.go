@@ -56,7 +56,7 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T) {
@@ -93,5 +93,5 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

@@ -70,7 +70,7 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
@@ -127,7 +127,7 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
@@ -184,7 +184,7 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
@@ -254,7 +254,7 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
@@ -324,7 +324,7 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
@@ -389,5 +389,5 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

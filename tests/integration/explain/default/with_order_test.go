@@ -78,7 +78,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
@@ -137,5 +137,5 @@ func TestDefaultExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

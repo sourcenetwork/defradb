@@ -40,7 +40,7 @@ func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 		ExpectedError: "Directive \"explain\" may not be used on FIELD.",
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
@@ -88,7 +88,7 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainWithAlias(t *testing.T) {
@@ -115,5 +115,5 @@ func TestDefaultExplainWithAlias(t *testing.T) {
 		ExpectedPatterns: []dataMap{basicPattern},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

@@ -108,7 +108,7 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *testing.T) {
@@ -198,5 +198,5 @@ func TestDefaultExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

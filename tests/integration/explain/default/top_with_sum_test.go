@@ -96,7 +96,7 @@ func TestDefaultExplainTopLevelSumRequest(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
@@ -180,5 +180,5 @@ func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

@@ -86,7 +86,7 @@ func TestDefaultExplainRequestWithOnlyLimit(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
@@ -147,7 +147,7 @@ func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithLimitAndOffset(t *testing.T) {
@@ -208,5 +208,5 @@ func TestDefaultExplainRequestWithLimitAndOffset(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

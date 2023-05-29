@@ -142,7 +142,7 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing.T) {
@@ -273,7 +273,7 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithManySources(t *testing.T) {
@@ -477,5 +477,5 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithManySources(t *te
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

@@ -78,7 +78,7 @@ func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
@@ -131,5 +131,5 @@ func TestDefaultExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

@@ -8,15 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain_simple
+package test_explain
 
 import (
 	"testing"
-
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
-
-type dataMap = map[string]any
 
 var bookAuthorGQLSchema = (`
 	type Article {
@@ -56,22 +52,11 @@ var bookAuthorGQLSchema = (`
 
 `)
 
-// TODO: This should be resolved in https://github.com/sourcenetwork/defradb/issues/953.
-func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(
+func RunExplainTest(t *testing.T, test ExplainRequestTestCase) {
+	ExecuteExplainRequestTestCase(
 		t,
 		bookAuthorGQLSchema,
-		[]string{"Article", "Book", "Author", "AuthorContact", "AontactAddress"},
+		[]string{"Article", "Book", "Author", "AuthorContact", "ContactAddress"},
 		test,
 	)
 }
-
-// TODO: This comment is removed in PR that resolves https://github.com/sourcenetwork/defradb/issues/953
-//func executeExplainTestCase(t *testing.T, test explainUtils.ExplainRequestTestCase) {
-//	explainUtils.ExecuteExplainRequestTestCase(
-//		t,
-//		bookAuthorGQLSchema,
-//		[]string{"article", "book", "author", "authorContact", "contactAddress"},
-//		test,
-//	)
-//}
