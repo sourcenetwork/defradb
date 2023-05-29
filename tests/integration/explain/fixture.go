@@ -12,50 +12,52 @@ package test_explain
 
 import (
 	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var bookAuthorGQLSchema = (`
-	type Article {
-		name: String
-		author: Author
-		pages: Int
-	}
+var SchemaForExplainTests = testUtils.SchemaUpdate{
+	Schema: (`
+		type Article {
+			name: String
+			author: Author
+			pages: Int
+		}
 
-	type Book {
-		name: String
-		author: Author
-		pages: Int
-		chapterPages: [Int!]
-	}
+		type Book {
+			name: String
+			author: Author
+			pages: Int
+			chapterPages: [Int!]
+		}
 
-	type Author {
-		name: String
-		age: Int
-		verified: Boolean
-		books: [Book]
-		articles: [Article]
-		contact: AuthorContact
-	}
+		type Author {
+			name: String
+			age: Int
+			verified: Boolean
+			books: [Book]
+			articles: [Article]
+			contact: AuthorContact
+		}
 
-	type AuthorContact {
-		cell: String
-		email: String
-		author: Author
-		address: ContactAddress
-	}
+		type AuthorContact {
+			cell: String
+			email: String
+			author: Author
+			address: ContactAddress
+		}
 
-	type ContactAddress {
-		city: String
-		country: String
-		contact: AuthorContact
-	}
+		type ContactAddress {
+			city: String
+			country: String
+			contact: AuthorContact
+		}
+	`),
+}
 
-`)
-
-func RunExplainTest(t *testing.T, test ExplainRequestTestCase) {
-	ExecuteExplainRequestTestCase(
+func ExecuteTestCase(t *testing.T, test testUtils.TestCase) {
+	testUtils.ExecuteTestCase(
 		t,
-		bookAuthorGQLSchema,
 		[]string{"Article", "Book", "Author", "AuthorContact", "ContactAddress"},
 		test,
 	)
