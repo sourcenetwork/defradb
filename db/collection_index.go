@@ -142,22 +142,41 @@ func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *cl
 	return nil
 }
 
+func (c *collection) collectIndexedFields() []*client.FieldDescription {
+	fieldsMap := make(map[string]*client.FieldDescription)
+	for _, index := range c.indexes {
+		for _, field := range index.Description().Fields {
+			for _, colField := range c.desc.Schema.Fields {
+				if field.Name == colField.Name {
+					fieldsMap[field.Name] = &colField
+					break
+				}
+			}
+		}
+	}
+	fields := make([]*client.FieldDescription, 0, len(fieldsMap))
+	for _, field := range fieldsMap {
+		fields = append(fields, field)
+	}
+	return fields
+}
+
 func (c *collection) updateIndex(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
+	_, err := c.getIndexes(ctx, txn)
+	if err != nil {
+		return err
+	}
 	var f fetcher.Fetcher
 	if c.fetcherFactory != nil {
 		f = c.fetcherFactory()
 	} else {
 		f = new(fetcher.DocumentFetcher)
 	}
-	fields := make([]*client.FieldDescription, len(c.desc.Schema.Fields))
-	for i, field := range c.desc.Schema.Fields {
-		fields[i] = &field
-	}
-	err := f.Init(&c.desc, fields, false, false)
+	err = f.Init(&c.desc, c.collectIndexedFields(), false, false)
 	if err != nil {
 		_ = f.Close()
 		return err
@@ -178,7 +197,6 @@ func (c *collection) updateIndex(
 	if err != nil {
 		return err
 	}
-	_, err = c.getIndexes(ctx, txn)
 	for _, index := range c.indexes {
 		err = index.Update(ctx, txn, oldDoc, doc)
 		if err != nil {

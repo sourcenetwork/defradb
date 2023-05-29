@@ -745,3 +745,33 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 	err = f.users.Update(f.ctx, doc)
 	require.Error(t, err)
 }
+
+func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+	f.createUserCollectionIndexOnAge()
+
+	f.users.fetcherFactory = func() fetcher.Fetcher {
+		f := fetcherMocks.NewStubbedFetcher(t)
+		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			RunAndReturn(func(
+				col *client.CollectionDescription,
+				fields []*client.FieldDescription,
+				reverse, showDeleted bool,
+			) error {
+				require.Equal(t, 2, len(fields))
+				require.ElementsMatch(t,
+					[]string{usersNameFieldName, usersAgeFieldName},
+					[]string{fields[0].Name, fields[1].Name})
+				return errors.New("early exit")
+			})
+		return f
+	}
+	doc := f.newUserDoc("John", 21)
+	f.saveDocToCollection(doc, f.users)
+
+	err := doc.Set(usersNameFieldName, "Islam")
+	require.NoError(t, err)
+	_ = f.users.Update(f.ctx, doc)
+}
