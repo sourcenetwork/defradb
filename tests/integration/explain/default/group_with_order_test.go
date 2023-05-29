@@ -47,42 +47,6 @@ func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{groupOrderPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -131,42 +95,6 @@ func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{groupOrderPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -214,42 +142,6 @@ func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t
 				}
 			}
 		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{groupOrderPattern},
 

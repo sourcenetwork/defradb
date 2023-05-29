@@ -44,50 +44,6 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			// books
-			1: {
-				`{
-					"name": "Painted House",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 22
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 178
-				}`,
-				`{
-					"name": "Theif Lord",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 321
-				 }`,
-				`{
-					"name": "Incomplete book",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 79
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: "bae-25fafcc7-f251-58c1-9495-ead73e676fb8"
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"contact_id": "bae-1fe427b8-ab8d-56c3-9df2-826a6ce86fed"
-				}`,
-				// _key: "bae-3dddb519-3612-5e43-86e5-49d6295d4f84"
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false,
-					"contact_id": "bae-c0960a29-b704-5c37-9c2e-59e1249e4559"
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{averageTypeIndexJoinPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -194,73 +150,6 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 				)
 			}
 		}`,
-
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 2
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 11
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 31
-				}`,
-			},
-
-			// books
-			1: {
-				`{
-					"name": "Painted House",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 22,
-					"chapterPages": [1, 20]
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 178,
-					"chapterPages": [1, 11, 30, 50, 80, 120, 150]
-				}`,
-				`{
-					"name": "Theif Lord",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 321,
-					"chapterPages": [22, 211, 310]
-				}`,
-				`{
-					"name": "Incomplete book",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 79,
-					"chapterPages": [1, 22, 33, 44, 55, 66]
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: "bae-25fafcc7-f251-58c1-9495-ead73e676fb8"
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"contact_id": "bae-1fe427b8-ab8d-56c3-9df2-826a6ce86fed"
-				}`,
-				// _key: "bae-3dddb519-3612-5e43-86e5-49d6295d4f84"
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false,
-					"contact_id": "bae-c0960a29-b704-5c37-9c2e-59e1249e4559"
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{
 			{

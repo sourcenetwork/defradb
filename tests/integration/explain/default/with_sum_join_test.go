@@ -43,45 +43,6 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			// books
-			1: {
-				`{
-					"name": "Painted House",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 22
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 101
-				}`,
-				`{
-					"name": "Theif Lord",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 321
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: "bae-25fafcc7-f251-58c1-9495-ead73e676fb8"
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"contact_id": "bae-1fe427b8-ab8d-56c3-9df2-826a6ce86fed"
-				}`,
-				// _key: "bae-3dddb519-3612-5e43-86e5-49d6295d4f84"
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false,
-					"contact_id": "bae-c0960a29-b704-5c37-9c2e-59e1249e4559"
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{sumTypeIndexJoinPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -165,45 +126,6 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing
 				)
 			}
 		}`,
-
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 2
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 11
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 31
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: "bae-25fafcc7-f251-58c1-9495-ead73e676fb8"
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"contact_id": "bae-1fe427b8-ab8d-56c3-9df2-826a6ce86fed"
-				}`,
-				// _key: "bae-3dddb519-3612-5e43-86e5-49d6295d4f84"
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false,
-					"contact_id": "bae-c0960a29-b704-5c37-9c2e-59e1249e4559"
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{sumTypeIndexJoinPattern},
 
@@ -290,64 +212,6 @@ func TestDefaultExplainRequestWithSumOnOneToManyJoinedFieldWithManySources(t *te
 				)
 			}
 		}`,
-
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 2
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 11
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 31
-				}`,
-			},
-
-			// books
-			1: {
-				`{
-					"name": "Painted House",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 22
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 101
-				}`,
-				`{
-					"name": "Theif Lord",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 321
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: "bae-25fafcc7-f251-58c1-9495-ead73e676fb8"
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"contact_id": "bae-1fe427b8-ab8d-56c3-9df2-826a6ce86fed"
-				}`,
-				// _key: "bae-3dddb519-3612-5e43-86e5-49d6295d4f84"
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false,
-					"contact_id": "bae-c0960a29-b704-5c37-9c2e-59e1249e4559"
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{
 			{

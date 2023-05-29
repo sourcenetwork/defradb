@@ -28,23 +28,6 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
-				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{basicPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -84,23 +67,6 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 				age
 			}
 		}`,
-
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
-				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{basicPattern},
 
@@ -142,23 +108,6 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 				}
 			}`,
 
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-						"name": "Lone",
-						"age":  26,
-						"verified": false
-					}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{basicPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -198,27 +147,6 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 				age
 			}
 		}`,
-
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"age": 32
-				}`,
-				`{
-					"name": "Carlo",
-					"age": 55
-				}`,
-				`{
-					"name": "Alice",
-					"age": 19
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{basicPattern},
 
@@ -269,27 +197,6 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"age": 32
-				}`,
-				`{
-					"name": "Carlo",
-					"age": 55
-				}`,
-				`{
-					"name": "Alice",
-					"age": 19
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{basicPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -338,27 +245,6 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 				age
 			}
 		}`,
-
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"age": 32
-				}`,
-				`{
-					"name": "Carlo",
-					"age": 55
-				}`,
-				`{
-					"name": "Alice",
-					"age": 19
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{basicPattern},
 

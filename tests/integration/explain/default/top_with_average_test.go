@@ -52,22 +52,6 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 			)
 		}`,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John",
-					"verified": false,
-					"age": 28
-				}`,
-				`{
-					"name": "Bob",
-					"verified": true,
-					"age": 30
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{topLevelAveragePattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -151,27 +135,6 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 				}
 			)
 		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John",
-					"verified": false,
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"verified": false,
-					"age": 30
-				}`,
-				`{
-					"name": "Alice",
-					"verified": false,
-					"age": 32
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{topLevelAveragePattern},
 

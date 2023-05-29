@@ -32,29 +32,6 @@ func TestDefaultExplainRequestWithDockeysOnInnerGroupSelection(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// dockey: "bae-21a6ad4a-1cd8-5613-807c-a90c7c12f880"
-				`{
-					"name": "John Grisham",
-					"age": 12
-				}`,
-
-				// dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
-				`{
-					"name": "Cornelia Funke",
-					"age": 20
-				}`,
-
-				// dockey: "bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
-				`{
-					"name": "John's Twin",
-					"age": 65
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{groupPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{

@@ -39,39 +39,6 @@ func TestDefaultExplainRequestWithOnlyLimit(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-
-				// _key: bae-aa839756-588e-5b57-887d-33689a06e375
-				`{
-					"name": "Shahzad Sisley",
-					"age": 26,
-					"verified": true
-				}`,
-
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-
-				// _key: bae-e7e87bbb-1079-59db-b4b9-0e14b24d5b69
-				`{
-					"name": "Andrew Lone",
-					"age": 28,
-					"verified": true
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{limitPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -100,39 +67,6 @@ func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-
-				// _key: bae-aa839756-588e-5b57-887d-33689a06e375
-				`{
-					"name": "Shahzad Sisley",
-					"age": 26,
-					"verified": true
-				}`,
-
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-
-				// _key: bae-e7e87bbb-1079-59db-b4b9-0e14b24d5b69
-				`{
-					"name": "Andrew Lone",
-					"age": 28,
-					"verified": true
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{limitPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -160,39 +94,6 @@ func TestDefaultExplainRequestWithLimitAndOffset(t *testing.T) {
 				name
 			}
 		}`,
-
-		Docs: map[int][]string{
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-
-				// _key: bae-aa839756-588e-5b57-887d-33689a06e375
-				`{
-					"name": "Shahzad Sisley",
-					"age": 26,
-					"verified": true
-				}`,
-
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-
-				// _key: bae-e7e87bbb-1079-59db-b4b9-0e14b24d5b69
-				`{
-					"name": "Andrew Lone",
-					"age": 28,
-					"verified": true
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{limitPattern},
 

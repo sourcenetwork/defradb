@@ -45,40 +45,6 @@ func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{
 			{
 				"explain": dataMap{
@@ -125,40 +91,6 @@ func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T
 				}
 			}
 		}`,
-
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{
 			{
@@ -227,40 +159,6 @@ func TestDefaultExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T
 				}
 			}
 		}`,
-
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{
 			{

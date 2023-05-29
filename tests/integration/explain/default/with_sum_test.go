@@ -40,32 +40,6 @@ func TestDefaultExplainRequestWithSumOnInlineArrayField_ChildFieldWillBeEmpty(t 
 			}
 		}`,
 
-		Docs: map[int][]string{
-			// books
-			1: {
-				`{
-					"name": "Painted House",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 77,
-					"chapterPages": [1, 22, 33, 44, 55, 66]
-				}`, // sum of chapterPages == 221
-
-				`{
-					"name": "A Time for Mercy",
-					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-					"pages": 55,
-					"chapterPages": [1, 22]
-				}`, // sum of chapterPages == 23
-
-				`{
-					"name": "Theif Lord",
-					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-					"pages": 321,
-					"chapterPages": [10, 50, 100, 200, 300]
-				}`, // sum of chapterPages == 660
-			},
-		},
-
 		ExpectedPatterns: []dataMap{sumPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{

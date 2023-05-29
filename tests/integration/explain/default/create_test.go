@@ -70,15 +70,6 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 			}
 		}`,
 
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "Shahzad Lone",
-					"age": 27
-				}`,
-			},
-		},
-
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
 			{
 				TargetNodeName:    "createNode",

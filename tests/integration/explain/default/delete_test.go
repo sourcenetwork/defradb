@@ -39,16 +39,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 				}
 			}`,
 
-		Docs: map[int][]string{
-			2: {
-				`{
-						"name": "Shahzad",
-						"age":  26,
-						"verified": true
-					}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{deletePattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -101,36 +91,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 				}
 			}`,
 
-		Docs: map[int][]string{
-			2: {
-				`{
-						"name": "Shahzad",
-						"age":  26,
-						"verified": true
-					}`,
-				`{
-						"name": "Shahzad",
-						"age":  25,
-						"verified": true
-					}`,
-				`{
-						"name": "Shahzad",
-						"age":  6,
-						"verified": true
-					}`,
-				`{
-						"name": "Shahzad",
-						"age":  1,
-						"verified": true
-					}`,
-				`{
-						"name": "Shahzad Lone",
-						"age":  26,
-						"verified": true
-					}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{deletePattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -174,17 +134,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 					_key
 				}
 			}`,
-
-		Docs: map[int][]string{
-			2: {
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{deletePattern},
 
@@ -234,23 +183,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 					AliasKey: _key
 				}
 			}`,
-
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-						"name": "Lone",
-						"age":  26,
-						"verified": false
-					}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{deletePattern},
 
@@ -303,16 +235,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 				}
 			}`,
 
-		Docs: map[int][]string{
-			2: {
-				`{
-						"name": "Shahzad",
-						"age":  26,
-						"verified": true
-					}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{deletePattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -359,17 +281,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 					_key
 				}
 			}`,
-
-		Docs: map[int][]string{
-			2: {
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{deletePattern},
 

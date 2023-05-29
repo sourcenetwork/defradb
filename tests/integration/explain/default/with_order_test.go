@@ -40,24 +40,6 @@ func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{orderPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -92,24 +74,6 @@ func TestDefaultExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				age
 			}
 		}`,
-
-		Docs: map[int][]string{
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{orderPattern},
 

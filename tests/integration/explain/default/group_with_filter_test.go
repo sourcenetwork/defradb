@@ -33,26 +33,6 @@ func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-                     "name": "John Grisham",
-                     "age": 65
-                 }`,
-
-				`{
-                     "name": "Cornelia Funke",
-                     "age": 62
-                 }`,
-
-				`{
-                     "name": "John's Twin",
-                     "age": 65
-                 }`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{groupPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{

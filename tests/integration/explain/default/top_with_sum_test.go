@@ -46,22 +46,6 @@ func TestDefaultExplainTopLevelSumRequest(t *testing.T) {
 			)
 		}`,
 
-		Docs: map[int][]string{
-			//Authors
-			2: {
-				`{
-					"name": "John",
-					"verified": true,
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"verified": true,
-					"age": 30
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{topLevelSumPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -116,27 +100,6 @@ func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
 				}
 			)
 		}`,
-
-		Docs: map[int][]string{
-			//Authors
-			2: {
-				`{
-					"name": "John",
-					"verified": false,
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"verified": false,
-					"age": 30
-				}`,
-				`{
-					"name": "Alice",
-					"verified": true,
-					"age": 32
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{topLevelSumPattern},
 

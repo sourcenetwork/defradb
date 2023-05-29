@@ -28,15 +28,6 @@ func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-			},
-		},
-
 		ExpectedError: "Directive \"explain\" may not be used on FIELD.",
 	}
 
@@ -54,15 +45,6 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 				age
 			}
 		}`,
-
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-			},
-		},
 
 		ExpectedFullGraph: []dataMap{
 			{
@@ -102,15 +84,6 @@ func TestDefaultExplainWithAlias(t *testing.T) {
 				age: age
 			}
 		}`,
-
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{basicPattern},
 	}

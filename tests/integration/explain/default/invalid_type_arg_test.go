@@ -28,15 +28,6 @@ func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
-				}`,
-			},
-		},
-
 		ExpectedError: "Argument \"type\" has invalid value invalid.\nExpected type \"ExplainType\", found invalid.",
 	}
 

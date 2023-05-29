@@ -28,23 +28,6 @@ func TestDefaultExplainRequestWithDocKeyFilter(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
-				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{basicPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -80,17 +63,6 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
 				age
 			}
 		}`,
-
-		Docs: map[int][]string{
-			2: {
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{basicPattern},
 
@@ -132,23 +104,6 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *
 				age
 			}
 		}`,
-
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
-				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{basicPattern},
 
@@ -195,23 +150,6 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testin
 			}
 		}`,
 
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
-				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{basicPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -251,23 +189,6 @@ func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
 				age
 			}
 		}`,
-
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
-				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{basicPattern},
 

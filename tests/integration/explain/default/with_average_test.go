@@ -44,20 +44,6 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			// books
-			1: {
-				`{
-					"name": "Painted House",
-					"chapterPages": [1, 22, 33, 44, 55, 66]
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"chapterPages": [0, 22, 101, 321]
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{averagePattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{

@@ -39,24 +39,6 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{dagScanPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -92,24 +74,6 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 				}
 			}
 		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{dagScanPattern},
 
@@ -148,24 +112,6 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 			}
 		}`,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{dagScanPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -202,24 +148,6 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 				}
 			}
 		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{dagScanPattern},
 

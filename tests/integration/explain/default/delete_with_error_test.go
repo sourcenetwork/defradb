@@ -25,23 +25,6 @@ func TestDefaultExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.
 				delete_Author(ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"])
 			}`,
 
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-						"name": "Lone",
-						"age":  26,
-						"verified": false
-					}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
-			},
-		},
-
 		ExpectedError: "Field \"delete_Author\" of type \"[Author]\" must have a sub selection.",
 	}
 

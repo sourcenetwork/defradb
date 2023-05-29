@@ -42,22 +42,6 @@ func TestDefaultExplainTopLevelCountRequest(t *testing.T) {
 			_count(Author: {})
 		}`,
 
-		Docs: map[int][]string{
-			//Authors
-			2: {
-				`{
-					"name": "John",
-					"verified": true,
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"verified": false,
-					"age": 30
-				}`,
-			},
-		},
-
 		ExpectedPatterns: []dataMap{topLevelCountPattern},
 
 		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
@@ -110,27 +94,6 @@ func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
 				}
 			)
 		}`,
-
-		Docs: map[int][]string{
-			//Authors
-			2: {
-				`{
-					"name": "John",
-					"verified": false,
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"verified": false,
-					"age": 30
-				}`,
-				`{
-					"name": "Alice",
-					"verified": true,
-					"age": 32
-				}`,
-			},
-		},
 
 		ExpectedPatterns: []dataMap{topLevelCountPattern},
 
