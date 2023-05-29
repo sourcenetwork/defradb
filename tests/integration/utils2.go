@@ -1190,7 +1190,7 @@ func AssertErrors(
 			errorString := e.Error()
 			if !strings.Contains(errorString, expectedError) {
 				// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
-				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
+				require.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
 				continue
 			}
 			return true
