@@ -152,7 +152,9 @@ func (i *collectionSimpleIndex) Update(
 	newDoc *client.Document,
 ) error {
 	key, err := i.getDocKey(oldDoc)
-	err = err
+	if err != nil {
+		return err
+	}
 	err = txn.Datastore().Delete(ctx, key.ToDS())
 	i.Save(ctx, txn, newDoc)
 	return nil

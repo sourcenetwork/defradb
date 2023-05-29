@@ -159,25 +159,31 @@ func (c *collection) updateIndex(
 	}
 	err := f.Init(&c.desc, fields, false, false)
 	if err != nil {
+		_ = f.Close()
 		return err
 	}
 
 	docKey := base.MakeDocKey(c.Description(), doc.Key().String())
 	err = f.Start(ctx, txn, core.NewSpans(core.NewSpan(docKey, docKey.PrefixEnd())))
 	if err != nil {
+		_ = f.Close()
 		return err
 	}
 	oldDoc, err := f.FetchNextDecoded(ctx)
+	if err != nil {
+		_ = f.Close()
+		return err
+	}
+	err = f.Close()
 	if err != nil {
 		return err
 	}
 	_, err = c.getIndexes(ctx, txn)
 	for _, index := range c.indexes {
 		err = index.Update(ctx, txn, oldDoc, doc)
-	}
-	err = f.Close()
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

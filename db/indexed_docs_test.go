@@ -660,6 +660,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 				f := fetcherMocks.NewStubbedFetcher(t)
 				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
 				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Close().Unset()
+				f.EXPECT().Close().Return(nil)
 				return f
 			},
 		},
@@ -669,6 +671,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 				f := fetcherMocks.NewStubbedFetcher(t)
 				f.EXPECT().Start(mock.Anything, mock.Anything, mock.Anything).Unset()
 				f.EXPECT().Start(mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Close().Unset()
+				f.EXPECT().Close().Return(nil)
 				return f
 			},
 		},
@@ -678,6 +682,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 				f := fetcherMocks.NewStubbedFetcher(t)
 				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
 				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, testError)
+				f.EXPECT().Close().Unset()
+				f.EXPECT().Close().Return(nil)
 				return f
 			},
 		},
@@ -714,4 +720,28 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
 		require.Error(t, err, tc.Name)
 	}
+}
+
+func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnAge()
+
+	doc := f.newUserDoc("John", 21)
+	f.saveDocToCollection(doc, f.users)
+	f.commitTxn()
+
+	validKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
+	invalidKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).
+		Values("invalid").Build()
+
+	err := f.txn.Datastore().Delete(f.ctx, validKey.ToDS())
+	require.NoError(f.t, err)
+	err = f.txn.Datastore().Put(f.ctx, invalidKey.ToDS(), []byte{})
+	require.NoError(f.t, err)
+	f.commitTxn()
+
+	err = doc.Set(usersAgeFieldName, 23)
+	require.NoError(t, err)
+	err = f.users.Update(f.ctx, doc)
+	require.Error(t, err)
 }
