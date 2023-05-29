@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 		Description: "Explain (execute) mutation request with deletion using id.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Addresses
 			create2AddressDocuments(),
@@ -61,7 +62,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
@@ -70,7 +71,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 		Description: "Explain (execute) mutation request with deletion using filter.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Author
 			create2AuthorDocuments(),
@@ -109,5 +110,5 @@ func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

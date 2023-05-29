@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 		Description: "Explain (execute) with order field on parent.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
@@ -62,7 +63,7 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
@@ -71,7 +72,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 		Description: "Explain (execute) with multiple order fields on parent.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			testUtils.CreateDoc{
@@ -145,7 +146,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
@@ -154,7 +155,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 		Description: "Explain (execute) with order field on child.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Articles
 			create3ArticleDocuments(),
@@ -199,7 +200,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
@@ -208,7 +209,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 		Description: "Explain (execute) with order field on both parent and child.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Articles
 			create3ArticleDocuments(),
@@ -257,7 +258,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T) {
@@ -266,7 +267,7 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 		Description: "Explain (execute) where parent field is ordered by child field.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Articles
 			create3ArticleDocuments(),
@@ -318,5 +319,5 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

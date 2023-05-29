@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 		Description: "Explain (execute) mutation request with create.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			testUtils.Request{
 				Request: `mutation @explain(type: execute) {
@@ -58,5 +59,5 @@ func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

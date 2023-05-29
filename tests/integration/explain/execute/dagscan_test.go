@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainCommitsDagScan(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 		Description: "Explain (execute) commits request - dagScan.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
@@ -58,7 +59,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
@@ -67,7 +68,7 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 		Description: "Explain (execute) latest commits request - dagScan.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Author
 			create2AuthorDocuments(),
@@ -104,5 +105,5 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

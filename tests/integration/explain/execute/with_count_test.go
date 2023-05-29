@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 		Description: "Explain (execute) request with count on one to many relation.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Books
 			create3BookDocuments(),
@@ -68,5 +69,5 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

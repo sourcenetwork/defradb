@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 		Description: "Explain (execute) request using average on array field.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Books
 			create3BookDocuments(),
@@ -68,7 +69,7 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
@@ -77,7 +78,7 @@ func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 		Description: "Explain (execute) request using average on joined field.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Books
 			create3BookDocuments(),
@@ -129,5 +130,5 @@ func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

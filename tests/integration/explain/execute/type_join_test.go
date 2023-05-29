@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 		Description: "Explain a one-to-one join relation query, with alias.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
@@ -66,7 +67,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
@@ -75,7 +76,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 		Description: "Explain (execute) with two one-to-one join relation.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
@@ -137,7 +138,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
@@ -146,7 +147,7 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 		Description: "Explain (execute) with two nested level deep one to one join.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
@@ -197,5 +198,5 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

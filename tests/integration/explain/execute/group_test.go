@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithGroup(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainRequestWithGroup(t *testing.T) {
 		Description: "Explain (execute) request with groupBy.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Books
 			create2AddressDocuments(),
@@ -69,5 +70,5 @@ func TestExecuteExplainRequestWithGroup(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
