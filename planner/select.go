@@ -194,10 +194,10 @@ func (n *selectNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the filter attribute if it exists.
-	if n.filter == nil || n.filter.ExternalConditions == nil {
+	if n.filter == nil {
 		simpleExplainMap[filterLabel] = nil
 	} else {
-		simpleExplainMap[filterLabel] = n.filter.ExternalConditions
+		simpleExplainMap[filterLabel] = n.filter.ToMap(n.documentMapping)
 	}
 
 	return simpleExplainMap, nil
@@ -359,7 +359,6 @@ func (n *selectNode) addTypeIndexJoin(subSelect *mapper.Select) error {
 	if err != nil {
 		return err
 	}
-
 	if err := n.addSubPlan(subSelect.Index, typeIndexJoin); err != nil {
 		return err
 	}

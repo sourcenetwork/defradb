@@ -163,10 +163,19 @@ func (n *sumNode) simpleExplain() (map[string]any, error) {
 		simpleExplainMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
-		if source.Filter == nil || source.Filter.ExternalConditions == nil {
+		if source.Filter == nil {
 			simpleExplainMap[filterLabel] = nil
 		} else {
-			simpleExplainMap[filterLabel] = source.Filter.ExternalConditions
+			// get the target aggregate document mapping. Since the filters
+			// are relative to the target aggregate collection (and doc mapper).
+			var targetMap *core.DocumentMapping
+			if source.Index < len(n.documentMapping.ChildMappings) &&
+				n.documentMapping.ChildMappings[source.Index] != nil {
+				targetMap = n.documentMapping.ChildMappings[source.Index]
+			} else {
+				targetMap = n.documentMapping
+			}
+			simpleExplainMap[filterLabel] = source.Filter.ToMap(targetMap)
 		}
 
 		// Add the main field name.
