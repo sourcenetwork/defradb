@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -32,41 +33,48 @@ var orderTypeJoinPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order field on a related child.",
 
-		Request: `query @explain {
-			Author {
-				name
-				articles(order: {name: DESC}) {
-					name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": orderTypeJoinPattern,
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						articles(order: {name: DESC}) {
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": orderTypeJoinPattern,
+								},
+							},
 						},
 					},
 				},
-			},
-		},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "orderNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "DESC",
-							"fields": []string{
-								"name",
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "DESC",
+									"fields": []string{
+										"name",
+									},
+								},
 							},
 						},
 					},
@@ -75,63 +83,70 @@ func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order field on parent and related child.",
 
-		Request: `query @explain {
-			Author(order: {name: ASC}) {
-				name
-				articles(order: {name: DESC}) {
-					name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
-							"selectNode": dataMap{
-								"typeIndexJoin": orderTypeJoinPattern,
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author(order: {name: ASC}) {
+						name
+						articles(order: {name: DESC}) {
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"orderNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": orderTypeJoinPattern,
+									},
+								},
 							},
 						},
 					},
 				},
-			},
-		},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "orderNode",
-				OccurancesToSkip:  0,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "ASC",
-							"fields": []string{
-								"name",
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "orderNode",
+						OccurancesToSkip:  0,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields": []string{
+										"name",
+									},
+								},
 							},
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "orderNode",
-				OccurancesToSkip:  1,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "DESC",
-							"fields": []string{
-								"name",
+					{
+						TargetNodeName:    "orderNode",
+						OccurancesToSkip:  1,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "DESC",
+									"fields": []string{
+										"name",
+									},
+								},
 							},
 						},
 					},
@@ -140,51 +155,58 @@ func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request where parent is ordered by it's related child.",
 
-		Request: `query @explain {
-			Author(
-				order: {
-					articles: {name: ASC}
-				}
-			) {
-				articles {
-				    name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
-							"selectNode": dataMap{
-								"typeIndexJoin": normalTypeJoinPattern,
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author(
+						order: {
+							articles: {name: ASC}
+						}
+					) {
+						articles {
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"orderNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": normalTypeJoinPattern,
+									},
+								},
 							},
 						},
 					},
 				},
-			},
-		},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "orderNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "ASC",
-							"fields": []string{
-								"articles",
-								"name",
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields": []string{
+										"articles",
+										"name",
+									},
+								},
 							},
 						},
 					},
@@ -193,5 +215,5 @@ func TestDefaultExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

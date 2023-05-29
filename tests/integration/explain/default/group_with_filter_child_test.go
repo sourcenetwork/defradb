@@ -13,58 +13,66 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with filter on the inner _group selection.",
 
-		Request: `query @explain {
-			Author (groupBy: [age]) {
-				age
-				_group(filter: {age: {_gt: 63}}) {
-					name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{groupPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"age"},
-					"childSelects": []dataMap{
-						{
-							"collectionName": "Author",
-							"docKeys":        nil,
-							"filter": dataMap{
-								"age": dataMap{
-									"_gt": int32(63),
+				Request: `query @explain {
+					Author (groupBy: [age]) {
+						age
+						_group(filter: {age: {_gt: 63}}) {
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{groupPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"age"},
+							"childSelects": []dataMap{
+								{
+									"collectionName": "Author",
+									"docKeys":        nil,
+									"filter": dataMap{
+										"age": dataMap{
+											"_gt": int32(63),
+										},
+									},
+									"groupBy": nil,
+									"limit":   nil,
+									"orderBy": nil,
 								},
 							},
-							"groupBy": nil,
-							"limit":   nil,
-							"orderBy": nil,
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"filter":         nil,
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"spans": []dataMap{
-						{
-							"start": "/3",
-							"end":   "/4",
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"filter":         nil,
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
+								},
+							},
 						},
 					},
 				},
@@ -72,15 +80,20 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with filter on parent groupBy and on the inner _group selection.",
 
-		Request: `query @explain {
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
 			Author (
 				groupBy: [age],
 				filter: {age: {_gt: 62}}
@@ -92,45 +105,47 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 			}
 		}`,
 
-		ExpectedPatterns: []dataMap{groupPattern},
+				ExpectedPatterns: []dataMap{groupPattern},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"age"},
-					"childSelects": []dataMap{
-						{
-							"collectionName": "Author",
-							"docKeys":        nil,
-							"filter": dataMap{
-								"age": dataMap{
-									"_gt": int32(63),
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"age"},
+							"childSelects": []dataMap{
+								{
+									"collectionName": "Author",
+									"docKeys":        nil,
+									"filter": dataMap{
+										"age": dataMap{
+											"_gt": int32(63),
+										},
+									},
+									"groupBy": nil,
+									"limit":   nil,
+									"orderBy": nil,
 								},
 							},
-							"groupBy": nil,
-							"limit":   nil,
-							"orderBy": nil,
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"filter": dataMap{
-						"age": dataMap{
-							"_gt": int32(62),
-						},
-					},
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"spans": []dataMap{
-						{
-							"start": "/3",
-							"end":   "/4",
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"filter": dataMap{
+								"age": dataMap{
+									"_gt": int32(62),
+								},
+							},
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
+								},
+							},
 						},
 					},
 				},
@@ -138,5 +153,5 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

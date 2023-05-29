@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -29,85 +30,106 @@ var limitPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithOnlyLimit(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with only limit.",
 
-		Request: `query @explain {
-			Author(limit: 2) {
-				name
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{limitPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "limitNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"limit":  uint64(2),
-					"offset": uint64(0),
+				Request: `query @explain {
+					Author(limit: 2) {
+						name
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{limitPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "limitNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"limit":  uint64(2),
+							"offset": uint64(0),
+						},
+					},
 				},
 			},
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with only offset.",
 
-		Request: `query @explain {
-			Author(offset: 2) {
-				name
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{limitPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "limitNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"limit":  nil,
-					"offset": uint64(2),
+				Request: `query @explain {
+					Author(offset: 2) {
+						name
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{limitPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "limitNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"limit":  nil,
+							"offset": uint64(2),
+						},
+					},
 				},
 			},
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithLimitAndOffset(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with limit and offset.",
 
-		Request: `query @explain {
-			Author(limit: 3, offset: 1) {
-				name
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{limitPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "limitNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"limit":  uint64(3),
-					"offset": uint64(1),
+				Request: `query @explain {
+					Author(limit: 3, offset: 1) {
+						name
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{limitPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "limitNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"limit":  uint64(3),
+							"offset": uint64(1),
+						},
+					},
 				},
 			},
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

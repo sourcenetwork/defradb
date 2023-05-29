@@ -13,73 +13,197 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with a 1-to-1 join.",
 
-		Request: `query @explain {
-			Author {
-				OnlyEmail: contact {
-					email
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": normalTypeJoinPattern,
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						OnlyEmail: contact {
+							email
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": normalTypeJoinPattern,
+								},
+							},
 						},
 					},
 				},
-			},
-		},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "typeIndexJoin",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"direction":   "primary",
-					"joinType":    "typeJoinOne",
-					"rootName":    "author",
-					"subTypeName": "contact",
-				},
-			},
-			{
-				// Note: `root` is not a node but is a special case because for typeIndexJoin we
-				//       restructure to show both `root` and `subType` at the same level.
-				TargetNodeName:    "root",
-				IncludeChildNodes: true, // We care about checking children nodes.
-				ExpectedAttributes: dataMap{
-					"scanNode": dataMap{
-						"filter":         nil,
-						"collectionID":   "3",
-						"collectionName": "Author",
-						"spans": []dataMap{
-							{
-								"start": "/3",
-								"end":   "/4",
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "typeIndexJoin",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"direction":   "primary",
+							"joinType":    "typeJoinOne",
+							"rootName":    "author",
+							"subTypeName": "contact",
+						},
+					},
+					{
+						// Note: `root` is not a node but is a special case because for typeIndexJoin we
+						//       restructure to show both `root` and `subType` at the same level.
+						TargetNodeName:    "root",
+						IncludeChildNodes: true, // We care about checking children nodes.
+						ExpectedAttributes: dataMap{
+							"scanNode": dataMap{
+								"filter":         nil,
+								"collectionID":   "3",
+								"collectionName": "Author",
+								"spans": []dataMap{
+									{
+										"start": "/3",
+										"end":   "/4",
+									},
+								},
+							},
+						},
+					},
+					{
+						// Note: `subType` is not a node but is a special case because for typeIndexJoin we
+						//       restructure to show both `root` and `subType` at the same level.
+						TargetNodeName:    "subType",
+						IncludeChildNodes: true, // We care about checking children nodes.
+						ExpectedAttributes: dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"filter":         nil,
+										"collectionID":   "4",
+										"collectionName": "AuthorContact",
+										"spans": []dataMap{
+											{
+												"start": "/4",
+												"end":   "/5",
+											},
+										},
+									},
+								},
 							},
 						},
 					},
 				},
 			},
-			{
-				// Note: `subType` is not a node but is a special case because for typeIndexJoin we
-				//       restructure to show both `root` and `subType` at the same level.
-				TargetNodeName:    "subType",
-				IncludeChildNodes: true, // We care about checking children nodes.
-				ExpectedAttributes: dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) request with two level deep nested joins.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						contact {
+							email
+							address {
+								city
+							}
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": dataMap{
+										"root": dataMap{
+											"scanNode": dataMap{},
+										},
+										"subType": dataMap{
+											"selectTopNode": dataMap{
+												"selectNode": dataMap{
+													"typeIndexJoin": normalTypeJoinPattern,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "typeIndexJoin",
+						OccurancesToSkip:  0,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"direction":   "primary",
+							"joinType":    "typeJoinOne",
+							"rootName":    "author",
+							"subTypeName": "contact",
+						},
+					},
+					{
+						TargetNodeName:    "root",
+						OccurancesToSkip:  0,
+						IncludeChildNodes: true, // We care about checking children nodes.
+						ExpectedAttributes: dataMap{
+							"scanNode": dataMap{
+								"filter":         nil,
+								"collectionID":   "3",
+								"collectionName": "Author",
+								"spans": []dataMap{
+									{
+										"start": "/3",
+										"end":   "/4",
+									},
+								},
+							},
+						},
+					},
+
+					// Note: the 1st `subType` will contain the entire rest of the graph so we target
+					//       and select only the nodes we care about inside it and not `subType` itself.
+
+					{
+						TargetNodeName:    "typeIndexJoin",
+						OccurancesToSkip:  1,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"direction":   "primary",
+							"joinType":    "typeJoinOne",
+							"rootName":    "contact",
+							"subTypeName": "address",
+						},
+					},
+					{
+						TargetNodeName:    "root",
+						OccurancesToSkip:  1,
+						IncludeChildNodes: true,
+						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
 								"collectionID":   "4",
@@ -93,44 +217,23 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 							},
 						},
 					},
-				},
-			},
-		},
-	}
-
-	explainUtils.RunExplainTest(t, test)
-}
-
-func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
-
-		Description: "Explain (default) request with two level deep nested joins.",
-
-		Request: `query @explain {
-			Author {
-				name
-				contact {
-					email
-					address {
-						city
-					}
-				}
-			}
-		}`,
-
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": dataMap{
-								"root": dataMap{
-									"scanNode": dataMap{},
-								},
-								"subType": dataMap{
-									"selectTopNode": dataMap{
-										"selectNode": dataMap{
-											"typeIndexJoin": normalTypeJoinPattern,
+					{
+						TargetNodeName:    "subType", // The last subType (assert everything under it).
+						OccurancesToSkip:  1,
+						IncludeChildNodes: true,
+						ExpectedAttributes: dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"filter":         nil,
+										"collectionID":   "5",
+										"collectionName": "ContactAddress",
+										"spans": []dataMap{
+											{
+												"start": "/5",
+												"end":   "/6",
+											},
 										},
 									},
 								},
@@ -140,95 +243,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 				},
 			},
 		},
-
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "typeIndexJoin",
-				OccurancesToSkip:  0,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"direction":   "primary",
-					"joinType":    "typeJoinOne",
-					"rootName":    "author",
-					"subTypeName": "contact",
-				},
-			},
-			{
-				TargetNodeName:    "root",
-				OccurancesToSkip:  0,
-				IncludeChildNodes: true, // We care about checking children nodes.
-				ExpectedAttributes: dataMap{
-					"scanNode": dataMap{
-						"filter":         nil,
-						"collectionID":   "3",
-						"collectionName": "Author",
-						"spans": []dataMap{
-							{
-								"start": "/3",
-								"end":   "/4",
-							},
-						},
-					},
-				},
-			},
-
-			// Note: the 1st `subType` will contain the entire rest of the graph so we target
-			//       and select only the nodes we care about inside it and not `subType` itself.
-
-			{
-				TargetNodeName:    "typeIndexJoin",
-				OccurancesToSkip:  1,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"direction":   "primary",
-					"joinType":    "typeJoinOne",
-					"rootName":    "contact",
-					"subTypeName": "address",
-				},
-			},
-			{
-				TargetNodeName:    "root",
-				OccurancesToSkip:  1,
-				IncludeChildNodes: true,
-				ExpectedAttributes: dataMap{
-					"scanNode": dataMap{
-						"filter":         nil,
-						"collectionID":   "4",
-						"collectionName": "AuthorContact",
-						"spans": []dataMap{
-							{
-								"start": "/4",
-								"end":   "/5",
-							},
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "subType", // The last subType (assert everything under it).
-				OccurancesToSkip:  1,
-				IncludeChildNodes: true,
-				ExpectedAttributes: dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"filter":         nil,
-								"collectionID":   "5",
-								"collectionName": "ContactAddress",
-								"spans": []dataMap{
-									{
-										"start": "/5",
-										"end":   "/6",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

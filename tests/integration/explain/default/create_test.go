@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -29,60 +30,74 @@ var createPattern = dataMap{
 }
 
 func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Explain (default) mutation request with create.",
 
-		Request: `mutation @explain {
-			create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
-				name
-				age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{createPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "createNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"data": dataMap{
-						"age":      float64(27),
-						"name":     "Shahzad Lone",
-						"verified": true,
+				Request: `mutation @explain {
+					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
+						name
+						age
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{createPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "createNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"data": dataMap{
+								"age":      float64(27),
+								"name":     "Shahzad Lone",
+								"verified": true,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Explain (default) mutation request with create, document exists.",
 
-		Request: `mutation @explain {
-			create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
-				name
-				age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "createNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"data": dataMap{
-						"age":  float64(27),
-						"name": "Shahzad Lone",
+			testUtils.ExplainRequest{
+
+				Request: `mutation @explain {
+					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
+						name
+						age
+					}
+				}`,
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "createNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"data": dataMap{
+								"age":  float64(27),
+								"name": "Shahzad Lone",
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

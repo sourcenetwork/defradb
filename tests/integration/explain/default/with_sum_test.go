@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -29,44 +30,51 @@ var sumPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithSumOnInlineArrayField_ChildFieldWillBeEmpty(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with sum on an inline array field.",
 
-		Request: `query @explain {
-			Book {
-				name
-				NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: _sum(chapterPages: {})
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{sumPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "sumNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"fieldName":      "chapterPages",
-							"childFieldName": nil,
-							"filter":         nil,
+				Request: `query @explain {
+					Book {
+						name
+						NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: _sum(chapterPages: {})
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{sumPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "sumNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName":      "chapterPages",
+									"childFieldName": nil,
+									"filter":         nil,
+								},
+							},
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "2",
-					"collectionName": "Book",
-					"filter":         nil,
-					"spans": []dataMap{
-						{
-							"start": "/2",
-							"end":   "/3",
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "2",
+							"collectionName": "Book",
+							"filter":         nil,
+							"spans": []dataMap{
+								{
+									"start": "/2",
+									"end":   "/3",
+								},
+							},
 						},
 					},
 				},
@@ -74,5 +82,5 @@ func TestDefaultExplainRequestWithSumOnInlineArrayField_ChildFieldWillBeEmpty(t 
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

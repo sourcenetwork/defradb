@@ -13,54 +13,62 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with filter on parent groupBy.",
 
-		Request: `query @explain {
-			Author (
-				groupBy: [age],
-				filter: {age: {_gt: 63}}
-			) {
-				age
-				_group {
-					name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{groupPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"age"},
-					"childSelects": []dataMap{
-						emptyChildSelectsAttributeForAuthor,
-					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"filter": dataMap{
-						"age": dataMap{
-							"_gt": int32(63),
+				Request: `query @explain {
+					Author (
+						groupBy: [age],
+						filter: {age: {_gt: 63}}
+					) {
+						age
+						_group {
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{groupPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"age"},
+							"childSelects": []dataMap{
+								emptyChildSelectsAttributeForAuthor,
+							},
 						},
 					},
-					"spans": []dataMap{
-						{
-							"start": "/3",
-							"end":   "/4",
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter": dataMap{
+								"age": dataMap{
+									"_gt": int32(63),
+								},
+							},
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
+								},
+							},
 						},
 					},
 				},
@@ -68,5 +76,5 @@ func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -33,99 +34,106 @@ var averageTypeIndexJoinPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with average on joined/related field.",
 
-		Request: `query @explain {
-			Author {
-				name
-				_avg(books: {field: pages})
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{averageTypeIndexJoinPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:     "averageNode",
-				IncludeChildNodes:  false,
-				ExpectedAttributes: dataMap{}, // no attributes
-			},
-			{
-				TargetNodeName:    "countNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"fieldName": "books",
+				Request: `query @explain {
+					Author {
+						name
+						_avg(books: {field: pages})
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{averageTypeIndexJoinPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:     "averageNode",
+						IncludeChildNodes:  false,
+						ExpectedAttributes: dataMap{}, // no attributes
+					},
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName": "books",
+									"filter": dataMap{
+										"pages": dataMap{
+											"_ne": nil,
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "sumNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"childFieldName": "pages",
+									"fieldName":      "books",
+									"filter": dataMap{
+										"pages": dataMap{
+											"_ne": nil,
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "typeIndexJoin",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"joinType":    "typeJoinMany",
+							"rootName":    "author",
+							"subTypeName": "books",
+						},
+					},
+					{
+						TargetNodeName:    "scanNode", // inside of root type
+						OccurancesToSkip:  0,
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter":         nil,
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "scanNode", // inside of subType (related type)
+						OccurancesToSkip:  1,
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "2",
+							"collectionName": "Book",
 							"filter": dataMap{
 								"pages": dataMap{
 									"_ne": nil,
 								},
 							},
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "sumNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"childFieldName": "pages",
-							"fieldName":      "books",
-							"filter": dataMap{
-								"pages": dataMap{
-									"_ne": nil,
+							"spans": []dataMap{
+								{
+									"start": "/2",
+									"end":   "/3",
 								},
 							},
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "typeIndexJoin",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"joinType":    "typeJoinMany",
-					"rootName":    "author",
-					"subTypeName": "books",
-				},
-			},
-			{
-				TargetNodeName:    "scanNode", // inside of root type
-				OccurancesToSkip:  0,
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"filter":         nil,
-					"spans": []dataMap{
-						{
-							"start": "/3",
-							"end":   "/4",
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode", // inside of subType (related type)
-				OccurancesToSkip:  1,
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "2",
-					"collectionName": "Book",
-					"filter": dataMap{
-						"pages": dataMap{
-							"_ne": nil,
-						},
-					},
-					"spans": []dataMap{
-						{
-							"start": "/2",
-							"end":   "/3",
 						},
 					},
 				},
@@ -133,38 +141,45 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with average on multiple joined fields with filter.",
 
-		Request: `query @explain {
-			Author {
-				name
-				_avg(
-					books: {field: pages},
-					articles: {field: pages, filter: {pages: {_gt: 3}}}
-				)
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"averageNode": dataMap{
-							"countNode": dataMap{
-								"sumNode": dataMap{
-									"selectNode": dataMap{
-										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
-											},
-											{
-												"typeIndexJoin": normalTypeJoinPattern,
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						_avg(
+							books: {field: pages},
+							articles: {field: pages, filter: {pages: {_gt: 3}}}
+						)
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"averageNode": dataMap{
+									"countNode": dataMap{
+										"sumNode": dataMap{
+											"selectNode": dataMap{
+												"parallelNode": []dataMap{
+													{
+														"typeIndexJoin": normalTypeJoinPattern,
+													},
+													{
+														"typeIndexJoin": normalTypeJoinPattern,
+													},
+												},
 											},
 										},
 									},
@@ -173,156 +188,156 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 						},
 					},
 				},
-			},
-		},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:     "averageNode",
-				IncludeChildNodes:  false,
-				ExpectedAttributes: dataMap{}, // no attributes
-			},
-			{
-				TargetNodeName:    "countNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"fieldName": "books",
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:     "averageNode",
+						IncludeChildNodes:  false,
+						ExpectedAttributes: dataMap{}, // no attributes
+					},
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName": "books",
+									"filter": dataMap{
+										"pages": dataMap{
+											"_ne": nil,
+										},
+									},
+								},
+								{
+									"fieldName": "articles",
+									"filter": dataMap{
+										"pages": dataMap{
+											"_gt": int32(3),
+											"_ne": nil,
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "sumNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"childFieldName": "pages",
+									"fieldName":      "books",
+									"filter": dataMap{
+										"pages": dataMap{
+											"_ne": nil,
+										},
+									},
+								},
+								{
+									"childFieldName": "pages",
+									"fieldName":      "articles",
+									"filter": dataMap{
+										"pages": dataMap{
+											"_gt": int32(3),
+											"_ne": nil,
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "typeIndexJoin",
+						OccurancesToSkip:  0,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"joinType":    "typeJoinMany",
+							"rootName":    "author",
+							"subTypeName": "books",
+						},
+					},
+					{
+						TargetNodeName:    "scanNode", // inside of 1st root type
+						OccurancesToSkip:  0,
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter":         nil,
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "scanNode", // inside of 1st subType (related type)
+						OccurancesToSkip:  1,
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "2",
+							"collectionName": "Book",
 							"filter": dataMap{
 								"pages": dataMap{
 									"_ne": nil,
 								},
 							},
+							"spans": []dataMap{
+								{
+									"start": "/2",
+									"end":   "/3",
+								},
+							},
 						},
-						{
-							"fieldName": "articles",
+					},
+					{
+						TargetNodeName:    "typeIndexJoin",
+						OccurancesToSkip:  1,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"joinType":    "typeJoinMany",
+							"rootName":    "author",
+							"subTypeName": "articles",
+						},
+					},
+					{
+						TargetNodeName:    "scanNode", // inside of 2nd root type (AKA: subType's root)
+						OccurancesToSkip:  2,
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter":         nil,
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "scanNode", // inside of 2nd subType (AKA: subType's subtype)
+						OccurancesToSkip:  3,
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "1",
+							"collectionName": "Article",
 							"filter": dataMap{
 								"pages": dataMap{
 									"_gt": int32(3),
 									"_ne": nil,
 								},
 							},
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "sumNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"childFieldName": "pages",
-							"fieldName":      "books",
-							"filter": dataMap{
-								"pages": dataMap{
-									"_ne": nil,
+							"spans": []dataMap{
+								{
+									"start": "/1",
+									"end":   "/2",
 								},
 							},
-						},
-						{
-							"childFieldName": "pages",
-							"fieldName":      "articles",
-							"filter": dataMap{
-								"pages": dataMap{
-									"_gt": int32(3),
-									"_ne": nil,
-								},
-							},
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "typeIndexJoin",
-				OccurancesToSkip:  0,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"joinType":    "typeJoinMany",
-					"rootName":    "author",
-					"subTypeName": "books",
-				},
-			},
-			{
-				TargetNodeName:    "scanNode", // inside of 1st root type
-				OccurancesToSkip:  0,
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"filter":         nil,
-					"spans": []dataMap{
-						{
-							"start": "/3",
-							"end":   "/4",
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode", // inside of 1st subType (related type)
-				OccurancesToSkip:  1,
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "2",
-					"collectionName": "Book",
-					"filter": dataMap{
-						"pages": dataMap{
-							"_ne": nil,
-						},
-					},
-					"spans": []dataMap{
-						{
-							"start": "/2",
-							"end":   "/3",
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "typeIndexJoin",
-				OccurancesToSkip:  1,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"joinType":    "typeJoinMany",
-					"rootName":    "author",
-					"subTypeName": "articles",
-				},
-			},
-			{
-				TargetNodeName:    "scanNode", // inside of 2nd root type (AKA: subType's root)
-				OccurancesToSkip:  2,
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"filter":         nil,
-					"spans": []dataMap{
-						{
-							"start": "/3",
-							"end":   "/4",
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode", // inside of 2nd subType (AKA: subType's subtype)
-				OccurancesToSkip:  3,
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "1",
-					"collectionName": "Article",
-					"filter": dataMap{
-						"pages": dataMap{
-							"_gt": int32(3),
-							"_ne": nil,
-						},
-					},
-					"spans": []dataMap{
-						{
-							"start": "/1",
-							"end":   "/2",
 						},
 					},
 				},
@@ -330,5 +345,5 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

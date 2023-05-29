@@ -13,53 +13,68 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) a request by providing the directive on wrong location (field).",
 
-		Request: `query {
-			Author @explain {
-				name
-				age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedError: "Directive \"explain\" may not be used on FIELD.",
+			testUtils.ExplainRequest{
+
+				Request: `query {
+					Author @explain {
+						name
+						age
+					}
+				}`,
+
+				ExpectedError: "Directive \"explain\" may not be used on FIELD.",
+			},
+		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) a basic request.",
 
-		Request: `query @explain {
-			Author {
-				name
-				age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedFullGraph: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"filter":         nil,
-								"collectionID":   "3",
-								"collectionName": "Author",
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						age
+					}
+				}`,
+
+				ExpectedFullGraph: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"filter":         nil,
+										"collectionID":   "3",
+										"collectionName": "Author",
+										"spans": []dataMap{
+											{
+												"start": "/3",
+												"end":   "/4",
+											},
+										},
 									},
 								},
 							},
@@ -70,23 +85,30 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainWithAlias(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) a basic request with alias, no filter",
 
-		Request: `query @explain {
-			Author {
-				username: name
-				age: age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{basicPattern},
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						username: name
+						age: age
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{basicPattern},
+			},
+		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -31,43 +32,50 @@ var groupOrderPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order (descending) on parent groupBy.",
 
-		Request: `query @explain {
-			Author(
-				groupBy: [name],
-				order: {name: DESC}
-			) {
-				name
-				_group {
-					age
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{groupOrderPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"name"},
-					"childSelects": []dataMap{
-						emptyChildSelectsAttributeForAuthor,
+				Request: `query @explain {
+					Author(
+						groupBy: [name],
+						order: {name: DESC}
+					) {
+						name
+						_group {
+							age
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{groupOrderPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
+								emptyChildSelectsAttributeForAuthor,
+							},
+						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "orderNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "DESC",
-							"fields":    []string{"name"},
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "DESC",
+									"fields":    []string{"name"},
+								},
+							},
 						},
 					},
 				},
@@ -75,47 +83,54 @@ func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order (ascending) on parent groupBy.",
 
-		Request: `query @explain {
-			Author(
-				groupBy: [name],
-				order: {name: ASC}
-			) {
-				name
-				_group {
-					age
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{groupOrderPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"name"},
-					"childSelects": []dataMap{
-						emptyChildSelectsAttributeForAuthor,
+				Request: `query @explain {
+					Author(
+						groupBy: [name],
+						order: {name: ASC}
+					) {
+						name
+						_group {
+							age
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{groupOrderPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
+								emptyChildSelectsAttributeForAuthor,
+							},
+						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "orderNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "ASC",
-							"fields":    []string{"name"},
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields":    []string{"name"},
+								},
+							},
 						},
 					},
 				},
@@ -123,59 +138,66 @@ func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order on parent groupBy and inner _group selection.",
 
-		Request: `query @explain {
-			Author(
-				groupBy: [name],
-				order: {name: DESC}
-			) {
-				name
-				_group (order: {age: ASC}){
-					age
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{groupOrderPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"name"},
-					"childSelects": []dataMap{
-						{
-							"collectionName": "Author",
-							"orderBy": []dataMap{
+				Request: `query @explain {
+					Author(
+						groupBy: [name],
+						order: {name: DESC}
+					) {
+						name
+						_group (order: {age: ASC}){
+							age
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{groupOrderPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
 								{
-									"direction": "ASC",
-									"fields":    []string{"age"},
+									"collectionName": "Author",
+									"orderBy": []dataMap{
+										{
+											"direction": "ASC",
+											"fields":    []string{"age"},
+										},
+									},
+									"docKeys": nil,
+									"groupBy": nil,
+									"limit":   nil,
+									"filter":  nil,
 								},
 							},
-							"docKeys": nil,
-							"groupBy": nil,
-							"limit":   nil,
-							"filter":  nil,
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "orderNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "DESC",
-							"fields":    []string{"name"},
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "DESC",
+									"fields":    []string{"name"},
+								},
+							},
 						},
 					},
 				},
@@ -183,5 +205,5 @@ func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

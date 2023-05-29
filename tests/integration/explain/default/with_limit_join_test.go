@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -32,177 +33,205 @@ var limitTypeJoinPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with only limit on related child.",
 
-		Request: `query @explain {
-			Author {
-				name
-				articles(limit: 1) {
-					name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": limitTypeJoinPattern,
-						},
-					},
-				},
-			},
-		},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "limitNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"limit":  uint64(1),
-					"offset": uint64(0),
-				},
-			},
-		},
-	}
+				Request: `query @explain {
+					Author {
+						name
+						articles(limit: 1) {
+							name
+						}
+					}
+				}`,
 
-	explainUtils.RunExplainTest(t, test)
-}
-
-func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
-
-		Description: "Explain (default) request with only offset on related child.",
-
-		Request: `query @explain {
-			Author {
-				name
-				articles(offset: 2) {
-					name
-				}
-			}
-		}`,
-
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": limitTypeJoinPattern,
-						},
-					},
-				},
-			},
-		},
-
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "limitNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"limit":  nil,
-					"offset": uint64(2),
-				},
-			},
-		},
-	}
-
-	explainUtils.RunExplainTest(t, test)
-}
-
-func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
-
-		Description: "Explain (default) request with both limit and offset on related child.",
-
-		Request: `query @explain {
-			Author {
-				name
-				articles(limit: 2, offset: 2) {
-					name
-				}
-			}
-		}`,
-
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": limitTypeJoinPattern,
-						},
-					},
-				},
-			},
-		},
-
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "limitNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"limit":  uint64(2),
-					"offset": uint64(2),
-				},
-			},
-		},
-	}
-
-	explainUtils.RunExplainTest(t, test)
-}
-
-func TestDefaultExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnParent(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
-
-		Description: "Explain (default) request with limit on related child & both limit + offset on parent.",
-
-		Request: `query @explain {
-			Author(limit: 3, offset: 1) {
-				name
-				articles(limit: 2) {
-					name
-				}
-			}
-		}`,
-
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"limitNode": dataMap{
-							"selectNode": dataMap{
-								"typeIndexJoin": limitTypeJoinPattern,
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": limitTypeJoinPattern,
+								},
 							},
 						},
 					},
 				},
-			},
-		},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "limitNode",
-				OccurancesToSkip:  0,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"limit":  uint64(3),
-					"offset": uint64(1),
-				},
-			},
-			{
-				TargetNodeName:    "limitNode",
-				OccurancesToSkip:  1,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"limit":  uint64(2),
-					"offset": uint64(0),
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "limitNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"limit":  uint64(1),
+							"offset": uint64(0),
+						},
+					},
 				},
 			},
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) request with only offset on related child.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						articles(offset: 2) {
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": limitTypeJoinPattern,
+								},
+							},
+						},
+					},
+				},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "limitNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"limit":  nil,
+							"offset": uint64(2),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) request with both limit and offset on related child.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						articles(limit: 2, offset: 2) {
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": limitTypeJoinPattern,
+								},
+							},
+						},
+					},
+				},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "limitNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"limit":  uint64(2),
+							"offset": uint64(2),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnParent(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) request with limit on related child & both limit + offset on parent.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author(limit: 3, offset: 1) {
+						name
+						articles(limit: 2) {
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"limitNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": limitTypeJoinPattern,
+									},
+								},
+							},
+						},
+					},
+				},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "limitNode",
+						OccurancesToSkip:  0,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"limit":  uint64(3),
+							"offset": uint64(1),
+						},
+					},
+					{
+						TargetNodeName:    "limitNode",
+						OccurancesToSkip:  1,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"limit":  uint64(2),
+							"offset": uint64(0),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
 }

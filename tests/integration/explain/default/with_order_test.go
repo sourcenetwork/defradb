@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -29,29 +30,36 @@ var orderPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with ascending order on parent.",
 
-		Request: `query @explain {
-			Author(order: {age: ASC}) {
-				name
-				age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{orderPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "orderNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "ASC",
-							"fields": []string{
-								"age",
+				Request: `query @explain {
+					Author(order: {age: ASC}) {
+						name
+						age
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{orderPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields": []string{
+										"age",
+									},
+								},
 							},
 						},
 					},
@@ -60,39 +68,46 @@ func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with multiple order fields on parent.",
 
-		Request: `query @explain {
-			Author(order: {name: ASC, age: DESC}) {
-				name
-				age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{orderPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "orderNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "ASC",
-							"fields": []string{
-								"name",
-							},
-						},
-						{
-							"direction": "DESC",
-							"fields": []string{
-								"age",
+				Request: `query @explain {
+					Author(order: {name: ASC, age: DESC}) {
+						name
+						age
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{orderPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields": []string{
+										"name",
+									},
+								},
+								{
+									"direction": "DESC",
+									"fields": []string{
+										"age",
+									},
+								},
 							},
 						},
 					},
@@ -101,5 +116,5 @@ func TestDefaultExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

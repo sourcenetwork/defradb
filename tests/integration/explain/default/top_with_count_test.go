@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -34,99 +35,45 @@ var topLevelCountPattern = dataMap{
 }
 
 func TestDefaultExplainTopLevelCountRequest(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) top-level count request.",
 
-		Request: `query @explain {
-			_count(Author: {})
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{topLevelCountPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"filter":         nil,
-					"spans": []dataMap{
-						{
-							"start": "/3",
-							"end":   "/4",
+				Request: `query @explain {
+					_count(Author: {})
+				}`,
+
+				ExpectedPatterns: []dataMap{topLevelCountPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter":         nil,
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
+								},
+							},
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "countNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"fieldName": "Author",
-							"filter":    nil,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	explainUtils.RunExplainTest(t, test)
-}
-
-func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
-
-		Description: "Explain (default) top-level count request with filter.",
-
-		Request: `query @explain {
-			_count(
-				Author: {
-					filter: {
-						age: {
-							_gt: 26
-						}
-					}
-				}
-			)
-		}`,
-
-		ExpectedPatterns: []dataMap{topLevelCountPattern},
-
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "3",
-					"collectionName": "Author",
-					"filter": dataMap{
-						"age": dataMap{
-							"_gt": int32(26),
-						},
-					},
-					"spans": []dataMap{
-						{
-							"start": "/3",
-							"end":   "/4",
-						},
-					},
-				},
-			},
-			{
-				TargetNodeName:    "countNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"fieldName": "Author",
-							"filter": dataMap{
-								"age": dataMap{
-									"_gt": int32(26),
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName": "Author",
+									"filter":    nil,
 								},
 							},
 						},
@@ -136,5 +83,73 @@ func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) top-level count request with filter.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					_count(
+						Author: {
+							filter: {
+								age: {
+									_gt: 26
+								}
+							}
+						}
+					)
+				}`,
+
+				ExpectedPatterns: []dataMap{topLevelCountPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter": dataMap{
+								"age": dataMap{
+									"_gt": int32(26),
+								},
+							},
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName": "Author",
+									"filter": dataMap{
+										"age": dataMap{
+											"_gt": int32(26),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
 }

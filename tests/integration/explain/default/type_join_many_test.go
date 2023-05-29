@@ -13,80 +13,88 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDefaultExplainRequestWithAOneToManyJoin(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with a 1-to-M join.",
 
-		Request: `query @explain {
-			Author {
-				articles {
-					name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": normalTypeJoinPattern,
-						},
-					},
-				},
-			},
-		},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "typeIndexJoin",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"joinType":    "typeJoinMany",
-					"rootName":    "author",
-					"subTypeName": "articles",
-				},
-			},
-			{
-				// Note: `root` is not a node but is a special case because for typeIndexJoin we
-				//       restructure to show both `root` and `subType` at the same level.
-				TargetNodeName:    "root",
-				IncludeChildNodes: true, // We care about checking children nodes.
-				ExpectedAttributes: dataMap{
-					"scanNode": dataMap{
-						"filter":         nil,
-						"collectionID":   "3",
-						"collectionName": "Author",
-						"spans": []dataMap{
-							{
-								"start": "/3",
-								"end":   "/4",
+				Request: `query @explain {
+					Author {
+						articles {
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": normalTypeJoinPattern,
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				// Note: `subType` is not a node but is a special case because for typeIndexJoin we
-				//       restructure to show both `root` and `subType` at the same level.
-				TargetNodeName:    "subType",
-				IncludeChildNodes: true, // We care about checking children nodes.
-				ExpectedAttributes: dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "typeIndexJoin",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"joinType":    "typeJoinMany",
+							"rootName":    "author",
+							"subTypeName": "articles",
+						},
+					},
+					{
+						// Note: `root` is not a node but is a special case because for typeIndexJoin we
+						//       restructure to show both `root` and `subType` at the same level.
+						TargetNodeName:    "root",
+						IncludeChildNodes: true, // We care about checking children nodes.
+						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "1",
-								"collectionName": "Article",
+								"collectionID":   "3",
+								"collectionName": "Author",
 								"spans": []dataMap{
 									{
-										"start": "/1",
-										"end":   "/2",
+										"start": "/3",
+										"end":   "/4",
+									},
+								},
+							},
+						},
+					},
+					{
+						// Note: `subType` is not a node but is a special case because for typeIndexJoin we
+						//       restructure to show both `root` and `subType` at the same level.
+						TargetNodeName:    "subType",
+						IncludeChildNodes: true, // We care about checking children nodes.
+						ExpectedAttributes: dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"filter":         nil,
+										"collectionID":   "1",
+										"collectionName": "Article",
+										"spans": []dataMap{
+											{
+												"start": "/1",
+												"end":   "/2",
+											},
+										},
 									},
 								},
 							},
@@ -97,5 +105,5 @@ func TestDefaultExplainRequestWithAOneToManyJoin(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

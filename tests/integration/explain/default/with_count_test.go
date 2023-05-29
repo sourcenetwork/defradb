@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -29,43 +30,50 @@ var countPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with count on an inline array field.",
 
-		Request: `query @explain {
-			Book {
-				name
-				_count(chapterPages: {})
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedPatterns: []dataMap{countPattern},
+			testUtils.ExplainRequest{
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "countNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"filter":    nil,
-							"fieldName": "chapterPages",
+				Request: `query @explain {
+					Book {
+						name
+						_count(chapterPages: {})
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{countPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"filter":    nil,
+									"fieldName": "chapterPages",
+								},
+							},
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"filter":         nil,
-					"collectionID":   "2",
-					"collectionName": "Book",
-					"spans": []dataMap{
-						{
-							"start": "/2",
-							"end":   "/3",
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"filter":         nil,
+							"collectionID":   "2",
+							"collectionName": "Book",
+							"spans": []dataMap{
+								{
+									"start": "/2",
+									"end":   "/3",
+								},
+							},
 						},
 					},
 				},
@@ -73,5 +81,5 @@ func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
