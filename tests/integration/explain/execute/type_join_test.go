@@ -31,7 +31,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 			// Contacts
 			create2AuthorContactDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -40,7 +40,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -84,7 +84,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 			// Contacts
 			create2AuthorContactDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -97,7 +97,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -158,7 +158,7 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -171,7 +171,7 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,

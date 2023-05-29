@@ -28,7 +28,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					commits (dockey: "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138") {
 						links {
@@ -37,7 +37,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -73,7 +73,7 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 			// Author
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					latestCommits(dockey: "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138") {
 						cid
@@ -83,7 +83,7 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,

@@ -28,7 +28,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					update_ContactAddress(
 						ids: [
@@ -42,7 +42,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -84,7 +84,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					update_ContactAddress(
 						filter: {
@@ -99,7 +99,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,

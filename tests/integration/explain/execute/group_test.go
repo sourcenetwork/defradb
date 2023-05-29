@@ -28,7 +28,7 @@ func TestExecuteExplainRequestWithGroup(t *testing.T) {
 			// Books
 			create2AddressDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					ContactAddress(groupBy: [country]) {
 						country
@@ -38,7 +38,7 @@ func TestExecuteExplainRequestWithGroup(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,

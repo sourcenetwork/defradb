@@ -31,7 +31,7 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -39,7 +39,7 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,

@@ -45,7 +45,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					_avg(
 						Author: {
@@ -54,7 +54,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 					)
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -132,12 +132,12 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					_count(Author: {})
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -202,7 +202,7 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					_sum(
 						Author: {
@@ -211,7 +211,7 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 					)
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,

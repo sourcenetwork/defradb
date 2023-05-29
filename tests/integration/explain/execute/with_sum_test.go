@@ -28,7 +28,7 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 			// Books
 			create3BookDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Book {
 						name
@@ -36,7 +36,7 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -80,7 +80,7 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -92,7 +92,7 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,

@@ -45,7 +45,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -53,7 +53,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -88,14 +88,14 @@ func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -150,7 +150,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(filter: {name: {_eq: "Shahzad"}}) {
 						name
@@ -158,7 +158,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -213,7 +213,7 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(filter: {name: {_eq: "John"}}) {
 						name
@@ -221,7 +221,7 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,

@@ -25,14 +25,14 @@ func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
 						name
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,

@@ -28,14 +28,14 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					delete_ContactAddress(ids: ["bae-f01bf83f-1507-5fb5-a6a3-09ecffa3c692"]) {
 						city
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -76,14 +76,14 @@ func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 			// Author
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					delete_Author(filter: {name: {_like: "%Funke%"}}) {
 						name
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
