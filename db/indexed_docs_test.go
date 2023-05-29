@@ -12,6 +12,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
+	"github.com/sourcenetwork/defradb/db/fetcher"
+	fetcherMocks "github.com/sourcenetwork/defradb/db/fetcher/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -642,5 +644,74 @@ func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 		require.Error(t, err)
 		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
 		require.NoError(t, err)
+	}
+}
+
+func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
+	testError := errors.New("test error")
+
+	cases := []struct {
+		Name           string
+		PrepareFetcher func() fetcher.Fetcher
+	}{
+		{
+			Name: "Fails to init",
+			PrepareFetcher: func() fetcher.Fetcher {
+				f := fetcherMocks.NewStubbedFetcher(t)
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				return f
+			},
+		},
+		{
+			Name: "Fails to start",
+			PrepareFetcher: func() fetcher.Fetcher {
+				f := fetcherMocks.NewStubbedFetcher(t)
+				f.EXPECT().Start(mock.Anything, mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Start(mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				return f
+			},
+		},
+		{
+			Name: "Fails to fetch next decoded",
+			PrepareFetcher: func() fetcher.Fetcher {
+				f := fetcherMocks.NewStubbedFetcher(t)
+				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
+				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, testError)
+				return f
+			},
+		},
+		{
+			Name: "Fails to close",
+			PrepareFetcher: func() fetcher.Fetcher {
+				f := fetcherMocks.NewStubbedFetcher(t)
+				f.EXPECT().Close().Unset()
+				f.EXPECT().Close().Return(testError)
+				return f
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		f := newIndexTestFixture(t)
+		f.createUserCollectionIndexOnName()
+
+		doc := f.newUserDoc("John", 21)
+		f.saveDocToCollection(doc, f.users)
+
+		f.users.fetcherFactory = tc.PrepareFetcher
+		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+
+		err := doc.Set(usersNameFieldName, "Islam")
+		require.NoError(t, err, tc.Name)
+		err = f.users.Update(f.ctx, doc)
+		require.Error(t, err, tc.Name)
+
+		newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+
+		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+		require.NoError(t, err, tc.Name)
+		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+		require.Error(t, err, tc.Name)
 	}
 }

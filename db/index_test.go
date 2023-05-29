@@ -54,7 +54,7 @@ type indexTestFixture struct {
 	ctx   context.Context
 	db    *implicitTxnDB
 	txn   datastore.Txn
-	users client.Collection
+	users *collection
 	t     *testing.T
 }
 
@@ -259,14 +259,14 @@ func (f *indexTestFixture) getCollectionIndexes(colName string) ([]client.IndexD
 
 func (f *indexTestFixture) createCollection(
 	desc client.CollectionDescription,
-) client.Collection {
+) *collection {
 	col, err := f.db.createCollection(f.ctx, f.txn, desc)
 	assert.NoError(f.t, err)
 	err = f.txn.Commit(f.ctx)
 	assert.NoError(f.t, err)
 	f.txn, err = f.db.NewTxn(f.ctx, false)
 	assert.NoError(f.t, err)
-	return col
+	return col.(*collection)
 }
 
 func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {

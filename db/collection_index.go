@@ -147,21 +147,37 @@ func (c *collection) updateIndex(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	f := new(fetcher.DocumentFetcher)
+	var f fetcher.Fetcher
+	if c.fetcherFactory != nil {
+		f = c.fetcherFactory()
+	} else {
+		f = new(fetcher.DocumentFetcher)
+	}
 	fields := make([]*client.FieldDescription, len(c.desc.Schema.Fields))
 	for i, field := range c.desc.Schema.Fields {
 		fields[i] = &field
 	}
 	err := f.Init(&c.desc, fields, false, false)
-	err = err
+	if err != nil {
+		return err
+	}
 
 	docKey := base.MakeDocKey(c.Description(), doc.Key().String())
 	err = f.Start(ctx, txn, core.NewSpans(core.NewSpan(docKey, docKey.PrefixEnd())))
+	if err != nil {
+		return err
+	}
 	oldDoc, err := f.FetchNextDecoded(ctx)
+	if err != nil {
+		return err
+	}
 	_, err = c.getIndexes(ctx, txn)
 	for _, index := range c.indexes {
 		err = index.Update(ctx, txn, oldDoc, doc)
 	}
 	err = f.Close()
+	if err != nil {
+		return err
+	}
 	return nil
 }

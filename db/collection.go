@@ -30,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
@@ -57,8 +58,9 @@ type collection struct {
 
 	desc client.CollectionDescription
 
-	isIndexCached bool
-	indexes       []CollectionIndex
+	isIndexCached  bool
+	indexes        []CollectionIndex
+	fetcherFactory func() fetcher.Fetcher
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
