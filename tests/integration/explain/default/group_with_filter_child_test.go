@@ -92,7 +92,7 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t *testing.T) {
@@ -178,5 +178,5 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

@@ -91,7 +91,7 @@ func TestDefaultExplainTopLevelCountRequest(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
@@ -173,5 +173,5 @@ func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

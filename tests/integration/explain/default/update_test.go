@@ -105,7 +105,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
@@ -183,7 +183,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
@@ -253,7 +253,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) {
@@ -344,5 +344,5 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

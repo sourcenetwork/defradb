@@ -166,7 +166,7 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T)
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *testing.T) {
@@ -331,5 +331,5 @@ func TestDefaultExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *t
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

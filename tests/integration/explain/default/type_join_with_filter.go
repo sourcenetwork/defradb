@@ -128,7 +128,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
@@ -256,5 +256,5 @@ func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

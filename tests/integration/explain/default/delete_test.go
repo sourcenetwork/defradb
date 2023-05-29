@@ -87,7 +87,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *testing.T) {
@@ -161,7 +161,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
@@ -218,7 +218,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
@@ -289,7 +289,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
@@ -338,7 +338,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
 
 func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) {
@@ -434,5 +434,5 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.RunExplainTest(t, test)
 }

@@ -13,12 +13,14 @@ package test_explain_simple
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
+type dataMap = map[string]any
+
 func TestSimpleExplainRequest(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain (simple) a basic request.",
+	test := explainUtils.ExplainRequestTestCase{
+		Description: "Explain (simple) a basic request, assert full graph.",
 
 		Request: `query @explain(type: simple) {
 			Author {
@@ -37,7 +39,7 @@ func TestSimpleExplainRequest(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
+		ExpectedFullGraph: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
@@ -61,5 +63,5 @@ func TestSimpleExplainRequest(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.RunExplainTest(t, test)
 }
