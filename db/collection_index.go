@@ -19,8 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/db/fetcher"
 )
 
 // createCollectionIndex creates a new collection index and saves it to the database in its system store.
@@ -170,30 +168,7 @@ func (c *collection) updateIndex(
 	if err != nil {
 		return err
 	}
-	var f fetcher.Fetcher
-	if c.fetcherFactory != nil {
-		f = c.fetcherFactory()
-	} else {
-		f = new(fetcher.DocumentFetcher)
-	}
-	err = f.Init(&c.desc, c.collectIndexedFields(), false, false)
-	if err != nil {
-		_ = f.Close()
-		return err
-	}
-
-	docKey := base.MakeDocKey(c.Description(), doc.Key().String())
-	err = f.Start(ctx, txn, core.NewSpans(core.NewSpan(docKey, docKey.PrefixEnd())))
-	if err != nil {
-		_ = f.Close()
-		return err
-	}
-	oldDoc, err := f.FetchNextDecoded(ctx)
-	if err != nil {
-		_ = f.Close()
-		return err
-	}
-	err = f.Close()
+	oldDoc, err := c.get(ctx, txn, c.getPrimaryKeyFromDocKey(doc.Key()), c.collectIndexedFields(), false)
 	if err != nil {
 		return err
 	}
