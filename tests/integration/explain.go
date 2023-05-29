@@ -101,36 +101,36 @@ func executeExplainRequest(
 	t *testing.T,
 	description string,
 	db client.DB,
-	explainTest ExplainRequest,
+	action ExplainRequest,
 ) {
 	// Must have a non-empty request.
-	if explainTest.Request == "" {
+	if action.Request == "" {
 		require.Fail(t, "Explain test must have a non-empty request.", description)
 	}
 
 	// If no expected results are provided, then it's invalid use of this explain testing setup.
-	if explainTest.ExpectedError == "" &&
-		explainTest.ExpectedPatterns == nil &&
-		explainTest.ExpectedTargets == nil &&
-		explainTest.ExpectedFullGraph == nil {
+	if action.ExpectedError == "" &&
+		action.ExpectedPatterns == nil &&
+		action.ExpectedTargets == nil &&
+		action.ExpectedFullGraph == nil {
 		require.Fail(t, "Atleast one expected explain parameter must be provided.", description)
 	}
 
 	// If we expect an error, then all other expected results should be empty (they shouldn't be provided).
-	if explainTest.ExpectedError != "" &&
-		(explainTest.ExpectedFullGraph != nil ||
-			explainTest.ExpectedPatterns != nil ||
-			explainTest.ExpectedTargets != nil) {
+	if action.ExpectedError != "" &&
+		(action.ExpectedFullGraph != nil ||
+			action.ExpectedPatterns != nil ||
+			action.ExpectedTargets != nil) {
 		require.Fail(t, "Expected error should not have other expected results with it.", description)
 	}
 
-	result := db.ExecRequest(ctx, explainTest.Request)
+	result := db.ExecRequest(ctx, action.Request)
 	assertExplainRequestResults(
 		ctx,
 		t,
 		description,
 		&result.GQL,
-		explainTest,
+		action,
 	)
 }
 
@@ -139,17 +139,17 @@ func assertExplainRequestResults(
 	t *testing.T,
 	description string,
 	actualResult *client.GQLResult,
-	explainTest ExplainRequest,
+	action ExplainRequest,
 ) {
 	// Check expected error matches actual error. If it does we are done.
 	if AssertErrors(
 		t,
 		description,
 		actualResult.Errors,
-		explainTest.ExpectedError,
+		action.ExpectedError,
 	) {
 		return
-	} else if explainTest.ExpectedError != "" { // If didn't find a match but did expected an error, then fail.
+	} else if action.ExpectedError != "" { // If didn't find a match but did expected an error, then fail.
 		assert.Fail(t, "Expected an error however none was raised.", description)
 	}
 
@@ -159,13 +159,13 @@ func assertExplainRequestResults(
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
-	if lengthOfExpectedFullGraph := len(explainTest.ExpectedFullGraph); explainTest.ExpectedFullGraph != nil {
+	if lengthOfExpectedFullGraph := len(action.ExpectedFullGraph); action.ExpectedFullGraph != nil {
 		require.Equal(t, lengthOfExpectedFullGraph, len(resultantData), description)
 		for index, actualResult := range resultantData {
 			if lengthOfExpectedFullGraph > index {
 				assert.Equal(
 					t,
-					explainTest.ExpectedFullGraph[index],
+					action.ExpectedFullGraph[index],
 					actualResult,
 					description,
 				)
@@ -175,14 +175,14 @@ func assertExplainRequestResults(
 
 	// Ensure the complete high-level pattern matches, inother words check that all the
 	// explain graph nodes are in the correct expected ordering.
-	if explainTest.ExpectedPatterns != nil {
-		require.Equal(t, len(explainTest.ExpectedPatterns), len(resultantData), description)
+	if action.ExpectedPatterns != nil {
+		require.Equal(t, len(action.ExpectedPatterns), len(resultantData), description)
 		for index, actualResult := range resultantData {
 			// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
 			actualResultWithoutAttributes := trimExplainAttributes(t, description, actualResult)
 			assert.Equal(
 				t,
-				explainTest.ExpectedPatterns[index],
+				action.ExpectedPatterns[index],
 				actualResultWithoutAttributes,
 				description,
 			)
@@ -191,8 +191,8 @@ func assertExplainRequestResults(
 
 	// Match the targeted node's attributes (subset assertions), with the expected attributes.
 	// Note: This does not check if the node is in correct location or not.
-	if explainTest.ExpectedTargets != nil {
-		for _, target := range explainTest.ExpectedTargets {
+	if action.ExpectedTargets != nil {
+		for _, target := range action.ExpectedTargets {
 			assertExplainTargetCase(t, description, target, resultantData)
 		}
 	}
