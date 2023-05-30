@@ -397,7 +397,10 @@ func executeTestCase(
 			resultsChans = append(resultsChans, resultsChan)
 
 		case Request:
-			executeRequest(ctx, t, nodes, testCase, action)
+			executeRequest(ctx, t, nodes, testCase.Description, action)
+
+		case ExplainRequest:
+			executeExplainRequest(ctx, t, testCase.Description, db, action)
 
 		case IntrospectionRequest:
 			assertIntrospectionResults(ctx, t, testCase.Description, db, action)
@@ -1054,7 +1057,7 @@ func executeRequest(
 	ctx context.Context,
 	t *testing.T,
 	nodes []*node.Node,
-	testCase TestCase,
+	description string,
 	action Request,
 ) {
 	var expectedErrorRaised bool
@@ -1065,7 +1068,7 @@ func executeRequest(
 		expectedErrorRaised = assertRequestResults(
 			ctx,
 			t,
-			testCase.Description,
+			description,
 			&result.GQL,
 			action.Results,
 			action.ExpectedError,
@@ -1074,7 +1077,7 @@ func executeRequest(
 		)
 	}
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(t, description, action.ExpectedError, expectedErrorRaised)
 }
 
 // executeSubscriptionRequest executes the given subscription request, returning
@@ -1190,7 +1193,7 @@ func AssertErrors(
 			errorString := e.Error()
 			if !strings.Contains(errorString, expectedError) {
 				// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
-				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
+				require.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
 				continue
 			}
 			return true

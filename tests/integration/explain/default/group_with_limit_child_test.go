@@ -13,78 +13,50 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDefaultExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with limit and offset on inner _group selection.",
 
-		Request: `query @explain {
-			Author(groupBy: [name]) {
-				name
-				_group(limit: 2, offset: 1) {
-					age
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
- 					"verified": false,
- 					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
+			testUtils.ExplainRequest{
 
-		ExpectedPatterns: []dataMap{groupPattern},
+				Request: `query @explain {
+					Author(groupBy: [name]) {
+						name
+						_group(limit: 2, offset: 1) {
+							age
+						}
+					}
+				}`,
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"name"},
-					"childSelects": []dataMap{
-						{
-							"collectionName": "Author",
-							"limit": dataMap{
-								"limit":  uint64(2),
-								"offset": uint64(1),
+				ExpectedPatterns: []dataMap{groupPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
+								{
+									"collectionName": "Author",
+									"limit": dataMap{
+										"limit":  uint64(2),
+										"offset": uint64(1),
+									},
+									"docKeys": nil,
+									"filter":  nil,
+									"groupBy": nil,
+									"orderBy": nil,
+								},
 							},
-							"docKeys": nil,
-							"filter":  nil,
-							"groupBy": nil,
-							"orderBy": nil,
 						},
 					},
 				},
@@ -92,92 +64,63 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with limit and offset on multiple inner _group selections.",
 
-		Request: `query @explain {
-			Author(groupBy: [name]) {
-				name
-				innerFirstGroup: _group(limit: 1, offset: 2) {
-					age
-				}
-				innerSecondGroup: _group(limit: 2) {
-					age
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
- 					"verified": false,
- 					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
+			testUtils.ExplainRequest{
 
-		ExpectedPatterns: []dataMap{groupPattern},
+				Request: `query @explain {
+					Author(groupBy: [name]) {
+						name
+						innerFirstGroup: _group(limit: 1, offset: 2) {
+							age
+						}
+						innerSecondGroup: _group(limit: 2) {
+							age
+						}
+					}
+				}`,
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"name"},
-					"childSelects": []dataMap{
-						{
-							"collectionName": "Author",
-							"limit": dataMap{
-								"limit":  uint64(1),
-								"offset": uint64(2),
+				ExpectedPatterns: []dataMap{groupPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
+								{
+									"collectionName": "Author",
+									"limit": dataMap{
+										"limit":  uint64(1),
+										"offset": uint64(2),
+									},
+									"docKeys": nil,
+									"filter":  nil,
+									"groupBy": nil,
+									"orderBy": nil,
+								},
+								{
+									"collectionName": "Author",
+									"limit": dataMap{
+										"limit":  uint64(2),
+										"offset": uint64(0),
+									},
+									"docKeys": nil,
+									"filter":  nil,
+									"groupBy": nil,
+									"orderBy": nil,
+								},
 							},
-							"docKeys": nil,
-							"filter":  nil,
-							"groupBy": nil,
-							"orderBy": nil,
-						},
-						{
-							"collectionName": "Author",
-							"limit": dataMap{
-								"limit":  uint64(2),
-								"offset": uint64(0),
-							},
-							"docKeys": nil,
-							"filter":  nil,
-							"groupBy": nil,
-							"orderBy": nil,
 						},
 					},
 				},
@@ -185,5 +128,5 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

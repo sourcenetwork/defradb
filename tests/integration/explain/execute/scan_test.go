@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 		Description: "Explain (execute) request with all documents matching.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			testUtils.CreateDoc{
 				CollectionID: 2,
@@ -44,7 +45,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -52,7 +53,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -76,7 +77,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
@@ -85,16 +86,16 @@ func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 		Description: "Explain (execute) request with no documents.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -118,7 +119,7 @@ func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
@@ -127,7 +128,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 		Description: "Explain (execute) request with some documents matching.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			testUtils.CreateDoc{
 				CollectionID: 2,
@@ -149,7 +150,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(filter: {name: {_eq: "Shahzad"}}) {
 						name
@@ -157,7 +158,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -181,7 +182,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
@@ -190,7 +191,7 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 		Description: "Explain (execute) request with documents but no matches.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			testUtils.CreateDoc{
 				CollectionID: 2,
@@ -212,7 +213,7 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(filter: {name: {_eq: "John"}}) {
 						name
@@ -220,7 +221,7 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -244,5 +245,5 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package tests
 
 import (
 	"context"
@@ -16,19 +16,14 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
-
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 var (
-	log = logging.MustNewLogger("tests.integration.explain")
-
 	allPlanNodeNames = map[string]struct{}{
 		// Not a planNode but need it here as this is root of the explain graph.
 		"explain": {},
@@ -77,14 +72,9 @@ type PlanNodeTargetCase struct {
 	ExpectedAttributes any
 }
 
-type ExplainRequestTestCase struct {
-	Description string
-
+type ExplainRequest struct {
 	// Has to be a valid explain request type (one of: 'simple', 'debug', 'execute', 'predict').
 	Request string
-
-	// Docs is a map from Collection Index, to a list of docs in stringified JSON format
-	Docs map[int][]string
 
 	// The raw expected explain graph with everything (helpful for debugging purposes).
 	// Note: This is not always asserted (i.e. ignored from the comparison if not provided).
@@ -106,102 +96,61 @@ type ExplainRequestTestCase struct {
 	ExpectedError string
 }
 
-type databaseInfo struct {
-	name testUtils.DatabaseType
-	db   client.DB
-}
-
-func ExecuteExplainRequestTestCase(
+func executeExplainRequest(
+	ctx context.Context,
 	t *testing.T,
-	schema string,
-	collectionNames []string,
-	explainTest ExplainRequestTestCase,
+	description string,
+	db client.DB,
+	action ExplainRequest,
 ) {
-	if testUtils.DetectDbChanges && testUtils.DetectDbChangesPreTestChecks(t, collectionNames) {
-		return
-	}
-
 	// Must have a non-empty request.
-	if explainTest.Request == "" {
-		require.Fail(t, "Explain test must have a non-empty request.", explainTest.Description)
+	if action.Request == "" {
+		require.Fail(t, "Explain test must have a non-empty request.", description)
 	}
 
 	// If no expected results are provided, then it's invalid use of this explain testing setup.
-	if explainTest.ExpectedError == "" &&
-		explainTest.ExpectedPatterns == nil &&
-		explainTest.ExpectedTargets == nil &&
-		explainTest.ExpectedFullGraph == nil {
-		require.Fail(t, "Atleast one expected explain parameter must be provided.", explainTest.Description)
+	if action.ExpectedError == "" &&
+		action.ExpectedPatterns == nil &&
+		action.ExpectedTargets == nil &&
+		action.ExpectedFullGraph == nil {
+		require.Fail(t, "Atleast one expected explain parameter must be provided.", description)
 	}
 
 	// If we expect an error, then all other expected results should be empty (they shouldn't be provided).
-	if explainTest.ExpectedError != "" &&
-		(explainTest.ExpectedFullGraph != nil ||
-			explainTest.ExpectedPatterns != nil ||
-			explainTest.ExpectedTargets != nil) {
-		require.Fail(t, "Expected error should not have other expected results with it.", explainTest.Description)
+	if action.ExpectedError != "" &&
+		(action.ExpectedFullGraph != nil ||
+			action.ExpectedPatterns != nil ||
+			action.ExpectedTargets != nil) {
+		require.Fail(t, "Expected error should not have other expected results with it.", description)
 	}
 
-	ctx := context.Background()
-	dbs, err := getDatabases(ctx, t)
-	if testUtils.AssertError(t, explainTest.Description, err, explainTest.ExpectedError) {
-		return
-	}
-	require.NotEmpty(t, dbs)
-
-	for _, dbi := range dbs {
-		db := dbi.db
-		log.Info(ctx, explainTest.Description, logging.NewKV("Database", dbi.name))
-
-		if testUtils.DetectDbChanges {
-			t.SkipNow()
-			return
-		}
-
-		setupDatabase(
-			ctx,
-			t,
-			dbi,
-			schema,
-			collectionNames,
-			explainTest.Description,
-			explainTest.ExpectedError,
-			explainTest.Docs,
-			immutable.None[map[int]map[int][]string](),
-		)
-
-		result := db.ExecRequest(ctx, explainTest.Request)
-		if assertExplainRequestResults(
-			ctx,
-			t,
-			&result.GQL,
-			explainTest,
-		) {
-			continue
-		}
-
-		if explainTest.ExpectedError != "" {
-			assert.Fail(t, "Expected an error however none was raised.", explainTest.Description)
-		}
-
-		db.Close(ctx)
-	}
+	result := db.ExecRequest(ctx, action.Request)
+	assertExplainRequestResults(
+		ctx,
+		t,
+		description,
+		&result.GQL,
+		action,
+	)
 }
 
 func assertExplainRequestResults(
 	ctx context.Context,
 	t *testing.T,
+	description string,
 	actualResult *client.GQLResult,
-	explainTest ExplainRequestTestCase,
-) bool {
-	// Check expected error matches actual error.
-	if testUtils.AssertErrors(
+	action ExplainRequest,
+) {
+	// Check expected error matches actual error. If it does we are done.
+	if AssertErrors(
 		t,
-		explainTest.Description,
+		description,
 		actualResult.Errors,
-		explainTest.ExpectedError,
+		action.ExpectedError,
 	) {
-		return true
+		return
+	} else if action.ExpectedError != "" { // If didn't find a match but did expected an error, then fail.
+		assert.Fail(t, "Expected an error however none was raised.", description)
 	}
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
@@ -210,15 +159,15 @@ func assertExplainRequestResults(
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
-	if lengthOfExpectedFullGraph := len(explainTest.ExpectedFullGraph); explainTest.ExpectedFullGraph != nil {
-		require.Equal(t, lengthOfExpectedFullGraph, len(resultantData), explainTest.Description)
+	if lengthOfExpectedFullGraph := len(action.ExpectedFullGraph); action.ExpectedFullGraph != nil {
+		require.Equal(t, lengthOfExpectedFullGraph, len(resultantData), description)
 		for index, actualResult := range resultantData {
 			if lengthOfExpectedFullGraph > index {
 				assert.Equal(
 					t,
-					explainTest.ExpectedFullGraph[index],
+					action.ExpectedFullGraph[index],
 					actualResult,
-					explainTest.Description,
+					description,
 				)
 			}
 		}
@@ -226,29 +175,27 @@ func assertExplainRequestResults(
 
 	// Ensure the complete high-level pattern matches, inother words check that all the
 	// explain graph nodes are in the correct expected ordering.
-	if explainTest.ExpectedPatterns != nil {
-		require.Equal(t, len(explainTest.ExpectedPatterns), len(resultantData), explainTest.Description)
+	if action.ExpectedPatterns != nil {
+		require.Equal(t, len(action.ExpectedPatterns), len(resultantData), description)
 		for index, actualResult := range resultantData {
 			// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
-			actualResultWithoutAttributes := trimExplainAttributes(t, explainTest.Description, actualResult)
+			actualResultWithoutAttributes := trimExplainAttributes(t, description, actualResult)
 			assert.Equal(
 				t,
-				explainTest.ExpectedPatterns[index],
+				action.ExpectedPatterns[index],
 				actualResultWithoutAttributes,
-				explainTest.Description,
+				description,
 			)
 		}
 	}
 
 	// Match the targeted node's attributes (subset assertions), with the expected attributes.
 	// Note: This does not check if the node is in correct location or not.
-	if explainTest.ExpectedTargets != nil {
-		for _, target := range explainTest.ExpectedTargets {
-			assertExplainTargetCase(t, explainTest.Description, target, resultantData)
+	if action.ExpectedTargets != nil {
+		for _, target := range action.ExpectedTargets {
+			assertExplainTargetCase(t, description, target, resultantData)
 		}
 	}
-
-	return false
 }
 
 func assertExplainTargetCase(
@@ -469,92 +416,4 @@ func copyMap(originalMap map[string]any) map[string]any {
 		}
 	}
 	return newMap
-}
-
-func getDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
-	databases := []databaseInfo{}
-
-	for _, dbt := range testUtils.GetDatabaseTypes() {
-		db, _, err := testUtils.GetDatabase(ctx, t, dbt)
-		if err != nil {
-			return nil, err
-		}
-
-		databases = append(
-			databases,
-			databaseInfo{
-				name: dbt,
-				db:   db,
-			},
-		)
-	}
-
-	return databases, nil
-}
-
-// setupDatabase is persisted for the sake of the explain tests as they use a different
-// test executor that calls this function.
-func setupDatabase(
-	ctx context.Context,
-	t *testing.T,
-	dbi databaseInfo,
-	schema string,
-	collectionNames []string,
-	description string,
-	expectedError string,
-	documents map[int][]string,
-	updates immutable.Option[map[int]map[int][]string],
-) {
-	db := dbi.db
-	_, err := db.AddSchema(ctx, schema)
-	if testUtils.AssertError(t, description, err, expectedError) {
-		return
-	}
-
-	collections := []client.Collection{}
-	for _, collectionName := range collectionNames {
-		col, err := db.GetCollectionByName(ctx, collectionName)
-		if testUtils.AssertError(t, description, err, expectedError) {
-			return
-		}
-		collections = append(collections, col)
-	}
-
-	// insert docs
-	for collectionIndex, docs := range documents {
-		hasCollectionUpdates := false
-		collectionUpdates := map[int][]string{}
-
-		if updates.HasValue() {
-			collectionUpdates, hasCollectionUpdates = updates.Value()[collectionIndex]
-		}
-
-		for documentIndex, docStr := range docs {
-			doc, err := client.NewDocFromJSON([]byte(docStr))
-			if testUtils.AssertError(t, description, err, expectedError) {
-				return
-			}
-			err = collections[collectionIndex].Save(ctx, doc)
-			if testUtils.AssertError(t, description, err, expectedError) {
-				return
-			}
-
-			if hasCollectionUpdates {
-				documentUpdates, hasDocumentUpdates := collectionUpdates[documentIndex]
-
-				if hasDocumentUpdates {
-					for _, u := range documentUpdates {
-						err = doc.SetWithJSON([]byte(u))
-						if testUtils.AssertError(t, description, err, expectedError) {
-							return
-						}
-						err = collections[collectionIndex].Save(ctx, doc)
-						if testUtils.AssertError(t, description, err, expectedError) {
-							return
-						}
-					}
-				}
-			}
-		}
-	}
 }
