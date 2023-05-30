@@ -200,6 +200,13 @@ func (n *selectNode) simpleExplain() (map[string]any, error) {
 		simpleExplainMap[filterLabel] = n.filter.ToMap(n.documentMapping)
 	}
 
+	// Add the keys attribute if it exists.
+	if !n.keys.HasValue() {
+		simpleExplainMap[keysLabel] = nil
+	} else {
+		simpleExplainMap[keysLabel] = n.keys.Value()
+	}
+
 	return simpleExplainMap, nil
 }
 
