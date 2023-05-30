@@ -64,6 +64,7 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 						"explain": dataMap{
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
+									"_keys":  nil,
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,

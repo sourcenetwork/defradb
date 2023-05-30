@@ -38,6 +38,15 @@ func TestDefaultExplainRequestWithDocKeyFilter(t *testing.T) {
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
+						TargetNodeName: "selectNode",
+						ExpectedAttributes: dataMap{
+							"_keys": []string{
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							},
+							"filter": nil,
+						},
+					},
+					{
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
@@ -80,6 +89,15 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
 				ExpectedPatterns: []dataMap{basicPattern},
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName: "selectNode",
+						ExpectedAttributes: dataMap{
+							"_keys": []string{
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							},
+							"filter": nil,
+						},
+					},
 					{
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
@@ -128,6 +146,16 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *
 				ExpectedPatterns: []dataMap{basicPattern},
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName: "selectNode",
+						ExpectedAttributes: dataMap{
+							"_keys": []string{
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							},
+							"filter": nil,
+						},
+					},
 					{
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
@@ -181,6 +209,16 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testin
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
+						TargetNodeName: "selectNode",
+						ExpectedAttributes: dataMap{
+							"_keys": []string{
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+							},
+							"filter": nil,
+						},
+					},
+					{
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
@@ -218,7 +256,13 @@ func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					Author(filter: {_key: {_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"}}) {
+					Author(
+						filter: {
+							_key: {
+								_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
+							}
+						}
+					) {
 						name
 						age
 					}
@@ -227,6 +271,13 @@ func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
 				ExpectedPatterns: []dataMap{basicPattern},
 
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName: "selectNode",
+						ExpectedAttributes: dataMap{
+							"_keys":  nil,
+							"filter": nil,
+						},
+					},
 					{
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
