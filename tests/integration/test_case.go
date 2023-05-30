@@ -11,8 +11,6 @@
 package tests
 
 import (
-	"testing"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/config"
@@ -153,20 +151,6 @@ type UpdateDoc struct {
 	DontSync bool
 }
 
-// ResultAsserter is an interface that can be implemented to provide custom result
-// assertions.
-type ResultAsserter interface {
-	// Assert will be called with the test and the result of the request.
-	Assert(t *testing.T, result []map[string]any)
-}
-
-// ResultAsserterFunc is a function that can be used to implement the ResultAsserter
-type ResultAsserterFunc func(*testing.T, []map[string]any) (bool, string)
-
-func (f ResultAsserterFunc) Assert(t *testing.T, result []map[string]any) {
-	f(t, result)
-}
-
 // Request represents a standard Defra (GQL) request.
 type Request struct {
 	// NodeID may hold the ID (index) of a node to execute this request on.
@@ -181,9 +165,6 @@ type Request struct {
 	// The expected (data) results of the issued request.
 	Results []map[string]any
 
-	// Asserter is an optional custom result asserter.
-	Asserter ResultAsserter
-
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
@@ -195,8 +176,8 @@ type Request struct {
 //
 // A new transaction will be created for the first TransactionRequest2 of any given
 // TransactionId. TransactionRequest2s will be submitted to the database in the order
-// in which they are received (interleaving amongst other actions if provided), however
-// they will not be committed until a TransactionCommit of matching TransactionId is
+// in which they are recieved (interleaving amongst other actions if provided), however
+// they will not be commited until a TransactionCommit of matching TransactionId is
 // provided.
 type TransactionRequest2 struct {
 	// Used to identify the transaction for this to run against.
