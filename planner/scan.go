@@ -39,7 +39,6 @@ type scanNode struct {
 	desc client.CollectionDescription
 
 	fields []*client.FieldDescription
-	docKey []byte
 
 	showDeleted bool
 
@@ -106,7 +105,7 @@ func (n *scanNode) Next() (bool, error) {
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error
-		n.docKey, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
+		_, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
 		if err != nil {
 			return false, err
 		}

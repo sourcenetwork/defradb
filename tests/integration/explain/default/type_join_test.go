@@ -119,6 +119,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
+									"_keys":  nil,
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
@@ -176,6 +177,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
+									"_keys":  nil,
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
