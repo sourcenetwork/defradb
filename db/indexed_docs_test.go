@@ -775,3 +775,56 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 	require.NoError(t, err)
 	_ = f.users.Update(f.ctx, doc)
 }
+
+func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
+	testErr := errors.New("error")
+
+	cases := []struct {
+		Name          string
+		StubDataStore func(*mocks.DSReaderWriter_Expecter)
+	}{
+		{
+			Name: "Delete old value",
+			StubDataStore: func(ds *mocks.DSReaderWriter_Expecter) {
+				ds.Delete(mock.Anything, mock.Anything).Return(testErr)
+				ds.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
+			},
+		},
+		{
+			Name: "Store new value",
+			StubDataStore: func(ds *mocks.DSReaderWriter_Expecter) {
+				ds.Delete(mock.Anything, mock.Anything).Maybe().Return(nil)
+				ds.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
+				ds.Put(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(testErr)
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		f := newIndexTestFixture(t)
+		f.createUserCollectionIndexOnName()
+
+		doc := f.newUserDoc("John", 21)
+
+		f.users.fetcherFactory = func() fetcher.Fetcher {
+			df := fetcherMocks.NewStubbedFetcher(t)
+			df.EXPECT().FetchNextDecoded(mock.Anything).Unset()
+			df.EXPECT().FetchNextDecoded(mock.Anything).Return(doc, nil)
+			return df
+		}
+
+		f.saveDocToCollection(doc, f.users)
+
+		err := doc.Set(usersNameFieldName, "Islam")
+		require.NoError(t, err)
+
+		mockedTxn := f.mockTxn()
+		mockedTxn.MockDatastore = mocks.NewDSReaderWriter(f.t)
+		tc.StubDataStore(mockedTxn.MockDatastore.EXPECT())
+		mockedTxn.EXPECT().Datastore().Unset()
+		mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore).Maybe()
+
+		err = f.users.WithTxn(mockedTxn).Update(f.ctx, doc)
+		require.ErrorIs(t, err, testErr)
+	}
+}

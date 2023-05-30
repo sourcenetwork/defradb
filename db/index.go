@@ -156,8 +156,10 @@ func (i *collectionSimpleIndex) Update(
 		return err
 	}
 	err = txn.Datastore().Delete(ctx, key.ToDS())
-	i.Save(ctx, txn, newDoc)
-	return nil
+	if err != nil {
+		return err
+	}
+	return i.Save(ctx, txn, newDoc)
 }
 
 func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {

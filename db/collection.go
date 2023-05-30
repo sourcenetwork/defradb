@@ -574,13 +574,14 @@ func (c *collection) SchemaID() string {
 // handle instead of a raw DB handle.
 func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 	return &collection{
-		db:            c.db,
-		txn:           immutable.Some(txn),
-		desc:          c.desc,
-		colID:         c.colID,
-		schemaID:      c.schemaID,
-		isIndexCached: c.isIndexCached,
-		indexes:       c.indexes,
+		db:             c.db,
+		txn:            immutable.Some(txn),
+		desc:           c.desc,
+		colID:          c.colID,
+		schemaID:       c.schemaID,
+		isIndexCached:  c.isIndexCached,
+		indexes:        c.indexes,
+		fetcherFactory: c.fetcherFactory,
 	}
 }
 
