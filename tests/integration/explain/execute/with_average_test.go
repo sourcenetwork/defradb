@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
@@ -22,12 +23,12 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 		Description: "Explain (execute) request using average on array field.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Books
 			create3BookDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Book {
 						name
@@ -35,7 +36,7 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -68,7 +69,7 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
@@ -77,7 +78,7 @@ func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 		Description: "Explain (execute) request using average on joined field.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Books
 			create3BookDocuments(),
@@ -85,7 +86,7 @@ func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -93,7 +94,7 @@ func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -129,5 +130,5 @@ func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

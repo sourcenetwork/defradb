@@ -13,80 +13,52 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDefaultExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order (descending) on inner _group selection.",
 
-		Request: `query @explain {
-			Author(groupBy: [name]) {
-				name
-				_group (order: {age: DESC}){
-					age
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
+			testUtils.ExplainRequest{
 
-		ExpectedPatterns: []dataMap{groupPattern},
+				Request: `query @explain {
+					Author(groupBy: [name]) {
+						name
+						_group (order: {age: DESC}){
+							age
+						}
+					}
+				}`,
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"name"},
-					"childSelects": []dataMap{
-						{
-							"collectionName": "Author",
-							"orderBy": []dataMap{
+				ExpectedPatterns: []dataMap{groupPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
 								{
-									"direction": "DESC",
-									"fields":    []string{"age"},
+									"collectionName": "Author",
+									"orderBy": []dataMap{
+										{
+											"direction": "DESC",
+											"fields":    []string{"age"},
+										},
+									},
+									"docKeys": nil,
+									"groupBy": nil,
+									"limit":   nil,
+									"filter":  nil,
 								},
 							},
-							"docKeys": nil,
-							"groupBy": nil,
-							"limit":   nil,
-							"filter":  nil,
 						},
 					},
 				},
@@ -94,80 +66,51 @@ func TestDefaultExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testin
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order (ascending) on inner _group selection.",
 
-		Request: `query @explain {
-			Author(groupBy: [name]) {
-				name
-				_group (order: {age: ASC}){
-					age
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
+			testUtils.ExplainRequest{
 
-		ExpectedPatterns: []dataMap{groupPattern},
+				Request: `query @explain {
+					Author(groupBy: [name]) {
+						name
+						_group (order: {age: ASC}){
+							age
+						}
+					}
+				}`,
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"name"},
-					"childSelects": []dataMap{
-						{
-							"collectionName": "Author",
-							"orderBy": []dataMap{
+				ExpectedPatterns: []dataMap{groupPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
 								{
-									"direction": "ASC",
-									"fields":    []string{"age"},
+									"collectionName": "Author",
+									"orderBy": []dataMap{
+										{
+											"direction": "ASC",
+											"fields":    []string{"age"},
+										},
+									},
+									"docKeys": nil,
+									"groupBy": nil,
+									"limit":   nil,
+									"filter":  nil,
 								},
 							},
-							"docKeys": nil,
-							"groupBy": nil,
-							"limit":   nil,
-							"filter":  nil,
 						},
 					},
 				},
@@ -175,86 +118,57 @@ func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsInnerGroupSelection(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order on nested parent groupBy and on nested parent's inner _group.",
 
-		Request: `query @explain {
-			Author(groupBy: [name]) {
-				name
-				_group (
-					groupBy: [verified],
-					order: {verified: ASC}
-				){
-					verified
-					_group (order: {age: DESC}) {
-						age
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author(groupBy: [name]) {
+						name
+						_group (
+							groupBy: [verified],
+							order: {verified: ASC}
+						){
+							verified
+							_group (order: {age: DESC}) {
+								age
+							}
+						}
 					}
-				}
-			}
-		}`,
+				}`,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
+				ExpectedPatterns: []dataMap{groupPattern},
 
-		ExpectedPatterns: []dataMap{groupPattern},
-
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "groupNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"groupByFields": []string{"name"},
-					"childSelects": []dataMap{
-						{
-							"collectionName": "Author",
-							"orderBy": []dataMap{
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
 								{
-									"direction": "ASC",
-									"fields":    []string{"verified"},
+									"collectionName": "Author",
+									"orderBy": []dataMap{
+										{
+											"direction": "ASC",
+											"fields":    []string{"verified"},
+										},
+									},
+									"groupBy": []string{"verified", "name"},
+									"docKeys": nil,
+									"limit":   nil,
+									"filter":  nil,
 								},
 							},
-							"groupBy": []string{"verified", "name"},
-							"docKeys": nil,
-							"limit":   nil,
-							"filter":  nil,
 						},
 					},
 				},
@@ -262,5 +176,5 @@ func TestDefaultExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsIn
 		},
 	}
 
-	explainUtils.RunExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

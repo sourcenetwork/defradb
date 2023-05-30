@@ -11,61 +11,10 @@
 package test_explain_execute
 
 import (
-	"testing"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 type dataMap = map[string]any
-
-func gqlSchemaExecuteExplain() testUtils.SchemaUpdate {
-	return testUtils.SchemaUpdate{
-		Schema: (`
-			type Article {
-				name: String
-				author: Author
-				pages: Int
-			}
-
-			type Book {
-				name: String
-				author: Author
-				pages: Int
-				chapterPages: [Int!]
-			}
-
-			type Author {
-				name: String
-				age: Int
-				verified: Boolean
-				books: [Book]
-				articles: [Article]
-				contact: AuthorContact
-			}
-
-			type AuthorContact {
-				cell: String
-				email: String
-				author: Author
-				address: ContactAddress
-			}
-
-			type ContactAddress {
-				city: String
-				country: String
-				contact: AuthorContact
-			}
-		`),
-	}
-}
-
-func executeTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTestCase(
-		t,
-		[]string{"Article", "Book", "Author", "AuthorContact", "ContactAddress"},
-		test,
-	)
-}
 
 func create3ArticleDocuments() []testUtils.CreateDoc {
 	return []testUtils.CreateDoc{

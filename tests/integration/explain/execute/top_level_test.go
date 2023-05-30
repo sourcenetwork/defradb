@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 		Description: "Explain (execute) request with top level average.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			testUtils.CreateDoc{
 				CollectionID: 2,
@@ -44,7 +45,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					_avg(
 						Author: {
@@ -53,7 +54,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 					)
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -100,7 +101,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
@@ -109,7 +110,7 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 		Description: "Explain (execute) request with top level count.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			testUtils.CreateDoc{
 				CollectionID: 2,
@@ -131,12 +132,12 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					_count(Author: {})
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -170,7 +171,7 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
@@ -179,7 +180,7 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 		Description: "Explain (execute) request with top level sum.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			testUtils.CreateDoc{
 				CollectionID: 2,
@@ -201,7 +202,7 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					_sum(
 						Author: {
@@ -210,7 +211,7 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 					)
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -244,5 +245,5 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
