@@ -29,6 +29,9 @@ type CollectionDescription struct {
 
 	// Schema contains the data type information that this Collection uses.
 	Schema SchemaDescription
+	
+	// Indexes contains the indexes that this Collection has.
+	Indexes []IndexDescription
 }
 
 // IDString returns the collection ID as a string.

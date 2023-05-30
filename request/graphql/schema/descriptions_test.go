@@ -58,6 +58,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -104,6 +105,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
 					Name: "Author",
@@ -132,6 +134,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -187,6 +190,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
 					Name: "Author",
@@ -224,6 +228,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -270,6 +275,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
 					Name: "Author",
@@ -298,6 +304,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -353,6 +360,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
 					Name: "Author",
@@ -390,6 +398,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -445,6 +454,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
 					Name: "Author",
@@ -482,6 +492,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -537,6 +548,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
 					Name: "Author",
@@ -568,6 +580,7 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -581,7 +594,7 @@ func TestSingleSimpleType(t *testing.T) {
 func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
 	ctx := context.Background()
 
-	descs, _, err := FromString(ctx, testcase.sdl)
+	descs, err := FromString(ctx, testcase.sdl)
 	assert.NoError(t, err, testcase.description)
 	assert.Equal(t, len(descs), len(testcase.targetDescs), testcase.description)
 

@@ -340,12 +340,12 @@ func TestInvalidFieldIndex(t *testing.T) {
 func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 	ctx := context.Background()
 
-	_, colIndexes, err := FromString(ctx, testCase.sdl)
+	cols, err := FromString(ctx, testCase.sdl)
 	assert.NoError(t, err, testCase.description)
-	assert.Equal(t, len(colIndexes), 1, testCase.description)
-	assert.Equal(t, len(colIndexes[0]), len(testCase.targetDescriptions), testCase.description)
+	assert.Equal(t, len(cols), 1, testCase.description)
+	assert.Equal(t, len(cols[0].Indexes), len(testCase.targetDescriptions), testCase.description)
 
-	for i, d := range colIndexes[0] {
+	for i, d := range cols[0].Indexes {
 		assert.Equal(t, testCase.targetDescriptions[i], d, testCase.description)
 	}
 }
@@ -353,7 +353,7 @@ func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 func parseInvalidIndexAndTest(t *testing.T, testCase invalidIndexTestCase) {
 	ctx := context.Background()
 
-	_, _, err := FromString(ctx, testCase.sdl)
+	_, err := FromString(ctx, testCase.sdl)
 	assert.EqualError(t, err, testCase.expectedErr, testCase.description)
 }
 

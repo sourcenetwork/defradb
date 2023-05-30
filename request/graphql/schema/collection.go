@@ -26,7 +26,6 @@ import (
 // FromString parses a GQL SDL string into a set of collection descriptions.
 func FromString(ctx context.Context, schemaString string) (
 	[]client.CollectionDescription,
-	[][]client.IndexDescription,
 	error,
 ) {
 	source := source.NewSource(&source.Source{
@@ -39,7 +38,7 @@ func FromString(ctx context.Context, schemaString string) (
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	return fromAst(ctx, doc)
@@ -48,23 +47,20 @@ func FromString(ctx context.Context, schemaString string) (
 // fromAst parses a GQL AST into a set of collection descriptions.
 func fromAst(ctx context.Context, doc *ast.Document) (
 	[]client.CollectionDescription,
-	[][]client.IndexDescription,
 	error,
 ) {
 	relationManager := NewRelationManager()
 	descriptions := []client.CollectionDescription{}
-	indexes := [][]client.IndexDescription{}
 
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
-			description, colIndexes, err := fromAstDefinition(ctx, relationManager, defType)
+			description, err := fromAstDefinition(ctx, relationManager, defType)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 
 			descriptions = append(descriptions, description)
-			indexes = append(indexes, colIndexes)
 
 		default:
 			// Do nothing, ignore it and continue
@@ -77,10 +73,10 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 	// after all the collections have been processed.
 	err := finalizeRelations(relationManager, descriptions)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return descriptions, indexes, nil
+	return descriptions, nil
 }
 
 // fromAstDefinition parses a AST object definition into a set of collection descriptions.
@@ -88,7 +84,7 @@ func fromAstDefinition(
 	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.ObjectDefinition,
-) (client.CollectionDescription, []client.IndexDescription, error) {
+) (client.CollectionDescription, error) {
 	fieldDescriptions := []client.FieldDescription{
 		{
 			Name: request.KeyFieldName,
@@ -101,7 +97,7 @@ func fromAstDefinition(
 	for _, field := range def.Fields {
 		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def)
 		if err != nil {
-			return client.CollectionDescription{}, nil, err
+			return client.CollectionDescription{}, err
 		}
 
 		fieldDescriptions = append(fieldDescriptions, tmpFieldsDescriptions...)
@@ -110,7 +106,7 @@ func fromAstDefinition(
 			if directive.Name.Value == "index" {
 				index, err := fieldIndexFromAST(field, directive)
 				if err != nil {
-					return client.CollectionDescription{}, nil, err
+					return client.CollectionDescription{}, err
 				}
 				indexDescriptions = append(indexDescriptions, index)
 			}
@@ -132,7 +128,7 @@ func fromAstDefinition(
 		if directive.Name.Value == "index" {
 			index, err := indexFromAST(directive)
 			if err != nil {
-				return client.CollectionDescription{}, nil, err
+				return client.CollectionDescription{}, err
 			}
 			indexDescriptions = append(indexDescriptions, index)
 		}
@@ -144,7 +140,8 @@ func fromAstDefinition(
 			Name:   def.Name.Value,
 			Fields: fieldDescriptions,
 		},
-	}, indexDescriptions, nil
+		Indexes: indexDescriptions,
+	}, nil
 }
 
 func isValidIndexName(name string) bool {
