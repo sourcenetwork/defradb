@@ -56,6 +56,7 @@ const (
 	dataLabel           = "data"
 	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"
+	keysLabel           = "_keys"
 	idsLabel            = "ids"
 	limitLabel          = "limit"
 	offsetLabel         = "offset"

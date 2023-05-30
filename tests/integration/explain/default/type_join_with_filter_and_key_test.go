@@ -17,10 +17,10 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
+func TestDefaultExplainRequestWithRelatedAndRegularFilterAndKeys(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with related and regular filter.",
+		Description: "Explain (default) request with related and regular filter + keys.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -32,7 +32,11 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 						filter: {
 							name: {_eq: "John Grisham"},
 							books: {name: {_eq: "Painted House"}}
-						}
+						},
+						dockeys: [
+							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e"
+						]
 					) {
 						name
 						age
@@ -55,7 +59,10 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": nil,
+							"_keys": []string{
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e",
+							},
 							"filter": dataMap{
 								"books": dataMap{
 									"name": dataMap{
@@ -78,8 +85,12 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 							},
 							"spans": []dataMap{
 								{
-									"start": "/3",
-									"end":   "/4",
+									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+								},
+								{
+									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e",
+									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8f",
 								},
 							},
 						},
@@ -92,10 +103,10 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
+func TestDefaultExplainRequestWithManyRelatedFiltersAndKey(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with many related filters.",
+		Description: "Explain (default) request with many related filters + key.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -108,7 +119,8 @@ func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 							name: {_eq: "Cornelia Funke"},
 							articles: {name: {_eq: "To my dear readers"}},
 							books: {name: {_eq: "Theif Lord"}}
-						}
+						},
+						dockeys: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]
 					) {
 						name
 						age
@@ -138,7 +150,9 @@ func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": nil,
+							"_keys": []string{
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							},
 							"filter": dataMap{
 								"articles": dataMap{
 									"name": dataMap{
@@ -166,8 +180,8 @@ func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 							},
 							"spans": []dataMap{
 								{
-									"start": "/3",
-									"end":   "/4",
+									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
 								},
 							},
 						},
