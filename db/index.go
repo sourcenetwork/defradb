@@ -11,6 +11,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/ipfs/go-datastore/query"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"

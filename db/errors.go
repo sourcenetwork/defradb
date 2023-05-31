@@ -157,7 +157,7 @@ func NewErrCanNotIndexInvalidFieldValue(inner error) error {
 	return errors.Wrap(errCanNotIndexInvalidFieldValue, inner)
 }
 
-// NewCanNotDeleteIndexedField returns a new error a failed attempt to delete an indexed field 
+// NewCanNotDeleteIndexedField returns a new error a failed attempt to delete an indexed field
 func NewCanNotDeleteIndexedField(inner error) error {
 	return errors.Wrap(errCanNotDeleteIndexedField, inner)
 }

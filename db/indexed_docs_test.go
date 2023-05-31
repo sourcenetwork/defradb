@@ -9,14 +9,15 @@ import (
 	"time"
 
 	"github.com/ipfs/go-datastore/query"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	fetcherMocks "github.com/sourcenetwork/defradb/db/fetcher/mocks"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 const testValuePrefix = "v"
