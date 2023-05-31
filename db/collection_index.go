@@ -70,7 +70,7 @@ func (db *db) getAllCollectionIndexes(
 	indexes := make([]client.CollectionIndexDescription, 0)
 	for res := range q.Next() {
 		if res.Error != nil {
-			return nil, err
+			return nil, res.Error
 		}
 
 		var colDesk client.IndexDescription
@@ -112,7 +112,7 @@ func (db *db) getCollectionIndexes(
 	indexes := make([]client.IndexDescription, 0)
 	for res := range q.Next() {
 		if res.Error != nil {
-			return nil, err
+			return nil, res.Error
 		}
 
 		var colDesk client.IndexDescription
