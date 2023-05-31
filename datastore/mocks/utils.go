@@ -1,11 +1,21 @@
+// Copyright 2022 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package mocks
 
 import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
-	query "github.com/ipfs/go-datastore/query"
-	mock "github.com/stretchr/testify/mock"
+	"github.com/ipfs/go-datastore/query"
+	"github.com/stretchr/testify/mock"
 )
 
 type MultiStoreTxn struct {

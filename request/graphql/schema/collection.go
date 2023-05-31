@@ -23,6 +23,14 @@ import (
 	"github.com/graphql-go/graphql/language/source"
 )
 
+const (
+	indexDirectiveLabel          = "index"
+	indexDirectivePropName       = "name"
+	indexDirectivePropUnique     = "unique"
+	indexDirectivePropFields     = "fields"
+	indexDirectivePropDirections = "directions"
+)
+
 // FromString parses a GQL SDL string into a set of collection descriptions.
 func FromString(ctx context.Context, schemaString string) (
 	[]client.CollectionDescription,
@@ -103,7 +111,7 @@ func fromAstDefinition(
 		fieldDescriptions = append(fieldDescriptions, tmpFieldsDescriptions...)
 
 		for _, directive := range field.Directives {
-			if directive.Name.Value == "index" {
+			if directive.Name.Value == indexDirectiveLabel {
 				index, err := fieldIndexFromAST(field, directive)
 				if err != nil {
 					return client.CollectionDescription{}, err
@@ -125,7 +133,7 @@ func fromAstDefinition(
 	})
 
 	for _, directive := range def.Directives {
-		if directive.Name.Value == "index" {
+		if directive.Name.Value == indexDirectiveLabel {
 			index, err := indexFromAST(directive)
 			if err != nil {
 				return client.CollectionDescription{}, err
@@ -171,7 +179,7 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 	}
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
-		case "name":
+		case indexDirectivePropName:
 			nameVal, ok := arg.Value.(*ast.StringValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
@@ -180,7 +188,7 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 			if !isValidIndexName(desc.Name) {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-		case "unique":
+		case indexDirectivePropUnique:
 			boolVal, ok := arg.Value.(*ast.BooleanValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
@@ -198,7 +206,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 	var directions *ast.ListValue
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
-		case "name":
+		case indexDirectivePropName:
 			nameVal, ok := arg.Value.(*ast.StringValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
@@ -207,7 +215,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !isValidIndexName(desc.Name) {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-		case "fields":
+		case indexDirectivePropFields:
 			fieldsVal, ok := arg.Value.(*ast.ListValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
@@ -221,13 +229,13 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 					Name: fieldVal.Value,
 				})
 			}
-		case "directions":
+		case indexDirectivePropDirections:
 			var ok bool
 			directions, ok = arg.Value.(*ast.ListValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-		case "unique":
+		case indexDirectivePropUnique:
 			boolVal, ok := arg.Value.(*ast.BooleanValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg

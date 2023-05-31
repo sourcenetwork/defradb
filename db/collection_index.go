@@ -144,9 +144,10 @@ func (c *collection) collectIndexedFields() []*client.FieldDescription {
 	fieldsMap := make(map[string]*client.FieldDescription)
 	for _, index := range c.indexes {
 		for _, field := range index.Description().Fields {
-			for _, colField := range c.desc.Schema.Fields {
+			for i := range c.desc.Schema.Fields {
+				colField := &c.desc.Schema.Fields[i]
 				if field.Name == colField.Name {
-					fieldsMap[field.Name] = &colField
+					fieldsMap[field.Name] = colField
 					break
 				}
 			}
