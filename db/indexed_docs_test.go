@@ -658,6 +658,34 @@ func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 	}
 }
 
+func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	doc := f.newUserDoc("John", 21)
+	f.saveDocToCollection(doc, f.users)
+
+	err := doc.Set(usersNameFieldName, "Islam")
+	require.NoError(t, err)
+
+	// retrieve the collection without index cached
+	usersCol, err := f.db.getCollectionByName(f.ctx, f.txn, usersColName)
+	require.NoError(t, err)
+
+	testErr := errors.New("test error")
+
+	mockedTxn := f.mockTxn()
+	mockedTxn.MockSystemstore = mocks.NewDSReaderWriter(t)
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
+	mockedTxn.EXPECT().Systemstore().Unset()
+	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore)
+	mockedTxn.MockDatastore.EXPECT().Get(mock.Anything, mock.Anything).Unset()
+	mockedTxn.MockDatastore.EXPECT().Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
+
+	err = usersCol.WithTxn(mockedTxn).Update(f.ctx, doc)
+	require.ErrorIs(t, err, testErr)
+}
+
 func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 	testError := errors.New("test error")
 
