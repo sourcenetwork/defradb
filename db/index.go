@@ -77,10 +77,7 @@ func getFieldValConverter(kind client.FieldKind) func(any) ([]byte, error) {
 		}
 	case client.FieldKind_DATETIME:
 		return func(val any) ([]byte, error) {
-			timeStrVal, ok := val.(string)
-			if !ok {
-				return nil, errors.New("invalid datetime value")
-			}
+			timeStrVal := val.(string)
 			_, err := time.Parse(time.RFC3339, timeStrVal)
 			if err != nil {
 				return nil, err
@@ -119,7 +116,7 @@ func (i *collectionSimpleIndex) getDocKey(doc *client.Document) (core.IndexDataS
 	if err != nil {
 		isNil = errors.Is(err, client.ErrFieldNotExist)
 		if !isNil {
-			return core.IndexDataStoreKey{}, nil // @todo: test
+			return core.IndexDataStoreKey{}, nil 
 		}
 	}
 
