@@ -964,6 +964,39 @@ func TestDropIndex_IfFailsToQuerySystemStorage_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, testErr)
 }
 
+func TestDropIndex_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+
+	testErr := errors.New("test error")
+
+	mockedRootStore := mocks.NewRootStore(t)
+	mockedRootStore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
+	f.db.rootstore = mockedRootStore
+
+	err := f.users.DropIndex(f.ctx, testUsersColIndexName)
+	require.ErrorIs(t, err, testErr)
+}
+
+func TestDropIndex_IfFailsToDeleteFromStorage_ShouldNotCache(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+
+	testErr := errors.New("test error")
+
+	mockedTxn := f.mockTxn().ClearSystemStore()
+	systemStoreOn := mockedTxn.MockSystemstore.EXPECT()
+	systemStoreOn.Delete(mock.Anything, mock.Anything).Return(testErr)
+	f.stubSystemStore(systemStoreOn)
+	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).Maybe().
+		Return(mocks.NewQueryResultsWithValues(t), nil)
+
+	err := f.users.WithTxn(mockedTxn).DropIndex(f.ctx, testUsersColIndexName)
+	require.ErrorIs(t, err, testErr)
+}
+
 func TestDropAllIndex_ShouldDeleteAllIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	_, err := f.createCollectionIndexFor(usersColName, client.IndexDescription{

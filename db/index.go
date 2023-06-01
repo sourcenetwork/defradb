@@ -116,7 +116,7 @@ func (i *collectionSimpleIndex) getDocKey(doc *client.Document) (core.IndexDataS
 	if err != nil {
 		isNil = errors.Is(err, client.ErrFieldNotExist)
 		if !isNil {
-			return core.IndexDataStoreKey{}, nil 
+			return core.IndexDataStoreKey{}, nil
 		}
 	}
 
