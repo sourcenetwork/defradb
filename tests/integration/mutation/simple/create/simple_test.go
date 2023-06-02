@@ -93,7 +93,7 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "a document with the given dockey already exists",
+		ExpectedError: "a document with the given dockey already exists. DocKey: ",
 	}
 
 	simpleTests.ExecuteTestCase(t, test)

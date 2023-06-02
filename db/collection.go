@@ -653,10 +653,10 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 	if exists {
-		return ErrDocumentAlreadyExists
+		return NewErrDocumentAlreadyExists(primaryKey.DocKey)
 	}
 	if isDeleted {
-		return ErrDocumentDeleted
+		return NewErrDocumentDeleted(primaryKey.DocKey)
 	}
 
 	// write value object marker if we have an empty doc
@@ -696,7 +696,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 		return client.ErrDocumentNotFound
 	}
 	if isDeleted {
-		return ErrDocumentDeleted
+		return NewErrDocumentDeleted(primaryKey.DocKey)
 	}
 
 	err = c.update(ctx, txn, doc)
@@ -886,7 +886,7 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 		return false, client.ErrDocumentNotFound
 	}
 	if isDeleted {
-		return false, ErrDocumentDeleted
+		return false, NewErrDocumentDeleted(primaryKey.DocKey)
 	}
 
 	err = c.applyDelete(ctx, txn, primaryKey)

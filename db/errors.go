@@ -35,6 +35,8 @@ const (
 	errInvalidCRDTType               string = "only default or LWW (last writer wins) CRDT types are supported"
 	errCannotDeleteField             string = "deleting an existing field is not supported"
 	errFieldKindNotFound             string = "no type found for given name"
+	errDocumentAlreadyExists         string = "a document with the given dockey already exists"
+	errDocumentDeleted               string = "a document with the given dockey has been deleted"
 )
 
 var (
@@ -57,8 +59,8 @@ var (
 	ErrMergeSubTypeNotSupported = errors.New("merge doesn't support sub types yet")
 	ErrInvalidFilter            = errors.New("invalid filter")
 	ErrInvalidOpPath            = errors.New("invalid patch op path")
-	ErrDocumentAlreadyExists    = errors.New("a document with the given dockey already exists")
-	ErrDocumentDeleted          = errors.New("a document with the given dockey has been deleted")
+	ErrDocumentAlreadyExists    = errors.New(errDocumentAlreadyExists)
+	ErrDocumentDeleted          = errors.New(errDocumentDeleted)
 	ErrUnknownCRDTArgument      = errors.New("invalid CRDT arguments")
 	ErrUnknownCRDT              = errors.New("unknown crdt")
 	ErrSchemaFirstFieldDocKey   = errors.New("collection schema first field must be a DocKey")
@@ -212,5 +214,19 @@ func NewErrCannotDeleteField(name string, id client.FieldID) error {
 		errCannotDeleteField,
 		errors.NewKV("Name", name),
 		errors.NewKV("ID", id),
+	)
+}
+
+func NewErrDocumentAlreadyExists(dockey string) error {
+	return errors.New(
+		errDocumentAlreadyExists,
+		errors.NewKV("DocKey", dockey),
+	)
+}
+
+func NewErrDocumentDeleted(dockey string) error {
+	return errors.New(
+		errDocumentDeleted,
+		errors.NewKV("DocKey", dockey),
 	)
 }
