@@ -46,6 +46,7 @@ const (
 	COLLECTION_SCHEMA_VERSION         = "/collection/version/v"
 	COLLECTION_SCHEMA_VERSION_HISTORY = "/collection/version/h"
 	COLLECTION_INDEX                  = "/collection/index"
+	SCHEMA_MIGRATION                  = "/schema/migration"
 	SEQ                               = "/seq"
 	PRIMARY_KEY                       = "/pk"
 	REPLICATOR                        = "/replicator/id"
@@ -142,6 +143,14 @@ type SchemaHistoryKey struct {
 }
 
 var _ Key = (*SchemaHistoryKey)(nil)
+
+// SchemaVersionMigrationKey points to the jsonified configuration of a lens migration
+// for the give source schema version id.
+type SchemaVersionMigrationKey struct {
+	SourceSchemaVersionID string
+}
+
+var _ Key = (*SchemaVersionMigrationKey)(nil)
 
 type P2PCollectionKey struct {
 	CollectionID string
@@ -302,6 +311,10 @@ func NewSchemaHistoryKey(schemaId string, previousSchemaVersionID string) Schema
 		SchemaID:                schemaId,
 		PreviousSchemaVersionID: previousSchemaVersionID,
 	}
+}
+
+func NewSchemaVersionMigrationKey(schemaVersionID string) SchemaVersionMigrationKey {
+	return SchemaVersionMigrationKey{SourceSchemaVersionID: schemaVersionID}
 }
 
 func NewSequenceKey(name string) SequenceKey {
@@ -617,6 +630,24 @@ func (k SchemaHistoryKey) Bytes() []byte {
 }
 
 func (k SchemaHistoryKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k SchemaVersionMigrationKey) ToString() string {
+	result := SCHEMA_MIGRATION
+
+	if k.SourceSchemaVersionID != "" {
+		result = result + "/" + k.SourceSchemaVersionID
+	}
+
+	return result
+}
+
+func (k SchemaVersionMigrationKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k SchemaVersionMigrationKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
