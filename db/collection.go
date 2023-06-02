@@ -653,7 +653,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 	if exists {
-		return ErrDocumentAlreadyExists
+		return NewErrDocumentAlreadyExists(primaryKey.DocKey)
 	}
 	if isDeleted {
 		return ErrDocumentDeleted
