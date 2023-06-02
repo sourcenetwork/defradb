@@ -202,11 +202,6 @@ func (f *indexTestFixture) dropIndex(colName, indexName string) error {
 	return f.db.dropCollectionIndex(f.ctx, f.txn, colName, indexName)
 }
 
-func (f *indexTestFixture) dropAllIndexes(colName string) error {
-	col := (f.users.WithTxn(f.txn)).(*collection)
-	return col.dropAllIndexes(f.ctx)
-}
-
 func (f *indexTestFixture) countIndexPrefixes(colName, indexName string) int {
 	prefix := core.NewCollectionIndexKey(usersColName, indexName)
 	q, err := f.txn.Systemstore().Query(f.ctx, query.Query{
@@ -240,13 +235,7 @@ func (f *indexTestFixture) createCollectionIndexFor(
 	collectionName string,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	newDesc, err := f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
-	//if err != nil {
-	//return newDesc, err
-	//}
-	//f.txn, err = f.db.NewTxn(f.ctx, false)
-	//assert.NoError(f.t, err)
-	return newDesc, err
+	return f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
 }
 
 func (f *indexTestFixture) getAllIndexes() ([]client.CollectionIndexDescription, error) {
@@ -434,18 +423,71 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 }
 
 func TestCreateIndex_IfStorageFails_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
+	testErr := errors.New("test error")
 
-	name := "users_age_ASC"
-	desc := client.IndexDescription{
-		Name:   name,
-		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
+	testCases := []struct {
+		Name               string
+		ExpectedError      error
+		GetMockSystemstore func(t *testing.T) *mocks.DSReaderWriter
+		AlterDescription   func(desc *client.IndexDescription)
+	}{
+		{
+			Name:          "call Has() for custom index name",
+			ExpectedError: testErr,
+			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
+				store := mocks.NewDSReaderWriter(t)
+				store.EXPECT().Has(mock.Anything, mock.Anything).Unset()
+				store.EXPECT().Has(mock.Anything, mock.Anything).Return(false, testErr)
+				return store
+			},
+			AlterDescription: func(desc *client.IndexDescription) {},
+		},
+		{
+			Name:          "call Has() for generated index name",
+			ExpectedError: testErr,
+			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
+				store := mocks.NewDSReaderWriter(t)
+				store.EXPECT().Has(mock.Anything, mock.Anything).Unset()
+				store.EXPECT().Has(mock.Anything, mock.Anything).Return(false, testErr)
+				return store
+			},
+			AlterDescription: func(desc *client.IndexDescription) {
+				desc.Name = ""
+			},
+		},
+		{
+			Name:          "fails to store index description",
+			ExpectedError: NewErrInvalidStoredIndex(nil),
+			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
+				store := mocks.NewDSReaderWriter(t)
+				store.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Unset()
+				key := core.NewCollectionIndexKey(usersColName, testUsersColIndexName)
+				store.EXPECT().Put(mock.Anything, key.ToDS(), mock.Anything).Return(testErr)
+				return store
+			},
+			AlterDescription: func(desc *client.IndexDescription) {},
+		},
 	}
 
-	f.db.Close(f.ctx)
+	for _, testCase := range testCases {
+		f := newIndexTestFixture(t)
 
-	_, err := f.createCollectionIndex(desc)
-	assert.Error(t, err)
+		mockedTxn := f.mockTxn()
+
+		mockedTxn.MockSystemstore = testCase.GetMockSystemstore(t)
+		f.stubSystemStore(mockedTxn.MockSystemstore.EXPECT())
+		mockedTxn.EXPECT().Systemstore().Unset()
+		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
+
+		desc := client.IndexDescription{
+			Name:   testUsersColIndexName,
+			Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
+		}
+		testCase.AlterDescription(&desc)
+
+		_, err := f.createCollectionIndex(desc)
+		assert.ErrorIs(t, err, testErr, testCase.Name)
+	}
 }
 
 func TestCreateIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
@@ -499,6 +541,19 @@ func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCol
 	createIndexAndAssert(users, usersAgeFieldName, 2)
 	createIndexAndAssert(products, productsIDFieldName, 1)
 	createIndexAndAssert(products, productsCategoryFieldName, 2)
+}
+
+func TestCreateIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	testErr := errors.New("test error")
+
+	mockedRootStore := mocks.NewRootStore(t)
+	mockedRootStore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
+	f.db.rootstore = mockedRootStore
+
+	_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
+	require.ErrorIs(t, err, testErr)
 }
 
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
@@ -964,7 +1019,7 @@ func TestDropIndex_IfFailsToQuerySystemStorage_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, testErr)
 }
 
-func TestDropIndex_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
+func TestDropIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	f.createUserCollectionIndexOnName()
@@ -1015,7 +1070,7 @@ func TestDropAllIndex_ShouldDeleteAllIndexes(t *testing.T) {
 
 	assert.Equal(t, 2, f.countIndexPrefixes(usersColName, ""))
 
-	err = f.dropAllIndexes(usersColName)
+	err = f.users.dropAllIndexes(f.ctx, f.txn)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 0, f.countIndexPrefixes(usersColName, ""))
@@ -1027,6 +1082,80 @@ func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
 
 	f.db.Close(f.ctx)
 
-	err := f.dropAllIndexes(usersColName)
+	err := f.users.dropAllIndexes(f.ctx, f.txn)
 	assert.Error(t, err)
+}
+
+func TestDropAllIndexes_IfSystemStorageFails_ReturnError(t *testing.T) {
+	testErr := errors.New("test error")
+
+	testCases := []struct {
+		Name               string
+		ExpectedError      error
+		GetMockSystemstore func(t *testing.T) *mocks.DSReaderWriter
+	}{
+		{
+			Name:          "Query fails",
+			ExpectedError: testErr,
+			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
+				store := mocks.NewDSReaderWriter(t)
+				store.EXPECT().Query(mock.Anything, mock.Anything).Unset()
+				store.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
+				return store
+			},
+		},
+		{
+			Name:          "Query iterator fails",
+			ExpectedError: testErr,
+			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
+				store := mocks.NewDSReaderWriter(t)
+				store.EXPECT().Query(mock.Anything, mock.Anything).
+					Return(mocks.NewQueryResultsWithResults(t, query.Result{Error: testErr}), nil)
+				return store
+			},
+		},
+		{
+			Name:          "System storage fails to delete",
+			ExpectedError: NewErrInvalidStoredIndex(nil),
+			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
+				store := mocks.NewDSReaderWriter(t)
+				store.EXPECT().Query(mock.Anything, mock.Anything).
+					Return(mocks.NewQueryResultsWithValues(t, []byte{}), nil)
+				store.EXPECT().Delete(mock.Anything, mock.Anything).Maybe().Return(testErr)
+				return store
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		f := newIndexTestFixture(t)
+		f.createUserCollectionIndexOnName()
+
+		mockedTxn := f.mockTxn()
+
+		mockedTxn.MockSystemstore = testCase.GetMockSystemstore(t)
+		mockedTxn.EXPECT().Systemstore().Unset()
+		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
+
+		err := f.users.dropAllIndexes(f.ctx, f.txn)
+		assert.ErrorIs(t, err, testErr, testCase.Name)
+	}
+}
+
+func TestDropAllIndexes_ShouldCloseQueryIterator(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	mockedTxn := f.mockTxn()
+
+	mockedTxn.MockSystemstore = mocks.NewDSReaderWriter(t)
+	q := mocks.NewQueryResultsWithValues(t, []byte{})
+	q.EXPECT().Close().Unset()
+	q.EXPECT().Close().Return(nil)
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(q, nil)
+	mockedTxn.MockSystemstore.EXPECT().Delete(mock.Anything, mock.Anything).Maybe().Return(nil)
+	mockedTxn.EXPECT().Systemstore().Unset()
+	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
+
+	_ = f.users.dropAllIndexes(f.ctx, f.txn)
 }

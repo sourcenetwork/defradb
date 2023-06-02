@@ -250,7 +250,12 @@ func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	index, err := c.createIndex(ctx, desc)
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return client.IndexDescription{}, err
+	}
+
+	index, err := c.createIndex(ctx, txn, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -289,12 +294,8 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 	return nil
 }
 
-func (c *collection) dropAllIndexes(ctx context.Context) error {
+func (c *collection) dropAllIndexes(ctx context.Context, txn datastore.Txn) error {
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
-	txn, err := c.getTxn(ctx, false)
-	if err != nil {
-		return err
-	}
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix: prefix.ToString(),
 	})
@@ -352,13 +353,6 @@ func (c *collection) getIndexes(ctx context.Context, txn datastore.Txn) ([]Colle
 	}
 
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
-	if txn == nil {
-		var err error
-		txn, err = c.getTxn(ctx, true)
-		if err != nil {
-			return nil, err
-		}
-	}
 	indexes, err := deserializePrefix[client.IndexDescription](ctx, prefix.ToString(), txn.Systemstore())
 	if err != nil {
 		return nil, err
@@ -374,7 +368,11 @@ func (c *collection) getIndexes(ctx context.Context, txn datastore.Txn) ([]Colle
 }
 
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	indexes, err := c.getIndexes(ctx, nil)
+	txn, err := c.getTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	indexes, err := c.getIndexes(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -388,6 +386,7 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 
 func (c *collection) createIndex(
 	ctx context.Context,
+	txn datastore.Txn,
 	desc client.IndexDescription,
 ) (CollectionIndex, error) {
 	err := validateIndexDescription(desc)
@@ -400,12 +399,7 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	indexKey, err := c.processIndexName(ctx, &desc)
-	if err != nil {
-		return nil, err
-	}
-
-	txn, err := c.getTxn(ctx, false)
+	indexKey, err := c.processIndexName(ctx, txn, &desc)
 	if err != nil {
 		return nil, err
 	}
@@ -456,13 +450,9 @@ func (c *collection) checkExistingFields(
 
 func (c *collection) processIndexName(
 	ctx context.Context,
+	txn datastore.Txn,
 	desc *client.IndexDescription,
 ) (core.CollectionIndexKey, error) {
-	txn, err := c.getTxn(ctx, true)
-	if err != nil {
-		return core.CollectionIndexKey{}, err
-	}
-
 	var indexKey core.CollectionIndexKey
 	if desc.Name == "" {
 		nameIncrement := 1
