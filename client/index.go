@@ -35,13 +35,3 @@ type IndexDescription struct {
 	// Unique indicates whether the index is unique.
 	Unique bool
 }
-
-// CollectionIndexDescription describes an index on a collection.
-// It's useful for retrieving a list of indexes without having to
-// retrieve the entire collection description.
-type CollectionIndexDescription struct {
-	// CollectionName contains the name of the collection.
-	CollectionName string
-	// Index contains the index description.
-	Index IndexDescription
-}

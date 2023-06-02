@@ -238,7 +238,7 @@ func (f *indexTestFixture) createCollectionIndexFor(
 	return f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
 }
 
-func (f *indexTestFixture) getAllIndexes() ([]client.CollectionIndexDescription, error) {
+func (f *indexTestFixture) getAllIndexes() ([]collectionIndexDescription, error) {
 	return f.db.getAllCollectionIndexes(f.ctx, f.txn)
 }
 

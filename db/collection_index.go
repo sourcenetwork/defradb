@@ -21,6 +21,16 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
+// collectionIndexDescription describes an index on a collection.
+// It's useful for retrieving a list of indexes without having to
+// retrieve the entire collection description.
+type collectionIndexDescription struct {
+	// CollectionName contains the name of the collection.
+	CollectionName string
+	// Index contains the index description.
+	Index client.IndexDescription
+}
+
 // createCollectionIndex creates a new collection index and saves it to the database in its system store.
 func (db *db) createCollectionIndex(
 	ctx context.Context,
@@ -53,7 +63,7 @@ func (db *db) dropCollectionIndex(
 func (db *db) getAllCollectionIndexes(
 	ctx context.Context,
 	txn datastore.Txn,
-) ([]client.CollectionIndexDescription, error) {
+) ([]collectionIndexDescription, error) {
 	prefix := core.NewCollectionIndexKey("", "")
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix: prefix.ToString(),
@@ -67,7 +77,7 @@ func (db *db) getAllCollectionIndexes(
 		}
 	}()
 
-	indexes := make([]client.CollectionIndexDescription, 0)
+	indexes := make([]collectionIndexDescription, 0)
 	for res := range q.Next() {
 		if res.Error != nil {
 			return nil, res.Error
@@ -82,7 +92,7 @@ func (db *db) getAllCollectionIndexes(
 		if err != nil {
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
-		indexes = append(indexes, client.CollectionIndexDescription{
+		indexes = append(indexes, collectionIndexDescription{
 			CollectionName: indexKey.CollectionName,
 			Index:          colDesk,
 		})
