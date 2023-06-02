@@ -30,7 +30,6 @@ func TestStructIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					Unique: false,
 				},
 			},
 		},
@@ -43,30 +42,6 @@ func TestStructIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-				},
-			},
-		},
-		{
-			description: "Unique index",
-			sdl:         `type user @index(fields: ["name"], unique: true) {}`,
-			targetDescriptions: []client.IndexDescription{
-				{
-					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
-					},
-					Unique: true,
-				},
-			},
-		},
-		{
-			description: "Index explicitly not unique",
-			sdl:         `type user @index(fields: ["name"], unique: false) {}`,
-			targetDescriptions: []client.IndexDescription{
-				{
-					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
-					},
-					Unique: false,
 				},
 			},
 		},
@@ -125,7 +100,7 @@ func TestInvalidStructIndex(t *testing.T) {
 	cases := []invalidIndexTestCase{
 		{
 			description: "missing 'fields' argument",
-			sdl:         `type user @index(name: "userIndex", unique: true) {}`,
+			sdl:         `type user @index(name: "userIndex") {}`,
 			expectedErr: errIndexMissingFields,
 		},
 		{
@@ -156,11 +131,6 @@ func TestInvalidStructIndex(t *testing.T) {
 		{
 			description: "index name with special symbols",
 			sdl:         `type user @index(name: "user!name", fields: ["name"]) {}`,
-			expectedErr: errIndexInvalidArgument,
-		},
-		{
-			description: "invalid 'unique' value type",
-			sdl:         `type user @index(fields: ["name"], unique: "true") {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
@@ -218,7 +188,6 @@ func TestFieldIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					Unique: false,
 				},
 			},
 		},
@@ -233,35 +202,6 @@ func TestFieldIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
-					Unique: false,
-				},
-			},
-		},
-		{
-			description: "unique field index",
-			sdl: `type user {
-				name: String @index(unique: true)
-			}`,
-			targetDescriptions: []client.IndexDescription{
-				{
-					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
-					},
-					Unique: true,
-				},
-			},
-		},
-		{
-			description: "field index explicitly not unique",
-			sdl: `type user {
-				name: String @index(unique: false)
-			}`,
-			targetDescriptions: []client.IndexDescription{
-				{
-					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
-					},
-					Unique: false,
 				},
 			},
 		},
@@ -320,13 +260,6 @@ func TestInvalidFieldIndex(t *testing.T) {
 			description: "field index name with special symbols",
 			sdl: `type user {
 				name: String @index(name: "user!name") 
-			}`,
-			expectedErr: errIndexInvalidArgument,
-		},
-		{
-			description: "invalid 'unique' value type",
-			sdl: `type user {
-				name: String @index(unique: "true") 
 			}`,
 			expectedErr: errIndexInvalidArgument,
 		},

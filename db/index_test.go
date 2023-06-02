@@ -296,7 +296,6 @@ func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
 	assert.Equal(t, desc.Fields, resultDesc.Fields)
-	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
 func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {

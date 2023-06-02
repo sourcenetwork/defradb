@@ -26,7 +26,6 @@ import (
 const (
 	indexDirectiveLabel          = "index"
 	indexDirectivePropName       = "name"
-	indexDirectivePropUnique     = "unique"
 	indexDirectivePropFields     = "fields"
 	indexDirectivePropDirections = "directions"
 )
@@ -188,12 +187,6 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 			if !isValidIndexName(desc.Name) {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-		case indexDirectivePropUnique:
-			boolVal, ok := arg.Value.(*ast.BooleanValue)
-			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
-			}
-			desc.Unique = boolVal.Value
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
@@ -235,12 +228,6 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-		case indexDirectivePropUnique:
-			boolVal, ok := arg.Value.(*ast.BooleanValue)
-			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
-			}
-			desc.Unique = boolVal.Value
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
