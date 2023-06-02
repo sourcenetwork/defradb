@@ -170,13 +170,13 @@ func (i *collectionSimpleIndex) Update(
 	return i.Save(ctx, txn, newDoc)
 }
 
-func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
-	prefixKey := core.IndexDataStoreKey{}
-	prefixKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
-	prefixKey.IndexID = strconv.Itoa(int(i.desc.ID))
-	q, err := txn.Datastore().Query(ctx, query.Query{
-		Prefix: prefixKey.ToString(),
-	})
+func iteratePrefixKeys(
+	ctx context.Context,
+	prefix string,
+	storage ds.Read,
+	execFunc func(context.Context, ds.Key) error,
+) error {
+	q, err := storage.Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
 		return err
 	}
@@ -190,13 +190,29 @@ func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn
 		if res.Error != nil {
 			return res.Error
 		}
-		err = txn.Datastore().Delete(ctx, ds.NewKey(res.Key))
+		err = execFunc(ctx, ds.NewKey(res.Key))
 		if err != nil {
-			return NewCanNotDeleteIndexedField(err)
+			return err
 		}
 	}
 
 	return nil
+}
+func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
+	prefixKey := core.IndexDataStoreKey{}
+	prefixKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
+	prefixKey.IndexID = strconv.Itoa(int(i.desc.ID))
+
+	err := iteratePrefixKeys(ctx, prefixKey.ToString(), txn.Datastore(),
+		func(ctx context.Context, key ds.Key) error {
+			err := txn.Datastore().Delete(ctx, key)
+			if err != nil {
+				return NewCanNotDeleteIndexedField(err)
+			}
+			return nil
+		})
+
+	return err
 }
 
 func (i *collectionSimpleIndex) Name() string {
@@ -296,28 +312,13 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 
 func (c *collection) dropAllIndexes(ctx context.Context, txn datastore.Txn) error {
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
-	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: prefix.ToString(),
-	})
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := q.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close collection query", err)
-		}
-	}()
 
-	for res := range q.Next() {
-		if res.Error != nil {
-			return res.Error
-		}
-		err = txn.Systemstore().Delete(ctx, ds.NewKey(res.Key))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	err := iteratePrefixKeys(ctx, prefix.ToString(), txn.Systemstore(),
+		func(ctx context.Context, key ds.Key) error {
+			return txn.Systemstore().Delete(ctx, key)
+		})
+
+	return err
 }
 
 func deserializePrefix[T any](ctx context.Context, prefix string, storage ds.Read) ([]T, error) {
