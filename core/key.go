@@ -41,14 +41,15 @@ const (
 )
 
 const (
-	COLLECTION                = "/collection/names"
-	COLLECTION_SCHEMA         = "/collection/schema"
-	COLLECTION_SCHEMA_VERSION = "/collection/version"
-	COLLECTION_INDEX          = "/collection/index"
-	SEQ                       = "/seq"
-	PRIMARY_KEY               = "/pk"
-	REPLICATOR                = "/replicator/id"
-	P2P_COLLECTION            = "/p2p/collection"
+	COLLECTION                        = "/collection/names"
+	COLLECTION_SCHEMA                 = "/collection/schema"
+	COLLECTION_SCHEMA_VERSION         = "/collection/version/v"
+	COLLECTION_SCHEMA_VERSION_HISTORY = "/collection/version/h"
+	COLLECTION_INDEX                  = "/collection/index"
+	SEQ                               = "/seq"
+	PRIMARY_KEY                       = "/pk"
+	REPLICATOR                        = "/replicator/id"
+	P2P_COLLECTION                    = "/p2p/collection"
 )
 
 // Key is an interface that represents a key in the database.
@@ -128,6 +129,19 @@ type CollectionIndexKey struct {
 }
 
 var _ Key = (*CollectionIndexKey)(nil)
+
+// SchemaHistoryKey holds the pathway through the schema version history for
+// any given schema.
+//
+// The key points to the schema version id of the next version of the schema.
+// If a SchemaHistoryKey does not exist for a given SchemaVersionID it means
+// that that SchemaVersionID is for the latest version.
+type SchemaHistoryKey struct {
+	SchemaID                string
+	PreviousSchemaVersionID string
+}
+
+var _ Key = (*SchemaHistoryKey)(nil)
 
 type P2PCollectionKey struct {
 	CollectionID string
@@ -281,6 +295,13 @@ func (k CollectionIndexKey) Bytes() []byte {
 // ToDS returns the datastore key
 func (k CollectionIndexKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
+}
+
+func NewSchemaHistoryKey(schemaId string, previousSchemaVersionID string) SchemaHistoryKey {
+	return SchemaHistoryKey{
+		SchemaID:                schemaId,
+		PreviousSchemaVersionID: previousSchemaVersionID,
+	}
 }
 
 func NewSequenceKey(name string) SequenceKey {
@@ -574,6 +595,28 @@ func (k CollectionSchemaVersionKey) Bytes() []byte {
 }
 
 func (k CollectionSchemaVersionKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k SchemaHistoryKey) ToString() string {
+	result := COLLECTION_SCHEMA_VERSION_HISTORY
+
+	if k.SchemaID != "" {
+		result = result + "/" + k.SchemaID
+	}
+
+	if k.PreviousSchemaVersionID != "" {
+		result = result + "/" + k.PreviousSchemaVersionID
+	}
+
+	return result
+}
+
+func (k SchemaHistoryKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k SchemaHistoryKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
