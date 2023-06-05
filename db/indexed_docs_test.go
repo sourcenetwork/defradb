@@ -981,3 +981,35 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		require.ErrorIs(t, err, testErr)
 	}
 }
+
+func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
+	f := newIndexTestFixture(t)
+	f.createUserCollectionIndexOnName()
+
+	docJSON, err := json.Marshal(struct {
+		Age int `json:"age"`
+	}{Age: 44})
+	require.NoError(f.t, err)
+
+	doc, err := client.NewDocFromJSON(docJSON)
+	require.NoError(f.t, err)
+
+	f.saveDocToCollection(doc, f.users)
+
+	oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
+		Values(testNilValue).Build()
+
+	err = doc.Set(usersNameFieldName, "John")
+	require.NoError(f.t, err)
+
+	err = f.users.Update(f.ctx, doc)
+	require.NoError(f.t, err)
+	f.commitTxn()
+
+	newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+
+	_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+	require.NoError(t, err)
+	_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+	require.Error(t, err)
+}
