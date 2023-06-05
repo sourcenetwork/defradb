@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/db/fetcher"
 )
 
 func (c *collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
@@ -52,12 +51,7 @@ func (c *collection) get(
 	showDeleted bool,
 ) (*client.Document, error) {
 	// create a new document fetcher
-	var df fetcher.Fetcher
-	if c.fetcherFactory != nil {
-		df = c.fetcherFactory()
-	} else {
-		df = new(fetcher.DocumentFetcher)
-	}
+	df := c.newFetcher()
 	desc := &c.desc
 	// initialize it with the primary index
 	err := df.Init(&c.desc, fields, false, showDeleted)
