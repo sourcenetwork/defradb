@@ -384,7 +384,7 @@ func (k CollectionSchemaKey) ToDS() ds.Key {
 }
 
 func (k CollectionSchemaVersionKey) ToString() string {
-	result := COLLECTION_SCHEMA_VERSION
+	result := COLLECTION_SCHEMA_VERSION + "/" + string(ValueKey)
 
 	if k.SchemaVersionId != "" {
 		result = result + "/" + k.SchemaVersionId
