@@ -228,24 +228,14 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 		return new(fetcher.DocumentFetcher)
 	}
 }
-func (c *collection) indexExistingDocs(
+
+func (c *collection) iterateAllDocs(
 	ctx context.Context,
 	txn datastore.Txn,
-	index CollectionIndex,
+	fields []*client.FieldDescription,
+	exec func(doc *client.Document) error,
 ) error {
 	df := c.newFetcher()
-
-	fields := make([]*client.FieldDescription, 0, 1)
-	for _, field := range index.Description().Fields {
-		for i := range c.desc.Schema.Fields {
-			colField := &c.desc.Schema.Fields[i]
-			if field.Name == colField.Name {
-				fields = append(fields, colField)
-				break
-			}
-		}
-	}
-
 	err := df.Init(&c.desc, fields, false, false)
 	if err != nil {
 		_ = df.Close()
@@ -270,13 +260,34 @@ func (c *collection) indexExistingDocs(
 		if doc == nil {
 			break
 		}
-		err = index.Save(ctx, txn, doc)
+		err = exec(doc)
 		if err != nil {
 			return err
 		}
 	}
 
 	return df.Close()
+}
+
+func (c *collection) indexExistingDocs(
+	ctx context.Context,
+	txn datastore.Txn,
+	index CollectionIndex,
+) error {
+	fields := make([]*client.FieldDescription, 0, 1)
+	for _, field := range index.Description().Fields {
+		for i := range c.desc.Schema.Fields {
+			colField := &c.desc.Schema.Fields[i]
+			if field.Name == colField.Name {
+				fields = append(fields, colField)
+				break
+			}
+		}
+	}
+
+	return c.iterateAllDocs(ctx, txn, fields, func(doc *client.Document) error {
+		return index.Save(ctx, txn, doc)
+	})
 }
 
 func (c *collection) DropIndex(ctx context.Context, indexName string) error {
