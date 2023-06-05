@@ -236,6 +236,7 @@ func (db *db) updateCollection(
 	if err != nil {
 		return nil, err
 	}
+	priorSchemaVersionID := desc.Schema.VersionID
 	schemaVersionID := cid.String()
 	desc.Schema.VersionID = schemaVersionID
 
@@ -260,6 +261,12 @@ func (db *db) updateCollection(
 
 	collectionKey := core.NewCollectionKey(desc.Name)
 	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
+	if err != nil {
+		return nil, err
+	}
+
+	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, schemaVersionID)
+	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(priorSchemaVersionID))
 	if err != nil {
 		return nil, err
 	}

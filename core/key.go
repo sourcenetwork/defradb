@@ -106,6 +106,19 @@ type CollectionSchemaVersionKey struct {
 
 var _ Key = (*CollectionSchemaVersionKey)(nil)
 
+// SchemaHistoryKey holds the pathway through the schema version history for
+// any given schema.
+//
+// The keys point to the schema version id of the next version of the schema.
+// If a SchemaHistoryKey does not exist for a given SchemaVersionID it means
+// that that SchemaVersionID is for the latest version.
+type SchemaHistoryKey struct {
+	SchemaID             string
+	PriorSchemaVersionId string
+}
+
+var _ Key = (*SchemaHistoryKey)(nil)
+
 type P2PCollectionKey struct {
 	CollectionID string
 }
@@ -208,6 +221,13 @@ func NewCollectionSchemaKey(schemaId string) CollectionSchemaKey {
 
 func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersionKey {
 	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
+}
+
+func NewSchemaHistoryKey(schemaId string, priorSchemaVersionId string) SchemaHistoryKey {
+	return SchemaHistoryKey{
+		SchemaID:             schemaId,
+		PriorSchemaVersionId: priorSchemaVersionId,
+	}
 }
 
 func NewSequenceKey(name string) SequenceKey {
@@ -398,6 +418,28 @@ func (k CollectionSchemaVersionKey) Bytes() []byte {
 }
 
 func (k CollectionSchemaVersionKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k SchemaHistoryKey) ToString() string {
+	result := COLLECTION_SCHEMA_VERSION + "/" + string(PriorityKey)
+
+	if k.SchemaID != "" {
+		result = result + "/" + k.SchemaID
+	}
+
+	if k.PriorSchemaVersionId != "" {
+		result = result + "/" + k.PriorSchemaVersionId
+	}
+
+	return result
+}
+
+func (k SchemaHistoryKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k SchemaHistoryKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
