@@ -30,11 +30,19 @@ const (
 	indexFieldNilValue    = "n"
 )
 
+// CollectionIndex is an interface for collection indexes
+// It abstracts away common index functionality to be implemented
+// by different index types: non-unique, unique, and composite
 type CollectionIndex interface {
+	// Save indexes a document by storing it
 	Save(context.Context, datastore.Txn, *client.Document) error
+	// Update updates an existing document in the index
 	Update(context.Context, datastore.Txn, *client.Document, *client.Document) error
+	// RemoveAll removes all documents from the index
 	RemoveAll(context.Context, datastore.Txn) error
+	// Name returns the name of the index
 	Name() string
+	// Description returns the description of the index
 	Description() client.IndexDescription
 }
 
@@ -86,6 +94,7 @@ func getFieldValConverter(kind client.FieldKind) func(any) ([]byte, error) {
 	}
 }
 
+// NewCollectionIndex creates a new collection index
 func NewCollectionIndex(
 	collection client.Collection,
 	desc client.IndexDescription,

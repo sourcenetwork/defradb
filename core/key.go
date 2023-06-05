@@ -68,7 +68,7 @@ type DataStoreKey struct {
 
 var _ Key = (*DataStoreKey)(nil)
 
-// IndexDataStoreKey is a type that represents a key of an indexed document in the database.
+// IndexDataStoreKey is key of an indexed document in the database.
 type IndexDataStoreKey struct {
 	CollectionID string
 	IndexID      string
@@ -116,9 +116,10 @@ type CollectionSchemaVersionKey struct {
 
 var _ Key = (*CollectionSchemaVersionKey)(nil)
 
+// CollectionIndexKey is key for storing an index description
 type CollectionIndexKey struct {
-	CollectionName string
-	IndexName      string
+	CollectionID string
+	IndexID      string
 }
 
 var _ Key = (*CollectionIndexKey)(nil)
@@ -228,7 +229,7 @@ func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersi
 }
 
 func NewCollectionIndexKey(colID, name string) CollectionIndexKey {
-	return CollectionIndexKey{CollectionName: colID, IndexName: name}
+	return CollectionIndexKey{CollectionID: colID, IndexID: name}
 }
 
 func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
@@ -236,9 +237,9 @@ func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 	if len(keyArr) < 4 || len(keyArr) > 5 || keyArr[1] != "collection" || keyArr[2] != "index" {
 		return CollectionIndexKey{}, ErrInvalidKey
 	}
-	result := CollectionIndexKey{CollectionName: keyArr[3]}
+	result := CollectionIndexKey{CollectionID: keyArr[3]}
 	if len(keyArr) == 5 {
-		result.IndexName = keyArr[4]
+		result.IndexID = keyArr[4]
 	}
 	return result, nil
 }
@@ -532,10 +533,10 @@ func (k CollectionSchemaVersionKey) ToDS() ds.Key {
 func (k CollectionIndexKey) ToString() string {
 	result := COLLECTION_INDEX
 
-	if k.CollectionName != "" {
-		result = result + "/" + k.CollectionName
-		if k.IndexName != "" {
-			result = result + "/" + k.IndexName
+	if k.CollectionID != "" {
+		result = result + "/" + k.CollectionID
+		if k.IndexID != "" {
+			result = result + "/" + k.IndexID
 		}
 	}
 
