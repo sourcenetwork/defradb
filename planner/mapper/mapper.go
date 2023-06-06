@@ -889,7 +889,7 @@ sourceLoop:
 			enumerable.New(existingFields),
 		)
 
-		matchingFields := enumerable.Where(allFields, func(existingField Requestable) (bool, error) {
+		matchingFields := enumerable.Where[Requestable](allFields, func(existingField Requestable) (bool, error) {
 			return existingField.GetIndex() == keyIndex, nil
 		})
 
