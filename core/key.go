@@ -70,9 +70,12 @@ var _ Key = (*DataStoreKey)(nil)
 
 // IndexDataStoreKey is key of an indexed document in the database.
 type IndexDataStoreKey struct {
+	// CollectionID is the id (unique number) of the collection
 	CollectionID string
-	IndexID      string
-	FieldValues  []string
+	// IndexID is the id (unique number) of the index
+	IndexID string
+	// FieldValues is the values of the fields in the index
+	FieldValues []string
 }
 
 var _ Key = (*IndexDataStoreKey)(nil)
@@ -116,10 +119,12 @@ type CollectionSchemaVersionKey struct {
 
 var _ Key = (*CollectionSchemaVersionKey)(nil)
 
-// CollectionIndexKey is key for storing an index description
+// CollectionIndexKey to a stored description of an index
 type CollectionIndexKey struct {
-	CollectionID string
-	IndexID      string
+	// CollectionName is the name of the collection that the index is on
+	CollectionName string
+	// IndexName is the name of the index
+	IndexName string
 }
 
 var _ Key = (*CollectionIndexKey)(nil)
@@ -228,20 +233,53 @@ func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersi
 	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
 }
 
-func NewCollectionIndexKey(colID, name string) CollectionIndexKey {
-	return CollectionIndexKey{CollectionID: colID, IndexID: name}
+func NewCollectionIndexKey(colID, indexName string) CollectionIndexKey {
+	return CollectionIndexKey{CollectionName: colID, IndexName: indexName}
 }
 
+// NewCollectionIndexKeyFromString creates a new CollectionIndexKey from a string.
+// It expects the input string is in the following format:
+//
+// /collection/index/[CollectionName]/[IndexName]
+//
+// Where [IndexName] might be omitted. Anything else will return an error.
 func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 	keyArr := strings.Split(key, "/")
 	if len(keyArr) < 4 || len(keyArr) > 5 || keyArr[1] != "collection" || keyArr[2] != "index" {
 		return CollectionIndexKey{}, ErrInvalidKey
 	}
-	result := CollectionIndexKey{CollectionID: keyArr[3]}
+	result := CollectionIndexKey{CollectionName: keyArr[3]}
 	if len(keyArr) == 5 {
-		result.IndexID = keyArr[4]
+		result.IndexName = keyArr[4]
 	}
 	return result, nil
+}
+
+// ToString returns the string representation of the key
+// It is in the following format:
+// /collection/index/[CollectionName]/[IndexName]
+// if [CollectionName] is empty, the rest is ignored
+func (k CollectionIndexKey) ToString() string {
+	result := COLLECTION_INDEX
+
+	if k.CollectionName != "" {
+		result = result + "/" + k.CollectionName
+		if k.IndexName != "" {
+			result = result + "/" + k.IndexName
+		}
+	}
+
+	return result
+}
+
+// Bytes returns the byte representation of the key
+func (k CollectionIndexKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+// ToDS returns the datastore key
+func (k CollectionIndexKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
 }
 
 func NewSequenceKey(name string) SequenceKey {
@@ -352,35 +390,34 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	}
 }
 
-// NewIndexDataStoreKey creates a new IndexDataStoreKey from a string as best as it can,
-// splitting the input using '/' as a field deliminator.  It assumes
-// that the input string is in the following format:
+// NewIndexDataStoreKey creates a new IndexDataStoreKey from a string.
+// It expects the input string is in the following format:
 //
-// /[CollectionID]/[IndexID]/[FieldID](/[FieldID]...)
+// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)
 //
-// Any properties before the above (assuming a '/' deliminator) are ignored
+// Where [CollectionID] and [IndexID] are integers
 func NewIndexDataStoreKey(key string) (IndexDataStoreKey, error) {
-	indexKey := IndexDataStoreKey{}
 	if key == "" {
-		return indexKey, ErrEmptyKey
+		return IndexDataStoreKey{}, ErrEmptyKey
 	}
 
 	if !strings.HasPrefix(key, "/") {
-		return indexKey, ErrInvalidKey
+		return IndexDataStoreKey{}, ErrInvalidKey
 	}
 
 	elements := strings.Split(key[1:], "/")
 
 	// With less than 3 elements, we know it's an invalid key
 	if len(elements) < 3 {
-		return indexKey, ErrInvalidKey
+		return IndexDataStoreKey{}, ErrInvalidKey
 	}
 
 	_, err := strconv.Atoi(elements[0])
 	if err != nil {
 		return IndexDataStoreKey{}, ErrInvalidKey
 	}
-	indexKey.CollectionID = elements[0]
+
+	indexKey := IndexDataStoreKey{CollectionID: elements[0]}
 
 	_, err = strconv.Atoi(elements[1])
 	if err != nil {
@@ -399,14 +436,21 @@ func NewIndexDataStoreKey(key string) (IndexDataStoreKey, error) {
 	return indexKey, nil
 }
 
+// Bytes returns the byte representation of the key
 func (k *IndexDataStoreKey) Bytes() []byte {
 	return []byte(k.ToString())
 }
 
+// ToDS returns the datastore key
 func (k *IndexDataStoreKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
+// ToString returns the string representation of the key
+// It is in the following format:
+// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)
+// If while composing the string from left to right, a component
+// is empty, the string is returned up to that point
 func (k *IndexDataStoreKey) ToString() string {
 	sb := strings.Builder{}
 
@@ -433,10 +477,15 @@ func (k *IndexDataStoreKey) ToString() string {
 	return sb.String()
 }
 
+// Equal returns true if the two keys are equal 
 func (k IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
-	if k.CollectionID != other.CollectionID ||
-		k.IndexID != other.IndexID ||
-		len(k.FieldValues) != len(other.FieldValues) {
+	if k.CollectionID != other.CollectionID {
+		return false
+	}
+	if k.IndexID != other.IndexID {
+		return false
+	}
+	if len(k.FieldValues) != len(other.FieldValues) {
 		return false
 	}
 	for i := range k.FieldValues {
@@ -527,27 +576,6 @@ func (k CollectionSchemaVersionKey) Bytes() []byte {
 }
 
 func (k CollectionSchemaVersionKey) ToDS() ds.Key {
-	return ds.NewKey(k.ToString())
-}
-
-func (k CollectionIndexKey) ToString() string {
-	result := COLLECTION_INDEX
-
-	if k.CollectionID != "" {
-		result = result + "/" + k.CollectionID
-		if k.IndexID != "" {
-			result = result + "/" + k.IndexID
-		}
-	}
-
-	return result
-}
-
-func (k CollectionIndexKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
-func (k CollectionIndexKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 

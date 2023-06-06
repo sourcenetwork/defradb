@@ -146,15 +146,15 @@ func TestNewIndexKeyFromString_IfInvalidString_ReturnError(t *testing.T) {
 func TestNewIndexKeyFromString_IfOnlyCollectionName_ReturnKey(t *testing.T) {
 	key, err := NewCollectionIndexKeyFromString("/collection/index/col")
 	assert.NoError(t, err)
-	assert.Equal(t, key.CollectionID, "col")
-	assert.Equal(t, key.IndexID, "")
+	assert.Equal(t, key.CollectionName, "col")
+	assert.Equal(t, key.IndexName, "")
 }
 
 func TestNewIndexKeyFromString_IfFullKeyString_ReturnKey(t *testing.T) {
 	key, err := NewCollectionIndexKeyFromString("/collection/index/col/idx")
 	assert.NoError(t, err)
-	assert.Equal(t, key.CollectionID, "col")
-	assert.Equal(t, key.IndexID, "idx")
+	assert.Equal(t, key.CollectionName, "col")
+	assert.Equal(t, key.IndexName, "idx")
 }
 
 func TestIndexDatastoreKey_ToString(t *testing.T) {
