@@ -17,4 +17,5 @@ type ExplainType string
 const (
 	SimpleExplain  ExplainType = "simple"
 	ExecuteExplain ExplainType = "execute"
+	DebugExplain   ExplainType = "debug"
 )
