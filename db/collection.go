@@ -191,6 +191,12 @@ func (db *db) createCollection(
 		logging.NewKV("Name", col.Name()),
 		logging.NewKV("SchemaID", col.SchemaID()),
 	)
+	
+	for _, index := range col.desc.Indexes {
+		if _, err := col.createIndex(ctx, txn, index); err != nil {
+			return nil, err
+		}
+	}
 	return col, nil
 }
 

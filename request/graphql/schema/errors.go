@@ -25,6 +25,7 @@ const (
 	errIndexMissingFields         string = "index missing fields"
 	errIndexUnknownArgument       string = "index with unknown argument"
 	errIndexInvalidArgument       string = "index with invalid argument"
+	errIndexInvalidName           string = "index with invalid name"
 )
 
 var (
@@ -55,6 +56,10 @@ func NewErrDuplicateField(objectName, fieldName string) error {
 		errors.NewKV("Object", objectName),
 		errors.NewKV("Field", fieldName),
 	)
+}
+
+func NewErrIndexWithInvalidName(name string) error {
+	return errors.New(errIndexInvalidName, errors.NewKV("Name", name))
 }
 
 func NewErrFieldMissingRelation(objectName, fieldName string, objectType string) error {

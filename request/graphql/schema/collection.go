@@ -151,7 +151,10 @@ func fromAstDefinition(
 	}, nil
 }
 
-func isValidIndexName(name string) bool {
+// IsValidIndexName returns true if the name is a valid index name.
+// Valid index names must start with a letter or underscore, and can
+// contain letters, numbers, and underscores.
+func IsValidIndexName(name string) bool {
 	if len(name) == 0 {
 		return false
 	}
@@ -184,8 +187,8 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
 			desc.Name = nameVal.Value
-			if !isValidIndexName(desc.Name) {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			if !IsValidIndexName(desc.Name) {
+				return client.IndexDescription{}, NewErrIndexWithInvalidName(desc.Name)
 			}
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
@@ -205,7 +208,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
 			desc.Name = nameVal.Value
-			if !isValidIndexName(desc.Name) {
+			if !IsValidIndexName(desc.Name) {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
 		case indexDirectivePropFields:

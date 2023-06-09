@@ -138,7 +138,11 @@ type Collection interface {
 	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)
 
 	// CreateIndex creates a new index on the collection.
-	CreateIndex(ctx context.Context, desc IndexDescription) (IndexDescription, error)
+	// `IndexDescription` contains the description of the index to be created.
+	// `IndexDescription.Name` must start with a letter or an underscore and can 
+	// only contain letters, numbers, and underscores.
+	// If the name of the index is not provided, it will be generated.
+	CreateIndex(context.Context, IndexDescription) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.
 	DropIndex(ctx context.Context, indexName string) error

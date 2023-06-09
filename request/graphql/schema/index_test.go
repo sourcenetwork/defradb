@@ -240,28 +240,28 @@ func TestInvalidFieldIndex(t *testing.T) {
 			sdl: `type user {
 				name: String @index(name: "1_user_name") 
 			}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "field index with empty name",
 			sdl: `type user {
 				name: String @index(name: "") 
 			}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "field index name with spaces",
 			sdl: `type user {
 				name: String @index(name: "user name") 
 			}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: errIndexInvalidName,
 		},
 		{
 			description: "field index name with special symbols",
 			sdl: `type user {
 				name: String @index(name: "user!name") 
 			}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: errIndexInvalidName,
 		},
 	}
 
@@ -287,7 +287,7 @@ func parseInvalidIndexAndTest(t *testing.T, testCase invalidIndexTestCase) {
 	ctx := context.Background()
 
 	_, err := FromString(ctx, testCase.sdl)
-	assert.EqualError(t, err, testCase.expectedErr, testCase.description)
+	assert.ErrorContains(t, err, testCase.expectedErr, testCase.description)
 }
 
 type indexTestCase struct {

@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 const (
@@ -323,7 +324,7 @@ func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	assert.Equal(t, client.Ascending, newDesc.Fields[0].Direction)
 }
 
-func TestCreateIndex_IfNameIsNotSpecified_GenerateWithLowerCase(t *testing.T) {
+func TestCreateIndex_IfNameIsNotSpecified_Generate(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	colDesc := getUsersCollectionDesc()
 	const colName = "UsErS"
@@ -553,6 +554,15 @@ func TestCreateIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
 
 	_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 	require.ErrorIs(t, err, testErr)
+}
+
+func TestCreateIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	indexDesc := getUsersIndexDescOnName()
+	indexDesc.Name = "!"
+	_, err := f.users.CreateIndex(f.ctx, indexDesc)
+	require.ErrorIs(t, err, schema.NewErrIndexWithInvalidName(indexDesc.Name))
 }
 
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {

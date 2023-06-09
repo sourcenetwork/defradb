@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
+func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Creation of index should not hinder querying",
+		Description: "Creation of index with collection should not hinder querying",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -36,6 +36,10 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 						"Name":	"John",
 						"Age":	21
 					}`,
+			},
+			testUtils.DropIndex{
+				CollectionID: 0,
+				IndexID:      0,
 			},
 			testUtils.Request{
 				Request: `

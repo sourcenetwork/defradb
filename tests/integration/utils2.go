@@ -314,6 +314,8 @@ func executeTestCase(
 	collections := getCollections(ctx, t, nodes, collectionNames)
 	// documents are by collection (index), these are not node specific.
 	documents := getDocuments(ctx, t, testCase, collections, startActionIndex)
+	// indexes are by collection (index)
+	indexes := getIndexes(ctx, collections)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		// declare default database for ease of use
@@ -347,6 +349,7 @@ func executeTestCase(
 			// If the db was restarted we need to refresh the collection definitions as the old instances
 			// will reference the old (closed) database instances.
 			collections = getCollections(ctx, t, nodes, collectionNames)
+			indexes = getIndexes(ctx, collections)
 
 		case ConnectPeers:
 			syncChans = append(syncChans, connectPeers(ctx, t, testCase, action, nodes, nodeAddresses))
@@ -367,11 +370,13 @@ func executeTestCase(
 			updateSchema(ctx, t, nodes, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
 			collections = getCollections(ctx, t, nodes, collectionNames)
+			indexes = getIndexes(ctx, collections)
 
 		case SchemaPatch:
 			patchSchema(ctx, t, nodes, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
 			collections = getCollections(ctx, t, nodes, collectionNames)
+			indexes = getIndexes(ctx, collections)
 
 		case CreateDoc:
 			documents = createDoc(ctx, t, testCase, nodes, collections, documents, action)
@@ -381,6 +386,12 @@ func executeTestCase(
 
 		case UpdateDoc:
 			updateDoc(ctx, t, testCase, nodes, collections, documents, action)
+
+		case CreateIndex:
+			indexes = createIndex(ctx, t, testCase, nodes, collections, indexes, action)
+
+		case DropIndex:
+			dropIndex(ctx, t, testCase, nodes, collections, indexes, action)
 
 		case TransactionRequest2:
 			txns = executeTransactionRequest(ctx, t, db, txns, testCase, action)
@@ -819,6 +830,35 @@ func getDocuments(
 	return documentsByCollection
 }
 
+func getIndexes(
+	ctx context.Context,
+	collections [][]client.Collection,
+) [][][]client.IndexDescription {
+	if len(collections) == 0 {
+		return [][][]client.IndexDescription{}
+	}
+
+	result := make([][][]client.IndexDescription, len(collections))
+
+	for i, nodeCols := range collections {
+		result[i] = make([][]client.IndexDescription, len(nodeCols))
+
+		for j, col := range nodeCols {
+			if col == nil {
+				continue
+			}
+			colIndexes, err := col.GetIndexes(ctx)
+			if err != nil {
+				continue
+			}
+
+			result[i][j] = colIndexes
+		}
+	}
+
+	return result
+}
+
 // updateSchema updates the schema using the given details.
 func updateSchema(
 	ctx context.Context,
@@ -947,6 +987,91 @@ func updateDoc(
 			actionNodes,
 			nodeID,
 			func() error { return collections[action.CollectionID].Save(ctx, doc) },
+		)
+		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+// createIndex creates a secondary index using the collection api.
+func createIndex(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	nodes []*node.Node,
+	nodeCollections [][]client.Collection,
+	indexes [][][]client.IndexDescription,
+	action CreateIndex,
+) [][][]client.IndexDescription {
+	if action.CollectionID >= len(indexes) {
+		// Expand the slice if required, so that the index can be accessed by collection index
+		indexes = append(indexes,
+			make([][][]client.IndexDescription, action.CollectionID-len(indexes)+1)...)
+	}
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+		indexDesc := client.IndexDescription{
+			Name: action.IndexName,
+		}
+		if action.FieldName != "" {
+			indexDesc.Fields = []client.IndexedFieldDescription{
+				{
+					Name: action.FieldName,
+				},
+			}
+		} else if len(action.FieldsNames) > 0 {
+			for i := range action.FieldsNames {
+				indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
+					Name:      action.FieldsNames[i],
+					Direction: action.Directions[i],
+				})
+			}
+		}
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error {
+				desc, err := collections[action.CollectionID].CreateIndex(ctx, indexDesc)
+				if err != nil {
+					return err
+				}
+				indexes[nodeID][action.CollectionID] =
+					append(indexes[nodeID][action.CollectionID], desc)
+				return nil
+			},
+		)
+		if AssertError(t, testCase.Description, err, action.ExpectedError) {
+			return nil
+		}
+	}
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, false)
+
+	return indexes
+}
+
+// dropIndex drops the secondary index using the collection api.
+func dropIndex(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	nodes []*node.Node,
+	nodeCollections [][]client.Collection,
+	indexes [][][]client.IndexDescription,
+	action DropIndex,
+) {
+	var expectedErrorRaised bool
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+		indexDesc := indexes[nodeID][action.CollectionID][action.IndexID]
+
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error {
+				return collections[action.CollectionID].DropIndex(ctx, indexDesc.Name)
+			},
 		)
 		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
 	}

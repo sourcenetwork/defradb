@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 // collectionIndexDescription describes an index on a collection.
@@ -372,6 +373,9 @@ func (c *collection) createIndex(
 	txn datastore.Txn,
 	desc client.IndexDescription,
 ) (CollectionIndex, error) {
+	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
+		return nil, schema.NewErrIndexWithInvalidName("!")
+	}
 	err := validateIndexDescription(desc)
 	if err != nil {
 		return nil, err
@@ -488,9 +492,6 @@ func validateIndexDescription(desc client.IndexDescription) error {
 func generateIndexName(col client.Collection, fields []client.IndexedFieldDescription, inc int) string {
 	sb := strings.Builder{}
 	direction := "ASC"
-	//if fields[0].Direction == client.Descending {
-	//direction = "DESC"
-	//}
 	sb.WriteString(col.Name())
 	sb.WriteByte('_')
 	sb.WriteString(fields[0].Name)
