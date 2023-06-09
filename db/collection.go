@@ -191,7 +191,7 @@ func (db *db) createCollection(
 		logging.NewKV("Name", col.Name()),
 		logging.NewKV("SchemaID", col.SchemaID()),
 	)
-	
+
 	for _, index := range col.desc.Indexes {
 		if _, err := col.createIndex(ctx, txn, index); err != nil {
 			return nil, err
@@ -287,7 +287,6 @@ func (db *db) validateUpdateCollection(
 	txn datastore.Txn,
 	proposedDesc client.CollectionDescription,
 ) (bool, error) {
-	var hasChanged bool
 	existingCollection, err := db.getCollectionByName(ctx, txn, proposedDesc.Name)
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
@@ -321,6 +320,20 @@ func (db *db) validateUpdateCollection(
 		return false, ErrCannotSetVersionID
 	}
 
+	// If the field is new, then the collection has changed
+	hasChanged, err := validateUpdateCollectionFields(existingDesc, proposedDesc)
+	if err != nil {
+		return hasChanged, err
+	}
+
+	return hasChanged, nil
+}
+
+func validateUpdateCollectionFields(
+	existingDesc client.CollectionDescription,
+	proposedDesc client.CollectionDescription,
+) (bool, error) {
+	hasChanged := false
 	existingFieldsByID := map[client.FieldID]client.FieldDescription{}
 	existingFieldIndexesByName := map[string]int{}
 	for i, field := range existingDesc.Schema.Fields {
@@ -342,7 +355,6 @@ func (db *db) validateUpdateCollection(
 			return false, NewErrCannotSetFieldID(proposedField.Name, proposedField.ID)
 		}
 
-		// If the field is new, then the collection has changed
 		hasChanged = hasChanged || !fieldAlreadyExists
 
 		if !fieldAlreadyExists && (proposedField.Kind == client.FieldKind_FOREIGN_OBJECT ||
@@ -376,7 +388,6 @@ func (db *db) validateUpdateCollection(
 			return false, NewErrCannotDeleteField(field.Name, field.ID)
 		}
 	}
-
 	return hasChanged, nil
 }
 
