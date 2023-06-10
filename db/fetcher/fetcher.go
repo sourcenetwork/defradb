@@ -13,7 +13,6 @@ package fetcher
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/bits-and-blooms/bitset"
@@ -59,7 +58,9 @@ type DocumentFetcher struct {
 	order        []dsq.Order
 	curSpanIndex int
 
-	filter *mapper.Filter
+	filter       *mapper.Filter
+	ranFilter    bool // did we run the filter
+	passedFilter bool // did we pass the filter
 
 	filterFields map[uint32]client.FieldDescription
 	selectFields map[uint32]client.FieldDescription
@@ -107,7 +108,6 @@ func (df *DocumentFetcher) Init(
 	reverse bool,
 	showDeleted bool,
 ) error {
-	fmt.Println("CALLING FETCHER INIT")
 	if col.Schema.IsEmpty() {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "Schema")
 	}
@@ -123,9 +123,6 @@ func (df *DocumentFetcher) Init(
 		}
 		return df.deletedDocFetcher.init(col, fields, filter, docmapper, reverse)
 	}
-
-	fmt.Println("SELECT FIELDS:", df.selectFields)
-	fmt.Println("FILTER FIELDS:", df.filterFields)
 
 	return nil
 }
@@ -163,15 +160,22 @@ func (df *DocumentFetcher) init(
 	df.kvIter = nil
 
 	df.selectFields = make(map[uint32]client.FieldDescription, len(fields))
-	// @todo: We can probably make this size more accurate, this is an upper bound
-	for _, field := range fields {
+	// if we haven't been told to get specific fields
+	// get them all
+	var targetFields []client.FieldDescription
+	if len(fields) == 0 {
+		targetFields = df.col.Schema.Fields
+	} else {
+		targetFields = fields
+	}
+
+	for _, field := range targetFields {
 		df.selectFields[uint32(field.ID)] = field
 	}
 
 	if df.filter != nil {
-		fmt.Println("parsing filter:", df.filter.ExternalConditions)
-		parsedfilterFields := parser.ParseFilterFieldsForDescription(df.filter.ExternalConditions, df.col.Schema)
-		fmt.Println("parsed filter fields:", parsedfilterFields)
+		conditions := df.filter.ToMap(df.doc.mapping)
+		parsedfilterFields := parser.ParseFilterFieldsForDescription(conditions, df.col.Schema)
 		df.filterFields = make(map[uint32]client.FieldDescription, len(parsedfilterFields))
 		df.filterSet = bitset.New(uint(len(col.Schema.Fields)))
 		for _, field := range parsedfilterFields {
@@ -184,7 +188,6 @@ func (df *DocumentFetcher) init(
 }
 
 func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
-	fmt.Println("STARTING")
 	err := df.start(ctx, txn, spans, false)
 	if err != nil {
 		return err
@@ -311,18 +314,15 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 	}
 
 	if seekNext {
-		fmt.Println("SEEKING...")
 		curKey := df.kv.Key
 		curKey.FieldId = "" // clear field so prefixEnd applies to dockey
 		seekKey := curKey.PrefixEnd().ToString()
-		fmt.Printf("seeking from %s to %s\n", curKey.ToString(), seekKey)
 		spanDone, df.kv, err = df.seekKV(seekKey)
 		// handle any internal errors
 		if err != nil {
 			return false, false, err
 		}
 	} else {
-		fmt.Println("NEXT...")
 		spanDone, df.kv, err = df.nextKV()
 		// handle any internal errors
 		if err != nil {
@@ -336,18 +336,13 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 		spanDone = true
 	}
 
-	if df.kv != nil {
-		fmt.Printf("key: %v | value: %v\n", df.kv.Key.ToString(), df.kv.Value)
-	} else {
-		fmt.Println("NO KV")
-	}
-
 	df.kvEnd = spanDone
 	if df.kvEnd {
 		moreSpans, err := df.startNextSpan(ctx)
 		if err != nil {
 			return false, false, err
 		}
+		df.isReadingDocument = false
 		return !moreSpans, true, nil
 	}
 
@@ -436,7 +431,6 @@ func (df *DocumentFetcher) nextKVRaw() (iterDone bool, dsKey core.DataStoreKey, 
 // processKV continuously processes the key value pairs we've received
 // and step by step constructs the current encoded document
 func (df *DocumentFetcher) processKV(kv *KeyValue) error {
-	fmt.Println("processing...")
 	// skip MerkleCRDT meta-data priority key-value pair
 	// implement here <--
 	// instance := kv.Key.Name()
@@ -460,6 +454,8 @@ func (df *DocumentFetcher) processKV(kv *KeyValue) error {
 			}
 		}
 		df.doc.key = []byte(kv.Key.DocKey)
+		df.passedFilter = false
+		df.ranFilter = false
 	}
 
 	// we have to skip the object marker
@@ -472,19 +468,17 @@ func (df *DocumentFetcher) processKV(kv *KeyValue) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("checking for field:", fieldID)
 	fieldDesc, exists := df.selectFields[fieldID]
 	if !exists {
 		fieldDesc, exists = df.filterFields[fieldID]
 		if !exists {
-			fmt.Println("skipping:", fieldID)
 			return nil // if we can't find this field in our sets, just ignore it
 		}
 	}
 
 	ufid := uint(fieldID)
 
-	property := encProperty{
+	property := &encProperty{
 		Desc: fieldDesc,
 		Raw:  kv.Value,
 	}
@@ -508,12 +502,10 @@ func (df *DocumentFetcher) processKV(kv *KeyValue) error {
 // keypairs from the underlying store and constructs the document.
 func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
 	if df.kvEnd {
-		fmt.Println("FetchNext.kvend")
 		return nil, nil
 	}
 
 	if df.kv == nil {
-		fmt.Println("FetchNext.kvnil")
 		return nil, client.NewErrUninitializeProperty("DocumentFetcher", "kv")
 	}
 	// save the DocKey of the current kv pair so we can track when we cross the doc pair boundries
@@ -529,55 +521,56 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, erro
 			return nil, err
 		}
 
-		// check if we need to seek
-		seek := false
 		if df.filter != nil {
-			fmt.Println("checking for seek")
+			// only run filter if we've collected all the fields
+			// required for filtering. This is tracked by the bitsets.
 			if df.filterSet.Equal(df.doc.filterSet) {
+				df.ranFilter = true
 				filterDoc, err := df.doc.decodeToDocForFilter()
 				if err != nil {
 					return nil, err
 				}
 
-				// run filter
-				passed, err := mapper.RunFilter(filterDoc, df.filter)
+				df.passedFilter, err = mapper.RunFilter(filterDoc, df.filter)
 				if err != nil {
 					return nil, err
 				}
-
-				// if we don't pass the filter
-				// theres no point in collecting other select fields
-				// so we seek to the next doc
-				seek = !passed
 			}
 		}
 
-		spansDone, docDone, err := df.nextKey(ctx, seek)
+		// if we don't pass the filter (ran and pass)
+		// theres no point in collecting other select fields
+		// so we seek to the next doc
+		spansDone, docDone, err := df.nextKey(ctx, !df.passedFilter && df.ranFilter)
 		if err != nil {
 			return nil, err
 		}
+
 		if docDone {
-			fmt.Println("doc done")
 			// run filter
 			if df.filter != nil {
-				decodedDoc, err := df.doc.DecodeToDoc()
-				if err != nil {
-					return nil, err
-				}
-				passed, err := mapper.RunFilter(decodedDoc, df.filter)
-				if err != nil {
-					return nil, err
-				}
 
-				if passed {
+				// if we passed, return
+				if df.passedFilter {
 					return df.doc, nil
+				} else if !df.ranFilter { // if we didn't run, run it
+					decodedDoc, err := df.doc.DecodeToDoc()
+					if err != nil {
+						return nil, err
+					}
+					df.passedFilter, err = mapper.RunFilter(decodedDoc, df.filter)
+					if err != nil {
+						return nil, err
+					}
+					if df.passedFilter {
+						return df.doc, nil
+					}
 				}
 			} else {
 				return df.doc, nil
 			}
 
 			if !spansDone {
-				fmt.Println("span not done yet...")
 				continue
 			}
 
