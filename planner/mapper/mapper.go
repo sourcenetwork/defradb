@@ -12,11 +12,9 @@ package mapper
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -62,9 +60,6 @@ func toSelect(
 		return nil, err
 	}
 
-	fmt.Println("requestable aggregates:")
-	spew.Dump(aggregates)
-
 	// Needs to be done before resolving aggregates, else filter conversion may fail there
 	filterDependencies, err := resolveFilterDependencies(
 		descriptionsRepo, collectionName, selectRequest.Filter, mapping, fields)
@@ -80,8 +75,6 @@ func toSelect(
 	}
 
 	aggregates = appendUnderlyingAggregates(aggregates, mapping)
-	fmt.Println("ALL requestable aggregates:")
-	spew.Dump(aggregates)
 	fields, err = resolveAggregates(
 		selectRequest,
 		aggregates,
@@ -90,8 +83,7 @@ func toSelect(
 		desc,
 		descriptionsRepo,
 	)
-	fmt.Println("resolved aggregates:")
-	spew.Dump(fields)
+
 	if err != nil {
 		return nil, err
 	}
@@ -151,34 +143,91 @@ func resolveOrderDependencies(
 
 	// If there is orderby, and any one of the condition fields that are join fields and have not been
 	// requested, we need to map them here.
+outer:
 	for _, condition := range source.Value().Conditions {
-		if len(condition.Fields) <= 1 {
-			continue
+		fields := condition.Fields[:] // copy slice
+		for {
+			numFields := len(fields)
+			if numFields == 2 {
+				joinField := condition.Fields[0]
+
+				// ensure the child select is resolved for this order join
+				innserSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
+				if err != nil {
+					return err
+				}
+
+				// make sure the actual target field inside the join field
+				// is included in the select
+				targetFieldName := condition.Fields[1]
+				targetField := &Field{
+					Index: innserSelect.FirstIndexOfName(targetFieldName),
+					Name:  targetFieldName,
+				}
+				innserSelect.Fields = append(innserSelect.Fields, targetField)
+				continue outer
+
+			} else if numFields > 2 {
+				joinField := condition.Fields[0]
+
+				// ensure the child select is resolved for this order join
+				innserSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
+				if err != nil {
+					return err
+				}
+				mapping = innserSelect.DocumentMapping
+				fields = fields[1:] // chop off the front item, and loop again on inner
+			} else { // <= 1
+				// nothing todo, continue the outer for loop
+				continue outer
+			}
 		}
 
-		joinField := condition.Fields[0]
-
-		// Check if the join field is already mapped, if not then map it.
-		if isOrderJoinFieldMapped := len(mapping.IndexesByName[joinField]) != 0; !isOrderJoinFieldMapped {
-			index := mapping.GetNextIndex()
-			mapping.Add(index, joinField)
-
-			// Resolve the inner child fields and get it's mapping.
-			dummyJoinFieldSelect := request.Select{
-				Field: request.Field{
-					Name: joinField,
-				},
-			}
-			innerSelect, err := toSelect(descriptionsRepo, index, &dummyJoinFieldSelect, descName)
-			if err != nil {
-				return err
-			}
-			*existingFields = append(*existingFields, innerSelect)
-			mapping.SetChildAt(index, innerSelect.DocumentMapping)
-		}
 	}
 
 	return nil
+}
+
+// given a type join field, ensure its mapping exists
+// and add a coorsponding select field(s)
+func resolveChildOrder(
+	descriptionsRepo *DescriptionsRepo,
+	descName string,
+	orderChildField string,
+	mapping *core.DocumentMapping,
+	existingFields *[]Requestable,
+) (*Select, error) {
+	childFieldIndexes := mapping.IndexesByName[orderChildField]
+	// Check if the join field is already mapped, if not then map it.
+	if isOrderJoinFieldMapped := len(childFieldIndexes) != 0; !isOrderJoinFieldMapped {
+		index := mapping.GetNextIndex()
+		mapping.Add(index, orderChildField)
+
+		// Resolve the inner child fields and get it's mapping.
+		dummyJoinFieldSelect := request.Select{
+			Field: request.Field{
+				Name: orderChildField,
+			},
+		}
+		innerSelect, err := toSelect(descriptionsRepo, index, &dummyJoinFieldSelect, descName)
+		if err != nil {
+			return nil, err
+		}
+		*existingFields = append(*existingFields, innerSelect)
+		mapping.SetChildAt(index, innerSelect.DocumentMapping)
+		return innerSelect, nil
+	} else {
+		for _, field := range *existingFields {
+			fieldSelect, ok := field.(*Select)
+			if !ok {
+				continue
+			}
+			if fieldSelect.Field.Name == orderChildField {
+				return fieldSelect, nil
+			}
+		}
+	}
+	return nil, ErrMissingSelect
 }
 
 // resolveAggregates figures out which fields the given aggregates are targeting
@@ -237,14 +286,14 @@ func resolveAggregates(
 							Index: int(fieldDesc.ID),
 							Name:  target.hostExternalName,
 						},
-						Filter:  ToFilter(target.filter, mapping),
+						Filter:  ToFilter(target.filter.Value(), mapping),
 						Limit:   target.limit,
 						OrderBy: order,
 					}
 				} else {
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)
 					childMapping := mapping.ChildMappings[childObjectIndex]
-					convertedFilter = ToFilter(target.filter, childMapping)
+					convertedFilter = ToFilter(target.filter.Value(), childMapping)
 					host, hasHost = tryGetTarget(
 						target.hostExternalName,
 						convertedFilter,
@@ -270,7 +319,6 @@ func resolveAggregates(
 				if err != nil {
 					return nil, err
 				}
-
 				mapAggregateNestedTargets(target, hostSelectRequest, selectRequest.Root)
 
 				childMapping, childDesc, err := getTopLevelInfo(descriptionsRepo, hostSelectRequest, childCollectionName)
@@ -283,14 +331,15 @@ func resolveAggregates(
 					return nil, err
 				}
 
+				// ensure the field were aggregating is included in the join select
+
 				childMapping = childMapping.CloneWithoutRender()
 				mapping.SetChildAt(index, childMapping)
 
 				if !childIsMapped {
 					// If the child was not mapped, the filter will not have been converted yet
 					// so we must do that now.
-					fmt.Println("converted aggregate conditions:", target.filter.Value().Conditions)
-					convertedFilter = ToFilter(target.filter, mapping.ChildMappings[index])
+					convertedFilter = ToFilter(target.filter.Value(), mapping.ChildMappings[index])
 				}
 
 				dummyJoin := &Select{
@@ -340,6 +389,12 @@ func resolveAggregates(
 					// I believe this is dead code as the gql library should always catch this error first
 					return nil, ErrUnableToIdAggregateChild
 				}
+
+				// ensure target aggregate field is included in the type join
+				hostSelect.Fields = append(hostSelect.Fields, &Field{
+					Index: hostSelect.DocumentMapping.FirstIndexOfName(target.childExternalName),
+					Name:  target.childExternalName,
+				})
 
 				childTarget = OptionalChildTarget{
 					// If there are multiple children of the same name there is no way
@@ -776,7 +831,14 @@ func resolveInnerFilterDependencies(
 
 		if keyIndex >= len(mapping.ChildMappings) {
 			// If the key index is outside the bounds of the child mapping array, then
-			// this is not a relation/join and we can continue (no child props to process)
+			// this is not a relation/join and we can add it to the fields and
+			// continue (no child props to process)
+
+			newFields = append(existingFields, &Field{
+				Index: keyIndex,
+				Name:  key,
+			})
+
 			continue
 		}
 
@@ -890,11 +952,10 @@ func ToMutation(ctx context.Context, txn datastore.Txn, mutationRequest *request
 }
 
 func toTargetable(index int, selectRequest *request.Select, docMap *core.DocumentMapping) Targetable {
-	fmt.Println("targetable conditions:", selectRequest.Filter.Value().Conditions)
 	return Targetable{
 		Field:       toField(index, selectRequest),
 		DocKeys:     selectRequest.DocKeys,
-		Filter:      ToFilter(selectRequest.Filter, docMap),
+		Filter:      ToFilter(selectRequest.Filter.Value(), docMap),
 		Limit:       toLimit(selectRequest.Limit, selectRequest.Offset),
 		GroupBy:     toGroupBy(selectRequest.GroupBy, docMap),
 		OrderBy:     toOrderBy(selectRequest.OrderBy, docMap),
@@ -912,22 +973,20 @@ func toField(index int, selectRequest *request.Select) Field {
 // ToFilter converts the given `source` request filter to a Filter using the given mapping.
 //
 // Any requestables identified by name will be converted to being identified by index instead.
-func ToFilter(source immutable.Option[request.Filter], mapping *core.DocumentMapping) *Filter {
-	if !source.HasValue() {
+func ToFilter(source request.Filter, mapping *core.DocumentMapping) *Filter {
+	if len(source.Conditions) == 0 {
 		return nil
 	}
-	conditions := make(map[connor.FilterKey]any, len(source.Value().Conditions))
+	conditions := make(map[connor.FilterKey]any, len(source.Conditions))
 
-	for sourceKey, sourceClause := range source.Value().Conditions {
+	for sourceKey, sourceClause := range source.Conditions {
 		key, clause := toFilterMap(sourceKey, sourceClause, mapping)
 		conditions[key] = clause
 	}
 
-	// panic("hj")
-	fmt.Println("FILTER CONDITIONS:", source.Value().Conditions)
 	return &Filter{
 		Conditions:         conditions,
-		ExternalConditions: source.Value().Conditions,
+		ExternalConditions: source.Conditions,
 	}
 }
 

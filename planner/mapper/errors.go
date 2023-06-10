@@ -20,6 +20,8 @@ var (
 	ErrUnableToIdAggregateChild = errors.New("unable to identify aggregate child")
 	ErrAggregateTargetMissing   = errors.New("aggregate must be provided with a property to aggregate")
 	ErrFailedToFindHostField    = errors.New("failed to find host field")
+	ErrInvalidFieldIndex        = errors.New("given field doesn't have any indexes")
+	ErrMissingSelect            = errors.New("missing target select field")
 )
 
 func NewErrInvalidFieldToGroupBy(field string) error {
