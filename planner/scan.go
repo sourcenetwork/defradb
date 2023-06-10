@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -73,8 +71,6 @@ func (n *scanNode) Init() error {
 
 func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 	n.desc = desc
-	// panic("hi")
-	fmt.Printf("init collection: %T %+v\n", n.slct, n.slct)
 	n.initFields(n.slct.Fields)
 	if n.slct.OrderBy != nil {
 		for _, cond := range n.slct.OrderBy.Conditions {
@@ -89,8 +85,6 @@ func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 
 func (n *scanNode) initFields(fields []mapper.Requestable) {
 	for _, r := range fields {
-		fmt.Printf("scan field: %T %+v\n", r, r)
-
 		// add all the possible base level fields the fetcher is responsible
 		// for, including those that are needed by higher level aggregates
 		// or grouping alls, which them selves might have further dependants
@@ -111,6 +105,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) {
 					n.tryAddField(fd.Name)
 				}
 			}
+			n.tryAddField(requestable.Field.Name + "_id") // foreign key for type joins
 			n.initFields(requestable.Fields)
 		// aggregate might have its own target fields and filter fields
 		case *mapper.Aggregate:
@@ -124,14 +119,17 @@ func (n *scanNode) initFields(fields []mapper.Requestable) {
 						n.tryAddField(fd.Name)
 					}
 				}
-				n.tryAddField(target.ChildTarget.Name)
+				if target.ChildTarget.HasValue {
+					n.tryAddField(target.ChildTarget.Name)
+				} else {
+					n.tryAddField(target.Field.Name)
+				}
 			}
 		}
 	}
 }
 
 func (n *scanNode) tryAddField(fieldName string) bool {
-	fmt.Println("try add field:", fieldName)
 	fd, ok := n.desc.Schema.GetField(fieldName)
 	if !ok {
 		// skip fields that are not part of the
@@ -185,8 +183,6 @@ func (n *scanNode) Next() (bool, error) {
 	if len(n.currentValue.Fields) == 0 {
 		return false, nil
 	}
-
-	fmt.Println("decoded next doc:", n.currentValue.Fields)
 
 	n.documentMapping.SetFirstOfName(
 		&n.currentValue,
@@ -288,8 +284,6 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 func (n *scanNode) Merge() bool { return true }
 
 func (p *Planner) Scan(parsed *mapper.Select) *scanNode {
-	// panic("scan")
-	fmt.Println("CREATING SCANNER + FETCHER")
 	var f fetcher.Fetcher
 	if parsed.Cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)

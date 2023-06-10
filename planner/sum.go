@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -333,11 +331,9 @@ func sumItems[T any](
 	less func(T, T) bool,
 	toFloat func(T) float64,
 ) (float64, error) {
-	fmt.Println("summing items")
 	items := enumerable.New(source)
 	if aggregateTarget.Filter != nil {
 		items = enumerable.Where(items, func(item T) (bool, error) {
-			fmt.Println("enumeration filter:", aggregateTarget.Filter.ExternalConditions)
 			return mapper.RunFilter(item, aggregateTarget.Filter)
 		})
 	}

@@ -11,7 +11,6 @@
 package parser
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -34,7 +33,6 @@ func NewFilter(stmt *ast.ObjectValue, inputType gql.Input) (immutable.Option[req
 	if err != nil {
 		return immutable.None[request.Filter](), err
 	}
-	fmt.Println("parse conditions:", conditions)
 	return immutable.Some(request.Filter{
 		Conditions: conditions,
 	}), nil

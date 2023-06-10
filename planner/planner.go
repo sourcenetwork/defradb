@@ -12,7 +12,6 @@ package planner
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -118,8 +117,6 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		return p.newPlan(n.Selections[0])
 
 	case *request.Select:
-		fmt.Printf("new plan: select: %T %+v\n", n, n)
-		fmt.Printf("new plan: select fields: %T %+v\n", n.Fields[0], n.Fields[0])
 		m, err := mapper.ToSelect(p.ctx, p.txn, n)
 		if err != nil {
 			return nil, err
@@ -129,7 +126,6 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 			// If this Select is an aggregate, then it must be a top-level
 			// aggregate and we need to resolve it within the context of a
 			// top-level node.
-			fmt.Printf("new plan: top level agg: %T %+v\n", m, m)
 			return p.Top(m)
 		}
 

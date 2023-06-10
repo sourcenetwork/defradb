@@ -355,23 +355,25 @@ func (n *typeJoinOne) Next() (bool, error) {
 }
 
 func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
-	fkIndex := &mapper.PropertyIndex{
-		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + request.RelatedObjectID),
+	filterRaw := request.Filter{
+		Conditions: map[string]any{
+			(n.subTypeFieldName + request.RelatedObjectID): map[string]any{
+				"_eq": doc.GetKey(),
+			},
+		},
 	}
-	filter := map[connor.FilterKey]any{
-		fkIndex: doc.GetKey(),
+	filter := mapper.ToFilter(filterRaw, n.subType.DocumentMap())
+
+	// using the doc._key as a filter
+	err := appendFilterToScanNode(n.subType, filter.Conditions)
+	if err != nil {
+		return core.Doc{}
 	}
 
 	// We have to reset the scan node after appending the new key-filter
 	if err := n.subType.Init(); err != nil {
 		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
 		return doc
-	}
-
-	// using the doc._key as a filter
-	err := appendFilterToScanNode(n.subType, filter)
-	if err != nil {
-		return core.Doc{}
 	}
 
 	next, err := n.subType.Next()
@@ -545,14 +547,17 @@ func (n *typeJoinMany) Next() (bool, error) {
 	if n.index != nil {
 		// @todo: handle index for one-to-many setup
 	} else {
-		fkIndex := &mapper.PropertyIndex{
-			Index: n.subSelect.FirstIndexOfName(n.rootName + request.RelatedObjectID),
+		filterRaw := request.Filter{
+			Conditions: map[string]any{
+				(n.rootName + request.RelatedObjectID): map[string]any{
+					"_eq": n.currentValue.GetKey(),
+				},
+			},
 		}
-		filter := map[connor.FilterKey]any{
-			fkIndex: n.currentValue.GetKey(), // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
-		}
+		filter := mapper.ToFilter(filterRaw, n.subType.DocumentMap())
+
 		// using the doc._key as a filter
-		err := appendFilterToScanNode(n.subType, filter)
+		err := appendFilterToScanNode(n.subType, filter.Conditions)
 		if err != nil {
 			return false, err
 		}

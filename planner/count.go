@@ -15,7 +15,6 @@ package planner
 // aggregates in.
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/sourcenetwork/immutable"
@@ -45,7 +44,6 @@ type countExecInfo struct {
 }
 
 func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select) (*countNode, error) {
-	fmt.Println("creating count")
 	return &countNode{
 		p:                 p,
 		virtualFieldIndex: field.Index,
