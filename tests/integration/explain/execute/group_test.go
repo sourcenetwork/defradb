@@ -56,9 +56,8 @@ func TestExecuteExplainRequestWithGroup(t *testing.T) {
 										"iterations":    uint64(3),
 										"filterMatches": uint64(2),
 										"scanNode": dataMap{
-											"iterations":    uint64(4),
-											"docFetches":    uint64(4),
-											"filterMatches": uint64(2),
+											"iterations": uint64(4),
+											"docFetches": uint64(4),
 										},
 									},
 								},

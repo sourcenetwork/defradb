@@ -59,7 +59,7 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 func TestQuerySimpleWithSum(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, sum",
-		Request: `query @explain {
+		Request: `query {
 					_sum(Users: {field: Age})
 				}`,
 		Docs: map[int][]string{

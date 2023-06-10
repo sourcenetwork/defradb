@@ -21,7 +21,6 @@ import (
 // verify that that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndCount(t *testing.T) {
-	t.Fail()
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, average and sum on non-rendered group integer value",
 		Request: `query {
