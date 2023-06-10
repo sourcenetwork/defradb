@@ -192,11 +192,17 @@ func parseVal(val ast.Value, recurseFn parseFn) (any, error) {
 
 // ParseFilterFieldsForDescription parses the fields that are defined in the SchemaDescription
 // from the filter conditions“
-func ParseFilterFieldsForDescription(conditions map[string]any, schema client.SchemaDescription) []client.FieldDescription {
+func ParseFilterFieldsForDescription(
+	conditions map[string]any,
+	schema client.SchemaDescription,
+) []client.FieldDescription {
 	return parseFilterFieldsForDescriptionMap(conditions, schema)
 }
 
-func parseFilterFieldsForDescriptionMap(conditions map[string]any, schema client.SchemaDescription) []client.FieldDescription {
+func parseFilterFieldsForDescriptionMap(
+	conditions map[string]any,
+	schema client.SchemaDescription,
+) []client.FieldDescription {
 	fields := make([]client.FieldDescription, 0)
 	for k, v := range conditions {
 		switch k {

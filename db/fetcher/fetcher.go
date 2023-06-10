@@ -30,7 +30,9 @@ import (
 // Fetcher is the interface for collecting documents from the underlying data store.
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error
+	Init(col *client.CollectionDescription, fields []client.FieldDescription,
+		filter *mapper.Filter, docmapper *core.DocumentMapping,
+		reverse bool, showDeleted bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (EncodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
@@ -547,9 +549,7 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, erro
 		}
 
 		if docDone {
-			// run filter
 			if df.filter != nil {
-
 				// if we passed, return
 				if df.passedFilter {
 					return df.doc, nil

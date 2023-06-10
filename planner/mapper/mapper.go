@@ -166,7 +166,6 @@ outer:
 				}
 				innserSelect.Fields = append(innserSelect.Fields, targetField)
 				continue outer
-
 			} else if numFields > 2 {
 				joinField := condition.Fields[0]
 
@@ -182,7 +181,6 @@ outer:
 				continue outer
 			}
 		}
-
 	}
 
 	return nil
