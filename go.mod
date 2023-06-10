@@ -3,6 +3,7 @@ module github.com/sourcenetwork/defradb
 go 1.19
 
 require (
+	github.com/bits-and-blooms/bitset v1.7.0
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/evanphx/json-patch/v5 v5.6.0
@@ -54,7 +55,6 @@ require (
 require (
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bits-and-blooms/bitset v1.7.0 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
