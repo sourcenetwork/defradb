@@ -176,43 +176,43 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 		},
 		{
 			Key: IndexDataStoreKey{
-				CollectionID: "1",
+				CollectionID: 1,
 			},
 			Expected: "/1",
 		},
 		{
 			Key: IndexDataStoreKey{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 			},
 			Expected: "/1/2",
 		},
 		{
 			Key: IndexDataStoreKey{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("3"),
 			},
 			Expected: "/1/2/3",
 		},
 		{
 			Key: IndexDataStoreKey{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("3", "4"),
 			},
 			Expected: "/1/2/3/4",
 		},
 		{
 			Key: IndexDataStoreKey{
-				CollectionID: "1",
+				CollectionID: 1,
 				FieldValues:  toFieldValues("3"),
 			},
 			Expected: "/1",
 		},
 		{
 			Key: IndexDataStoreKey{
-				IndexID:     "2",
+				IndexID:     2,
 				FieldValues: toFieldValues("3"),
 			},
 			Expected: "",
@@ -225,24 +225,24 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 		},
 		{
 			Key: IndexDataStoreKey{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("", ""),
 			},
 			Expected: "/1/2",
 		},
 		{
 			Key: IndexDataStoreKey{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("", "3"),
 			},
 			Expected: "/1/2",
 		},
 		{
 			Key: IndexDataStoreKey{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("3", "", "4"),
 			},
 			Expected: "/1/2/3",
@@ -255,8 +255,8 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 
 func TestIndexDatastoreKey_Bytes(t *testing.T) {
 	key := IndexDataStoreKey{
-		CollectionID: "1",
-		IndexID:      "2",
+		CollectionID: 1,
+		IndexID:      2,
 		FieldValues:  toFieldValues("3", "4"),
 	}
 	assert.Equal(t, key.Bytes(), []byte("/1/2/3/4"))
@@ -264,8 +264,8 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 
 func TestIndexDatastoreKey_ToDS(t *testing.T) {
 	key := IndexDataStoreKey{
-		CollectionID: "1",
-		IndexID:      "2",
+		CollectionID: 1,
+		IndexID:      2,
 		FieldValues:  toFieldValues("3", "4"),
 	}
 	assert.Equal(t, key.ToDS(), ds.NewKey("/1/2/3/4"))
@@ -275,32 +275,32 @@ func TestIndexDatastoreKey_EqualTrue(t *testing.T) {
 	cases := [][]IndexDataStoreKey{
 		{
 			{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("3", "4"),
 			},
 			{
-				CollectionID: "1",
-				IndexID:      "2",
-				FieldValues:  toFieldValues("3", "4"),
-			},
-		},
-		{
-			{
-				CollectionID: "1",
-				FieldValues:  toFieldValues("3", "4"),
-			},
-			{
-				CollectionID: "1",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("3", "4"),
 			},
 		},
 		{
 			{
-				CollectionID: "1",
+				CollectionID: 1,
+				FieldValues:  toFieldValues("3", "4"),
 			},
 			{
-				CollectionID: "1",
+				CollectionID: 1,
+				FieldValues:  toFieldValues("3", "4"),
+			},
+		},
+		{
+			{
+				CollectionID: 1,
+			},
+			{
+				CollectionID: 1,
 			},
 		},
 	}
@@ -314,61 +314,61 @@ func TestIndexDatastoreKey_EqualFalse(t *testing.T) {
 	cases := [][]IndexDataStoreKey{
 		{
 			{
-				CollectionID: "1",
+				CollectionID: 1,
 			},
 			{
-				CollectionID: "2",
-			},
-		},
-		{
-			{
-				CollectionID: "1",
-				IndexID:      "2",
-			},
-			{
-				CollectionID: "1",
-				IndexID:      "3",
+				CollectionID: 2,
 			},
 		},
 		{
 			{
-				CollectionID: "1",
+				CollectionID: 1,
+				IndexID:      2,
 			},
 			{
-				IndexID: "1",
+				CollectionID: 1,
+				IndexID:      3,
 			},
 		},
 		{
 			{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+			},
+			{
+				IndexID: 1,
+			},
+		},
+		{
+			{
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("4", "3"),
 			},
 			{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("3", "4"),
 			},
 		},
 		{
 			{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("3"),
 			},
 			{
-				CollectionID: "1",
-				IndexID:      "2",
+				CollectionID: 1,
+				IndexID:      2,
 				FieldValues:  toFieldValues("3", "4"),
 			},
 		},
 		{
 			{
-				CollectionID: "1",
+				CollectionID: 1,
 				FieldValues:  toFieldValues("3", "", "4"),
 			},
 			{
-				CollectionID: "1",
+				CollectionID: 1,
 				FieldValues:  toFieldValues("3", "4"),
 			},
 		},
@@ -383,16 +383,16 @@ func TestNewIndexDataStoreKey_ValidKey(t *testing.T) {
 	str, err := NewIndexDataStoreKey("/1/2/3")
 	assert.NoError(t, err)
 	assert.Equal(t, str, IndexDataStoreKey{
-		CollectionID: "1",
-		IndexID:      "2",
+		CollectionID: 1,
+		IndexID:      2,
 		FieldValues:  toFieldValues("3"),
 	})
 
 	str, err = NewIndexDataStoreKey("/1/2/3/4")
 	assert.NoError(t, err)
 	assert.Equal(t, str, IndexDataStoreKey{
-		CollectionID: "1",
-		IndexID:      "2",
+		CollectionID: 1,
+		IndexID:      2,
 		FieldValues:  toFieldValues("3", "4"),
 	})
 }

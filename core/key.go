@@ -70,10 +70,10 @@ var _ Key = (*DataStoreKey)(nil)
 
 // IndexDataStoreKey is key of an indexed document in the database.
 type IndexDataStoreKey struct {
-	// CollectionID is the id (unique number) of the collection
-	CollectionID string
-	// IndexID is the id (unique number) of the index
-	IndexID string
+	// CollectionID is the id of the collection
+	CollectionID uint32
+	// IndexID is the id of the index
+	IndexID uint32
 	// FieldValues is the values of the fields in the index
 	FieldValues [][]byte
 }
@@ -412,18 +412,18 @@ func NewIndexDataStoreKey(key string) (IndexDataStoreKey, error) {
 		return IndexDataStoreKey{}, ErrInvalidKey
 	}
 
-	_, err := strconv.Atoi(elements[0])
+	colID, err := strconv.Atoi(elements[0])
 	if err != nil {
 		return IndexDataStoreKey{}, ErrInvalidKey
 	}
 
-	indexKey := IndexDataStoreKey{CollectionID: elements[0]}
+	indexKey := IndexDataStoreKey{CollectionID: uint32(colID)}
 
-	_, err = strconv.Atoi(elements[1])
+	indID, err := strconv.Atoi(elements[1])
 	if err != nil {
 		return IndexDataStoreKey{}, ErrInvalidKey
 	}
-	indexKey.IndexID = elements[1]
+	indexKey.IndexID = uint32(indID)
 
 	for i := 2; i < len(elements); i++ {
 		_, err = strconv.Atoi(elements[i])
@@ -454,17 +454,17 @@ func (k *IndexDataStoreKey) ToDS() ds.Key {
 func (k *IndexDataStoreKey) ToString() string {
 	sb := strings.Builder{}
 
-	if k.CollectionID == "" {
+	if k.CollectionID == 0 {
 		return ""
 	}
 	sb.WriteByte('/')
-	sb.WriteString(k.CollectionID)
+	sb.WriteString(strconv.Itoa(int(k.CollectionID)))
 
-	if k.IndexID == "" {
+	if k.IndexID == 0 {
 		return sb.String()
 	}
 	sb.WriteByte('/')
-	sb.WriteString(k.IndexID)
+	sb.WriteString(strconv.Itoa(int(k.IndexID)))
 
 	for _, v := range k.FieldValues {
 		if len(v) == 0 {

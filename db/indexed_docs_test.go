@@ -143,7 +143,7 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 	if collection == nil {
 		panic(errors.New("collection not found"))
 	}
-	key.CollectionID = strconv.Itoa(int(collection.ID()))
+	key.CollectionID = collection.ID()
 
 	if b.fieldName == "" {
 		return key
@@ -153,7 +153,7 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 	require.NoError(b.f.t, err)
 	for _, index := range indexes {
 		if index.Fields[0].Name == b.fieldName {
-			key.IndexID = strconv.Itoa(int(index.ID))
+			key.IndexID = index.ID
 			break
 		}
 	}

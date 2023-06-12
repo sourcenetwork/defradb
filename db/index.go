@@ -137,8 +137,8 @@ func (i *collectionSimpleIndex) getDocKey(doc *client.Document) (core.IndexDataS
 		storeValue = []byte(string(indexFieldValuePrefix) + string(data))
 	}
 	indexDataStoreKey := core.IndexDataStoreKey{}
-	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
-	indexDataStoreKey.IndexID = strconv.Itoa(int(i.desc.ID))
+	indexDataStoreKey.CollectionID = i.collection.ID()
+	indexDataStoreKey.IndexID = i.desc.ID
 	indexDataStoreKey.FieldValues = [][]byte{storeValue,
 		[]byte(string(indexFieldValuePrefix) + doc.Key().String())}
 	return indexDataStoreKey, nil
@@ -155,7 +155,8 @@ func (i *collectionSimpleIndex) Save(
 	}
 	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
 	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.IndexID, err)
+		field, _ := i.collection.Description().GetFieldByID(strconv.Itoa(int(key.IndexID)))
+		return NewErrFailedToStoreIndexedField(field.Name, err)
 	}
 	return nil
 }
@@ -207,8 +208,8 @@ func iteratePrefixKeys(
 }
 func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
 	prefixKey := core.IndexDataStoreKey{}
-	prefixKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
-	prefixKey.IndexID = strconv.Itoa(int(i.desc.ID))
+	prefixKey.CollectionID = i.collection.ID()
+	prefixKey.IndexID = i.desc.ID
 
 	err := iteratePrefixKeys(ctx, prefixKey.ToString(), txn.Datastore(),
 		func(ctx context.Context, key ds.Key) error {
