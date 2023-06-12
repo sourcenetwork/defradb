@@ -168,7 +168,7 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 			fieldBytesVal = b.values[0]
 		}
 
-		key.FieldValues = [][]byte{[]byte(fieldBytesVal), 
+		key.FieldValues = [][]byte{[]byte(fieldBytesVal),
 			[]byte(testValuePrefix + b.doc.Key().String())}
 	} else if len(b.values) > 0 {
 		key.FieldValues = b.values

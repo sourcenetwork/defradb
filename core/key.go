@@ -477,7 +477,7 @@ func (k *IndexDataStoreKey) ToString() string {
 	return sb.String()
 }
 
-// Equal returns true if the two keys are equal 
+// Equal returns true if the two keys are equal
 func (k IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 	if k.CollectionID != other.CollectionID {
 		return false

@@ -139,7 +139,7 @@ type Collection interface {
 
 	// CreateIndex creates a new index on the collection.
 	// `IndexDescription` contains the description of the index to be created.
-	// `IndexDescription.Name` must start with a letter or an underscore and can 
+	// `IndexDescription.Name` must start with a letter or an underscore and can
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
 	CreateIndex(context.Context, IndexDescription) (IndexDescription, error)

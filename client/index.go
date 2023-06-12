@@ -15,7 +15,7 @@ type IndexDirection string
 
 const (
 	// Ascending is the value to use for an ascending fields
-	Ascending  IndexDirection = "ASC"
+	Ascending IndexDirection = "ASC"
 	// Descending is the value to use for an descending fields
 	Descending IndexDirection = "DESC"
 )
@@ -23,7 +23,7 @@ const (
 // IndexFieldDescription describes how a field is being indexed.
 type IndexedFieldDescription struct {
 	// Name contains the name of the field.
-	Name      string
+	Name string
 	// Direction contains the direction of the index.
 	Direction IndexDirection
 }
