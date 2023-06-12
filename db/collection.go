@@ -99,8 +99,12 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 	}
 
 	return &collection{
-		db:    db,
-		desc:  desc,
+		db: db,
+		desc: client.CollectionDescription{
+			ID:     desc.ID,
+			Name:   desc.Name,
+			Schema: desc.Schema,
+		},
 		colID: desc.ID,
 	}, nil
 }
@@ -192,7 +196,7 @@ func (db *db) createCollection(
 		logging.NewKV("SchemaID", col.SchemaID()),
 	)
 
-	for _, index := range col.desc.Indexes {
+	for _, index := range desc.Indexes {
 		if _, err := col.createIndex(ctx, txn, index); err != nil {
 			return nil, err
 		}
@@ -320,13 +324,13 @@ func (db *db) validateUpdateCollection(
 		return false, ErrCannotSetVersionID
 	}
 
-	// If the field is new, then the collection has changed
-	hasChanged, err := validateUpdateCollectionFields(existingDesc, proposedDesc)
+	hasChangedFields, err := validateUpdateCollectionFields(existingDesc, proposedDesc)
 	if err != nil {
-		return hasChanged, err
+		return hasChangedFields, err
 	}
 
-	return hasChanged, nil
+	hasChangedIndexes, err := validateUpdateCollectionIndexes(existingDesc.Indexes, proposedDesc.Indexes)
+	return hasChangedFields || hasChangedIndexes, err
 }
 
 func validateUpdateCollectionFields(
@@ -355,6 +359,7 @@ func validateUpdateCollectionFields(
 			return false, NewErrCannotSetFieldID(proposedField.Name, proposedField.ID)
 		}
 
+		// If the field is new, then the collection has changed
 		hasChanged = hasChanged || !fieldAlreadyExists
 
 		if !fieldAlreadyExists && (proposedField.Kind == client.FieldKind_FOREIGN_OBJECT ||
@@ -391,6 +396,29 @@ func validateUpdateCollectionFields(
 	return hasChanged, nil
 }
 
+func validateUpdateCollectionIndexes(
+	existingIndexes []client.IndexDescription,
+	proposedIndexes []client.IndexDescription,
+) (bool, error) {
+	existingNameToIndex := map[string]client.IndexDescription{}
+	for _, index := range existingIndexes {
+		existingNameToIndex[index.Name] = index
+	}
+	for _, proposedIndex := range proposedIndexes {
+		if _, exists := existingNameToIndex[proposedIndex.Name]; exists {
+			delete(existingNameToIndex, proposedIndex.Name)
+		} else {
+			return false, NewErrCannotAddIndexWithPatch(proposedIndex.Name)
+		}
+	}
+	if len(existingNameToIndex) > 0 {
+		for _, index := range existingNameToIndex {
+			return false, NewErrCannotDropIndexWithPatch(index.Name)
+		}
+	}
+	return false, nil
+}
+
 // getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.
 //
 // Will return an error if the given key is empty, or not found.
@@ -414,6 +442,12 @@ func (db *db) getCollectionByVersionID(
 	if err != nil {
 		return nil, err
 	}
+	
+	indexes, err := db.getCollectionIndexes(ctx, txn, desc.Name)
+	if err != nil {
+		return nil, err
+	}
+	desc.Indexes = indexes
 
 	return &collection{
 		db:       db,

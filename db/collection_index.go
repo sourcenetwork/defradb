@@ -47,7 +47,7 @@ func (db *db) createCollectionIndex(
 ) (client.IndexDescription, error) {
 	col, err := db.getCollectionByName(ctx, txn, collectionName)
 	if err != nil {
-		return client.IndexDescription{}, NewErrCollectionDoesntExist(collectionName)
+		return client.IndexDescription{}, NewErrCanNotReadCollection(collectionName, err)
 	}
 	col = col.WithTxn(txn)
 	return col.CreateIndex(ctx, desc)
@@ -60,7 +60,7 @@ func (db *db) dropCollectionIndex(
 ) error {
 	col, err := db.getCollectionByName(ctx, txn, collectionName)
 	if err != nil {
-		return NewErrCollectionDoesntExist(collectionName)
+		return NewErrCanNotReadCollection(collectionName, err)
 	}
 	col = col.WithTxn(txn)
 	return col.DropIndex(ctx, indexName)
@@ -114,33 +114,7 @@ func (db *db) getCollectionIndexes(
 	colName string,
 ) ([]client.IndexDescription, error) {
 	prefix := core.NewCollectionIndexKey(colName, "")
-	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: prefix.ToString(),
-	})
-	if err != nil {
-		return nil, NewErrFailedToCreateCollectionQuery(err)
-	}
-	defer func() {
-		if err := q.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close collection query", err)
-		}
-	}()
-
-	indexes := make([]client.IndexDescription, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
-			return nil, res.Error
-		}
-
-		var colDesk client.IndexDescription
-		err = json.Unmarshal(res.Value, &colDesk)
-		if err != nil {
-			return nil, NewErrInvalidStoredIndex(err)
-		}
-		indexes = append(indexes, colDesk)
-	}
-
-	return indexes, nil
+	return deserializePrefix[client.IndexDescription](ctx, prefix.ToString(), txn.Systemstore())
 }
 
 func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
@@ -302,6 +276,7 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 	if err != nil {
 		return err
 	}
+	var didFind bool
 	for i := range c.indexes {
 		if c.indexes[i].Name() == indexName {
 			err = c.indexes[i].RemoveAll(ctx, txn)
@@ -309,6 +284,17 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 				return err
 			}
 			c.indexes = append(c.indexes[:i], c.indexes[i+1:]...)
+			didFind = true
+			break
+		}
+	}
+	if !didFind {
+		return NewErrIndexWithNameDoesNotExists(indexName)
+	}
+
+	for i := range c.desc.Indexes {
+		if c.desc.Indexes[i].Name == indexName {
+			c.desc.Indexes = append(c.desc.Indexes[:i], c.desc.Indexes[i+1:]...)
 			break
 		}
 	}
@@ -346,6 +332,11 @@ func (c *collection) getIndexes(ctx context.Context, txn datastore.Txn) ([]Colle
 		colIndexes = append(colIndexes, NewCollectionIndex(c, index))
 	}
 
+	descriptions := make([]client.IndexDescription, 0, len(colIndexes))
+	for _, index := range colIndexes {
+		descriptions = append(descriptions, index.Description())
+	}
+	c.desc.Indexes = descriptions
 	c.indexes = colIndexes
 	c.isIndexCached = true
 	return colIndexes, nil
@@ -411,6 +402,7 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 	colIndex := NewCollectionIndex(c, desc)
+	c.desc.Indexes = append(c.desc.Indexes, colIndex.Description())
 	return colIndex, nil
 }
 
@@ -462,7 +454,7 @@ func (c *collection) processIndexName(
 			return core.CollectionIndexKey{}, err
 		}
 		if exists {
-			return core.CollectionIndexKey{}, ErrIndexWithNameAlreadyExists
+			return core.CollectionIndexKey{}, NewErrIndexWithNameAlreadyExists(desc.Name)
 		}
 	}
 	return indexKey, nil

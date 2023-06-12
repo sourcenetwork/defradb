@@ -51,6 +51,9 @@ const (
 	errFailedToReadStoredIndexDesc    string = "failed to read stored index description"
 	errCanNotIndexInvalidFieldValue   string = "can not index invalid field value"
 	errCanNotDeleteIndexedField       string = "can not delete indexed field"
+	errCanNotAddIndexWithPatch        string = "adding indexes via patch is not supported"
+	errCanNotDropIndexWithPatch       string = "dropping indexes via patch is not supported"
+	errIndexWithNameDoesNotExists     string = "index with name doesn't exists"
 )
 
 var (
@@ -102,7 +105,6 @@ var (
 	ErrIndexFieldMissingName          = errors.New(errIndexFieldMissingName)
 	ErrIndexFieldMissingDirection     = errors.New(errIndexFieldMissingDirection)
 	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
-	ErrIndexWithNameAlreadyExists     = errors.New(errIndexWithNameAlreadyExists)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -135,9 +137,9 @@ func NewErrNonExistingFieldForIndex(field string) error {
 	return errors.New(errNonExistingFieldForIndex, errors.NewKV("Field", field))
 }
 
-// NewErrCollectionDoesntExist returns a new error indicating the collection doesn't exist.
-func NewErrCollectionDoesntExist(colName string) error {
-	return errors.New(errCollectionDoesntExisting, errors.NewKV("Collection", colName))
+// NewErrCanNotReadCollection returns a new error indicating the collection doesn't exist.
+func NewErrCanNotReadCollection(colName string, inner error) error {
+	return errors.Wrap(errCollectionDoesntExisting, inner, errors.NewKV("Collection", colName))
 }
 
 // NewErrFailedToStoreIndexedField returns a new error indicating that the indexed field could not be stored.
@@ -297,5 +299,33 @@ func NewErrDocumentDeleted(dockey string) error {
 	return errors.New(
 		errDocumentDeleted,
 		errors.NewKV("DocKey", dockey),
+	)
+}
+
+func NewErrIndexWithNameAlreadyExists(indexName string) error {
+	return errors.New(
+		errIndexWithNameAlreadyExists,
+		errors.NewKV("Name", indexName),
+	)
+}
+
+func NewErrIndexWithNameDoesNotExists(indexName string) error {
+	return errors.New(
+		errIndexWithNameDoesNotExists,
+		errors.NewKV("Name", indexName),
+	)
+}
+
+func NewErrCannotAddIndexWithPatch(proposedName string) error {
+	return errors.New(
+		errCanNotAddIndexWithPatch,
+		errors.NewKV("ProposedName", proposedName),
+	)
+}
+
+func NewErrCannotDropIndexWithPatch(indexName string) error {
+	return errors.New(
+		errCanNotDropIndexWithPatch,
+		errors.NewKV("Name", indexName),
 	)
 }

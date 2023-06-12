@@ -373,7 +373,7 @@ func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	_, err := f.createCollectionIndex(desc1)
 	assert.NoError(t, err)
 	_, err = f.createCollectionIndex(desc2)
-	assert.EqualError(t, err, errIndexWithNameAlreadyExists)
+	assert.ErrorIs(t, err, NewErrIndexWithNameAlreadyExists(name))
 }
 
 func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
@@ -498,7 +498,7 @@ func TestCreateIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 	}
 
 	_, err := f.createCollectionIndexFor(productsColName, desc)
-	assert.ErrorIs(t, err, NewErrCollectionDoesntExist(usersColName))
+	assert.ErrorIs(t, err, NewErrCanNotReadCollection(usersColName, nil))
 }
 
 func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
@@ -563,6 +563,72 @@ func TestCreateIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
 	indexDesc.Name = "!"
 	_, err := f.users.CreateIndex(f.ctx, indexDesc)
 	require.ErrorIs(t, err, schema.NewErrIndexWithInvalidName(indexDesc.Name))
+}
+
+func TestCreateIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	indOnName, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []client.IndexDescription{indOnName}, f.users.Description().Indexes)
+
+	indOnAge, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnAge())
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []client.IndexDescription{indOnName, indOnAge},
+		f.users.Description().Indexes)
+}
+
+func TestCreateIndex_NewCollectionDescription_ShouldIncludeIndexDescription(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	_, err := f.createCollectionIndex(getUsersIndexDescOnName())
+	require.NoError(t, err)
+
+	desc := getUsersIndexDescOnAge()
+	desc.Name = ""
+	_, err = f.createCollectionIndex(desc)
+	require.NoError(t, err)
+
+	cols, err := f.db.getAllCollections(f.ctx, f.txn)
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(cols))
+	col := cols[0]
+	require.Equal(t, 2, len(col.Description().Indexes))
+	require.NotEmpty(t, col.Description().Indexes[0].Name)
+	require.NotEmpty(t, col.Description().Indexes[1].Name)
+}
+
+func TestCreateIndex_IfFailedToReadIndexUponRetrievingCollectionDesc_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	testErr := errors.New("test error")
+
+	mockedTxn := f.mockTxn().ClearSystemStore()
+	onSystemStore := mockedTxn.MockSystemstore.EXPECT()
+
+	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, "")
+	matchPrefixFunc := func(q query.Query) bool {
+		res := q.Prefix == colIndexKey.ToDS().String()
+		return res
+	}
+
+	onSystemStore.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).Return(nil, testErr)
+
+	descData, err := json.Marshal(getUsersCollectionDesc())
+	require.NoError(t, err)
+
+	onSystemStore.Query(mock.Anything, mock.Anything).
+		Return(mocks.NewQueryResultsWithValues(t, []byte("schemaID")), nil)
+	onSystemStore.Get(mock.Anything, mock.Anything).Unset()
+	onSystemStore.Get(mock.Anything, mock.Anything).Return(descData, nil)
+
+	f.stubSystemStore(onSystemStore)
+
+	_, err = f.db.getAllCollections(f.ctx, f.txn)
+	require.ErrorIs(t, err, testErr)
 }
 
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
@@ -1010,7 +1076,7 @@ func TestDropIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	err := f.dropIndex(productsColName, "any_name")
-	assert.ErrorIs(t, err, NewErrCollectionDoesntExist(usersColName))
+	assert.ErrorIs(t, err, NewErrCanNotReadCollection(usersColName, nil))
 }
 
 func TestDropIndex_IfFailsToQuerySystemStorage_ReturnError(t *testing.T) {
@@ -1061,7 +1127,36 @@ func TestDropIndex_IfFailsToDeleteFromStorage_ShouldNotCache(t *testing.T) {
 	require.ErrorIs(t, err, testErr)
 }
 
-func TestDropAllIndex_ShouldDeleteAllIndexes(t *testing.T) {
+func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
+	f := newIndexTestFixture(t)
+	col := f.users.WithTxn(f.txn)
+	_, err := col.CreateIndex(f.ctx, getUsersIndexDescOnName())
+	require.NoError(t, err)
+	indOnAge, err := col.CreateIndex(f.ctx, getUsersIndexDescOnAge())
+	require.NoError(t, err)
+	f.commitTxn()
+
+	err = f.users.DropIndex(f.ctx, testUsersColIndexName)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []client.IndexDescription{indOnAge},
+		f.users.Description().Indexes)
+
+	err = f.users.DropIndex(f.ctx, testUsersColIndexAge)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []client.IndexDescription{}, f.users.Description().Indexes)
+}
+
+func TestDropIndex_IfIndexWithNameDoesNotExist_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	const name = "not_existing_index"
+	err := f.users.DropIndex(f.ctx, name)
+	require.ErrorIs(t, err, NewErrIndexWithNameDoesNotExists(name))
+}
+
+func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	_, err := f.createCollectionIndexFor(usersColName, client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{

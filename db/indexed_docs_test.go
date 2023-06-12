@@ -11,6 +11,7 @@
 package db
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -211,8 +212,14 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	require.NoError(f.t, err)
 
 	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, "")
-	matchPrefixFunc := func(q query.Query) bool { return q.Prefix == colIndexKey.ToDS().String() }
+	matchPrefixFunc := func(q query.Query) bool {
+		return q.Prefix == colIndexKey.ToDS().String()
+	}
 
+	systemStoreOn.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).
+		RunAndReturn(func(context.Context, query.Query) (query.Results, error) {
+			return mocks.NewQueryResultsWithValues(f.t, indexOnNameDescData), nil
+		}).Maybe()
 	systemStoreOn.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).Maybe().
 		Return(mocks.NewQueryResultsWithValues(f.t, indexOnNameDescData), nil)
 	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
