@@ -82,7 +82,7 @@ type indexKeyBuilder struct {
 	colName   string
 	fieldName string
 	doc       *client.Document
-	values    []string
+	values    [][]byte
 	isUnique  bool
 }
 
@@ -114,7 +114,7 @@ func (b *indexKeyBuilder) Doc(doc *client.Document) *indexKeyBuilder {
 
 // Values sets the values for the index key.
 // It will override the field values stored in the document.
-func (b *indexKeyBuilder) Values(values ...string) *indexKeyBuilder {
+func (b *indexKeyBuilder) Values(values ...[]byte) *indexKeyBuilder {
 	b.values = values
 	return b
 }
@@ -159,16 +159,17 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 	}
 
 	if b.doc != nil {
-		var fieldStrVal string
+		var fieldBytesVal []byte
 		if len(b.values) == 0 {
 			fieldVal, err := b.doc.Get(b.fieldName)
 			require.NoError(b.f.t, err)
-			fieldStrVal = fmt.Sprintf("%s%v", testValuePrefix, fieldVal)
+			fieldBytesVal = []byte(fmt.Sprintf("%s%v", testValuePrefix, fieldVal))
 		} else {
-			fieldStrVal = b.values[0]
+			fieldBytesVal = b.values[0]
 		}
 
-		key.FieldValues = []string{fieldStrVal, testValuePrefix + b.doc.Key().String()}
+		key.FieldValues = [][]byte{[]byte(fieldBytesVal), 
+			[]byte(testValuePrefix + b.doc.Key().String())}
 	} else if len(b.values) > 0 {
 		key.FieldValues = b.values
 	}
@@ -479,7 +480,7 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 
 			keyBuilder := newIndexKeyBuilder(f).Col(collection.Name()).Field("field").Doc(doc)
 			if tc.Stored != "" {
-				keyBuilder.Values(testValuePrefix + tc.Stored)
+				keyBuilder.Values([]byte(testValuePrefix + tc.Stored))
 			}
 			key := keyBuilder.Build()
 
@@ -506,7 +507,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
-		Values(testNilValue).Build()
+		Values([]byte(testNilValue)).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -892,7 +893,7 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 
 	validKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
 	invalidKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).
-		Values("invalid").Build()
+		Values([]byte("invalid")).Build()
 
 	err := f.txn.Datastore().Delete(f.ctx, validKey.ToDS())
 	require.NoError(f.t, err)
@@ -1004,7 +1005,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 
 	oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
-		Values(testNilValue).Build()
+		Values([]byte(testNilValue)).Build()
 
 	err = doc.Set(usersNameFieldName, "John")
 	require.NoError(f.t, err)

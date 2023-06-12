@@ -126,20 +126,21 @@ func (i *collectionSimpleIndex) getDocKey(doc *client.Document) (core.IndexDataS
 		}
 	}
 
-	storeValue := ""
+	var storeValue []byte
 	if isNil {
-		storeValue = indexFieldNilValue
+		storeValue = []byte(indexFieldNilValue)
 	} else {
 		data, err := i.convertFunc(fieldVal)
 		if err != nil {
 			return core.IndexDataStoreKey{}, NewErrCanNotIndexInvalidFieldValue(err)
 		}
-		storeValue = indexFieldValuePrefix + string(data)
+		storeValue = []byte(string(indexFieldValuePrefix) + string(data))
 	}
 	indexDataStoreKey := core.IndexDataStoreKey{}
 	indexDataStoreKey.CollectionID = strconv.Itoa(int(i.collection.ID()))
 	indexDataStoreKey.IndexID = strconv.Itoa(int(i.desc.ID))
-	indexDataStoreKey.FieldValues = []string{storeValue, indexFieldValuePrefix + doc.Key().String()}
+	indexDataStoreKey.FieldValues = [][]byte{storeValue,
+		[]byte(string(indexFieldValuePrefix) + doc.Key().String())}
 	return indexDataStoreKey, nil
 }
 

@@ -75,7 +75,7 @@ type IndexDataStoreKey struct {
 	// IndexID is the id (unique number) of the index
 	IndexID string
 	// FieldValues is the values of the fields in the index
-	FieldValues []string
+	FieldValues [][]byte
 }
 
 var _ Key = (*IndexDataStoreKey)(nil)
@@ -430,7 +430,7 @@ func NewIndexDataStoreKey(key string) (IndexDataStoreKey, error) {
 		if err != nil {
 			return IndexDataStoreKey{}, ErrInvalidKey
 		}
-		indexKey.FieldValues = append(indexKey.FieldValues, elements[i])
+		indexKey.FieldValues = append(indexKey.FieldValues, []byte(elements[i]))
 	}
 
 	return indexKey, nil
@@ -467,11 +467,11 @@ func (k *IndexDataStoreKey) ToString() string {
 	sb.WriteString(k.IndexID)
 
 	for _, v := range k.FieldValues {
-		if v == "" {
+		if len(v) == 0 {
 			break
 		}
 		sb.WriteByte('/')
-		sb.WriteString(v)
+		sb.WriteString(string(v))
 	}
 
 	return sb.String()
@@ -489,7 +489,7 @@ func (k IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 		return false
 	}
 	for i := range k.FieldValues {
-		if k.FieldValues[i] != other.FieldValues[i] {
+		if string(k.FieldValues[i]) != string(other.FieldValues[i]) {
 			return false
 		}
 	}

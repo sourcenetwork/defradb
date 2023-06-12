@@ -157,6 +157,14 @@ func TestNewIndexKeyFromString_IfFullKeyString_ReturnKey(t *testing.T) {
 	assert.Equal(t, key.IndexName, "idx")
 }
 
+func toFieldValues(values ...string) [][]byte {
+	var result [][]byte = make([][]byte, 0, len(values))
+	for _, value := range values {
+		result = append(result, []byte(value))
+	}
+	return result
+}
+
 func TestIndexDatastoreKey_ToString(t *testing.T) {
 	cases := []struct {
 		Key      IndexDataStoreKey
@@ -183,7 +191,7 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 			Key: IndexDataStoreKey{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"3"},
+				FieldValues:  toFieldValues("3"),
 			},
 			Expected: "/1/2/3",
 		},
@@ -191,27 +199,27 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 			Key: IndexDataStoreKey{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"3", "4"},
+				FieldValues:  toFieldValues("3", "4"),
 			},
 			Expected: "/1/2/3/4",
 		},
 		{
 			Key: IndexDataStoreKey{
 				CollectionID: "1",
-				FieldValues:  []string{"3"},
+				FieldValues:  toFieldValues("3"),
 			},
 			Expected: "/1",
 		},
 		{
 			Key: IndexDataStoreKey{
 				IndexID:     "2",
-				FieldValues: []string{"3"},
+				FieldValues: toFieldValues("3"),
 			},
 			Expected: "",
 		},
 		{
 			Key: IndexDataStoreKey{
-				FieldValues: []string{"3"},
+				FieldValues: toFieldValues("3"),
 			},
 			Expected: "",
 		},
@@ -219,7 +227,7 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 			Key: IndexDataStoreKey{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"", ""},
+				FieldValues:  toFieldValues("", ""),
 			},
 			Expected: "/1/2",
 		},
@@ -227,7 +235,7 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 			Key: IndexDataStoreKey{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"", "3"},
+				FieldValues:  toFieldValues("", "3"),
 			},
 			Expected: "/1/2",
 		},
@@ -235,7 +243,7 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 			Key: IndexDataStoreKey{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"3", "", "4"},
+				FieldValues:  toFieldValues("3", "", "4"),
 			},
 			Expected: "/1/2/3",
 		},
@@ -249,7 +257,7 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 	key := IndexDataStoreKey{
 		CollectionID: "1",
 		IndexID:      "2",
-		FieldValues:  []string{"3", "4"},
+		FieldValues:  toFieldValues("3", "4"),
 	}
 	assert.Equal(t, key.Bytes(), []byte("/1/2/3/4"))
 }
@@ -258,7 +266,7 @@ func TestIndexDatastoreKey_ToDS(t *testing.T) {
 	key := IndexDataStoreKey{
 		CollectionID: "1",
 		IndexID:      "2",
-		FieldValues:  []string{"3", "4"},
+		FieldValues:  toFieldValues("3", "4"),
 	}
 	assert.Equal(t, key.ToDS(), ds.NewKey("/1/2/3/4"))
 }
@@ -269,22 +277,22 @@ func TestIndexDatastoreKey_EqualTrue(t *testing.T) {
 			{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"3", "4"},
+				FieldValues:  toFieldValues("3", "4"),
 			},
 			{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"3", "4"},
+				FieldValues:  toFieldValues("3", "4"),
 			},
 		},
 		{
 			{
 				CollectionID: "1",
-				FieldValues:  []string{"3", "4"},
+				FieldValues:  toFieldValues("3", "4"),
 			},
 			{
 				CollectionID: "1",
-				FieldValues:  []string{"3", "4"},
+				FieldValues:  toFieldValues("3", "4"),
 			},
 		},
 		{
@@ -334,34 +342,34 @@ func TestIndexDatastoreKey_EqualFalse(t *testing.T) {
 			{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"4", "3"},
+				FieldValues:  toFieldValues("4", "3"),
 			},
 			{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"3", "4"},
+				FieldValues:  toFieldValues("3", "4"),
 			},
 		},
 		{
 			{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"3"},
+				FieldValues:  toFieldValues("3"),
 			},
 			{
 				CollectionID: "1",
 				IndexID:      "2",
-				FieldValues:  []string{"3", "4"},
+				FieldValues:  toFieldValues("3", "4"),
 			},
 		},
 		{
 			{
 				CollectionID: "1",
-				FieldValues:  []string{"3", "", "4"},
+				FieldValues:  toFieldValues("3", "", "4"),
 			},
 			{
 				CollectionID: "1",
-				FieldValues:  []string{"3", "4"},
+				FieldValues:  toFieldValues("3", "4"),
 			},
 		},
 	}
@@ -377,7 +385,7 @@ func TestNewIndexDataStoreKey_ValidKey(t *testing.T) {
 	assert.Equal(t, str, IndexDataStoreKey{
 		CollectionID: "1",
 		IndexID:      "2",
-		FieldValues:  []string{"3"},
+		FieldValues:  toFieldValues("3"),
 	})
 
 	str, err = NewIndexDataStoreKey("/1/2/3/4")
@@ -385,7 +393,7 @@ func TestNewIndexDataStoreKey_ValidKey(t *testing.T) {
 	assert.Equal(t, str, IndexDataStoreKey{
 		CollectionID: "1",
 		IndexID:      "2",
-		FieldValues:  []string{"3", "4"},
+		FieldValues:  toFieldValues("3", "4"),
 	})
 }
 
