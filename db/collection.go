@@ -405,7 +405,15 @@ func validateUpdateCollectionIndexes(
 		existingNameToIndex[index.Name] = index
 	}
 	for _, proposedIndex := range proposedIndexes {
-		if _, exists := existingNameToIndex[proposedIndex.Name]; exists {
+		if existingIndex, exists := existingNameToIndex[proposedIndex.Name]; exists {
+			if len(existingIndex.Fields) != len(proposedIndex.Fields) {
+				return false, ErrCanNotChangeIndexWithPatch
+			}
+			for i := range existingIndex.Fields {
+				if existingIndex.Fields[i] != proposedIndex.Fields[i] {
+					return false, ErrCanNotChangeIndexWithPatch
+				}
+			}
 			delete(existingNameToIndex, proposedIndex.Name)
 		} else {
 			return false, NewErrCannotAddIndexWithPatch(proposedIndex.Name)
@@ -442,7 +450,7 @@ func (db *db) getCollectionByVersionID(
 	if err != nil {
 		return nil, err
 	}
-	
+
 	indexes, err := db.getCollectionIndexes(ctx, txn, desc.Name)
 	if err != nil {
 		return nil, err

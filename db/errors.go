@@ -53,6 +53,7 @@ const (
 	errCanNotDeleteIndexedField       string = "can not delete indexed field"
 	errCanNotAddIndexWithPatch        string = "adding indexes via patch is not supported"
 	errCanNotDropIndexWithPatch       string = "dropping indexes via patch is not supported"
+	errCanNotChangeIndexWithPatch     string = "changing indexes via patch is not supported"
 	errIndexWithNameDoesNotExists     string = "index with name doesn't exists"
 )
 
@@ -105,6 +106,7 @@ var (
 	ErrIndexFieldMissingName          = errors.New(errIndexFieldMissingName)
 	ErrIndexFieldMissingDirection     = errors.New(errIndexFieldMissingDirection)
 	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
+	ErrCanNotChangeIndexWithPatch     = errors.New(errCanNotChangeIndexWithPatch)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
