@@ -1,0 +1,46 @@
+.graphiql-defradb-header {
+  margin-top: 0;
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+}
+
+.graphiql-defradb-subheader {
+  margin-bottom: var(--px-8);
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-medium);
+}
+
+.graphiql-defradb-errors {
+  color: red;
+}
+
+.graphiql-defradb-textarea {
+  width: 100%;
+  min-height: 300px;
+
+  outline: none;
+  resize: vertical;
+
+  margin-bottom: var(--px-8);
+  padding: var(--px-8);
+
+  font-size: var(--font-size-body);
+  color: var(--color-neutral);
+
+  background-color: var(--color-primary);
+  border: 2px solid hsla(var(--color-neutral), var(--alpha-background-light));
+  border-radius: var(--border-radius-4);
+}
+
+.graphiql-defradb-button {
+  color: var(--color-neutral);
+  cursor: pointer;
+  padding: var(--px-8) var(--px-16);
+  border: none;
+  border-radius: var(--border-radius-4);
+  background-color: hsla(var(--color-neutral), var(--alpha-background-light));
+}
+
+.graphiql-defradb-textarea::placeholder {
+  color: hsla(var(--color-neutral), 0.5);
+}
