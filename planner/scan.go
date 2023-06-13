@@ -72,14 +72,6 @@ func (n *scanNode) Init() error {
 func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 	n.desc = desc
 	n.initFields(n.slct.Fields)
-	if n.slct.OrderBy != nil {
-		for _, cond := range n.slct.OrderBy.Conditions {
-			for _, index := range cond.FieldIndexes {
-				name, _ := n.docMapper.documentMapping.TryToFindNameFromIndex(index)
-				n.tryAddField(name)
-			}
-		}
-	}
 	return nil
 }
 

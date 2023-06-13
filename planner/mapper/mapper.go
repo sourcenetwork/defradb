@@ -73,8 +73,9 @@ func toSelect(
 	fields = append(fields, filterDependencies...)
 
 	// Resolve order dependencies that may have been missed due to not being rendered.
-	if err := resolveOrderDependencies(
-		descriptionsRepo, collectionName, selectRequest.OrderBy, mapping, &fields); err != nil {
+	err = resolveOrderDependencies(
+		descriptionsRepo, collectionName, selectRequest.OrderBy, mapping, &fields)
+	if err != nil {
 		return nil, err
 	}
 
@@ -156,7 +157,7 @@ outer:
 			// 2 fields: Single depth related type: {author: {age: DESC}}
 			// >2 fields: Multi depth related type: {author: {friends: {age: DESC}}}
 			if numFields == 2 {
-				joinField := condition.Fields[0]
+				joinField := fields[0]
 
 				// ensure the child select is resolved for this order join
 				innerSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
@@ -166,7 +167,7 @@ outer:
 
 				// make sure the actual target field inside the join field
 				// is included in the select
-				targetFieldName := condition.Fields[1]
+				targetFieldName := fields[1]
 				targetField := &Field{
 					Index: innerSelect.FirstIndexOfName(targetFieldName),
 					Name:  targetFieldName,
@@ -174,7 +175,7 @@ outer:
 				innerSelect.Fields = append(innerSelect.Fields, targetField)
 				continue outer
 			} else if numFields > 2 {
-				joinField := condition.Fields[0]
+				joinField := fields[0]
 
 				// ensure the child select is resolved for this order join
 				innerSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
@@ -184,6 +185,11 @@ outer:
 				mapping = innerSelect.DocumentMapping
 				fields = fields[1:] // chop off the front item, and loop again on inner
 			} else { // <= 1
+				targetFieldName := fields[0]
+				*existingFields = append(*existingFields, &Field{
+					Index: mapping.FirstIndexOfName(targetFieldName),
+					Name:  targetFieldName,
+				})
 				// nothing todo, continue the outer for loop
 				continue outer
 			}
@@ -252,7 +258,6 @@ func resolveAggregates(
 ) ([]Requestable, error) {
 	fields := inputFields
 	dependenciesByParentId := map[int][]int{}
-
 	for _, aggregate := range aggregates {
 		aggregateTargets := make([]AggregateTarget, len(aggregate.targets))
 
@@ -332,6 +337,12 @@ func resolveAggregates(
 				}
 
 				childFields, _, err := getRequestables(hostSelectRequest, childMapping, childDesc, descriptionsRepo)
+				if err != nil {
+					return nil, err
+				}
+
+				err = resolveOrderDependencies(
+					descriptionsRepo, childCollectionName, target.order, childMapping, &childFields)
 				if err != nil {
 					return nil, err
 				}
