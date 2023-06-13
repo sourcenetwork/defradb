@@ -26,6 +26,7 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/events"
 )
@@ -155,9 +156,57 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(req.Context(), rw, newGQLResult(result.GQL), http.StatusOK)
 }
 
+type fieldResponse struct {
+	Name         string              `json:"name"`
+	Kind         client.FieldKind    `json:"kind"`
+	RelationName string              `json:"relation_name"`
+	RelationType client.RelationType `json:"relation_type"`
+}
+
 type collectionResponse struct {
-	Name string `json:"name"`
-	ID   string `json:"id"`
+	Name   string          `json:"name"`
+	ID     string          `json:"id"`
+	Fields []fieldResponse `json:"fields,omitempty"`
+}
+
+func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	cols, err := db.GetAllCollections(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	colResp := make([]collectionResponse, len(cols))
+	for i, col := range cols {
+		fields := make([]fieldResponse, len(col.Schema().Fields))
+		for j, field := range col.Schema().Fields {
+			fields[j] = fieldResponse{
+				Name:         field.Name,
+				Kind:         field.Kind,
+				RelationName: field.RelationName,
+				RelationType: field.RelationType,
+			}
+		}
+
+		colResp[i] = collectionResponse{
+			Name:   col.Name(),
+			ID:     col.SchemaID(),
+			Fields: fields,
+		}
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("result", "success", "collections", colResp),
+		http.StatusOK,
+	)
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
