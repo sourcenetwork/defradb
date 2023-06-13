@@ -664,38 +664,66 @@ func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	assert.Len(t, f.getPrefixFromDataStore(prodCatKey.ToString()), 1)
 }
 
-func TestNonUniqueDrop_IfFailsToQueryDataStorage_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-	f.createUserCollectionIndexOnName()
-
+func TestNonUniqueDrop_IfDataStorageFails_ReturnError(t *testing.T) {
 	testErr := errors.New("test error")
 
-	mockedTxn := f.mockTxn()
-	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
-	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).Unset()
-	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
-	mockedTxn.EXPECT().Datastore().Unset()
-	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
+	testCases := []struct {
+		description          string
+		prepareSystemStorage func(*mocks.DSReaderWriter_Expecter)
+	}{
+		{
+			description: "Fails to query data storage",
+			prepareSystemStorage: func(mockedDS *mocks.DSReaderWriter_Expecter) {
+				mockedDS.Query(mock.Anything, mock.Anything).Unset()
+				mockedDS.Query(mock.Anything, mock.Anything).Return(nil, testErr)
+			},
+		},
+		{
+			description: "Fails to iterate data storage",
+			prepareSystemStorage: func(mockedDS *mocks.DSReaderWriter_Expecter) {
+				mockedDS.Query(mock.Anything, mock.Anything).Unset()
+				q := mocks.NewQueryResultsWithResults(t, query.Result{Error: testErr})
+				mockedDS.Query(mock.Anything, mock.Anything).Return(q, nil)
+				q.EXPECT().Close().Unset()
+				q.EXPECT().Close().Return(nil)
+			},
+		},
+		{
+			description: "Fails to delete from data storage",
+			prepareSystemStorage: func(mockedDS *mocks.DSReaderWriter_Expecter) {
+				q := mocks.NewQueryResultsWithResults(t, query.Result{Entry: query.Entry{Key: ""}})
+				q.EXPECT().Close().Unset()
+				q.EXPECT().Close().Return(nil)
+				mockedDS.Query(mock.Anything, mock.Anything).Return(q, nil)
+				mockedDS.Delete(mock.Anything, mock.Anything).Unset()
+				mockedDS.Delete(mock.Anything, mock.Anything).Return(testErr)
+			},
+		},
+		{
+			description: "Fails to close data storage query iterator",
+			prepareSystemStorage: func(mockedDS *mocks.DSReaderWriter_Expecter) {
+				q := mocks.NewQueryResultsWithResults(t, query.Result{Entry: query.Entry{Key: ""}})
+				q.EXPECT().Close().Unset()
+				q.EXPECT().Close().Return(testErr)
+				mockedDS.Query(mock.Anything, mock.Anything).Return(q, nil)
+				mockedDS.Delete(mock.Anything, mock.Anything).Return(nil)
+			},
+		},
+	}
 
-	err := f.dropIndex(usersColName, testUsersColIndexName)
-	require.ErrorIs(t, err, testErr)
-}
+	for _, tc := range testCases {
+		f := newIndexTestFixture(t)
+		f.createUserCollectionIndexOnName()
 
-func TestNonUniqueDrop_IfQueryIteratorFails_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-	f.createUserCollectionIndexOnName()
+		mockedTxn := f.mockTxn()
+		mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
+		tc.prepareSystemStorage(mockedTxn.MockDatastore.EXPECT())
+		mockedTxn.EXPECT().Datastore().Unset()
+		mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
 
-	testErr := errors.New("test error")
-
-	mockedTxn := f.mockTxn()
-	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
-	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).
-		Return(mocks.NewQueryResultsWithResults(t, query.Result{Error: testErr}), nil)
-	mockedTxn.EXPECT().Datastore().Unset()
-	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
-
-	err := f.dropIndex(usersColName, testUsersColIndexName)
-	require.ErrorIs(t, err, testErr)
+		err := f.dropIndex(usersColName, testUsersColIndexName)
+		require.ErrorIs(t, err, testErr, tc.description)
+	}
 }
 
 func TestNonUniqueDrop_ShouldCloseQueryIterator(t *testing.T) {
@@ -715,23 +743,6 @@ func TestNonUniqueDrop_ShouldCloseQueryIterator(t *testing.T) {
 
 	err := f.dropIndex(usersColName, testUsersColIndexName)
 	assert.NoError(t, err)
-}
-
-func TestNonUniqueDrop_IfDatastoreFailsToDelete_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-	f.createUserCollectionIndexOnName()
-
-	mockedTxn := f.mockTxn()
-	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
-	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).
-		Return(mocks.NewQueryResultsWithValues(t, []byte{}), nil)
-	mockedTxn.MockDatastore.EXPECT().Delete(mock.Anything, mock.Anything).
-		Return(errors.New("error"))
-	mockedTxn.EXPECT().Datastore().Unset()
-	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
-
-	err := f.dropIndex(usersColName, testUsersColIndexName)
-	require.ErrorIs(t, err, NewCanNotDeleteIndexedField(nil))
 }
 
 func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {

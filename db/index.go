@@ -188,20 +188,20 @@ func iteratePrefixKeys(
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err := q.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close collection query", err)
-		}
-	}()
 
 	for res := range q.Next() {
 		if res.Error != nil {
+			_ = q.Close()
 			return res.Error
 		}
 		err = execFunc(ctx, ds.NewKey(res.Key))
 		if err != nil {
+			_ = q.Close()
 			return err
 		}
+	}
+	if err = q.Close(); err != nil {
+		return err
 	}
 
 	return nil
