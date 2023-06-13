@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"sync"
 
+	dag "github.com/ipfs/boxo/ipld/merkledag"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -126,7 +127,7 @@ func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
 	if err != nil {
 		return nil, errors.Wrap("failed to create block", err)
 	}
-	return ipld.Decode(blk)
+	return ipld.Decode(blk, dag.DecodeProtobufBlock)
 }
 
 func (p *Peer) createNodeGetter(
