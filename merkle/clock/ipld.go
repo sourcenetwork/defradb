@@ -27,10 +27,6 @@ import (
 
 var _ core.NodeGetter = (*CrdtNodeGetter)(nil)
 
-func init() {
-	ipld.Register(cid.DagProtobuf, dag.DecodeProtobufBlock)
-}
-
 type DeltaExtractorFn func(ipld.Node) (core.Delta, error)
 
 // crdtNodeGetter wraps an ipld.NodeGetter with some additional utility methods
