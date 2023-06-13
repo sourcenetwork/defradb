@@ -13,8 +13,9 @@ package core
 import (
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // Decode takes a field value and description and converts it to the

@@ -1,3 +1,13 @@
+// Copyright 2023 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package lenses
 
 import (
@@ -12,7 +22,7 @@ import (
 //   - `value` can be any valid json value and is the value that you wish the `dst` property
 //     of all documents being transformed by this module to have.
 var SetDefaultModulePath string = getPathRelativeToProjectRoot(
-	"/tests/modules/rust_wasm32_set_default/target/wasm32-unknown-unknown/debug/rust_wasm32_set_default.wasm",
+	"/tests/lenses/rust_wasm32_set_default/target/wasm32-unknown-unknown/debug/rust_wasm32_set_default.wasm",
 )
 
 func getPathRelativeToProjectRoot(relativePath string) string {

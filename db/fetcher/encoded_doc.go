@@ -21,6 +21,7 @@ import (
 type EncodedDocument interface {
 	// Key returns the key of the document
 	Key() []byte
+	SchemaVersionID() string
 	// Reset re-initializes the EncodedDocument object.
 	Reset()
 	// Decode returns a properly decoded document object
@@ -52,6 +53,7 @@ func (e encProperty) Decode() (any, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return core.Decode(e.Desc, val)
 }
 
@@ -60,8 +62,9 @@ type encodedDocument struct {
 	mapping *core.DocumentMapping
 	doc     *core.Doc
 
-	key        []byte
-	Properties []*encProperty
+	key             []byte
+	schemaVersionID string
+	Properties      map[client.FieldDescription]*encProperty
 
 	// tracking bitsets
 	// A value of 1 indicates a required field
@@ -70,7 +73,6 @@ type encodedDocument struct {
 	// by clearing the bit for the FieldID
 	filterSet *bitset.BitSet // filter fields
 	selectSet *bitset.BitSet // select fields
-
 }
 
 var _ EncodedDocument = (*encodedDocument)(nil)
@@ -79,9 +81,13 @@ func (encdoc *encodedDocument) Key() []byte {
 	return encdoc.key
 }
 
+func (encdoc *encodedDocument) SchemaVersionID() string {
+	return encdoc.schemaVersionID
+}
+
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
-	encdoc.Properties = make([]*encProperty, 0)
+	encdoc.Properties = make(map[client.FieldDescription]*encProperty, 0)
 	encdoc.key = nil
 	if encdoc.mapping != nil {
 		doc := encdoc.mapping.NewDoc()
@@ -108,6 +114,8 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 			return nil, err
 		}
 	}
+
+	doc.SchemaVersionID = encdoc.SchemaVersionID()
 
 	return doc, nil
 }
@@ -144,5 +152,7 @@ func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
 		}
 		encdoc.doc.Fields[prop.Desc.ID] = val
 	}
+
+	encdoc.doc.SchemaVersionID = encdoc.SchemaVersionID()
 	return *encdoc.doc, nil
 }

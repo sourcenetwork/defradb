@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/lens"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
@@ -252,6 +253,7 @@ func (p *Planner) Scan(parsed *mapper.Select) (*scanNode, error) {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = new(fetcher.DocumentFetcher)
+		f = lens.NewFetcher(f, p.db.LensRegistry())
 	}
 	scan := &scanNode{
 		p:         p,

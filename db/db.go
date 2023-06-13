@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/lens"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/request/graphql"
@@ -58,7 +59,8 @@ type db struct {
 
 	events events.Events
 
-	parser core.Parser
+	parser       core.Parser
+	lensRegistry client.LensRegistry
 
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
@@ -110,8 +112,9 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 
 		crdtFactory: &crdtFactory,
 
-		parser:  parser,
-		options: options,
+		parser:       parser,
+		lensRegistry: lens.NewRegistry(),
+		options:      options,
 	}
 
 	// apply options
@@ -162,6 +165,10 @@ func (db *db) systemstore() datastore.DSReaderWriter {
 	return db.multistore.Systemstore()
 }
 
+func (db *db) LensRegistry() client.LensRegistry {
+	return db.lensRegistry
+}
+
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters.
 func (db *db) initialize(ctx context.Context) error {
@@ -180,13 +187,19 @@ func (db *db) initialize(ctx context.Context) error {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
-	// and finish initialization
+	// and migrations and finish initialization
 	if exists {
 		log.Debug(ctx, "DB has already been initialized, continuing")
 		err = db.loadSchema(ctx, txn)
 		if err != nil {
 			return err
 		}
+
+		err = db.lensRegistry.RefreshLenses(ctx, txn)
+		if err != nil {
+			return err
+		}
+
 		// The query language types are only updated on successful commit
 		// so we must not forget to do so on success regardless of whether
 		// we have written to the datastores.

@@ -75,6 +75,6 @@ fn try_transform(ptr: *mut u8) -> Result<Option<Vec<u8>>, Box<dyn Error>> {
 
     input.insert(params.dst, params.value);
 
-    let result_json = serde_json::to_vec(&input)?;
+    let result_json = serde_json::to_vec(&input.clone())?;
     Ok(Some(result_json))
 }

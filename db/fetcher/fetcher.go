@@ -446,6 +446,11 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		df.ranFilter = false
 	}
 
+	if kv.Key.FieldId == core.DATASTORE_DOC_VERSION_FIELD_ID {
+		df.doc.schemaVersionID = string(kv.Value)
+		return nil
+	}
+
 	// we have to skip the object marker
 	if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
 		return nil
@@ -476,7 +481,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		property.IsFilter = true
 	}
 
-	df.doc.Properties = append(df.doc.Properties, property)
+	df.doc.Properties[fieldDesc] = property
 
 	return nil
 }

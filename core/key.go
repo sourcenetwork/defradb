@@ -49,6 +49,7 @@ const (
 	SCHEMA_MIGRATION                  = "/schema/migration"
 	SEQ                               = "/seq"
 	PRIMARY_KEY                       = "/pk"
+	DATASTORE_DOC_VERSION_FIELD_ID    = "v"
 	REPLICATOR                        = "/replicator/id"
 	P2P_COLLECTION                    = "/p2p/collection"
 )
@@ -315,6 +316,19 @@ func NewSchemaHistoryKey(schemaId string, previousSchemaVersionID string) Schema
 
 func NewSchemaVersionMigrationKey(schemaVersionID string) SchemaVersionMigrationKey {
 	return SchemaVersionMigrationKey{SourceSchemaVersionID: schemaVersionID}
+}
+
+func NewSchemaHistoryKeyFromString(keyString string) (SchemaHistoryKey, error) {
+	keyString = strings.TrimPrefix(keyString, COLLECTION_SCHEMA_VERSION_HISTORY+"/")
+	elements := strings.Split(keyString, "/")
+	if len(elements) != 2 {
+		return SchemaHistoryKey{}, ErrInvalidKey
+	}
+
+	return SchemaHistoryKey{
+		SchemaID:                elements[0],
+		PreviousSchemaVersionID: elements[1],
+	}, nil
 }
 
 func NewSequenceKey(name string) SequenceKey {
