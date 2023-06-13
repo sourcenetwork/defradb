@@ -157,10 +157,9 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 type fieldResponse struct {
-	Name         string              `json:"name"`
-	Kind         client.FieldKind    `json:"kind"`
-	RelationName string              `json:"relation_name"`
-	RelationType client.RelationType `json:"relation_type"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Kind string `json:"kind"`
 }
 
 type collectionResponse struct {
@@ -187,10 +186,9 @@ func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		fields := make([]fieldResponse, len(col.Schema().Fields))
 		for j, field := range col.Schema().Fields {
 			fields[j] = fieldResponse{
-				Name:         field.Name,
-				Kind:         field.Kind,
-				RelationName: field.RelationName,
-				RelationType: field.RelationType,
+				ID:   field.ID.String(),
+				Name: field.Name,
+				Kind: client.FieldKindEnumToStringMapping[field.Kind],
 			}
 		}
 

@@ -173,6 +173,24 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"[String!]":  FieldKind_STRING_ARRAY,
 }
 
+// FieldKindEnumToStringMapping maps enum values [FieldKind] to their string representations.
+var FieldKindEnumToStringMapping = map[FieldKind]string{
+	FieldKind_DocKey:                "ID",
+	FieldKind_BOOL:                  "Boolean",
+	FieldKind_NILLABLE_BOOL_ARRAY:   "[Boolean]",
+	FieldKind_BOOL_ARRAY:            "[Boolean!]",
+	FieldKind_INT:                   "Integer",
+	FieldKind_NILLABLE_INT_ARRAY:    "[Integer]",
+	FieldKind_INT_ARRAY:             "[Integer!]",
+	FieldKind_DATETIME:              "DateTime",
+	FieldKind_FLOAT:                 "Float",
+	FieldKind_NILLABLE_FLOAT_ARRAY:  "[Float]",
+	FieldKind_FLOAT_ARRAY:           "[Float!]",
+	FieldKind_STRING:                "String",
+	FieldKind_NILLABLE_STRING_ARRAY: "[String]",
+	FieldKind_STRING_ARRAY:          "[String!]",
+}
+
 // RelationType describes the type of relation between two types.
 type RelationType uint8
 
