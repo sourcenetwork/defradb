@@ -25,6 +25,10 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
+var (
+	FilterEqOp = &Operator{Operation: "_eq"}
+)
+
 // ToSelect converts the given [parser.Select] into a [Select].
 //
 // In the process of doing so it will construct the document map required to access the data
