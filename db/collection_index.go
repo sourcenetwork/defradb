@@ -498,24 +498,24 @@ func deserializePrefix[T any](ctx context.Context, prefix string, storage ds.Rea
 	if err != nil {
 		return nil, NewErrFailedToCreateCollectionQuery(err)
 	}
-	defer func() {
-		if err := q.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close collection query", err)
-		}
-	}()
 
 	elements := make(map[string]T)
 	for res := range q.Next() {
 		if res.Error != nil {
+			_ = q.Close()
 			return nil, res.Error
 		}
 
 		var element T
 		err = json.Unmarshal(res.Value, &element)
 		if err != nil {
+			_ = q.Close()
 			return nil, NewErrInvalidStoredIndex(err)
 		}
 		elements[res.Key] = element
+	}
+	if err := q.Close(); err != nil {
+		return nil, err
 	}
 	return elements, nil
 }

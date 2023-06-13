@@ -726,11 +726,28 @@ func TestGetIndexes_IfSystemStoreQueryIteratorFails_ReturnError(t *testing.T) {
 	mockedTxn := f.mockTxn()
 
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Unset()
-	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
-		Return(mocks.NewQueryResultsWithResults(t, query.Result{Error: testErr}), nil)
+	q := mocks.NewQueryResultsWithResults(t, query.Result{Error: testErr})
+	q.EXPECT().Close().Unset()
+	q.EXPECT().Close().Return(nil)
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(q, nil)
 
 	_, err := f.getAllIndexes()
 	assert.ErrorIs(t, err, testErr)
+}
+
+func TestGetIndexes_IfSystemStoreHasInvalidData_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+
+	mockedTxn := f.mockTxn()
+
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Unset()
+	q := mocks.NewQueryResultsWithValues(t, []byte("invalid"))
+	q.EXPECT().Close().Unset()
+	q.EXPECT().Close().Return(nil)
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(q, nil)
+
+	_, err := f.getAllIndexes()
+	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
 }
 
 func TestGetIndexes_IfFailsToReadSeqNumber_ReturnError(t *testing.T) {
