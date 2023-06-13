@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,14 +8,16 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package request
+package test_explain_debug
 
-// ExplainType does not represent which type is currently the default explain request type.
-type ExplainType string
+type dataMap = map[string]any
 
-// Types of explain requests.
-const (
-	SimpleExplain  ExplainType = "simple"
-	ExecuteExplain ExplainType = "execute"
-	DebugExplain   ExplainType = "debug"
-)
+var basicPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"selectNode": dataMap{
+				"scanNode": dataMap{},
+			},
+		},
+	},
+}

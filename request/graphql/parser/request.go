@@ -145,6 +145,9 @@ func parseExplainDirective(astDirective *ast.Directive) (immutable.Option[reques
 	case schemaTypes.ExplainArgExecute:
 		return immutable.Some(request.ExecuteExplain), nil
 
+	case schemaTypes.ExplainArgDebug:
+		return immutable.Some(request.DebugExplain), nil
+
 	default:
 		return immutable.None[request.ExplainType](), ErrUnknownExplainType
 	}

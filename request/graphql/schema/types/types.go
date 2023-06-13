@@ -22,6 +22,7 @@ const (
 	ExplainArgNameType string = "type"
 	ExplainArgSimple   string = "simple"
 	ExplainArgExecute  string = "execute"
+	ExplainArgDebug    string = "debug"
 )
 
 var (
@@ -52,6 +53,11 @@ var (
 			ExplainArgExecute: &gql.EnumValueConfig{
 				Value:       ExplainArgExecute,
 				Description: "Deeper explaination - insights gathered by executing the plan graph.",
+			},
+
+			ExplainArgDebug: &gql.EnumValueConfig{
+				Value:       ExplainArgDebug,
+				Description: "Like simple explain, but more verbose nodes (no attributes).",
 			},
 		},
 	})
