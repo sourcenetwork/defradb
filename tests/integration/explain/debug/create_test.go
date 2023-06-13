@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain_default
+package test_explain_debug
 
 import (
 	"testing"
@@ -29,16 +29,16 @@ var createPattern = dataMap{
 	},
 }
 
-func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
+func TestDebugExplainMutationRequestWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (default) mutation request with create.",
+		Description: "Explain (debug) mutation request with create.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			testUtils.ExplainRequest{
 
-				Request: `mutation @explain {
+				Request: `mutation @explain(type: debug) {
 					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
 						name
 						age
@@ -46,20 +46,6 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 				}`,
 
 				ExpectedPatterns: []dataMap{createPattern},
-
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
-					{
-						TargetNodeName:    "createNode",
-						IncludeChildNodes: false,
-						ExpectedAttributes: dataMap{
-							"data": dataMap{
-								"age":      float64(27),
-								"name":     "Shahzad Lone",
-								"verified": true,
-							},
-						},
-					},
-				},
 			},
 		},
 	}
@@ -67,16 +53,16 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T) {
+func TestDebugExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (default) mutation request with create, document exists.",
+		Description: "Explain (debug) mutation request with create, document exists.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			testUtils.ExplainRequest{
 
-				Request: `mutation @explain {
+				Request: `mutation @explain(type: debug) {
 					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
 						name
 						age
@@ -84,19 +70,6 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 				}`,
 
 				ExpectedPatterns: []dataMap{createPattern},
-
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
-					{
-						TargetNodeName:    "createNode",
-						IncludeChildNodes: false,
-						ExpectedAttributes: dataMap{
-							"data": dataMap{
-								"age":  float64(27),
-								"name": "Shahzad Lone",
-							},
-						},
-					},
-				},
 			},
 		},
 	}

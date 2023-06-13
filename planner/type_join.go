@@ -138,7 +138,6 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 		joinDirectionLabel          = "direction"
 		joinDirectionPrimaryLabel   = "primary"
 		joinDirectionSecondaryLabel = "secondary"
-		joinSubTypeLabel            = "subType"
 		joinSubTypeNameLabel        = "subTypeName"
 		joinRootLabel               = "rootName"
 	)
