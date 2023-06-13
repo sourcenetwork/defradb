@@ -52,16 +52,14 @@ export async function listSchema(): Promise<ListSchemaResponse> {
 }
 
 export async function loadSchema(name: string, fields: Field[]): Promise<LoadSchemaResponse> {
-  const body = [`type ${name} {`, ...fields.map(field => `${field.name}: ${field.kind}`), '}'].join('\n')
+  const _fields = fields.map(field => `${field.name}: ${field.kind.replace('Integer', 'Int')}`)
+  const body = [`type ${name} {`, ..._fields, '}'].join('\n')
   return fetch(baseUrl + '/schema/load', { method: 'POST', body }).then(res => res.json())
 }
 
 export async function patchSchema(nameA: string, fieldsA: Field[], nameB: string, fieldsB: Field[]): Promise<PatchSchemaResponse> {
-  const _fieldsA = fieldsA.map(field => ({ Name: field.name, Kind: field.kind.replace('Int', 'Integer') }))
-  const _fieldsB = fieldsB.map(field => ({ Name: field.name, Kind: field.kind.replace('Int', 'Integer') }))
-  
-  const schemaA = { Name: nameA, Fields: _fieldsA }
-  const schemaB = { Name: nameB, Fields: _fieldsB }
+  const schemaA = { Name: nameA, Fields: fieldsA.map(field => ({ Name: field.name, Kind: field.kind })) }
+  const schemaB = { Name: nameB, Fields: fieldsB.map(field => ({ Name: field.name, Kind: field.kind })) }
 
   const collectionA = { [nameA]: { Name: nameA, Schema: schemaA } }
   const collectionB = { [nameB]: { Name: nameB, Schema: schemaB } }

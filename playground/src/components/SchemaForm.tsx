@@ -6,9 +6,9 @@ const fieldTypes = [
   'Boolean',
   '[Boolean]',
   '[Boolean!]',
-  'Int',
-  '[Int]',
-  '[Int!]',
+  'Integer',
+  '[Integer]',
+  '[Integer!]',
   'DateTime',
   'Float',
   '[Float]',
@@ -33,7 +33,7 @@ export type SchemaFormProps = {
 
 const defaultValue: FormData = {
   name: '',
-  fields: [{ name: 'Name', kind: 'String' }]
+  fields: [{ name: 'name', kind: 'String' }]
 }
 
 export function SchemaForm({ errors, isLoading, onSubmit, values = defaultValue }: SchemaFormProps) {
