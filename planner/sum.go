@@ -43,7 +43,6 @@ func (p *Planner) Sum(
 	field *mapper.Aggregate,
 	parent *mapper.Select,
 ) (*sumNode, error) {
-	// panic("sum")
 	isFloat := false
 	for _, target := range field.AggregateTargets {
 		isTargetFloat, err := p.isValueFloat(parent, &target)

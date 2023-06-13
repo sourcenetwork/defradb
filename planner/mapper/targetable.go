@@ -100,10 +100,11 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 		case *PropertyIndex:
 			subObj := v.(map[connor.FilterKey]any)
 			outkey, _ := mapping.TryToFindNameFromIndex(keyType.Index)
-			if childMapping, ok := tryGetChildMapping(mapping, keyType.Index); !ok {
-				outmap[outkey] = filterObjectToMap(mapping, subObj)
-			} else {
+			childMapping, ok := tryGetChildMapping(mapping, keyType.Index)
+			if ok {
 				outmap[outkey] = filterObjectToMap(childMapping, subObj)
+			} else {
+				outmap[outkey] = filterObjectToMap(mapping, subObj)
 			}
 
 		case *Operator:

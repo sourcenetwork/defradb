@@ -152,11 +152,14 @@ outer:
 		fields := condition.Fields[:] // copy slice
 		for {
 			numFields := len(fields)
+			// <2 fields: Direct field on the root type: {age: DESC}
+			// 2 fields: Single depth related type: {author: {age: DESC}}
+			// >2 fields: Multi depth related type: {author: {friends: {age: DESC}}}
 			if numFields == 2 {
 				joinField := condition.Fields[0]
 
 				// ensure the child select is resolved for this order join
-				innserSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
+				innerSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
 				if err != nil {
 					return err
 				}
@@ -165,20 +168,20 @@ outer:
 				// is included in the select
 				targetFieldName := condition.Fields[1]
 				targetField := &Field{
-					Index: innserSelect.FirstIndexOfName(targetFieldName),
+					Index: innerSelect.FirstIndexOfName(targetFieldName),
 					Name:  targetFieldName,
 				}
-				innserSelect.Fields = append(innserSelect.Fields, targetField)
+				innerSelect.Fields = append(innerSelect.Fields, targetField)
 				continue outer
 			} else if numFields > 2 {
 				joinField := condition.Fields[0]
 
 				// ensure the child select is resolved for this order join
-				innserSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
+				innerSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
 				if err != nil {
 					return err
 				}
-				mapping = innserSelect.DocumentMapping
+				mapping = innerSelect.DocumentMapping
 				fields = fields[1:] // chop off the front item, and loop again on inner
 			} else { // <= 1
 				// nothing todo, continue the outer for loop
@@ -201,7 +204,7 @@ func resolveChildOrder(
 ) (*Select, error) {
 	childFieldIndexes := mapping.IndexesByName[orderChildField]
 	// Check if the join field is already mapped, if not then map it.
-	if isOrderJoinFieldMapped := len(childFieldIndexes) != 0; !isOrderJoinFieldMapped {
+	if len(childFieldIndexes) == 0 {
 		index := mapping.GetNextIndex()
 		mapping.Add(index, orderChildField)
 
@@ -332,8 +335,6 @@ func resolveAggregates(
 				if err != nil {
 					return nil, err
 				}
-
-				// ensure the field were aggregating is included in the join select
 
 				childMapping = childMapping.CloneWithoutRender()
 				mapping.SetChildAt(index, childMapping)
@@ -835,7 +836,6 @@ func resolveInnerFilterDependencies(
 			// If the key index is outside the bounds of the child mapping array, then
 			// this is not a relation/join and we can add it to the fields and
 			// continue (no child props to process)
-
 			newFields = append(existingFields, &Field{
 				Index: keyIndex,
 				Name:  key,

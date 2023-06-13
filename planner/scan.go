@@ -283,19 +283,29 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 // Merge implements mergeNode
 func (n *scanNode) Merge() bool { return true }
 
-func (p *Planner) Scan(parsed *mapper.Select) *scanNode {
+func (p *Planner) Scan(parsed *mapper.Select) (*scanNode, error) {
 	var f fetcher.Fetcher
 	if parsed.Cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = new(fetcher.DocumentFetcher)
 	}
-	return &scanNode{
+	scan := &scanNode{
 		p:         p,
 		fetcher:   f,
 		slct:      parsed,
 		docMapper: docMapper{parsed.DocumentMapping},
 	}
+
+	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
+	if err != nil {
+		return nil, err
+	}
+	err = scan.initCollection(colDesc)
+	if err != nil {
+		return nil, err
+	}
+	return scan, nil
 }
 
 // multiScanNode is a buffered scanNode that has
