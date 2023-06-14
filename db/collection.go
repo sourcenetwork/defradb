@@ -265,8 +265,8 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, schemaVersionID)
-	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(previousSchemaVersionID))
+	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, previousSchemaVersionID)
+	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
 	if err != nil {
 		return nil, err
 	}
