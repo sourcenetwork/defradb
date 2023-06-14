@@ -73,23 +73,23 @@ func (db *db) getAllCollectionIndexes(
 ) ([]collectionIndexDescription, error) {
 	prefix := core.NewCollectionIndexKey("", "")
 
-	indexMap, err := deserializePrefix[client.IndexDescription](ctx,
+	deserializedIndexes, err := deserializePrefix[client.IndexDescription](ctx,
 		prefix.ToString(), txn.Systemstore())
 
 	if err != nil {
 		return nil, err
 	}
 
-	indexes := make([]collectionIndexDescription, 0, len(indexMap))
+	indexes := make([]collectionIndexDescription, 0, len(deserializedIndexes))
 
-	for indexKeyStr, index := range indexMap {
-		indexKey, err := core.NewCollectionIndexKeyFromString(indexKeyStr)
+	for _, indexRec := range deserializedIndexes {
+		indexKey, err := core.NewCollectionIndexKeyFromString(indexRec.key)
 		if err != nil {
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
 		indexes = append(indexes, collectionIndexDescription{
 			CollectionName: indexKey.CollectionName,
-			Index:          index,
+			Index:          indexRec.element,
 		})
 	}
 
@@ -102,14 +102,14 @@ func (db *db) getCollectionIndexes(
 	colName string,
 ) ([]client.IndexDescription, error) {
 	prefix := core.NewCollectionIndexKey(colName, "")
-	indexMap, err := deserializePrefix[client.IndexDescription](ctx,
+	deserializedIndexes, err := deserializePrefix[client.IndexDescription](ctx,
 		prefix.ToString(), txn.Systemstore())
 	if err != nil {
 		return nil, err
 	}
-	indexes := make([]client.IndexDescription, 0, len(indexMap))
-	for _, index := range indexMap {
-		indexes = append(indexes, index)
+	indexes := make([]client.IndexDescription, 0, len(deserializedIndexes))
+	for _, indexRec := range deserializedIndexes {
+		indexes = append(indexes, indexRec.element)
 	}
 	return indexes, nil
 }
@@ -328,14 +328,14 @@ func (c *collection) getIndexes(ctx context.Context, txn datastore.Txn) ([]Colle
 	}
 
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
-	indexDescriptions, err := deserializePrefix[client.IndexDescription](
+	deserializedIndexes, err := deserializePrefix[client.IndexDescription](
 		ctx, prefix.ToString(), txn.Systemstore())
 	if err != nil {
 		return nil, err
 	}
-	colIndexes := make([]CollectionIndex, 0, len(indexDescriptions))
-	for _, desc := range indexDescriptions {
-		index, err := NewCollectionIndex(c, desc)
+	colIndexes := make([]CollectionIndex, 0, len(deserializedIndexes))
+	for _, indexRec := range deserializedIndexes {
+		index, err := NewCollectionIndex(c, indexRec.element)
 		if err != nil {
 			return nil, err
 		}
@@ -513,13 +513,22 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 	return sb.String()
 }
 
-func deserializePrefix[T any](ctx context.Context, prefix string, storage ds.Read) (map[string]T, error) {
+type deserializedElement[T any] struct {
+	key     string
+	element T
+}
+
+func deserializePrefix[T any](
+	ctx context.Context,
+	prefix string,
+	storage ds.Read,
+) ([]deserializedElement[T], error) {
 	q, err := storage.Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
 		return nil, NewErrFailedToCreateCollectionQuery(err)
 	}
 
-	elements := make(map[string]T)
+	elements := make([]deserializedElement[T], 0)
 	for res := range q.Next() {
 		if res.Error != nil {
 			_ = q.Close()
@@ -532,7 +541,7 @@ func deserializePrefix[T any](ctx context.Context, prefix string, storage ds.Rea
 			_ = q.Close()
 			return nil, NewErrInvalidStoredIndex(err)
 		}
-		elements[res.Key] = element
+		elements = append(elements, deserializedElement[T]{key: res.Key, element: element})
 	}
 	if err := q.Close(); err != nil {
 		return nil, err

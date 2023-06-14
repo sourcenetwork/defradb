@@ -1143,6 +1143,63 @@ func TestCollectionGetIndexes_IfIndexIsDropped_ShouldUpdateCache(t *testing.T) {
 	assert.Len(t, indexes, 0)
 }
 
+func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
+	f := newIndexTestFixtureBare(t)
+	colDesc := client.CollectionDescription{
+		Name: "testCollection",
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
+				{
+					Name: "_key",
+					Kind: client.FieldKind_DocKey,
+				},
+			},
+		},
+	}
+	const (
+		num             = 30
+		fieldNamePrefix = "field_"
+		indexNamePrefix = "index_"
+	)
+
+	toSuffix := func(i int) string {
+		return fmt.Sprintf("%02d", i)
+	}
+
+	for i := 1; i <= num; i++ {
+		colDesc.Schema.Fields = append(colDesc.Schema.Fields,
+			client.FieldDescription{
+				Name: fieldNamePrefix + toSuffix(i),
+				Kind: client.FieldKind_STRING,
+				Typ:  client.LWW_REGISTER,
+			})
+	}
+
+	collection := f.createCollection(colDesc)
+
+	for i := 1; i <= num; i++ {
+		iStr := toSuffix(i)
+		indexDesc := client.IndexDescription{
+			Name: indexNamePrefix + iStr,
+			Fields: []client.IndexedFieldDescription{
+				{Name: fieldNamePrefix + iStr, Direction: client.Ascending},
+			},
+		}
+
+		_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
+		require.NoError(t, err)
+	}
+	f.commitTxn()
+
+	indexes, err := collection.GetIndexes(f.ctx)
+	require.NoError(t, err)
+	require.Len(t, indexes, num)
+
+	for i := 1; i <= num; i++ {
+		assert.Equal(t, indexNamePrefix+toSuffix(i), indexes[i-1].Name, "i = %d", i)
+	}
+}
+
 func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 	desc := f.createUserCollectionIndexOnName()
