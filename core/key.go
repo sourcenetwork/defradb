@@ -113,8 +113,8 @@ var _ Key = (*CollectionSchemaVersionKey)(nil)
 // If a SchemaHistoryKey does not exist for a given SchemaVersionID it means
 // that that SchemaVersionID is for the latest version.
 type SchemaHistoryKey struct {
-	SchemaID             string
-	PriorSchemaVersionId string
+	SchemaID                string
+	PreviousSchemaVersionId string
 }
 
 var _ Key = (*SchemaHistoryKey)(nil)
@@ -223,10 +223,10 @@ func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersi
 	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
 }
 
-func NewSchemaHistoryKey(schemaId string, priorSchemaVersionId string) SchemaHistoryKey {
+func NewSchemaHistoryKey(schemaId string, previousSchemaVersionId string) SchemaHistoryKey {
 	return SchemaHistoryKey{
-		SchemaID:             schemaId,
-		PriorSchemaVersionId: priorSchemaVersionId,
+		SchemaID:                schemaId,
+		PreviousSchemaVersionId: previousSchemaVersionId,
 	}
 }
 
@@ -428,8 +428,8 @@ func (k SchemaHistoryKey) ToString() string {
 		result = result + "/" + k.SchemaID
 	}
 
-	if k.PriorSchemaVersionId != "" {
-		result = result + "/" + k.PriorSchemaVersionId
+	if k.PreviousSchemaVersionId != "" {
+		result = result + "/" + k.PreviousSchemaVersionId
 	}
 
 	return result
