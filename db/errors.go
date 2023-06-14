@@ -49,12 +49,13 @@ const (
 	errCollectionDoesntExisting       string = "collection with given name doesn't exist"
 	errFailedToStoreIndexedField      string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc    string = "failed to read stored index description"
-	errCanNotIndexInvalidFieldValue   string = "can not index invalid field value"
 	errCanNotDeleteIndexedField       string = "can not delete indexed field"
 	errCanNotAddIndexWithPatch        string = "adding indexes via patch is not supported"
 	errCanNotDropIndexWithPatch       string = "dropping indexes via patch is not supported"
 	errCanNotChangeIndexWithPatch     string = "changing indexes via patch is not supported"
 	errIndexWithNameDoesNotExists     string = "index with name doesn't exists"
+	errInvalidFieldValue              string = "invalid field value"
+	errUnsupportedIndexFieldType      string = "unsupported index field type"
 )
 
 var (
@@ -153,12 +154,6 @@ func NewErrFailedToStoreIndexedField(fieldName string, inner error) error {
 // could not be read.
 func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
-}
-
-// NewErrCanNotIndexInvalidFieldValue returns a new error indicating that the field value is invalid
-// and cannot be indexed.
-func NewErrCanNotIndexInvalidFieldValue(inner error) error {
-	return errors.Wrap(errCanNotIndexInvalidFieldValue, inner)
 }
 
 // NewCanNotDeleteIndexedField returns a new error a failed attempt to delete an indexed field
@@ -304,6 +299,8 @@ func NewErrDocumentDeleted(dockey string) error {
 	)
 }
 
+// NewErrIndexWithNameAlreadyExists returns a new error indicating that an index with the
+// given name already exists.
 func NewErrIndexWithNameAlreadyExists(indexName string) error {
 	return errors.New(
 		errIndexWithNameAlreadyExists,
@@ -311,6 +308,8 @@ func NewErrIndexWithNameAlreadyExists(indexName string) error {
 	)
 }
 
+// NewErrIndexWithNameDoesNotExists returns a new error indicating that an index with the
+// given name does not exist.
 func NewErrIndexWithNameDoesNotExists(indexName string) error {
 	return errors.New(
 		errIndexWithNameDoesNotExists,
@@ -318,6 +317,8 @@ func NewErrIndexWithNameDoesNotExists(indexName string) error {
 	)
 }
 
+// NewErrCannotAddIndexWithPatch returns a new error indicating that an index cannot be added
+// with a patch.
 func NewErrCannotAddIndexWithPatch(proposedName string) error {
 	return errors.New(
 		errCanNotAddIndexWithPatch,
@@ -325,9 +326,30 @@ func NewErrCannotAddIndexWithPatch(proposedName string) error {
 	)
 }
 
+// NewErrCannotDropIndexWithPatch returns a new error indicating that an index cannot be dropped
+// with a patch.
 func NewErrCannotDropIndexWithPatch(indexName string) error {
 	return errors.New(
 		errCanNotDropIndexWithPatch,
 		errors.NewKV("Name", indexName),
+	)
+}
+
+// NewErrInvalidFieldValue returns a new error indicating that the given value is invalid for the
+// given field kind.
+func NewErrInvalidFieldValue(kind client.FieldKind, value any) error {
+	return errors.New(
+		errInvalidFieldValue,
+		errors.NewKV("Kind", kind),
+		errors.NewKV("Value", value),
+	)
+}
+
+// NewErrUnsupportedIndexFieldType returns a new error indicating that the given field kind is not
+// supported for indexing.
+func NewErrUnsupportedIndexFieldType(kind client.FieldKind) error {
+	return errors.New(
+		errUnsupportedIndexFieldType,
+		errors.NewKV("Kind", kind),
 	)
 }

@@ -46,51 +46,51 @@ type CollectionIndex interface {
 	Description() client.IndexDescription
 }
 
-func getFieldValConverter(kind client.FieldKind) func(any) ([]byte, error) {
+func getFieldValConverter(kind client.FieldKind) (func(any) ([]byte, error), error) {
 	switch kind {
 	case client.FieldKind_STRING:
 		return func(val any) ([]byte, error) {
 			return []byte(val.(string)), nil
-		}
+		}, nil
 	case client.FieldKind_INT:
 		return func(val any) ([]byte, error) {
 			intVal, ok := val.(int64)
 			if !ok {
-				return nil, errors.New("invalid int value")
+				return nil, NewErrInvalidFieldValue(kind, val)
 			}
 			return []byte(strconv.FormatInt(intVal, 10)), nil
-		}
+		}, nil
 	case client.FieldKind_FLOAT:
 		return func(val any) ([]byte, error) {
 			floatVal, ok := val.(float64)
 			if !ok {
-				return nil, errors.New("invalid float value")
+				return nil, NewErrInvalidFieldValue(kind, val)
 			}
 			return []byte(strconv.FormatFloat(floatVal, 'f', -1, 64)), nil
-		}
+		}, nil
 	case client.FieldKind_BOOL:
 		return func(val any) ([]byte, error) {
 			boolVal, ok := val.(bool)
 			if !ok {
-				return nil, errors.New("invalid bool value")
+				return nil, NewErrInvalidFieldValue(kind, val)
 			}
 			var intVal int64 = 0
 			if boolVal {
 				intVal = 1
 			}
 			return []byte(strconv.FormatInt(intVal, 10)), nil
-		}
+		}, nil
 	case client.FieldKind_DATETIME:
 		return func(val any) ([]byte, error) {
 			timeStrVal := val.(string)
 			_, err := time.Parse(time.RFC3339, timeStrVal)
 			if err != nil {
-				return nil, err
+				return nil, NewErrInvalidFieldValue(kind, val)
 			}
 			return []byte(timeStrVal), nil
-		}
+		}, nil
 	default:
-		panic("there is no test for this case")
+		return nil, NewErrUnsupportedIndexFieldType(kind)
 	}
 }
 
@@ -98,13 +98,14 @@ func getFieldValConverter(kind client.FieldKind) func(any) ([]byte, error) {
 func NewCollectionIndex(
 	collection client.Collection,
 	desc client.IndexDescription,
-) CollectionIndex {
+) (CollectionIndex, error) {
 	index := &collectionSimpleIndex{collection: collection, desc: desc}
 	schema := collection.Description().Schema
 	fieldID := schema.GetFieldKey(desc.Fields[0].Name)
 	field := schema.Fields[fieldID]
-	index.convertFunc = getFieldValConverter(field.Kind)
-	return index
+	var e error
+	index.convertFunc, e = getFieldValConverter(field.Kind)
+	return index, e
 }
 
 type collectionSimpleIndex struct {
@@ -132,7 +133,7 @@ func (i *collectionSimpleIndex) getDocKey(doc *client.Document) (core.IndexDataS
 	} else {
 		data, err := i.convertFunc(fieldVal)
 		if err != nil {
-			return core.IndexDataStoreKey{}, NewErrCanNotIndexInvalidFieldValue(err)
+			return core.IndexDataStoreKey{}, err
 		}
 		storeValue = []byte(string(indexFieldValuePrefix) + string(data))
 	}

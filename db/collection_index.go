@@ -128,6 +128,7 @@ func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *cl
 	return nil
 }
 
+// collectIndexedFields returns all fields that are indexed by all collection indexes.
 func (c *collection) collectIndexedFields() []*client.FieldDescription {
 	fieldsMap := make(map[string]*client.FieldDescription)
 	for _, index := range c.indexes {
@@ -320,13 +321,18 @@ func (c *collection) getIndexes(ctx context.Context, txn datastore.Txn) ([]Colle
 	}
 
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
-	indexes, err := deserializePrefix[client.IndexDescription](ctx, prefix.ToString(), txn.Systemstore())
+	indexDescriptions, err := deserializePrefix[client.IndexDescription](
+		ctx, prefix.ToString(), txn.Systemstore())
 	if err != nil {
 		return nil, err
 	}
-	colIndexes := make([]CollectionIndex, 0, len(indexes))
-	for _, index := range indexes {
-		colIndexes = append(colIndexes, NewCollectionIndex(c, index))
+	colIndexes := make([]CollectionIndex, 0, len(indexDescriptions))
+	for _, desc := range indexDescriptions {
+		index, err := NewCollectionIndex(c, desc)
+		if err != nil {
+			return nil, err
+		}
+		colIndexes = append(colIndexes, index)
 	}
 
 	descriptions := make([]client.IndexDescription, 0, len(colIndexes))
@@ -398,7 +404,10 @@ func (c *collection) createIndex(
 	if err != nil {
 		return nil, err
 	}
-	colIndex := NewCollectionIndex(c, desc)
+	colIndex, err := NewCollectionIndex(c, desc)
+	if err != nil {
+		return nil, err
+	}
 	c.desc.Indexes = append(c.desc.Indexes, colIndex.Description())
 	return colIndex, nil
 }

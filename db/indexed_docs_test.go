@@ -212,7 +212,7 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	indexOnNameDescData, err := json.Marshal(desc)
 	require.NoError(f.t, err)
 
-	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, "")
+	colIndexKey := core.NewCollectionIndexKey(usersColName, "")
 	matchPrefixFunc := func(q query.Query) bool {
 		return q.Prefix == colIndexKey.ToDS().String()
 	}
@@ -226,7 +226,7 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(f.t), nil)
 
-	colKey := core.NewCollectionKey(f.users.Name())
+	colKey := core.NewCollectionKey(usersColName)
 	systemStoreOn.Get(mock.Anything, colKey.ToDS()).Maybe().Return([]byte(userColVersionID), nil)
 
 	colVersionIDKey := core.NewCollectionSchemaVersionKey(userColVersionID)
@@ -239,11 +239,13 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	require.NoError(f.t, err)
 	systemStoreOn.Get(mock.Anything, colVersionIDKey.ToDS()).Maybe().Return(colDescBytes, nil)
 
-	colIndexOnNameKey := core.NewCollectionIndexKey(f.users.Description().Name, testUsersColIndexName)
+	colIndexOnNameKey := core.NewCollectionIndexKey(usersColName, testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
 
-	sequenceKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, f.users.ID()))
-	systemStoreOn.Get(mock.Anything, sequenceKey.ToDS()).Maybe().Return([]byte{0, 0, 0, 0, 0, 0, 0, 1}, nil)
+	if f.users != nil {
+		sequenceKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, f.users.ID()))
+		systemStoreOn.Get(mock.Anything, sequenceKey.ToDS()).Maybe().Return([]byte{0, 0, 0, 0, 0, 0, 0, 1}, nil)
+	}
 
 	systemStoreOn.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
 
@@ -473,7 +475,8 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 		err = collection.Create(f.ctx, doc)
 		f.commitTxn()
 		if tc.ShouldFail {
-			require.ErrorIs(f.t, err, NewErrCanNotIndexInvalidFieldValue(nil), "test case: %s", tc.Name)
+			require.ErrorIs(f.t, err,
+				NewErrInvalidFieldValue(tc.FieldKind, tc.FieldVal), "test case: %s", tc.Name)
 		} else {
 			assertMsg := fmt.Sprintf("test case: %s", tc.Name)
 			require.NoError(f.t, err, assertMsg)
