@@ -1040,7 +1040,11 @@ func (c *collection) saveValueToMerkleCRDT(
 	args ...any) (ipld.Node, uint64, error) {
 	switch ctype {
 	case client.LWW_REGISTER:
-		field, _ := c.Description().GetFieldByID(key.FieldId)
+		fieldID, err := strconv.Atoi(key.FieldId)
+		if err != nil {
+			return nil, 0, err
+		}
+		field, _ := c.Description().GetFieldByID(client.FieldID(fieldID))
 		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
 			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),

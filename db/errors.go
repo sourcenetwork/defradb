@@ -56,6 +56,8 @@ const (
 	errIndexWithNameDoesNotExists     string = "index with name doesn't exists"
 	errInvalidFieldValue              string = "invalid field value"
 	errUnsupportedIndexFieldType      string = "unsupported index field type"
+	errIndexDescriptionHasNoFields    string = "index description has no fields"
+	errIndexDescHasNonExistingField   string = "index description has non existing field"
 )
 
 var (
@@ -145,13 +147,14 @@ func NewErrCanNotReadCollection(colName string, inner error) error {
 	return errors.Wrap(errCollectionDoesntExisting, inner, errors.NewKV("Collection", colName))
 }
 
-// NewErrFailedToStoreIndexedField returns a new error indicating that the indexed field could not be stored.
-func NewErrFailedToStoreIndexedField(fieldName string, inner error) error {
-	return errors.Wrap(errFailedToStoreIndexedField, inner, errors.NewKV("Field", fieldName))
+// NewErrFailedToStoreIndexedField returns a new error indicating that the indexed field 
+// could not be stored.
+func NewErrFailedToStoreIndexedField(key string, inner error) error {
+	return errors.Wrap(errFailedToStoreIndexedField, inner, errors.NewKV("Key", key))
 }
 
-// NewErrFailedToReadStoredIndexDesc returns a new error indicating that the stored index description
-// could not be read.
+// NewErrFailedToReadStoredIndexDesc returns a new error indicating that the stored index 
+// description could not be read.
 func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
 }
@@ -161,12 +164,14 @@ func NewCanNotDeleteIndexedField(inner error) error {
 	return errors.Wrap(errCanNotDeleteIndexedField, inner)
 }
 
-// NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was provided.
+// NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was 
+// provided.
 func NewErrNonZeroIndexIDProvided(indexID uint32) error {
 	return errors.New(errNonZeroIndexIDProvided, errors.NewKV("ID", indexID))
 }
 
-// NewErrFailedToGetCollection returns a new error indicating that the collection could not be obtained.
+// NewErrFailedToGetCollection returns a new error indicating that the collection could not 
+// be obtained.
 func NewErrFailedToGetCollection(name string, inner error) error {
 	return errors.Wrap(errFailedToGetCollection, inner, errors.NewKV("Name", name))
 }
@@ -351,5 +356,24 @@ func NewErrUnsupportedIndexFieldType(kind client.FieldKind) error {
 	return errors.New(
 		errUnsupportedIndexFieldType,
 		errors.NewKV("Kind", kind),
+	)
+}
+
+// NewErrIndexDescHasNoFields returns a new error indicating that the given index
+// description has no fields.
+func NewErrIndexDescHasNoFields(desc client.IndexDescription) error {
+	return errors.New(
+		errIndexDescriptionHasNoFields,
+		errors.NewKV("Description", desc),
+	)
+}
+
+// NewErrIndexDescHasNonExistingField returns a new error indicating that the given index
+// description points to a field that does not exist.
+func NewErrIndexDescHasNonExistingField(desc client.IndexDescription, fieldName string) error {
+	return errors.New(
+		errIndexDescHasNonExistingField,
+		errors.NewKV("Description", desc),
+		errors.NewKV("Field name", fieldName),
 	)
 }

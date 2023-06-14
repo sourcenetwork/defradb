@@ -99,10 +99,16 @@ func NewCollectionIndex(
 	collection client.Collection,
 	desc client.IndexDescription,
 ) (CollectionIndex, error) {
+	if len(desc.Fields) == 0 {
+		return nil, NewErrIndexDescHasNoFields(desc)
+	}
 	index := &collectionSimpleIndex{collection: collection, desc: desc}
 	schema := collection.Description().Schema
-	fieldID := schema.GetFieldKey(desc.Fields[0].Name)
-	field := schema.Fields[fieldID]
+	fieldID := client.FieldID(schema.GetFieldKey(desc.Fields[0].Name))
+	field, foundField := collection.Description().GetFieldByID(fieldID)
+	if fieldID == client.FieldID(0) || !foundField {
+		return nil, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name)
+	}
 	var e error
 	index.convertFunc, e = getFieldValConverter(field.Kind)
 	return index, e
@@ -156,8 +162,7 @@ func (i *collectionSimpleIndex) Save(
 	}
 	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
 	if err != nil {
-		field, _ := i.collection.Description().GetFieldByID(strconv.Itoa(int(key.IndexID)))
-		return NewErrFailedToStoreIndexedField(field.Name, err)
+		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
 	}
 	return nil
 }

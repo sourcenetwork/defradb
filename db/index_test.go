@@ -1356,3 +1356,19 @@ func TestDropAllIndexes_ShouldCloseQueryIterator(t *testing.T) {
 
 	_ = f.users.dropAllIndexes(f.ctx, f.txn)
 }
+
+func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	desc := getUsersIndexDescOnName()
+	desc.Fields = nil
+	_, err := NewCollectionIndex(f.users, desc)
+	require.ErrorIs(t, err, NewErrIndexDescHasNoFields(desc))
+}
+
+func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	desc := getUsersIndexDescOnName()
+	desc.Fields[0].Name = "non_existing_field"
+	_, err := NewCollectionIndex(f.users, desc)
+	require.ErrorIs(t, err, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name))
+}
