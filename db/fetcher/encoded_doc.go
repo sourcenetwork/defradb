@@ -273,7 +273,7 @@ func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
 		if encdoc.doc.Fields[prop.Desc.ID] != nil { // used cached decoded fields
 			continue
 		}
-		if filter && prop.Filter != filter { // only get filter fields if filter=true
+		if filter && !prop.Filter { // only get filter fields if filter=true
 			continue
 		}
 		_, val, err := prop.Decode()

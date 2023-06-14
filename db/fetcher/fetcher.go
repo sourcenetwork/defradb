@@ -45,8 +45,8 @@ type Fetcher interface {
 	Close() error
 }
 
-// KeyValue is a KV store response containing the resulting core.Key and byte array value.
-type KeyValue struct {
+// keyValue is a KV store response containing the resulting core.Key and byte array value.
+type keyValue struct {
 	Key   core.DataStoreKey
 	Value []byte
 }
@@ -94,7 +94,7 @@ type DocumentFetcher struct {
 
 	initialized bool
 
-	kv                *KeyValue
+	kv                *keyValue
 	kvIter            iterable.Iterator
 	kvResultsIter     dsq.Results
 	kvEnd             bool
@@ -182,7 +182,10 @@ func (df *DocumentFetcher) init(
 
 	if df.filter != nil {
 		conditions := df.filter.ToMap(df.doc.mapping)
-		parsedfilterFields := parser.ParseFilterFieldsForDescription(conditions, df.col.Schema)
+		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, df.col.Schema)
+		if err != nil {
+			return err
+		}
 		df.filterFields = make(map[uint32]client.FieldDescription, len(parsedfilterFields))
 		df.filterSet = bitset.New(uint(len(col.Schema.Fields)))
 		for _, field := range parsedfilterFields {
@@ -291,26 +294,6 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 	return err == nil, err
 }
 
-func (df *DocumentFetcher) KVEnd() bool {
-	return df.kvEnd
-}
-
-func (df *DocumentFetcher) KV() *KeyValue {
-	return df.kv
-}
-
-func (df *DocumentFetcher) NextKey(ctx context.Context, withSeek bool) (spanDone bool, docDone bool, err error) {
-	return df.nextKey(ctx, withSeek)
-}
-
-func (df *DocumentFetcher) NextKV() (iterDone bool, kv *KeyValue, err error) {
-	return df.nextKV()
-}
-
-func (df *DocumentFetcher) ProcessKV(kv *KeyValue) error {
-	return df.processKV(kv)
-}
-
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
 // It returns true if the current doc is completed.
 // The first call to nextKey CANNOT have seekNext be true (ErrFailedToSeek)
@@ -365,13 +348,13 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 // - It directly interacts with the KVIterator.
 // - Returns true if the entire iterator/span is exhausted
 // - Returns a kv pair instead of internally updating
-func (df *DocumentFetcher) nextKV() (iterDone bool, kv *KeyValue, err error) {
+func (df *DocumentFetcher) nextKV() (iterDone bool, kv *keyValue, err error) {
 	done, dsKey, res, err := df.nextKVRaw()
 	if done || err != nil {
 		return done, nil, err
 	}
 
-	kv = &KeyValue{
+	kv = &keyValue{
 		Key:   dsKey,
 		Value: res.Value,
 	}
@@ -381,7 +364,7 @@ func (df *DocumentFetcher) nextKV() (iterDone bool, kv *KeyValue, err error) {
 // seekKV will seek through results/iterator until it reaches
 // the target key, or if the target key doesn't exist, the
 // next smallest key that is greater than the target.
-func (df *DocumentFetcher) seekKV(key string) (bool, *KeyValue, error) {
+func (df *DocumentFetcher) seekKV(key string) (bool, *keyValue, error) {
 	// make sure the current kv is *before* the target key
 	switch strings.Compare(df.kv.Key.ToString(), key) {
 	case 0:
@@ -404,7 +387,7 @@ func (df *DocumentFetcher) seekKV(key string) (bool, *KeyValue, error) {
 			continue
 		case 0, 1:
 			// equal or greater (first), return a formatted kv
-			kv := &KeyValue{
+			kv := &keyValue{
 				Key:   dsKey,
 				Value: res.Value, // @todo make lazy
 			}
@@ -417,19 +400,19 @@ func (df *DocumentFetcher) seekKV(key string) (bool, *KeyValue, error) {
 // - It directly interacts with the KVIterator.
 // - Returns true if the entire iterator/span is exhausted
 // - Returns a kv pair instead of internally updating
-func (df *DocumentFetcher) nextKVRaw() (iterDone bool, dsKey core.DataStoreKey, res dsq.Result, err error) {
+func (df *DocumentFetcher) nextKVRaw() (bool, core.DataStoreKey, dsq.Result, error) {
 	res, available := df.kvResultsIter.NextSync()
 	if !available {
-		return true, dsKey, res, nil
+		return true, core.DataStoreKey{}, res, nil
 	}
-	err = res.Error
+	err := res.Error
 	if err != nil {
-		return true, dsKey, res, err
+		return true, core.DataStoreKey{}, res, err
 	}
 
-	dsKey, err = core.NewDataStoreKey(res.Key)
+	dsKey, err := core.NewDataStoreKey(res.Key)
 	if err != nil {
-		return true, dsKey, res, err
+		return true, core.DataStoreKey{}, res, err
 	}
 
 	return false, dsKey, res, nil
@@ -437,7 +420,7 @@ func (df *DocumentFetcher) nextKVRaw() (iterDone bool, dsKey core.DataStoreKey, 
 
 // processKV continuously processes the key value pairs we've received
 // and step by step constructs the current encoded document
-func (df *DocumentFetcher) processKV(kv *KeyValue) error {
+func (df *DocumentFetcher) processKV(kv *keyValue) error {
 	// skip MerkleCRDT meta-data priority key-value pair
 	// implement here <--
 	// instance := kv.Key.Name()
@@ -453,7 +436,6 @@ func (df *DocumentFetcher) processKV(kv *KeyValue) error {
 		df.doc.Reset()
 
 		// re-init doc state
-		// @todo: convert to util method
 		if df.filterSet != nil {
 			df.doc.filterSet = bitset.New(df.filterSet.Len())
 			if df.filterSet.Test(0) {

@@ -355,14 +355,6 @@ func (n *typeJoinOne) Next() (bool, error) {
 }
 
 func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
-	// filterRaw := request.Filter{
-	// 	Conditions: map[string]any{
-	// 		n.subTypeFieldName + "_id": map[string]any{
-	// 			"_eq": doc.GetKey(),
-	// 		},
-	// 	},
-	// }
-	// filter := mapper.ToFilter(filterRaw, n.subType.DocumentMap())
 	fkIndex := &mapper.PropertyIndex{
 		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + "_id"),
 	}
@@ -555,20 +547,12 @@ func (n *typeJoinMany) Next() (bool, error) {
 	if n.index != nil {
 		// @todo: handle index for one-to-many setup
 	} else {
-		// filterRaw := request.Filter{
-		// 	Conditions: map[string]any{
-		// 		n.rootName + "_id": map[string]any{
-		// 			"_eq": n.currentValue.GetKey(),
-		// 		},
-		// 	},
-		// }
-		// filter := mapper.ToFilter(filterRaw, n.subType.DocumentMap())
 		fkIndex := &mapper.PropertyIndex{
 			Index: n.subSelect.FirstIndexOfName(n.rootName + "_id"),
 		}
 		filter := map[connor.FilterKey]any{
 			fkIndex: map[connor.FilterKey]any{
-				mapper.FilterEqOp: n.currentValue.GetKey(), // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
+				mapper.FilterEqOp: n.currentValue.GetKey(),
 			},
 		}
 

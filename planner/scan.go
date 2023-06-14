@@ -71,11 +71,10 @@ func (n *scanNode) Init() error {
 
 func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 	n.desc = desc
-	n.initFields(n.slct.Fields)
-	return nil
+	return n.initFields(n.slct.Fields)
 }
 
-func (n *scanNode) initFields(fields []mapper.Requestable) {
+func (n *scanNode) initFields(fields []mapper.Requestable) error {
 	for _, r := range fields {
 		// add all the possible base level fields the fetcher is responsible
 		// for, including those that are needed by higher level aggregates
@@ -88,25 +87,19 @@ func (n *scanNode) initFields(fields []mapper.Requestable) {
 		// @todo: Might need to check that these are sub selects
 		// are _groups
 		case *mapper.Select:
-			if requestable.Targetable.Filter != nil {
-				fieldDescs := parser.ParseFilterFieldsForDescription(
-					requestable.Targetable.Filter.ExternalConditions,
-					n.desc.Schema,
-				)
-				for _, fd := range fieldDescs {
-					n.tryAddField(fd.Name)
-				}
-			}
 			n.tryAddField(requestable.Field.Name + "_id") // foreign key for type joins
 			n.initFields(requestable.Fields)
 		// aggregate might have its own target fields and filter fields
 		case *mapper.Aggregate:
 			for _, target := range requestable.AggregateTargets {
 				if target.Filter != nil {
-					fieldDescs := parser.ParseFilterFieldsForDescription(
+					fieldDescs, err := parser.ParseFilterFieldsForDescription(
 						target.Filter.ExternalConditions,
 						n.desc.Schema,
 					)
+					if err != nil {
+						return err
+					}
 					for _, fd := range fieldDescs {
 						n.tryAddField(fd.Name)
 					}
@@ -119,6 +112,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) {
 			}
 		}
 	}
+	return nil
 }
 
 func (n *scanNode) tryAddField(fieldName string) bool {
@@ -253,7 +247,6 @@ func (n *scanNode) excuteExplain() map[string]any {
 	return map[string]any{
 		"iterations": n.execInfo.iterations,
 		"docFetches": n.execInfo.docFetches,
-		// "filterMatches": n.execInfo.filterMatches,
 	}
 }
 
