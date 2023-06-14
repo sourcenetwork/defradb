@@ -20,9 +20,8 @@ import (
 	"encoding/json"
 
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/unit"
 	otelMetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
 
 var _ Metric = (*Meter)(nil)
@@ -35,7 +34,7 @@ type Metric interface {
 	Register(name string)
 
 	// Dump is responsible to read the metrics and output all the gathered data.
-	Dump(ctx context.Context) (any, error)
+	Dump(ctx context.Context) (*metricdata.ResourceMetrics, error)
 
 	// Close shutsdown the meter.
 	Close(ctx context.Context) error
@@ -61,8 +60,12 @@ func (m *Meter) Register(name string) {
 }
 
 // Dump is responsible to read the metrics and output all the gathered data.
-func (m *Meter) Dump(ctx context.Context) (any, error) {
-	return m.reader.Collect(ctx)
+func (m *Meter) Dump(ctx context.Context) (*metricdata.ResourceMetrics, error) {
+	out := &metricdata.ResourceMetrics{}
+	if err := m.reader.Collect(ctx, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // Close shutsdown the meter.
@@ -73,33 +76,33 @@ func (m *Meter) Close(ctx context.Context) error {
 // GetSyncHistogram returns a new histogram with the given name and unit.
 func (m *Meter) GetSyncHistogram(
 	name string,
-	unit unit.Unit,
-) (instrument.Int64Histogram, error) {
+	unit string,
+) (metric.Int64Histogram, error) {
 	return m.meter.Int64Histogram(
 		name,
-		instrument.WithUnit(unit),
+		metric.WithUnit(unit),
 	)
 }
 
 // GetSyncCounter returns a new counter with the given name and unit.
 func (m *Meter) GetSyncCounter(
 	name string,
-	unit unit.Unit,
-) (instrument.Int64Counter, error) {
+	unit string,
+) (metric.Int64Counter, error) {
 	return m.meter.Int64Counter(
 		name,
-		instrument.WithUnit(unit),
+		metric.WithUnit(unit),
 	)
 }
 
 // DumpScopeMetricsString returns a string representation of the metrics.
 func (m *Meter) DumpScopeMetricsString(ctx context.Context) (string, error) {
-	data, err := m.reader.Collect(ctx)
-	if err != nil {
+	out := &metricdata.ResourceMetrics{}
+	if err := m.reader.Collect(ctx, out); err != nil {
 		return "", err
 	}
-	jsonBytes, err := json.MarshalIndent(data.ScopeMetrics, "", "  ")
 
+	jsonBytes, err := json.MarshalIndent(out.ScopeMetrics, "", "  ")
 	if err != nil {
 		return "", err
 	}
