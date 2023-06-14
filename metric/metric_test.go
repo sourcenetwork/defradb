@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/otel/metric/unit"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
 
@@ -25,7 +24,7 @@ func TestMetricSyncHistogram(t *testing.T) {
 	meter.Register("HistogramOnly")
 	workDuration, err := meter.GetSyncHistogram(
 		"workDuration",
-		unit.Milliseconds,
+		"ms",
 	)
 	if err != nil {
 		t.Error(err)
@@ -46,13 +45,8 @@ func TestMetricSyncHistogram(t *testing.T) {
 	// Goes in third bucket.
 	workDuration.Record(ctx, elapsedTime.Nanoseconds())
 
-	dump, err := meter.Dump(ctx)
+	data, err := meter.Dump(ctx)
 	if err != nil {
-		t.Error(err)
-	}
-
-	data, isMatricData := dump.(metricdata.ResourceMetrics)
-	if !isMatricData {
 		t.Error(err)
 	}
 
@@ -62,14 +56,14 @@ func TestMetricSyncHistogram(t *testing.T) {
 	assert.Equal(t, "workDuration", data.ScopeMetrics[0].Metrics[0].Name)
 
 	firstMetricData := data.ScopeMetrics[0].Metrics[0].Data
-	histData, isHistData := firstMetricData.(metricdata.Histogram)
+	histData, isHistData := firstMetricData.(metricdata.Histogram[int64])
 	if !isHistData {
 		t.Error(err)
 	}
 
 	assert.Equal(t, 1, len(histData.DataPoints))
 	assert.Equal(t, uint64(3), histData.DataPoints[0].Count)
-	assert.Equal(t, 12.0, histData.DataPoints[0].Sum) // 2 + 4 + 6
+	assert.Equal(t, int64(12), histData.DataPoints[0].Sum) // 2 + 4 + 6
 	assert.Equal(
 		t,
 		[]float64{0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000},
@@ -91,7 +85,7 @@ func TestMetricSyncCounter(t *testing.T) {
 	meter.Register("CounterOnly")
 	stuffCounter, err := meter.GetSyncCounter(
 		"countStuff",
-		unit.Dimensionless,
+		"1",
 	)
 	if err != nil {
 		t.Error(err)
@@ -101,13 +95,8 @@ func TestMetricSyncCounter(t *testing.T) {
 	stuffCounter.Add(ctx, 12)
 	stuffCounter.Add(ctx, 1)
 
-	dump, err := meter.Dump(ctx)
+	data, err := meter.Dump(ctx)
 	if err != nil {
-		t.Error(err)
-	}
-
-	data, isMatricData := dump.(metricdata.ResourceMetrics)
-	if !isMatricData {
 		t.Error(err)
 	}
 
@@ -137,7 +126,7 @@ func TestMetricWithCounterAndHistogramIntrumentOnOneMeter(t *testing.T) {
 
 	stuffCounter, err := meter.GetSyncCounter(
 		"countStuff",
-		unit.Dimensionless,
+		"1",
 	)
 	if err != nil {
 		t.Error(err)
@@ -145,7 +134,7 @@ func TestMetricWithCounterAndHistogramIntrumentOnOneMeter(t *testing.T) {
 
 	workDuration, err := meter.GetSyncHistogram(
 		"workDuration",
-		unit.Milliseconds,
+		"ms",
 	)
 	if err != nil {
 		t.Error(err)
@@ -166,13 +155,8 @@ func TestMetricWithCounterAndHistogramIntrumentOnOneMeter(t *testing.T) {
 
 	stuffCounter.Add(ctx, 1)
 
-	dump, err := meter.Dump(ctx)
+	data, err := meter.Dump(ctx)
 	if err != nil {
-		t.Error(err)
-	}
-
-	data, isMatricData := dump.(metricdata.ResourceMetrics)
-	if !isMatricData {
 		t.Error(err)
 	}
 
@@ -197,14 +181,14 @@ func TestMetricWithCounterAndHistogramIntrumentOnOneMeter(t *testing.T) {
 	assert.Equal(t, "workDuration", metrics[1].Name)
 
 	histMetricData := metrics[1].Data
-	histData, isHistData := histMetricData.(metricdata.Histogram)
+	histData, isHistData := histMetricData.(metricdata.Histogram[int64])
 	if !isHistData {
 		t.Error(err)
 	}
 
 	assert.Equal(t, 1, len(histData.DataPoints))
 	assert.Equal(t, uint64(3), histData.DataPoints[0].Count)
-	assert.Equal(t, 12.0, histData.DataPoints[0].Sum) // 2 + 4 + 6
+	assert.Equal(t, int64(12), histData.DataPoints[0].Sum) // 2 + 4 + 6
 	assert.Equal(
 		t,
 		[]float64{0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000},
