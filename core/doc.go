@@ -278,17 +278,5 @@ func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string,
 		}
 	}
 
-	// Try to find the name of this index in the ChildMappings.
-	for _, childMapping := range mapping.ChildMappings {
-		if childMapping == nil {
-			continue
-		}
-
-		name, found := childMapping.TryToFindNameFromIndex(targetIndex)
-		if found {
-			return name, true
-		}
-	}
-
 	return "", false
 }

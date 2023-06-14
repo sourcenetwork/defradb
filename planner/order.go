@@ -110,14 +110,20 @@ func (n *orderNode) simpleExplain() (map[string]any, error) {
 	for _, element := range n.ordering {
 		// Build the list containing the corresponding names of all the indexes.
 		fieldNames := []string{}
+
+		mapping := n.documentMapping
 		for _, fieldIndex := range element.FieldIndexes {
-			// Try to find the name of this index.
-			fieldName, found := n.documentMapping.TryToFindNameFromIndex(fieldIndex)
+			fieldName, found := mapping.TryToFindNameFromIndex(fieldIndex)
 			if !found {
 				return nil, client.NewErrFieldIndexNotExist(fieldIndex)
 			}
 
 			fieldNames = append(fieldNames, fieldName)
+			if fieldIndex < len(mapping.ChildMappings) {
+				if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
+					mapping = childMapping
+				}
+			}
 		}
 
 		// Put it all together for this order element.
