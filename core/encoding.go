@@ -105,6 +105,14 @@ func Decode(fieldDesc client.FieldDescription, val any) (any, error) {
 			case uint:
 				return float64(v), nil
 			}
+		case client.FieldKind_INT:
+			switch v := val.(type) {
+			case float64:
+				if v >= 0 {
+					return uint64(v), nil
+				}
+				return int64(v), nil
+			}
 		}
 	}
 
