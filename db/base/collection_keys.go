@@ -11,8 +11,6 @@
 package base
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -40,7 +38,7 @@ func MakePrimaryIndexKeyForCRDT(
 ) (core.DataStoreKey, error) {
 	switch ctype {
 	case client.COMPOSITE:
-		return MakeCollectionKey(c).WithInstanceInfo(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
+		return MakeCollectionKey(c).WithInstanceInfo(key).WithFieldId(core.COMPOSITE_NAMESPACE_ID), nil
 	case client.LWW_REGISTER:
 		fieldKey := getFieldKey(c, key, fieldName)
 		return MakeCollectionKey(c).WithInstanceInfo(fieldKey), nil
@@ -53,8 +51,5 @@ func getFieldKey(
 	key core.DataStoreKey,
 	fieldName string,
 ) core.DataStoreKey {
-	if !c.Schema.IsEmpty() {
-		return key.WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
-	}
-	return key.WithFieldId(fieldName)
+	return key.WithFieldId(c.Schema.GetFieldKey(fieldName))
 }

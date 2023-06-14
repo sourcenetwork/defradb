@@ -17,6 +17,7 @@ import (
 	badger "github.com/dgraph-io/badger/v3"
 	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -320,13 +321,16 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
+	fd, ok := col.Description().GetField("Name")
+	require.True(t, ok)
+
 	clk := clock.NewMerkleClock(
 		db.multistore.Headstore(),
 		nil,
 		core.HeadStoreKey{}.WithDocKey(
 			"bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d",
 		).WithFieldId(
-			"Name",
+			uint16(fd.ID),
 		),
 		nil,
 	)

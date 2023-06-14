@@ -151,7 +151,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 		if err != nil {
 			return err
 		}
-		return c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldId(""))
+		return c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldId(0))
 	}
 
 	// ensure object marker exists

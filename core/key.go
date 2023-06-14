@@ -48,6 +48,15 @@ const (
 	PRIMARY_KEY               = "/pk"
 	REPLICATOR                = "/replicator/id"
 	P2P_COLLECTION            = "/p2p/collection"
+
+	// fieldID string size to calculate padding
+	// ie: 	12   => 0012
+	//		3    => 0003
+	//		512  => 0512
+	fieldIDStringSize = 3
+
+	compositeFieldID       uint16 = 999   // THESE VALUES MUST BE EQUIVALENT (INT/STRING)
+	compositeFieldIDString        = "999" // THESE VALUES MUST BE EQUIVALENT (INT/STRING)
 )
 
 // Key is an interface that represents a key in the database.
@@ -62,7 +71,7 @@ type DataStoreKey struct {
 	CollectionID string
 	InstanceType InstanceType
 	DocKey       string
-	FieldId      string
+	FieldId      uint16
 }
 
 var _ Key = (*DataStoreKey)(nil)
@@ -76,7 +85,7 @@ var _ Key = (*PrimaryDataStoreKey)(nil)
 
 type HeadStoreKey struct {
 	DocKey  string
-	FieldId string //can be 'C'
+	FieldId uint16 //can be 'C' (composite)
 	Cid     cid.Cid
 }
 
@@ -149,11 +158,44 @@ func NewDataStoreKey(key string) (DataStoreKey, error) {
 	dataStoreKey.CollectionID = elements[0]
 	dataStoreKey.InstanceType = InstanceType(elements[1])
 	dataStoreKey.DocKey = elements[2]
+	var err error
 	if numberOfElements == 4 {
-		dataStoreKey.FieldId = elements[3]
+		dataStoreKey.FieldId, err = fieldIdStringToUint16(elements[3])
 	}
 
-	return dataStoreKey, nil
+	return dataStoreKey, err
+}
+
+// fieldIdStringToUint16 converts a string
+// with a possible padding of size fieldIDStringSize
+// to a uint16
+func fieldIdStringToUint16(fid string) (uint16, error) {
+	if fid == compositeFieldIDString || fid == COMPOSITE_NAMESPACE {
+		return compositeFieldID, nil
+	}
+	trimmedFid := strings.TrimLeft(fid, "0")
+	if trimmedFid == "" { // id was all zeros
+		return 0, nil
+	}
+	ufid, err := strconv.ParseUint(trimmedFid, 10, 16)
+	if err != nil {
+		return 0, err
+	}
+	return uint16(ufid), nil
+}
+
+func fieldIdUint16ToString(fid uint16) string {
+	fidStr := strconv.FormatUint(uint64(fid), 10)
+	if fidStr == compositeFieldIDString {
+		return COMPOSITE_NAMESPACE
+	}
+	return leftPad2Len(fidStr, "0", fieldIDStringSize)
+}
+
+func leftPad2Len(s string, padStr string, overallLen int) string {
+	var padCountInt = 1 + ((overallLen - len(padStr)) / len(padStr))
+	var retStr = strings.Repeat(padStr, padCountInt) + s
+	return retStr[(len(retStr) - overallLen):]
 }
 
 func MustNewDataStoreKey(key string) DataStoreKey {
@@ -188,10 +230,14 @@ func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 		return HeadStoreKey{}, err
 	}
 
+	fidStr, err := fieldIdStringToUint16(elements[2])
+	if err != nil {
+		return HeadStoreKey{}, err
+	}
 	return HeadStoreKey{
 		// elements[0] is empty (key has leading '/')
 		DocKey:  elements[1],
-		FieldId: elements[2],
+		FieldId: fidStr,
 		Cid:     cid,
 	}, nil
 }
@@ -246,7 +292,7 @@ func (k DataStoreKey) WithInstanceInfo(key DataStoreKey) DataStoreKey {
 	return newKey
 }
 
-func (k DataStoreKey) WithFieldId(fieldId string) DataStoreKey {
+func (k DataStoreKey) WithFieldId(fieldId uint16) DataStoreKey {
 	newKey := k
 	newKey.FieldId = fieldId
 	return newKey
@@ -271,7 +317,7 @@ func (k HeadStoreKey) WithCid(c cid.Cid) HeadStoreKey {
 	return newKey
 }
 
-func (k HeadStoreKey) WithFieldId(fieldId string) HeadStoreKey {
+func (k HeadStoreKey) WithFieldId(fieldId uint16) HeadStoreKey {
 	newKey := k
 	newKey.FieldId = fieldId
 	return newKey
@@ -289,8 +335,8 @@ func (k DataStoreKey) ToString() string {
 	if k.DocKey != "" {
 		result = result + "/" + k.DocKey
 	}
-	if k.FieldId != "" {
-		result = result + "/" + k.FieldId
+	if k.FieldId != 0 {
+		result = result + "/" + fieldIdUint16ToString(k.FieldId)
 	}
 
 	return result
@@ -478,8 +524,8 @@ func (k HeadStoreKey) ToString() string {
 	if k.DocKey != "" {
 		result = result + "/" + k.DocKey
 	}
-	if k.FieldId != "" {
-		result = result + "/" + k.FieldId
+	if k.FieldId != 0 {
+		result = result + "/" + fieldIdUint16ToString(k.FieldId)
 	}
 	if k.Cid.Defined() {
 		result = result + "/" + k.Cid.String()
@@ -502,8 +548,8 @@ func (k HeadStoreKey) ToDS() ds.Key {
 func (k DataStoreKey) PrefixEnd() DataStoreKey {
 	newKey := k
 
-	if k.FieldId != "" {
-		newKey.FieldId = string(bytesPrefixEnd([]byte(k.FieldId)))
+	if k.FieldId != 0 {
+		newKey.FieldId = compositeFieldID + 1
 		return newKey
 	}
 	if k.DocKey != "" {
@@ -525,13 +571,13 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 // In a Primary index, the last key path is the FieldID.
 // This may be different in Secondary Indexes.
 // An error is returned if it can't correct convert the field to a uint32.
-func (k DataStoreKey) FieldID() (uint32, error) {
-	fieldID, err := strconv.Atoi(k.FieldId)
-	if err != nil {
-		return 0, NewErrFailedToGetFieldIdOfKey(err)
-	}
-	return uint32(fieldID), nil
-}
+// func (k DataStoreKey) FieldID() (uint32, error) {
+// 	fieldID, err := strconv.Atoi(k.FieldId)
+// 	if err != nil {
+// 		return 0, NewErrFailedToGetFieldIdOfKey(err)
+// 	}
+// 	return uint32(fieldID), nil
+// }
 
 func bytesPrefixEnd(b []byte) []byte {
 	end := make([]byte, len(b))

@@ -52,7 +52,7 @@ func newHeadSet() *heads {
 
 	return NewHeadSet(
 		datastore.AsDSReaderWriter(s),
-		core.HeadStoreKey{}.WithDocKey("mydockey").WithFieldId("1"),
+		core.HeadStoreKey{}.WithDocKey("mydockey").WithFieldId(1),
 	)
 }
 

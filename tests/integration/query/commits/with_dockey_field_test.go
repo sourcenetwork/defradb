@@ -34,7 +34,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{},
+				ExpectedError: "strconv.ParseUint: parsing \"not a field\"", // @todo: replace with typed error
 			},
 		},
 	}
@@ -56,7 +56,7 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "999999") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "998") {
 							cid
 						}
 					}`,
@@ -88,7 +88,7 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 							cid
 						}
 					}`,
-				Results: []map[string]any{},
+				ExpectedError: "strconv.ParseUint: parsing \"Age\"", // @todo: replace with typed error
 			},
 		},
 	}

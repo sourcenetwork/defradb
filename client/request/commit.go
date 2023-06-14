@@ -20,7 +20,7 @@ type CommitSelect struct {
 	Field
 
 	DocKey  immutable.Option[string]
-	FieldID immutable.Option[string]
+	FieldID immutable.Option[uint16]
 	Cid     immutable.Option[string]
 	Depth   immutable.Option[uint64]
 

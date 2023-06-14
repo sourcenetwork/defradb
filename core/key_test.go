@@ -32,10 +32,11 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInst
 	t *testing.T,
 ) {
 	instanceType := "anyType"
-	fieldId := "f1"
+	fieldId := uint16(1)
+	fieldIdStr := "001"
 	docKey := "docKey"
 	collectionId := "1"
-	inputString := collectionId + "/" + instanceType + "/" + docKey + "/" + fieldId
+	inputString := collectionId + "/" + instanceType + "/" + docKey + "/" + fieldIdStr
 
 	result, err := NewDataStoreKey(inputString)
 	if err != nil {
@@ -51,7 +52,7 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInst
 			FieldId:      fieldId,
 			InstanceType: InstanceType(instanceType)},
 		result)
-	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docKey+"/"+fieldId, resultString)
+	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docKey+"/"+fieldIdStr, resultString)
 }
 
 func TestNewDataStoreKey_ReturnsEmptyStruct_GivenAStringWithMissingElements(t *testing.T) {

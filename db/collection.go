@@ -15,7 +15,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -993,7 +992,7 @@ func (c *collection) saveValueToMerkleCRDT(
 		lwwreg := merkleCRDT.(*crdt.MerkleLWWRegister)
 		return lwwreg.Set(ctx, bytes)
 	case client.COMPOSITE:
-		key = key.WithFieldId(core.COMPOSITE_NAMESPACE)
+		key = key.WithFieldId(core.COMPOSITE_NAMESPACE_ID)
 		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
 			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
@@ -1093,22 +1092,22 @@ func (c *collection) tryGetFieldKey(key core.PrimaryDataStoreKey, fieldName stri
 	return core.DataStoreKey{
 		CollectionID: key.CollectionId,
 		DocKey:       key.DocKey,
-		FieldId:      strconv.FormatUint(uint64(fieldId), 10),
+		FieldId:      fieldId,
 	}, true
 }
 
 // tryGetSchemaFieldID returns the FieldID of the given fieldName.
 // Will return false if the field is not found.
-func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
+func (c *collection) tryGetSchemaFieldID(fieldName string) (uint16, bool) {
 	for _, field := range c.desc.Schema.Fields {
 		if field.Name == fieldName {
 			if field.IsObject() || field.IsObjectArray() {
 				// We do not wish to match navigational properties, only
 				// fields directly on the collection.
-				return uint32(0), false
+				return 0, false
 			}
-			return uint32(field.ID), true
+			return uint16(field.ID), true
 		}
 	}
-	return uint32(0), false
+	return uint16(0), false
 }
