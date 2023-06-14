@@ -191,7 +191,7 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
 	key        []byte
-	Properties map[client.FieldDescription]*encProperty
+	properties map[client.FieldDescription]*encProperty
 }
 
 var _ EncodedDocument = (*encodedDocument)(nil)
@@ -202,7 +202,7 @@ func (encdoc *encodedDocument) Key() []byte {
 
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset(newKey []byte) {
-	encdoc.Properties = make(map[client.FieldDescription]*encProperty)
+	encdoc.properties = make(map[client.FieldDescription]*encProperty)
 	encdoc.key = newKey
 }
 
@@ -213,7 +213,7 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 		return nil, err
 	}
 	doc := client.NewDocWithKey(key)
-	for fieldDesc, prop := range encdoc.Properties {
+	for fieldDesc, prop := range encdoc.properties {
 		ctype, val, err := prop.Decode()
 		if err != nil {
 			return nil, err
@@ -232,7 +232,7 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 func (encdoc *encodedDocument) DecodeToDoc(mapping *core.DocumentMapping) (core.Doc, error) {
 	doc := mapping.NewDoc()
 	doc.SetKey(string(encdoc.key))
-	for fieldDesc, prop := range encdoc.Properties {
+	for fieldDesc, prop := range encdoc.properties {
 		_, val, err := prop.Decode()
 		if err != nil {
 			return core.Doc{}, err

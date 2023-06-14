@@ -338,7 +338,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// to better handle dynamic use cases beyond primary indexes. If a
 	// secondary index is provided, we need to extract the indexed/implicit fields
 	// from the KV pair.
-	df.doc.Properties[fieldDesc] = &encProperty{
+	df.doc.properties[fieldDesc] = &encProperty{
 		Desc: fieldDesc,
 		Raw:  kv.Value,
 	}
