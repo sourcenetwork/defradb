@@ -41,13 +41,14 @@ const (
 )
 
 const (
-	COLLECTION                = "/collection/names"
-	COLLECTION_SCHEMA         = "/collection/schema"
-	COLLECTION_SCHEMA_VERSION = "/collection/version"
-	SEQ                       = "/seq"
-	PRIMARY_KEY               = "/pk"
-	REPLICATOR                = "/replicator/id"
-	P2P_COLLECTION            = "/p2p/collection"
+	COLLECTION                        = "/collection/names"
+	COLLECTION_SCHEMA                 = "/collection/schema"
+	COLLECTION_SCHEMA_VERSION         = "/collection/version/v"
+	COLLECTION_SCHEMA_VERSION_HISTORY = "/collection/version/h"
+	SEQ                               = "/seq"
+	PRIMARY_KEY                       = "/pk"
+	REPLICATOR                        = "/replicator/id"
+	P2P_COLLECTION                    = "/p2p/collection"
 )
 
 // Key is an interface that represents a key in the database.
@@ -404,7 +405,7 @@ func (k CollectionSchemaKey) ToDS() ds.Key {
 }
 
 func (k CollectionSchemaVersionKey) ToString() string {
-	result := COLLECTION_SCHEMA_VERSION + "/" + string(ValueKey)
+	result := COLLECTION_SCHEMA_VERSION
 
 	if k.SchemaVersionId != "" {
 		result = result + "/" + k.SchemaVersionId
@@ -422,7 +423,7 @@ func (k CollectionSchemaVersionKey) ToDS() ds.Key {
 }
 
 func (k SchemaHistoryKey) ToString() string {
-	result := COLLECTION_SCHEMA_VERSION + "/" + string(PriorityKey)
+	result := COLLECTION_SCHEMA_VERSION_HISTORY
 
 	if k.SchemaID != "" {
 		result = result + "/" + k.SchemaID
