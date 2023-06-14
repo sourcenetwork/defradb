@@ -114,6 +114,8 @@ func NewCollectionIndex(
 	return index, e
 }
 
+// collectionSimpleIndex is an non-unique index that indexes documents by a single field.
+// Single-field indexes store values only in ascending order.
 type collectionSimpleIndex struct {
 	collection  client.Collection
 	desc        client.IndexDescription
@@ -123,6 +125,8 @@ type collectionSimpleIndex struct {
 var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 
 func (i *collectionSimpleIndex) getDocKey(doc *client.Document) (core.IndexDataStoreKey, error) {
+	// collectionSimpleIndex only supports single field indexes, that's why we
+	// can safely assume access the first field
 	indexedFieldName := i.desc.Fields[0].Name
 	fieldVal, err := doc.Get(indexedFieldName)
 	isNil := false
@@ -184,49 +188,48 @@ func (i *collectionSimpleIndex) Update(
 	return i.Save(ctx, txn, newDoc)
 }
 
-func iteratePrefixKeys(
+func fetchKeysForPrefix(
 	ctx context.Context,
 	prefix string,
 	storage ds.Read,
-	execFunc func(context.Context, ds.Key) error,
-) error {
+) ([]ds.Key, error) {
 	q, err := storage.Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	keys := make([]ds.Key, 0)
 	for res := range q.Next() {
 		if res.Error != nil {
 			_ = q.Close()
-			return res.Error
+			return nil, res.Error
 		}
-		err = execFunc(ctx, ds.NewKey(res.Key))
-		if err != nil {
-			_ = q.Close()
-			return err
-		}
+		keys = append(keys, ds.NewKey(res.Key))
 	}
 	if err = q.Close(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return keys, nil
 }
 func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
 	prefixKey := core.IndexDataStoreKey{}
 	prefixKey.CollectionID = i.collection.ID()
 	prefixKey.IndexID = i.desc.ID
 
-	err := iteratePrefixKeys(ctx, prefixKey.ToString(), txn.Datastore(),
-		func(ctx context.Context, key ds.Key) error {
-			err := txn.Datastore().Delete(ctx, key)
-			if err != nil {
-				return NewCanNotDeleteIndexedField(err)
-			}
-			return nil
-		})
+	keys, err := fetchKeysForPrefix(ctx, prefixKey.ToString(), txn.Datastore())
+	if err != nil {
+		return err
+	}
 
-	return err
+	for _, key := range keys {
+		err := txn.Datastore().Delete(ctx, key)
+		if err != nil {
+			return NewCanNotDeleteIndexedField(err)
+		}
+	}
+
+	return nil
 }
 
 func (i *collectionSimpleIndex) Name() string {

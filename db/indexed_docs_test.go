@@ -709,7 +709,6 @@ func TestNonUniqueDrop_IfDataStorageFails_ReturnError(t *testing.T) {
 				q.EXPECT().Close().Unset()
 				q.EXPECT().Close().Return(testErr)
 				mockedDS.Query(mock.Anything, mock.Anything).Return(q, nil)
-				mockedDS.Delete(mock.Anything, mock.Anything).Return(nil)
 			},
 		},
 	}

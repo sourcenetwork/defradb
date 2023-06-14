@@ -307,10 +307,17 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 func (c *collection) dropAllIndexes(ctx context.Context, txn datastore.Txn) error {
 	prefix := core.NewCollectionIndexKey(c.Name(), "")
 
-	err := iteratePrefixKeys(ctx, prefix.ToString(), txn.Systemstore(),
-		func(ctx context.Context, key ds.Key) error {
-			return txn.Systemstore().Delete(ctx, key)
-		})
+	keys, err := fetchKeysForPrefix(ctx, prefix.ToString(), txn.Systemstore())
+	if err != nil {
+		return err
+	}
+
+	for _, key := range keys {
+		err = txn.Systemstore().Delete(ctx, key)
+		if err != nil {
+			return err
+		}
+	}
 
 	return err
 }
@@ -489,9 +496,13 @@ func validateIndexDescription(desc client.IndexDescription) error {
 
 func generateIndexName(col client.Collection, fields []client.IndexedFieldDescription, inc int) string {
 	sb := strings.Builder{}
+	// at the moment we support only single field indexes that can be stored only in
+	// ascending order. This will change once we introduce composite indexes.
 	direction := "ASC"
 	sb.WriteString(col.Name())
 	sb.WriteByte('_')
+	// we can safely assume that there is at least one field in the slice
+	// because we validate it before calling this function
 	sb.WriteString(fields[0].Name)
 	sb.WriteByte('_')
 	sb.WriteString(direction)
