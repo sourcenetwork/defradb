@@ -404,12 +404,9 @@ func TestNewIndexDataStoreKey_InvalidKey(t *testing.T) {
 		"/1",
 		"/1/2",
 		" /1/2/3",
-		"/1/2/3 ",
 		"1/2/3",
 		"/a/2/3",
 		"/1/b/3",
-		"/1/2/c",
-		"/1/2/3/d",
 	}
 	for i, key := range keys {
 		_, err := NewIndexDataStoreKey(key)

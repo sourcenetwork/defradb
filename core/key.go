@@ -426,10 +426,6 @@ func NewIndexDataStoreKey(key string) (IndexDataStoreKey, error) {
 	indexKey.IndexID = uint32(indID)
 
 	for i := 2; i < len(elements); i++ {
-		_, err = strconv.Atoi(elements[i])
-		if err != nil {
-			return IndexDataStoreKey{}, ErrInvalidKey
-		}
 		indexKey.FieldValues = append(indexKey.FieldValues, []byte(elements[i]))
 	}
 
