@@ -240,7 +240,7 @@ func (f *indexTestFixture) createCollectionIndexFor(
 }
 
 func (f *indexTestFixture) getAllIndexes() ([]collectionIndexDescription, error) {
-	return f.db.getAllCollectionIndexes(f.ctx, f.txn)
+	return f.db.getAllIndexes(f.ctx, f.txn)
 }
 
 func (f *indexTestFixture) getCollectionIndexes(colName string) ([]client.IndexDescription, error) {

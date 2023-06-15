@@ -66,8 +66,8 @@ func (db *db) dropCollectionIndex(
 	return col.DropIndex(ctx, indexName)
 }
 
-// getAllCollectionIndexes returns all the indexes in the database.
-func (db *db) getAllCollectionIndexes(
+// getAllIndexes returns all the indexes in the database.
+func (db *db) getAllIndexes(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]collectionIndexDescription, error) {
@@ -192,6 +192,56 @@ func (c *collection) CreateIndex(
 		return client.IndexDescription{}, err
 	}
 	return index.Description(), nil
+}
+
+func (c *collection) createIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	desc client.IndexDescription,
+) (CollectionIndex, error) {
+	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
+		return nil, schema.NewErrIndexWithInvalidName("!")
+	}
+	err := validateIndexDescription(desc)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.checkExistingFields(ctx, desc.Fields)
+	if err != nil {
+		return nil, err
+	}
+
+	indexKey, err := c.processIndexName(ctx, txn, &desc)
+	if err != nil {
+		return nil, err
+	}
+
+	colSeq, err := c.db.getSequence(ctx, txn, fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, c.ID()))
+	if err != nil {
+		return nil, err
+	}
+	colID, err := colSeq.next(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+	desc.ID = uint32(colID)
+
+	buf, err := json.Marshal(desc)
+	if err != nil {
+		return nil, err
+	}
+
+	err = txn.Systemstore().Put(ctx, indexKey.ToDS(), buf)
+	if err != nil {
+		return nil, err
+	}
+	colIndex, err := NewCollectionIndex(c, desc)
+	if err != nil {
+		return nil, err
+	}
+	c.desc.Indexes = append(c.desc.Indexes, colIndex.Description())
+	return colIndex, nil
 }
 
 func (c *collection) newFetcher() fetcher.Fetcher {
@@ -367,56 +417,6 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	}
 
 	return indexDescriptions, nil
-}
-
-func (c *collection) createIndex(
-	ctx context.Context,
-	txn datastore.Txn,
-	desc client.IndexDescription,
-) (CollectionIndex, error) {
-	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
-		return nil, schema.NewErrIndexWithInvalidName("!")
-	}
-	err := validateIndexDescription(desc)
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.checkExistingFields(ctx, desc.Fields)
-	if err != nil {
-		return nil, err
-	}
-
-	indexKey, err := c.processIndexName(ctx, txn, &desc)
-	if err != nil {
-		return nil, err
-	}
-
-	colSeq, err := c.db.getSequence(ctx, txn, fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, c.ID()))
-	if err != nil {
-		return nil, err
-	}
-	colID, err := colSeq.next(ctx, txn)
-	if err != nil {
-		return nil, err
-	}
-	desc.ID = uint32(colID)
-
-	buf, err := json.Marshal(desc)
-	if err != nil {
-		return nil, err
-	}
-
-	err = txn.Systemstore().Put(ctx, indexKey.ToDS(), buf)
-	if err != nil {
-		return nil, err
-	}
-	colIndex, err := NewCollectionIndex(c, desc)
-	if err != nil {
-		return nil, err
-	}
-	c.desc.Indexes = append(c.desc.Indexes, colIndex.Description())
-	return colIndex, nil
 }
 
 func (c *collection) checkExistingFields(

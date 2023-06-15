@@ -87,8 +87,8 @@ var (
 	ErrSchemaFirstFieldDocKey         = errors.New("collection schema first field must be a DocKey")
 	ErrCollectionAlreadyExists        = errors.New("collection already exists")
 	ErrCollectionNameEmpty            = errors.New("collection name can't be empty")
-	ErrSchemaIdEmpty                  = errors.New("schema ID can't be empty")
-	ErrSchemaVersionIdEmpty           = errors.New("schema version ID can't be empty")
+	ErrSchemaIDEmpty                  = errors.New("schema ID can't be empty")
+	ErrSchemaVersionIDEmpty           = errors.New("schema version ID can't be empty")
 	ErrKeyEmpty                       = errors.New("key cannot be empty")
 	ErrAddingP2PCollection            = errors.New(errAddingP2PCollection)
 	ErrRemovingP2PCollection          = errors.New(errRemovingP2PCollection)
@@ -147,13 +147,13 @@ func NewErrCanNotReadCollection(colName string, inner error) error {
 	return errors.Wrap(errCollectionDoesntExisting, inner, errors.NewKV("Collection", colName))
 }
 
-// NewErrFailedToStoreIndexedField returns a new error indicating that the indexed field 
+// NewErrFailedToStoreIndexedField returns a new error indicating that the indexed field
 // could not be stored.
 func NewErrFailedToStoreIndexedField(key string, inner error) error {
 	return errors.Wrap(errFailedToStoreIndexedField, inner, errors.NewKV("Key", key))
 }
 
-// NewErrFailedToReadStoredIndexDesc returns a new error indicating that the stored index 
+// NewErrFailedToReadStoredIndexDesc returns a new error indicating that the stored index
 // description could not be read.
 func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
@@ -164,13 +164,13 @@ func NewCanNotDeleteIndexedField(inner error) error {
 	return errors.Wrap(errCanNotDeleteIndexedField, inner)
 }
 
-// NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was 
+// NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was
 // provided.
 func NewErrNonZeroIndexIDProvided(indexID uint32) error {
 	return errors.New(errNonZeroIndexIDProvided, errors.NewKV("ID", indexID))
 }
 
-// NewErrFailedToGetCollection returns a new error indicating that the collection could not 
+// NewErrFailedToGetCollection returns a new error indicating that the collection could not
 // be obtained.
 func NewErrFailedToGetCollection(name string, inner error) error {
 	return errors.Wrap(errFailedToGetCollection, inner, errors.NewKV("Name", name))

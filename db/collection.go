@@ -436,7 +436,7 @@ func (db *db) getCollectionByVersionID(
 	schemaVersionId string,
 ) (*collection, error) {
 	if schemaVersionId == "" {
-		return nil, ErrSchemaVersionIdEmpty
+		return nil, ErrSchemaVersionIDEmpty
 	}
 
 	key := core.NewCollectionSchemaVersionKey(schemaVersionId)
@@ -488,7 +488,7 @@ func (db *db) getCollectionBySchemaID(
 	schemaID string,
 ) (client.Collection, error) {
 	if schemaID == "" {
-		return nil, ErrSchemaIdEmpty
+		return nil, ErrSchemaIDEmpty
 	}
 
 	key := core.NewCollectionSchemaKey(schemaID)

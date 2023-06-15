@@ -124,7 +124,9 @@ type collectionSimpleIndex struct {
 
 var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 
-func (i *collectionSimpleIndex) getDocKey(doc *client.Document) (core.IndexDataStoreKey, error) {
+func (i *collectionSimpleIndex) getDocumentsIndexKey(
+	doc *client.Document,
+) (core.IndexDataStoreKey, error) {
 	// collectionSimpleIndex only supports single field indexes, that's why we
 	// can safely assume access the first field
 	indexedFieldName := i.desc.Fields[0].Name
@@ -160,7 +162,7 @@ func (i *collectionSimpleIndex) Save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	key, err := i.getDocKey(doc)
+	key, err := i.getDocumentsIndexKey(doc)
 	if err != nil {
 		return err
 	}
@@ -177,7 +179,7 @@ func (i *collectionSimpleIndex) Update(
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
-	key, err := i.getDocKey(oldDoc)
+	key, err := i.getDocumentsIndexKey(oldDoc)
 	if err != nil {
 		return err
 	}
