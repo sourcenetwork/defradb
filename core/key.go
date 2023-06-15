@@ -233,6 +233,7 @@ func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersi
 	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
 }
 
+// NewCollectionIndexKey creates a new CollectionIndexKey from a collection name and index name.
 func NewCollectionIndexKey(colID, indexName string) CollectionIndexKey {
 	return CollectionIndexKey{CollectionName: colID, IndexName: indexName}
 }

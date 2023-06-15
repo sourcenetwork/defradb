@@ -310,6 +310,14 @@ func TestIndexDatastoreKey_EqualTrue(t *testing.T) {
 	}
 }
 
+func TestCollectionIndexKey_Bytes(t *testing.T) {
+	key := CollectionIndexKey{
+		CollectionName: "col",
+		IndexName:      "idx",
+	}
+	assert.Equal(t, []byte(COLLECTION_INDEX+"/col/idx"), key.Bytes())
+}
+
 func TestIndexDatastoreKey_EqualFalse(t *testing.T) {
 	cases := [][]IndexDataStoreKey{
 		{
