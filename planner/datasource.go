@@ -35,7 +35,6 @@ func (p *Planner) getSource(parsed *mapper.Select) (planSource, error) {
 	return p.getCollectionScanPlan(parsed)
 }
 
-// @todo: Add field selection
 func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, error) {
 	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
 	if err != nil {
@@ -44,7 +43,7 @@ func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, erro
 
 	scan, err := p.Scan(parsed)
 	if err != nil {
-		return planSource{}, nil
+		return planSource{}, err
 	}
 
 	return planSource{

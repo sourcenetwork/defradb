@@ -525,7 +525,11 @@ func (p *Planner) RunSubscriptionRequest(
 		return nil, err
 	}
 
-	return p.executeRequest(ctx, planNode)
+	data, err := p.executeRequest(ctx, planNode)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 // MakePlan makes a plan from the parsed request.
