@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	ds "github.com/ipfs/go-datastore"
@@ -23,11 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-)
-
-const (
-	indexFieldValuePrefix = "v"
-	indexFieldNilValue    = "n"
 )
 
 // CollectionIndex is an interface for collection indexes
@@ -46,52 +40,41 @@ type CollectionIndex interface {
 	Description() client.IndexDescription
 }
 
-func getFieldValConverter(kind client.FieldKind) (func(any) ([]byte, error), error) {
+func canConvertIndexFieldValue[T any](val any) bool {
+	_, ok := val.(T)
+	return ok
+}
+
+func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
 	switch kind {
 	case client.FieldKind_STRING:
-		return func(val any) ([]byte, error) {
-			return []byte(val.(string)), nil
-		}, nil
+		return canConvertIndexFieldValue[string]
 	case client.FieldKind_INT:
-		return func(val any) ([]byte, error) {
-			intVal, ok := val.(int64)
-			if !ok {
-				return nil, NewErrInvalidFieldValue(kind, val)
-			}
-			return []byte(strconv.FormatInt(intVal, 10)), nil
-		}, nil
+		return canConvertIndexFieldValue[int64]
 	case client.FieldKind_FLOAT:
-		return func(val any) ([]byte, error) {
-			floatVal, ok := val.(float64)
-			if !ok {
-				return nil, NewErrInvalidFieldValue(kind, val)
-			}
-			return []byte(strconv.FormatFloat(floatVal, 'f', -1, 64)), nil
-		}, nil
+		return canConvertIndexFieldValue[float64]
 	case client.FieldKind_BOOL:
-		return func(val any) ([]byte, error) {
-			boolVal, ok := val.(bool)
-			if !ok {
-				return nil, NewErrInvalidFieldValue(kind, val)
-			}
-			var intVal int64 = 0
-			if boolVal {
-				intVal = 1
-			}
-			return []byte(strconv.FormatInt(intVal, 10)), nil
-		}, nil
+		return canConvertIndexFieldValue[bool]
 	case client.FieldKind_DATETIME:
-		return func(val any) ([]byte, error) {
-			timeStrVal := val.(string)
-			_, err := time.Parse(time.RFC3339, timeStrVal)
-			if err != nil {
-				return nil, NewErrInvalidFieldValue(kind, val)
+		return func(val any) bool {
+			timeStrVal, ok := val.(string)
+			if !ok {
+				return false
 			}
-			return []byte(timeStrVal), nil
-		}, nil
+			_, err := time.Parse(time.RFC3339, timeStrVal)
+			return err == nil
+		}
 	default:
+		return nil
+	}
+}
+
+func getFieldValidateFunc(kind client.FieldKind) (func(any) bool, error) {
+	validateFunc := getValidateIndexFieldFunc(kind)
+	if validateFunc == nil {
 		return nil, NewErrUnsupportedIndexFieldType(kind)
 	}
+	return validateFunc, nil
 }
 
 // NewCollectionIndex creates a new collection index
@@ -110,16 +93,18 @@ func NewCollectionIndex(
 		return nil, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name)
 	}
 	var e error
-	index.convertFunc, e = getFieldValConverter(field.Kind)
+	index.fieldDesc = field
+	index.validateFieldFunc, e = getFieldValidateFunc(field.Kind)
 	return index, e
 }
 
 // collectionSimpleIndex is an non-unique index that indexes documents by a single field.
 // Single-field indexes store values only in ascending order.
 type collectionSimpleIndex struct {
-	collection  client.Collection
-	desc        client.IndexDescription
-	convertFunc func(any) ([]byte, error)
+	collection        client.Collection
+	desc              client.IndexDescription
+	validateFieldFunc func(any) bool
+	fieldDesc         client.FieldDescription
 }
 
 var _ CollectionIndex = (*collectionSimpleIndex)(nil)
@@ -127,34 +112,35 @@ var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 func (i *collectionSimpleIndex) getDocumentsIndexKey(
 	doc *client.Document,
 ) (core.IndexDataStoreKey, error) {
-	// collectionSimpleIndex only supports single field indexes, that's why we
-	// can safely assume access the first field
-	indexedFieldName := i.desc.Fields[0].Name
-	fieldVal, err := doc.Get(indexedFieldName)
-	isNil := false
+	fieldValue, err := i.getDocFieldValue(doc)
 	if err != nil {
-		isNil = errors.Is(err, client.ErrFieldNotExist)
-		if !isNil {
-			return core.IndexDataStoreKey{}, nil
-		}
+		return core.IndexDataStoreKey{}, err
 	}
 
-	var storeValue []byte
-	if isNil {
-		storeValue = []byte(indexFieldNilValue)
-	} else {
-		data, err := i.convertFunc(fieldVal)
-		if err != nil {
-			return core.IndexDataStoreKey{}, err
-		}
-		storeValue = []byte(string(indexFieldValuePrefix) + string(data))
-	}
 	indexDataStoreKey := core.IndexDataStoreKey{}
 	indexDataStoreKey.CollectionID = i.collection.ID()
 	indexDataStoreKey.IndexID = i.desc.ID
-	indexDataStoreKey.FieldValues = [][]byte{storeValue,
-		[]byte(string(indexFieldValuePrefix) + doc.Key().String())}
+	indexDataStoreKey.FieldValues = [][]byte{fieldValue, []byte(doc.Key().String())}
 	return indexDataStoreKey, nil
+}
+
+func (i *collectionSimpleIndex) getDocFieldValue(doc *client.Document) ([]byte, error) {
+	// collectionSimpleIndex only supports single field indexes, that's why we
+	// can safely access the first field
+	indexedFieldName := i.desc.Fields[0].Name
+	fieldVal, err := doc.GetValue(indexedFieldName)
+	if err != nil {
+		if errors.Is(err, client.ErrFieldNotExist) {
+			return client.NewCBORValue(client.LWW_REGISTER, nil).Bytes()
+		} else {
+			return nil, err
+		}
+	}
+	writeableVal, ok := fieldVal.(client.WriteableValue)
+	if !ok || !i.validateFieldFunc(fieldVal.Value()) {
+		return nil, NewErrInvalidFieldValue(i.fieldDesc.Kind, writeableVal)
+	}
+	return writeableVal.Bytes()
 }
 
 func (i *collectionSimpleIndex) Save(

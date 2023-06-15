@@ -31,9 +31,6 @@ import (
 	fetcherMocks "github.com/sourcenetwork/defradb/db/fetcher/mocks"
 )
 
-const testValuePrefix = "v"
-const testNilValue = "n"
-
 type userDoc struct {
 	Name   string  `json:"name"`
 	Age    int     `json:"age"`
@@ -160,16 +157,20 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 
 	if b.doc != nil {
 		var fieldBytesVal []byte
+		var writeableVal client.WriteableValue
 		if len(b.values) == 0 {
-			fieldVal, err := b.doc.Get(b.fieldName)
+			fieldVal, err := b.doc.GetValue(b.fieldName)
 			require.NoError(b.f.t, err)
-			fieldBytesVal = []byte(fmt.Sprintf("%s%v", testValuePrefix, fieldVal))
+			var ok bool
+			writeableVal, ok = fieldVal.(client.WriteableValue)
+			require.True(b.f.t, ok)
 		} else {
-			fieldBytesVal = b.values[0]
+			writeableVal = client.NewCBORValue(client.LWW_REGISTER, b.values[0])
 		}
+		fieldBytesVal, err = writeableVal.Bytes()
+		require.NoError(b.f.t, err)
 
-		key.FieldValues = [][]byte{[]byte(fieldBytesVal),
-			[]byte(testValuePrefix + b.doc.Key().String())}
+		key.FieldValues = [][]byte{fieldBytesVal, []byte(b.doc.Key().String())}
 	} else if len(b.values) > 0 {
 		key.FieldValues = b.values
 	}
@@ -288,7 +289,6 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
 }
 
-// @todo: should store as nil value?
 func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
@@ -418,20 +418,18 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 		// FieldVal is the value the index will receive for serialization
 		FieldVal   any
 		ShouldFail bool
-		// Stored is the value that is stored as part of the index value key
-		Stored string
 	}{
 		{Name: "invalid int", FieldKind: client.FieldKind_INT, FieldVal: "invalid", ShouldFail: true},
 		{Name: "invalid float", FieldKind: client.FieldKind_FLOAT, FieldVal: "invalid", ShouldFail: true},
 		{Name: "invalid bool", FieldKind: client.FieldKind_BOOL, FieldVal: "invalid", ShouldFail: true},
 		{Name: "invalid datetime", FieldKind: client.FieldKind_DATETIME, FieldVal: nowStr[1:], ShouldFail: true},
 
-		{Name: "valid int", FieldKind: client.FieldKind_INT, FieldVal: 12, Stored: "12"},
-		{Name: "valid float", FieldKind: client.FieldKind_FLOAT, FieldVal: 36.654, Stored: "36.654"},
-		{Name: "valid bool true", FieldKind: client.FieldKind_BOOL, FieldVal: true, Stored: "1"},
-		{Name: "valid bool false", FieldKind: client.FieldKind_BOOL, FieldVal: false, Stored: "0"},
-		{Name: "valid datetime string", FieldKind: client.FieldKind_DATETIME, FieldVal: nowStr, Stored: nowStr},
-		{Name: "valid empty string", FieldKind: client.FieldKind_STRING, FieldVal: "", Stored: ""},
+		{Name: "valid int", FieldKind: client.FieldKind_INT, FieldVal: 12},
+		{Name: "valid float", FieldKind: client.FieldKind_FLOAT, FieldVal: 36.654},
+		{Name: "valid bool true", FieldKind: client.FieldKind_BOOL, FieldVal: true},
+		{Name: "valid bool false", FieldKind: client.FieldKind_BOOL, FieldVal: false},
+		{Name: "valid datetime string", FieldKind: client.FieldKind_DATETIME, FieldVal: nowStr},
+		{Name: "valid empty string", FieldKind: client.FieldKind_STRING, FieldVal: ""},
 	}
 
 	for i, tc := range testCase {
@@ -482,9 +480,6 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 			require.NoError(f.t, err, assertMsg)
 
 			keyBuilder := newIndexKeyBuilder(f).Col(collection.Name()).Field("field").Doc(doc)
-			if tc.Stored != "" {
-				keyBuilder.Values([]byte(testValuePrefix + tc.Stored))
-			}
 			key := keyBuilder.Build()
 
 			keyStr := key.ToDS()
@@ -510,7 +505,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
-		Values([]byte(testNilValue)).Build()
+		Values([]byte(nil)).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -1018,7 +1013,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 
 	oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
-		Values([]byte(testNilValue)).Build()
+		Values([]byte(nil)).Build()
 
 	err = doc.Set(usersNameFieldName, "John")
 	require.NoError(f.t, err)
