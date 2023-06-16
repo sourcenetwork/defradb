@@ -1064,13 +1064,16 @@ func dropIndex(
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
-		indexDesc := indexes[nodeID][action.CollectionID][action.IndexID]
+		indexName := action.IndexName
+		if indexName == "" {
+			indexName = indexes[nodeID][action.CollectionID][action.IndexID].Name
+		}
 
 		err := withRetry(
 			actionNodes,
 			nodeID,
 			func() error {
-				return collections[action.CollectionID].DropIndex(ctx, indexDesc.Name)
+				return collections[action.CollectionID].DropIndex(ctx, indexName)
 			},
 		)
 		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)

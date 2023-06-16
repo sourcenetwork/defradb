@@ -197,6 +197,10 @@ type DropIndex struct {
 	// the indexes within the database.
 	IndexID int
 
+	// The index name of the secondary index within the collection.
+	// If it is provided, `IndexID` is ignored.
+	IndexName string
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that

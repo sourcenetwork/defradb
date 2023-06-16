@@ -45,14 +45,59 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 				Request: `
 					query  {
 						Users {
-							_key
 							Name
 							Age
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+						"Name": "John",
+						"Age":  uint64(21),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Creation of index with collection should not hinder querying",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-52b9170d-b77a-5887-b877-cbdbb99b009f
+				Doc: `
+					{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.DropIndex{
+				CollectionID:  0,
+				IndexName:     "non_existing_index",
+				ExpectedError: "index with name doesn't exists. Name: non_existing_index",
+			},
+			testUtils.Request{
+				Request: `
+					query  {
+						Users {
+							Name
+							Age
+						}
+					}`,
+				Results: []map[string]any{
+					{
 						"Name": "John",
 						"Age":  uint64(21),
 					},

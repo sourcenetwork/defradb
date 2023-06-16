@@ -42,14 +42,12 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 				Request: `
 					query  {
 						Users {
-							_key
 							Name
 							Age
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 						"Name": "John",
 						"Age":  uint64(21),
 					},
@@ -91,14 +89,12 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 				Request: `
 					query  {
 						Users {
-							_key
 							Name
 							Age
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 						"Name": "John",
 						"Age":  uint64(21),
 					},

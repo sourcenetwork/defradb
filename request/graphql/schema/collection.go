@@ -247,9 +247,9 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			if dirVal.Value == "ASC" {
+			if dirVal.Value == string(client.Ascending) {
 				desc.Fields[i].Direction = client.Ascending
-			} else if dirVal.Value == "DESC" {
+			} else if dirVal.Value == string(client.Descending) {
 				desc.Fields[i].Direction = client.Descending
 			}
 		}
