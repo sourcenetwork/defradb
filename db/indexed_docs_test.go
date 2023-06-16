@@ -812,6 +812,9 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	mockedTxn.MockDatastore.EXPECT().Get(mock.Anything, mock.Anything).Unset()
 	mockedTxn.MockDatastore.EXPECT().Get(mock.Anything, mock.Anything).Return([]byte{}, nil)
 
+	usersCol.(*collection).fetcherFactory = func() fetcher.Fetcher {
+		return fetcherMocks.NewStubbedFetcher(t)
+	}
 	err = usersCol.WithTxn(mockedTxn).Update(f.ctx, doc)
 	require.ErrorIs(t, err, testErr)
 }

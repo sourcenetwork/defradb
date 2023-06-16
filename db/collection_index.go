@@ -96,7 +96,7 @@ func (db *db) getAllIndexes(
 	return indexes, nil
 }
 
-func (db *db) getCollectionIndexes(
+func (db *db) fetchCollectionIndexDescriptions(
 	ctx context.Context,
 	txn datastore.Txn,
 	colName string,
@@ -115,11 +115,11 @@ func (db *db) getCollectionIndexes(
 }
 
 func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
-	indexes, err := c.getIndexes(ctx, txn)
+	err := c.loadIndexes(ctx, txn)
 	if err != nil {
 		return err
 	}
-	for _, index := range indexes {
+	for _, index := range c.indexes {
 		err = index.Save(ctx, txn, doc)
 		if err != nil {
 			return err
@@ -149,12 +149,12 @@ func (c *collection) collectIndexedFields() []*client.FieldDescription {
 	return fields
 }
 
-func (c *collection) updateIndex(
+func (c *collection) updateIndexedDoc(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	_, err := c.getIndexes(ctx, txn)
+	err := c.loadIndexes(ctx, txn)
 	if err != nil {
 		return err
 	}
@@ -179,19 +179,13 @@ func (c *collection) CreateIndex(
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
+	defer c.discardImplicitTxn(ctx, txn)
 
 	index, err := c.createIndex(ctx, txn, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	if c.isIndexCached {
-		c.indexes = append(c.indexes, index)
-	}
-	err = c.indexExistingDocs(ctx, txn, index)
-	if err != nil {
-		return client.IndexDescription{}, err
-	}
-	return index.Description(), nil
+	return index.Description(), c.commitImplicitTxn(ctx, txn)
 }
 
 func (c *collection) createIndex(
@@ -212,7 +206,7 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	indexKey, err := c.processIndexName(ctx, txn, &desc)
+	indexKey, err := c.generateIndexNameIfNeededAndCreateKey(ctx, txn, &desc)
 	if err != nil {
 		return nil, err
 	}
@@ -241,6 +235,11 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 	c.desc.Indexes = append(c.desc.Indexes, colIndex.Description())
+	c.indexes = append(c.indexes, colIndex)
+	err = c.indexExistingDocs(ctx, txn, colIndex)
+	if err != nil {
+		return nil, err
+	}
 	return colIndex, nil
 }
 
@@ -314,16 +313,25 @@ func (c *collection) indexExistingDocs(
 }
 
 func (c *collection) DropIndex(ctx context.Context, indexName string) error {
-	key := core.NewCollectionIndexKey(c.Name(), indexName)
-
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	_, err = c.getIndexes(ctx, txn)
+	defer c.discardImplicitTxn(ctx, txn)
+
+	err = c.dropIndex(ctx, txn, indexName)
 	if err != nil {
 		return err
 	}
+	return c.commitImplicitTxn(ctx, txn)
+}
+
+func (c *collection) dropIndex(ctx context.Context, txn datastore.Txn, indexName string) error {
+	err := c.loadIndexes(ctx, txn)
+	if err != nil {
+		return err
+	}
+
 	var didFind bool
 	for i := range c.indexes {
 		if c.indexes[i].Name() == indexName {
@@ -346,6 +354,7 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 			break
 		}
 	}
+	key := core.NewCollectionIndexKey(c.Name(), indexName)
 	err = txn.Systemstore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return err
@@ -372,51 +381,34 @@ func (c *collection) dropAllIndexes(ctx context.Context, txn datastore.Txn) erro
 	return err
 }
 
-func (c *collection) getIndexes(ctx context.Context, txn datastore.Txn) ([]CollectionIndex, error) {
-	if c.isIndexCached {
-		return c.indexes, nil
-	}
-
-	prefix := core.NewCollectionIndexKey(c.Name(), "")
-	deserializedIndexes, err := deserializePrefix[client.IndexDescription](
-		ctx, prefix.ToString(), txn.Systemstore())
+func (c *collection) loadIndexes(ctx context.Context, txn datastore.Txn) error {
+	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, txn, c.Name())
 	if err != nil {
-		return nil, err
+		return err
 	}
-	colIndexes := make([]CollectionIndex, 0, len(deserializedIndexes))
-	for _, indexRec := range deserializedIndexes {
-		index, err := NewCollectionIndex(c, indexRec.element)
+	colIndexes := make([]CollectionIndex, 0, len(indexDescriptions))
+	for _, indexDesc := range indexDescriptions {
+		index, err := NewCollectionIndex(c, indexDesc)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		colIndexes = append(colIndexes, index)
 	}
-
-	descriptions := make([]client.IndexDescription, 0, len(colIndexes))
-	for _, index := range colIndexes {
-		descriptions = append(descriptions, index.Description())
-	}
-	c.desc.Indexes = descriptions
+	c.desc.Indexes = indexDescriptions
 	c.indexes = colIndexes
-	c.isIndexCached = true
-	return colIndexes, nil
+	return nil
 }
 
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	txn, err := c.getTxn(ctx, true)
+	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
-	indexes, err := c.getIndexes(ctx, txn)
+	err = c.loadIndexes(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
-	indexDescriptions := make([]client.IndexDescription, 0, len(indexes))
-	for _, index := range indexes {
-		indexDescriptions = append(indexDescriptions, index.Description())
-	}
-
-	return indexDescriptions, nil
+	return c.desc.Indexes, nil
 }
 
 func (c *collection) checkExistingFields(
@@ -440,7 +432,7 @@ func (c *collection) checkExistingFields(
 	return nil
 }
 
-func (c *collection) processIndexName(
+func (c *collection) generateIndexNameIfNeededAndCreateKey(
 	ctx context.Context,
 	txn datastore.Txn,
 	desc *client.IndexDescription,

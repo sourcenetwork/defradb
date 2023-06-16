@@ -58,7 +58,6 @@ type collection struct {
 
 	desc client.CollectionDescription
 
-	isIndexCached  bool
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
 }
@@ -451,18 +450,19 @@ func (db *db) getCollectionByVersionID(
 		return nil, err
 	}
 
-	indexes, err := db.getCollectionIndexes(ctx, txn, desc.Name)
-	if err != nil {
-		return nil, err
-	}
-	desc.Indexes = indexes
-
-	return &collection{
+	col := &collection{
 		db:       db,
 		desc:     desc,
 		colID:    desc.ID,
 		schemaID: desc.Schema.SchemaID,
-	}, nil
+	}
+
+	err = col.loadIndexes(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	return col, nil
 }
 
 // getCollectionByName returns an existing collection within the database.
@@ -638,7 +638,6 @@ func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 		desc:           c.desc,
 		colID:          c.colID,
 		schemaID:       c.schemaID,
-		isIndexCached:  c.isIndexCached,
 		indexes:        c.indexes,
 		fetcherFactory: c.fetcherFactory,
 	}
@@ -823,7 +822,7 @@ func (c *collection) save(
 	isCreate bool,
 ) (cid.Cid, error) {
 	if !isCreate {
-		err := c.updateIndex(ctx, txn, doc)
+		err := c.updateIndexedDoc(ctx, txn, doc)
 		if err != nil {
 			return cid.Undef, err
 		}

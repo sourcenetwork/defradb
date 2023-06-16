@@ -244,7 +244,7 @@ func (f *indexTestFixture) getAllIndexes() ([]collectionIndexDescription, error)
 }
 
 func (f *indexTestFixture) getCollectionIndexes(colName string) ([]client.IndexDescription, error) {
-	return f.db.getCollectionIndexes(f.ctx, f.txn, colName)
+	return f.db.fetchCollectionIndexDescriptions(f.ctx, f.txn, colName)
 }
 
 func (f *indexTestFixture) createCollection(
@@ -920,23 +920,6 @@ func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
 	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
 }
 
-func TestCollectionGetIndexes_IfCalledAgain_ShouldReturnCached(t *testing.T) {
-	f := newIndexTestFixture(t)
-
-	f.createUserCollectionIndexOnName()
-
-	_, err := f.users.GetIndexes(f.ctx)
-	require.NoError(t, err)
-
-	mockedTxn := mocks.NewTxnWithMultistore(f.t)
-
-	indexes, err := f.users.WithTxn(mockedTxn).GetIndexes(f.ctx)
-	require.NoError(t, err)
-
-	require.Equal(t, 1, len(indexes))
-	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
-}
-
 func TestCollectionGetIndexes_ShouldCloseQueryIterator(t *testing.T) {
 	f := newIndexTestFixture(t)
 
@@ -957,7 +940,7 @@ func TestCollectionGetIndexes_ShouldCloseQueryIterator(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestCollectionGetIndexes_IfSystemStoreFails_ShouldNotCache(t *testing.T) {
+func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 	testErr := errors.New("test error")
 
 	testCases := []struct {
@@ -1010,12 +993,6 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ShouldNotCache(t *testing.T) {
 
 		_, err := f.users.WithTxn(mockedTxn).GetIndexes(f.ctx)
 		require.ErrorIs(t, err, testCase.ExpectedError)
-
-		indexes, err := f.users.GetIndexes(f.ctx)
-		require.NoError(t, err)
-
-		require.Equal(t, 1, len(indexes))
-		assert.Equal(t, testUsersColIndexName, indexes[0].Name)
 	}
 }
 
@@ -1100,7 +1077,7 @@ func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].ID, indexes[1].ID})
 }
 
-func TestCollectionGetIndexes_IfIndexIsCreated_ShouldUpdateCache(t *testing.T) {
+func TestCollectionGetIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	f.createUserCollectionIndexOnName()
@@ -1117,7 +1094,7 @@ func TestCollectionGetIndexes_IfIndexIsCreated_ShouldUpdateCache(t *testing.T) {
 	assert.Len(t, indexes, 2)
 }
 
-func TestCollectionGetIndexes_IfIndexIsDropped_ShouldUpdateCache(t *testing.T) {
+func TestCollectionGetIndexes_IfIndexIsDropped_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	f.createUserCollectionIndexOnName()
@@ -1259,7 +1236,7 @@ func TestDropIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, testErr)
 }
 
-func TestDropIndex_IfFailsToDeleteFromStorage_ShouldNotCache(t *testing.T) {
+func TestDropIndex_IfFailsToDeleteFromStorage_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	f.createUserCollectionIndexOnName()
