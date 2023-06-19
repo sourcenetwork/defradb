@@ -170,6 +170,21 @@ func (c *collection) updateIndexedDoc(
 	return nil
 }
 
+// CreateIndex creates a new index on the collection.
+//
+// If the index name is empty, a name will be automatically generated.
+// Otherwise its uniqueness will be checked against existing indexes and 
+// it will be validated with `schema.IsValidIndexName` method.
+//
+// The provided index description must include at least one field with
+// a name that exists in the collection schema.
+// Also it's `ID` field must be zero. It will be assigned a unique
+// incremental value by the database.
+// 
+// The index description will be stored in the system store.
+// 
+// Once finished, if there are existing documents in the collection,
+// the documents will be indexed by the new index.
 func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexDescription,
@@ -303,6 +318,11 @@ func (c *collection) indexExistingDocs(
 	})
 }
 
+// DropIndex removes an index from the collection.
+//
+// The index will be removed from the system store.
+//
+// All index artifacts for existing documents related the index will be removed.
 func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -390,6 +410,7 @@ func (c *collection) loadIndexes(ctx context.Context, txn datastore.Txn) error {
 	return nil
 }
 
+// GetIndexes returns all indexes for the collection.
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
