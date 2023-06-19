@@ -17,17 +17,11 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
 
 	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
-)
-
-const (
-	indexDirectiveLabel          = "index"
-	indexDirectivePropName       = "name"
-	indexDirectivePropFields     = "fields"
-	indexDirectivePropDirections = "directions"
 )
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
@@ -110,7 +104,7 @@ func fromAstDefinition(
 		fieldDescriptions = append(fieldDescriptions, tmpFieldsDescriptions...)
 
 		for _, directive := range field.Directives {
-			if directive.Name.Value == indexDirectiveLabel {
+			if directive.Name.Value == types.IndexDirectiveLabel {
 				index, err := fieldIndexFromAST(field, directive)
 				if err != nil {
 					return client.CollectionDescription{}, err
@@ -132,7 +126,7 @@ func fromAstDefinition(
 	})
 
 	for _, directive := range def.Directives {
-		if directive.Name.Value == indexDirectiveLabel {
+		if directive.Name.Value == types.IndexDirectiveLabel {
 			index, err := indexFromAST(directive)
 			if err != nil {
 				return client.CollectionDescription{}, err
@@ -181,7 +175,7 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 	}
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
-		case indexDirectivePropName:
+		case types.IndexDirectivePropName:
 			nameVal, ok := arg.Value.(*ast.StringValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
@@ -202,7 +196,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 	var directions *ast.ListValue
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
-		case indexDirectivePropName:
+		case types.IndexDirectivePropName:
 			nameVal, ok := arg.Value.(*ast.StringValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
@@ -211,7 +205,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !IsValidIndexName(desc.Name) {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-		case indexDirectivePropFields:
+		case types.IndexDirectivePropFields:
 			fieldsVal, ok := arg.Value.(*ast.ListValue)
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
@@ -225,7 +219,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 					Name: fieldVal.Value,
 				})
 			}
-		case indexDirectivePropDirections:
+		case types.IndexDirectivePropDirections:
 			var ok bool
 			directions, ok = arg.Value.(*ast.ListValue)
 			if !ok {

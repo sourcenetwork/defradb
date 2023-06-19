@@ -23,6 +23,11 @@ const (
 	ExplainArgSimple   string = "simple"
 	ExplainArgExecute  string = "execute"
 	ExplainArgDebug    string = "debug"
+
+	IndexDirectiveLabel          = "index"
+	IndexDirectivePropName       = "name"
+	IndexDirectivePropFields     = "fields"
+	IndexDirectivePropDirections = "directions"
 )
 
 var (
