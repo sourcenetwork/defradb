@@ -208,6 +208,27 @@ type DropIndex struct {
 	ExpectedError string
 }
 
+// GetIndex will attempt to get the given secondary index from the given collection
+// using the collection api.
+type GetIndexes struct {
+	// NodeID may hold the ID (index) of a node to create the secondary index on.
+	//
+	// If a value is not provided the indexes will be retrieved from the first nodes.
+	NodeID immutable.Option[int]
+
+	// The collection for which this indexes should be retrieved.
+	CollectionID int
+	
+	// The expected indexes to be returned.
+	ExpectedIndexes []client.IndexDescription
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
 // Request represents a standard Defra (GQL) request.
 type Request struct {
 	// NodeID may hold the ID (index) of a node to execute this request on.

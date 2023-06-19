@@ -315,7 +315,7 @@ func executeTestCase(
 	// documents are by collection (index), these are not node specific.
 	documents := getDocuments(ctx, t, testCase, collections, startActionIndex)
 	// indexes are by collection (index)
-	indexes := getIndexes(ctx, collections)
+	indexes := getAllIndexes(ctx, collections)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		// declare default database for ease of use
@@ -349,7 +349,7 @@ func executeTestCase(
 			// If the db was restarted we need to refresh the collection definitions as the old instances
 			// will reference the old (closed) database instances.
 			collections = getCollections(ctx, t, nodes, collectionNames)
-			indexes = getIndexes(ctx, collections)
+			indexes = getAllIndexes(ctx, collections)
 
 		case ConnectPeers:
 			syncChans = append(syncChans, connectPeers(ctx, t, testCase, action, nodes, nodeAddresses))
@@ -370,13 +370,13 @@ func executeTestCase(
 			updateSchema(ctx, t, nodes, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
 			collections = getCollections(ctx, t, nodes, collectionNames)
-			indexes = getIndexes(ctx, collections)
+			indexes = getAllIndexes(ctx, collections)
 
 		case SchemaPatch:
 			patchSchema(ctx, t, nodes, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
 			collections = getCollections(ctx, t, nodes, collectionNames)
-			indexes = getIndexes(ctx, collections)
+			indexes = getAllIndexes(ctx, collections)
 
 		case CreateDoc:
 			documents = createDoc(ctx, t, testCase, nodes, collections, documents, action)
@@ -392,6 +392,9 @@ func executeTestCase(
 
 		case DropIndex:
 			dropIndex(ctx, t, testCase, nodes, collections, indexes, action)
+
+		case GetIndexes:
+			getIndexes(ctx, t, testCase, nodes, collections, action)
 
 		case TransactionRequest2:
 			txns = executeTransactionRequest(ctx, t, db, txns, testCase, action)
@@ -697,7 +700,7 @@ actionLoop:
 		case ConfigureReplicator:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			syncChans = append(syncChans, setupRepicatorWaitSync(
+			syncChans = append(syncChans, setupReplicatorWaitSync(
 				ctx, t, testCase, waitGroupStartIndex, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
 			))
 		}
@@ -830,7 +833,7 @@ func getDocuments(
 	return documentsByCollection
 }
 
-func getIndexes(
+func getAllIndexes(
 	ctx context.Context,
 	collections [][]client.Collection,
 ) [][][]client.IndexDescription {
@@ -857,6 +860,106 @@ func getIndexes(
 	}
 
 	return result
+}
+
+func getIndexes(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	nodes []*node.Node,
+	nodeCollections [][]client.Collection,
+	action GetIndexes,
+) {
+	if len(nodeCollections) == 0 {
+		return
+	}
+
+	var expectedErrorRaised bool
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error {
+				actualIndexes, err := collections[action.CollectionID].GetIndexes(ctx)
+				if err != nil {
+					return err
+				}
+
+				assertIndexesListsEqual(action.ExpectedIndexes,
+					actualIndexes, t, testCase.Description)
+
+				return nil
+			},
+		)
+		expectedErrorRaised = expectedErrorRaised ||
+			AssertError(t, testCase.Description, err, action.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+func assertIndexesListsEqual(
+	expectedIndexes []client.IndexDescription,
+	actualIndexes []client.IndexDescription,
+	t *testing.T,
+	testDescription string,
+) {
+	toNames := func(indexes []client.IndexDescription) []string {
+		names := make([]string, len(indexes))
+		for i, index := range indexes {
+			names[i] = index.Name
+		}
+		return names
+	}
+
+	require.ElementsMatch(t, toNames(expectedIndexes), toNames(actualIndexes), testDescription)
+
+	toMap := func(indexes []client.IndexDescription) map[string]client.IndexDescription {
+		resultMap := map[string]client.IndexDescription{}
+		for _, index := range indexes {
+			resultMap[index.Name] = index
+		}
+		return resultMap
+	}
+
+	expectedMap := toMap(expectedIndexes)
+	actualMap := toMap(actualIndexes)
+	for key := range expectedMap {
+		assertIndexesEqual(expectedMap[key], actualMap[key], t, testDescription)
+	}
+}
+
+func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
+	t *testing.T,
+	testDescription string,
+) {
+	assert.Equal(t, expectedIndex.Name, actualIndex.Name, testDescription)
+	assert.Equal(t, expectedIndex.ID, actualIndex.ID, testDescription)
+
+	toNames := func(fields []client.IndexedFieldDescription) []string {
+		names := make([]string, len(fields))
+		for i, field := range fields {
+			names[i] = field.Name
+		}
+		return names
+	}
+	
+	require.ElementsMatch(t, toNames(expectedIndex.Fields), toNames(actualIndex.Fields), testDescription)
+
+	toMap := func(fields []client.IndexedFieldDescription) map[string]client.IndexedFieldDescription {
+		resultMap := map[string]client.IndexedFieldDescription{}
+		for _, field := range fields {
+			resultMap[field.Name] = field
+		}
+		return resultMap
+	}
+
+	expectedMap := toMap(expectedIndex.Fields)
+	actualMap := toMap(actualIndex.Fields)
+	for key := range expectedMap {
+		assert.Equal(t, expectedMap[key], actualMap[key], testDescription)
+	}
 }
 
 // updateSchema updates the schema using the given details.

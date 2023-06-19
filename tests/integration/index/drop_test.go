@@ -18,7 +18,7 @@ import (
 
 func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Creation of index with collection should not hinder querying",
+		Description: "Drop index should return error if index does not exist",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
