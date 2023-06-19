@@ -1283,6 +1283,25 @@ func TestDropIndex_IfIndexWithNameDoesNotExist_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, NewErrIndexWithNameDoesNotExists(name))
 }
 
+func TestDropIndex_IfSystemStoreFails_ReturnError(t *testing.T) {
+	testErr := errors.New("test error")
+
+	f := newIndexTestFixture(t)
+
+	f.createUserCollectionIndexOnName()
+
+	mockedTxn := f.mockTxn()
+
+	mockedTxn.MockSystemstore = mocks.NewDSReaderWriter(t)
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Unset()
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
+	mockedTxn.EXPECT().Systemstore().Unset()
+	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
+
+	err := f.users.WithTxn(mockedTxn).DropIndex(f.ctx, testUsersColIndexName)
+	require.ErrorIs(t, err, testErr)
+}
+
 func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	_, err := f.createCollectionIndexFor(usersColName, client.IndexDescription{
