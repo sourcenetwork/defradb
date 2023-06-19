@@ -109,11 +109,11 @@ func parseDirectives(astDirectives []*ast.Directive) (request.Directives, error)
 
 		if astDirective.Name.Value == request.ExplainLabel {
 			// Explain directive found, lets parse and validate the directive.
-			parsedExplainDirctive, err := parseExplainDirective(astDirective)
+			parsedExplainDirective, err := parseExplainDirective(astDirective)
 			if err != nil {
 				return request.Directives{}, err
 			}
-			explainDirective = parsedExplainDirctive
+			explainDirective = parsedExplainDirective
 		}
 	}
 
