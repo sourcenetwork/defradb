@@ -426,6 +426,7 @@ func NewIndexDataStoreKey(key string) (IndexDataStoreKey, error) {
 	}
 	indexKey.IndexID = uint32(indID)
 
+	// first 2 elements are the collection and index IDs, the rest are field values
 	for i := 2; i < len(elements); i++ {
 		indexKey.FieldValues = append(indexKey.FieldValues, []byte(elements[i]))
 	}
