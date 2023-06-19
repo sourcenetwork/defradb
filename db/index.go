@@ -143,6 +143,7 @@ func (i *collectionSimpleIndex) getDocFieldValue(doc *client.Document) ([]byte, 
 	return writeableVal.Bytes()
 }
 
+// Save indexes a document by storing the indexed field value.
 func (i *collectionSimpleIndex) Save(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -159,6 +160,8 @@ func (i *collectionSimpleIndex) Save(
 	return nil
 }
 
+// Update updates indexed field values of an existing document.
+// It removes the old document from the index and adds the new one.
 func (i *collectionSimpleIndex) Update(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -200,6 +203,9 @@ func fetchKeysForPrefix(
 
 	return keys, nil
 }
+
+// RemoveAll remove all artifacts of the index from the storage, i.e. all index
+// field values for all documents.
 func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
 	prefixKey := core.IndexDataStoreKey{}
 	prefixKey.CollectionID = i.collection.ID()
@@ -220,10 +226,12 @@ func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn
 	return nil
 }
 
+// Name returns the name of the index
 func (i *collectionSimpleIndex) Name() string {
 	return i.desc.Name
 }
 
+// Description returns the description of the index
 func (i *collectionSimpleIndex) Description() client.IndexDescription {
 	return i.desc
 }
