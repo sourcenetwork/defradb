@@ -112,6 +112,8 @@ func defaultMutationType() *gql.Object {
 func defaultDirectivesType() []*gql.Directive {
 	return []*gql.Directive{
 		schemaTypes.ExplainDirective,
+		schemaTypes.IndexDirective,
+		schemaTypes.IndexFieldDirective,
 	}
 }
 

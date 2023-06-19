@@ -20,6 +20,18 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
+type EncodedDocument interface {
+	// Key returns the key of the document
+	Key() []byte
+	// Reset re-initializes the EncodedDocument object.
+	Reset(newKey []byte)
+	// Decode returns a properly decoded document object
+	Decode() (*client.Document, error)
+	// DecodeToDoc returns a decoded document as a
+	// map of field/value pairs
+	DecodeToDoc(*core.DocumentMapping) (core.Doc, error)
+}
+
 type EPTuple []encProperty
 
 // EncProperty is an encoded property of a EncodedDocument
@@ -178,24 +190,30 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
-	Key        []byte
-	Properties map[client.FieldDescription]*encProperty
+	key        []byte
+	properties map[client.FieldDescription]*encProperty
+}
+
+var _ EncodedDocument = (*encodedDocument)(nil)
+
+func (encdoc *encodedDocument) Key() []byte {
+	return encdoc.key
 }
 
 // Reset re-initializes the EncodedDocument object.
-func (encdoc *encodedDocument) Reset() {
-	encdoc.Properties = make(map[client.FieldDescription]*encProperty)
-	encdoc.Key = nil
+func (encdoc *encodedDocument) Reset(newKey []byte) {
+	encdoc.properties = make(map[client.FieldDescription]*encProperty)
+	encdoc.key = newKey
 }
 
 // Decode returns a properly decoded document object
 func (encdoc *encodedDocument) Decode() (*client.Document, error) {
-	key, err := client.NewDocKeyFromString(string(encdoc.Key))
+	key, err := client.NewDocKeyFromString(string(encdoc.key))
 	if err != nil {
 		return nil, err
 	}
 	doc := client.NewDocWithKey(key)
-	for fieldDesc, prop := range encdoc.Properties {
+	for fieldDesc, prop := range encdoc.properties {
 		ctype, val, err := prop.Decode()
 		if err != nil {
 			return nil, err
@@ -213,8 +231,8 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 // map of field/value pairs
 func (encdoc *encodedDocument) DecodeToDoc(mapping *core.DocumentMapping) (core.Doc, error) {
 	doc := mapping.NewDoc()
-	doc.SetKey(string(encdoc.Key))
-	for fieldDesc, prop := range encdoc.Properties {
+	doc.SetKey(string(encdoc.key))
+	for fieldDesc, prop := range encdoc.properties {
 		_, val, err := prop.Decode()
 		if err != nil {
 			return core.Doc{}, err

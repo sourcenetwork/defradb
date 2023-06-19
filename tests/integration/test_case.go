@@ -13,6 +13,7 @@ package tests
 import (
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 )
 
@@ -149,6 +150,83 @@ type UpdateDoc struct {
 
 	// Setting DontSync to true will prevent waiting for that update.
 	DontSync bool
+}
+
+// CreateIndex will attempt to create the given secondary index for the given collection
+// using the collection api.
+type CreateIndex struct {
+	// NodeID may hold the ID (index) of a node to create the secondary index on.
+	//
+	// If a value is not provided the index will be created in all nodes.
+	NodeID immutable.Option[int]
+
+	// The collection for which this index should be created.
+	CollectionID int
+
+	// The name of the index to create. If not provided, one will be generated.
+	IndexName string
+
+	// The name of the field to index. Used only for single field indexes.
+	FieldName string
+
+	// The names of the fields to index. Used only for composite indexes.
+	FieldsNames []string
+	// The directions of the 'FieldsNames' to index. Used only for composite indexes.
+	Directions []client.IndexDirection
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// DropIndex will attempt to drop the given secondary index from the given collection
+// using the collection api.
+type DropIndex struct {
+	// NodeID may hold the ID (index) of a node to delete the secondary index from.
+	//
+	// If a value is not provided the index will be deleted from all nodes.
+	NodeID immutable.Option[int]
+
+	// The collection from which the index should be deleted.
+	CollectionID int
+
+	// The index-identifier of the secondary index within the collection.
+	// This is based on the order in which it was created, not the ordering of
+	// the indexes within the database.
+	IndexID int
+
+	// The index name of the secondary index within the collection.
+	// If it is provided, `IndexID` is ignored.
+	IndexName string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// GetIndex will attempt to get the given secondary index from the given collection
+// using the collection api.
+type GetIndexes struct {
+	// NodeID may hold the ID (index) of a node to create the secondary index on.
+	//
+	// If a value is not provided the indexes will be retrieved from the first nodes.
+	NodeID immutable.Option[int]
+
+	// The collection for which this indexes should be retrieved.
+	CollectionID int
+
+	// The expected indexes to be returned.
+	ExpectedIndexes []client.IndexDescription
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // Request represents a standard Defra (GQL) request.

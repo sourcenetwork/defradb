@@ -29,6 +29,9 @@ type CollectionDescription struct {
 
 	// Schema contains the data type information that this Collection uses.
 	Schema SchemaDescription
+
+	// Indexes contains the secondary indexes that this Collection has.
+	Indexes []IndexDescription
 }
 
 // IDString returns the collection ID as a string.
@@ -50,10 +53,10 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 
 // GetFieldByID searches for a field with the given ID. If such a field is found it
 // will return it and true, if it is not found it will return false.
-func (col CollectionDescription) GetFieldByID(id string) (FieldDescription, bool) {
+func (col CollectionDescription) GetFieldByID(id FieldID) (FieldDescription, bool) {
 	if !col.Schema.IsEmpty() {
 		for _, field := range col.Schema.Fields {
-			if field.ID.String() == id {
+			if field.ID == id {
 				return field, true
 			}
 		}

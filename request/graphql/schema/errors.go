@@ -22,6 +22,10 @@ const (
 	errTypeNotFound               string = "no type found for given name"
 	errRelationNotFound           string = "no relation found"
 	errNonNullForTypeNotSupported string = "NonNull variants for type are not supported"
+	errIndexMissingFields         string = "index missing fields"
+	errIndexUnknownArgument       string = "index with unknown argument"
+	errIndexInvalidArgument       string = "index with invalid argument"
+	errIndexInvalidName           string = "index with invalid name"
 )
 
 var (
@@ -41,6 +45,9 @@ var (
 	// NonNull is the literal name of the GQL type, so we have to disable the linter
 	//nolint:revive
 	ErrNonNullNotSupported = errors.New("NonNull fields are not currently supported")
+	ErrIndexMissingFields  = errors.New(errIndexMissingFields)
+	ErrIndexWithUnknownArg = errors.New(errIndexUnknownArgument)
+	ErrIndexWithInvalidArg = errors.New(errIndexInvalidArgument)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -49,6 +56,10 @@ func NewErrDuplicateField(objectName, fieldName string) error {
 		errors.NewKV("Object", objectName),
 		errors.NewKV("Field", fieldName),
 	)
+}
+
+func NewErrIndexWithInvalidName(name string) error {
+	return errors.New(errIndexInvalidName, errors.NewKV("Name", name))
 }
 
 func NewErrFieldMissingRelation(objectName, fieldName string, objectType string) error {
