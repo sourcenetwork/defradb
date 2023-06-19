@@ -24,7 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
@@ -241,14 +240,6 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 	return colIndex, nil
-}
-
-func (c *collection) newFetcher() fetcher.Fetcher {
-	if c.fetcherFactory != nil {
-		return c.fetcherFactory()
-	} else {
-		return new(fetcher.DocumentFetcher)
-	}
 }
 
 func (c *collection) iterateAllDocs(
