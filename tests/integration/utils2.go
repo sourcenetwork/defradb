@@ -944,7 +944,7 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
 		}
 		return names
 	}
-	
+
 	require.ElementsMatch(t, toNames(expectedIndex.Fields), toNames(actualIndex.Fields), testDescription)
 
 	toMap := func(fields []client.IndexedFieldDescription) map[string]client.IndexedFieldDescription {

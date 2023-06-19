@@ -218,7 +218,7 @@ type GetIndexes struct {
 
 	// The collection for which this indexes should be retrieved.
 	CollectionID int
-	
+
 	// The expected indexes to be returned.
 	ExpectedIndexes []client.IndexDescription
 
