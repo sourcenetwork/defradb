@@ -173,16 +173,16 @@ func (c *collection) updateIndexedDoc(
 // CreateIndex creates a new index on the collection.
 //
 // If the index name is empty, a name will be automatically generated.
-// Otherwise its uniqueness will be checked against existing indexes and 
+// Otherwise its uniqueness will be checked against existing indexes and
 // it will be validated with `schema.IsValidIndexName` method.
 //
 // The provided index description must include at least one field with
 // a name that exists in the collection schema.
 // Also it's `ID` field must be zero. It will be assigned a unique
 // incremental value by the database.
-// 
+//
 // The index description will be stored in the system store.
-// 
+//
 // Once finished, if there are existing documents in the collection,
 // the documents will be indexed by the new index.
 func (c *collection) CreateIndex(
@@ -430,9 +430,8 @@ func (c *collection) checkExistingFields(
 	collectionFields := c.Description().Schema.Fields
 	for _, field := range fields {
 		found := false
-		fieldLower := strings.ToLower(field.Name)
 		for _, colField := range collectionFields {
-			if fieldLower == strings.ToLower(colField.Name) {
+			if field.Name == colField.Name {
 				found = true
 				break
 			}
