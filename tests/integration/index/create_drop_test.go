@@ -16,14 +16,14 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
+func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Creation of index with collection should not hinder querying",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						Name: String @index
 						Age: Int
 					}
 				`,
@@ -38,9 +38,8 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 					}`,
 			},
 			testUtils.DropIndex{
-				CollectionID:  0,
-				IndexName:     "non_existing_index",
-				ExpectedError: "index with name doesn't exists. Name: non_existing_index",
+				CollectionID: 0,
+				IndexID:      0,
 			},
 			testUtils.Request{
 				Request: `
