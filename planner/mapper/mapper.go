@@ -87,8 +87,31 @@ func toSelect(
 		return nil, err
 	}
 
-	// If there is a groupBy, and no inner group has been requested, we need to map the property here
+	// Resolve groupBy mappings i.e. alias remapping and handle missed inner group.
 	if selectRequest.GroupBy.HasValue() {
+		groupByFields := selectRequest.GroupBy.Value().Fields
+		// Remap all alias field names to use their internal field name mappings.
+		for index, groupByField := range groupByFields {
+			if _, fieldHasMapping := mapping.IndexesByName[groupByField]; fieldHasMapping {
+				// Not an alias as is already mapped.
+				continue
+			} else if _, isAlias := mapping.IndexesByName[groupByField+request.RelatedObjectID]; isAlias {
+				// Remap the alias to it's actual internal name.
+				groupByFields[index] = groupByField + request.RelatedObjectID
+			} else {
+				// Field is not mapped nor is an alias, then is invalid field to group on. This can be
+				// incase of when an alias might have been used on groupBy relation from the single side.
+				return nil, NewErrInvalidFieldToGroupBy(groupByField)
+			}
+		}
+
+		selectRequest.GroupBy = immutable.Some(
+			request.GroupBy{
+				Fields: groupByFields,
+			},
+		)
+
+		// If there is a groupBy, and no inner group has been requested, we need to map the property here
 		if _, isGroupFieldMapped := mapping.IndexesByName[request.GroupFieldName]; !isGroupFieldMapped {
 			index := mapping.GetNextIndex()
 			mapping.Add(index, request.GroupFieldName)
