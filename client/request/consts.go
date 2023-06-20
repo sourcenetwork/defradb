@@ -15,6 +15,10 @@ const (
 	// https://spec.graphql.org/October2021/#sec-Type-Name-Introspection
 	TypeNameFieldName = "__typename"
 
+	// This is appended to the related object name to give us the field name
+	// that corresponds to the related object's join relation id, i.e. `Author_id`.
+	RelatedObjectID = "_id"
+
 	Cid         = "cid"
 	Data        = "data"
 	DocKey      = "dockey"
