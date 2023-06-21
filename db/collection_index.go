@@ -128,12 +128,12 @@ func (c *collection) indexNewDoc(ctx context.Context, txn datastore.Txn, doc *cl
 }
 
 // collectIndexedFields returns all fields that are indexed by all collection indexes.
-func (c *collection) collectIndexedFields() []*client.FieldDescription {
-	fieldsMap := make(map[string]*client.FieldDescription)
+func (c *collection) collectIndexedFields() []client.FieldDescription {
+	fieldsMap := make(map[string]client.FieldDescription)
 	for _, index := range c.indexes {
 		for _, field := range index.Description().Fields {
 			for i := range c.desc.Schema.Fields {
-				colField := &c.desc.Schema.Fields[i]
+				colField := c.desc.Schema.Fields[i]
 				if field.Name == colField.Name {
 					fieldsMap[field.Name] = colField
 					break
@@ -141,7 +141,7 @@ func (c *collection) collectIndexedFields() []*client.FieldDescription {
 			}
 		}
 	}
-	fields := make([]*client.FieldDescription, 0, len(fieldsMap))
+	fields := make([]client.FieldDescription, 0, len(fieldsMap))
 	for _, field := range fieldsMap {
 		fields = append(fields, field)
 	}
@@ -260,11 +260,11 @@ func (c *collection) createIndex(
 func (c *collection) iterateAllDocs(
 	ctx context.Context,
 	txn datastore.Txn,
-	fields []*client.FieldDescription,
+	fields []client.FieldDescription,
 	exec func(doc *client.Document) error,
 ) error {
 	df := c.newFetcher()
-	err := df.Init(&c.desc, fields, false, false)
+	err := df.Init(&c.desc, fields, nil, nil, false, false)
 	if err != nil {
 		_ = df.Close()
 		return err
@@ -302,10 +302,10 @@ func (c *collection) indexExistingDocs(
 	txn datastore.Txn,
 	index CollectionIndex,
 ) error {
-	fields := make([]*client.FieldDescription, 0, 1)
+	fields := make([]client.FieldDescription, 0, 1)
 	for _, field := range index.Description().Fields {
 		for i := range c.desc.Schema.Fields {
-			colField := &c.desc.Schema.Fields[i]
+			colField := c.desc.Schema.Fields[i]
 			if field.Name == colField.Name {
 				fields = append(fields, colField)
 				break

@@ -356,7 +356,7 @@ func (n *typeJoinOne) Next() (bool, error) {
 
 func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
 	fkIndex := &mapper.PropertyIndex{
-		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + "_id"),
+		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + request.RelatedObjectID),
 	}
 	filter := map[connor.FilterKey]any{
 		fkIndex: map[connor.FilterKey]any{
@@ -548,7 +548,7 @@ func (n *typeJoinMany) Next() (bool, error) {
 		// @todo: handle index for one-to-many setup
 	} else {
 		fkIndex := &mapper.PropertyIndex{
-			Index: n.subSelect.FirstIndexOfName(n.rootName + "_id"),
+			Index: n.subSelect.FirstIndexOfName(n.rootName + request.RelatedObjectID),
 		}
 		filter := map[connor.FilterKey]any{
 			fkIndex: map[connor.FilterKey]any{
