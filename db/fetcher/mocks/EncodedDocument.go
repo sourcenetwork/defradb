@@ -75,23 +75,23 @@ func (_c *EncodedDocument_Decode_Call) RunAndReturn(run func() (*client.Document
 	return _c
 }
 
-// DecodeToDoc provides a mock function with given fields: _a0
-func (_m *EncodedDocument) DecodeToDoc(_a0 *core.DocumentMapping) (core.Doc, error) {
-	ret := _m.Called(_a0)
+// DecodeToDoc provides a mock function with given fields:
+func (_m *EncodedDocument) DecodeToDoc() (core.Doc, error) {
+	ret := _m.Called()
 
 	var r0 core.Doc
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*core.DocumentMapping) (core.Doc, error)); ok {
-		return rf(_a0)
+	if rf, ok := ret.Get(0).(func() (core.Doc, error)); ok {
+		return rf()
 	}
-	if rf, ok := ret.Get(0).(func(*core.DocumentMapping) core.Doc); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func() core.Doc); ok {
+		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(core.Doc)
 	}
 
-	if rf, ok := ret.Get(1).(func(*core.DocumentMapping) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -105,14 +105,13 @@ type EncodedDocument_DecodeToDoc_Call struct {
 }
 
 // DecodeToDoc is a helper method to define mock.On call
-//   - _a0 *core.DocumentMapping
-func (_e *EncodedDocument_Expecter) DecodeToDoc(_a0 interface{}) *EncodedDocument_DecodeToDoc_Call {
-	return &EncodedDocument_DecodeToDoc_Call{Call: _e.mock.On("DecodeToDoc", _a0)}
+func (_e *EncodedDocument_Expecter) DecodeToDoc() *EncodedDocument_DecodeToDoc_Call {
+	return &EncodedDocument_DecodeToDoc_Call{Call: _e.mock.On("DecodeToDoc")}
 }
 
-func (_c *EncodedDocument_DecodeToDoc_Call) Run(run func(_a0 *core.DocumentMapping)) *EncodedDocument_DecodeToDoc_Call {
+func (_c *EncodedDocument_DecodeToDoc_Call) Run(run func()) *EncodedDocument_DecodeToDoc_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*core.DocumentMapping))
+		run()
 	})
 	return _c
 }
@@ -122,7 +121,7 @@ func (_c *EncodedDocument_DecodeToDoc_Call) Return(_a0 core.Doc, _a1 error) *Enc
 	return _c
 }
 
-func (_c *EncodedDocument_DecodeToDoc_Call) RunAndReturn(run func(*core.DocumentMapping) (core.Doc, error)) *EncodedDocument_DecodeToDoc_Call {
+func (_c *EncodedDocument_DecodeToDoc_Call) RunAndReturn(run func() (core.Doc, error)) *EncodedDocument_DecodeToDoc_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -170,9 +169,9 @@ func (_c *EncodedDocument_Key_Call) RunAndReturn(run func() []byte) *EncodedDocu
 	return _c
 }
 
-// Reset provides a mock function with given fields: newKey
-func (_m *EncodedDocument) Reset(newKey []byte) {
-	_m.Called(newKey)
+// Reset provides a mock function with given fields:
+func (_m *EncodedDocument) Reset() {
+	_m.Called()
 }
 
 // EncodedDocument_Reset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Reset'
@@ -181,14 +180,13 @@ type EncodedDocument_Reset_Call struct {
 }
 
 // Reset is a helper method to define mock.On call
-//   - newKey []byte
-func (_e *EncodedDocument_Expecter) Reset(newKey interface{}) *EncodedDocument_Reset_Call {
-	return &EncodedDocument_Reset_Call{Call: _e.mock.On("Reset", newKey)}
+func (_e *EncodedDocument_Expecter) Reset() *EncodedDocument_Reset_Call {
+	return &EncodedDocument_Reset_Call{Call: _e.mock.On("Reset")}
 }
 
-func (_c *EncodedDocument_Reset_Call) Run(run func(newKey []byte)) *EncodedDocument_Reset_Call {
+func (_c *EncodedDocument_Reset_Call) Run(run func()) *EncodedDocument_Reset_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]byte))
+		run()
 	})
 	return _c
 }
@@ -198,7 +196,7 @@ func (_c *EncodedDocument_Reset_Call) Return() *EncodedDocument_Reset_Call {
 	return _c
 }
 
-func (_c *EncodedDocument_Reset_Call) RunAndReturn(run func([]byte)) *EncodedDocument_Reset_Call {
+func (_c *EncodedDocument_Reset_Call) RunAndReturn(run func()) *EncodedDocument_Reset_Call {
 	_c.Call.Return(run)
 	return _c
 }

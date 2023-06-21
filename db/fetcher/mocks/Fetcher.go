@@ -13,6 +13,8 @@ import (
 
 	fetcher "github.com/sourcenetwork/defradb/db/fetcher"
 
+	mapper "github.com/sourcenetwork/defradb/planner/mapper"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -240,13 +242,13 @@ func (_c *Fetcher_FetchNextDoc_Call) RunAndReturn(run func(context.Context, *cor
 	return _c
 }
 
-// Init provides a mock function with given fields: col, fields, reverse, showDeleted
-func (_m *Fetcher) Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool, showDeleted bool) error {
-	ret := _m.Called(col, fields, reverse, showDeleted)
+// Init provides a mock function with given fields: col, fields, filter, docmapper, reverse, showDeleted
+func (_m *Fetcher) Init(col *client.CollectionDescription, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error {
+	ret := _m.Called(col, fields, filter, docmapper, reverse, showDeleted)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*client.CollectionDescription, []*client.FieldDescription, bool, bool) error); ok {
-		r0 = rf(col, fields, reverse, showDeleted)
+	if rf, ok := ret.Get(0).(func(*client.CollectionDescription, []client.FieldDescription, *mapper.Filter, *core.DocumentMapping, bool, bool) error); ok {
+		r0 = rf(col, fields, filter, docmapper, reverse, showDeleted)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -261,16 +263,18 @@ type Fetcher_Init_Call struct {
 
 // Init is a helper method to define mock.On call
 //   - col *client.CollectionDescription
-//   - fields []*client.FieldDescription
+//   - fields []client.FieldDescription
+//   - filter *mapper.Filter
+//   - docmapper *core.DocumentMapping
 //   - reverse bool
 //   - showDeleted bool
-func (_e *Fetcher_Expecter) Init(col interface{}, fields interface{}, reverse interface{}, showDeleted interface{}) *Fetcher_Init_Call {
-	return &Fetcher_Init_Call{Call: _e.mock.On("Init", col, fields, reverse, showDeleted)}
+func (_e *Fetcher_Expecter) Init(col interface{}, fields interface{}, filter interface{}, docmapper interface{}, reverse interface{}, showDeleted interface{}) *Fetcher_Init_Call {
+	return &Fetcher_Init_Call{Call: _e.mock.On("Init", col, fields, filter, docmapper, reverse, showDeleted)}
 }
 
-func (_c *Fetcher_Init_Call) Run(run func(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool, showDeleted bool)) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) Run(run func(col *client.CollectionDescription, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool)) *Fetcher_Init_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*client.CollectionDescription), args[1].([]*client.FieldDescription), args[2].(bool), args[3].(bool))
+		run(args[0].(*client.CollectionDescription), args[1].([]client.FieldDescription), args[2].(*mapper.Filter), args[3].(*core.DocumentMapping), args[4].(bool), args[5].(bool))
 	})
 	return _c
 }
@@ -280,7 +284,7 @@ func (_c *Fetcher_Init_Call) Return(_a0 error) *Fetcher_Init_Call {
 	return _c
 }
 
-func (_c *Fetcher_Init_Call) RunAndReturn(run func(*client.CollectionDescription, []*client.FieldDescription, bool, bool) error) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) RunAndReturn(run func(*client.CollectionDescription, []client.FieldDescription, *mapper.Filter, *core.DocumentMapping, bool, bool) error) *Fetcher_Init_Call {
 	_c.Call.Return(run)
 	return _c
 }
