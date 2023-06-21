@@ -21,7 +21,14 @@ import (
 
 func NewStubbedFetcher(t *testing.T) *Fetcher {
 	f := NewFetcher(t)
-	f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	f.EXPECT().Init(
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+	).Maybe().Return(nil)
 	f.EXPECT().Start(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
 	f.EXPECT().FetchNext(mock.Anything).Maybe().Return(nil, nil)
 	f.EXPECT().FetchNextDoc(mock.Anything, mock.Anything).Maybe().
