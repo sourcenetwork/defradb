@@ -88,7 +88,10 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 		// are _groups
 		case *mapper.Select:
 			n.tryAddField(requestable.Field.Name + "_id") // foreign key for type joins
-			n.initFields(requestable.Fields)
+			err := n.initFields(requestable.Fields)
+			if err != nil {
+				return err
+			}
 		// aggregate might have its own target fields and filter fields
 		case *mapper.Aggregate:
 			for _, target := range requestable.AggregateTargets {

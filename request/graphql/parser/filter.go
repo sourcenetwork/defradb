@@ -231,7 +231,10 @@ func parseFilterFieldsForDescriptionMap(
 	return fields, nil
 }
 
-func parseFilterFieldsForDescriptionSlice(conditions []any, schema client.SchemaDescription) ([]client.FieldDescription, error) {
+func parseFilterFieldsForDescriptionSlice(
+	conditions []any,
+	schema client.SchemaDescription,
+) ([]client.FieldDescription, error) {
 	fields := make([]client.FieldDescription, 0)
 	for _, v := range conditions {
 		switch cond := v.(type) {
