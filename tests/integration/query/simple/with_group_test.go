@@ -213,6 +213,7 @@ func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *test
 		Description: "Simple query with groupBy without selecting field grouped by, with inner _group.",
 		Request: `query {
 					Users(groupBy: [Name]) {
+						Name
 						_group {
 							Age
 						}

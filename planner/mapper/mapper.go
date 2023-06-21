@@ -98,15 +98,10 @@ func toSelect(
 		groupByFields := selectRequest.GroupBy.Value().Fields
 		// Remap all alias field names to use their internal field name mappings.
 		for index, groupByField := range groupByFields {
-			if _, fieldHasMapping := mapping.IndexesByName[groupByField]; fieldHasMapping {
-				// Not an alias as is already mapped.
-				continue
-			} else if _, isAlias := mapping.IndexesByName[groupByField+request.RelatedObjectID]; isAlias {
-				// Remap the alias to it's actual internal name.
+			fieldDesc, ok := desc.Schema.GetField(groupByField)
+			if ok && fieldDesc.IsObject() && !fieldDesc.IsObjectArray() {
 				groupByFields[index] = groupByField + request.RelatedObjectID
-			} else {
-				// Field is not mapped nor is an alias, then is invalid field to group on. This can be
-				// incase of when an alias might have been used on groupBy relation from the single side.
+			} else if ok && fieldDesc.IsObjectArray() {
 				return nil, NewErrInvalidFieldToGroupBy(groupByField)
 			}
 		}
