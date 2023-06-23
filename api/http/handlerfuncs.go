@@ -17,6 +17,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	dshelp "github.com/ipfs/boxo/datastore/dshelp"
@@ -26,6 +27,7 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/events"
 )
@@ -225,6 +227,83 @@ func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		simpleDataResponse("result", "success"),
 		http.StatusOK,
 	)
+}
+
+func createIndexHandler(rw http.ResponseWriter, req *http.Request) {
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = req.ParseForm()
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	colNameArg := req.Form.Get("collection")
+	fieldsArg := req.Form.Get("fields")
+	indexNameArg := req.Form.Get("name")
+
+	col, err := db.GetCollectionByName(req.Context(), colNameArg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	fields := strings.Split(fieldsArg, ",")
+	fieldDescriptions := make([]client.IndexedFieldDescription, 0, len(fields))
+	for _, field := range fields {
+		fieldDescriptions = append(fieldDescriptions, client.IndexedFieldDescription{Name: field})
+	}
+	indexDesc := client.IndexDescription{
+		Name:   indexNameArg,
+		Fields: fieldDescriptions,
+	}
+	indexDesc, err = col.CreateIndex(req.Context(), indexDesc)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	type fieldResponse struct {
+		Name      string                `json:"name"`
+		Direction client.IndexDirection `json:"direction"`
+	}
+
+	type indexResponse struct {
+		Name   string          `json:"name"`
+		ID     uint32          `json:"id"`
+		Fields []fieldResponse `json:"fields"`
+	}
+
+	indexResp := indexResponse{
+		Name: indexDesc.Name,
+		ID:   indexDesc.ID,
+	}
+
+	for _, field := range indexDesc.Fields {
+		indexResp.Fields = append(indexResp.Fields, fieldResponse{
+			Name:      field.Name,
+			Direction: field.Direction,
+		})
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("index", indexResp),
+		http.StatusOK,
+	)
+}
+
+func dropIndexHandler(rw http.ResponseWriter, req *http.Request) {
+	panic("not implemented")
+}
+
+func listIndexHandler(rw http.ResponseWriter, req *http.Request) {
+	panic("not implemented")
 }
 
 func getBlockHandler(rw http.ResponseWriter, req *http.Request) {

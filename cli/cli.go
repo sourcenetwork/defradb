@@ -57,6 +57,7 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 	rpcCmd := MakeRPCCommand(cfg)
 	blocksCmd := MakeBlocksCommand()
 	schemaCmd := MakeSchemaCommand()
+	indexCmd := MakeIndexCommand()
 	clientCmd := MakeClientCommand()
 	rpcReplicatorCmd := MakeReplicatorCommand()
 	p2pCollectionCmd := MakeP2PCollectionCommand()
@@ -81,12 +82,16 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 		MakeSchemaAddCommand(cfg),
 		MakeSchemaPatchCommand(cfg),
 	)
+	indexCmd.AddCommand(
+		MakeIndexCreateCommand(cfg),
+	)
 	clientCmd.AddCommand(
 		MakeDumpCommand(cfg),
 		MakePingCommand(cfg),
 		MakeRequestCommand(cfg),
 		MakePeerIDCommand(cfg),
 		schemaCmd,
+		indexCmd,
 		rpcCmd,
 		blocksCmd,
 	)
