@@ -84,6 +84,7 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 	)
 	indexCmd.AddCommand(
 		MakeIndexCreateCommand(cfg),
+		MakeIndexDropCommand(cfg),
 	)
 	clientCmd.AddCommand(
 		MakeDumpCommand(cfg),

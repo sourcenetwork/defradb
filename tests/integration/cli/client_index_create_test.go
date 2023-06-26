@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -22,8 +22,8 @@ func TestIndex_IfNoArgs_ShowUsage(t *testing.T) {
 
 func TestIndexCreate_IfNoArgs_ShowUsage(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "create"})
-	assertContainsSubstring(t, stdout, "Usage:")
+	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "create"})
+	assertContainsSubstring(t, stderr, "required flag")
 }
 
 func createUserCollection(t *testing.T, conf DefraNodeConfig) {
@@ -64,7 +64,7 @@ func TestIndexCreate_IfInternalError_ShouldFails(t *testing.T) {
 	stopDefra := runDefraNode(t, conf)
 
 	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "create",
-		"--collection", "User", "--fields", "Name", "--name", "users_name_index", "|", "more"})
+		"--collection", "User", "--fields", "Name", "--name", "users_name_index"})
 	stopDefra()
 
 	assertContainsSubstring(t, stdout, "errors")

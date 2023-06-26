@@ -299,7 +299,39 @@ func createIndexHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func dropIndexHandler(rw http.ResponseWriter, req *http.Request) {
-	panic("not implemented")
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = req.ParseForm()
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	colNameArg := req.Form.Get("collection")
+	indexNameArg := req.Form.Get("name")
+
+	col, err := db.GetCollectionByName(req.Context(), colNameArg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = col.DropIndex(req.Context(), indexNameArg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("result", "success"),
+		http.StatusOK,
+	)
 }
 
 func listIndexHandler(rw http.ResponseWriter, req *http.Request) {

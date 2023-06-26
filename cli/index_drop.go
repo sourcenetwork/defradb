@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -25,37 +25,27 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-func MakeIndexCreateCommand(cfg *config.Config) *cobra.Command {
+func MakeIndexDropCommand(cfg *config.Config) *cobra.Command {
 	var collectionArg string
 	var nameArg string
-	var fieldsArg string
 	var cmd = &cobra.Command{
-		Use:   "create -c --collection <collection> --fields <fields> [-n --name <name>]",
-		Short: "Creates a secondary index on a collection's field(s)",
-		Long: `Creates a secondary index on a collection's field(s).
+		Use:   "drop -c --collection <collection> -n --name <name>",
+		Short: "Drop a collection's secondary index",
+		Long: `Drop a collection's secondary index.
 		
-The --name flag is optional. If not provided, a name will be generated automatically.
-
-Example: create an index for 'Users' collection on 'Name' field:
-  defradb client index create --collection 'Users' --fields 'Name'
-
-Example: create a named index for 'Users' collection on 'Name' field:
-  defradb client index create --collection Users --fields Name --name UsersByName`,
-		ValidArgs: []string{"collection", "fields", "name"},
+Example: drop the index 'UsersByName' for 'Users' collection:
+  defradb client index create --collection Users --name UsersByName`,
+		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexCreatePath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexDropPath)
 			if err != nil {
 				return NewErrFailedToJoinEndpoint(err)
 			}
 
 			values := url.Values{
 				"collection": {collectionArg},
-				"fields":     {fieldsArg},
+				"name":     {nameArg},
 			}
-			if nameArg != "" {
-				values.Add("name", nameArg)
-			}
-
 			res, err := http.PostForm(endpoint.String(), values)
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
@@ -75,14 +65,7 @@ Example: create a named index for 'Users' collection on 'Name' field:
 			if !isFileInfoPipe(stdout) {
 				type schemaResponse struct {
 					Data struct {
-						Index struct {
-							Name   string `json:"name"`
-							ID     uint32 `json:"id"`
-							Fields []struct {
-								Name      string `json:"name"`
-								Direction string `json:"direction"`
-							} `json:"fields"`
-						} `json:"index"`
+						Result bool `json:"result"`
 					} `json:"data"`
 					Errors []struct {
 						Message string `json:"message"`
@@ -99,7 +82,7 @@ Example: create a named index for 'Users' collection on 'Name' field:
 					log.FeedbackInfo(cmd.Context(), "success")
 				} else {
 					log.FeedbackInfo(cmd.Context(), "Successfully created index.",
-						logging.NewKV("Index", r.Data.Index))
+						logging.NewKV("Result", r.Data.Result))
 					log.FeedbackInfo(cmd.Context(), "failure")
 				}
 			}
@@ -109,13 +92,12 @@ Example: create a named index for 'Users' collection on 'Name' field:
 	}
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
-	cmd.Flags().StringVar(&fieldsArg, "fields", "", "Fields to index")
 
 	err := cmd.MarkFlagRequired("collection")
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not mark 'collection' as required argument", err)
 	}
-	err = cmd.MarkFlagRequired("fields")
+	err = cmd.MarkFlagRequired("name")
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not mark 'fields' as required argument", err)
 	}
