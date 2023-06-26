@@ -162,11 +162,13 @@ endif
 
 .PHONY: test
 test:
+	$(MAKE) -C ./tests/lenses build
 	gotestsum --format pkgname -- ./... $(TEST_FLAGS)
 
 # Only build the tests (don't execute them).
 .PHONY: test\:build
 test\:build:
+	$(MAKE) -C ./tests/lenses build
 	gotestsum --format pkgname -- ./... $(TEST_FLAGS) -run=nope
 
 .PHONY: test\:ci
@@ -175,18 +177,22 @@ test\:ci:
 
 .PHONY: test\:go
 test\:go:
+	$(MAKE) -C ./tests/lenses build
 	go test ./... $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
+	$(MAKE) -C ./tests/lenses build
 	gotestsum --format testname -- ./... $(TEST_FLAGS)
 
 .PHONY: test\:verbose
 test\:verbose:
+	$(MAKE) -C ./tests/lenses build
 	gotestsum --format standard-verbose -- ./... $(TEST_FLAGS)
 
 .PHONY: test\:watch
 test\:watch:
+	$(MAKE) -C ./tests/lenses build
 	gotestsum --watch -- ./...
 
 .PHONY: test\:clean
@@ -211,6 +217,7 @@ test\:scripts:
 .PHONY: test\:coverage
 test\:coverage:
 	@$(MAKE) deps:coverage
+	$(MAKE) -C ./tests/lenses build
 ifeq ($(path),)
 	go-acc ./... --output=coverage.txt --covermode=atomic -- -failfast -coverpkg=./...
 	@echo "Show coverage information for each function in ./..."

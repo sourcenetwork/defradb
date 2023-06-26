@@ -41,3 +41,7 @@ crash.log
 
 # Ignore .zip files, such as Lambda Function code slugs.
 **.zip
+
+tests/lenses/rust_wasm32_set_default/Cargo.lock
+tests/lenses/rust_wasm32_set_default/target
+tests/lenses/rust_wasm32_set_default/pkg
