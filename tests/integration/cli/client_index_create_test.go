@@ -44,5 +44,28 @@ func TestIndexCreate_IfCollectionExists_ShouldCreateIndex(t *testing.T) {
 
 	jsonResponse := `{"data":{"index":{"name":"users_name_index","id":1,"fields":[{"name":"Name","direction":"ASC"}]}}}`
 	assertContainsSubstring(t, stdout, jsonResponse)
+	assertNotContainsSubstring(t, stdout, "errors")
 	assertNotContainsSubstring(t, nodeLog, "errors")
+}
+
+func TestIndexCreate_IfInternalError_ShouldFail(t *testing.T) {
+	conf := NewDefraNodeDefaultConfig(t)
+	stopDefra := runDefraNode(t, conf)
+
+	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "create",
+		"--collection", "User", "--fields", "Name", "--name", "users_name_index"})
+	stopDefra()
+
+	assertContainsSubstring(t, stdout, "errors")
+}
+
+func TestIndexCreate_IfInternalError_ShouldFails(t *testing.T) {
+	conf := NewDefraNodeDefaultConfig(t)
+	stopDefra := runDefraNode(t, conf)
+
+	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "create",
+		"--collection", "User", "--fields", "Name", "--name", "users_name_index", "|", "more"})
+	stopDefra()
+
+	assertContainsSubstring(t, stdout, "errors")
 }

@@ -22,7 +22,6 @@ import (
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -46,7 +45,7 @@ Example: create a named index for 'Users' collection on 'Name' field:
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexCreatePath)
 			if err != nil {
-				return errors.Wrap("failed to join endpoint", err)
+				return NewErrFailedToJoinEndpoint(err)
 			}
 
 			values := url.Values{
@@ -73,9 +72,7 @@ Example: create a named index for 'Users' collection on 'Name' field:
 				return err
 			}
 
-			if isFileInfoPipe(stdout) {
-				cmd.Println(string(response))
-			} else {
+			if !isFileInfoPipe(stdout) {
 				type schemaResponse struct {
 					Data struct {
 						Index struct {
@@ -106,6 +103,7 @@ Example: create a named index for 'Users' collection on 'Name' field:
 					log.FeedbackInfo(cmd.Context(), "failure")
 				}
 			}
+			cmd.Println(string(response))
 			return nil
 		},
 	}
