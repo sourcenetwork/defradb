@@ -16,7 +16,6 @@ import (
 	"encoding/json"
 	"io"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,15 +23,20 @@ import (
 	"github.com/sourcenetwork/defradb/config"
 )
 
-func startNode(t *testing.T) (*config.Config, func()) {
+func getTestConfig(t *testing.T) *config.Config {
 	cfg := config.DefaultConfig()
 	dir := t.TempDir()
-	ctx := context.Background()
 	cfg.Datastore.Store = "memory"
 	cfg.Datastore.Badger.Path = dir
 	cfg.Net.P2PDisabled = false
+	return cfg
+}
+
+func startNode(t *testing.T) (*config.Config, func()) {
+	cfg := getTestConfig(t)
 	setTestingAddresses(cfg)
 
+	ctx := context.Background()
 	di, err := start(ctx, cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -41,9 +45,7 @@ func startNode(t *testing.T) (*config.Config, func()) {
 }
 
 func TestIndexCreateCmd_IfInvalidAddress_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
-	defer close()
-	time.Sleep(10 * time.Millisecond)
+	cfg := getTestConfig(t)
 	cfg.API.Address = "invalid address"
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 
@@ -57,9 +59,7 @@ func TestIndexCreateCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 }
 
 func TestIndexCreateCmd_IfNonExistingAddress_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
-	defer close()
-	time.Sleep(10 * time.Millisecond)
+	cfg := getTestConfig(t)
 	cfg.API.Address = "none"
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 

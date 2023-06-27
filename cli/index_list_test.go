@@ -15,16 +15,13 @@ import (
 	"encoding/json"
 	"io"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIndexListCmd_IfInvalidAddress_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
-	defer close()
-	time.Sleep(10 * time.Millisecond)
+	cfg := getTestConfig(t)
 	cfg.API.Address = "invalid address"
 	indexCreateCmd := MakeIndexListCommand(cfg)
 
@@ -36,9 +33,7 @@ func TestIndexListCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 }
 
 func TestIndexListCmd_IfNonExistingAddress_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
-	defer close()
-	time.Sleep(10 * time.Millisecond)
+	cfg := getTestConfig(t)
 	cfg.API.Address = "none"
 	indexCreateCmd := MakeIndexListCommand(cfg)
 
