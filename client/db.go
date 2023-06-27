@@ -126,7 +126,7 @@ type Store interface {
 	// GetAllCollections returns all the collections and their descriptions that currently exist within
 	// this [Store].
 	GetAllCollections(context.Context) ([]Collection, error)
-	
+
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 

@@ -44,7 +44,7 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 
 			values := url.Values{
 				"collection": {collectionArg},
-				"name":     {nameArg},
+				"name":       {nameArg},
 			}
 			res, err := http.PostForm(endpoint.String(), values)
 			if err != nil {
