@@ -279,9 +279,13 @@ func TestDocQueue(t *testing.T) {
 	q.done(testKey)
 	// give time for the goroutine to add the key
 	time.Sleep(10 * time.Millisecond)
+	q.mu.Lock()
 	require.Len(t, q.docs, 1)
+	q.mu.Unlock()
 	q.done(testKey)
+	q.mu.Lock()
 	require.Len(t, q.docs, 0)
+	q.mu.Unlock()
 }
 
 func TestPushLog(t *testing.T) {

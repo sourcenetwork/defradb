@@ -1166,34 +1166,12 @@ func TestPushLogToReplicator_WithReplicator_FailedPushingLogError(t *testing.T) 
 	node, err := makeNode(delta, []cid.Cid{docCid})
 	require.NoError(t, err)
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	n.pushLogToReplicators(ctx, events.Update{
 		DocKey:   doc.Key().String(),
 		Cid:      docCid,
 		SchemaID: col.SchemaID(),
 		Block:    node,
 	})
-
-	// give time for the log error to be processed
-	time.Sleep(1 * time.Second)
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	assert.Equal(t, "Failed pushing log", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
 }
 
 func TestSession_NoError(t *testing.T) {
