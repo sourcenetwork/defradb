@@ -141,6 +141,7 @@ func resolveOrderDependencies(
 		return nil
 	}
 
+	currentExistingFields := existingFields
 	// If there is orderby, and any one of the condition fields that are join fields and have not been
 	// requested, we need to map them here.
 outer:
@@ -155,7 +156,7 @@ outer:
 				joinField := fields[0]
 
 				// ensure the child select is resolved for this order join
-				innerSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
+				innerSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, currentExistingFields)
 				if err != nil {
 					return err
 				}
@@ -178,6 +179,7 @@ outer:
 					return err
 				}
 				mapping = innerSelect.DocumentMapping
+				currentExistingFields = &innerSelect.Fields
 				fields = fields[1:] // chop off the front item, and loop again on inner
 			} else { // <= 1
 				targetFieldName := fields[0]
