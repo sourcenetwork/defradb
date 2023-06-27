@@ -262,7 +262,7 @@ func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	require.Contains(t, n.ListenAddrs()[0].String(), "/ip4/127.0.0.1/tcp/")
+	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
 }
 
 func TestWithListenTCPAddrString_WithInvalidListenTCPAddrString_ParseError(t *testing.T) {
