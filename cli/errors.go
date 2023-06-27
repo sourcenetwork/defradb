@@ -25,6 +25,7 @@ const (
 	errFailedToJoinEndpoint        string = "failed to join endpoint"
 	errFailedToSendRequest         string = "failed to send request"
 	errFailedToReadResponseBody    string = "failed to read response body"
+	errFailedToCloseResponseBody   string = "failed to close response body"
 	errFailedToStatStdOut          string = "failed to stat stdout"
 	errFailedToHandleGQLErrors     string = "failed to handle GraphQL errors"
 	errFailedToPrettyPrintResponse string = "failed to pretty print response"
@@ -88,6 +89,10 @@ func NewErrFailedToSendRequest(inner error) error {
 
 func NewErrFailedToReadResponseBody(inner error) error {
 	return errors.Wrap(errFailedToReadResponseBody, inner)
+}
+
+func NewErrFailedToCloseResponseBody(inner error) error {
+	return errors.Wrap(errFailedToCloseResponseBody, inner)
 }
 
 func NewErrFailedToStatStdOut(inner error) error {

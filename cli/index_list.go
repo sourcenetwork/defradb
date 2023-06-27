@@ -55,7 +55,11 @@ Example: show all index for 'Users' collection:
 				return NewErrFailedToSendRequest(err)
 			}
 
-			defer res.Body.Close()
+			defer func() {
+				if e := res.Body.Close(); e != nil {
+					err = NewErrFailedToCloseResponseBody(err)
+				}
+			}()
 			response, err := io.ReadAll(res.Body)
 			if err != nil {
 				return NewErrFailedToReadResponseBody(err)

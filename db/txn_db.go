@@ -187,7 +187,9 @@ func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collec
 }
 
 // GetAllIndexes gets all the indexes in the database.
-func (db *implicitTxnDB) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+func (db *implicitTxnDB) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
@@ -198,7 +200,9 @@ func (db *implicitTxnDB) GetAllIndexes(ctx context.Context) (map[client.Collecti
 }
 
 // GetAllIndexes gets all the indexes in the database.
-func (db *explicitTxnDB) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+func (db *explicitTxnDB) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
 	return db.getAllIndexes(ctx, db.txn)
 }
 
