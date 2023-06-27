@@ -11,10 +11,10 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -50,20 +50,25 @@ Example: create a named index for 'Users' collection on 'Name' field:
 				}
 			}
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexCreatePath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexPath)
 			if err != nil {
 				return NewErrFailedToJoinEndpoint(err)
 			}
 
-			values := url.Values{
-				"collection": {collectionArg},
-				"fields":     {fieldsArg},
+			data := map[string]string{
+				"collection": collectionArg,
+				"fields":     fieldsArg,
 			}
 			if nameArg != "" {
-				values.Add("name", nameArg)
+				data["name"] = nameArg
 			}
 
-			res, err := http.PostForm(endpoint.String(), values)
+			jsonData, err := json.Marshal(data)
+			if err != nil {
+				return err
+			}
+
+			res, err := http.Post(endpoint.String(), "application/json", bytes.NewBuffer(jsonData))
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
 			}

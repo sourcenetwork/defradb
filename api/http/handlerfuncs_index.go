@@ -11,6 +11,7 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -51,15 +52,16 @@ func createIndexHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = req.ParseForm()
+	var data map[string]string
+	err = json.NewDecoder(req.Body).Decode(&data)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
-	colNameArg := req.Form.Get("collection")
-	fieldsArg := req.Form.Get("fields")
-	indexNameArg := req.Form.Get("name")
+	colNameArg := data["collection"]
+	fieldsArg := data["fields"]
+	indexNameArg := data["name"]
 
 	col, err := db.GetCollectionByName(req.Context(), colNameArg)
 	if err != nil {
@@ -97,14 +99,15 @@ func dropIndexHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = req.ParseForm()
+	var data map[string]string
+	err = json.NewDecoder(req.Body).Decode(&data)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
-	colNameArg := req.Form.Get("collection")
-	indexNameArg := req.Form.Get("name")
+	colNameArg := data["collection"]
+	indexNameArg := data["name"]
 
 	col, err := db.GetCollectionByName(req.Context(), colNameArg)
 	if err != nil {

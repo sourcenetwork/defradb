@@ -11,10 +11,10 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -44,16 +44,28 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 				}
 			}
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexDropPath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexPath)
 			if err != nil {
 				return NewErrFailedToJoinEndpoint(err)
 			}
 
-			values := url.Values{
-				"collection": {collectionArg},
-				"name":       {nameArg},
+			data := map[string]string{
+				"collection": collectionArg,
+				"name":       nameArg,
 			}
-			res, err := http.PostForm(endpoint.String(), values)
+
+			jsonData, err := json.Marshal(data)
+			if err != nil {
+				return err
+			}
+
+			req, err := http.NewRequest("DELETE", endpoint.String(), bytes.NewBuffer(jsonData))
+			if err != nil {
+				return NewErrFailedToSendRequest(err)
+			}
+			req.Header.Add("Content-Type", "application/json")
+			client := &http.Client{}
+			res, err := client.Do(req)
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
 			}

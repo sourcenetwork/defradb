@@ -32,9 +32,7 @@ const (
 	GraphQLPath     string = versionedAPIPath + "/graphql"
 	SchemaLoadPath  string = versionedAPIPath + "/schema/load"
 	SchemaPatchPath string = versionedAPIPath + "/schema/patch"
-	IndexCreatePath string = versionedAPIPath + "/index/create"
-	IndexDropPath   string = versionedAPIPath + "/index/drop"
-	IndexListPath   string = versionedAPIPath + "/index/list"
+	IndexPath       string = versionedAPIPath + "/index"
 	PeerIDPath      string = versionedAPIPath + "/peerid"
 )
 
@@ -63,9 +61,9 @@ func setRoutes(h *handler) *handler {
 	h.Post(GraphQLPath, h.handle(execGQLHandler))
 	h.Post(SchemaLoadPath, h.handle(loadSchemaHandler))
 	h.Post(SchemaPatchPath, h.handle(patchSchemaHandler))
-	h.Post(IndexCreatePath, h.handle(createIndexHandler))
-	h.Post(IndexDropPath, h.handle(dropIndexHandler))
-	h.Get(IndexListPath, h.handle(listIndexHandler))
+	h.Post(IndexPath, h.handle(createIndexHandler))
+	h.Delete(IndexPath, h.handle(dropIndexHandler))
+	h.Get(IndexPath, h.handle(listIndexHandler))
 	h.Get(PeerIDPath, h.handle(peerIDHandler))
 
 	return h

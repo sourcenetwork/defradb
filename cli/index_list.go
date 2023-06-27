@@ -38,7 +38,7 @@ Example: show all index for 'Users' collection:
   defradb client index list --collection Users`,
 		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexListPath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexPath)
 			if err != nil {
 				return NewErrFailedToJoinEndpoint(err)
 			}
