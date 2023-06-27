@@ -15,14 +15,16 @@ import (
 	"encoding/json"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestIndexDropCmd_InInvalidAddress_ReturnError(t *testing.T) {
+func TestIndexDropCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
+	time.Sleep(10 * time.Millisecond)
 	cfg.API.Address = "invalid address"
 	indexDropCmd := MakeIndexDropCommand(cfg)
 
@@ -34,9 +36,10 @@ func TestIndexDropCmd_InInvalidAddress_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
 }
 
-func TestIndexDropCmd_InNonExistingAddress_ReturnError(t *testing.T) {
+func TestIndexDropCmd_IfNonExistingAddress_ReturnError(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
+	time.Sleep(10 * time.Millisecond)
 	cfg.API.Address = "none"
 	indexDropCmd := MakeIndexDropCommand(cfg)
 

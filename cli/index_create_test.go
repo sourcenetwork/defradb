@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,9 +40,10 @@ func startNode(t *testing.T) (*config.Config, func()) {
 	return cfg, func() { di.close(ctx) }
 }
 
-func TestIndexCreateCmd_InInvalidAddress_ReturnError(t *testing.T) {
+func TestIndexCreateCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
+	time.Sleep(10 * time.Millisecond)
 	cfg.API.Address = "invalid address"
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 
@@ -54,9 +56,10 @@ func TestIndexCreateCmd_InInvalidAddress_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
 }
 
-func TestIndexCreateCmd_InNonExistingAddress_ReturnError(t *testing.T) {
+func TestIndexCreateCmd_IfNonExistingAddress_ReturnError(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
+	time.Sleep(10 * time.Millisecond)
 	cfg.API.Address = "none"
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 
