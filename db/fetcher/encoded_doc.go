@@ -42,7 +42,7 @@ type encProperty struct {
 
 	// Filter flag to determine if this flag
 	// is needed for eager filter evaluation
-	Filter bool
+	IsFilter bool
 
 	// // encoding meta data
 	// encoding base.DataEncoding
@@ -273,7 +273,7 @@ func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
 		if encdoc.doc.Fields[prop.Desc.ID] != nil { // used cached decoded fields
 			continue
 		}
-		if filter && !prop.Filter { // only get filter fields if filter=true
+		if filter && !prop.IsFilter { // only get filter fields if filter=true
 			continue
 		}
 		_, val, err := prop.Decode()

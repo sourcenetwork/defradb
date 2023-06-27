@@ -473,7 +473,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 
 	if df.filterSet != nil && df.filterSet.Test(ufid) {
 		df.doc.filterSet.Set(ufid)
-		property.Filter = true
+		property.IsFilter = true
 	}
 
 	df.doc.Properties = append(df.doc.Properties, property)
