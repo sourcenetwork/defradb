@@ -18,15 +18,22 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
+	codec "github.com/planetscale/vtprotobuf/codec/grpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/encoding"
+	_ "google.golang.org/grpc/encoding/proto"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	pb "github.com/sourcenetwork/defradb/net/api/pb"
+	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
+func init() {
+	encoding.RegisterCodec(codec.Codec{})
+}
+
 type Client struct {
-	c    pb.ServiceClient
+	c    pb.Service2Client
 	conn *grpc.ClientConn
 }
 
@@ -38,7 +45,7 @@ func NewClient(target string, opts ...grpc.DialOption) (*Client, error) {
 	}
 
 	return &Client{
-		c:    pb.NewServiceClient(conn),
+		c:    pb.NewService2Client(conn),
 		conn: conn,
 	}, nil
 }

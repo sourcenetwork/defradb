@@ -17,10 +17,7 @@ import (
 	"testing"
 	"time"
 
-	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/sourcenetwork/defradb/node"
 )
 
 var envVarsDifferent = map[string]string{
@@ -222,47 +219,6 @@ func TestInvalidEnvVars(t *testing.T) {
 	err := cfg.LoadWithRootdir(false)
 
 	assert.ErrorIs(t, err, ErrLoadingConfig)
-}
-
-func TestNodeConfig(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/9179"
-	cfg.Net.TCPAddress = "/ip4/0.0.0.0/tcp/9169"
-	cfg.Net.RPCTimeout = "100s"
-	cfg.Net.RPCMaxConnectionIdle = "111s"
-	cfg.Net.RelayEnabled = true
-	cfg.Net.PubSubEnabled = true
-	cfg.Datastore.Badger.Path = "/tmp/defra_cli/badger"
-
-	err := cfg.validate()
-	assert.NoError(t, err)
-
-	nodeConfig := cfg.NodeConfig()
-	options, errOptionsMerge := node.NewMergedOptions(nodeConfig)
-
-	// confirming it provides the same config as a manually constructed node.Options
-	p2pAddr, errP2P := ma.NewMultiaddr(cfg.Net.P2PAddress)
-	tcpAddr, errTCP := ma.NewMultiaddr(cfg.Net.TCPAddress)
-	connManager, errConnManager := node.NewConnManager(100, 400, time.Second*20)
-	expectedOptions := node.Options{
-		ListenAddrs:  []ma.Multiaddr{p2pAddr},
-		TCPAddr:      tcpAddr,
-		DataPath:     "/tmp/defra_cli/badger",
-		EnablePubSub: true,
-		EnableRelay:  true,
-		ConnManager:  connManager,
-	}
-	assert.NoError(t, errOptionsMerge)
-	assert.NoError(t, errP2P)
-	assert.NoError(t, errTCP)
-	assert.NoError(t, errConnManager)
-	for k, v := range options.ListenAddrs {
-		assert.Equal(t, expectedOptions.ListenAddrs[k], v)
-	}
-	assert.Equal(t, expectedOptions.TCPAddr.String(), options.TCPAddr.String())
-	assert.Equal(t, expectedOptions.DataPath, options.DataPath)
-	assert.Equal(t, expectedOptions.EnablePubSub, options.EnablePubSub)
-	assert.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
 }
 
 func TestCreateAndLoadCustomConfig(t *testing.T) {

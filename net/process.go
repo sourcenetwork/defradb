@@ -39,7 +39,7 @@ func (p *Peer) processLog(
 	ctx context.Context,
 	txn datastore.Txn,
 	col client.Collection,
-	dockey core.DataStoreKey,
+	dsKey core.DataStoreKey,
 	c cid.Cid,
 	field string,
 	nd ipld.Node,
@@ -48,7 +48,7 @@ func (p *Peer) processLog(
 ) ([]cid.Cid, error) {
 	log.Debug(ctx, "Running processLog")
 
-	crdt, err := initCRDTForType(ctx, txn, col, dockey, field)
+	crdt, err := initCRDTForType(ctx, txn, col, dsKey, field)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (p *Peer) processLog(
 	log.Debug(
 		ctx,
 		"Processing PushLog request",
-		logging.NewKV("DocKey", dockey),
+		logging.NewKV("Datastore key", dsKey),
 		logging.NewKV("CID", c),
 	)
 
@@ -87,7 +87,7 @@ func initCRDTForType(
 	ctx context.Context,
 	txn datastore.MultiStore,
 	col client.Collection,
-	docKey core.DataStoreKey,
+	dsKey core.DataStoreKey,
 	field string,
 ) (crdt.MerkleCRDT, error) {
 	var key core.DataStoreKey
@@ -98,18 +98,18 @@ func initCRDTForType(
 		key = base.MakeCollectionKey(
 			description,
 		).WithInstanceInfo(
-			docKey,
+			dsKey,
 		).WithFieldId(
 			core.COMPOSITE_NAMESPACE,
 		)
 	} else {
 		fd, ok := description.Schema.GetField(field)
 		if !ok {
-			return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, docKey))
+			return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, dsKey))
 		}
 		ctype = fd.Typ
 		fieldID := fd.ID.String()
-		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(fieldID)
+		key = base.MakeCollectionKey(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return crdt.DefaultFactory.InstanceWithStores(
@@ -144,7 +144,7 @@ func (p *Peer) handleChildBlocks(
 	session *sync.WaitGroup,
 	txn datastore.Txn,
 	col client.Collection,
-	dockey core.DataStoreKey,
+	dsKey core.DataStoreKey,
 	field string,
 	nd ipld.Node,
 	children []cid.Cid,
@@ -188,14 +188,14 @@ func (p *Peer) handleChildBlocks(
 			ctx,
 			"Submitting new job to DAG queue",
 			logging.NewKV("Collection", col.Name()),
-			logging.NewKV("DocKey", dockey),
+			logging.NewKV("Datastore key", dsKey),
 			logging.NewKV("Field", fieldName),
 			logging.NewKV("CID", cNode.Cid()))
 
 		session.Add(1)
 		job := &dagJob{
 			collection: col,
-			dockey:     dockey,
+			dsKey:      dsKey,
 			fieldName:  fieldName,
 			session:    session,
 			nodeGetter: getter,
