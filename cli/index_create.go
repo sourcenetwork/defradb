@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -43,6 +42,14 @@ Example: create a named index for 'Users' collection on 'Name' field:
   defradb client index create --collection Users --fields Name --name UsersByName`,
 		ValidArgs: []string{"collection", "fields", "name"},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if collectionArg == "" || fieldsArg == "" {
+				if collectionArg == "" {
+					return NewErrMissingArg("collection")
+				} else {
+					return NewErrMissingArg("fields")
+				}
+			}
+
 			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexCreatePath)
 			if err != nil {
 				return NewErrFailedToJoinEndpoint(err)
@@ -76,7 +83,9 @@ Example: create a named index for 'Users' collection on 'Name' field:
 				return err
 			}
 
-			if !isFileInfoPipe(stdout) {
+			if isFileInfoPipe(stdout) {
+				cmd.Println(string(response))
+			} else {
 				type schemaResponse struct {
 					Data struct {
 						Index struct {
@@ -98,31 +107,19 @@ Example: create a named index for 'Users' collection on 'Name' field:
 					return NewErrFailedToUnmarshalResponse(err)
 				}
 				if len(r.Errors) > 0 {
-					log.FeedbackError(cmd.Context(), "Failed to create index.",
+					log.FeedbackError(cmd.Context(), "Failed to create index",
 						logging.NewKV("Errors", r.Errors))
-					log.FeedbackInfo(cmd.Context(), "success")
 				} else {
-					log.FeedbackInfo(cmd.Context(), "Successfully created index.",
+					log.FeedbackInfo(cmd.Context(), "Successfully created index",
 						logging.NewKV("Index", r.Data.Index))
-					log.FeedbackInfo(cmd.Context(), "failure")
 				}
 			}
-			cmd.Println(string(response))
 			return nil
 		},
 	}
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
 	cmd.Flags().StringVar(&fieldsArg, "fields", "", "Fields to index")
-
-	err := cmd.MarkFlagRequired("collection")
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not mark 'collection' as required argument", err)
-	}
-	err = cmd.MarkFlagRequired("fields")
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not mark 'fields' as required argument", err)
-	}
 
 	return cmd
 }

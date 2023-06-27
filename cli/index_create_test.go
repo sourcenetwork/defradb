@@ -48,7 +48,9 @@ func TestIndexCreateCmd_InInvalidAddress_ReturnError(t *testing.T) {
 	b := bytes.NewBufferString("")
 	indexCreateCmd.SetOut(b)
 
-	err := indexCreateCmd.RunE(indexCreateCmd, nil)
+	indexCreateCmd.SetArgs([]string{"--collection", "User",
+		"--fields", "Name", "--name", "users_name_index"})
+	err := indexCreateCmd.Execute()
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
 }
 
@@ -61,7 +63,9 @@ func TestIndexCreateCmd_InNonExistingAddress_ReturnError(t *testing.T) {
 	b := bytes.NewBufferString("")
 	indexCreateCmd.SetOut(b)
 
-	err := indexCreateCmd.RunE(indexCreateCmd, nil)
+	indexCreateCmd.SetArgs([]string{"--collection", "User",
+		"--fields", "Name", "--name", "users_name_index"})
+	err := indexCreateCmd.Execute()
 	require.ErrorIs(t, err, NewErrFailedToSendRequest(err))
 }
 

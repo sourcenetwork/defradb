@@ -70,8 +70,22 @@ Example: show all index for 'Users' collection:
 				return err
 			}
 
-			if !isFileInfoPipe(stdout) {
+			if isFileInfoPipe(stdout) {
+				cmd.Println(string(response))
+			} else {
+				type indexRespType struct {
+					Name   string `json:"name"`
+					ID     uint32 `json:"id"`
+					Fields []struct {
+						Name      string `json:"name"`
+						Direction string `json:"direction"`
+					} `json:"fields"`
+				}
 				type responseType struct {
+					Data struct {
+						Collections map[string][]indexRespType `json:"collections"`
+						Indexes     []indexRespType            `json:"indexes"`
+					} `json:"data"`
 					Errors []struct {
 						Message string `json:"message"`
 					} `json:"errors"`
@@ -82,12 +96,16 @@ Example: show all index for 'Users' collection:
 					return NewErrFailedToUnmarshalResponse(err)
 				}
 				if len(r.Errors) > 0 {
-					log.FeedbackError(cmd.Context(), "Failed to list index.",
+					log.FeedbackError(cmd.Context(), "Failed to list index",
 						logging.NewKV("Errors", r.Errors))
-					log.FeedbackInfo(cmd.Context(), "success")
+				} else if collectionArg != "" {
+					log.FeedbackInfo(cmd.Context(), "Fetched indexes for collection "+collectionArg,
+						logging.NewKV("Indexes", r.Data.Indexes))
+				} else {
+					log.FeedbackInfo(cmd.Context(), "Fetched all indexes",
+						logging.NewKV("Collections", r.Data.Collections))
 				}
 			}
-			cmd.Println(string(response))
 			return nil
 		},
 	}

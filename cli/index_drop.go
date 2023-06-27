@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -37,6 +36,14 @@ Example: drop the index 'UsersByName' for 'Users' collection:
   defradb client index create --collection Users --name UsersByName`,
 		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if collectionArg == "" || nameArg == "" {
+				if collectionArg == "" {
+					return NewErrMissingArg("collection")
+				} else {
+					return NewErrMissingArg("name")
+				}
+			}
+
 			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexDropPath)
 			if err != nil {
 				return NewErrFailedToJoinEndpoint(err)
@@ -66,10 +73,12 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 				return err
 			}
 
-			if !isFileInfoPipe(stdout) {
+			if isFileInfoPipe(stdout) {
+				cmd.Println(string(response))
+			} else {
 				type schemaResponse struct {
 					Data struct {
-						Result bool `json:"result"`
+						Result string `json:"result"`
 					} `json:"data"`
 					Errors []struct {
 						Message string `json:"message"`
@@ -81,30 +90,18 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 					return NewErrFailedToUnmarshalResponse(err)
 				}
 				if len(r.Errors) > 0 {
-					log.FeedbackError(cmd.Context(), "Failed to drop index.",
+					log.FeedbackError(cmd.Context(), "Failed to drop index",
 						logging.NewKV("Errors", r.Errors))
-					log.FeedbackInfo(cmd.Context(), "success")
 				} else {
-					log.FeedbackInfo(cmd.Context(), "Successfully dropped index.",
+					log.FeedbackInfo(cmd.Context(), "Successfully dropped index",
 						logging.NewKV("Result", r.Data.Result))
-					log.FeedbackInfo(cmd.Context(), "failure")
 				}
 			}
-			cmd.Println(string(response))
 			return nil
 		},
 	}
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
-
-	err := cmd.MarkFlagRequired("collection")
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not mark 'collection' as required argument", err)
-	}
-	err = cmd.MarkFlagRequired("name")
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not mark 'name' as required argument", err)
-	}
 
 	return cmd
 }

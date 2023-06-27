@@ -17,7 +17,7 @@ import (
 func TestIndexDrop_IfNoArgs_ShowUsage(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
 	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "drop"})
-	assertContainsSubstring(t, stderr, "required flag")
+	assertContainsSubstring(t, stderr, "Usage")
 }
 
 const userColIndexOnNameFieldName = "users_name_index"

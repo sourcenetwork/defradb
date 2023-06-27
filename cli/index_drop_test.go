@@ -24,12 +24,13 @@ func TestIndexDropCmd_InInvalidAddress_ReturnError(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
 	cfg.API.Address = "invalid address"
-	indexCreateCmd := MakeIndexDropCommand(cfg)
+	indexDropCmd := MakeIndexDropCommand(cfg)
 
 	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
+	indexDropCmd.SetOut(b)
 
-	err := indexCreateCmd.RunE(indexCreateCmd, nil)
+	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
+	err := indexDropCmd.Execute()
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
 }
 
@@ -37,12 +38,13 @@ func TestIndexDropCmd_InNonExistingAddress_ReturnError(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
 	cfg.API.Address = "none"
-	indexCreateCmd := MakeIndexDropCommand(cfg)
+	indexDropCmd := MakeIndexDropCommand(cfg)
 
 	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
+	indexDropCmd.SetOut(b)
 
-	err := indexCreateCmd.RunE(indexCreateCmd, nil)
+	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
+	err := indexDropCmd.Execute()
 	require.ErrorIs(t, err, NewErrFailedToSendRequest(err))
 }
 

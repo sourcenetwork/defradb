@@ -23,7 +23,7 @@ func TestIndex_IfNoArgs_ShowUsage(t *testing.T) {
 func TestIndexCreate_IfNoArgs_ShowUsage(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
 	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "create"})
-	assertContainsSubstring(t, stderr, "required flag")
+	assertContainsSubstring(t, stderr, "Usage")
 }
 
 func createUserCollection(t *testing.T, conf DefraNodeConfig) {
