@@ -335,7 +335,87 @@ func dropIndexHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func listIndexHandler(rw http.ResponseWriter, req *http.Request) {
-	panic("not implemented")
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	queryParams := req.URL.Query()
+	collectionParam := queryParams.Get("collection")
+
+	type fieldResponse struct {
+		Name      string                `json:"name"`
+		Direction client.IndexDirection `json:"direction"`
+	}
+
+	type indexResponse struct {
+		Name   string          `json:"name"`
+		ID     uint32          `json:"id"`
+		Fields []fieldResponse `json:"fields"`
+	}
+
+	convertToRep := func(indexDesc client.IndexDescription) indexResponse {
+		indexResp := indexResponse{
+			Name: indexDesc.Name,
+			ID:   indexDesc.ID,
+		}
+
+		for _, field := range indexDesc.Fields {
+			indexResp.Fields = append(indexResp.Fields, fieldResponse{
+				Name:      field.Name,
+				Direction: field.Direction,
+			})
+		}
+		return indexResp
+	}
+
+	if collectionParam == "" {
+		indexesPerCol, err := db.GetAllIndexes(req.Context())
+		if err != nil {
+			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+			return
+		}
+		type collectionIndexes struct {
+			Collections map[client.CollectionName][]indexResponse `json:"collections"`
+		}
+		var resp collectionIndexes
+		resp.Collections = make(map[client.CollectionName][]indexResponse)
+		for colName, indexes := range indexesPerCol {
+			for _, index := range indexes {
+				resp.Collections[colName] = append(resp.Collections[colName], convertToRep(index))
+			}
+		}
+		sendJSON(
+			req.Context(),
+			rw,
+			struct {
+				Data collectionIndexes `json:"data"`
+			}{Data: resp},
+			http.StatusOK,
+		)
+	} else {
+		col, err := db.GetCollectionByName(req.Context(), collectionParam)
+		if err != nil {
+			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+			return
+		}
+		indexes, err := col.GetIndexes(req.Context())
+		if err != nil {
+			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+			return
+		}
+		var resp []indexResponse
+		for _, index := range indexes {
+			resp = append(resp, convertToRep(index))
+		}
+		sendJSON(
+			req.Context(),
+			rw,
+			simpleDataResponse("indexes", resp),
+			http.StatusOK,
+		)
+	}
 }
 
 func getBlockHandler(rw http.ResponseWriter, req *http.Request) {

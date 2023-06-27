@@ -27,7 +27,11 @@ func TestIndexCreate_IfNoArgs_ShowUsage(t *testing.T) {
 }
 
 func createUserCollection(t *testing.T, conf DefraNodeConfig) {
-	fileName := schemaFileFixture(t, "schema.graphql", `type User { Name: String }`)
+	createCollection(t, conf, `type User { Name: String }`)
+}
+
+func createCollection(t *testing.T, conf DefraNodeConfig, colSchema string) {
+	fileName := schemaFileFixture(t, "schema.graphql", colSchema)
 	stdout, _ := runDefraCommand(t, conf, []string{"client", "schema", "add", "-f", fileName})
 	assertContainsSubstring(t, stdout, "success")
 }
@@ -49,17 +53,6 @@ func TestIndexCreate_IfCollectionExists_ShouldCreateIndex(t *testing.T) {
 }
 
 func TestIndexCreate_IfInternalError_ShouldFail(t *testing.T) {
-	conf := NewDefraNodeDefaultConfig(t)
-	stopDefra := runDefraNode(t, conf)
-
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "create",
-		"--collection", "User", "--fields", "Name", "--name", "users_name_index"})
-	stopDefra()
-
-	assertContainsSubstring(t, stdout, "errors")
-}
-
-func TestIndexCreate_IfInternalError_ShouldFails(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
 	stopDefra := runDefraNode(t, conf)
 

@@ -239,7 +239,7 @@ func (f *indexTestFixture) createCollectionIndexFor(
 	return f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
 }
 
-func (f *indexTestFixture) getAllIndexes() ([]collectionIndexDescription, error) {
+func (f *indexTestFixture) getAllIndexes() (map[client.CollectionName][]client.IndexDescription, error) {
 	return f.db.getAllIndexes(f.ctx, f.txn)
 }
 
@@ -688,14 +688,11 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	assert.NoError(t, err)
 
 	require.Equal(t, 2, len(indexes))
-	usersIndexIndex := 0
-	if indexes[0].CollectionName != usersColName {
-		usersIndexIndex = 1
-	}
-	assert.Equal(t, usersIndexDesc.Name, indexes[usersIndexIndex].Index.Name)
-	assert.Equal(t, usersColName, indexes[usersIndexIndex].CollectionName)
-	assert.Equal(t, productsIndexDesc.Name, indexes[1-usersIndexIndex].Index.Name)
-	assert.Equal(t, productsColName, indexes[1-usersIndexIndex].CollectionName)
+
+	assert.Equal(t, 1, len(indexes[usersColName]))
+	assert.Equal(t, usersIndexDesc.Name, indexes[usersColName][0].Name)
+	assert.Equal(t, 1, len(indexes[productsColName]))
+	assert.Equal(t, productsIndexDesc.Name, indexes[productsColName][0].Name)
 }
 
 func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {

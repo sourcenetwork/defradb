@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,38 +12,19 @@ package cli
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/defradb/config"
 )
 
-func startNode(t *testing.T) (*config.Config, func()) {
-	cfg := config.DefaultConfig()
-	dir := t.TempDir()
-	ctx := context.Background()
-	cfg.Datastore.Store = "memory"
-	cfg.Datastore.Badger.Path = dir
-	cfg.Net.P2PDisabled = false
-	setTestingAddresses(cfg)
-
-	di, err := start(ctx, cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return cfg, func() { di.close(ctx) }
-}
-
-func TestIndexCreateCmd_InInvalidAddress_ReturnError(t *testing.T) {
+func TestIndexListCmd_InInvalidAddress_ReturnError(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
 	cfg.API.Address = "invalid address"
-	indexCreateCmd := MakeIndexCreateCommand(cfg)
+	indexCreateCmd := MakeIndexListCommand(cfg)
 
 	b := bytes.NewBufferString("")
 	indexCreateCmd.SetOut(b)
@@ -52,11 +33,11 @@ func TestIndexCreateCmd_InInvalidAddress_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
 }
 
-func TestIndexCreateCmd_InNonExistingAddress_ReturnError(t *testing.T) {
+func TestIndexListCmd_InNonExistingAddress_ReturnError(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
 	cfg.API.Address = "none"
-	indexCreateCmd := MakeIndexCreateCommand(cfg)
+	indexCreateCmd := MakeIndexListCommand(cfg)
 
 	b := bytes.NewBufferString("")
 	indexCreateCmd.SetOut(b)
@@ -65,37 +46,7 @@ func TestIndexCreateCmd_InNonExistingAddress_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, NewErrFailedToSendRequest(err))
 }
 
-func TestIndexCreateCmd_IfNoCollection_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
-	defer close()
-	indexCreateCmd := MakeIndexCreateCommand(cfg)
-
-	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
-
-	indexCreateCmd.SetArgs([]string{"--collection", "User",
-		"--fields", "Name", "--name", "users_name_index"})
-	err := indexCreateCmd.Execute()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	out, err := io.ReadAll(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r := make(map[string]any)
-	err = json.Unmarshal(out, &r)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, hasErrors := r["errors"]
-	assert.True(t, hasErrors, "command should return error")
-}
-
-func TestIndexCreateCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
+func TestIndexListCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
 
@@ -106,12 +57,18 @@ func TestIndexCreateCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	}
 
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
-	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
-
 	indexCreateCmd.SetArgs([]string{"--collection", "User",
 		"--fields", "Name", "--name", "users_name_index"})
 	err = indexCreateCmd.Execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	indexListCmd := MakeIndexListCommand(cfg)
+	b := bytes.NewBufferString("")
+	indexListCmd.SetOut(b)
+
+	err = indexListCmd.Execute()
 	if err != nil {
 		t.Fatal(err)
 	}

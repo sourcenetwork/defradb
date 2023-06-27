@@ -20,11 +20,15 @@ func TestIndexDrop_IfNoArgs_ShowUsage(t *testing.T) {
 	assertContainsSubstring(t, stderr, "required flag")
 }
 
-const indexName = "users_name_index"
+const userColIndexOnNameFieldName = "users_name_index"
 
 func createIndexOnName(t *testing.T, conf DefraNodeConfig) {
+	createIndexOnField(t, conf, "User", "Name", userColIndexOnNameFieldName)
+}
+
+func createIndexOnField(t *testing.T, conf DefraNodeConfig, colName, fieldName, indexName string) {
 	runDefraCommand(t, conf, []string{"client", "index", "create",
-		"--collection", "User", "--fields", "Name", "--name", indexName})
+		"--collection", colName, "--fields", fieldName, "--name", indexName})
 }
 
 func TestIndexDrop_IfCollectionWithIndexExists_ShouldDropIndex(t *testing.T) {

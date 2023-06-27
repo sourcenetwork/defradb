@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -25,28 +24,33 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-func MakeIndexDropCommand(cfg *config.Config) *cobra.Command {
+func MakeIndexListCommand(cfg *config.Config) *cobra.Command {
 	var collectionArg string
-	var nameArg string
 	var cmd = &cobra.Command{
-		Use:   "drop -c --collection <collection> -n --name <name>",
-		Short: "Drop a collection's secondary index",
-		Long: `Drop a collection's secondary index.
+		Use:   "list [-c --collection <collection>]",
+		Short: "Shows the list indexes in the database or for a specific collection",
+		Long: `Shows the list indexes in the database or for a specific collection.
 		
-Example: drop the index 'UsersByName' for 'Users' collection:
-  defradb client index create --collection Users --name UsersByName`,
-		ValidArgs: []string{"collection", "name"},
+If the --collection flag is provided, only the indexes for that collection will be shown.
+Otherwise, all indexes in the database will be shown.
+
+Example: show all index for 'Users' collection:
+  defradb client index list --collection Users`,
+		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexDropPath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexListPath)
 			if err != nil {
 				return NewErrFailedToJoinEndpoint(err)
 			}
 
-			values := url.Values{
-				"collection": {collectionArg},
-				"name":     {nameArg},
+			if collectionArg != "" {
+				values := url.Values{
+					"collection": {collectionArg},
+				}
+				endpoint.RawQuery = values.Encode()
 			}
-			res, err := http.PostForm(endpoint.String(), values)
+
+			res, err := http.Get(endpoint.String())
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
 			}
@@ -63,27 +67,20 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 			}
 
 			if !isFileInfoPipe(stdout) {
-				type schemaResponse struct {
-					Data struct {
-						Result bool `json:"result"`
-					} `json:"data"`
+				type responseType struct {
 					Errors []struct {
 						Message string `json:"message"`
 					} `json:"errors"`
 				}
-				r := schemaResponse{}
+				r := responseType{}
 				err = json.Unmarshal(response, &r)
 				if err != nil {
 					return NewErrFailedToUnmarshalResponse(err)
 				}
 				if len(r.Errors) > 0 {
-					log.FeedbackError(cmd.Context(), "Failed to drop index.",
+					log.FeedbackError(cmd.Context(), "Failed to list index.",
 						logging.NewKV("Errors", r.Errors))
 					log.FeedbackInfo(cmd.Context(), "success")
-				} else {
-					log.FeedbackInfo(cmd.Context(), "Successfully dropped index.",
-						logging.NewKV("Result", r.Data.Result))
-					log.FeedbackInfo(cmd.Context(), "failure")
 				}
 			}
 			cmd.Println(string(response))
@@ -91,16 +88,6 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 		},
 	}
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
-	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
-
-	err := cmd.MarkFlagRequired("collection")
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not mark 'collection' as required argument", err)
-	}
-	err = cmd.MarkFlagRequired("name")
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not mark 'name' as required argument", err)
-	}
 
 	return cmd
 }
