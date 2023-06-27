@@ -71,18 +71,10 @@ Example: show all index for 'Users' collection:
 			if isFileInfoPipe(stdout) {
 				cmd.Println(string(response))
 			} else {
-				type indexRespType struct {
-					Name   string `json:"name"`
-					ID     uint32 `json:"id"`
-					Fields []struct {
-						Name      string `json:"name"`
-						Direction string `json:"direction"`
-					} `json:"fields"`
-				}
 				type responseType struct {
 					Data struct {
-						Collections map[string][]indexRespType `json:"collections"`
-						Indexes     []indexRespType            `json:"indexes"`
+						Collections map[string][]indexResponse `json:"collections"`
+						Indexes     []indexResponse            `json:"indexes"`
 					} `json:"data"`
 					Errors []struct {
 						Message string `json:"message"`

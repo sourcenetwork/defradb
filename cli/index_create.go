@@ -24,6 +24,17 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
+type indexFieldResponse struct {
+	Name      string `json:"name"`
+	Direction string `json:"direction"`
+}
+
+type indexResponse struct {
+	Name   string               `json:"name"`
+	ID     uint32               `json:"id"`
+	Fields []indexFieldResponse `json:"fields"`
+}
+
 func MakeIndexCreateCommand(cfg *config.Config) *cobra.Command {
 	var collectionArg string
 	var nameArg string
@@ -91,14 +102,7 @@ Example: create a named index for 'Users' collection on 'Name' field:
 			} else {
 				type schemaResponse struct {
 					Data struct {
-						Index struct {
-							Name   string `json:"name"`
-							ID     uint32 `json:"id"`
-							Fields []struct {
-								Name      string `json:"name"`
-								Direction string `json:"direction"`
-							} `json:"fields"`
-						} `json:"index"`
+						Index indexResponse `json:"index"`
 					} `json:"data"`
 					Errors []struct {
 						Message string `json:"message"`
