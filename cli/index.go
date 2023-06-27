@@ -18,7 +18,7 @@ func MakeIndexCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "index",
 		Short: "Mange collections' indexes of a running DefraDB instance",
-		Long:  `Manage (create, drop, or list) for collection indexes on a DefraDB node.`,
+		Long:  `Manage (create, drop, or list) collection indexes on a DefraDB node.`,
 	}
 
 	return cmd
