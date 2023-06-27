@@ -79,7 +79,7 @@ func (p *Planner) makeTypeIndexJoin(
 	var err error
 
 	desc := parent.sourceInfo.collectionDescription
-	typeFieldDesc, ok := desc.GetField(subType.Name)
+	typeFieldDesc, ok := desc.Schema.GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -286,7 +286,7 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.Schema.GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -359,19 +359,21 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
 		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + request.RelatedObjectID),
 	}
 	filter := map[connor.FilterKey]any{
-		fkIndex: doc.GetKey(),
-	}
-
-	// We have to reset the scan node after appending the new key-filter
-	if err := n.subType.Init(); err != nil {
-		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
-		return doc
+		fkIndex: map[connor.FilterKey]any{
+			mapper.FilterEqOp: doc.GetKey(),
+		},
 	}
 
 	// using the doc._key as a filter
 	err := appendFilterToScanNode(n.subType, filter)
 	if err != nil {
 		return core.Doc{}
+	}
+
+	// We have to reset the scan node after appending the new key-filter
+	if err := n.subType.Init(); err != nil {
+		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
+		return doc
 	}
 
 	next, err := n.subType.Next()
@@ -482,7 +484,7 @@ func (p *Planner) makeTypeJoinMany(
 		return nil, err
 	}
 
-	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.Schema.GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -549,8 +551,11 @@ func (n *typeJoinMany) Next() (bool, error) {
 			Index: n.subSelect.FirstIndexOfName(n.rootName + request.RelatedObjectID),
 		}
 		filter := map[connor.FilterKey]any{
-			fkIndex: n.currentValue.GetKey(), // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
+			fkIndex: map[connor.FilterKey]any{
+				mapper.FilterEqOp: n.currentValue.GetKey(),
+			},
 		}
+
 		// using the doc._key as a filter
 		err := appendFilterToScanNode(n.subType, filter)
 		if err != nil {

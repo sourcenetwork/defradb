@@ -25,6 +25,7 @@ const (
 	errVFetcherFailedToDecodeNode   string = "(version fetcher) failed to decode protobuf"
 	errVFetcherFailedToGetDagLink   string = "(version fetcher) failed to get node link from DAG"
 	errFailedToGetDagNode           string = "failed to get DAG Node"
+	errMissingMapper                string = "missing document mapper"
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 	ErrVFetcherFailedToDecodeNode   = errors.New(errVFetcherFailedToDecodeNode)
 	ErrVFetcherFailedToGetDagLink   = errors.New(errVFetcherFailedToGetDagLink)
 	ErrFailedToGetDagNode           = errors.New(errFailedToGetDagNode)
+	ErrMissingMapper                = errors.New(errMissingMapper)
 	ErrSingleSpanOnly               = errors.New("spans must contain only a single entry")
 )
 

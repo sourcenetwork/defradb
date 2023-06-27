@@ -305,7 +305,7 @@ func (c *collection) applyMerge(
 			return ErrInvalidMergeValueType
 		}
 
-		fd, valid := c.desc.GetField(mfield)
+		fd, valid := c.desc.Schema.GetField(mfield)
 		if !valid {
 			return client.NewErrFieldNotExist(mfield)
 		}
@@ -398,7 +398,7 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (clie
 		return client.FieldDescription{}, false
 	}
 
-	relationFieldDescription, valid := c.Description().GetField(
+	relationFieldDescription, valid := c.Description().Schema.GetField(
 		strings.TrimSuffix(fieldDesc.Name, request.RelatedObjectID),
 	)
 	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation()
