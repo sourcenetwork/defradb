@@ -49,9 +49,8 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 										"filterMatches": uint64(2),
 										"iterations":    uint64(3),
 										"scanNode": dataMap{
-											"iterations":    uint64(3),
-											"docFetches":    uint64(3),
-											"filterMatches": uint64(2),
+											"iterations": uint64(3),
+											"docFetches": uint64(3),
 										},
 									},
 								},
@@ -132,9 +131,8 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 										"filterMatches": uint64(4),
 										"iterations":    uint64(5),
 										"scanNode": dataMap{
-											"iterations":    uint64(5),
-											"docFetches":    uint64(5),
-											"filterMatches": uint64(4),
+											"iterations": uint64(5),
+											"docFetches": uint64(5),
 										},
 									},
 								},
@@ -186,9 +184,8 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 									"typeIndexJoin": dataMap{
 										"iterations": uint64(3),
 										"scanNode": dataMap{
-											"iterations":    uint64(3),
-											"docFetches":    uint64(3),
-											"filterMatches": uint64(2),
+											"iterations": uint64(3),
+											"docFetches": uint64(3),
 										},
 									},
 								},
@@ -243,9 +240,8 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
 											"scanNode": dataMap{
-												"iterations":    uint64(3),
-												"docFetches":    uint64(3),
-												"filterMatches": uint64(2),
+												"iterations": uint64(3),
+												"docFetches": uint64(3),
 											},
 										},
 									},
@@ -304,9 +300,8 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
 											"scanNode": dataMap{
-												"iterations":    uint64(3),
-												"docFetches":    uint64(3),
-												"filterMatches": uint64(2),
+												"iterations": uint64(3),
+												"docFetches": uint64(3),
 											},
 										},
 									},

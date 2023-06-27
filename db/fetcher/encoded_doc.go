@@ -13,6 +13,7 @@ package fetcher
 import (
 	"fmt"
 
+	"github.com/bits-and-blooms/bitset"
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
 
@@ -24,12 +25,12 @@ type EncodedDocument interface {
 	// Key returns the key of the document
 	Key() []byte
 	// Reset re-initializes the EncodedDocument object.
-	Reset(newKey []byte)
+	Reset()
 	// Decode returns a properly decoded document object
 	Decode() (*client.Document, error)
 	// DecodeToDoc returns a decoded document as a
 	// map of field/value pairs
-	DecodeToDoc(*core.DocumentMapping) (core.Doc, error)
+	DecodeToDoc() (core.Doc, error)
 }
 
 type EPTuple []encProperty
@@ -38,6 +39,10 @@ type EPTuple []encProperty
 type encProperty struct {
 	Desc client.FieldDescription
 	Raw  []byte
+
+	// Filter flag to determine if this flag
+	// is needed for eager filter evaluation
+	IsFilter bool
 
 	// // encoding meta data
 	// encoding base.DataEncoding
@@ -190,8 +195,20 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
+	mapping *core.DocumentMapping
+	doc     *core.Doc
+
 	key        []byte
-	properties map[client.FieldDescription]*encProperty
+	Properties []*encProperty
+
+	// tracking bitsets
+	// A value of 1 indicates a required field
+	// 0 means we we ignore the field
+	// we update the bitsets as we collect values
+	// by clearing the bit for the FieldID
+	filterSet *bitset.BitSet // filter fields
+	selectSet *bitset.BitSet // select fields
+
 }
 
 var _ EncodedDocument = (*encodedDocument)(nil)
@@ -201,9 +218,15 @@ func (encdoc *encodedDocument) Key() []byte {
 }
 
 // Reset re-initializes the EncodedDocument object.
-func (encdoc *encodedDocument) Reset(newKey []byte) {
-	encdoc.properties = make(map[client.FieldDescription]*encProperty)
-	encdoc.key = newKey
+func (encdoc *encodedDocument) Reset() {
+	encdoc.Properties = make([]*encProperty, 0)
+	encdoc.key = nil
+	if encdoc.mapping != nil {
+		doc := encdoc.mapping.NewDoc()
+		encdoc.doc = &doc
+	}
+	encdoc.filterSet = nil
+	encdoc.selectSet = nil
 }
 
 // Decode returns a properly decoded document object
@@ -213,12 +236,12 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 		return nil, err
 	}
 	doc := client.NewDocWithKey(key)
-	for fieldDesc, prop := range encdoc.properties {
+	for _, prop := range encdoc.Properties {
 		ctype, val, err := prop.Decode()
 		if err != nil {
 			return nil, err
 		}
-		err = doc.SetAs(fieldDesc.Name, val, ctype)
+		err = doc.SetAs(prop.Desc.Name, val, ctype)
 		if err != nil {
 			return nil, err
 		}
@@ -229,15 +252,35 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 
 // DecodeToDoc returns a decoded document as a
 // map of field/value pairs
-func (encdoc *encodedDocument) DecodeToDoc(mapping *core.DocumentMapping) (core.Doc, error) {
-	doc := mapping.NewDoc()
-	doc.SetKey(string(encdoc.key))
-	for fieldDesc, prop := range encdoc.properties {
+func (encdoc *encodedDocument) DecodeToDoc() (core.Doc, error) {
+	return encdoc.decodeToDoc(false)
+}
+
+func (encdoc *encodedDocument) decodeToDocForFilter() (core.Doc, error) {
+	return encdoc.decodeToDoc(true)
+}
+
+func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
+	if encdoc.mapping == nil {
+		return core.Doc{}, ErrMissingMapper
+	}
+	if encdoc.doc == nil {
+		doc := encdoc.mapping.NewDoc()
+		encdoc.doc = &doc
+	}
+	encdoc.doc.SetKey(string(encdoc.key))
+	for _, prop := range encdoc.Properties {
+		if encdoc.doc.Fields[prop.Desc.ID] != nil { // used cached decoded fields
+			continue
+		}
+		if filter && !prop.IsFilter { // only get filter fields if filter=true
+			continue
+		}
 		_, val, err := prop.Decode()
 		if err != nil {
 			return core.Doc{}, err
 		}
-		doc.Fields[fieldDesc.ID] = val
+		encdoc.doc.Fields[prop.Desc.ID] = val
 	}
-	return doc, nil
+	return *encdoc.doc, nil
 }

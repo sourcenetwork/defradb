@@ -103,7 +103,7 @@ func initCRDTForType(
 			core.COMPOSITE_NAMESPACE,
 		)
 	} else {
-		fd, ok := description.GetField(field)
+		fd, ok := description.Schema.GetField(field)
 		if !ok {
 			return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, docKey))
 		}

@@ -111,7 +111,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 						TargetNodeName:    "deleteNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"filter": dataMap{},
+							"filter": nil,
 							"ids":    []string(nil),
 						},
 					},
@@ -122,7 +122,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 						ExpectedAttributes: dataMap{
 							"collectionID":   "3",
 							"collectionName": "Author",
-							"filter":         dataMap{},
+							"filter":         nil,
 							"spans": []dataMap{
 								{
 									"end":   "/4",

@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	fetcherMocks "github.com/sourcenetwork/defradb/db/fetcher/mocks"
+	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
 type userDoc struct {
@@ -545,8 +546,8 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -831,8 +832,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -926,11 +927,13 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 
 	f.users.fetcherFactory = func() fetcher.Fetcher {
 		f := fetcherMocks.NewStubbedFetcher(t)
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			RunAndReturn(func(
 				col *client.CollectionDescription,
-				fields []*client.FieldDescription,
+				fields []client.FieldDescription,
+				filter *mapper.Filter,
+				mapping *core.DocumentMapping,
 				reverse, showDeleted bool,
 			) error {
 				require.Equal(t, 2, len(fields))
