@@ -26,9 +26,6 @@ type scanExecInfo struct {
 
 	// Total number of times attempted to fetch documents.
 	docFetches uint64
-
-	// Total number of documents that matched / passed the filter.
-	// filterMatches uint64
 }
 
 // scans an index for records
@@ -84,8 +81,6 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 		case *mapper.Field:
 			n.tryAddField(requestable.GetName())
 		// select might have its own select fields and filters fields
-		// @todo: Might need to check that these are sub selects
-		// are _groups
 		case *mapper.Select:
 			n.tryAddField(requestable.Field.Name + "_id") // foreign key for type joins
 			err := n.initFields(requestable.Fields)
@@ -166,7 +161,6 @@ func (n *scanNode) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	// @question: Should this be after the length check?
 	n.execInfo.docFetches++
 
 	if len(n.currentValue.Fields) == 0 {
@@ -178,25 +172,6 @@ func (n *scanNode) Next() (bool, error) {
 		request.DeletedFieldName,
 		n.currentValue.Status.IsDeleted(),
 	)
-
-	// Keeping for refence as there is an outstanding
-	// question.
-	//
-	// Don't need to run filter here anymore since the
-	// fetcher will run the filter for us
-	//
-	// Question: How do we want to handle `info.filterMatches`
-	// now? @shahzadlone
-	/*
-		passed, err := mapper.RunFilter(n.currentValue, n.filter)
-		if err != nil {
-			return false, err
-		}
-		if passed {
-			n.execInfo.filterMatches++
-			return true, nil
-		}
-	*/
 
 	return true, nil
 }

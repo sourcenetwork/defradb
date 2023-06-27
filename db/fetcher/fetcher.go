@@ -71,7 +71,6 @@ type DocumentFetcher struct {
 
 	filterFields map[uint32]client.FieldDescription
 	selectFields map[uint32]client.FieldDescription
-	// allfields       map[uint32]*client.FieldDescription
 
 	// static bitset to which stores the IDs of fields
 	// needed for filtering.
@@ -477,12 +476,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		property.Filter = true
 	}
 
-	// @todo: Secondary Index might not have encoded FieldIDs
-	// @body: Need to generalized the processKV, and overall Fetcher architecture
-	// to better handle dynamic use cases beyond primary indexes. If a
-	// secondary index is provided, we need to extract the indexed/implicit fields
-	// from the KV pair.
-	df.doc.Properties = append(df.doc.Properties, property) // @todo see if we can avoid the append/copy
+	df.doc.Properties = append(df.doc.Properties, property)
 
 	return nil
 }
