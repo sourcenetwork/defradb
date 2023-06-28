@@ -19,11 +19,11 @@ import (
 )
 
 type indexFieldResp struct {
-	Name string `json:"name"`
+	Name string `json:"Name"`
 }
 type indexResp struct {
-	Name   string           `json:"name"`
-	Fields []indexFieldResp `json:"fields"`
+	Name   string           `json:"Name"`
+	Fields []indexFieldResp `json:"Fields"`
 }
 
 func TestIndexList_IfCollectionIsNotSpecified_ShouldReturnAllIndexes(t *testing.T) {
