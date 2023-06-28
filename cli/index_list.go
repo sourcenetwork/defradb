@@ -20,14 +20,15 @@ import (
 	"github.com/spf13/cobra"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
 type indexListResponse struct {
 	Data struct {
-		Collections map[string][]indexResponse `json:"collections"`
-		Indexes     []indexResponse            `json:"indexes"`
+		Collections map[string][]client.IndexDescription `json:"collections"`
+		Indexes     []client.IndexDescription            `json:"indexes"`
 	} `json:"data"`
 	Errors []struct {
 		Message string `json:"message"`

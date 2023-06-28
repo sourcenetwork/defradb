@@ -18,33 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-type indexFieldResponse struct {
-	Name      string                `json:"name"`
-	Direction client.IndexDirection `json:"direction"`
-}
-
-type indexResponse struct {
-	Name   string               `json:"name"`
-	ID     uint32               `json:"id"`
-	Fields []indexFieldResponse `json:"fields"`
-}
-
-func indexDescToResponse(desc client.IndexDescription) indexResponse {
-	indexResp := indexResponse{
-		Name: desc.Name,
-		ID:   desc.ID,
-	}
-
-	for _, field := range desc.Fields {
-		indexResp.Fields = append(indexResp.Fields, indexFieldResponse{
-			Name:      field.Name,
-			Direction: field.Direction,
-		})
-	}
-
-	return indexResp
-}
-
 func createIndexHandler(rw http.ResponseWriter, req *http.Request) {
 	db, err := dbFromContext(req.Context())
 	if err != nil {
@@ -87,7 +60,7 @@ func createIndexHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		simpleDataResponse("index", indexDescToResponse(indexDesc)),
+		simpleDataResponse("index", indexDesc),
 		http.StatusOK,
 	)
 }
@@ -145,25 +118,12 @@ func listIndexHandler(rw http.ResponseWriter, req *http.Request) {
 			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 			return
 		}
-		type collectionIndexes struct {
-			Collections map[client.CollectionName][]indexResponse `json:"collections"`
-		}
-		var resp collectionIndexes
-		resp.Collections = make(map[client.CollectionName][]indexResponse)
-		for colName, indexes := range indexesPerCol {
-			for _, index := range indexes {
-				resp.Collections[colName] = append(
-					resp.Collections[colName],
-					indexDescToResponse(index),
-				)
-			}
-		}
 		sendJSON(
 			req.Context(),
 			rw,
 			struct {
-				Data collectionIndexes `json:"data"`
-			}{Data: resp},
+				Data map[client.CollectionName][]client.IndexDescription `json:"data"`
+			}{Data: indexesPerCol},
 			http.StatusOK,
 		)
 	} else {
@@ -177,14 +137,10 @@ func listIndexHandler(rw http.ResponseWriter, req *http.Request) {
 			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 			return
 		}
-		var resp []indexResponse
-		for _, index := range indexes {
-			resp = append(resp, indexDescToResponse(index))
-		}
 		sendJSON(
 			req.Context(),
 			rw,
-			simpleDataResponse("indexes", resp),
+			simpleDataResponse("indexes", indexes),
 			http.StatusOK,
 		)
 	}

@@ -72,7 +72,7 @@ func TestIndexCreate_IfCollectionExists_ShouldCreateIndex(t *testing.T) {
 		"--collection", "User", "--fields", "Name", "--name", "users_name_index"})
 	nodeLog := stopDefra()
 
-	jsonResponse := `{"data":{"index":{"name":"users_name_index","id":1,"fields":[{"name":"Name","direction":"ASC"}]}}}`
+	jsonResponse := `{"data":{"index":{"Name":"users_name_index","ID":1,"Fields":[{"Name":"Name","Direction":"ASC"}]}}}`
 	assertContainsSubstring(t, stdout, jsonResponse)
 	assertNotContainsSubstring(t, stdout, "errors")
 	assertNotContainsSubstring(t, nodeLog, "errors")
