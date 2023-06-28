@@ -24,6 +24,15 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
+type indexDropResponse struct {
+	Data struct {
+		Result string `json:"result"`
+	} `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
+}
+
 func MakeIndexDropCommand(cfg *config.Config) *cobra.Command {
 	var collectionArg string
 	var nameArg string
@@ -86,15 +95,7 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 			if isFileInfoPipe(stdout) {
 				cmd.Println(string(response))
 			} else {
-				type schemaResponse struct {
-					Data struct {
-						Result string `json:"result"`
-					} `json:"data"`
-					Errors []struct {
-						Message string `json:"message"`
-					} `json:"errors"`
-				}
-				r := schemaResponse{}
+				r := indexDropResponse{}
 				err = json.Unmarshal(response, &r)
 				if err != nil {
 					return NewErrFailedToUnmarshalResponse(err)

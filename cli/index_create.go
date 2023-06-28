@@ -35,6 +35,15 @@ type indexResponse struct {
 	Fields []indexFieldResponse `json:"fields"`
 }
 
+type indexCreateResponse struct {
+	Data struct {
+		Index indexResponse `json:"index"`
+	} `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
+}
+
 func MakeIndexCreateCommand(cfg *config.Config) *cobra.Command {
 	var collectionArg string
 	var nameArg string
@@ -100,15 +109,7 @@ Example: create a named index for 'Users' collection on 'Name' field:
 			if isFileInfoPipe(stdout) {
 				cmd.Println(string(response))
 			} else {
-				type schemaResponse struct {
-					Data struct {
-						Index indexResponse `json:"index"`
-					} `json:"data"`
-					Errors []struct {
-						Message string `json:"message"`
-					} `json:"errors"`
-				}
-				r := schemaResponse{}
+				r := indexCreateResponse{}
 				err = json.Unmarshal(response, &r)
 				if err != nil {
 					return NewErrFailedToUnmarshalResponse(err)

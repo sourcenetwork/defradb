@@ -24,6 +24,16 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
+type indexListResponse struct {
+	Data struct {
+		Collections map[string][]indexResponse `json:"collections"`
+		Indexes     []indexResponse            `json:"indexes"`
+	} `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
+}
+
 func MakeIndexListCommand(cfg *config.Config) *cobra.Command {
 	var collectionArg string
 	var cmd = &cobra.Command{
@@ -71,16 +81,7 @@ Example: show all index for 'Users' collection:
 			if isFileInfoPipe(stdout) {
 				cmd.Println(string(response))
 			} else {
-				type responseType struct {
-					Data struct {
-						Collections map[string][]indexResponse `json:"collections"`
-						Indexes     []indexResponse            `json:"indexes"`
-					} `json:"data"`
-					Errors []struct {
-						Message string `json:"message"`
-					} `json:"errors"`
-				}
-				r := responseType{}
+				r := indexListResponse{}
 				err = json.Unmarshal(response, &r)
 				if err != nil {
 					return NewErrFailedToUnmarshalResponse(err)
