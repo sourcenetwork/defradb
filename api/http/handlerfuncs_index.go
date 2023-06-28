@@ -118,12 +118,16 @@ func listIndexHandler(rw http.ResponseWriter, req *http.Request) {
 			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 			return
 		}
+		type collectionIndexes struct {
+			Collections map[client.CollectionName][]client.IndexDescription `json:"collections"`
+		}
+		colIndexes := collectionIndexes{Collections: indexesPerCol}
 		sendJSON(
 			req.Context(),
 			rw,
 			struct {
-				Data map[client.CollectionName][]client.IndexDescription `json:"data"`
-			}{Data: indexesPerCol},
+				Data collectionIndexes `json:"data"`
+			}{Data: colIndexes},
 			http.StatusOK,
 		)
 	} else {
