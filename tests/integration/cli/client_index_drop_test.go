@@ -31,6 +31,34 @@ func createIndexOnField(t *testing.T, conf DefraNodeConfig, colName, fieldName, 
 		"--collection", colName, "--fields", fieldName, "--name", indexName})
 }
 
+func TestIndexDrop_IfNoNameArg_ShouldFail(t *testing.T) {
+	conf := NewDefraNodeDefaultConfig(t)
+	stopDefra := runDefraNode(t, conf)
+
+	createUserCollection(t, conf)
+	createIndexOnName(t, conf)
+
+	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "drop",
+		"--collection", "User"})
+	stopDefra()
+
+	assertContainsSubstring(t, stderr, "missing argument")
+}
+
+func TestIndexDrop_IfNoCollectionArg_ShouldFail(t *testing.T) {
+	conf := NewDefraNodeDefaultConfig(t)
+	stopDefra := runDefraNode(t, conf)
+
+	createUserCollection(t, conf)
+	createIndexOnName(t, conf)
+
+	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "drop",
+		"--name", "users_name_index"})
+	stopDefra()
+
+	assertContainsSubstring(t, stderr, "missing argument")
+}
+
 func TestIndexDrop_IfCollectionWithIndexExists_ShouldDropIndex(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
 	stopDefra := runDefraNode(t, conf)

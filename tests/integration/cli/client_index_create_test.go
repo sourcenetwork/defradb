@@ -14,6 +14,16 @@ import (
 	"testing"
 )
 
+func createUserCollection(t *testing.T, conf DefraNodeConfig) {
+	createCollection(t, conf, `type User { Name: String }`)
+}
+
+func createCollection(t *testing.T, conf DefraNodeConfig, colSchema string) {
+	fileName := schemaFileFixture(t, "schema.graphql", colSchema)
+	stdout, _ := runDefraCommand(t, conf, []string{"client", "schema", "add", "-f", fileName})
+	assertContainsSubstring(t, stdout, "success")
+}
+
 func TestIndex_IfNoArgs_ShowUsage(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
 	stdout, _ := runDefraCommand(t, conf, []string{"client", "index"})
@@ -26,14 +36,30 @@ func TestIndexCreate_IfNoArgs_ShowUsage(t *testing.T) {
 	assertContainsSubstring(t, stderr, "Usage")
 }
 
-func createUserCollection(t *testing.T, conf DefraNodeConfig) {
-	createCollection(t, conf, `type User { Name: String }`)
+func TestIndexCreate_IfNoFieldsArg_ShouldFail(t *testing.T) {
+	conf := NewDefraNodeDefaultConfig(t)
+	stopDefra := runDefraNode(t, conf)
+
+	createUserCollection(t, conf)
+
+	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "create",
+		"--collection", "User"})
+	stopDefra()
+
+	assertContainsSubstring(t, stderr, "missing argument")
 }
 
-func createCollection(t *testing.T, conf DefraNodeConfig, colSchema string) {
-	fileName := schemaFileFixture(t, "schema.graphql", colSchema)
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "schema", "add", "-f", fileName})
-	assertContainsSubstring(t, stdout, "success")
+func TestIndexCreate_IfNoCollectionArg_ShouldFail(t *testing.T) {
+	conf := NewDefraNodeDefaultConfig(t)
+	stopDefra := runDefraNode(t, conf)
+
+	createUserCollection(t, conf)
+
+	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "create",
+		"--fields", "Name"})
+	stopDefra()
+
+	assertContainsSubstring(t, stderr, "missing argument")
 }
 
 func TestIndexCreate_IfCollectionExists_ShouldCreateIndex(t *testing.T) {
