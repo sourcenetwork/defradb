@@ -411,7 +411,7 @@ func executeTestCase(
 			resultsChans = append(resultsChans, resultsChan)
 
 		case Request:
-			executeRequest(ctx, t, nodes, testCase.Description, action)
+			executeRequest(ctx, t, nodes, &txns, testCase.Description, action)
 
 		case ExplainRequest:
 			executeExplainRequest(ctx, t, testCase.Description, db, action)
@@ -1208,6 +1208,42 @@ func withRetry(
 	return nil
 }
 
+func getStore(
+	ctx context.Context,
+	t *testing.T,
+	description string,
+	db client.DB,
+	txnsPointer *[]datastore.Txn,
+	transactionSpecifier immutable.Option[int],
+	expectedError string,
+) client.Store {
+	if !transactionSpecifier.HasValue() {
+		return db
+	}
+
+	transactionID := transactionSpecifier.Value()
+	txns := *txnsPointer
+
+	if transactionID >= len(txns) {
+		// Extend the txn slice so this txn can fit and be accessed by TransactionId
+		txns = append(txns, make([]datastore.Txn, transactionID-len(txns)+1)...)
+		*txnsPointer = txns
+	}
+
+	if txns[transactionID] == nil {
+		// Create a new transaction if one does not already exist.
+		txn, err := db.NewTxn(ctx, false)
+		if AssertError(t, description, err, expectedError) {
+			txn.Discard(ctx)
+			return nil
+		}
+
+		txns[transactionID] = txn
+	}
+
+	return db.WithTxn(txns[transactionID])
+}
+
 // executeTransactionRequest executes the given transactional request.
 //
 // It will create and cache a new transaction if it is the first of the given
@@ -1288,12 +1324,14 @@ func executeRequest(
 	ctx context.Context,
 	t *testing.T,
 	nodes []*node.Node,
+	txnsPointer *[]datastore.Txn,
 	description string,
 	action Request,
 ) {
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, nodes) {
-		result := node.DB.ExecRequest(ctx, action.Request)
+		db := getStore(ctx, t, description, node.DB, txnsPointer, action.TransactionID, action.ExpectedError)
+		result := db.ExecRequest(ctx, action.Request)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(

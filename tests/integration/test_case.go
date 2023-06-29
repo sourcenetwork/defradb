@@ -237,6 +237,9 @@ type Request struct {
 	// in which case the expected results must all match across all nodes.
 	NodeID immutable.Option[int]
 
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
+
 	// The request to execute.
 	Request string
 
