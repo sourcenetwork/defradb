@@ -15,6 +15,7 @@ import (
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
@@ -224,8 +225,8 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 					"age": 27
 				}`,
 			},
-			testUtils.TransactionRequest2{
-				TransactionID: 0,
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
 				Request: `mutation {
 					update_User(data: "{\"age\": 28}") {
 						_key
@@ -241,8 +242,8 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 					},
 				},
 			},
-			testUtils.TransactionRequest2{
-				TransactionID: 1,
+			testUtils.Request{
+				TransactionID: immutable.Some(1),
 				Request: `mutation {
 					update_User(data: "{\"age\": 29}") {
 						_key
