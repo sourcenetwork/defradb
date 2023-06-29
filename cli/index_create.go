@@ -87,7 +87,7 @@ Example: create a named index for 'Users' collection on 'Name' field:
 			if err != nil {
 				return NewErrFailedToReadResponseBody(err)
 			}
-			if e := res.Body.Close(); e != nil {
+			if err := res.Body.Close(); err != nil {
 				return NewErrFailedToCloseResponseBody(err)
 			}
 

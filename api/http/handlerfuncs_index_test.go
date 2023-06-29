@@ -51,7 +51,7 @@ func TestCreateIndexHandler_IfFailsToParseParams_ReturnError(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	assert.Equal(t, http.StatusInternalServerError, rr.Code, "handler returned wrong status code")
+	assert.Equal(t, http.StatusBadRequest, rr.Code, "handler returned wrong status code")
 	assert.Contains(t, rr.Body.String(), "invalid character", "handler returned unexpected body")
 }
 
@@ -115,7 +115,7 @@ func TestDropIndexHandler_IfFailsToParseParams_ReturnError(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	assert.Equal(t, http.StatusInternalServerError, rr.Code, "handler returned wrong status code")
+	assert.Equal(t, http.StatusBadRequest, rr.Code, "handler returned wrong status code")
 	assert.Contains(t, rr.Body.String(), "invalid character", "handler returned unexpected body")
 }
 

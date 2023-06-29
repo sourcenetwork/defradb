@@ -28,7 +28,7 @@ func createIndexHandler(rw http.ResponseWriter, req *http.Request) {
 	var data map[string]string
 	err = json.NewDecoder(req.Body).Decode(&data)
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -75,7 +75,7 @@ func dropIndexHandler(rw http.ResponseWriter, req *http.Request) {
 	var data map[string]string
 	err = json.NewDecoder(req.Body).Decode(&data)
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -118,16 +118,10 @@ func listIndexHandler(rw http.ResponseWriter, req *http.Request) {
 			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 			return
 		}
-		type collectionIndexes struct {
-			Collections map[client.CollectionName][]client.IndexDescription `json:"collections"`
-		}
-		colIndexes := collectionIndexes{Collections: indexesPerCol}
 		sendJSON(
 			req.Context(),
 			rw,
-			struct {
-				Data collectionIndexes `json:"data"`
-			}{Data: colIndexes},
+			simpleDataResponse("collections", indexesPerCol),
 			http.StatusOK,
 		)
 	} else {

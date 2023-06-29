@@ -83,7 +83,7 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 			if err != nil {
 				return NewErrFailedToReadResponseBody(err)
 			}
-			if e := res.Body.Close(); e != nil {
+			if err := res.Body.Close(); err != nil {
 				return NewErrFailedToCloseResponseBody(err)
 			}
 
