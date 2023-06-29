@@ -14,34 +14,27 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type indexFieldResp struct {
-	Name string `json:"Name"`
-}
-type indexResp struct {
-	Name   string           `json:"Name"`
-	Fields []indexFieldResp `json:"Fields"`
-}
 
 func TestIndexList_IfCollectionIsNotSpecified_ShouldReturnAllIndexes(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
 	stopDefra := runDefraNode(t, conf)
 
-	createCollection(t, conf, `type User { Name: String }`)
-	createCollection(t, conf, `type Product { Name: String Price: Int }`)
-	createIndexOnField(t, conf, "User", "Name", "")
-	createIndexOnField(t, conf, "Product", "Name", "")
-	createIndexOnField(t, conf, "Product", "Price", "")
+	createCollection(t, conf, `type User { name: String }`)
+	createCollection(t, conf, `type Product { name: String price: Int }`)
+	createIndexOnField(t, conf, "User", "name", "")
+	createIndexOnField(t, conf, "Product", "name", "")
+	createIndexOnField(t, conf, "Product", "price", "")
 
 	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "list"})
 	nodeLog := stopDefra()
 
 	var resp struct {
 		Data struct {
-			Collections map[string][]indexResp `json:"collections"`
+			Collections map[string][]client.IndexDescription `json:"collections"`
 		} `json:"data"`
 	}
 	err := json.Unmarshal([]byte(stdout[0]), &resp)
@@ -62,9 +55,9 @@ func TestIndexList_IfCollectionIsSpecified_ShouldReturnCollectionsIndexes(t *tes
 	createUserCollection(t, conf)
 	createIndexOnName(t, conf)
 
-	createCollection(t, conf, `type Product { Name: String Price: Int }`)
-	createIndexOnField(t, conf, "Product", "Name", "")
-	createIndexOnField(t, conf, "Product", "Price", "")
+	createCollection(t, conf, `type Product { name: String price: Int }`)
+	createIndexOnField(t, conf, "Product", "name", "")
+	createIndexOnField(t, conf, "Product", "price", "")
 
 	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "list",
 		"--collection", "User"})
@@ -72,15 +65,16 @@ func TestIndexList_IfCollectionIsSpecified_ShouldReturnCollectionsIndexes(t *tes
 
 	var resp struct {
 		Data struct {
-			Indexes []indexResp `json:"indexes"`
+			Indexes []client.IndexDescription `json:"indexes"`
 		} `json:"data"`
 	}
 	err := json.Unmarshal([]byte(stdout[0]), &resp)
 	require.NoError(t, err)
 
-	expectedResp := indexResp{Name: userColIndexOnNameFieldName, Fields: []indexFieldResp{{Name: "Name"}}}
+	//expectedResp := indexResp{Name: userColIndexOnNameFieldName, Fields: []indexFieldResp{{Name: "name"}}}
+	expectedDesc := client.IndexDescription{Name: userColIndexOnNameFieldName, ID: 1, Fields: []client.IndexedFieldDescription{{Name: "name", Direction: client.Ascending}}}
 	assert.Equal(t, 1, len(resp.Data.Indexes))
-	assert.Equal(t, expectedResp, resp.Data.Indexes[0])
+	assert.Equal(t, expectedDesc, resp.Data.Indexes[0])
 
 	assertNotContainsSubstring(t, stdout, "errors")
 	assertNotContainsSubstring(t, nodeLog, "errors")

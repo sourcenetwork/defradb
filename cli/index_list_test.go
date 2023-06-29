@@ -49,7 +49,7 @@ func TestIndexListCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	defer close()
 
 	addSchemaCmd := MakeSchemaAddCommand(cfg)
-	err := addSchemaCmd.RunE(addSchemaCmd, []string{`type User { Name: String }`})
+	err := addSchemaCmd.RunE(addSchemaCmd, []string{`type User { name: String }`})
 	if err != nil {
 		t.Fatal(err)
 	}

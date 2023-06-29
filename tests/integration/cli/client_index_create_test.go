@@ -15,7 +15,7 @@ import (
 )
 
 func createUserCollection(t *testing.T, conf DefraNodeConfig) {
-	createCollection(t, conf, `type User { Name: String }`)
+	createCollection(t, conf, `type User { name: String }`)
 }
 
 func createCollection(t *testing.T, conf DefraNodeConfig, colSchema string) {
@@ -69,10 +69,10 @@ func TestIndexCreate_IfCollectionExists_ShouldCreateIndex(t *testing.T) {
 	createUserCollection(t, conf)
 
 	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "create",
-		"--collection", "User", "--fields", "Name", "--name", "users_name_index"})
+		"--collection", "User", "--fields", "name", "--name", "users_name_index"})
 	nodeLog := stopDefra()
 
-	jsonResponse := `{"data":{"index":{"Name":"users_name_index","ID":1,"Fields":[{"Name":"Name","Direction":"ASC"}]}}}`
+	jsonResponse := `{"data":{"index":{"Name":"users_name_index","ID":1,"Fields":[{"Name":"name","Direction":"ASC"}]}}}`
 	assertContainsSubstring(t, stdout, jsonResponse)
 	assertNotContainsSubstring(t, stdout, "errors")
 	assertNotContainsSubstring(t, nodeLog, "errors")

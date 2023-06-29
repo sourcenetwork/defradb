@@ -23,7 +23,7 @@ func TestIndexDrop_IfNoArgs_ShowUsage(t *testing.T) {
 const userColIndexOnNameFieldName = "users_name_index"
 
 func createIndexOnName(t *testing.T, conf DefraNodeConfig) {
-	createIndexOnField(t, conf, "User", "Name", userColIndexOnNameFieldName)
+	createIndexOnField(t, conf, "User", "name", userColIndexOnNameFieldName)
 }
 
 func createIndexOnField(t *testing.T, conf DefraNodeConfig, colName, fieldName, indexName string) {

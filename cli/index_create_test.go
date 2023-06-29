@@ -107,7 +107,7 @@ func TestIndexCreateCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	defer close()
 
 	addSchemaCmd := MakeSchemaAddCommand(cfg)
-	err := addSchemaCmd.RunE(addSchemaCmd, []string{`type User { Name: String }`})
+	err := addSchemaCmd.RunE(addSchemaCmd, []string{`type User { name: String }`})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func TestIndexCreateCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	indexCreateCmd.SetOut(b)
 
 	indexCreateCmd.SetArgs([]string{"--collection", "User",
-		"--fields", "Name", "--name", "users_name_index"})
+		"--fields", "name", "--name", "users_name_index"})
 	err = indexCreateCmd.Execute()
 	if err != nil {
 		t.Fatal(err)
