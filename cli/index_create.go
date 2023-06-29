@@ -45,11 +45,11 @@ func MakeIndexCreateCommand(cfg *config.Config) *cobra.Command {
 		
 The --name flag is optional. If not provided, a name will be generated automatically.
 
-Example: create an index for 'Users' collection on 'Name' field:
-  defradb client index create --collection 'Users' --fields 'Name'
+Example: create an index for 'Users' collection on 'name' field:
+  defradb client index create --collection Users --fields name
 
-Example: create a named index for 'Users' collection on 'Name' field:
-  defradb client index create --collection Users --fields Name --name UsersByName`,
+Example: create a named index for 'Users' collection on 'name' field:
+  defradb client index create --collection Users --fields name --name UsersByName`,
 		ValidArgs: []string{"collection", "fields", "name"},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if collectionArg == "" || fieldsArg == "" {
