@@ -73,13 +73,6 @@ func getTargetedHistory(
 	schemaID string,
 	targetSchemaVersionID string,
 ) (map[schemaVersionID]*targetedHistoryItem, error) {
-	// todo - history should be cached (on registery?):
-	// https://github.com/sourcenetwork/defradb/issues/1590
-	// I timed this (once...), it took `157.973µs` on my laptop (badger IM) or
-	// `166.067µs` (badger file), 3 schema versions
-	// (TestSchemaMigrationQueryMigratesFromIntermediaryVersion). I'm happy
-	// as-is for now and it can be cached later.  Will run on fetcher construction.
-	// add a ticket.
 	history, err := getHistory(ctx, txn, lensConfigs, schemaID)
 	if err != nil {
 		return nil, err
