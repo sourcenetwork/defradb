@@ -13,53 +13,66 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
-func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-
-		{
-			Description: "Simple delete mutation where one element exists.",
-			Docs: map[int][]string{
-				0: {
-					`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
-					}`,
-				},
+func TestDeletionOfADocumentUsingSingleKeyWhereDocExists(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple delete mutation where one element exists.",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+						points: Float
+						verified: Boolean
+					}
+				`,
 			},
-			TransactionalRequests: []testUtils.TransactionRequest{
-				{
-					TransactionId: 0,
-					Request: `mutation {
-								delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-									_key
-								}
-							}`,
-					Results: []map[string]any{
-						{
-							"_key": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
-						},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"age":  26,
+					"points": 48.5,
+					"verified": true
+				}`,
+			},
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
+				Request: `mutation {
+							delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+								_key
+							}
+						}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
 					},
 				},
-				{
-					TransactionId: 0,
-					Request: `query {
-								User(dockey: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-									_key
-								}
-							}`,
+			},
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
+				Request: `query {
+							User(dockey: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+								_key
+							}
+						}`,
 
-					// explicitly empty
-					Results: []map[string]any{},
-				},
+				// explicitly empty
+				Results: []map[string]any{},
 			},
 		},
+	}
 
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+}
+
+func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple delete mutation with an aliased _key name.",
 			Docs: map[int][]string{
