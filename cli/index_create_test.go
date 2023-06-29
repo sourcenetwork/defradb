@@ -116,8 +116,8 @@ func TestIndexCreateCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	b := bytes.NewBufferString("")
 	indexCreateCmd.SetOut(b)
 
-	indexCreateCmd.SetArgs([]string{"--collection", "User",
-		"--fields", "name", "--name", "users_name_index"})
+	indexCreateCmd.SetArgs([]string{
+		"--collection", "User", "--fields", "name", "--name", "users_name_index"})
 	err = indexCreateCmd.Execute()
 	if err != nil {
 		t.Fatal(err)
