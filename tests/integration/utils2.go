@@ -396,9 +396,6 @@ func executeTestCase(
 		case GetIndexes:
 			getIndexes(ctx, t, testCase, nodes, collections, action)
 
-		case TransactionRequest2:
-			txns = executeTransactionRequest(ctx, t, db, txns, testCase, action)
-
 		case TransactionCommit:
 			commitTransaction(ctx, t, txns, testCase, action)
 
@@ -1242,60 +1239,6 @@ func getStore(
 	}
 
 	return db.WithTxn(txns[transactionID])
-}
-
-// executeTransactionRequest executes the given transactional request.
-//
-// It will create and cache a new transaction if it is the first of the given
-// TransactionId. If an error is returned the transaction will be discarded before
-// this function returns.
-func executeTransactionRequest(
-	ctx context.Context,
-	t *testing.T,
-	db client.DB,
-	txns []datastore.Txn,
-	testCase TestCase,
-	action TransactionRequest2,
-) []datastore.Txn {
-	if action.TransactionID >= len(txns) {
-		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		txns = append(txns, make([]datastore.Txn, action.TransactionID-len(txns)+1)...)
-	}
-
-	if txns[action.TransactionID] == nil {
-		// Create a new transaction if one does not already exist.
-		txn, err := db.NewTxn(ctx, false)
-		if AssertError(t, testCase.Description, err, action.ExpectedError) {
-			txn.Discard(ctx)
-			return nil
-		}
-
-		txns[action.TransactionID] = txn
-	}
-
-	result := db.WithTxn(txns[action.TransactionID]).ExecRequest(ctx, action.Request)
-	expectedErrorRaised := assertRequestResults(
-		ctx,
-		t,
-		testCase.Description,
-		&result.GQL,
-		action.Results,
-		action.ExpectedError,
-		// anyof is not yet supported by transactional requests
-		0,
-		map[docFieldKey][]any{},
-	)
-
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-	if expectedErrorRaised {
-		// Make sure to discard the transaction before exit, else an unwanted error
-		// may surface later (e.g. on database close).
-		txns[action.TransactionID].Discard(ctx)
-		return nil
-	}
-
-	return txns
 }
 
 // commitTransaction commits the given transaction.

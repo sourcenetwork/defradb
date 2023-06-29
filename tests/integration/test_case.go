@@ -253,30 +253,6 @@ type Request struct {
 	ExpectedError string
 }
 
-// TransactionRequest2 represents a transactional request.
-//
-// A new transaction will be created for the first TransactionRequest2 of any given
-// TransactionId. TransactionRequest2s will be submitted to the database in the order
-// in which they are recieved (interleaving amongst other actions if provided), however
-// they will not be commited until a TransactionCommit of matching TransactionId is
-// provided.
-type TransactionRequest2 struct {
-	// Used to identify the transaction for this to run against.
-	TransactionID int
-
-	// The request to run against the transaction.
-	Request string
-
-	// The expected (data) results of the issued request.
-	Results []map[string]any
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
 // TransactionCommit represents a commit request for a transaction of the given id.
 type TransactionCommit struct {
 	// Used to identify the transaction to commit.
