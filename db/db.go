@@ -65,6 +65,9 @@ type db struct {
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
 
+	// The maximum number of cached migrations instances to preserve per schema version.
+	lensPoolSize immutable.Option[int]
+
 	// The options used to init the database
 	options any
 }
@@ -90,6 +93,15 @@ func WithMaxRetries(num int) Option {
 	}
 }
 
+// WithLensPoolSize sets the maximum number of cached migrations instances to preserve per schema version.
+//
+// Will default to `5` if not set.
+func WithLensPoolSize(num int) Option {
+	return func(db *db) {
+		db.lensPoolSize = immutable.Some(num)
+	}
+}
+
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (client.DB, error) {
 	return newDB(ctx, rootstore, options...)
@@ -112,9 +124,8 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 
 		crdtFactory: &crdtFactory,
 
-		parser:       parser,
-		lensRegistry: lens.NewRegistry(),
-		options:      options,
+		parser:  parser,
+		options: options,
 	}
 
 	// apply options
@@ -124,6 +135,10 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 		}
 		opt(db)
 	}
+
+	// lensPoolSize may be set by `options`, and because they are funcs on db
+	// we have to mutate `db` here to set the registry.
+	db.lensRegistry = lens.NewRegistry(db.lensPoolSize)
 
 	err = db.initialize(ctx)
 	if err != nil {

@@ -16,6 +16,7 @@ import (
 
 	"github.com/ipfs/go-datastore/query"
 	"github.com/lens-vm/lens/host-go/config"
+	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -31,6 +32,7 @@ import (
 // lensRegistry is responsible for managing all migration related state within a local
 // database instance.
 type lensRegistry struct {
+	lensPoolSize int
 	// lens lockers by source schema version ID
 	lensWarehouse map[string]*lensLocker
 	// lens configurations by source schema version ID
@@ -39,8 +41,19 @@ type lensRegistry struct {
 
 var _ client.LensRegistry = (*lensRegistry)(nil)
 
-func NewRegistry() *lensRegistry {
+// NewRegistry instantiates a new registery.
+//
+// It will be of size 5 (per schema version) if a size is not provided.
+func NewRegistry(lensPoolSize immutable.Option[int]) *lensRegistry {
+	var size int
+	if lensPoolSize.HasValue() {
+		size = lensPoolSize.Value()
+	} else {
+		size = 5
+	}
+
 	return &lensRegistry{
+		lensPoolSize:  size,
 		lensWarehouse: map[string]*lensLocker{},
 		lensConfigs:   map[string]client.LensConfig{},
 	}
@@ -70,12 +83,12 @@ func (r *lensRegistry) SetMigration(ctx context.Context, txn datastore.Txn, cfg 
 func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error {
 	locker, ok := r.lensWarehouse[cfg.SourceSchemaVersionID]
 	if !ok {
-		locker = newLocker(cfg)
+		locker = newLocker(r.lensPoolSize, cfg)
 		r.lensWarehouse[cfg.SourceSchemaVersionID] = locker
 	}
 
-	newLensPipes := make([]*lensPipe, LENS_POOL_SIZE)
-	for i := 0; i < LENS_POOL_SIZE; i++ {
+	newLensPipes := make([]*lensPipe, r.lensPoolSize)
+	for i := 0; i < r.lensPoolSize; i++ {
 		var err error
 		newLensPipes[i], err = newLensPipe(cfg)
 		if err != nil {
@@ -202,10 +215,6 @@ func (r *lensRegistry) Config() []client.LensConfig {
 	return result
 }
 
-// LENS_POOL_SIZE is the number of lenses that each lens locker can contain, i.e. how many wasm module instances
-// per schema version.
-const LENS_POOL_SIZE int = 5
-
 // lensLocker provides a pool-like mechanic for caching a limited number of wasm lens modules in
 // a thread safe fashion.
 //
@@ -224,10 +233,10 @@ type lensLocker struct {
 	safes chan *lensPipe
 }
 
-func newLocker(cfg client.LensConfig) *lensLocker {
+func newLocker(lensPoolSize int, cfg client.LensConfig) *lensLocker {
 	return &lensLocker{
 		cfg:   cfg,
-		safes: make(chan *lensPipe, LENS_POOL_SIZE),
+		safes: make(chan *lensPipe, lensPoolSize),
 	}
 }
 

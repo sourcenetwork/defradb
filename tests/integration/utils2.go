@@ -66,6 +66,10 @@ var (
 
 const subscriptionTimeout = 1 * time.Second
 
+// Instanstiating lenses is very expensive, and our tests do not benefit from a large number of them,
+// so we explicitly set it to a low value.
+const lensPoolSize = 2
+
 var databaseDir string
 var rootDatabaseDir string
 
@@ -165,7 +169,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 		return nil, err
 	}
 
-	dbopts = append(dbopts, db.WithUpdateEvents())
+	dbopts = append(dbopts, db.WithUpdateEvents(), db.WithLensPoolSize(lensPoolSize))
 
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
@@ -177,7 +181,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 
 func NewInMemoryDB(ctx context.Context) (client.DB, error) {
 	rootstore := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents(), db.WithLensPoolSize(lensPoolSize))
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +210,7 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB,
 		return nil, err
 	}
 
-	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
+	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents(), db.WithLensPoolSize(lensPoolSize))
 	if err != nil {
 		return nil, err
 	}
