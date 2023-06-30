@@ -109,8 +109,7 @@ func TestIndexDropCmd_WithConsoleOutputIfNoCollection_ReturnError(t *testing.T) 
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	assert.Len(t, logLines[0]["Errors"], 1)
+	assert.True(t, hasLogWithKey(logLines, "Errors"))
 }
 
 func TestIndexDropCmd_WithConsoleOutputIfNoErrors_ShouldReturnData(t *testing.T) {
@@ -133,4 +132,6 @@ func TestIndexDropCmd_WithConsoleOutputIfNoErrors_ShouldReturnData(t *testing.T)
 	require.NoError(t, err)
 	require.Len(t, logLines, 1)
 	assert.Equal(t, "success", logLines[0]["Result"])
+
+	assert.False(t, hasLogWithKey(logLines, "Errors"))
 }

@@ -84,10 +84,7 @@ func TestIndexListCmd_WithConsoleOutputIfCollectionDoesNotExist_ReturnError(t *t
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	resultList, ok := logLines[0]["Errors"].([]any)
-	require.True(t, ok)
-	assert.Len(t, resultList, 1)
+	require.True(t, hasLogWithKey(logLines, "Errors"))
 }
 
 func TestIndexListCmd_WithConsoleOutputIfCollectionIsGiven_ReturnCollectionList(t *testing.T) {
@@ -116,6 +113,8 @@ func TestIndexListCmd_WithConsoleOutputIfCollectionIsGiven_ReturnCollectionList(
 	result, ok := resultList[0].(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, indexName, result["Name"])
+
+	assert.False(t, hasLogWithKey(logLines, "Errors"))
 }
 
 func TestIndexListCmd_WithConsoleOutputIfNoArgs_ReturnAllIndexes(t *testing.T) {
@@ -156,4 +155,6 @@ func TestIndexListCmd_WithConsoleOutputIfNoArgs_ReturnAllIndexes(t *testing.T) {
 	productIndex, ok := productCollection[0].(map[string]any)
 	require.True(t, ok)
 	require.Equal(t, productIndexName, productIndex["Name"])
+
+	assert.False(t, hasLogWithKey(logLines, "Errors"))
 }

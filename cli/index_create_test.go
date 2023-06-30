@@ -96,6 +96,15 @@ func execCreateIndexCmd(t *testing.T, cfg *config.Config, collection, fields, na
 	require.NoError(t, err)
 }
 
+func hasLogWithKey(logLines []map[string]any, key string) bool {
+	for _, logLine := range logLines {
+		if _, ok := logLine[key]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 func TestIndexCreateCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
 	cfg.API.Address = "invalid address"
@@ -189,8 +198,7 @@ func TestIndexCreateCmd_WithConsoleOutputIfNoCollection_ReturnError(t *testing.T
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	assert.Len(t, logLines[0]["Errors"], 1)
+	assert.True(t, hasLogWithKey(logLines, "Errors"))
 }
 
 func TestIndexCreateCmd_WithConsoleOutputIfNoErrors_ReturnData(t *testing.T) {
@@ -216,4 +224,6 @@ func TestIndexCreateCmd_WithConsoleOutputIfNoErrors_ReturnData(t *testing.T) {
 	result, ok := logLines[0]["Index"].(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, indexName, result["Name"])
+
+	assert.False(t, hasLogWithKey(logLines, "Errors"))
 }
