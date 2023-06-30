@@ -154,8 +154,9 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 		return c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldId(""))
 	}
 
-	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, then an update
-	// commit synced via P2P.  The synced update commit should not undelete the local.
+	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
+	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
+	// the local reperesentation of the document.
 	versionKey := c.key.WithValueFlag().WithFieldId(core.DATASTORE_DOC_VERSION_FIELD_ID)
 	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
 	hasObjectMarker := !(err != nil && errors.Is(err, ds.ErrNotFound))
