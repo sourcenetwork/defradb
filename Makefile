@@ -71,10 +71,12 @@ deps\:lint:
 
 .PHONY: deps\:test
 deps\:test:
+	rustup target add wasm32-unknown-unknown
 	go install gotest.tools/gotestsum@latest
 
 .PHONY: deps\:coverage
 deps\:coverage:
+	rustup target add wasm32-unknown-unknown
 	go install github.com/ory/go-acc@latest
 
 .PHONY: deps\:bench
