@@ -39,9 +39,6 @@ type lensedFetcher struct {
 	fieldDescriptionsByName map[string]client.FieldDescription
 
 	targetVersionID string
-	// We cache the target schema version ID as bytes so we dont have to bother
-	// casting it within the fetch loop.
-	targetVersionIDBytes []byte
 }
 
 var _ fetcher.Fetcher = (*lensedFetcher)(nil)
@@ -75,7 +72,6 @@ func (f *lensedFetcher) Init(
 	}
 
 	f.targetVersionID = col.Schema.VersionID
-	f.targetVersionIDBytes = []byte(col.Schema.VersionID)
 	return f.source.Init(col, fields, filter, docmapper, reverse, showDeleted)
 }
 
@@ -387,7 +383,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		}
 
 		versionKey := datastoreKeyBase.WithFieldId(core.DATASTORE_DOC_VERSION_FIELD_ID)
-		err := f.txn.Datastore().Put(ctx, versionKey.ToDS(), f.targetVersionIDBytes)
+		err := f.txn.Datastore().Put(ctx, versionKey.ToDS(), []byte(f.targetVersionID))
 		if err != nil {
 			return err
 		}
