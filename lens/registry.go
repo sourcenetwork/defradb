@@ -264,20 +264,20 @@ type borrowedEnumerable struct {
 var _ enumerable.Socket[LensDoc] = (*borrowedEnumerable)(nil)
 
 func (s *borrowedEnumerable) SetSource(newSource enumerable.Enumerable[LensDoc]) {
-	s.source.input.SetSource(newSource)
+	s.source.SetSource(newSource)
 }
 
 func (s *borrowedEnumerable) Next() (bool, error) {
-	return s.source.enumerable.Next()
+	return s.source.Next()
 }
 
 func (s *borrowedEnumerable) Value() (LensDoc, error) {
-	return s.source.enumerable.Value()
+	return s.source.Value()
 }
 
 func (s *borrowedEnumerable) Reset() {
 	s.locker.returnLens(s.source)
-	s.source.enumerable.Reset()
+	s.source.Reset()
 }
 
 // lensPipe provides a mechanic where the underlying wasm module can be hidden from consumers
