@@ -55,7 +55,7 @@ func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fe
 	}
 }
 
-func (df *lensedFetcher) Init(
+func (f *lensedFetcher) Init(
 	col *client.CollectionDescription,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
@@ -63,39 +63,39 @@ func (df *lensedFetcher) Init(
 	reverse bool,
 	showDeleted bool,
 ) error {
-	df.col = col
+	f.col = col
 
-	df.fieldDescriptionsByName = make(map[string]client.FieldDescription, len(col.Schema.Fields))
+	f.fieldDescriptionsByName = make(map[string]client.FieldDescription, len(col.Schema.Fields))
 	// Add cache the field descriptions in reverse, allowing smaller-index fields to overwrite any later
 	// ones.  This should never really happen here, but it ensures the result is consistent with col.GetField
 	// which returns the first one it finds with a matching name.
 	for i := len(col.Schema.Fields) - 1; i >= 0; i-- {
 		field := col.Schema.Fields[i]
-		df.fieldDescriptionsByName[field.Name] = field
+		f.fieldDescriptionsByName[field.Name] = field
 	}
 
-	df.targetVersionID = col.Schema.VersionID
-	df.targetVersionIDBytes = []byte(col.Schema.VersionID)
-	return df.source.Init(col, fields, filter, docmapper, reverse, showDeleted)
+	f.targetVersionID = col.Schema.VersionID
+	f.targetVersionIDBytes = []byte(col.Schema.VersionID)
+	return f.source.Init(col, fields, filter, docmapper, reverse, showDeleted)
 }
 
-func (df *lensedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
-	history, err := getTargetedHistory(ctx, txn, df.registry.Config(), df.col.Schema.SchemaID, df.col.Schema.VersionID)
+func (f *lensedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
+	history, err := getTargetedHistory(ctx, txn, f.registry.Config(), f.col.Schema.SchemaID, f.col.Schema.VersionID)
 	if err != nil {
 		return err
 	}
-	df.lens = New(df.registry, df.col.Schema.VersionID, history)
-	df.txn = txn
+	f.lens = New(f.registry, f.col.Schema.VersionID, history)
+	f.txn = txn
 
-	return df.source.Start(ctx, txn, spans)
+	return f.source.Start(ctx, txn, spans)
 }
 
-func (df *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, error) {
+func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, error) {
 	panic("This function is never called and is dead code.  As this type is internal, panicing is okay for now")
 }
 
-func (df *lensedFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, error) {
-	doc, err := df.source.FetchNextDecoded(ctx)
+func (f *lensedFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, error) {
+	doc, err := f.source.FetchNextDecoded(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (df *lensedFetcher) FetchNextDecoded(ctx context.Context) (*client.Document
 		return nil, nil
 	}
 
-	if doc.SchemaVersionID == df.targetVersionID {
+	if doc.SchemaVersionID == f.targetVersionID {
 		// If the document is already at the target schema version, no migration is required and
 		// we can return it early.
 		return doc, nil
@@ -115,31 +115,31 @@ func (df *lensedFetcher) FetchNextDecoded(ctx context.Context) (*client.Document
 		return nil, err
 	}
 
-	err = df.lens.Put(doc.SchemaVersionID, sourceLensDoc)
+	err = f.lens.Put(doc.SchemaVersionID, sourceLensDoc)
 	if err != nil {
 		return nil, err
 	}
 
-	hasNext, err := df.lens.Next()
+	hasNext, err := f.lens.Next()
 	if err != nil {
 		return nil, err
 	}
 	if !hasNext {
 		// The migration decided to not yield a document, so we cycle through the next fetcher doc
-		return df.FetchNextDecoded(ctx)
+		return f.FetchNextDecoded(ctx)
 	}
 
-	migratedLensDoc, err := df.lens.Value()
+	migratedLensDoc, err := f.lens.Value()
 	if err != nil {
 		return nil, err
 	}
 
-	migratedDoc, err := df.lensDocToClientDoc(migratedLensDoc)
+	migratedDoc, err := f.lensDocToClientDoc(migratedLensDoc)
 	if err != nil {
 		return nil, err
 	}
 
-	err = df.updateDataStore(ctx, sourceLensDoc, migratedLensDoc)
+	err = f.updateDataStore(ctx, sourceLensDoc, migratedLensDoc)
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +147,11 @@ func (df *lensedFetcher) FetchNextDecoded(ctx context.Context) (*client.Document
 	return migratedDoc, nil
 }
 
-func (df *lensedFetcher) FetchNextDoc(
+func (f *lensedFetcher) FetchNextDoc(
 	ctx context.Context,
 	mapping *core.DocumentMapping,
 ) ([]byte, core.Doc, error) {
-	key, doc, err := df.source.FetchNextDoc(ctx, mapping)
+	key, doc, err := f.source.FetchNextDoc(ctx, mapping)
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
@@ -160,7 +160,7 @@ func (df *lensedFetcher) FetchNextDoc(
 		return key, doc, nil
 	}
 
-	if doc.SchemaVersionID == df.targetVersionID {
+	if doc.SchemaVersionID == f.targetVersionID {
 		// If the document is already at the target schema version, no migration is required and
 		// we can return it early.
 		return key, doc, nil
@@ -170,26 +170,26 @@ func (df *lensedFetcher) FetchNextDoc(
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
-	err = df.lens.Put(doc.SchemaVersionID, sourceJson)
+	err = f.lens.Put(doc.SchemaVersionID, sourceJson)
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
 
-	hasNext, err := df.lens.Next()
+	hasNext, err := f.lens.Next()
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
 	if !hasNext {
 		// The migration decided to not yield a document, so we cycle through the next fetcher doc
-		return df.FetchNextDoc(ctx, mapping)
+		return f.FetchNextDoc(ctx, mapping)
 	}
 
-	migratedDocJson, err := df.lens.Value()
+	migratedDocJson, err := f.lens.Value()
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
 
-	migratedDoc, err := df.lensDocToCoreDoc(mapping, migratedDocJson)
+	migratedDoc, err := f.lensDocToCoreDoc(mapping, migratedDocJson)
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
@@ -197,11 +197,11 @@ func (df *lensedFetcher) FetchNextDoc(
 	return key, migratedDoc, nil
 }
 
-func (df *lensedFetcher) Close() error {
-	if df.lens != nil {
-		df.lens.Reset()
+func (f *lensedFetcher) Close() error {
+	if f.lens != nil {
+		f.lens.Reset()
 	}
-	return df.source.Close()
+	return f.source.Close()
 }
 
 // clientDocToLensDoc converts a client.Document to a LensDoc.
@@ -238,7 +238,7 @@ func coreDocToLensDoc(mapping *core.DocumentMapping, doc core.Doc) (LensDoc, err
 }
 
 // lensDocToCoreDoc converts a LensDoc to a core.Doc.
-func (df *lensedFetcher) lensDocToCoreDoc(mapping *core.DocumentMapping, docAsMap LensDoc) (core.Doc, error) {
+func (f *lensedFetcher) lensDocToCoreDoc(mapping *core.DocumentMapping, docAsMap LensDoc) (core.Doc, error) {
 	doc := mapping.NewDoc()
 
 	for fieldName, fieldByteValue := range docAsMap {
@@ -252,7 +252,7 @@ func (df *lensedFetcher) lensDocToCoreDoc(mapping *core.DocumentMapping, docAsMa
 			continue
 		}
 
-		fieldDesc, fieldFound := df.fieldDescriptionsByName[fieldName]
+		fieldDesc, fieldFound := f.fieldDescriptionsByName[fieldName]
 		if !fieldFound {
 			// Note: This can technically happen if a Lens migration returns a field that
 			// we do not know about. In which case we have to skip it.
@@ -278,13 +278,13 @@ func (df *lensedFetcher) lensDocToCoreDoc(mapping *core.DocumentMapping, docAsMa
 		}
 	}
 
-	doc.SchemaVersionID = df.col.Schema.VersionID
+	doc.SchemaVersionID = f.col.Schema.VersionID
 
 	return doc, nil
 }
 
 // lensDocToClientDoc converts a LensDoc to a client.Document.
-func (df *lensedFetcher) lensDocToClientDoc(docAsMap LensDoc) (*client.Document, error) {
+func (f *lensedFetcher) lensDocToClientDoc(docAsMap LensDoc) (*client.Document, error) {
 	key, err := client.NewDocKeyFromString(docAsMap[request.KeyFieldName].(string))
 	if err != nil {
 		return nil, err
@@ -296,7 +296,7 @@ func (df *lensedFetcher) lensDocToClientDoc(docAsMap LensDoc) (*client.Document,
 			continue
 		}
 
-		fieldDesc, fieldFound := df.fieldDescriptionsByName[fieldName]
+		fieldDesc, fieldFound := f.fieldDescriptionsByName[fieldName]
 		if !fieldFound {
 			// Note: This can technically happen if a Lens migration returns a field that
 			// we do not know about. In which case we have to skip it.
@@ -314,7 +314,7 @@ func (df *lensedFetcher) lensDocToClientDoc(docAsMap LensDoc) (*client.Document,
 		}
 	}
 
-	doc.SchemaVersionID = df.col.Schema.VersionID
+	doc.SchemaVersionID = f.col.Schema.VersionID
 
 	// Note: client.Document does not have a means of flagging as to whether it is
 	// deleted or not, and, currently the fetcher does not ever returned deleted items
@@ -328,7 +328,7 @@ func (df *lensedFetcher) lensDocToClientDoc(docAsMap LensDoc) (*client.Document,
 // This removes the need to migrate a document everytime it is fetched as the second time around
 // the underlying fetcher will return the migrated values cached in the datastore instead of the
 // underlying dag store values.
-func (df *lensedFetcher) updateDataStore(ctx context.Context, original map[string]any, migrated map[string]any) error {
+func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string]any, migrated map[string]any) error {
 	modifiedFieldValuesByName := map[string]any{}
 	for name, originalValue := range original {
 		migratedValue, ok := migrated[name]
@@ -361,13 +361,13 @@ func (df *lensedFetcher) updateDataStore(ctx context.Context, original map[strin
 		}
 
 		datastoreKeyBase := core.DataStoreKey{
-			CollectionID: df.col.IDString(),
+			CollectionID: f.col.IDString(),
 			DocKey:       dockey,
 			InstanceType: core.ValueKey,
 		}
 
 		for fieldName, value := range modifiedFieldValuesByName {
-			fieldDesc, ok := df.fieldDescriptionsByName[fieldName]
+			fieldDesc, ok := f.fieldDescriptionsByName[fieldName]
 			if !ok {
 				// It may be that the migration has set fields that are unknown to us locally
 				// in which case we have to skip them for now.
@@ -380,14 +380,14 @@ func (df *lensedFetcher) updateDataStore(ctx context.Context, original map[strin
 				return err
 			}
 
-			err = df.txn.Datastore().Put(ctx, fieldKey.ToDS(), append([]byte{byte(fieldDesc.Typ)}, bytes...))
+			err = f.txn.Datastore().Put(ctx, fieldKey.ToDS(), append([]byte{byte(fieldDesc.Typ)}, bytes...))
 			if err != nil {
 				return err
 			}
 		}
 
 		versionKey := datastoreKeyBase.WithFieldId(core.DATASTORE_DOC_VERSION_FIELD_ID)
-		err := df.txn.Datastore().Put(ctx, versionKey.ToDS(), df.targetVersionIDBytes)
+		err := f.txn.Datastore().Put(ctx, versionKey.ToDS(), f.targetVersionIDBytes)
 		if err != nil {
 			return err
 		}
