@@ -48,40 +48,112 @@ func TestIndexListCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
 
-	addSchemaCmd := MakeSchemaAddCommand(cfg)
-	err := addSchemaCmd.RunE(addSchemaCmd, []string{`type User { name: String }`})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	indexCreateCmd := MakeIndexCreateCommand(cfg)
-	indexCreateCmd.SetArgs([]string{"--collection", "User",
-		"--fields", "Name", "--name", "users_name_index"})
-	err = indexCreateCmd.Execute()
-	if err != nil {
-		t.Fatal(err)
-	}
+	execAddSchemaCmd(t, cfg, `type User { name: String }`)
+	execCreateIndexCmd(t, cfg, "User", "name", "users_name_index")
 
 	indexListCmd := MakeIndexListCommand(cfg)
 	b := bytes.NewBufferString("")
 	indexListCmd.SetOut(b)
 
-	err = indexListCmd.Execute()
-	if err != nil {
-		t.Fatal(err)
-	}
+	err := indexListCmd.Execute()
+	require.NoError(t, err)
 
 	out, err := io.ReadAll(b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	r := make(map[string]any)
 	err = json.Unmarshal(out, &r)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, hasData := r["data"]
 	assert.True(t, hasData, "command should return data")
+}
+
+func TestIndexListCmd_WithConsoleOutputIfCollectionDoesNotExist_ReturnError(t *testing.T) {
+	cfg, close := startNode(t)
+	defer close()
+
+	indexListCmd := MakeIndexListCommand(cfg)
+	indexListCmd.SetArgs([]string{"--collection", "User"})
+
+	outputBuf, revertOutput := simulateConsoleOutput(t)
+	defer revertOutput()
+
+	err := indexListCmd.Execute()
+	require.NoError(t, err)
+
+	logLines, err := parseLines(outputBuf)
+	require.NoError(t, err)
+	require.Len(t, logLines, 1)
+	resultList, ok := logLines[0]["Errors"].([]any)
+	require.True(t, ok)
+	assert.Len(t, resultList, 1)
+}
+
+func TestIndexListCmd_WithConsoleOutputIfCollectionIsGiven_ReturnCollectionList(t *testing.T) {
+	cfg, close := startNode(t)
+	defer close()
+
+	const indexName = "users_name_index"
+	execAddSchemaCmd(t, cfg, `type User { name: String }`)
+	execCreateIndexCmd(t, cfg, "User", "name", indexName)
+
+	indexListCmd := MakeIndexListCommand(cfg)
+	indexListCmd.SetArgs([]string{"--collection", "User"})
+
+	outputBuf, revertOutput := simulateConsoleOutput(t)
+	defer revertOutput()
+
+	err := indexListCmd.Execute()
+	require.NoError(t, err)
+
+	logLines, err := parseLines(outputBuf)
+	require.NoError(t, err)
+	require.Len(t, logLines, 1)
+	resultList, ok := logLines[0]["Indexes"].([]any)
+	require.True(t, ok)
+	require.Len(t, resultList, 1)
+	result, ok := resultList[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, indexName, result["Name"])
+}
+
+func TestIndexListCmd_WithConsoleOutputIfNoArgs_ReturnAllIndexes(t *testing.T) {
+	cfg, close := startNode(t)
+	defer close()
+
+	const userIndexName = "users_name_index"
+	const productIndexName = "product_price_index"
+	execAddSchemaCmd(t, cfg, `type User { name: String }`)
+	execAddSchemaCmd(t, cfg, `type Product { price: Int }`)
+	execCreateIndexCmd(t, cfg, "User", "name", userIndexName)
+	execCreateIndexCmd(t, cfg, "Product", "price", productIndexName)
+
+	indexListCmd := MakeIndexListCommand(cfg)
+
+	outputBuf, revertOutput := simulateConsoleOutput(t)
+	defer revertOutput()
+
+	err := indexListCmd.Execute()
+	require.NoError(t, err)
+
+	logLines, err := parseLines(outputBuf)
+	require.NoError(t, err)
+	require.Len(t, logLines, 1)
+	resultCollections, ok := logLines[0]["Collections"].(map[string]any)
+	require.True(t, ok)
+
+	userCollection, ok := resultCollections["User"].([]any)
+	require.True(t, ok)
+	require.Len(t, userCollection, 1)
+	userIndex, ok := userCollection[0].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, userIndexName, userIndex["Name"])
+
+	productCollection, ok := resultCollections["Product"].([]any)
+	require.True(t, ok)
+	require.Len(t, productCollection, 1)
+	productIndex, ok := productCollection[0].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, productIndexName, productIndex["Name"])
 }

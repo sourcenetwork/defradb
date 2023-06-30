@@ -11,16 +11,19 @@
 package cli
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 func getTestConfig(t *testing.T) *config.Config {
@@ -38,10 +41,59 @@ func startNode(t *testing.T) (*config.Config, func()) {
 
 	ctx := context.Background()
 	di, err := start(ctx, cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	return cfg, func() { di.close(ctx) }
+}
+
+func parseLines(r io.Reader) ([]map[string]any, error) {
+	fileScanner := bufio.NewScanner(r)
+
+	fileScanner.Split(bufio.ScanLines)
+
+	logLines := []map[string]any{}
+	for fileScanner.Scan() {
+		loggedLine := make(map[string]any)
+		err := json.Unmarshal(fileScanner.Bytes(), &loggedLine)
+		if err != nil {
+			return nil, err
+		}
+		logLines = append(logLines, loggedLine)
+	}
+
+	return logLines, nil
+}
+
+func simulateConsoleOutput(t *testing.T) (*bytes.Buffer, func()) {
+	b := &bytes.Buffer{}
+	log.ApplyConfig(logging.Config{
+		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
+		Pipe:          b,
+	})
+
+	f, err := os.CreateTemp(t.TempDir(), "tmpFile")
+	require.NoError(t, err)
+	originalStdout := os.Stdout
+	os.Stdout = f
+
+	return b, func() {
+		os.Stdout = originalStdout
+		f.Close()
+		os.Remove(f.Name())
+	}
+}
+
+func execAddSchemaCmd(t *testing.T, cfg *config.Config, schema string) {
+	addSchemaCmd := MakeSchemaAddCommand(cfg)
+	err := addSchemaCmd.RunE(addSchemaCmd, []string{schema})
+	require.NoError(t, err)
+}
+
+func execCreateIndexCmd(t *testing.T, cfg *config.Config, collection, fields, name string) {
+	indexCreateCmd := MakeIndexCreateCommand(cfg)
+	indexCreateCmd.SetArgs([]string{"--collection", collection,
+		"--fields", fields, "--name", name})
+	err := indexCreateCmd.Execute()
+	require.NoError(t, err)
 }
 
 func TestIndexCreateCmd_IfInvalidAddress_ReturnError(t *testing.T) {
@@ -83,34 +135,24 @@ func TestIndexCreateCmd_IfNoCollection_ReturnError(t *testing.T) {
 	indexCreateCmd.SetArgs([]string{"--collection", "User",
 		"--fields", "Name", "--name", "users_name_index"})
 	err := indexCreateCmd.Execute()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	out, err := io.ReadAll(b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	r := make(map[string]any)
 	err = json.Unmarshal(out, &r)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, hasErrors := r["errors"]
 	assert.True(t, hasErrors, "command should return error")
 }
 
-func TestIndexCreateCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
+func TestIndexCreateCmd_IfNoErrors_ReturnData(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
 
-	addSchemaCmd := MakeSchemaAddCommand(cfg)
-	err := addSchemaCmd.RunE(addSchemaCmd, []string{`type User { name: String }`})
-	if err != nil {
-		t.Fatal(err)
-	}
+	execAddSchemaCmd(t, cfg, `type User { name: String }`)
 
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 	b := bytes.NewBufferString("")
@@ -118,22 +160,60 @@ func TestIndexCreateCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 
 	indexCreateCmd.SetArgs([]string{
 		"--collection", "User", "--fields", "name", "--name", "users_name_index"})
-	err = indexCreateCmd.Execute()
-	if err != nil {
-		t.Fatal(err)
-	}
+	err := indexCreateCmd.Execute()
+	require.NoError(t, err)
 
 	out, err := io.ReadAll(b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	r := make(map[string]any)
 	err = json.Unmarshal(out, &r)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, hasData := r["data"]
 	assert.True(t, hasData, "command should return data")
+}
+
+func TestIndexCreateCmd_WithConsoleOutputIfNoCollection_ReturnError(t *testing.T) {
+	cfg, close := startNode(t)
+	defer close()
+	indexCreateCmd := MakeIndexCreateCommand(cfg)
+	indexCreateCmd.SetArgs([]string{"--collection", "User",
+		"--fields", "Name", "--name", "users_name_index"})
+
+	outputBuf, revertOutput := simulateConsoleOutput(t)
+	defer revertOutput()
+
+	err := indexCreateCmd.Execute()
+	require.NoError(t, err)
+
+	logLines, err := parseLines(outputBuf)
+	require.NoError(t, err)
+	require.Len(t, logLines, 1)
+	assert.Len(t, logLines[0]["Errors"], 1)
+}
+
+func TestIndexCreateCmd_WithConsoleOutputIfNoErrors_ReturnData(t *testing.T) {
+	cfg, close := startNode(t)
+	defer close()
+
+	execAddSchemaCmd(t, cfg, `type User { name: String }`)
+
+	const indexName = "users_name_index"
+	indexCreateCmd := MakeIndexCreateCommand(cfg)
+	indexCreateCmd.SetArgs([]string{
+		"--collection", "User", "--fields", "name", "--name", indexName})
+
+	outputBuf, revertOutput := simulateConsoleOutput(t)
+	defer revertOutput()
+
+	err := indexCreateCmd.Execute()
+	require.NoError(t, err)
+
+	logLines, err := parseLines(outputBuf)
+	require.NoError(t, err)
+	require.Len(t, logLines, 1)
+	result, ok := logLines[0]["Index"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, indexName, result["Name"])
 }

@@ -56,20 +56,14 @@ func TestIndexDropCmd_IfNoCollection_ReturnError(t *testing.T) {
 
 	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
 	err := indexDropCmd.Execute()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	out, err := io.ReadAll(b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	r := make(map[string]any)
 	err = json.Unmarshal(out, &r)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, hasErrors := r["errors"]
 	assert.True(t, hasErrors, "command should return error")
@@ -79,41 +73,64 @@ func TestIndexDropCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	cfg, close := startNode(t)
 	defer close()
 
-	addSchemaCmd := MakeSchemaAddCommand(cfg)
-	err := addSchemaCmd.RunE(addSchemaCmd, []string{`type User { name: String }`})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	indexCreateCmd := MakeIndexCreateCommand(cfg)
-	indexCreateCmd.SetArgs([]string{"--collection", "User",
-		"--fields", "name", "--name", "users_name_index"})
-	err = indexCreateCmd.Execute()
-	if err != nil {
-		t.Fatal(err)
-	}
+	execAddSchemaCmd(t, cfg, `type User { name: String }`)
+	execCreateIndexCmd(t, cfg, "User", "name", "users_name_index")
 
 	indexDropCmd := MakeIndexDropCommand(cfg)
 	b := bytes.NewBufferString("")
 	indexDropCmd.SetOut(b)
 
 	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
-	err = indexDropCmd.Execute()
-	if err != nil {
-		t.Fatal(err)
-	}
+	err := indexDropCmd.Execute()
+	require.NoError(t, err)
 
 	out, err := io.ReadAll(b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	r := make(map[string]any)
 	err = json.Unmarshal(out, &r)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, hasData := r["data"]
 	assert.True(t, hasData, "command should return data")
+}
+
+func TestIndexDropCmd_WithConsoleOutputIfNoCollection_ReturnError(t *testing.T) {
+	cfg, close := startNode(t)
+	defer close()
+	indexDropCmd := MakeIndexDropCommand(cfg)
+
+	outputBuf, revertOutput := simulateConsoleOutput(t)
+	defer revertOutput()
+
+	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
+	err := indexDropCmd.Execute()
+	require.NoError(t, err)
+
+	logLines, err := parseLines(outputBuf)
+	require.NoError(t, err)
+	require.Len(t, logLines, 1)
+	assert.Len(t, logLines[0]["Errors"], 1)
+}
+
+func TestIndexDropCmd_WithConsoleOutputIfNoErrors_ShouldReturnData(t *testing.T) {
+	cfg, close := startNode(t)
+	defer close()
+
+	execAddSchemaCmd(t, cfg, `type User { name: String }`)
+	execCreateIndexCmd(t, cfg, "User", "name", "users_name_index")
+
+	indexDropCmd := MakeIndexDropCommand(cfg)
+	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
+
+	outputBuf, revertOutput := simulateConsoleOutput(t)
+	defer revertOutput()
+
+	err := indexDropCmd.Execute()
+	require.NoError(t, err)
+
+	logLines, err := parseLines(outputBuf)
+	require.NoError(t, err)
+	require.Len(t, logLines, 1)
+	assert.Equal(t, "success", logLines[0]["Result"])
 }
