@@ -1536,6 +1536,7 @@ func executeRequest(
 			&result.GQL,
 			action.Results,
 			action.ExpectedError,
+			action.Asserter,
 			nodeID,
 			anyOfByFieldKey,
 		)
@@ -1601,6 +1602,7 @@ func executeSubscriptionRequest(
 							finalResult,
 							action.Results,
 							action.ExpectedError,
+							nil,
 							// anyof is not yet supported by subscription requests
 							0,
 							map[docFieldKey][]any{},
@@ -1673,6 +1675,7 @@ func assertRequestResults(
 	result *client.GQLResult,
 	expectedResults []map[string]any,
 	expectedError string,
+	asserter ResultAsserter,
 	nodeID int,
 	anyOfByField map[docFieldKey][]any,
 ) bool {
@@ -1686,6 +1689,11 @@ func assertRequestResults(
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]any)
+
+	if asserter != nil {
+		asserter.Assert(s.t, resultantData)
+		return true
+	}
 
 	log.Info(s.ctx, "", logging.NewKV("RequestResults", result.Data))
 
