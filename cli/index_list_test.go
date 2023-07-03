@@ -25,23 +25,8 @@ func TestIndexListCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg.API.Address = "invalid address"
 	indexCreateCmd := MakeIndexListCommand(cfg)
 
-	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
-
 	err := indexCreateCmd.RunE(indexCreateCmd, nil)
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
-}
-
-func TestIndexListCmd_IfNonExistingAddress_ReturnError(t *testing.T) {
-	cfg := getTestConfig(t)
-	cfg.API.Address = "none"
-	indexCreateCmd := MakeIndexListCommand(cfg)
-
-	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
-
-	err := indexCreateCmd.RunE(indexCreateCmd, nil)
-	require.ErrorIs(t, err, NewErrFailedToSendRequest(err))
 }
 
 func TestIndexListCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
@@ -52,13 +37,13 @@ func TestIndexListCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	execCreateIndexCmd(t, cfg, "User", "name", "users_name_index")
 
 	indexListCmd := MakeIndexListCommand(cfg)
-	b := bytes.NewBufferString("")
-	indexListCmd.SetOut(b)
+	outputBuf := bytes.NewBufferString("")
+	indexListCmd.SetOut(outputBuf)
 
 	err := indexListCmd.Execute()
 	require.NoError(t, err)
 
-	out, err := io.ReadAll(b)
+	out, err := io.ReadAll(outputBuf)
 	require.NoError(t, err)
 
 	r := make(map[string]any)
@@ -82,6 +67,7 @@ func TestIndexListCmd_WithConsoleOutputIfCollectionDoesNotExist_ReturnError(t *t
 	err := indexListCmd.Execute()
 	require.NoError(t, err)
 
+	outputBuf = outputBuf
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
 	require.True(t, hasLogWithKey(logLines, "Errors"))

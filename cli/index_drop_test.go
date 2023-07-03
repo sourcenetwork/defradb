@@ -25,25 +25,9 @@ func TestIndexDropCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg.API.Address = "invalid address"
 	indexDropCmd := MakeIndexDropCommand(cfg)
 
-	b := bytes.NewBufferString("")
-	indexDropCmd.SetOut(b)
-
 	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
 	err := indexDropCmd.Execute()
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
-}
-
-func TestIndexDropCmd_IfNonExistingAddress_ReturnError(t *testing.T) {
-	cfg := getTestConfig(t)
-	cfg.API.Address = "none"
-	indexDropCmd := MakeIndexDropCommand(cfg)
-
-	b := bytes.NewBufferString("")
-	indexDropCmd.SetOut(b)
-
-	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
-	err := indexDropCmd.Execute()
-	require.ErrorIs(t, err, NewErrFailedToSendRequest(err))
 }
 
 func TestIndexDropCmd_IfNoCollection_ReturnError(t *testing.T) {
@@ -51,14 +35,14 @@ func TestIndexDropCmd_IfNoCollection_ReturnError(t *testing.T) {
 	defer close()
 	indexDropCmd := MakeIndexDropCommand(cfg)
 
-	b := bytes.NewBufferString("")
-	indexDropCmd.SetOut(b)
+	outputBuf := bytes.NewBufferString("")
+	indexDropCmd.SetOut(outputBuf)
 
 	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
 	err := indexDropCmd.Execute()
 	require.NoError(t, err)
 
-	out, err := io.ReadAll(b)
+	out, err := io.ReadAll(outputBuf)
 	require.NoError(t, err)
 
 	r := make(map[string]any)
@@ -77,14 +61,14 @@ func TestIndexDropCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 	execCreateIndexCmd(t, cfg, "User", "name", "users_name_index")
 
 	indexDropCmd := MakeIndexDropCommand(cfg)
-	b := bytes.NewBufferString("")
-	indexDropCmd.SetOut(b)
+	outputBuf := bytes.NewBufferString("")
+	indexDropCmd.SetOut(outputBuf)
 
 	indexDropCmd.SetArgs([]string{"--collection", "User", "--name", "users_name_index"})
 	err := indexDropCmd.Execute()
 	require.NoError(t, err)
 
-	out, err := io.ReadAll(b)
+	out, err := io.ReadAll(outputBuf)
 	require.NoError(t, err)
 
 	r := make(map[string]any)

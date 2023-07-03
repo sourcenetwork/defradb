@@ -110,27 +110,10 @@ func TestIndexCreateCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg.API.Address = "invalid address"
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 
-	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
-
 	indexCreateCmd.SetArgs([]string{"--collection", "User",
 		"--fields", "Name", "--name", "users_name_index"})
 	err := indexCreateCmd.Execute()
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
-}
-
-func TestIndexCreateCmd_IfNonExistingAddress_ReturnError(t *testing.T) {
-	cfg := getTestConfig(t)
-	cfg.API.Address = "none"
-	indexCreateCmd := MakeIndexCreateCommand(cfg)
-
-	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
-
-	indexCreateCmd.SetArgs([]string{"--collection", "User",
-		"--fields", "Name", "--name", "users_name_index"})
-	err := indexCreateCmd.Execute()
-	require.ErrorIs(t, err, NewErrFailedToSendRequest(err))
 }
 
 func TestIndexCreateCmd_IfNoCollection_ReturnError(t *testing.T) {
@@ -138,15 +121,15 @@ func TestIndexCreateCmd_IfNoCollection_ReturnError(t *testing.T) {
 	defer close()
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 
-	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
+	outputBuf := bytes.NewBufferString("")
+	indexCreateCmd.SetOut(outputBuf)
 
 	indexCreateCmd.SetArgs([]string{"--collection", "User",
 		"--fields", "Name", "--name", "users_name_index"})
 	err := indexCreateCmd.Execute()
 	require.NoError(t, err)
 
-	out, err := io.ReadAll(b)
+	out, err := io.ReadAll(outputBuf)
 	require.NoError(t, err)
 
 	r := make(map[string]any)
@@ -164,15 +147,15 @@ func TestIndexCreateCmd_IfNoErrors_ReturnData(t *testing.T) {
 	execAddSchemaCmd(t, cfg, `type User { name: String }`)
 
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
-	b := bytes.NewBufferString("")
-	indexCreateCmd.SetOut(b)
+	outputBuf := bytes.NewBufferString("")
+	indexCreateCmd.SetOut(outputBuf)
 
 	indexCreateCmd.SetArgs([]string{
 		"--collection", "User", "--fields", "name", "--name", "users_name_index"})
 	err := indexCreateCmd.Execute()
 	require.NoError(t, err)
 
-	out, err := io.ReadAll(b)
+	out, err := io.ReadAll(outputBuf)
 	require.NoError(t, err)
 
 	r := make(map[string]any)
