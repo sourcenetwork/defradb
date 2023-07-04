@@ -18,9 +18,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// Decode takes a field value and description and converts it to the
+// DecodeFieldValue takes a field value and description and converts it to the
 // standardized Defra Go type.
-func Decode(fieldDesc client.FieldDescription, val any) (any, error) {
+func DecodeFieldValue(fieldDesc client.FieldDescription, val any) (any, error) {
 	if val == nil {
 		return nil, nil
 	}

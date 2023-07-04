@@ -54,7 +54,7 @@ func (e encProperty) Decode() (any, error) {
 		return nil, err
 	}
 
-	return core.Decode(e.Desc, val)
+	return core.DecodeFieldValue(e.Desc, val)
 }
 
 // @todo: Implement Encoded Document type

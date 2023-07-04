@@ -255,7 +255,7 @@ func (f *lensedFetcher) lensDocToCoreDoc(mapping *core.DocumentMapping, docAsMap
 			continue
 		}
 
-		fieldValue, err := core.Decode(fieldDesc, fieldByteValue)
+		fieldValue, err := core.DecodeFieldValue(fieldDesc, fieldByteValue)
 		if err != nil {
 			return core.Doc{}, err
 		}
@@ -299,7 +299,7 @@ func (f *lensedFetcher) lensDocToClientDoc(docAsMap LensDoc) (*client.Document, 
 			continue
 		}
 
-		fieldValue, err := core.Decode(fieldDesc, fieldByteValue)
+		fieldValue, err := core.DecodeFieldValue(fieldDesc, fieldByteValue)
 		if err != nil {
 			return nil, err
 		}
