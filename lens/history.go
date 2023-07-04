@@ -265,7 +265,9 @@ func getHistory(
 	for _, pairing := range pairings {
 		src := history[pairing.schemaVersionID]
 
-		// Use the internal pairings to set the next/previous links
+		// Use the internal pairings to set the next/previous links. This must be
+		// done after the `history` map has been fully populated, else `src` and
+		// `next` may not yet have been added to the map.
 		if next, hasNext := history[pairing.nextSchemaVersionID]; hasNext {
 			src.next = immutable.Some(next)
 			next.previous = immutable.Some(src)
