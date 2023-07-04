@@ -86,3 +86,68 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema migration",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				TransactionID: immutable.Some(0),
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq",
+					DestinationSchemaVersionID: "bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "verified",
+									"value": true,
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.TransactionCommit{
+				TransactionID: 0,
+			},
+			testUtils.Request{
+				TransactionID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+						verified
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":     "John",
+						"verified": true,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
