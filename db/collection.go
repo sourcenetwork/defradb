@@ -874,7 +874,15 @@ func (c *collection) save(
 		}
 
 		if val.IsDirty() {
-			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
+			fieldKey, isAliasKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
+			// Overwrite the aliased key with the internal related object name.
+			if isAliasKey {
+				oldKey := k
+				k = oldKey + request.RelatedObjectID
+				doc.Fields()[k] = v
+				delete(doc.Fields(), oldKey)
+			}
+
 			if !fieldExists {
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
@@ -1183,31 +1191,40 @@ func (c *collection) getDSKeyFromDockey(docKey client.DocKey) core.DataStoreKey 
 	}
 }
 
-func (c *collection) tryGetFieldKey(key core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool) {
-	fieldId, hasField := c.tryGetSchemaFieldID(fieldName)
+func (c *collection) tryGetFieldKey(key core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool, bool) {
+	fieldId, isAliasKey, hasField := c.tryGetSchemaFieldID(fieldName)
 	if !hasField {
-		return core.DataStoreKey{}, false
+		return core.DataStoreKey{}, false, false
 	}
 
 	return core.DataStoreKey{
 		CollectionID: key.CollectionId,
 		DocKey:       key.DocKey,
 		FieldId:      strconv.FormatUint(uint64(fieldId), 10),
-	}, true
+	}, isAliasKey, true
 }
 
 // tryGetSchemaFieldID returns the FieldID of the given fieldName.
 // Will return false if the field is not found.
-func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
+func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool, bool) {
+	// Before comparing the name exactly, check if it is an alias, if it is then return the FieldID
+	// of the found alias field.
+	for _, field := range c.desc.Schema.Fields {
+		if field.Name == (fieldName + request.RelatedObjectID) {
+			return uint32(field.ID), true, true
+		}
+	}
+
 	for _, field := range c.desc.Schema.Fields {
 		if field.Name == fieldName {
 			if field.IsObject() || field.IsObjectArray() {
 				// We do not wish to match navigational properties, only
 				// fields directly on the collection.
-				return uint32(0), false
+				return uint32(0), false, false
 			}
-			return uint32(field.ID), true
+			return uint32(field.ID), false, true
 		}
 	}
-	return uint32(0), false
+
+	return uint32(0), false, false
 }
