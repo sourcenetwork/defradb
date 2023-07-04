@@ -81,10 +81,9 @@ func (r *lensRegistry) SetMigration(ctx context.Context, txn datastore.Txn, cfg 
 }
 
 func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error {
-	locker, ok := r.lensWarehouse[cfg.SourceSchemaVersionID]
-	if !ok {
+	locker, lockerAlreadyExists := r.lensWarehouse[cfg.SourceSchemaVersionID]
+	if !lockerAlreadyExists {
 		locker = newLocker(r.lensPoolSize, cfg)
-		r.lensWarehouse[cfg.SourceSchemaVersionID] = locker
 	}
 
 	newLensPipes := make([]*lensPipe, r.lensPoolSize)
@@ -100,6 +99,10 @@ func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error
 	// transaction if used for stuff (e.g. GQL requests) before commit.
 	// https://github.com/sourcenetwork/defradb/issues/1592
 	txn.OnSuccess(func() {
+		if !lockerAlreadyExists {
+			r.lensWarehouse[cfg.SourceSchemaVersionID] = locker
+		}
+
 	drainLoop:
 		for {
 			select {
