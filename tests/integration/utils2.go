@@ -396,9 +396,6 @@ func executeTestCase(
 		case GetIndexes:
 			getIndexes(ctx, t, testCase, nodes, collections, action)
 
-		case TransactionRequest2:
-			txns = executeTransactionRequest(ctx, t, db, txns, testCase, action)
-
 		case TransactionCommit:
 			commitTransaction(ctx, t, txns, testCase, action)
 
@@ -411,7 +408,7 @@ func executeTestCase(
 			resultsChans = append(resultsChans, resultsChan)
 
 		case Request:
-			executeRequest(ctx, t, nodes, testCase.Description, action)
+			executeRequest(ctx, t, nodes, &txns, testCase.Description, action)
 
 		case ExplainRequest:
 			executeExplainRequest(ctx, t, testCase.Description, db, action)
@@ -1208,58 +1205,40 @@ func withRetry(
 	return nil
 }
 
-// executeTransactionRequest executes the given transactional request.
-//
-// It will create and cache a new transaction if it is the first of the given
-// TransactionId. If an error is returned the transaction will be discarded before
-// this function returns.
-func executeTransactionRequest(
+func getStore(
 	ctx context.Context,
 	t *testing.T,
+	description string,
 	db client.DB,
-	txns []datastore.Txn,
-	testCase TestCase,
-	action TransactionRequest2,
-) []datastore.Txn {
-	if action.TransactionID >= len(txns) {
-		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		txns = append(txns, make([]datastore.Txn, action.TransactionID-len(txns)+1)...)
+	txnsPointer *[]datastore.Txn,
+	transactionSpecifier immutable.Option[int],
+	expectedError string,
+) client.Store {
+	if !transactionSpecifier.HasValue() {
+		return db
 	}
 
-	if txns[action.TransactionID] == nil {
+	transactionID := transactionSpecifier.Value()
+	txns := *txnsPointer
+
+	if transactionID >= len(txns) {
+		// Extend the txn slice so this txn can fit and be accessed by TransactionId
+		txns = append(txns, make([]datastore.Txn, transactionID-len(txns)+1)...)
+		*txnsPointer = txns
+	}
+
+	if txns[transactionID] == nil {
 		// Create a new transaction if one does not already exist.
 		txn, err := db.NewTxn(ctx, false)
-		if AssertError(t, testCase.Description, err, action.ExpectedError) {
+		if AssertError(t, description, err, expectedError) {
 			txn.Discard(ctx)
 			return nil
 		}
 
-		txns[action.TransactionID] = txn
+		txns[transactionID] = txn
 	}
 
-	result := db.WithTxn(txns[action.TransactionID]).ExecRequest(ctx, action.Request)
-	expectedErrorRaised := assertRequestResults(
-		ctx,
-		t,
-		testCase.Description,
-		&result.GQL,
-		action.Results,
-		action.ExpectedError,
-		// anyof is not yet supported by transactional requests
-		0,
-		map[docFieldKey][]any{},
-	)
-
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-	if expectedErrorRaised {
-		// Make sure to discard the transaction before exit, else an unwanted error
-		// may surface later (e.g. on database close).
-		txns[action.TransactionID].Discard(ctx)
-		return nil
-	}
-
-	return txns
+	return db.WithTxn(txns[transactionID])
 }
 
 // commitTransaction commits the given transaction.
@@ -1288,12 +1267,14 @@ func executeRequest(
 	ctx context.Context,
 	t *testing.T,
 	nodes []*node.Node,
+	txnsPointer *[]datastore.Txn,
 	description string,
 	action Request,
 ) {
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, nodes) {
-		result := node.DB.ExecRequest(ctx, action.Request)
+		db := getStore(ctx, t, description, node.DB, txnsPointer, action.TransactionID, action.ExpectedError)
+		result := db.ExecRequest(ctx, action.Request)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
