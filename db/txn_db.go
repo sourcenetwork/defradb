@@ -186,6 +186,26 @@ func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collec
 	return db.getAllCollections(ctx, db.txn)
 }
 
+// GetAllIndexes gets all the indexes in the database.
+func (db *implicitTxnDB) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getAllIndexes(ctx, txn)
+}
+
+// GetAllIndexes gets all the indexes in the database.
+func (db *explicitTxnDB) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	return db.getAllIndexes(ctx, db.txn)
+}
+
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
 // creating the necessary collections, request types, etc.
 //

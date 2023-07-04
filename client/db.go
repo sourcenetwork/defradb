@@ -19,6 +19,8 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
+type CollectionName = string
+
 // DB is the primary public programmatic access point to the local DefraDB instance.
 //
 // It should be constructed via the [db] package, via the [db.NewDB] function.
@@ -109,7 +111,7 @@ type Store interface {
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.
-	GetCollectionByName(context.Context, string) (Collection, error)
+	GetCollectionByName(context.Context, CollectionName) (Collection, error)
 
 	// GetCollectionBySchemaID attempts to retrieve a collection matching the given schema ID.
 	//
@@ -124,6 +126,9 @@ type Store interface {
 	// GetAllCollections returns all the collections and their descriptions that currently exist within
 	// this [Store].
 	GetAllCollections(context.Context) ([]Collection, error)
+
+	// GetAllIndexes returns all the indexes that currently exist within this [Store].
+	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(context.Context, string) *RequestResult

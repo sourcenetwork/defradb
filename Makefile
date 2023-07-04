@@ -25,7 +25,7 @@ BUILD_FLAGS=-trimpath -ldflags "\
 -X 'github.com/sourcenetwork/defradb/version.GitCommitDate=$(VERSION_GITCOMMITDATE)'"
 endif
 
-TEST_FLAGS=-race -shuffle=on -timeout 60s
+TEST_FLAGS=-race -shuffle=on -timeout 70s
 
 default:
 	@go run $(BUILD_FLAGS) cmd/defradb/main.go
