@@ -162,11 +162,11 @@ func (f *lensedFetcher) FetchNextDoc(
 		return key, doc, nil
 	}
 
-	sourceJson, err := coreDocToLensDoc(mapping, doc)
+	sourceLensDoc, err := coreDocToLensDoc(mapping, doc)
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
-	err = f.lens.Put(doc.SchemaVersionID, sourceJson)
+	err = f.lens.Put(doc.SchemaVersionID, sourceLensDoc)
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
@@ -180,12 +180,17 @@ func (f *lensedFetcher) FetchNextDoc(
 		return f.FetchNextDoc(ctx, mapping)
 	}
 
-	migratedDocJson, err := f.lens.Value()
+	migratedLensDoc, err := f.lens.Value()
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
 
-	migratedDoc, err := f.lensDocToCoreDoc(mapping, migratedDocJson)
+	migratedDoc, err := f.lensDocToCoreDoc(mapping, migratedLensDoc)
+	if err != nil {
+		return nil, core.Doc{}, err
+	}
+
+	err = f.updateDataStore(ctx, sourceLensDoc, migratedLensDoc)
 	if err != nil {
 		return nil, core.Doc{}, err
 	}
