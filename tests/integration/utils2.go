@@ -383,10 +383,10 @@ func executeTestCase(
 			indexes = getAllIndexes(ctx, collections)
 
 		case ConfigureMigration:
-			configureMigration(ctx, t, nodes, testCase, action)
+			configureMigration(ctx, t, nodes, &txns, testCase, action)
 
 		case GetMigrations:
-			getMigrations(ctx, t, nodes, testCase, action)
+			getMigrations(ctx, t, nodes, &txns, testCase, action)
 
 		case CreateDoc:
 			documents = createDoc(ctx, t, testCase, nodes, collections, documents, action)

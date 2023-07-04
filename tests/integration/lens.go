@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -26,6 +27,9 @@ import (
 type ConfigureMigration struct {
 	// NodeID is the node ID (index) of the node in which to configure the migration.
 	NodeID immutable.Option[int]
+
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
 
 	// The configuration to use.
 	//
@@ -45,6 +49,9 @@ type GetMigrations struct {
 	// NodeID is the node ID (index) of the node in which to configure the migration.
 	NodeID immutable.Option[int]
 
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
+
 	// The expected configuration.
 	ExpectedResults []client.LensConfig
 }
@@ -53,11 +60,14 @@ func configureMigration(
 	ctx context.Context,
 	t *testing.T,
 	nodes []*node.Node,
+	txnsPointer *[]datastore.Txn,
 	testCase TestCase,
 	action ConfigureMigration,
 ) {
 	for _, node := range getNodes(action.NodeID, nodes) {
-		err := node.DB.SetMigration(ctx, action.LensConfig)
+		db := getStore(ctx, t, testCase.Description, node.DB, txnsPointer, action.TransactionID, action.ExpectedError)
+
+		err := db.SetMigration(ctx, action.LensConfig)
 		expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -68,11 +78,14 @@ func getMigrations(
 	ctx context.Context,
 	t *testing.T,
 	nodes []*node.Node,
+	txnsPointer *[]datastore.Txn,
 	testCase TestCase,
 	action GetMigrations,
 ) {
 	for _, node := range getNodes(action.NodeID, nodes) {
-		configs := node.DB.LensRegistry().Config()
+		db := getStore(ctx, t, testCase.Description, node.DB, txnsPointer, action.TransactionID, "")
+
+		configs := db.LensRegistry().Config()
 
 		// The order of the results is not deterministic, so do not assert on the element
 		// locations.
