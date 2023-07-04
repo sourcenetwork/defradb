@@ -144,9 +144,7 @@ func (l *lens) Next() (bool, error) {
 				break
 			}
 
-			// Note: this check only works with a linear migration history.
-			isMigratingUp := historyLocation.targetVector > 0
-			if isMigratingUp {
+			if historyLocation.targetVector > 0 {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
