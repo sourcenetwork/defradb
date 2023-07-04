@@ -341,6 +341,8 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		}
 
 		// Note: A deep equals check is required here, as the values may be inline-array slices
+		// Todo: `reflect.DeepEqual` is pretty rubish long-term here and should be replaced
+		// with something more defra specific: https://github.com/sourcenetwork/defradb/issues/1606
 		if !reflect.DeepEqual(originalValue, migratedValue) {
 			modifiedFieldValuesByName[name] = migratedValue
 		}
