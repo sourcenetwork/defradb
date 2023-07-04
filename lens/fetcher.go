@@ -76,7 +76,7 @@ func (f *lensedFetcher) Init(
 }
 
 func (f *lensedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
-	history, err := getTargetedHistory(ctx, txn, f.registry.Config(), f.col.Schema.SchemaID, f.col.Schema.VersionID)
+	history, err := getTargetedSchemaHistory(ctx, txn, f.registry.Config(), f.col.Schema.SchemaID, f.col.Schema.VersionID)
 	if err != nil {
 		return err
 	}

@@ -21,37 +21,37 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-// historyItem represents an item in a particular schema's history, it
+// schemaHistoryLink represents an item in a particular schema's history, it
 // links to the previous and next version items if they exist.
-type historyItem struct {
+type schemaHistoryLink struct {
 	// The schema version id of this history item.
 	schemaVersionID string
 
-	// The history item for the next schema version, if there is one
+	// The history link to the next schema version, if there is one
 	// (for the most recent schema version this will be None).
-	next immutable.Option[*historyItem]
+	next immutable.Option[*schemaHistoryLink]
 
-	// The history item for the previous schema version, if there is
+	// The history link to the previous schema version, if there is
 	// one (for the initial schema version this will be None).
-	previous immutable.Option[*historyItem]
+	previous immutable.Option[*schemaHistoryLink]
 }
 
-// targetedHistoryItem represents an item in a particular schema's history, it
+// targetedSchemaHistoryLink represents an item in a particular schema's history, it
 // links to the previous and next version items if they exist.
 //
 // It also contains a vector which describes the distance and direction to the
 // target schema version (given as an input param on construction).
-type targetedHistoryItem struct {
+type targetedSchemaHistoryLink struct {
 	// The schema version id of this history item.
 	schemaVersionID string
 
-	// The history item for the next schema version, if there is one
+	// The link to next schema version, if there is one
 	// (for the most recent schema version this will be None).
-	next immutable.Option[*targetedHistoryItem]
+	next immutable.Option[*targetedSchemaHistoryLink]
 
-	// The history item for the previous schema version, if there is
+	// The link to the previous schema version, if there is
 	// one (for the initial schema version this will be None).
-	previous immutable.Option[*targetedHistoryItem]
+	previous immutable.Option[*targetedSchemaHistoryLink]
 
 	// The distance and direction from this history item to the target.
 	//
@@ -61,34 +61,34 @@ type targetedHistoryItem struct {
 	targetVector int
 }
 
-// getTargetedHistory returns the history of the schema of the given id, relative
+// getTargetedSchemaHistory returns the history of the schema of the given id, relative
 // to the given target schema version id.
 //
 // This includes any history items that are only known via registered
 // schema migrations.
-func getTargetedHistory(
+func getTargetedSchemaHistory(
 	ctx context.Context,
 	txn datastore.Txn,
 	lensConfigs []client.LensConfig,
 	schemaID string,
 	targetSchemaVersionID string,
-) (map[schemaVersionID]*targetedHistoryItem, error) {
-	history, err := getHistory(ctx, txn, lensConfigs, schemaID)
+) (map[schemaVersionID]*targetedSchemaHistoryLink, error) {
+	history, err := getSchemaHistory(ctx, txn, lensConfigs, schemaID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := map[schemaVersionID]*targetedHistoryItem{}
+	result := map[schemaVersionID]*targetedSchemaHistoryLink{}
 
 	for _, item := range history {
-		result[item.schemaVersionID] = &targetedHistoryItem{
+		result[item.schemaVersionID] = &targetedSchemaHistoryLink{
 			schemaVersionID: item.schemaVersionID,
 		}
 	}
 
 	for _, item := range result {
-		historyItem := history[item.schemaVersionID]
-		nextHistoryItem := historyItem.next
+		schemaHistoryLink := history[item.schemaVersionID]
+		nextHistoryItem := schemaHistoryLink.next
 		if !nextHistoryItem.HasValue() {
 			continue
 		}
@@ -169,31 +169,31 @@ func getTargetedHistory(
 	return result, nil
 }
 
-type historyPairing struct {
+type schemaHistoryPairing struct {
 	schemaVersionID     string
 	nextSchemaVersionID string
 }
 
-// getHistory returns the history of the schema of the given id.
+// getSchemaHistory returns the history of the schema of the given id.
 //
 // This includes any history items that are only known via registered
 // schema migrations.
-func getHistory(
+func getSchemaHistory(
 	ctx context.Context,
 	txn datastore.Txn,
 	lensConfigs []client.LensConfig,
 	schemaID string,
-) (map[schemaVersionID]*historyItem, error) {
-	pairings := map[string]*historyPairing{}
+) (map[schemaVersionID]*schemaHistoryLink, error) {
+	pairings := map[string]*schemaHistoryPairing{}
 
 	for _, config := range lensConfigs {
-		pairings[config.SourceSchemaVersionID] = &historyPairing{
+		pairings[config.SourceSchemaVersionID] = &schemaHistoryPairing{
 			schemaVersionID:     config.SourceSchemaVersionID,
 			nextSchemaVersionID: config.DestinationSchemaVersionID,
 		}
 
 		if _, ok := pairings[config.DestinationSchemaVersionID]; !ok {
-			pairings[config.DestinationSchemaVersionID] = &historyPairing{
+			pairings[config.DestinationSchemaVersionID] = &schemaHistoryPairing{
 				schemaVersionID: config.DestinationSchemaVersionID,
 			}
 		}
@@ -236,13 +236,13 @@ func getHistory(
 
 		// The local schema version history takes priority over and migration-defined history
 		// and overwrites whatever already exists in the pairings (if any)
-		pairings[key.PreviousSchemaVersionID] = &historyPairing{
+		pairings[key.PreviousSchemaVersionID] = &schemaHistoryPairing{
 			schemaVersionID:     key.PreviousSchemaVersionID,
 			nextSchemaVersionID: string(res.Value),
 		}
 
 		if _, ok := pairings[string(res.Value)]; !ok {
-			pairings[string(res.Value)] = &historyPairing{
+			pairings[string(res.Value)] = &schemaHistoryPairing{
 				schemaVersionID: string(res.Value),
 			}
 		}
@@ -253,11 +253,11 @@ func getHistory(
 		return nil, err
 	}
 
-	history := map[schemaVersionID]*historyItem{}
+	history := map[schemaVersionID]*schemaHistoryLink{}
 
 	for _, pairing := range pairings {
 		// Convert the temporary types to the cleaner return type:
-		history[pairing.schemaVersionID] = &historyItem{
+		history[pairing.schemaVersionID] = &schemaHistoryLink{
 			schemaVersionID: pairing.schemaVersionID,
 		}
 	}
