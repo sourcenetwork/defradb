@@ -11,7 +11,6 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -26,7 +25,7 @@ func createIndexHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var data map[string]string
-	err = json.NewDecoder(req.Body).Decode(&data)
+	err = getJSON(req, &data)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
@@ -73,7 +72,7 @@ func dropIndexHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var data map[string]string
-	err = json.NewDecoder(req.Body).Decode(&data)
+	err = getJSON(req, &data)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
