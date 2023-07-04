@@ -146,7 +146,7 @@ type SchemaHistoryKey struct {
 var _ Key = (*SchemaHistoryKey)(nil)
 
 // SchemaVersionMigrationKey points to the jsonified configuration of a lens migration
-// for the give source schema version id.
+// for the given source schema version id.
 type SchemaVersionMigrationKey struct {
 	SourceSchemaVersionID string
 }
