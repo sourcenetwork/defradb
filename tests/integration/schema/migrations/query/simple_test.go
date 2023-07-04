@@ -513,3 +513,125 @@ func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema migration, migration mutating existing scalar field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq",
+					DestinationSchemaVersionID: "bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								// This may appear to be an odd thing to do, but it is just a simplification.
+								// Existing fields may be mutated by migrations, and that is what we are testing
+								// here.
+								Arguments: map[string]any{
+									"dst":   "name",
+									"value": "Fred",
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Fred",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema migration, migration mutating existing inline-array field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						mobile: [Int!]
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"mobile": [644, 832, 8325]
+				}`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafkreic427cayffkscmp2ng224wpmsryzwz5aec6dhbfr2xoljb4xbugji",
+					DestinationSchemaVersionID: "bafkreidrmuahiz4qenylm247udlro732ip3adwv3dqpeds3s2kghwtfvt4",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								// This may appear to be an odd thing to do, but it is just a simplification.
+								// Existing fields may be mutated by migrations, and that is what we are testing
+								// here.
+								Arguments: map[string]any{
+									"dst":   "mobile",
+									"value": []int{847, 723, 2012},
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						mobile
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"mobile": []int64{847, 723, 2012},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
