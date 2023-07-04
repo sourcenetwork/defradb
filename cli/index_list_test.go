@@ -67,7 +67,6 @@ func TestIndexListCmd_WithConsoleOutputIfCollectionDoesNotExist_ReturnError(t *t
 	err := indexListCmd.Execute()
 	require.NoError(t, err)
 
-	outputBuf = outputBuf
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
 	require.True(t, hasLogWithKey(logLines, "Errors"))
