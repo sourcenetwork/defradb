@@ -27,8 +27,12 @@ func createIndexOnName(t *testing.T, conf DefraNodeConfig) {
 }
 
 func createIndexOnField(t *testing.T, conf DefraNodeConfig, colName, fieldName, indexName string) {
-	runDefraCommand(t, conf, []string{"client", "index", "create",
-		"--collection", colName, "--fields", fieldName, "--name", indexName})
+	runDefraCommand(t, conf, []string{
+		"client", "index", "create",
+		"--collection", colName,
+		"--fields", fieldName,
+		"--name", indexName,
+	})
 }
 
 func TestIndexDrop_IfNoNameArg_ShouldFail(t *testing.T) {
@@ -38,8 +42,10 @@ func TestIndexDrop_IfNoNameArg_ShouldFail(t *testing.T) {
 	createUserCollection(t, conf)
 	createIndexOnName(t, conf)
 
-	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "drop",
-		"--collection", "User"})
+	_, stderr := runDefraCommand(t, conf, []string{
+		"client", "index", "drop",
+		"--collection", "User",
+	})
 	stopDefra()
 
 	assertContainsSubstring(t, stderr, "missing argument")
@@ -52,8 +58,10 @@ func TestIndexDrop_IfNoCollectionArg_ShouldFail(t *testing.T) {
 	createUserCollection(t, conf)
 	createIndexOnName(t, conf)
 
-	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "drop",
-		"--name", "users_name_index"})
+	_, stderr := runDefraCommand(t, conf, []string{
+		"client", "index", "drop",
+		"--name", "users_name_index",
+	})
 	stopDefra()
 
 	assertContainsSubstring(t, stderr, "missing argument")
@@ -66,8 +74,11 @@ func TestIndexDrop_IfCollectionWithIndexExists_ShouldDropIndex(t *testing.T) {
 	createUserCollection(t, conf)
 	createIndexOnName(t, conf)
 
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "drop",
-		"--collection", "User", "--name", "users_name_index"})
+	stdout, _ := runDefraCommand(t, conf, []string{
+		"client", "index", "drop",
+		"--collection", "User",
+		"--name", "users_name_index",
+	})
 	nodeLog := stopDefra()
 
 	jsonResponse := `{"data":{"result":"success"}}`
@@ -80,8 +91,11 @@ func TestIndexDrop_IfCollectionDoesNotExist_ShouldFail(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
 	stopDefra := runDefraNode(t, conf)
 
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "drop",
-		"--collection", "User", "--name", "users_name_index"})
+	stdout, _ := runDefraCommand(t, conf, []string{
+		"client", "index", "drop",
+		"--collection", "User",
+		"--name", "users_name_index",
+	})
 	stopDefra()
 
 	assertContainsSubstring(t, stdout, "errors")
@@ -93,8 +107,11 @@ func TestIndexDrop_IfInternalError_ShouldFail(t *testing.T) {
 
 	createUserCollection(t, conf)
 
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "drop",
-		"--collection", "User", "--name", "users_name_index"})
+	stdout, _ := runDefraCommand(t, conf, []string{
+		"client", "index", "drop",
+		"--collection", "User",
+		"--name", "users_name_index",
+	})
 	stopDefra()
 
 	assertContainsSubstring(t, stdout, "errors")

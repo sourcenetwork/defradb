@@ -90,8 +90,11 @@ func execAddSchemaCmd(t *testing.T, cfg *config.Config, schema string) {
 
 func execCreateIndexCmd(t *testing.T, cfg *config.Config, collection, fields, name string) {
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
-	indexCreateCmd.SetArgs([]string{"--collection", collection,
-		"--fields", fields, "--name", name})
+	indexCreateCmd.SetArgs([]string{
+		"--collection", collection,
+		"--fields", fields,
+		"--name", name,
+	})
 	err := indexCreateCmd.Execute()
 	require.NoError(t, err)
 }
@@ -110,8 +113,11 @@ func TestIndexCreateCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg.API.Address = "invalid address"
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 
-	indexCreateCmd.SetArgs([]string{"--collection", "User",
-		"--fields", "Name", "--name", "users_name_index"})
+	indexCreateCmd.SetArgs([]string{
+		"--collection", "User",
+		"--fields", "Name",
+		"--name", "users_name_index",
+	})
 	err := indexCreateCmd.Execute()
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
 }
@@ -124,8 +130,11 @@ func TestIndexCreateCmd_IfNoCollection_ReturnError(t *testing.T) {
 	outputBuf := bytes.NewBufferString("")
 	indexCreateCmd.SetOut(outputBuf)
 
-	indexCreateCmd.SetArgs([]string{"--collection", "User",
-		"--fields", "Name", "--name", "users_name_index"})
+	indexCreateCmd.SetArgs([]string{
+		"--collection", "User",
+		"--fields", "Name",
+		"--name", "users_name_index",
+	})
 	err := indexCreateCmd.Execute()
 	require.NoError(t, err)
 
@@ -151,7 +160,10 @@ func TestIndexCreateCmd_IfNoErrors_ReturnData(t *testing.T) {
 	indexCreateCmd.SetOut(outputBuf)
 
 	indexCreateCmd.SetArgs([]string{
-		"--collection", "User", "--fields", "name", "--name", "users_name_index"})
+		"--collection", "User",
+		"--fields", "name",
+		"--name", "users_name_index",
+	})
 	err := indexCreateCmd.Execute()
 	require.NoError(t, err)
 
@@ -170,8 +182,11 @@ func TestIndexCreateCmd_WithConsoleOutputIfNoCollection_ReturnError(t *testing.T
 	cfg, close := startNode(t)
 	defer close()
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
-	indexCreateCmd.SetArgs([]string{"--collection", "User",
-		"--fields", "Name", "--name", "users_name_index"})
+	indexCreateCmd.SetArgs([]string{
+		"--collection", "User",
+		"--fields", "Name",
+		"--name", "users_name_index",
+	})
 
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
@@ -193,7 +208,10 @@ func TestIndexCreateCmd_WithConsoleOutputIfNoErrors_ReturnData(t *testing.T) {
 	const indexName = "users_name_index"
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 	indexCreateCmd.SetArgs([]string{
-		"--collection", "User", "--fields", "name", "--name", indexName})
+		"--collection", "User",
+		"--fields", "name",
+		"--name", indexName,
+	})
 
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()

@@ -42,8 +42,10 @@ func TestIndexCreate_IfNoFieldsArg_ShouldFail(t *testing.T) {
 
 	createUserCollection(t, conf)
 
-	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "create",
-		"--collection", "User"})
+	_, stderr := runDefraCommand(t, conf, []string{
+		"client", "index", "create",
+		"--collection", "User",
+	})
 	stopDefra()
 
 	assertContainsSubstring(t, stderr, "missing argument")
@@ -55,8 +57,10 @@ func TestIndexCreate_IfNoCollectionArg_ShouldFail(t *testing.T) {
 
 	createUserCollection(t, conf)
 
-	_, stderr := runDefraCommand(t, conf, []string{"client", "index", "create",
-		"--fields", "Name"})
+	_, stderr := runDefraCommand(t, conf, []string{
+		"client", "index", "create",
+		"--fields", "Name",
+	})
 	stopDefra()
 
 	assertContainsSubstring(t, stderr, "missing argument")
@@ -68,8 +72,12 @@ func TestIndexCreate_IfCollectionExists_ShouldCreateIndex(t *testing.T) {
 
 	createUserCollection(t, conf)
 
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "create",
-		"--collection", "User", "--fields", "name", "--name", "users_name_index"})
+	stdout, _ := runDefraCommand(t, conf, []string{
+		"client", "index", "create",
+		"--collection", "User",
+		"--fields", "name",
+		"--name", "users_name_index",
+	})
 	nodeLog := stopDefra()
 
 	jsonResponse := `{"data":{"index":{"Name":"users_name_index","ID":1,"Fields":[{"Name":"name","Direction":"ASC"}]}}}`
@@ -82,8 +90,12 @@ func TestIndexCreate_IfInternalError_ShouldFail(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
 	stopDefra := runDefraNode(t, conf)
 
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "create",
-		"--collection", "User", "--fields", "Name", "--name", "users_name_index"})
+	stdout, _ := runDefraCommand(t, conf, []string{
+		"client", "index", "create",
+		"--collection", "User",
+		"--fields", "Name",
+		"--name", "users_name_index",
+	})
 	stopDefra()
 
 	assertContainsSubstring(t, stdout, "errors")

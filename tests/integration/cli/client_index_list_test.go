@@ -60,8 +60,10 @@ func TestIndexList_IfCollectionIsSpecified_ShouldReturnCollectionsIndexes(t *tes
 	createIndexOnField(t, conf, "Product", "name", "")
 	createIndexOnField(t, conf, "Product", "price", "")
 
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "list",
-		"--collection", "User"})
+	stdout, _ := runDefraCommand(t, conf, []string{
+		"client", "index", "list",
+		"--collection", "User",
+	})
 	nodeLog := stopDefra()
 
 	var resp struct {
@@ -72,7 +74,6 @@ func TestIndexList_IfCollectionIsSpecified_ShouldReturnCollectionsIndexes(t *tes
 	err := json.Unmarshal([]byte(stdout[0]), &resp)
 	require.NoError(t, err)
 
-	//expectedResp := indexResp{Name: userColIndexOnNameFieldName, Fields: []indexFieldResp{{Name: "name"}}}
 	expectedDesc := client.IndexDescription{Name: userColIndexOnNameFieldName, ID: 1, Fields: []client.IndexedFieldDescription{{Name: "name", Direction: client.Ascending}}}
 	assert.Equal(t, 1, len(resp.Data.Indexes))
 	assert.Equal(t, expectedDesc, resp.Data.Indexes[0])
@@ -85,8 +86,10 @@ func TestIndexList_IfInternalError_ShouldFail(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
 	stopDefra := runDefraNode(t, conf)
 
-	stdout, _ := runDefraCommand(t, conf, []string{"client", "index", "list",
-		"--collection", "User"})
+	stdout, _ := runDefraCommand(t, conf, []string{
+		"client", "index", "list",
+		"--collection", "User",
+	})
 	stopDefra()
 
 	assertContainsSubstring(t, stdout, "errors")
