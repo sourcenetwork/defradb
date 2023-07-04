@@ -18,6 +18,23 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
+func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One to one create mutation, with an invalid field.",
+		Actions: []any{
+			testUtils.Request{
+				Request: `mutation {
+					create_Author(data: "{\"notName\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+					name
+				}
+			}`,
+				ExpectedError: "The given field does not exist. Name: notName",
+			},
+		},
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationCreateOneToOneNoChild(t *testing.T) {
@@ -35,6 +52,23 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 						"name": "John Grisham",
 					},
 				},
+			},
+		},
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One to one create mutation, from the secondary side",
+		Actions: []any{
+			testUtils.Request{
+				Request: `mutation {
+					create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+						name
+					}
+				}`,
+				ExpectedError: "no document for the given key exists",
 			},
 		},
 	}
