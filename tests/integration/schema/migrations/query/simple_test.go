@@ -635,3 +635,64 @@ func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema migration, migration removing existing field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 40
+				}`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafkreidovoxkxttybaew2qraoelormm63ilutzms7wlwmcr3xru44hfnta",
+					DestinationSchemaVersionID: "bafkreia4bbxhtqwzw4smby5xsqxv6ptoc6ijc6v3lmnlv66twpfak5gxxq",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.RemoveModulePath,
+								Arguments: map[string]any{
+									"target": "age",
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+						"age":  nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}

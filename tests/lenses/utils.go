@@ -25,6 +25,14 @@ var SetDefaultModulePath string = getPathRelativeToProjectRoot(
 	"/tests/lenses/rust_wasm32_set_default/target/wasm32-unknown-unknown/debug/rust_wasm32_set_default.wasm",
 )
 
+// RemoveModulePath is the path to the `Remove` lens module compiled to wasm.
+//
+// The module has one parameter:
+//   - `target` is a string and is the name of the property you wish to remove.
+var RemoveModulePath string = getPathRelativeToProjectRoot(
+	"/tests/lenses/rust_wasm32_remove/target/wasm32-unknown-unknown/debug/rust_wasm32_remove.wasm",
+)
+
 func getPathRelativeToProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(path.Dir(filename)))

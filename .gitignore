@@ -45,3 +45,6 @@ crash.log
 tests/lenses/rust_wasm32_set_default/Cargo.lock
 tests/lenses/rust_wasm32_set_default/target
 tests/lenses/rust_wasm32_set_default/pkg
+tests/lenses/rust_wasm32_remove/Cargo.lock
+tests/lenses/rust_wasm32_remove/target
+tests/lenses/rust_wasm32_remove/pkg
