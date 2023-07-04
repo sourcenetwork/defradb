@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	fixture "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_many"
 )
 
 func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testing.T) {
@@ -45,22 +46,8 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 	// require.NoError(t, err)
 
 	test := testUtils.TestCase{
+		Description: "One to many delete document using single key show deleted.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-				type Book {
-					name: String
-					rating: Float
-					author: Author
-				}
-
-				type Author {
-					name: String
-					age: Int
-					published: [Book]
-				}
-				`,
-			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc:          jsonString1,
@@ -121,5 +108,6 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
+	fixture.ExecuteTestCase(t, test)
+
 }
