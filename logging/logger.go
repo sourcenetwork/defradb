@@ -253,7 +253,7 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 			cfg.EncodeLevel = defaultConfig.EncoderConfig.EncodeLevel
 			return zapcore.NewCore(
 				zapcore.NewJSONEncoder(cfg),
-				zapcore.AddSync(config.pipe),
+				zapcore.Lock(zapcore.AddSync(config.pipe)),
 				zap.NewAtomicLevelAt(zapcore.Level(config.Level.LogLevel)),
 			)
 		}))
