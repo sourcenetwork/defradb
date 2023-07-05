@@ -27,16 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
-// collectionIndexDescription describes an index on a collection.
-// It's useful for retrieving a list of indexes without having to
-// retrieve the entire collection description.
-type collectionIndexDescription struct {
-	// CollectionName contains the name of the collection.
-	CollectionName string
-	// Index contains the index description.
-	Index client.IndexDescription
-}
-
 // createCollectionIndex creates a new collection index and saves it to the database in its system store.
 func (db *db) createCollectionIndex(
 	ctx context.Context,
@@ -69,7 +59,7 @@ func (db *db) dropCollectionIndex(
 func (db *db) getAllIndexes(
 	ctx context.Context,
 	txn datastore.Txn,
-) ([]collectionIndexDescription, error) {
+) (map[client.CollectionName][]client.IndexDescription, error) {
 	prefix := core.NewCollectionIndexKey("", "")
 
 	deserializedIndexes, err := deserializePrefix[client.IndexDescription](ctx,
@@ -79,17 +69,14 @@ func (db *db) getAllIndexes(
 		return nil, err
 	}
 
-	indexes := make([]collectionIndexDescription, 0, len(deserializedIndexes))
+	indexes := make(map[client.CollectionName][]client.IndexDescription)
 
 	for _, indexRec := range deserializedIndexes {
 		indexKey, err := core.NewCollectionIndexKeyFromString(indexRec.key)
 		if err != nil {
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
-		indexes = append(indexes, collectionIndexDescription{
-			CollectionName: indexKey.CollectionName,
-			Index:          indexRec.element,
-		})
+		indexes[indexKey.CollectionName] = append(indexes[indexKey.CollectionName], indexRec.element)
 	}
 
 	return indexes, nil
