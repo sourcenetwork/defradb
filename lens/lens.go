@@ -18,6 +18,7 @@ import (
 
 type schemaVersionID = string
 
+// LensDoc represents a document that will be sent to/from a Lens.
 type LensDoc = map[string]any
 
 type lensInput struct {
