@@ -26,8 +26,16 @@ type lensInput struct {
 	Doc             LensDoc
 }
 
+// Lens migrate items fed in to the target schema version.
+//
+// Source documents may be of various schema versions, and may need to be migrated across multiple
+// versions.  As the input versions are unknown until enumerated, the migration pipeline is constructed
+// lazily, as new source schema versions are discovered.  If a migration does not exist for a schema
+// version, the document will be passed on to the next stage.
 type Lens interface {
 	enumerable.Enumerable[LensDoc]
+
+	// Put feeds the given document into the Lens, so that its transformed output may be yielded.
 	Put(schemaVersionID schemaVersionID, value LensDoc) error
 }
 
