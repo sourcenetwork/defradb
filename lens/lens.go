@@ -44,7 +44,7 @@ type lens struct {
 
 var _ Lens = (*lens)(nil)
 
-func New(
+func new(
 	lensRegistry client.LensRegistry,
 	targetSchemaVersionID schemaVersionID,
 	schemaVersionHistory map[schemaVersionID]*targetedSchemaHistoryLink,

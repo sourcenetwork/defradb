@@ -80,7 +80,7 @@ func (f *lensedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core
 	if err != nil {
 		return err
 	}
-	f.lens = New(f.registry, f.col.Schema.VersionID, history)
+	f.lens = new(f.registry, f.col.Schema.VersionID, history)
 	f.txn = txn
 
 	return f.source.Start(ctx, txn, spans)
