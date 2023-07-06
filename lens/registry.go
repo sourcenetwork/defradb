@@ -41,6 +41,9 @@ type lensRegistry struct {
 
 var _ client.LensRegistry = (*lensRegistry)(nil)
 
+// DefaultPoolSize is the default size of the lens pool for each schema version.
+const DefaultPoolSize int = 5
+
 // NewRegistry instantiates a new registery.
 //
 // It will be of size 5 (per schema version) if a size is not provided.
@@ -49,7 +52,7 @@ func NewRegistry(lensPoolSize immutable.Option[int]) *lensRegistry {
 	if lensPoolSize.HasValue() {
 		size = lensPoolSize.Value()
 	} else {
-		size = 5
+		size = DefaultPoolSize
 	}
 
 	return &lensRegistry{
