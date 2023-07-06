@@ -42,9 +42,14 @@ type Lens interface {
 type lens struct {
 	lensRegistry client.LensRegistry
 
-	lensPipesBySchemaVersionIDs      map[schemaVersionID]enumerable.Concatenation[LensDoc]
+	// The primary access points to the lens pipes through which all things flow.
+	lensPipesBySchemaVersionIDs map[schemaVersionID]enumerable.Concatenation[LensDoc]
+
+	// The input pipes, into which items are added to the pipe system.
 	lensInputPipesBySchemaVersionIDs map[schemaVersionID]enumerable.Queue[LensDoc]
-	outputPipe                       enumerable.Concatenation[LensDoc]
+
+	// The output pipe, through which all outputs must exit.
+	outputPipe enumerable.Concatenation[LensDoc]
 
 	schemaVersionHistory map[schemaVersionID]*targetedSchemaHistoryLink
 
