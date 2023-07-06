@@ -105,7 +105,7 @@ deps:
 
 .PHONY: mock
 mock:
-	$(MAKE) deps:mock
+	@$(MAKE) deps:mock
 	mockery --dir ./client --output ./client/mocks --name DB --with-expecter
 	mockery --dir ./client --output ./client/mocks --name Collection --with-expecter
 	mockery --dir ./datastore --output ./datastore/mocks --name DAGStore --with-expecter
