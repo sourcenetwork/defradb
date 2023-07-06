@@ -174,7 +174,8 @@ type schemaHistoryPairing struct {
 	nextSchemaVersionID string
 }
 
-// getSchemaHistory returns the history of the schema of the given id.
+// getSchemaHistory returns the history of the schema of the given id as linked list
+// with each item mapped by schema version id.
 //
 // This includes any history items that are only known via registered
 // schema migrations.
