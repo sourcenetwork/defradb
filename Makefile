@@ -27,6 +27,9 @@ endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 70s
 
+LENS_TEST_DIRECTORY=tests/integration/schema/migrations
+DEFAULT_TEST_DIRECTORIES=$$(go list ./... | grep -v $(LENS_TEST_DIRECTORY))
+
 default:
 	@go run $(BUILD_FLAGS) cmd/defradb/main.go
 
@@ -71,13 +74,17 @@ deps\:lint:
 
 .PHONY: deps\:test
 deps\:test:
-	rustup target add wasm32-unknown-unknown
 	go install gotest.tools/gotestsum@latest
+
+.PHONY: deps\:lens
+deps\:lens:
+	rustup target add wasm32-unknown-unknown
+	@$(MAKE) -C ./tests/lenses build
 
 .PHONY: deps\:coverage
 deps\:coverage:
-	rustup target add wasm32-unknown-unknown
 	go install github.com/ory/go-acc@latest
+	@$(MAKE) deps:lens
 
 .PHONY: deps\:bench
 deps\:bench:
@@ -164,38 +171,37 @@ endif
 
 .PHONY: test
 test:
-	$(MAKE) -C ./tests/lenses build
-	gotestsum --format pkgname -- ./... $(TEST_FLAGS)
+	gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 # Only build the tests (don't execute them).
 .PHONY: test\:build
 test\:build:
-	$(MAKE) -C ./tests/lenses build
-	gotestsum --format pkgname -- ./... $(TEST_FLAGS) -run=nope
+	gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS) -run=nope
 
 .PHONY: test\:ci
 test\:ci:
-	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:names
+	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:all
 
 .PHONY: test\:go
 test\:go:
-	$(MAKE) -C ./tests/lenses build
-	go test ./... $(TEST_FLAGS)
+	go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
-	$(MAKE) -C ./tests/lenses build
-	gotestsum --format testname -- ./... $(TEST_FLAGS)
+	gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+
+.PHONY: test\:all
+test\:all:
+	@$(MAKE) test:names
+	@$(MAKE) test:lens
 
 .PHONY: test\:verbose
 test\:verbose:
-	$(MAKE) -C ./tests/lenses build
-	gotestsum --format standard-verbose -- ./... $(TEST_FLAGS)
+	gotestsum --format standard-verbose -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:watch
 test\:watch:
-	$(MAKE) -C ./tests/lenses build
-	gotestsum --watch -- ./...
+	gotestsum --watch -- $(DEFAULT_TEST_DIRECTORIES)
 
 .PHONY: test\:clean
 test\:clean:
@@ -213,13 +219,17 @@ test\:bench-short:
 test\:scripts:
 	@$(MAKE) -C ./tools/scripts/ test
 
+.PHONY: test\:lens
+test\:lens:
+	@$(MAKE) deps:lens
+	gotestsum --format testname -- ./$(LENS_TEST_DIRECTORY)/... $(TEST_FLAGS)
+
 # Using go-acc to ensure integration tests are included.
 # Usage: `make test:coverage` or `make test:coverage path="{pathToPackage}"`
 # Example: `make test:coverage path="./api/..."`
 .PHONY: test\:coverage
 test\:coverage:
 	@$(MAKE) deps:coverage
-	$(MAKE) -C ./tests/lenses build
 ifeq ($(path),)
 	go-acc ./... --output=coverage.txt --covermode=atomic -- -failfast -coverpkg=./...
 	@echo "Show coverage information for each function in ./..."
@@ -240,6 +250,7 @@ test\:coverage-html:
 
 .PHONY: test\:changes
 test\:changes:
+	@$(MAKE) deps:lens
 	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum -- ./... -shuffle=on -p 1
 
 .PHONY: validate\:codecov
