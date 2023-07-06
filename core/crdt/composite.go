@@ -159,7 +159,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 	// the local reperesentation of the document.
 	versionKey := c.key.WithValueFlag().WithFieldId(core.DATASTORE_DOC_VERSION_FIELD_ID)
 	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
-	hasObjectMarker := !(err != nil && errors.Is(err, ds.ErrNotFound))
+	hasObjectMarker := !errors.Is(err, ds.ErrNotFound)
 	if err != nil && hasObjectMarker {
 		return err
 	}
