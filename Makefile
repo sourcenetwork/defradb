@@ -171,7 +171,6 @@ test\:build:
 
 .PHONY: test\:ci
 test\:ci:
-	@$(MAKE) mock
 	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:names
 
 .PHONY: test\:go

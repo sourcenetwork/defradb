@@ -23,7 +23,7 @@ These tests focus on small, isolated parts of the code to ensure each part is wo
 For unit tests, we sometimes use mocks. Mocks are automatically generated from Go interfaces using the mockery tool. 
 This helps to isolate the code being tested and provide more focused and reliable tests.
 
-To regenerate the mocks, run `make mock`.  `make test:ci` will also do this.
+To regenerate the mocks, run `make mock`.
 
 The mocks are typically generated into a separate mocks directory.
 
