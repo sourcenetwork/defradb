@@ -876,6 +876,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		t.Log(tc.Name)
+
 		f := newIndexTestFixture(t)
 		f.createUserCollectionIndexOnName()
 
@@ -986,6 +988,8 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		t.Log(tc.Name)
+
 		f := newIndexTestFixture(t)
 		f.createUserCollectionIndexOnName()
 
