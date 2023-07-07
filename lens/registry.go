@@ -125,7 +125,7 @@ func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error
 	return nil
 }
 
-func (r *lensRegistry) RefreshLenses(ctx context.Context, txn datastore.Txn) error {
+func (r *lensRegistry) ReloadLenses(ctx context.Context, txn datastore.Txn) error {
 	prefix := core.NewSchemaVersionMigrationKey("")
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix: prefix.ToString(),

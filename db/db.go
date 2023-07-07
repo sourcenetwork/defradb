@@ -210,7 +210,7 @@ func (db *db) initialize(ctx context.Context) error {
 			return err
 		}
 
-		err = db.lensRegistry.RefreshLenses(ctx, txn)
+		err = db.lensRegistry.ReloadLenses(ctx, txn)
 		if err != nil {
 			return err
 		}

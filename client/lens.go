@@ -57,9 +57,9 @@ type LensRegistry interface {
 	// schema version.
 	SetMigration(context.Context, datastore.Txn, LensConfig) error
 
-	// RefreshLenses clears any cached migrations, loads their configurations from the database and re-initializes
+	// ReloadLenses clears any cached migrations, loads their configurations from the database and re-initializes
 	// them.  It is run on database start if the database already existed.
-	RefreshLenses(ctx context.Context, txn datastore.Txn) error
+	ReloadLenses(ctx context.Context, txn datastore.Txn) error
 
 	// MigrateUp returns an enumerable that feeds the given source through the Lens migration for the given
 	// schema version id if one is found, if there is no matching migration the given source will be returned.
