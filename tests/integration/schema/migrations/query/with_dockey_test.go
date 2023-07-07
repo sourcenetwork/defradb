@@ -88,7 +88,7 @@ func TestSchemaMigrationQueryByDocKey(t *testing.T) {
 }
 
 // This test asserts that lenses are being correctly returned to the pool for reuse after
-// fetch completion. Querying by dockey show mean that the fetcher only scans the dockey
+// fetch completion. Querying by dockey should mean that the fetcher only scans the dockey
 // prefix, and thus will only migrate a single document per query (unlike filters etc which
 // will migrate all documents at the time of writing). If the return mechanic was very faulty
 // then this test *should* deadlock.
