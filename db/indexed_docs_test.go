@@ -957,12 +957,6 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 	_ = f.users.Update(f.ctx, doc)
 }
 
-/*
-// Todo - the mock in this test would need to construct the version history properly
-// however that is kind of temporary as the prod. code needs to change in a little bit
-// to bypass the lines that this trips up on once you are happy with the way things are running
-// if it still fails then, consider removing this teset (it looks low value compared to the effort
-// required to make it work)
 func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 	testErr := errors.New("error")
 
@@ -994,6 +988,9 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		f.createUserCollectionIndexOnName()
 
 		doc := f.newUserDoc("John", 21)
+		// This is only required as we are using it as a return value
+		// in production this value will have been set by the fetcher
+		doc.SchemaVersionID = f.users.Schema().VersionID
 
 		f.users.fetcherFactory = func() fetcher.Fetcher {
 			df := fetcherMocks.NewStubbedFetcher(t)
@@ -1017,7 +1014,6 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		require.ErrorIs(t, err, testErr)
 	}
 }
-*/
 
 func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	f := newIndexTestFixture(t)
