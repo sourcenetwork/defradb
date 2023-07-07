@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -605,36 +606,27 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 	}
 }
 
-/*
-// Todo - the mock in this test would need to construct the version history properly
-// however that is kind of temporary as the prod. code needs to change in a little bit
-// to bypass the lines that this trips up on once you are happy with the way things are running
-// if it still fails then, consider removing this teset (it looks low value compared to the effort
-// required to make it work)
 func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
 	doc := f.newUserDoc("John", 21)
 	f.saveDocToCollection(doc, f.users)
 
-	testErr := errors.New("test error")
+	fieldKeyString := core.DataStoreKey{
+		CollectionID: f.users.desc.IDString(),
+	}.WithDocKey(doc.Key().String()).
+		WithFieldId("1").
+		WithValueFlag().
+		ToString()
 
-	f.users.fetcherFactory = func() fetcher.Fetcher {
-		return fetcherMocks.NewStubbedFetcher(t)
-	}
+	invalidKeyString := fieldKeyString + "/doesn't matter/"
 
-	mockedTxn := f.mockTxn()
-	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
-	mockedTxn.MockDatastore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Unset()
-	mockedTxn.MockDatastore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).
-		Return(testErr)
-	mockedTxn.EXPECT().Datastore().Unset()
-	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
+	// Insert an invalid key within the document prefix, this will generate an error within the fetcher.
+	f.users.db.multistore.Datastore().Put(f.ctx, datastore.NewKey(invalidKeyString), []byte("doesn't matter"))
 
-	_, err := f.users.WithTxn(mockedTxn).CreateIndex(f.ctx, getUsersIndexDescOnName())
-	require.ErrorIs(f.t, err, testErr)
+	_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
+	require.ErrorIs(f.t, err, core.ErrInvalidKey)
 }
-*/
 
 func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
