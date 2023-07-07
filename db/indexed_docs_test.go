@@ -988,6 +988,9 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		f.createUserCollectionIndexOnName()
 
 		doc := f.newUserDoc("John", 21)
+		err := doc.Set(usersNameFieldName, "Islam")
+		require.NoError(t, err)
+
 		// This is only required as we are using it as a return value
 		// in production this value will have been set by the fetcher
 		doc.SchemaVersionID = f.users.Schema().VersionID
@@ -998,11 +1001,6 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			df.EXPECT().FetchNextDecoded(mock.Anything).Return(doc, nil)
 			return df
 		}
-
-		f.saveDocToCollection(doc, f.users)
-
-		err := doc.Set(usersNameFieldName, "Islam")
-		require.NoError(t, err)
 
 		mockedTxn := f.mockTxn()
 		mockedTxn.MockDatastore = mocks.NewDSReaderWriter(f.t)
