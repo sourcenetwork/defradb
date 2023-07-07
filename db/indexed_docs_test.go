@@ -820,12 +820,6 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	require.ErrorIs(t, err, testErr)
 }
 
-/*
-// Todo - the mock in this test would need to construct the version history properly
-// however that is kind of temporary as the prod. code needs to change in a little bit
-// to bypass the lines that this trips up on once you are happy with the way things are running
-// if it still fails then, consider removing this teset (it looks low value compared to the effort
-// required to make it work)
 func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 	testError := errors.New("test error")
 
@@ -870,6 +864,10 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to close",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
+				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
+				// By default the the stubbed fetcher returns an empty, invalid document
+				// here we need to make sure it reaches the Close call by overriding that default.
+				f.EXPECT().FetchNextDecoded(mock.Anything).Maybe().Return(nil, nil)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(testError)
 				return f
@@ -900,7 +898,6 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 		require.Error(t, err, tc.Name)
 	}
 }
-*/
 
 func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
