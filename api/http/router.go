@@ -30,6 +30,7 @@ const (
 	DumpPath        string = versionedAPIPath + "/debug/dump"
 	BlocksPath      string = versionedAPIPath + "/blocks"
 	GraphQLPath     string = versionedAPIPath + "/graphql"
+	SchemaListPath  string = versionedAPIPath + "/schema/list"
 	SchemaLoadPath  string = versionedAPIPath + "/schema/load"
 	SchemaPatchPath string = versionedAPIPath + "/schema/patch"
 	IndexPath       string = versionedAPIPath + "/index"
@@ -59,6 +60,7 @@ func setRoutes(h *handler) *handler {
 	h.Get(BlocksPath+"/{cid}", h.handle(getBlockHandler))
 	h.Get(GraphQLPath, h.handle(execGQLHandler))
 	h.Post(GraphQLPath, h.handle(execGQLHandler))
+	h.Get(SchemaListPath, h.handle(listSchemaHandler))
 	h.Post(SchemaLoadPath, h.handle(loadSchemaHandler))
 	h.Post(SchemaPatchPath, h.handle(patchSchemaHandler))
 	h.Post(IndexPath, h.handle(createIndexHandler))

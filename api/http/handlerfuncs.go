@@ -155,9 +155,60 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(req.Context(), rw, newGQLResult(result.GQL), http.StatusOK)
 }
 
-type collectionResponse struct {
-	Name string `json:"name"`
+type fieldResponse struct {
 	ID   string `json:"id"`
+	Name string `json:"name"`
+	Kind string `json:"kind"`
+}
+
+type collectionResponse struct {
+	Name   string          `json:"name"`
+	ID     string          `json:"id"`
+	Fields []fieldResponse `json:"fields,omitempty"`
+}
+
+func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	cols, err := db.GetAllCollections(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	colResp := make([]collectionResponse, len(cols))
+	for i, col := range cols {
+		fields := make([]fieldResponse, len(col.Schema().Fields))
+		for j, field := range col.Schema().Fields {
+			fields[j] = fieldResponse{
+				ID:   field.ID.String(),
+				Name: field.Name,
+			}
+			if field.IsObjectArray() {
+				fields[j].Kind = fmt.Sprintf("[%s]", field.Schema)
+			} else if field.IsObject() {
+				fields[j].Kind = field.Schema
+			} else {
+				fields[j].Kind = field.Kind.String()
+			}
+		}
+		colResp[i] = collectionResponse{
+			Name:   col.Name(),
+			ID:     col.SchemaID(),
+			Fields: fields,
+		}
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("result", "success", "collections", colResp),
+		http.StatusOK,
+	)
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
