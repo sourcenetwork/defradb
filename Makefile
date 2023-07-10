@@ -89,6 +89,10 @@ deps\:chglog:
 deps\:modules:
 	go mod download
 
+.PHONY: deps\:mock
+deps\:mock:
+	go install github.com/vektra/mockery/v2@v2.30.1
+
 .PHONY: deps
 deps:
 	@$(MAKE) deps:modules && \
@@ -96,7 +100,20 @@ deps:
 	$(MAKE) deps:chglog && \
 	$(MAKE) deps:coverage && \
 	$(MAKE) deps:lint && \
-	$(MAKE) deps:test
+	$(MAKE) deps:test && \
+	$(MAKE) deps:mock
+
+.PHONY: mock
+mock:
+	@$(MAKE) deps:mock
+	mockery --dir ./client --output ./client/mocks --name DB --with-expecter
+	mockery --dir ./client --output ./client/mocks --name Collection --with-expecter
+	mockery --dir ./datastore --output ./datastore/mocks --name DAGStore --with-expecter
+	mockery --dir ./datastore --output ./datastore/mocks --name DSReaderWriter --with-expecter
+	mockery --srcpkg github.com/ipfs/go-datastore/query --output ./datastore/mocks --name Results --with-expecter
+	mockery --dir ./datastore --output ./datastore/mocks --name RootStore --with-expecter
+	mockery --dir ./datastore --output ./datastore/mocks --name Txn --with-expecter
+	mockery --dir ./datastore --output ./datastore/mocks --name DAGStore --with-expecter
 
 .PHONY: dev\:start
 dev\:start:
