@@ -108,7 +108,7 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *
 						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" },
 						{ "op": "remove", "path": "/Users/Schema/Fields/2/ID" },
 						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "age" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/2/Kind", "value": "Integer" }
+						{ "op": "replace", "path": "/Users/Schema/Fields/2/Kind", "value": "Int" }
 					]
 				`,
 			},
