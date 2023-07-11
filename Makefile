@@ -123,6 +123,8 @@ mock:
 	mockery --dir ./datastore --output ./datastore/mocks --name RootStore --with-expecter
 	mockery --dir ./datastore --output ./datastore/mocks --name Txn --with-expecter
 	mockery --dir ./datastore --output ./datastore/mocks --name DAGStore --with-expecter
+	mockery --dir ./db/fetcher --output ./db/fetcher/mocks --name Fetcher --with-expecter
+	mockery --dir ./db/fetcher --output ./db/fetcher/mocks --name EncodedDocument --with-expecter
 
 .PHONY: dev\:start
 dev\:start:
