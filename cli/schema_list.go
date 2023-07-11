@@ -43,9 +43,9 @@ type schemaListResponse struct {
 func MakeSchemaListCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "list",
-		Short: "List schema types from DefraDB",
+		Short: "List schema types with their respective fields",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaListPath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPath)
 			if err != nil {
 				return NewErrFailedToJoinEndpoint(err)
 			}
