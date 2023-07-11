@@ -424,12 +424,12 @@ func (p *Planner) SelectFromSource(
 	}
 
 	if fromCollection {
-		desc, err := p.getCollectionDesc(selectReq.Name)
+		col, err := p.db.GetCollectionByName(p.ctx, selectReq.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		s.sourceInfo = sourceInfo{desc}
+		s.sourceInfo = sourceInfo{col.Description()}
 	}
 
 	aggregates, err := s.initFields(selectReq)

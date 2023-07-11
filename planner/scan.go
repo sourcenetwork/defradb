@@ -258,26 +258,29 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 // Merge implements mergeNode
 func (n *scanNode) Merge() bool { return true }
 
-func (p *Planner) Scan(parsed *mapper.Select) (*scanNode, error) {
+func (p *Planner) Scan(
+	mapperSelect *mapper.Select,
+	colDesc client.CollectionDescription,
+) (*scanNode, error) {
 	var f fetcher.Fetcher
-	if parsed.Cid.HasValue() {
+	if mapperSelect.Cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = new(fetcher.DocumentFetcher)
+		indexedFields := colDesc.CollectIndexedFields()
+		if len(indexedFields) > 0 {
+			f = fetcher.NewIndexFetcher(f, indexedFields)
+		}
 		f = lens.NewFetcher(f, p.db.LensRegistry())
 	}
 	scan := &scanNode{
 		p:         p,
 		fetcher:   f,
-		slct:      parsed,
-		docMapper: docMapper{parsed.DocumentMapping},
+		slct:      mapperSelect,
+		docMapper: docMapper{mapperSelect.DocumentMapping},
 	}
 
-	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
-	if err != nil {
-		return nil, err
-	}
-	err = scan.initCollection(colDesc)
+	err := scan.initCollection(colDesc)
 	if err != nil {
 		return nil, err
 	}
