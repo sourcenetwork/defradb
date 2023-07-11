@@ -131,6 +131,14 @@ func Decode(encdoc EncodedDocument) (*client.Document, error) {
 	return doc, nil
 }
 
+func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
+	otherEncDoc, ok := other.(*encodedDocument)
+	if !ok {
+		return
+	}
+	encdoc.Properties = append(encdoc.Properties, otherEncDoc.Properties...)
+}
+
 // DecodeToDoc returns a decoded document as a
 // map of field/value pairs
 func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter bool) (core.Doc, error) {

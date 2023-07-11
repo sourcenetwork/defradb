@@ -16,8 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaWithIndexOnTheOnlyField(t *testing.T) {
+func TestIndexWithExplain(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -30,11 +31,41 @@ func TestSchemaWithIndexOnTheOnlyField(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query @explain(type: execute) {
-						users(filter: {name: {_eq: "Shahzad"}}) {
+						users(filter: {name: {_eq: "Islam"}}) {
 							name
 						}
 					}`,
 				Asserter: newExplainAsserter(2, 2, 1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+}
+
+func TestIndex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						name: String @index
+					} 
+				`,
+			},
+			createUserDocs(),
+			testUtils.Request{
+				Request: `
+					query {
+						users(filter: {name: {_eq: "Islam"}}) {
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Islam",
+					},
+				},
 			},
 		},
 	}
