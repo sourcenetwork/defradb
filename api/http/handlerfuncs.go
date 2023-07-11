@@ -26,6 +26,7 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/events"
 )
@@ -182,19 +183,23 @@ func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 
 	colResp := make([]collectionResponse, len(cols))
 	for i, col := range cols {
-		fields := make([]fieldResponse, len(col.Schema().Fields))
-		for j, field := range col.Schema().Fields {
-			fields[j] = fieldResponse{
+		var fields []fieldResponse
+		for _, field := range col.Schema().Fields {
+			if field.Name == "_key" || field.RelationType == client.Relation_Type_INTERNAL_ID {
+				continue // ignore generated fields
+			}
+			fieldRes := fieldResponse{
 				ID:   field.ID.String(),
 				Name: field.Name,
 			}
 			if field.IsObjectArray() {
-				fields[j].Kind = fmt.Sprintf("[%s]", field.Schema)
+				fieldRes.Kind = fmt.Sprintf("[%s]", field.Schema)
 			} else if field.IsObject() {
-				fields[j].Kind = field.Schema
+				fieldRes.Kind = field.Schema
 			} else {
-				fields[j].Kind = field.Kind.String()
+				fieldRes.Kind = field.Kind.String()
 			}
+			fields = append(fields, fieldRes)
 		}
 		colResp[i] = collectionResponse{
 			Name:   col.Name(),
