@@ -795,6 +795,7 @@ func resolveInnerFilterDependencies(
 ) ([]Requestable, error) {
 	newFields := []Requestable{}
 
+sourceLoop:
 	for key := range source {
 		if strings.HasPrefix(key, "_") && key != request.KeyFieldName {
 			continue
@@ -844,15 +845,10 @@ func resolveInnerFilterDependencies(
 			// If the key index is outside the bounds of the child mapping array, then
 			// this is not a relation/join and we can add it to the fields and
 			// continue (no child props to process)
-			isDuplicate := false
 			for _, field := range existingFields {
 				if field.GetIndex() == keyIndex {
-					isDuplicate = true
-					break
+					continue sourceLoop
 				}
-			}
-			if isDuplicate {
-				continue
 			}
 			newFields = append(existingFields, &Field{
 				Index: keyIndex,
