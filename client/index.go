@@ -37,3 +37,24 @@ type IndexDescription struct {
 	// Fields contains the fields that are being indexed.
 	Fields []IndexedFieldDescription
 }
+
+// CollectIndexedFields returns all fields that are indexed by all collection indexes.
+func (d CollectionDescription) CollectIndexedFields() []FieldDescription {
+	fieldsMap := make(map[string]FieldDescription)
+	for _, index := range d.Indexes {
+		for _, field := range index.Fields {
+			for i := range d.Schema.Fields {
+				colField := d.Schema.Fields[i]
+				if field.Name == colField.Name {
+					fieldsMap[field.Name] = colField
+					break
+				}
+			}
+		}
+	}
+	fields := make([]FieldDescription, 0, len(fieldsMap))
+	for _, field := range fieldsMap {
+		fields = append(fields, field)
+	}
+	return fields
+}
