@@ -12,8 +12,6 @@ package request
 
 import (
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 // SelectionType is the type of selection.
@@ -100,7 +98,7 @@ func (s *Select) validateGroupBy() []error {
 				}
 			}
 			if !fieldExistsInGroupBy && !isAliasFieldInGroupBy {
-				result = append(result, client.NewErrSelectOfNonGroupField(typedChildSelection.Name))
+				result = append(result, NewErrSelectOfNonGroupField(typedChildSelection.Name))
 			}
 		default:
 			// Do nothing

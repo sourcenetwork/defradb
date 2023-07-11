@@ -18,6 +18,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 // This is the main implementation starting point for accessing the internal Document API
@@ -502,7 +503,7 @@ func (doc *Document) remapAliasFields(fieldDescriptions []FieldDescription) (boo
 	foundAlias := false
 	for docField, docFieldValue := range doc.fields {
 		for _, fieldDescription := range fieldDescriptions {
-			maybeAliasField := docField + "_id"
+			maybeAliasField := docField + request.RelatedObjectID
 			if fieldDescription.Name == maybeAliasField {
 				foundAlias = true
 				doc.fields[maybeAliasField] = docFieldValue
