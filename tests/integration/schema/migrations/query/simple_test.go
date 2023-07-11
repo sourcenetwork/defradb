@@ -696,3 +696,215 @@ func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequested(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema migration, migration preserves existing field without requesting it",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 40
+				}`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafkreidovoxkxttybaew2qraoelormm63ilutzms7wlwmcr3xru44hfnta",
+					DestinationSchemaVersionID: "bafkreia4bbxhtqwzw4smby5xsqxv6ptoc6ijc6v3lmnlv66twpfak5gxxq",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "name",
+									"value": "Fred",
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Fred",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Fred",
+						"age":  uint64(40),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequested(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema migration, migration copies existing field without requesting src",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 40
+				}`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "yearsLived", "Kind": "Int"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafkreidovoxkxttybaew2qraoelormm63ilutzms7wlwmcr3xru44hfnta",
+					DestinationSchemaVersionID: "bafkreia4bbxhtqwzw4smby5xsqxv6ptoc6ijc6v3lmnlv66twpfak5gxxq",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.CopyModulePath,
+								Arguments: map[string]any{
+									"src": "age",
+									"dst": "yearsLived",
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						yearsLived
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":       "John",
+						"yearsLived": uint64(40),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRequested(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema migration, migration copies existing field without requesting src or dst",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 40
+				}`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "yearsLived", "Kind": "Int"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafkreidovoxkxttybaew2qraoelormm63ilutzms7wlwmcr3xru44hfnta",
+					DestinationSchemaVersionID: "bafkreia4bbxhtqwzw4smby5xsqxv6ptoc6ijc6v3lmnlv66twpfak5gxxq",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.CopyModulePath,
+								Arguments: map[string]any{
+									"src": "age",
+									"dst": "yearsLived",
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						age
+						yearsLived
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":       "John",
+						"age":        uint64(40),
+						"yearsLived": uint64(40),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}

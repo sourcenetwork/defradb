@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ipfs/go-datastore"
+	ipfsDatastore "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,6 +27,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	fetcherMocks "github.com/sourcenetwork/defradb/db/fetcher/mocks"
@@ -547,8 +548,8 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -622,7 +623,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	invalidKeyString := fieldKeyString + "/doesn't matter/"
 
 	// Insert an invalid key within the document prefix, this will generate an error within the fetcher.
-	f.users.db.multistore.Datastore().Put(f.ctx, datastore.NewKey(invalidKeyString), []byte("doesn't matter"))
+	f.users.db.multistore.Datastore().Put(f.ctx, ipfsDatastore.NewKey(invalidKeyString), []byte("doesn't matter"))
 
 	_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 	require.ErrorIs(f.t, err, core.ErrInvalidKey)
@@ -831,8 +832,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -932,9 +933,11 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 
 	f.users.fetcherFactory = func() fetcher.Fetcher {
 		f := fetcherMocks.NewStubbedFetcher(t)
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			RunAndReturn(func(
+				ctx context.Context,
+				txn datastore.Txn,
 				col *client.CollectionDescription,
 				fields []client.FieldDescription,
 				filter *mapper.Filter,

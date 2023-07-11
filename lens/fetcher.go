@@ -39,6 +39,9 @@ type lensedFetcher struct {
 	fieldDescriptionsByName map[string]client.FieldDescription
 
 	targetVersionID string
+
+	// If true there are migrations registered for the collection being fetched.
+	hasMigrations bool
 }
 
 var _ fetcher.Fetcher = (*lensedFetcher)(nil)
@@ -53,6 +56,8 @@ func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fe
 }
 
 func (f *lensedFetcher) Init(
+	ctx context.Context,
+	txn datastore.Txn,
 	col *client.CollectionDescription,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
@@ -71,16 +76,35 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[field.Name] = field
 	}
 
-	f.targetVersionID = col.Schema.VersionID
-	return f.source.Init(col, fields, filter, docmapper, reverse, showDeleted)
-}
-
-func (f *lensedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	history, err := getTargetedSchemaHistory(ctx, txn, f.registry.Config(), f.col.Schema.SchemaID, f.col.Schema.VersionID)
 	if err != nil {
 		return err
 	}
 	f.lens = new(f.registry, f.col.Schema.VersionID, history)
+	f.txn = txn
+
+	for schemaVersionID := range history {
+		if f.registry.HasMigration(schemaVersionID) {
+			f.hasMigrations = true
+			break
+		}
+	}
+
+	f.targetVersionID = col.Schema.VersionID
+
+	var innerFetcherFields []client.FieldDescription
+	if f.hasMigrations {
+		// If there are migrations present, they may require fields that are not otherwise
+		// requested.  At the moment this means we need to pass in nil so that the underlying
+		// fetcher fetches everything.
+		innerFetcherFields = nil
+	} else {
+		innerFetcherFields = fields
+	}
+	return f.source.Init(ctx, txn, col, innerFetcherFields, filter, docmapper, reverse, showDeleted)
+}
+
+func (f *lensedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	f.txn = txn
 
 	return f.source.Start(ctx, txn, spans)
@@ -100,9 +124,9 @@ func (f *lensedFetcher) FetchNextDecoded(ctx context.Context) (*client.Document,
 		return nil, nil
 	}
 
-	if doc.SchemaVersionID == f.targetVersionID {
-		// If the document is already at the target schema version, no migration is required and
-		// we can return it early.
+	if !f.hasMigrations || doc.SchemaVersionID == f.targetVersionID {
+		// If there are no migrations registered for this schema, or if the document is already
+		// at the target schema version, no migration is required and we can return it early.
 		return doc, nil
 	}
 

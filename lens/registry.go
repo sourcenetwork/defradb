@@ -221,6 +221,11 @@ func (r *lensRegistry) Config() []client.LensConfig {
 	return result
 }
 
+func (r *lensRegistry) HasMigration(schemaVersionID string) bool {
+	_, hasMigration := r.lensWarehouse[schemaVersionID]
+	return hasMigration
+}
+
 // lensLocker provides a pool-like mechanic for caching a limited number of wasm lens modules in
 // a thread safe fashion.
 //

@@ -33,6 +33,15 @@ var RemoveModulePath string = getPathRelativeToProjectRoot(
 	"/tests/lenses/rust_wasm32_remove/target/wasm32-unknown-unknown/debug/rust_wasm32_remove.wasm",
 )
 
+// CopyModulePath is the path to the `Copy` lens module compiled to wasm.
+//
+// The module has two parameters:
+//   - `src` is a string and is the name of the property you wish to copy values from.
+//   - `dst` is a string and is the name of the property you wish to copy the `src` value to.
+var CopyModulePath string = getPathRelativeToProjectRoot(
+	"/tests/lenses/rust_wasm32_copy/target/wasm32-unknown-unknown/debug/rust_wasm32_copy.wasm",
+)
+
 func getPathRelativeToProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(path.Dir(filename)))

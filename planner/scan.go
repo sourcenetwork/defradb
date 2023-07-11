@@ -61,7 +61,16 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.fields, n.filter, n.slct.DocumentMapping, n.reverse, n.showDeleted); err != nil {
+	if err := n.fetcher.Init(
+		n.p.ctx,
+		n.p.txn,
+		&n.desc,
+		n.fields,
+		n.filter,
+		n.slct.DocumentMapping,
+		n.reverse,
+		n.showDeleted,
+	); err != nil {
 		return err
 	}
 	return n.initScan()

@@ -76,4 +76,8 @@ type LensRegistry interface {
 	//
 	// Modifying the slice does not affect the loaded configurations.
 	Config() []LensConfig
+
+	// HasMigration returns true if there is a migration registered for the given schema version id, otherwise
+	// will return false.
+	HasMigration(string) bool
 }

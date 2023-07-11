@@ -31,6 +31,8 @@ import (
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
 	Init(
+		ctx context.Context,
+		txn datastore.Txn,
 		col *client.CollectionDescription,
 		fields []client.FieldDescription,
 		filter *mapper.Filter,
@@ -107,6 +109,8 @@ type DocumentFetcher struct {
 
 // Init implements DocumentFetcher.
 func (df *DocumentFetcher) Init(
+	ctx context.Context,
+	txn datastore.Txn,
 	col *client.CollectionDescription,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
