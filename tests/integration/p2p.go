@@ -19,8 +19,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/net"
+	pb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
-	"github.com/sourcenetwork/defradb/node"
 
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
@@ -137,7 +138,7 @@ func connectPeers(
 	t *testing.T,
 	testCase TestCase,
 	cfg ConnectPeers,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	addresses []string,
 ) chan struct{} {
 	// If we have some database actions prior to connecting the peers, we want to ensure that they had time to
@@ -168,8 +169,8 @@ func setupPeerWaitSync(
 	testCase TestCase,
 	startIndex int,
 	cfg ConnectPeers,
-	sourceNode *node.Node,
-	targetNode *node.Node,
+	sourceNode *net.Node,
+	targetNode *net.Node,
 ) chan struct{} {
 	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
@@ -300,7 +301,7 @@ func configureReplicator(
 	t *testing.T,
 	testCase TestCase,
 	cfg ConfigureReplicator,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	addresses []string,
 ) chan struct{} {
 	// If we have some database actions prior to configuring the replicator, we want to ensure that they had time to
@@ -313,7 +314,12 @@ func configureReplicator(
 	addr, err := ma.NewMultiaddr(targetAddress)
 	require.NoError(t, err)
 
-	_, err = sourceNode.Peer.SetReplicator(ctx, addr)
+	_, err = sourceNode.Peer.SetReplicator(
+		ctx,
+		&pb.SetReplicatorRequest{
+			Addr: addr.Bytes(),
+		},
+	)
 	require.NoError(t, err)
 	return setupReplicatorWaitSync(ctx, t, testCase, 0, cfg, sourceNode, targetNode)
 }
@@ -324,8 +330,8 @@ func setupReplicatorWaitSync(
 	testCase TestCase,
 	startIndex int,
 	cfg ConfigureReplicator,
-	sourceNode *node.Node,
-	targetNode *node.Node,
+	sourceNode *net.Node,
+	targetNode *net.Node,
 ) chan struct{} {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -404,7 +410,7 @@ func subscribeToCollection(
 	t *testing.T,
 	testCase TestCase,
 	action SubscribeToCollection,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	collections [][]client.Collection,
 ) {
 	n := nodes[action.NodeID]
@@ -420,7 +426,12 @@ func subscribeToCollection(
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
-	err := n.Peer.AddP2PCollections(schemaIDs)
+	_, err := n.Peer.AddP2PCollections(
+		ctx,
+		&pb.AddP2PCollectionsRequest{
+			Collections: schemaIDs,
+		},
+	)
 	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -438,7 +449,7 @@ func unsubscribeToCollection(
 	t *testing.T,
 	testCase TestCase,
 	action UnsubscribeToCollection,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	collections [][]client.Collection,
 ) {
 	n := nodes[action.NodeID]
@@ -454,7 +465,12 @@ func unsubscribeToCollection(
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
-	err := n.Peer.RemoveP2PCollections(schemaIDs)
+	_, err := n.Peer.RemoveP2PCollections(
+		ctx,
+		&pb.RemoveP2PCollectionsRequest{
+			Collections: schemaIDs,
+		},
+	)
 	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -472,26 +488,29 @@ func getAllP2PCollections(
 	ctx context.Context,
 	t *testing.T,
 	action GetAllP2PCollections,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	collections [][]client.Collection,
 ) {
-	expectedCollections := []client.P2PCollection{}
+	expectedCollections := []*pb.GetAllP2PCollectionsReply_Collection{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
 		col := collections[action.NodeID][collectionIndex]
 		expectedCollections = append(
 			expectedCollections,
-			client.P2PCollection{
-				ID:   col.SchemaID(),
+			&pb.GetAllP2PCollectionsReply_Collection{
+				Id:   col.SchemaID(),
 				Name: col.Name(),
 			},
 		)
 	}
 
 	n := nodes[action.NodeID]
-	cols, err := n.Peer.GetAllP2PCollections()
+	cols, err := n.Peer.GetAllP2PCollections(
+		ctx,
+		&pb.GetAllP2PCollectionsRequest{},
+	)
 	require.NoError(t, err)
 
-	assert.Equal(t, expectedCollections, cols)
+	assert.Equal(t, expectedCollections, cols.Collections)
 }
 
 // waitForSync waits for all given wait channels to receive an item signaling completion.
