@@ -185,7 +185,6 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 		}
 	}
 
-	// prepend the value byte array with a single byte indicator for the CRDT Type.
 	err = reg.store.Put(ctx, key.ToDS(), val)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
