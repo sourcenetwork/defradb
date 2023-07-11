@@ -24,7 +24,6 @@ import (
 
 type schemaListResponse struct {
 	Data struct {
-		Result      string `json:"result"`
 		Collections []struct {
 			Name   string `json:"name"`
 			ID     string `json:"id"`

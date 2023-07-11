@@ -592,6 +592,112 @@ mutation {
 	}
 }
 
+func TestListSchemaHandlerWithoutDB(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
+
+	errResponse := ErrorResponse{}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             nil,
+		Method:         "GET",
+		Path:           SchemaPath,
+		ExpectedStatus: 500,
+		ResponseData:   &errResponse,
+	})
+
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
+}
+
+func TestListSchemaHandlerWitNoError(t *testing.T) {
+	ctx := context.Background()
+	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
+
+	stmt := `
+type user {
+	name: String
+	age: Int
+	verified: Boolean
+	points: Float
+}
+type group {
+	owner: user
+	members: [user]
+}`
+
+	_, err := defra.AddSchema(ctx, stmt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp := DataResponse{}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             defra,
+		Method:         "GET",
+		Path:           SchemaPath,
+		ExpectedStatus: 200,
+		ResponseData:   &resp,
+	})
+
+	switch v := resp.Data.(type) {
+	case map[string]any:
+		assert.Equal(t, map[string]any{
+			"collections": []any{
+				map[string]any{
+					"name": "group",
+					"id":   "bafkreieunyhcyupkdppyo2g4zcqtdxvj5xi4f422gp2jwene6ohndvcobe",
+					"fields": []any{
+						map[string]any{
+							"id":   "1",
+							"kind": "[user]",
+							"name": "members",
+						},
+						map[string]any{
+							"id":   "2",
+							"kind": "user",
+							"name": "owner",
+						},
+					},
+				},
+				map[string]any{
+					"name": "user",
+					"id":   "bafkreigrucdl7x3lsa4xwgz2bn7lbqmiwkifnspgx7hlkpaal3o55325bq",
+					"fields": []any{
+						map[string]any{
+							"id":   "1",
+							"kind": "Int",
+							"name": "age",
+						},
+						map[string]any{
+							"id":   "2",
+							"kind": "String",
+							"name": "name",
+						},
+						map[string]any{
+							"id":   "3",
+							"kind": "Float",
+							"name": "points",
+						},
+						map[string]any{
+							"id":   "4",
+							"kind": "Boolean",
+							"name": "verified",
+						},
+					},
+				},
+			},
+		}, v)
+
+	default:
+		t.Fatalf("data should be of type map[string]any but got %T\n%v", resp.Data, v)
+	}
+}
+
 func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"

@@ -211,7 +211,7 @@ func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		simpleDataResponse("result", "success", "collections", colResp),
+		simpleDataResponse("collections", colResp),
 		http.StatusOK,
 	)
 }
