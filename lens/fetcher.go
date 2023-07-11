@@ -357,43 +357,41 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		}
 	}
 
-	if len(modifiedFieldValuesByName) > 0 {
-		dockey, ok := original[request.KeyFieldName].(string)
+	dockey, ok := original[request.KeyFieldName].(string)
+	if !ok {
+		return core.ErrInvalidKey
+	}
+
+	datastoreKeyBase := core.DataStoreKey{
+		CollectionID: f.col.IDString(),
+		DocKey:       dockey,
+		InstanceType: core.ValueKey,
+	}
+
+	for fieldName, value := range modifiedFieldValuesByName {
+		fieldDesc, ok := f.fieldDescriptionsByName[fieldName]
 		if !ok {
-			return core.ErrInvalidKey
+			// It may be that the migration has set fields that are unknown to us locally
+			// in which case we have to skip them for now.
+			continue
 		}
+		fieldKey := datastoreKeyBase.WithFieldId(fieldDesc.ID.String())
 
-		datastoreKeyBase := core.DataStoreKey{
-			CollectionID: f.col.IDString(),
-			DocKey:       dockey,
-			InstanceType: core.ValueKey,
-		}
-
-		for fieldName, value := range modifiedFieldValuesByName {
-			fieldDesc, ok := f.fieldDescriptionsByName[fieldName]
-			if !ok {
-				// It may be that the migration has set fields that are unknown to us locally
-				// in which case we have to skip them for now.
-				continue
-			}
-			fieldKey := datastoreKeyBase.WithFieldId(fieldDesc.ID.String())
-
-			bytes, err := cbor.Marshal(value)
-			if err != nil {
-				return err
-			}
-
-			err = f.txn.Datastore().Put(ctx, fieldKey.ToDS(), append([]byte{byte(fieldDesc.Typ)}, bytes...))
-			if err != nil {
-				return err
-			}
-		}
-
-		versionKey := datastoreKeyBase.WithFieldId(core.DATASTORE_DOC_VERSION_FIELD_ID)
-		err := f.txn.Datastore().Put(ctx, versionKey.ToDS(), []byte(f.targetVersionID))
+		bytes, err := cbor.Marshal(value)
 		if err != nil {
 			return err
 		}
+
+		err = f.txn.Datastore().Put(ctx, fieldKey.ToDS(), append([]byte{byte(fieldDesc.Typ)}, bytes...))
+		if err != nil {
+			return err
+		}
+	}
+
+	versionKey := datastoreKeyBase.WithFieldId(core.DATASTORE_DOC_VERSION_FIELD_ID)
+	err := f.txn.Datastore().Put(ctx, versionKey.ToDS(), []byte(f.targetVersionID))
+	if err != nil {
+		return err
 	}
 
 	return nil
