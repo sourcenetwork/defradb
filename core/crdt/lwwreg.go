@@ -114,8 +114,6 @@ func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	// ignore the first byte (CRDT Type marker) from the returned value
-	buf = buf[1:]
 	return buf, nil
 }
 
@@ -188,8 +186,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	}
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
-	buf := append([]byte{byte(client.LWW_REGISTER)}, val...)
-	err = reg.store.Put(ctx, key.ToDS(), buf)
+	err = reg.store.Put(ctx, key.ToDS(), val)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}

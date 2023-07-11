@@ -50,12 +50,10 @@ type encProperty struct {
 
 // Decode returns the decoded value and CRDT type for the given property.
 func (e encProperty) Decode() (client.CType, any, error) {
-	ctype := client.CType(e.Raw[0])
-	buf := e.Raw[1:]
 	var val any
-	err := cbor.Unmarshal(buf, &val)
+	err := cbor.Unmarshal(e.Raw, &val)
 	if err != nil {
-		return ctype, nil, err
+		return client.NONE_CRDT, nil, err
 	}
 
 	if array, isArray := val.([]any); isArray {
@@ -66,7 +64,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				boolArray[i], ok = untypedValue.(bool)
 				if !ok {
-					return ctype, nil, client.NewErrUnexpectedType[bool](e.Desc.Name, untypedValue)
+					return client.NONE_CRDT, nil, client.NewErrUnexpectedType[bool](e.Desc.Name, untypedValue)
 				}
 			}
 			val = boolArray
@@ -74,7 +72,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_NILLABLE_BOOL_ARRAY:
 			val, err = convertNillableArray[bool](e.Desc.Name, array)
 			if err != nil {
-				return ctype, nil, err
+				return client.NONE_CRDT, nil, err
 			}
 
 		case client.FieldKind_INT_ARRAY:
@@ -82,7 +80,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				intArray[i], err = convertToInt(fmt.Sprintf("%s[%v]", e.Desc.Name, i), untypedValue)
 				if err != nil {
-					return ctype, nil, err
+					return client.NONE_CRDT, nil, err
 				}
 			}
 			val = intArray
@@ -90,7 +88,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_NILLABLE_INT_ARRAY:
 			val, err = convertNillableArrayWithConverter(e.Desc.Name, array, convertToInt)
 			if err != nil {
-				return ctype, nil, err
+				return client.NONE_CRDT, nil, err
 			}
 
 		case client.FieldKind_FLOAT_ARRAY:
@@ -98,7 +96,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				floatArray[i], ok = untypedValue.(float64)
 				if !ok {
-					return ctype, nil, client.NewErrUnexpectedType[float64](e.Desc.Name, untypedValue)
+					return client.NONE_CRDT, nil, client.NewErrUnexpectedType[float64](e.Desc.Name, untypedValue)
 				}
 			}
 			val = floatArray
@@ -106,7 +104,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_NILLABLE_FLOAT_ARRAY:
 			val, err = convertNillableArray[float64](e.Desc.Name, array)
 			if err != nil {
-				return ctype, nil, err
+				return client.NONE_CRDT, nil, err
 			}
 
 		case client.FieldKind_STRING_ARRAY:
@@ -114,7 +112,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				stringArray[i], ok = untypedValue.(string)
 				if !ok {
-					return ctype, nil, client.NewErrUnexpectedType[string](e.Desc.Name, untypedValue)
+					return client.NONE_CRDT, nil, client.NewErrUnexpectedType[string](e.Desc.Name, untypedValue)
 				}
 			}
 			val = stringArray
@@ -122,7 +120,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_NILLABLE_STRING_ARRAY:
 			val, err = convertNillableArray[string](e.Desc.Name, array)
 			if err != nil {
-				return ctype, nil, err
+				return client.NONE_CRDT, nil, err
 			}
 		}
 	} else { // CBOR often encodes values typed as floats as ints
@@ -130,18 +128,18 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_FLOAT:
 			switch v := val.(type) {
 			case int64:
-				return ctype, float64(v), nil
+				return client.NONE_CRDT, float64(v), nil
 			case int:
-				return ctype, float64(v), nil
+				return client.NONE_CRDT, float64(v), nil
 			case uint64:
-				return ctype, float64(v), nil
+				return client.NONE_CRDT, float64(v), nil
 			case uint:
-				return ctype, float64(v), nil
+				return client.NONE_CRDT, float64(v), nil
 			}
 		}
 	}
 
-	return ctype, val, nil
+	return e.Desc.Typ, val, nil
 }
 
 func convertNillableArray[T any](propertyName string, items []any) ([]immutable.Option[T], error) {
