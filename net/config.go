@@ -10,7 +10,7 @@
 
 /* Node configuration, in which NodeOpt functions are applied on Options. */
 
-package node
+package net
 
 import (
 	"time"
@@ -19,6 +19,8 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
+
+	"github.com/sourcenetwork/defradb/config"
 )
 
 // Options is the node options.
@@ -58,8 +60,31 @@ func NewConnManager(low int, high int, grace time.Duration) (cconnmgr.ConnManage
 	return c, nil
 }
 
+// WithConfig provides the Node-specific configuration, from the top-level Net config.
+func WithConfig(cfg *config.Config) NodeOpt {
+	return func(opt *Options) error {
+		var err error
+		err = WithListenP2PAddrStrings(cfg.Net.P2PAddress)(opt)
+		if err != nil {
+			return err
+		}
+		err = WithListenTCPAddrString(cfg.Net.TCPAddress)(opt)
+		if err != nil {
+			return err
+		}
+		opt.EnableRelay = cfg.Net.RelayEnabled
+		opt.EnablePubSub = cfg.Net.PubSubEnabled
+		opt.DataPath = cfg.Datastore.Badger.Path
+		opt.ConnManager, err = NewConnManager(100, 400, time.Second*20)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
 // DataPath sets the data path.
-func DataPath(path string) NodeOpt {
+func WithDataPath(path string) NodeOpt {
 	return func(opt *Options) error {
 		opt.DataPath = path
 		return nil
@@ -83,7 +108,7 @@ func WithEnableRelay(enable bool) NodeOpt {
 }
 
 // ListenP2PAddrStrings sets the address to listen on given as strings.
-func ListenP2PAddrStrings(addrs ...string) NodeOpt {
+func WithListenP2PAddrStrings(addrs ...string) NodeOpt {
 	return func(opt *Options) error {
 		for _, addrstr := range addrs {
 			a, err := ma.NewMultiaddr(addrstr)
@@ -97,7 +122,7 @@ func ListenP2PAddrStrings(addrs ...string) NodeOpt {
 }
 
 // ListenTCPAddrString sets the TCP address to listen on, as Multiaddr.
-func ListenTCPAddrString(addr string) NodeOpt {
+func WithListenTCPAddrString(addr string) NodeOpt {
 	return func(opt *Options) error {
 		a, err := ma.NewMultiaddr(addr)
 		if err != nil {
@@ -109,7 +134,7 @@ func ListenTCPAddrString(addr string) NodeOpt {
 }
 
 // ListenAddrs sets the address to listen on given as MultiAddr(s).
-func ListenAddrs(addrs ...ma.Multiaddr) NodeOpt {
+func WithListenAddrs(addrs ...ma.Multiaddr) NodeOpt {
 	return func(opt *Options) error {
 		opt.ListenAddrs = addrs
 		return nil

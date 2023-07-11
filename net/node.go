@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,7 +14,7 @@ and GRPC server.
 
 Basically it combines db/DB, net/Peer, and net/Server into a single Node object.
 */
-package node
+package net
 
 import (
 	"context"
@@ -44,36 +44,26 @@ import (
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/net"
 )
 
-var (
-	log = logging.MustNewLogger("node")
-)
-
-const evtWaitTimeout = 10 * time.Second
+var evtWaitTimeout = 10 * time.Second
 
 // Node is a networked peer instance of DefraDB.
 type Node struct {
 	// embed the DB interface into the node
 	client.DB
 
-	*net.Peer
-
-	host   host.Host
-	dht    routing.Routing
-	pubsub *pubsub.PubSub
+	*Peer
 
 	// receives an event when the status of a peer connection changes.
 	peerEvent chan event.EvtPeerConnectednessChanged
 
 	// receives an event when a pubsub topic is added.
-	pubSubEvent chan net.EvtPubSub
+	pubSubEvent chan EvtPubSub
 
 	// receives an event when a pushLog request has been processed.
-	pushLogEvent chan net.EvtReceivedPushLog
+	pushLogEvent chan EvtReceivedPushLog
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -158,7 +148,7 @@ func NewNode(
 
 	ctx, cancel := context.WithCancel(ctx)
 
-	peer, err := net.NewPeer(
+	peer, err := NewPeer(
 		ctx,
 		db,
 		h,
@@ -180,13 +170,10 @@ func NewNode(
 		// test, but we should resolve this when we can (e.g. via using subscribe-like
 		// mechanics, potentially via use of a ring-buffer based [events.Channel]
 		// implementation): https://github.com/sourcenetwork/defradb/issues/1358.
-		pubSubEvent:  make(chan net.EvtPubSub, 20),
-		pushLogEvent: make(chan net.EvtReceivedPushLog, 20),
+		pubSubEvent:  make(chan EvtPubSub, 20),
+		pushLogEvent: make(chan EvtReceivedPushLog, 20),
 		peerEvent:    make(chan event.EvtPeerConnectednessChanged, 20),
 		Peer:         peer,
-		host:         h,
-		dht:          ddht,
-		pubsub:       ps,
 		DB:           db,
 		ctx:          ctx,
 		cancel:       cancel,
@@ -249,6 +236,7 @@ func (n *Node) subscribeToPeerConnectionEvents() {
 			n.ctx,
 			fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
 		)
+		return
 	}
 	go func() {
 		for e := range sub.Out() {
@@ -264,20 +252,21 @@ func (n *Node) subscribeToPeerConnectionEvents() {
 
 // subscribeToPubSubEvents subscribes the node to the event bus for a pubsub.
 func (n *Node) subscribeToPubSubEvents() {
-	sub, err := n.host.EventBus().Subscribe(new(net.EvtPubSub))
+	sub, err := n.host.EventBus().Subscribe(new(EvtPubSub))
 	if err != nil {
 		log.Info(
 			n.ctx,
 			fmt.Sprintf("failed to subscribe to pubsub event: %v", err),
 		)
+		return
 	}
 	go func() {
 		for e := range sub.Out() {
 			select {
-			case n.pubSubEvent <- e.(net.EvtPubSub):
+			case n.pubSubEvent <- e.(EvtPubSub):
 			default:
 				<-n.pubSubEvent
-				n.pubSubEvent <- e.(net.EvtPubSub)
+				n.pubSubEvent <- e.(EvtPubSub)
 			}
 		}
 	}()
@@ -285,20 +274,21 @@ func (n *Node) subscribeToPubSubEvents() {
 
 // subscribeToPushLogEvents subscribes the node to the event bus for a push log request completion.
 func (n *Node) subscribeToPushLogEvents() {
-	sub, err := n.host.EventBus().Subscribe(new(net.EvtReceivedPushLog))
+	sub, err := n.host.EventBus().Subscribe(new(EvtReceivedPushLog))
 	if err != nil {
 		log.Info(
 			n.ctx,
 			fmt.Sprintf("failed to subscribe to push log event: %v", err),
 		)
+		return
 	}
 	go func() {
 		for e := range sub.Out() {
 			select {
-			case n.pushLogEvent <- e.(net.EvtReceivedPushLog):
+			case n.pushLogEvent <- e.(EvtReceivedPushLog):
 			default:
 				<-n.pushLogEvent
-				n.pushLogEvent <- e.(net.EvtReceivedPushLog)
+				n.pushLogEvent <- e.(EvtReceivedPushLog)
 			}
 		}
 	}()
@@ -317,7 +307,7 @@ func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return errors.New("waiting for peer connection timed out")
+			return ErrPeerConnectionWaitTimout
 		case <-n.ctx.Done():
 			return nil
 		}
@@ -334,7 +324,7 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return errors.New("waiting for pubsub timed out")
+			return ErrPubSubWaitTimeout
 		case <-n.ctx.Done():
 			return nil
 		}
@@ -357,7 +347,7 @@ func (n *Node) WaitForPushLogByPeerEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return errors.New("waiting for pushlog timed out")
+			return ErrPushLogWaitTimeout
 		case <-n.ctx.Done():
 			return nil
 		}
@@ -380,7 +370,7 @@ func (n *Node) WaitForPushLogFromPeerEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return errors.New("waiting for pushlog timed out")
+			return ErrPushLogWaitTimeout
 		case <-n.ctx.Done():
 			return nil
 		}
