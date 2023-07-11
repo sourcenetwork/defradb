@@ -316,7 +316,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 
 		go func() {
 			log.FeedbackInfo(ctx, "Started RPC server", logging.NewKV("Address", addr))
-			netpb.RegisterService2Server(server, n.Peer)
+			netpb.RegisterCollectionServer(server, n.Peer)
 			if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 				log.FeedbackFatalE(ctx, "Failed to start RPC server", err)
 			}

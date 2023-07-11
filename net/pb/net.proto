@@ -127,8 +127,8 @@ message GetAllP2PCollectionsReply {
 }
 
 
-// Service is the peer-to-peer network API for document sync
-service Service2 {
+// Collection is the peer-to-peer network API for document sync by replication and subscription to collections
+service Collection {
     // SetReplicator for this peer
     rpc SetReplicator(SetReplicatorRequest) returns (SetReplicatorReply) {}
 

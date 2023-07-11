@@ -46,7 +46,7 @@ func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
 	return database
 }
 
-func TestNewNode_FromFixture_NoError(t *testing.T) {
+func TestNewNode_WithEnableRelay_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())

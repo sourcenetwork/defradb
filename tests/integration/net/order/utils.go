@@ -26,7 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
-	net_pb "github.com/sourcenetwork/defradb/net/pb"
+	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -307,7 +307,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 					require.NoError(t, err)
 					_, err = n.Peer.SetReplicator(
 						ctx,
-						&net_pb.SetReplicatorRequest{
+						&netpb.SetReplicatorRequest{
 							Addr: addr.Bytes(),
 						},
 					)

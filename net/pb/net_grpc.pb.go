@@ -267,18 +267,18 @@ var Service_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	Service2_SetReplicator_FullMethodName        = "/net.pb.Service2/SetReplicator"
-	Service2_DeleteReplicator_FullMethodName     = "/net.pb.Service2/DeleteReplicator"
-	Service2_GetAllReplicators_FullMethodName    = "/net.pb.Service2/GetAllReplicators"
-	Service2_AddP2PCollections_FullMethodName    = "/net.pb.Service2/AddP2PCollections"
-	Service2_RemoveP2PCollections_FullMethodName = "/net.pb.Service2/RemoveP2PCollections"
-	Service2_GetAllP2PCollections_FullMethodName = "/net.pb.Service2/GetAllP2PCollections"
+	Collection_SetReplicator_FullMethodName        = "/net.pb.Collection/SetReplicator"
+	Collection_DeleteReplicator_FullMethodName     = "/net.pb.Collection/DeleteReplicator"
+	Collection_GetAllReplicators_FullMethodName    = "/net.pb.Collection/GetAllReplicators"
+	Collection_AddP2PCollections_FullMethodName    = "/net.pb.Collection/AddP2PCollections"
+	Collection_RemoveP2PCollections_FullMethodName = "/net.pb.Collection/RemoveP2PCollections"
+	Collection_GetAllP2PCollections_FullMethodName = "/net.pb.Collection/GetAllP2PCollections"
 )
 
-// Service2Client is the client API for Service2 service.
+// CollectionClient is the client API for Collection service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type Service2Client interface {
+type CollectionClient interface {
 	// SetReplicator for this peer
 	SetReplicator(ctx context.Context, in *SetReplicatorRequest, opts ...grpc.CallOption) (*SetReplicatorReply, error)
 	// DeleteReplicator for this peer
@@ -290,72 +290,72 @@ type Service2Client interface {
 	GetAllP2PCollections(ctx context.Context, in *GetAllP2PCollectionsRequest, opts ...grpc.CallOption) (*GetAllP2PCollectionsReply, error)
 }
 
-type service2Client struct {
+type collectionClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewService2Client(cc grpc.ClientConnInterface) Service2Client {
-	return &service2Client{cc}
+func NewCollectionClient(cc grpc.ClientConnInterface) CollectionClient {
+	return &collectionClient{cc}
 }
 
-func (c *service2Client) SetReplicator(ctx context.Context, in *SetReplicatorRequest, opts ...grpc.CallOption) (*SetReplicatorReply, error) {
+func (c *collectionClient) SetReplicator(ctx context.Context, in *SetReplicatorRequest, opts ...grpc.CallOption) (*SetReplicatorReply, error) {
 	out := new(SetReplicatorReply)
-	err := c.cc.Invoke(ctx, Service2_SetReplicator_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Collection_SetReplicator_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *service2Client) DeleteReplicator(ctx context.Context, in *DeleteReplicatorRequest, opts ...grpc.CallOption) (*DeleteReplicatorReply, error) {
+func (c *collectionClient) DeleteReplicator(ctx context.Context, in *DeleteReplicatorRequest, opts ...grpc.CallOption) (*DeleteReplicatorReply, error) {
 	out := new(DeleteReplicatorReply)
-	err := c.cc.Invoke(ctx, Service2_DeleteReplicator_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Collection_DeleteReplicator_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *service2Client) GetAllReplicators(ctx context.Context, in *GetAllReplicatorRequest, opts ...grpc.CallOption) (*GetAllReplicatorReply, error) {
+func (c *collectionClient) GetAllReplicators(ctx context.Context, in *GetAllReplicatorRequest, opts ...grpc.CallOption) (*GetAllReplicatorReply, error) {
 	out := new(GetAllReplicatorReply)
-	err := c.cc.Invoke(ctx, Service2_GetAllReplicators_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Collection_GetAllReplicators_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *service2Client) AddP2PCollections(ctx context.Context, in *AddP2PCollectionsRequest, opts ...grpc.CallOption) (*AddP2PCollectionsReply, error) {
+func (c *collectionClient) AddP2PCollections(ctx context.Context, in *AddP2PCollectionsRequest, opts ...grpc.CallOption) (*AddP2PCollectionsReply, error) {
 	out := new(AddP2PCollectionsReply)
-	err := c.cc.Invoke(ctx, Service2_AddP2PCollections_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Collection_AddP2PCollections_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *service2Client) RemoveP2PCollections(ctx context.Context, in *RemoveP2PCollectionsRequest, opts ...grpc.CallOption) (*RemoveP2PCollectionsReply, error) {
+func (c *collectionClient) RemoveP2PCollections(ctx context.Context, in *RemoveP2PCollectionsRequest, opts ...grpc.CallOption) (*RemoveP2PCollectionsReply, error) {
 	out := new(RemoveP2PCollectionsReply)
-	err := c.cc.Invoke(ctx, Service2_RemoveP2PCollections_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Collection_RemoveP2PCollections_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *service2Client) GetAllP2PCollections(ctx context.Context, in *GetAllP2PCollectionsRequest, opts ...grpc.CallOption) (*GetAllP2PCollectionsReply, error) {
+func (c *collectionClient) GetAllP2PCollections(ctx context.Context, in *GetAllP2PCollectionsRequest, opts ...grpc.CallOption) (*GetAllP2PCollectionsReply, error) {
 	out := new(GetAllP2PCollectionsReply)
-	err := c.cc.Invoke(ctx, Service2_GetAllP2PCollections_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Collection_GetAllP2PCollections_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Service2Server is the server API for Service2 service.
-// All implementations must embed UnimplementedService2Server
+// CollectionServer is the server API for Collection service.
+// All implementations must embed UnimplementedCollectionServer
 // for forward compatibility
-type Service2Server interface {
+type CollectionServer interface {
 	// SetReplicator for this peer
 	SetReplicator(context.Context, *SetReplicatorRequest) (*SetReplicatorReply, error)
 	// DeleteReplicator for this peer
@@ -365,182 +365,182 @@ type Service2Server interface {
 	AddP2PCollections(context.Context, *AddP2PCollectionsRequest) (*AddP2PCollectionsReply, error)
 	RemoveP2PCollections(context.Context, *RemoveP2PCollectionsRequest) (*RemoveP2PCollectionsReply, error)
 	GetAllP2PCollections(context.Context, *GetAllP2PCollectionsRequest) (*GetAllP2PCollectionsReply, error)
-	mustEmbedUnimplementedService2Server()
+	mustEmbedUnimplementedCollectionServer()
 }
 
-// UnimplementedService2Server must be embedded to have forward compatible implementations.
-type UnimplementedService2Server struct {
+// UnimplementedCollectionServer must be embedded to have forward compatible implementations.
+type UnimplementedCollectionServer struct {
 }
 
-func (UnimplementedService2Server) SetReplicator(context.Context, *SetReplicatorRequest) (*SetReplicatorReply, error) {
+func (UnimplementedCollectionServer) SetReplicator(context.Context, *SetReplicatorRequest) (*SetReplicatorReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetReplicator not implemented")
 }
-func (UnimplementedService2Server) DeleteReplicator(context.Context, *DeleteReplicatorRequest) (*DeleteReplicatorReply, error) {
+func (UnimplementedCollectionServer) DeleteReplicator(context.Context, *DeleteReplicatorRequest) (*DeleteReplicatorReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteReplicator not implemented")
 }
-func (UnimplementedService2Server) GetAllReplicators(context.Context, *GetAllReplicatorRequest) (*GetAllReplicatorReply, error) {
+func (UnimplementedCollectionServer) GetAllReplicators(context.Context, *GetAllReplicatorRequest) (*GetAllReplicatorReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllReplicators not implemented")
 }
-func (UnimplementedService2Server) AddP2PCollections(context.Context, *AddP2PCollectionsRequest) (*AddP2PCollectionsReply, error) {
+func (UnimplementedCollectionServer) AddP2PCollections(context.Context, *AddP2PCollectionsRequest) (*AddP2PCollectionsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddP2PCollections not implemented")
 }
-func (UnimplementedService2Server) RemoveP2PCollections(context.Context, *RemoveP2PCollectionsRequest) (*RemoveP2PCollectionsReply, error) {
+func (UnimplementedCollectionServer) RemoveP2PCollections(context.Context, *RemoveP2PCollectionsRequest) (*RemoveP2PCollectionsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveP2PCollections not implemented")
 }
-func (UnimplementedService2Server) GetAllP2PCollections(context.Context, *GetAllP2PCollectionsRequest) (*GetAllP2PCollectionsReply, error) {
+func (UnimplementedCollectionServer) GetAllP2PCollections(context.Context, *GetAllP2PCollectionsRequest) (*GetAllP2PCollectionsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllP2PCollections not implemented")
 }
-func (UnimplementedService2Server) mustEmbedUnimplementedService2Server() {}
+func (UnimplementedCollectionServer) mustEmbedUnimplementedCollectionServer() {}
 
-// UnsafeService2Server may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to Service2Server will
+// UnsafeCollectionServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CollectionServer will
 // result in compilation errors.
-type UnsafeService2Server interface {
-	mustEmbedUnimplementedService2Server()
+type UnsafeCollectionServer interface {
+	mustEmbedUnimplementedCollectionServer()
 }
 
-func RegisterService2Server(s grpc.ServiceRegistrar, srv Service2Server) {
-	s.RegisterService(&Service2_ServiceDesc, srv)
+func RegisterCollectionServer(s grpc.ServiceRegistrar, srv CollectionServer) {
+	s.RegisterService(&Collection_ServiceDesc, srv)
 }
 
-func _Service2_SetReplicator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Collection_SetReplicator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetReplicatorRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(Service2Server).SetReplicator(ctx, in)
+		return srv.(CollectionServer).SetReplicator(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Service2_SetReplicator_FullMethodName,
+		FullMethod: Collection_SetReplicator_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(Service2Server).SetReplicator(ctx, req.(*SetReplicatorRequest))
+		return srv.(CollectionServer).SetReplicator(ctx, req.(*SetReplicatorRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service2_DeleteReplicator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Collection_DeleteReplicator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteReplicatorRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(Service2Server).DeleteReplicator(ctx, in)
+		return srv.(CollectionServer).DeleteReplicator(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Service2_DeleteReplicator_FullMethodName,
+		FullMethod: Collection_DeleteReplicator_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(Service2Server).DeleteReplicator(ctx, req.(*DeleteReplicatorRequest))
+		return srv.(CollectionServer).DeleteReplicator(ctx, req.(*DeleteReplicatorRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service2_GetAllReplicators_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Collection_GetAllReplicators_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAllReplicatorRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(Service2Server).GetAllReplicators(ctx, in)
+		return srv.(CollectionServer).GetAllReplicators(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Service2_GetAllReplicators_FullMethodName,
+		FullMethod: Collection_GetAllReplicators_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(Service2Server).GetAllReplicators(ctx, req.(*GetAllReplicatorRequest))
+		return srv.(CollectionServer).GetAllReplicators(ctx, req.(*GetAllReplicatorRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service2_AddP2PCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Collection_AddP2PCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddP2PCollectionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(Service2Server).AddP2PCollections(ctx, in)
+		return srv.(CollectionServer).AddP2PCollections(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Service2_AddP2PCollections_FullMethodName,
+		FullMethod: Collection_AddP2PCollections_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(Service2Server).AddP2PCollections(ctx, req.(*AddP2PCollectionsRequest))
+		return srv.(CollectionServer).AddP2PCollections(ctx, req.(*AddP2PCollectionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service2_RemoveP2PCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Collection_RemoveP2PCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveP2PCollectionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(Service2Server).RemoveP2PCollections(ctx, in)
+		return srv.(CollectionServer).RemoveP2PCollections(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Service2_RemoveP2PCollections_FullMethodName,
+		FullMethod: Collection_RemoveP2PCollections_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(Service2Server).RemoveP2PCollections(ctx, req.(*RemoveP2PCollectionsRequest))
+		return srv.(CollectionServer).RemoveP2PCollections(ctx, req.(*RemoveP2PCollectionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service2_GetAllP2PCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Collection_GetAllP2PCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAllP2PCollectionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(Service2Server).GetAllP2PCollections(ctx, in)
+		return srv.(CollectionServer).GetAllP2PCollections(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Service2_GetAllP2PCollections_FullMethodName,
+		FullMethod: Collection_GetAllP2PCollections_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(Service2Server).GetAllP2PCollections(ctx, req.(*GetAllP2PCollectionsRequest))
+		return srv.(CollectionServer).GetAllP2PCollections(ctx, req.(*GetAllP2PCollectionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Service2_ServiceDesc is the grpc.ServiceDesc for Service2 service.
+// Collection_ServiceDesc is the grpc.ServiceDesc for Collection service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Service2_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "net.pb.Service2",
-	HandlerType: (*Service2Server)(nil),
+var Collection_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "net.pb.Collection",
+	HandlerType: (*CollectionServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "SetReplicator",
-			Handler:    _Service2_SetReplicator_Handler,
+			Handler:    _Collection_SetReplicator_Handler,
 		},
 		{
 			MethodName: "DeleteReplicator",
-			Handler:    _Service2_DeleteReplicator_Handler,
+			Handler:    _Collection_DeleteReplicator_Handler,
 		},
 		{
 			MethodName: "GetAllReplicators",
-			Handler:    _Service2_GetAllReplicators_Handler,
+			Handler:    _Collection_GetAllReplicators_Handler,
 		},
 		{
 			MethodName: "AddP2PCollections",
-			Handler:    _Service2_AddP2PCollections_Handler,
+			Handler:    _Collection_AddP2PCollections_Handler,
 		},
 		{
 			MethodName: "RemoveP2PCollections",
-			Handler:    _Service2_RemoveP2PCollections_Handler,
+			Handler:    _Collection_RemoveP2PCollections_Handler,
 		},
 		{
 			MethodName: "GetAllP2PCollections",
-			Handler:    _Service2_GetAllP2PCollections_Handler,
+			Handler:    _Collection_GetAllP2PCollections_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

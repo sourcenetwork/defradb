@@ -69,14 +69,14 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	require.Contains(t, err.Error(), "failed to parse peer ID")
 }
 
-func TestPushlogWithInvalidPeerID2(t *testing.T) {
+func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	ctx := context.Background()
-	_, n := newTestNode(ctx, t)
-	n.Start()
+	_, n1 := newTestNode(ctx, t)
+	n1.Start()
 	_, n2 := newTestNode(ctx, t)
 	n2.Start()
 
-	err := n.host.Connect(ctx, peer.AddrInfo{
+	err := n1.host.Connect(ctx, peer.AddrInfo{
 		ID: n2.PeerID(),
 		Addrs: []ma.Multiaddr{
 			n2.host.Addrs()[0],
@@ -84,7 +84,7 @@ func TestPushlogWithInvalidPeerID2(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = n.db.AddSchema(ctx, `type User {
+	_, err = n1.db.AddSchema(ctx, `type User {
 		name: String
 	}`)
 	require.NoError(t, err)
@@ -97,7 +97,7 @@ func TestPushlogWithInvalidPeerID2(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "test"}`))
 	require.NoError(t, err)
 
-	col, err := n.db.GetCollectionByName(ctx, "User")
+	col, err := n1.db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 	err = col.Save(ctx, doc)
 	require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestPushlogWithInvalidPeerID2(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.server.pushLog(ctx, events.Update{
+	err = n1.server.pushLog(ctx, events.Update{
 		DocKey:   doc.Key().String(),
 		Cid:      cid,
 		SchemaID: col.SchemaID(),

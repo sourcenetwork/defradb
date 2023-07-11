@@ -33,7 +33,7 @@ func init() {
 }
 
 type Client struct {
-	c    pb.Service2Client
+	c    pb.CollectionClient
 	conn *grpc.ClientConn
 }
 
@@ -45,7 +45,7 @@ func NewClient(target string, opts ...grpc.DialOption) (*Client, error) {
 	}
 
 	return &Client{
-		c:    pb.NewService2Client(conn),
+		c:    pb.NewCollectionClient(conn),
 		conn: conn,
 	}, nil
 }

@@ -87,7 +87,7 @@ type Peer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	pb.UnimplementedService2Server
+	pb.UnimplementedCollectionServer
 }
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
@@ -526,7 +526,7 @@ func (p *Peer) pushToReplicator(
 	}
 }
 
-// DeleteReplicator adds a target peer node as a replication destination for documents in our DB.
+// DeleteReplicator removes a peer node from the replicators.
 func (p *Peer) DeleteReplicator(
 	ctx context.Context,
 	req *pb.DeleteReplicatorRequest,
@@ -550,7 +550,6 @@ func (p *Peer) DeleteReplicator(
 	}, txn.Commit(ctx)
 }
 
-// DeleteReplicator adds a target peer node as a replication destination for documents in our DB.
 func (p *Peer) deleteReplicator(
 	ctx context.Context,
 	store client.Store,
@@ -613,7 +612,7 @@ func (p *Peer) deleteReplicator(
 	})
 }
 
-// GetAllReplicators adds a target peer node as a replication destination for documents in our DB.
+// GetAllReplicators returns all replicators and the schemas that are replicated to them.
 func (p *Peer) GetAllReplicators(
 	ctx context.Context,
 	req *pb.GetAllReplicatorRequest,
