@@ -257,11 +257,6 @@ func (doc *Document) Delete(fields ...string) error {
 	return nil
 }
 
-// SetAsType Sets the value of a field along with a specific type
-// func (doc *Document) SetAsType(t client.CType, field string, value any) error {
-// 	return doc.set(t, field, value)
-// }
-
 func (doc *Document) set(t CType, field string, value Value) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
@@ -477,6 +472,66 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	docMap["_key"] = doc.Key().String()
 
 	return docMap, nil
+}
+
+// setDockeyFromBytes makes docKey out of the consumed bytes and then sets it as `doc.key`.
+func (doc *Document) setDockeyFromBytes(bytes []byte) error {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	pref := cid.Prefix{
+		Version:  1,
+		Codec:    cid.Raw,
+		MhType:   mh.SHA2_256,
+		MhLength: -1, // default length
+	}
+
+	c, err := pref.Sum(bytes)
+	if err != nil {
+		return err
+	}
+
+	doc.key = NewDocKeyV0(c)
+	return nil
+}
+
+func (doc *Document) remapAliasFields(fieldDescriptions []FieldDescription) (bool, error) {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	foundAlias := false
+	for docField, docFieldValue := range doc.fields {
+		for _, fieldDescription := range fieldDescriptions {
+			maybeAliasField := docField + "_id"
+			if fieldDescription.Name == maybeAliasField {
+				foundAlias = true
+				doc.fields[maybeAliasField] = docFieldValue
+				delete(doc.fields, docField)
+			}
+		}
+	}
+
+	return foundAlias, nil
+}
+
+// RemapAliasFieldsAndDockey remaps the alias fields and fixes (overwrites) the dockey.
+func (doc *Document) RemapAliasFieldsAndDockey(fieldDescriptions []FieldDescription) error {
+	foundAlias, err := doc.remapAliasFields(fieldDescriptions)
+	if err != nil {
+		return err
+	}
+
+	if !foundAlias {
+		return nil
+	}
+
+	newBytes, err := doc.Bytes()
+	if err != nil {
+		return err
+	}
+
+	// Update the dockey so dockey isn't based on an aliased name of a field.
+	return doc.setDockeyFromBytes(newBytes)
 }
 
 // DocumentStatus represent the state of the document in the DAG store.

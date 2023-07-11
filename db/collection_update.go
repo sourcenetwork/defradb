@@ -334,7 +334,7 @@ func (c *collection) applyMerge(
 		mergeCBOR[mfield] = cborVal
 
 		val := client.NewCBORValue(fd.Typ, cborVal)
-		fieldKey, _, fieldExists := c.tryGetFieldKey(key, mfield)
+		fieldKey, fieldExists := c.tryGetFieldKey(key, mfield)
 		if !fieldExists {
 			return client.NewErrFieldNotExist(mfield)
 		}

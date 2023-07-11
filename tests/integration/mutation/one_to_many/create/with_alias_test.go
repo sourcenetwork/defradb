@@ -186,3 +186,84 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 
 	fixture.ExecuteTestCase(t, test)
 }
+
+func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDocID(t *testing.T) {
+	// These keys MUST be shared by both tests below.
+	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
+
+	nonAliasedTest := testUtils.TestCase{
+		Description: "One to many update mutation using relation alias name from single side (wrong)",
+		Actions: []any{
+			testUtils.Request{
+				Request: `mutation {
+ 					create_Author(data: "{\"name\": \"John Grisham\"}") {
+ 						_key
+ 					}
+ 				}`,
+				Results: []map[string]any{
+					{
+						"_key": authorKey,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: fmt.Sprintf(
+					`mutation {
+ 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+ 							_key
+ 							name
+ 						}
+ 					}`,
+					authorKey,
+				),
+				Results: []map[string]any{
+					{
+						"_key": bookKey, // Must be same as below.
+						"name": "Painted House",
+					},
+				},
+			},
+		},
+	}
+	fixture.ExecuteTestCase(t, nonAliasedTest)
+
+	// Check that `bookKey` is same in both above and the alised version below.
+	// Note: Everything should be same, only diff should be the use of alias.
+
+	aliasedTest := testUtils.TestCase{
+		Description: "One to many update mutation using relation alias name from single side (wrong)",
+		Actions: []any{
+			testUtils.Request{
+				Request: `mutation {
+ 					create_Author(data: "{\"name\": \"John Grisham\"}") {
+ 						_key
+ 					}
+ 				}`,
+				Results: []map[string]any{
+					{
+						"_key": authorKey,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: fmt.Sprintf(
+					`mutation {
+ 						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
+ 							_key
+ 							name
+ 						}
+ 					}`,
+					authorKey,
+				),
+				Results: []map[string]any{
+					{
+						"_key": bookKey, // Must be same as below.
+						"name": "Painted House",
+					},
+				},
+			},
+		},
+	}
+	fixture.ExecuteTestCase(t, aliasedTest)
+}
