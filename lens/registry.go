@@ -32,11 +32,11 @@ import (
 // lensRegistry is responsible for managing all migration related state within a local
 // database instance.
 type lensRegistry struct {
-	lensPoolSize int
+	poolSize int
 	// lens lockers by source schema version ID
-	lensWarehouse map[string]*lensLocker
+	warehouse map[string]*lensLocker
 	// lens configurations by source schema version ID
-	lensConfigs map[string]client.LensConfig
+	configs map[string]client.LensConfig
 }
 
 var _ client.LensRegistry = (*lensRegistry)(nil)
@@ -56,9 +56,9 @@ func NewRegistry(lensPoolSize immutable.Option[int]) *lensRegistry {
 	}
 
 	return &lensRegistry{
-		lensPoolSize:  size,
-		lensWarehouse: map[string]*lensLocker{},
-		lensConfigs:   map[string]client.LensConfig{},
+		poolSize:  size,
+		warehouse: map[string]*lensLocker{},
+		configs:   map[string]client.LensConfig{},
 	}
 }
 
@@ -84,13 +84,13 @@ func (r *lensRegistry) SetMigration(ctx context.Context, txn datastore.Txn, cfg 
 }
 
 func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error {
-	locker, lockerAlreadyExists := r.lensWarehouse[cfg.SourceSchemaVersionID]
+	locker, lockerAlreadyExists := r.warehouse[cfg.SourceSchemaVersionID]
 	if !lockerAlreadyExists {
-		locker = newLocker(r.lensPoolSize, cfg)
+		locker = newLocker(r.poolSize, cfg)
 	}
 
-	newLensPipes := make([]*lensPipe, r.lensPoolSize)
-	for i := 0; i < r.lensPoolSize; i++ {
+	newLensPipes := make([]*lensPipe, r.poolSize)
+	for i := 0; i < r.poolSize; i++ {
 		var err error
 		newLensPipes[i], err = newLensPipe(cfg)
 		if err != nil {
@@ -103,7 +103,7 @@ func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error
 	// https://github.com/sourcenetwork/defradb/issues/1592
 	txn.OnSuccess(func() {
 		if !lockerAlreadyExists {
-			r.lensWarehouse[cfg.SourceSchemaVersionID] = locker
+			r.warehouse[cfg.SourceSchemaVersionID] = locker
 		}
 
 	drainLoop:
@@ -119,7 +119,7 @@ func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error
 			locker.returnLens(lensPipe)
 		}
 
-		r.lensConfigs[cfg.SourceSchemaVersionID] = cfg
+		r.configs[cfg.SourceSchemaVersionID] = cfg
 	})
 
 	return nil
@@ -189,7 +189,7 @@ func (r *lensRegistry) MigrateUp(
 	src enumerable.Enumerable[LensDoc],
 	schemaVersionID string,
 ) (enumerable.Enumerable[LensDoc], error) {
-	lensLocker, ok := r.lensWarehouse[schemaVersionID]
+	lensLocker, ok := r.warehouse[schemaVersionID]
 	if !ok {
 		// If there are no migrations for this schema version, just return the given source.
 		return src, nil
@@ -215,14 +215,14 @@ func (*lensRegistry) MigrateDown(
 
 func (r *lensRegistry) Config() []client.LensConfig {
 	result := []client.LensConfig{}
-	for _, cfg := range r.lensConfigs {
+	for _, cfg := range r.configs {
 		result = append(result, cfg)
 	}
 	return result
 }
 
 func (r *lensRegistry) HasMigration(schemaVersionID string) bool {
-	_, hasMigration := r.lensWarehouse[schemaVersionID]
+	_, hasMigration := r.warehouse[schemaVersionID]
 	return hasMigration
 }
 
