@@ -247,7 +247,7 @@ func newLocker(lensPoolSize int, cfg client.LensConfig) *lensLocker {
 }
 
 // borrow attempts to borrow a module from the locker, if one is not available
-// it will return a new, temporary instance that does not be returned to the locker
+// it will return a new, temporary instance that will not be returned to the locker
 // after use.
 func (l *lensLocker) borrow() (enumerable.Socket[LensDoc], error) {
 	select {
