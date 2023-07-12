@@ -12,7 +12,6 @@ require (
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.4.2
 	github.com/gofrs/uuid/v5 v5.0.0
-	github.com/gogo/protobuf v1.3.2
 	github.com/graphql-go/graphql v0.8.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/iancoleman/strcase v0.2.0
@@ -30,11 +29,11 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.9.3
 	github.com/libp2p/go-libp2p-record v0.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/multiformats/go-multiaddr v0.10.0
+	github.com/multiformats/go-multiaddr v0.10.1
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/multiformats/go-multihash v0.2.3
-	github.com/multiformats/go-varint v0.0.7
 	github.com/pkg/errors v0.9.1
+	github.com/planetscale/vtprotobuf v0.4.0
 	github.com/sourcenetwork/immutable v0.2.2
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
@@ -50,6 +49,7 @@ require (
 	golang.org/x/crypto v0.11.0
 	golang.org/x/net v0.12.0
 	google.golang.org/grpc v1.56.2
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
@@ -75,6 +75,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -146,6 +147,7 @@ require (
 	github.com/multiformats/go-multiaddr-fmt v0.1.0 // indirect
 	github.com/multiformats/go-multicodec v0.9.0 // indirect
 	github.com/multiformats/go-multistream v0.4.1 // indirect
+	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.7 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -191,7 +193,6 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gonum.org/v1/gonum v0.13.0 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect

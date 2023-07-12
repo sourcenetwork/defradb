@@ -33,7 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/net"
 )
 
 const (
@@ -450,7 +450,7 @@ func executeTestCase(
 func closeNodes(
 	ctx context.Context,
 	t *testing.T,
-	nodes []*node.Node,
+	nodes []*net.Node,
 ) {
 	for _, node := range nodes {
 		if node.Peer != nil {
@@ -464,12 +464,12 @@ func closeNodes(
 // getNodes gets the set of applicable nodes for the given nodeID.
 //
 // If nodeID has a value it will return that node only, otherwise all nodes will be returned.
-func getNodes(nodeID immutable.Option[int], nodes []*node.Node) []*node.Node {
+func getNodes(nodeID immutable.Option[int], nodes []*net.Node) []*net.Node {
 	if !nodeID.HasValue() {
 		return nodes
 	}
 
-	return []*node.Node{nodes[nodeID.Value()]}
+	return []*net.Node{nodes[nodeID.Value()]}
 }
 
 // getNodeCollections gets the set of applicable collections for the given nodeID.
@@ -589,7 +589,7 @@ func getStartingNodes(
 	t *testing.T,
 	dbt DatabaseType,
 	testCase TestCase,
-) ([]*node.Node, []string) {
+) ([]*net.Node, []string) {
 	hasExplicitNode := false
 	for _, action := range testCase.Actions {
 		switch action.(type) {
@@ -603,7 +603,7 @@ func getStartingNodes(
 		db, path, err := GetDatabase(ctx, t, dbt)
 		require.Nil(t, err)
 
-		return []*node.Node{
+		return []*net.Node{
 				{
 					DB: db,
 				},
@@ -612,7 +612,7 @@ func getStartingNodes(
 			}
 	}
 
-	return []*node.Node{}, []string{}
+	return []*net.Node{}, []string{}
 }
 
 func restartNodes(
@@ -621,7 +621,7 @@ func restartNodes(
 	testCase TestCase,
 	dbt DatabaseType,
 	actionIndex int,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	dbPaths []string,
 	nodeAddresses []string,
 	configureActions []config.Config,
@@ -642,7 +642,7 @@ func restartNodes(
 		if len(configureActions) == 0 {
 			// If there are no explicit node configuration actions the node will be
 			// basic (i.e. no P2P stuff) and can be yielded now.
-			nodes[i] = &node.Node{
+			nodes[i] = &net.Node{
 				DB: db,
 			}
 			continue
@@ -652,11 +652,11 @@ func restartNodes(
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
 		cfg.Net.P2PAddress = strings.Split(nodeAddresses[i], "/p2p/")[0]
-		var n *node.Node
-		n, err = node.NewNode(
+		var n *net.Node
+		n, err = net.NewNode(
 			ctx,
 			db,
-			cfg.NodeConfig(),
+			net.WithConfig(&cfg),
 		)
 		require.NoError(t, err)
 
@@ -713,7 +713,7 @@ actionLoop:
 func getCollections(
 	ctx context.Context,
 	t *testing.T,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	collectionNames []string,
 ) [][]client.Collection {
 	collections := make([][]client.Collection, len(nodes))
@@ -744,7 +744,7 @@ func configureNode(
 	t *testing.T,
 	dbt DatabaseType,
 	cfg config.Config,
-) (*node.Node, string, string) {
+) (*net.Node, string, string) {
 	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
 	// And affects where libp2p(?) stores some values on the file system, even when using
 	// an in memory store.
@@ -753,12 +753,12 @@ func configureNode(
 	db, path, err := GetDatabase(ctx, t, dbt) //disable change dector, or allow it?
 	require.NoError(t, err)
 
-	var n *node.Node
+	var n *net.Node
 	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-	n, err = node.NewNode(
+	n, err = net.NewNode(
 		ctx,
 		db,
-		cfg.NodeConfig(),
+		net.WithConfig(&cfg),
 	)
 	require.NoError(t, err)
 
@@ -863,7 +863,7 @@ func getIndexes(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	action GetIndexes,
 ) {
@@ -963,7 +963,7 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
 func updateSchema(
 	ctx context.Context,
 	t *testing.T,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	testCase TestCase,
 	action SchemaUpdate,
 ) {
@@ -978,7 +978,7 @@ func updateSchema(
 func patchSchema(
 	ctx context.Context,
 	t *testing.T,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	testCase TestCase,
 	action SchemaPatch,
 ) {
@@ -996,7 +996,7 @@ func createDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action CreateDoc,
@@ -1039,7 +1039,7 @@ func deleteDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action DeleteDoc,
@@ -1068,7 +1068,7 @@ func updateDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action UpdateDoc,
@@ -1099,7 +1099,7 @@ func createIndex(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	indexes [][][]client.IndexDescription,
 	action CreateIndex,
@@ -1156,7 +1156,7 @@ func dropIndex(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	indexes [][][]client.IndexDescription,
 	action DropIndex,
@@ -1190,7 +1190,7 @@ func dropIndex(
 // about this in our tests so we just retry a few times until it works (or the
 // retry limit is breached - important incase this is a different error)
 func withRetry(
-	nodes []*node.Node,
+	nodes []*net.Node,
 	nodeID int,
 	action func() error,
 ) error {
@@ -1266,7 +1266,7 @@ func commitTransaction(
 func executeRequest(
 	ctx context.Context,
 	t *testing.T,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	txnsPointer *[]datastore.Txn,
 	description string,
 	action Request,
