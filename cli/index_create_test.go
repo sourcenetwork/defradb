@@ -71,7 +71,7 @@ func parseLines(r io.Reader) ([]map[string]any, error) {
 
 func simulateConsoleOutput(t *testing.T) (*bytes.Buffer, func()) {
 	// give go routines time to log before starting capture
-	time.Sleep(10 * time.Microsecond)
+	time.Sleep(100 * time.Microsecond)
 
 	b := &bytes.Buffer{}
 	log.ApplyConfig(logging.Config{
