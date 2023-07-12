@@ -6,9 +6,10 @@ import { patchSchema, ErrorItem } from '../lib/api'
 
 export type SchemaPatchFormProps = {
   values?: FormData
+  fieldTypes: string[]
 }
 
-export function SchemaPatchForm({ values }: SchemaPatchFormProps) {
+export function SchemaPatchForm({ values, fieldTypes }: SchemaPatchFormProps) {
   const queryClient = useQueryClient()
   const schemaContext = useSchemaContext({ nonNull: true })
 
@@ -40,6 +41,7 @@ export function SchemaPatchForm({ values }: SchemaPatchFormProps) {
       isLoading={isLoading}
       onSubmit={onSubmit}
       values={values}
+      fieldTypes={fieldTypes}
     />
   ) 
 }

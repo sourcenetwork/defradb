@@ -25,7 +25,6 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/multiformats/go-multihash"
 
-	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
@@ -157,9 +156,10 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 type fieldResponse struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Kind string `json:"kind"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Kind     string `json:"kind"`
+	Internal bool   `json:"internal"`
 }
 
 type collectionResponse struct {
@@ -185,12 +185,10 @@ func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	for i, col := range cols {
 		var fields []fieldResponse
 		for _, field := range col.Schema().Fields {
-			if field.Name == "_key" || field.RelationType == client.Relation_Type_INTERNAL_ID {
-				continue // ignore generated fields
-			}
 			fieldRes := fieldResponse{
-				ID:   field.ID.String(),
-				Name: field.Name,
+				ID:       field.ID.String(),
+				Name:     field.Name,
+				Internal: field.IsInternal(),
 			}
 			if field.IsObjectArray() {
 				fieldRes.Kind = fmt.Sprintf("[%s]", field.Schema)

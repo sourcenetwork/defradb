@@ -15,6 +15,7 @@ export type Field = {
   id?: string
   name: string
   kind: string
+  internal: boolean
 }
 
 export type Collection = {
@@ -32,7 +33,6 @@ export type Response<T> = {
 }
 
 export type ListSchemaResponse = Response<{
-  result?: string
   collections?: CollectionWithFields[]
 }>
 
@@ -52,9 +52,9 @@ export async function listSchema(): Promise<ListSchemaResponse> {
 }
 
 export async function loadSchema(name: string, fields: Field[]): Promise<LoadSchemaResponse> {
-  const _fields = fields.map(field => `${field.name}: ${field.kind.replace('Integer', 'Int')}`)
+  const _fields = fields.map(field => `${field.name}: ${field.kind}`)
   const body = [`type ${name} {`, ..._fields, '}'].join('\n')
-  return fetch(baseUrl + '/schema/load', { method: 'POST', body }).then(res => res.json())
+  return fetch(baseUrl + '/schema', { method: 'POST', body }).then(res => res.json())
 }
 
 export async function patchSchema(nameA: string, fieldsA: Field[], nameB: string, fieldsB: Field[]): Promise<PatchSchemaResponse> {
@@ -65,5 +65,5 @@ export async function patchSchema(nameA: string, fieldsA: Field[], nameB: string
   const collectionB = { [nameB]: { Name: nameB, Schema: schemaB } }
   
   const body = JSON.stringify(compare(collectionA, collectionB))
-  return fetch(baseUrl + '/schema/patch', { method: 'POST', body }).then(res => res.json())
+  return fetch(baseUrl + '/schema', { method: 'PATCH', body }).then(res => res.json())
 }

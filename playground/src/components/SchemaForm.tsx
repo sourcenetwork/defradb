@@ -2,22 +2,6 @@ import { useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Field, ErrorItem } from '../lib/api'
 
-const fieldTypes = [
-  'Boolean',
-  '[Boolean]',
-  '[Boolean!]',
-  'Integer',
-  '[Integer]',
-  '[Integer!]',
-  'DateTime',
-  'Float',
-  '[Float]',
-  '[Float!]',
-  'String',
-  '[String]',
-  '[String!]',
-]
-
 export type FormData = {
   name: string
   fields: Field[]
@@ -29,14 +13,15 @@ export type SchemaFormProps = {
   isLoading: boolean
   onSubmit: (data: FormData) => void
   values?: FormData
+  fieldTypes: string[]
 }
 
 const defaultValue: FormData = {
   name: '',
-  fields: [{ name: 'name', kind: 'String' }]
+  fields: [{ name: 'name', kind: 'String', internal: false }]
 }
 
-export function SchemaForm({ errors, isLoading, onSubmit, values = defaultValue }: SchemaFormProps) {
+export function SchemaForm({ errors, isLoading, onSubmit, values = defaultValue, fieldTypes }: SchemaFormProps) {
   const { control, formState, reset, register, handleSubmit } = useForm<FormData>({ values })
   const { fields, append, remove } = useFieldArray({ control, name: 'fields', keyName: '_id' })
 
@@ -65,13 +50,13 @@ export function SchemaForm({ errors, isLoading, onSubmit, values = defaultValue 
         <button
           type="button"
           className="graphiql-defradb-button"
-          onClick={() => append({ name: '', kind: 'Boolean' })}
+          onClick={() => append({ name: '', kind: 'Boolean', internal: false })}
         >
           Add
         </button>
       </div>
       {fields.map((field, index) =>
-        <div key={field._id} className="graphiql-defradb-field">
+        <div key={field._id} className="graphiql-defradb-field" style={{ display: field.internal ? 'none' : undefined }}>
           <input
             className="graphiql-defradb-input"
             disabled={isLoading || !!field.id}

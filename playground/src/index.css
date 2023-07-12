@@ -85,7 +85,3 @@ html, body, #root {
 .graphiql-defradb-button[disabled] {
   cursor: default;
 }
-
-.graphiql-defradb-textarea::placeholder {
-  color: hsla(var(--color-neutral), 0.5);
-}

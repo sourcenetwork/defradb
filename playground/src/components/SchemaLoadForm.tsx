@@ -4,7 +4,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import { SchemaForm, FormData } from './SchemaForm'
 import { loadSchema, ErrorItem } from '../lib/api'
 
-export function SchemaLoadForm() {
+export type SchemaLoadFormProps = {
+  fieldTypes: string[]
+}
+
+export function SchemaLoadForm({ fieldTypes }: SchemaLoadFormProps) {
   const queryClient = useQueryClient()
   const schemaContext = useSchemaContext({ nonNull: true })
 
@@ -35,6 +39,7 @@ export function SchemaLoadForm() {
       errors={errors}
       isLoading={isLoading}
       onSubmit={onSubmit}
+      fieldTypes={fieldTypes}
     />
   ) 
 }

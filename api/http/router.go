@@ -42,7 +42,7 @@ func setRoutes(h *handler) *handler {
 	if len(h.options.allowedOrigins) != 0 {
 		h.Use(cors.Handler(cors.Options{
 			AllowedOrigins: h.options.allowedOrigins,
-			AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+			AllowedMethods: []string{"GET", "POST", "PATCH", "OPTIONS"},
 			AllowedHeaders: []string{"Content-Type"},
 			MaxAge:         300,
 		}))
