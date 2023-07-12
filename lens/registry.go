@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-// todo: This file, particularly the `lensLocker`` stuff, contains fairly sensitive code that is both
+// todo: This file, particularly the `lensPool` stuff, contains fairly sensitive code that is both
 // cumbersome to fully test with integration/benchmark tests, and can have a significant affect on
 // the users if broken (deadlocks, large performance degradation).  It should have proper unit tests.
 // https://github.com/sourcenetwork/defradb/issues/1596
@@ -33,8 +33,9 @@ import (
 // database instance.
 type lensRegistry struct {
 	poolSize int
-	// lens lockers by source schema version ID
-	warehouse map[string]*lensLocker
+
+	lensPoolsBySchemaVersionID map[string]*lensPool
+
 	// lens configurations by source schema version ID
 	configs map[string]client.LensConfig
 }
@@ -56,9 +57,9 @@ func NewRegistry(lensPoolSize immutable.Option[int]) *lensRegistry {
 	}
 
 	return &lensRegistry{
-		poolSize:  size,
-		warehouse: map[string]*lensLocker{},
-		configs:   map[string]client.LensConfig{},
+		poolSize:                   size,
+		lensPoolsBySchemaVersionID: map[string]*lensPool{},
+		configs:                    map[string]client.LensConfig{},
 	}
 }
 
@@ -84,7 +85,7 @@ func (r *lensRegistry) SetMigration(ctx context.Context, txn datastore.Txn, cfg 
 }
 
 func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error {
-	locker, lockerAlreadyExists := r.warehouse[cfg.SourceSchemaVersionID]
+	locker, lockerAlreadyExists := r.lensPoolsBySchemaVersionID[cfg.SourceSchemaVersionID]
 	if !lockerAlreadyExists {
 		locker = newLocker(r.poolSize, cfg)
 	}
@@ -103,13 +104,13 @@ func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error
 	// https://github.com/sourcenetwork/defradb/issues/1592
 	txn.OnSuccess(func() {
 		if !lockerAlreadyExists {
-			r.warehouse[cfg.SourceSchemaVersionID] = locker
+			r.lensPoolsBySchemaVersionID[cfg.SourceSchemaVersionID] = locker
 		}
 
 	drainLoop:
 		for {
 			select {
-			case <-locker.safes:
+			case <-locker.pipes:
 			default:
 				break drainLoop
 			}
@@ -189,13 +190,13 @@ func (r *lensRegistry) MigrateUp(
 	src enumerable.Enumerable[LensDoc],
 	schemaVersionID string,
 ) (enumerable.Enumerable[LensDoc], error) {
-	lensLocker, ok := r.warehouse[schemaVersionID]
+	lensPool, ok := r.lensPoolsBySchemaVersionID[schemaVersionID]
 	if !ok {
 		// If there are no migrations for this schema version, just return the given source.
 		return src, nil
 	}
 
-	lens, err := lensLocker.borrow()
+	lens, err := lensPool.borrow()
 	if err != nil {
 		return nil, err
 	}
@@ -222,16 +223,16 @@ func (r *lensRegistry) Config() []client.LensConfig {
 }
 
 func (r *lensRegistry) HasMigration(schemaVersionID string) bool {
-	_, hasMigration := r.warehouse[schemaVersionID]
+	_, hasMigration := r.lensPoolsBySchemaVersionID[schemaVersionID]
 	return hasMigration
 }
 
-// lensLocker provides a pool-like mechanic for caching a limited number of wasm lens modules in
+// lensPool provides a pool-like mechanic for caching a limited number of wasm lens modules in
 // a thread safe fashion.
 //
 // Instanstiating a lens module is pretty expensive as it has to spin up the wasm runtime environment
 // so we need to limit how frequently we do this.
-type lensLocker struct {
+type lensPool struct {
 	// The config used to create the lenses within this locker.
 	cfg client.LensConfig
 
@@ -241,25 +242,25 @@ type lensLocker struct {
 	// We wish to limit this as creating lenses is expensive, and we do not want
 	// to be dynamically resizing this collection and spinning up new lens instances
 	// in user time, or holding on to large numbers of them.
-	safes chan *lensPipe
+	pipes chan *lensPipe
 }
 
-func newLocker(lensPoolSize int, cfg client.LensConfig) *lensLocker {
-	return &lensLocker{
+func newLocker(lensPoolSize int, cfg client.LensConfig) *lensPool {
+	return &lensPool{
 		cfg:   cfg,
-		safes: make(chan *lensPipe, lensPoolSize),
+		pipes: make(chan *lensPipe, lensPoolSize),
 	}
 }
 
 // borrow attempts to borrow a module from the locker, if one is not available
 // it will return a new, temporary instance that will not be returned to the locker
 // after use.
-func (l *lensLocker) borrow() (enumerable.Socket[LensDoc], error) {
+func (l *lensPool) borrow() (enumerable.Socket[LensDoc], error) {
 	select {
-	case lens := <-l.safes:
+	case lens := <-l.pipes:
 		return &borrowedEnumerable{
 			source: lens,
-			locker: l,
+			pool:   l,
 		}, nil
 	default:
 		// If there are no free cached migrations within the locker, create a new temporary one
@@ -269,8 +270,8 @@ func (l *lensLocker) borrow() (enumerable.Socket[LensDoc], error) {
 }
 
 // returnLens returns a borrowed module to the locker, allowing it to be reused by other contexts.
-func (l *lensLocker) returnLens(lens *lensPipe) {
-	l.safes <- lens
+func (l *lensPool) returnLens(lens *lensPipe) {
+	l.pipes <- lens
 }
 
 // borrowedEnumerable is an enumerable tied to a locker.
@@ -279,7 +280,7 @@ func (l *lensLocker) returnLens(lens *lensPipe) {
 // pipe is returned to the locker.
 type borrowedEnumerable struct {
 	source *lensPipe
-	locker *lensLocker
+	pool   *lensPool
 }
 
 var _ enumerable.Socket[LensDoc] = (*borrowedEnumerable)(nil)
@@ -297,7 +298,7 @@ func (s *borrowedEnumerable) Value() (LensDoc, error) {
 }
 
 func (s *borrowedEnumerable) Reset() {
-	s.locker.returnLens(s.source)
+	s.pool.returnLens(s.source)
 	s.source.Reset()
 }
 
