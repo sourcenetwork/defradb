@@ -35,6 +35,8 @@ const (
 	errFailedToPrettyPrintResponse string = "failed to pretty print response"
 	errFailedToUnmarshalResponse   string = "failed to unmarshal response"
 	errFailedParsePeerID           string = "failed to parse PeerID"
+	errFailedToMarshalData         string = "failed to marshal data"
+	errInvalidArgumentLength       string = "invalid argument length"
 )
 
 // Errors returnable from this package.
@@ -59,6 +61,8 @@ var (
 	ErrFailedToPrettyPrintResponse = errors.New(errFailedToPrettyPrintResponse)
 	ErrFailedToUnmarshalResponse   = errors.New(errFailedToUnmarshalResponse)
 	ErrFailedParsePeerID           = errors.New(errFailedParsePeerID)
+	ErrInvalidExportFormat         = errors.New("invalid export format")
+	ErrInvalidArgumentLength       = errors.New(errInvalidArgumentLength)
 )
 
 func NewErrMissingArg(name string) error {
@@ -123,4 +127,14 @@ func NewErrFailedToUnmarshalResponse(inner error) error {
 
 func NewErrFailedParsePeerID(inner error) error {
 	return errors.Wrap(errFailedParsePeerID, inner)
+}
+
+// NewFailedToMarshalData returns an error indicating that a there was a problem with mashalling.
+func NewFailedToMarshalData(inner error) error {
+	return errors.Wrap(errFailedToMarshalData, inner)
+}
+
+// NewErrInvalidArgumentLength returns an error indicating an incorrect number of arguments.
+func NewErrInvalidArgumentLength(inner error, expected int) error {
+	return errors.Wrap(errInvalidArgumentLength, inner, errors.NewKV("Expected", expected))
 }

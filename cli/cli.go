@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
@@ -99,6 +100,8 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 		MakePingCommand(cfg),
 		MakeRequestCommand(cfg),
 		MakePeerIDCommand(cfg),
+		MakeDBExportCommand(cfg),
+		MakeDBImportCommand(cfg),
 		schemaCmd,
 		indexCmd,
 		rpcCmd,
@@ -180,4 +183,9 @@ func hasGraphQLErrors(buf []byte) (bool, error) {
 	} else {
 		return false, nil
 	}
+}
+
+type httpAPIResponse[T any] struct {
+	Data T `json:"data"`
+	httpapi.ErrorResponse
 }

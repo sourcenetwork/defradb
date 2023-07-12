@@ -26,23 +26,28 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
+const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
+
 func getTestConfig(t *testing.T) *config.Config {
 	cfg := config.DefaultConfig()
 	dir := t.TempDir()
 	cfg.Datastore.Store = "memory"
 	cfg.Datastore.Badger.Path = dir
 	cfg.Net.P2PDisabled = false
+	cfg.Net.P2PAddress = randomMultiaddr
+	cfg.Net.RPCAddress = "0.0.0.0:0"
+	cfg.Net.TCPAddress = randomMultiaddr
 	return cfg
 }
 
-func startNode(t *testing.T) (*config.Config, func()) {
+func startTestNode(t *testing.T) (*config.Config, *defraInstance, func()) {
 	cfg := getTestConfig(t)
 	setTestingAddresses(cfg)
 
 	ctx := context.Background()
 	di, err := start(ctx, cfg)
 	require.NoError(t, err)
-	return cfg, func() { di.close(ctx) }
+	return cfg, di, func() { di.close(ctx) }
 }
 
 func parseLines(r io.Reader) ([]map[string]any, error) {
@@ -123,7 +128,7 @@ func TestIndexCreateCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 }
 
 func TestIndexCreateCmd_IfNoCollection_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 
@@ -150,7 +155,7 @@ func TestIndexCreateCmd_IfNoCollection_ReturnError(t *testing.T) {
 }
 
 func TestIndexCreateCmd_IfNoErrors_ReturnData(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 
 	execAddSchemaCmd(t, cfg, `type User { name: String }`)
@@ -179,7 +184,7 @@ func TestIndexCreateCmd_IfNoErrors_ReturnData(t *testing.T) {
 }
 
 func TestIndexCreateCmd_WithConsoleOutputIfNoCollection_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 	indexCreateCmd := MakeIndexCreateCommand(cfg)
 	indexCreateCmd.SetArgs([]string{
@@ -200,7 +205,7 @@ func TestIndexCreateCmd_WithConsoleOutputIfNoCollection_ReturnError(t *testing.T
 }
 
 func TestIndexCreateCmd_WithConsoleOutputIfNoErrors_ReturnData(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 
 	execAddSchemaCmd(t, cfg, `type User { name: String }`)
