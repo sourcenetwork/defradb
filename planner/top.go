@@ -209,6 +209,7 @@ func (p *Planner) Top(m *mapper.Select) (*topLevelNode, error) {
 			}
 			aggregateChildren = append(aggregateChildren, child)
 			aggregateChildIndexes = append(aggregateChildIndexes, field.GetIndex())
+
 		case *mapper.Select:
 			child, err := p.Select(f)
 			if err != nil {

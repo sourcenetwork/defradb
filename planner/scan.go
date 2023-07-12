@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/planner/mapper"
+	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
 
 type scanExecInfo struct {
@@ -25,9 +26,6 @@ type scanExecInfo struct {
 
 	// Total number of times attempted to fetch documents.
 	docFetches uint64
-
-	// Total number of documents that matched / passed the filter.
-	filterMatches uint64
 }
 
 // scans an index for records
@@ -38,7 +36,8 @@ type scanNode struct {
 	p    *Planner
 	desc client.CollectionDescription
 
-	fields []*client.FieldDescription
+	fields []client.FieldDescription
+	docKey []byte
 
 	showDeleted bool
 
@@ -46,6 +45,7 @@ type scanNode struct {
 	reverse bool
 
 	filter *mapper.Filter
+	slct   *mapper.Select
 
 	scanInitialized bool
 
@@ -60,7 +60,7 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse, n.showDeleted); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.filter, n.slct.DocumentMapping, n.reverse, n.showDeleted); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -68,7 +68,61 @@ func (n *scanNode) Init() error {
 
 func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 	n.desc = desc
+	return n.initFields(n.slct.Fields)
+}
+
+func (n *scanNode) initFields(fields []mapper.Requestable) error {
+	for _, r := range fields {
+		// add all the possible base level fields the fetcher is responsible
+		// for, including those that are needed by higher level aggregates
+		// or grouping alls, which them selves might have further dependants
+		switch requestable := r.(type) {
+		// field is simple as its just a base level field
+		case *mapper.Field:
+			n.tryAddField(requestable.GetName())
+		// select might have its own select fields and filters fields
+		case *mapper.Select:
+			n.tryAddField(requestable.Field.Name + "_id") // foreign key for type joins
+			err := n.initFields(requestable.Fields)
+			if err != nil {
+				return err
+			}
+		// aggregate might have its own target fields and filter fields
+		case *mapper.Aggregate:
+			for _, target := range requestable.AggregateTargets {
+				if target.Filter != nil {
+					fieldDescs, err := parser.ParseFilterFieldsForDescription(
+						target.Filter.ExternalConditions,
+						n.desc.Schema,
+					)
+					if err != nil {
+						return err
+					}
+					for _, fd := range fieldDescs {
+						n.tryAddField(fd.Name)
+					}
+				}
+				if target.ChildTarget.HasValue {
+					n.tryAddField(target.ChildTarget.Name)
+				} else {
+					n.tryAddField(target.Field.Name)
+				}
+			}
+		}
+	}
 	return nil
+}
+
+func (n *scanNode) tryAddField(fieldName string) bool {
+	fd, ok := n.desc.Schema.GetField(fieldName)
+	if !ok {
+		// skip fields that are not part of the
+		// schema description. The scanner (and fetcher)
+		// is only responsible for basic fields
+		return false
+	}
+	n.fields = append(n.fields, fd)
+	return true
 }
 
 // Start starts the internal logic of the scanner
@@ -102,32 +156,24 @@ func (n *scanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	// keep scanning until we find a doc that passes the filter
-	for {
-		var err error
-		_, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
-		if err != nil {
-			return false, err
-		}
-		n.execInfo.docFetches++
-
-		if len(n.currentValue.Fields) == 0 {
-			return false, nil
-		}
-		n.documentMapping.SetFirstOfName(
-			&n.currentValue,
-			request.DeletedFieldName,
-			n.currentValue.Status.IsDeleted(),
-		)
-		passed, err := mapper.RunFilter(n.currentValue, n.filter)
-		if err != nil {
-			return false, err
-		}
-		if passed {
-			n.execInfo.filterMatches++
-			return true, nil
-		}
+	var err error
+	n.docKey, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
+	if err != nil {
+		return false, err
 	}
+	n.execInfo.docFetches++
+
+	if len(n.currentValue.Fields) == 0 {
+		return false, nil
+	}
+
+	n.documentMapping.SetFirstOfName(
+		&n.currentValue,
+		request.DeletedFieldName,
+		n.currentValue.Status.IsDeleted(),
+	)
+
+	return true, nil
 }
 
 func (n *scanNode) Spans(spans core.Spans) {
@@ -177,9 +223,8 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 
 func (n *scanNode) excuteExplain() map[string]any {
 	return map[string]any{
-		"iterations":    n.execInfo.iterations,
-		"docFetches":    n.execInfo.docFetches,
-		"filterMatches": n.execInfo.filterMatches,
+		"iterations": n.execInfo.iterations,
+		"docFetches": n.execInfo.docFetches,
 	}
 }
 
@@ -201,18 +246,29 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 // Merge implements mergeNode
 func (n *scanNode) Merge() bool { return true }
 
-func (p *Planner) Scan(parsed *mapper.Select) *scanNode {
+func (p *Planner) Scan(parsed *mapper.Select) (*scanNode, error) {
 	var f fetcher.Fetcher
 	if parsed.Cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = new(fetcher.DocumentFetcher)
 	}
-	return &scanNode{
+	scan := &scanNode{
 		p:         p,
 		fetcher:   f,
+		slct:      parsed,
 		docMapper: docMapper{parsed.DocumentMapping},
 	}
+
+	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
+	if err != nil {
+		return nil, err
+	}
+	err = scan.initCollection(colDesc)
+	if err != nil {
+		return nil, err
+	}
+	return scan, nil
 }
 
 // multiScanNode is a buffered scanNode that has

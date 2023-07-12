@@ -13,12 +13,25 @@ package fetcher
 import (
 	"fmt"
 
+	"github.com/bits-and-blooms/bitset"
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
+
+type EncodedDocument interface {
+	// Key returns the key of the document
+	Key() []byte
+	// Reset re-initializes the EncodedDocument object.
+	Reset()
+	// Decode returns a properly decoded document object
+	Decode() (*client.Document, error)
+	// DecodeToDoc returns a decoded document as a
+	// map of field/value pairs
+	DecodeToDoc() (core.Doc, error)
+}
 
 type EPTuple []encProperty
 
@@ -27,18 +40,20 @@ type encProperty struct {
 	Desc client.FieldDescription
 	Raw  []byte
 
+	// Filter flag to determine if this flag
+	// is needed for eager filter evaluation
+	IsFilter bool
+
 	// // encoding meta data
 	// encoding base.DataEncoding
 }
 
 // Decode returns the decoded value and CRDT type for the given property.
-func (e encProperty) Decode() (client.CType, any, error) {
-	ctype := client.CType(e.Raw[0])
-	buf := e.Raw[1:]
+func (e encProperty) Decode() (any, error) {
 	var val any
-	err := cbor.Unmarshal(buf, &val)
+	err := cbor.Unmarshal(e.Raw, &val)
 	if err != nil {
-		return ctype, nil, err
+		return nil, err
 	}
 
 	if array, isArray := val.([]any); isArray {
@@ -49,7 +64,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				boolArray[i], ok = untypedValue.(bool)
 				if !ok {
-					return ctype, nil, client.NewErrUnexpectedType[bool](e.Desc.Name, untypedValue)
+					return nil, client.NewErrUnexpectedType[bool](e.Desc.Name, untypedValue)
 				}
 			}
 			val = boolArray
@@ -57,7 +72,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_NILLABLE_BOOL_ARRAY:
 			val, err = convertNillableArray[bool](e.Desc.Name, array)
 			if err != nil {
-				return ctype, nil, err
+				return nil, err
 			}
 
 		case client.FieldKind_INT_ARRAY:
@@ -65,7 +80,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				intArray[i], err = convertToInt(fmt.Sprintf("%s[%v]", e.Desc.Name, i), untypedValue)
 				if err != nil {
-					return ctype, nil, err
+					return nil, err
 				}
 			}
 			val = intArray
@@ -73,7 +88,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_NILLABLE_INT_ARRAY:
 			val, err = convertNillableArrayWithConverter(e.Desc.Name, array, convertToInt)
 			if err != nil {
-				return ctype, nil, err
+				return nil, err
 			}
 
 		case client.FieldKind_FLOAT_ARRAY:
@@ -81,7 +96,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				floatArray[i], ok = untypedValue.(float64)
 				if !ok {
-					return ctype, nil, client.NewErrUnexpectedType[float64](e.Desc.Name, untypedValue)
+					return nil, client.NewErrUnexpectedType[float64](e.Desc.Name, untypedValue)
 				}
 			}
 			val = floatArray
@@ -89,7 +104,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_NILLABLE_FLOAT_ARRAY:
 			val, err = convertNillableArray[float64](e.Desc.Name, array)
 			if err != nil {
-				return ctype, nil, err
+				return nil, err
 			}
 
 		case client.FieldKind_STRING_ARRAY:
@@ -97,7 +112,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				stringArray[i], ok = untypedValue.(string)
 				if !ok {
-					return ctype, nil, client.NewErrUnexpectedType[string](e.Desc.Name, untypedValue)
+					return nil, client.NewErrUnexpectedType[string](e.Desc.Name, untypedValue)
 				}
 			}
 			val = stringArray
@@ -105,7 +120,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_NILLABLE_STRING_ARRAY:
 			val, err = convertNillableArray[string](e.Desc.Name, array)
 			if err != nil {
-				return ctype, nil, err
+				return nil, err
 			}
 		}
 	} else { // CBOR often encodes values typed as floats as ints
@@ -113,18 +128,18 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_FLOAT:
 			switch v := val.(type) {
 			case int64:
-				return ctype, float64(v), nil
+				return float64(v), nil
 			case int:
-				return ctype, float64(v), nil
+				return float64(v), nil
 			case uint64:
-				return ctype, float64(v), nil
+				return float64(v), nil
 			case uint:
-				return ctype, float64(v), nil
+				return float64(v), nil
 			}
 		}
 	}
 
-	return ctype, val, nil
+	return val, nil
 }
 
 func convertNillableArray[T any](propertyName string, items []any) ([]immutable.Option[T], error) {
@@ -178,29 +193,53 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
-	Key        []byte
-	Properties map[client.FieldDescription]*encProperty
+	mapping *core.DocumentMapping
+	doc     *core.Doc
+
+	key        []byte
+	Properties []*encProperty
+
+	// tracking bitsets
+	// A value of 1 indicates a required field
+	// 0 means we we ignore the field
+	// we update the bitsets as we collect values
+	// by clearing the bit for the FieldID
+	filterSet *bitset.BitSet // filter fields
+	selectSet *bitset.BitSet // select fields
+
+}
+
+var _ EncodedDocument = (*encodedDocument)(nil)
+
+func (encdoc *encodedDocument) Key() []byte {
+	return encdoc.key
 }
 
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
-	encdoc.Properties = make(map[client.FieldDescription]*encProperty)
-	encdoc.Key = nil
+	encdoc.Properties = make([]*encProperty, 0)
+	encdoc.key = nil
+	if encdoc.mapping != nil {
+		doc := encdoc.mapping.NewDoc()
+		encdoc.doc = &doc
+	}
+	encdoc.filterSet = nil
+	encdoc.selectSet = nil
 }
 
 // Decode returns a properly decoded document object
 func (encdoc *encodedDocument) Decode() (*client.Document, error) {
-	key, err := client.NewDocKeyFromString(string(encdoc.Key))
+	key, err := client.NewDocKeyFromString(string(encdoc.key))
 	if err != nil {
 		return nil, err
 	}
 	doc := client.NewDocWithKey(key)
-	for fieldDesc, prop := range encdoc.Properties {
-		ctype, val, err := prop.Decode()
+	for _, prop := range encdoc.Properties {
+		val, err := prop.Decode()
 		if err != nil {
 			return nil, err
 		}
-		err = doc.SetAs(fieldDesc.Name, val, ctype)
+		err = doc.SetAs(prop.Desc.Name, val, prop.Desc.Typ)
 		if err != nil {
 			return nil, err
 		}
@@ -211,15 +250,35 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 
 // DecodeToDoc returns a decoded document as a
 // map of field/value pairs
-func (encdoc *encodedDocument) DecodeToDoc(mapping *core.DocumentMapping) (core.Doc, error) {
-	doc := mapping.NewDoc()
-	doc.SetKey(string(encdoc.Key))
-	for fieldDesc, prop := range encdoc.Properties {
-		_, val, err := prop.Decode()
+func (encdoc *encodedDocument) DecodeToDoc() (core.Doc, error) {
+	return encdoc.decodeToDoc(false)
+}
+
+func (encdoc *encodedDocument) decodeToDocForFilter() (core.Doc, error) {
+	return encdoc.decodeToDoc(true)
+}
+
+func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
+	if encdoc.mapping == nil {
+		return core.Doc{}, ErrMissingMapper
+	}
+	if encdoc.doc == nil {
+		doc := encdoc.mapping.NewDoc()
+		encdoc.doc = &doc
+	}
+	encdoc.doc.SetKey(string(encdoc.key))
+	for _, prop := range encdoc.Properties {
+		if encdoc.doc.Fields[prop.Desc.ID] != nil { // used cached decoded fields
+			continue
+		}
+		if filter && !prop.IsFilter { // only get filter fields if filter=true
+			continue
+		}
+		val, err := prop.Decode()
 		if err != nil {
 			return core.Doc{}, err
 		}
-		doc.Fields[fieldDesc.ID] = val
+		encdoc.doc.Fields[prop.Desc.ID] = val
 	}
-	return doc, nil
+	return *encdoc.doc, nil
 }

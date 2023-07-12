@@ -29,6 +29,9 @@ type CollectionDescription struct {
 
 	// Schema contains the data type information that this Collection uses.
 	Schema SchemaDescription
+
+	// Indexes contains the secondary indexes that this Collection has.
+	Indexes []IndexDescription
 }
 
 // IDString returns the collection ID as a string.
@@ -36,24 +39,12 @@ func (col CollectionDescription) IDString() string {
 	return fmt.Sprint(col.ID)
 }
 
-// GetField returns the field of the given name.
-func (col CollectionDescription) GetField(name string) (FieldDescription, bool) {
-	if !col.Schema.IsEmpty() {
-		for _, field := range col.Schema.Fields {
-			if field.Name == name {
-				return field, true
-			}
-		}
-	}
-	return FieldDescription{}, false
-}
-
 // GetFieldByID searches for a field with the given ID. If such a field is found it
 // will return it and true, if it is not found it will return false.
-func (col CollectionDescription) GetFieldByID(id string) (FieldDescription, bool) {
+func (col CollectionDescription) GetFieldByID(id FieldID) (FieldDescription, bool) {
 	if !col.Schema.IsEmpty() {
 		for _, field := range col.Schema.Fields {
-			if field.ID.String() == id {
+			if field.ID == id {
 				return field, true
 			}
 		}
@@ -115,8 +106,55 @@ func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
 	return uint32(0)
 }
 
+// GetField returns the field of the given name.
+func (sd SchemaDescription) GetField(name string) (FieldDescription, bool) {
+	if !sd.IsEmpty() {
+		for _, field := range sd.Fields {
+			if field.Name == name {
+				return field, true
+			}
+		}
+	}
+	return FieldDescription{}, false
+}
+
 // FieldKind describes the type of a field.
 type FieldKind uint8
+
+func (f FieldKind) String() string {
+	switch f {
+	case FieldKind_DocKey:
+		return "ID"
+	case FieldKind_BOOL:
+		return "Boolean"
+	case FieldKind_NILLABLE_BOOL_ARRAY:
+		return "[Boolean]"
+	case FieldKind_BOOL_ARRAY:
+		return "[Boolean!]"
+	case FieldKind_INT:
+		return "Int"
+	case FieldKind_NILLABLE_INT_ARRAY:
+		return "[Int]"
+	case FieldKind_INT_ARRAY:
+		return "[Int!]"
+	case FieldKind_DATETIME:
+		return "DateTime"
+	case FieldKind_FLOAT:
+		return "Float"
+	case FieldKind_NILLABLE_FLOAT_ARRAY:
+		return "[Float]"
+	case FieldKind_FLOAT_ARRAY:
+		return "[Float!]"
+	case FieldKind_STRING:
+		return "String"
+	case FieldKind_NILLABLE_STRING_ARRAY:
+		return "[String]"
+	case FieldKind_STRING_ARRAY:
+		return "[String!]"
+	default:
+		return fmt.Sprint(uint8(f))
+	}
+}
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
@@ -161,9 +199,9 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"Boolean":    FieldKind_BOOL,
 	"[Boolean]":  FieldKind_NILLABLE_BOOL_ARRAY,
 	"[Boolean!]": FieldKind_BOOL_ARRAY,
-	"Integer":    FieldKind_INT,
-	"[Integer]":  FieldKind_NILLABLE_INT_ARRAY,
-	"[Integer!]": FieldKind_INT_ARRAY,
+	"Int":        FieldKind_INT,
+	"[Int]":      FieldKind_NILLABLE_INT_ARRAY,
+	"[Int!]":     FieldKind_INT_ARRAY,
 	"DateTime":   FieldKind_DATETIME,
 	"Float":      FieldKind_FLOAT,
 	"[Float]":    FieldKind_NILLABLE_FLOAT_ARRAY,
@@ -171,24 +209,6 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"String":     FieldKind_STRING,
 	"[String]":   FieldKind_NILLABLE_STRING_ARRAY,
 	"[String!]":  FieldKind_STRING_ARRAY,
-}
-
-// FieldKindEnumToStringMapping maps enum values [FieldKind] to their string representations.
-var FieldKindEnumToStringMapping = map[FieldKind]string{
-	FieldKind_DocKey:                "ID",
-	FieldKind_BOOL:                  "Boolean",
-	FieldKind_NILLABLE_BOOL_ARRAY:   "[Boolean]",
-	FieldKind_BOOL_ARRAY:            "[Boolean!]",
-	FieldKind_INT:                   "Integer",
-	FieldKind_NILLABLE_INT_ARRAY:    "[Integer]",
-	FieldKind_INT_ARRAY:             "[Integer!]",
-	FieldKind_DATETIME:              "DateTime",
-	FieldKind_FLOAT:                 "Float",
-	FieldKind_NILLABLE_FLOAT_ARRAY:  "[Float]",
-	FieldKind_FLOAT_ARRAY:           "[Float!]",
-	FieldKind_STRING:                "String",
-	FieldKind_NILLABLE_STRING_ARRAY: "[String]",
-	FieldKind_STRING_ARRAY:          "[String!]",
 }
 
 // RelationType describes the type of relation between two types.

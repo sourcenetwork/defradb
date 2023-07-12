@@ -83,6 +83,8 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 					}
 				}`,
 
+				ExpectedPatterns: []dataMap{createPattern},
+
 				ExpectedTargets: []testUtils.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "createNode",

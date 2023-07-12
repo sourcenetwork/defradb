@@ -110,7 +110,7 @@ type Config struct {
 	OutputPaths           []string
 	OverridesByLoggerName map[string]Config
 
-	pipe io.Writer // this is used for testing purposes only
+	Pipe io.Writer // this is used for testing purposes only
 }
 
 func (c Config) forLogger(name string) Config {
@@ -121,7 +121,7 @@ func (c Config) forLogger(name string) Config {
 		EnableCaller:     c.EnableCaller,
 		EncoderFormat:    c.EncoderFormat,
 		OutputPaths:      c.OutputPaths,
-		pipe:             c.pipe,
+		Pipe:             c.Pipe,
 	}
 
 	if override, hasOverride := c.OverridesByLoggerName[name]; hasOverride {
@@ -143,8 +143,8 @@ func (c Config) forLogger(name string) Config {
 		if len(override.OutputPaths) != 0 {
 			loggerConfig.OutputPaths = override.OutputPaths
 		}
-		if override.pipe != nil {
-			loggerConfig.pipe = override.pipe
+		if override.Pipe != nil {
+			loggerConfig.Pipe = override.Pipe
 		}
 	}
 
@@ -161,7 +161,7 @@ func (c Config) copy() Config {
 			EnableCaller:     o.EnableCaller,
 			DisableColor:     o.DisableColor,
 			OutputPaths:      o.OutputPaths,
-			pipe:             o.pipe,
+			Pipe:             o.Pipe,
 		}
 	}
 
@@ -173,7 +173,7 @@ func (c Config) copy() Config {
 		EnableCaller:          c.EnableCaller,
 		DisableColor:          c.DisableColor,
 		OverridesByLoggerName: overridesByLoggerName,
-		pipe:                  c.pipe,
+		Pipe:                  c.Pipe,
 	}
 }
 
@@ -205,8 +205,8 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 		newConfig.OutputPaths = validatePaths(newConfigOptions.OutputPaths)
 	}
 
-	if newConfigOptions.pipe != nil {
-		newConfig.pipe = newConfigOptions.pipe
+	if newConfigOptions.Pipe != nil {
+		newConfig.Pipe = newConfigOptions.Pipe
 	}
 
 	for k, o := range newConfigOptions.OverridesByLoggerName {
@@ -219,7 +219,7 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 			DisableColor:     o.DisableColor,
 			EncoderFormat:    o.EncoderFormat,
 			OutputPaths:      validatePaths(o.OutputPaths),
-			pipe:             o.pipe,
+			Pipe:             o.Pipe,
 		}
 	}
 

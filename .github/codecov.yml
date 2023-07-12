@@ -62,5 +62,6 @@ comment:
 
 ignore:
   - "tests"
+  - "**/mocks/*"
   - "**/*_test.go"
   - "**/*.pb.go"

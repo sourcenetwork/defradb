@@ -89,13 +89,17 @@ func (s *Select) validateGroupBy() []error {
 			}
 
 			var fieldExistsInGroupBy bool
+			var isAliasFieldInGroupBy bool
 			for _, groupByField := range s.GroupBy.Value().Fields {
 				if typedChildSelection.Name == groupByField {
 					fieldExistsInGroupBy = true
 					break
+				} else if typedChildSelection.Name == groupByField+RelatedObjectID {
+					isAliasFieldInGroupBy = true
+					break
 				}
 			}
-			if !fieldExistsInGroupBy {
+			if !fieldExistsInGroupBy && !isAliasFieldInGroupBy {
 				result = append(result, client.NewErrSelectOfNonGroupField(typedChildSelection.Name))
 			}
 		default:

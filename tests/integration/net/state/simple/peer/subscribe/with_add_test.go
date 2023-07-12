@@ -198,7 +198,7 @@ func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
 			},
 			testUtils.SubscribeToCollection{
 				NodeID:        1,
-				CollectionIDs: []int{testUtils.NonExistantCollectionID},
+				CollectionIDs: []int{testUtils.NonExistentCollectionID},
 				ExpectedError: "datastore: key not found",
 			},
 			testUtils.CreateDoc{
@@ -242,7 +242,7 @@ func TestP2PSubscribeAddValidAndErroneousCollectionID(t *testing.T) {
 			},
 			testUtils.SubscribeToCollection{
 				NodeID:        1,
-				CollectionIDs: []int{0, testUtils.NonExistantCollectionID},
+				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
 				ExpectedError: "datastore: key not found",
 			},
 			testUtils.CreateDoc{
@@ -291,7 +291,7 @@ func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 			},
 			testUtils.SubscribeToCollection{
 				NodeID:        1,
-				CollectionIDs: []int{testUtils.NonExistantCollectionID},
+				CollectionIDs: []int{testUtils.NonExistentCollectionID},
 				ExpectedError: "datastore: key not found",
 			},
 			testUtils.CreateDoc{

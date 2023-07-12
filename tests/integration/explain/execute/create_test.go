@@ -45,9 +45,8 @@ func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 										"iterations":    uint64(1),
 										"filterMatches": uint64(1),
 										"scanNode": dataMap{
-											"iterations":    uint64(1),
-											"docFetches":    uint64(1),
-											"filterMatches": uint64(1),
+											"iterations": uint64(1),
+											"docFetches": uint64(1),
 										},
 									},
 								},

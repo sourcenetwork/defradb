@@ -19,8 +19,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/net"
+	pb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
-	"github.com/sourcenetwork/defradb/node"
 
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
@@ -35,18 +36,18 @@ import (
 type ConnectPeers struct {
 	// SourceNodeID is the node ID (index) of the first node to connect.
 	//
-	// Is completely interchangable with TargetNodeID and which way round
+	// Is completely interchangeable with TargetNodeID and which way round
 	// these properties are specified is purely cosmetic.
 	SourceNodeID int
 
 	// TargetNodeID is the node ID (index) of the second node to connect.
 	//
-	// Is completely interchangable with SourceNodeID and which way round
+	// Is completely interchangeable with SourceNodeID and which way round
 	// these properties are specified is purely cosmetic.
 	TargetNodeID int
 }
 
-// ConfigureReplicator confugures a directional replicator relationship between
+// ConfigureReplicator configures a directional replicator relationship between
 // two nodes.
 //
 // All document changes made in the source node will be synced to the target node.
@@ -61,9 +62,9 @@ type ConfigureReplicator struct {
 	TargetNodeID int
 }
 
-// NonExistantCollectionID can be used to represent a non-existant collection ID, it will be substituted
-// for a non-existant collection ID when used in actions that support this.
-const NonExistantCollectionID int = -1
+// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
+// for a non-existent collection ID when used in actions that support this.
+const NonExistentCollectionID int = -1
 
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
 //
@@ -78,7 +79,7 @@ type SubscribeToCollection struct {
 
 	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
 	//
-	// A [NonExistantCollectionID] may be provided to test non-existant collection IDs.
+	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
 	CollectionIDs []int
 
 	// Any error expected from the action. Optional.
@@ -96,7 +97,7 @@ type UnsubscribeToCollection struct {
 
 	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
 	//
-	// A [NonExistantCollectionID] may be provided to test non-existant collection IDs.
+	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
 	CollectionIDs []int
 
 	// Any error expected from the action. Optional.
@@ -125,11 +126,11 @@ type WaitForSync struct{}
 
 // AnyOf may be used as `Results` field where the value may
 // be one of several values, yet the value of that field must be the same
-// across all nodes due to strong eventual consistancy.
+// across all nodes due to strong eventual consistency.
 type AnyOf []any
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
-// that will recieve an empty struct upon sync completion of all expected peer-sync events.
+// that will receive an empty struct upon sync completion of all expected peer-sync events.
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
 func connectPeers(
@@ -137,7 +138,7 @@ func connectPeers(
 	t *testing.T,
 	testCase TestCase,
 	cfg ConnectPeers,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	addresses []string,
 ) chan struct{} {
 	// If we have some database actions prior to connecting the peers, we want to ensure that they had time to
@@ -155,7 +156,7 @@ func connectPeers(
 	log.Info(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 	sourceNode.Boostrap(addrs)
 
-	// Boostrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
+	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(100 * time.Millisecond)
@@ -168,8 +169,8 @@ func setupPeerWaitSync(
 	testCase TestCase,
 	startIndex int,
 	cfg ConnectPeers,
-	sourceNode *node.Node,
-	targetNode *node.Node,
+	sourceNode *net.Node,
+	targetNode *net.Node,
 ) chan struct{} {
 	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
@@ -290,8 +291,8 @@ func collectionSubscribedTo(
 	return false
 }
 
-// configureReplicator configures a replicator relationship between two existing, staarted, nodes.
-// It returns a channel that will recieve an empty struct upon sync completion of all expected
+// configureReplicator configures a replicator relationship between two existing, started, nodes.
+// It returns a channel that will receive an empty struct upon sync completion of all expected
 // replicator-sync events.
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
@@ -300,7 +301,7 @@ func configureReplicator(
 	t *testing.T,
 	testCase TestCase,
 	cfg ConfigureReplicator,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	addresses []string,
 ) chan struct{} {
 	// If we have some database actions prior to configuring the replicator, we want to ensure that they had time to
@@ -313,30 +314,35 @@ func configureReplicator(
 	addr, err := ma.NewMultiaddr(targetAddress)
 	require.NoError(t, err)
 
-	_, err = sourceNode.Peer.SetReplicator(ctx, addr)
+	_, err = sourceNode.Peer.SetReplicator(
+		ctx,
+		&pb.SetReplicatorRequest{
+			Addr: addr.Bytes(),
+		},
+	)
 	require.NoError(t, err)
-	return setupRepicatorWaitSync(ctx, t, testCase, 0, cfg, sourceNode, targetNode)
+	return setupReplicatorWaitSync(ctx, t, testCase, 0, cfg, sourceNode, targetNode)
 }
 
-func setupRepicatorWaitSync(
+func setupReplicatorWaitSync(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
 	startIndex int,
 	cfg ConfigureReplicator,
-	sourceNode *node.Node,
-	targetNode *node.Node,
+	sourceNode *net.Node,
+	targetNode *net.Node,
 ) chan struct{} {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
 	docIDsSyncedToSource := map[int]struct{}{}
 	waitIndex := 0
-	currentdocID := 0
+	currentDocID := 0
 	for i := startIndex; i < len(testCase.Actions); i++ {
 		switch action := testCase.Actions[i].(type) {
 		case CreateDoc:
 			if !action.NodeID.HasValue() || action.NodeID.Value() == cfg.SourceNodeID {
-				docIDsSyncedToSource[currentdocID] = struct{}{}
+				docIDsSyncedToSource[currentDocID] = struct{}{}
 			}
 
 			// A document created on the source or one that is created on all nodes will be sent to the target even
@@ -345,7 +351,7 @@ func setupRepicatorWaitSync(
 				sourceToTargetEvents[waitIndex] += 1
 			}
 
-			currentdocID++
+			currentDocID++
 
 		case DeleteDoc:
 			if _, shouldSyncFromTarget := docIDsSyncedToSource[action.DocID]; shouldSyncFromTarget &&
@@ -404,15 +410,15 @@ func subscribeToCollection(
 	t *testing.T,
 	testCase TestCase,
 	action SubscribeToCollection,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	collections [][]client.Collection,
 ) {
 	n := nodes[action.NodeID]
 
 	schemaIDs := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
-		if collectionIndex == NonExistantCollectionID {
-			schemaIDs = append(schemaIDs, "NonExistantCollectionID")
+		if collectionIndex == NonExistentCollectionID {
+			schemaIDs = append(schemaIDs, "NonExistentCollectionID")
 			continue
 		}
 
@@ -420,7 +426,12 @@ func subscribeToCollection(
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
-	err := n.Peer.AddP2PCollections(schemaIDs)
+	_, err := n.Peer.AddP2PCollections(
+		ctx,
+		&pb.AddP2PCollectionsRequest{
+			Collections: schemaIDs,
+		},
+	)
 	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -438,15 +449,15 @@ func unsubscribeToCollection(
 	t *testing.T,
 	testCase TestCase,
 	action UnsubscribeToCollection,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	collections [][]client.Collection,
 ) {
 	n := nodes[action.NodeID]
 
 	schemaIDs := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
-		if collectionIndex == NonExistantCollectionID {
-			schemaIDs = append(schemaIDs, "NonExistantCollectionID")
+		if collectionIndex == NonExistentCollectionID {
+			schemaIDs = append(schemaIDs, "NonExistentCollectionID")
 			continue
 		}
 
@@ -454,7 +465,12 @@ func unsubscribeToCollection(
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
-	err := n.Peer.RemoveP2PCollections(schemaIDs)
+	_, err := n.Peer.RemoveP2PCollections(
+		ctx,
+		&pb.RemoveP2PCollectionsRequest{
+			Collections: schemaIDs,
+		},
+	)
 	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -472,26 +488,29 @@ func getAllP2PCollections(
 	ctx context.Context,
 	t *testing.T,
 	action GetAllP2PCollections,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	collections [][]client.Collection,
 ) {
-	expectedCollections := []client.P2PCollection{}
+	expectedCollections := []*pb.GetAllP2PCollectionsReply_Collection{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
 		col := collections[action.NodeID][collectionIndex]
 		expectedCollections = append(
 			expectedCollections,
-			client.P2PCollection{
-				ID:   col.SchemaID(),
+			&pb.GetAllP2PCollectionsReply_Collection{
+				Id:   col.SchemaID(),
 				Name: col.Name(),
 			},
 		)
 	}
 
 	n := nodes[action.NodeID]
-	cols, err := n.Peer.GetAllP2PCollections()
+	cols, err := n.Peer.GetAllP2PCollections(
+		ctx,
+		&pb.GetAllP2PCollectionsRequest{},
+	)
 	require.NoError(t, err)
 
-	assert.Equal(t, expectedCollections, cols)
+	assert.Equal(t, expectedCollections, cols.Collections)
 }
 
 // waitForSync waits for all given wait channels to receive an item signaling completion.
@@ -511,7 +530,7 @@ func waitForSync(
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
 		case <-time.After(subscriptionTimeout * 10):
-			assert.Fail(t, "timeout occured while waiting for data stream", testCase.Description)
+			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
 		}
 	}
 }

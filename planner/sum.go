@@ -82,7 +82,7 @@ func (p *Planner) isValueFloat(
 			return false, err
 		}
 
-		fieldDescription, fieldDescriptionFound := parentDescription.GetField(source.Name)
+		fieldDescription, fieldDescriptionFound := parentDescription.Schema.GetField(source.Name)
 		if !fieldDescriptionFound {
 			return false, client.NewErrFieldNotExist(source.Name)
 		}
@@ -130,7 +130,7 @@ func (p *Planner) isValueFloat(
 		return false, err
 	}
 
-	fieldDescription, fieldDescriptionFound := childCollectionDescription.GetField(source.ChildTarget.Name)
+	fieldDescription, fieldDescriptionFound := childCollectionDescription.Schema.GetField(source.ChildTarget.Name)
 	if !fieldDescriptionFound {
 		return false, client.NewErrFieldNotExist(source.ChildTarget.Name)
 	}

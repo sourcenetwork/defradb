@@ -305,7 +305,7 @@ func (c *collection) applyMerge(
 			return ErrInvalidMergeValueType
 		}
 
-		fd, valid := c.desc.GetField(mfield)
+		fd, valid := c.desc.Schema.GetField(mfield)
 		if !valid {
 			return client.NewErrFieldNotExist(mfield)
 		}
@@ -398,7 +398,9 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (clie
 		return client.FieldDescription{}, false
 	}
 
-	relationFieldDescription, valid := c.Description().GetField(strings.TrimSuffix(fieldDesc.Name, "_id"))
+	relationFieldDescription, valid := c.Description().Schema.GetField(
+		strings.TrimSuffix(fieldDesc.Name, request.RelatedObjectID),
+	)
 	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation()
 }
 
@@ -431,7 +433,7 @@ func (c *collection) patchPrimaryDoc(
 	_, err = primaryCol.UpdateWithKey(
 		ctx,
 		primaryDockey,
-		fmt.Sprintf(`{"%s": "%s"}`, primaryField.Name+"_id", docKey),
+		fmt.Sprintf(`{"%s": "%s"}`, primaryField.Name+request.RelatedObjectID, docKey),
 	)
 	if err != nil {
 		return err

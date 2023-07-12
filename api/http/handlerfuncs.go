@@ -24,10 +24,10 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/multiformats/go-multihash"
-	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 )
 
@@ -183,15 +183,24 @@ func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 
 	colResp := make([]collectionResponse, len(cols))
 	for i, col := range cols {
-		fields := make([]fieldResponse, len(col.Schema().Fields))
-		for j, field := range col.Schema().Fields {
-			fields[j] = fieldResponse{
+		var fields []fieldResponse
+		for _, field := range col.Schema().Fields {
+			if field.Name == "_key" || field.RelationType == client.Relation_Type_INTERNAL_ID {
+				continue // ignore generated fields
+			}
+			fieldRes := fieldResponse{
 				ID:   field.ID.String(),
 				Name: field.Name,
-				Kind: client.FieldKindEnumToStringMapping[field.Kind],
 			}
+			if field.IsObjectArray() {
+				fieldRes.Kind = fmt.Sprintf("[%s]", field.Schema)
+			} else if field.IsObject() {
+				fieldRes.Kind = field.Schema
+			} else {
+				fieldRes.Kind = field.Kind.String()
+			}
+			fields = append(fields, fieldRes)
 		}
-
 		colResp[i] = collectionResponse{
 			Name:   col.Name(),
 			ID:     col.SchemaID(),
@@ -202,7 +211,7 @@ func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		simpleDataResponse("result", "success", "collections", colResp),
+		simpleDataResponse("collections", colResp),
 		http.StatusOK,
 	)
 }
