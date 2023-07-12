@@ -95,12 +95,16 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				return ErrEmptyFile
 			}
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPatchPath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPath)
 			if err != nil {
 				return err
 			}
 
-			res, err := http.Post(endpoint.String(), "text", strings.NewReader(patch))
+			req, err := http.NewRequest(http.MethodPatch, endpoint.String(), strings.NewReader(patch))
+			if err != nil {
+				return NewErrFailedToSendRequest(err)
+			}
+			res, err := http.DefaultClient.Do(req)
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
 			}

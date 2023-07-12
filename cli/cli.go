@@ -80,6 +80,7 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 	)
 	schemaCmd.AddCommand(
 		MakeSchemaAddCommand(cfg),
+		MakeSchemaListCommand(cfg),
 		MakeSchemaPatchCommand(cfg),
 	)
 	indexCmd.AddCommand(

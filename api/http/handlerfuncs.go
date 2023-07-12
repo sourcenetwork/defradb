@@ -26,6 +26,7 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/events"
 )
@@ -155,9 +156,64 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(req.Context(), rw, newGQLResult(result.GQL), http.StatusOK)
 }
 
-type collectionResponse struct {
-	Name string `json:"name"`
+type fieldResponse struct {
 	ID   string `json:"id"`
+	Name string `json:"name"`
+	Kind string `json:"kind"`
+}
+
+type collectionResponse struct {
+	Name   string          `json:"name"`
+	ID     string          `json:"id"`
+	Fields []fieldResponse `json:"fields,omitempty"`
+}
+
+func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	cols, err := db.GetAllCollections(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	colResp := make([]collectionResponse, len(cols))
+	for i, col := range cols {
+		var fields []fieldResponse
+		for _, field := range col.Schema().Fields {
+			if field.Name == "_key" || field.RelationType == client.Relation_Type_INTERNAL_ID {
+				continue // ignore generated fields
+			}
+			fieldRes := fieldResponse{
+				ID:   field.ID.String(),
+				Name: field.Name,
+			}
+			if field.IsObjectArray() {
+				fieldRes.Kind = fmt.Sprintf("[%s]", field.Schema)
+			} else if field.IsObject() {
+				fieldRes.Kind = field.Schema
+			} else {
+				fieldRes.Kind = field.Kind.String()
+			}
+			fields = append(fields, fieldRes)
+		}
+		colResp[i] = collectionResponse{
+			Name:   col.Name(),
+			ID:     col.SchemaID(),
+			Fields: fields,
+		}
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("collections", colResp),
+		http.StatusOK,
+	)
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {

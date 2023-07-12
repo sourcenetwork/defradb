@@ -121,6 +121,41 @@ func (sd SchemaDescription) GetField(name string) (FieldDescription, bool) {
 // FieldKind describes the type of a field.
 type FieldKind uint8
 
+func (f FieldKind) String() string {
+	switch f {
+	case FieldKind_DocKey:
+		return "ID"
+	case FieldKind_BOOL:
+		return "Boolean"
+	case FieldKind_NILLABLE_BOOL_ARRAY:
+		return "[Boolean]"
+	case FieldKind_BOOL_ARRAY:
+		return "[Boolean!]"
+	case FieldKind_INT:
+		return "Int"
+	case FieldKind_NILLABLE_INT_ARRAY:
+		return "[Int]"
+	case FieldKind_INT_ARRAY:
+		return "[Int!]"
+	case FieldKind_DATETIME:
+		return "DateTime"
+	case FieldKind_FLOAT:
+		return "Float"
+	case FieldKind_NILLABLE_FLOAT_ARRAY:
+		return "[Float]"
+	case FieldKind_FLOAT_ARRAY:
+		return "[Float!]"
+	case FieldKind_STRING:
+		return "String"
+	case FieldKind_NILLABLE_STRING_ARRAY:
+		return "[String]"
+	case FieldKind_STRING_ARRAY:
+		return "[String!]"
+	default:
+		return fmt.Sprint(uint8(f))
+	}
+}
+
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
 	FieldKind_None         FieldKind = 0
