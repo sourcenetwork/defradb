@@ -19,7 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/net"
 )
 
 // ConfigureMigration is a test action which will configure a Lens migration using the
@@ -59,7 +59,7 @@ type GetMigrations struct {
 func configureMigration(
 	ctx context.Context,
 	t *testing.T,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	txnsPointer *[]datastore.Txn,
 	testCase TestCase,
 	action ConfigureMigration,
@@ -77,7 +77,7 @@ func configureMigration(
 func getMigrations(
 	ctx context.Context,
 	t *testing.T,
-	nodes []*node.Node,
+	nodes []*net.Node,
 	txnsPointer *[]datastore.Txn,
 	testCase TestCase,
 	action GetMigrations,

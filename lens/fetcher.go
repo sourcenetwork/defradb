@@ -406,7 +406,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 			return err
 		}
 
-		err = f.txn.Datastore().Put(ctx, fieldKey.ToDS(), append([]byte{byte(fieldDesc.Typ)}, bytes...))
+		err = f.txn.Datastore().Put(ctx, fieldKey.ToDS(), bytes)
 		if err != nil {
 			return err
 		}
