@@ -58,6 +58,7 @@ const (
 	errUnsupportedIndexFieldType      string = "unsupported index field type"
 	errIndexDescriptionHasNoFields    string = "index description has no fields"
 	errIndexDescHasNonExistingField   string = "index description has non existing field"
+	errFieldOrAliasToFieldNotExist    string = "The given field or alias to field does not exist"
 )
 
 var (
@@ -77,7 +78,6 @@ var (
 	)
 	ErrMissingDocFieldToUpdate        = errors.New("missing document field to update")
 	ErrDocMissingKey                  = errors.New("document is missing key")
-	ErrMergeSubTypeNotSupported       = errors.New("merge doesn't support sub types yet")
 	ErrInvalidFilter                  = errors.New("invalid filter")
 	ErrInvalidOpPath                  = errors.New("invalid patch op path")
 	ErrDocumentAlreadyExists          = errors.New(errDocumentAlreadyExists)
@@ -110,7 +110,13 @@ var (
 	ErrIndexFieldMissingDirection     = errors.New(errIndexFieldMissingDirection)
 	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
 	ErrCanNotChangeIndexWithPatch     = errors.New(errCanNotChangeIndexWithPatch)
+	ErrFieldOrAliasToFieldNotExist    = errors.New(errFieldOrAliasToFieldNotExist)
 )
+
+// NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
+func NewErrFieldOrAliasToFieldNotExist(name string) error {
+	return errors.New(errFieldOrAliasToFieldNotExist, errors.NewKV("Name", name))
+}
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
 // could not be obtained.
