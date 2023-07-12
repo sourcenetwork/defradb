@@ -94,7 +94,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return errors.New("empty schema provided")
 			}
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaLoadPath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPath)
 			if err != nil {
 				return errors.Wrap("join paths failed", err)
 			}
