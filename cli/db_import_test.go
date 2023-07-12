@@ -15,8 +15,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestDBImportCmd_WithNoArgument_ReturnError(t *testing.T) {

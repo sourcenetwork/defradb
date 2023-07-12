@@ -26,6 +26,9 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
+const cborFileType = "cbor"
+const jsonFileType = "json"
+
 func MakeDBExportCommand(cfg *config.Config) *cobra.Command {
 	var collections []string
 	var pretty bool
@@ -68,7 +71,6 @@ Example: export data for the 'Users' collection:
 					"collections": collections,
 				}
 				endpoint.RawQuery = values.Encode()
-
 			}
 
 			res, err := http.Get(endpoint.String())
@@ -109,7 +111,7 @@ Example: export data for the 'Users' collection:
 				}
 				var b []byte
 
-				if strings.ToLower(format) == "cbor" {
+				if strings.ToLower(format) == cborFileType {
 					em, err := cbor.CanonicalEncOptions().EncMode()
 					if err != nil {
 						return NewFailedToMarshalData(err)
@@ -139,7 +141,8 @@ Example: export data for the 'Users' collection:
 		},
 	}
 	cmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Set the output JSON to be pretty printed")
-	cmd.Flags().StringVarP(&format, "format", "f", "json", "Define the output format. Supported formats: [json, cbor]")
+	cmd.Flags().StringVarP(&format, "format", "f", jsonFileType,
+		"Define the output format. Supported formats: [json, cbor]")
 	cmd.Flags().StringSliceVarP(&collections, "collections", "c", []string{}, "List of collections")
 
 	return cmd
@@ -147,7 +150,7 @@ Example: export data for the 'Users' collection:
 
 func isValidExportFormat(format string) bool {
 	switch strings.ToLower(format) {
-	case "cbor", "json":
+	case cborFileType, jsonFileType:
 		return true
 	default:
 		return false

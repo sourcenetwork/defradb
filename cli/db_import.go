@@ -40,7 +40,6 @@ Example: import data to the database:
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-
 			contentType := "application/json"
 			inputPath := args[0]
 			if strings.HasSuffix(inputPath, "cbor") {
