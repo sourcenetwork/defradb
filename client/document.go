@@ -107,26 +107,9 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 		return nil, err
 	}
 
-	// if no key was specified, then we assume it doesn't exist and we generate it.
+	// if no key was specified, then we assume it doesn't exist and we generate, and set it.
 	if !hasKey {
-		pref := cid.Prefix{
-			Version:  1,
-			Codec:    cid.Raw,
-			MhType:   mh.SHA2_256,
-			MhLength: -1, // default length
-		}
-
-		buf, err := doc.Bytes()
-		if err != nil {
-			return nil, err
-		}
-
-		// And then feed it some data
-		c, err := pref.Sum(buf)
-		if err != nil {
-			return nil, err
-		}
-		doc.key = NewDocKeyV0(c)
+		doc.generateAndSetDockey()
 	}
 
 	return doc, nil
@@ -496,6 +479,16 @@ func (doc *Document) setDockeyFromBytes(bytes []byte) error {
 	return nil
 }
 
+// generateAndSetDockey generates dockey and (re)sets `doc.key`.
+func (doc *Document) generateAndSetDockey() error {
+	newBytes, err := doc.Bytes()
+	if err != nil {
+		return err
+	}
+
+	return doc.setDockeyFromBytes(newBytes)
+}
+
 func (doc *Document) remapAliasFields(fieldDescriptions []FieldDescription) (bool, error) {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
@@ -526,13 +519,8 @@ func (doc *Document) RemapAliasFieldsAndDockey(fieldDescriptions []FieldDescript
 		return nil
 	}
 
-	newBytes, err := doc.Bytes()
-	if err != nil {
-		return err
-	}
-
 	// Update the dockey so dockey isn't based on an aliased name of a field.
-	return doc.setDockeyFromBytes(newBytes)
+	return doc.generateAndSetDockey()
 }
 
 // DocumentStatus represent the state of the document in the DAG store.
