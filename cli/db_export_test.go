@@ -65,8 +65,7 @@ func TestDBExportCmd_WithEmptyDatastore_NoError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Data exported for all collections", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Data exported for all collections"))
 
 	b, err := os.ReadFile(filePath)
 	require.NoError(t, err)
@@ -90,8 +89,7 @@ func TestDBExportCmd_WithInvalidCollection_ReturnError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Failed to export data", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Failed to export data"))
 }
 
 func TestDBExportCmd_WithAllCollection_NoError(t *testing.T) {
@@ -126,8 +124,7 @@ func TestDBExportCmd_WithAllCollection_NoError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Data exported for all collections", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Data exported for all collections"))
 
 	b, err := os.ReadFile(filePath)
 	require.NoError(t, err)
@@ -172,8 +169,7 @@ func TestDBExportCmd_WithAllCollectionAndPrettyFormating_NoError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Data exported for all collections", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Data exported for all collections"))
 
 	b, err := os.ReadFile(filePath)
 	require.NoError(t, err)
@@ -227,8 +223,7 @@ func TestDBExportCmd_WithAllCollectionAndCBORFormat_NoError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Data exported for all collections", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Data exported for all collections"))
 
 	b, err := os.ReadFile(filePath)
 	require.NoError(t, err)
@@ -273,8 +268,7 @@ func TestDBExportCmd_WithSingleCollection_NoError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Data exported for collection User", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Data exported for collection User"))
 
 	b, err := os.ReadFile(filePath)
 	require.NoError(t, err)
@@ -333,8 +327,7 @@ func TestDBExportCmd_WithMultipleCollections_NoError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Data exported for collections User, Address", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Data exported for collections User, Address"))
 
 	b, err := os.ReadFile(filePath)
 	require.NoError(t, err)

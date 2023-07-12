@@ -72,8 +72,7 @@ func TestDBImportCmd_WithEmptyDatastore_ReturnError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Failed to import data", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Failed to import data"))
 }
 
 func TestDBImportCmd_WithExistingCollection_NoError(t *testing.T) {
@@ -106,8 +105,7 @@ func TestDBImportCmd_WithExistingCollection_NoError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Successfully imported data from file", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Successfully imported data from file"))
 
 	col, err := di.db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
@@ -153,8 +151,7 @@ func TestDBImportCmd_WithExistingCollectionFromCBOR_NoError(t *testing.T) {
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
-	require.Len(t, logLines, 1)
-	require.Equal(t, "Successfully imported data from file", logLines[0]["msg"])
+	require.True(t, lineHas(logLines, "msg", "Successfully imported data from file"))
 
 	col, err := di.db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)

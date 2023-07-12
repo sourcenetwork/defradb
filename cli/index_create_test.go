@@ -18,7 +18,6 @@ import (
 	"io"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,10 +68,16 @@ func parseLines(r io.Reader) ([]map[string]any, error) {
 	return logLines, nil
 }
 
-func simulateConsoleOutput(t *testing.T) (*bytes.Buffer, func()) {
-	// give go routines time to log before starting capture
-	time.Sleep(100 * time.Microsecond)
+func lineHas(lines []map[string]any, key, value string) bool {
+	for _, line := range lines {
+		if line[key] == value {
+			return true
+		}
+	}
+	return false
+}
 
+func simulateConsoleOutput(t *testing.T) (*bytes.Buffer, func()) {
 	b := &bytes.Buffer{}
 	log.ApplyConfig(logging.Config{
 		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
