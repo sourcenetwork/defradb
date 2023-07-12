@@ -17,8 +17,8 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
-	mh "github.com/multiformats/go-multihash"
 	"github.com/sourcenetwork/defradb/client/request"
+	ccid "github.com/sourcenetwork/defradb/core/cid"
 )
 
 // This is the main implementation starting point for accessing the internal Document API
@@ -109,7 +109,7 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 
 	// if no key was specified, then we assume it doesn't exist and we generate, and set it.
 	if !hasKey {
-		doc.generateAndSetDockey()
+		doc.generateAndSetDocKey()
 	}
 
 	return doc, nil
@@ -458,35 +458,38 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	return docMap, nil
 }
 
-// setDockeyFromBytes makes docKey out of the consumed bytes and then sets it as `doc.key`.
-func (doc *Document) setDockeyFromBytes(bytes []byte) error {
+// GenerateDocKey generates docKey/docID corresponding to the document.
+func (doc *Document) GenerateDocKey() (DocKey, error) {
+	bytes, err := doc.Bytes()
+	if err != nil {
+		return DocKey{}, err
+	}
+
+	cid, err := ccid.NewSHA256CidV1(bytes)
+	if err != nil {
+		return DocKey{}, err
+	}
+
+	return NewDocKeyV0(cid), nil
+}
+
+// setDocKey sets the `doc.key` (should NOT be public).
+func (doc *Document) setDocKey(docID DocKey) {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 
-	pref := cid.Prefix{
-		Version:  1,
-		Codec:    cid.Raw,
-		MhType:   mh.SHA2_256,
-		MhLength: -1, // default length
-	}
-
-	c, err := pref.Sum(bytes)
-	if err != nil {
-		return err
-	}
-
-	doc.key = NewDocKeyV0(c)
-	return nil
+	doc.key = docID
 }
 
-// generateAndSetDockey generates dockey and (re)sets `doc.key`.
-func (doc *Document) generateAndSetDockey() error {
-	newBytes, err := doc.Bytes()
+// generateAndSetDocKey generates the docKey/docID and then (re)sets `doc.key`.
+func (doc *Document) generateAndSetDocKey() error {
+	docKey, err := doc.GenerateDocKey()
 	if err != nil {
 		return err
 	}
 
-	return doc.setDockeyFromBytes(newBytes)
+	doc.setDocKey(docKey)
+	return nil
 }
 
 func (doc *Document) remapAliasFields(fieldDescriptions []FieldDescription) (bool, error) {
@@ -520,7 +523,7 @@ func (doc *Document) RemapAliasFieldsAndDockey(fieldDescriptions []FieldDescript
 	}
 
 	// Update the dockey so dockey isn't based on an aliased name of a field.
-	return doc.generateAndSetDockey()
+	return doc.generateAndSetDocKey()
 }
 
 // DocumentStatus represent the state of the document in the DAG store.
