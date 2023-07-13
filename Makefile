@@ -175,6 +175,10 @@ endif
 test:
 	gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
+.PHONY: test\:quick
+test\:quick:
+	gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+
 # Only build the tests (don't execute them).
 .PHONY: test\:build
 test\:build:
