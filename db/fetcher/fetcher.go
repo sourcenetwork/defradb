@@ -40,7 +40,7 @@ type Fetcher interface {
 		reverse bool,
 		showDeleted bool,
 	) error
-	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
+	Start(ctx context.Context, spans core.Spans) error
 	FetchNext(ctx context.Context) (EncodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
 	FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, error)
@@ -118,6 +118,7 @@ func (df *DocumentFetcher) Init(
 	reverse bool,
 	showDeleted bool,
 ) error {
+	df.txn = txn
 	if col.Schema.IsEmpty() {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "Schema")
 	}
@@ -130,6 +131,7 @@ func (df *DocumentFetcher) Init(
 	if showDeleted {
 		if df.deletedDocFetcher == nil {
 			df.deletedDocFetcher = new(DocumentFetcher)
+			df.deletedDocFetcher.txn = txn
 		}
 		return df.deletedDocFetcher.init(col, fields, filter, docmapper, reverse)
 	}
@@ -200,21 +202,21 @@ func (df *DocumentFetcher) init(
 	return nil
 }
 
-func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
-	err := df.start(ctx, txn, spans, false)
+func (df *DocumentFetcher) Start(ctx context.Context, spans core.Spans) error {
+	err := df.start(ctx, spans, false)
 	if err != nil {
 		return err
 	}
 
 	if df.deletedDocFetcher != nil {
-		return df.deletedDocFetcher.start(ctx, txn, spans, true)
+		return df.deletedDocFetcher.start(ctx, spans, true)
 	}
 
 	return nil
 }
 
 // Start implements DocumentFetcher.
-func (df *DocumentFetcher) start(ctx context.Context, txn datastore.Txn, spans core.Spans, withDeleted bool) error {
+func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDeleted bool) error {
 	if df.col == nil {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "CollectionDescription")
 	}
@@ -251,7 +253,6 @@ func (df *DocumentFetcher) start(ctx context.Context, txn datastore.Txn, spans c
 	}
 
 	df.curSpanIndex = -1
-	df.txn = txn
 
 	if df.reverse {
 		df.order = []dsq.Order{dsq.OrderByKeyDescending{}}

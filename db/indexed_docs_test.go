@@ -559,8 +559,8 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			Name: "Fails to start",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Start(mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Start(mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Start(mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Start(mock.Anything, mock.Anything).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -843,8 +843,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to start",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Start(mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Start(mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Start(mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Start(mock.Anything, mock.Anything).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f

@@ -82,24 +82,14 @@ func TestFetcherStart(t *testing.T) {
 	df, err := newTestFetcher(ctx, txn)
 	assert.NoError(t, err)
 
-	err = df.Start(ctx, txn, core.Spans{})
+	err = df.Start(ctx, core.Spans{})
 	assert.NoError(t, err)
 }
 
 func TestFetcherStartWithoutInit(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		t.Error(err)
-		return
-	}
 	df := new(fetcher.DocumentFetcher)
-	err = df.Start(ctx, txn, core.Spans{})
+	err := df.Start(ctx, core.Spans{})
 	assert.Error(t, err)
 }
 
@@ -138,7 +128,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
-	err = df.Start(ctx, txn, core.Spans{})
+	err = df.Start(ctx, core.Spans{})
 	assert.NoError(t, err)
 
 	encdoc, err := df.FetchNext(ctx)
@@ -183,7 +173,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
-	err = df.Start(ctx, txn, core.Spans{})
+	err = df.Start(ctx, core.Spans{})
 	assert.NoError(t, err)
 
 	encdoc, err := df.FetchNext(ctx)
@@ -221,7 +211,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
-	err = df.Start(ctx, txn, core.Spans{})
+	err = df.Start(ctx, core.Spans{})
 	assert.NoError(t, err)
 
 	ddoc, err := df.FetchNextDecoded(ctx)
@@ -273,7 +263,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
-	err = df.Start(ctx, txn, core.Spans{})
+	err = df.Start(ctx, core.Spans{})
 	assert.NoError(t, err)
 
 	ddoc, err := df.FetchNextDecoded(ctx)
@@ -336,7 +326,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 		core.NewSpan(docKey, docKey.PrefixEnd()),
 	)
 
-	err = df.Start(ctx, txn, spans)
+	err = df.Start(ctx, spans)
 	assert.NoError(t, err)
 
 	ddoc, err := df.FetchNextDecoded(ctx)
