@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 )
@@ -51,10 +52,10 @@ func newTestCollectionDescription() client.CollectionDescription {
 	}
 }
 
-func newTestFetcher() (*fetcher.DocumentFetcher, error) {
+func newTestFetcher(ctx context.Context, txn datastore.Txn) (*fetcher.DocumentFetcher, error) {
 	df := new(fetcher.DocumentFetcher)
 	desc := newTestCollectionDescription()
-	err := df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
+	err := df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func newTestFetcher() (*fetcher.DocumentFetcher, error) {
 }
 
 func TestFetcherInit(t *testing.T) {
-	_, err := newTestFetcher()
+	_, err := newTestFetcher(context.Background(), nil)
 	assert.NoError(t, err)
 }
 
@@ -78,7 +79,7 @@ func TestFetcherStart(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	df, err := newTestFetcher()
+	df, err := newTestFetcher(ctx, txn)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -134,7 +135,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
+	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -179,7 +180,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
+	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -209,16 +210,16 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	df := new(fetcher.DocumentFetcher)
-	desc := col.Description()
-	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
-	assert.NoError(t, err)
-
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
+	df := new(fetcher.DocumentFetcher)
+	desc := col.Description()
+	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
+	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
@@ -261,16 +262,16 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	df := new(fetcher.DocumentFetcher)
-	desc := col.Description()
-	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
-	assert.NoError(t, err)
-
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
+	df := new(fetcher.DocumentFetcher)
+	desc := col.Description()
+	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
+	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
@@ -318,9 +319,15 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, desc.Schema.Fields, nil, nil, false, false)
+	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	// create a span for our document we wish to find
@@ -328,12 +335,6 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	spans := core.NewSpans(
 		core.NewSpan(docKey, docKey.PrefixEnd()),
 	)
-
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		t.Error(err)
-		return
-	}
 
 	err = df.Start(ctx, txn, spans)
 	assert.NoError(t, err)

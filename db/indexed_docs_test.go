@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	ipfsDatastore "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	fetcherMocks "github.com/sourcenetwork/defradb/db/fetcher/mocks"
@@ -546,8 +548,8 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -611,22 +613,20 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	doc := f.newUserDoc("John", 21)
 	f.saveDocToCollection(doc, f.users)
 
-	testErr := errors.New("test error")
+	fieldKeyString := core.DataStoreKey{
+		CollectionID: f.users.desc.IDString(),
+	}.WithDocKey(doc.Key().String()).
+		WithFieldId("1").
+		WithValueFlag().
+		ToString()
 
-	f.users.fetcherFactory = func() fetcher.Fetcher {
-		return fetcherMocks.NewStubbedFetcher(t)
-	}
+	invalidKeyString := fieldKeyString + "/doesn't matter/"
 
-	mockedTxn := f.mockTxn()
-	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
-	mockedTxn.MockDatastore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Unset()
-	mockedTxn.MockDatastore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).
-		Return(testErr)
-	mockedTxn.EXPECT().Datastore().Unset()
-	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
+	// Insert an invalid key within the document prefix, this will generate an error within the fetcher.
+	f.users.db.multistore.Datastore().Put(f.ctx, ipfsDatastore.NewKey(invalidKeyString), []byte("doesn't matter"))
 
-	_, err := f.users.WithTxn(mockedTxn).CreateIndex(f.ctx, getUsersIndexDescOnName())
-	require.ErrorIs(f.t, err, testErr)
+	_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
+	require.ErrorIs(f.t, err, core.ErrInvalidKey)
 }
 
 func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
@@ -832,8 +832,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to init",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+				f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -865,6 +865,10 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to close",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
+				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
+				// By default the the stubbed fetcher returns an empty, invalid document
+				// here we need to make sure it reaches the Close call by overriding that default.
+				f.EXPECT().FetchNextDecoded(mock.Anything).Maybe().Return(nil, nil)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(testError)
 				return f
@@ -873,6 +877,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		t.Log(tc.Name)
+
 		f := newIndexTestFixture(t)
 		f.createUserCollectionIndexOnName()
 
@@ -927,9 +933,11 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 
 	f.users.fetcherFactory = func() fetcher.Fetcher {
 		f := fetcherMocks.NewStubbedFetcher(t)
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
-		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
+		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			RunAndReturn(func(
+				ctx context.Context,
+				txn datastore.Txn,
 				col *client.CollectionDescription,
 				fields []client.FieldDescription,
 				filter *mapper.Filter,
@@ -977,10 +985,18 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		t.Log(tc.Name)
+
 		f := newIndexTestFixture(t)
 		f.createUserCollectionIndexOnName()
 
 		doc := f.newUserDoc("John", 21)
+		err := doc.Set(usersNameFieldName, "Islam")
+		require.NoError(t, err)
+
+		// This is only required as we are using it as a return value
+		// in production this value will have been set by the fetcher
+		doc.SchemaVersionID = f.users.Schema().VersionID
 
 		f.users.fetcherFactory = func() fetcher.Fetcher {
 			df := fetcherMocks.NewStubbedFetcher(t)
@@ -988,11 +1004,6 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			df.EXPECT().FetchNextDecoded(mock.Anything).Return(doc, nil)
 			return df
 		}
-
-		f.saveDocToCollection(doc, f.users)
-
-		err := doc.Set(usersNameFieldName, "Islam")
-		require.NoError(t, err)
 
 		mockedTxn := f.mockTxn()
 		mockedTxn.MockDatastore = mocks.NewDSReaderWriter(f.t)

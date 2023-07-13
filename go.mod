@@ -14,7 +14,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/graphql-go/graphql v0.8.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/iancoleman/strcase v0.2.0
+	github.com/iancoleman/strcase v0.3.0
 	github.com/ipfs/boxo v0.10.2
 	github.com/ipfs/go-block-format v0.1.2
 	github.com/ipfs/go-cid v0.4.1
@@ -23,6 +23,7 @@ require (
 	github.com/ipfs/go-log v1.0.5
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/jbenet/goprocess v0.1.4
+	github.com/lens-vm/lens/host-go v0.0.0-20230630110646-acdc3794600b
 	github.com/libp2p/go-libp2p v0.28.0
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.24.2
@@ -34,7 +35,7 @@ require (
 	github.com/multiformats/go-multihash v0.2.3
 	github.com/pkg/errors v0.9.1
 	github.com/planetscale/vtprotobuf v0.4.0
-	github.com/sourcenetwork/immutable v0.2.2
+	github.com/sourcenetwork/immutable v0.3.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.16.0
@@ -173,6 +174,7 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/textileio/go-log/v2 v2.1.3-gke-2 // indirect
+	github.com/wasmerio/wasmer-go v1.0.4 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20230126041949-52956bd4c9aa // indirect
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/lens"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
@@ -113,11 +114,14 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 // It's a very simple factory, but it allows us to inject a mock fetcher
 // for testing.
 func (c *collection) newFetcher() fetcher.Fetcher {
+	var innerFetcher fetcher.Fetcher
 	if c.fetcherFactory != nil {
-		return c.fetcherFactory()
+		innerFetcher = c.fetcherFactory()
 	} else {
-		return new(fetcher.DocumentFetcher)
+		innerFetcher = new(fetcher.DocumentFetcher)
 	}
+
+	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
 }
 
 // createCollection creates a collection and saves it to the database in its system store.
@@ -262,6 +266,7 @@ func (db *db) updateCollection(
 	if err != nil {
 		return nil, err
 	}
+	previousSchemaVersionID := desc.Schema.VersionID
 	schemaVersionID := cid.String()
 	desc.Schema.VersionID = schemaVersionID
 
@@ -286,6 +291,12 @@ func (db *db) updateCollection(
 
 	collectionKey := core.NewCollectionKey(desc.Name)
 	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
+	if err != nil {
+		return nil, err
+	}
+
+	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, previousSchemaVersionID)
+	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
 	if err != nil {
 		return nil, err
 	}
