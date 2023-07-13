@@ -117,6 +117,9 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 					logicMapEntries[i] = filterObjectToMap(mapping, itemMap)
 				}
 				outmap[keyType.Operation] = logicMapEntries
+			case "_not":
+				itemMap := v.(map[connor.FilterKey]any)
+				outmap[keyType.Operation] = filterObjectToMap(mapping, itemMap)
 			default:
 				outmap[keyType.Operation] = v
 			}
