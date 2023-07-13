@@ -271,6 +271,7 @@ func (p *Planner) Scan(
 		if len(indexedFields) > 0 {
 			f = fetcher.NewIndexFetcher(f, indexedFields)
 		}
+		f = new(fetcher.FetcherSwitcher)
 		f = lens.NewFetcher(f, p.db.LensRegistry())
 	}
 	scan := &scanNode{
