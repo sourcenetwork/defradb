@@ -107,3 +107,57 @@ func createUserDocs() []testUtils.CreateDoc {
 		},
 	}
 }
+
+func createUserDocsWithAge() []testUtils.CreateDoc {
+	return []testUtils.CreateDoc{
+		{
+			CollectionID: 0,
+			Doc: `{
+					"name": "John",
+					"age": 30
+				}`,
+		},
+		{
+			CollectionID: 0,
+			Doc: `{
+					"name": "Islam",
+					"age": 32
+				}`,
+		},
+		{
+			CollectionID: 0,
+			Doc: `{
+					"name": "Andy",
+					"age": 33
+				}`,
+		},
+		{
+			CollectionID: 0,
+			Doc: `{
+					"name": "Shahzad",
+					"age": 20
+				}`,
+		},
+		{
+			CollectionID: 0,
+			Doc: `{
+					"name": "Fred",
+					"age": 28
+				}`,
+		},
+		{
+			CollectionID: 0,
+			Doc: `{
+					"name": "Orpheus",
+					"age": 48
+				}`,
+		},
+		{
+			CollectionID: 0,
+			Doc: `{
+					"name": "Addo",
+					"age": 42
+				}`,
+		},
+	}
+}

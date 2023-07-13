@@ -6,22 +6,23 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/mapper"
+
+	"github.com/ipfs/go-datastore/query"
 )
 
 type IndexFetcher struct {
-	nonIndexFetcher Fetcher
-	col             *client.CollectionDescription
-	txn             datastore.Txn
-	indexedFields   []client.FieldDescription
-	filter          *mapper.Filter
-	reverse         bool
-	showDeleted     bool
-	doc             *encodedDocument
-	index           client.IndexDescription
-	indexCond       any
-	indexedField    client.FieldDescription
-	didReturn       bool
+	nonIndexFetcher   Fetcher
+	col               *client.CollectionDescription
+	txn               datastore.Txn
+	indexedFields     []client.FieldDescription
+	filter            *mapper.Filter
+	doc               *encodedDocument
+	index             client.IndexDescription
+	indexedFieldDesc  client.FieldDescription
+	indexQuery        query.Results
+	indexDataStoreKey core.IndexDataStoreKey
 }
 
 var _ Fetcher = (*IndexFetcher)(nil)
@@ -49,18 +50,46 @@ func (f *IndexFetcher) Init(
 	fields = f.filterOutIndexedFields(fields)
 	f.doc = &encodedDocument{}
 	f.doc.mapping = docMapper
-	f.reverse = reverse
-	f.showDeleted = showDeleted
 
 	colIndexes := f.col.Indexes
 	for fieldName, cond := range f.filter.ExternalConditions {
 		for i := range colIndexes {
 			if fieldName == colIndexes[i].Fields[0].Name {
 				f.index = colIndexes[i]
-				f.indexCond = cond
+
+				condMap, ok := cond.(map[string]any)
+				if !ok {
+					return nil
+				}
+				var op string
+				var filterVal any
+				for op, filterVal = range condMap {
+					break
+				}
+
+				if op != "_eq" {
+					return nil
+				}
+
+				filterStrVal, ok := filterVal.(string)
+				if !ok {
+					return nil
+				}
+
+				writableValue := client.NewCBORValue(client.LWW_REGISTER, filterStrVal)
+
+				valBytes, err := writableValue.Bytes()
+				if err != nil {
+					return err
+				}
+
+				f.indexDataStoreKey.CollectionID = f.col.ID
+				f.indexDataStoreKey.IndexID = f.index.ID
+				f.indexDataStoreKey.FieldValues = [][]byte{valBytes}
+
 				for j := range f.indexedFields {
 					if f.indexedFields[j].Name == fieldName {
-						f.indexedField = f.indexedFields[j]
+						f.indexedFieldDesc = f.indexedFields[j]
 						break
 					}
 				}
@@ -119,80 +148,53 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
 		return f.nonIndexFetcher.FetchNext(ctx)
 	}
 
-	if f.didReturn {
-		return nil, nil
-	}
-
 	f.doc.Reset()
 
-	condMap, ok := f.indexCond.(map[string]any)
-	if !ok {
-		return nil, nil
-	}
-	var op string
-	var filterVal any
-	for op, filterVal = range condMap {
-		break
-	}
-
-	if op != "_eq" {
-		return nil, nil
-	}
-
-	filterStrVal, ok := filterVal.(string)
-	if !ok {
-		return nil, nil
-	}
-
-	writableValue := client.NewCBORValue(client.LWW_REGISTER, filterStrVal)
-	//indexDataStoreKey.FieldValues = [][]byte{fieldValue, []byte(doc.Key().String())}
-
-	valBytes, err := writableValue.Bytes()
-	if err != nil {
-		return nil, err
-	}
-
-	indexDataStoreKey := core.IndexDataStoreKey{}
-	indexDataStoreKey.CollectionID = f.col.ID
-	indexDataStoreKey.IndexID = f.index.ID
-	indexDataStoreKey.FieldValues = [][]byte{valBytes}
-
-	keys, err := datastore.FetchKeysForPrefix(ctx, indexDataStoreKey.ToString(), f.txn.Datastore())
-	if err != nil {
-		return nil, err
-	}
-
-	for _, key := range keys {
-		indexKey, err := core.NewIndexDataStoreKey(key.String())
+	var err error
+	if f.indexQuery == nil {
+		f.indexQuery, err = f.txn.Datastore().Query(ctx, query.Query{
+			Prefix: f.indexDataStoreKey.ToString(),
+		})
 		if err != nil {
 			return nil, err
 		}
-		property := &encProperty{
-			Desc: f.indexedField,
-			Raw:  append([]byte{byte(client.LWW_REGISTER)}, valBytes...),
-		}
-
-		f.doc.key = indexKey.FieldValues[1]
-		f.doc.Properties = append(f.doc.Properties, property)
-
-		if f.nonIndexFetcher != nil {
-			/*targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
-			spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
-			err = f.nonIndexFetcher.Start(ctx, f.txn, spans)
-			if err != nil {
-				return nil, err
-			}
-			encDoc, err := f.nonIndexFetcher.FetchNext(ctx)
-			if err != nil {
-				return nil, err
-			}
-			f.doc.MergeProperties(encDoc)*/
-		}
-		f.didReturn = true
-		return f.doc, nil
 	}
 
-	return nil, nil
+	res, hasValue := f.indexQuery.NextSync()
+	if !hasValue || res.Error != nil {
+		return nil, res.Error
+	}
+
+	indexKey, err := core.NewIndexDataStoreKey(res.Key)
+	if err != nil {
+		return nil, err
+	}
+	property := &encProperty{
+		Desc: f.indexedFieldDesc,
+		Raw:  f.indexDataStoreKey.FieldValues[0],
+	}
+
+	f.doc.key = indexKey.FieldValues[1]
+	f.doc.Properties = append(f.doc.Properties, property)
+
+	if f.nonIndexFetcher != nil {
+		targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
+		spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
+		err = f.nonIndexFetcher.Start(ctx, f.txn, spans)
+		if err != nil {
+			return nil, err
+		}
+		encDoc, err := f.nonIndexFetcher.FetchNext(ctx)
+		if err != nil {
+			return nil, err
+		}
+		err = f.nonIndexFetcher.Close()
+		if err != nil {
+			return nil, err
+		}
+		f.doc.MergeProperties(encDoc)
+	}
+	return f.doc, nil
 }
 
 func (f *IndexFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, error) {
@@ -232,6 +234,9 @@ func (f *IndexFetcher) FetchNextDoc(ctx context.Context, mapping *core.DocumentM
 func (f *IndexFetcher) Close() error {
 	if !f.canUseIndex() {
 		return f.nonIndexFetcher.Close()
+	}
+	if f.indexQuery != nil {
+		return f.indexQuery.Close()
 	}
 	return nil
 }

@@ -23,11 +23,13 @@ func TestIndexWithExplain(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type users {
-						name: String @index
+						name: String 
+						age: Int
+						verified: Boolean
 					} 
 				`,
 			},
-			createUserDocs(),
+			createUserDocsWithAge(),
 			testUtils.Request{
 				Request: `
 					query @explain(type: execute) {
@@ -43,8 +45,9 @@ func TestIndexWithExplain(t *testing.T) {
 	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
-func TestIndex(t *testing.T) {
+func TestQueryWithIndex_WithOnlyIndexedField_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
+		Description: "If there is only one indexed field in the query, it should be fetched",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -64,6 +67,82 @@ func TestIndex(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "Islam",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+}
+
+func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If there are non-indexed fields in the query, they should be fetched",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						name: String @index
+						age: Int
+					} 
+				`,
+			},
+			createUserDocsWithAge(),
+			testUtils.Request{
+				Request: `
+					query {
+						users(filter: {name: {_eq: "Islam"}}) {
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Islam",
+						"age":  uint64(32),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+}
+
+func TestQueryWithIndex_IfMoreThenOneDoc_ShouldFetchAll(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If there are more than one doc with the same indexed field, they should be fetched",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						name: String @index
+						age: Int
+					} 
+				`,
+			},
+			createUserDocsWithAge(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Islam",
+					"age": 18
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						users(filter: {name: {_eq: "Islam"}}) {
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"age": uint64(32),
+					},
+					{
+						"age": uint64(18),
 					},
 				},
 			},
