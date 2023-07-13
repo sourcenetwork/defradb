@@ -26,6 +26,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 						name: String
 						points: Float
 						verified: Boolean
+						group: group
 					}
 
 					type group {
@@ -100,13 +101,6 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 													"name": "_key",
 													"type": map[string]any{
 														"name":   "Ordering",
-														"ofType": nil,
-													},
-												},
-												map[string]any{
-													"name": "members",
-													"type": map[string]any{
-														"name":   "",
 														"ofType": nil,
 													},
 												},
