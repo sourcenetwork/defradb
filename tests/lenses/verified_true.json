@@ -1,0 +1,11 @@
+{
+    "lenses": [
+        {
+            "path": "/tests/modules/rust_wasm32rust_wasm32_set_default_simple/target/wasm32-unknown-unknown/debug/rust_wasm32_set_default.wasm",
+            "arguments": {
+                "dst": "verified",
+                "value": true
+            }
+        }
+    ]
+}

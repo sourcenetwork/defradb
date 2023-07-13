@@ -712,6 +712,49 @@ func (_c *DB_GetCollectionByVersionID_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// LensRegistry provides a mock function with given fields:
+func (_m *DB) LensRegistry() client.LensRegistry {
+	ret := _m.Called()
+
+	var r0 client.LensRegistry
+	if rf, ok := ret.Get(0).(func() client.LensRegistry); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(client.LensRegistry)
+		}
+	}
+
+	return r0
+}
+
+// DB_LensRegistry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LensRegistry'
+type DB_LensRegistry_Call struct {
+	*mock.Call
+}
+
+// LensRegistry is a helper method to define mock.On call
+func (_e *DB_Expecter) LensRegistry() *DB_LensRegistry_Call {
+	return &DB_LensRegistry_Call{Call: _e.mock.On("LensRegistry")}
+}
+
+func (_c *DB_LensRegistry_Call) Run(run func()) *DB_LensRegistry_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *DB_LensRegistry_Call) Return(_a0 client.LensRegistry) *DB_LensRegistry_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_LensRegistry_Call) RunAndReturn(run func() client.LensRegistry) *DB_LensRegistry_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MaxTxnRetries provides a mock function with given fields:
 func (_m *DB) MaxTxnRetries() int {
 	ret := _m.Called()
@@ -1030,6 +1073,49 @@ func (_c *DB_Root_Call) Return(_a0 datastore.RootStore) *DB_Root_Call {
 }
 
 func (_c *DB_Root_Call) RunAndReturn(run func() datastore.RootStore) *DB_Root_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetMigration provides a mock function with given fields: _a0, _a1
+func (_m *DB) SetMigration(_a0 context.Context, _a1 client.LensConfig) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, client.LensConfig) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_SetMigration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetMigration'
+type DB_SetMigration_Call struct {
+	*mock.Call
+}
+
+// SetMigration is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 client.LensConfig
+func (_e *DB_Expecter) SetMigration(_a0 interface{}, _a1 interface{}) *DB_SetMigration_Call {
+	return &DB_SetMigration_Call{Call: _e.mock.On("SetMigration", _a0, _a1)}
+}
+
+func (_c *DB_SetMigration_Call) Run(run func(_a0 context.Context, _a1 client.LensConfig)) *DB_SetMigration_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(client.LensConfig))
+	})
+	return _c
+}
+
+func (_c *DB_SetMigration_Call) Return(_a0 error) *DB_SetMigration_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_SetMigration_Call) RunAndReturn(run func(context.Context, client.LensConfig) error) *DB_SetMigration_Call {
 	_c.Call.Return(run)
 	return _c
 }
