@@ -11,6 +11,8 @@
 package index
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -61,103 +63,97 @@ func newExplainAsserter(iterations, docFetched, filterMatcher int) *explainResul
 	}
 }
 
-func createUserDocs() []testUtils.CreateDoc {
-	return []testUtils.CreateDoc{
+func getDocs() []map[string]any {
+	return []map[string]any{
 		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "John"
-				}`,
+			"name":     "John",
+			"age":      30,
+			"verified": true,
+			"email":    "john@gmail.com",
 		},
 		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Islam"
-				}`,
+			"name":     "Islam",
+			"age":      32,
+			"verified": true,
+			"email":    "islam@gmail.com",
 		},
 		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Andy"
-				}`,
+			"name":     "Andy",
+			"age":      33,
+			"verified": true,
+			"email":    "andy@gmail.com",
 		},
 		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Shahzad"
-				}`,
+			"name":     "Shahzad",
+			"age":      20,
+			"verified": false,
+			"email":    "shahzad@gmail.com",
 		},
 		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Fred"
-				}`,
+			"name":     "Fred",
+			"age":      28,
+			"verified": false,
+			"email":    "fred@gmail.com",
 		},
 		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Orpheus"
-				}`,
+			"name":     "Keenan",
+			"age":      48,
+			"verified": false,
+			"email":    "keenan@gmail.com",
 		},
 		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Addo"
-				}`,
+			"name":     "Addo",
+			"age":      42,
+			"verified": false,
+			"email":    "addo@gmail.com",
 		},
 	}
 }
 
-func createUserDocsWithAge() []testUtils.CreateDoc {
-	return []testUtils.CreateDoc{
-		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "John",
-					"age": 30
-				}`,
-		},
-		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Islam",
-					"age": 32
-				}`,
-		},
-		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Andy",
-					"age": 33
-				}`,
-		},
-		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Shahzad",
-					"age": 20
-				}`,
-		},
-		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Fred",
-					"age": 28
-				}`,
-		},
-		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Orpheus",
-					"age": 48
-				}`,
-		},
-		{
-			CollectionID: 0,
-			Doc: `{
-					"name": "Addo",
-					"age": 42
-				}`,
-		},
+// createSchemaWithDocs returns UpdateSchema action and CreateDoc actions
+// with the documents that match the schema.
+// The schema is parsed to get the list of properties, and the docs
+// are created with the same properties.
+// This allows us to have only one large list of docs with predefined
+// properties, and create schemas with different properties from it.
+func createSchemaWithDocs(schema string) []any {
+	docs := getDocs()
+	actions := make([]any, 0, len(docs)+1)
+	actions = append(actions, testUtils.SchemaUpdate{Schema: schema})
+	props := getSchemaProps(schema)
+	for _, doc := range docs {
+		docDesc := makeDocWithProps(doc, props)
+		actions = append(actions, testUtils.CreateDoc{CollectionID: 0, Doc: docDesc})
 	}
+	return actions
+}
+
+func makeDocWithProps(doc map[string]any, props []string) string {
+	sb := strings.Builder{}
+	sb.WriteString("{\n")
+	for i := range props {
+		format := `"%s": %v`
+		if _, isStr := doc[props[i]].(string); isStr {
+			format = `"%s": "%v"`
+		}
+		sb.WriteString(fmt.Sprintf(format, props[i], doc[props[i]]))
+		if i != len(props)-1 {
+			sb.WriteString(",")
+		}
+		sb.WriteString("\n")
+	}
+	sb.WriteString("}")
+	return sb.String()
+}
+
+func getSchemaProps(schema string) []string {
+	props := make([]string, 0)
+	lines := strings.Split(schema, "\n")
+	for _, line := range lines {
+		pos := strings.Index(line, ":")
+		if pos != -1 {
+			props = append(props, strings.TrimSpace(line[:pos]))
+		}
+	}
+	return props
 }

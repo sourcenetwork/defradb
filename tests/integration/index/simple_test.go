@@ -20,16 +20,13 @@ func TestIndexWithExplain(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type users {
-						name: String 
-						age: Int
-						verified: Boolean
-					} 
-				`,
-			},
-			createUserDocsWithAge(),
+			createSchemaWithDocs(`
+				type users {
+					name: String 
+					age: Int
+					verified: Boolean
+				} 
+			`),
 			testUtils.Request{
 				Request: `
 					query @explain(type: execute) {
@@ -49,14 +46,11 @@ func TestQueryWithIndex_WithOnlyIndexedField_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there is only one indexed field in the query, it should be fetched",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type users {
-						name: String @index
-					} 
-				`,
-			},
-			createUserDocs(),
+			createSchemaWithDocs(`
+				type users {
+					name: String @index
+				} 
+			`),
 			testUtils.Request{
 				Request: `
 					query {
@@ -80,15 +74,12 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "If there are non-indexed fields in the query, they should be fetched",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type users {
-						name: String @index
-						age: Int
-					} 
-				`,
-			},
-			createUserDocsWithAge(),
+			createSchemaWithDocs(`
+				type users {
+					name: String @index
+					age: Int
+				} 
+			`),
 			testUtils.Request{
 				Request: `
 					query {
@@ -114,15 +105,12 @@ func TestQueryWithIndex_IfMoreThenOneDoc_ShouldFetchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there are more than one doc with the same indexed field, they should be fetched",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type users {
-						name: String @index
-						age: Int
-					} 
-				`,
-			},
-			createUserDocsWithAge(),
+			createSchemaWithDocs(`
+				type users {
+					name: String @index
+					age: Int
+				} 
+			`),
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
