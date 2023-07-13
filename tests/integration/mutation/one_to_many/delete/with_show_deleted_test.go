@@ -109,5 +109,4 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 	}
 
 	fixture.ExecuteTestCase(t, test)
-
 }

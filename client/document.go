@@ -17,6 +17,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/defradb/client/request"
 	ccid "github.com/sourcenetwork/defradb/core/cid"
 )
@@ -109,7 +110,10 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 
 	// if no key was specified, then we assume it doesn't exist and we generate, and set it.
 	if !hasKey {
-		doc.generateAndSetDocKey()
+		err = doc.generateAndSetDocKey()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return doc, nil

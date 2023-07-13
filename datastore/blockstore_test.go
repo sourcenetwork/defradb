@@ -17,8 +17,9 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
-	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/stretchr/testify/require"
+
+	ccid "github.com/sourcenetwork/defradb/core/cid"
 
 	"github.com/sourcenetwork/defradb/datastore/memory"
 )

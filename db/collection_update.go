@@ -317,7 +317,6 @@ func (c *collection) applyMerge(
 			fd, isValidField = c.desc.Schema.GetField(mfield)
 			if !isValidField {
 				return client.NewErrFieldNotExist(mfield)
-
 			}
 		}
 

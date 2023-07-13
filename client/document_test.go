@@ -13,8 +13,9 @@ package client
 import (
 	"testing"
 
-	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/stretchr/testify/assert"
+
+	ccid "github.com/sourcenetwork/defradb/core/cid"
 )
 
 var (
