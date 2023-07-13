@@ -108,6 +108,25 @@ type Store interface {
 	// [FieldKindStringToEnumMapping].
 	PatchSchema(context.Context, string) error
 
+	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivilent to
+	// calling `LensRegistry().SetMigration(ctx, cfg)`.
+	//
+	// There may only be one migration per schema version id.  If another migration was registered it will be
+	// overwritten by this migration.
+	//
+	// Neither of the schema version IDs specified in the configuration need to exist at the time of calling.
+	// This is to allow the migration of documents of schema versions unknown to the local node recieved by the
+	// P2P system.
+	//
+	// Migrations will only run if there is a complete path from the document schema version to the latest local
+	// schema version.
+	SetMigration(context.Context, LensConfig) error
+
+	// LensRegistry returns the LensRegistry in use by this database instance.
+	//
+	// It exposes several useful thread-safe migration related functions.
+	LensRegistry() LensRegistry
+
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.

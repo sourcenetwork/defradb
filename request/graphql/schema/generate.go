@@ -1116,20 +1116,14 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 					continue
 				}
 				typeMap := g.manager.schema.TypeMap()
+				configType, isOrderable := typeMap[genTypeName(field.Type, "OrderArg")]
 				if gql.IsLeafType(field.Type) { // only Scalars, and enums
 					fields[field.Name] = &gql.InputObjectFieldConfig{
 						Type: typeMap["Ordering"],
 					}
-				} else { // sub objects
-					configType, isOrderable := typeMap[genTypeName(field.Type, "OrderArg")]
-					if !isOrderable {
-						fields[field.Name] = &gql.InputObjectFieldConfig{
-							Type: &gql.InputObjectField{},
-						}
-					} else {
-						fields[field.Name] = &gql.InputObjectFieldConfig{
-							Type: configType,
-						}
+				} else if isOrderable { // sub objects
+					fields[field.Name] = &gql.InputObjectFieldConfig{
+						Type: configType,
 					}
 				}
 			}

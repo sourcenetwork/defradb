@@ -889,7 +889,7 @@ sourceLoop:
 			enumerable.New(existingFields),
 		)
 
-		matchingFields := enumerable.Where(allFields, func(existingField Requestable) (bool, error) {
+		matchingFields := enumerable.Where[Requestable](allFields, func(existingField Requestable) (bool, error) {
 			return existingField.GetIndex() == keyIndex, nil
 		})
 
@@ -1039,6 +1039,13 @@ func toFilterMap(
 				returnClauses = append(returnClauses, returnClause)
 			}
 			return key, returnClauses
+		case map[string]any:
+			innerMapClause := map[connor.FilterKey]any{}
+			for innerSourceKey, innerSourceValue := range typedClause {
+				rKey, rValue := toFilterMap(innerSourceKey, innerSourceValue, mapping)
+				innerMapClause[rKey] = rValue
+			}
+			return key, innerMapClause
 		default:
 			return key, typedClause
 		}

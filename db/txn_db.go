@@ -279,6 +279,25 @@ func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string) er
 	return db.patchSchema(ctx, db.txn, patchString)
 }
 
+func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.lensRegistry.SetMigration(ctx, txn, cfg)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+func (db *explicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+	return db.lensRegistry.SetMigration(ctx, db.txn, cfg)
+}
+
 // SetReplicator adds a new replicator to the database.
 func (db *implicitTxnDB) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	txn, err := db.NewTxn(ctx, false)

@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/lens"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
@@ -60,7 +61,16 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.fields, n.filter, n.slct.DocumentMapping, n.reverse, n.showDeleted); err != nil {
+	if err := n.fetcher.Init(
+		n.p.ctx,
+		n.p.txn,
+		&n.desc,
+		n.fields,
+		n.filter,
+		n.slct.DocumentMapping,
+		n.reverse,
+		n.showDeleted,
+	); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -252,6 +262,7 @@ func (p *Planner) Scan(parsed *mapper.Select) (*scanNode, error) {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = new(fetcher.DocumentFetcher)
+		f = lens.NewFetcher(f, p.db.LensRegistry())
 	}
 	scan := &scanNode{
 		p:         p,

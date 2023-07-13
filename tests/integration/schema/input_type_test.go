@@ -16,6 +16,109 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type user {
+						age: Int
+						name: String
+						points: Float
+						verified: Boolean
+						group: group
+					}
+
+					type group {
+						members: [user]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "group") {
+							name
+							fields {
+								name
+								args {
+									name
+									type {
+										name
+										ofType {
+											name
+											kind
+										}
+										inputFields {
+											name
+											type {
+												name
+												ofType {
+													name
+													kind
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "group",
+						"fields": []any{
+							map[string]any{
+								// Asserting only on group, because it is the field that contains `order` info we are
+								// looking for, additionally wanted to reduce the noise of other elements that were getting
+								// dumped out which made the entire output horrible.
+								"name": "_group",
+								"args": append(
+									trimFields(
+										fields{
+											dockeyArg,
+											dockeysArg,
+											buildFilterArg("group", []argDef{
+												{
+													fieldName: "members",
+													typeName:  "userFilterArg",
+												},
+											}),
+											groupByArg,
+											limitArg,
+											offsetArg,
+										},
+										testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps,
+									),
+									map[string]any{
+										"name": "order",
+										"type": map[string]any{
+											"name":   "groupOrderArg",
+											"ofType": nil,
+											"inputFields": []any{
+												map[string]any{
+													"name": "_key",
+													"type": map[string]any{
+														"name":   "Ordering",
+														"ofType": nil,
+													},
+												},
+											},
+										},
+									},
+								).Tidy(),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"user", "group"}, test)
+}
+
 func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

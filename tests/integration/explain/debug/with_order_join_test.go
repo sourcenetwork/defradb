@@ -134,21 +134,7 @@ func TestDebugExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T) 
 					}
 				}`,
 
-				ExpectedPatterns: []dataMap{
-					{
-						"explain": dataMap{
-							"selectTopNode": dataMap{
-								"orderNode": dataMap{
-									"selectNode": dataMap{
-										"typeIndexJoin": dataMap{
-											"typeJoinMany": normalTypeJoinPattern,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				ExpectedError: "Argument \"order\" has invalid value {articles: {name: ASC}}.\nIn field \"articles\": Unknown field.",
 			},
 		},
 	}

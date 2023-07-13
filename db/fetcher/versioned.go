@@ -99,6 +99,8 @@ type VersionedFetcher struct {
 
 // Init initializes the VersionedFetcher.
 func (vf *VersionedFetcher) Init(
+	ctx context.Context,
+	txn datastore.Txn,
 	col *client.CollectionDescription,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
@@ -112,7 +114,7 @@ func (vf *VersionedFetcher) Init(
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
-	return vf.DocumentFetcher.Init(col, fields, filter, docmapper, reverse, showDeleted)
+	return vf.DocumentFetcher.Init(ctx, txn, col, fields, filter, docmapper, reverse, showDeleted)
 }
 
 // Start serializes the correct state according to the Key and CID.

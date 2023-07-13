@@ -40,6 +40,8 @@ func matchWith(op string, conditions, data any) (bool, error) {
 		return like(conditions, data)
 	case "_nlike":
 		return nlike(conditions, data)
+	case "_not":
+		return not(conditions, data)
 	default:
 		return false, NewErrUnknownOperator(op)
 	}

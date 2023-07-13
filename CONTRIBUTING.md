@@ -55,6 +55,13 @@ Run the following commands for testing:
 - `make bench` to run the benchmark suite. To compare a branch's results with the `develop` branch results, execute the suite on both branches, output the results to files, and compare them with a tool like `benchstat` (e.g., `benchstat develop.txt current.txt`). To install `benchstat`, use `make deps:bench`.
 - `make test:changes` to run a test suite detecting breaking changes. Accompany breaking changes with documentation in `docs/data_format_changes/` for the test to pass.
 
+### Test prerequisites
+
+The following tools are required in order to build and run the tests within this repository:
+
+- [Go](https://go.dev/doc/install)
+- Cargo/rustc, typically installed via [rustup](https://www.rust-lang.org/tools/install)
+
 ## Documentation
 The overall project documentation can be found at [docs.source.network](https://docs.source.network), and its source at [github.com/sourcenetwork/docs.source.network](https://github.com/sourcenetwork/docs.source.network).
 
