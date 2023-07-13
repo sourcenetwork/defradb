@@ -218,7 +218,7 @@ func buildFilterArg(objectName string, fields []argDef) Field {
 			"name": filterArgName,
 		}),
 		makeInputObject("_key", "IDOperatorBlock", nil),
-		makeInputObject("_not", "authorFilterArg", nil),
+		makeInputObject("_not", filterArgName, nil),
 		makeInputObject("_or", nil, map[string]any{
 			"kind": "INPUT_OBJECT",
 			"name": filterArgName,
