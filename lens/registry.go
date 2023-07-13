@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // todo: This file, particularly the `lensPool` stuff, contains fairly sensitive code that is both
@@ -153,7 +154,7 @@ func (r *lensRegistry) ReloadLenses(ctx context.Context, txn datastore.Txn) erro
 		if res.Error != nil {
 			err = q.Close()
 			if err != nil {
-				return err
+				return errors.Wrap(err.Error(), res.Error)
 			}
 			return res.Error
 		}
@@ -172,7 +173,7 @@ func (r *lensRegistry) ReloadLenses(ctx context.Context, txn datastore.Txn) erro
 		if err != nil {
 			err = q.Close()
 			if err != nil {
-				return err
+				return errors.Wrap(err.Error(), res.Error)
 			}
 			return err
 		}
