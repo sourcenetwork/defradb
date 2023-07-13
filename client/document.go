@@ -51,11 +51,17 @@ import (
 // @body: A document interface can be implemented by both a TypedDocument and a
 // UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
-	key    DocKey
-	fields map[string]Field
-	values map[Field]Value
-	head   cid.Cid
-	mu     sync.RWMutex
+	key DocKey
+	// SchemaVersionID holds the id of the schema version that this document is
+	// currently at.
+	//
+	// Migrating the document will update this value to the output version of the
+	// migration.
+	SchemaVersionID string
+	fields          map[string]Field
+	values          map[Field]Value
+	head            cid.Cid
+	mu              sync.RWMutex
 	// marks if document has unsaved changes
 	isDirty bool
 }

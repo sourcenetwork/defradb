@@ -34,6 +34,9 @@ type Doc struct {
 
 	Fields DocFields
 	Status client.DocumentStatus
+	// The id of the schema version that this document is currently at.  This includes
+	// any migrations that may have been run.
+	SchemaVersionID string
 }
 
 // GetKey returns the DocKey for this document.
@@ -275,18 +278,6 @@ func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string,
 			if index == targetIndex {
 				return name, true
 			}
-		}
-	}
-
-	// Try to find the name of this index in the ChildMappings.
-	for _, childMapping := range mapping.ChildMappings {
-		if childMapping == nil {
-			continue
-		}
-
-		name, found := childMapping.TryToFindNameFromIndex(targetIndex)
-		if found {
-			return name, true
 		}
 	}
 
