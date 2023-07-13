@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithIntNotEqualToXFilter(t *testing.T) {
+func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with logical compound filter (not)",
 		Request: `query {
@@ -64,7 +64,7 @@ func TestQuerySimpleWithIntNotEqualToXFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithIntNotEqualToXorYFilter(t *testing.T) {
+func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with logical compound filter (not)",
 		Request: `query {
@@ -101,6 +101,97 @@ func TestQuerySimpleWithIntNotEqualToXorYFilter(t *testing.T) {
 			{
 				"Name": "John",
 				"Age":  uint64(21),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithEmptyNotFilter_ReturnError(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with empty logical compound filter (not) returns empty result set",
+		Request: `query {
+					Users(filter: {_not: {}}) {
+						Name
+						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+		},
+		Results: []map[string]any{},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithNotEqualToXAndNotYFilter_NoError(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with logical compound filter (not)",
+		Request: `query {
+					Users(filter: {_not: {Age: {_eq: 55}, _not: {Name: {_eq: "Carlo"}}}}) {
+						Name
+						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+				`{
+					"Name": "Frank",
+					"Age": 55
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Bob",
+				"Age":  uint64(32),
+			},
+			{
+				"Name": "Alice",
+				"Age":  uint64(19),
+			},
+			{
+				"Name": "John",
+				"Age":  uint64(21),
+			},
+			{
+				"Name": "Carlo",
+				"Age":  uint64(55),
 			},
 		},
 	}

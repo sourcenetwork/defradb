@@ -28,7 +28,7 @@ func TestNot_WithEmptyCondition_ReturnError(t *testing.T) {
 }
 
 type operator struct {
-	// The filter operation string that this Operator represents.
+	// The filter operation string that this `operator`` represents.
 	//
 	// E.g. "_eq", or "_and".
 	Operation string
