@@ -139,3 +139,35 @@ func TestQueryWithIndex_IfMoreThenOneDoc_ShouldFetchAll(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
+
+func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If there are more than one doc with the same indexed field, they should be fetched",
+		Actions: []any{
+			createSchemaWithDocs(`
+				type users {
+					name: String 
+					age: Int @index
+				} 
+			`),
+			testUtils.Request{
+				Request: `
+					query {
+						users(filter: {age: {_gt: 45}}) {
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Keenan",
+					},
+					{
+						"name": "Chris",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+}

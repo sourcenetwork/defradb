@@ -66,24 +66,6 @@ func newExplainAsserter(iterations, docFetched, filterMatcher int) *explainResul
 func getDocs() []map[string]any {
 	return []map[string]any{
 		{
-			"name":     "John",
-			"age":      30,
-			"verified": true,
-			"email":    "john@gmail.com",
-		},
-		{
-			"name":     "Islam",
-			"age":      32,
-			"verified": true,
-			"email":    "islam@gmail.com",
-		},
-		{
-			"name":     "Andy",
-			"age":      33,
-			"verified": true,
-			"email":    "andy@gmail.com",
-		},
-		{
 			"name":     "Shahzad",
 			"age":      20,
 			"verified": false,
@@ -96,16 +78,40 @@ func getDocs() []map[string]any {
 			"email":    "fred@gmail.com",
 		},
 		{
-			"name":     "Keenan",
-			"age":      48,
+			"name":     "John",
+			"age":      30,
 			"verified": false,
-			"email":    "keenan@gmail.com",
+			"email":    "john@gmail.com",
+		},
+		{
+			"name":     "Islam",
+			"age":      32,
+			"verified": false,
+			"email":    "islam@gmail.com",
+		},
+		{
+			"name":     "Andy",
+			"age":      33,
+			"verified": true,
+			"email":    "andy@gmail.com",
 		},
 		{
 			"name":     "Addo",
 			"age":      42,
-			"verified": false,
+			"verified": true,
 			"email":    "addo@gmail.com",
+		},
+		{
+			"name":     "Keenan",
+			"age":      48,
+			"verified": true,
+			"email":    "keenan@gmail.com",
+		},
+		{
+			"name":     "Chris",
+			"age":      55,
+			"verified": true,
+			"email":    "chris@gmail.com",
 		},
 	}
 }

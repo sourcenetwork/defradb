@@ -54,7 +54,10 @@ func (f *IndexFetcher) Init(
 	f.filter = filter
 	f.doc = &encodedDocument{}
 	f.doc.mapping = docMapper
-	
+
+	f.indexDataStoreKey.CollectionID = f.col.ID
+	f.indexDataStoreKey.IndexID = f.index.ID
+
 	for i := range fields {
 		if fields[i].Name == f.indexedField.Name {
 			f.docFields = append(fields[:i], fields[i+1:]...)
@@ -87,8 +90,6 @@ func (f *IndexFetcher) Init(
 		return err
 	}
 
-	f.indexDataStoreKey.CollectionID = f.col.ID
-	f.indexDataStoreKey.IndexID = f.index.ID
 	f.indexDataStoreKey.FieldValues = [][]byte{valBytes}
 
 	return nil
