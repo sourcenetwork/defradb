@@ -51,10 +51,8 @@ export async function listSchema(): Promise<ListSchemaResponse> {
   return fetch(baseUrl + '/schema').then(res => res.json())
 }
 
-export async function loadSchema(name: string, fields: Field[]): Promise<LoadSchemaResponse> {
-  const _fields = fields.map(field => `${field.name}: ${field.kind}`)
-  const body = [`type ${name} {`, ..._fields, '}'].join('\n')
-  return fetch(baseUrl + '/schema', { method: 'POST', body }).then(res => res.json())
+export async function loadSchema(schema: string): Promise<LoadSchemaResponse> {
+  return fetch(baseUrl + '/schema', { method: 'POST', body: schema }).then(res => res.json())
 }
 
 export async function patchSchema(nameA: string, fieldsA: Field[], nameB: string, fieldsB: Field[]): Promise<PatchSchemaResponse> {

@@ -51,6 +51,25 @@ html, body, #root {
   border-radius: var(--border-radius-4);
 }
 
+.graphiql-defradb-textarea {
+  min-height: 300px;
+  width: 100%;
+  resize: vertical;
+
+  font-size: var(--font-size-body);
+  color: var(--color-neutral);
+
+  background-color: var(--color-primary);
+  border: 2px solid hsla(var(--color-neutral), var(--alpha-background-light));
+  border-radius: var(--border-radius-4);
+}
+
+.graphiql-defradb-load-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--px-8);
+}
+
 .graphiql-defradb-form {
   border-radius: var(--border-radius-4);
   border: 2px solid hsla(var(--color-neutral), var(--alpha-background-light));
@@ -71,17 +90,4 @@ html, body, #root {
   display: flex;
   align-items: center;
   gap: var(--px-8);
-}
-
-.graphiql-defradb-button {
-  color: var(--color-neutral);
-  cursor: pointer;
-  padding: var(--px-8) var(--px-16);
-  border: none;
-  border-radius: var(--border-radius-4);
-  background-color: hsla(var(--color-neutral), var(--alpha-background-light));
-}
-
-.graphiql-defradb-button[disabled] {
-  cursor: default;
 }

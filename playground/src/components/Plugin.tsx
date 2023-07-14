@@ -32,12 +32,12 @@ export function Plugin() {
       <h2 className="graphiql-defradb-header">DefraDB</h2>
       <div className="graphiql-defradb-plugin">
         <div>
-          <h3 className="graphiql-defradb-subheader">Create</h3>
-          <SchemaLoadForm fieldTypes={fieldTypes} />
+          <h3 className="graphiql-defradb-subheader">Add Schema</h3>
+          <SchemaLoadForm />
         </div>
-        { collections?.map((schema, index) => 
-          <div key={index}>
-            <h3 className="graphiql-defradb-subheader">{schema.name}</h3>
+        { collections?.map((schema) => 
+          <div key={schema.id}>
+            <h3 className="graphiql-defradb-subheader">{schema.name} Schema</h3>
             <SchemaPatchForm fieldTypes={fieldTypes} values={schema} />
           </div>
         )}
