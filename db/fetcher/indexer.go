@@ -2,6 +2,7 @@ package fetcher
 
 import (
 	"context"
+	"errors"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -24,6 +25,7 @@ type IndexFetcher struct {
 	indexQuery        query.Results
 	indexDataStoreKey core.IndexDataStoreKey
 	indexFilterCond   any
+	indexIter         filteredIndexKeyIterator
 }
 
 var _ Fetcher = (*IndexFetcher)(nil)
@@ -40,6 +42,48 @@ func NewIndexFetcher(
 		index:           indexDesc,
 		indexFilterCond: filterCond,
 	}
+}
+
+type filteredIndexKeyIterator interface {
+	Next() ([]byte, error)
+	Close() error
+}
+
+type eqIndexKeyIterator struct {
+	filterVal any
+}
+
+func (i *eqIndexKeyIterator) Next() ([]byte, error) {
+	writableValue := client.NewCBORValue(client.LWW_REGISTER, i.filterVal)
+
+	valBytes, err := writableValue.Bytes()
+	if err != nil {
+		return nil, nil
+	}
+
+	return valBytes, nil
+}
+
+func (i *eqIndexKeyIterator) Close() error {
+	return nil
+}
+
+func createFilteredIndexKeyIterator(indexFilterCond any) (filteredIndexKeyIterator, error) {
+	condMap, ok := indexFilterCond.(map[string]any)
+	if !ok {
+		return nil, errors.New("invalid index filter condition")
+	}
+	var op string
+	var filterVal any
+	for op, filterVal = range condMap {
+		break
+	}
+
+	if op == "_eq" {
+		return &eqIndexKeyIterator{filterVal: filterVal}, nil
+	}
+
+	return nil, errors.New("invalid index filter condition")
 }
 
 func (f *IndexFetcher) Init(
@@ -64,33 +108,11 @@ func (f *IndexFetcher) Init(
 		}
 	}
 
-	condMap, ok := f.indexFilterCond.(map[string]any)
-	if !ok {
-		return nil
-	}
-	var op string
-	var filterVal any
-	for op, filterVal = range condMap {
-		break
-	}
-
-	if op != "_eq" {
-		return nil
-	}
-
-	filterStrVal, ok := filterVal.(string)
-	if !ok {
-		return nil
-	}
-
-	writableValue := client.NewCBORValue(client.LWW_REGISTER, filterStrVal)
-
-	valBytes, err := writableValue.Bytes()
+	iter, err := createFilteredIndexKeyIterator(f.indexFilterCond)
 	if err != nil {
 		return err
 	}
-
-	f.indexDataStoreKey.FieldValues = [][]byte{valBytes}
+	f.indexIter = iter
 
 	return nil
 }
@@ -103,7 +125,12 @@ func (f *IndexFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.
 func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
 	f.doc.Reset()
 
-	var err error
+	val, err := f.indexIter.Next()
+	if err != nil {
+		return nil, err
+	}
+	f.indexDataStoreKey.FieldValues = [][]byte{val}
+
 	if f.indexQuery == nil {
 		f.indexQuery, err = f.txn.Datastore().Query(ctx, query.Query{
 			Prefix: f.indexDataStoreKey.ToString(),
