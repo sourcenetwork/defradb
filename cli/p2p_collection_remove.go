@@ -28,7 +28,7 @@ func MakeP2PCollectionRemoveCommand(cfg *config.Config) *cobra.Command {
 		Use:   "remove [collectionID]",
 		Short: "Remove p2p collections",
 		Long: `Remove p2p collections from the followed pubsub topics.
-The removed collections will not be synchronized between nodes.`,
+The removed collections will no longer be synchronized between nodes.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
 				return errors.New("must specify at least one collectionID")
