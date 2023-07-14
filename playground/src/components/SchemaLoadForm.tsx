@@ -16,7 +16,7 @@ export function SchemaLoadForm() {
   const queryClient = useQueryClient()
   const schemaContext = useSchemaContext({ nonNull: true })
 
-  const { control, formState, reset, register, handleSubmit } = useForm<FormData>({ defaultValues })
+  const { formState, reset, register, handleSubmit } = useForm<FormData>({ defaultValues })
 
   const [errors, setErrors] = useState<ErrorItem[]>()
   const [isLoading, setIsLoading] = useState(false)

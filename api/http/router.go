@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
 	"github.com/pkg/errors"
 )
 
@@ -35,38 +34,22 @@ const (
 	PeerIDPath  string = versionedAPIPath + "/peerid"
 )
 
-func setRoutes(h *handler) *handler {
-	h.Mux = chi.NewRouter()
+var router = chi.NewRouter()
 
-	// setup CORS
-	if len(h.options.allowedOrigins) != 0 {
-		h.Use(cors.Handler(cors.Options{
-			AllowedOrigins: h.options.allowedOrigins,
-			AllowedMethods: []string{"GET", "POST", "PATCH", "OPTIONS"},
-			AllowedHeaders: []string{"Content-Type"},
-			MaxAge:         300,
-		}))
-	}
-
-	// setup logger middleware
-	h.Use(loggerMiddleware)
-
-	// define routes
-	h.Get(RootPath, h.handle(rootHandler))
-	h.Get(PingPath, h.handle(pingHandler))
-	h.Get(DumpPath, h.handle(dumpHandler))
-	h.Get(BlocksPath+"/{cid}", h.handle(getBlockHandler))
-	h.Get(GraphQLPath, h.handle(execGQLHandler))
-	h.Post(GraphQLPath, h.handle(execGQLHandler))
-	h.Get(SchemaPath, h.handle(listSchemaHandler))
-	h.Post(SchemaPath, h.handle(loadSchemaHandler))
-	h.Patch(SchemaPath, h.handle(patchSchemaHandler))
-	h.Post(IndexPath, h.handle(createIndexHandler))
-	h.Delete(IndexPath, h.handle(dropIndexHandler))
-	h.Get(IndexPath, h.handle(listIndexHandler))
-	h.Get(PeerIDPath, h.handle(peerIDHandler))
-
-	return h
+func init() {
+	router.Get(RootPath, rootHandler)
+	router.Get(PingPath, pingHandler)
+	router.Get(DumpPath, dumpHandler)
+	router.Get(BlocksPath+"/{cid}", getBlockHandler)
+	router.Get(GraphQLPath, execGQLHandler)
+	router.Post(GraphQLPath, execGQLHandler)
+	router.Get(SchemaPath, listSchemaHandler)
+	router.Post(SchemaPath, loadSchemaHandler)
+	router.Patch(SchemaPath, patchSchemaHandler)
+	router.Post(IndexPath, createIndexHandler)
+	router.Delete(IndexPath, dropIndexHandler)
+	router.Get(IndexPath, listIndexHandler)
+	router.Get(PeerIDPath, peerIDHandler)
 }
 
 // JoinPaths takes a base path and any number of additional paths

@@ -72,7 +72,7 @@ func MakeSchemaListCommand(cfg *config.Config) *cobra.Command {
 			for _, c := range r.Data.Collections {
 				cmd.Printf("type %s {\n", c.Name)
 				for _, f := range c.Fields {
-					if f.Internal == false {
+					if !f.Internal {
 						cmd.Printf("\t%s: %s\n", f.Name, f.Kind)
 					}
 				}
