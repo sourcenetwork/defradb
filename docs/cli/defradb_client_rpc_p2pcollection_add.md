@@ -1,10 +1,10 @@
 ## defradb client rpc p2pcollection add
 
-Add p2p collections
+Add P2P collections
 
 ### Synopsis
 
-Add p2p collections to the synchronized pubsub topics.
+Add P2P collections to the synchronized pubsub topics.
 The collections are synchronized between nodes of a pubsub network.
 
 ```
@@ -33,5 +33,5 @@ defradb client rpc p2pcollection add [collectionID] [flags]
 
 ### SEE ALSO
 
-* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the p2p collection system
+* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the P2P collection system
 

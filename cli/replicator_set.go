@@ -31,7 +31,7 @@ func MakeReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 	)
 	var cmd = &cobra.Command{
 		Use:   "set [-f, --full | -c, --collection] <peer>",
-		Short: "Set a p2p replicator",
+		Short: "Set a P2P replicator",
 		Long: `Add a new target replicator.
 A replicator replicates one or all collection(s) from this node to another.
 `,

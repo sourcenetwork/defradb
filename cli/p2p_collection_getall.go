@@ -26,8 +26,8 @@ import (
 func MakeP2PCollectionGetallCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
-		Short: "Get all p2p collections",
-		Long: `Get all p2p collections in the pubsub topics.
+		Short: "Get all P2P collections",
+		Long: `Get all P2P collections in the pubsub topics.
 This is the list of collections of the node that are synchronized on the pubsub network.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.NoArgs(cmd, args); err != nil {
@@ -52,7 +52,7 @@ This is the list of collections of the node that are synchronized on the pubsub 
 
 			collections, err := client.GetAllP2PCollections(ctx)
 			if err != nil {
-				return errors.Wrap("failed to add p2p collections, request failed", err)
+				return errors.Wrap("failed to add P2P collections, request failed", err)
 			}
 
 			if len(collections) > 0 {

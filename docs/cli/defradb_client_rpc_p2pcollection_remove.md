@@ -1,10 +1,10 @@
 ## defradb client rpc p2pcollection remove
 
-Remove p2p collections
+Remove P2P collections
 
 ### Synopsis
 
-Remove p2p collections from the followed pubsub topics.
+Remove P2P collections from the followed pubsub topics.
 The removed collections will not be synchronized between nodes.
 
 ```
@@ -33,5 +33,5 @@ defradb client rpc p2pcollection remove [collectionID] [flags]
 
 ### SEE ALSO
 
-* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the p2p collection system
+* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the P2P collection system
 

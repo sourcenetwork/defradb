@@ -4,7 +4,7 @@ Get all replicators
 
 ### Synopsis
 
-Get all the replicators active in the p2p data sync system.
+Get all the replicators active in the P2P data sync system.
 These are the replicators that are currently replicating data from one node to another.
 
 ```

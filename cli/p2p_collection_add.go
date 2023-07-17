@@ -26,8 +26,8 @@ import (
 func MakeP2PCollectionAddCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "add [collectionID]",
-		Short: "Add p2p collections",
-		Long: `Add p2p collections to the synchronized pubsub topics.
+		Short: "Add P2P collections",
+		Long: `Add P2P collections to the synchronized pubsub topics.
 The collections are synchronized between nodes of a pubsub network.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
@@ -52,9 +52,9 @@ The collections are synchronized between nodes of a pubsub network.`,
 
 			err = client.AddP2PCollections(ctx, args...)
 			if err != nil {
-				return errors.Wrap("failed to add p2p collections, request failed", err)
+				return errors.Wrap("failed to add P2P collections, request failed", err)
 			}
-			log.FeedbackInfo(ctx, "Successfully added p2p collections", logging.NewKV("Collections", args))
+			log.FeedbackInfo(ctx, "Successfully added P2P collections", logging.NewKV("Collections", args))
 			return nil
 		},
 	}

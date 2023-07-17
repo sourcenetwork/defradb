@@ -29,6 +29,6 @@ Interact with a DefraDB node via RPC.
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the p2p collection system
+* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the P2P collection system
 * [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Configure the replicator system
 

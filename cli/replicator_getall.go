@@ -27,7 +27,7 @@ func MakeReplicatorGetallCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all replicators",
-		Long: `Get all the replicators active in the p2p data sync system.
+		Long: `Get all the replicators active in the P2P data sync system.
 These are the replicators that are currently replicating data from one node to another.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {

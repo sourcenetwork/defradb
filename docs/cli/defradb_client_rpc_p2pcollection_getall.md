@@ -1,10 +1,10 @@
 ## defradb client rpc p2pcollection getall
 
-Get all p2p collections
+Get all P2P collections
 
 ### Synopsis
 
-Get all p2p collections in the pubsub topics.
+Get all P2P collections in the pubsub topics.
 This is the list of collections of the node that are synchronized on the pubsub network.
 
 ```
@@ -33,5 +33,5 @@ defradb client rpc p2pcollection getall [flags]
 
 ### SEE ALSO
 
-* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the p2p collection system
+* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the P2P collection system
 

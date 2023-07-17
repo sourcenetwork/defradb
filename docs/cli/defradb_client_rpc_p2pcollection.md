@@ -1,10 +1,10 @@
 ## defradb client rpc p2pcollection
 
-Configure the p2p collection system
+Configure the P2P collection system
 
 ### Synopsis
 
-Add, delete, or get the list of p2p collections.
+Add, delete, or get the list of P2P collections.
 The selected collections synchronize their events on the pubsub network.
 
 ### Options
@@ -30,7 +30,7 @@ The selected collections synchronize their events on the pubsub network.
 ### SEE ALSO
 
 * [defradb client rpc](defradb_client_rpc.md)	 - Interact with a DefraDB node via RPC
-* [defradb client rpc p2pcollection add](defradb_client_rpc_p2pcollection_add.md)	 - Add p2p collections
-* [defradb client rpc p2pcollection getall](defradb_client_rpc_p2pcollection_getall.md)	 - Get all p2p collections
-* [defradb client rpc p2pcollection remove](defradb_client_rpc_p2pcollection_remove.md)	 - Remove p2p collections
+* [defradb client rpc p2pcollection add](defradb_client_rpc_p2pcollection_add.md)	 - Add P2P collections
+* [defradb client rpc p2pcollection getall](defradb_client_rpc_p2pcollection_getall.md)	 - Get all P2P collections
+* [defradb client rpc p2pcollection remove](defradb_client_rpc_p2pcollection_remove.md)	 - Remove P2P collections
 
