@@ -1,6 +1,7 @@
 package fetcher
 
 import (
+	"bytes"
 	"context"
 	"errors"
 
@@ -14,18 +15,18 @@ import (
 )
 
 type IndexFetcher struct {
-	docFetcher        Fetcher
-	col               *client.CollectionDescription
-	txn               datastore.Txn
-	filter            *mapper.Filter
-	doc               *encodedDocument
-	index             client.IndexDescription
-	indexedField      client.FieldDescription
-	docFields         []client.FieldDescription
-	indexQuery        query.Results
-	indexDataStoreKey core.IndexDataStoreKey
-	indexFilterCond   any
-	indexIter         filteredIndexKeyIterator
+	docFetcher         Fetcher
+	col                *client.CollectionDescription
+	txn                datastore.Txn
+	filter             *mapper.Filter
+	doc                *encodedDocument
+	index              client.IndexDescription
+	indexedField       client.FieldDescription
+	docFields          []client.FieldDescription
+	indexQuery         query.Results
+	indexDataStoreKey  core.IndexDataStoreKey
+	indexFilterCond    any
+	indexQueryProvider filteredIndexQueryProvider
 }
 
 var _ Fetcher = (*IndexFetcher)(nil)
@@ -44,31 +45,56 @@ func NewIndexFetcher(
 	}
 }
 
-type filteredIndexKeyIterator interface {
-	Next() ([]byte, error)
-	Close() error
+type filteredIndexQueryProvider interface {
+	Get(context.Context, datastore.Txn) (query.Results, error)
 }
 
-type eqIndexKeyIterator struct {
-	filterVal any
+type eqIndexQueryProvider struct {
+	indexKey  core.IndexDataStoreKey
+	filterVal []byte
 }
 
-func (i *eqIndexKeyIterator) Next() ([]byte, error) {
-	writableValue := client.NewCBORValue(client.LWW_REGISTER, i.filterVal)
-
-	valBytes, err := writableValue.Bytes()
-	if err != nil {
+func (i *eqIndexQueryProvider) Get(ctx context.Context, txn datastore.Txn) (query.Results, error) {
+	if len(i.indexKey.FieldValues) != 0 {
 		return nil, nil
 	}
 
-	return valBytes, nil
+	i.indexKey.FieldValues = [][]byte{i.filterVal}
+	return txn.Datastore().Query(ctx, query.Query{
+		Prefix:   i.indexKey.ToString(),
+		KeysOnly: true,
+	})
 }
 
-func (i *eqIndexKeyIterator) Close() error {
-	return nil
+type gtIndexQueryProvider struct {
+	indexKey  core.IndexDataStoreKey
+	filterVal []byte
 }
 
-func createFilteredIndexKeyIterator(indexFilterCond any) (filteredIndexKeyIterator, error) {
+type gtIndexCmp struct {
+	value []byte
+}
+
+func (cmp *gtIndexCmp) Filter(e query.Entry) bool {
+	indexKey, err := core.NewIndexDataStoreKey(e.Key)
+	if err != nil {
+		return false
+	}
+	res := bytes.Compare(indexKey.FieldValues[0], cmp.value)
+	return res > 0
+}
+
+func (i *gtIndexQueryProvider) Get(ctx context.Context, txn datastore.Txn) (query.Results, error) {
+	return txn.Datastore().Query(ctx, query.Query{
+		Prefix:   i.indexKey.ToString(),
+		KeysOnly: true,
+		Filters: []query.Filter{
+			&gtIndexCmp{value: i.filterVal},
+		},
+	})
+}
+
+func (f *IndexFetcher) createFilteredIndexQueryProvider(indexFilterCond any) (filteredIndexQueryProvider, error) {
 	condMap, ok := indexFilterCond.(map[string]any)
 	if !ok {
 		return nil, errors.New("invalid index filter condition")
@@ -79,8 +105,23 @@ func createFilteredIndexKeyIterator(indexFilterCond any) (filteredIndexKeyIterat
 		break
 	}
 
+	writableValue := client.NewCBORValue(client.LWW_REGISTER, filterVal)
+
+	valueBytes, err := writableValue.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
 	if op == "_eq" {
-		return &eqIndexKeyIterator{filterVal: filterVal}, nil
+		return &eqIndexQueryProvider{
+			indexKey:  f.indexDataStoreKey,
+			filterVal: valueBytes,
+		}, nil
+	} else if op == "_gt" {
+		return &gtIndexQueryProvider{
+			indexKey:  f.indexDataStoreKey,
+			filterVal: valueBytes,
+		}, nil
 	}
 
 	return nil, errors.New("invalid index filter condition")
@@ -108,37 +149,28 @@ func (f *IndexFetcher) Init(
 		}
 	}
 
-	iter, err := createFilteredIndexKeyIterator(f.indexFilterCond)
+	queryProvider, err := f.createFilteredIndexQueryProvider(f.indexFilterCond)
 	if err != nil {
 		return err
 	}
-	f.indexIter = iter
+	f.indexQueryProvider = queryProvider
 
 	return nil
 }
 
 func (f *IndexFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	f.txn = txn
+
+	var err error
+	f.indexQuery, err = f.indexQueryProvider.Get(ctx, f.txn)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
 	f.doc.Reset()
-
-	val, err := f.indexIter.Next()
-	if err != nil {
-		return nil, err
-	}
-	f.indexDataStoreKey.FieldValues = [][]byte{val}
-
-	if f.indexQuery == nil {
-		f.indexQuery, err = f.txn.Datastore().Query(ctx, query.Query{
-			Prefix: f.indexDataStoreKey.ToString(),
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	res, hasValue := f.indexQuery.NextSync()
 	if !hasValue || res.Error != nil {
@@ -151,7 +183,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
 	}
 	property := &encProperty{
 		Desc: f.indexedField,
-		Raw:  f.indexDataStoreKey.FieldValues[0],
+		Raw:  indexKey.FieldValues[0],
 	}
 
 	f.doc.key = indexKey.FieldValues[1]
