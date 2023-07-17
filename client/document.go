@@ -17,7 +17,9 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
-	mh "github.com/multiformats/go-multihash"
+
+	"github.com/sourcenetwork/defradb/client/request"
+	ccid "github.com/sourcenetwork/defradb/core/cid"
 )
 
 // This is the main implementation starting point for accessing the internal Document API
@@ -106,26 +108,12 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 		return nil, err
 	}
 
-	// if no key was specified, then we assume it doesn't exist and we generate it.
+	// if no key was specified, then we assume it doesn't exist and we generate, and set it.
 	if !hasKey {
-		pref := cid.Prefix{
-			Version:  1,
-			Codec:    cid.Raw,
-			MhType:   mh.SHA2_256,
-			MhLength: -1, // default length
-		}
-
-		buf, err := doc.Bytes()
+		err = doc.generateAndSetDocKey()
 		if err != nil {
 			return nil, err
 		}
-
-		// And then feed it some data
-		c, err := pref.Sum(buf)
-		if err != nil {
-			return nil, err
-		}
-		doc.key = NewDocKeyV0(c)
 	}
 
 	return doc, nil
@@ -256,11 +244,6 @@ func (doc *Document) Delete(fields ...string) error {
 	}
 	return nil
 }
-
-// SetAsType Sets the value of a field along with a specific type
-// func (doc *Document) SetAsType(t client.CType, field string, value any) error {
-// 	return doc.set(t, field, value)
-// }
 
 func (doc *Document) set(t CType, field string, value Value) error {
 	doc.mu.Lock()
@@ -477,6 +460,74 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	docMap["_key"] = doc.Key().String()
 
 	return docMap, nil
+}
+
+// GenerateDocKey generates docKey/docID corresponding to the document.
+func (doc *Document) GenerateDocKey() (DocKey, error) {
+	bytes, err := doc.Bytes()
+	if err != nil {
+		return DocKey{}, err
+	}
+
+	cid, err := ccid.NewSHA256CidV1(bytes)
+	if err != nil {
+		return DocKey{}, err
+	}
+
+	return NewDocKeyV0(cid), nil
+}
+
+// setDocKey sets the `doc.key` (should NOT be public).
+func (doc *Document) setDocKey(docID DocKey) {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	doc.key = docID
+}
+
+// generateAndSetDocKey generates the docKey/docID and then (re)sets `doc.key`.
+func (doc *Document) generateAndSetDocKey() error {
+	docKey, err := doc.GenerateDocKey()
+	if err != nil {
+		return err
+	}
+
+	doc.setDocKey(docKey)
+	return nil
+}
+
+func (doc *Document) remapAliasFields(fieldDescriptions []FieldDescription) (bool, error) {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	foundAlias := false
+	for docField, docFieldValue := range doc.fields {
+		for _, fieldDescription := range fieldDescriptions {
+			maybeAliasField := docField + request.RelatedObjectID
+			if fieldDescription.Name == maybeAliasField {
+				foundAlias = true
+				doc.fields[maybeAliasField] = docFieldValue
+				delete(doc.fields, docField)
+			}
+		}
+	}
+
+	return foundAlias, nil
+}
+
+// RemapAliasFieldsAndDockey remaps the alias fields and fixes (overwrites) the dockey.
+func (doc *Document) RemapAliasFieldsAndDockey(fieldDescriptions []FieldDescription) error {
+	foundAlias, err := doc.remapAliasFields(fieldDescriptions)
+	if err != nil {
+		return err
+	}
+
+	if !foundAlias {
+		return nil
+	}
+
+	// Update the dockey so dockey isn't based on an aliased name of a field.
+	return doc.generateAndSetDocKey()
 }
 
 // DocumentStatus represent the state of the document in the DAG store.

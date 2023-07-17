@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
-func TestCreateSaveErrorsGivenValueInRelationField(t *testing.T) {
+func TestCreateSaveGivenAliasValueInRelationField(t *testing.T) {
 	doc, err := client.NewDocFromJSON(
 		[]byte(
 			`{
@@ -41,7 +41,6 @@ func TestCreateSaveErrorsGivenValueInRelationField(t *testing.T) {
 				},
 			},
 		},
-		ExpectedError: "The given field does not exist",
 	}
 
 	executeTestCase(t, test)

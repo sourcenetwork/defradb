@@ -17,12 +17,11 @@ import (
 )
 
 const (
-	errFieldNotExist         string = "The given field does not exist"
-	errSelectOfNonGroupField string = "cannot select a non-group-by field at group-level"
-	errUnexpectedType        string = "unexpected type"
-	errParsingFailed         string = "failed to parse argument"
-	errUninitializeProperty  string = "invalid state, required property is uninitialized"
-	errMaxTxnRetries         string = "reached maximum transaction reties"
+	errFieldNotExist        string = "The given field does not exist"
+	errUnexpectedType       string = "unexpected type"
+	errParsingFailed        string = "failed to parse argument"
+	errUninitializeProperty string = "invalid state, required property is uninitialized"
+	errMaxTxnRetries        string = "reached maximum transaction reties"
 )
 
 // Errors returnable from this package.
@@ -30,21 +29,20 @@ const (
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrFieldNotExist         = errors.New(errFieldNotExist)
-	ErrSelectOfNonGroupField = errors.New(errSelectOfNonGroupField)
-	ErrUnexpectedType        = errors.New(errUnexpectedType)
-	ErrParsingFailed         = errors.New(errParsingFailed)
-	ErrUninitializeProperty  = errors.New(errUninitializeProperty)
-	ErrFieldNotObject        = errors.New("trying to access field on a non object type")
-	ErrValueTypeMismatch     = errors.New("value does not match indicated type")
-	ErrIndexNotFound         = errors.New("no index found for given ID")
-	ErrDocumentNotFound      = errors.New("no document for the given key exists")
-	ErrInvalidUpdateTarget   = errors.New("the target document to update is of invalid type")
-	ErrInvalidUpdater        = errors.New("the updater of a document is of invalid type")
-	ErrInvalidDeleteTarget   = errors.New("the target document to delete is of invalid type")
-	ErrMalformedDocKey       = errors.New("malformed DocKey, missing either version or cid")
-	ErrInvalidDocKeyVersion  = errors.New("invalid DocKey version")
-	ErrMaxTxnRetries         = errors.New(errMaxTxnRetries)
+	ErrFieldNotExist        = errors.New(errFieldNotExist)
+	ErrUnexpectedType       = errors.New(errUnexpectedType)
+	ErrParsingFailed        = errors.New(errParsingFailed)
+	ErrUninitializeProperty = errors.New(errUninitializeProperty)
+	ErrFieldNotObject       = errors.New("trying to access field on a non object type")
+	ErrValueTypeMismatch    = errors.New("value does not match indicated type")
+	ErrIndexNotFound        = errors.New("no index found for given ID")
+	ErrDocumentNotFound     = errors.New("no document for the given key exists")
+	ErrInvalidUpdateTarget  = errors.New("the target document to update is of invalid type")
+	ErrInvalidUpdater       = errors.New("the updater of a document is of invalid type")
+	ErrInvalidDeleteTarget  = errors.New("the target document to delete is of invalid type")
+	ErrMalformedDocKey      = errors.New("malformed DocKey, missing either version or cid")
+	ErrInvalidDocKeyVersion = errors.New("invalid DocKey version")
+	ErrMaxTxnRetries        = errors.New(errMaxTxnRetries)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -56,12 +54,6 @@ func NewErrFieldNotExist(name string) error {
 // given location.
 func NewErrFieldIndexNotExist(index int) error {
 	return errors.New(errFieldNotExist, errors.NewKV("Index", index))
-}
-
-// NewErrSelectOfNonGroupField returns an error indicating that a non-group-by field
-// was selected at group-level.
-func NewErrSelectOfNonGroupField(name string) error {
-	return errors.New(errSelectOfNonGroupField, errors.NewKV("Field", name))
 }
 
 // NewErrUnexpectedType returns an error indicating that the given value is of an unexpected type.
