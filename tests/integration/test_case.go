@@ -270,6 +270,9 @@ type TransactionCommit struct {
 // The subscription will remain active until shortly after all actions have been processed.
 // The results of the subscription will then be asserted upon.
 type SubscriptionRequest struct {
+	// NodeID is the node ID (index) of the node in which to subscribe to.
+	NodeID immutable.Option[int]
+
 	// The subscription request to submit.
 	Request string
 
@@ -284,6 +287,9 @@ type SubscriptionRequest struct {
 }
 
 type IntrospectionRequest struct {
+	// NodeID is the node ID (index) of the node in which to introspect.
+	NodeID immutable.Option[int]
+
 	// The introspection request to use when fetching schema state.
 	//
 	// Available properties can be found in the GQL spec:
@@ -314,6 +320,9 @@ type IntrospectionRequest struct {
 // The GraphQL clients usually use this to fetch the schema state with a default introspection
 // query they provide.
 type ClientIntrospectionRequest struct {
+	// NodeID is the node ID (index) of the node in which to introspect.
+	NodeID immutable.Option[int]
+
 	// The introspection request to use when fetching schema state.
 	Request string
 

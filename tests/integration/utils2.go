@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/datastore/memory"
@@ -295,142 +294,98 @@ func executeTestCase(
 	testCase TestCase,
 	dbt DatabaseType,
 ) {
-	var done bool
 	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
 
 	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
-	txns := []datastore.Txn{}
-	allActionsDone := make(chan struct{})
-	resultsChans := []chan func(){}
-	syncChans := []chan struct{}{}
-	nodeAddresses := []string{}
-	// The actions responsible for configuring the node
-	nodeConfigs := []config.Config{}
-	nodes, dbPaths := getStartingNodes(ctx, t, dbt, testCase)
+
+	s := newState(ctx, t, testCase, dbt, collectionNames)
+	setStartingNodes(s)
+
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
-	defer closeNodes(ctx, t, nodes)
+	defer closeNodes(s)
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
-	collections := getCollections(ctx, t, nodes, collectionNames)
-	// documents are by collection (index), these are not node specific.
-	documents := getDocuments(ctx, t, testCase, collections, startActionIndex)
-	// indexes are by collection (index)
-	indexes := getAllIndexes(ctx, collections)
+	refreshCollections(s)
+	refreshDocuments(s, startActionIndex)
+	refreshIndexes(s)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
-		// declare default database for ease of use
-		var db client.DB
-		if len(nodes) > 0 {
-			db = nodes[0].DB
-		}
-
 		switch action := testCase.Actions[i].(type) {
 		case ConfigureNode:
-			if DetectDbChanges {
-				// We do not yet support the change detector for tests running across multiple nodes.
-				t.SkipNow()
-				return
-			}
-			cfg := action()
-			node, address, path := configureNode(ctx, t, dbt, cfg)
-			nodes = append(nodes, node)
-			nodeAddresses = append(nodeAddresses, address)
-			dbPaths = append(dbPaths, path)
-			nodeConfigs = append(nodeConfigs, cfg)
+			configureNode(s, action)
 
 		case Restart:
-			// Append the new syncChans on top of the previous - the old syncChans will be closed
-			// gracefully as part of the node closure.
-			syncChans = append(
-				syncChans,
-				restartNodes(ctx, t, testCase, dbt, i, nodes, dbPaths, nodeAddresses, nodeConfigs)...,
-			)
-
-			// If the db was restarted we need to refresh the collection definitions as the old instances
-			// will reference the old (closed) database instances.
-			collections = getCollections(ctx, t, nodes, collectionNames)
-			indexes = getAllIndexes(ctx, collections)
+			restartNodes(s, i)
 
 		case ConnectPeers:
-			syncChans = append(syncChans, connectPeers(ctx, t, testCase, action, nodes, nodeAddresses))
+			connectPeers(s, action)
 
 		case ConfigureReplicator:
-			syncChans = append(syncChans, configureReplicator(ctx, t, testCase, action, nodes, nodeAddresses))
+			configureReplicator(s, action)
 
 		case SubscribeToCollection:
-			subscribeToCollection(ctx, t, testCase, action, nodes, collections)
+			subscribeToCollection(s, action)
 
 		case UnsubscribeToCollection:
-			unsubscribeToCollection(ctx, t, testCase, action, nodes, collections)
+			unsubscribeToCollection(s, action)
 
 		case GetAllP2PCollections:
-			getAllP2PCollections(ctx, t, action, nodes, collections)
+			getAllP2PCollections(s, action)
 
 		case SchemaUpdate:
-			updateSchema(ctx, t, nodes, testCase, action)
-			// If the schema was updated we need to refresh the collection definitions.
-			collections = getCollections(ctx, t, nodes, collectionNames)
-			indexes = getAllIndexes(ctx, collections)
+			updateSchema(s, action)
 
 		case SchemaPatch:
-			patchSchema(ctx, t, nodes, testCase, action)
-			// If the schema was updated we need to refresh the collection definitions.
-			collections = getCollections(ctx, t, nodes, collectionNames)
-			indexes = getAllIndexes(ctx, collections)
+			patchSchema(s, action)
 
 		case ConfigureMigration:
-			configureMigration(ctx, t, nodes, &txns, testCase, action)
+			configureMigration(s, action)
 
 		case GetMigrations:
-			getMigrations(ctx, t, nodes, &txns, testCase, action)
+			getMigrations(s, action)
 
 		case CreateDoc:
-			documents = createDoc(ctx, t, testCase, nodes, collections, documents, action)
+			createDoc(s, action)
 
 		case DeleteDoc:
-			deleteDoc(ctx, t, testCase, nodes, collections, documents, action)
+			deleteDoc(s, action)
 
 		case UpdateDoc:
-			updateDoc(ctx, t, testCase, nodes, collections, documents, action)
+			updateDoc(s, action)
 
 		case CreateIndex:
-			indexes = createIndex(ctx, t, testCase, nodes, collections, indexes, action)
+			createIndex(s, action)
 
 		case DropIndex:
-			dropIndex(ctx, t, testCase, nodes, collections, indexes, action)
+			dropIndex(s, action)
 
 		case GetIndexes:
-			getIndexes(ctx, t, testCase, nodes, collections, action)
+			getIndexes(s, action)
 
 		case TransactionCommit:
-			commitTransaction(ctx, t, txns, testCase, action)
+			commitTransaction(s, action)
 
 		case SubscriptionRequest:
-			var resultsChan chan func()
-			resultsChan, done = executeSubscriptionRequest(ctx, t, allActionsDone, db, testCase, action)
-			if done {
-				return
-			}
-			resultsChans = append(resultsChans, resultsChan)
+			executeSubscriptionRequest(s, action)
 
 		case Request:
-			executeRequest(ctx, t, nodes, &txns, testCase.Description, action)
+			executeRequest(s, action)
 
 		case ExplainRequest:
-			executeExplainRequest(ctx, t, testCase.Description, db, action)
+			executeExplainRequest(s, action)
 
 		case IntrospectionRequest:
-			assertIntrospectionResults(ctx, t, testCase.Description, db, action)
+			assertIntrospectionResults(s, action)
 
 		case ClientIntrospectionRequest:
-			assertClientIntrospectionResults(ctx, t, testCase.Description, db, action)
+			assertClientIntrospectionResults(s, action)
 
 		case WaitForSync:
-			waitForSync(t, testCase, action, syncChans)
+			waitForSync(s, action)
 
 		case SetupComplete:
 			// no-op, just continue.
@@ -441,9 +396,9 @@ func executeTestCase(
 	}
 
 	// Notify any active subscriptions that all requests have been sent.
-	close(allActionsDone)
+	close(s.allActionsDone)
 
-	for _, resultsChan := range resultsChans {
+	for _, resultsChan := range s.subscriptionResultsChans {
 		select {
 		case subscriptionAssert := <-resultsChan:
 			// We want to assert back in the main thread so failures get recorded properly
@@ -458,16 +413,14 @@ func executeTestCase(
 
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
 func closeNodes(
-	ctx context.Context,
-	t *testing.T,
-	nodes []*net.Node,
+	s *state,
 ) {
-	for _, node := range nodes {
+	for _, node := range s.nodes {
 		if node.Peer != nil {
 			err := node.Close()
-			require.NoError(t, err)
+			require.NoError(s.t, err)
 		}
-		node.DB.Close(ctx)
+		node.DB.Close(s.ctx)
 	}
 }
 
@@ -590,18 +543,15 @@ ActionLoop:
 	return startIndex, endIndex
 }
 
-// getStartingNodes returns a set of initial Defra nodes for the test to execute against.
+// setStartingNodes adds a set of initial Defra nodes for the test to execute against.
 //
-// If a node(s) has been explicitly configured via a `ConfigureNode` action then an empty
-// set will be returned.
-func getStartingNodes(
-	ctx context.Context,
-	t *testing.T,
-	dbt DatabaseType,
-	testCase TestCase,
-) ([]*net.Node, []string) {
+// If a node(s) has been explicitly configured via a `ConfigureNode` action then no new
+// nodes will be added.
+func setStartingNodes(
+	s *state,
+) {
 	hasExplicitNode := false
-	for _, action := range testCase.Actions {
+	for _, action := range s.testCase.Actions {
 		switch action.(type) {
 		case ConfigureNode:
 			hasExplicitNode = true
@@ -610,75 +560,63 @@ func getStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		db, path, err := GetDatabase(ctx, t, dbt)
-		require.Nil(t, err)
+		db, path, err := GetDatabase(s.ctx, s.t, s.dbt)
+		require.Nil(s.t, err)
 
-		return []*net.Node{
-				{
-					DB: db,
-				},
-			}, []string{
-				path,
-			}
+		s.nodes = append(s.nodes, &net.Node{
+			DB: db,
+		})
+		s.dbPaths = append(s.dbPaths, path)
 	}
-
-	return []*net.Node{}, []string{}
 }
 
 func restartNodes(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
-	dbt DatabaseType,
+	s *state,
 	actionIndex int,
-	nodes []*net.Node,
-	dbPaths []string,
-	nodeAddresses []string,
-	configureActions []config.Config,
-) []chan struct{} {
-	if dbt == badgerIMType || dbt == defraIMType {
-		return nil
+) {
+	if s.dbt == badgerIMType || s.dbt == defraIMType {
+		return
 	}
-	closeNodes(ctx, t, nodes)
+	closeNodes(s)
 
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
-	for i := len(nodes) - 1; i >= 0; i-- {
+	for i := len(s.nodes) - 1; i >= 0; i-- {
 		originalPath := databaseDir
-		databaseDir = dbPaths[i]
-		db, _, err := GetDatabase(ctx, t, dbt)
-		require.Nil(t, err)
+		databaseDir = s.dbPaths[i]
+		db, _, err := GetDatabase(s.ctx, s.t, s.dbt)
+		require.Nil(s.t, err)
 		databaseDir = originalPath
 
-		if len(configureActions) == 0 {
+		if len(s.nodeConfigs) == 0 {
 			// If there are no explicit node configuration actions the node will be
 			// basic (i.e. no P2P stuff) and can be yielded now.
-			nodes[i] = &net.Node{
+			s.nodes[i] = &net.Node{
 				DB: db,
 			}
 			continue
 		}
 
-		cfg := configureActions[i]
+		cfg := s.nodeConfigs[i]
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
-		cfg.Net.P2PAddress = strings.Split(nodeAddresses[i], "/p2p/")[0]
+		cfg.Net.P2PAddress = strings.Split(s.nodeAddresses[i], "/p2p/")[0]
 		var n *net.Node
 		n, err = net.NewNode(
-			ctx,
+			s.ctx,
 			db,
 			net.WithConfig(&cfg),
 		)
-		require.NoError(t, err)
+		require.NoError(s.t, err)
 
 		if err := n.Start(); err != nil {
 			closeErr := n.Close()
 			if closeErr != nil {
-				t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
+				s.t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
 			}
-			require.NoError(t, err)
+			require.NoError(s.t, err)
 		}
 
-		nodes[i] = n
+		s.nodes[i] = n
 	}
 
 	// The index of the action after the last wait action before the current restart action.
@@ -686,7 +624,7 @@ func restartNodes(
 	waitGroupStartIndex := 0
 actionLoop:
 	for i := actionIndex; i >= 0; i-- {
-		switch testCase.Actions[i].(type) {
+		switch s.testCase.Actions[i].(type) {
 		case WaitForSync:
 			// +1 as we do not wish to resume from the wait itself, but the next action
 			// following it. This may be the current restart action.
@@ -695,54 +633,52 @@ actionLoop:
 		}
 	}
 
-	syncChans := []chan struct{}{}
-	for _, tc := range testCase.Actions {
+	for _, tc := range s.testCase.Actions {
 		switch action := tc.(type) {
 		case ConnectPeers:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			syncChans = append(syncChans, setupPeerWaitSync(
-				ctx, t, testCase, waitGroupStartIndex, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
-			))
+			setupPeerWaitSync(
+				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
+			)
 		case ConfigureReplicator:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			syncChans = append(syncChans, setupReplicatorWaitSync(
-				ctx, t, testCase, waitGroupStartIndex, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
-			))
+			setupReplicatorWaitSync(
+				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
+			)
 		}
 	}
 
-	return syncChans
+	// If the db was restarted we need to refresh the collection definitions as the old instances
+	// will reference the old (closed) database instances.
+	refreshCollections(s)
+	refreshIndexes(s)
 }
 
-// getCollections returns all the collections of the given names, preserving order.
+// refreshCollections refreshes all the collections of the given names, preserving order.
 //
 // If a given collection is not present in the database the value at the corresponding
 // result-index will be nil.
-func getCollections(
-	ctx context.Context,
-	t *testing.T,
-	nodes []*net.Node,
-	collectionNames []string,
-) [][]client.Collection {
-	collections := make([][]client.Collection, len(nodes))
+func refreshCollections(
+	s *state,
+) {
+	s.collections = make([][]client.Collection, len(s.nodes))
 
-	for nodeID, node := range nodes {
-		collections[nodeID] = make([]client.Collection, len(collectionNames))
-		allCollections, err := node.DB.GetAllCollections(ctx)
-		require.Nil(t, err)
+	for nodeID, node := range s.nodes {
+		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
+		allCollections, err := node.DB.GetAllCollections(s.ctx)
+		require.Nil(s.t, err)
 
-		for i, collectionName := range collectionNames {
+		for i, collectionName := range s.collectionNames {
 			for _, collection := range allCollections {
 				if collection.Name() == collectionName {
-					collections[nodeID][i] = collection
+					s.collections[nodeID][i] = collection
 					break
 				}
 			}
 		}
 	}
-	return collections
 }
 
 // configureNode configures and starts a new Defra node using the provided configuration.
@@ -750,66 +686,71 @@ func getCollections(
 // It returns the new node, and its peer address. Any errors generated during configuration
 // will result in a test failure.
 func configureNode(
-	ctx context.Context,
-	t *testing.T,
-	dbt DatabaseType,
-	cfg config.Config,
-) (*net.Node, string, string) {
+	s *state,
+	action ConfigureNode,
+) {
+	if DetectDbChanges {
+		// We do not yet support the change detector for tests running across multiple nodes.
+		s.t.SkipNow()
+		return
+	}
+
+	cfg := action()
 	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
 	// And affects where libp2p(?) stores some values on the file system, even when using
 	// an in memory store.
-	cfg.Datastore.Badger.Path = t.TempDir()
+	cfg.Datastore.Badger.Path = s.t.TempDir()
 
-	db, path, err := GetDatabase(ctx, t, dbt) //disable change dector, or allow it?
-	require.NoError(t, err)
+	db, path, err := GetDatabase(s.ctx, s.t, s.dbt) //disable change dector, or allow it?
+	require.NoError(s.t, err)
 
 	var n *net.Node
-	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
 	n, err = net.NewNode(
-		ctx,
+		s.ctx,
 		db,
 		net.WithConfig(&cfg),
 	)
-	require.NoError(t, err)
+	require.NoError(s.t, err)
 
 	if err := n.Start(); err != nil {
 		closeErr := n.Close()
 		if closeErr != nil {
-			t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
+			s.t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
 		}
-		require.NoError(t, err)
+		require.NoError(s.t, err)
 	}
 
 	address := fmt.Sprintf("%s/p2p/%s", n.ListenAddrs()[0].String(), n.PeerID())
+	s.nodeAddresses = append(s.nodeAddresses, address)
+	s.nodeConfigs = append(s.nodeConfigs, cfg)
 
-	return n, address, path
+	s.nodes = append(s.nodes, n)
+	s.dbPaths = append(s.dbPaths, path)
 }
 
-func getDocuments(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
-	collections [][]client.Collection,
+func refreshDocuments(
+	s *state,
 	startActionIndex int,
-) [][]*client.Document {
-	if len(collections) == 0 {
+) {
+	if len(s.collections) == 0 {
 		// This should only be possible at the moment for P2P testing, for which the
 		// change detector is currently disabled.  We'll likely need some fancier logic
 		// here if/when we wish to enable it.
-		return [][]*client.Document{}
+		return
 	}
 
 	// For now just do the initial setup using the collections on the first node,
 	// this may need to become more involved at a later date depending on testing
 	// requirements.
-	documentsByCollection := make([][]*client.Document, len(collections[0]))
+	s.documents = make([][]*client.Document, len(s.collections[0]))
 
-	for i := range collections[0] {
-		documentsByCollection[i] = []*client.Document{}
+	for i := range s.collections[0] {
+		s.documents[i] = []*client.Document{}
 	}
 
 	for i := 0; i < startActionIndex; i++ {
-		switch action := testCase.Actions[i].(type) {
+		switch action := s.testCase.Actions[i].(type) {
 		case CreateDoc:
 			// We need to add the existing documents in the order in which the test case lists them
 			// otherwise they cannot be referenced correctly by other actions.
@@ -822,88 +763,79 @@ func getDocuments(
 
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
-			collection := getNodeCollections(action.NodeID, collections)[0][action.CollectionID]
+			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(ctx, doc.Key(), false)
+			doc, err = collection.Get(s.ctx, doc.Key(), false)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
 				continue
 			}
 
-			documentsByCollection[action.CollectionID] = append(documentsByCollection[action.CollectionID], doc)
+			s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
 		}
 	}
-
-	return documentsByCollection
 }
 
-func getAllIndexes(
-	ctx context.Context,
-	collections [][]client.Collection,
-) [][][]client.IndexDescription {
-	if len(collections) == 0 {
-		return [][][]client.IndexDescription{}
+func refreshIndexes(
+	s *state,
+) {
+	if len(s.collections) == 0 {
+		return
 	}
 
-	result := make([][][]client.IndexDescription, len(collections))
+	s.indexes = make([][][]client.IndexDescription, len(s.collections))
 
-	for i, nodeCols := range collections {
-		result[i] = make([][]client.IndexDescription, len(nodeCols))
+	for i, nodeCols := range s.collections {
+		s.indexes[i] = make([][]client.IndexDescription, len(nodeCols))
 
 		for j, col := range nodeCols {
 			if col == nil {
 				continue
 			}
-			colIndexes, err := col.GetIndexes(ctx)
+			colIndexes, err := col.GetIndexes(s.ctx)
 			if err != nil {
 				continue
 			}
 
-			result[i][j] = colIndexes
+			s.indexes[i][j] = colIndexes
 		}
 	}
-
-	return result
 }
 
 func getIndexes(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
-	nodes []*net.Node,
-	nodeCollections [][]client.Collection,
+	s *state,
 	action GetIndexes,
 ) {
-	if len(nodeCollections) == 0 {
+	if len(s.collections) == 0 {
 		return
 	}
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		err := withRetry(
 			actionNodes,
 			nodeID,
 			func() error {
-				actualIndexes, err := collections[action.CollectionID].GetIndexes(ctx)
+				actualIndexes, err := collections[action.CollectionID].GetIndexes(s.ctx)
 				if err != nil {
 					return err
 				}
 
 				assertIndexesListsEqual(action.ExpectedIndexes,
-					actualIndexes, t, testCase.Description)
+					actualIndexes, s.t, s.testCase.Description)
 
 				return nil
 			},
 		)
 		expectedErrorRaised = expectedErrorRaised ||
-			AssertError(t, testCase.Description, err, action.ExpectedError)
+			AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 func assertIndexesListsEqual(
@@ -971,156 +903,136 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
 
 // updateSchema updates the schema using the given details.
 func updateSchema(
-	ctx context.Context,
-	t *testing.T,
-	nodes []*net.Node,
-	testCase TestCase,
+	s *state,
 	action SchemaUpdate,
 ) {
-	for _, node := range getNodes(action.NodeID, nodes) {
-		_, err := node.DB.AddSchema(ctx, action.Schema)
-		expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		_, err := node.DB.AddSchema(s.ctx, action.Schema)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	}
+
+	// If the schema was updated we need to refresh the collection definitions.
+	refreshCollections(s)
+	refreshIndexes(s)
 }
 
 func patchSchema(
-	ctx context.Context,
-	t *testing.T,
-	nodes []*net.Node,
-	testCase TestCase,
+	s *state,
 	action SchemaPatch,
 ) {
-	for _, node := range getNodes(action.NodeID, nodes) {
-		err := node.DB.PatchSchema(ctx, action.Patch)
-		expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		err := node.DB.PatchSchema(s.ctx, action.Patch)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	}
+
+	// If the schema was updated we need to refresh the collection definitions.
+	refreshCollections(s)
+	refreshIndexes(s)
 }
 
 // createDoc creates a document using the collection api and caches it in the
 // given documents slice.
 func createDoc(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
-	nodes []*net.Node,
-	nodeCollections [][]client.Collection,
-	documents [][]*client.Document,
+	s *state,
 	action CreateDoc,
-) [][]*client.Document {
+) {
 	// All the docs should be identical, and we only need 1 copy so taking the last
 	// is okay.
 	var doc *client.Document
-	actionNodes := getNodes(action.NodeID, nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		var err error
 		doc, err = client.NewDocFromJSON([]byte(action.Doc))
-		if AssertError(t, testCase.Description, err, action.ExpectedError) {
-			return nil
+		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
+			return
 		}
 
 		err = withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return collections[action.CollectionID].Save(ctx, doc) },
+			func() error { return collections[action.CollectionID].Save(s.ctx, doc) },
 		)
-		if AssertError(t, testCase.Description, err, action.ExpectedError) {
-			return nil
+		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
+			return
 		}
 	}
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, false)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, false)
 
-	if action.CollectionID >= len(documents) {
+	if action.CollectionID >= len(s.documents) {
 		// Expand the slice if required, so that the document can be accessed by collection index
-		documents = append(documents, make([][]*client.Document, action.CollectionID-len(documents)+1)...)
+		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
 	}
-	documents[action.CollectionID] = append(documents[action.CollectionID], doc)
-
-	return documents
+	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
 }
 
 // deleteDoc deletes a document using the collection api and caches it in the
 // given documents slice.
 func deleteDoc(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
-	nodes []*net.Node,
-	nodeCollections [][]client.Collection,
-	documents [][]*client.Document,
+	s *state,
 	action DeleteDoc,
 ) {
-	doc := documents[action.CollectionID][action.DocID]
+	doc := s.documents[action.CollectionID][action.DocID]
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		err := withRetry(
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].DeleteWithKey(ctx, doc.Key())
+				_, err := collections[action.CollectionID].DeleteWithKey(s.ctx, doc.Key())
 				return err
 			},
 		)
-		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // updateDoc updates a document using the collection api.
 func updateDoc(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
-	nodes []*net.Node,
-	nodeCollections [][]client.Collection,
-	documents [][]*client.Document,
+	s *state,
 	action UpdateDoc,
 ) {
-	doc := documents[action.CollectionID][action.DocID]
+	doc := s.documents[action.CollectionID][action.DocID]
 
 	err := doc.SetWithJSON([]byte(action.Doc))
-	if AssertError(t, testCase.Description, err, action.ExpectedError) {
+	if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
 		return
 	}
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return collections[action.CollectionID].Save(ctx, doc) },
+			func() error { return collections[action.CollectionID].Save(s.ctx, doc) },
 		)
-		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // createIndex creates a secondary index using the collection api.
 func createIndex(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
-	nodes []*net.Node,
-	nodeCollections [][]client.Collection,
-	indexes [][][]client.IndexDescription,
+	s *state,
 	action CreateIndex,
-) [][][]client.IndexDescription {
-	if action.CollectionID >= len(indexes) {
+) {
+	if action.CollectionID >= len(s.indexes) {
 		// Expand the slice if required, so that the index can be accessed by collection index
-		indexes = append(indexes,
-			make([][][]client.IndexDescription, action.CollectionID-len(indexes)+1)...)
+		s.indexes = append(s.indexes,
+			make([][][]client.IndexDescription, action.CollectionID-len(s.indexes)+1)...)
 	}
-	actionNodes := getNodes(action.NodeID, nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		indexDesc := client.IndexDescription{
 			Name: action.IndexName,
 		}
@@ -1142,54 +1054,47 @@ func createIndex(
 			actionNodes,
 			nodeID,
 			func() error {
-				desc, err := collections[action.CollectionID].CreateIndex(ctx, indexDesc)
+				desc, err := collections[action.CollectionID].CreateIndex(s.ctx, indexDesc)
 				if err != nil {
 					return err
 				}
-				indexes[nodeID][action.CollectionID] =
-					append(indexes[nodeID][action.CollectionID], desc)
+				s.indexes[nodeID][action.CollectionID] =
+					append(s.indexes[nodeID][action.CollectionID], desc)
 				return nil
 			},
 		)
-		if AssertError(t, testCase.Description, err, action.ExpectedError) {
-			return nil
+		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
+			return
 		}
 	}
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, false)
-
-	return indexes
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, false)
 }
 
 // dropIndex drops the secondary index using the collection api.
 func dropIndex(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
-	nodes []*net.Node,
-	nodeCollections [][]client.Collection,
-	indexes [][][]client.IndexDescription,
+	s *state,
 	action DropIndex,
 ) {
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		indexName := action.IndexName
 		if indexName == "" {
-			indexName = indexes[nodeID][action.CollectionID][action.IndexID].Name
+			indexName = s.indexes[nodeID][action.CollectionID][action.IndexID].Name
 		}
 
 		err := withRetry(
 			actionNodes,
 			nodeID,
 			func() error {
-				return collections[action.CollectionID].DropIndex(ctx, indexName)
+				return collections[action.CollectionID].DropIndex(s.ctx, indexName)
 			},
 		)
-		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // withRetry attempts to perform the given action, retrying up to a DB-defined
@@ -1216,11 +1121,8 @@ func withRetry(
 }
 
 func getStore(
-	ctx context.Context,
-	t *testing.T,
-	description string,
+	s *state,
 	db client.DB,
-	txnsPointer *[]datastore.Txn,
 	transactionSpecifier immutable.Option[int],
 	expectedError string,
 ) client.Store {
@@ -1229,26 +1131,24 @@ func getStore(
 	}
 
 	transactionID := transactionSpecifier.Value()
-	txns := *txnsPointer
 
-	if transactionID >= len(txns) {
+	if transactionID >= len(s.txns) {
 		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		txns = append(txns, make([]datastore.Txn, transactionID-len(txns)+1)...)
-		*txnsPointer = txns
+		s.txns = append(s.txns, make([]datastore.Txn, transactionID-len(s.txns)+1)...)
 	}
 
-	if txns[transactionID] == nil {
+	if s.txns[transactionID] == nil {
 		// Create a new transaction if one does not already exist.
-		txn, err := db.NewTxn(ctx, false)
-		if AssertError(t, description, err, expectedError) {
-			txn.Discard(ctx)
+		txn, err := db.NewTxn(s.ctx, false)
+		if AssertError(s.t, s.testCase.Description, err, expectedError) {
+			txn.Discard(s.ctx)
 			return nil
 		}
 
-		txns[transactionID] = txn
+		s.txns[transactionID] = txn
 	}
 
-	return db.WithTxn(txns[transactionID])
+	return db.WithTxn(s.txns[transactionID])
 }
 
 // commitTransaction commits the given transaction.
@@ -1256,41 +1156,34 @@ func getStore(
 // Will panic if the given transaction does not exist. Discards the transaction if
 // an error is returned on commit.
 func commitTransaction(
-	ctx context.Context,
-	t *testing.T,
-	txns []datastore.Txn,
-	testCase TestCase,
+	s *state,
 	action TransactionCommit,
 ) {
-	err := txns[action.TransactionID].Commit(ctx)
+	err := s.txns[action.TransactionID].Commit(s.ctx)
 	if err != nil {
-		txns[action.TransactionID].Discard(ctx)
+		s.txns[action.TransactionID].Discard(s.ctx)
 	}
 
-	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // executeRequest executes the given request.
 func executeRequest(
-	ctx context.Context,
-	t *testing.T,
-	nodes []*net.Node,
-	txnsPointer *[]datastore.Txn,
-	description string,
+	s *state,
 	action Request,
 ) {
 	var expectedErrorRaised bool
-	for nodeID, node := range getNodes(action.NodeID, nodes) {
-		db := getStore(ctx, t, description, node.DB, txnsPointer, action.TransactionID, action.ExpectedError)
-		result := db.ExecRequest(ctx, action.Request)
+	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
+		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
+		result := db.ExecRequest(s.ctx, action.Request)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
-			ctx,
-			t,
-			description,
+			s.ctx,
+			s.t,
+			s.testCase.Description,
 			&result.GQL,
 			action.Results,
 			action.ExpectedError,
@@ -1299,7 +1192,7 @@ func executeRequest(
 		)
 	}
 
-	assertExpectedErrorRaised(t, description, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // executeSubscriptionRequest executes the given subscription request, returning
@@ -1311,73 +1204,71 @@ func executeRequest(
 // failures are recorded properly. It will only yield once, once
 // the subscription has terminated.
 func executeSubscriptionRequest(
-	ctx context.Context,
-	t *testing.T,
-	allActionsDone chan struct{},
-	db client.DB,
-	testCase TestCase,
+	s *state,
 	action SubscriptionRequest,
-) (chan func(), bool) {
+) {
 	subscriptionAssert := make(chan func())
 
-	result := db.ExecRequest(ctx, action.Request)
-	if AssertErrors(t, testCase.Description, result.GQL.Errors, action.ExpectedError) {
-		return nil, true
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		result := node.DB.ExecRequest(s.ctx, action.Request)
+		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
+			return
+		}
+
+		go func() {
+			data := []map[string]any{}
+			errs := []error{}
+
+			allActionsAreDone := false
+			expectedDataRecieved := len(action.Results) == 0
+			stream := result.Pub.Stream()
+			for {
+				select {
+				case s := <-stream:
+					sResult, _ := s.(client.GQLResult)
+					sData, _ := sResult.Data.([]map[string]any)
+					errs = append(errs, sResult.Errors...)
+					data = append(data, sData...)
+
+					if len(data) >= len(action.Results) {
+						expectedDataRecieved = true
+					}
+
+				case <-s.allActionsDone:
+					allActionsAreDone = true
+				}
+
+				if expectedDataRecieved && allActionsAreDone {
+					finalResult := &client.GQLResult{
+						Data:   data,
+						Errors: errs,
+					}
+
+					subscriptionAssert <- func() {
+						// This assert should be executed from the main test routine
+						// so that failures will be properly handled.
+						expectedErrorRaised := assertRequestResults(
+							s.ctx,
+							s.t,
+							s.testCase.Description,
+							finalResult,
+							action.Results,
+							action.ExpectedError,
+							// anyof is not yet supported by subscription requests
+							0,
+							map[docFieldKey][]any{},
+						)
+
+						assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+					}
+
+					return
+				}
+			}
+		}()
 	}
 
-	go func() {
-		data := []map[string]any{}
-		errs := []error{}
-
-		allActionsAreDone := false
-		expectedDataRecieved := len(action.Results) == 0
-		stream := result.Pub.Stream()
-		for {
-			select {
-			case s := <-stream:
-				sResult, _ := s.(client.GQLResult)
-				sData, _ := sResult.Data.([]map[string]any)
-				errs = append(errs, sResult.Errors...)
-				data = append(data, sData...)
-
-				if len(data) >= len(action.Results) {
-					expectedDataRecieved = true
-				}
-
-			case <-allActionsDone:
-				allActionsAreDone = true
-			}
-
-			if expectedDataRecieved && allActionsAreDone {
-				finalResult := &client.GQLResult{
-					Data:   data,
-					Errors: errs,
-				}
-
-				subscriptionAssert <- func() {
-					// This assert should be executed from the main test routine
-					// so that failures will be properly handled.
-					expectedErrorRaised := assertRequestResults(
-						ctx,
-						t,
-						testCase.Description,
-						finalResult,
-						action.Results,
-						action.ExpectedError,
-						// anyof is not yet supported by subscription requests
-						0,
-						map[docFieldKey][]any{},
-					)
-
-					assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
-				}
-
-				return
-			}
-		}
-	}()
-
-	return subscriptionAssert, false
+	s.subscriptionResultsChans = append(s.subscriptionResultsChans, subscriptionAssert)
 }
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
@@ -1490,30 +1381,29 @@ func assertExpectedErrorRaised(t *testing.T, description string, expectedError s
 }
 
 func assertIntrospectionResults(
-	ctx context.Context,
-	t *testing.T,
-	description string,
-	db client.DB,
+	s *state,
 	action IntrospectionRequest,
 ) bool {
-	result := db.ExecRequest(ctx, action.Request)
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		result := node.DB.ExecRequest(s.ctx, action.Request)
 
-	if AssertErrors(t, description, result.GQL.Errors, action.ExpectedError) {
-		return true
-	}
-	resultantData := result.GQL.Data.(map[string]any)
+		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
+			return true
+		}
+		resultantData := result.GQL.Data.(map[string]any)
 
-	if len(action.ExpectedData) == 0 && len(action.ContainsData) == 0 {
-		require.Equal(t, action.ExpectedData, resultantData)
-	}
+		if len(action.ExpectedData) == 0 && len(action.ContainsData) == 0 {
+			require.Equal(s.t, action.ExpectedData, resultantData)
+		}
 
-	if len(action.ExpectedData) == 0 && len(action.ContainsData) > 0 {
-		assertContains(t, action.ContainsData, resultantData)
-	} else {
-		require.Equal(t, len(action.ExpectedData), len(resultantData))
+		if len(action.ExpectedData) == 0 && len(action.ContainsData) > 0 {
+			assertContains(s.t, action.ContainsData, resultantData)
+		} else {
+			require.Equal(s.t, len(action.ExpectedData), len(resultantData))
 
-		for k, result := range resultantData {
-			assert.Equal(t, action.ExpectedData[k], result)
+			for k, result := range resultantData {
+				assert.Equal(s.t, action.ExpectedData[k], result)
+			}
 		}
 	}
 
@@ -1522,47 +1412,46 @@ func assertIntrospectionResults(
 
 // Asserts that the client introspection results conform to our expectations.
 func assertClientIntrospectionResults(
-	ctx context.Context,
-	t *testing.T,
-	description string,
-	db client.DB,
+	s *state,
 	action ClientIntrospectionRequest,
 ) bool {
-	result := db.ExecRequest(ctx, action.Request)
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		result := node.DB.ExecRequest(s.ctx, action.Request)
 
-	if AssertErrors(t, description, result.GQL.Errors, action.ExpectedError) {
-		return true
-	}
-	resultantData := result.GQL.Data.(map[string]any)
+		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
+			return true
+		}
+		resultantData := result.GQL.Data.(map[string]any)
 
-	if len(resultantData) == 0 {
-		return false
-	}
+		if len(resultantData) == 0 {
+			return false
+		}
 
-	// Iterate through all types, validating each type definition.
-	// Inspired from buildClientSchema.ts from graphql-js,
-	// which is one way that clients do validate the schema.
-	types := resultantData["__schema"].(map[string]any)["types"].([]any)
+		// Iterate through all types, validating each type definition.
+		// Inspired from buildClientSchema.ts from graphql-js,
+		// which is one way that clients do validate the schema.
+		types := resultantData["__schema"].(map[string]any)["types"].([]any)
 
-	for _, typeData := range types {
-		typeDef := typeData.(map[string]any)
-		kind := typeDef["kind"].(string)
+		for _, typeData := range types {
+			typeDef := typeData.(map[string]any)
+			kind := typeDef["kind"].(string)
 
-		switch kind {
-		case "SCALAR", "INTERFACE", "UNION", "ENUM":
-			// No validation for these types in this test
-		case "OBJECT":
-			fields := typeDef["fields"]
-			if fields == nil {
-				t.Errorf("Fields are missing for OBJECT type %v", typeDef["name"])
+			switch kind {
+			case "SCALAR", "INTERFACE", "UNION", "ENUM":
+				// No validation for these types in this test
+			case "OBJECT":
+				fields := typeDef["fields"]
+				if fields == nil {
+					s.t.Errorf("Fields are missing for OBJECT type %v", typeDef["name"])
+				}
+			case "INPUT_OBJECT":
+				inputFields := typeDef["inputFields"]
+				if inputFields == nil {
+					s.t.Errorf("InputFields are missing for INPUT_OBJECT type %v", typeDef["name"])
+				}
+			default:
+				// t.Errorf("Unknown type kind: %v", kind)
 			}
-		case "INPUT_OBJECT":
-			inputFields := typeDef["inputFields"]
-			if inputFields == nil {
-				t.Errorf("InputFields are missing for INPUT_OBJECT type %v", typeDef["name"])
-			}
-		default:
-			// t.Errorf("Unknown type kind: %v", kind)
 		}
 	}
 

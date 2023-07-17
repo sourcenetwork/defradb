@@ -111,14 +111,29 @@ func (vf *VersionedFetcher) Init(
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)
+	vf.txn = txn
+
+	// create store
+	root := memory.NewDatastore(ctx)
+	vf.root = root
+
+	var err error
+	vf.store, err = datastore.NewTxnFrom(
+		ctx,
+		vf.root,
+		false,
+	) // were going to discard and nuke this later
+	if err != nil {
+		return err
+	}
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
-	return vf.DocumentFetcher.Init(ctx, txn, col, fields, filter, docmapper, reverse, showDeleted)
+	return vf.DocumentFetcher.Init(ctx, vf.store, col, fields, filter, docmapper, reverse, showDeleted)
 }
 
 // Start serializes the correct state according to the Key and CID.
-func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
+func (vf *VersionedFetcher) Start(ctx context.Context, spans core.Spans) error {
 	if vf.col == nil {
 		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
 	}
@@ -145,29 +160,15 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 		return NewErrFailedToDecodeCIDForVFetcher(err)
 	}
 
-	vf.txn = txn
 	vf.ctx = ctx
 	vf.key = dk
 	vf.version = c
-
-	// create store
-	root := memory.NewDatastore(ctx)
-	vf.root = root
-
-	vf.store, err = datastore.NewTxnFrom(
-		ctx,
-		vf.root,
-		false,
-	) // were going to discard and nuke this later
-	if err != nil {
-		return err
-	}
 
 	if err := vf.seekTo(vf.version); err != nil {
 		return NewErrFailedToSeek(c, err)
 	}
 
-	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
+	return vf.DocumentFetcher.Start(ctx, core.Spans{})
 }
 
 // Rootstore returns the rootstore of the VersionedFetcher.
@@ -196,7 +197,7 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 		return err
 	}
 
-	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
+	return vf.DocumentFetcher.Start(ctx, core.Spans{})
 }
 
 // seekTo seeks to the given CID version by stepping through the CRDT state graph from the beginning

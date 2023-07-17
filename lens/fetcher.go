@@ -104,10 +104,8 @@ func (f *lensedFetcher) Init(
 	return f.source.Init(ctx, txn, col, innerFetcherFields, filter, docmapper, reverse, showDeleted)
 }
 
-func (f *lensedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
-	f.txn = txn
-
-	return f.source.Start(ctx, txn, spans)
+func (f *lensedFetcher) Start(ctx context.Context, spans core.Spans) error {
+	return f.source.Start(ctx, spans)
 }
 
 func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, error) {

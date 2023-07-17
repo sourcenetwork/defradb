@@ -28,7 +28,8 @@ endif
 TEST_FLAGS=-race -shuffle=on -timeout 70s
 
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
-DEFAULT_TEST_DIRECTORIES=$$(go list ./... | grep -v $(LENS_TEST_DIRECTORY))
+CLI_TEST_DIRECTORY=tests/integration/cli
+DEFAULT_TEST_DIRECTORIES=$$(go list ./... | grep -v -e $(LENS_TEST_DIRECTORY) -e $(CLI_TEST_DIRECTORY))
 
 default:
 	@go run $(BUILD_FLAGS) cmd/defradb/main.go
@@ -175,6 +176,10 @@ endif
 test:
 	gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
+.PHONY: test\:quick
+test\:quick:
+	gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+
 # Only build the tests (don't execute them).
 .PHONY: test\:build
 test\:build:
@@ -196,6 +201,7 @@ test\:names:
 test\:all:
 	@$(MAKE) test:names
 	@$(MAKE) test:lens
+	@$(MAKE) test:cli
 
 .PHONY: test\:verbose
 test\:verbose:
@@ -225,6 +231,10 @@ test\:scripts:
 test\:lens:
 	@$(MAKE) deps:lens
 	gotestsum --format testname -- ./$(LENS_TEST_DIRECTORY)/... $(TEST_FLAGS)
+
+.PHONY: test\:cli
+test\:cli:
+	gotestsum --format testname -- ./$(CLI_TEST_DIRECTORY)/... $(TEST_FLAGS)
 
 # Using go-acc to ensure integration tests are included.
 # Usage: `make test:coverage` or `make test:coverage path="{pathToPackage}"`
