@@ -299,7 +299,7 @@ func executeTestCase(
 	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
 
-	s := newState(ctx, t, testCase, dbt)
+	s := newState(ctx, t, testCase, dbt, collectionNames)
 	setStartingNodes(s)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -309,7 +309,7 @@ func executeTestCase(
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
-	refreshCollections(s, collectionNames)
+	refreshCollections(s)
 
 	// documents are by collection (index), these are not node specific.
 	documents := getDocuments(ctx, t, testCase, s.collections, startActionIndex)
@@ -331,7 +331,7 @@ func executeTestCase(
 
 			// If the db was restarted we need to refresh the collection definitions as the old instances
 			// will reference the old (closed) database instances.
-			refreshCollections(s, collectionNames)
+			refreshCollections(s)
 			indexes = getAllIndexes(s)
 
 		case ConnectPeers:
@@ -352,13 +352,13 @@ func executeTestCase(
 		case SchemaUpdate:
 			updateSchema(s, action)
 			// If the schema was updated we need to refresh the collection definitions.
-			refreshCollections(s, collectionNames)
+			refreshCollections(s)
 			indexes = getAllIndexes(s)
 
 		case SchemaPatch:
 			patchSchema(s, action)
 			// If the schema was updated we need to refresh the collection definitions.
-			refreshCollections(s, collectionNames)
+			refreshCollections(s)
 			indexes = getAllIndexes(s)
 
 		case ConfigureMigration:
@@ -676,16 +676,15 @@ actionLoop:
 // result-index will be nil.
 func refreshCollections(
 	s *state,
-	collectionNames []string,
 ) {
 	s.collections = make([][]client.Collection, len(s.nodes))
 
 	for nodeID, node := range s.nodes {
-		s.collections[nodeID] = make([]client.Collection, len(collectionNames))
+		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
 		allCollections, err := node.DB.GetAllCollections(s.ctx)
 		require.Nil(s.t, err)
 
-		for i, collectionName := range collectionNames {
+		for i, collectionName := range s.collectionNames {
 			for _, collection := range allCollections {
 				if collection.Name() == collectionName {
 					s.collections[nodeID][i] = collection

@@ -60,7 +60,12 @@ type state struct {
 	dbPaths []string
 
 	// Collections by index, by nodeID present in the test.
+	// Indexes matches that of collectionNames.
 	collections [][]client.Collection
+
+	// The names of the collections active in this test.
+	// Indexes matches that of collections.
+	collectionNames []string
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -69,6 +74,7 @@ func newState(
 	t *testing.T,
 	testCase TestCase,
 	dbt DatabaseType,
+	collectionNames []string,
 ) *state {
 	return &state{
 		ctx:                      ctx,
@@ -84,5 +90,6 @@ func newState(
 		nodes:                    []*net.Node{},
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
+		collectionNames:          collectionNames,
 	}
 }
