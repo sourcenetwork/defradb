@@ -65,7 +65,7 @@ var (
 
 const subscriptionTimeout = 1 * time.Second
 
-// Instantiating lenses is very expensive, and our tests do not benefit from a large number of them,
+// Instantiating lenses is expensive, and our tests do not benefit from a large number of them,
 // so we explicitly set it to a low value.
 const lensPoolSize = 2
 

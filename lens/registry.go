@@ -13,9 +13,12 @@ package lens
 import (
 	"context"
 	"encoding/json"
+	"sync"
 
 	"github.com/ipfs/go-datastore/query"
 	"github.com/lens-vm/lens/host-go/config"
+	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/lens-vm/lens/host-go/runtimes/wasmer"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -34,6 +37,13 @@ import (
 // database instance.
 type lensRegistry struct {
 	poolSize int
+
+	// The runtime used to execute lens wasm modules.
+	runtime module.Runtime
+
+	// The modules by file path used to instantiate lens wasm module instances.
+	modulesByPath map[string]module.Module
+	moduleLock    sync.Mutex
 
 	lensPoolsBySchemaVersionID map[string]*lensPool
 
@@ -59,6 +69,8 @@ func NewRegistry(lensPoolSize immutable.Option[int]) *lensRegistry {
 
 	return &lensRegistry{
 		poolSize:                   size,
+		runtime:                    wasmer.New(),
+		modulesByPath:              map[string]module.Module{},
 		lensPoolsBySchemaVersionID: map[string]*lensPool{},
 		configs:                    map[string]client.LensConfig{},
 	}
@@ -88,13 +100,13 @@ func (r *lensRegistry) SetMigration(ctx context.Context, txn datastore.Txn, cfg 
 func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error {
 	locker, lockerAlreadyExists := r.lensPoolsBySchemaVersionID[cfg.SourceSchemaVersionID]
 	if !lockerAlreadyExists {
-		locker = newLocker(r.poolSize, cfg)
+		locker = r.newLocker(r.poolSize, cfg)
 	}
 
 	newLensPipes := make([]*lensPipe, r.poolSize)
 	for i := 0; i < r.poolSize; i++ {
 		var err error
-		newLensPipes[i], err = newLensPipe(cfg)
+		newLensPipes[i], err = r.newLensPipe(cfg)
 		if err != nil {
 			return err
 		}
@@ -237,6 +249,8 @@ type lensPool struct {
 	// The config used to create the lenses within this locker.
 	cfg client.LensConfig
 
+	registry *lensRegistry
+
 	// Using a buffered channel provides an easy way to manage a finite
 	// number of lenses.
 	//
@@ -246,10 +260,11 @@ type lensPool struct {
 	pipes chan *lensPipe
 }
 
-func newLocker(lensPoolSize int, cfg client.LensConfig) *lensPool {
+func (r *lensRegistry) newLocker(lensPoolSize int, cfg client.LensConfig) *lensPool {
 	return &lensPool{
-		cfg:   cfg,
-		pipes: make(chan *lensPipe, lensPoolSize),
+		cfg:      cfg,
+		registry: r,
+		pipes:    make(chan *lensPipe, lensPoolSize),
 	}
 }
 
@@ -266,7 +281,7 @@ func (l *lensPool) borrow() (enumerable.Socket[LensDoc], error) {
 	default:
 		// If there are no free cached migrations within the locker, create a new temporary one
 		// instead of blocking.
-		return newLensPipe(l.cfg)
+		return l.registry.newLensPipe(l.cfg)
 	}
 }
 
@@ -312,9 +327,13 @@ type lensPipe struct {
 
 var _ enumerable.Socket[LensDoc] = (*lensPipe)(nil)
 
-func newLensPipe(cfg client.LensConfig) (*lensPipe, error) {
+func (r *lensRegistry) newLensPipe(cfg client.LensConfig) (*lensPipe, error) {
 	socket := enumerable.NewSocket[LensDoc]()
-	enumerable, err := config.Load[LensDoc, LensDoc](cfg.Lens, socket)
+
+	r.moduleLock.Lock()
+	enumerable, err := config.LoadInto[LensDoc, LensDoc](r.runtime, r.modulesByPath, cfg.Lens, socket)
+	r.moduleLock.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
