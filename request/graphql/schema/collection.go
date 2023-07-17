@@ -441,6 +441,11 @@ func finalizeRelations(relationManager *RelationManager, descriptions []client.C
 				return NewErrRelationMissingField(field.Schema, field.Name)
 			}
 
+			// if a many relation is not finalized then we are missing the primary side of the relation
+			if field.RelationType == client.Relation_Type_MANY && !rel.finalized {
+				return NewErrMissingPrimaryRelation(field.Schema)
+			}
+
 			field.RelationType = rel.Kind() | fieldRelationType
 			description.Schema.Fields[i] = field
 		}

@@ -250,3 +250,23 @@ func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Dogs", "Users"}, test)
 }
+
+func TestSchemaSimpleErrorsGivenOneSidedManyRelationField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Dogs {
+						name: String
+					}
+					type Users {
+						Dogs: [Dogs]
+					}
+				`,
+				ExpectedError: "missing primary relation. Type: Dogs",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Dogs", "Users"}, test)
+}
