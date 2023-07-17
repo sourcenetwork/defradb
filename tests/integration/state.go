@@ -66,6 +66,12 @@ type state struct {
 	// The names of the collections active in this test.
 	// Indexes matches that of collections.
 	collectionNames []string
+
+	// Documents by index, by collection index.
+	//
+	// Each index is assumed to be global, and may be expected across multiple
+	// nodes.
+	documents [][]*client.Document
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -91,5 +97,6 @@ func newState(
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,
+		documents:                [][]*client.Document{},
 	}
 }

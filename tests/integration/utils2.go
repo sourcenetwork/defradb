@@ -310,9 +310,8 @@ func executeTestCase(
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
 	refreshCollections(s)
+	refreshDocuments(s, startActionIndex)
 
-	// documents are by collection (index), these are not node specific.
-	documents := getDocuments(ctx, t, testCase, s.collections, startActionIndex)
 	// indexes are by collection (index)
 	indexes := getAllIndexes(s)
 
@@ -368,13 +367,13 @@ func executeTestCase(
 			getMigrations(s, action)
 
 		case CreateDoc:
-			documents = createDoc(s, documents, action)
+			createDoc(s, action)
 
 		case DeleteDoc:
-			deleteDoc(s, documents, action)
+			deleteDoc(s, action)
 
 		case UpdateDoc:
-			updateDoc(s, documents, action)
+			updateDoc(s, action)
 
 		case CreateIndex:
 			indexes = createIndex(s, indexes, action)
@@ -737,31 +736,28 @@ func configureNode(
 	s.dbPaths = append(s.dbPaths, path)
 }
 
-func getDocuments(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
-	collections [][]client.Collection,
+func refreshDocuments(
+	s *state,
 	startActionIndex int,
-) [][]*client.Document {
-	if len(collections) == 0 {
+) {
+	if len(s.collections) == 0 {
 		// This should only be possible at the moment for P2P testing, for which the
 		// change detector is currently disabled.  We'll likely need some fancier logic
 		// here if/when we wish to enable it.
-		return [][]*client.Document{}
+		return
 	}
 
 	// For now just do the initial setup using the collections on the first node,
 	// this may need to become more involved at a later date depending on testing
 	// requirements.
-	documentsByCollection := make([][]*client.Document, len(collections[0]))
+	s.documents = make([][]*client.Document, len(s.collections[0]))
 
-	for i := range collections[0] {
-		documentsByCollection[i] = []*client.Document{}
+	for i := range s.collections[0] {
+		s.documents[i] = []*client.Document{}
 	}
 
 	for i := 0; i < startActionIndex; i++ {
-		switch action := testCase.Actions[i].(type) {
+		switch action := s.testCase.Actions[i].(type) {
 		case CreateDoc:
 			// We need to add the existing documents in the order in which the test case lists them
 			// otherwise they cannot be referenced correctly by other actions.
@@ -774,22 +770,20 @@ func getDocuments(
 
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
-			collection := getNodeCollections(action.NodeID, collections)[0][action.CollectionID]
+			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(ctx, doc.Key(), false)
+			doc, err = collection.Get(s.ctx, doc.Key(), false)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
 				continue
 			}
 
-			documentsByCollection[action.CollectionID] = append(documentsByCollection[action.CollectionID], doc)
+			s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
 		}
 	}
-
-	return documentsByCollection
 }
 
 func getAllIndexes(
@@ -945,9 +939,8 @@ func patchSchema(
 // given documents slice.
 func createDoc(
 	s *state,
-	documents [][]*client.Document,
 	action CreateDoc,
-) [][]*client.Document {
+) {
 	// All the docs should be identical, and we only need 1 copy so taking the last
 	// is okay.
 	var doc *client.Document
@@ -956,7 +949,7 @@ func createDoc(
 		var err error
 		doc, err = client.NewDocFromJSON([]byte(action.Doc))
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-			return nil
+			return
 		}
 
 		err = withRetry(
@@ -965,29 +958,26 @@ func createDoc(
 			func() error { return collections[action.CollectionID].Save(s.ctx, doc) },
 		)
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-			return nil
+			return
 		}
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, false)
 
-	if action.CollectionID >= len(documents) {
+	if action.CollectionID >= len(s.documents) {
 		// Expand the slice if required, so that the document can be accessed by collection index
-		documents = append(documents, make([][]*client.Document, action.CollectionID-len(documents)+1)...)
+		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
 	}
-	documents[action.CollectionID] = append(documents[action.CollectionID], doc)
-
-	return documents
+	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
 }
 
 // deleteDoc deletes a document using the collection api and caches it in the
 // given documents slice.
 func deleteDoc(
 	s *state,
-	documents [][]*client.Document,
 	action DeleteDoc,
 ) {
-	doc := documents[action.CollectionID][action.DocID]
+	doc := s.documents[action.CollectionID][action.DocID]
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
@@ -1009,10 +999,9 @@ func deleteDoc(
 // updateDoc updates a document using the collection api.
 func updateDoc(
 	s *state,
-	documents [][]*client.Document,
 	action UpdateDoc,
 ) {
-	doc := documents[action.CollectionID][action.DocID]
+	doc := s.documents[action.CollectionID][action.DocID]
 
 	err := doc.SetWithJSON([]byte(action.Doc))
 	if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
