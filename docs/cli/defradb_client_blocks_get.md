@@ -27,5 +27,5 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the DefraDB's blockstore
 

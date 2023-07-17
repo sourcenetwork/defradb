@@ -1,6 +1,6 @@
 ## defradb client blocks
 
-Interact with the database's blockstore
+Interact with the DefraDB's blockstore
 
 ### Options
 

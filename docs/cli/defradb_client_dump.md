@@ -1,6 +1,6 @@
 ## defradb client dump
 
-Dump the contents of a database node-side
+Dump the contents of a DefraDB node-side
 
 ```
 defradb client dump [flags]
