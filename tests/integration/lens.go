@@ -11,9 +11,6 @@
 package tests
 
 import (
-	"context"
-	"testing"
-
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
@@ -57,38 +54,34 @@ type GetMigrations struct {
 }
 
 func configureMigration(
-	ctx context.Context,
-	t *testing.T,
+	s *state,
 	nodes []*net.Node,
 	txnsPointer *[]datastore.Txn,
-	testCase TestCase,
 	action ConfigureMigration,
 ) {
 	for _, node := range getNodes(action.NodeID, nodes) {
-		db := getStore(ctx, t, testCase.Description, node.DB, txnsPointer, action.TransactionID, action.ExpectedError)
+		db := getStore(s, node.DB, txnsPointer, action.TransactionID, action.ExpectedError)
 
-		err := db.SetMigration(ctx, action.LensConfig)
-		expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+		err := db.SetMigration(s.ctx, action.LensConfig)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	}
 }
 
 func getMigrations(
-	ctx context.Context,
-	t *testing.T,
+	s *state,
 	nodes []*net.Node,
 	txnsPointer *[]datastore.Txn,
-	testCase TestCase,
 	action GetMigrations,
 ) {
 	for _, node := range getNodes(action.NodeID, nodes) {
-		db := getStore(ctx, t, testCase.Description, node.DB, txnsPointer, action.TransactionID, "")
+		db := getStore(s, node.DB, txnsPointer, action.TransactionID, "")
 
 		configs := db.LensRegistry().Config()
 
 		// The order of the results is not deterministic, so do not assert on the element
 		// locations.
-		assert.ElementsMatch(t, configs, action.ExpectedResults)
+		assert.ElementsMatch(s.t, configs, action.ExpectedResults)
 	}
 }

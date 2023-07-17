@@ -97,15 +97,13 @@ type ExplainRequest struct {
 }
 
 func executeExplainRequest(
-	ctx context.Context,
-	t *testing.T,
-	description string,
+	s *state,
 	db client.DB,
 	action ExplainRequest,
 ) {
 	// Must have a non-empty request.
 	if action.Request == "" {
-		require.Fail(t, "Explain test must have a non-empty request.", description)
+		require.Fail(s.t, "Explain test must have a non-empty request.", s.testCase.Description)
 	}
 
 	// If no expected results are provided, then it's invalid use of this explain testing setup.
@@ -113,7 +111,7 @@ func executeExplainRequest(
 		action.ExpectedPatterns == nil &&
 		action.ExpectedTargets == nil &&
 		action.ExpectedFullGraph == nil {
-		require.Fail(t, "Atleast one expected explain parameter must be provided.", description)
+		require.Fail(s.t, "Atleast one expected explain parameter must be provided.", s.testCase.Description)
 	}
 
 	// If we expect an error, then all other expected results should be empty (they shouldn't be provided).
@@ -121,14 +119,14 @@ func executeExplainRequest(
 		(action.ExpectedFullGraph != nil ||
 			action.ExpectedPatterns != nil ||
 			action.ExpectedTargets != nil) {
-		require.Fail(t, "Expected error should not have other expected results with it.", description)
+		require.Fail(s.t, "Expected error should not have other expected results with it.", s.testCase.Description)
 	}
 
-	result := db.ExecRequest(ctx, action.Request)
+	result := db.ExecRequest(s.ctx, action.Request)
 	assertExplainRequestResults(
-		ctx,
-		t,
-		description,
+		s.ctx,
+		s.t,
+		s.testCase.Description,
 		&result.GQL,
 		action,
 	)

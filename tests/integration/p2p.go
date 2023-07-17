@@ -11,9 +11,7 @@
 package tests
 
 import (
-	"context"
 	"fmt"
-	"testing"
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -134,9 +132,7 @@ type AnyOf []any
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
 func connectPeers(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
+	s *state,
 	cfg ConnectPeers,
 	nodes []*net.Node,
 	addresses []string,
@@ -148,25 +144,23 @@ func connectPeers(
 	targetNode := nodes[cfg.TargetNodeID]
 	targetAddress := addresses[cfg.TargetNodeID]
 
-	log.Info(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
+	log.Info(s.ctx, "Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
 	addrs, err := netutils.ParsePeers([]string{targetAddress})
 	if err != nil {
-		t.Fatal(fmt.Sprintf("failed to parse bootstrap peers %v", targetAddress), err)
+		s.t.Fatal(fmt.Sprintf("failed to parse bootstrap peers %v", targetAddress), err)
 	}
-	log.Info(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
+	log.Info(s.ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 	sourceNode.Boostrap(addrs)
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(100 * time.Millisecond)
-	return setupPeerWaitSync(ctx, t, testCase, 0, cfg, sourceNode, targetNode)
+	return setupPeerWaitSync(s, 0, cfg, sourceNode, targetNode)
 }
 
 func setupPeerWaitSync(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
+	s *state,
 	startIndex int,
 	cfg ConnectPeers,
 	sourceNode *net.Node,
@@ -176,8 +170,8 @@ func setupPeerWaitSync(
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
 	waitIndex := 0
-	for i := startIndex; i < len(testCase.Actions); i++ {
-		switch action := testCase.Actions[i].(type) {
+	for i := startIndex; i < len(s.testCase.Actions); i++ {
+		switch action := s.testCase.Actions[i].(type) {
 		case SubscribeToCollection:
 			if action.ExpectedError != "" {
 				// If the subscription action is expected to error, then we should do nothing here.
@@ -260,11 +254,11 @@ func setupPeerWaitSync(
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
-				require.NoError(t, err)
+				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
 				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
-				require.NoError(t, err)
+				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
 		}
@@ -297,9 +291,7 @@ func collectionSubscribedTo(
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
 func configureReplicator(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
+	s *state,
 	cfg ConfigureReplicator,
 	nodes []*net.Node,
 	addresses []string,
@@ -312,22 +304,20 @@ func configureReplicator(
 	targetAddress := addresses[cfg.TargetNodeID]
 
 	addr, err := ma.NewMultiaddr(targetAddress)
-	require.NoError(t, err)
+	require.NoError(s.t, err)
 
 	_, err = sourceNode.Peer.SetReplicator(
-		ctx,
+		s.ctx,
 		&pb.SetReplicatorRequest{
 			Addr: addr.Bytes(),
 		},
 	)
-	require.NoError(t, err)
-	return setupReplicatorWaitSync(ctx, t, testCase, 0, cfg, sourceNode, targetNode)
+	require.NoError(s.t, err)
+	return setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
 }
 
 func setupReplicatorWaitSync(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
+	s *state,
 	startIndex int,
 	cfg ConfigureReplicator,
 	sourceNode *net.Node,
@@ -338,8 +328,8 @@ func setupReplicatorWaitSync(
 	docIDsSyncedToSource := map[int]struct{}{}
 	waitIndex := 0
 	currentDocID := 0
-	for i := startIndex; i < len(testCase.Actions); i++ {
-		switch action := testCase.Actions[i].(type) {
+	for i := startIndex; i < len(s.testCase.Actions); i++ {
+		switch action := s.testCase.Actions[i].(type) {
 		case CreateDoc:
 			if !action.NodeID.HasValue() || action.NodeID.Value() == cfg.SourceNodeID {
 				docIDsSyncedToSource[currentDocID] = struct{}{}
@@ -387,11 +377,11 @@ func setupReplicatorWaitSync(
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
 				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
-				require.NoError(t, err)
+				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
 				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
-				require.NoError(t, err)
+				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
 		}
@@ -406,9 +396,7 @@ func setupReplicatorWaitSync(
 //
 // Any errors generated during this process will result in a test failure.
 func subscribeToCollection(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
+	s *state,
 	action SubscribeToCollection,
 	nodes []*net.Node,
 	collections [][]client.Collection,
@@ -427,13 +415,13 @@ func subscribeToCollection(
 	}
 
 	_, err := n.Peer.AddP2PCollections(
-		ctx,
+		s.ctx,
 		&pb.AddP2PCollectionsRequest{
 			Collections: schemaIDs,
 		},
 	)
-	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -445,9 +433,7 @@ func subscribeToCollection(
 //
 // Any errors generated during this process will result in a test failure.
 func unsubscribeToCollection(
-	ctx context.Context,
-	t *testing.T,
-	testCase TestCase,
+	s *state,
 	action UnsubscribeToCollection,
 	nodes []*net.Node,
 	collections [][]client.Collection,
@@ -466,13 +452,13 @@ func unsubscribeToCollection(
 	}
 
 	_, err := n.Peer.RemoveP2PCollections(
-		ctx,
+		s.ctx,
 		&pb.RemoveP2PCollectionsRequest{
 			Collections: schemaIDs,
 		},
 	)
-	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -485,8 +471,7 @@ func unsubscribeToCollection(
 //
 // Any errors generated during this process will result in a test failure.
 func getAllP2PCollections(
-	ctx context.Context,
-	t *testing.T,
+	s *state,
 	action GetAllP2PCollections,
 	nodes []*net.Node,
 	collections [][]client.Collection,
@@ -505,12 +490,12 @@ func getAllP2PCollections(
 
 	n := nodes[action.NodeID]
 	cols, err := n.Peer.GetAllP2PCollections(
-		ctx,
+		s.ctx,
 		&pb.GetAllP2PCollectionsRequest{},
 	)
-	require.NoError(t, err)
+	require.NoError(s.t, err)
 
-	assert.Equal(t, expectedCollections, cols.Collections)
+	assert.Equal(s.t, expectedCollections, cols.Collections)
 }
 
 // waitForSync waits for all given wait channels to receive an item signaling completion.
@@ -518,8 +503,7 @@ func getAllP2PCollections(
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
 func waitForSync(
-	t *testing.T,
-	testCase TestCase,
+	s *state,
 	action WaitForSync,
 	waitChans []chan struct{},
 ) {
@@ -530,7 +514,7 @@ func waitForSync(
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
 		case <-time.After(subscriptionTimeout * 10):
-			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
+			assert.Fail(s.t, "timeout occurred while waiting for data stream", s.testCase.Description)
 		}
 	}
 }
