@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,13 +18,13 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
-func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
+func TestMutationCreateOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, with an invalid field.",
+		Description: "One to one create mutation, alias relation, with an invalid field.",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-					create_Author(data: "{\"notName\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+					create_Author(data: "{\"notName\": \"John Grisham\",\"published\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 					name
 				}
 			}`,
@@ -37,16 +37,16 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
-func TestMutationCreateOneToOneNoChild(t *testing.T) {
+func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationPrimarySide_CreatedDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, from the wrong side",
+		Description: "One to one create mutation, alias relation, from the wrong side",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-							create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-								name
-							}
-						}`,
+					create_Author(data: "{\"name\": \"John Grisham\",\"published\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+					name
+				}
+			}`,
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
@@ -58,13 +58,13 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 	simpleTests.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testing.T) {
+func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationSecondarySide_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, from the secondary side",
+		Description: "One to one create mutation, alias relation, from the secondary side",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-					create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+					create_Book(data: "{\"name\": \"Painted House\",\"author\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 						name
 					}
 				}`,
@@ -75,18 +75,18 @@ func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testin
 	simpleTests.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreateOneToOne(t *testing.T) {
+func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySide(t *testing.T) {
 	bookKey := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
 
 	test := testUtils.TestCase{
-		Description: "One to one create mutation",
+		Description: "One to one create mutation with an alias relation.",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-						create_Book(data: "{\"name\": \"Painted House\"}") {
-							_key
-						}
-					}`,
+					create_Book(data: "{\"name\": \"Painted House\"}") {
+						_key
+					}
+				}`,
 				Results: []map[string]any{
 					{
 						"_key": bookKey,
@@ -96,7 +96,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
-						create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
+						create_Author(data: "{\"name\": \"John Grisham\",\"published\": \"%s\"}") {
 							name
 						}
 					}`,
@@ -109,15 +109,14 @@ func TestMutationCreateOneToOne(t *testing.T) {
 				},
 			},
 			testUtils.Request{
-				Request: `
-					query {
-						Book {
+				Request: `query {
+					Book {
+						name
+						author {
 							name
-							author {
-								name
-							}
 						}
-					}`,
+					}
+				}`,
 				Results: []map[string]any{
 					{
 						"name": "Painted House",
@@ -128,15 +127,14 @@ func TestMutationCreateOneToOne(t *testing.T) {
 				},
 			},
 			testUtils.Request{
-				Request: `
-					query {
-						Author {
+				Request: `query {
+					Author {
+						name
+						published {
 							name
-							published {
-								name
-							}
 						}
-					}`,
+					}
+				}`,
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
@@ -152,18 +150,18 @@ func TestMutationCreateOneToOne(t *testing.T) {
 	simpleTests.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
+func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromSecondarySide(t *testing.T) {
 	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 
 	test := testUtils.TestCase{
-		Description: "One to one create mutation from secondary side",
+		Description: "One to one create mutation from secondary side with alias relation.",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-						create_Author(data: "{\"name\": \"John Grisham\"}") {
-							_key
-						}
-					}`,
+					create_Author(data: "{\"name\": \"John Grisham\"}") {
+						_key
+					}
+				}`,
 				Results: []map[string]any{
 					{
 						"_key": authorKey,
@@ -173,7 +171,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
-						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
 							name
 						}
 					}`,
@@ -186,15 +184,14 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 				},
 			},
 			testUtils.Request{
-				Request: `
-					query {
-						Author {
+				Request: `query {
+					Author {
+						name
+						published {
 							name
-							published {
-								name
-							}
 						}
-					}`,
+					}
+				}`,
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
@@ -205,15 +202,14 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 				},
 			},
 			testUtils.Request{
-				Request: `
-					query {
-						Book {
+				Request: `query {
+					Book {
+						name
+						author {
 							name
-							author {
-								name
-							}
 						}
-					}`,
+					}
+				}`,
 				Results: []map[string]any{
 					{
 						"name": "Painted House",
