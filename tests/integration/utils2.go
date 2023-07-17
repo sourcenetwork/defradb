@@ -295,7 +295,6 @@ func executeTestCase(
 	testCase TestCase,
 	dbt DatabaseType,
 ) {
-	var done bool
 	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
 
 	flattenActions(&testCase)
@@ -303,7 +302,6 @@ func executeTestCase(
 
 	s := newState(ctx, t, testCase, dbt)
 
-	resultsChans := []chan func(){}
 	syncChans := []chan struct{}{}
 	nodeAddresses := []string{}
 	// The actions responsible for configuring the node
@@ -405,12 +403,7 @@ func executeTestCase(
 			commitTransaction(s, action)
 
 		case SubscriptionRequest:
-			var resultsChan chan func()
-			resultsChan, done = executeSubscriptionRequest(s, nodes, action)
-			if done {
-				return
-			}
-			resultsChans = append(resultsChans, resultsChan)
+			executeSubscriptionRequest(s, nodes, action)
 
 		case Request:
 			executeRequest(s, nodes, action)
@@ -438,7 +431,7 @@ func executeTestCase(
 	// Notify any active subscriptions that all requests have been sent.
 	close(s.allActionsDone)
 
-	for _, resultsChan := range resultsChans {
+	for _, resultsChan := range s.subscriptionResultsChans {
 		select {
 		case subscriptionAssert := <-resultsChan:
 			// We want to assert back in the main thread so failures get recorded properly
@@ -1275,13 +1268,13 @@ func executeSubscriptionRequest(
 	s *state,
 	nodes []*net.Node,
 	action SubscriptionRequest,
-) (chan func(), bool) {
+) {
 	subscriptionAssert := make(chan func())
 
 	for _, node := range getNodes(action.NodeID, nodes) {
 		result := node.DB.ExecRequest(s.ctx, action.Request)
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
-			return nil, true
+			return
 		}
 
 		go func() {
@@ -1337,7 +1330,7 @@ func executeSubscriptionRequest(
 		}()
 	}
 
-	return subscriptionAssert, false
+	s.subscriptionResultsChans = append(s.subscriptionResultsChans, subscriptionAssert)
 }
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected

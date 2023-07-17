@@ -37,6 +37,9 @@ type state struct {
 
 	// Will recieve an item once all actions have finished processing.
 	allActionsDone chan struct{}
+
+	// These channels will recieve a function which asserts results of any subscription requests.
+	subscriptionResultsChans []chan func()
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -47,11 +50,12 @@ func newState(
 	dbt DatabaseType,
 ) *state {
 	return &state{
-		ctx:            ctx,
-		t:              t,
-		testCase:       testCase,
-		dbt:            dbt,
-		txns:           []datastore.Txn{},
-		allActionsDone: make(chan struct{}),
+		ctx:                      ctx,
+		t:                        t,
+		testCase:                 testCase,
+		dbt:                      dbt,
+		txns:                     []datastore.Txn{},
+		allActionsDone:           make(chan struct{}),
+		subscriptionResultsChans: []chan func(){},
 	}
 }
