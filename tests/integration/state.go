@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/net"
@@ -57,6 +58,9 @@ type state struct {
 
 	// The paths to any file-based databases active in this test.
 	dbPaths []string
+
+	// Collections by index, by nodeID present in the test.
+	collections [][]client.Collection
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -79,5 +83,6 @@ func newState(
 		nodeConfigs:              []config.Config{},
 		nodes:                    []*net.Node{},
 		dbPaths:                  []string{},
+		collections:              [][]client.Collection{},
 	}
 }

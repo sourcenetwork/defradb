@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
@@ -394,7 +393,6 @@ func setupReplicatorWaitSync(
 func subscribeToCollection(
 	s *state,
 	action SubscribeToCollection,
-	collections [][]client.Collection,
 ) {
 	n := s.nodes[action.NodeID]
 
@@ -405,7 +403,7 @@ func subscribeToCollection(
 			continue
 		}
 
-		col := collections[action.NodeID][collectionIndex]
+		col := s.collections[action.NodeID][collectionIndex]
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
@@ -430,7 +428,6 @@ func subscribeToCollection(
 func unsubscribeToCollection(
 	s *state,
 	action UnsubscribeToCollection,
-	collections [][]client.Collection,
 ) {
 	n := s.nodes[action.NodeID]
 
@@ -441,7 +438,7 @@ func unsubscribeToCollection(
 			continue
 		}
 
-		col := collections[action.NodeID][collectionIndex]
+		col := s.collections[action.NodeID][collectionIndex]
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
@@ -467,11 +464,10 @@ func unsubscribeToCollection(
 func getAllP2PCollections(
 	s *state,
 	action GetAllP2PCollections,
-	collections [][]client.Collection,
 ) {
 	expectedCollections := []*pb.GetAllP2PCollectionsReply_Collection{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
-		col := collections[action.NodeID][collectionIndex]
+		col := s.collections[action.NodeID][collectionIndex]
 		expectedCollections = append(
 			expectedCollections,
 			&pb.GetAllP2PCollectionsReply_Collection{

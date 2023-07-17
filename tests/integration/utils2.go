@@ -309,11 +309,12 @@ func executeTestCase(
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
-	collections := getCollections(s, collectionNames)
+	refreshCollections(s, collectionNames)
+
 	// documents are by collection (index), these are not node specific.
-	documents := getDocuments(ctx, t, testCase, collections, startActionIndex)
+	documents := getDocuments(ctx, t, testCase, s.collections, startActionIndex)
 	// indexes are by collection (index)
-	indexes := getAllIndexes(s, collections)
+	indexes := getAllIndexes(s)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		switch action := testCase.Actions[i].(type) {
@@ -330,8 +331,8 @@ func executeTestCase(
 
 			// If the db was restarted we need to refresh the collection definitions as the old instances
 			// will reference the old (closed) database instances.
-			collections = getCollections(s, collectionNames)
-			indexes = getAllIndexes(s, collections)
+			refreshCollections(s, collectionNames)
+			indexes = getAllIndexes(s)
 
 		case ConnectPeers:
 			connectPeers(s, action)
@@ -340,25 +341,25 @@ func executeTestCase(
 			configureReplicator(s, action)
 
 		case SubscribeToCollection:
-			subscribeToCollection(s, action, collections)
+			subscribeToCollection(s, action)
 
 		case UnsubscribeToCollection:
-			unsubscribeToCollection(s, action, collections)
+			unsubscribeToCollection(s, action)
 
 		case GetAllP2PCollections:
-			getAllP2PCollections(s, action, collections)
+			getAllP2PCollections(s, action)
 
 		case SchemaUpdate:
 			updateSchema(s, action)
 			// If the schema was updated we need to refresh the collection definitions.
-			collections = getCollections(s, collectionNames)
-			indexes = getAllIndexes(s, collections)
+			refreshCollections(s, collectionNames)
+			indexes = getAllIndexes(s)
 
 		case SchemaPatch:
 			patchSchema(s, action)
 			// If the schema was updated we need to refresh the collection definitions.
-			collections = getCollections(s, collectionNames)
-			indexes = getAllIndexes(s, collections)
+			refreshCollections(s, collectionNames)
+			indexes = getAllIndexes(s)
 
 		case ConfigureMigration:
 			configureMigration(s, action)
@@ -367,22 +368,22 @@ func executeTestCase(
 			getMigrations(s, action)
 
 		case CreateDoc:
-			documents = createDoc(s, collections, documents, action)
+			documents = createDoc(s, documents, action)
 
 		case DeleteDoc:
-			deleteDoc(s, collections, documents, action)
+			deleteDoc(s, documents, action)
 
 		case UpdateDoc:
-			updateDoc(s, collections, documents, action)
+			updateDoc(s, documents, action)
 
 		case CreateIndex:
-			indexes = createIndex(s, collections, indexes, action)
+			indexes = createIndex(s, indexes, action)
 
 		case DropIndex:
-			dropIndex(s, collections, indexes, action)
+			dropIndex(s, indexes, action)
 
 		case GetIndexes:
-			getIndexes(s, collections, action)
+			getIndexes(s, action)
 
 		case TransactionCommit:
 			commitTransaction(s, action)
@@ -669,31 +670,30 @@ actionLoop:
 	}
 }
 
-// getCollections returns all the collections of the given names, preserving order.
+// refreshCollections refreshes all the collections of the given names, preserving order.
 //
 // If a given collection is not present in the database the value at the corresponding
 // result-index will be nil.
-func getCollections(
+func refreshCollections(
 	s *state,
 	collectionNames []string,
-) [][]client.Collection {
-	collections := make([][]client.Collection, len(s.nodes))
+) {
+	s.collections = make([][]client.Collection, len(s.nodes))
 
 	for nodeID, node := range s.nodes {
-		collections[nodeID] = make([]client.Collection, len(collectionNames))
+		s.collections[nodeID] = make([]client.Collection, len(collectionNames))
 		allCollections, err := node.DB.GetAllCollections(s.ctx)
 		require.Nil(s.t, err)
 
 		for i, collectionName := range collectionNames {
 			for _, collection := range allCollections {
 				if collection.Name() == collectionName {
-					collections[nodeID][i] = collection
+					s.collections[nodeID][i] = collection
 					break
 				}
 			}
 		}
 	}
-	return collections
 }
 
 // configureNode configures and starts a new Defra node using the provided configuration.
@@ -795,15 +795,14 @@ func getDocuments(
 
 func getAllIndexes(
 	s *state,
-	collections [][]client.Collection,
 ) [][][]client.IndexDescription {
-	if len(collections) == 0 {
+	if len(s.collections) == 0 {
 		return [][][]client.IndexDescription{}
 	}
 
-	result := make([][][]client.IndexDescription, len(collections))
+	result := make([][][]client.IndexDescription, len(s.collections))
 
-	for i, nodeCols := range collections {
+	for i, nodeCols := range s.collections {
 		result[i] = make([][]client.IndexDescription, len(nodeCols))
 
 		for j, col := range nodeCols {
@@ -824,16 +823,15 @@ func getAllIndexes(
 
 func getIndexes(
 	s *state,
-	nodeCollections [][]client.Collection,
 	action GetIndexes,
 ) {
-	if len(nodeCollections) == 0 {
+	if len(s.collections) == 0 {
 		return
 	}
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		err := withRetry(
 			actionNodes,
 			nodeID,
@@ -948,7 +946,6 @@ func patchSchema(
 // given documents slice.
 func createDoc(
 	s *state,
-	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action CreateDoc,
 ) [][]*client.Document {
@@ -956,7 +953,7 @@ func createDoc(
 	// is okay.
 	var doc *client.Document
 	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		var err error
 		doc, err = client.NewDocFromJSON([]byte(action.Doc))
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
@@ -988,7 +985,6 @@ func createDoc(
 // given documents slice.
 func deleteDoc(
 	s *state,
-	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action DeleteDoc,
 ) {
@@ -996,7 +992,7 @@ func deleteDoc(
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		err := withRetry(
 			actionNodes,
 			nodeID,
@@ -1014,7 +1010,6 @@ func deleteDoc(
 // updateDoc updates a document using the collection api.
 func updateDoc(
 	s *state,
-	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action UpdateDoc,
 ) {
@@ -1027,7 +1022,7 @@ func updateDoc(
 
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		err := withRetry(
 			actionNodes,
 			nodeID,
@@ -1042,7 +1037,6 @@ func updateDoc(
 // createIndex creates a secondary index using the collection api.
 func createIndex(
 	s *state,
-	nodeCollections [][]client.Collection,
 	indexes [][][]client.IndexDescription,
 	action CreateIndex,
 ) [][][]client.IndexDescription {
@@ -1052,7 +1046,7 @@ func createIndex(
 			make([][][]client.IndexDescription, action.CollectionID-len(indexes)+1)...)
 	}
 	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		indexDesc := client.IndexDescription{
 			Name: action.IndexName,
 		}
@@ -1096,13 +1090,12 @@ func createIndex(
 // dropIndex drops the secondary index using the collection api.
 func dropIndex(
 	s *state,
-	nodeCollections [][]client.Collection,
 	indexes [][][]client.IndexDescription,
 	action DropIndex,
 ) {
 	var expectedErrorRaised bool
 	actionNodes := getNodes(action.NodeID, s.nodes)
-	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		indexName := action.IndexName
 		if indexName == "" {
 			indexName = indexes[nodeID][action.CollectionID][action.IndexID].Name
