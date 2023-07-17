@@ -316,11 +316,6 @@ func executeTestCase(
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		switch action := testCase.Actions[i].(type) {
 		case ConfigureNode:
-			if DetectDbChanges {
-				// We do not yet support the change detector for tests running across multiple nodes.
-				t.SkipNow()
-				return
-			}
 			configureNode(s, action)
 
 		case Restart:
@@ -700,6 +695,12 @@ func configureNode(
 	s *state,
 	action ConfigureNode,
 ) {
+	if DetectDbChanges {
+		// We do not yet support the change detector for tests running across multiple nodes.
+		s.t.SkipNow()
+		return
+	}
+
 	cfg := action()
 	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
 	// And affects where libp2p(?) stores some values on the file system, even when using
