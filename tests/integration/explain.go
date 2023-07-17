@@ -21,6 +21,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/immutable"
 )
 
 var (
@@ -73,6 +75,9 @@ type PlanNodeTargetCase struct {
 }
 
 type ExplainRequest struct {
+	// NodeID is the node ID (index) of the node in which to explain.
+	NodeID immutable.Option[int]
+
 	// Has to be a valid explain request type (one of: 'simple', 'debug', 'execute', 'predict').
 	Request string
 
@@ -98,7 +103,7 @@ type ExplainRequest struct {
 
 func executeExplainRequest(
 	s *state,
-	db client.DB,
+	nodes []*net.Node,
 	action ExplainRequest,
 ) {
 	// Must have a non-empty request.
@@ -122,14 +127,16 @@ func executeExplainRequest(
 		require.Fail(s.t, "Expected error should not have other expected results with it.", s.testCase.Description)
 	}
 
-	result := db.ExecRequest(s.ctx, action.Request)
-	assertExplainRequestResults(
-		s.ctx,
-		s.t,
-		s.testCase.Description,
-		&result.GQL,
-		action,
-	)
+	for _, node := range getNodes(action.NodeID, nodes) {
+		result := node.DB.ExecRequest(s.ctx, action.Request)
+		assertExplainRequestResults(
+			s.ctx,
+			s.t,
+			s.testCase.Description,
+			&result.GQL,
+			action,
+		)
+	}
 }
 
 func assertExplainRequestResults(

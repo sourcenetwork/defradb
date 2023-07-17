@@ -325,12 +325,6 @@ func executeTestCase(
 	indexes := getAllIndexes(s, collections)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
-		// declare default database for ease of use
-		var db client.DB
-		if len(nodes) > 0 {
-			db = nodes[0].DB
-		}
-
 		switch action := testCase.Actions[i].(type) {
 		case ConfigureNode:
 			if DetectDbChanges {
@@ -414,7 +408,7 @@ func executeTestCase(
 
 		case SubscriptionRequest:
 			var resultsChan chan func()
-			resultsChan, done = executeSubscriptionRequest(s, allActionsDone, db, action)
+			resultsChan, done = executeSubscriptionRequest(s, allActionsDone, nodes, action)
 			if done {
 				return
 			}
@@ -424,13 +418,13 @@ func executeTestCase(
 			executeRequest(s, nodes, &txns, action)
 
 		case ExplainRequest:
-			executeExplainRequest(s, db, action)
+			executeExplainRequest(s, nodes, action)
 
 		case IntrospectionRequest:
-			assertIntrospectionResults(s, db, action)
+			assertIntrospectionResults(s, nodes, action)
 
 		case ClientIntrospectionRequest:
-			assertClientIntrospectionResults(s, db, action)
+			assertClientIntrospectionResults(s, nodes, action)
 
 		case WaitForSync:
 			waitForSync(s, action, syncChans)
@@ -1287,67 +1281,69 @@ func executeRequest(
 func executeSubscriptionRequest(
 	s *state,
 	allActionsDone chan struct{},
-	db client.DB,
+	nodes []*net.Node,
 	action SubscriptionRequest,
 ) (chan func(), bool) {
 	subscriptionAssert := make(chan func())
 
-	result := db.ExecRequest(s.ctx, action.Request)
-	if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
-		return nil, true
-	}
-
-	go func() {
-		data := []map[string]any{}
-		errs := []error{}
-
-		allActionsAreDone := false
-		expectedDataRecieved := len(action.Results) == 0
-		stream := result.Pub.Stream()
-		for {
-			select {
-			case s := <-stream:
-				sResult, _ := s.(client.GQLResult)
-				sData, _ := sResult.Data.([]map[string]any)
-				errs = append(errs, sResult.Errors...)
-				data = append(data, sData...)
-
-				if len(data) >= len(action.Results) {
-					expectedDataRecieved = true
-				}
-
-			case <-allActionsDone:
-				allActionsAreDone = true
-			}
-
-			if expectedDataRecieved && allActionsAreDone {
-				finalResult := &client.GQLResult{
-					Data:   data,
-					Errors: errs,
-				}
-
-				subscriptionAssert <- func() {
-					// This assert should be executed from the main test routine
-					// so that failures will be properly handled.
-					expectedErrorRaised := assertRequestResults(
-						s.ctx,
-						s.t,
-						s.testCase.Description,
-						finalResult,
-						action.Results,
-						action.ExpectedError,
-						// anyof is not yet supported by subscription requests
-						0,
-						map[docFieldKey][]any{},
-					)
-
-					assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-				}
-
-				return
-			}
+	for _, node := range getNodes(action.NodeID, nodes) {
+		result := node.DB.ExecRequest(s.ctx, action.Request)
+		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
+			return nil, true
 		}
-	}()
+
+		go func() {
+			data := []map[string]any{}
+			errs := []error{}
+
+			allActionsAreDone := false
+			expectedDataRecieved := len(action.Results) == 0
+			stream := result.Pub.Stream()
+			for {
+				select {
+				case s := <-stream:
+					sResult, _ := s.(client.GQLResult)
+					sData, _ := sResult.Data.([]map[string]any)
+					errs = append(errs, sResult.Errors...)
+					data = append(data, sData...)
+
+					if len(data) >= len(action.Results) {
+						expectedDataRecieved = true
+					}
+
+				case <-allActionsDone:
+					allActionsAreDone = true
+				}
+
+				if expectedDataRecieved && allActionsAreDone {
+					finalResult := &client.GQLResult{
+						Data:   data,
+						Errors: errs,
+					}
+
+					subscriptionAssert <- func() {
+						// This assert should be executed from the main test routine
+						// so that failures will be properly handled.
+						expectedErrorRaised := assertRequestResults(
+							s.ctx,
+							s.t,
+							s.testCase.Description,
+							finalResult,
+							action.Results,
+							action.ExpectedError,
+							// anyof is not yet supported by subscription requests
+							0,
+							map[docFieldKey][]any{},
+						)
+
+						assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+					}
+
+					return
+				}
+			}
+		}()
+	}
 
 	return subscriptionAssert, false
 }
@@ -1463,27 +1459,29 @@ func assertExpectedErrorRaised(t *testing.T, description string, expectedError s
 
 func assertIntrospectionResults(
 	s *state,
-	db client.DB,
+	nodes []*net.Node,
 	action IntrospectionRequest,
 ) bool {
-	result := db.ExecRequest(s.ctx, action.Request)
+	for _, node := range getNodes(action.NodeID, nodes) {
+		result := node.DB.ExecRequest(s.ctx, action.Request)
 
-	if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
-		return true
-	}
-	resultantData := result.GQL.Data.(map[string]any)
+		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
+			return true
+		}
+		resultantData := result.GQL.Data.(map[string]any)
 
-	if len(action.ExpectedData) == 0 && len(action.ContainsData) == 0 {
-		require.Equal(s.t, action.ExpectedData, resultantData)
-	}
+		if len(action.ExpectedData) == 0 && len(action.ContainsData) == 0 {
+			require.Equal(s.t, action.ExpectedData, resultantData)
+		}
 
-	if len(action.ExpectedData) == 0 && len(action.ContainsData) > 0 {
-		assertContains(s.t, action.ContainsData, resultantData)
-	} else {
-		require.Equal(s.t, len(action.ExpectedData), len(resultantData))
+		if len(action.ExpectedData) == 0 && len(action.ContainsData) > 0 {
+			assertContains(s.t, action.ContainsData, resultantData)
+		} else {
+			require.Equal(s.t, len(action.ExpectedData), len(resultantData))
 
-		for k, result := range resultantData {
-			assert.Equal(s.t, action.ExpectedData[k], result)
+			for k, result := range resultantData {
+				assert.Equal(s.t, action.ExpectedData[k], result)
+			}
 		}
 	}
 
@@ -1493,44 +1491,46 @@ func assertIntrospectionResults(
 // Asserts that the client introspection results conform to our expectations.
 func assertClientIntrospectionResults(
 	s *state,
-	db client.DB,
+	nodes []*net.Node,
 	action ClientIntrospectionRequest,
 ) bool {
-	result := db.ExecRequest(s.ctx, action.Request)
+	for _, node := range getNodes(action.NodeID, nodes) {
+		result := node.DB.ExecRequest(s.ctx, action.Request)
 
-	if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
-		return true
-	}
-	resultantData := result.GQL.Data.(map[string]any)
+		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
+			return true
+		}
+		resultantData := result.GQL.Data.(map[string]any)
 
-	if len(resultantData) == 0 {
-		return false
-	}
+		if len(resultantData) == 0 {
+			return false
+		}
 
-	// Iterate through all types, validating each type definition.
-	// Inspired from buildClientSchema.ts from graphql-js,
-	// which is one way that clients do validate the schema.
-	types := resultantData["__schema"].(map[string]any)["types"].([]any)
+		// Iterate through all types, validating each type definition.
+		// Inspired from buildClientSchema.ts from graphql-js,
+		// which is one way that clients do validate the schema.
+		types := resultantData["__schema"].(map[string]any)["types"].([]any)
 
-	for _, typeData := range types {
-		typeDef := typeData.(map[string]any)
-		kind := typeDef["kind"].(string)
+		for _, typeData := range types {
+			typeDef := typeData.(map[string]any)
+			kind := typeDef["kind"].(string)
 
-		switch kind {
-		case "SCALAR", "INTERFACE", "UNION", "ENUM":
-			// No validation for these types in this test
-		case "OBJECT":
-			fields := typeDef["fields"]
-			if fields == nil {
-				s.t.Errorf("Fields are missing for OBJECT type %v", typeDef["name"])
+			switch kind {
+			case "SCALAR", "INTERFACE", "UNION", "ENUM":
+				// No validation for these types in this test
+			case "OBJECT":
+				fields := typeDef["fields"]
+				if fields == nil {
+					s.t.Errorf("Fields are missing for OBJECT type %v", typeDef["name"])
+				}
+			case "INPUT_OBJECT":
+				inputFields := typeDef["inputFields"]
+				if inputFields == nil {
+					s.t.Errorf("InputFields are missing for INPUT_OBJECT type %v", typeDef["name"])
+				}
+			default:
+				// t.Errorf("Unknown type kind: %v", kind)
 			}
-		case "INPUT_OBJECT":
-			inputFields := typeDef["inputFields"]
-			if inputFields == nil {
-				s.t.Errorf("InputFields are missing for INPUT_OBJECT type %v", typeDef["name"])
-			}
-		default:
-			// t.Errorf("Unknown type kind: %v", kind)
 		}
 	}
 
