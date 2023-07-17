@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"strings"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -66,11 +68,6 @@ func (i *eqIndexQueryProvider) Get(ctx context.Context, txn datastore.Txn) (quer
 	})
 }
 
-type gtIndexQueryProvider struct {
-	indexKey  core.IndexDataStoreKey
-	filterVal []byte
-}
-
 type gtIndexCmp struct {
 	value []byte
 }
@@ -84,17 +81,164 @@ func (cmp *gtIndexCmp) Filter(e query.Entry) bool {
 	return res > 0
 }
 
-func (i *gtIndexQueryProvider) Get(ctx context.Context, txn datastore.Txn) (query.Results, error) {
+type geIndexCmp struct {
+	value []byte
+}
+
+func (cmp *geIndexCmp) Filter(e query.Entry) bool {
+	indexKey, err := core.NewIndexDataStoreKey(e.Key)
+	if err != nil {
+		return false
+	}
+	res := bytes.Compare(indexKey.FieldValues[0], cmp.value)
+	return res > 0 || res == 0
+}
+
+type ltIndexCmp struct {
+	value []byte
+}
+
+func (cmp *ltIndexCmp) Filter(e query.Entry) bool {
+	indexKey, err := core.NewIndexDataStoreKey(e.Key)
+	if err != nil {
+		return false
+	}
+	res := bytes.Compare(indexKey.FieldValues[0], cmp.value)
+	return res < 0
+}
+
+type leIndexCmp struct {
+	value []byte
+}
+
+func (cmp *leIndexCmp) Filter(e query.Entry) bool {
+	indexKey, err := core.NewIndexDataStoreKey(e.Key)
+	if err != nil {
+		return false
+	}
+	res := bytes.Compare(indexKey.FieldValues[0], cmp.value)
+	return res < 0 || res == 0
+}
+
+type neIndexCmp struct {
+	value []byte
+}
+
+func (cmp *neIndexCmp) Filter(e query.Entry) bool {
+	indexKey, err := core.NewIndexDataStoreKey(e.Key)
+	if err != nil {
+		return false
+	}
+	return !bytes.Equal(indexKey.FieldValues[0], cmp.value)
+}
+
+type arrIndexCmp struct {
+	values map[string]bool
+	isIn   bool
+}
+
+func newNinIndexCmp(values [][]byte, isIn bool) *arrIndexCmp {
+	valuesMap := make(map[string]bool)
+	for _, v := range values {
+		valuesMap[string(v)] = true
+	}
+	return &arrIndexCmp{values: valuesMap, isIn: isIn}
+}
+
+func (cmp *arrIndexCmp) Filter(e query.Entry) bool {
+	indexKey, err := core.NewIndexDataStoreKey(e.Key)
+	if err != nil {
+		return false
+	}
+	_, found := cmp.values[string(indexKey.FieldValues[0])]
+	return found == cmp.isIn
+}
+
+type cmpIndexQueryProvider struct {
+	indexKey core.IndexDataStoreKey
+	filter   query.Filter
+}
+
+func (i *cmpIndexQueryProvider) Get(ctx context.Context, txn datastore.Txn) (query.Results, error) {
 	return txn.Datastore().Query(ctx, query.Query{
 		Prefix:   i.indexKey.ToString(),
 		KeysOnly: true,
-		Filters: []query.Filter{
-			&gtIndexCmp{value: i.filterVal},
-		},
+		Filters:  []query.Filter{i.filter},
 	})
 }
 
-func (f *IndexFetcher) createFilteredIndexQueryProvider(indexFilterCond any) (filteredIndexQueryProvider, error) {
+type likeIndexCmp struct {
+	filterValue string
+	hasPrefix   bool
+	hasSuffix   bool
+	startAndEnd []string
+	isLike      bool
+}
+
+func newLikeIndexCmp(filterValue string, isLike bool) *likeIndexCmp {
+	cmp := &likeIndexCmp{
+		filterValue: filterValue,
+		isLike:      isLike,
+	}
+	if len(cmp.filterValue) >= 2 {
+		if cmp.filterValue[0] == '%' {
+			cmp.hasPrefix = true
+			cmp.filterValue = strings.TrimPrefix(cmp.filterValue, "%")
+		}
+		if cmp.filterValue[len(cmp.filterValue)-1] == '%' {
+			cmp.hasSuffix = true
+			cmp.filterValue = strings.TrimSuffix(cmp.filterValue, "%")
+		}
+		if !cmp.hasPrefix && !cmp.hasSuffix {
+			cmp.startAndEnd = strings.Split(cmp.filterValue, "%")
+		}
+	}
+
+	return cmp
+}
+
+func (cmp *likeIndexCmp) Filter(e query.Entry) bool {
+	indexKey, err := core.NewIndexDataStoreKey(e.Key)
+	if err != nil {
+		return false
+	}
+
+	var value string
+	err = cbor.Unmarshal(indexKey.FieldValues[0], &value)
+	if err != nil {
+		return false
+	}
+
+	return cmp.doesMatch(value) == cmp.isLike
+}
+
+func (cmp *likeIndexCmp) doesMatch(value string) bool {
+	switch {
+	case cmp.hasPrefix && cmp.hasSuffix:
+		return strings.Contains(value, cmp.filterValue)
+
+	case cmp.hasPrefix:
+		// if the condition has a prefix string `%`, this means that we are matching
+		// the condition as being a suffix to the data.
+		return strings.HasSuffix(value, cmp.filterValue)
+
+	case cmp.hasSuffix:
+		// if the condition has a suffix string `%`, this means that we are matching
+		// the condition as being a prefix to the data.
+		return strings.HasPrefix(value, cmp.filterValue)
+
+	case len(cmp.startAndEnd) == 2:
+		return strings.HasPrefix(value, cmp.startAndEnd[0]) &&
+			strings.HasSuffix(value, cmp.startAndEnd[1])
+
+	default:
+		return cmp.filterValue == value
+	}
+}
+
+func (f *IndexFetcher) createFilteredIndexQueryProvider(
+	indexFilterCond any,
+) (filteredIndexQueryProvider, error) {
 	condMap, ok := indexFilterCond.(map[string]any)
 	if !ok {
 		return nil, errors.New("invalid index filter condition")
@@ -105,22 +249,79 @@ func (f *IndexFetcher) createFilteredIndexQueryProvider(indexFilterCond any) (fi
 		break
 	}
 
-	writableValue := client.NewCBORValue(client.LWW_REGISTER, filterVal)
+	if op == "_eq" || op == "_gt" || op == "_ge" || op == "_lt" || op == "_le" || op == "_ne" {
+		writableValue := client.NewCBORValue(client.LWW_REGISTER, filterVal)
 
-	valueBytes, err := writableValue.Bytes()
-	if err != nil {
-		return nil, err
-	}
+		valueBytes, err := writableValue.Bytes()
+		if err != nil {
+			return nil, err
+		}
 
-	if op == "_eq" {
-		return &eqIndexQueryProvider{
-			indexKey:  f.indexDataStoreKey,
-			filterVal: valueBytes,
+		if op == "_eq" {
+			return &eqIndexQueryProvider{
+				indexKey:  f.indexDataStoreKey,
+				filterVal: valueBytes,
+			}, nil
+		} else if op == "_gt" {
+			return &cmpIndexQueryProvider{
+				indexKey: f.indexDataStoreKey,
+				filter:   &gtIndexCmp{value: valueBytes},
+			}, nil
+		} else if op == "_ge" {
+			return &cmpIndexQueryProvider{
+				indexKey: f.indexDataStoreKey,
+				filter:   &geIndexCmp{value: valueBytes},
+			}, nil
+		} else if op == "_lt" {
+			return &cmpIndexQueryProvider{
+				indexKey: f.indexDataStoreKey,
+				filter:   &ltIndexCmp{value: valueBytes},
+			}, nil
+		} else if op == "_le" {
+			return &cmpIndexQueryProvider{
+				indexKey: f.indexDataStoreKey,
+				filter:   &leIndexCmp{value: valueBytes},
+			}, nil
+		} else if op == "_ne" {
+			return &cmpIndexQueryProvider{
+				indexKey: f.indexDataStoreKey,
+				filter:   &neIndexCmp{value: valueBytes},
+			}, nil
+		}
+	} else if op == "_in" || op == "_nin" {
+		inArr, ok := filterVal.([]any)
+		if !ok {
+			return nil, errors.New("invalid _in/_nin value")
+		}
+		valArr := make([][]byte, 0, len(inArr))
+		for _, v := range inArr {
+			writableValue := client.NewCBORValue(client.LWW_REGISTER, v)
+			valueBytes, err := writableValue.Bytes()
+			if err != nil {
+				return nil, err
+			}
+			valArr = append(valArr, valueBytes)
+		}
+		if op == "_in" {
+			return &cmpIndexQueryProvider{
+				indexKey: f.indexDataStoreKey,
+				filter:   newNinIndexCmp(valArr, true),
+			}, nil
+		} else {
+			return &cmpIndexQueryProvider{
+				indexKey: f.indexDataStoreKey,
+				filter:   newNinIndexCmp(valArr, false),
+			}, nil
+		}
+	} else if op == "_like" {
+		return &cmpIndexQueryProvider{
+			indexKey: f.indexDataStoreKey,
+			filter:   newLikeIndexCmp(filterVal.(string), true),
 		}, nil
-	} else if op == "_gt" {
-		return &gtIndexQueryProvider{
-			indexKey:  f.indexDataStoreKey,
-			filterVal: valueBytes,
+	} else if op == "_nlike" {
+		return &cmpIndexQueryProvider{
+			indexKey: f.indexDataStoreKey,
+			filter:   newLikeIndexCmp(filterVal.(string), false),
 		}, nil
 	}
 
