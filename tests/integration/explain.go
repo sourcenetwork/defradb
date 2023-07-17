@@ -16,12 +16,12 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/immutable"
 )
 
 var (
