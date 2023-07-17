@@ -303,7 +303,6 @@ func executeTestCase(
 
 	s := newState(ctx, t, testCase, dbt)
 
-	allActionsDone := make(chan struct{})
 	resultsChans := []chan func(){}
 	syncChans := []chan struct{}{}
 	nodeAddresses := []string{}
@@ -407,7 +406,7 @@ func executeTestCase(
 
 		case SubscriptionRequest:
 			var resultsChan chan func()
-			resultsChan, done = executeSubscriptionRequest(s, allActionsDone, nodes, action)
+			resultsChan, done = executeSubscriptionRequest(s, nodes, action)
 			if done {
 				return
 			}
@@ -437,7 +436,7 @@ func executeTestCase(
 	}
 
 	// Notify any active subscriptions that all requests have been sent.
-	close(allActionsDone)
+	close(s.allActionsDone)
 
 	for _, resultsChan := range resultsChans {
 		select {
@@ -1274,7 +1273,6 @@ func executeRequest(
 // the subscription has terminated.
 func executeSubscriptionRequest(
 	s *state,
-	allActionsDone chan struct{},
 	nodes []*net.Node,
 	action SubscriptionRequest,
 ) (chan func(), bool) {
@@ -1305,7 +1303,7 @@ func executeSubscriptionRequest(
 						expectedDataRecieved = true
 					}
 
-				case <-allActionsDone:
+				case <-s.allActionsDone:
 					allActionsAreDone = true
 				}
 

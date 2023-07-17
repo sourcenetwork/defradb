@@ -34,6 +34,9 @@ type state struct {
 	//
 	// This is order dependent and the property is accessed by index.
 	txns []datastore.Txn
+
+	// Will recieve an item once all actions have finished processing.
+	allActionsDone chan struct{}
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -44,10 +47,11 @@ func newState(
 	dbt DatabaseType,
 ) *state {
 	return &state{
-		ctx:      ctx,
-		t:        t,
-		testCase: testCase,
-		dbt:      dbt,
-		txns:     []datastore.Txn{},
+		ctx:            ctx,
+		t:              t,
+		testCase:       testCase,
+		dbt:            dbt,
+		txns:           []datastore.Txn{},
+		allActionsDone: make(chan struct{}),
 	}
 }
