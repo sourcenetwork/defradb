@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/net"
 )
 
@@ -56,11 +55,10 @@ type GetMigrations struct {
 func configureMigration(
 	s *state,
 	nodes []*net.Node,
-	txnsPointer *[]datastore.Txn,
 	action ConfigureMigration,
 ) {
 	for _, node := range getNodes(action.NodeID, nodes) {
-		db := getStore(s, node.DB, txnsPointer, action.TransactionID, action.ExpectedError)
+		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
 
 		err := db.SetMigration(s.ctx, action.LensConfig)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -72,11 +70,10 @@ func configureMigration(
 func getMigrations(
 	s *state,
 	nodes []*net.Node,
-	txnsPointer *[]datastore.Txn,
 	action GetMigrations,
 ) {
 	for _, node := range getNodes(action.NodeID, nodes) {
-		db := getStore(s, node.DB, txnsPointer, action.TransactionID, "")
+		db := getStore(s, node.DB, action.TransactionID, "")
 
 		configs := db.LensRegistry().Config()
 

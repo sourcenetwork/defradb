@@ -303,7 +303,6 @@ func executeTestCase(
 
 	s := newState(ctx, t, testCase, dbt)
 
-	txns := []datastore.Txn{}
 	allActionsDone := make(chan struct{})
 	resultsChans := []chan func(){}
 	syncChans := []chan struct{}{}
@@ -380,10 +379,10 @@ func executeTestCase(
 			indexes = getAllIndexes(s, collections)
 
 		case ConfigureMigration:
-			configureMigration(s, nodes, &txns, action)
+			configureMigration(s, nodes, action)
 
 		case GetMigrations:
-			getMigrations(s, nodes, &txns, action)
+			getMigrations(s, nodes, action)
 
 		case CreateDoc:
 			documents = createDoc(s, nodes, collections, documents, action)
@@ -404,7 +403,7 @@ func executeTestCase(
 			getIndexes(s, nodes, collections, action)
 
 		case TransactionCommit:
-			commitTransaction(s, txns, action)
+			commitTransaction(s, action)
 
 		case SubscriptionRequest:
 			var resultsChan chan func()
@@ -415,7 +414,7 @@ func executeTestCase(
 			resultsChans = append(resultsChans, resultsChan)
 
 		case Request:
-			executeRequest(s, nodes, &txns, action)
+			executeRequest(s, nodes, action)
 
 		case ExplainRequest:
 			executeExplainRequest(s, nodes, action)
@@ -1192,7 +1191,6 @@ func withRetry(
 func getStore(
 	s *state,
 	db client.DB,
-	txnsPointer *[]datastore.Txn,
 	transactionSpecifier immutable.Option[int],
 	expectedError string,
 ) client.Store {
@@ -1201,15 +1199,13 @@ func getStore(
 	}
 
 	transactionID := transactionSpecifier.Value()
-	txns := *txnsPointer
 
-	if transactionID >= len(txns) {
+	if transactionID >= len(s.txns) {
 		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		txns = append(txns, make([]datastore.Txn, transactionID-len(txns)+1)...)
-		*txnsPointer = txns
+		s.txns = append(s.txns, make([]datastore.Txn, transactionID-len(s.txns)+1)...)
 	}
 
-	if txns[transactionID] == nil {
+	if s.txns[transactionID] == nil {
 		// Create a new transaction if one does not already exist.
 		txn, err := db.NewTxn(s.ctx, false)
 		if AssertError(s.t, s.testCase.Description, err, expectedError) {
@@ -1217,10 +1213,10 @@ func getStore(
 			return nil
 		}
 
-		txns[transactionID] = txn
+		s.txns[transactionID] = txn
 	}
 
-	return db.WithTxn(txns[transactionID])
+	return db.WithTxn(s.txns[transactionID])
 }
 
 // commitTransaction commits the given transaction.
@@ -1229,12 +1225,11 @@ func getStore(
 // an error is returned on commit.
 func commitTransaction(
 	s *state,
-	txns []datastore.Txn,
 	action TransactionCommit,
 ) {
-	err := txns[action.TransactionID].Commit(s.ctx)
+	err := s.txns[action.TransactionID].Commit(s.ctx)
 	if err != nil {
-		txns[action.TransactionID].Discard(s.ctx)
+		s.txns[action.TransactionID].Discard(s.ctx)
 	}
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -1246,12 +1241,11 @@ func commitTransaction(
 func executeRequest(
 	s *state,
 	nodes []*net.Node,
-	txnsPointer *[]datastore.Txn,
 	action Request,
 ) {
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, nodes) {
-		db := getStore(s, node.DB, txnsPointer, action.TransactionID, action.ExpectedError)
+		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
 		result := db.ExecRequest(s.ctx, action.Request)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}

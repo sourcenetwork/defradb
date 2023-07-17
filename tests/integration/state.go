@@ -13,6 +13,8 @@ package tests
 import (
 	"context"
 	"testing"
+
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 type state struct {
@@ -27,6 +29,11 @@ type state struct {
 
 	// The type of database currently being tested.
 	dbt DatabaseType
+
+	// Any explicit transactions active in this test.
+	//
+	// This is order dependent and the property is accessed by index.
+	txns []datastore.Txn
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -41,5 +48,6 @@ func newState(
 		t:        t,
 		testCase: testCase,
 		dbt:      dbt,
+		txns:     []datastore.Txn{},
 	}
 }
