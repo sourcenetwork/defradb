@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/datastore/memory"
@@ -302,9 +301,6 @@ func executeTestCase(
 
 	s := newState(ctx, t, testCase, dbt)
 
-	nodeAddresses := []string{}
-	// The actions responsible for configuring the node
-	nodeConfigs := []config.Config{}
 	nodes, dbPaths := getStartingNodes(ctx, t, dbt, testCase)
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
@@ -327,15 +323,12 @@ func executeTestCase(
 				t.SkipNow()
 				return
 			}
-			cfg := action()
-			node, address, path := configureNode(s, cfg)
+			node, path := configureNode(s, action)
 			nodes = append(nodes, node)
-			nodeAddresses = append(nodeAddresses, address)
 			dbPaths = append(dbPaths, path)
-			nodeConfigs = append(nodeConfigs, cfg)
 
 		case Restart:
-			restartNodes(s, i, nodes, dbPaths, nodeAddresses, nodeConfigs)
+			restartNodes(s, i, nodes, dbPaths)
 
 			// If the db was restarted we need to refresh the collection definitions as the old instances
 			// will reference the old (closed) database instances.
@@ -343,10 +336,10 @@ func executeTestCase(
 			indexes = getAllIndexes(s, collections)
 
 		case ConnectPeers:
-			connectPeers(s, action, nodes, nodeAddresses)
+			connectPeers(s, action, nodes)
 
 		case ConfigureReplicator:
-			configureReplicator(s, action, nodes, nodeAddresses)
+			configureReplicator(s, action, nodes)
 
 		case SubscribeToCollection:
 			subscribeToCollection(s, action, nodes, collections)
@@ -611,8 +604,6 @@ func restartNodes(
 	actionIndex int,
 	nodes []*net.Node,
 	dbPaths []string,
-	nodeAddresses []string,
-	configureActions []config.Config,
 ) {
 	if s.dbt == badgerIMType || s.dbt == defraIMType {
 		return
@@ -627,7 +618,7 @@ func restartNodes(
 		require.Nil(s.t, err)
 		databaseDir = originalPath
 
-		if len(configureActions) == 0 {
+		if len(s.nodeConfigs) == 0 {
 			// If there are no explicit node configuration actions the node will be
 			// basic (i.e. no P2P stuff) and can be yielded now.
 			nodes[i] = &net.Node{
@@ -636,10 +627,10 @@ func restartNodes(
 			continue
 		}
 
-		cfg := configureActions[i]
+		cfg := s.nodeConfigs[i]
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
-		cfg.Net.P2PAddress = strings.Split(nodeAddresses[i], "/p2p/")[0]
+		cfg.Net.P2PAddress = strings.Split(s.nodeAddresses[i], "/p2p/")[0]
 		var n *net.Node
 		n, err = net.NewNode(
 			s.ctx,
@@ -725,8 +716,9 @@ func getCollections(
 // will result in a test failure.
 func configureNode(
 	s *state,
-	cfg config.Config,
-) (*net.Node, string, string) {
+	action ConfigureNode,
+) (*net.Node, string) {
+	cfg := action()
 	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
 	// And affects where libp2p(?) stores some values on the file system, even when using
 	// an in memory store.
@@ -753,8 +745,10 @@ func configureNode(
 	}
 
 	address := fmt.Sprintf("%s/p2p/%s", n.ListenAddrs()[0].String(), n.PeerID())
+	s.nodeAddresses = append(s.nodeAddresses, address)
+	s.nodeConfigs = append(s.nodeConfigs, cfg)
 
-	return n, address, path
+	return n, path
 }
 
 func getDocuments(

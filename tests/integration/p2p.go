@@ -135,14 +135,13 @@ func connectPeers(
 	s *state,
 	cfg ConnectPeers,
 	nodes []*net.Node,
-	addresses []string,
 ) {
 	// If we have some database actions prior to connecting the peers, we want to ensure that they had time to
 	// complete before we connect. Otherwise we might wrongly catch them in our wait function.
 	time.Sleep(100 * time.Millisecond)
 	sourceNode := nodes[cfg.SourceNodeID]
 	targetNode := nodes[cfg.TargetNodeID]
-	targetAddress := addresses[cfg.TargetNodeID]
+	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
 	log.Info(s.ctx, "Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
 	addrs, err := netutils.ParsePeers([]string{targetAddress})
@@ -294,14 +293,13 @@ func configureReplicator(
 	s *state,
 	cfg ConfigureReplicator,
 	nodes []*net.Node,
-	addresses []string,
 ) {
 	// If we have some database actions prior to configuring the replicator, we want to ensure that they had time to
 	// complete before the configuration. Otherwise we might wrongly catch them in our wait function.
 	time.Sleep(100 * time.Millisecond)
 	sourceNode := nodes[cfg.SourceNodeID]
 	targetNode := nodes[cfg.TargetNodeID]
-	targetAddress := addresses[cfg.TargetNodeID]
+	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
 	addr, err := ma.NewMultiaddr(targetAddress)
 	require.NoError(s.t, err)
