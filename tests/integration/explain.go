@@ -21,7 +21,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -103,7 +102,6 @@ type ExplainRequest struct {
 
 func executeExplainRequest(
 	s *state,
-	nodes []*net.Node,
 	action ExplainRequest,
 ) {
 	// Must have a non-empty request.
@@ -127,7 +125,7 @@ func executeExplainRequest(
 		require.Fail(s.t, "Expected error should not have other expected results with it.", s.testCase.Description)
 	}
 
-	for _, node := range getNodes(action.NodeID, nodes) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.DB.ExecRequest(s.ctx, action.Request)
 		assertExplainRequestResults(
 			s.ctx,

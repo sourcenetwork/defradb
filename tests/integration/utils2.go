@@ -300,16 +300,16 @@ func executeTestCase(
 	startActionIndex, endActionIndex := getActionRange(testCase)
 
 	s := newState(ctx, t, testCase, dbt)
+	setStartingNodes(s)
 
-	nodes, dbPaths := getStartingNodes(ctx, t, dbt, testCase)
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
-	defer closeNodes(s, nodes)
+	defer closeNodes(s)
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
-	collections := getCollections(s, nodes, collectionNames)
+	collections := getCollections(s, collectionNames)
 	// documents are by collection (index), these are not node specific.
 	documents := getDocuments(ctx, t, testCase, collections, startActionIndex)
 	// indexes are by collection (index)
@@ -323,86 +323,84 @@ func executeTestCase(
 				t.SkipNow()
 				return
 			}
-			node, path := configureNode(s, action)
-			nodes = append(nodes, node)
-			dbPaths = append(dbPaths, path)
+			configureNode(s, action)
 
 		case Restart:
-			restartNodes(s, i, nodes, dbPaths)
+			restartNodes(s, i)
 
 			// If the db was restarted we need to refresh the collection definitions as the old instances
 			// will reference the old (closed) database instances.
-			collections = getCollections(s, nodes, collectionNames)
+			collections = getCollections(s, collectionNames)
 			indexes = getAllIndexes(s, collections)
 
 		case ConnectPeers:
-			connectPeers(s, action, nodes)
+			connectPeers(s, action)
 
 		case ConfigureReplicator:
-			configureReplicator(s, action, nodes)
+			configureReplicator(s, action)
 
 		case SubscribeToCollection:
-			subscribeToCollection(s, action, nodes, collections)
+			subscribeToCollection(s, action, collections)
 
 		case UnsubscribeToCollection:
-			unsubscribeToCollection(s, action, nodes, collections)
+			unsubscribeToCollection(s, action, collections)
 
 		case GetAllP2PCollections:
-			getAllP2PCollections(s, action, nodes, collections)
+			getAllP2PCollections(s, action, collections)
 
 		case SchemaUpdate:
-			updateSchema(s, nodes, action)
+			updateSchema(s, action)
 			// If the schema was updated we need to refresh the collection definitions.
-			collections = getCollections(s, nodes, collectionNames)
+			collections = getCollections(s, collectionNames)
 			indexes = getAllIndexes(s, collections)
 
 		case SchemaPatch:
-			patchSchema(s, nodes, action)
+			patchSchema(s, action)
 			// If the schema was updated we need to refresh the collection definitions.
-			collections = getCollections(s, nodes, collectionNames)
+			collections = getCollections(s, collectionNames)
 			indexes = getAllIndexes(s, collections)
 
 		case ConfigureMigration:
-			configureMigration(s, nodes, action)
+			configureMigration(s, action)
 
 		case GetMigrations:
-			getMigrations(s, nodes, action)
+			getMigrations(s, action)
 
 		case CreateDoc:
-			documents = createDoc(s, nodes, collections, documents, action)
+			documents = createDoc(s, collections, documents, action)
 
 		case DeleteDoc:
-			deleteDoc(s, nodes, collections, documents, action)
+			deleteDoc(s, collections, documents, action)
 
 		case UpdateDoc:
-			updateDoc(s, nodes, collections, documents, action)
+			updateDoc(s, collections, documents, action)
 
 		case CreateIndex:
-			indexes = createIndex(s, nodes, collections, indexes, action)
+			indexes = createIndex(s, collections, indexes, action)
 
 		case DropIndex:
-			dropIndex(s, nodes, collections, indexes, action)
+			dropIndex(s, collections, indexes, action)
 
 		case GetIndexes:
-			getIndexes(s, nodes, collections, action)
+			getIndexes(s, collections, action)
 
 		case TransactionCommit:
 			commitTransaction(s, action)
 
 		case SubscriptionRequest:
-			executeSubscriptionRequest(s, nodes, action)
+			executeSubscriptionRequest(s, action)
 
 		case Request:
-			executeRequest(s, nodes, action)
+			executeRequest(s, action)
 
 		case ExplainRequest:
-			executeExplainRequest(s, nodes, action)
+			executeExplainRequest(s, action)
 
 		case IntrospectionRequest:
-			assertIntrospectionResults(s, nodes, action)
+			assertIntrospectionResults(s, action)
 
 		case ClientIntrospectionRequest:
-			assertClientIntrospectionResults(s, nodes, action)
+			assertClientIntrospectionResults(s, action)
 
 		case WaitForSync:
 			waitForSync(s, action)
@@ -434,9 +432,8 @@ func executeTestCase(
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
 func closeNodes(
 	s *state,
-	nodes []*net.Node,
 ) {
-	for _, node := range nodes {
+	for _, node := range s.nodes {
 		if node.Peer != nil {
 			err := node.Close()
 			require.NoError(s.t, err)
@@ -564,18 +561,15 @@ ActionLoop:
 	return startIndex, endIndex
 }
 
-// getStartingNodes returns a set of initial Defra nodes for the test to execute against.
+// setStartingNodes adds a set of initial Defra nodes for the test to execute against.
 //
-// If a node(s) has been explicitly configured via a `ConfigureNode` action then an empty
-// set will be returned.
-func getStartingNodes(
-	ctx context.Context,
-	t *testing.T,
-	dbt DatabaseType,
-	testCase TestCase,
-) ([]*net.Node, []string) {
+// If a node(s) has been explicitly configured via a `ConfigureNode` action then no new
+// nodes will be added.
+func setStartingNodes(
+	s *state,
+) {
 	hasExplicitNode := false
-	for _, action := range testCase.Actions {
+	for _, action := range s.testCase.Actions {
 		switch action.(type) {
 		case ConfigureNode:
 			hasExplicitNode = true
@@ -584,36 +578,29 @@ func getStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		db, path, err := GetDatabase(ctx, t, dbt)
-		require.Nil(t, err)
+		db, path, err := GetDatabase(s.ctx, s.t, s.dbt)
+		require.Nil(s.t, err)
 
-		return []*net.Node{
-				{
-					DB: db,
-				},
-			}, []string{
-				path,
-			}
+		s.nodes = append(s.nodes, &net.Node{
+			DB: db,
+		})
+		s.dbPaths = append(s.dbPaths, path)
 	}
-
-	return []*net.Node{}, []string{}
 }
 
 func restartNodes(
 	s *state,
 	actionIndex int,
-	nodes []*net.Node,
-	dbPaths []string,
 ) {
 	if s.dbt == badgerIMType || s.dbt == defraIMType {
 		return
 	}
-	closeNodes(s, nodes)
+	closeNodes(s)
 
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
-	for i := len(nodes) - 1; i >= 0; i-- {
+	for i := len(s.nodes) - 1; i >= 0; i-- {
 		originalPath := databaseDir
-		databaseDir = dbPaths[i]
+		databaseDir = s.dbPaths[i]
 		db, _, err := GetDatabase(s.ctx, s.t, s.dbt)
 		require.Nil(s.t, err)
 		databaseDir = originalPath
@@ -621,7 +608,7 @@ func restartNodes(
 		if len(s.nodeConfigs) == 0 {
 			// If there are no explicit node configuration actions the node will be
 			// basic (i.e. no P2P stuff) and can be yielded now.
-			nodes[i] = &net.Node{
+			s.nodes[i] = &net.Node{
 				DB: db,
 			}
 			continue
@@ -647,7 +634,7 @@ func restartNodes(
 			require.NoError(s.t, err)
 		}
 
-		nodes[i] = n
+		s.nodes[i] = n
 	}
 
 	// The index of the action after the last wait action before the current restart action.
@@ -670,13 +657,13 @@ actionLoop:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
 			setupPeerWaitSync(
-				s, waitGroupStartIndex, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
 			)
 		case ConfigureReplicator:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
 			setupReplicatorWaitSync(
-				s, waitGroupStartIndex, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
+				s, waitGroupStartIndex, action, s.nodes[action.SourceNodeID], s.nodes[action.TargetNodeID],
 			)
 		}
 	}
@@ -688,12 +675,11 @@ actionLoop:
 // result-index will be nil.
 func getCollections(
 	s *state,
-	nodes []*net.Node,
 	collectionNames []string,
 ) [][]client.Collection {
-	collections := make([][]client.Collection, len(nodes))
+	collections := make([][]client.Collection, len(s.nodes))
 
-	for nodeID, node := range nodes {
+	for nodeID, node := range s.nodes {
 		collections[nodeID] = make([]client.Collection, len(collectionNames))
 		allCollections, err := node.DB.GetAllCollections(s.ctx)
 		require.Nil(s.t, err)
@@ -717,7 +703,7 @@ func getCollections(
 func configureNode(
 	s *state,
 	action ConfigureNode,
-) (*net.Node, string) {
+) {
 	cfg := action()
 	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
 	// And affects where libp2p(?) stores some values on the file system, even when using
@@ -748,7 +734,8 @@ func configureNode(
 	s.nodeAddresses = append(s.nodeAddresses, address)
 	s.nodeConfigs = append(s.nodeConfigs, cfg)
 
-	return n, path
+	s.nodes = append(s.nodes, n)
+	s.dbPaths = append(s.dbPaths, path)
 }
 
 func getDocuments(
@@ -837,7 +824,6 @@ func getAllIndexes(
 
 func getIndexes(
 	s *state,
-	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	action GetIndexes,
 ) {
@@ -846,7 +832,7 @@ func getIndexes(
 	}
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, nodes)
+	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		err := withRetry(
 			actionNodes,
@@ -936,10 +922,9 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
 // updateSchema updates the schema using the given details.
 func updateSchema(
 	s *state,
-	nodes []*net.Node,
 	action SchemaUpdate,
 ) {
-	for _, node := range getNodes(action.NodeID, nodes) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
 		_, err := node.DB.AddSchema(s.ctx, action.Schema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
@@ -949,10 +934,9 @@ func updateSchema(
 
 func patchSchema(
 	s *state,
-	nodes []*net.Node,
 	action SchemaPatch,
 ) {
-	for _, node := range getNodes(action.NodeID, nodes) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
 		err := node.DB.PatchSchema(s.ctx, action.Patch)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
@@ -964,7 +948,6 @@ func patchSchema(
 // given documents slice.
 func createDoc(
 	s *state,
-	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action CreateDoc,
@@ -972,7 +955,7 @@ func createDoc(
 	// All the docs should be identical, and we only need 1 copy so taking the last
 	// is okay.
 	var doc *client.Document
-	actionNodes := getNodes(action.NodeID, nodes)
+	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		var err error
 		doc, err = client.NewDocFromJSON([]byte(action.Doc))
@@ -1005,7 +988,6 @@ func createDoc(
 // given documents slice.
 func deleteDoc(
 	s *state,
-	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action DeleteDoc,
@@ -1013,7 +995,7 @@ func deleteDoc(
 	doc := documents[action.CollectionID][action.DocID]
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, nodes)
+	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		err := withRetry(
 			actionNodes,
@@ -1032,7 +1014,6 @@ func deleteDoc(
 // updateDoc updates a document using the collection api.
 func updateDoc(
 	s *state,
-	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action UpdateDoc,
@@ -1045,7 +1026,7 @@ func updateDoc(
 	}
 
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, nodes)
+	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		err := withRetry(
 			actionNodes,
@@ -1061,7 +1042,6 @@ func updateDoc(
 // createIndex creates a secondary index using the collection api.
 func createIndex(
 	s *state,
-	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	indexes [][][]client.IndexDescription,
 	action CreateIndex,
@@ -1071,7 +1051,7 @@ func createIndex(
 		indexes = append(indexes,
 			make([][][]client.IndexDescription, action.CollectionID-len(indexes)+1)...)
 	}
-	actionNodes := getNodes(action.NodeID, nodes)
+	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		indexDesc := client.IndexDescription{
 			Name: action.IndexName,
@@ -1116,13 +1096,12 @@ func createIndex(
 // dropIndex drops the secondary index using the collection api.
 func dropIndex(
 	s *state,
-	nodes []*net.Node,
 	nodeCollections [][]client.Collection,
 	indexes [][][]client.IndexDescription,
 	action DropIndex,
 ) {
 	var expectedErrorRaised bool
-	actionNodes := getNodes(action.NodeID, nodes)
+	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
 		indexName := action.IndexName
 		if indexName == "" {
@@ -1217,11 +1196,10 @@ func commitTransaction(
 // executeRequest executes the given request.
 func executeRequest(
 	s *state,
-	nodes []*net.Node,
 	action Request,
 ) {
 	var expectedErrorRaised bool
-	for nodeID, node := range getNodes(action.NodeID, nodes) {
+	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
 		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
 		result := db.ExecRequest(s.ctx, action.Request)
 
@@ -1251,12 +1229,11 @@ func executeRequest(
 // the subscription has terminated.
 func executeSubscriptionRequest(
 	s *state,
-	nodes []*net.Node,
 	action SubscriptionRequest,
 ) {
 	subscriptionAssert := make(chan func())
 
-	for _, node := range getNodes(action.NodeID, nodes) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.DB.ExecRequest(s.ctx, action.Request)
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return
@@ -1429,10 +1406,9 @@ func assertExpectedErrorRaised(t *testing.T, description string, expectedError s
 
 func assertIntrospectionResults(
 	s *state,
-	nodes []*net.Node,
 	action IntrospectionRequest,
 ) bool {
-	for _, node := range getNodes(action.NodeID, nodes) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.DB.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
@@ -1461,10 +1437,9 @@ func assertIntrospectionResults(
 // Asserts that the client introspection results conform to our expectations.
 func assertClientIntrospectionResults(
 	s *state,
-	nodes []*net.Node,
 	action ClientIntrospectionRequest,
 ) bool {
-	for _, node := range getNodes(action.NodeID, nodes) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.DB.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {

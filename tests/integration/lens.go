@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/net"
 )
 
 // ConfigureMigration is a test action which will configure a Lens migration using the
@@ -54,10 +53,9 @@ type GetMigrations struct {
 
 func configureMigration(
 	s *state,
-	nodes []*net.Node,
 	action ConfigureMigration,
 ) {
-	for _, node := range getNodes(action.NodeID, nodes) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
 		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
 
 		err := db.SetMigration(s.ctx, action.LensConfig)
@@ -69,10 +67,9 @@ func configureMigration(
 
 func getMigrations(
 	s *state,
-	nodes []*net.Node,
 	action GetMigrations,
 ) {
-	for _, node := range getNodes(action.NodeID, nodes) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
 		db := getStore(s, node.DB, action.TransactionID, "")
 
 		configs := db.LensRegistry().Config()

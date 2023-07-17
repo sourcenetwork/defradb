@@ -134,13 +134,12 @@ type AnyOf []any
 func connectPeers(
 	s *state,
 	cfg ConnectPeers,
-	nodes []*net.Node,
 ) {
 	// If we have some database actions prior to connecting the peers, we want to ensure that they had time to
 	// complete before we connect. Otherwise we might wrongly catch them in our wait function.
 	time.Sleep(100 * time.Millisecond)
-	sourceNode := nodes[cfg.SourceNodeID]
-	targetNode := nodes[cfg.TargetNodeID]
+	sourceNode := s.nodes[cfg.SourceNodeID]
+	targetNode := s.nodes[cfg.TargetNodeID]
 	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
 	log.Info(s.ctx, "Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
@@ -292,13 +291,12 @@ func collectionSubscribedTo(
 func configureReplicator(
 	s *state,
 	cfg ConfigureReplicator,
-	nodes []*net.Node,
 ) {
 	// If we have some database actions prior to configuring the replicator, we want to ensure that they had time to
 	// complete before the configuration. Otherwise we might wrongly catch them in our wait function.
 	time.Sleep(100 * time.Millisecond)
-	sourceNode := nodes[cfg.SourceNodeID]
-	targetNode := nodes[cfg.TargetNodeID]
+	sourceNode := s.nodes[cfg.SourceNodeID]
+	targetNode := s.nodes[cfg.TargetNodeID]
 	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
 	addr, err := ma.NewMultiaddr(targetAddress)
@@ -396,10 +394,9 @@ func setupReplicatorWaitSync(
 func subscribeToCollection(
 	s *state,
 	action SubscribeToCollection,
-	nodes []*net.Node,
 	collections [][]client.Collection,
 ) {
-	n := nodes[action.NodeID]
+	n := s.nodes[action.NodeID]
 
 	schemaIDs := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
@@ -433,10 +430,9 @@ func subscribeToCollection(
 func unsubscribeToCollection(
 	s *state,
 	action UnsubscribeToCollection,
-	nodes []*net.Node,
 	collections [][]client.Collection,
 ) {
-	n := nodes[action.NodeID]
+	n := s.nodes[action.NodeID]
 
 	schemaIDs := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
@@ -471,7 +467,6 @@ func unsubscribeToCollection(
 func getAllP2PCollections(
 	s *state,
 	action GetAllP2PCollections,
-	nodes []*net.Node,
 	collections [][]client.Collection,
 ) {
 	expectedCollections := []*pb.GetAllP2PCollectionsReply_Collection{}
@@ -486,7 +481,7 @@ func getAllP2PCollections(
 		)
 	}
 
-	n := nodes[action.NodeID]
+	n := s.nodes[action.NodeID]
 	cols, err := n.Peer.GetAllP2PCollections(
 		s.ctx,
 		&pb.GetAllP2PCollectionsRequest{},
