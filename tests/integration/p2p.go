@@ -136,7 +136,7 @@ func connectPeers(
 	cfg ConnectPeers,
 	nodes []*net.Node,
 	addresses []string,
-) chan struct{} {
+) {
 	// If we have some database actions prior to connecting the peers, we want to ensure that they had time to
 	// complete before we connect. Otherwise we might wrongly catch them in our wait function.
 	time.Sleep(100 * time.Millisecond)
@@ -156,7 +156,7 @@ func connectPeers(
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
 	time.Sleep(100 * time.Millisecond)
-	return setupPeerWaitSync(s, 0, cfg, sourceNode, targetNode)
+	setupPeerWaitSync(s, 0, cfg, sourceNode, targetNode)
 }
 
 func setupPeerWaitSync(
@@ -165,7 +165,7 @@ func setupPeerWaitSync(
 	cfg ConnectPeers,
 	sourceNode *net.Node,
 	targetNode *net.Node,
-) chan struct{} {
+) {
 	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -266,7 +266,7 @@ func setupPeerWaitSync(
 	// Ensure that the wait routine is ready to receive events before we continue.
 	<-ready
 
-	return nodeSynced
+	s.syncChans = append(s.syncChans, nodeSynced)
 }
 
 // collectionSubscribedTo returns true if the collection on the given node
@@ -295,7 +295,7 @@ func configureReplicator(
 	cfg ConfigureReplicator,
 	nodes []*net.Node,
 	addresses []string,
-) chan struct{} {
+) {
 	// If we have some database actions prior to configuring the replicator, we want to ensure that they had time to
 	// complete before the configuration. Otherwise we might wrongly catch them in our wait function.
 	time.Sleep(100 * time.Millisecond)
@@ -313,7 +313,7 @@ func configureReplicator(
 		},
 	)
 	require.NoError(s.t, err)
-	return setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
+	setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
 }
 
 func setupReplicatorWaitSync(
@@ -322,7 +322,7 @@ func setupReplicatorWaitSync(
 	cfg ConfigureReplicator,
 	sourceNode *net.Node,
 	targetNode *net.Node,
-) chan struct{} {
+) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
 	docIDsSyncedToSource := map[int]struct{}{}
@@ -389,7 +389,7 @@ func setupReplicatorWaitSync(
 	// Ensure that the wait routine is ready to receive events before we continue.
 	<-ready
 
-	return nodeSynced
+	s.syncChans = append(s.syncChans, nodeSynced)
 }
 
 // subscribeToCollection sets up a collection subscription on the given node/collection.
@@ -505,9 +505,8 @@ func getAllP2PCollections(
 func waitForSync(
 	s *state,
 	action WaitForSync,
-	waitChans []chan struct{},
 ) {
-	for _, resultsChan := range waitChans {
+	for _, resultsChan := range s.syncChans {
 		select {
 		case <-resultsChan:
 			continue

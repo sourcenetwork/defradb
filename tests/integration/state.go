@@ -40,6 +40,9 @@ type state struct {
 
 	// These channels will recieve a function which asserts results of any subscription requests.
 	subscriptionResultsChans []chan func()
+
+	// These synchronisation channels allow async actions to track their completion.
+	syncChans []chan struct{}
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -57,5 +60,6 @@ func newState(
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
+		syncChans:                []chan struct{}{},
 	}
 }

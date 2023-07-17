@@ -302,7 +302,6 @@ func executeTestCase(
 
 	s := newState(ctx, t, testCase, dbt)
 
-	syncChans := []chan struct{}{}
 	nodeAddresses := []string{}
 	// The actions responsible for configuring the node
 	nodeConfigs := []config.Config{}
@@ -336,12 +335,7 @@ func executeTestCase(
 			nodeConfigs = append(nodeConfigs, cfg)
 
 		case Restart:
-			// Append the new syncChans on top of the previous - the old syncChans will be closed
-			// gracefully as part of the node closure.
-			syncChans = append(
-				syncChans,
-				restartNodes(s, i, nodes, dbPaths, nodeAddresses, nodeConfigs)...,
-			)
+			restartNodes(s, i, nodes, dbPaths, nodeAddresses, nodeConfigs)
 
 			// If the db was restarted we need to refresh the collection definitions as the old instances
 			// will reference the old (closed) database instances.
@@ -349,10 +343,10 @@ func executeTestCase(
 			indexes = getAllIndexes(s, collections)
 
 		case ConnectPeers:
-			syncChans = append(syncChans, connectPeers(s, action, nodes, nodeAddresses))
+			connectPeers(s, action, nodes, nodeAddresses)
 
 		case ConfigureReplicator:
-			syncChans = append(syncChans, configureReplicator(s, action, nodes, nodeAddresses))
+			configureReplicator(s, action, nodes, nodeAddresses)
 
 		case SubscribeToCollection:
 			subscribeToCollection(s, action, nodes, collections)
@@ -418,7 +412,7 @@ func executeTestCase(
 			assertClientIntrospectionResults(s, nodes, action)
 
 		case WaitForSync:
-			waitForSync(s, action, syncChans)
+			waitForSync(s, action)
 
 		case SetupComplete:
 			// no-op, just continue.
@@ -619,9 +613,9 @@ func restartNodes(
 	dbPaths []string,
 	nodeAddresses []string,
 	configureActions []config.Config,
-) []chan struct{} {
+) {
 	if s.dbt == badgerIMType || s.dbt == defraIMType {
-		return nil
+		return
 	}
 	closeNodes(s, nodes)
 
@@ -679,25 +673,22 @@ actionLoop:
 		}
 	}
 
-	syncChans := []chan struct{}{}
 	for _, tc := range s.testCase.Actions {
 		switch action := tc.(type) {
 		case ConnectPeers:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			syncChans = append(syncChans, setupPeerWaitSync(
+			setupPeerWaitSync(
 				s, waitGroupStartIndex, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
-			))
+			)
 		case ConfigureReplicator:
 			// Give the nodes a chance to connect to each other and learn about each other's subscribed topics.
 			time.Sleep(100 * time.Millisecond)
-			syncChans = append(syncChans, setupReplicatorWaitSync(
+			setupReplicatorWaitSync(
 				s, waitGroupStartIndex, action, nodes[action.SourceNodeID], nodes[action.TargetNodeID],
-			))
+			)
 		}
 	}
-
-	return syncChans
 }
 
 // getCollections returns all the collections of the given names, preserving order.
