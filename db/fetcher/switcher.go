@@ -24,17 +24,19 @@ func (f *FetcherSwitcher) Init(
 	var filterCond any
 	var indexedFieldDesc client.FieldDescription
 	colIndexes := col.Indexes
-	for filterFieldName, cond := range filter.ExternalConditions {
-		for i := range colIndexes {
-			if filterFieldName == colIndexes[i].Fields[0].Name {
-				index = colIndexes[i]
-				filterCond = cond
+	if filter != nil {
+		for filterFieldName, cond := range filter.ExternalConditions {
+			for i := range colIndexes {
+				if filterFieldName == colIndexes[i].Fields[0].Name {
+					index = colIndexes[i]
+					filterCond = cond
 
-				indexedFields := col.CollectIndexedFields()
-				for j := range indexedFields {
-					if indexedFields[j].Name == filterFieldName {
-						indexedFieldDesc = indexedFields[j]
-						break
+					indexedFields := col.CollectIndexedFields()
+					for j := range indexedFields {
+						if indexedFields[j].Name == filterFieldName {
+							indexedFieldDesc = indexedFields[j]
+							break
+						}
 					}
 				}
 			}
