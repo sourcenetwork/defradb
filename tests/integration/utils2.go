@@ -321,11 +321,6 @@ func executeTestCase(
 		case Restart:
 			restartNodes(s, i)
 
-			// If the db was restarted we need to refresh the collection definitions as the old instances
-			// will reference the old (closed) database instances.
-			refreshCollections(s)
-			refreshIndexes(s)
-
 		case ConnectPeers:
 			connectPeers(s, action)
 
@@ -343,15 +338,9 @@ func executeTestCase(
 
 		case SchemaUpdate:
 			updateSchema(s, action)
-			// If the schema was updated we need to refresh the collection definitions.
-			refreshCollections(s)
-			refreshIndexes(s)
 
 		case SchemaPatch:
 			patchSchema(s, action)
-			// If the schema was updated we need to refresh the collection definitions.
-			refreshCollections(s)
-			refreshIndexes(s)
 
 		case ConfigureMigration:
 			configureMigration(s, action)
@@ -660,6 +649,11 @@ actionLoop:
 			)
 		}
 	}
+
+	// If the db was restarted we need to refresh the collection definitions as the old instances
+	// will reference the old (closed) database instances.
+	refreshCollections(s)
+	refreshIndexes(s)
 }
 
 // refreshCollections refreshes all the collections of the given names, preserving order.
@@ -918,6 +912,10 @@ func updateSchema(
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	}
+
+	// If the schema was updated we need to refresh the collection definitions.
+	refreshCollections(s)
+	refreshIndexes(s)
 }
 
 func patchSchema(
@@ -930,6 +928,10 @@ func patchSchema(
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	}
+
+	// If the schema was updated we need to refresh the collection definitions.
+	refreshCollections(s)
+	refreshIndexes(s)
 }
 
 // createDoc creates a document using the collection api and caches it in the
