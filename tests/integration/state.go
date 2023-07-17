@@ -72,6 +72,9 @@ type state struct {
 	// Each index is assumed to be global, and may be expected across multiple
 	// nodes.
 	documents [][]*client.Document
+
+	// Indexes, by index, by collection index, by node index.
+	indexes [][][]client.IndexDescription
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -98,5 +101,6 @@ func newState(
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,
 		documents:                [][]*client.Document{},
+		indexes:                  [][][]client.IndexDescription{},
 	}
 }

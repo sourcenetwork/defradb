@@ -311,9 +311,7 @@ func executeTestCase(
 	// collections are by node (index), as they are specific to nodes.
 	refreshCollections(s)
 	refreshDocuments(s, startActionIndex)
-
-	// indexes are by collection (index)
-	indexes := getAllIndexes(s)
+	refreshIndexes(s)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		switch action := testCase.Actions[i].(type) {
@@ -331,7 +329,7 @@ func executeTestCase(
 			// If the db was restarted we need to refresh the collection definitions as the old instances
 			// will reference the old (closed) database instances.
 			refreshCollections(s)
-			indexes = getAllIndexes(s)
+			refreshIndexes(s)
 
 		case ConnectPeers:
 			connectPeers(s, action)
@@ -352,13 +350,13 @@ func executeTestCase(
 			updateSchema(s, action)
 			// If the schema was updated we need to refresh the collection definitions.
 			refreshCollections(s)
-			indexes = getAllIndexes(s)
+			refreshIndexes(s)
 
 		case SchemaPatch:
 			patchSchema(s, action)
 			// If the schema was updated we need to refresh the collection definitions.
 			refreshCollections(s)
-			indexes = getAllIndexes(s)
+			refreshIndexes(s)
 
 		case ConfigureMigration:
 			configureMigration(s, action)
@@ -376,10 +374,10 @@ func executeTestCase(
 			updateDoc(s, action)
 
 		case CreateIndex:
-			indexes = createIndex(s, indexes, action)
+			createIndex(s, action)
 
 		case DropIndex:
-			dropIndex(s, indexes, action)
+			dropIndex(s, action)
 
 		case GetIndexes:
 			getIndexes(s, action)
@@ -786,17 +784,17 @@ func refreshDocuments(
 	}
 }
 
-func getAllIndexes(
+func refreshIndexes(
 	s *state,
-) [][][]client.IndexDescription {
+) {
 	if len(s.collections) == 0 {
-		return [][][]client.IndexDescription{}
+		return
 	}
 
-	result := make([][][]client.IndexDescription, len(s.collections))
+	s.indexes = make([][][]client.IndexDescription, len(s.collections))
 
 	for i, nodeCols := range s.collections {
-		result[i] = make([][]client.IndexDescription, len(nodeCols))
+		s.indexes[i] = make([][]client.IndexDescription, len(nodeCols))
 
 		for j, col := range nodeCols {
 			if col == nil {
@@ -807,11 +805,9 @@ func getAllIndexes(
 				continue
 			}
 
-			result[i][j] = colIndexes
+			s.indexes[i][j] = colIndexes
 		}
 	}
-
-	return result
 }
 
 func getIndexes(
@@ -1025,13 +1021,12 @@ func updateDoc(
 // createIndex creates a secondary index using the collection api.
 func createIndex(
 	s *state,
-	indexes [][][]client.IndexDescription,
 	action CreateIndex,
-) [][][]client.IndexDescription {
-	if action.CollectionID >= len(indexes) {
+) {
+	if action.CollectionID >= len(s.indexes) {
 		// Expand the slice if required, so that the index can be accessed by collection index
-		indexes = append(indexes,
-			make([][][]client.IndexDescription, action.CollectionID-len(indexes)+1)...)
+		s.indexes = append(s.indexes,
+			make([][][]client.IndexDescription, action.CollectionID-len(s.indexes)+1)...)
 	}
 	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
@@ -1060,25 +1055,22 @@ func createIndex(
 				if err != nil {
 					return err
 				}
-				indexes[nodeID][action.CollectionID] =
-					append(indexes[nodeID][action.CollectionID], desc)
+				s.indexes[nodeID][action.CollectionID] =
+					append(s.indexes[nodeID][action.CollectionID], desc)
 				return nil
 			},
 		)
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-			return nil
+			return
 		}
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, false)
-
-	return indexes
 }
 
 // dropIndex drops the secondary index using the collection api.
 func dropIndex(
 	s *state,
-	indexes [][][]client.IndexDescription,
 	action DropIndex,
 ) {
 	var expectedErrorRaised bool
@@ -1086,7 +1078,7 @@ func dropIndex(
 	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
 		indexName := action.IndexName
 		if indexName == "" {
-			indexName = indexes[nodeID][action.CollectionID][action.IndexID].Name
+			indexName = s.indexes[nodeID][action.CollectionID][action.IndexID].Name
 		}
 
 		err := withRetry(
