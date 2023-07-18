@@ -25,14 +25,15 @@ const (
 	Version          string = "v0"
 	versionedAPIPath string = "/api/" + Version
 
-	RootPath    string = versionedAPIPath + ""
-	PingPath    string = versionedAPIPath + "/ping"
-	DumpPath    string = versionedAPIPath + "/debug/dump"
-	BlocksPath  string = versionedAPIPath + "/blocks"
-	GraphQLPath string = versionedAPIPath + "/graphql"
-	SchemaPath  string = versionedAPIPath + "/schema"
-	IndexPath   string = versionedAPIPath + "/index"
-	PeerIDPath  string = versionedAPIPath + "/peerid"
+	RootPath            string = versionedAPIPath + ""
+	PingPath            string = versionedAPIPath + "/ping"
+	DumpPath            string = versionedAPIPath + "/debug/dump"
+	BlocksPath          string = versionedAPIPath + "/blocks"
+	GraphQLPath         string = versionedAPIPath + "/graphql"
+	SchemaPath          string = versionedAPIPath + "/schema"
+	SchemaMigrationPath string = SchemaPath + "/migration"
+	IndexPath           string = versionedAPIPath + "/index"
+	PeerIDPath          string = versionedAPIPath + "/peerid"
 )
 
 func setRoutes(h *handler) *handler {
@@ -61,6 +62,8 @@ func setRoutes(h *handler) *handler {
 	h.Get(SchemaPath, h.handle(listSchemaHandler))
 	h.Post(SchemaPath, h.handle(loadSchemaHandler))
 	h.Patch(SchemaPath, h.handle(patchSchemaHandler))
+	h.Post(SchemaMigrationPath, h.handle(setMigrationHandler))
+	h.Get(SchemaMigrationPath, h.handle(getMigrationHandler))
 	h.Post(IndexPath, h.handle(createIndexHandler))
 	h.Delete(IndexPath, h.handle(dropIndexHandler))
 	h.Get(IndexPath, h.handle(listIndexHandler))
