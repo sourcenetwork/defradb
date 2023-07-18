@@ -216,21 +216,13 @@ func (cmp *likeIndexCmp) doesMatch(value string) bool {
 	switch {
 	case cmp.hasPrefix && cmp.hasSuffix:
 		return strings.Contains(value, cmp.filterValue)
-
 	case cmp.hasPrefix:
-		// if the condition has a prefix string `%`, this means that we are matching
-		// the condition as being a suffix to the data.
 		return strings.HasSuffix(value, cmp.filterValue)
-
 	case cmp.hasSuffix:
-		// if the condition has a suffix string `%`, this means that we are matching
-		// the condition as being a prefix to the data.
 		return strings.HasPrefix(value, cmp.filterValue)
-
 	case len(cmp.startAndEnd) == 2:
 		return strings.HasPrefix(value, cmp.startAndEnd[0]) &&
 			strings.HasSuffix(value, cmp.startAndEnd[1])
-
 	default:
 		return cmp.filterValue == value
 	}
