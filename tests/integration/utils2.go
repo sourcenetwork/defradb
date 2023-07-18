@@ -1604,6 +1604,7 @@ func executeSubscriptionRequest(
 							action.ExpectedError,
 							nil,
 							// anyof is not yet supported by subscription requests
+							nil,
 							0,
 							map[docFieldKey][]any{},
 						)

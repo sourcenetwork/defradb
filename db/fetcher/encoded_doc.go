@@ -136,7 +136,9 @@ func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
 	if !ok {
 		return
 	}
-	encdoc.Properties = append(encdoc.Properties, otherEncDoc.Properties...)
+	for field, prop := range otherEncDoc.Properties {
+		encdoc.Properties[field] = prop
+	}
 }
 
 // DecodeToDoc returns a decoded document as a

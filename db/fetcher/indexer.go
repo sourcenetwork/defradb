@@ -321,6 +321,8 @@ func (f *IndexFetcher) createFilteredIndexQueryProvider(
 }
 
 func (f *IndexFetcher) Init(
+	ctx context.Context,
+	txn datastore.Txn,
 	col *client.CollectionDescription,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
@@ -332,6 +334,7 @@ func (f *IndexFetcher) Init(
 	f.filter = filter
 	f.doc = &encodedDocument{}
 	f.doc.mapping = docMapper
+	f.txn = txn
 
 	f.indexDataStoreKey.CollectionID = f.col.ID
 	f.indexDataStoreKey.IndexID = f.index.ID
@@ -351,9 +354,7 @@ func (f *IndexFetcher) Init(
 	return nil
 }
 
-func (f *IndexFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
-	f.txn = txn
-
+func (f *IndexFetcher) Start(ctx context.Context, spans core.Spans) error {
 	var err error
 	f.indexQuery, err = f.indexQueryProvider.Get(ctx, f.txn)
 	if err != nil {
@@ -380,16 +381,16 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
 	}
 
 	f.doc.key = indexKey.FieldValues[1]
-	f.doc.Properties = append(f.doc.Properties, property)
+	f.doc.Properties[f.indexedField] = property
 
 	if f.docFetcher != nil {
 		targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
 		spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
-		err = f.docFetcher.Init(f.col, f.docFields, f.filter, f.doc.mapping, false, false)
+		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.filter, f.doc.mapping, false, false)
 		if err != nil {
 			return nil, err
 		}
-		err = f.docFetcher.Start(ctx, f.txn, spans)
+		err = f.docFetcher.Start(ctx, spans)
 		if err != nil {
 			return nil, err
 		}

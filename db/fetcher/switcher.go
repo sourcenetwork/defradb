@@ -1,8 +1,11 @@
 package fetcher
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -13,6 +16,8 @@ type FetcherSwitcher struct {
 var _ Fetcher = (*FetcherSwitcher)(nil)
 
 func (f *FetcherSwitcher) Init(
+	ctx context.Context,
+	txn datastore.Txn,
 	col *client.CollectionDescription,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
@@ -49,5 +54,5 @@ func (f *FetcherSwitcher) Init(
 		f.Fetcher = new(DocumentFetcher)
 	}
 
-	return f.Fetcher.Init(col, fields, filter, docMapper, reverse, showDeleted)
+	return f.Fetcher.Init(ctx, txn, col, fields, filter, docMapper, reverse, showDeleted)
 }

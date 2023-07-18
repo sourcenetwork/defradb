@@ -266,11 +266,6 @@ func (p *Planner) Scan(
 	if mapperSelect.Cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
-		f = new(fetcher.DocumentFetcher)
-		indexedFields := colDesc.CollectIndexedFields()
-		if len(indexedFields) > 0 {
-			f = fetcher.NewIndexFetcher(f, indexedFields)
-		}
 		f = new(fetcher.FetcherSwitcher)
 		f = lens.NewFetcher(f, p.db.LensRegistry())
 	}
