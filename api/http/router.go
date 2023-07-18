@@ -48,7 +48,7 @@ func setRoutes(h *handler) *handler {
 	h.Get(SchemaPath, listSchemaHandler)
 	h.Post(SchemaPath, loadSchemaHandler)
 	h.Patch(SchemaPath, patchSchemaHandler)
-  h.Post(SchemaMigrationPath, setMigrationHandler)
+	h.Post(SchemaMigrationPath, setMigrationHandler)
 	h.Get(SchemaMigrationPath, getMigrationHandler)
 	h.Post(IndexPath, createIndexHandler)
 	h.Delete(IndexPath, dropIndexHandler)

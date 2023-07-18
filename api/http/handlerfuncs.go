@@ -25,6 +25,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/multiformats/go-multihash"
 
+	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
