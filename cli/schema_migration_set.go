@@ -39,10 +39,10 @@ Example: set from an argument string:
   defradb client schema migration set bae123 bae456 '{"lenses": [...'
 
 Example: set from file:
-  defradb client schema migration set bae123 bae456 -f schema_migration.graphql
+  defradb client schema migration set bae123 bae456 -f schema_migration.lens
 
 Example: add from stdin:
-  cat schema_migration.graphql | defradb client schema migration set bae123 bae456 -
+  cat schema_migration.lens | defradb client schema migration set bae123 bae456 -
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -77,7 +77,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				log.FeedbackInfo(
 					cmd.Context(),
 					"Run 'defradb client schema migration set -' to read from stdin."+
-						" Example: 'cat schema_migration.graphql | defradb client schema migration set -').",
+						" Example: 'cat schema_migration.lens | defradb client schema migration set -').",
 				)
 				return nil
 			} else if args[2] == "-" {
