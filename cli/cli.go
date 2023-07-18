@@ -81,6 +81,7 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 	)
 	schemaMigrationCmd.AddCommand(
 		MakeSchemaMigrationSetCommand(cfg),
+		MakeSchemaMigrationGetCommand(cfg),
 	)
 	schemaCmd.AddCommand(
 		MakeSchemaAddCommand(cfg),
