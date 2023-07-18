@@ -24,5 +24,5 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	router.Handle("/*", http.FileServer(http.FS(sub)))
+	playgroundHandler = http.FileServer(http.FS(sub))
 }

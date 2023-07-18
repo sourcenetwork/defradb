@@ -11,11 +11,11 @@
 package http
 
 import (
+	"net/http"
 	"net/url"
 	"path"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 )
 
@@ -34,22 +34,25 @@ const (
 	PeerIDPath  string = versionedAPIPath + "/peerid"
 )
 
-var router = chi.NewRouter()
+// playgroundHandler is set when building with the playground build tag
+var playgroundHandler http.Handler
 
-func init() {
-	router.Get(RootPath, rootHandler)
-	router.Get(PingPath, pingHandler)
-	router.Get(DumpPath, dumpHandler)
-	router.Get(BlocksPath+"/{cid}", getBlockHandler)
-	router.Get(GraphQLPath, execGQLHandler)
-	router.Post(GraphQLPath, execGQLHandler)
-	router.Get(SchemaPath, listSchemaHandler)
-	router.Post(SchemaPath, loadSchemaHandler)
-	router.Patch(SchemaPath, patchSchemaHandler)
-	router.Post(IndexPath, createIndexHandler)
-	router.Delete(IndexPath, dropIndexHandler)
-	router.Get(IndexPath, listIndexHandler)
-	router.Get(PeerIDPath, peerIDHandler)
+func setRoutes(h *handler) *handler {
+	h.Get(RootPath, rootHandler)
+	h.Get(PingPath, pingHandler)
+	h.Get(DumpPath, dumpHandler)
+	h.Get(BlocksPath+"/{cid}", getBlockHandler)
+	h.Get(GraphQLPath, execGQLHandler)
+	h.Post(GraphQLPath, execGQLHandler)
+	h.Get(SchemaPath, listSchemaHandler)
+	h.Post(SchemaPath, loadSchemaHandler)
+	h.Patch(SchemaPath, patchSchemaHandler)
+	h.Post(IndexPath, createIndexHandler)
+	h.Delete(IndexPath, dropIndexHandler)
+	h.Get(IndexPath, listIndexHandler)
+	h.Get(PeerIDPath, peerIDHandler)
+	h.Handle("/*", playgroundHandler)
+	return h
 }
 
 // JoinPaths takes a base path and any number of additional paths

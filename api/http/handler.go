@@ -94,13 +94,11 @@ func newHandler(db client.DB, opts serverOptions) *handler {
 		})
 	})
 
-	mux.Mount("/", router)
-
-	return &handler{
+	return setRoutes(&handler{
 		Mux:     mux,
 		db:      db,
 		options: opts,
-	}
+	})
 }
 
 func getJSON(req *http.Request, v any) error {
