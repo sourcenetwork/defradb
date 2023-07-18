@@ -26,7 +26,7 @@ const (
 	errIndexUnknownArgument       string = "index with unknown argument"
 	errIndexInvalidArgument       string = "index with invalid argument"
 	errIndexInvalidName           string = "index with invalid name"
-	errMissingPrimaryRelation     string = "missing primary relation"
+	errRelationOneSided           string = "relation must be defined on both schemas"
 )
 
 var (
@@ -45,11 +45,11 @@ var (
 	ErrMultipleRelationPrimaries  = errors.New("relation can only have a single field set as primary")
 	// NonNull is the literal name of the GQL type, so we have to disable the linter
 	//nolint:revive
-	ErrNonNullNotSupported    = errors.New("NonNull fields are not currently supported")
-	ErrIndexMissingFields     = errors.New(errIndexMissingFields)
-	ErrIndexWithUnknownArg    = errors.New(errIndexUnknownArgument)
-	ErrIndexWithInvalidArg    = errors.New(errIndexInvalidArgument)
-	ErrMissingPrimaryRelation = errors.New(errMissingPrimaryRelation)
+	ErrNonNullNotSupported = errors.New("NonNull fields are not currently supported")
+	ErrIndexMissingFields  = errors.New(errIndexMissingFields)
+	ErrIndexWithUnknownArg = errors.New(errIndexUnknownArgument)
+	ErrIndexWithInvalidArg = errors.New(errIndexInvalidArgument)
+	ErrRelationOneSided    = errors.New(errRelationOneSided)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -81,8 +81,8 @@ func NewErrRelationMissingField(objectName, fieldName string) error {
 	)
 }
 
-func NewErrMissingPrimaryRelation(typeName string) error {
-	return errors.New(errMissingPrimaryRelation, errors.NewKV("Type", typeName))
+func NewErrRelationOneSided(typeName string) error {
+	return errors.New(errRelationOneSided, errors.NewKV("Type", typeName))
 }
 
 func NewErrAggregateTargetNotFound(objectName, target string) error {

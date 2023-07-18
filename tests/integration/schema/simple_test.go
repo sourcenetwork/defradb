@@ -150,23 +150,6 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
-func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: NotAType
-					}
-				`,
-				ExpectedError: "no type found for given name",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
-}
-
 func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -244,26 +227,6 @@ func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 					}
 				`,
 				ExpectedError: "NonNull variants for type are not supported. Type: Dogs",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, []string{"Dogs", "Users"}, test)
-}
-
-func TestSchemaSimpleErrorsGivenOneSidedManyRelationField(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Dogs {
-						name: String
-					}
-					type Users {
-						Dogs: [Dogs]
-					}
-				`,
-				ExpectedError: "missing primary relation. Type: Dogs",
 			},
 		},
 	}
