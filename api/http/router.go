@@ -24,14 +24,15 @@ const (
 	Version          string = "v0"
 	versionedAPIPath string = "/api/" + Version
 
-	RootPath    string = versionedAPIPath + ""
-	PingPath    string = versionedAPIPath + "/ping"
-	DumpPath    string = versionedAPIPath + "/debug/dump"
-	BlocksPath  string = versionedAPIPath + "/blocks"
-	GraphQLPath string = versionedAPIPath + "/graphql"
-	SchemaPath  string = versionedAPIPath + "/schema"
-	IndexPath   string = versionedAPIPath + "/index"
-	PeerIDPath  string = versionedAPIPath + "/peerid"
+	RootPath            string = versionedAPIPath + ""
+	PingPath            string = versionedAPIPath + "/ping"
+	DumpPath            string = versionedAPIPath + "/debug/dump"
+	BlocksPath          string = versionedAPIPath + "/blocks"
+	GraphQLPath         string = versionedAPIPath + "/graphql"
+	SchemaPath          string = versionedAPIPath + "/schema"
+	SchemaMigrationPath string = SchemaPath + "/migration"
+	IndexPath           string = versionedAPIPath + "/index"
+	PeerIDPath          string = versionedAPIPath + "/peerid"
 )
 
 // playgroundHandler is set when building with the playground build tag
@@ -47,6 +48,8 @@ func setRoutes(h *handler) *handler {
 	h.Get(SchemaPath, listSchemaHandler)
 	h.Post(SchemaPath, loadSchemaHandler)
 	h.Patch(SchemaPath, patchSchemaHandler)
+  h.Post(SchemaMigrationPath, setMigrationHandler)
+	h.Get(SchemaMigrationPath, getMigrationHandler)
 	h.Post(IndexPath, createIndexHandler)
 	h.Delete(IndexPath, dropIndexHandler)
 	h.Get(IndexPath, listIndexHandler)

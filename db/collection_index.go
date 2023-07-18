@@ -259,7 +259,7 @@ func (c *collection) iterateAllDocs(
 	start := base.MakeCollectionKey(c.desc)
 	spans := core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 
-	err = df.Start(ctx, txn, spans)
+	err = df.Start(ctx, spans)
 	if err != nil {
 		_ = df.Close()
 		return err

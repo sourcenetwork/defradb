@@ -147,7 +147,7 @@ func (n *scanNode) initScan() error {
 		n.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 	}
 
-	err := n.fetcher.Start(n.p.ctx, n.p.txn, n.spans)
+	err := n.fetcher.Start(n.p.ctx, n.spans)
 	if err != nil {
 		return err
 	}

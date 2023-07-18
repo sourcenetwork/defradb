@@ -22,12 +22,12 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
-	mh "github.com/multiformats/go-multihash"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
+	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -166,7 +166,7 @@ func (db *db) createCollection(
 	}
 
 	// add a reference to this DB by desc hash
-	cid, err := core.NewSHA256CidV1(globalSchemaBuf)
+	cid, err := ccid.NewSHA256CidV1(globalSchemaBuf)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +262,7 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	cid, err := core.NewSHA256CidV1(globalSchemaBuf)
+	cid, err := ccid.NewSHA256CidV1(globalSchemaBuf)
 	if err != nil {
 		return nil, err
 	}
@@ -703,34 +703,25 @@ func (c *collection) CreateMany(ctx context.Context, docs []*client.Document) er
 func (c *collection) getKeysFromDoc(
 	doc *client.Document,
 ) (client.DocKey, core.PrimaryDataStoreKey, error) {
-	// DocKey verification
-	buf, err := doc.Bytes()
-	if err != nil {
-		return client.DocKey{}, core.PrimaryDataStoreKey{}, err
-	}
-	// @todo:  grab the cid Prefix from the DocKey internal CID if available
-	pref := cid.Prefix{
-		Version:  1,
-		Codec:    cid.Raw,
-		MhType:   mh.SHA2_256,
-		MhLength: -1, // default length
-	}
-	// And then feed it some data
-	doccid, err := pref.Sum(buf)
+	docKey, err := doc.GenerateDocKey()
 	if err != nil {
 		return client.DocKey{}, core.PrimaryDataStoreKey{}, err
 	}
 
-	dockey := client.NewDocKeyV0(doccid)
-	primaryKey := c.getPrimaryKeyFromDocKey(dockey)
+	primaryKey := c.getPrimaryKeyFromDocKey(docKey)
 	if primaryKey.DocKey != doc.Key().String() {
 		return client.DocKey{}, core.PrimaryDataStoreKey{},
 			NewErrDocVerification(doc.Key().String(), primaryKey.DocKey)
 	}
-	return dockey, primaryKey, nil
+	return docKey, primaryKey, nil
 }
 
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
+	// This has to be done before dockey verification happens in the next step.
+	if err := doc.RemapAliasFieldsAndDockey(c.desc.Schema.Fields); err != nil {
+		return err
+	}
+
 	dockey, primaryKey, err := c.getKeysFromDoc(doc)
 	if err != nil {
 		return err
@@ -875,6 +866,7 @@ func (c *collection) save(
 
 		if val.IsDirty() {
 			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
+
 			if !fieldExists {
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
@@ -1209,5 +1201,6 @@ func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
 			return uint32(field.ID), true
 		}
 	}
+
 	return uint32(0), false
 }

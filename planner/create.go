@@ -88,9 +88,13 @@ func (n *createNode) Next() (bool, error) {
 
 	currentValue.SetKey(n.doc.Key().String())
 	for i, value := range n.doc.Values() {
-		// On create the document will have no aliased fields/aggregates/etc so we can safely take
-		// the first index.
-		n.documentMapping.SetFirstOfName(&currentValue, i.Name(), value.Value())
+		if len(n.documentMapping.IndexesByName[i.Name()]) > 0 {
+			n.documentMapping.SetFirstOfName(&currentValue, i.Name(), value.Value())
+		} else if aliasName := i.Name() + request.RelatedObjectID; len(n.documentMapping.IndexesByName[aliasName]) > 0 {
+			n.documentMapping.SetFirstOfName(&currentValue, aliasName, value.Value())
+		} else {
+			return false, client.NewErrFieldNotExist(i.Name())
+		}
 	}
 
 	n.returned = true
