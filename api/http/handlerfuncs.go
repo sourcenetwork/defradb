@@ -283,6 +283,52 @@ func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	)
 }
 
+func setMigrationHandler(rw http.ResponseWriter, req *http.Request) {
+	cfgStr, err := readWithLimit(req.Body, rw)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	txn, err := db.NewTxn(req.Context(), false)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	var cfg client.LensConfig
+	err = json.Unmarshal(cfgStr, &cfg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = db.LensRegistry().SetMigration(req.Context(), txn, cfg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = txn.Commit(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("result", "success"),
+		http.StatusOK,
+	)
+}
+
 func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 	cidStr := chi.URLParam(req, "cid")
 
