@@ -129,7 +129,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return errors.Wrap("join paths failed", err)
 			}
 
-			res, err := http.Post(endpoint.String(), "json", strings.NewReader(string(migrationCfgJson)))
+			res, err := http.Post(endpoint.String(), "application/json", strings.NewReader(string(migrationCfgJson)))
 			if err != nil {
 				return errors.Wrap("failed to post schema migration", err)
 			}
