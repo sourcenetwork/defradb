@@ -329,6 +329,27 @@ func setMigrationHandler(rw http.ResponseWriter, req *http.Request) {
 	)
 }
 
+func getMigrationHandler(rw http.ResponseWriter, req *http.Request) {
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	cfgs := db.LensRegistry().Config()
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("configuration", cfgs),
+		http.StatusOK,
+	)
+}
+
 func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 	cidStr := chi.URLParam(req, "cid")
 
