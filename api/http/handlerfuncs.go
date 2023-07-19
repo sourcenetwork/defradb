@@ -24,10 +24,10 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/multiformats/go-multihash"
-	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 )
 
@@ -157,9 +157,10 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 type fieldResponse struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Kind string `json:"kind"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Kind     string `json:"kind"`
+	Internal bool   `json:"internal"`
 }
 
 type collectionResponse struct {
@@ -185,12 +186,10 @@ func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	for i, col := range cols {
 		var fields []fieldResponse
 		for _, field := range col.Schema().Fields {
-			if field.Name == "_key" || field.RelationType == client.Relation_Type_INTERNAL_ID {
-				continue // ignore generated fields
-			}
 			fieldRes := fieldResponse{
-				ID:   field.ID.String(),
-				Name: field.Name,
+				ID:       field.ID.String(),
+				Name:     field.Name,
+				Internal: field.IsInternal(),
 			}
 			if field.IsObjectArray() {
 				fieldRes.Kind = fmt.Sprintf("[%s]", field.Schema)
@@ -279,6 +278,73 @@ func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		req.Context(),
 		rw,
 		simpleDataResponse("result", "success"),
+		http.StatusOK,
+	)
+}
+
+func setMigrationHandler(rw http.ResponseWriter, req *http.Request) {
+	cfgStr, err := readWithLimit(req.Body, rw)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	txn, err := db.NewTxn(req.Context(), false)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	var cfg client.LensConfig
+	err = json.Unmarshal(cfgStr, &cfg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = db.LensRegistry().SetMigration(req.Context(), txn, cfg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = txn.Commit(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("result", "success"),
+		http.StatusOK,
+	)
+}
+
+func getMigrationHandler(rw http.ResponseWriter, req *http.Request) {
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	cfgs := db.LensRegistry().Config()
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("configuration", cfgs),
 		http.StatusOK,
 	)
 }

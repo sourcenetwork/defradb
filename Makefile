@@ -25,8 +25,13 @@ BUILD_FLAGS=-trimpath -ldflags "\
 -X 'github.com/sourcenetwork/defradb/version.GitCommitDate=$(VERSION_GITCOMMITDATE)'"
 endif
 
+ifdef BUILD_TAGS
+BUILD_FLAGS+=-tags $(BUILD_TAGS)
+endif
+
 TEST_FLAGS=-race -shuffle=on -timeout 70s
 
+PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
 CLI_TEST_DIRECTORY=tests/integration/cli
 DEFAULT_TEST_DIRECTORIES=$$(go list ./... | grep -v -e $(LENS_TEST_DIRECTORY) -e $(CLI_TEST_DIRECTORY))
@@ -102,6 +107,10 @@ deps\:modules:
 .PHONY: deps\:mock
 deps\:mock:
 	go install github.com/vektra/mockery/v2@v2.30.1
+
+.PHONY: deps\:playground
+deps\:playground:
+	cd $(PLAYGROUND_DIRECTORY) && npm install && npm run build
 
 .PHONY: deps
 deps:

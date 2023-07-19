@@ -18,6 +18,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -68,23 +69,36 @@ func simpleDataResponse(args ...any) DataResponse {
 
 // newHandler returns a handler with the router instantiated.
 func newHandler(db client.DB, opts serverOptions) *handler {
+	mux := chi.NewRouter()
+	mux.Use(loggerMiddleware)
+
+	if len(opts.allowedOrigins) != 0 {
+		mux.Use(cors.Handler(cors.Options{
+			AllowedOrigins: opts.allowedOrigins,
+			AllowedMethods: []string{"GET", "POST", "PATCH", "OPTIONS"},
+			AllowedHeaders: []string{"Content-Type"},
+			MaxAge:         300,
+		}))
+	}
+
+	mux.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if opts.tls.HasValue() {
+				rw.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+			}
+			ctx := context.WithValue(req.Context(), ctxDB{}, db)
+			if opts.peerID != "" {
+				ctx = context.WithValue(ctx, ctxPeerID{}, opts.peerID)
+			}
+			next.ServeHTTP(rw, req.WithContext(ctx))
+		})
+	})
+
 	return setRoutes(&handler{
+		Mux:     mux,
 		db:      db,
 		options: opts,
 	})
-}
-
-func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
-	return func(rw http.ResponseWriter, req *http.Request) {
-		if h.options.tls.HasValue() {
-			rw.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-		}
-		ctx := context.WithValue(req.Context(), ctxDB{}, h.db)
-		if h.options.peerID != "" {
-			ctx = context.WithValue(ctx, ctxPeerID{}, h.options.peerID)
-		}
-		f(rw, req.WithContext(ctx))
-	}
 }
 
 func getJSON(req *http.Request, v any) error {

@@ -28,9 +28,10 @@ type schemaListResponse struct {
 			Name   string `json:"name"`
 			ID     string `json:"id"`
 			Fields []struct {
-				ID   string `json:"id"`
-				Name string `json:"name"`
-				Kind string `json:"kind"`
+				ID       string `json:"id"`
+				Name     string `json:"name"`
+				Kind     string `json:"kind"`
+				Internal bool   `json:"internal"`
 			} `json:"fields"`
 		} `json:"collections"`
 	} `json:"data"`
@@ -71,7 +72,9 @@ func MakeSchemaListCommand(cfg *config.Config) *cobra.Command {
 			for _, c := range r.Data.Collections {
 				cmd.Printf("type %s {\n", c.Name)
 				for _, f := range c.Fields {
-					cmd.Printf("\t%s: %s\n", f.Name, f.Kind)
+					if !f.Internal {
+						cmd.Printf("\t%s: %s\n", f.Name, f.Kind)
+					}
 				}
 				cmd.Printf("}\n")
 			}
