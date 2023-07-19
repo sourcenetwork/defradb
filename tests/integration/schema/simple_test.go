@@ -150,6 +150,23 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
+func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: NotAType
+					}
+				`,
+				ExpectedError: "relation must be defined on both schemas. Type: NotAType",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
 func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
