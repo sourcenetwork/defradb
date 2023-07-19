@@ -16,7 +16,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -40,33 +39,35 @@ Example: import data to the database:
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			contentType := "application/json"
-			inputPath := args[0]
-			if strings.HasSuffix(inputPath, "cbor") {
-				contentType = "application/octet-stream"
-			}
-
-			b, err := os.ReadFile(inputPath)
-			if err != nil {
-				return NewErrFailedToJoinEndpoint(err)
-			}
-
 			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.ImportPath)
 			if err != nil {
 				return NewErrFailedToJoinEndpoint(err)
 			}
 
-			res, err := http.Post(endpoint.String(), contentType, bytes.NewBuffer(b))
+			inputPath := args[0]
+			data := map[string]string{
+				"filepath": inputPath,
+			}
+
+			b, err := json.Marshal(data)
+			if err != nil {
+				return err
+			}
+
+			res, err := http.Post(endpoint.String(), "application/json", bytes.NewBuffer(b))
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
 			}
 
+			defer func() {
+				if e := res.Body.Close(); e != nil {
+					err = NewErrFailedToCloseResponseBody(e, err)
+				}
+			}()
+
 			response, err := io.ReadAll(res.Body)
 			if err != nil {
 				return NewErrFailedToReadResponseBody(err)
-			}
-			if err := res.Body.Close(); err != nil {
-				return NewErrFailedToCloseResponseBody(err)
 			}
 
 			stdout, err := os.Stdout.Stat()

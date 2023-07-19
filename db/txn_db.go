@@ -373,3 +373,44 @@ func (db *implicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, er
 func (db *explicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return db.getAllP2PCollections(ctx, db.txn)
 }
+
+// BasicImport returns the list of persisted collection IDs that
+// the P2P system subscribes to.
+func (db *implicitTxnDB) BasicImport(ctx context.Context, filepath string) error {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	return db.basicImport(ctx, txn, filepath)
+}
+
+// BasicImport returns the list of persisted collection IDs that
+// the P2P system subscribes to.
+func (db *explicitTxnDB) BasicImport(ctx context.Context, filepath string) error {
+	return db.basicImport(ctx, db.txn, filepath)
+}
+
+// BasicExport returns the list of persisted collection IDs that
+// the P2P system subscribes to.
+func (db *implicitTxnDB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.basicExport(ctx, txn, config)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+// BasicExport returns the list of persisted collection IDs that
+// the P2P system subscribes to.
+func (db *explicitTxnDB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	return db.basicExport(ctx, db.txn, config)
+}

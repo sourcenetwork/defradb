@@ -105,8 +105,11 @@ func NewErrFailedToReadResponseBody(inner error) error {
 	return errors.Wrap(errFailedToReadResponseBody, inner)
 }
 
-func NewErrFailedToCloseResponseBody(inner error) error {
-	return errors.Wrap(errFailedToCloseResponseBody, inner)
+func NewErrFailedToCloseResponseBody(closeErr, other error) error {
+	if other != nil {
+		return errors.Wrap(errFailedToCloseResponseBody, closeErr, errors.NewKV("Other error", other))
+	}
+	return errors.Wrap(errFailedToCloseResponseBody, closeErr)
 }
 
 func NewErrFailedToStatStdOut(inner error) error {

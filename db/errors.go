@@ -59,6 +59,8 @@ const (
 	errIndexDescriptionHasNoFields    string = "index description has no fields"
 	errIndexDescHasNonExistingField   string = "index description has non existing field"
 	errFieldOrAliasToFieldNotExist    string = "The given field or alias to field does not exist"
+	errCloseFile                      string = "failed to close the file"
+	errRemoveFile                     string = "failed to remove the file"
 )
 
 var (
@@ -111,6 +113,8 @@ var (
 	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
 	ErrCanNotChangeIndexWithPatch     = errors.New(errCanNotChangeIndexWithPatch)
 	ErrFieldOrAliasToFieldNotExist    = errors.New(errFieldOrAliasToFieldNotExist)
+	ErrCloseFile                      = errors.New(errCloseFile)
+	ErrRemoveFile                     = errors.New(errRemoveFile)
 )
 
 // NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
@@ -382,4 +386,18 @@ func NewErrIndexDescHasNonExistingField(desc client.IndexDescription, fieldName 
 		errors.NewKV("Description", desc),
 		errors.NewKV("Field name", fieldName),
 	)
+}
+
+func NewErrCloseFile(closeErr, other error) error {
+	if other != nil {
+		return errors.Wrap(errCloseFile, closeErr, errors.NewKV("Other error", other))
+	}
+	return errors.Wrap(errCloseFile, closeErr)
+}
+
+func NewErrRemoveFile(removeErr, other error) error {
+	if other != nil {
+		return errors.Wrap(errRemoveFile, removeErr, errors.NewKV("Other error", other))
+	}
+	return errors.Wrap(errRemoveFile, removeErr)
 }

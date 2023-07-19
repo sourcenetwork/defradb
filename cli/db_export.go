@@ -18,7 +18,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/spf13/cobra"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
@@ -26,7 +25,6 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-const cborFileType = "cbor"
 const jsonFileType = "json"
 
 func MakeDBExportCommand(cfg *config.Config) *cobra.Command {
@@ -43,10 +41,8 @@ Otherwise, all collections in the database will be exported.
 
 If the --pretty flag is provided, the JSON will be pretty printed.
 
-If the --format flag is provided, the supported options are json and cbor.
-
 Example: export data for the 'Users' collection:
-  defradb client export --format cbor --collection Users user_data.json`,
+  defradb client export --collection Users user_data.json`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 				return NewErrInvalidArgumentLength(err, 1)
@@ -63,27 +59,35 @@ Example: export data for the 'Users' collection:
 				return NewErrFailedToJoinEndpoint(err)
 			}
 
+			// set query parameters
+			values := make(url.Values)
 			if len(collections) != 0 {
 				for i := range collections {
 					collections[i] = strings.Trim(collections[i], " ")
 				}
-				values := url.Values{
-					"collections": collections,
-				}
-				endpoint.RawQuery = values.Encode()
+				values["collections"] = collections
 			}
+			if pretty {
+				values.Set("pretty", "true")
+			}
+			values.Set("format", format)
+			values.Set("filepath", outputPath)
+			endpoint.RawQuery = values.Encode()
 
 			res, err := http.Get(endpoint.String())
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
 			}
 
+			defer func() {
+				if e := res.Body.Close(); e != nil {
+					err = NewErrFailedToCloseResponseBody(e, err)
+				}
+			}()
+
 			response, err := io.ReadAll(res.Body)
 			if err != nil {
 				return NewErrFailedToReadResponseBody(err)
-			}
-			if err := res.Body.Close(); err != nil {
-				return NewErrFailedToCloseResponseBody(err)
 			}
 
 			stdout, err := os.Stdout.Stat()
@@ -94,7 +98,12 @@ Example: export data for the 'Users' collection:
 			if isFileInfoPipe(stdout) {
 				cmd.Println(string(response))
 			} else {
-				r := httpAPIResponse[map[string][]map[string]any]{}
+				type exportResponse struct {
+					Errors []struct {
+						Message string `json:"message"`
+					} `json:"errors"`
+				}
+				r := exportResponse{}
 				err = json.Unmarshal(response, &r)
 				if err != nil {
 					return NewErrFailedToUnmarshalResponse(err)
@@ -109,40 +118,13 @@ Example: export data for the 'Users' collection:
 				} else {
 					log.FeedbackInfo(cmd.Context(), "Data exported for all collections")
 				}
-				var b []byte
-
-				if strings.ToLower(format) == cborFileType {
-					em, err := cbor.CanonicalEncOptions().EncMode()
-					if err != nil {
-						return NewFailedToMarshalData(err)
-					}
-					b, err = em.Marshal(r.Data)
-					if err != nil {
-						return NewFailedToMarshalData(err)
-					}
-				} else if pretty {
-					b, err = json.MarshalIndent(r.Data, "", "  ")
-					if err != nil {
-						return NewFailedToMarshalData(err)
-					}
-				} else {
-					b, err = json.Marshal(r.Data)
-					if err != nil {
-						return NewFailedToMarshalData(err)
-					}
-				}
-
-				err = os.WriteFile(outputPath, b, 0644)
-				if err != nil {
-					return err
-				}
 			}
 			return nil
 		},
 	}
 	cmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Set the output JSON to be pretty printed")
 	cmd.Flags().StringVarP(&format, "format", "f", jsonFileType,
-		"Define the output format. Supported formats: [json, cbor]")
+		"Define the output format. Supported formats: [json]")
 	cmd.Flags().StringSliceVarP(&collections, "collections", "c", []string{}, "List of collections")
 
 	return cmd
@@ -150,7 +132,7 @@ Example: export data for the 'Users' collection:
 
 func isValidExportFormat(format string) bool {
 	switch strings.ToLower(format) {
-	case cborFileType, jsonFileType:
+	case jsonFileType:
 		return true
 	default:
 		return false
