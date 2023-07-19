@@ -23,8 +23,8 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -48,8 +48,8 @@ func TestSchemaUpdatesRemoveCollectionIDErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -73,8 +73,8 @@ func TestSchemaUpdatesRemoveSchemaIDErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -98,8 +98,8 @@ func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -114,8 +114,8 @@ func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
+						email
 					}
 				}`,
 				Results: []map[string]any{},
@@ -132,8 +132,8 @@ func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},

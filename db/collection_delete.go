@@ -168,6 +168,12 @@ func (c *collection) deleteWithFilter(
 	if err != nil {
 		return nil, err
 	}
+
+	err = selectionPlan.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	if err := selectionPlan.Start(); err != nil {
 		return nil, err
 	}
@@ -233,7 +239,7 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFound
 	}
 	if isDeleted {
-		return ErrDocumentDeleted
+		return NewErrDocumentDeleted(key.DocKey)
 	}
 
 	dsKey := key.ToDataStoreKey()

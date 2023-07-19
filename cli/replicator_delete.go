@@ -36,31 +36,15 @@ func MakeReplicatorDeleteCommand(cfg *config.Config) *cobra.Command {
 	for the p2p data sync system.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return errors.New("must specify one argument: peer")
+				return errors.New("must specify one argument: PeerID")
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pidString := args[0]
 
-			if len(col) != 0 {
-				log.FeedbackInfo(
-					cmd.Context(),
-					"Removing replicator for collection",
-					logging.NewKV("PeerAddress", pidString),
-					logging.NewKV("Collection", col),
-					logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
-				)
-			} else {
-				if !fullRep {
-					return errors.New("must run with either --full or --collection")
-				}
-				log.FeedbackInfo(
-					cmd.Context(),
-					"Removing full replicator",
-					logging.NewKV("PeerAddress", pidString),
-					logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
-				)
+			if len(col) == 0 && !fullRep {
+				return errors.New("must run with either --full or --collection")
 			}
 
 			cred := insecure.NewCredentials()
@@ -79,14 +63,14 @@ func MakeReplicatorDeleteCommand(cfg *config.Config) *cobra.Command {
 
 			pid, err := peer.Decode(pidString)
 			if err != nil {
-				return errors.Wrap("failed to parse peer id from string", err)
+				return errors.Wrap("failed to parse PeerID from string", err)
 			}
 
 			err = client.DeleteReplicator(ctx, pid)
 			if err != nil {
 				return errors.Wrap("failed to delete replicator, request failed", err)
 			}
-			log.FeedbackInfo(ctx, "Successfully deleted replicator", logging.NewKV("PID", pid.String()))
+			log.FeedbackInfo(ctx, "Successfully deleted replicator", logging.NewKV("PeerID", pid.String()))
 			return nil
 		},
 	}

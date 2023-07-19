@@ -20,7 +20,7 @@ func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with equal value",
 		Request: `query {
-					users(filter: {Age: {_ge: 32}}) {
+					Users(filter: {Age: {_ge: 32}}) {
 						Name
 					}
 				}`,
@@ -50,7 +50,7 @@ func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with greater value",
 		Request: `query {
-					users(filter: {Age: {_ge: 31}}) {
+					Users(filter: {Age: {_ge: 31}}) {
 						Name
 					}
 				}`,
@@ -80,7 +80,7 @@ func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge nil filter",
 		Request: `query {
-					users(filter: {Age: {_ge: null}}) {
+					Users(filter: {Age: {_ge: null}}) {
 						Name
 					}
 				}`,

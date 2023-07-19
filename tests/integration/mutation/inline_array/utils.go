@@ -17,19 +17,19 @@ import (
 )
 
 var userCollectionGQLSchema = (`
-	type users {
-		Name: String
-		LikedIndexes: [Boolean!]
-		IndexLikesDislikes: [Boolean]
-		FavouriteIntegers: [Int!]
-		TestScores: [Int]
-		FavouriteFloats: [Float!]
-		PageRatings: [Float]
-		PreferredStrings: [String!]
-		PageHeaders: [String]
+	type Users {
+		name: String
+		likedIndexes: [Boolean!]
+		indexLikesDislikes: [Boolean]
+		favouriteIntegers: [Int!]
+		testScores: [Int]
+		favouriteFloats: [Float!]
+		pageRatings: [Float]
+		preferredStrings: [String!]
+		pageHeaders: [String]
 	}
 `)
 
 func ExecuteTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(t, userCollectionGQLSchema, []string{"users"}, test)
+	testUtils.ExecuteRequestTestCase(t, userCollectionGQLSchema, []string{"Users"}, test)
 }

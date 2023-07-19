@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimitA
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count with limit and offset on non-rendered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {offset: 1, limit: 1})
 					}
@@ -60,7 +60,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, child limit, count with limit and offset on rendered group",
 		Request: `query {
-					users(groupBy: [Age]) {
+					Users(groupBy: [Age]) {
 						Age
 						_count(_group: {offset: 1, limit: 1})
 						_group (limit: 2) {

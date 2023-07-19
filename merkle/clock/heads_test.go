@@ -20,26 +20,19 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
-	mh "github.com/multiformats/go-multihash"
 
 	"github.com/sourcenetwork/defradb/core"
+	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func newRandomCID() cid.Cid {
-	pref := cid.Prefix{
-		Version:  1,
-		Codec:    cid.Raw,
-		MhType:   mh.SHA2_256,
-		MhLength: -1, // default length
-	}
-
 	// And then feed it some data
 	bs := make([]byte, 4)
 	i := rand.Uint32()
 	binary.LittleEndian.PutUint32(bs, i)
 
-	c, err := pref.Sum(bs)
+	c, err := ccid.NewSHA256CidV1(bs)
 	if err != nil {
 		return cid.Undef
 	}

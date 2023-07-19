@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defradb.store")
+	log = logging.MustNewLogger("store")
 )
 
 // RootStore wraps Batching and TxnDatastore requiring datastore to support both batching and transactions.

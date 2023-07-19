@@ -23,22 +23,22 @@ func TestSchemaUpdatesAddFieldKindFloat(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 6} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 6} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{},
@@ -55,35 +55,35 @@ func TestSchemaUpdatesAddFieldKindFloatWithCreate(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 6} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 6} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": 3
+					"name": "John",
+					"foo": 3
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo":  float64(3),
+						"name": "John",
+						"foo":  float64(3),
 					},
 				},
 			},
@@ -99,35 +99,35 @@ func TestSchemaUpdatesAddFieldKindFloatSubstitutionWithCreate(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "Float"} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": "Float"} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": 3
+					"name": "John",
+					"foo": 3
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo":  float64(3),
+						"name": "John",
+						"foo":  float64(3),
 					},
 				},
 			},

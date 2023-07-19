@@ -43,7 +43,7 @@ An optional dockey parameter for this commit query. Only commits for a document
  with a matching dockey will be returned.  If no documents match, the result
  set will be empty.
 `
-	commitFieldArgDescription string = `
+	commitFieldIDArgDescription string = `
 An optional field ID parameter for this commit query. Only commits for a fields
  matching this ID will be returned. Specifying 'C' will limit the results to 
  composite (document level) commits only, otherwise field IDs are numeric. If no
@@ -80,6 +80,14 @@ The ID of the collection that this commit was committed against.
 	commitSchemaVersionIDFieldDescription string = `
 The ID of the schema version that this commit was committed against. This ID allows one
  to determine the state of the data model at the time of commit.
+`
+	commitFieldNameFieldDescription string = `
+The name of the field that this commit was committed against. If this is a composite field
+ the value will be null.
+`
+	commitFieldIDFieldDescription string = `
+The id of the field that this commit was committed against. If this is a composite field
+ the value will be "C".
 `
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.

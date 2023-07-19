@@ -24,9 +24,10 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/multiformats/go-multihash"
-	"github.com/pkg/errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 )
 
@@ -155,6 +156,65 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(req.Context(), rw, newGQLResult(result.GQL), http.StatusOK)
 }
 
+type fieldResponse struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Kind     string `json:"kind"`
+	Internal bool   `json:"internal"`
+}
+
+type collectionResponse struct {
+	Name   string          `json:"name"`
+	ID     string          `json:"id"`
+	Fields []fieldResponse `json:"fields,omitempty"`
+}
+
+func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	cols, err := db.GetAllCollections(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	colResp := make([]collectionResponse, len(cols))
+	for i, col := range cols {
+		var fields []fieldResponse
+		for _, field := range col.Schema().Fields {
+			fieldRes := fieldResponse{
+				ID:       field.ID.String(),
+				Name:     field.Name,
+				Internal: field.IsInternal(),
+			}
+			if field.IsObjectArray() {
+				fieldRes.Kind = fmt.Sprintf("[%s]", field.Schema)
+			} else if field.IsObject() {
+				fieldRes.Kind = field.Schema
+			} else {
+				fieldRes.Kind = field.Kind.String()
+			}
+			fields = append(fields, fieldRes)
+		}
+		colResp[i] = collectionResponse{
+			Name:   col.Name(),
+			ID:     col.SchemaID(),
+			Fields: fields,
+		}
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("collections", colResp),
+		http.StatusOK,
+	)
+}
+
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	sdl, err := readWithLimit(req.Body, rw)
 	if err != nil {
@@ -168,16 +228,29 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = db.AddSchema(req.Context(), string(sdl))
+	colDescs, err := db.AddSchema(req.Context(), string(sdl))
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
+	colResp := make([]collectionResponse, len(colDescs))
+	for i, desc := range colDescs {
+		col, err := db.GetCollectionByName(req.Context(), desc.Name)
+		if err != nil {
+			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+			return
+		}
+		colResp[i] = collectionResponse{
+			Name: col.Name(),
+			ID:   col.SchemaID(),
+		}
+	}
+
 	sendJSON(
 		req.Context(),
 		rw,
-		simpleDataResponse("result", "success"),
+		simpleDataResponse("result", "success", "collections", colResp),
 		http.StatusOK,
 	)
 }
@@ -205,6 +278,73 @@ func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		req.Context(),
 		rw,
 		simpleDataResponse("result", "success"),
+		http.StatusOK,
+	)
+}
+
+func setMigrationHandler(rw http.ResponseWriter, req *http.Request) {
+	cfgStr, err := readWithLimit(req.Body, rw)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	txn, err := db.NewTxn(req.Context(), false)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	var cfg client.LensConfig
+	err = json.Unmarshal(cfgStr, &cfg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = db.LensRegistry().SetMigration(req.Context(), txn, cfg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = txn.Commit(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("result", "success"),
+		http.StatusOK,
+	)
+}
+
+func getMigrationHandler(rw http.ResponseWriter, req *http.Request) {
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	cfgs := db.LensRegistry().Config()
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("configuration", cfgs),
 		http.StatusOK,
 	)
 }

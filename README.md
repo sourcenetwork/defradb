@@ -11,7 +11,7 @@
   </picture>
 </p>
 
-DefraDB is a user-centric database that prioritizes data ownership, personal privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
+DefraDB is a user-centric database that prioritizes data ownership, personal privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
 
 Read the documentation on [docs.source.network](https://docs.source.network/).
 
@@ -231,7 +231,7 @@ defradb client query '
 
 DQL is compatible with GraphQL but features various extensions.
 
-Read its documentation at [docs.source.network](https://docs.source.network/query-specification/query-language-overview) to discover its filtering, ordering, limiting, relationships, variables, aggregate functions, and other useful features.
+Read its documentation at [docs.source.network](https://docs.source.network/references/query-specification/query-language-overview) to discover its filtering, ordering, limiting, relationships, variables, aggregate functions, and other useful features.
 
 
 ## Peer-to-peer data synchronization
@@ -240,7 +240,7 @@ DefraDB leverages peer-to-peer networking for data exchange, synchronization, an
 
 When starting a node for the first time, a key pair is generated and stored in its "root directory" (`~/.defradb/` by default).
 
-Each node has a unique `Peer ID` generated from its public key. This ID allows other nodes to connect to it.
+Each node has a unique `PeerID` generated from its public key. This ID allows other nodes to connect to it.
 
 There are two types of peer-to-peer relationships supported: **pubsub** peering and **replicator** peering.
 
@@ -250,7 +250,7 @@ Replicator peering *actively* pushes changes from a specific collection *to* a t
 
 ### Pubsub example
 
-Pubsub peers can be specified on the command line using the `--peers` flag, which accepts a comma-separated list of peer [multiaddresses](https://docs.libp2p.io/concepts/addressing/). For example, a node at IP `192.168.1.12` listening on 9000 with Peer ID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
+Pubsub peers can be specified on the command line using the `--peers` flag, which accepts a comma-separated list of peer [multiaddresses](https://docs.libp2p.io/concepts/addressing/). For example, a node at IP `192.168.1.12` listening on 9000 with PeerID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
 
 Let's go through an example of two nodes (*nodeA* and *nodeB*) connecting with each other over pubsub, on the same machine.
 
@@ -260,7 +260,7 @@ Start *nodeA* with a default configuration:
 defradb start
 ```
 
-Obtain the Peer ID from its console output. In this example, we use `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally it will be different.
+Obtain the PeerID from its console output. In this example, we use `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally it will be different.
 
 For *nodeB*, we provide the following configuration:
 
@@ -280,7 +280,7 @@ This starts two nodes and connects them via pubsub networking.
 
 ### Collection subscription example
 
-It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `schemaVersionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
+It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `collectionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
 
 ```shell
 defradb client rpc p2pcollection add --url localhost:9182 bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske
@@ -335,9 +335,7 @@ defradb client schema add --url localhost:9182 '
 Set *nodeA* to actively replicate the "Article" collection to *nodeB*:
 
 ```shell
-defradb client rpc addreplicator "Article" /ip4/0.0.0.0/tcp/9172/p2p/
 defradb client rpc replicator set -c "Article" /ip4/0.0.0.0/tcp/9172/p2p/<peerID_of_nodeB>
-
 ```
 
 As we add or update documents in the "Article" collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
@@ -375,6 +373,19 @@ Note: `sudo` is needed above for the redirection server (to bind port 80).
 
 A valid email address is necessary for the creation of the certificate, and is important to get notifications from the Certificate Authority - in case the certificate is about to expire, etc.
 
+## Supporting CORS
+
+When accessing DefraDB through a frontend interface, you may be confronted with a CORS error. That is because, by default, DefraDB will not have any allowed origins set. To specify which origins should be allowed to access your DefraDB endpoint, you can specify them when starting the database:
+```shell
+defradb start --allowed-origins=https://yourdomain.com
+```
+
+If running a frontend app locally on localhost, allowed origins must be set with the port of the app:
+```shell
+defradb start --allowed-origins=http://localhost:3000
+```
+
+The catch-all `*` is also a valid origin. 
 
 ## Community
 

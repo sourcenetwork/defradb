@@ -23,29 +23,36 @@ import (
 
 // addSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, request types, etc.
-func (db *db) addSchema(ctx context.Context, txn datastore.Txn, schemaString string) error {
+func (db *db) addSchema(
+	ctx context.Context,
+	txn datastore.Txn,
+	schemaString string,
+) ([]client.CollectionDescription, error) {
 	existingDescriptions, err := db.getCollectionDescriptions(ctx, txn)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	newDescriptions, err := db.parser.ParseSDL(ctx, schemaString)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = db.parser.SetSchema(ctx, txn, append(existingDescriptions, newDescriptions...))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	for _, desc := range newDescriptions {
-		if _, err := db.createCollection(ctx, txn, desc); err != nil {
-			return err
+	returnDescriptions := make([]client.CollectionDescription, len(newDescriptions))
+	for i, desc := range newDescriptions {
+		col, err := db.createCollection(ctx, txn, desc)
+		if err != nil {
+			return nil, err
 		}
+		returnDescriptions[i] = col.Description()
 	}
 
-	return nil
+	return returnDescriptions, nil
 }
 
 func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {

@@ -17,8 +17,8 @@ import (
 )
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
-	initialSchemaVersionId := "bafkreicg3xcpjlt3ecguykpcjrdx5ogi4n7cq2fultyr6vippqdxnrny3u"
-	updatedSchemaVersionId := "bafkreicquhkxvwfzmjnoptu4cf5ib4tameu6wmq5wzwg3ooc32zqbvtif4"
+	initialSchemaVersionId := "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq"
+	updatedSchemaVersionId := "bafkreidejaxpsevyijnr4nah4e2l263emwhdaj57fwwv34eu5rea4ff54e"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with update after schema update, verison join",
@@ -26,14 +26,14 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			// We want to make sure that this works across database versions, so we tell
@@ -41,7 +41,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
+						name
 						_version {
 							schemaVersionId
 						}
@@ -49,7 +49,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
+						"name": "John",
 						"_version": []map[string]any{
 							{
 								"schemaVersionId": initialSchemaVersionId,
@@ -61,7 +61,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -69,14 +69,14 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Email": "ih8oraclelicensing@netscape.net"
+					"email": "ih8oraclelicensing@netscape.net"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
+						email
 						_version {
 							schemaVersionId
 						}
@@ -84,8 +84,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 				}`,
 				Results: []map[string]any{
 					{
-						"Name":  "John",
-						"Email": "ih8oraclelicensing@netscape.net",
+						"name":  "John",
+						"email": "ih8oraclelicensing@netscape.net",
 						"_version": []map[string]any{
 							{
 								// Update commit
@@ -105,8 +105,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 }
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
-	initialSchemaVersionId := "bafkreicg3xcpjlt3ecguykpcjrdx5ogi4n7cq2fultyr6vippqdxnrny3u"
-	updatedSchemaVersionId := "bafkreicquhkxvwfzmjnoptu4cf5ib4tameu6wmq5wzwg3ooc32zqbvtif4"
+	initialSchemaVersionId := "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq"
+	updatedSchemaVersionId := "bafkreidejaxpsevyijnr4nah4e2l263emwhdaj57fwwv34eu5rea4ff54e"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with update after schema update, commits query",
@@ -114,20 +114,20 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John"
+					"name": "John"
 				}`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -135,12 +135,12 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
-					"Email": "ih8oraclelicensing@netscape.net"
+					"email": "ih8oraclelicensing@netscape.net"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					commits (field: "C") {
+					commits (fieldId: "C") {
 						schemaVersionId
 					}
 				}`,

@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testi
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, and sum of count",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: _count})
 						_group (groupBy: [Verified]){

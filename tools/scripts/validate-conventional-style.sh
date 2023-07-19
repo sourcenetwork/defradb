@@ -7,6 +7,9 @@
 # Usage: ./validate-conventional-style.sh "feat: Add a new feature"
 #========================================================================================
 
+readonly BOT_LABEL="bot";
+readonly IGNORE_DECORATOR="(i)";
+
 # Declare a non-mutable indexed array that contains all the subset of conventional style
 #  labels that we deem valid for our use case. There should always be insync with the
 #  labels we have defined for the change log in: `defradb/tools/configs/chglog/config.yml`.
@@ -19,33 +22,28 @@ readonly -a VALID_LABELS=("chore"
                           "refactor"
                           "test"
                           "tools"
-                          "bot");
-
-BOTPREFIX="bot"
+                          "${BOT_LABEL}");
 
 if [ "${#}" -ne 1 ]; then
     printf "Error: Invalid number of arguments (pass title as 1 string argument).\n";
     exit 2;
 fi
 
-TITLE=${1};
-IS_BOT=false;
+readonly TITLE="${1}";
 
-# Detect if title is prefixed with `bot`
-if [[ "${TITLE}" =~ ^"${BOTPREFIX}:" ]]; then
+# Detect if title is prefixed with `bot`, skips length validation if it is.
+if [[ "${TITLE}" =~ ^"${BOT_LABEL}:" ]] || [[ "${TITLE}" =~ ^"${BOT_LABEL}${IGNORE_DECORATOR}:" ]]; then
     printf "Info: Title is from a bot, skipping length-related title validation.\n";
-    IS_BOT=true;
-fi  
 
 # Validate that the entire length of the title is less than or equal to our character limit.
-if [ "${#TITLE}" -gt 60 ] && [ "${IS_BOT}" = false ]; then
+elif [[ "${#TITLE}" -gt 60 ]]; then
     printf "Error: The length of the title is too long (should be 60 or less).\n";
     exit 3;
 fi
 
 # Split the title at ':' and store the result in ${SPLIT_TOKENS}.
 # Doing eval to ensure the split works for elements that contain spaces.
-eval "SPLIT_TOKENS=($(echo "\"$TITLE\"" | sed 's/:/" "/g'))";
+eval "SPLIT_TOKENS=($(echo "\"${TITLE}\"" | sed 's/:/" "/g'))";
 
 # Validate the `:` token exists exactly once.
 if [ "${#SPLIT_TOKENS[*]}" -ne 2 ]; then
@@ -53,8 +51,8 @@ if [ "${#SPLIT_TOKENS[*]}" -ne 2 ]; then
     exit 4;
 fi
 
-LABEL="${SPLIT_TOKENS[0]}";
-DESCRIPTION="${SPLIT_TOKENS[1]}";
+readonly LABEL="${SPLIT_TOKENS[0]}";
+readonly DESCRIPTION="${SPLIT_TOKENS[1]}";
 
 printf "Info: label = [%s]\n" "${LABEL}";
 printf "Info: description = [%s]\n" "${DESCRIPTION}";
@@ -65,9 +63,9 @@ if [ "${#DESCRIPTION}" -le 2 ]; then
     exit 5;
 fi
 
-CHECK_SPACE="${DESCRIPTION::1}"; # First character
-CHECK_FIRST_UPPER_CASE="${DESCRIPTION:1:1}"; # Second character
-CHECK_LAST_VALID="${DESCRIPTION: -1}"; # Last character
+readonly CHECK_SPACE="${DESCRIPTION::1}"; # First character
+readonly CHECK_FIRST_UPPER_CASE="${DESCRIPTION:1:1}"; # Second character
+readonly CHECK_LAST_VALID="${DESCRIPTION: -1}"; # Last character
 
 # Validate that there is a space between the label and description.
 if [ "${CHECK_SPACE}" != " " ]; then
@@ -91,6 +89,9 @@ fi
 for validLabel in "${VALID_LABELS[@]}"; do
     if [ "${LABEL}" == "${validLabel}" ]; then
         printf "Success: Title's label and description style is valid.\n";
+        exit 0;
+    elif [ "${LABEL}" == "${validLabel}${IGNORE_DECORATOR}" ]; then
+        printf "Success: Title's label and description style is valid with ignore/internal decorator.\n";
         exit 0;
     fi
 done

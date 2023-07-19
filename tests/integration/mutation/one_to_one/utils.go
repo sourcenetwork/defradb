@@ -19,24 +19,24 @@ import (
 func ExecuteTestCase(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
-		[]string{"book", "author"},
+		[]string{"Book", "Author"},
 		testUtils.TestCase{
 			Description: test.Description,
 			Actions: append(
 				[]any{
 					testUtils.SchemaUpdate{
 						Schema: `
-						type book {
+						type Book {
 							name: String
 							rating: Float
-							author: author
+							author: Author
 						}
 
-						type author {
+						type Author {
 							name: String
 							age: Int
 							verified: Boolean
-							published: book @primary
+							published: Book @primary
 						}
 						`,
 					},

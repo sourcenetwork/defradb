@@ -12,8 +12,18 @@ package mapper
 
 import "github.com/sourcenetwork/defradb/errors"
 
+const (
+	errInvalidFieldToGroupBy string = "invalid field value to groupBy"
+)
+
 var (
 	ErrUnableToIdAggregateChild = errors.New("unable to identify aggregate child")
 	ErrAggregateTargetMissing   = errors.New("aggregate must be provided with a property to aggregate")
 	ErrFailedToFindHostField    = errors.New("failed to find host field")
+	ErrInvalidFieldIndex        = errors.New("given field doesn't have any indexes")
+	ErrMissingSelect            = errors.New("missing target select field")
 )
+
+func NewErrInvalidFieldToGroupBy(field string) error {
+	return errors.New(errInvalidFieldToGroupBy, errors.NewKV("Field", field))
+}

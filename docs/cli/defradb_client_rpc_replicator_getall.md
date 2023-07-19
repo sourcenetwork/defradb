@@ -4,8 +4,7 @@ Get all replicators
 
 ### Synopsis
 
-Use this command if you wish to get all the replicators
-for the p2p data sync system.
+Use this command if you wish to get all the replicators for the p2p data sync system.
 
 ```
 defradb client rpc replicator getall [flags]
@@ -27,7 +26,7 @@ defradb client rpc replicator getall [flags]
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
-      --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
+      --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 

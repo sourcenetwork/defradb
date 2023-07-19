@@ -45,7 +45,7 @@ type AggregateTarget struct {
 type Aggregate struct {
 	Field
 	// The mapping of this aggregate's parent/host.
-	core.DocumentMapping
+	*core.DocumentMapping
 
 	// The collection of targets that this aggregate will aggregate.
 	AggregateTargets []AggregateTarget

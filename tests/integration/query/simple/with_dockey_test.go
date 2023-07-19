@@ -21,7 +21,7 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 		{
 			Description: "Simple query with basic filter (key by DocKey arg)",
 			Request: `query {
-						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						Users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 							Name
 							Age
 						}
@@ -44,7 +44,7 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 		{
 			Description: "Simple query with basic filter (key by DocKey arg), no results",
 			Request: `query {
-						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009g") {
+						Users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009g") {
 							Name
 							Age
 						}
@@ -62,7 +62,7 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 		{
 			Description: "Simple query with basic filter (key by DocKey arg), partial results",
 			Request: `query {
-						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						Users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 							Name
 							Age
 						}

@@ -17,16 +17,16 @@ import (
 )
 
 var userCollectionGQLSchema = (`
-	type users {
-		Name: String
-		Age: Int
-		Verified: Boolean
+	type Users {
+		name: String
+		age: Int
+		verified: Boolean
 	}
 `)
 
 const companiesCollectionGQLSchema = (`
-	type companies {
-		Name: String
+	type Companies {
+		name: String
 	}
 `)
 
@@ -43,5 +43,5 @@ func updateCompaniesCollectionSchema() testUtils.SchemaUpdate {
 }
 
 func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(t, userCollectionGQLSchema, []string{"users"}, test)
+	testUtils.ExecuteRequestTestCase(t, userCollectionGQLSchema, []string{"Users"}, test)
 }

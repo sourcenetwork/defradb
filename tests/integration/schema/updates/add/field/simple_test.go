@@ -23,22 +23,22 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
+						email
 					}
 				}`,
 				Results: []map[string]any{},
@@ -55,14 +55,14 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Authors/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Authors/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "add operation does not apply: doc is missing path",
@@ -70,7 +70,7 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
+						name
 					}
 				}`,
 				Results: []map[string]any{},
@@ -87,24 +87,24 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "City", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "city", "Kind": 11} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
-						City
+						name
+						email
+						city
 					}
 				}`,
 				Results: []map[string]any{},
@@ -121,30 +121,30 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "City", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "city", "Kind": 11} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
-						City
+						name
+						email
+						city
 					}
 				}`,
 				Results: []map[string]any{},
@@ -161,7 +161,7 @@ func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -185,7 +185,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -193,8 +193,8 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 				// Email field is valid, City field has invalid kind
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "City", "Kind": 111} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "city", "Kind": 111} }
 					]
 				`,
 				ExpectedError: "no type found for given name. Type: 111",
@@ -203,17 +203,17 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 				// Email does not exist as the commit failed
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
+						email
 					}
 				}`,
-				ExpectedError: "Cannot query field \"Email\" on type \"Users\"",
+				ExpectedError: "Cannot query field \"email\" on type \"Users\"",
 			},
 			testUtils.Request{
 				// Original schema is preserved
 				Request: `query {
 					Users {
-						Name
+						name
 					}
 				}`,
 				Results: []map[string]any{},
@@ -230,17 +230,17 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Name", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "name", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "duplicate field. Name: Name",
+				ExpectedError: "duplicate field. Name: name",
 			},
 		},
 	}
@@ -254,18 +254,18 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "duplicate field. Name: Email",
+				ExpectedError: "duplicate field. Name: email",
 			},
 		},
 	}
@@ -279,17 +279,17 @@ func TestSchemaUpdatesAddFieldWithExplicitIDErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"ID": 2, "Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"ID": 2, "Name": "email", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "explicitly setting a field ID value is not supported. Field: Email, ID: 2",
+				ExpectedError: "explicitly setting a field ID value is not supported. Field: email, ID: 2",
 			},
 		},
 	}

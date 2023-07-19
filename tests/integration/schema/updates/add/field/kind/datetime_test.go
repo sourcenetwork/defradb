@@ -23,22 +23,22 @@ func TestSchemaUpdatesAddFieldKindDateTime(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 10} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 10} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{},
@@ -55,35 +55,35 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 4} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 4} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": "2017-07-23T03:46:56.647Z"
+					"name": "John",
+					"foo": "2017-07-23T03:46:56.647Z"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo":  "2017-07-23T03:46:56.647Z",
+						"name": "John",
+						"foo":  "2017-07-23T03:46:56.647Z",
 					},
 				},
 			},
@@ -99,35 +99,35 @@ func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithCreate(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "DateTime"} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": "DateTime"} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": "2017-07-23T03:46:56.647Z"
+					"name": "John",
+					"foo": "2017-07-23T03:46:56.647Z"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo":  "2017-07-23T03:46:56.647Z",
+						"name": "John",
+						"foo":  "2017-07-23T03:46:56.647Z",
 					},
 				},
 			},

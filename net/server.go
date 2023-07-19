@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/ipfs/go-cid"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -56,6 +57,8 @@ type server struct {
 	// This is used to prevent multiple concurrent processing of the same document and
 	// limit unecessary transaction conflicts.
 	docQueue *docQueue
+
+	pb.UnimplementedServiceServer
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
@@ -196,18 +199,24 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-	log.Debug(ctx, "Received a PushLog request", logging.NewKV("PID", pid))
+	log.Debug(ctx, "Received a PushLog request", logging.NewKV("PeerID", pid))
 
-	// parse request object
-	cid := req.Body.Cid.Cid
+	cid, err := cid.Cast(req.Body.Cid)
+	if err != nil {
+		return nil, err
+	}
+	dockey, err := client.NewDocKeyFromString(string(req.Body.DocKey))
+	if err != nil {
+		return nil, err
+	}
 
-	s.docQueue.add(req.Body.DocKey.String())
+	s.docQueue.add(dockey.String())
 	defer func() {
-		s.docQueue.done(req.Body.DocKey.String())
+		s.docQueue.done(dockey.String())
 		if s.pushLogEmitter != nil {
 			byPeer, err := libpeer.Decode(req.Body.Creator)
 			if err != nil {
-				log.Info(ctx, "could not decode the peer id of the log creator", logging.NewKV("Error", err.Error()))
+				log.Info(ctx, "could not decode the PeerID of the log creator", logging.NewKV("Error", err.Error()))
 			}
 			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
 				FromPeer: pid,
@@ -238,7 +247,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 
 	schemaID := string(req.Body.SchemaID)
-	docKey := core.DataStoreKeyFromDocKey(req.Body.DocKey.DocKey)
+	docKey := core.DataStoreKeyFromDocKey(dockey)
 
 	var txnErr error
 	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
@@ -416,7 +425,7 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 		return s.publishLog(ctx, topic, req)
 	}
 
-	data, err := req.Marshal()
+	data, err := req.MarshalVT()
 	if err != nil {
 		return errors.Wrap("failed marshling pubsub message", err)
 	}
@@ -424,10 +433,16 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
 		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", topic), err)
 	}
+
+	cid, err := cid.Cast(req.Body.Cid)
+	if err != nil {
+		return err
+	}
+
 	log.Debug(
 		ctx,
 		"Published log",
-		logging.NewKV("CID", req.Body.Cid.Cid),
+		logging.NewKV("CID", cid),
 		logging.NewKV("DocKey", topic),
 	)
 	return nil
@@ -438,7 +453,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 	log.Debug(
 		s.peer.ctx,
 		"Handling new pubsub message",
-		logging.NewKV("SenderId", from),
+		logging.NewKV("SenderID", from),
 		logging.NewKV("Topic", topic),
 	)
 	req := new(pb.PushLogRequest)
@@ -494,7 +509,7 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 	}
 	pid, err := libpeer.Decode(ctxPeer.Addr.String())
 	if err != nil {
-		return "", errors.Wrap("parsing stream peer id", err)
+		return "", errors.Wrap("parsing stream PeerID", err)
 	}
 	return pid, nil
 }

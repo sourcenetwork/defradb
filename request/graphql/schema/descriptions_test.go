@@ -24,7 +24,7 @@ func TestSingleSimpleType(t *testing.T) {
 		{
 			description: "Single simple type",
 			sdl: `
-			type user {
+			type User {
 				name: String
 				age: Int
 				verified: Boolean
@@ -32,9 +32,9 @@ func TestSingleSimpleType(t *testing.T) {
 			`,
 			targetDescs: []client.CollectionDescription{
 				{
-					Name: "user",
+					Name: "User",
 					Schema: client.SchemaDescription{
-						Name: "user",
+						Name: "User",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -58,19 +58,20 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
 		{
 			description: "Multiple simple types",
 			sdl: `
-			type user {
+			type User {
 				name: String
 				age: Int
 				verified: Boolean
 			}
 
-			type author {
+			type Author {
 				name: String
 				publisher: String
 				rating: Float
@@ -78,9 +79,9 @@ func TestSingleSimpleType(t *testing.T) {
 			`,
 			targetDescs: []client.CollectionDescription{
 				{
-					Name: "user",
+					Name: "User",
 					Schema: client.SchemaDescription{
-						Name: "user",
+						Name: "User",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -104,11 +105,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "author",
+					Name: "Author",
 					Schema: client.SchemaDescription{
-						Name: "author",
+						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -132,29 +134,30 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
 		{
 			description: "Multiple types with relations (one-to-one)",
 			sdl: `
-			type book {
+			type Book {
 				name: String
 				rating: Float
-				author: author
+				author: Author
 			}
 
-			type author {
+			type Author {
 				name: String
 				age: Int
-				published: book
+				published: Book
 			}
 			`,
 			targetDescs: []client.CollectionDescription{
 				{
-					Name: "book",
+					Name: "Book",
 					Schema: client.SchemaDescription{
-						Name: "book",
+						Name: "Book",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -166,7 +169,7 @@ func TestSingleSimpleType(t *testing.T) {
 								RelationName: "author_book",
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
-								Schema:       "author",
+								Schema:       "Author",
 								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
 							},
 							{
@@ -187,11 +190,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "author",
+					Name: "Author",
 					Schema: client.SchemaDescription{
-						Name: "author",
+						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -213,7 +217,7 @@ func TestSingleSimpleType(t *testing.T) {
 								RelationName: "author_book",
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
-								Schema:       "book",
+								Schema:       "Book",
 								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
 							},
 							{
@@ -224,19 +228,20 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
 		{
 			description: "Multiple simple types",
 			sdl: `
-			type user {
+			type User {
 				name: String
 				age: Int
 				verified: Boolean
 			}
 
-			type author {
+			type Author {
 				name: String
 				publisher: String
 				rating: Float
@@ -244,9 +249,9 @@ func TestSingleSimpleType(t *testing.T) {
 			`,
 			targetDescs: []client.CollectionDescription{
 				{
-					Name: "user",
+					Name: "User",
 					Schema: client.SchemaDescription{
-						Name: "user",
+						Name: "User",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -270,11 +275,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "author",
+					Name: "Author",
 					Schema: client.SchemaDescription{
-						Name: "author",
+						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -298,29 +304,30 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
 		{
 			description: "Multiple types with relations (one-to-one)",
 			sdl: `
-			type book {
+			type Book {
 				name: String
 				rating: Float
-				author: author @relation(name:"book_authors")
+				author: Author @relation(name:"book_authors")
 			}
 
-			type author {
+			type Author {
 				name: String
 				age: Int
-				published: book @relation(name:"book_authors")
+				published: Book @relation(name:"book_authors")
 			}
 			`,
 			targetDescs: []client.CollectionDescription{
 				{
-					Name: "book",
+					Name: "Book",
 					Schema: client.SchemaDescription{
-						Name: "book",
+						Name: "Book",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -332,7 +339,7 @@ func TestSingleSimpleType(t *testing.T) {
 								RelationName: "book_authors",
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
-								Schema:       "author",
+								Schema:       "Author",
 								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
 							},
 							{
@@ -353,11 +360,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "author",
+					Name: "Author",
 					Schema: client.SchemaDescription{
-						Name: "author",
+						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -379,7 +387,7 @@ func TestSingleSimpleType(t *testing.T) {
 								RelationName: "book_authors",
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
-								Schema:       "book",
+								Schema:       "Book",
 								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
 							},
 							{
@@ -390,29 +398,30 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
 		{
 			description: "Multiple types with relations (one-to-one) with directive",
 			sdl: `
-			type book {
+			type Book {
 				name: String
 				rating: Float
-				author: author @primary
+				author: Author @primary
 			}
 
-			type author {
+			type Author {
 				name: String
 				age: Int
-				published: book
+				published: Book
 			}
 			`,
 			targetDescs: []client.CollectionDescription{
 				{
-					Name: "book",
+					Name: "Book",
 					Schema: client.SchemaDescription{
-						Name: "book",
+						Name: "Book",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -424,7 +433,7 @@ func TestSingleSimpleType(t *testing.T) {
 								RelationName: "author_book",
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
-								Schema:       "author",
+								Schema:       "Author",
 								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
 							},
 							{
@@ -445,11 +454,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "author",
+					Name: "Author",
 					Schema: client.SchemaDescription{
-						Name: "author",
+						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -471,7 +481,7 @@ func TestSingleSimpleType(t *testing.T) {
 								RelationName: "author_book",
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
-								Schema:       "book",
+								Schema:       "Book",
 								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
 							},
 							{
@@ -482,29 +492,30 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
 		{
 			description: "Multiple types with relations (one-to-many)",
 			sdl: `
-			type book {
+			type Book {
 				name: String
 				rating: Float
-				author: author
+				author: Author
 			}
 
-			type author {
+			type Author {
 				name: String
 				age: Int
-				published: [book]
+				published: [Book]
 			}
 			`,
 			targetDescs: []client.CollectionDescription{
 				{
-					Name: "book",
+					Name: "Book",
 					Schema: client.SchemaDescription{
-						Name: "book",
+						Name: "Book",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -516,7 +527,7 @@ func TestSingleSimpleType(t *testing.T) {
 								RelationName: "author_book",
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
-								Schema:       "author",
+								Schema:       "Author",
 								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEMANY | client.Relation_Type_Primary,
 							},
 							{
@@ -537,11 +548,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "author",
+					Name: "Author",
 					Schema: client.SchemaDescription{
-						Name: "author",
+						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -563,11 +575,12 @@ func TestSingleSimpleType(t *testing.T) {
 								RelationName: "author_book",
 								Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
 								Typ:          client.NONE_CRDT,
-								Schema:       "book",
+								Schema:       "Book",
 								RelationType: client.Relation_Type_MANY | client.Relation_Type_ONEMANY,
 							},
 						},
 					},
+					Indexes: []client.IndexDescription{},
 				},
 			},
 		},

@@ -1,14 +1,14 @@
 syntax = "proto3";
 package net.pb;
 
-import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+option go_package = "/;net_pb";
 
 // Log represents a thread log.
 message Document {
     // ID of the document.
-    bytes docKey = 1 [(gogoproto.customtype) = "ProtoDocKey"];
+    bytes docKey = 1;
     // head of the log.
-    bytes head = 4 [(gogoproto.customtype) = "ProtoCid"];
+    bytes head = 4;
 
     // Record is a thread record containing link data.
     message Log {
@@ -34,15 +34,15 @@ message PushLogRequest {
 
     message Body {
         // docKey is the DocKey of the document that is affected by the log.
-        bytes docKey = 1 [(gogoproto.customtype) = "ProtoDocKey"];
+        bytes docKey = 1;
         // cid is the CID of the composite of the document.
-        bytes cid = 2 [(gogoproto.customtype) = "ProtoCid"];
+        bytes cid = 2;
         // schemaID is the SchemaID of the collection that the document resides in.
         bytes schemaID = 3;
-        // creator is the peer ID of the peer that created the log.
+        // creator is the PeerID of the peer that created the log.
         string creator = 4;
         // log hold the block that represent version of the document.
-        Document.Log log = 5;
+        Document.Log log = 6;
     }
 }
 
@@ -64,4 +64,83 @@ service Service {
     rpc PushLog(PushLogRequest) returns (PushLogReply) {}
     // GetHeadLog from this peer
     rpc GetHeadLog(GetHeadLogRequest) returns (GetHeadLogReply) {}
+}
+
+message SetReplicatorRequest {
+    repeated string collections = 1;
+    bytes addr = 2;
+}
+
+message SetReplicatorReply {
+    bytes peerID = 1;
+}
+
+message DeleteReplicatorRequest {
+    bytes peerID = 1;
+    repeated string collections = 2;
+}
+
+message DeleteReplicatorReply {
+    bytes peerID = 1;
+}
+
+message GetAllReplicatorRequest {}
+
+message GetAllReplicatorReply {
+    message Replicators {
+        message Info {
+            bytes id = 1;
+            bytes addrs = 2;
+        }
+        Info info = 1;
+        repeated string schemas = 2;
+    }
+
+    repeated Replicators replicators = 1;
+   
+}
+
+message AddP2PCollectionsRequest {
+    repeated string collections = 1;
+}
+
+message AddP2PCollectionsReply {
+    string err = 1;
+}
+
+message RemoveP2PCollectionsRequest {
+    repeated string collections = 1;
+}
+
+message RemoveP2PCollectionsReply {
+    string err = 1;
+}
+
+message GetAllP2PCollectionsRequest {}
+
+message GetAllP2PCollectionsReply {
+    message Collection {
+        string id = 1;
+        string name = 2;
+    }
+    repeated Collection collections = 1;
+}
+
+
+// Collection is the peer-to-peer network API for document sync by replication and subscription to collections
+service Collection {
+    // SetReplicator for this peer
+    rpc SetReplicator(SetReplicatorRequest) returns (SetReplicatorReply) {}
+
+    // DeleteReplicator for this peer
+    rpc DeleteReplicator(DeleteReplicatorRequest) returns (DeleteReplicatorReply) {}
+
+    // DeleteReplicator for this peer
+    rpc GetAllReplicators(GetAllReplicatorRequest) returns (GetAllReplicatorReply) {}
+
+    rpc AddP2PCollections(AddP2PCollectionsRequest) returns (AddP2PCollectionsReply) {}
+    
+    rpc RemoveP2PCollections(RemoveP2PCollectionsRequest) returns (RemoveP2PCollectionsReply) {}
+    
+    rpc GetAllP2PCollections(GetAllP2PCollectionsRequest) returns (GetAllP2PCollectionsReply) {}
 }

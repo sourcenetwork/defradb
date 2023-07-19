@@ -22,7 +22,7 @@ Interact with a DefraDB gRPC server.
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
-      --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
+      --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 

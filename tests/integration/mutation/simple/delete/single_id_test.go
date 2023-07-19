@@ -13,53 +13,66 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
-func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-
-		{
-			Description: "Simple delete mutation where one element exists.",
-			Docs: map[int][]string{
-				0: {
-					`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
-					}`,
-				},
+func TestDeletionOfADocumentUsingSingleKeyWhereDocExists(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple delete mutation where one element exists.",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+						points: Float
+						verified: Boolean
+					}
+				`,
 			},
-			TransactionalRequests: []testUtils.TransactionRequest{
-				{
-					TransactionId: 0,
-					Request: `mutation {
-								delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-									_key
-								}
-							}`,
-					Results: []map[string]any{
-						{
-							"_key": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
-						},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"age":  26,
+					"points": 48.5,
+					"verified": true
+				}`,
+			},
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
+				Request: `mutation {
+							delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+								_key
+							}
+						}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
 					},
 				},
-				{
-					TransactionId: 0,
-					Request: `query {
-								user(dockey: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-									_key
-								}
-							}`,
+			},
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
+				Request: `query {
+							User(dockey: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+								_key
+							}
+						}`,
 
-					// explicitly empty
-					Results: []map[string]any{},
-				},
+				// explicitly empty
+				Results: []map[string]any{},
 			},
 		},
+	}
 
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+}
+
+func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple delete mutation with an aliased _key name.",
 			Docs: map[int][]string{
@@ -73,14 +86,14 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 			},
 			Request: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-							FancyKey: _key
+						delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+							fancyKey: _key
 						}
 					}`,
 
 			Results: []map[string]any{
 				{
-					"FancyKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+					"fancyKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
 				},
 			},
 			ExpectedError: "",
@@ -88,8 +101,8 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 		{
 			Description: "Delete an updated document and return an aliased _key name.",
 			Request: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-							MyTestKey: _key
+						delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+							myTestKey: _key
 						}
 					}`,
 			Docs: map[int][]string{
@@ -115,7 +128,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 			},
 			Results: []map[string]any{
 				{
-					"MyTestKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+					"myTestKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
 				},
 			},
 			ExpectedError: "",
@@ -131,7 +144,7 @@ func TestDeleteWithUnknownIdEmptyCollection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Deletion using id that doesn't exist, where the collection is empty.",
 		Request: `mutation {
-					delete_user(id: "bae-028383cc-d6ba-5df7-959f-2bdce3536a05") {
+					delete_User(id: "bae-028383cc-d6ba-5df7-959f-2bdce3536a05") {
 						_key
 					}
 				}`,
@@ -145,7 +158,7 @@ func TestDeleteWithUnknownId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Deletion using id that doesn't exist, where the collection is non-empty.",
 		Request: `mutation {
-					delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca811") {
+					delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca811") {
 						_key
 					}
 				}`,
@@ -169,7 +182,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 		{
 			Description: "Deletion of a document without sub selection, should give error.",
 			Request: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810")
+						delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810")
 					}`,
 			Docs: map[int][]string{
 				0: {
@@ -182,13 +195,13 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 				},
 			},
 			Results:       []map[string]any{},
-			ExpectedError: "Field \"delete_user\" of type \"[user]\" must have a sub selection.",
+			ExpectedError: "Field \"delete_User\" of type \"[User]\" must have a sub selection.",
 		},
 
 		{
 			Description: "Deletion of a document without _key sub-selection.",
 			Request: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+						delete_User(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 						}
 					}`,
 			Docs: map[int][]string{
@@ -202,7 +215,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 				},
 			},
 			Results:       []map[string]any{},
-			ExpectedError: "Syntax Error GraphQL request (2:67) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(id: \"bae-8ca944fd-260e-5a44-b88f-326d9faca810\") {\n                                                                     ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
+			ExpectedError: "Syntax Error GraphQL request (2:67) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_User(id: \"bae-8ca944fd-260e-5a44-b88f-326d9faca810\") {\n                                                                     ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
 		},
 	}
 

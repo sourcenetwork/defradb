@@ -20,22 +20,22 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of bool array",
 		Request: `query {
-					users {
-						Name
-						_count(LikedIndexes: {filter: {_eq: true}})
+					Users {
+						name
+						_count(likedIndexes: {filter: {_eq: true}})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"LikedIndexes": [true, true, false, true]
+					"name": "Shahzad",
+					"likedIndexes": [true, true, false, true]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 3,
 			},
 		},
@@ -48,22 +48,22 @@ func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with filter, count of nillable bool array",
 		Request: `query {
-					users {
-						Name
-						_count(IndexLikesDislikes: {filter: {_eq: true}})
+					Users {
+						name
+						_count(indexLikesDislikes: {filter: {_eq: true}})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"IndexLikesDislikes": [true, true, false, null]
+					"name": "John",
+					"indexLikesDislikes": [true, true, false, null]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "John",
+				"name":   "John",
 				"_count": 2,
 			},
 		},
@@ -76,22 +76,22 @@ func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of integer array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteIntegers: {filter: {_gt: 0}})
+					Users {
+						name
+						_count(favouriteIntegers: {filter: {_gt: 0}})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, -1, 1, 0]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 2,
 			},
 		},
@@ -104,22 +104,22 @@ func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of integer array",
 		Request: `query {
-					users {
-						Name
-						_count(TestScores: {filter: {_gt: 0}})
+					Users {
+						name
+						_count(testScores: {filter: {_gt: 0}})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"TestScores": [-1, 2, 1, null, 0]
+					"name": "Shahzad",
+					"testScores": [-1, 2, 1, null, 0]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 2,
 			},
 		},
@@ -132,21 +132,21 @@ func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of integer array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteIntegers: {filter: {_and: [{_gt: -2}, {_lt: 2}]}})
+					Users {
+						name
+						_count(favouriteIntegers: {filter: {_and: [{_gt: -2}, {_lt: 2}]}})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				(`{
-				"Name": "Shahzad",
-				"FavouriteIntegers": [-1, 2, -1, 1, 0, -2]
+				"name": "Shahzad",
+				"favouriteIntegers": [-1, 2, -1, 1, 0, -2]
 			}`)},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 4,
 			},
 		},
@@ -159,22 +159,22 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of float array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteFloats: {filter: {_lt: 9}})
+					Users {
+						name
+						_count(favouriteFloats: {filter: {_lt: 9}})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteFloats": [3.1425, 0.00000000001, 10]
+					"name": "Shahzad",
+					"favouriteFloats": [3.1425, 0.00000000001, 10]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 2,
 			},
 		},
@@ -187,22 +187,22 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of nillable float array",
 		Request: `query {
-					users {
-						Name
-						_count(PageRatings: {filter: {_lt: 9}})
+					Users {
+						name
+						_count(pageRatings: {filter: {_lt: 9}})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"PageRatings": [3.1425, 0.00000000001, 10, null]
+					"name": "Shahzad",
+					"pageRatings": [3.1425, 0.00000000001, 10, null]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 2,
 			},
 		},
@@ -215,22 +215,22 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of string array",
 		Request: `query {
-					users {
-						Name
-						_count(PreferredStrings: {filter: {_in: ["", "the first"]}})
+					Users {
+						name
+						_count(preferredStrings: {filter: {_in: ["", "the first"]}})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"PreferredStrings": ["", "the previous", "the first", "empty string"]
+					"name": "Shahzad",
+					"preferredStrings": ["", "the previous", "the first", "empty string"]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 2,
 			},
 		},
@@ -243,22 +243,22 @@ func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered count of string array",
 		Request: `query {
-					users {
-						Name
-						_count(PageHeaders: {filter: {_in: ["", "the first", "empty string"]}})
+					Users {
+						name
+						_count(pageHeaders: {filter: {_in: ["", "the first", "empty string"]}})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"PageHeaders": ["", "the previous", null, "empty string"]
+					"name": "Shahzad",
+					"pageHeaders": ["", "the previous", null, "empty string"]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 2,
 			},
 		},

@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 
 	badger "github.com/dgraph-io/badger/v3"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -35,10 +36,9 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-	netapi "github.com/sourcenetwork/defradb/net/api"
-	netpb "github.com/sourcenetwork/defradb/net/api/pb"
+	"github.com/sourcenetwork/defradb/net"
+	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 func MakeStartCommand(cfg *config.Config) *cobra.Command {
@@ -154,6 +154,15 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 		log.FeedbackFatalE(context.Background(), "Could not bind api.tls", err)
 	}
 
+	cmd.Flags().StringArray(
+		"allowed-origins", cfg.API.AllowedOrigins,
+		"List of origins to allow for CORS requests",
+	)
+	err = cfg.BindFlag("api.allowed-origins", cmd.Flags().Lookup("allowed-origins"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.allowed-origins", err)
+	}
+
 	cmd.Flags().String(
 		"pubkeypath", cfg.API.PubKeyPath,
 		"Path to the public key for tls",
@@ -184,7 +193,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 }
 
 type defraInstance struct {
-	node   *node.Node
+	node   *net.Node
 	db     client.DB
 	server *httpapi.Server
 }
@@ -242,13 +251,13 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	}
 
 	// init the p2p node
-	var n *node.Node
+	var n *net.Node
 	if !cfg.Net.P2PDisabled {
 		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-		n, err = node.NewNode(
+		n, err = net.NewNode(
 			ctx,
 			db,
-			cfg.NodeConfig(),
+			net.WithConfig(cfg),
 		)
 		if err != nil {
 			db.Close(ctx)
@@ -305,11 +314,9 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 			return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", addr), err)
 		}
 
-		netService := netapi.NewService(n.Peer)
-
 		go func() {
 			log.FeedbackInfo(ctx, "Started RPC server", logging.NewKV("Address", addr))
-			netpb.RegisterServiceServer(server, netService)
+			netpb.RegisterCollectionServer(server, n.Peer)
 			if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 				log.FeedbackFatalE(ctx, "Failed to start RPC server", err)
 			}
@@ -319,6 +326,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	sOpt := []func(*httpapi.Server){
 		httpapi.WithAddress(cfg.API.Address),
 		httpapi.WithRootDir(cfg.Rootdir),
+		httpapi.WithAllowedOrigins(cfg.API.AllowedOrigins...),
 	}
 
 	if n != nil {
@@ -374,7 +382,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 func wait(ctx context.Context, di *defraInstance) error {
 	// setup signal handlers
 	signalCh := make(chan os.Signal, 1)
-	signal.Notify(signalCh, os.Interrupt)
+	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case <-ctx.Done():

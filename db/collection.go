@@ -22,16 +22,18 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
-	mh "github.com/multiformats/go-multihash"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
+	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/lens"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
@@ -56,6 +58,9 @@ type collection struct {
 	schemaID string
 
 	desc client.CollectionDescription
+
+	indexes        []CollectionIndex
+	fetcherFactory func() fetcher.Fetcher
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
@@ -94,10 +99,29 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 	}
 
 	return &collection{
-		db:    db,
-		desc:  desc,
+		db: db,
+		desc: client.CollectionDescription{
+			ID:     desc.ID,
+			Name:   desc.Name,
+			Schema: desc.Schema,
+		},
 		colID: desc.ID,
 	}, nil
+}
+
+// newFetcher returns a new fetcher instance for this collection.
+// If a fetcherFactory is set, it will be used to create the fetcher.
+// It's a very simple factory, but it allows us to inject a mock fetcher
+// for testing.
+func (c *collection) newFetcher() fetcher.Fetcher {
+	var innerFetcher fetcher.Fetcher
+	if c.fetcherFactory != nil {
+		innerFetcher = c.fetcherFactory()
+	} else {
+		innerFetcher = new(fetcher.DocumentFetcher)
+	}
+
+	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
 }
 
 // createCollection creates a collection and saves it to the database in its system store.
@@ -142,7 +166,7 @@ func (db *db) createCollection(
 	}
 
 	// add a reference to this DB by desc hash
-	cid, err := core.NewSHA256CidV1(globalSchemaBuf)
+	cid, err := ccid.NewSHA256CidV1(globalSchemaBuf)
 	if err != nil {
 		return nil, err
 	}
@@ -184,8 +208,14 @@ func (db *db) createCollection(
 		ctx,
 		"Created collection",
 		logging.NewKV("Name", col.Name()),
-		logging.NewKV("ID", col.SchemaID),
+		logging.NewKV("SchemaID", col.SchemaID()),
 	)
+
+	for _, index := range desc.Indexes {
+		if _, err := col.createIndex(ctx, txn, index); err != nil {
+			return nil, err
+		}
+	}
 	return col, nil
 }
 
@@ -232,10 +262,11 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	cid, err := core.NewSHA256CidV1(globalSchemaBuf)
+	cid, err := ccid.NewSHA256CidV1(globalSchemaBuf)
 	if err != nil {
 		return nil, err
 	}
+	previousSchemaVersionID := desc.Schema.VersionID
 	schemaVersionID := cid.String()
 	desc.Schema.VersionID = schemaVersionID
 
@@ -264,6 +295,12 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
+	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, previousSchemaVersionID)
+	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
+	if err != nil {
+		return nil, err
+	}
+
 	return db.getCollectionByName(ctx, txn, desc.Name)
 }
 
@@ -276,7 +313,6 @@ func (db *db) validateUpdateCollection(
 	txn datastore.Txn,
 	proposedDesc client.CollectionDescription,
 ) (bool, error) {
-	var hasChanged bool
 	existingCollection, err := db.getCollectionByName(ctx, txn, proposedDesc.Name)
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
@@ -310,6 +346,20 @@ func (db *db) validateUpdateCollection(
 		return false, ErrCannotSetVersionID
 	}
 
+	hasChangedFields, err := validateUpdateCollectionFields(existingDesc, proposedDesc)
+	if err != nil {
+		return hasChangedFields, err
+	}
+
+	hasChangedIndexes, err := validateUpdateCollectionIndexes(existingDesc.Indexes, proposedDesc.Indexes)
+	return hasChangedFields || hasChangedIndexes, err
+}
+
+func validateUpdateCollectionFields(
+	existingDesc client.CollectionDescription,
+	proposedDesc client.CollectionDescription,
+) (bool, error) {
+	hasChanged := false
 	existingFieldsByID := map[client.FieldID]client.FieldDescription{}
 	existingFieldIndexesByName := map[string]int{}
 	for i, field := range existingDesc.Schema.Fields {
@@ -365,8 +415,38 @@ func (db *db) validateUpdateCollection(
 			return false, NewErrCannotDeleteField(field.Name, field.ID)
 		}
 	}
-
 	return hasChanged, nil
+}
+
+func validateUpdateCollectionIndexes(
+	existingIndexes []client.IndexDescription,
+	proposedIndexes []client.IndexDescription,
+) (bool, error) {
+	existingNameToIndex := map[string]client.IndexDescription{}
+	for _, index := range existingIndexes {
+		existingNameToIndex[index.Name] = index
+	}
+	for _, proposedIndex := range proposedIndexes {
+		if existingIndex, exists := existingNameToIndex[proposedIndex.Name]; exists {
+			if len(existingIndex.Fields) != len(proposedIndex.Fields) {
+				return false, ErrCanNotChangeIndexWithPatch
+			}
+			for i := range existingIndex.Fields {
+				if existingIndex.Fields[i] != proposedIndex.Fields[i] {
+					return false, ErrCanNotChangeIndexWithPatch
+				}
+			}
+			delete(existingNameToIndex, proposedIndex.Name)
+		} else {
+			return false, NewErrCannotAddIndexWithPatch(proposedIndex.Name)
+		}
+	}
+	if len(existingNameToIndex) > 0 {
+		for _, index := range existingNameToIndex {
+			return false, NewErrCannotDropIndexWithPatch(index.Name)
+		}
+	}
+	return false, nil
 }
 
 // getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.
@@ -378,7 +458,7 @@ func (db *db) getCollectionByVersionID(
 	schemaVersionId string,
 ) (*collection, error) {
 	if schemaVersionId == "" {
-		return nil, ErrSchemaVersionIdEmpty
+		return nil, ErrSchemaVersionIDEmpty
 	}
 
 	key := core.NewCollectionSchemaVersionKey(schemaVersionId)
@@ -393,12 +473,19 @@ func (db *db) getCollectionByVersionID(
 		return nil, err
 	}
 
-	return &collection{
+	col := &collection{
 		db:       db,
 		desc:     desc,
 		colID:    desc.ID,
 		schemaID: desc.Schema.SchemaID,
-	}, nil
+	}
+
+	err = col.loadIndexes(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	return col, nil
 }
 
 // getCollectionByName returns an existing collection within the database.
@@ -424,7 +511,7 @@ func (db *db) getCollectionBySchemaID(
 	schemaID string,
 ) (client.Collection, error) {
 	if schemaID == "" {
-		return nil, ErrSchemaIdEmpty
+		return nil, ErrSchemaIDEmpty
 	}
 
 	key := core.NewCollectionSchemaKey(schemaID)
@@ -569,11 +656,13 @@ func (c *collection) SchemaID() string {
 // handle instead of a raw DB handle.
 func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 	return &collection{
-		db:       c.db,
-		txn:      immutable.Some(txn),
-		desc:     c.desc,
-		colID:    c.colID,
-		schemaID: c.schemaID,
+		db:             c.db,
+		txn:            immutable.Some(txn),
+		desc:           c.desc,
+		colID:          c.colID,
+		schemaID:       c.schemaID,
+		indexes:        c.indexes,
+		fetcherFactory: c.fetcherFactory,
 	}
 }
 
@@ -614,34 +703,25 @@ func (c *collection) CreateMany(ctx context.Context, docs []*client.Document) er
 func (c *collection) getKeysFromDoc(
 	doc *client.Document,
 ) (client.DocKey, core.PrimaryDataStoreKey, error) {
-	// DocKey verification
-	buf, err := doc.Bytes()
-	if err != nil {
-		return client.DocKey{}, core.PrimaryDataStoreKey{}, err
-	}
-	// @todo:  grab the cid Prefix from the DocKey internal CID if available
-	pref := cid.Prefix{
-		Version:  1,
-		Codec:    cid.Raw,
-		MhType:   mh.SHA2_256,
-		MhLength: -1, // default length
-	}
-	// And then feed it some data
-	doccid, err := pref.Sum(buf)
+	docKey, err := doc.GenerateDocKey()
 	if err != nil {
 		return client.DocKey{}, core.PrimaryDataStoreKey{}, err
 	}
 
-	dockey := client.NewDocKeyV0(doccid)
-	primaryKey := c.getPrimaryKeyFromDocKey(dockey)
+	primaryKey := c.getPrimaryKeyFromDocKey(docKey)
 	if primaryKey.DocKey != doc.Key().String() {
 		return client.DocKey{}, core.PrimaryDataStoreKey{},
 			NewErrDocVerification(doc.Key().String(), primaryKey.DocKey)
 	}
-	return dockey, primaryKey, nil
+	return docKey, primaryKey, nil
 }
 
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
+	// This has to be done before dockey verification happens in the next step.
+	if err := doc.RemapAliasFieldsAndDockey(c.desc.Schema.Fields); err != nil {
+		return err
+	}
+
 	dockey, primaryKey, err := c.getKeysFromDoc(doc)
 	if err != nil {
 		return err
@@ -653,10 +733,10 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 	if exists {
-		return ErrDocumentAlreadyExists
+		return NewErrDocumentAlreadyExists(primaryKey.DocKey)
 	}
 	if isDeleted {
-		return ErrDocumentDeleted
+		return NewErrDocumentDeleted(primaryKey.DocKey)
 	}
 
 	// write value object marker if we have an empty doc
@@ -674,7 +754,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 
-	return err
+	return c.indexNewDoc(ctx, txn, doc)
 }
 
 // Update an existing document with the new values.
@@ -696,7 +776,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 		return client.ErrDocumentNotFound
 	}
 	if isDeleted {
-		return ErrDocumentDeleted
+		return NewErrDocumentDeleted(primaryKey.DocKey)
 	}
 
 	err = c.update(ctx, txn, doc)
@@ -755,6 +835,12 @@ func (c *collection) save(
 	doc *client.Document,
 	isCreate bool,
 ) (cid.Cid, error) {
+	if !isCreate {
+		err := c.updateIndexedDoc(ctx, txn, doc)
+		if err != nil {
+			return cid.Undef, err
+		}
+	}
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
 	// wait, and just did it here, then *if* the commit fails down
@@ -780,11 +866,12 @@ func (c *collection) save(
 
 		if val.IsDirty() {
 			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
+
 			if !fieldExists {
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			fieldDescription, valid := c.desc.GetField(k)
+			fieldDescription, valid := c.desc.Schema.GetField(k)
 			if !valid {
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
@@ -886,7 +973,7 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 		return false, client.ErrDocumentNotFound
 	}
 	if isDeleted {
-		return false, ErrDocumentDeleted
+		return false, NewErrDocumentDeleted(primaryKey.DocKey)
 	}
 
 	err = c.applyDelete(ctx, txn, primaryKey)
@@ -967,12 +1054,18 @@ func (c *collection) saveValueToMerkleCRDT(
 	args ...any) (ipld.Node, uint64, error) {
 	switch ctype {
 	case client.LWW_REGISTER:
+		fieldID, err := strconv.Atoi(key.FieldId)
+		if err != nil {
+			return nil, 0, err
+		}
+		field, _ := c.Description().GetFieldByID(client.FieldID(fieldID))
 		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
 			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
 			c.db.events.Updates,
 			ctype,
 			key,
+			field.Name,
 		)
 		if err != nil {
 			return nil, 0, err
@@ -998,6 +1091,7 @@ func (c *collection) saveValueToMerkleCRDT(
 			c.db.events.Updates,
 			ctype,
 			key,
+			"",
 		)
 		if err != nil {
 			return nil, 0, err
@@ -1107,5 +1201,6 @@ func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
 			return uint32(field.ID), true
 		}
 	}
+
 	return uint32(0), false
 }

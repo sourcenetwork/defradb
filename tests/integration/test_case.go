@@ -13,6 +13,7 @@ package tests
 import (
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 )
 
@@ -42,9 +43,10 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode struct {
-	config.Config
-}
+type ConfigureNode func() config.Config
+
+// Restart is an action that will close and then start all nodes.
+type Restart struct{}
 
 // SchemaUpdate is an action that will update the database schema.
 type SchemaUpdate struct {
@@ -150,19 +152,27 @@ type UpdateDoc struct {
 	DontSync bool
 }
 
-// Request represents a standard Defra (GQL) request.
-type Request struct {
-	// NodeID may hold the ID (index) of a node to execute this request on.
+// CreateIndex will attempt to create the given secondary index for the given collection
+// using the collection api.
+type CreateIndex struct {
+	// NodeID may hold the ID (index) of a node to create the secondary index on.
 	//
-	// If a value is not provided the request will be executed against all nodes,
-	// in which case the expected results must all match across all nodes.
+	// If a value is not provided the index will be created in all nodes.
 	NodeID immutable.Option[int]
 
-	// The request to execute.
-	Request string
+	// The collection for which this index should be created.
+	CollectionID int
 
-	// The expected (data) results of the issued request.
-	Results []map[string]any
+	// The name of the index to create. If not provided, one will be generated.
+	IndexName string
+
+	// The name of the field to index. Used only for single field indexes.
+	FieldName string
+
+	// The names of the fields to index. Used only for composite indexes.
+	FieldsNames []string
+	// The directions of the 'FieldsNames' to index. Used only for composite indexes.
+	Directions []client.IndexDirection
 
 	// Any error expected from the action. Optional.
 	//
@@ -171,18 +181,66 @@ type Request struct {
 	ExpectedError string
 }
 
-// TransactionRequest2 represents a transactional request.
-//
-// A new transaction will be created for the first TransactionRequest2 of any given
-// TransactionId. TransactionRequest2s will be submitted to the database in the order
-// in which they are recieved (interleaving amongst other actions if provided), however
-// they will not be commited until a TransactionCommit of matching TransactionId is
-// provided.
-type TransactionRequest2 struct {
-	// Used to identify the transaction for this to run against.
-	TransactionID int
+// DropIndex will attempt to drop the given secondary index from the given collection
+// using the collection api.
+type DropIndex struct {
+	// NodeID may hold the ID (index) of a node to delete the secondary index from.
+	//
+	// If a value is not provided the index will be deleted from all nodes.
+	NodeID immutable.Option[int]
 
-	// The request to run against the transaction.
+	// The collection from which the index should be deleted.
+	CollectionID int
+
+	// The index-identifier of the secondary index within the collection.
+	// This is based on the order in which it was created, not the ordering of
+	// the indexes within the database.
+	IndexID int
+
+	// The index name of the secondary index within the collection.
+	// If it is provided, `IndexID` is ignored.
+	IndexName string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// GetIndex will attempt to get the given secondary index from the given collection
+// using the collection api.
+type GetIndexes struct {
+	// NodeID may hold the ID (index) of a node to create the secondary index on.
+	//
+	// If a value is not provided the indexes will be retrieved from the first nodes.
+	NodeID immutable.Option[int]
+
+	// The collection for which this indexes should be retrieved.
+	CollectionID int
+
+	// The expected indexes to be returned.
+	ExpectedIndexes []client.IndexDescription
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// Request represents a standard Defra (GQL) request.
+type Request struct {
+	// NodeID may hold the ID (index) of a node to execute this request on.
+	//
+	// If a value is not provided the request will be executed against all nodes,
+	// in which case the expected results must all match across all nodes.
+	NodeID immutable.Option[int]
+
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
+
+	// The request to execute.
 	Request string
 
 	// The expected (data) results of the issued request.
@@ -212,6 +270,9 @@ type TransactionCommit struct {
 // The subscription will remain active until shortly after all actions have been processed.
 // The results of the subscription will then be asserted upon.
 type SubscriptionRequest struct {
+	// NodeID is the node ID (index) of the node in which to subscribe to.
+	NodeID immutable.Option[int]
+
 	// The subscription request to submit.
 	Request string
 
@@ -226,6 +287,9 @@ type SubscriptionRequest struct {
 }
 
 type IntrospectionRequest struct {
+	// NodeID is the node ID (index) of the node in which to introspect.
+	NodeID immutable.Option[int]
+
 	// The introspection request to use when fetching schema state.
 	//
 	// Available properties can be found in the GQL spec:
@@ -244,6 +308,23 @@ type IntrospectionRequest struct {
 	// corresponding result-array (inner maps are not traversed beyond the array,
 	// the full array-item must match exactly).
 	ContainsData map[string]any
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// ClientIntrospectionRequest represents a GraphQL client introspection request.
+// The GraphQL clients usually use this to fetch the schema state with a default introspection
+// query they provide.
+type ClientIntrospectionRequest struct {
+	// NodeID is the node ID (index) of the node in which to introspect.
+	NodeID immutable.Option[int]
+
+	// The introspection request to use when fetching schema state.
+	Request string
 
 	// Any error expected from the action. Optional.
 	//

@@ -25,22 +25,22 @@ func TestSchemaUpdatesAddFieldKindNillableIntArray(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 19} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 19} }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{},
@@ -57,35 +57,35 @@ func TestSchemaUpdatesAddFieldKindNillableIntArrayWithCreate(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 19} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 19} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": [3, -5, null]
+					"name": "John",
+					"foo": [3, -5, null]
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo": []immutable.Option[int64]{
+						"name": "John",
+						"foo": []immutable.Option[int64]{
 							immutable.Some[int64](3),
 							immutable.Some[int64](-5),
 							immutable.None[int64](),
@@ -105,35 +105,35 @@ func TestSchemaUpdatesAddFieldKindNillableIntArraySubstitutionWithCreate(t *test
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "[Integer]"} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": "[Int]"} }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Foo": [3, -5, null]
+					"name": "John",
+					"foo": [3, -5, null]
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Foo
+						name
+						foo
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Foo": []immutable.Option[int64]{
+						"name": "John",
+						"foo": []immutable.Option[int64]{
 							immutable.Some[int64](3),
 							immutable.Some[int64](-5),
 							immutable.None[int64](),

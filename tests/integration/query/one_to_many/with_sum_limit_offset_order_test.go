@@ -20,7 +20,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Request: `query {
-				author {
+				Author {
 					name
 					_sum(published: {field: rating, offset: 1, limit: 2, order: {name: ASC}})
 				}
@@ -96,7 +96,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Request: `query {
-				author {
+				Author {
 					name
 					_sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
 				}
@@ -171,7 +171,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Request: `query {
-				author {
+				Author {
 					name
 					asc: _sum(published: {field: rating, offset: 1, limit: 2, order: {name: ASC}})
 					desc: _sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
@@ -251,7 +251,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Request: `query {
-				author {
+				Author {
 					name
 					byName: _sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
 					byRating: _sum(published: {field: rating, offset: 1, limit: 2, order: {rating: DESC}})
@@ -330,7 +330,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Request: `query {
-				author {
+				Author {
 					name
 					_sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
 					published(offset: 1, limit: 2, order: {name: ASC}) {

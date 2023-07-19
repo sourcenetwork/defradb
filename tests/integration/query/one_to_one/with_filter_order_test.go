@@ -20,7 +20,7 @@ func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one subtype descending order query with filter, no subtype child fields selected.",
 		Request: `query {
-			book(
+			Book(
 				filter: {author: {age: {_gt: 5}}},
 				order: {author: {age: DESC}}
 			){
@@ -79,7 +79,7 @@ func TestOnetoOneSubTypeAscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one subtype ascending order query with filter, no subtype child fields selected.",
 		Request: `query {
-			book(
+			Book(
 				filter: {author: {age: {_gt: 5}}},
 				order: {author: {age: ASC}}
 			){

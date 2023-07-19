@@ -13,8 +13,9 @@ package relation_create
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	relationTests "github.com/sourcenetwork/defradb/tests/integration/mutation/relation"
 )
 
@@ -39,10 +40,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				}`,
 			},
 			// Create books related to publishers, and ensure they are correctly linked (in and out of transactions).
-			testUtils.TransactionRequest2{
-				TransactionID: 0,
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_book(data: "{\"name\": \"Book By Website\",\"rating\": 4.0, \"publisher_id\": \"bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4\"}") {
+					create_Book(data: "{\"name\": \"Book By Website\",\"rating\": 4.0, \"publisher_id\": \"bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4\"}") {
 						_key
 					}
 				}`,
@@ -52,10 +53,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 					},
 				},
 			},
-			testUtils.TransactionRequest2{
-				TransactionID: 1,
+			testUtils.Request{
+				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					create_book(data: "{\"name\": \"Book By Online\",\"rating\": 4.0, \"publisher_id\": \"bae-8a381044-9206-51e7-8bc8-dc683d5f2523\"}") {
+					create_Book(data: "{\"name\": \"Book By Online\",\"rating\": 4.0, \"publisher_id\": \"bae-8a381044-9206-51e7-8bc8-dc683d5f2523\"}") {
 						_key
 					}
 				}`,
@@ -66,10 +67,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				},
 			},
 			// Assert publisher -> books direction within transaction 0.
-			testUtils.TransactionRequest2{
-				TransactionID: 0,
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -96,10 +97,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				},
 			},
 			// Assert publisher -> books direction within transaction 1.
-			testUtils.TransactionRequest2{
-				TransactionID: 1,
+			testUtils.Request{
+				TransactionID: immutable.Some(1),
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {
@@ -135,7 +136,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			testUtils.Request{
 				// Assert books -> publisher direction outside the transactions.
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -191,10 +192,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				}`,
 			},
 			// Create books related to publishers, and ensure they are correctly linked (in and out of transactions).
-			testUtils.TransactionRequest2{
-				TransactionID: 0,
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_book(data: "{\"name\": \"Book By Website\",\"rating\": 4.0, \"publisher_id\": \"bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4\"}") {
+					create_Book(data: "{\"name\": \"Book By Website\",\"rating\": 4.0, \"publisher_id\": \"bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4\"}") {
 						_key
 					}
 				}`,
@@ -204,10 +205,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 					},
 				},
 			},
-			testUtils.TransactionRequest2{
-				TransactionID: 1,
+			testUtils.Request{
+				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					create_book(data: "{\"name\": \"Book By Online\",\"rating\": 4.0, \"publisher_id\": \"bae-8a381044-9206-51e7-8bc8-dc683d5f2523\"}") {
+					create_Book(data: "{\"name\": \"Book By Online\",\"rating\": 4.0, \"publisher_id\": \"bae-8a381044-9206-51e7-8bc8-dc683d5f2523\"}") {
 						_key
 					}
 				}`,
@@ -218,10 +219,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				},
 			},
 			// Assert publisher -> books direction within transaction 0.
-			testUtils.TransactionRequest2{
-				TransactionID: 0,
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -242,10 +243,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				},
 			},
 			// Assert publisher -> books direction within transaction 1.
-			testUtils.TransactionRequest2{
-				TransactionID: 1,
+			testUtils.Request{
+				TransactionID: immutable.Some(1),
 				Request: `query {
-					book {
+					Book {
 						_key
 						name
 						publisher {
@@ -275,7 +276,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			testUtils.Request{
 				// Assert publishers -> books direction outside the transactions.
 				Request: `query {
-					publisher {
+					Publisher {
 						_key
 						name
 						published {

@@ -23,8 +23,8 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -34,13 +34,13 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" }
 					]
 				`,
-				ExpectedError: "duplicate field. Name: Email",
+				ExpectedError: "duplicate field. Name: email",
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
+						name
+						email
 					}
 				}`,
 				Results: []map[string]any{},
@@ -57,8 +57,8 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Email: String
+						name: String
+						email: String
 					}
 				`,
 			},
@@ -69,16 +69,16 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 					[
 						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/3" },
 						{ "op": "remove", "path": "/Users/Schema/Fields/3/ID" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/3/Name", "value": "Fax" }
+						{ "op": "replace", "path": "/Users/Schema/Fields/3/Name", "value": "fax" }
 					]
 				`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Email
-						Fax
+						name
+						email
+						fax
 					}
 				}`,
 				Results: []map[string]any{},
@@ -96,7 +96,7 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
@@ -107,30 +107,30 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *
 					[
 						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" },
 						{ "op": "remove", "path": "/Users/Schema/Fields/2/ID" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "Age" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/2/Kind", "value": "Integer" }
+						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "age" },
+						{ "op": "replace", "path": "/Users/Schema/Fields/2/Kind", "value": "Int" }
 					]
 				`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Age": 3
+					"name": "John",
+					"age": 3
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
 					Users {
-						Name
-						Age
+						name
+						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
+						"name": "John",
 						// It is important to test this with data, to ensure the type has been substituted correctly
-						"Age": uint64(3),
+						"age": uint64(3),
 					},
 				},
 			},
@@ -147,7 +147,7 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndInvalidKindSubstitut
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},

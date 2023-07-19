@@ -1,0 +1,9 @@
+query {
+    User {
+        name
+        age
+        verified
+        points
+        _key
+    }
+}

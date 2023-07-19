@@ -23,6 +23,7 @@ import (
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 func MakeSchemaAddCommand(cfg *config.Config) *cobra.Command {
@@ -93,7 +94,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return errors.New("empty schema provided")
 			}
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaLoadPath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPath)
 			if err != nil {
 				return errors.Wrap("join paths failed", err)
 			}
@@ -134,13 +135,20 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				} else {
 					type schemaResponse struct {
 						Data struct {
-							Result string `json:"result"`
+							Result      string `json:"result"`
+							Collections []struct {
+								Name string `json:"name"`
+								ID   string `json:"id"`
+							} `json:"collections"`
 						} `json:"data"`
 					}
 					r := schemaResponse{}
 					err = json.Unmarshal(response, &r)
 					if err != nil {
 						return errors.Wrap("failed to unmarshal response", err)
+					}
+					if r.Data.Result == "success" {
+						log.FeedbackInfo(cmd.Context(), "Successfully added schema.", logging.NewKV("Collections", r.Data.Collections))
 					}
 					log.FeedbackInfo(cmd.Context(), r.Data.Result)
 				}

@@ -16,9 +16,9 @@ import (
 
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	mh "github.com/multiformats/go-multihash"
 
 	"github.com/sourcenetwork/defradb/core"
+	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore"
 )
@@ -32,7 +32,7 @@ func newTestMerkleClock() *MerkleClock {
 
 	rw := datastore.AsDSReaderWriter(s)
 	multistore := datastore.MultiStoreFrom(rw)
-	reg := crdt.NewLWWRegister(rw, core.CollectionSchemaVersionKey{}, core.DataStoreKey{})
+	reg := crdt.NewLWWRegister(rw, core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
 	return NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{DocKey: "dockey", FieldId: "1"}, reg).(*MerkleClock)
 }
 
@@ -40,7 +40,7 @@ func TestNewMerkleClock(t *testing.T) {
 	s := newDS()
 	rw := datastore.AsDSReaderWriter(s)
 	multistore := datastore.MultiStoreFrom(rw)
-	reg := crdt.NewLWWRegister(rw, core.CollectionSchemaVersionKey{}, core.DataStoreKey{})
+	reg := crdt.NewLWWRegister(rw, core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
 	clk := NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{}, reg).(*MerkleClock)
 
 	if clk.headstore != multistore.Headstore() {
@@ -79,15 +79,7 @@ func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
-	pref := cid.Prefix{
-		Version:  1,
-		Codec:    cid.Raw,
-		MhType:   mh.SHA2_256,
-		MhLength: -1, // default length
-	}
-
-	// And then feed it some data
-	c, err := pref.Sum([]byte("Hello World!"))
+	c, err := ccid.NewSHA256CidV1([]byte("Hello World!"))
 	if err != nil {
 		t.Error("Failed to create new head CID:", err)
 		return

@@ -169,7 +169,7 @@ func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
 			},
 			testUtils.UnsubscribeToCollection{
 				NodeID:        1,
-				CollectionIDs: []int{0, testUtils.NonExistantCollectionID},
+				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
 				ExpectedError: "datastore: key not found",
 			},
 			testUtils.CreateDoc{

@@ -17,17 +17,17 @@ import (
 )
 
 var schema = (`
-	type book {
-		Name: String
-		Rating: Float
-		Author: author
+	type Book {
+		name: String
+		rating: Float
+		author: Author
 	}
 
-	type author {
-		Name: String
-		Age: Int
-		Verified: Boolean
-		Published: [book]
+	type Author {
+		name: String
+		age: Int
+		verified: Boolean
+		published: [Book]
 	}
 `)
 

@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,122 +14,64 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainQueryOneToManyWithACount(t *testing.T) {
-	test := testUtils.RequestTestCase{
-
-		Description: "Explain one one-to-many relation query with count.",
-
-		Request: `query @explain {
-			author {
-				name
-				numberOfBooks: _count(books: {})
-			}
-		}`,
-
-		Docs: map[int][]string{
-			//articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-			//books
-			1: {
-				`{
-					"name": "Painted House",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`,
-				`{
-					"name": "Theif Lord",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
+var countPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"countNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
+				},
 			},
 		},
+	},
+}
 
-		// ----> selectTopNode                (explainable but no-attributes)
-		//    ----> countNode                 (explainable)
-		//        ----> selectNode            (explainable)
-		//             ----> typeIndexJoin    (explainable)
-		//                 ----> typeJoinMany (non-explainable)
-		//                     ----> scanNode (explainable)
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"countNode": dataMap{
+func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) request with count on an inline array field.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Book {
+						name
+						_count(chapterPages: {})
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{countPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
 									"filter":    nil,
-									"fieldName": "books",
+									"fieldName": "chapterPages",
 								},
 							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"typeIndexJoin": dataMap{
-									"joinType": "typeJoinMany",
-									"rootName": "author",
-									"root": dataMap{
-										"scanNode": dataMap{
-											"filter":         nil,
-											"collectionID":   "3",
-											"collectionName": "author",
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
-												},
-											},
-										},
-									},
-									"subTypeName": "books",
-									"subType": dataMap{
-										"selectTopNode": dataMap{
-											"selectNode": dataMap{
-												"filter": nil,
-												"scanNode": dataMap{
-													"filter":         nil,
-													"collectionID":   "2",
-													"collectionName": "book",
-													"spans": []dataMap{
-														{
-															"start": "/2",
-															"end":   "/3",
-														},
-													},
-												},
-											},
-										},
-									},
+						},
+					},
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"filter":         nil,
+							"collectionID":   "2",
+							"collectionName": "Book",
+							"spans": []dataMap{
+								{
+									"start": "/2",
+									"end":   "/3",
 								},
 							},
 						},
@@ -139,5 +81,5 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

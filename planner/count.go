@@ -48,7 +48,7 @@ func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select) (*countNod
 		p:                 p,
 		virtualFieldIndex: field.Index,
 		aggregateMapping:  field.AggregateTargets,
-		docMapper:         docMapper{&field.DocumentMapping},
+		docMapper:         docMapper{field.DocumentMapping},
 	}, nil
 }
 
@@ -75,10 +75,22 @@ func (n *countNode) simpleExplain() (map[string]any, error) {
 		simpleExplainMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
-		if source.Filter == nil || source.Filter.ExternalConditions == nil {
+		if source.Filter == nil {
 			simpleExplainMap[filterLabel] = nil
 		} else {
-			simpleExplainMap[filterLabel] = source.Filter.ExternalConditions
+			// get the target aggregate document mapping. Since the filters
+			// are relative to the target aggregate collection (and doc mapper).
+			//
+			// We can determine if there is a child map if the index from the
+			// aggregate target is set (non nil) on the childMapping
+			var targetMap *core.DocumentMapping
+			if source.Index < len(n.documentMapping.ChildMappings) &&
+				n.documentMapping.ChildMappings[source.Index] != nil {
+				targetMap = n.documentMapping.ChildMappings[source.Index]
+			} else {
+				targetMap = n.documentMapping
+			}
+			simpleExplainMap[filterLabel] = source.Filter.ToMap(targetMap)
 		}
 
 		// Add the main field name.

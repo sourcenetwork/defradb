@@ -5,7 +5,7 @@ Delete a replicator
 ### Synopsis
 
 Use this command if you wish to remove the target replicator
-for the p2p data sync system.
+	for the p2p data sync system.
 
 ```
 defradb client rpc replicator delete [-f, --full | -c, --collection] <peer> [flags]
@@ -14,7 +14,9 @@ defradb client rpc replicator delete [-f, --full | -c, --collection] <peer> [fla
 ### Options
 
 ```
-  -h, --help   help for delete
+  -c, --collection stringArray   Define the collection for the replicator
+  -f, --full                     Set the replicator to act on all collections
+  -h, --help                     help for delete
 ```
 
 ### Options inherited from parent commands
@@ -27,7 +29,7 @@ defradb client rpc replicator delete [-f, --full | -c, --collection] <peer> [fla
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
-      --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
+      --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 

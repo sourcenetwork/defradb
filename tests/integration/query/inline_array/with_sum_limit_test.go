@@ -20,22 +20,22 @@ func TestQueryInlineIntegerArrayWithSumWithLimit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, limited sum of integer array",
 		Request: `query {
-					users {
-						Name
-						_sum(FavouriteIntegers: {limit: 2})
+					Users {
+						name
+						_sum(favouriteIntegers: {limit: 2})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, -1, 1, 0]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				"_sum": int64(1),
 			},
 		},

@@ -21,7 +21,7 @@ func TestQueryOneToMany(t *testing.T) {
 		{
 			Description: "One-to-many relation query from one side",
 			Request: `query {
-						book {
+						Book {
 							name
 							rating
 							author {
@@ -62,7 +62,7 @@ func TestQueryOneToMany(t *testing.T) {
 		{
 			Description: "One-to-many relation query from many side",
 			Request: `query {
-				author {
+				Author {
 					name
 					age
 					published {
@@ -144,7 +144,7 @@ func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with non-existant parent",
 		Request: `query {
-						book {
+						Book {
 							name
 							rating
 							author {
@@ -167,7 +167,7 @@ func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"author": nil,
+				"Author": nil,
 			},
 		},
 	}

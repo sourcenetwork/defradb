@@ -22,8 +22,8 @@ import (
 
 func TestUpdateWithKey(t *testing.T) {
 	docStr := `{
-		"Name": "John",
-		"Age": 21
+		"name": "John",
+		"age": 21
 	}`
 
 	doc, err := client.NewDocFromJSON([]byte(docStr))
@@ -35,14 +35,14 @@ func TestUpdateWithKey(t *testing.T) {
 		{
 			Description: "Test update users with key and invalid JSON",
 			Docs: map[string][]string{
-				"users": {docStr},
+				"Users": {docStr},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
-				"users": []func(c client.Collection) error{
+				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
 						_, err := c.UpdateWithKey(ctx, doc.Key(), `{
-							Name: "Eric"
+							name: "Eric"
 						}`)
 						return err
 					},
@@ -52,13 +52,13 @@ func TestUpdateWithKey(t *testing.T) {
 		}, {
 			Description: "Test update users with key and invalid updator",
 			Docs: map[string][]string{
-				"users": {docStr},
+				"Users": {docStr},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
-				"users": []func(c client.Collection) error{
+				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithKey(ctx, doc.Key(), `"Name: Eric"`)
+						_, err := c.UpdateWithKey(ctx, doc.Key(), `"name: Eric"`)
 						return err
 					},
 				},
@@ -67,17 +67,17 @@ func TestUpdateWithKey(t *testing.T) {
 		}, {
 			Description: "Test update users with key and patch updator (not implemented so no change)",
 			Docs: map[string][]string{
-				"users": {docStr},
+				"Users": {docStr},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
-				"users": []func(c client.Collection) error{
+				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
 						_, err := c.UpdateWithKey(ctx, doc.Key(), `[
 							{
-								"Name": "Eric"
+								"name": "Eric"
 							}, {
-								"Name": "Sam"
+								"name": "Sam"
 							}
 						]`)
 						if err != nil {
@@ -89,7 +89,7 @@ func TestUpdateWithKey(t *testing.T) {
 							return err
 						}
 
-						name, err := d.Get("Name")
+						name, err := d.Get("name")
 						if err != nil {
 							return err
 						}
@@ -103,14 +103,14 @@ func TestUpdateWithKey(t *testing.T) {
 		}, {
 			Description: "Test update users with key",
 			Docs: map[string][]string{
-				"users": {docStr},
+				"Users": {docStr},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
-				"users": []func(c client.Collection) error{
+				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
 						_, err := c.UpdateWithKey(ctx, doc.Key(), `{
-							"Name": "Eric"
+							"name": "Eric"
 						}`)
 						if err != nil {
 							return err
@@ -121,7 +121,7 @@ func TestUpdateWithKey(t *testing.T) {
 							return err
 						}
 
-						name, err := d.Get("Name")
+						name, err := d.Get("name")
 						if err != nil {
 							return err
 						}

@@ -20,7 +20,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with filter",
 		Request: `query {
-			author {
+			Author {
 				name
 				_count(published: {filter: {rating: {_gt: 4.8}}})
 			}
@@ -79,7 +79,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with filter",
 		Request: `query {
-			author {
+			Author {
 				name
 				_count(published: {filter: {rating: {_ne: null}}})
 				published(filter: {rating: {_ne: null}}){
@@ -160,7 +160,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testi
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with filter",
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				_count(published: {filter: {rating: {_ne: null}}})
 				published(filter: {rating: {_ne: null}}){
@@ -184,6 +184,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testi
 								},
 							},
 							"selectNode": dataMap{
+								"_keys":  nil,
 								"filter": nil,
 								"typeIndexJoin": dataMap{
 									"joinType": "typeJoinMany",
@@ -192,7 +193,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testi
 										"scanNode": dataMap{
 											"filter":         nil,
 											"collectionID":   "2",
-											"collectionName": "author",
+											"collectionName": "Author",
 											"spans": []dataMap{
 												{
 													"start": "/2",
@@ -205,6 +206,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testi
 									"subType": dataMap{
 										"selectTopNode": dataMap{
 											"selectNode": dataMap{
+												"_keys":  nil,
 												"filter": nil,
 												"scanNode": dataMap{
 													"filter": dataMap{
@@ -213,7 +215,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testi
 														},
 													},
 													"collectionID":   "1",
-													"collectionName": "book",
+													"collectionName": "Book",
 													"spans": []dataMap{
 														{
 															"start": "/1",
@@ -242,7 +244,7 @@ func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count",
 		Request: `query @explain {
-			author {
+			Author {
 				name
 				_count(published: {})
 				published(filter: {rating: {_ne: null}}){
@@ -256,6 +258,7 @@ func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T
 					"selectTopNode": dataMap{
 						"countNode": dataMap{
 							"selectNode": dataMap{
+								"_keys":  nil,
 								"filter": nil,
 								"parallelNode": []dataMap{
 									{
@@ -264,7 +267,7 @@ func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T
 											"root": dataMap{
 												"scanNode": dataMap{
 													"collectionID":   "2",
-													"collectionName": "author",
+													"collectionName": "Author",
 													"filter":         nil,
 													"spans": []dataMap{
 														{
@@ -278,10 +281,11 @@ func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T
 											"subType": dataMap{
 												"selectTopNode": dataMap{
 													"selectNode": dataMap{
+														"_keys":  nil,
 														"filter": nil,
 														"scanNode": dataMap{
 															"collectionID":   "1",
-															"collectionName": "book",
+															"collectionName": "Book",
 															"filter": dataMap{
 																"rating": dataMap{
 																	"_ne": nil,
@@ -306,7 +310,7 @@ func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T
 											"root": dataMap{
 												"scanNode": dataMap{
 													"collectionID":   "2",
-													"collectionName": "author",
+													"collectionName": "Author",
 													"filter":         nil,
 													"spans": []dataMap{
 														{
@@ -320,10 +324,11 @@ func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T
 											"subType": dataMap{
 												"selectTopNode": dataMap{
 													"selectNode": dataMap{
+														"_keys":  nil,
 														"filter": nil,
 														"scanNode": dataMap{
 															"collectionID":   "1",
-															"collectionName": "book",
+															"collectionName": "Book",
 															"filter":         nil,
 															"spans": []dataMap{
 																{

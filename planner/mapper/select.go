@@ -25,7 +25,7 @@ type Select struct {
 
 	// The document mapping for this select, describing how items yielded
 	// for this select can be accessed and rendered.
-	core.DocumentMapping
+	*core.DocumentMapping
 
 	// A commit identifier that can be specified to request data at a given time.
 	Cid immutable.Option[string]

@@ -20,7 +20,7 @@ func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne float filter",
 		Request: `query {
-					users(filter: {HeightM: {_ne: 2.1}}) {
+					Users(filter: {HeightM: {_ne: 2.1}}) {
 						Name
 					}
 				}`,
@@ -50,7 +50,7 @@ func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne float nil filter",
 		Request: `query {
-					users(filter: {HeightM: {_ne: null}}) {
+					Users(filter: {HeightM: {_ne: null}}) {
 						Name
 					}
 				}`,

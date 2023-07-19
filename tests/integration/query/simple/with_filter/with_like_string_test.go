@@ -20,7 +20,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsString(t *testing.T
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic like-string filter contains string",
 		Request: `query {
-					users(filter: {Name: {_like: "%Stormborn%"}}) {
+					Users(filter: {Name: {_like: "%Stormborn%"}}) {
 						Name
 					}
 				}`,
@@ -50,7 +50,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsPrefixString(t *testing.T
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic like-string filter with string as prefix",
 		Request: `query {
-					users(filter: {Name: {_like: "Viserys%"}}) {
+					Users(filter: {Name: {_like: "Viserys%"}}) {
 						Name
 					}
 				}`,
@@ -80,7 +80,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsSuffixString(t *testing.T
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic like-string filter with string as suffix",
 		Request: `query {
-					users(filter: {Name: {_like: "%Andals"}}) {
+					Users(filter: {Name: {_like: "%Andals"}}) {
 						Name
 					}
 				}`,
@@ -110,7 +110,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockExactString(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic like-string filter with string as suffix",
 		Request: `query {
-					users(filter: {Name: {_like: "Daenerys Stormborn of House Targaryen, the First of Her Name"}}) {
+					Users(filter: {Name: {_like: "Daenerys Stormborn of House Targaryen, the First of Her Name"}}) {
 						Name
 					}
 				}`,
@@ -140,7 +140,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResu
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic like-string filter with contains string mulitple results",
 		Request: `query {
-					users(filter: {Name: {_like: "%Targaryen%"}}) {
+					Users(filter: {Name: {_like: "%Targaryen%"}}) {
 						Name
 					}
 				}`,
@@ -173,7 +173,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasStartAndEnd(t *testing.T
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic like-string filter with string as start and end",
 		Request: `query {
-					users(filter: {Name: {_like: "Daenerys%Name"}}) {
+					Users(filter: {Name: {_like: "Daenerys%Name"}}) {
 						Name
 					}
 				}`,
@@ -203,7 +203,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic like-string filter with none of the strings",
 		Request: `query {
-					users(filter: {_and: [{Name: {_like: "%Baratheon%"}}, {Name: {_like: "%Stormborn%"}}]}) {
+					Users(filter: {_and: [{Name: {_like: "%Baratheon%"}}, {Name: {_like: "%Stormborn%"}}]}) {
 						Name
 					}
 				}`,
@@ -229,7 +229,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasEither(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic like-string filter with either strings",
 		Request: `query {
-					users(filter: {_or: [{Name: {_like: "%Baratheon%"}}, {Name: {_like: "%Stormborn%"}}]}) {
+					Users(filter: {_or: [{Name: {_like: "%Baratheon%"}}, {Name: {_like: "%Stormborn%"}}]}) {
 						Name
 					}
 				}`,
@@ -259,7 +259,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockPropNotSet(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic like-string filter with either strings",
 		Request: `query {
-					users(filter: {Name: {_like: "%King%"}}) {
+					Users(filter: {Name: {_like: "%King%"}}) {
 						Name
 					}
 				}`,

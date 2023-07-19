@@ -186,24 +186,24 @@ func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collec
 	return db.getAllCollections(ctx, db.txn)
 }
 
-// AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
-// creating the necessary collections, request types, etc.
-//
-// All schema types provided must not exist prior to calling this, and they may not reference existing
-// types previously defined.
-func (db *implicitTxnDB) AddSchema(ctx context.Context, schemaString string) error {
-	txn, err := db.NewTxn(ctx, false)
+// GetAllIndexes gets all the indexes in the database.
+func (db *implicitTxnDB) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	err = db.addSchema(ctx, txn, schemaString)
-	if err != nil {
-		return err
-	}
+	return db.getAllIndexes(ctx, txn)
+}
 
-	return txn.Commit(ctx)
+// GetAllIndexes gets all the indexes in the database.
+func (db *explicitTxnDB) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	return db.getAllIndexes(ctx, db.txn)
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
@@ -211,7 +211,30 @@ func (db *implicitTxnDB) AddSchema(ctx context.Context, schemaString string) err
 //
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
-func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) error {
+func (db *implicitTxnDB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	cols, err := db.addSchema(ctx, txn, schemaString)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := txn.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return cols, nil
+}
+
+// AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
+// creating the necessary collections, request types, etc.
+//
+// All schema types provided must not exist prior to calling this, and they may not reference existing
+// types previously defined.
+func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
 	return db.addSchema(ctx, db.txn, schemaString)
 }
 
@@ -254,6 +277,25 @@ func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string) er
 // will be applied.
 func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string) error {
 	return db.patchSchema(ctx, db.txn, patchString)
+}
+
+func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.lensRegistry.SetMigration(ctx, txn, cfg)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+func (db *explicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+	return db.lensRegistry.SetMigration(ctx, db.txn, cfg)
 }
 
 // SetReplicator adds a new replicator to the database.

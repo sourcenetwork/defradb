@@ -31,7 +31,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-							update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+							update_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 								name
 							}
 						}`,
@@ -65,7 +65,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: `
 				mutation {
-					update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-3d236f89-6a31-5add-a36a-27971a2eac76\"}") {
+					update_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-3d236f89-6a31-5add-a36a-27971a2eac76\"}") {
 						name
 					}
 				}`,
@@ -78,7 +78,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						book {
+						Book {
 							name
 							author {
 								name
@@ -97,7 +97,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						author {
+						Author {
 							name
 							published {
 								name
@@ -138,7 +138,7 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: `
 				mutation {
-					update_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed\"}") {
+					update_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed\"}") {
 						name
 					}
 				}`,
@@ -151,7 +151,7 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						book {
+						Book {
 							name
 							author {
 								name
@@ -170,7 +170,7 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						author {
+						Author {
 							name
 							published {
 								name

@@ -45,14 +45,14 @@ func TestUpdateOneToOneSaveErrorsGivenNonExistantKeyViaSecondarySide(t *testing.
 
 	test := testUtils.TestCase{
 		Docs: map[string][]string{
-			"book": {
+			"Book": {
 				`{
 					"name": "Painted House"
 				}`,
 			},
 		},
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"book": []func(c client.Collection) error{
+			"Book": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					return c.Save(context.Background(), doc)
 				},
@@ -92,14 +92,14 @@ func TestUpdateOneToOneSavesGivenNewRelationValue(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Docs: map[string][]string{
-			"author": {
+			"Author": {
 				`{
 					"name": "John Grisham"
 				}`,
 			},
 		},
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"author": []func(c client.Collection) error{
+			"Author": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					return c.Save(context.Background(), doc)
 				},
@@ -135,19 +135,19 @@ func TestUpdateOneToOneSaveFromSecondarySide(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Docs: map[string][]string{
-			"author": {
+			"Author": {
 				`{
 					"name": "John Grisham"
 				}`,
 			},
-			"book": {
+			"Book": {
 				`{
 					"name": "Painted House"
 				}`,
 			},
 		},
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"book": []func(c client.Collection) error{
+			"Book": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					return c.Save(context.Background(), doc)
 				},

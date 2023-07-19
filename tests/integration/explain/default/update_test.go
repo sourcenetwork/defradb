@@ -14,75 +14,79 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+var updatePattern = dataMap{
+	"explain": dataMap{
+		"updateNode": dataMap{
+			"selectTopNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
+				},
+			},
+		},
+	},
+}
 
-		Description: "Explain simple update mutation with boolean equals filter, multiple rows",
+func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Request: `mutation @explain {
-			update_author(
-				filter: {
-					verified: {
-						_eq: true
+		Description: "Explain (default) mutation request with update using boolean filter.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `mutation @explain {
+					update_Author(
+						filter: {
+							verified: {
+								_eq: true
+							}
+						},
+						data: "{\"age\": 59}"
+					) {
+						_key
+						name
+						age
 					}
-				},
-				data: "{\"age\": 59}"
-			) {
-				_key
-				name
-				age
-			}
-		}`,
-
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
 				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"updateNode": dataMap{
-						"data": dataMap{
-							"age": float64(59),
-						},
-						"filter": dataMap{
-							"verified": dataMap{
-								"_eq": true,
+				ExpectedPatterns: []dataMap{updatePattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "updateNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"data": dataMap{
+								"age": float64(59),
 							},
+							"filter": dataMap{
+								"verified": dataMap{
+									"_eq": true,
+								},
+							},
+							"ids": []string(nil),
 						},
-						"ids": []string(nil),
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter": dataMap{
-										"verified": dataMap{
-											"_eq": true,
-										},
-									},
-									"spans": []dataMap{
-										{
-											"end":   "/4",
-											"start": "/3",
-										},
-									},
+					},
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be last node, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter": dataMap{
+								"verified": dataMap{
+									"_eq": true,
+								},
+							},
+							"spans": []dataMap{
+								{
+									"end":   "/4",
+									"start": "/3",
 								},
 							},
 						},
@@ -92,233 +96,65 @@ func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestExplainSimpleMutationUpdateWithIdInFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Description: "Explain simple update mutation with id in filter, multiple rows",
+		Description: "Explain (default) mutation request with update using ids.",
 
-		Request: `mutation @explain {
-			update_author(
-				ids: [
-					"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				],
-				data: "{\"age\": 59}"
-			) {
-				_key
-				name
-				age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
-				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
+			testUtils.ExplainRequest{
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"updateNode": dataMap{
-						"data": dataMap{
-							"age": float64(59),
-						},
-						"filter": nil,
-						"ids": []string{
+				Request: `mutation @explain {
+					update_Author(
+						ids: [
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-						},
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
-											"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-										},
-										{
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-
-		Description: "Explain simple update mutation with id equals filter, multiple rows but single match",
-
-		Request: `mutation @explain {
-			update_author(
-				id: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-				data: "{\"age\": 59}"
-			) {
-				_key
-				name
-				age
-			}
-		}`,
-
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
-				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"updateNode": dataMap{
-						"data": dataMap{
-							"age": float64(59),
-						},
-						"filter": nil,
-						"ids": []string{
-							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-						},
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
-											"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-
-		Description: "Explain simple update mutation with ids and filter, multiple rows",
-
-		Request: `mutation @explain {
-			update_author(
-				filter: {
-					verified: {
-						_eq: true
+							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
+						],
+						data: "{\"age\": 59}"
+					) {
+						_key
+						name
+						age
 					}
-				},
-				ids: [
-					"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				],
-				data: "{\"age\": 59}"
-			) {
-				_key
-				name
-				age
-			}
-		}`,
-
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-					"name": "Lone",
-					"age":  26,
-					"verified": false
 				}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-					"name":     "Shahzad Lone",
-					"age":      27,
-					"verified": true
-				}`,
-			},
-		},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"updateNode": dataMap{
-						"data": dataMap{
-							"age": float64(59),
-						},
-						"filter": dataMap{
-							"verified": dataMap{
-								"_eq": true,
+				ExpectedPatterns: []dataMap{updatePattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "updateNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"data": dataMap{
+								"age": float64(59),
+							},
+							"filter": nil,
+							"ids": []string{
+								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 						},
-						"ids": []string{
-							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-						},
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter": dataMap{
-										"verified": dataMap{
-											"_eq": true,
-										},
-									},
-									"spans": []dataMap{
-										{
-											"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
-											"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-										},
-										{
-											"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
-											"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
-										},
-									},
+					},
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be last node, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter":         nil,
+							"spans": []dataMap{
+								{
+									"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
+									"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+								},
+								{
+									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								},
 							},
 						},
@@ -328,5 +164,146 @@ func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) mutation request with update using id.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `mutation @explain {
+					update_Author(
+						id: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+						data: "{\"age\": 59}"
+					) {
+						_key
+						name
+						age
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{updatePattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "updateNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"data": dataMap{
+								"age": float64(59),
+							},
+							"filter": nil,
+							"ids": []string{
+								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+							},
+						},
+					},
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be last node, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter":         nil,
+							"spans": []dataMap{
+								{
+									"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+									"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) mutation request with update using both ids and filter.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `mutation @explain {
+					update_Author(
+						filter: {
+							verified: {
+								_eq: true
+							}
+						},
+						ids: [
+							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
+						],
+						data: "{\"age\": 59}"
+					) {
+						_key
+						name
+						age
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{updatePattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "updateNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"data": dataMap{
+								"age": float64(59),
+							},
+							"filter": dataMap{
+								"verified": dataMap{
+									"_eq": true,
+								},
+							},
+							"ids": []string{
+								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							},
+						},
+					},
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be last node, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter": dataMap{
+								"verified": dataMap{
+									"_eq": true,
+								},
+							},
+							"spans": []dataMap{
+								{
+									"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+									"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
+								},
+								{
+									"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+									"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
 }

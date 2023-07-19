@@ -27,14 +27,14 @@ import (
 func MakePeerIDCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "peerid",
-		Short: "Get the peer ID of the DefraDB node",
+		Short: "Get the PeerID of the DefraDB node",
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
 			stdout, err := os.Stdout.Stat()
 			if err != nil {
 				return errors.Wrap("failed to stat stdout", err)
 			}
 			if !isFileInfoPipe(stdout) {
-				log.FeedbackInfo(cmd.Context(), "Requesting peer ID...")
+				log.FeedbackInfo(cmd.Context(), "Requesting PeerID...")
 			}
 
 			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.PeerIDPath)
@@ -44,7 +44,7 @@ func MakePeerIDCommand(cfg *config.Config) *cobra.Command {
 
 			res, err := http.Get(endpoint.String())
 			if err != nil {
-				return errors.Wrap("failed to request peer ID", err)
+				return errors.Wrap("failed to request PeerID", err)
 			}
 
 			defer func() {
@@ -76,7 +76,7 @@ func MakePeerIDCommand(cfg *config.Config) *cobra.Command {
 					}
 					return nil
 				}
-				return errors.New("no peer ID available. P2P might be disabled")
+				return errors.New("no PeerID available. P2P might be disabled")
 			}
 
 			r := httpapi.DataResponse{}

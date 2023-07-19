@@ -20,22 +20,22 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Request: `query {
-					users {
-						Name
-						_sum(FavouriteIntegers: {offset: 1, limit: 3, order: ASC})
+					Users {
+						name
+						_sum(favouriteIntegers: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, 5, 1, 0, 7]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				// 0 + 1 + 2
 				"_sum": int64(3),
 			},
@@ -49,22 +49,22 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Request: `query {
-					users {
-						Name
-						_sum(FavouriteIntegers: {offset: 1, limit: 3, order: DESC})
+					Users {
+						name
+						_sum(favouriteIntegers: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, 5, 1, 0, 7]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				// 5 + 2 + 1
 				"_sum": int64(8),
 			},
@@ -78,22 +78,22 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Request: `query {
-					users {
-						Name
-						_sum(TestScores: {offset: 1, limit: 3, order: ASC})
+					Users {
+						name
+						_sum(testScores: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"TestScores": [2, null, 5, 1, 0, 7]
+					"name": "Shahzad",
+					"testScores": [2, null, 5, 1, 0, 7]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				// 0 + 1 + 2
 				"_sum": int64(3),
 			},
@@ -107,22 +107,22 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Request: `query {
-					users {
-						Name
-						_sum(TestScores: {offset: 1, limit: 3, order: DESC})
+					Users {
+						name
+						_sum(testScores: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"TestScores": [null, 2, 5, 1, 0, 7]
+					"name": "Shahzad",
+					"testScores": [null, 2, 5, 1, 0, 7]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				// 5 + 2 + 1
 				"_sum": int64(8),
 			},
@@ -136,22 +136,22 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Request: `query {
-					users {
-						Name
-						_sum(FavouriteFloats: {offset: 1, limit: 3, order: ASC})
+					Users {
+						name
+						_sum(favouriteFloats: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
+					"name": "Shahzad",
+					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				// 0.577 + 2.718 + 3.1425
 				"_sum": float64(6.4375),
 			},
@@ -165,22 +165,22 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Request: `query {
-					users {
-						Name
-						_sum(FavouriteFloats: {offset: 1, limit: 3, order: DESC})
+					Users {
+						name
+						_sum(favouriteFloats: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
+					"name": "Shahzad",
+					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				// 6.283 + 3.1425 + 2.718
 				"_sum": float64(12.1435),
 			},
@@ -194,22 +194,22 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Request: `query {
-					users {
-						Name
-						_sum(PageRatings: {offset: 1, limit: 3, order: ASC})
+					Users {
+						name
+						_sum(pageRatings: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"PageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
+					"name": "Shahzad",
+					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				// 0.577 + 2.718 + 3.1425
 				"_sum": float64(6.4375),
 			},
@@ -223,22 +223,22 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t 
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Request: `query {
-					users {
-						Name
-						_sum(PageRatings: {offset: 1, limit: 3, order: DESC})
+					Users {
+						name
+						_sum(pageRatings: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"PageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
+					"name": "Shahzad",
+					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "Shahzad",
+				"name": "Shahzad",
 				// 6.283 + 3.1425 + 2.718
 				"_sum": float64(12.1435),
 			},

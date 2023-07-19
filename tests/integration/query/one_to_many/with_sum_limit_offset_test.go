@@ -20,7 +20,7 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset",
 		Request: `query {
-				author {
+				Author {
 					name
 					_sum(published: {field: rating, offset: 1, limit: 2})
 				}

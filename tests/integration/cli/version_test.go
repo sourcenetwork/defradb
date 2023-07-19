@@ -40,7 +40,6 @@ func TestExecVersionJSON(t *testing.T) {
 	assert.Contains(t, output, "go\":")
 	assert.Contains(t, output, "commit\":")
 	assert.Contains(t, output, "commitdate\":")
-
 	var data map[string]any
 	err := json.Unmarshal([]byte(output), &data)
 	assert.NoError(t, err)

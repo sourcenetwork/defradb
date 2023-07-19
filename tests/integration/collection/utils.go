@@ -47,7 +47,7 @@ func ExecuteRequestTestCase(
 		t.Fatal(err)
 	}
 
-	err = db.AddSchema(ctx, schema)
+	_, err = db.AddSchema(ctx, schema)
 	if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 		return
 	}

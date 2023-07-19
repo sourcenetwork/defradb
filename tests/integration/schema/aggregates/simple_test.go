@@ -21,13 +21,13 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 							fields {
 								name
@@ -49,7 +49,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_count",
@@ -57,12 +57,12 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
-											"name": "users__CountSelector",
+											"name": "Users__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
 													"type": map[string]any{
-														"name": "usersFilterArg",
+														"name": "UsersFilterArg",
 													},
 												},
 												map[string]any{
@@ -83,7 +83,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 									map[string]any{
 										"name": "_version",
 										"type": map[string]any{
-											"name": "users___version__CountSelector",
+											"name": "Users___version__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "limit",
@@ -109,7 +109,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
@@ -117,13 +117,13 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 							fields {
 								name
@@ -149,7 +149,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_sum",
@@ -157,7 +157,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
-											"name": "users__NumericSelector",
+											"name": "Users__NumericSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "field",
@@ -165,14 +165,14 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 														"name": nil,
 														"kind": "NON_NULL",
 														"ofType": map[string]any{
-															"name": "usersNumericFieldsArg",
+															"name": "UsersNumericFieldsArg",
 														},
 													},
 												},
 												map[string]any{
 													"name": "filter",
 													"type": map[string]any{
-														"name":   "usersFilterArg",
+														"name":   "UsersFilterArg",
 														"kind":   "INPUT_OBJECT",
 														"ofType": nil,
 													},
@@ -196,7 +196,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 												map[string]any{
 													"name": "order",
 													"type": map[string]any{
-														"name":   "usersOrderArg",
+														"name":   "UsersOrderArg",
 														"kind":   "INPUT_OBJECT",
 														"ofType": nil,
 													},
@@ -213,7 +213,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
@@ -221,13 +221,13 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
 					query {
-						__type (name: "users") {
+						__type (name: "Users") {
 							name
 							fields {
 								name
@@ -253,7 +253,7 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
-						"name": "users",
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
 								"name": "_avg",
@@ -261,7 +261,7 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
-											"name": "users__NumericSelector",
+											"name": "Users__NumericSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "field",
@@ -269,14 +269,14 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 														"name": nil,
 														"kind": "NON_NULL",
 														"ofType": map[string]any{
-															"name": "usersNumericFieldsArg",
+															"name": "UsersNumericFieldsArg",
 														},
 													},
 												},
 												map[string]any{
 													"name": "filter",
 													"type": map[string]any{
-														"name":   "usersFilterArg",
+														"name":   "UsersFilterArg",
 														"kind":   "INPUT_OBJECT",
 														"ofType": nil,
 													},
@@ -300,7 +300,7 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 												map[string]any{
 													"name": "order",
 													"type": map[string]any{
-														"name":   "usersOrderArg",
+														"name":   "UsersOrderArg",
 														"kind":   "INPUT_OBJECT",
 														"ofType": nil,
 													},
@@ -317,5 +317,5 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

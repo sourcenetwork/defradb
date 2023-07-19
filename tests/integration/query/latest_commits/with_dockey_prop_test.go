@@ -24,24 +24,24 @@ func TestQueryLastCommitsWithDockeyProperty(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							dockey
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+						"dockey": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

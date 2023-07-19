@@ -14,98 +14,92 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainMutationCreateSimple(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain simple create mutation.",
-
-		Request: `mutation @explain {
-			create_author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
-				_key
-				name
-				age
-			}
-		}`,
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"createNode": dataMap{
-						"data": dataMap{
-							"age":      float64(27),
-							"name":     "Shahzad Lone",
-							"verified": true,
-						},
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans":          []dataMap{},
-								},
-							},
-						},
-					},
+var createPattern = dataMap{
+	"explain": dataMap{
+		"createNode": dataMap{
+			"selectTopNode": dataMap{
+				"selectNode": dataMap{
+					"scanNode": dataMap{},
 				},
 			},
 		},
-
-		ExpectedError: "",
-	}
-
-	executeTestCase(t, test)
+	},
 }
 
-func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain simple create mutation, where document already exists.",
+func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Explain (default) mutation request with create.",
 
-		Request: `mutation @explain {
-			create_author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
-				_key
-				name
-				age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "Shahzad Lone",
-					"age": 27
+			testUtils.ExplainRequest{
+
+				Request: `mutation @explain {
+					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
+						name
+						age
+					}
 				}`,
-			},
-		},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"createNode": dataMap{
-						"data": dataMap{
-							"age":  float64(27),
-							"name": "Shahzad Lone",
-						},
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans":          []dataMap{},
-								},
+				ExpectedPatterns: []dataMap{createPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "createNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"data": dataMap{
+								"age":      float64(27),
+								"name":     "Shahzad Lone",
+								"verified": true,
 							},
 						},
 					},
 				},
 			},
 		},
-
-		ExpectedError: "",
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Explain (default) mutation request with create, document exists.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `mutation @explain {
+					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
+						name
+						age
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{createPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "createNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"data": dataMap{
+								"age":  float64(27),
+								"name": "Shahzad Lone",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
 }

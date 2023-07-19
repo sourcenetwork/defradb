@@ -20,7 +20,7 @@ func TestQuerySimpleWithIntGreaterThanAndIntLessThanFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with logical compound filter (and)",
 		Request: `query {
-					users(filter: {_and: [{Age: {_gt: 20}}, {Age: {_lt: 50}}]}) {
+					Users(filter: {_and: [{Age: {_gt: 20}}, {Age: {_lt: 50}}]}) {
 						Name
 						Age
 					}

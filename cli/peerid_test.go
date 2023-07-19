@@ -125,5 +125,5 @@ func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
 
 	assert.Equal(t, http.StatusNotFound, r.Extensions.Status)
 	assert.Equal(t, "Not Found", r.Extensions.HTTPError)
-	assert.Equal(t, "no peer ID available. P2P might be disabled", r.Message)
+	assert.Equal(t, "no PeerID available. P2P might be disabled", r.Message)
 }

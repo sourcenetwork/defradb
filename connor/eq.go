@@ -61,7 +61,7 @@ func eq(condition, data any) (bool, error) {
 		return false, nil
 	case int64:
 		return numbers.Equal(cn, data), nil
-	case int:
+	case int32:
 		return numbers.Equal(cn, data), nil
 	case float64:
 		return numbers.Equal(cn, data), nil

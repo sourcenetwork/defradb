@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.planner")
+	log = logging.MustNewLogger("planner")
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.
@@ -166,8 +166,8 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 }
 
 // makePlan creates a new plan from the parsed data, optimizes the plan and returns
-// an initiated plan. The caller of makePlan is also responsible of calling Close()
-// on the plan to free it's resources.
+// it. The caller of makePlan is also responsible of calling Close() on the plan to
+// free it's resources.
 func (p *Planner) makePlan(stmt any) (planNode, error) {
 	planNode, err := p.newPlan(stmt)
 	if err != nil {
@@ -179,7 +179,6 @@ func (p *Planner) makePlan(stmt any) (planNode, error) {
 		return nil, err
 	}
 
-	err = planNode.Init()
 	return planNode, err
 }
 
@@ -483,6 +482,11 @@ func (p *Planner) RunRequest(
 		}
 	}()
 
+	err = planNode.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	// Ensure subscription request doesn't ever end up with an explain directive.
 	if len(req.Subscription) > 0 && req.Subscription[0].Directives.ExplainType.HasValue() {
 		return nil, ErrCantExplainSubscriptionRequest
@@ -516,7 +520,16 @@ func (p *Planner) RunSubscriptionRequest(
 		}
 	}()
 
-	return p.executeRequest(ctx, planNode)
+	err = planNode.Init()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := p.executeRequest(ctx, planNode)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 // MakePlan makes a plan from the parsed request.

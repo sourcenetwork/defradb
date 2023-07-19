@@ -20,7 +20,7 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with cid",
 		Request: `query {
-					users (cid: "any non-nil string value - this will be ignored") {
+					Users (cid: "any non-nil string value - this will be ignored") {
 						Name
 					}
 				}`,

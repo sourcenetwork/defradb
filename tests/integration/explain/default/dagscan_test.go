@@ -14,53 +14,50 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainCommitsDagScan(t *testing.T) {
-	test := testUtils.RequestTestCase{
-
-		Description: "Explain commits query.",
-
-		Request: `query @explain {
-			commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", field: "1") {
-				links {
-					cid
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
+var dagScanPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"selectNode": dataMap{
+				"dagScanNode": dataMap{},
 			},
 		},
+	},
+}
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"dagScanNode": dataMap{
-								"cid":   nil,
-								"field": "1",
-								"spans": []dataMap{
-									{
-										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
-										"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
-									},
+func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) commits query-op.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+						links {
+							cid
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{dagScanPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "dagScanNode",
+						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
+						ExpectedAttributes: dataMap{
+							"cid":     nil,
+							"fieldId": "1",
+							"spans": []dataMap{
+								{
+									"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
+									"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
 								},
 							},
 						},
@@ -70,54 +67,40 @@ func TestExplainCommitsDagScan(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestExplainCommitsDagScanWithoutField(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Description: "Explain commits query with only dockey (no field).",
+		Description: "Explain (default) commits query-op with only dockey (no field).",
 
-		Request: `query @explain {
-			commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
-				links {
-					cid
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+						links {
+							cid
+						}
+					}
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"dagScanNode": dataMap{
-								"cid":   nil,
-								"field": nil,
-								"spans": []dataMap{
-									{
-										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-										"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df4",
-									},
+				ExpectedPatterns: []dataMap{dagScanPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "dagScanNode",
+						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
+						ExpectedAttributes: dataMap{
+							"cid":     nil,
+							"fieldId": nil,
+							"spans": []dataMap{
+								{
+									"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+									"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df4",
 								},
 							},
 						},
@@ -127,55 +110,41 @@ func TestExplainCommitsDagScanWithoutField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestExplainLatestCommitsDagScan(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Description: "Explain latestCommits query.",
+		Description: "Explain (default) latestCommits query-op.",
 
-		Request: `query @explain {
-			latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", field: "1") {
-				cid
-				links {
-					cid
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+						cid
+						links {
+							cid
+						}
+					}
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"dagScanNode": dataMap{
-								"cid":   nil,
-								"field": "1",
-								"spans": []dataMap{
-									{
-										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
-										"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
-									},
+				ExpectedPatterns: []dataMap{dagScanPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "dagScanNode",
+						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
+						ExpectedAttributes: dataMap{
+							"cid":     nil,
+							"fieldId": "1",
+							"spans": []dataMap{
+								{
+									"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
+									"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
 								},
 							},
 						},
@@ -185,55 +154,41 @@ func TestExplainLatestCommitsDagScan(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestExplainLatestCommitsDagScanWithoutField(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Description: "Explain latestCommits query with only dockey (no field).",
+		Description: "Explain (default) latestCommits query-op with only dockey (no field).",
 
-		Request: `query @explain {
-			latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
-				cid
-				links {
-					cid
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+						cid
+						links {
+							cid
+						}
+					}
 				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"dagScanNode": dataMap{
-								"cid":   nil,
-								"field": "C",
-								"spans": []dataMap{
-									{
-										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
-										"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/D",
-									},
+				ExpectedPatterns: []dataMap{dagScanPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "dagScanNode",
+						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
+						ExpectedAttributes: dataMap{
+							"cid":     nil,
+							"fieldId": "C",
+							"spans": []dataMap{
+								{
+									"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
+									"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/D",
 								},
 							},
 						},
@@ -243,45 +198,59 @@ func TestExplainLatestCommitsDagScanWithoutField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Description: "Explain latestCommits query without DocKey.",
+		Description: "Explain (default) latestCommits query without DocKey.",
 
-		Request: `query @explain {
-			latestCommits(field: "1") {
-				cid
-				links {
-					cid
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					latestCommits(fieldId: "1") {
+						cid
+						links {
+							cid
+						}
+					}
+				}`,
+
+				ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+			},
+		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
-	test := testUtils.RequestTestCase{
+func TestDefaultExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Description: "Explain latestCommits query without any arguments.",
+		Description: "Explain (default) latestCommits query without any arguments.",
 
-		Request: `query @explain {
-			latestCommits {
-				cid
-				links {
-					cid
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					latestCommits {
+						cid
+						links {
+							cid
+						}
+					}
+				}`,
+
+				ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+			},
+		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

@@ -86,7 +86,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 					{
 						"name": "John Grisham",
 						// Because in ascending order years for John are:
-						// 'The Associate' as it has no publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
+						// 'The Associate' as it has no Publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
 						"s1": float64(4.2) + float64(4.9),
 						"NewestPublishersBook": []map[string]any{
 							{
@@ -138,7 +138,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 						"name": "John Grisham",
 						// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
 						"s1": 4.8 + 4.5,
-						// 'The Associate' as it has no publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
+						// 'The Associate' as it has no Publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
 						"s2": float64(4.2) + float64(4.9),
 					},
 					{

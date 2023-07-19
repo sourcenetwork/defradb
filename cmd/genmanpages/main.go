@@ -28,7 +28,7 @@ import (
 
 const defaultPerm os.FileMode = 0o777
 
-var log = logging.MustNewLogger("defra.genmanpages")
+var log = logging.MustNewLogger("genmanpages")
 
 func main() {
 	dirFlag := flag.String("o", "build/man", "Directory in which to generate DefraDB man pages")

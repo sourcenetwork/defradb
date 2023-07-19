@@ -1,6 +1,8 @@
 syntax = "proto3";
 package api.pb;
 
+option go_package = "/;api_pb";
+
 message SetReplicatorRequest {
     repeated string collections = 1;
     bytes addr = 2;

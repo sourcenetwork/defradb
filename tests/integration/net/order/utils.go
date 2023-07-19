@@ -25,13 +25,14 @@ import (
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/net"
+	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
-	"github.com/sourcenetwork/defradb/node"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 var (
-	log = logging.MustNewLogger("defra.test.net")
+	log = logging.MustNewLogger("test.net")
 )
 
 const (
@@ -53,11 +54,11 @@ type P2PTestCase struct {
 	// Configuration parameters for each peer
 	NodeConfig []*config.Config
 
-	// List of peers for each node.
+	// List of peers for each net.
 	// Only peers with lower index than the node can be used in the list of peers.
 	NodePeers map[int][]int
 
-	// List of replicators for each node.
+	// List of replicators for each net.
 	// Only peers with lower index than the node can be used in the list of peers.
 	NodeReplicators map[int][]int
 
@@ -70,7 +71,7 @@ type P2PTestCase struct {
 	ReplicatorResult map[int]map[string]map[string]any
 }
 
-func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Node, []client.DocKey, error) {
+func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node, []client.DocKey, error) {
 	ctx := context.Background()
 
 	log.Info(ctx, "Building new memory store")
@@ -92,12 +93,12 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	}
 
 	// init the p2p node
-	var n *node.Node
+	var n *net.Node
 	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-	n, err = node.NewNode(
+	n, err = net.NewNode(
 		ctx,
 		db,
-		cfg.NodeConfig(),
+		net.WithConfig(cfg),
 	)
 	if err != nil {
 		return nil, nil, errors.Wrap("failed to start P2P node", err)
@@ -128,7 +129,8 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 }
 
 func seedSchema(ctx context.Context, db client.DB) error {
-	return db.AddSchema(ctx, userCollectionGQLSchema)
+	_, err := db.AddSchema(ctx, userCollectionGQLSchema)
+	return err
 }
 
 func seedDocument(ctx context.Context, db client.DB, document string) (client.DocKey, error) {
@@ -194,7 +196,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	ctx := context.Background()
 
 	dockeys := []client.DocKey{}
-	nodes := []*node.Node{}
+	nodes := []*net.Node{}
 
 	for i, cfg := range test.NodeConfig {
 		log.Info(ctx, fmt.Sprintf("Setting up node %d", i))
@@ -303,7 +305,12 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 						fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
 					)
 					require.NoError(t, err)
-					_, err = n.Peer.SetReplicator(ctx, addr)
+					_, err = n.Peer.SetReplicator(
+						ctx,
+						&netpb.SetReplicatorRequest{
+							Addr: addr.Bytes(),
+						},
+					)
 					require.NoError(t, err)
 				}
 			}
@@ -342,10 +349,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 	// clean up
 	for _, n := range nodes {
-		n.DB.Close(ctx)
 		if err := n.Close(); err != nil {
 			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err.Error()))
 		}
+		n.DB.Close(ctx)
 	}
 }
 

@@ -17,7 +17,7 @@ import (
 )
 
 var userSchema = (`
-	type user {
+	type User {
 		name: String
 		age: Int
 		points: Float
@@ -26,13 +26,13 @@ var userSchema = (`
 `)
 
 func ExecuteTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(t, userSchema, []string{"user"}, test)
+	testUtils.ExecuteRequestTestCase(t, userSchema, []string{"User"}, test)
 }
 
 func Execute(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
-		[]string{"user"},
+		[]string{"User"},
 		testUtils.TestCase{
 			Description: test.Description,
 			Actions: append(

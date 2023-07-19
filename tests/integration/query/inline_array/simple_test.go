@@ -23,69 +23,69 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 		{
 			Description: "Simple inline array with no filter, nil boolean array",
 			Request: `query {
-						users {
-							Name
-							LikedIndexes
+						Users {
+							name
+							likedIndexes
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"LikedIndexes": null
+						"name": "John",
+						"likedIndexes": null
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":         "John",
-					"LikedIndexes": nil,
+					"name":         "John",
+					"likedIndexes": nil,
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, empty boolean array",
 			Request: `query {
-						users {
-							Name
-							LikedIndexes
+						Users {
+							name
+							likedIndexes
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"LikedIndexes": []
+						"name": "John",
+						"likedIndexes": []
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":         "John",
-					"LikedIndexes": []bool{},
+					"name":         "John",
+					"likedIndexes": []bool{},
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, booleans",
 			Request: `query {
-						users {
-							Name
-							LikedIndexes
+						Users {
+							name
+							likedIndexes
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John", 
-						"LikedIndexes": [true, true, false, true]
+						"name": "John", 
+						"likedIndexes": [true, true, false, true]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":         "John",
-					"LikedIndexes": []bool{true, true, false, true},
+					"name":         "John",
+					"likedIndexes": []bool{true, true, false, true},
 				},
 			},
 		},
@@ -100,23 +100,23 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, booleans",
 		Request: `query {
-					users {
-						Name
-						IndexLikesDislikes
+					Users {
+						name
+						indexLikesDislikes
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"IndexLikesDislikes": [true, true, false, null]
+					"name": "John",
+					"indexLikesDislikes": [true, true, false, null]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"IndexLikesDislikes": []immutable.Option[bool]{
+				"name": "John",
+				"indexLikesDislikes": []immutable.Option[bool]{
 					immutable.Some(true),
 					immutable.Some(true),
 					immutable.Some(false),
@@ -134,137 +134,137 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 		{
 			Description: "Simple inline array with no filter, default integer array",
 			Request: `query {
-						users {
-							Name
-							FavouriteIntegers
+						Users {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John"
+						"name": "John"
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": nil,
+					"name":              "John",
+					"favouriteIntegers": nil,
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, nil integer array",
 			Request: `query {
-						users {
-							Name
-							FavouriteIntegers
+						Users {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteIntegers": null
+						"name": "John",
+						"favouriteIntegers": null
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": nil,
+					"name":              "John",
+					"favouriteIntegers": nil,
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, empty integer array",
 			Request: `query {
-						users {
-							Name
-							FavouriteIntegers
+						Users {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteIntegers": []
+						"name": "John",
+						"favouriteIntegers": []
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": []int64{},
+					"name":              "John",
+					"favouriteIntegers": []int64{},
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, positive integers",
 			Request: `query {
-						users {
-							Name
-							FavouriteIntegers
+						Users {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteIntegers": [1, 2, 3, 5, 8]
+						"name": "John",
+						"favouriteIntegers": [1, 2, 3, 5, 8]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "John",
-					"FavouriteIntegers": []int64{1, 2, 3, 5, 8},
+					"name":              "John",
+					"favouriteIntegers": []int64{1, 2, 3, 5, 8},
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, negative integers",
 			Request: `query {
-						users {
-							Name
-							FavouriteIntegers
+						Users {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "Andy",
-						"FavouriteIntegers": [-1, -2, -3, -5, -8]
+						"name": "Andy",
+						"favouriteIntegers": [-1, -2, -3, -5, -8]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "Andy",
-					"FavouriteIntegers": []int64{-1, -2, -3, -5, -8},
+					"name":              "Andy",
+					"favouriteIntegers": []int64{-1, -2, -3, -5, -8},
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, mixed integers",
 			Request: `query {
-						users {
-							Name
-							FavouriteIntegers
+						Users {
+							name
+							favouriteIntegers
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "Shahzad",
-						"FavouriteIntegers": [-1, 2, -1, 1, 0]
+						"name": "Shahzad",
+						"favouriteIntegers": [-1, 2, -1, 1, 0]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":              "Shahzad",
-					"FavouriteIntegers": []int64{-1, 2, -1, 1, 0},
+					"name":              "Shahzad",
+					"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 				},
 			},
 		},
@@ -279,23 +279,23 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable ints",
 		Request: `query {
-					users {
-						Name
-						TestScores
+					Users {
+						name
+						testScores
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"TestScores": [-1, null, -1, 2, 0]
+					"name": "John",
+					"testScores": [-1, null, -1, 2, 0]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"TestScores": []immutable.Option[int64]{
+				"name": "John",
+				"testScores": []immutable.Option[int64]{
 					immutable.Some[int64](-1),
 					immutable.None[int64](),
 					immutable.Some[int64](-1),
@@ -314,69 +314,69 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 		{
 			Description: "Simple inline array with no filter, nil float array",
 			Request: `query {
-						users {
-							Name
-							FavouriteFloats
+						Users {
+							name
+							favouriteFloats
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteFloats": null
+						"name": "John",
+						"favouriteFloats": null
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":            "John",
-					"FavouriteFloats": nil,
+					"name":            "John",
+					"favouriteFloats": nil,
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, empty float array",
 			Request: `query {
-						users {
-							Name
-							FavouriteFloats
+						Users {
+							name
+							favouriteFloats
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteFloats": []
+						"name": "John",
+						"favouriteFloats": []
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":            "John",
-					"FavouriteFloats": []float64{},
+					"name":            "John",
+					"favouriteFloats": []float64{},
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, positive floats",
 			Request: `query {
-						users {
-							Name
-							FavouriteFloats
+						Users {
+							name
+							favouriteFloats
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"FavouriteFloats": [3.1425, 0.00000000001, 10]
+						"name": "John",
+						"favouriteFloats": [3.1425, 0.00000000001, 10]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":            "John",
-					"FavouriteFloats": []float64{3.1425, 0.00000000001, 10},
+					"name":            "John",
+					"favouriteFloats": []float64{3.1425, 0.00000000001, 10},
 				},
 			},
 		},
@@ -391,23 +391,23 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable floats",
 		Request: `query {
-					users {
-						Name
-						PageRatings
+					Users {
+						name
+						pageRatings
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"PageRatings": [3.1425, null, -0.00000000001, 10]
+					"name": "John",
+					"pageRatings": [3.1425, null, -0.00000000001, 10]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"PageRatings": []immutable.Option[float64]{
+				"name": "John",
+				"pageRatings": []immutable.Option[float64]{
 					immutable.Some(3.1425),
 					immutable.None[float64](),
 					immutable.Some(-0.00000000001),
@@ -425,69 +425,69 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 		{
 			Description: "Simple inline array with no filter, nil string array",
 			Request: `query {
-						users {
-							Name
-							PreferredStrings
+						Users {
+							name
+							preferredStrings
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"PreferredStrings": null
+						"name": "John",
+						"preferredStrings": null
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":             "John",
-					"PreferredStrings": nil,
+					"name":             "John",
+					"preferredStrings": nil,
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, empty string array",
 			Request: `query {
-						users {
-							Name
-							PreferredStrings
+						Users {
+							name
+							preferredStrings
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"PreferredStrings": []
+						"name": "John",
+						"preferredStrings": []
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":             "John",
-					"PreferredStrings": []string{},
+					"name":             "John",
+					"preferredStrings": []string{},
 				},
 			},
 		},
 		{
 			Description: "Simple inline array with no filter, strings",
 			Request: `query {
-						users {
-							Name
-							PreferredStrings
+						Users {
+							name
+							preferredStrings
 						}
 					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
-						"PreferredStrings": ["", "the previous", "the first", "empty string"]
+						"name": "John",
+						"preferredStrings": ["", "the previous", "the first", "empty string"]
 					}`,
 				},
 			},
 			Results: []map[string]any{
 				{
-					"Name":             "John",
-					"PreferredStrings": []string{"", "the previous", "the first", "empty string"},
+					"name":             "John",
+					"preferredStrings": []string{"", "the previous", "the first", "empty string"},
 				},
 			},
 		},
@@ -502,23 +502,23 @@ func TestQueryInlineArrayWithNillableString(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable strings",
 		Request: `query {
-					users {
-						Name
-						PageHeaders
+					Users {
+						name
+						pageHeaders
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"PageHeaders": ["", "the previous", "the first", "empty string", null]
+					"name": "John",
+					"pageHeaders": ["", "the previous", "the first", "empty string", null]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"PageHeaders": []immutable.Option[string]{
+				"name": "John",
+				"pageHeaders": []immutable.Option[string]{
 					immutable.Some(""),
 					immutable.Some("the previous"),
 					immutable.Some("the first"),

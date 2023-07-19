@@ -20,7 +20,7 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded latest commits query within object query",
 		Request: `query {
-					users {
+					Users {
 						Name
 						Age
 						_version {
@@ -46,14 +46,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq",
+						"cid": "bafybeicloiyf5zl5k54cjuhfg6rpsj7rnhxswvnuizpagd2kwq4px6aqn4",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeibelbquwus6f4lek2uclnmt5o525qbg46pzgxkjmrfjg3hwg63r4i",
+								"cid":  "bafybeieqi3u6kdbsb76qrfziiiabs52ztptecry34lo46cwfbqmf3u4kwi",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeih7josq7krvco7jc5z2mhiox4dge77zyn3v7gmemfjkkh3xkqwpni",
+								"cid":  "bafybeidoaqrpud2z2d4jnjqqmo3kn5rakr7yh2d2cdmjkvk5fcisy54jam",
 								"name": "Name",
 							},
 						},
@@ -70,7 +70,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded commits query within object query with schema version id",
 		Request: `query {
-					users {
+					Users {
 						Name
 						_version {
 							schemaVersionId
@@ -90,7 +90,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 				"Name": "John",
 				"_version": []map[string]any{
 					{
-						"schemaVersionId": "bafkreicl25inntuxlx4fbbcwb2tzbja4iyvujjwhk25pen7ljjdzcpgup4",
+						"schemaVersionId": "bafkreicl3pjcorfcaexxmqcrilkhx7xl37o6b34nxgtiauygtl7hrqbhoq",
 					},
 				},
 			},
@@ -106,7 +106,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded commits query within object query with dockey",
 		Request: `query {
-					users {
+					Users {
 						Name
 						_key
 						_version {
@@ -142,7 +142,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded, aliased, latest commits query within object query",
 		Request: `query {
-					users {
+					Users {
 						Name
 						Age
 						_version {
@@ -171,14 +171,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeiaahzxsfz55nuqnsll42wxrbdjmy5si222l4ydbrwb53tpxnzdmwq",
+						"cid": "bafybeicloiyf5zl5k54cjuhfg6rpsj7rnhxswvnuizpagd2kwq4px6aqn4",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafybeibelbquwus6f4lek2uclnmt5o525qbg46pzgxkjmrfjg3hwg63r4i",
+								"cid":  "bafybeieqi3u6kdbsb76qrfziiiabs52ztptecry34lo46cwfbqmf3u4kwi",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeih7josq7krvco7jc5z2mhiox4dge77zyn3v7gmemfjkkh3xkqwpni",
+								"cid":  "bafybeidoaqrpud2z2d4jnjqqmo3kn5rakr7yh2d2cdmjkvk5fcisy54jam",
 								"name": "Name",
 							},
 						},

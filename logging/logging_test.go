@@ -379,7 +379,7 @@ func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{}
-			c.pipe = b
+			c.Pipe = b
 		})
 
 		logMessage := "test log message"
@@ -416,7 +416,7 @@ func TestLogDoesntWriteMessagesToLogGivenNotFoundLogPath(t *testing.T) {
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{"/path/not/found"}
-			c.pipe = b
+			c.Pipe = b
 		})
 
 		logMessage := "test log message"
@@ -453,7 +453,7 @@ func TestLogDoesntWriteMessagesToLogGivenStderrLogPath(t *testing.T) {
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{stderr}
-			c.pipe = b
+			c.Pipe = b
 		})
 
 		logMessage := "test log message"
@@ -568,7 +568,7 @@ func TestLogWritesMessagesToFeedbackLog(t *testing.T) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.EnableStackTrace = NewEnableStackTraceOption(tc.WithStackTrace)
 			c.EnableCaller = NewEnableCallerOption(tc.WithCaller)
-			c.pipe = b
+			c.Pipe = b
 		})
 		logMessage := "test log message"
 
@@ -613,7 +613,7 @@ func TestLogWritesMessagesToLogGivenPipeWithValidPath(t *testing.T) {
 	b := &bytes.Buffer{}
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
-		c.pipe = b
+		c.Pipe = b
 	})
 	logMessage := "test log message"
 
@@ -874,7 +874,7 @@ func TestGetGoLoggerAndApplyConfig(t *testing.T) {
 	b := &bytes.Buffer{}
 	l.ApplyConfig(Config{
 		EncoderFormat: NewEncoderFormatOption(JSON),
-		pipe:          b,
+		Pipe:          b,
 	})
 
 	l.ZapEventLogger.Info("some info")
@@ -906,7 +906,7 @@ func TestGetGoLoggerV2AndApplyConfig(t *testing.T) {
 	b := &bytes.Buffer{}
 	l.ApplyConfig(Config{
 		EncoderFormat: NewEncoderFormatOption(JSON),
-		pipe:          b,
+		Pipe:          b,
 	})
 
 	l.ZapEventLogger.Info("some info")

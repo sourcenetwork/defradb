@@ -12,9 +12,16 @@ name: Code Test Coverage Workflow
 
 on:
   pull_request:
+    branches:
+      - master
+      - develop
 
   push:
-
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
 
 jobs:
   code-test-coverage:
@@ -25,10 +32,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
 
-      - name: Setup Go
+      - name: Setup Go environment explicitly
         uses: actions/setup-go@v3
         with:
           go-version: "1.19"
@@ -37,13 +42,35 @@ jobs:
       - name: Generate full test coverage report using go-acc
         run: make test:coverage
 
-      - name: Upload coverage to Codecov
+      - name: Upload coverage to Codecov without token, retry on failure
+        env: 
+          codecov_secret: ${{ secrets.CODECOV_TOKEN }}
+        if: env.codecov_secret == ''
+        uses: Wandalen/wretry.action@v1.0.36
+        with:
+          attempt_limit: 5
+          attempt_delay: 10000
+          action: codecov/codecov-action@v3
+          with: |
+            name: defradb-codecov
+            files: ./coverage.txt
+            flags: all-tests
+            os: 'linux'
+            fail_ci_if_error: true
+            verbose: true
+
+      - name: Upload coverage to Codecov with token
+        env: 
+          codecov_secret: ${{ secrets.CODECOV_TOKEN }}
+        if: env.codecov_secret != ''
         uses: codecov/codecov-action@v3
         with:
-          fail_ci_if_error: true
+          token: ${{ env.codecov_secret }}
+          name: defradb-codecov
           files: ./coverage.txt
-          flags: defra-tests
-          name: codecov-umbrella
+          flags: all-tests
+          os: 'linux'
+          fail_ci_if_error: true
           verbose: true
           # path_to_write_report: ./coverage/codecov_report.txt
           # directory: ./coverage/reports/

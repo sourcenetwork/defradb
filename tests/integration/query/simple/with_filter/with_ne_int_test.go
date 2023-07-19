@@ -20,7 +20,7 @@ func TestQuerySimpleWithIntNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne int filter",
 		Request: `query {
-					users(filter: {Age: {_ne: 21}}) {
+					Users(filter: {Age: {_ne: 21}}) {
 						Name
 					}
 				}`,
@@ -50,7 +50,7 @@ func TestQuerySimpleWithIntNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne int nil filter",
 		Request: `query {
-					users(filter: {Age: {_ne: null}}) {
+					Users(filter: {Age: {_ne: null}}) {
 						Name
 					}
 				}`,

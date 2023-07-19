@@ -20,12 +20,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
-func TestCreateSaveErrorsGivenValueInRelationField(t *testing.T) {
+func TestCreateSaveGivenAliasValueInRelationField(t *testing.T) {
 	doc, err := client.NewDocFromJSON(
 		[]byte(
 			`{
-				"Name": "Painted House",
-				"Author": "ValueDoesntMatter"
+				"name": "Painted House",
+				"author": "ValueDoesntMatter"
 			}`,
 		),
 	)
@@ -35,13 +35,12 @@ func TestCreateSaveErrorsGivenValueInRelationField(t *testing.T) {
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"book": []func(c client.Collection) error{
+			"Book": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					return c.Save(context.Background(), doc)
 				},
 			},
 		},
-		ExpectedError: "The given field does not exist",
 	}
 
 	executeTestCase(t, test)

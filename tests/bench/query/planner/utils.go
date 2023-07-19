@@ -79,9 +79,14 @@ func runMakePlanBench(
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		planner := planner.New(ctx, db.WithTxn(txn), txn)
-		_, err := planner.MakePlan(q)
+		plan, err := planner.MakePlan(q)
 		if err != nil {
 			return errors.Wrap("failed to make plan", err)
+		}
+
+		err = plan.Init()
+		if err != nil {
+			return errors.Wrap("failed to init plan", err)
 		}
 	}
 	b.StopTimer()

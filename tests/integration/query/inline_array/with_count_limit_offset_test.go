@@ -20,22 +20,22 @@ func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimitGreaterThanLength(t 
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, offsetted limited count of integer array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteIntegers: {offset: 1, limit: 3})
+					Users {
+						name
+						_count(favouriteIntegers: {offset: 1, limit: 3})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, 3]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, 3]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 2,
 			},
 		},
@@ -48,22 +48,22 @@ func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, offsetted limited count of integer array",
 		Request: `query {
-					users {
-						Name
-						_count(FavouriteIntegers: {offset: 1, limit: 3})
+					Users {
+						name
+						_count(favouriteIntegers: {offset: 1, limit: 3})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, -1, 1, 0]
+					"name": "Shahzad",
+					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name":   "Shahzad",
+				"name":   "Shahzad",
 				"_count": 3,
 			},
 		},

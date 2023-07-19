@@ -14,207 +14,208 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainTopLevelAverageQuery(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain top-level average query.",
-
-		Request: `query @explain {
-			_avg(
-				author: {
-					field: age
-				}
-			)
-		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John",
-					"verified": false,
-					"age": 28
-				}`,
-				`{
-					"name": "Bob",
-					"verified": true,
-					"age": 30
-				}`,
-			},
-		},
-
-		Results: []dataMap{
+var topLevelAveragePattern = dataMap{
+	"explain": dataMap{
+		"topLevelNode": []dataMap{
 			{
-				"explain": dataMap{
-					"topLevelNode": []dataMap{
-						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_ne": nil,
-											},
-										},
-										"spans": []dataMap{
-											{
-												"end":   "/4",
-												"start": "/3",
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							"sumNode": dataMap{
-								"sources": []dataMap{
-									{
-										"childFieldName": "age",
-										"fieldName":      "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_ne": nil,
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							"countNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_ne": nil,
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							"averageNode": dataMap{},
-						},
+				"selectTopNode": dataMap{
+					"selectNode": dataMap{
+						"scanNode": dataMap{},
 					},
 				},
 			},
+			{
+				"sumNode": dataMap{},
+			},
+			{
+				"countNode": dataMap{},
+			},
+			{
+				"averageNode": dataMap{},
+			},
 		},
-	}
-
-	executeTestCase(t, test)
+	},
 }
 
-func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain top-level average query with filter.",
+func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Request: `query @explain {
-			_avg(
-				author: {
-					field: age,
-					filter: {
-						age: {
-							_gt: 26
+		Description: "Explain (default) top-level average request with filter.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					_avg(
+						Author: {
+							field: age
 						}
-					}
-				}
-			)
-		}`,
+					)
+				}`,
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John",
-					"verified": false,
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"verified": false,
-					"age": 30
-				}`,
-				`{
-					"name": "Alice",
-					"verified": false,
-					"age": 32
-				}`,
-			},
-		},
+				ExpectedPatterns: []dataMap{topLevelAveragePattern},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"topLevelNode": []dataMap{
-						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_ne": nil,
-												"_gt": int(26),
-											},
-										},
-										"spans": []dataMap{
-											{
-												"end":   "/4",
-												"start": "/3",
-											},
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter": dataMap{
+								"age": dataMap{
+									"_ne": nil,
+								},
+							},
+							"spans": []dataMap{
+								{
+									"end":   "/4",
+									"start": "/3",
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "sumNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"childFieldName": "age",
+									"fieldName":      "Author",
+									"filter": dataMap{
+										"age": dataMap{
+											"_ne": nil,
 										},
 									},
 								},
 							},
 						},
-						{
-							"sumNode": dataMap{
-								"sources": []dataMap{
-									{
-										"childFieldName": "age",
-										"fieldName":      "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_gt": int(26),
-												"_ne": nil,
-											},
+					},
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName": "Author",
+									"filter": dataMap{
+										"age": dataMap{
+											"_ne": nil,
 										},
 									},
 								},
 							},
 						},
-						{
-							"countNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_gt": int(26),
-												"_ne": nil,
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							"averageNode": dataMap{},
-						},
+					},
+					{
+						TargetNodeName:     "averageNode",
+						IncludeChildNodes:  true,      // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{}, // no attributes
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) top-level average request with filter.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					_avg(
+						Author: {
+							field: age,
+							filter: {
+								age: {
+									_gt: 26
+								}
+							}
+						}
+					)
+				}`,
+
+				ExpectedPatterns: []dataMap{topLevelAveragePattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter": dataMap{
+								"age": dataMap{
+									"_gt": int32(26),
+									"_ne": nil,
+								},
+							},
+							"spans": []dataMap{
+								{
+									"end":   "/4",
+									"start": "/3",
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "sumNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"childFieldName": "age",
+									"fieldName":      "Author",
+									"filter": dataMap{
+										"age": dataMap{
+											"_gt": int32(26),
+											"_ne": nil,
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName": "Author",
+									"filter": dataMap{
+										"age": dataMap{
+											"_gt": int32(26),
+											"_ne": nil,
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:     "averageNode",
+						IncludeChildNodes:  true,      // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{}, // no attributes
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
 }

@@ -32,9 +32,9 @@ func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, sum on undefined field",
 		Request: `query {
-					_sum(users: {})
+					_sum(Users: {})
 				}`,
-		ExpectedError: "Argument \"users\" has invalid value {}.\nIn field \"field\": Expected \"usersNumericFieldsArg!\", found null.",
+		ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
 	}
 
 	executeTestCase(t, test)
@@ -44,7 +44,7 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, sum on empty",
 		Request: `query {
-					_sum(users: {field: Age})
+					_sum(Users: {field: Age})
 				}`,
 		Results: []map[string]any{
 			{
@@ -60,7 +60,7 @@ func TestQuerySimpleWithSum(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, sum",
 		Request: `query {
-					_sum(users: {field: Age})
+					_sum(Users: {field: Age})
 				}`,
 		Docs: map[int][]string{
 			0: {

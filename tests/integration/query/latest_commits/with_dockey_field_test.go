@@ -22,7 +22,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and field name",
 		Request: `query {
-					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
+					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "age") {
 						cid
 						links {
 							cid
@@ -33,8 +33,8 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},
@@ -45,12 +45,12 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and field id",
 		Request: `query {
-					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
+					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "1") {
 						cid
 						links {
 							cid
@@ -61,14 +61,14 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"cid":   "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+				"cid":   "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
 				"links": []map[string]any{},
 			},
 		},
@@ -78,12 +78,12 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and composite field id",
 		Request: `query {
-					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {
+					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "C") {
 						cid
 						links {
 							cid
@@ -94,22 +94,22 @@ func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+				"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
 				"links": []map[string]any{
 					{
-						"cid":  "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
-						"name": "Age",
+						"cid":  "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
+						"name": "age",
 					},
 					{
-						"cid":  "bafybeih25dvtgei2bryhlz24tbyfdcni5di7akgcx24pezxts27wz7v454",
-						"name": "Name",
+						"cid":  "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
+						"name": "name",
 					},
 				},
 			},

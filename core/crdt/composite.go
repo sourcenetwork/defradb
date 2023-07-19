@@ -47,6 +47,8 @@ type CompositeDAGDelta struct {
 	// Status represents the status of the document. By default it is `Active`.
 	// Alternatively, if can be set to `Deleted`.
 	Status client.DocumentStatus
+
+	FieldName string
 }
 
 // GetPriority gets the current priority for this delta.
@@ -70,7 +72,8 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 		Data            []byte
 		DocKey          []byte
 		Status          uint8
-	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey, delta.Status.UInt8()})
+		FieldName       string
+	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey, delta.Status.UInt8(), delta.FieldName})
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +98,8 @@ type CompositeDAG struct {
 	//
 	// It can be used to identify the collection datastructure state at time of commit.
 	schemaVersionKey core.CollectionSchemaVersionKey
+
+	fieldName string
 }
 
 func NewCompositeDAG(
@@ -102,11 +107,13 @@ func NewCompositeDAG(
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	namespace core.Key,
 	key core.DataStoreKey,
+	fieldName string,
 ) CompositeDAG {
 	return CompositeDAG{
 		store:            store,
 		key:              key,
 		schemaVersionKey: schemaVersionKey,
+		fieldName:        fieldName,
 	}
 }
 
@@ -131,6 +138,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 		DocKey:          []byte(c.key.DocKey),
 		SubDAGs:         links,
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
+		FieldName:       c.fieldName,
 	}
 }
 
@@ -146,13 +154,27 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 		return c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldId(""))
 	}
 
-	// ensure object marker exists
-	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
+	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
+	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
+	// the local reperesentation of the document.
+	versionKey := c.key.WithValueFlag().WithFieldId(core.DATASTORE_DOC_VERSION_FIELD_ID)
+	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
+	hasObjectMarker := !errors.Is(err, ds.ErrNotFound)
+	if err != nil && hasObjectMarker {
+		return err
+	}
+
+	if bytes.Equal(objectMarker, []byte{base.DeletedObjectMarker}) {
+		versionKey = versionKey.WithDeletedFlag()
+	}
+
+	err = c.store.Put(ctx, versionKey.ToDS(), []byte(c.schemaVersionKey.SchemaVersionId))
 	if err != nil {
 		return err
 	}
-	if !exists {
-		// write object marker
+
+	if !hasObjectMarker {
+		// ensure object marker exists
 		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
 	}
 

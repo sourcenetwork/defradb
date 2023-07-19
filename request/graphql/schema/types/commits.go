@@ -67,6 +67,14 @@ var (
 				Description: commitSchemaVersionIDFieldDescription,
 				Type:        gql.String,
 			},
+			"fieldName": &gql.Field{
+				Description: commitFieldNameFieldDescription,
+				Type:        gql.String,
+			},
+			"fieldId": &gql.Field{
+				Type:        gql.String,
+				Description: commitFieldIDFieldDescription,
+			},
 			"delta": &gql.Field{
 				Description: commitDeltaFieldDescription,
 				Type:        gql.String,
@@ -150,6 +158,14 @@ var (
 					Value:       "collectionID",
 					Description: commitCollectionIDFieldDescription,
 				},
+				"fieldName": &gql.EnumValueConfig{
+					Value:       "fieldName",
+					Description: commitFieldNameFieldDescription,
+				},
+				"fieldId": &gql.EnumValueConfig{
+					Value:       "fieldId",
+					Description: commitFieldIDFieldDescription,
+				},
 			},
 		},
 	)
@@ -159,10 +175,10 @@ var (
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey": NewArgConfig(gql.ID, commitDockeyArgDescription),
-			"field":  NewArgConfig(gql.String, commitFieldArgDescription),
-			"order":  NewArgConfig(CommitsOrderArg, OrderArgDescription),
-			"cid":    NewArgConfig(gql.ID, commitCIDArgDescription),
+			"dockey":            NewArgConfig(gql.ID, commitDockeyArgDescription),
+			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
+			"order":             NewArgConfig(CommitsOrderArg, OrderArgDescription),
+			"cid":               NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
@@ -182,8 +198,8 @@ var (
 		Description: latestCommitsQueryDescription,
 		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey": NewArgConfig(gql.NewNonNull(gql.ID), commitDockeyArgDescription),
-			"field":  NewArgConfig(gql.String, commitFieldArgDescription),
+			"dockey":            NewArgConfig(gql.NewNonNull(gql.ID), commitDockeyArgDescription),
+			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
 		},
 	}
 )

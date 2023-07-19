@@ -23,6 +23,8 @@ api:
     address: {{ .API.Address }}
     # Whether the API server should listen over HTTPS
     tls: {{ .API.TLS }}
+    # The list of origins a cross-domain request can be executed from.
+    # allowed-origins: {{ .API.AllowedOrigins }}
     # The path to the public key file. Ignored if domains is set.
     pubkeypath: {{ .API.PubKeyPath }}
     # The path to the private key file. Ignored if domains is set.

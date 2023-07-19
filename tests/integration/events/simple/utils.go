@@ -17,8 +17,8 @@ import (
 )
 
 var schema = `
-	type users {
-		Name: String
+	type Users {
+		name: String
 	}
 `
 

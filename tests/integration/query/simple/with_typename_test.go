@@ -20,7 +20,7 @@ func TestQuerySimpleWithTypeName(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with typename",
 		Request: `query {
-					users {
+					Users {
 						Name
 						__typename
 					}
@@ -35,7 +35,7 @@ func TestQuerySimpleWithTypeName(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name":       "John",
-				"__typename": "users",
+				"__typename": "Users",
 			},
 		},
 	}
@@ -47,7 +47,7 @@ func TestQuerySimpleWithAliasedTypeName(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with aliased typename",
 		Request: `query {
-					users {
+					Users {
 						Name
 						__typename
 						t1: __typename
@@ -63,8 +63,8 @@ func TestQuerySimpleWithAliasedTypeName(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name":       "John",
-				"__typename": "users",
-				"t1":         "users",
+				"__typename": "Users",
+				"t1":         "Users",
 			},
 		},
 	}

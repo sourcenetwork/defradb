@@ -172,8 +172,8 @@ func (l *logger) ApplyConfig(config Config) {
 	l.logger = newLogger
 
 	if !willOutputToStderrOrStdout(config.OutputPaths) {
-		if config.pipe != nil { // for testing purposes only
-			l.consoleLogger = stdlog.New(config.pipe, "", 0)
+		if config.Pipe != nil { // for testing purposes only
+			l.consoleLogger = stdlog.New(config.Pipe, "", 0)
 		} else {
 			l.consoleLogger = stdlog.New(os.Stderr, "", 0)
 		}
@@ -245,7 +245,7 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	if willOutputToStderrOrStdout(defaultConfig.OutputPaths) && config.pipe != nil {
+	if willOutputToStderrOrStdout(defaultConfig.OutputPaths) && config.Pipe != nil {
 		newLogger = newLogger.WithOptions(zap.WrapCore(func(zapcore.Core) zapcore.Core {
 			cfg := zap.NewProductionEncoderConfig()
 			cfg.ConsoleSeparator = defaultConfig.EncoderConfig.ConsoleSeparator
@@ -253,7 +253,7 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 			cfg.EncodeLevel = defaultConfig.EncoderConfig.EncodeLevel
 			return zapcore.NewCore(
 				zapcore.NewJSONEncoder(cfg),
-				zapcore.AddSync(config.pipe),
+				zapcore.Lock(zapcore.AddSync(config.Pipe)),
 				zap.NewAtomicLevelAt(zapcore.Level(config.Level.LogLevel)),
 			)
 		}))

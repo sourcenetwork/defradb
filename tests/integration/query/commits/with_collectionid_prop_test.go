@@ -25,14 +25,14 @@ func TestQueryCommitsWithCollectionID(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
-						"Name":	"Source"
+						"name":	"Source"
 					}`,
 			},
 			testUtils.Request{
@@ -43,24 +43,24 @@ func TestQueryCommitsWithCollectionID(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"collectionID": int64(1),
-					},
-					{
-						"collectionID": int64(1),
-					},
-					{
-						"collectionID": int64(1),
-					},
-					{
 						"collectionID": int64(2),
 					},
 					{
 						"collectionID": int64(2),
+					},
+					{
+						"collectionID": int64(1),
+					},
+					{
+						"collectionID": int64(1),
+					},
+					{
+						"collectionID": int64(1),
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users", "companies"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users", "Companies"}, test)
 }

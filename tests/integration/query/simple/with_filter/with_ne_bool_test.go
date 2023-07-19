@@ -20,7 +20,7 @@ func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne true filter",
 		Request: `query {
-					users(filter: {Verified: {_ne: true}}) {
+					Users(filter: {Verified: {_ne: true}}) {
 						Name
 					}
 				}`,
@@ -56,7 +56,7 @@ func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne nil filter",
 		Request: `query {
-					users(filter: {Verified: {_ne: null}}) {
+					Users(filter: {Verified: {_ne: null}}) {
 						Name
 					}
 				}`,
@@ -92,7 +92,7 @@ func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne false filter",
 		Request: `query {
-					users(filter: {Verified: {_ne: false}}) {
+					Users(filter: {Verified: {_ne: false}}) {
 						Name
 					}
 				}`,

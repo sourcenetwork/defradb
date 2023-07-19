@@ -61,10 +61,9 @@ import (
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/node"
 )
 
-var log = logging.MustNewLogger("defra.config")
+var log = logging.MustNewLogger("config")
 
 const (
 	DefaultAPIEmail = "example@example.com"
@@ -287,20 +286,22 @@ func (dbcfg DatastoreConfig) validate() error {
 
 // APIConfig configures the API endpoints.
 type APIConfig struct {
-	Address     string
-	TLS         bool
-	PubKeyPath  string
-	PrivKeyPath string
-	Email       string
+	Address        string
+	TLS            bool
+	AllowedOrigins []string `mapstructure:"allowed-origins"`
+	PubKeyPath     string
+	PrivKeyPath    string
+	Email          string
 }
 
 func defaultAPIConfig() *APIConfig {
 	return &APIConfig{
-		Address:     "localhost:9181",
-		TLS:         false,
-		PubKeyPath:  "certs/server.key",
-		PrivKeyPath: "certs/server.crt",
-		Email:       DefaultAPIEmail,
+		Address:        "localhost:9181",
+		TLS:            false,
+		AllowedOrigins: []string{},
+		PubKeyPath:     "certs/server.key",
+		PrivKeyPath:    "certs/server.crt",
+		Email:          DefaultAPIEmail,
 	}
 }
 
@@ -420,29 +421,6 @@ func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
 		return d, NewErrInvalidRPCMaxConnectionIdle(err, netcfg.RPCMaxConnectionIdle)
 	}
 	return d, nil
-}
-
-// NodeConfig provides the Node-specific configuration, from the top-level Net config.
-func (cfg *Config) NodeConfig() node.NodeOpt {
-	return func(opt *node.Options) error {
-		var err error
-		err = node.ListenP2PAddrStrings(cfg.Net.P2PAddress)(opt)
-		if err != nil {
-			return err
-		}
-		err = node.ListenTCPAddrString(cfg.Net.TCPAddress)(opt)
-		if err != nil {
-			return err
-		}
-		opt.EnableRelay = cfg.Net.RelayEnabled
-		opt.EnablePubSub = cfg.Net.PubSubEnabled
-		opt.DataPath = cfg.Datastore.Badger.Path
-		opt.ConnManager, err = node.NewConnManager(100, 400, time.Second*20)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
 }
 
 // LogConfig configures output and logger.

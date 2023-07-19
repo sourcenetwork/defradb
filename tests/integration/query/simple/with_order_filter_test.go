@@ -20,7 +20,7 @@ func TestQuerySimpleWithNumericGreaterThanFilterAndNumericOrderDescending(t *tes
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with order & filter",
 		Request: `query {
-					users(filter: {Age: {_gt: 30}}, order: {Age: DESC}) {
+					Users(filter: {Age: {_gt: 30}}, order: {Age: DESC}) {
 						Name
 						Age
 					}

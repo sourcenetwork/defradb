@@ -20,7 +20,7 @@ func TestQuerySimple(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with no filter",
 		Request: `query {
-					users {
+					Users {
 						_key
 						Name
 						Age
@@ -50,7 +50,7 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with alias, no filter",
 		Request: `query {
-					users {
+					Users {
 						username: Name
 						age: Age
 					}
@@ -78,7 +78,7 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with no filter, multiple rows",
 		Request: `query {
-					users {
+					Users {
 						Name
 						Age
 					}
@@ -114,12 +114,12 @@ func TestQuerySimpleWithUndefinedField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query for undefined field",
 		Request: `query {
-					users {
+					Users {
 						Name
 						ThisFieldDoesNotExists
 					}
 				}`,
-		ExpectedError: "Cannot query field \"ThisFieldDoesNotExists\" on type \"users\".",
+		ExpectedError: "Cannot query field \"ThisFieldDoesNotExists\" on type \"Users\".",
 	}
 
 	executeTestCase(t, test)
@@ -129,7 +129,7 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with some default-value fields",
 		Request: `query {
-					users {
+					Users {
 						Name
 						Email
 						Age
@@ -162,7 +162,7 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with default-value fields",
 		Request: `query {
-					users {
+					Users {
 						Name
 						Email
 						Age

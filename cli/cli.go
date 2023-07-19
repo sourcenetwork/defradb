@@ -28,7 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-var log = logging.MustNewLogger("defra.cli")
+var log = logging.MustNewLogger("cli")
 
 const badgerDatastoreName = "badger"
 
@@ -57,6 +57,8 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 	rpcCmd := MakeRPCCommand(cfg)
 	blocksCmd := MakeBlocksCommand()
 	schemaCmd := MakeSchemaCommand()
+	schemaMigrationCmd := MakeSchemaMigrationCommand()
+	indexCmd := MakeIndexCommand()
 	clientCmd := MakeClientCommand()
 	rpcReplicatorCmd := MakeReplicatorCommand()
 	p2pCollectionCmd := MakeP2PCollectionCommand()
@@ -77,9 +79,20 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 	blocksCmd.AddCommand(
 		MakeBlocksGetCommand(cfg),
 	)
+	schemaMigrationCmd.AddCommand(
+		MakeSchemaMigrationSetCommand(cfg),
+		MakeSchemaMigrationGetCommand(cfg),
+	)
 	schemaCmd.AddCommand(
 		MakeSchemaAddCommand(cfg),
+		MakeSchemaListCommand(cfg),
 		MakeSchemaPatchCommand(cfg),
+		schemaMigrationCmd,
+	)
+	indexCmd.AddCommand(
+		MakeIndexCreateCommand(cfg),
+		MakeIndexDropCommand(cfg),
+		MakeIndexListCommand(cfg),
 	)
 	clientCmd.AddCommand(
 		MakeDumpCommand(cfg),
@@ -87,6 +100,7 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 		MakeRequestCommand(cfg),
 		MakePeerIDCommand(cfg),
 		schemaCmd,
+		indexCmd,
 		rpcCmd,
 		blocksCmd,
 	)

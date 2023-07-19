@@ -33,7 +33,7 @@ func newMockStore() datastore.DSReaderWriter {
 func setupLWWRegister() LWWRegister {
 	store := newMockStore()
 	key := core.DataStoreKey{DocKey: "AAAA-BBBB"}
-	return NewLWWRegister(store, core.CollectionSchemaVersionKey{}, key)
+	return NewLWWRegister(store, core.CollectionSchemaVersionKey{}, key, "")
 }
 
 func setupLoadedLWWRegster(ctx context.Context) LWWRegister {

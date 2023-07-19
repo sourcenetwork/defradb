@@ -23,17 +23,17 @@ func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": 16} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 16} }
 					]
 				`,
-				ExpectedError: "the adding of new relation fields is not yet supported. Field: Foo, Kind: 16",
+				ExpectedError: "the adding of new relation fields is not yet supported. Field: foo, Kind: 16",
 			},
 		},
 	}

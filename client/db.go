@@ -19,6 +19,8 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
+type CollectionName = string
+
 // DB is the primary public programmatic access point to the local DefraDB instance.
 //
 // It should be constructed via the [db] package, via the [db.NewDB] function.
@@ -88,7 +90,7 @@ type Store interface {
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(context.Context, string) error
+	AddSchema(context.Context, string) ([]CollectionDescription, error)
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
 	// present in the database.
@@ -106,10 +108,29 @@ type Store interface {
 	// [FieldKindStringToEnumMapping].
 	PatchSchema(context.Context, string) error
 
+	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivilent to
+	// calling `LensRegistry().SetMigration(ctx, cfg)`.
+	//
+	// There may only be one migration per schema version id.  If another migration was registered it will be
+	// overwritten by this migration.
+	//
+	// Neither of the schema version IDs specified in the configuration need to exist at the time of calling.
+	// This is to allow the migration of documents of schema versions unknown to the local node recieved by the
+	// P2P system.
+	//
+	// Migrations will only run if there is a complete path from the document schema version to the latest local
+	// schema version.
+	SetMigration(context.Context, LensConfig) error
+
+	// LensRegistry returns the LensRegistry in use by this database instance.
+	//
+	// It exposes several useful thread-safe migration related functions.
+	LensRegistry() LensRegistry
+
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.
-	GetCollectionByName(context.Context, string) (Collection, error)
+	GetCollectionByName(context.Context, CollectionName) (Collection, error)
 
 	// GetCollectionBySchemaID attempts to retrieve a collection matching the given schema ID.
 	//
@@ -124,6 +145,9 @@ type Store interface {
 	// GetAllCollections returns all the collections and their descriptions that currently exist within
 	// this [Store].
 	GetAllCollections(context.Context) ([]Collection, error)
+
+	// GetAllIndexes returns all the indexes that currently exist within this [Store].
+	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(context.Context, string) *RequestResult

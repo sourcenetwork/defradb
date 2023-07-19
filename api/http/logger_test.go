@@ -79,12 +79,11 @@ func TestLoggerKeyValueOutput(t *testing.T) {
 
 	rec2 := httptest.NewRecorder()
 
-	h := newHandler(nil, serverOptions{})
 	log.ApplyConfig(logging.Config{
 		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
 		OutputPaths:   []string{logFile},
 	})
-	loggerMiddleware(h.handle(pingHandler)).ServeHTTP(rec2, req)
+	loggerMiddleware(http.HandlerFunc(pingHandler)).ServeHTTP(rec2, req)
 	assert.Equal(t, 200, rec2.Result().StatusCode)
 
 	// inspect the log file
@@ -96,7 +95,7 @@ func TestLoggerKeyValueOutput(t *testing.T) {
 	// check that everything is as expected
 	assert.Equal(t, "{\"data\":{\"response\":\"pong\"}}", rec2.Body.String())
 	assert.Equal(t, "INFO", kv["level"])
-	assert.Equal(t, "defra.http", kv["logger"])
+	assert.Equal(t, "http", kv["logger"])
 	assert.Equal(t, "Request", kv["msg"])
 	assert.Equal(t, "GET", kv["Method"])
 	assert.Equal(t, "/ping", kv["Path"])

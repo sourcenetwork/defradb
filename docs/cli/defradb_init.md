@@ -13,9 +13,8 @@ defradb init [flags]
 ### Options
 
 ```
-  -h, --help             help for init
-      --reinitialize     Reinitialize the configuration file
-      --rootdir string   Directory for data and configuration to use (default "$HOME/.defradb")
+  -h, --help           help for init
+      --reinitialize   Reinitialize the configuration file
 ```
 
 ### Options inherited from parent commands
@@ -27,6 +26,7 @@ defradb init [flags]
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
+      --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 

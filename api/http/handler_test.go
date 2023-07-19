@@ -86,7 +86,7 @@ func TestNewHandlerWithLogger(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, "defra.http", kv["logger"])
+	assert.Equal(t, "http", kv["logger"])
 }
 
 func TestGetJSON(t *testing.T) {

@@ -24,23 +24,23 @@ func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average and sum of populated integer array",
 		Request: `query {
-					users(groupBy: [Name]) {
-						Name
-						_avg(FavouriteIntegers: {})
-						_sum(FavouriteIntegers: {})
+					Users(groupBy: [name]) {
+						name
+						_avg(favouriteIntegers: {})
+						_sum(favouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
-					"Name": "John",
-					"FavouriteIntegers": [-1, 0, 9, 0]
+					"name": "John",
+					"favouriteIntegers": [-1, 0, 9, 0]
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
+				"name": "John",
 				"_avg": float64(2),
 				"_sum": int64(8),
 			},

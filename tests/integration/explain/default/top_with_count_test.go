@@ -14,145 +14,132 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainTopLevelCountQuery(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain top-level count query.",
-
-		Request: `query @explain {
-			_count(author: {})
-		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John",
-					"verified": true,
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"verified": false,
-					"age": 30
-				}`,
-			},
-		},
-
-		Results: []dataMap{
+var topLevelCountPattern = dataMap{
+	"explain": dataMap{
+		"topLevelNode": []dataMap{
 			{
-				"explain": dataMap{
-					"topLevelNode": []dataMap{
-						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "author",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							"countNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName": "author",
-										"filter":    nil,
-									},
-								},
-							},
-						},
+				"selectTopNode": dataMap{
+					"selectNode": dataMap{
+						"scanNode": dataMap{},
 					},
 				},
 			},
+			{
+				"countNode": dataMap{},
+			},
 		},
-	}
-
-	executeTestCase(t, test)
+	},
 }
 
-func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain top-level count query with filter.",
+func TestDefaultExplainTopLevelCountRequest(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Request: `query @explain {
-			_count(
-				author: {
-					filter: {
-						age: {
-							_gt: 26
-						}
-					}
-				}
-			)
-		}`,
+		Description: "Explain (default) top-level count request.",
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John",
-					"verified": false,
-					"age": 21
-				}`,
-				`{
-					"name": "Bob",
-					"verified": false,
-					"age": 30
-				}`,
-				`{
-					"name": "Alice",
-					"verified": true,
-					"age": 32
-				}`,
-			},
-		},
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"topLevelNode": []dataMap{
-						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_gt": int(26),
-											},
-										},
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
-											},
-										},
-									},
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					_count(Author: {})
+				}`,
+
+				ExpectedPatterns: []dataMap{topLevelCountPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter":         nil,
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
 								},
 							},
 						},
-						{
-							"countNode": dataMap{
-								"sources": []dataMap{
-									{
-										"fieldName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_gt": int(26),
-											},
+					},
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName": "Author",
+									"filter":    nil,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) top-level count request with filter.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					_count(
+						Author: {
+							filter: {
+								age: {
+									_gt: 26
+								}
+							}
+						}
+					)
+				}`,
+
+				ExpectedPatterns: []dataMap{topLevelCountPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter": dataMap{
+								"age": dataMap{
+									"_gt": int32(26),
+								},
+							},
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
+								},
+							},
+						},
+					},
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"fieldName": "Author",
+									"filter": dataMap{
+										"age": dataMap{
+											"_gt": int32(26),
 										},
 									},
 								},
@@ -164,5 +151,5 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

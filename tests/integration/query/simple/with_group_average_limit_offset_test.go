@@ -20,7 +20,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageW
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, limited average on non-rendered group integer value",
 		Request: `query {
-					users(groupBy: [Name]) {
+					Users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age, offset: 1, limit: 2})
 					}

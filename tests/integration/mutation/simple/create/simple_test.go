@@ -57,7 +57,7 @@ func TestMutationCreateSimple(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation",
 		Request: `mutation {
-					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -79,7 +79,7 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation where document already exists.",
 		Request: `mutation {
-					create_user(data: "{\"name\": \"John\",\"age\": 27}") {
+					create_User(data: "{\"name\": \"John\",\"age\": 27}") {
 						_key
 						name
 						age
@@ -93,7 +93,7 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "a document with the given dockey already exists",
+		ExpectedError: "a document with the given dockey already exists. DocKey: ",
 	}
 
 	simpleTests.ExecuteTestCase(t, test)
@@ -103,7 +103,7 @@ func TestMutationCreateSimpleDoesNotCreateDocEmptyData(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation with empty data param.",
 		Request: `mutation {
-					create_user(data: "") {
+					create_User(data: "") {
 						_key
 						name
 						age

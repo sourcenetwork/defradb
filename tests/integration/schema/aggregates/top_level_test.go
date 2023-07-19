@@ -21,7 +21,7 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.IntrospectionRequest{
@@ -56,14 +56,14 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 									"name": "_count",
 									"args": []any{
 										map[string]any{
-											"name": "users",
+											"name": "Users",
 											"type": map[string]any{
-												"name": "users__CountSelector",
+												"name": "Users__CountSelector",
 												"inputFields": []any{
 													map[string]any{
 														"name": "filter",
 														"type": map[string]any{
-															"name": "usersFilterArg",
+															"name": "UsersFilterArg",
 														},
 													},
 													map[string]any{
@@ -91,7 +91,7 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
@@ -99,7 +99,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.IntrospectionRequest{
@@ -138,9 +138,9 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 									"name": "_sum",
 									"args": []any{
 										map[string]any{
-											"name": "users",
+											"name": "Users",
 											"type": map[string]any{
-												"name": "users__NumericSelector",
+												"name": "Users__NumericSelector",
 												"inputFields": []any{
 													map[string]any{
 														"name": "field",
@@ -148,14 +148,14 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 															"name": nil,
 															"kind": "NON_NULL",
 															"ofType": map[string]any{
-																"name": "usersNumericFieldsArg",
+																"name": "UsersNumericFieldsArg",
 															},
 														},
 													},
 													map[string]any{
 														"name": "filter",
 														"type": map[string]any{
-															"name":   "usersFilterArg",
+															"name":   "UsersFilterArg",
 															"kind":   "INPUT_OBJECT",
 															"ofType": nil,
 														},
@@ -179,7 +179,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 													map[string]any{
 														"name": "order",
 														"type": map[string]any{
-															"name":   "usersOrderArg",
+															"name":   "UsersOrderArg",
 															"kind":   "INPUT_OBJECT",
 															"ofType": nil,
 														},
@@ -197,7 +197,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
@@ -205,7 +205,7 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type users {}
+					type Users {}
 				`,
 			},
 			testUtils.IntrospectionRequest{
@@ -244,9 +244,9 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 									"name": "_avg",
 									"args": []any{
 										map[string]any{
-											"name": "users",
+											"name": "Users",
 											"type": map[string]any{
-												"name": "users__NumericSelector",
+												"name": "Users__NumericSelector",
 												"inputFields": []any{
 													map[string]any{
 														"name": "field",
@@ -254,14 +254,14 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 															"name": nil,
 															"kind": "NON_NULL",
 															"ofType": map[string]any{
-																"name": "usersNumericFieldsArg",
+																"name": "UsersNumericFieldsArg",
 															},
 														},
 													},
 													map[string]any{
 														"name": "filter",
 														"type": map[string]any{
-															"name":   "usersFilterArg",
+															"name":   "UsersFilterArg",
 															"kind":   "INPUT_OBJECT",
 															"ofType": nil,
 														},
@@ -285,7 +285,7 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 													map[string]any{
 														"name": "order",
 														"type": map[string]any{
-															"name":   "usersOrderArg",
+															"name":   "UsersOrderArg",
 															"kind":   "INPUT_OBJECT",
 															"ofType": nil,
 														},
@@ -303,5 +303,5 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

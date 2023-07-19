@@ -21,7 +21,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 		{
 			Description: "One-to-many relation query from many side with parent level group and filter on join",
 			Request: `query {
-				author (groupBy: [age]) {
+				Author (groupBy: [age]) {
 					age
 					_group {
 						name
@@ -139,7 +139,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 		{
 			Description: "One-to-many relation query from many side with parent level group and group filter",
 			Request: `query {
-				author (groupBy: [age]) {
+				Author (groupBy: [age]) {
 					age
 					_group (filter: {published: {rating: {_gt: 4.6}}}) {
 						name
@@ -261,7 +261,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 		{
 			Description: "One-to-many relation query from many side with parent level group and filters",
 			Request: `query {
-				author (groupBy: [age], filter: {age: {_gt: 300}}) {
+				Author (groupBy: [age], filter: {age: {_gt: 300}}) {
 					age
 					_group {
 						name

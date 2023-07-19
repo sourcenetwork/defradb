@@ -572,11 +572,11 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 
 	for _, field := range obj.Fields() {
 		// Only lists can be counted
-		if _, isList := field.Type.(*gql.List); !isList {
+		listType, isList := field.Type.(*gql.List)
+		if !isList {
 			continue
 		}
-
-		inputObjectName := genObjectCountName(field.Type.Name())
+		inputObjectName := genObjectCountName(listType.OfType.Name())
 		countableObject, isSubTypeCountableCollection := g.manager.schema.TypeMap()[inputObjectName]
 		if !isSubTypeCountableCollection {
 			inputObjectName = genNumericInlineArrayCountName(obj.Name(), field.Name)
@@ -618,7 +618,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
-			inputObjectName = genNumericObjectSelectorName(field.Type.Name())
+			inputObjectName = genNumericObjectSelectorName(listType.OfType.Name())
 		}
 
 		subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[inputObjectName]
@@ -658,7 +658,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
-			inputObjectName = genNumericObjectSelectorName(field.Type.Name())
+			inputObjectName = genNumericObjectSelectorName(listType.OfType.Name())
 		}
 
 		subAverageType, isSubTypeAveragable := g.manager.schema.TypeMap()[inputObjectName]
@@ -1025,7 +1025,12 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 						Type: operatorType,
 					}
 				} else { // objects (relations)
-					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(field.Type, "FilterArg")]
+					fieldType := field.Type
+					if l, isList := field.Type.(*gql.List); isList {
+						// We want the FilterArg for the object, not the list of objects.
+						fieldType = l.OfType
+					}
+					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(fieldType, "FilterArg")]
 					if !isFilterable {
 						filterType = &gql.InputObjectField{}
 					}
@@ -1111,20 +1116,14 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 					continue
 				}
 				typeMap := g.manager.schema.TypeMap()
+				configType, isOrderable := typeMap[genTypeName(field.Type, "OrderArg")]
 				if gql.IsLeafType(field.Type) { // only Scalars, and enums
 					fields[field.Name] = &gql.InputObjectFieldConfig{
 						Type: typeMap["Ordering"],
 					}
-				} else { // sub objects
-					configType, isOrderable := typeMap[genTypeName(field.Type, "OrderArg")]
-					if !isOrderable {
-						fields[field.Name] = &gql.InputObjectFieldConfig{
-							Type: &gql.InputObjectField{},
-						}
-					} else {
-						fields[field.Name] = &gql.InputObjectFieldConfig{
-							Type: configType,
-						}
+				} else if isOrderable { // sub objects
+					fields[field.Name] = &gql.InputObjectFieldConfig{
+						Type: configType,
 					}
 				}
 			}

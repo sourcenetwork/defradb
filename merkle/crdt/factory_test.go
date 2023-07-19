@@ -133,6 +133,7 @@ func TestFactoryInstanceMissing(t *testing.T) {
 		events.EmptyUpdateChannel,
 		client.LWW_REGISTER,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
+		"",
 	)
 	assert.Equal(t, err, ErrFactoryTypeNoExist)
 }
@@ -148,6 +149,7 @@ func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
 		events.EmptyUpdateChannel,
 		client.LWW_REGISTER,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
+		"",
 	)
 	assert.NoError(t, err)
 
@@ -166,6 +168,7 @@ func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
 		events.EmptyUpdateChannel,
 		client.COMPOSITE,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
+		"",
 	)
 	assert.NoError(t, err)
 
@@ -183,6 +186,7 @@ func TestFullFactoryInstanceLWWRegister(t *testing.T) {
 		events.EmptyUpdateChannel,
 		client.LWW_REGISTER,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
+		"",
 	)
 	assert.NoError(t, err)
 
@@ -200,6 +204,7 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 		events.EmptyUpdateChannel,
 		client.COMPOSITE,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
+		"",
 	)
 	assert.NoError(t, err)
 
@@ -211,7 +216,7 @@ func TestLWWRegisterFactoryFn(t *testing.T) {
 	ctx := context.Background()
 	m := newStores()
 	f := NewFactory(m) // here factory is only needed to satisfy datastore.MultiStore interface
-	crdt := lwwFactoryFn(f, core.CollectionSchemaVersionKey{}, events.EmptyUpdateChannel)(core.MustNewDataStoreKey("/1/0/MyKey"))
+	crdt := lwwFactoryFn(f, core.CollectionSchemaVersionKey{}, events.EmptyUpdateChannel, "")(core.MustNewDataStoreKey("/1/0/MyKey"))
 
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
 	assert.True(t, ok)
@@ -224,7 +229,7 @@ func TestCompositeRegisterFactoryFn(t *testing.T) {
 	ctx := context.Background()
 	m := newStores()
 	f := NewFactory(m) // here factory is only needed to satisfy datastore.MultiStore interface
-	crdt := compFactoryFn(f, core.CollectionSchemaVersionKey{}, events.EmptyUpdateChannel)(core.MustNewDataStoreKey("/1/0/MyKey"))
+	crdt := compFactoryFn(f, core.CollectionSchemaVersionKey{}, events.EmptyUpdateChannel, "")(core.MustNewDataStoreKey("/1/0/MyKey"))
 
 	merkleReg, ok := crdt.(*MerkleCompositeDAG)
 	assert.True(t, ok)

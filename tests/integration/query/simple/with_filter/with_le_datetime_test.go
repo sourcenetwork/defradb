@@ -20,7 +20,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le DateTime filter with equal value",
 		Request: `query {
-					users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56.647Z"}}) {
+					Users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56.647Z"}}) {
 						Name
 					}
 				}`,
@@ -52,7 +52,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le DateTime filter with greater value",
 		Request: `query {
-					users(filter: {CreatedAt: {_le: "2018-07-23T03:46:56.647Z"}}) {
+					Users(filter: {CreatedAt: {_le: "2018-07-23T03:46:56.647Z"}}) {
 						Name
 					}
 				}`,
@@ -84,7 +84,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le DateTime filter with null value",
 		Request: `query {
-					users(filter: {CreatedAt: {_le: null}}) {
+					Users(filter: {CreatedAt: {_le: null}}) {
 						Name
 					}
 				}`,

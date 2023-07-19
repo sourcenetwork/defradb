@@ -1,0 +1,70 @@
+# Copyright 2023 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Lint Workflow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+
+permissions:
+  # Allow read access to pull request (Required for the `only-new-issues` option.)
+  pull-requests: read
+  contents: read
+
+jobs:
+  lint:
+    name: Lint job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+          check-latest: true
+
+      - name: Check linting through golangci-lint
+        uses: golangci/golangci-lint-action@v3
+
+        with:
+          # Required: the version of golangci-lint is required.
+          # Note: The version should not pick the patch version as the latest patch
+          #  version is what will always be used.
+          version: v1.51
+
+          # Optional: working directory, useful for monorepos or if we wanted to run this
+          #  on a non-root directory.
+          # working-directory: ./
+
+          # Optional: golangci-lint command line arguments.
+          # Note: we can set `--issues-exit-code=0` if we want a successcode always,
+          #  indicating that the linter ran successfully (weather or not linter errors
+          #  exist or not doesn't matter). But the good thing is that the annotations
+          #  will still show up. I think this can be useful if we don't want the pipeline
+          #  to stop just because we had some linter errors.
+          args: --issues-exit-code=1 --config tools/configs/golangci.yaml
+
+          # Optional: we can set the below to `true` if we only want to see newly
+          #  introduced linter errors, however I found that in practive that option is a
+          #  bit gimmicky, as it passes the linter check despite having new linter errors
+          #  in some cases. So we opt in for all annotations of linter errors to show up,
+          #  this is actually nicer because we suppress our linter errors manually
+          #  anyways so there shouldn't be any linter errors anyways. The enforces us to
+          #  always have a clean lint state.
+          only-new-issues: false

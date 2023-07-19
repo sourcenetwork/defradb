@@ -247,7 +247,7 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 			ctx,
 			"Generating auto certificate",
 			logging.NewKV("Domain", s.options.domain.Value()),
-			logging.NewKV("Cert cache", certCache),
+			logging.NewKV("Certificate cache", certCache),
 		)
 
 		m := &autocert.Manager{

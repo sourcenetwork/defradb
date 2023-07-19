@@ -25,19 +25,19 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
-						"Name":	"Source"
+						"name":	"Source"
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							collectionID
 						}
 					}`,
@@ -49,7 +49,7 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						latestCommits(dockey: "bae-eed4b800-6704-5bcd-8250-5d2743820a7b") {
+						latestCommits(dockey: "bae-de8c99bf-ee0e-5655-8a72-919c2d459a30") {
 							collectionID
 						}
 					}`,
@@ -62,5 +62,5 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users", "companies"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users", "Companies"}, test)
 }

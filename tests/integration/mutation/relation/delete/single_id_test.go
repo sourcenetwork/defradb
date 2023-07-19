@@ -54,7 +54,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `mutation {
-						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+						delete_Author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
 							_key
 						}
 					}`,
@@ -102,7 +102,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `mutation {
-						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+						delete_Author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
 							AliasOfKey: _key
 						}
 					}`,
@@ -167,7 +167,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `mutation {
-						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+						delete_Author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
 							Key: _key
 						}
 					}`,

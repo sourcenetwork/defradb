@@ -32,7 +32,7 @@ func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, count on empty",
 		Request: `query {
-					_count(users: {})
+					_count(Users: {})
 				}`,
 		Results: []map[string]any{
 			{
@@ -48,7 +48,7 @@ func TestQuerySimpleWithCount(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, count",
 		Request: `query {
-					_count(users: {})
+					_count(Users: {})
 				}`,
 		Docs: map[int][]string{
 			0: {

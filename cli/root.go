@@ -41,12 +41,10 @@ See https://docs.source.network/BSL.txt for more information.
 				if err := cfg.LoadWithRootdir(true); err != nil {
 					return errors.Wrap("failed to load config", err)
 				}
-				// log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
 			} else {
 				if err := cfg.LoadWithRootdir(false); err != nil {
 					return errors.Wrap("failed to load config", err)
 				}
-				// log.FeedbackInfo(cmd.Context(), "Using default configuration")
 			}
 			return nil
 		},

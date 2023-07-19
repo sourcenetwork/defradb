@@ -24,13 +24,13 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "not a field") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "not a field") {
 							cid
 						}
 					}`,
@@ -39,7 +39,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
@@ -50,13 +50,13 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "999999") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "999999") {
 							cid
 						}
 					}`,
@@ -65,7 +65,7 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -78,13 +78,13 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "Age") {
 							cid
 						}
 					}`,
@@ -93,11 +93,11 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and field id",
@@ -106,30 +106,30 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "1") {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeihxvx3f7eejvco6zbxsidoeuph6ywpbo33lrqm3picna2aj7pdeiu",
+						"cid": "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (users should not be specifying field ids).
+// desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and field id",
@@ -138,24 +138,24 @@ func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {
+						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "C") {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeiapquwo7dfow7b7ovwrn3nl4e2cv2g5eoufuzylq54b4o6tatfrny",
+						"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

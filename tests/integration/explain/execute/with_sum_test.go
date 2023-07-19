@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
@@ -22,12 +23,12 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 		Description: "Explain (execute) request with sum on an inline array.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Books
 			create3BookDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Book {
 						name
@@ -35,7 +36,7 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -48,9 +49,8 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 										"iterations":    uint64(4),
 										"filterMatches": uint64(3),
 										"scanNode": dataMap{
-											"iterations":    uint64(4),
-											"docFetches":    uint64(4),
-											"filterMatches": uint64(3),
+											"iterations": uint64(4),
+											"docFetches": uint64(4),
 										},
 									},
 								},
@@ -62,7 +62,7 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
@@ -71,7 +71,7 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 		Description: "Explain (execute) request with sum of a related one to many field.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Articles
 			create3ArticleDocuments(),
@@ -79,7 +79,7 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -91,7 +91,7 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -106,9 +106,8 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
 											"scanNode": dataMap{
-												"iterations":    uint64(3),
-												"docFetches":    uint64(3),
-												"filterMatches": uint64(2),
+												"iterations": uint64(3),
+												"docFetches": uint64(3),
 											},
 										},
 									},
@@ -121,5 +120,5 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
