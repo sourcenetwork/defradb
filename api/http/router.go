@@ -11,12 +11,11 @@
 package http
 
 import (
+	"net/http"
 	"net/url"
 	"path"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
 	"github.com/pkg/errors"
 )
 
@@ -36,39 +35,26 @@ const (
 	PeerIDPath          string = versionedAPIPath + "/peerid"
 )
 
+// playgroundHandler is set when building with the playground build tag
+var playgroundHandler http.Handler
+
 func setRoutes(h *handler) *handler {
-	h.Mux = chi.NewRouter()
-
-	// setup CORS
-	if len(h.options.allowedOrigins) != 0 {
-		h.Use(cors.Handler(cors.Options{
-			AllowedOrigins: h.options.allowedOrigins,
-			AllowedMethods: []string{"GET", "POST", "OPTIONS"},
-			AllowedHeaders: []string{"Content-Type"},
-			MaxAge:         300,
-		}))
-	}
-
-	// setup logger middleware
-	h.Use(loggerMiddleware)
-
-	// define routes
-	h.Get(RootPath, h.handle(rootHandler))
-	h.Get(PingPath, h.handle(pingHandler))
-	h.Get(DumpPath, h.handle(dumpHandler))
-	h.Get(BlocksPath+"/{cid}", h.handle(getBlockHandler))
-	h.Get(GraphQLPath, h.handle(execGQLHandler))
-	h.Post(GraphQLPath, h.handle(execGQLHandler))
-	h.Get(SchemaPath, h.handle(listSchemaHandler))
-	h.Post(SchemaPath, h.handle(loadSchemaHandler))
-	h.Patch(SchemaPath, h.handle(patchSchemaHandler))
-	h.Post(SchemaMigrationPath, h.handle(setMigrationHandler))
-	h.Get(SchemaMigrationPath, h.handle(getMigrationHandler))
-	h.Post(IndexPath, h.handle(createIndexHandler))
-	h.Delete(IndexPath, h.handle(dropIndexHandler))
-	h.Get(IndexPath, h.handle(listIndexHandler))
-	h.Get(PeerIDPath, h.handle(peerIDHandler))
-
+	h.Get(RootPath, rootHandler)
+	h.Get(PingPath, pingHandler)
+	h.Get(DumpPath, dumpHandler)
+	h.Get(BlocksPath+"/{cid}", getBlockHandler)
+	h.Get(GraphQLPath, execGQLHandler)
+	h.Post(GraphQLPath, execGQLHandler)
+	h.Get(SchemaPath, listSchemaHandler)
+	h.Post(SchemaPath, loadSchemaHandler)
+	h.Patch(SchemaPath, patchSchemaHandler)
+	h.Post(SchemaMigrationPath, setMigrationHandler)
+	h.Get(SchemaMigrationPath, getMigrationHandler)
+	h.Post(IndexPath, createIndexHandler)
+	h.Delete(IndexPath, dropIndexHandler)
+	h.Get(IndexPath, listIndexHandler)
+	h.Get(PeerIDPath, peerIDHandler)
+	h.Handle("/*", playgroundHandler)
 	return h
 }
 
