@@ -1,0 +1,45 @@
+---
+version: "2.0"
+
+services:
+  defra-db:
+    image: TODO
+    expose:
+      - port: 9161
+        to:
+          - global: true
+      - port: 9171
+        to:
+          - global: true
+      - port: 9181
+        to:
+          - global: true
+
+profiles:
+  compute:
+    defra-db:
+      resources:
+        cpu:
+          units: 1.0
+        memory:
+          size: 4Gi
+        storage:
+          size: 1Gi
+  placement:
+    akash:
+      attributes:
+        host: akash
+      signedBy:
+        anyOf:
+          - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
+          - "akash18qa2a2ltfyvkyj0ggj3hkvuj6twzyumuaru9s4"
+      pricing:
+        defra-db: 
+          denom: uakt
+          amount: 10000
+
+deployment:
+  defra-db:
+    akash:
+      profile: defra-db
+      count: 1 
