@@ -23,17 +23,14 @@ func exportHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	showDeleted := req.URL.Query().Get("showDeleted") == "true"
-	colsList := req.URL.Query()["collections"]
-	filepath := req.URL.Query().Get("filepath")
-	pretty := req.URL.Query().Get("pretty") == "true"
+	cfg := &client.BackupConfig{}
+	err = getJSON(req, cfg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		return
+	}
 
-	err = db.BasicExport(req.Context(), &client.BackupConfig{
-		Filepath:    filepath,
-		ShowDeleted: showDeleted,
-		Collections: colsList,
-		Pretty:      pretty,
-	})
+	err = db.BasicExport(req.Context(), cfg)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
@@ -55,7 +52,6 @@ func importHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	data := map[string]string{}
-
 	err = getJSON(req, &data)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusBadRequest)

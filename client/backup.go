@@ -22,11 +22,11 @@ type Backup interface {
 }
 
 type BackupConfig struct {
-	Filepath string
+	Filepath string `json:"filepath"`
 	// only JSON is supported at the moment
-	Format string
+	Format string `json:"format"`
 	// pretty print JSON
-	Pretty      bool
-	Collections []string
-	ShowDeleted bool
+	Pretty      bool     `json:"pretty"`
+	Collections []string `json:"collections"`
+	ShowDeleted bool     `json:"showDeleted"`
 }

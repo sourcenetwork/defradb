@@ -44,41 +44,6 @@ func findCollectionName(r *bufio.Reader) (string, error) {
 	}
 }
 
-func findDocument(r *bufio.Reader) (doc map[string]any, done bool, err error) {
-	open := 0
-	hasObject := false
-	buf := []byte{}
-	for {
-		b, err := r.ReadByte()
-		if err != nil {
-			return nil, false, err
-		}
-		switch string(b) {
-		case "{":
-			open++
-			hasObject = true
-			buf = append(buf, b)
-		case "}":
-			open--
-			buf = append(buf, b)
-		case "]":
-			return nil, true, nil
-		default:
-			if open > 0 {
-				buf = append(buf, b)
-			}
-		}
-
-		if hasObject && open == 0 {
-			err = json.Unmarshal(buf, &doc)
-			if err != nil {
-				return nil, false, err
-			}
-			return doc, false, nil
-		}
-	}
-}
-
 func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath string) (err error) {
 	f, err := os.Open(filepath)
 	if err != nil {
@@ -92,6 +57,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 	}()
 
 	r := bufio.NewReader(f)
+	d := json.NewDecoder(r)
 
 	for {
 		colName, err := findCollectionName(r)
@@ -107,13 +73,11 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			return err
 		}
 
-		for {
-			docMap, done, err := findDocument(r)
+		for d.More() {
+			docMap := map[string]any{}
+			err = d.Decode(&docMap)
 			if err != nil {
 				return err
-			}
-			if done {
-				break
 			}
 
 			newkey, ok := docMap["_newKey"].(string)
@@ -141,6 +105,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				return err
 			}
 		}
+
 	}
 
 	return nil
