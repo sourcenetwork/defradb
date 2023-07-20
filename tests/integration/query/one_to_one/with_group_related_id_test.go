@@ -97,6 +97,9 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
 }
 
+/* This test is temporarily disabled due to:
+https://github.com/sourcenetwork/defradb/issues/1672
+
 // This test documents unwanted behaviour, see:
 // https://github.com/sourcenetwork/defradb/issues/1654
 func TestQueryOneToOneWithGroupRelatedIDFromSecondary(t *testing.T) {
@@ -109,7 +112,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondary(t *testing.T) {
 						name: String
 						author: Author
 					}
-				
+
 					type Author {
 						name: String
 						published: Book @primary
@@ -174,3 +177,4 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondary(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
 }
+*/
