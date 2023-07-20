@@ -25,10 +25,12 @@ type Backup interface {
 
 // BackupConfig holds the configuration parameters for database backups.
 type BackupConfig struct {
+	// If a file already exists at this location, it will be truncated and overwriten.
 	Filepath string `json:"filepath"`
-	// only JSON is supported at the moment
+	// Only JSON is supported at the moment.
 	Format string `json:"format"`
-	// pretty print JSON
-	Pretty      bool     `json:"pretty"`
+	// Pretty print JSON.
+	Pretty bool `json:"pretty"`
+	// List of collection names to select which one to backup.
 	Collections []string `json:"collections"`
 }

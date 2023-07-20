@@ -35,7 +35,7 @@ func MakeDBExportCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "export  [-c --collections | -p --pretty | -f --format] <output_path>",
 		Short: "Export the database to a file",
-		Long: `Export the database to a file.
+		Long: `Export the database to a file. If a file exists at the <output_path> location, it will be overwritten.
 		
 If the --collection flag is provided, only the data for that collection will be exported.
 Otherwise, all collections in the database will be exported.
