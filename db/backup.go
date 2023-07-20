@@ -107,9 +107,10 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		}
 	}
 
+	tempFile := config.Filepath + ".temp"
 	f, err := os.Create(config.Filepath)
 	if err != nil {
-		return NewErrCreateFile(err, config.Filepath)
+		return NewErrCreateFile(err, tempFile)
 	}
 	defer func() {
 		closeErr := f.Close()
@@ -117,10 +118,12 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			err = NewErrCloseFile(closeErr, err)
 		} else if err != nil {
 			// ensure we cleanup if there was an error
-			removeErr := os.Remove(config.Filepath)
+			removeErr := os.Remove(tempFile)
 			if removeErr != nil {
-				err = NewErrRemoveFile(removeErr, err, config.Filepath)
+				err = NewErrRemoveFile(removeErr, err, tempFile)
 			}
+		} else {
+			_ = os.Rename(tempFile, config.Filepath)
 		}
 	}()
 
