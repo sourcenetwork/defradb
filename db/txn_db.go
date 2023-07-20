@@ -383,7 +383,12 @@ func (db *implicitTxnDB) BasicImport(ctx context.Context, filepath string) error
 	}
 	defer txn.Discard(ctx)
 
-	return db.basicImport(ctx, txn, filepath)
+	err = db.basicImport(ctx, txn, filepath)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
 }
 
 // BasicImport imports a json dataset.

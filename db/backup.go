@@ -76,7 +76,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				return NewErrDocFromMap(err)
 			}
 
-			err = col.Create(ctx, doc)
+			err = col.WithTxn(txn).Create(ctx, doc)
 			if err != nil {
 				return NewErrDocCreate(err)
 			}
@@ -125,15 +125,9 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 	}()
 
 	// open the object
-	_, err = f.WriteString("{")
+	err = writeString(f, "{", "{\n", config.Pretty)
 	if err != nil {
-		return NewErrFailedToWriteString(err)
-	}
-	if config.Pretty {
-		_, err = f.WriteString("\n")
-		if err != nil {
-			return NewErrFailedToWriteString(err)
-		}
+		return err
 	}
 
 	firstCol := true
@@ -142,32 +136,24 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			firstCol = false
 		} else {
 			// add collection seperator
-			_, err = f.WriteString(",")
+			err = writeString(f, ",", ",\n", config.Pretty)
 			if err != nil {
-				return NewErrFailedToWriteString(err)
-			}
-			if config.Pretty {
-				_, err = f.WriteString("\n")
-				if err != nil {
-					return NewErrFailedToWriteString(err)
-				}
+				return err
 			}
 		}
 
 		// set collection
-		if config.Pretty {
-			_, err = f.WriteString(fmt.Sprintf("  \"%s\": [\n", col.Name()))
-			if err != nil {
-				return NewErrFailedToWriteString(err)
-			}
-		} else {
-			_, err = f.WriteString(fmt.Sprintf("\"%s\":[", col.Name()))
-			if err != nil {
-				return NewErrFailedToWriteString(err)
-			}
+		err = writeString(
+			f,
+			fmt.Sprintf("\"%s\":[", col.Name()),
+			fmt.Sprintf("  \"%s\": [\n", col.Name()),
+			config.Pretty,
+		)
+		if err != nil {
+			return err
 		}
-
-		keysCh, err := col.GetAllDocKeys(ctx)
+		colTxn := col.WithTxn(txn)
+		keysCh, err := colTxn.GetAllDocKeys(ctx)
 		if err != nil {
 			return err
 		}
@@ -178,18 +164,12 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				firstDoc = false
 			} else {
 				// add document seperator
-				_, err = f.WriteString(",")
+				err = writeString(f, ",", ",\n", config.Pretty)
 				if err != nil {
-					return NewErrFailedToWriteString(err)
-				}
-				if config.Pretty {
-					_, err = f.WriteString("\n")
-					if err != nil {
-						return NewErrFailedToWriteString(err)
-					}
+					return err
 				}
 			}
-			doc, err := col.Get(ctx, key.Key, false)
+			doc, err := colTxn.Get(ctx, key.Key, false)
 			if err != nil {
 				return err
 			}
@@ -233,28 +213,16 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		}
 
 		// close collection
-		if config.Pretty {
-			_, err = f.WriteString("\n  ")
-			if err != nil {
-				return NewErrFailedToWriteString(err)
-			}
-		}
-		_, err = f.WriteString("]")
+		err = writeString(f, "]", "\n  ]", config.Pretty)
 		if err != nil {
-			return NewErrFailedToWriteString(err)
+			return err
 		}
 	}
 
 	// close object
-	if config.Pretty {
-		_, err = f.WriteString("\n")
-		if err != nil {
-			return NewErrFailedToWriteString(err)
-		}
-	}
-	_, err = f.WriteString("}")
+	err = writeString(f, "}", "\n}", config.Pretty)
 	if err != nil {
-		return NewErrFailedToWriteString(err)
+		return err
 	}
 
 	err = f.Sync()
@@ -262,5 +230,21 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		return err
 	}
 
+	return nil
+}
+
+func writeString(f *os.File, normal, pretty string, isPretty bool) error {
+	if isPretty {
+		_, err := f.WriteString(pretty)
+		if err != nil {
+			return NewErrFailedToWriteString(err)
+		}
+		return nil
+	}
+
+	_, err := f.WriteString(normal)
+	if err != nil {
+		return NewErrFailedToWriteString(err)
+	}
 	return nil
 }

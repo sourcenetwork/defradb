@@ -64,6 +64,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
+	defer txn.Discard(ctx)
 
 	filepath := t.TempDir() + "/test.json"
 	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath})
@@ -125,6 +126,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
+	defer txn.Discard(ctx)
 
 	filepath := t.TempDir() + "/test.json"
 	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath, Pretty: true})
@@ -186,8 +188,79 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
+	defer txn.Discard(ctx)
 
 	filepath := t.TempDir() + "/test.json"
+	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
+	require.NoError(t, err)
+
+	b, err := os.ReadFile(filepath)
+	require.NoError(t, err)
+	fileMap := map[string]any{}
+	err = json.Unmarshal(b, &fileMap)
+	require.NoError(t, err)
+
+	expectedMap := map[string]any{}
+	data := []byte(`{"Address":[{"_key":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_newKey":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}]}`)
+	err = json.Unmarshal(data, &expectedMap)
+	require.NoError(t, err)
+	require.EqualValues(t, expectedMap, fileMap)
+}
+
+func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+	defer db.Close(ctx)
+
+	_, err = db.AddSchema(ctx, `type User {
+		name: String
+		age: Int
+	}
+
+	type Address {
+		street: String
+		city: String
+	}`)
+	require.NoError(t, err)
+
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	require.NoError(t, err)
+
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`))
+	require.NoError(t, err)
+
+	col1, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	err = col1.Create(ctx, doc1)
+	require.NoError(t, err)
+
+	err = col1.Create(ctx, doc2)
+	require.NoError(t, err)
+
+	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`))
+	require.NoError(t, err)
+
+	col2, err := db.GetCollectionByName(ctx, "Address")
+	require.NoError(t, err)
+
+	err = col2.Create(ctx, doc3)
+	require.NoError(t, err)
+
+	txn, err := db.NewTxn(ctx, true)
+	require.NoError(t, err)
+	defer txn.Discard(ctx)
+
+	filepath := t.TempDir() + "/test.json"
+
+	err = os.WriteFile(
+		filepath,
+		[]byte(`{"Address":[{"_key":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_newKey":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}],"User":[{"_key":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","_newKey":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","age":40,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`),
+		0664,
+	)
+	require.NoError(t, err)
+
 	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath, Collections: []string{"Address"}})
 	require.NoError(t, err)
 
@@ -221,7 +294,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
 
 	filepath := t.TempDir() + "/test.json"
@@ -234,6 +307,11 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.basicImport(ctx, txn, filepath)
+	require.NoError(t, err)
+	err = txn.Commit(ctx)
+	require.NoError(t, err)
+
+	txn, err = db.NewTxn(ctx, true)
 	require.NoError(t, err)
 
 	col1, err := db.getCollectionByName(ctx, txn, "Address")
@@ -275,7 +353,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
 
 	filepath := t.TempDir() + "/test.json"
@@ -289,6 +367,8 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 
 	err = db.basicImport(ctx, txn, filepath)
 	require.ErrorIs(t, err, ErrExpectedJSONObject)
+	err = txn.Commit(ctx)
+	require.NoError(t, err)
 }
 
 func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
@@ -308,7 +388,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
 
 	filepath := t.TempDir() + "/test.json"
@@ -322,6 +402,8 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 
 	err = db.basicImport(ctx, txn, filepath)
 	require.ErrorIs(t, err, ErrExpectedJSONArray)
+	err = txn.Commit(ctx)
+	require.NoError(t, err)
 }
 
 func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
@@ -341,7 +423,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
 
 	filepath := t.TempDir() + "/test.json"
@@ -356,6 +438,8 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 	wrongFilepath := t.TempDir() + "/some/test.json"
 	err = db.basicImport(ctx, txn, wrongFilepath)
 	require.ErrorIs(t, err, os.ErrNotExist)
+	err = txn.Commit(ctx)
+	require.NoError(t, err)
 }
 
 func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
@@ -375,7 +459,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
 
 	filepath := t.TempDir() + "/test.json"
@@ -389,4 +473,6 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 
 	err = db.basicImport(ctx, txn, filepath)
 	require.ErrorIs(t, err, ErrFailedToGetCollection)
+	err = txn.Commit(ctx)
+	require.NoError(t, err)
 }
