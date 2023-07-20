@@ -10,7 +10,9 @@
 
 package client
 
-import "context"
+import (
+	"context"
+)
 
 // Backup contains DefraDB's supported backup operations.
 type Backup interface {
@@ -21,6 +23,7 @@ type Backup interface {
 	BasicExport(ctx context.Context, config *BackupConfig) error
 }
 
+// BackupConfig holds the configuration parameters for database backups.
 type BackupConfig struct {
 	Filepath string `json:"filepath"`
 	// only JSON is supported at the moment
@@ -28,5 +31,4 @@ type BackupConfig struct {
 	// pretty print JSON
 	Pretty      bool     `json:"pretty"`
 	Collections []string `json:"collections"`
-	ShowDeleted bool     `json:"showDeleted"`
 }

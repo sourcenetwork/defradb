@@ -12,6 +12,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -32,10 +33,10 @@ func TestDBExportCmd_WithInvalidExportFormat_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
 	dbExportCmd := MakeDBExportCommand(cfg)
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	dbExportCmd.Flags().Set("format", "invalid")
-	err := dbExportCmd.RunE(dbExportCmd, []string{filePath})
+	err := dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.ErrorIs(t, err, ErrInvalidExportFormat)
 }
 
@@ -43,10 +44,10 @@ func TestDBExportCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
 	cfg.API.Address = "invalid address"
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	dbExportCmd := MakeDBExportCommand(cfg)
-	err := dbExportCmd.RunE(dbExportCmd, []string{filePath})
+	err := dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
 }
 
@@ -54,20 +55,20 @@ func TestDBExportCmd_WithEmptyDatastore_NoError(t *testing.T) {
 	cfg, _, close := startTestNode(t)
 	defer close()
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
 	dbExportCmd := MakeDBExportCommand(cfg)
-	err := dbExportCmd.RunE(dbExportCmd, []string{filePath})
+	err := dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
 	require.True(t, lineHas(logLines, "msg", "Data exported for all collections"))
 
-	b, err := os.ReadFile(filePath)
+	b, err := os.ReadFile(filepath)
 	require.NoError(t, err)
 
 	require.Len(t, b, 2) // file should be an empty json object
@@ -77,14 +78,14 @@ func TestDBExportCmd_WithInvalidCollection_ReturnError(t *testing.T) {
 	cfg, _, close := startTestNode(t)
 	defer close()
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
 	dbExportCmd := MakeDBExportCommand(cfg)
 	dbExportCmd.Flags().Set("collections", "User")
-	err := dbExportCmd.RunE(dbExportCmd, []string{filePath})
+	err := dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
 
 	logLines, err := parseLines(outputBuf)
@@ -113,20 +114,20 @@ func TestDBExportCmd_WithAllCollection_NoError(t *testing.T) {
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
 	dbExportCmd := MakeDBExportCommand(cfg)
-	err = dbExportCmd.RunE(dbExportCmd, []string{filePath})
+	err = dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
 	require.True(t, lineHas(logLines, "msg", "Data exported for all collections"))
 
-	b, err := os.ReadFile(filePath)
+	b, err := os.ReadFile(filepath)
 	require.NoError(t, err)
 
 	require.Equal(
@@ -157,21 +158,21 @@ func TestDBExportCmd_WithAllCollectionAndPrettyFormating_NoError(t *testing.T) {
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
 	dbExportCmd := MakeDBExportCommand(cfg)
 	dbExportCmd.Flags().Set("pretty", "true")
-	err = dbExportCmd.RunE(dbExportCmd, []string{filePath})
+	err = dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
 	require.True(t, lineHas(logLines, "msg", "Data exported for all collections"))
 
-	b, err := os.ReadFile(filePath)
+	b, err := os.ReadFile(filepath)
 	require.NoError(t, err)
 
 	require.Equal(
@@ -186,51 +187,6 @@ func TestDBExportCmd_WithAllCollectionAndPrettyFormating_NoError(t *testing.T) {
     }
   ]
 }`,
-		string(b),
-	)
-}
-
-func TestDBExportCmd_WithAllCollectionAndCBORFormat_NoError(t *testing.T) {
-	ctx := context.Background()
-
-	cfg, di, close := startTestNode(t)
-	defer close()
-
-	_, err := di.db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
-	require.NoError(t, err)
-
-	col, err := di.db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	err = col.Create(ctx, doc)
-	require.NoError(t, err)
-
-	filePath := t.TempDir() + "/test.json"
-
-	outputBuf, revertOutput := simulateConsoleOutput(t)
-	defer revertOutput()
-
-	dbExportCmd := MakeDBExportCommand(cfg)
-	dbExportCmd.Flags().Set("format", "cbor")
-	err = dbExportCmd.RunE(dbExportCmd, []string{filePath})
-	require.NoError(t, err)
-
-	logLines, err := parseLines(outputBuf)
-	require.NoError(t, err)
-	require.True(t, lineHas(logLines, "msg", "Data exported for all collections"))
-
-	b, err := os.ReadFile(filePath)
-	require.NoError(t, err)
-
-	require.Equal(
-		t,
-		"\xa1dUser\x81\xa4cage\xf9O\x80d_keyx(bae-e933420a-988a-56f8-8952-6c245aebd519dnamedJohng_newKeyx(bae-e933420a-988a-56f8-8952-6c245aebd519",
 		string(b),
 	)
 }
@@ -256,21 +212,21 @@ func TestDBExportCmd_WithSingleCollection_NoError(t *testing.T) {
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
 	dbExportCmd := MakeDBExportCommand(cfg)
 	dbExportCmd.Flags().Set("collections", "User")
-	err = dbExportCmd.RunE(dbExportCmd, []string{filePath})
+	err = dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
 	require.True(t, lineHas(logLines, "msg", "Data exported for collection User"))
 
-	b, err := os.ReadFile(filePath)
+	b, err := os.ReadFile(filepath)
 	require.NoError(t, err)
 
 	require.Equal(
@@ -315,26 +271,30 @@ func TestDBExportCmd_WithMultipleCollections_NoError(t *testing.T) {
 	err = col2.Create(ctx, doc2)
 	require.NoError(t, err)
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
 	dbExportCmd := MakeDBExportCommand(cfg)
 	dbExportCmd.Flags().Set("collections", "User, Address")
-	err = dbExportCmd.RunE(dbExportCmd, []string{filePath})
+	err = dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
 
 	logLines, err := parseLines(outputBuf)
 	require.NoError(t, err)
 	require.True(t, lineHas(logLines, "msg", "Data exported for collections User, Address"))
 
-	b, err := os.ReadFile(filePath)
+	b, err := os.ReadFile(filepath)
+	require.NoError(t, err)
+	fileMap := map[string]any{}
+	err = json.Unmarshal(b, &fileMap)
 	require.NoError(t, err)
 
-	require.Equal(
-		t,
-		`{"Address":[{"_key":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_newKey":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}],"User":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
-		string(b),
-	)
+	expectedMap := map[string]any{}
+	data := []byte(`{"Address":[{"_key":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_newKey":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}],"User":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`)
+	err = json.Unmarshal(data, &expectedMap)
+	require.NoError(t, err)
+
+	require.EqualValues(t, expectedMap, fileMap)
 }

@@ -29,8 +29,9 @@ func findCollectionName(r *bufio.Reader) (string, error) {
 	for {
 		b, err := r.ReadByte()
 		if err != nil {
-			return "", err
+			return "", NewErrFailedToReadByte(err)
 		}
+		fmt.Println(string(b))
 		if string(b) == "\"" {
 			quotes++
 			if quotes == 2 {
@@ -44,10 +45,22 @@ func findCollectionName(r *bufio.Reader) (string, error) {
 	}
 }
 
+func goToArrayStart(r *bufio.Reader) error {
+	for {
+		b, err := r.ReadByte()
+		if err != nil {
+			return NewErrFailedToReadByte(err)
+		}
+		if string(b) == "[" {
+			return nil
+		}
+	}
+}
+
 func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath string) (err error) {
 	f, err := os.Open(filepath)
 	if err != nil {
-		return err
+		return NewErrOpenFile(err)
 	}
 	defer func() {
 		closeErr := f.Close()
@@ -56,9 +69,15 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 		}
 	}()
 
-	r := bufio.NewReader(f)
-	d := json.NewDecoder(r)
+	d := json.NewDecoder(bufio.NewReader(f))
 
+	// t, err := d.Token()
+	// if err != nil {
+	// 	return err
+	// }
+	// if t != json.Delim('{') {
+	// 	return errors.New("expected JSON object")
+	// }
 	for {
 		colName, err := findCollectionName(r)
 		if err != nil {
@@ -68,41 +87,34 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			return err
 		}
 
-		col, err := db.getCollectionByName(ctx, txn, colName)
+		goToArrayStart(r)
 		if err != nil {
 			return err
+		}
+
+		col, err := db.getCollectionByName(ctx, txn, colName)
+		if err != nil {
+			return NewErrFailedToGetCollection(colName, err)
 		}
 
 		for d.More() {
 			docMap := map[string]any{}
 			err = d.Decode(&docMap)
 			if err != nil {
-				return err
+				return NewErrJSONDecode(err)
 			}
 
-			newkey, ok := docMap["_newKey"].(string)
-			if !ok {
-				return err
-			}
-			key, err := client.NewDocKeyFromString(newkey)
+			delete(docMap, "_key")
+			delete(docMap, "_newKey")
+
+			doc, err := client.NewDocFromMap(docMap)
 			if err != nil {
-				return err
-			}
-
-			doc := client.NewDocWithKey(key)
-			for k, v := range docMap {
-				if k == "_key" || k == "_newKey" {
-					continue
-				}
-				err := doc.Set(k, v)
-				if err != nil {
-					return err
-				}
+				return NewErrDocFromMap(err)
 			}
 
 			err = col.Create(ctx, doc)
 			if err != nil {
-				return err
+				return NewErrDocCreate(err)
 			}
 		}
 
@@ -116,13 +128,13 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 	if len(config.Collections) == 0 {
 		cols, err = db.getAllCollections(ctx, txn)
 		if err != nil {
-			return err
+			return NewErrFailedToGetAllCollections(err)
 		}
 	} else {
 		for _, colName := range config.Collections {
 			col, err := db.getCollectionByName(ctx, txn, colName)
 			if err != nil {
-				return err
+				return NewErrFailedToGetCollection(colName, err)
 			}
 			cols = append(cols, col)
 		}
@@ -130,7 +142,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 
 	f, err := os.Create(config.Filepath)
 	if err != nil {
-		return err
+		return NewErrCreateFile(err)
 	}
 	defer func() {
 		closeErr := f.Close()
@@ -148,10 +160,13 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 	// open the object
 	_, err = f.WriteString("{")
 	if err != nil {
-		return err
+		return NewErrFailedToWriteString(err)
 	}
 	if config.Pretty {
 		_, err = f.WriteString("\n")
+		if err != nil {
+			return NewErrFailedToWriteString(err)
+		}
 	}
 
 	firstCol := true
@@ -162,12 +177,12 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			// add collection seperator
 			_, err = f.WriteString(",")
 			if err != nil {
-				return err
+				return NewErrFailedToWriteString(err)
 			}
 			if config.Pretty {
 				_, err = f.WriteString("\n")
 				if err != nil {
-					return err
+					return NewErrFailedToWriteString(err)
 				}
 			}
 		}
@@ -176,12 +191,12 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		if config.Pretty {
 			_, err = f.WriteString(fmt.Sprintf("  \"%s\": [\n", col.Name()))
 			if err != nil {
-				return err
+				return NewErrFailedToWriteString(err)
 			}
 		} else {
 			_, err = f.WriteString(fmt.Sprintf("\"%s\":[", col.Name()))
 			if err != nil {
-				return err
+				return NewErrFailedToWriteString(err)
 			}
 		}
 
@@ -198,16 +213,16 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				// add document seperator
 				_, err = f.WriteString(",")
 				if err != nil {
-					return err
+					return NewErrFailedToWriteString(err)
 				}
 				if config.Pretty {
 					_, err = f.WriteString("\n")
 					if err != nil {
-						return err
+						return NewErrFailedToWriteString(err)
 					}
 				}
 			}
-			doc, err := col.Get(ctx, key.Key, config.ShowDeleted)
+			doc, err := col.Get(ctx, key.Key, false)
 			if err != nil {
 				return err
 			}
@@ -230,11 +245,11 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			if config.Pretty {
 				_, err = f.WriteString("    ")
 				if err != nil {
-					return err
+					return NewErrFailedToWriteString(err)
 				}
 				b, err = json.MarshalIndent(docM, "    ", "  ")
 				if err != nil {
-					return err
+					return NewErrFailedToWriteString(err)
 				}
 			} else {
 				b, err = json.Marshal(docM)
@@ -254,12 +269,12 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		if config.Pretty {
 			_, err = f.WriteString("\n  ")
 			if err != nil {
-				return err
+				return NewErrFailedToWriteString(err)
 			}
 		}
 		_, err = f.WriteString("]")
 		if err != nil {
-			return err
+			return NewErrFailedToWriteString(err)
 		}
 
 	}
@@ -268,12 +283,12 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 	if config.Pretty {
 		_, err = f.WriteString("\n")
 		if err != nil {
-			return err
+			return NewErrFailedToWriteString(err)
 		}
 	}
 	_, err = f.WriteString("}")
 	if err != nil {
-		return err
+		return NewErrFailedToWriteString(err)
 	}
 
 	err = f.Sync()

@@ -11,16 +11,17 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 )
@@ -59,22 +60,23 @@ Example: export data for the 'Users' collection:
 				return NewErrFailedToJoinEndpoint(err)
 			}
 
-			// set query parameters
-			values := make(url.Values)
-			if len(collections) != 0 {
-				for i := range collections {
-					collections[i] = strings.Trim(collections[i], " ")
-				}
-				values["collections"] = collections
+			for i := range collections {
+				collections[i] = strings.Trim(collections[i], " ")
 			}
-			if pretty {
-				values.Set("pretty", "true")
-			}
-			values.Set("format", format)
-			values.Set("filepath", outputPath)
-			endpoint.RawQuery = values.Encode()
 
-			res, err := http.Get(endpoint.String())
+			data := client.BackupConfig{
+				Filepath:    outputPath,
+				Format:      format,
+				Pretty:      pretty,
+				Collections: collections,
+			}
+
+			b, err := json.Marshal(data)
+			if err != nil {
+				return err
+			}
+
+			res, err := http.Post(endpoint.String(), "application/json", bytes.NewBuffer(b))
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
 			}

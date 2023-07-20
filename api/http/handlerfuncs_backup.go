@@ -11,9 +11,13 @@
 package http
 
 import (
+	"context"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 func exportHandler(rw http.ResponseWriter, req *http.Request) {
@@ -25,6 +29,12 @@ func exportHandler(rw http.ResponseWriter, req *http.Request) {
 
 	cfg := &client.BackupConfig{}
 	err = getJSON(req, cfg)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		return
+	}
+
+	err = validateBackupConfig(req.Context(), cfg, db)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
@@ -51,16 +61,22 @@ func importHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	data := map[string]string{}
-	err = getJSON(req, &data)
+	cfg := &client.BackupConfig{}
+	err = getJSON(req, cfg)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
 	}
 
-	err = db.BasicImport(req.Context(), data["filepath"])
+	err = validateBackupConfig(req.Context(), cfg, db)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		return
+	}
+
+	err = db.BasicImport(req.Context(), cfg.Filepath)
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -70,4 +86,38 @@ func importHandler(rw http.ResponseWriter, req *http.Request) {
 		simpleDataResponse("result", "success"),
 		http.StatusOK,
 	)
+}
+
+func validateBackupConfig(ctx context.Context, cfg *client.BackupConfig, db client.DB) error {
+	if !isValidPath(cfg.Filepath) {
+		return errors.New("invalid file path")
+	}
+
+	if cfg.Format != "" && strings.ToLower(cfg.Format) != "json" {
+		return errors.New("only JSON format is supported at the moment")
+	}
+	for _, colName := range cfg.Collections {
+		_, err := db.GetCollectionByName(ctx, colName)
+		if err != nil {
+			return errors.Wrap("collection does not exist", err)
+		}
+	}
+	return nil
+}
+
+func isValidPath(filepath string) bool {
+	// if a file exists, return true
+	if _, err := os.Stat(filepath); err == nil {
+		return true
+	}
+
+	// if not, attempt to write to the path and if successful,
+	// remove the file and return true
+	var d []byte
+	if err := os.WriteFile(filepath, d, 0o644); err == nil {
+		os.Remove(filepath)
+		return true
+	}
+
+	return false
 }

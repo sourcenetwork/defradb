@@ -19,6 +19,7 @@ const (
 	errFailedToGetHeads               string = "failed to get document heads"
 	errFailedToCreateCollectionQuery  string = "failed to create collection prefix query"
 	errFailedToGetCollection          string = "failed to get collection"
+	errFailedToGetAllCollections      string = "failed to get all collections"
 	errDocVerification                string = "the document verification failed"
 	errAddingP2PCollection            string = "cannot add collection ID"
 	errRemovingP2PCollection          string = "cannot remove collection ID"
@@ -59,14 +60,22 @@ const (
 	errIndexDescriptionHasNoFields    string = "index description has no fields"
 	errIndexDescHasNonExistingField   string = "index description has non existing field"
 	errFieldOrAliasToFieldNotExist    string = "The given field or alias to field does not exist"
+	errCreateFile                     string = "failed to create the file"
+	errOpenFile                       string = "failed to open the file"
 	errCloseFile                      string = "failed to close the file"
 	errRemoveFile                     string = "failed to remove the file"
+	errFailedToReadByte               string = "failed to read byte"
+	errFailedToWriteString            string = "failed to write string"
+	errJSONDecode                     string = "failed to decode JSON"
+	errDocFromMap                     string = "failed to create a new doc from map"
+	errDocCreate                      string = "failed to save a new doc to collection"
 )
 
 var (
 	ErrFailedToGetHeads              = errors.New(errFailedToGetHeads)
 	ErrFailedToCreateCollectionQuery = errors.New(errFailedToCreateCollectionQuery)
 	ErrFailedToGetCollection         = errors.New(errFailedToGetCollection)
+	ErrFailedToGetAllCollections     = errors.New(errFailedToGetAllCollections)
 	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
 	// call against the supplied Document Key.
 	ErrDocVerification         = errors.New(errDocVerification)
@@ -113,8 +122,15 @@ var (
 	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
 	ErrCanNotChangeIndexWithPatch     = errors.New(errCanNotChangeIndexWithPatch)
 	ErrFieldOrAliasToFieldNotExist    = errors.New(errFieldOrAliasToFieldNotExist)
+	ErrCreateFile                     = errors.New(errCreateFile)
+	ErrOpenFile                       = errors.New(errOpenFile)
 	ErrCloseFile                      = errors.New(errCloseFile)
 	ErrRemoveFile                     = errors.New(errRemoveFile)
+	ErrFailedToReadByte               = errors.New(errFailedToReadByte)
+	ErrFailedToWriteString            = errors.New(errFailedToWriteString)
+	ErrJSONDecode                     = errors.New(errJSONDecode)
+	ErrDocFromMap                     = errors.New(errDocFromMap)
+	ErrDocCreate                      = errors.New(errDocCreate)
 )
 
 // NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
@@ -184,6 +200,12 @@ func NewErrNonZeroIndexIDProvided(indexID uint32) error {
 // be obtained.
 func NewErrFailedToGetCollection(name string, inner error) error {
 	return errors.Wrap(errFailedToGetCollection, inner, errors.NewKV("Name", name))
+}
+
+// NewErrFailedToGetAllCollections returns a new error indicating that the collection list could not
+// be obtained.
+func NewErrFailedToGetAllCollections(inner error) error {
+	return errors.Wrap(errFailedToGetAllCollections, inner)
 }
 
 // NewErrDocVerification returns a new error indicating that the document verification failed.
@@ -388,6 +410,17 @@ func NewErrIndexDescHasNonExistingField(desc client.IndexDescription, fieldName 
 	)
 }
 
+// NewErrCreateFile returns a new error indicating there was a failure in creating a file.
+func NewErrCreateFile(inner error) error {
+	return errors.Wrap(errCreateFile, inner)
+}
+
+// NewErrOpenFile returns a new error indicating there was a failure in opening a file.
+func NewErrOpenFile(inner error) error {
+	return errors.Wrap(errOpenFile, inner)
+}
+
+// NewErrCloseFile returns a new error indicating there was a failure in closing a file.
 func NewErrCloseFile(closeErr, other error) error {
 	if other != nil {
 		return errors.Wrap(errCloseFile, closeErr, errors.NewKV("Other error", other))
@@ -395,9 +428,40 @@ func NewErrCloseFile(closeErr, other error) error {
 	return errors.Wrap(errCloseFile, closeErr)
 }
 
+// NewErrRemoveFile returns a new error indicating there was a failure in removing a file.
 func NewErrRemoveFile(removeErr, other error) error {
 	if other != nil {
 		return errors.Wrap(errRemoveFile, removeErr, errors.NewKV("Other error", other))
 	}
 	return errors.Wrap(errRemoveFile, removeErr)
+}
+
+// NewErrFailedToReadByte returns a new error indicating there was a failure in read a byte
+// from the Reader
+func NewErrFailedToReadByte(inner error) error {
+	return errors.Wrap(errFailedToReadByte, inner)
+}
+
+// NewErrFailedToWriteString returns a new error indicating there was a failure in writing
+// a string to the Writer
+func NewErrFailedToWriteString(inner error) error {
+	return errors.Wrap(errFailedToWriteString, inner)
+}
+
+// NewErrJSONDecode returns a new error indicating there was a failure in decoding some JSON
+// from the JSON decoder
+func NewErrJSONDecode(inner error) error {
+	return errors.Wrap(errJSONDecode, inner)
+}
+
+// NewErrDocFromMap returns a new error indicating there was a failure in create
+// a new doc from a map
+func NewErrDocFromMap(inner error) error {
+	return errors.Wrap(errDocFromMap, inner)
+}
+
+// NewErrDocCreate returns a new error indicating there was a failure in save
+// a new doc to a collection
+func NewErrDocCreate(inner error) error {
+	return errors.Wrap(errDocCreate, inner)
 }

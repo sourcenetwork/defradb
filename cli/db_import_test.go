@@ -22,42 +22,50 @@ import (
 
 func TestDBImportCmd_WithNoArgument_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
+	setTestingAddresses(cfg)
 
 	dbImportCmd := MakeDBImportCommand(cfg)
 	err := dbImportCmd.ValidateArgs([]string{})
 	require.ErrorIs(t, err, ErrInvalidArgumentLength)
 }
 
-func TestDBImportCmd_WithNonExistantFile_ReturnError(t *testing.T) {
-	cfg := getTestConfig(t)
-	dbImportCmd := MakeDBImportCommand(cfg)
-
-	filePath := t.TempDir() + "/test.json"
-
-	dbImportCmd.Flags().Set("format", "invalid")
-	err := dbImportCmd.RunE(dbImportCmd, []string{filePath})
-	require.ErrorIs(t, err, os.ErrNotExist)
-}
-
 func TestDBImportCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
 	cfg.API.Address = "invalid address"
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	dbImportCmd := MakeDBImportCommand(cfg)
-	err := dbImportCmd.RunE(dbImportCmd, []string{filePath})
+	err := dbImportCmd.RunE(dbImportCmd, []string{filepath})
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
+}
+
+func TestDBImportCmd_WithNonExistantFile_ReturnError(t *testing.T) {
+	cfg, _, close := startTestNode(t)
+	defer close()
+
+	filepath := t.TempDir() + "/test.json"
+
+	outputBuf, revertOutput := simulateConsoleOutput(t)
+	defer revertOutput()
+
+	dbImportCmd := MakeDBImportCommand(cfg)
+	err := dbImportCmd.RunE(dbImportCmd, []string{filepath})
+	require.NoError(t, err)
+
+	logLines, err := parseLines(outputBuf)
+	require.NoError(t, err)
+	require.True(t, lineHas(logLines, "msg", "Failed to import data"))
 }
 
 func TestDBImportCmd_WithEmptyDatastore_ReturnError(t *testing.T) {
 	cfg, _, close := startTestNode(t)
 	defer close()
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	err := os.WriteFile(
-		filePath,
+		filepath,
 		[]byte(`{"User":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`),
 		0664,
 	)
@@ -67,7 +75,7 @@ func TestDBImportCmd_WithEmptyDatastore_ReturnError(t *testing.T) {
 	defer revertOutput()
 
 	dbImportCmd := MakeDBImportCommand(cfg)
-	err = dbImportCmd.RunE(dbImportCmd, []string{filePath})
+	err = dbImportCmd.RunE(dbImportCmd, []string{filepath})
 	require.NoError(t, err)
 
 	logLines, err := parseLines(outputBuf)
@@ -87,10 +95,10 @@ func TestDBImportCmd_WithExistingCollection_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	filePath := t.TempDir() + "/test.json"
+	filepath := t.TempDir() + "/test.json"
 
 	err = os.WriteFile(
-		filePath,
+		filepath,
 		[]byte(`{"User":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`),
 		0664,
 	)
@@ -100,53 +108,7 @@ func TestDBImportCmd_WithExistingCollection_NoError(t *testing.T) {
 	defer revertOutput()
 
 	dbImportCmd := MakeDBImportCommand(cfg)
-	err = dbImportCmd.RunE(dbImportCmd, []string{filePath})
-	require.NoError(t, err)
-
-	logLines, err := parseLines(outputBuf)
-	require.NoError(t, err)
-	require.True(t, lineHas(logLines, "msg", "Successfully imported data from file"))
-
-	col, err := di.db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	key, err := client.NewDocKeyFromString("bae-e933420a-988a-56f8-8952-6c245aebd519")
-	require.NoError(t, err)
-	doc, err := col.Get(ctx, key, false)
-	require.NoError(t, err)
-
-	val, err := doc.Get("name")
-	require.NoError(t, err)
-
-	require.Equal(t, "John", val.(string))
-}
-
-func TestDBImportCmd_WithExistingCollectionFromCBOR_NoError(t *testing.T) {
-	ctx := context.Background()
-
-	cfg, di, close := startTestNode(t)
-	defer close()
-
-	_, err := di.db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	filePath := t.TempDir() + "/test.cbor"
-
-	err = os.WriteFile(
-		filePath,
-		[]byte("\xa1dUser\x81\xa4d_keyx(bae-e933420a-988a-56f8-8952-6c245aebd519g_newKeyx(bae-e933420a-988a-56f8-8952-6c245aebd519cage\xfb@>\x00\x00\x00\x00\x00\x00dnamedJohn"),
-		0664,
-	)
-	require.NoError(t, err)
-
-	outputBuf, revertOutput := simulateConsoleOutput(t)
-	defer revertOutput()
-
-	dbImportCmd := MakeDBImportCommand(cfg)
-	err = dbImportCmd.RunE(dbImportCmd, []string{filePath})
+	err = dbImportCmd.RunE(dbImportCmd, []string{filepath})
 	require.NoError(t, err)
 
 	logLines, err := parseLines(outputBuf)
