@@ -377,7 +377,7 @@ func (db *explicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, er
 // BasicImport imports a json dataset.
 // filepath must be accessible to the node.
 func (db *implicitTxnDB) BasicImport(ctx context.Context, filepath string) error {
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
