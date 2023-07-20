@@ -583,10 +583,10 @@ func TestImportHandler_WithUnknownCollection_KeyNotFoundError(t *testing.T) {
 		ExpectedStatus: 500,
 		ResponseData:   &errResponse,
 	})
-	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "datastore: key not found")
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "failed to get collection: datastore: key not found. Name: User")
 	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
 	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	require.Equal(t, "datastore: key not found", errResponse.Errors[0].Message)
+	require.Equal(t, "failed to get collection: datastore: key not found. Name: User", errResponse.Errors[0].Message)
 }
 
 // type mockStore struct {
@@ -728,12 +728,16 @@ func TestImportHandler_WithExistingDoc_DocumentExistError(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "a document with the given dockey already exists")
+	require.Contains(
+		t,
+		errResponse.Errors[0].Extensions.Stack,
+		"failed to save a new doc to collection: a document with the given dockey already exists",
+	)
 	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
 	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
 	require.Equal(
 		t,
-		"a document with the given dockey already exists. DocKey: bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab",
+		"failed to save a new doc to collection: a document with the given dockey already exists. DocKey: bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab",
 		errResponse.Errors[0].Message,
 	)
 }
