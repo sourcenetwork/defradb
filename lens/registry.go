@@ -100,7 +100,7 @@ func (r *lensRegistry) SetMigration(ctx context.Context, txn datastore.Txn, cfg 
 func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error {
 	locker, lockerAlreadyExists := r.lensPoolsBySchemaVersionID[cfg.SourceSchemaVersionID]
 	if !lockerAlreadyExists {
-		locker = r.newLocker(r.poolSize, cfg)
+		locker = r.newPool(r.poolSize, cfg)
 	}
 
 	newLensPipes := make([]*lensPipe, r.poolSize)
@@ -260,7 +260,7 @@ type lensPool struct {
 	pipes chan *lensPipe
 }
 
-func (r *lensRegistry) newLocker(lensPoolSize int, cfg client.LensConfig) *lensPool {
+func (r *lensRegistry) newPool(lensPoolSize int, cfg client.LensConfig) *lensPool {
 	return &lensPool{
 		cfg:      cfg,
 		registry: r,
