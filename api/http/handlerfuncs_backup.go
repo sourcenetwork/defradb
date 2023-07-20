@@ -115,7 +115,7 @@ func isValidPath(filepath string) bool {
 	// remove the file and return true
 	var d []byte
 	if err := os.WriteFile(filepath, d, 0o644); err == nil {
-		os.Remove(filepath)
+		_ = os.Remove(filepath)
 		return true
 	}
 

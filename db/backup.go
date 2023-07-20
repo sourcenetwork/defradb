@@ -15,47 +15,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 )
-
-func findCollectionName(r *bufio.Reader) (string, error) {
-	quotes := 0
-	buf := []byte{}
-	for {
-		b, err := r.ReadByte()
-		if err != nil {
-			return "", NewErrFailedToReadByte(err)
-		}
-		fmt.Println(string(b))
-		if string(b) == "\"" {
-			quotes++
-			if quotes == 2 {
-				return string(buf), nil
-			}
-			continue
-		}
-		if quotes == 1 {
-			buf = append(buf, b)
-		}
-	}
-}
-
-func goToArrayStart(r *bufio.Reader) error {
-	for {
-		b, err := r.ReadByte()
-		if err != nil {
-			return NewErrFailedToReadByte(err)
-		}
-		if string(b) == "[" {
-			return nil
-		}
-	}
-}
 
 func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath string) (err error) {
 	f, err := os.Open(filepath)
@@ -71,30 +35,30 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 
 	d := json.NewDecoder(bufio.NewReader(f))
 
-	// t, err := d.Token()
-	// if err != nil {
-	// 	return err
-	// }
-	// if t != json.Delim('{') {
-	// 	return errors.New("expected JSON object")
-	// }
-	for {
-		colName, err := findCollectionName(r)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			return err
-		}
-
-		goToArrayStart(r)
+	t, err := d.Token()
+	if err != nil {
+		return err
+	}
+	if t != json.Delim('{') {
+		return ErrExpectedJSONObject
+	}
+	for d.More() {
+		t, err := d.Token()
 		if err != nil {
 			return err
 		}
-
+		colName := t.(string)
 		col, err := db.getCollectionByName(ctx, txn, colName)
 		if err != nil {
 			return NewErrFailedToGetCollection(colName, err)
+		}
+
+		t, err = d.Token()
+		if err != nil {
+			return err
+		}
+		if t != json.Delim('[') {
+			return ErrExpectedJSONArray
 		}
 
 		for d.More() {
@@ -117,7 +81,10 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				return NewErrDocCreate(err)
 			}
 		}
-
+		_, err = d.Token()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -276,7 +243,6 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		if err != nil {
 			return NewErrFailedToWriteString(err)
 		}
-
 	}
 
 	// close object

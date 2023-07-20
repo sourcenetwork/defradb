@@ -11,49 +11,15 @@
 package db
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"os"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 )
-
-func TestFindCollectionName_WithEmptyJSONObject_ReturnError(t *testing.T) {
-	buf := bytes.NewBuffer([]byte(`{}`))
-	r := bufio.NewReader(buf)
-	_, err := findCollectionName(r)
-	require.ErrorIs(t, err, io.EOF)
-}
-
-func TestFindCollectionName_WithValidJSONObject_NoError(t *testing.T) {
-	buf := bytes.NewBuffer([]byte(`{"User": []}`))
-	r := bufio.NewReader(buf)
-	name, err := findCollectionName(r)
-	require.NoError(t, err)
-	require.Equal(t, "User", name)
-}
-
-func TestGoToArrayStart_WithEmptyJSONObject_ReturnError(t *testing.T) {
-	buf := bytes.NewBuffer([]byte(`{}`))
-	r := bufio.NewReader(buf)
-	err := goToArrayStart(r)
-	require.ErrorIs(t, err, io.EOF)
-}
-
-func TestGoToArrayStart_WithValidJSONObject_NoError(t *testing.T) {
-	buf := bytes.NewBuffer([]byte(`{"User": []}`))
-	r := bufio.NewReader(buf)
-	err := goToArrayStart(r)
-	require.NoError(t, err)
-	b, err := r.Peek(1)
-	require.NoError(t, err)
-	require.Equal(t, []byte("]"), b)
-}
 
 func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	ctx := context.Background()
@@ -238,7 +204,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	require.EqualValues(t, expectedMap, fileMap)
 }
 
-func TestBasicImport_NoError(t *testing.T) {
+func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
@@ -269,5 +235,158 @@ func TestBasicImport_NoError(t *testing.T) {
 
 	err = db.basicImport(ctx, txn, filepath)
 	require.NoError(t, err)
-	t.Fail()
+
+	col1, err := db.getCollectionByName(ctx, txn, "Address")
+	require.NoError(t, err)
+
+	key1, err := client.NewDocKeyFromString("bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f")
+	require.NoError(t, err)
+	_, err = col1.Get(ctx, key1, false)
+	require.NoError(t, err)
+
+	col2, err := db.getCollectionByName(ctx, txn, "User")
+	require.NoError(t, err)
+
+	key2, err := client.NewDocKeyFromString("bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df")
+	require.NoError(t, err)
+	_, err = col2.Get(ctx, key2, false)
+	require.NoError(t, err)
+
+	key3, err := client.NewDocKeyFromString("bae-e933420a-988a-56f8-8952-6c245aebd519")
+	require.NoError(t, err)
+	_, err = col2.Get(ctx, key3, false)
+	require.NoError(t, err)
+}
+
+func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+	defer db.Close(ctx)
+
+	_, err = db.AddSchema(ctx, `type User {
+		name: String
+		age: Int
+	}
+
+	type Address {
+		street: String
+		city: String
+	}`)
+	require.NoError(t, err)
+
+	txn, err := db.NewTxn(ctx, true)
+	require.NoError(t, err)
+
+	filepath := t.TempDir() + "/test.json"
+
+	err = os.WriteFile(
+		filepath,
+		[]byte(`["Address":[{"_key":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_newKey":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}],"User":[{"_key":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","_newKey":"bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df","age":40,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]]`),
+		0664,
+	)
+	require.NoError(t, err)
+
+	err = db.basicImport(ctx, txn, filepath)
+	require.ErrorIs(t, err, ErrExpectedJSONObject)
+}
+
+func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+	defer db.Close(ctx)
+
+	_, err = db.AddSchema(ctx, `type User {
+		name: String
+		age: Int
+	}
+
+	type Address {
+		street: String
+		city: String
+	}`)
+	require.NoError(t, err)
+
+	txn, err := db.NewTxn(ctx, true)
+	require.NoError(t, err)
+
+	filepath := t.TempDir() + "/test.json"
+
+	err = os.WriteFile(
+		filepath,
+		[]byte(`{"Address":{"_key":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_newKey":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}}`),
+		0664,
+	)
+	require.NoError(t, err)
+
+	err = db.basicImport(ctx, txn, filepath)
+	require.ErrorIs(t, err, ErrExpectedJSONArray)
+}
+
+func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+	defer db.Close(ctx)
+
+	_, err = db.AddSchema(ctx, `type User {
+		name: String
+		age: Int
+	}
+
+	type Address {
+		street: String
+		city: String
+	}`)
+	require.NoError(t, err)
+
+	txn, err := db.NewTxn(ctx, true)
+	require.NoError(t, err)
+
+	filepath := t.TempDir() + "/test.json"
+
+	err = os.WriteFile(
+		filepath,
+		[]byte(`{"Address":{"_key":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_newKey":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}}`),
+		0664,
+	)
+	require.NoError(t, err)
+
+	wrongFilepath := t.TempDir() + "/some/test.json"
+	err = db.basicImport(ctx, txn, wrongFilepath)
+	require.ErrorIs(t, err, os.ErrNotExist)
+}
+
+func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+	defer db.Close(ctx)
+
+	_, err = db.AddSchema(ctx, `type User {
+		name: String
+		age: Int
+	}
+
+	type Address {
+		street: String
+		city: String
+	}`)
+	require.NoError(t, err)
+
+	txn, err := db.NewTxn(ctx, true)
+	require.NoError(t, err)
+
+	filepath := t.TempDir() + "/test.json"
+
+	err = os.WriteFile(
+		filepath,
+		[]byte(`{"Addresses":{"_key":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","_newKey":"bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f","city":"Toronto","street":"101 Maple St"}}`),
+		0664,
+	)
+	require.NoError(t, err)
+
+	err = db.basicImport(ctx, txn, filepath)
+	require.ErrorIs(t, err, ErrFailedToGetCollection)
 }

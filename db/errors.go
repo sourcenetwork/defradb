@@ -69,6 +69,8 @@ const (
 	errJSONDecode                     string = "failed to decode JSON"
 	errDocFromMap                     string = "failed to create a new doc from map"
 	errDocCreate                      string = "failed to save a new doc to collection"
+	errExpectedJSONObject             string = "expected JSON object"
+	errExpectedJSONArray              string = "expected JSON array"
 )
 
 var (
@@ -131,6 +133,8 @@ var (
 	ErrJSONDecode                     = errors.New(errJSONDecode)
 	ErrDocFromMap                     = errors.New(errDocFromMap)
 	ErrDocCreate                      = errors.New(errDocCreate)
+	ErrExpectedJSONObject             = errors.New(errExpectedJSONObject)
+	ErrExpectedJSONArray              = errors.New(errExpectedJSONArray)
 )
 
 // NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
