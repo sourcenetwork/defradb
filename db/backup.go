@@ -24,7 +24,7 @@ import (
 func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath string) (err error) {
 	f, err := os.Open(filepath)
 	if err != nil {
-		return NewErrOpenFile(err)
+		return NewErrOpenFile(err, filepath)
 	}
 	defer func() {
 		closeErr := f.Close()
@@ -109,7 +109,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 
 	f, err := os.Create(config.Filepath)
 	if err != nil {
-		return NewErrCreateFile(err)
+		return NewErrCreateFile(err, config.Filepath)
 	}
 	defer func() {
 		closeErr := f.Close()
@@ -119,7 +119,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			// ensure we cleanup if there was an error
 			removeErr := os.Remove(config.Filepath)
 			if removeErr != nil {
-				err = NewErrRemoveFile(removeErr, err)
+				err = NewErrRemoveFile(removeErr, err, config.Filepath)
 			}
 		}
 	}()

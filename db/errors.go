@@ -60,10 +60,10 @@ const (
 	errIndexDescriptionHasNoFields    string = "index description has no fields"
 	errIndexDescHasNonExistingField   string = "index description has non existing field"
 	errFieldOrAliasToFieldNotExist    string = "The given field or alias to field does not exist"
-	errCreateFile                     string = "failed to create the file"
-	errOpenFile                       string = "failed to open the file"
-	errCloseFile                      string = "failed to close the file"
-	errRemoveFile                     string = "failed to remove the file"
+	errCreateFile                     string = "failed to create file"
+	errOpenFile                       string = "failed to open file"
+	errCloseFile                      string = "failed to close file"
+	errRemoveFile                     string = "failed to remove file"
 	errFailedToReadByte               string = "failed to read byte"
 	errFailedToWriteString            string = "failed to write string"
 	errJSONDecode                     string = "failed to decode JSON"
@@ -415,13 +415,13 @@ func NewErrIndexDescHasNonExistingField(desc client.IndexDescription, fieldName 
 }
 
 // NewErrCreateFile returns a new error indicating there was a failure in creating a file.
-func NewErrCreateFile(inner error) error {
-	return errors.Wrap(errCreateFile, inner)
+func NewErrCreateFile(inner error, filepath string) error {
+	return errors.Wrap(errCreateFile, inner, errors.NewKV("Filepath", filepath))
 }
 
 // NewErrOpenFile returns a new error indicating there was a failure in opening a file.
-func NewErrOpenFile(inner error) error {
-	return errors.Wrap(errOpenFile, inner)
+func NewErrOpenFile(inner error, filepath string) error {
+	return errors.Wrap(errOpenFile, inner, errors.NewKV("Filepath", filepath))
 }
 
 // NewErrCloseFile returns a new error indicating there was a failure in closing a file.
@@ -433,11 +433,20 @@ func NewErrCloseFile(closeErr, other error) error {
 }
 
 // NewErrRemoveFile returns a new error indicating there was a failure in removing a file.
-func NewErrRemoveFile(removeErr, other error) error {
+func NewErrRemoveFile(removeErr, other error, filepath string) error {
 	if other != nil {
-		return errors.Wrap(errRemoveFile, removeErr, errors.NewKV("Other error", other))
+		return errors.Wrap(
+			errRemoveFile,
+			removeErr,
+			errors.NewKV("Other error", other),
+			errors.NewKV("Filepath", filepath),
+		)
 	}
-	return errors.Wrap(errRemoveFile, removeErr)
+	return errors.Wrap(
+		errRemoveFile,
+		removeErr,
+		errors.NewKV("Filepath", filepath),
+	)
 }
 
 // NewErrFailedToReadByte returns a new error indicating there was a failure in read a byte
