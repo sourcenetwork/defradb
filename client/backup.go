@@ -19,7 +19,7 @@ type Backup interface {
 	// BasicImport imports a json dataset.
 	// filepath must be accessible to the node.
 	BasicImport(ctx context.Context, filepath string) error
-	// BasicExport exports the current data or subset of data to file in json or cbor format.
+	// BasicExport exports the current data or subset of data to file in json format.
 	BasicExport(ctx context.Context, config *BackupConfig) error
 }
 
