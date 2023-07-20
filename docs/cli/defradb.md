@@ -6,7 +6,7 @@ DefraDB Edge Database
 
 DefraDB is the edge database to power the user-centric future.
 
-Start a database node, interact with a local or remote node, and much more.
+Start a DefraDB node, interact with a local or remote node, and much more.
 
 
 ### Options
@@ -28,6 +28,6 @@ Start a database node, interact with a local or remote node, and much more.
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb init](defradb_init.md)	 - Initialize DefraDB's root directory and configuration file
 * [defradb server-dump](defradb_server-dump.md)	 - Dumps the state of the entire database
-* [defradb start](defradb_start.md)	 - Start a database node
+* [defradb start](defradb_start.md)	 - Start a DefraDB node
 * [defradb version](defradb_version.md)	 - Display the version information of DefraDB and its components
 

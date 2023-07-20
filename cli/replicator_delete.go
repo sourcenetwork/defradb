@@ -32,7 +32,7 @@ func MakeReplicatorDeleteCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "delete [-f, --full | -c, --collection] <peer>",
 		Short: "Delete a replicator. It will stop synchronizing",
-		Long:  `Remove a replicator. It will stop synchronizing.`,
+		Long:  `Delete a replicator. It will stop synchronizing.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 				return errors.New("must specify one argument: PeerID")
