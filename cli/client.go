@@ -17,9 +17,9 @@ import (
 func MakeClientCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "client",
-		Short: "Interact with a running DefraDB node as a client",
-		Long: `Interact with a running DefraDB node as a client.
-Execute queries, add schema types, and run debug routines.`,
+		Short: "Interact with a DefraDB node",
+		Long: `Interact with a DefraDB node.
+Execute queries, add schema types, obtain node info, etc.`,
 	}
 
 	return cmd

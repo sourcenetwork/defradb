@@ -27,7 +27,8 @@ func MakeP2PCollectionGetallCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all P2P collections",
-		Long:  `Use this command if you wish to get all P2P collections in the pubsub topics`,
+		Long: `Get all P2P collections in the pubsub topics.
+This is the list of collections of the node that are synchronized on the pubsub network.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.NoArgs(cmd, args); err != nil {
 				return errors.New("must specify no argument")
@@ -38,7 +39,7 @@ func MakeP2PCollectionGetallCommand(cfg *config.Config) *cobra.Command {
 			cred := insecure.NewCredentials()
 			client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
 			if err != nil {
-				return errors.Wrap("failed to create RPC client", err)
+				return ErrFailedToCreateRPCClient
 			}
 
 			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
@@ -51,7 +52,7 @@ func MakeP2PCollectionGetallCommand(cfg *config.Config) *cobra.Command {
 
 			collections, err := client.GetAllP2PCollections(ctx)
 			if err != nil {
-				return errors.Wrap("failed to add p2p collections, request failed", err)
+				return errors.Wrap("failed to add P2P collections, request failed", err)
 			}
 
 			if len(collections) > 0 {

@@ -25,10 +25,7 @@ func MakeRootCommand(cfg *config.Config) *cobra.Command {
 		Short: "DefraDB Edge Database",
 		Long: `DefraDB is the edge database to power the user-centric future.
 
-Start a database node, issue a request to a local or remote node, and much more.
-
-DefraDB is released under the BSL license, (c) 2022 Democratized Data Foundation.
-See https://docs.source.network/BSL.txt for more information.
+Start a DefraDB node, interact with a local or remote node, and much more.
 `,
 		// Runs on subcommands before their Run function, to handle configuration and top-level flags.
 		// Loads the rootDir containing the configuration file, otherwise warn about it and load a default configuration.

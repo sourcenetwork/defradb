@@ -27,7 +27,8 @@ import (
 func MakePeerIDCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "peerid",
-		Short: "Get the PeerID of the DefraDB node",
+		Short: "Get the PeerID of the node",
+		Long:  `Get the PeerID of the node.`,
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
 			stdout, err := os.Stdout.Stat()
 			if err != nil {

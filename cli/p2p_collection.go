@@ -17,8 +17,9 @@ import (
 func MakeP2PCollectionCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "p2pcollection",
-		Short: "Interact with the P2P collection system",
-		Long:  "Add, delete, or get the list of P2P collections",
+		Short: "Configure the P2P collection system",
+		Long: `Add, delete, or get the list of P2P collections.
+The selected collections synchronize their events on the pubsub network.`,
 	}
 	return cmd
 }

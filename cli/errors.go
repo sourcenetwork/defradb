@@ -30,6 +30,7 @@ const (
 	errFailedToHandleGQLErrors     string = "failed to handle GraphQL errors"
 	errFailedToPrettyPrintResponse string = "failed to pretty print response"
 	errFailedToUnmarshalResponse   string = "failed to unmarshal response"
+	errFailedParsePeerID           string = "failed to parse PeerID"
 )
 
 // Errors returnable from this package.
@@ -44,7 +45,7 @@ var (
 	ErrEmptyStdin                  = errors.New(errEmptyStdin)
 	ErrFailedToReadFile            = errors.New(errFailedToReadFile)
 	ErrFailedToReadStdin           = errors.New(errFailedToReadStdin)
-	ErrFailToWrapRPCClient         = errors.New(errFailedToCreateRPCClient)
+	ErrFailedToCreateRPCClient     = errors.New(errFailedToCreateRPCClient)
 	ErrFailedToAddReplicator       = errors.New(errFailedToAddReplicator)
 	ErrFailedToJoinEndpoint        = errors.New(errFailedToJoinEndpoint)
 	ErrFailedToSendRequest         = errors.New(errFailedToSendRequest)
@@ -53,6 +54,7 @@ var (
 	ErrFailedToHandleGQLErrors     = errors.New(errFailedToHandleGQLErrors)
 	ErrFailedToPrettyPrintResponse = errors.New(errFailedToPrettyPrintResponse)
 	ErrFailedToUnmarshalResponse   = errors.New(errFailedToUnmarshalResponse)
+	ErrFailedParsePeerID           = errors.New(errFailedParsePeerID)
 )
 
 func NewErrMissingArg(name string) error {
@@ -109,4 +111,8 @@ func NewErrFailedToPrettyPrintResponse(inner error) error {
 
 func NewErrFailedToUnmarshalResponse(inner error) error {
 	return errors.Wrap(errFailedToUnmarshalResponse, inner)
+}
+
+func NewErrFailedParsePeerID(inner error) error {
+	return errors.Wrap(errFailedParsePeerID, inner)
 }
