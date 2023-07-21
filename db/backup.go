@@ -108,7 +108,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 	}
 
 	tempFile := config.Filepath + ".temp"
-	f, err := os.Create(config.Filepath)
+	f, err := os.Create(tempFile)
 	if err != nil {
 		return NewErrCreateFile(err, tempFile)
 	}
