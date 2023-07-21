@@ -29,7 +29,7 @@ ifdef BUILD_TAGS
 BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
-TEST_FLAGS=-race -shuffle=on -timeout 70s
+TEST_FLAGS=-race -shuffle=on -timeout 120s
 
 PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
@@ -243,6 +243,7 @@ test\:lens:
 
 .PHONY: test\:cli
 test\:cli:
+	@$(MAKE) deps:lens
 	gotestsum --format testname -- ./$(CLI_TEST_DIRECTORY)/... $(TEST_FLAGS)
 
 # Using go-acc to ensure integration tests are included.
