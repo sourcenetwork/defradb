@@ -20,7 +20,6 @@ var schemas = (`
 	type User {
 		name: String
 		age: Int
-		books: [Book]
 	}
 `)
 
