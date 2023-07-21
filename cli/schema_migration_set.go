@@ -45,16 +45,14 @@ Example: add from stdin:
   cat schema_migration.lens | defradb client schema migration set bae123 bae456 -
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if err := cobra.MinimumNArgs(2)(cmd, args); err != nil {
 				return NewErrMissingArgs([]string{"src", "dst", "cfg"})
 			}
 			if err := cobra.MaximumNArgs(3)(cmd, args); err != nil {
 				return NewErrTooManyArgs(3, len(args))
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+
 			var lensCfgJson string
 			var srcSchemaVersionID string
 			var dstSchemaVersionID string
