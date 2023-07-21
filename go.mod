@@ -23,7 +23,7 @@ require (
 	github.com/ipfs/go-log v1.0.5
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/jbenet/goprocess v0.1.4
-	github.com/lens-vm/lens/host-go v0.0.0-20230630110646-acdc3794600b
+	github.com/lens-vm/lens/host-go v0.0.0-20230720125121-328ae81f5744
 	github.com/libp2p/go-libp2p v0.28.0
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.24.2
