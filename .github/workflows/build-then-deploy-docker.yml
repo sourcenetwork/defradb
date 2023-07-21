@@ -12,7 +12,9 @@
 # then it will deploy the image to DockerHub & GitHub container registries.
 name: Build Then Deploy Docker Workflow
 
-on: pull_request_target
+on: 
+  pull_request_target:
+    types: [edited]
 
   # push:
   #   tags:
