@@ -85,7 +85,7 @@ func NewNode(
 	// create our peerstore from the underlying defra rootstore
 	// prefixed with "p2p"
 	rootstore := db.Root()
-	pstore := namespace.Wrap(rootstore, ds.NewKey("peers"))
+	pstore := namespace.Wrap(rootstore, ds.NewKey("/db"))
 	peerstore, err := pstoreds.NewPeerstore(ctx, pstore, pstoreds.DefaultOpts())
 	if err != nil {
 		return nil, fin.Cleanup(err)
