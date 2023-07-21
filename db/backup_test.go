@@ -207,6 +207,80 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	require.EqualValues(t, expectedMap, fileMap)
 }
 
+func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+	defer db.Close(ctx)
+
+	_, err = db.AddSchema(ctx, `type User {
+		name: String
+		age: Int
+		book: [Book]
+	}
+
+	type Book {
+		name: String
+		author: User
+	}`)
+	require.NoError(t, err)
+
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	require.NoError(t, err)
+
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 31}`))
+	require.NoError(t, err)
+
+	col1, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	err = col1.Create(ctx, doc1)
+	require.NoError(t, err)
+
+	err = col1.Create(ctx, doc2)
+	require.NoError(t, err)
+
+	doc3, err := client.NewDocFromJSON([]byte(`{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`))
+	require.NoError(t, err)
+
+	doc4, err := client.NewDocFromJSON([]byte(`{"name": "Game of chains", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`))
+	require.NoError(t, err)
+
+	col2, err := db.GetCollectionByName(ctx, "Book")
+	require.NoError(t, err)
+
+	err = col2.Create(ctx, doc3)
+	require.NoError(t, err)
+	err = col2.Create(ctx, doc4)
+	require.NoError(t, err)
+
+	err = doc1.Set("age", 31)
+	require.NoError(t, err)
+
+	err = col1.Update(ctx, doc1)
+	require.NoError(t, err)
+
+	txn, err := db.NewTxn(ctx, true)
+	require.NoError(t, err)
+	defer txn.Discard(ctx)
+
+	filepath := t.TempDir() + "/test.json"
+	err = db.basicExport(ctx, txn, &client.BackupConfig{Filepath: filepath})
+	require.NoError(t, err)
+
+	b, err := os.ReadFile(filepath)
+	require.NoError(t, err)
+	fileMap := map[string]any{}
+	err = json.Unmarshal(b, &fileMap)
+	require.NoError(t, err)
+
+	expectedMap := map[string]any{}
+	data := []byte(`{"Book":[{"_key":"bae-4399f189-138d-5d49-9e25-82e78463677b","_newKey":"bae-78a40f28-a4b8-5dca-be44-392b0f96d0ff","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","name":"Game of chains"},{"_key":"bae-5cf2fec3-d8ed-50d5-8286-39109853d2da","_newKey":"bae-edeade01-2d21-5d6d-aadf-efc5a5279de5","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","name":"John and the sourcerers' stone"}],"User":[{"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927","_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","age":31,"name":"John"}]}`)
+	err = json.Unmarshal(data, &expectedMap)
+	require.NoError(t, err)
+	require.EqualValues(t, expectedMap, fileMap)
+}
+
 func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)

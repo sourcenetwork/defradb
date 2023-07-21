@@ -52,6 +52,25 @@ func TestBackupExport_WithInvalidFilePath_ReturnError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestBackupExport_WithInvalidCollection_ReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John", "age": 30}`,
+			},
+			testUtils.BackupExport{
+				Config: client.BackupConfig{
+					Collections: []string{"Invalid"},
+				},
+				ExpectedError: "failed to get collection: datastore: key not found. Name: Invalid",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestBackupExport_JustUserCollection_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -64,30 +83,6 @@ func TestBackupExport_JustUserCollection_ReturnError(t *testing.T) {
 					Collections: []string{"User"},
 				},
 				ExpectedContent: `{"User":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestBackupExport_AllCollectionsMultipleDocs_ReturnError(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc:          `{"name": "John", "age": 30}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc:          `{"name": "Bob", "age": 31}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc:          `{"name": "John and the sourcerers' stone"}`,
-			},
-			testUtils.BackupExport{
-				ExpectedContent: `{"Book":[{"_key":"bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4","_newKey":"bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4","name":"John and the sourcerers' stone"}],"User":[{"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927","_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
 			},
 		},
 	}

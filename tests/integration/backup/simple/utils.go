@@ -20,17 +20,14 @@ var schemas = (`
 	type User {
 		name: String
 		age: Int
-	}
-
-	type Book {
-		name: String
+		books: [Book]
 	}
 `)
 
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
-		[]string{"User", "Book"},
+		[]string{"User"},
 		testUtils.TestCase{
 			Description: test.Description,
 			Actions: append(

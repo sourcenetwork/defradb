@@ -18,6 +18,7 @@ import (
 	"os"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -91,6 +92,9 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 }
 
 func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client.BackupConfig) (err error) {
+	// old key -> new Key
+	keyChangeCache := map[string]string{}
+
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
 		cols, err = db.getAllCollections(ctx, txn)
@@ -105,6 +109,10 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			}
 			cols = append(cols, col)
 		}
+	}
+	colNameCache := map[string]struct{}{}
+	for _, col := range cols {
+		colNameCache[col.Name()] = struct{}{}
 	}
 
 	tempFile := config.Filepath + ".temp"
@@ -177,6 +185,60 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				return err
 			}
 
+			// replace any foreing key if it needs to be changed
+			for _, field := range col.Schema().Fields {
+				switch field.Kind {
+				case client.FieldKind_FOREIGN_OBJECT:
+					if _, ok := colNameCache[field.Schema]; !ok {
+						continue
+					}
+					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
+						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
+							err := doc.Set(field.Name+request.RelatedObjectID, newKey)
+							if err != nil {
+								return err
+							}
+						} else {
+							foreignCol, err := db.getCollectionByName(ctx, txn, field.Schema)
+							if err != nil {
+								return NewErrFailedToGetCollection(field.Schema, err)
+							}
+							foreignDocKey, err := client.NewDocKeyFromString(foreignKey.(string))
+							if err != nil {
+								return err
+							}
+							foreignDoc, err := foreignCol.Get(ctx, foreignDocKey, false)
+							if err != nil {
+								err := doc.Set(field.Name+request.RelatedObjectID, nil)
+								if err != nil {
+									return err
+								}
+							} else {
+								oldDoc, err := foreignDoc.ToMap()
+								if err != nil {
+									return err
+								}
+								// Temporary until https://github.com/sourcenetwork/defradb/issues/1681 is resolved.
+								ensureIntIsInt(foreignCol.Schema().Fields, oldDoc)
+								delete(oldDoc, "_key")
+								newDoc, err := client.NewDocFromMap(oldDoc)
+								if err != nil {
+									return err
+								}
+								err = doc.Set(field.Name+request.RelatedObjectID, newDoc.Key().String())
+								if err != nil {
+									return err
+								}
+
+								if newDoc.Key().String() != foreignDoc.Key().String() {
+									keyChangeCache[foreignDoc.Key().String()] = newDoc.Key().String()
+								}
+							}
+						}
+					}
+				}
+			}
+
 			docM, err := doc.ToMap()
 			if err != nil {
 				return err
@@ -194,6 +256,10 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			docM["_newKey"] = newDoc.Key().String()
 			// NewDocFromMap removes the "_key" map item so we add it back.
 			docM["_key"] = doc.Key().String()
+
+			if newDoc.Key().String() != doc.Key().String() {
+				keyChangeCache[doc.Key().String()] = newDoc.Key().String()
+			}
 
 			var b []byte
 			if config.Pretty {
