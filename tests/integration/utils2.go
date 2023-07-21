@@ -1108,7 +1108,6 @@ func backupExport(
 	s *state,
 	action BackupExport,
 ) {
-
 	if action.Config.Filepath == "" {
 		action.Config.Filepath = s.t.TempDir() + "/test.json"
 	}
@@ -1135,7 +1134,6 @@ func backupImport(
 	s *state,
 	action BackupImport,
 ) {
-
 	if action.Filepath == "" {
 		action.Filepath = s.t.TempDir() + "/test.json"
 	}
