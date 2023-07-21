@@ -105,8 +105,11 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return NewErrMissingArg("dst")
 			}
 
+			decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
+			decoder.DisallowUnknownFields()
+
 			var lensCfg model.Lens
-			err = json.Unmarshal([]byte(lensCfgJson), &lensCfg)
+			err = decoder.Decode(&lensCfg)
 			if err != nil {
 				return errors.Wrap("invalid lens configuration", err)
 			}
