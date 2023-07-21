@@ -185,6 +185,8 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				return err
 			}
 
+			isSelfReference := false
+			refFieldName := ""
 			// replace any foreing key if it needs to be changed
 			for _, field := range col.Schema().Fields {
 				switch field.Kind {
@@ -197,6 +199,10 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 							err := doc.Set(field.Name+request.RelatedObjectID, newKey)
 							if err != nil {
 								return err
+							}
+							if foreignKey.(string) == doc.Key().String() {
+								isSelfReference = true
+								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
 							foreignCol, err := db.getCollectionByName(ctx, txn, field.Schema)
@@ -214,24 +220,38 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 									return err
 								}
 							} else {
-								oldDoc, err := foreignDoc.ToMap()
-								if err != nil {
-									return err
-								}
-								// Temporary until https://github.com/sourcenetwork/defradb/issues/1681 is resolved.
-								ensureIntIsInt(foreignCol.Schema().Fields, oldDoc)
-								delete(oldDoc, "_key")
-								newDoc, err := client.NewDocFromMap(oldDoc)
-								if err != nil {
-									return err
-								}
-								err = doc.Set(field.Name+request.RelatedObjectID, newDoc.Key().String())
+								oldForeignDoc, err := foreignDoc.ToMap()
 								if err != nil {
 									return err
 								}
 
-								if newDoc.Key().String() != foreignDoc.Key().String() {
-									keyChangeCache[foreignDoc.Key().String()] = newDoc.Key().String()
+								// Temporary until https://github.com/sourcenetwork/defradb/issues/1681 is resolved.
+								ensureIntIsInt(foreignCol.Schema().Fields, oldForeignDoc)
+
+								delete(oldForeignDoc, "_key")
+								if foreignDoc.Key().String() == foreignDocKey.String() {
+									delete(oldForeignDoc, field.Name+request.RelatedObjectID)
+								}
+
+								if foreignDoc.Key().String() == doc.Key().String() {
+									isSelfReference = true
+									refFieldName = field.Name + request.RelatedObjectID
+								}
+
+								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc)
+								if err != nil {
+									return err
+								}
+
+								if foreignDoc.Key().String() != doc.Key().String() {
+									err = doc.Set(field.Name+request.RelatedObjectID, newForeignDoc.Key().String())
+									if err != nil {
+										return err
+									}
+								}
+
+								if newForeignDoc.Key().String() != foreignDoc.Key().String() {
+									keyChangeCache[foreignDoc.Key().String()] = newForeignDoc.Key().String()
 								}
 							}
 						}
@@ -248,6 +268,10 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			ensureIntIsInt(col.Schema().Fields, docM)
 
 			delete(docM, "_key")
+			if isSelfReference {
+				delete(docM, refFieldName)
+			}
+
 			newDoc, err := client.NewDocFromMap(docM)
 			if err != nil {
 				return err
@@ -256,6 +280,10 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			docM["_newKey"] = newDoc.Key().String()
 			// NewDocFromMap removes the "_key" map item so we add it back.
 			docM["_key"] = doc.Key().String()
+
+			if isSelfReference {
+				docM[refFieldName] = newDoc.Key().String()
+			}
 
 			if newDoc.Key().String() != doc.Key().String() {
 				keyChangeCache[doc.Key().String()] = newDoc.Key().String()

@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -20,19 +20,14 @@ var schemas = (`
 	type User {
 		name: String
 		age: Int
-		book: Book
-	}
-
-	type Book {
-		name: String
-		author: User @primary
+		boss: User @primary
 	}
 `)
 
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
-		[]string{"User", "Book"},
+		[]string{"User"},
 		testUtils.TestCase{
 			Description: test.Description,
 			Actions: append(
