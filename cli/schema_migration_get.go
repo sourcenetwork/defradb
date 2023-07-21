@@ -38,7 +38,7 @@ Example:
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if err := cobra.NoArgs(cmd, args); err != nil {
-				return errors.New("this command take no arguments")
+				return NewErrTooManyArgs(0, len(args))
 			}
 
 			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaMigrationPath)
