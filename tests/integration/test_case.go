@@ -332,3 +332,43 @@ type ClientIntrospectionRequest struct {
 	// contains this string.
 	ExpectedError string
 }
+
+// BackupExport will attempt to export data from the datastore using the db api.
+type BackupExport struct {
+	// NodeID may hold the ID (index) of a node to generate the backup from.
+	//
+	// If a value is not provided the indexes will be retrieved from the first nodes.
+	NodeID immutable.Option[int]
+
+	// The backup configuration.
+	Config client.BackupConfig
+
+	// Content expected to be found in the backup file.
+	ExpectedContent string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// BackupExport will attempt to export data from the datastore using the db api.
+type BackupImport struct {
+	// NodeID may hold the ID (index) of a node to generate the backup from.
+	//
+	// If a value is not provided the indexes will be retrieved from the first nodes.
+	NodeID immutable.Option[int]
+
+	// The backup file path.
+	Filepath string
+
+	// The backup file content.
+	ImportContent string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
