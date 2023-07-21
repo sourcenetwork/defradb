@@ -92,7 +92,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 		dockeys = append(dockeys, dockey)
 	}
 
-	// init the p2p node
+	// init the P2P node
 	var n *net.Node
 	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
 	n, err = net.NewNode(
