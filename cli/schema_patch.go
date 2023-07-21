@@ -54,7 +54,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				if err = cmd.Usage(); err != nil {
 					return err
 				}
-				return ErrTooManyArgs
+				return NewErrTooManyArgs(1, len(args))
 			}
 
 			if patchFile != "" {

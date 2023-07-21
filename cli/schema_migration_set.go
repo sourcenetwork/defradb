@@ -45,16 +45,14 @@ Example: add from stdin:
   cat schema_migration.lens | defradb client schema migration set bae123 bae456 -
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if err := cobra.MinimumNArgs(2)(cmd, args); err != nil {
-				return errors.New("must specify src and dst schema versions, as well as a lens cfg")
+				return NewErrMissingArgs([]string{"src", "dst", "cfg"})
 			}
 			if err := cobra.MaximumNArgs(3)(cmd, args); err != nil {
-				return errors.New("must specify src and dst schema versions, as well as a lens cfg")
+				return NewErrTooManyArgs(3, len(args))
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+
 			var lensCfgJson string
 			var srcSchemaVersionID string
 			var dstSchemaVersionID string
@@ -72,7 +70,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			} else if len(args) == 2 {
 				// If the lensFile flag has not been provided then it must be provided as an arg
 				// and thus len(args) cannot be 2
-				return errors.Wrap("must provide a lens cfg", err)
+				return NewErrMissingArg("cfg")
 			} else if isFileInfoPipe(fi) && args[2] != "-" {
 				log.FeedbackInfo(
 					cmd.Context(),
@@ -98,17 +96,20 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			dstSchemaVersionID = args[1]
 
 			if lensCfgJson == "" {
-				return errors.New("empty lens configuration provided")
+				return NewErrMissingArg("cfg")
 			}
 			if srcSchemaVersionID == "" {
-				return errors.New("no source schema version id provided")
+				return NewErrMissingArg("src")
 			}
 			if dstSchemaVersionID == "" {
-				return errors.New("no destination schema version id provided")
+				return NewErrMissingArg("dst")
 			}
 
+			decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
+			decoder.DisallowUnknownFields()
+
 			var lensCfg model.Lens
-			err = json.Unmarshal([]byte(lensCfgJson), &lensCfg)
+			err = decoder.Decode(&lensCfg)
 			if err != nil {
 				return errors.Wrap("invalid lens configuration", err)
 			}
