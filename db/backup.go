@@ -181,6 +181,10 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			if err != nil {
 				return err
 			}
+
+			// Temporary until https://github.com/sourcenetwork/defradb/issues/1681 is resolved.
+			ensureIntIsInt(col.Schema().Fields, docM)
+
 			delete(docM, "_key")
 			newDoc, err := client.NewDocFromMap(docM)
 			if err != nil {
@@ -250,4 +254,20 @@ func writeString(f *os.File, normal, pretty string, isPretty bool) error {
 		return NewErrFailedToWriteString(err)
 	}
 	return nil
+}
+
+// Temporary until https://github.com/sourcenetwork/defradb/issues/1681 is resolved.
+func ensureIntIsInt(fields []client.FieldDescription, docMap map[string]any) {
+	for _, field := range fields {
+		if field.Kind == client.FieldKind_INT {
+			if val, ok := docMap[field.Name]; ok {
+				switch v := val.(type) {
+				case uint64:
+					docMap[field.Name] = int(v)
+				case int64:
+					docMap[field.Name] = int(v)
+				}
+			}
+		}
+	}
 }
