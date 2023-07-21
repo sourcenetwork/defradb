@@ -60,6 +60,7 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 	schemaMigrationCmd := MakeSchemaMigrationCommand()
 	indexCmd := MakeIndexCommand()
 	clientCmd := MakeClientCommand()
+	backupCmd := MakeBackupCommand()
 	rpcReplicatorCmd := MakeReplicatorCommand()
 	p2pCollectionCmd := MakeP2PCollectionCommand()
 	p2pCollectionCmd.AddCommand(
@@ -94,17 +95,20 @@ func NewDefraCommand(cfg *config.Config) DefraCommand {
 		MakeIndexDropCommand(cfg),
 		MakeIndexListCommand(cfg),
 	)
+	backupCmd.AddCommand(
+		MakeBackupExportCommand(cfg),
+		MakeBackupImportCommand(cfg),
+	)
 	clientCmd.AddCommand(
 		MakeDumpCommand(cfg),
 		MakePingCommand(cfg),
 		MakeRequestCommand(cfg),
 		MakePeerIDCommand(cfg),
-		MakeDBExportCommand(cfg),
-		MakeDBImportCommand(cfg),
 		schemaCmd,
 		indexCmd,
 		rpcCmd,
 		blocksCmd,
+		backupCmd,
 	)
 	rootCmd.AddCommand(
 		clientCmd,

@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-func MakeDBImportCommand(cfg *config.Config) *cobra.Command {
+func MakeBackupImportCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "import <input_path>",
 		Short: "Import a JSON data file to the database",

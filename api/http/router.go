@@ -33,8 +33,9 @@ const (
 	SchemaMigrationPath string = SchemaPath + "/migration"
 	IndexPath           string = versionedAPIPath + "/index"
 	PeerIDPath          string = versionedAPIPath + "/peerid"
-	ExportPath          string = versionedAPIPath + "/export"
-	ImportPath          string = versionedAPIPath + "/import"
+	BackupPath          string = versionedAPIPath + "/backup"
+	ExportPath          string = BackupPath + "/export"
+	ImportPath          string = BackupPath + "/import"
 )
 
 // playgroundHandler is set when building with the playground build tag

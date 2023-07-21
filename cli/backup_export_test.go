@@ -21,17 +21,17 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func TestDBExportCmd_WithNoArgument_ReturnError(t *testing.T) {
+func TestBackupExportCmd_WithNoArgument_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
 
-	dbExportCmd := MakeDBExportCommand(cfg)
+	dbExportCmd := MakeBackupExportCommand(cfg)
 	err := dbExportCmd.ValidateArgs([]string{})
 	require.ErrorIs(t, err, ErrInvalidArgumentLength)
 }
 
-func TestDBExportCmd_WithInvalidExportFormat_ReturnError(t *testing.T) {
+func TestBackupExportCmd_WithInvalidExportFormat_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
-	dbExportCmd := MakeDBExportCommand(cfg)
+	dbExportCmd := MakeBackupExportCommand(cfg)
 
 	filepath := t.TempDir() + "/test.json"
 
@@ -40,18 +40,18 @@ func TestDBExportCmd_WithInvalidExportFormat_ReturnError(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidExportFormat)
 }
 
-func TestDBExportCmd_IfInvalidAddress_ReturnError(t *testing.T) {
+func TestBackupExportCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
 	cfg.API.Address = "invalid address"
 
 	filepath := t.TempDir() + "/test.json"
 
-	dbExportCmd := MakeDBExportCommand(cfg)
+	dbExportCmd := MakeBackupExportCommand(cfg)
 	err := dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
 }
 
-func TestDBExportCmd_WithEmptyDatastore_NoError(t *testing.T) {
+func TestBackupExportCmd_WithEmptyDatastore_NoError(t *testing.T) {
 	cfg, _, close := startTestNode(t)
 	defer close()
 
@@ -60,7 +60,7 @@ func TestDBExportCmd_WithEmptyDatastore_NoError(t *testing.T) {
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
-	dbExportCmd := MakeDBExportCommand(cfg)
+	dbExportCmd := MakeBackupExportCommand(cfg)
 	err := dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
 
@@ -74,7 +74,7 @@ func TestDBExportCmd_WithEmptyDatastore_NoError(t *testing.T) {
 	require.Len(t, b, 2) // file should be an empty json object
 }
 
-func TestDBExportCmd_WithInvalidCollection_ReturnError(t *testing.T) {
+func TestBackupExportCmd_WithInvalidCollection_ReturnError(t *testing.T) {
 	cfg, _, close := startTestNode(t)
 	defer close()
 
@@ -83,7 +83,7 @@ func TestDBExportCmd_WithInvalidCollection_ReturnError(t *testing.T) {
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
-	dbExportCmd := MakeDBExportCommand(cfg)
+	dbExportCmd := MakeBackupExportCommand(cfg)
 	dbExportCmd.Flags().Set("collections", "User")
 	err := dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
@@ -93,7 +93,7 @@ func TestDBExportCmd_WithInvalidCollection_ReturnError(t *testing.T) {
 	require.True(t, lineHas(logLines, "msg", "Failed to export data"))
 }
 
-func TestDBExportCmd_WithAllCollection_NoError(t *testing.T) {
+func TestBackupExportCmd_WithAllCollection_NoError(t *testing.T) {
 	ctx := context.Background()
 
 	cfg, di, close := startTestNode(t)
@@ -119,7 +119,7 @@ func TestDBExportCmd_WithAllCollection_NoError(t *testing.T) {
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
-	dbExportCmd := MakeDBExportCommand(cfg)
+	dbExportCmd := MakeBackupExportCommand(cfg)
 	err = dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
 
@@ -137,7 +137,7 @@ func TestDBExportCmd_WithAllCollection_NoError(t *testing.T) {
 	)
 }
 
-func TestDBExportCmd_WithAllCollectionAndPrettyFormating_NoError(t *testing.T) {
+func TestBackupExportCmd_WithAllCollectionAndPrettyFormating_NoError(t *testing.T) {
 	ctx := context.Background()
 
 	cfg, di, close := startTestNode(t)
@@ -163,7 +163,7 @@ func TestDBExportCmd_WithAllCollectionAndPrettyFormating_NoError(t *testing.T) {
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
-	dbExportCmd := MakeDBExportCommand(cfg)
+	dbExportCmd := MakeBackupExportCommand(cfg)
 	dbExportCmd.Flags().Set("pretty", "true")
 	err = dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
@@ -191,7 +191,7 @@ func TestDBExportCmd_WithAllCollectionAndPrettyFormating_NoError(t *testing.T) {
 	)
 }
 
-func TestDBExportCmd_WithSingleCollection_NoError(t *testing.T) {
+func TestBackupExportCmd_WithSingleCollection_NoError(t *testing.T) {
 	ctx := context.Background()
 
 	cfg, di, close := startTestNode(t)
@@ -217,7 +217,7 @@ func TestDBExportCmd_WithSingleCollection_NoError(t *testing.T) {
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
-	dbExportCmd := MakeDBExportCommand(cfg)
+	dbExportCmd := MakeBackupExportCommand(cfg)
 	dbExportCmd.Flags().Set("collections", "User")
 	err = dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)
@@ -236,7 +236,7 @@ func TestDBExportCmd_WithSingleCollection_NoError(t *testing.T) {
 	)
 }
 
-func TestDBExportCmd_WithMultipleCollections_NoError(t *testing.T) {
+func TestBackupExportCmd_WithMultipleCollections_NoError(t *testing.T) {
 	ctx := context.Background()
 
 	cfg, di, close := startTestNode(t)
@@ -276,7 +276,7 @@ func TestDBExportCmd_WithMultipleCollections_NoError(t *testing.T) {
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
-	dbExportCmd := MakeDBExportCommand(cfg)
+	dbExportCmd := MakeBackupExportCommand(cfg)
 	dbExportCmd.Flags().Set("collections", "User, Address")
 	err = dbExportCmd.RunE(dbExportCmd, []string{filepath})
 	require.NoError(t, err)

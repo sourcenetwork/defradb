@@ -28,7 +28,7 @@ import (
 
 const jsonFileType = "json"
 
-func MakeDBExportCommand(cfg *config.Config) *cobra.Command {
+func MakeBackupExportCommand(cfg *config.Config) *cobra.Command {
 	var collections []string
 	var pretty bool
 	var format string

@@ -20,27 +20,27 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func TestDBImportCmd_WithNoArgument_ReturnError(t *testing.T) {
+func TestBackupImportCmd_WithNoArgument_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
 	setTestingAddresses(cfg)
 
-	dbImportCmd := MakeDBImportCommand(cfg)
+	dbImportCmd := MakeBackupImportCommand(cfg)
 	err := dbImportCmd.ValidateArgs([]string{})
 	require.ErrorIs(t, err, ErrInvalidArgumentLength)
 }
 
-func TestDBImportCmd_IfInvalidAddress_ReturnError(t *testing.T) {
+func TestBackupImportCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
 	cfg.API.Address = "invalid address"
 
 	filepath := t.TempDir() + "/test.json"
 
-	dbImportCmd := MakeDBImportCommand(cfg)
+	dbImportCmd := MakeBackupImportCommand(cfg)
 	err := dbImportCmd.RunE(dbImportCmd, []string{filepath})
 	require.ErrorIs(t, err, NewErrFailedToJoinEndpoint(err))
 }
 
-func TestDBImportCmd_WithNonExistantFile_ReturnError(t *testing.T) {
+func TestBackupImportCmd_WithNonExistantFile_ReturnError(t *testing.T) {
 	cfg, _, close := startTestNode(t)
 	defer close()
 
@@ -49,7 +49,7 @@ func TestDBImportCmd_WithNonExistantFile_ReturnError(t *testing.T) {
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
-	dbImportCmd := MakeDBImportCommand(cfg)
+	dbImportCmd := MakeBackupImportCommand(cfg)
 	err := dbImportCmd.RunE(dbImportCmd, []string{filepath})
 	require.NoError(t, err)
 
@@ -58,7 +58,7 @@ func TestDBImportCmd_WithNonExistantFile_ReturnError(t *testing.T) {
 	require.True(t, lineHas(logLines, "msg", "Failed to import data"))
 }
 
-func TestDBImportCmd_WithEmptyDatastore_ReturnError(t *testing.T) {
+func TestBackupImportCmd_WithEmptyDatastore_ReturnError(t *testing.T) {
 	cfg, _, close := startTestNode(t)
 	defer close()
 
@@ -74,7 +74,7 @@ func TestDBImportCmd_WithEmptyDatastore_ReturnError(t *testing.T) {
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
-	dbImportCmd := MakeDBImportCommand(cfg)
+	dbImportCmd := MakeBackupImportCommand(cfg)
 	err = dbImportCmd.RunE(dbImportCmd, []string{filepath})
 	require.NoError(t, err)
 
@@ -83,7 +83,7 @@ func TestDBImportCmd_WithEmptyDatastore_ReturnError(t *testing.T) {
 	require.True(t, lineHas(logLines, "msg", "Failed to import data"))
 }
 
-func TestDBImportCmd_WithExistingCollection_NoError(t *testing.T) {
+func TestBackupImportCmd_WithExistingCollection_NoError(t *testing.T) {
 	ctx := context.Background()
 
 	cfg, di, close := startTestNode(t)
@@ -107,7 +107,7 @@ func TestDBImportCmd_WithExistingCollection_NoError(t *testing.T) {
 	outputBuf, revertOutput := simulateConsoleOutput(t)
 	defer revertOutput()
 
-	dbImportCmd := MakeDBImportCommand(cfg)
+	dbImportCmd := MakeBackupImportCommand(cfg)
 	err = dbImportCmd.RunE(dbImportCmd, []string{filepath})
 	require.NoError(t, err)
 
