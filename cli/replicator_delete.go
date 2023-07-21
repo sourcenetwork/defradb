@@ -31,9 +31,8 @@ func MakeReplicatorDeleteCommand(cfg *config.Config) *cobra.Command {
 	)
 	var cmd = &cobra.Command{
 		Use:   "delete [-f, --full | -c, --collection] <peer>",
-		Short: "Delete a replicator",
-		Long: `Use this command if you wish to remove the target replicator
-	for the p2p data sync system.`,
+		Short: "Delete a replicator. It will stop synchronizing",
+		Long:  `Delete a replicator. It will stop synchronizing.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 				return errors.New("must specify one argument: PeerID")
@@ -50,7 +49,7 @@ func MakeReplicatorDeleteCommand(cfg *config.Config) *cobra.Command {
 			cred := insecure.NewCredentials()
 			client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
 			if err != nil {
-				return errors.Wrap("failed to create RPC client", err)
+				return ErrFailedToCreateRPCClient
 			}
 
 			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
@@ -63,7 +62,7 @@ func MakeReplicatorDeleteCommand(cfg *config.Config) *cobra.Command {
 
 			pid, err := peer.Decode(pidString)
 			if err != nil {
-				return errors.Wrap("failed to parse PeerID from string", err)
+				return NewErrFailedParsePeerID(err)
 			}
 
 			err = client.DeleteReplicator(ctx, pid)

@@ -26,8 +26,9 @@ import (
 func MakeP2PCollectionRemoveCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "remove [collectionID]",
-		Short: "Add P2P collections",
-		Long:  `Use this command if you wish to remove P2P collections from the pubsub topics`,
+		Short: "Remove P2P collections",
+		Long: `Remove P2P collections from the followed pubsub topics.
+The removed collections will no longer be synchronized between nodes.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
 				return errors.New("must specify at least one collectionID")
@@ -38,7 +39,7 @@ func MakeP2PCollectionRemoveCommand(cfg *config.Config) *cobra.Command {
 			cred := insecure.NewCredentials()
 			client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
 			if err != nil {
-				return errors.Wrap("failed to create RPC client", err)
+				return ErrFailedToCreateRPCClient
 			}
 
 			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
@@ -51,9 +52,9 @@ func MakeP2PCollectionRemoveCommand(cfg *config.Config) *cobra.Command {
 
 			err = client.RemoveP2PCollections(ctx, args...)
 			if err != nil {
-				return errors.Wrap("failed to remove p2p collections, request failed", err)
+				return errors.Wrap("failed to remove P2P collections, request failed", err)
 			}
-			log.FeedbackInfo(ctx, "Successfully removed p2p collections", logging.NewKV("Collections", args))
+			log.FeedbackInfo(ctx, "Successfully removed P2P collections", logging.NewKV("Collections", args))
 			return nil
 		},
 	}

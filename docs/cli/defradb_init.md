@@ -5,6 +5,7 @@ Initialize DefraDB's root directory and configuration file
 ### Synopsis
 
 Initialize a directory for configuration and data at the given path.
+Passed flags will be persisted in the stored configuration.
 
 ```
 defradb init [flags]

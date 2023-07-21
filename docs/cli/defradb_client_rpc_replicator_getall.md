@@ -4,7 +4,8 @@ Get all replicators
 
 ### Synopsis
 
-Use this command if you wish to get all the replicators for the p2p data sync system.
+Get all the replicators active in the P2P data sync system.
+These are the replicators that are currently replicating data from one node to another.
 
 ```
 defradb client rpc replicator getall [flags]
@@ -19,7 +20,7 @@ defradb client rpc replicator getall [flags]
 ### Options inherited from parent commands
 
 ```
-      --addr string          gRPC endpoint address (default "0.0.0.0:9161")
+      --addr string          RPC endpoint address (default "0.0.0.0:9161")
       --logformat string     Log format to use. Options are csv, json (default "csv")
       --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
       --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
@@ -32,5 +33,5 @@ defradb client rpc replicator getall [flags]
 
 ### SEE ALSO
 
-* [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Interact with the replicator system
+* [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Configure the replicator system
 

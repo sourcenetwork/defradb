@@ -17,8 +17,8 @@ import (
 func MakeSchemaCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "schema",
-		Short: "Interact with the schema system of a running DefraDB instance",
-		Long:  `Make changes, updates, or look for existing schema types to a DefraDB node.`,
+		Short: "Interact with the schema system of a DefraDB node",
+		Long:  `Make changes, updates, or look for existing schema types.`,
 	}
 
 	return cmd

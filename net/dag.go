@@ -30,7 +30,7 @@ var (
 	DAGSyncTimeout = time.Second * 60
 )
 
-// A DAGSyncer is an abstraction to an IPLD-based p2p storage layer.  A
+// A DAGSyncer is an abstraction to an IPLD-based P2P storage layer.  A
 // DAGSyncer is a DAGService with the ability to publish new ipld nodes to the
 // network, and retrieving others from it.
 type DAGSyncer interface {

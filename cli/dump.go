@@ -27,7 +27,7 @@ import (
 func MakeDumpCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "dump",
-		Short: "Dump the contents of a database node-side",
+		Short: "Dump the contents of DefraDB node-side",
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
 			stdout, err := os.Stdout.Stat()
 			if err != nil {

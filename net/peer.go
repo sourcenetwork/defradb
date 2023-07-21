@@ -65,7 +65,7 @@ type Peer struct {
 	ps   *pubsub.PubSub
 
 	server *server
-	p2pRPC *grpc.Server // rpc server over the p2p network
+	p2pRPC *grpc.Server // rpc server over the P2P network
 
 	// Used to close the dagWorker pool for a given document.
 	// The string represents a dockey.
@@ -184,7 +184,7 @@ func (p *Peer) Start() error {
 		go p.handleBroadcastLoop()
 	}
 
-	// register the p2p gRPC server
+	// register the P2P gRPC server
 	go func() {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
 		if err := p.p2pRPC.Serve(p2plistener); err != nil &&

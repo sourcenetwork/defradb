@@ -15,7 +15,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-// DefraDB's p2p protocol information (https://docs.libp2p.io/concepts/protocols/).
+// DefraDB's P2P protocol information (https://docs.libp2p.io/concepts/protocols/).
 
 const (
 	// Name is the protocol slug, the codename representing it.

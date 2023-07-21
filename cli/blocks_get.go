@@ -24,7 +24,7 @@ import (
 func MakeBlocksGetCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "get [CID]",
-		Short: "Get a block by its CID from the blockstore.",
+		Short: "Get a block by its CID from the blockstore",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if len(args) != 1 {
 				return NewErrMissingArg("CID")

@@ -31,7 +31,7 @@ func MakeSchemaPatchCommand(cfg *config.Config) *cobra.Command {
 		Short: "Patch an existing schema type",
 		Long: `Patch an existing schema.
 
-Uses JSON PATCH formatting as a DDL.
+Uses JSON Patch to modify schema types.
 
 Example: patch from an argument string:
   defradb client schema patch '[{ "op": "add", "path": "...", "value": {...} }]'
