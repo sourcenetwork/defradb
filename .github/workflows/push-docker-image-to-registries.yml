@@ -10,7 +10,7 @@
 
 # This workflow builds a Docker container image, if the build is successful
 # then it will deploy the image to DockerHub & GitHub container registries.
-name: Build Then Deploy Docker Workflow
+name: Push Docker Image To Registries Workflow
 
 on: 
   push:
@@ -19,7 +19,7 @@ on:
 
 jobs:
   push-to-registries:
-    name: Push Docker image to multiple registries
+    name: Push Docker image to registries job
     
     runs-on: ubuntu-latest
     
@@ -52,7 +52,7 @@ jobs:
             sourcenetwork/defradb
             ghcr.io/${{ github.repository }}
       
-      - name: Build and push Docker images
+      - name: Push docker images as build succeeds
         uses: docker/build-push-action@v4
         with:
           context: .
