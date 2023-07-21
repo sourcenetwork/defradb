@@ -10,7 +10,11 @@
 
 package cli
 
-import "github.com/sourcenetwork/defradb/errors"
+import (
+	"strings"
+
+	"github.com/sourcenetwork/defradb/errors"
+)
 
 const (
 	errMissingArg                  string = "missing argument"
@@ -61,8 +65,12 @@ func NewErrMissingArg(name string) error {
 	return errors.New(errMissingArg, errors.NewKV("Name", name))
 }
 
-func NewErrMissingArgs(count int, provided int) error {
-	return errors.New(errMissingArgs, errors.NewKV("Required", count), errors.NewKV("Provided", provided))
+func NewErrMissingArgs(names []string) error {
+	return errors.New(errMissingArgs, errors.NewKV("Required", strings.Join(names, ", ")))
+}
+
+func NewErrTooManyArgs(max, actual int) error {
+	return errors.New(errTooManyArgs, errors.NewKV("Max", max), errors.NewKV("Actual", actual))
 }
 
 func NewFailedToReadFile(inner error) error {
