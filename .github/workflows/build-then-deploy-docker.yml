@@ -13,7 +13,7 @@
 name: Build Then Deploy Docker Workflow
 
 on: 
-  pull_request_target:
+  pull_request:
     branches:
       - master
       - develop
