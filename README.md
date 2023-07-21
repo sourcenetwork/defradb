@@ -272,7 +272,7 @@ About the flags:
 
 - `--rootdir` specifies the root dir (config and data) to use
 - `--url` is the address to listen on for the client HTTP and GraphQL API
-- `--p2paddr` is the multiaddress for the p2p networking to listen on
+- `--p2paddr` is the multiaddress for the P2P networking to listen on
 - `--tcpaddr` is the multiaddress for the gRPC server to listen on
 - `--peers` is a comma-separated list of peer multiaddresses
 

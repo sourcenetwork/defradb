@@ -1,6 +1,6 @@
 ## defradb client ping
 
-Ping to test connection to a node
+Ping to test connection with a node
 
 ```
 defradb client ping [flags]
@@ -27,5 +27,5 @@ defradb client ping [flags]
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 

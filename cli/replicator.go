@@ -17,8 +17,9 @@ import (
 func MakeReplicatorCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "replicator",
-		Short: "Interact with the replicator system",
-		Long:  "Add, delete, or get the list of persisted replicators",
+		Short: "Configure the replicator system",
+		Long: `Configure the replicator system. Add, delete, or get the list of persisted replicators.
+A replicator replicates one or all collection(s) from one node to another.`,
 	}
 	return cmd
 }
