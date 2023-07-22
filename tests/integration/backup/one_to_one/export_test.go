@@ -130,12 +130,13 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 				CollectionID: 1,
 				Doc:          `{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519", "favourite": "bae-0648f44e-74e8-593b-a662-3310ec278927"}`,
 			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc:          `{"name": "Game of chains", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519", "favourite": "bae-0648f44e-74e8-593b-a662-3310ec278927"}`,
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"age": 31}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"Book":[{"_key":"bae-45b1def4-4e63-5a93-a1b8-f7b08e682164","_newKey":"bae-45b1def4-4e63-5a93-a1b8-f7b08e682164","author_id":"bae-e933420a-988a-56f8-8952-6c245aebd519","favourite_id":"bae-0648f44e-74e8-593b-a662-3310ec278927","name":"John and the sourcerers' stone"},{"_key":"bae-6c4816ee-2c08-5d77-9c84-d1406c1ebb6e","_newKey":"bae-6c4816ee-2c08-5d77-9c84-d1406c1ebb6e","author_id":"bae-e933420a-988a-56f8-8952-6c245aebd519","favourite_id":"bae-0648f44e-74e8-593b-a662-3310ec278927","name":"Game of chains"}],"User":[{"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927","_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
+				ExpectedContent: `{"Book":[{"_key":"bae-45b1def4-4e63-5a93-a1b8-f7b08e682164","_newKey":"bae-add2ccfe-84a1-519c-ab7d-c54b43909532","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","favourite_id":"bae-0648f44e-74e8-593b-a662-3310ec278927","name":"John and the sourcerers' stone"}],"User":[{"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927","_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","age":31,"name":"John"}]}`,
 			},
 		},
 	}
@@ -152,12 +153,12 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 					name: String
 					age: Int
 					book: Book @relation(name: "written_books")
-					favouriteBook: Book @relation(name: "favourite_books") @primary
+					favouriteBook: Book @relation(name: "favourite_books")
 				}
 				type Book {
 					name: String
-					author: User @relation(name: "written_books") @primary
-					favourite: User @relation(name: "favourite_books") 
+					author: User @relation(name: "written_books")
+					favourite: User @relation(name: "favourite_books")
 				}
 				`,
 			},
@@ -166,12 +167,12 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 				Doc:          `{"name": "John", "age": 30}`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 1,
-				Doc:          `{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519", "favourite": "bae-0648f44e-74e8-593b-a662-3310ec278927"}`,
+				CollectionID: 0,
+				Doc:          `{"name": "Bob", "age": 31}`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc:          `{"name": "Bob", "age": 31, "favouriteBook": "bae-45b1def4-4e63-5a93-a1b8-f7b08e682163"}`,
+				CollectionID: 1,
+				Doc:          `{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519", "favourite": "bae-0648f44e-74e8-593b-a662-3310ec278927"}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -191,6 +192,8 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, []string{"User", "Book"}, test)
 }
 
+// note: This test should fail at the second book creation since the relationship is 1-to-1 and this
+// effectively creates a 1-to-many relationship
 func TestBackupExport_DoubleReletionshipWithUpdateAndDoublylinked_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -228,16 +231,10 @@ func TestBackupExport_DoubleReletionshipWithUpdateAndDoublylinked_NoError(t *tes
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
-				// Doc:          `{"age": 31, "book_id": "bae-da7f2d88-05c4-528a-846a-0d18ab26603b"}`,
-				Doc: `{"age": 31}`,
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 1,
-				DocID:        1,
-				Doc:          `{"author_id": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
+				Doc:          `{"age": 31, "book_id": "bae-da7f2d88-05c4-528a-846a-0d18ab26603b"}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"Book":[{"_key":"bae-45b1def4-4e63-5a93-a1b8-f7b08e682164","_newKey":"bae-add2ccfe-84a1-519c-ab7d-c54b43909532","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","favourite_id":"bae-0648f44e-74e8-593b-a662-3310ec278927","name":"John and the sourcerers' stone"},{"_key":"bae-da7f2d88-05c4-528a-846a-0d18ab26603b","_newKey":"bae-da7f2d88-05c4-528a-846a-0d18ab26603b","name":"Game of chains"}],"User":[{"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927","_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","age":31,"name":"John"}]}`,
+				ExpectedContent: `{"Book":[{"_key":"bae-45b1def4-4e63-5a93-a1b8-f7b08e682164","_newKey":"bae-add2ccfe-84a1-519c-ab7d-c54b43909532","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","favourite_id":"bae-0648f44e-74e8-593b-a662-3310ec278927","name":"John and the sourcerers' stone"},{"_key":"bae-da7f2d88-05c4-528a-846a-0d18ab26603b","_newKey":"bae-78a40f28-a4b8-5dca-be44-392b0f96d0ff","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","name":"Game of chains"}],"User":[{"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927","_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","age":31,"name":"John"}]}`,
 			},
 		},
 	}
