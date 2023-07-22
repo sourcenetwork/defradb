@@ -31,6 +31,8 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
   - [Collection subscription example](#collection-subscription-example)
   - [Replicator example](#replicator-example)
 - [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
+- [Supporting CORS](#supporting-cors)
+- [Backing up and restoring](#backing-up-and-restoring)
 - [Licensing](#licensing)
 - [Contributors](#contributors)
 
@@ -386,6 +388,25 @@ defradb start --allowed-origins=http://localhost:3000
 ```
 
 The catch-all `*` is also a valid origin. 
+
+## Backing up and restoring
+
+It is currently no possible to do a full backup of DefraDB that includes the history of changes through the Merkle DAG. However, DefraDB currently supports a simple backup of the data in JSON format that can be used to seed a database or help with transitioning from one DefraDB version to another.
+
+To backup the data, run the following command:
+```shell
+defradb client backup export path/to/backup.json
+```
+
+To pretty print the JSON content when exporting, run the following command:
+```shell
+defradb client backup export --pretty path/to/backup.json
+```
+
+To restore the data, run the following command:
+```shell
+defradb client backup import path/to/backup.json
+```
 
 ## Community
 
