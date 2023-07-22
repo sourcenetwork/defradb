@@ -89,8 +89,8 @@ func detectDbChangesInit(repository string, targetBranch string) {
 
 	latestTargetCommitHash := getLatestCommit(repository, targetBranch)
 	detectDbChangesCodeDir = path.Join(changeDetectorTempDir, "code", latestTargetCommitHash)
-	rand.Seed(time.Now().Unix())
-	randNumber := rand.Int()
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	randNumber := r.Int()
 	dbsDir := path.Join(changeDetectorTempDir, "dbs", fmt.Sprint(randNumber))
 
 	testPackagePath, isIntegrationTest := getTestPackagePath()
