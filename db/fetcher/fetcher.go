@@ -332,6 +332,10 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 
 	df.kvEnd = spanDone
 	if df.kvEnd {
+		err = df.kvResultsIter.Close()
+		if err != nil {
+			return false, false, err
+		}
 		moreSpans, err := df.startNextSpan(ctx)
 		if err != nil {
 			return false, false, err
