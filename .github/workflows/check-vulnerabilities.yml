@@ -1,0 +1,39 @@
+# Copyright 2023 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Check Vulnerabilities Workflow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
+
+jobs:
+  check-vulnerabilities:
+    name: Check vulnerabilities job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run govulncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-input: "1.19.5"
+          go-package: ./...
+          check-latest: true
+          cache: true
