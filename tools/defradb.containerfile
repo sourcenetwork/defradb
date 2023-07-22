@@ -10,10 +10,12 @@ COPY go.mod go.sum Makefile ./
 RUN make deps:modules
 COPY . .
 RUN make build
+RUN cp /go/pkg/mod/github.com/wasmerio/wasmer-go@v1.0.4/wasmer/packaged/lib/linux-amd64/libwasmer.so libwasmer.so
 
 # Stage: RUN
-FROM gcr.io/distroless/base-debian11
+FROM debian:bookworm-slim
 COPY --from=BUILD /repo/build/defradb /defradb
+COPY --from=BUILD /repo/libwasmer.so /lib/libwasmer.so
 
 # Documents which ports are normally used.
 # To publish the ports: `docker run -p 9181:9181` ...
