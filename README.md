@@ -391,7 +391,7 @@ The catch-all `*` is also a valid origin.
 
 ## Backing up and restoring
 
-It is currently no possible to do a full backup of DefraDB that includes the history of changes through the Merkle DAG. However, DefraDB currently supports a simple backup of the data in JSON format that can be used to seed a database or help with transitioning from one DefraDB version to another.
+It is currently not possible to do a full backup of DefraDB that includes the history of changes through the Merkle DAG. However, DefraDB currently supports a simple backup of the current data state in JSON format that can be used to seed a database or help with transitioning from one DefraDB version to another.
 
 To backup the data, run the following command:
 ```shell
