@@ -71,7 +71,7 @@ func TestBackupExport_WithInvalidCollection_ReturnError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestBackupExport_JustUserCollection_ReturnError(t *testing.T) {
+func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{

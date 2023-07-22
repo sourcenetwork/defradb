@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestBackupExport_JustUserCollection_ReturnError(t *testing.T) {
+func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -36,7 +36,7 @@ func TestBackupExport_JustUserCollection_ReturnError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_ReturnError(t *testing.T) {
+func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -65,7 +65,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_ReturnError(t *test
 	executeTestCase(t, test)
 }
 
-func TestBackupExport_AllCollectionsMultipleDocsAndMultipleDocUpdate_ReturnError(t *testing.T) {
+func TestBackupExport_AllCollectionsMultipleDocsAndMultipleDocUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{

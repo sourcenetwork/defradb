@@ -25,7 +25,7 @@ var schemas = (`
 
 	type Book {
 		name: String
-		author: User
+		author: User @primary
 	}
 `)
 
