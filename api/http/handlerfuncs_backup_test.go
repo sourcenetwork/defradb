@@ -196,87 +196,6 @@ func TestExportHandler_WithBasicExportError_ReturnError(t *testing.T) {
 	require.Equal(t, "test error", errResponse.Errors[0].Message)
 }
 
-// func TestExportHandler_WithGetCollectionError_ReturnError(t *testing.T) {
-// 	t.Cleanup(CleanupEnv)
-// 	env = "dev"
-// 	db := mocks.NewDB(t)
-// 	testError := errors.New("test error")
-// 	db.EXPECT().GetAllCollections(mock.Anything).Return(nil, testError)
-
-// 	errResponse := ErrorResponse{}
-// 	testRequest(testOptions{
-// 		Testing:        t,
-// 		DB:             db,
-// 		Method:         "GET",
-// 		Path:           ExportPath,
-// 		Body:           nil,
-// 		ExpectedStatus: 500,
-// 		ResponseData:   &errResponse,
-// 	})
-// 	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "test error")
-// 	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-// 	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-// 	require.Equal(t, "test error", errResponse.Errors[0].Message)
-// }
-
-// func TestExportHandler_WithGetAllDockeysError_ReturnError(t *testing.T) {
-// 	t.Cleanup(CleanupEnv)
-// 	env = "dev"
-
-// 	db := mocks.NewDB(t)
-// 	testError := errors.New("test error")
-// 	col := mocks.NewCollection(t)
-// 	col.EXPECT().GetAllDocKeys(mock.Anything).Return(nil, testError)
-// 	col.EXPECT().Schema().Return(client.SchemaDescription{Name: "test"})
-// 	db.EXPECT().GetAllCollections(mock.Anything).Return([]client.Collection{col}, nil)
-
-// 	errResponse := ErrorResponse{}
-// 	testRequest(testOptions{
-// 		Testing:        t,
-// 		DB:             db,
-// 		Method:         "GET",
-// 		Path:           ExportPath,
-// 		Body:           nil,
-// 		ExpectedStatus: 500,
-// 		ResponseData:   &errResponse,
-// 	})
-// 	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "test error")
-// 	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-// 	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-// 	require.Equal(t, "test error", errResponse.Errors[0].Message)
-// }
-
-// func TestExportHandler_WithColGetError_ReturnError(t *testing.T) {
-// 	t.Cleanup(CleanupEnv)
-// 	env = "dev"
-
-// 	db := mocks.NewDB(t)
-// 	testError := errors.New("test error")
-// 	col := mocks.NewCollection(t)
-// 	keyCh := make(chan client.DocKeysResult, 2)
-// 	keyCh <- client.DocKeysResult{}
-// 	close(keyCh)
-// 	col.EXPECT().GetAllDocKeys(mock.Anything).Return(keyCh, nil)
-// 	col.EXPECT().Schema().Return(client.SchemaDescription{Name: "test"})
-// 	col.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(nil, testError)
-// 	db.EXPECT().GetAllCollections(mock.Anything).Return([]client.Collection{col}, nil)
-
-// 	errResponse := ErrorResponse{}
-// 	testRequest(testOptions{
-// 		Testing:        t,
-// 		DB:             db,
-// 		Method:         "GET",
-// 		Path:           ExportPath,
-// 		Body:           nil,
-// 		ExpectedStatus: 500,
-// 		ResponseData:   &errResponse,
-// 	})
-// 	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "test error")
-// 	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-// 	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-// 	require.Equal(t, "test error", errResponse.Errors[0].Message)
-// }
-
 func TestExportHandler_AllCollections_NoError(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
@@ -588,45 +507,6 @@ func TestImportHandler_WithUnknownCollection_KeyNotFoundError(t *testing.T) {
 	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
 	require.Equal(t, "failed to get collection: datastore: key not found. Name: User", errResponse.Errors[0].Message)
 }
-
-// type mockStore struct {
-// 	client.DB
-// 	datastore.Txn
-// }
-
-// func TestImportHandler_WithTxnCommitError_ReturnError(t *testing.T) {
-// 	t.Cleanup(CleanupEnv)
-// 	env = "dev"
-
-// 	testError := errors.New("test error")
-// 	db := mocks.NewDB(t)
-// 	txn := dsMocks.NewTxn(t)
-// 	store := mockStore{
-// 		DB:  db,
-// 		Txn: txn,
-// 	}
-// 	db.EXPECT().NewTxn(mock.Anything, mock.Anything).Return(txn, nil)
-// 	db.EXPECT().WithTxn(mock.Anything).Return(store)
-// 	txn.EXPECT().Discard(mock.Anything).Return()
-// 	txn.EXPECT().Commit(mock.Anything).Return(testError)
-
-// 	buf := bytes.NewBuffer([]byte(`{}`))
-
-// 	errResponse := ErrorResponse{}
-// 	testRequest(testOptions{
-// 		Testing:        t,
-// 		DB:             db,
-// 		Method:         "POST",
-// 		Path:           ImportPath,
-// 		Body:           buf,
-// 		ExpectedStatus: 500,
-// 		ResponseData:   &errResponse,
-// 	})
-// 	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "test error")
-// 	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-// 	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-// 	require.Equal(t, "test error", errResponse.Errors[0].Message)
-// }
 
 func TestImportHandler_UserCollection_NoError(t *testing.T) {
 	ctx := context.Background()
