@@ -46,7 +46,7 @@ jobs:
           # Required: the version of golangci-lint is required.
           # Note: The version should not pick the patch version as the latest patch
           #  version is what will always be used.
-          version: v1.51
+          version: v1.53
 
           # Optional: working directory, useful for monorepos or if we wanted to run this
           #  on a non-root directory.
