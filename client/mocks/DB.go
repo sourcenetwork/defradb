@@ -126,6 +126,92 @@ func (_c *DB_AddSchema_Call) RunAndReturn(run func(context.Context, string) ([]c
 	return _c
 }
 
+// BasicExport provides a mock function with given fields: ctx, config
+func (_m *DB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	ret := _m.Called(ctx, config)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *client.BackupConfig) error); ok {
+		r0 = rf(ctx, config)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_BasicExport_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BasicExport'
+type DB_BasicExport_Call struct {
+	*mock.Call
+}
+
+// BasicExport is a helper method to define mock.On call
+//   - ctx context.Context
+//   - config *client.BackupConfig
+func (_e *DB_Expecter) BasicExport(ctx interface{}, config interface{}) *DB_BasicExport_Call {
+	return &DB_BasicExport_Call{Call: _e.mock.On("BasicExport", ctx, config)}
+}
+
+func (_c *DB_BasicExport_Call) Run(run func(ctx context.Context, config *client.BackupConfig)) *DB_BasicExport_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*client.BackupConfig))
+	})
+	return _c
+}
+
+func (_c *DB_BasicExport_Call) Return(_a0 error) *DB_BasicExport_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_BasicExport_Call) RunAndReturn(run func(context.Context, *client.BackupConfig) error) *DB_BasicExport_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// BasicImport provides a mock function with given fields: ctx, filepath
+func (_m *DB) BasicImport(ctx context.Context, filepath string) error {
+	ret := _m.Called(ctx, filepath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, filepath)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_BasicImport_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BasicImport'
+type DB_BasicImport_Call struct {
+	*mock.Call
+}
+
+// BasicImport is a helper method to define mock.On call
+//   - ctx context.Context
+//   - filepath string
+func (_e *DB_Expecter) BasicImport(ctx interface{}, filepath interface{}) *DB_BasicImport_Call {
+	return &DB_BasicImport_Call{Call: _e.mock.On("BasicImport", ctx, filepath)}
+}
+
+func (_c *DB_BasicImport_Call) Run(run func(ctx context.Context, filepath string)) *DB_BasicImport_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_BasicImport_Call) Return(_a0 error) *DB_BasicImport_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_BasicImport_Call) RunAndReturn(run func(context.Context, string) error) *DB_BasicImport_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Blockstore provides a mock function with given fields:
 func (_m *DB) Blockstore() blockstore.Blockstore {
 	ret := _m.Called()

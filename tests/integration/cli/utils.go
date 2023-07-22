@@ -35,7 +35,7 @@ import (
 )
 
 const COMMAND_TIMEOUT_SECONDS = 2 * time.Second
-const SUBCOMMAND_TIME_BUFFER_SECONDS = 1 * time.Second
+const SUBCOMMAND_TIME_BUFFER_SECONDS = 200 * time.Millisecond
 
 type DefraNodeConfig struct {
 	rootDir  string

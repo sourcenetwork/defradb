@@ -12,7 +12,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -53,7 +52,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 
 			defer func() {
 				if e := res.Body.Close(); e != nil {
-					err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
+					err = NewErrFailedToCloseResponseBody(e, err)
 				}
 			}()
 

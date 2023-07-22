@@ -30,7 +30,7 @@ func TestIndexListCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 }
 
 func TestIndexListCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 
 	execAddSchemaCmd(t, cfg, `type User { name: String }`)
@@ -55,7 +55,7 @@ func TestIndexListCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 }
 
 func TestIndexListCmd_WithConsoleOutputIfCollectionDoesNotExist_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 
 	indexListCmd := MakeIndexListCommand(cfg)
@@ -73,7 +73,7 @@ func TestIndexListCmd_WithConsoleOutputIfCollectionDoesNotExist_ReturnError(t *t
 }
 
 func TestIndexListCmd_WithConsoleOutputIfCollectionIsGiven_ReturnCollectionList(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 
 	const indexName = "users_name_index"
@@ -103,7 +103,7 @@ func TestIndexListCmd_WithConsoleOutputIfCollectionIsGiven_ReturnCollectionList(
 }
 
 func TestIndexListCmd_WithConsoleOutputIfNoArgs_ReturnAllIndexes(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 
 	const userIndexName = "users_name_index"

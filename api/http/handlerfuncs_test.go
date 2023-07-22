@@ -27,6 +27,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
@@ -42,6 +43,7 @@ type testOptions struct {
 	Path           string
 	Body           io.Reader
 	Headers        map[string]string
+	QueryParams    map[string]string
 	ExpectedStatus int
 	ResponseData   any
 	ServerOptions  serverOptions
@@ -69,7 +71,7 @@ func TestRootHandler(t *testing.T) {
 	})
 	switch v := resp.Data.(type) {
 	case map[string]any:
-		assert.Equal(t, "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database. Read the documentation at https://docs.source.network/.", v["response"])
+		require.Equal(t, "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database. Read the documentation at https://docs.source.network/.", v["response"])
 	default:
 		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
@@ -89,7 +91,7 @@ func TestPingHandler(t *testing.T) {
 
 	switch v := resp.Data.(type) {
 	case map[string]any:
-		assert.Equal(t, "pong", v["response"])
+		require.Equal(t, "pong", v["response"])
 	default:
 		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
@@ -113,7 +115,7 @@ func TestDumpHandlerWithNoError(t *testing.T) {
 
 	switch v := resp.Data.(type) {
 	case map[string]any:
-		assert.Equal(t, "ok", v["response"])
+		require.Equal(t, "ok", v["response"])
 	default:
 		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
@@ -132,10 +134,10 @@ func TestDumpHandlerWithDBError(t *testing.T) {
 		ExpectedStatus: 500,
 		ResponseData:   &errResponse,
 	})
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "no database available", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLWithNilBody(t *testing.T) {
@@ -152,10 +154,10 @@ func TestExecGQLWithNilBody(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "body cannot be empty")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "body cannot be empty", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "body cannot be empty")
+	require.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "body cannot be empty", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLWithEmptyBody(t *testing.T) {
@@ -172,10 +174,10 @@ func TestExecGQLWithEmptyBody(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "missing GraphQL request")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "missing GraphQL request", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "missing GraphQL request")
+	require.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "missing GraphQL request", errResponse.Errors[0].Message)
 }
 
 type mockReadCloser struct {
@@ -205,10 +207,10 @@ func TestExecGQLWithMockBody(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "error reading")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "error reading", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "error reading")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "error reading", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLWithInvalidContentType(t *testing.T) {
@@ -217,7 +219,7 @@ func TestExecGQLWithInvalidContentType(t *testing.T) {
 	errResponse := ErrorResponse{}
 	stmt := `
 mutation {
-	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+	create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
 		_key
 	}
 }`
@@ -233,10 +235,10 @@ mutation {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "mime: invalid media parameter")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "mime: invalid media parameter", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "mime: invalid media parameter")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "mime: invalid media parameter", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLWithNoDB(t *testing.T) {
@@ -245,7 +247,7 @@ func TestExecGQLWithNoDB(t *testing.T) {
 	errResponse := ErrorResponse{}
 	stmt := `
 mutation {
-	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+	create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
 		_key
 	}
 }`
@@ -260,10 +262,10 @@ mutation {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "no database available", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
@@ -273,7 +275,7 @@ func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
 	stmt := `
 [
 	"query": "mutation {
-		create_user(
+		create_User(
 			data: \"{
 				\\\"age\\\": 31,
 				\\\"verified\\\": true,
@@ -297,10 +299,10 @@ func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "invalid character")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "unmarshal error: invalid character ':' after array element", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "invalid character")
+	require.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "unmarshal error: invalid character ':' after array element", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
@@ -315,7 +317,7 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 	stmt := `
 {
 	"query": "mutation {
-		create_user(
+		create_User(
 			data: \"{
 				\\\"age\\\": 31,
 				\\\"verified\\\": true,
@@ -344,7 +346,7 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 		ResponseData:   &resp,
 	})
 
-	assert.Contains(t, users[0].Key, "bae-")
+	require.Contains(t, users[0].Key, "bae-")
 }
 
 func TestExecGQLHandlerContentTypeJSONWithError(t *testing.T) {
@@ -359,7 +361,7 @@ func TestExecGQLHandlerContentTypeJSONWithError(t *testing.T) {
 	stmt := `
 	{
 		"query": "mutation {
-			create_user(
+			create_User(
 				data: \"{
 					\\\"age\\\": 31,
 					\\\"notAField\\\": true
@@ -384,8 +386,8 @@ func TestExecGQLHandlerContentTypeJSONWithError(t *testing.T) {
 		ResponseData:   &resp,
 	})
 
-	assert.Contains(t, resp.Errors, "The given field does not exist. Name: notAField")
-	assert.Len(t, resp.Errors, 1)
+	require.Contains(t, resp.Errors, "The given field does not exist. Name: notAField")
+	require.Len(t, resp.Errors, 1)
 }
 
 func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
@@ -400,7 +402,7 @@ func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
 	stmt := `
 {
 	"query": "mutation {
-		create_user(
+		create_User(
 			data: \"{
 				\\\"age\\\": 31,
 				\\\"verified\\\": true,
@@ -429,7 +431,7 @@ func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
 		ResponseData:   &resp,
 	})
 
-	assert.Contains(t, users[0].Key, "bae-")
+	require.Contains(t, users[0].Key, "bae-")
 }
 
 func TestExecGQLHandlerContentTypeFormURLEncoded(t *testing.T) {
@@ -447,10 +449,10 @@ func TestExecGQLHandlerContentTypeFormURLEncoded(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "content type application/x-www-form-urlencoded not yet supported")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "content type application/x-www-form-urlencoded not yet supported", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "content type application/x-www-form-urlencoded not yet supported")
+	require.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "content type application/x-www-form-urlencoded not yet supported", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLHandlerContentTypeGraphQL(t *testing.T) {
@@ -464,7 +466,7 @@ func TestExecGQLHandlerContentTypeGraphQL(t *testing.T) {
 	// add document
 	stmt := `
 mutation {
-	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+	create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
 		_key
 	}
 }`
@@ -485,7 +487,7 @@ mutation {
 		ResponseData:   &resp,
 	})
 
-	assert.Contains(t, users[0].Key, "bae-")
+	require.Contains(t, users[0].Key, "bae-")
 }
 
 func TestExecGQLHandlerContentTypeText(t *testing.T) {
@@ -499,7 +501,7 @@ func TestExecGQLHandlerContentTypeText(t *testing.T) {
 	// add document
 	stmt := `
 mutation {
-	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+	create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
 		_key
 	}
 }`
@@ -519,7 +521,7 @@ mutation {
 		ResponseData:   &resp,
 	})
 
-	assert.Contains(t, users[0].Key, "bae-")
+	require.Contains(t, users[0].Key, "bae-")
 }
 
 func TestExecGQLHandlerWithSubsctiption(t *testing.T) {
@@ -532,7 +534,7 @@ func TestExecGQLHandlerWithSubsctiption(t *testing.T) {
 
 	stmt := `
 subscription {
-	user {
+	User {
 		_key
 		age
 		name
@@ -565,7 +567,7 @@ subscription {
 	// add document
 	stmt2 := `
 mutation {
-	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+	create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
 		_key
 	}
 }`
@@ -586,7 +588,7 @@ mutation {
 	})
 	select {
 	case data := <-ch:
-		assert.Contains(t, string(data), users[0].Key)
+		require.Contains(t, string(data), users[0].Key)
 	case err := <-errCh:
 		t.Fatal(err)
 	}
@@ -740,17 +742,17 @@ func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "error reading")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "error reading", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "error reading")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "error reading", errResponse.Errors[0].Message)
 }
 
 func TestLoadSchemaHandlerWithoutDB(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
 	stmt := `
-type user {
+type User {
 	name: String
 	age: Int
 	verified: Boolean
@@ -770,10 +772,10 @@ type user {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "no database available", errResponse.Errors[0].Message)
 }
 
 func TestLoadSchemaHandlerWithAddSchemaError(t *testing.T) {
@@ -785,7 +787,7 @@ func TestLoadSchemaHandlerWithAddSchemaError(t *testing.T) {
 
 	// statement with types instead of type
 	stmt := `
-types user {
+types User {
 	name: String
 	age: Int
 	verified: Boolean
@@ -805,12 +807,12 @@ types user {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "Syntax Error GraphQL (2:1) Unexpected Name")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "Syntax Error GraphQL (2:1) Unexpected Name")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(
 		t,
-		"Syntax Error GraphQL (2:1) Unexpected Name \"types\"\n\n1: \n2: types user {\n   ^\n3: \\u0009name: String\n",
+		"Syntax Error GraphQL (2:1) Unexpected Name \"types\"\n\n1: \n2: types User {\n   ^\n3: \\u0009name: String\n",
 		errResponse.Errors[0].Message,
 	)
 }
@@ -821,7 +823,7 @@ func TestLoadSchemaHandlerWitNoError(t *testing.T) {
 	defer defra.Close(ctx)
 
 	stmt := `
-type user {
+type User {
 	name: String
 	age: Int
 	verified: Boolean
@@ -843,12 +845,12 @@ type user {
 
 	switch v := resp.Data.(type) {
 	case map[string]any:
-		assert.Equal(t, map[string]any{
+		require.Equal(t, map[string]any{
 			"result": "success",
 			"collections": []any{
 				map[string]any{
-					"name": "user",
-					"id":   "bafkreigrucdl7x3lsa4xwgz2bn7lbqmiwkifnspgx7hlkpaal3o55325bq",
+					"name": "User",
+					"id":   "bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske",
 				},
 			},
 		}, v)
@@ -872,10 +874,10 @@ func TestGetBlockHandlerWithMultihashError(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "illegal base32 data at input byte 0")
-	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "illegal base32 data at input byte 0", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "illegal base32 data at input byte 0")
+	require.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "illegal base32 data at input byte 0", errResponse.Errors[0].Message)
 }
 
 func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
@@ -898,10 +900,10 @@ func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "no database available", errResponse.Errors[0].Message)
 }
 
 func TestGetBlockHandlerWithNoDB(t *testing.T) {
@@ -918,10 +920,10 @@ func TestGetBlockHandlerWithNoDB(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "no database available", errResponse.Errors[0].Message)
 }
 
 func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
@@ -942,10 +944,10 @@ func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "ipld: could not find bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "ipld: could not find bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "ipld: could not find bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm")
+	require.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "ipld: could not find bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm", errResponse.Errors[0].Message)
 }
 
 func TestGetBlockHandlerWithValidBlockstore(t *testing.T) {
@@ -958,7 +960,7 @@ func TestGetBlockHandlerWithValidBlockstore(t *testing.T) {
 	// add document
 	stmt := `
 mutation {
-	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+	create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
 		_key
 	}
 }`
@@ -986,7 +988,7 @@ mutation {
 	// get document cid
 	stmt2 := `
 query {
-	user (dockey: "%s") {
+	User (dockey: "%s") {
 		_version {
 			cid
 		}
@@ -1028,7 +1030,7 @@ query {
 	case map[string]any:
 		switch val := d["val"].(type) {
 		case string:
-			assert.Equal(t, "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=", val)
+			require.Equal(t, "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=", val)
 		default:
 			t.Fatalf("expecting string but got %T", val)
 		}
@@ -1054,7 +1056,7 @@ func TestPeerIDHandler(t *testing.T) {
 
 	switch v := resp.Data.(type) {
 	case map[string]any:
-		assert.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", v["peerID"])
+		require.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", v["peerID"])
 	default:
 		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
@@ -1075,13 +1077,13 @@ func TestPeerIDHandlerWithNoPeerIDInContext(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no PeerID available. P2P might be disabled")
-	assert.Equal(t, http.StatusNotFound, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Not Found", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "no PeerID available. P2P might be disabled", errResponse.Errors[0].Message)
+	require.Contains(t, errResponse.Errors[0].Extensions.Stack, "no PeerID available. P2P might be disabled")
+	require.Equal(t, http.StatusNotFound, errResponse.Errors[0].Extensions.Status)
+	require.Equal(t, "Not Found", errResponse.Errors[0].Extensions.HTTPError)
+	require.Equal(t, "no PeerID available. P2P might be disabled", errResponse.Errors[0].Message)
 }
 
-func testRequest(opt testOptions) {
+func testRequest(opt testOptions) []byte {
 	req, err := http.NewRequest(opt.Method, opt.Path, opt.Body)
 	if err != nil {
 		opt.Testing.Fatal(err)
@@ -1091,20 +1093,30 @@ func testRequest(opt testOptions) {
 		req.Header.Set(k, v)
 	}
 
+	q := req.URL.Query()
+	for k, v := range opt.QueryParams {
+		q.Add(k, v)
+	}
+	req.URL.RawQuery = q.Encode()
+
 	h := newHandler(opt.DB, opt.ServerOptions)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	assert.Equal(opt.Testing, opt.ExpectedStatus, rec.Result().StatusCode)
 
-	respBody, err := io.ReadAll(rec.Result().Body)
+	resBody, err := io.ReadAll(rec.Result().Body)
 	if err != nil {
 		opt.Testing.Fatal(err)
 	}
 
-	err = json.Unmarshal(respBody, &opt.ResponseData)
-	if err != nil {
-		opt.Testing.Fatal(err)
+	if opt.ResponseData != nil {
+		err = json.Unmarshal(resBody, &opt.ResponseData)
+		if err != nil {
+			opt.Testing.Fatal(err)
+		}
 	}
+
+	return resBody
 }
 
 func testSubscriptionRequest(ctx context.Context, opt testOptions, ch chan []byte, errCh chan error) {
@@ -1123,7 +1135,7 @@ func testSubscriptionRequest(ctx context.Context, opt testOptions, ch chan []byt
 	h := newHandler(opt.DB, opt.ServerOptions)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
-	assert.Equal(opt.Testing, opt.ExpectedStatus, rec.Result().StatusCode)
+	require.Equal(opt.Testing, opt.ExpectedStatus, rec.Result().StatusCode)
 
 	respBody, err := io.ReadAll(rec.Result().Body)
 	if err != nil {
@@ -1156,7 +1168,7 @@ func testNewInMemoryDB(t *testing.T, ctx context.Context) client.DB {
 
 func testLoadSchema(t *testing.T, ctx context.Context, db client.DB) {
 	stmt := `
-type user {
+type User {
 	name: String 
 	age: Int 
 	verified: Boolean 
