@@ -53,7 +53,7 @@ func pingHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		simpleDataResponse("response", "pong", "test"),
+		simpleDataResponse("response", "pong"),
 		http.StatusOK,
 	)
 }

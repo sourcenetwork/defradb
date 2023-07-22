@@ -82,13 +82,15 @@ Example: create a named index for 'Users' collection on 'name' field:
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
 			}
+			defer func() {
+				if e := res.Body.Close(); e != nil {
+					err = NewErrFailedToCloseResponseBody(e, err)
+				}
+			}()
 
 			response, err := io.ReadAll(res.Body)
 			if err != nil {
 				return NewErrFailedToReadResponseBody(err)
-			}
-			if err := res.Body.Close(); err != nil {
-				return NewErrFailedToCloseResponseBody(err)
 			}
 
 			stdout, err := os.Stdout.Stat()
