@@ -76,7 +76,7 @@ client\:add-schema:
 
 .PHONY: deps\:lint
 deps\:lint:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53
 
 .PHONY: deps\:test
 deps\:test:
@@ -158,7 +158,7 @@ verify:
 
 .PHONY: tidy
 tidy:
-	go mod tidy -go=1.19
+	go mod tidy -go=1.20
 
 .PHONY: clean
 clean:
