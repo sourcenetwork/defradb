@@ -1,0 +1,54 @@
+# Copyright 2023 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+# This workflow validates that the images pushed to the container
+# registry can be pulled and run sucessfully.
+name: Pull Docker Image Workflow
+
+on:
+  workflow_run:
+    # Warning: this workflow must NOT:
+    # - interact with any new code.
+    # - checkout new code.
+    # - build/compile anything (only pull).
+    # - make any indirect calls (i.e. make xyz, or npm install, etc.)
+    # Note this workflow:
+    # - will use the base's (or default) workflow file's state.
+    # - doesn't run on the PR or the branch coming in, it runs on the default branch.
+    # - has read-write repo token
+    # - has access to secrets
+    workflows: ["Push Docker Image To Registries Workflow"]
+    types:
+      - completed
+
+env:
+  DOCKERHUB_IMAGE_TAG: sourcenetwork/defradb:latest
+  GITHUB_IMAGE_TAG: ghcr.io/sourcenetwork/defradb:latest
+
+jobs:
+  pull-docker-image:
+    name: Pull docker image job
+
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pull DockerHub image
+        run: docker pull ${{ env.DOCKERHUB_IMAGE_TAG }}
+
+      - name: Test DockerHub image
+        run: docker run --rm ${{ env.DOCKERHUB_IMAGE_TAG }}
+
+      - name: Pull GitHub image
+        run: docker pull ${{ env.GITHUB_IMAGE_TAG }}
+
+      - name: Test GitHub image
+        run: docker run --rm ${{ env.GITHUB_IMAGE_TAG }}
