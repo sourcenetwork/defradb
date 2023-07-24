@@ -151,3 +151,28 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestBackupImport_EmptyObject_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.BackupImport{
+				ImportContent: `{"User":[{}]}`,
+			},
+			testUtils.Request{
+				Request: `
+					query  {
+						User {
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": nil,
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
