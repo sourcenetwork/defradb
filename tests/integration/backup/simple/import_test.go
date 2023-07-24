@@ -177,7 +177,7 @@ func TestBackupImport_EmptyObject_NoError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestBackupImport_WithMultipleNoKeysAndInvalidField_NoError(t *testing.T) {
+func TestBackupImport_WithMultipleNoKeysAndInvalidField_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.BackupImport{
