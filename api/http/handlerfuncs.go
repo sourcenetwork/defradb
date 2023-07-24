@@ -244,8 +244,9 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		colResp[i] = collectionResponse{
-			Name: col.Name(),
-			ID:   col.SchemaID(),
+			Name:      col.Name(),
+			ID:        col.SchemaID(),
+			VersionID: col.Schema().VersionID,
 		}
 	}
 
