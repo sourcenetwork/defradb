@@ -151,3 +151,56 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestBackupImport_EmptyObject_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.BackupImport{
+				ImportContent: `{"User":[{}]}`,
+			},
+			testUtils.Request{
+				Request: `
+					query  {
+						User {
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": nil,
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestBackupImport_WithMultipleNoKeysAndInvalidField_Errors(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.BackupImport{
+				ImportContent: `{"User":[
+					{"age":30,"name":"John"},
+					{"INVALID":31,"name":"Smith"},
+					{"age":32,"name":"Bob"}
+				]}`,
+				ExpectedError: "The given field does not exist. Name: INVALID",
+			},
+			testUtils.Request{
+				Request: `
+					query  {
+						User {
+							name
+							age
+						}
+					}`,
+				// No documents should have been commited
+				Results: []map[string]any{},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

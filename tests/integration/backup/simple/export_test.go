@@ -33,6 +33,22 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestBackupExport_Empty_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{}`,
+			},
+			testUtils.BackupExport{
+				ExpectedContent: `{"User":[{"_key":"bae-524bfa06-849c-5daf-b6df-05c2da80844d","_newKey":"bae-524bfa06-849c-5daf-b6df-05c2da80844d"}]}`,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestBackupExport_WithInvalidFilePath_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
