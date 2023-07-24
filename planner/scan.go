@@ -48,8 +48,6 @@ type scanNode struct {
 	filter *mapper.Filter
 	slct   *mapper.Select
 
-	scanInitialized bool
-
 	fetcher fetcher.Fetcher
 
 	execInfo scanExecInfo
@@ -152,7 +150,6 @@ func (n *scanNode) initScan() error {
 		return err
 	}
 
-	n.scanInitialized = true
 	return nil
 }
 

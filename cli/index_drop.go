@@ -79,12 +79,15 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 				return NewErrFailedToSendRequest(err)
 			}
 
+			defer func() {
+				if e := res.Body.Close(); e != nil {
+					err = NewErrFailedToCloseResponseBody(e, err)
+				}
+			}()
+
 			response, err := io.ReadAll(res.Body)
 			if err != nil {
 				return NewErrFailedToReadResponseBody(err)
-			}
-			if err := res.Body.Close(); err != nil {
-				return NewErrFailedToCloseResponseBody(err)
 			}
 
 			stdout, err := os.Stdout.Stat()

@@ -332,6 +332,10 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 
 	df.kvEnd = spanDone
 	if df.kvEnd {
+		err = df.kvResultsIter.Close()
+		if err != nil {
+			return false, false, err
+		}
 		moreSpans, err := df.startNextSpan(ctx)
 		if err != nil {
 			return false, false, err
@@ -656,22 +660,18 @@ func (df *DocumentFetcher) FetchNextDoc(
 
 // Close closes the DocumentFetcher.
 func (df *DocumentFetcher) Close() error {
-	if df.kvIter == nil {
-		return nil
+	if df.kvIter != nil {
+		err := df.kvIter.Close()
+		if err != nil {
+			return err
+		}
 	}
 
-	err := df.kvIter.Close()
-	if err != nil {
-		return err
-	}
-
-	if df.kvResultsIter == nil {
-		return nil
-	}
-
-	err = df.kvResultsIter.Close()
-	if err != nil {
-		return err
+	if df.kvResultsIter != nil {
+		err := df.kvResultsIter.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	if df.deletedDocFetcher != nil {

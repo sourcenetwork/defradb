@@ -33,6 +33,9 @@ const (
 	SchemaMigrationPath string = SchemaPath + "/migration"
 	IndexPath           string = versionedAPIPath + "/index"
 	PeerIDPath          string = versionedAPIPath + "/peerid"
+	BackupPath          string = versionedAPIPath + "/backup"
+	ExportPath          string = BackupPath + "/export"
+	ImportPath          string = BackupPath + "/import"
 )
 
 // playgroundHandler is set when building with the playground build tag
@@ -54,7 +57,10 @@ func setRoutes(h *handler) *handler {
 	h.Delete(IndexPath, dropIndexHandler)
 	h.Get(IndexPath, listIndexHandler)
 	h.Get(PeerIDPath, peerIDHandler)
+	h.Post(ExportPath, exportHandler)
+	h.Post(ImportPath, importHandler)
 	h.Handle("/*", playgroundHandler)
+
 	return h
 }
 

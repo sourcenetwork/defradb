@@ -366,6 +366,12 @@ func executeTestCase(
 		case GetIndexes:
 			getIndexes(s, action)
 
+		case BackupExport:
+			backupExport(s, action)
+
+		case BackupImport:
+			backupImport(s, action)
+
 		case TransactionCommit:
 			commitTransaction(s, action)
 
@@ -1097,6 +1103,58 @@ func dropIndex(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
+// backupExport generates a backup using the db api.
+func backupExport(
+	s *state,
+	action BackupExport,
+) {
+	if action.Config.Filepath == "" {
+		action.Config.Filepath = s.t.TempDir() + "/test.json"
+	}
+
+	var expectedErrorRaised bool
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, node := range actionNodes {
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error { return node.DB.BasicExport(s.ctx, &action.Config) },
+		)
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+		if !expectedErrorRaised {
+			assertBackupContent(s.t, action.ExpectedContent, action.Config.Filepath)
+		}
+	}
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+// backupImport imports data from a backup using the db api.
+func backupImport(
+	s *state,
+	action BackupImport,
+) {
+	if action.Filepath == "" {
+		action.Filepath = s.t.TempDir() + "/test.json"
+	}
+
+	// we can avoid checking the error here as this would mean the filepath is invalid
+	// and we want to make sure that `BasicImport` fails in this case.
+	_ = os.WriteFile(action.Filepath, []byte(action.ImportContent), 0664)
+
+	var expectedErrorRaised bool
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, node := range actionNodes {
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error { return node.DB.BasicImport(s.ctx, action.Filepath) },
+		)
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	}
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
 // withRetry attempts to perform the given action, retrying up to a DB-defined
 // maximum attempt count if a transaction conflict error is returned.
 //
@@ -1489,4 +1547,14 @@ func assertContains(t *testing.T, contains map[string]any, actual map[string]any
 			assert.Equal(t, expected, innerActual)
 		}
 	}
+}
+
+func assertBackupContent(t *testing.T, expectedContent, filepath string) {
+	b, err := os.ReadFile(filepath)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		expectedContent,
+		string(b),
+	)
 }

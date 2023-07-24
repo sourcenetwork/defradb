@@ -442,7 +442,7 @@ func finalizeRelations(relationManager *RelationManager, descriptions []client.C
 			}
 
 			// if not finalized then we are missing one side of the relationship
-			if !rel.finalized {
+			if !rel.finalized && field.Schema != description.Name {
 				return NewErrRelationOneSided(field.Schema)
 			}
 

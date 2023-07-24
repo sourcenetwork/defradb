@@ -12,7 +12,8 @@ package storage
 
 import (
 	"context"
-	"math/rand"
+	"crypto/rand"
+	mathRand "math/rand"
 	"sort"
 	"testing"
 
@@ -327,5 +328,5 @@ func getSampledIndex(populationSize int, sampleSize int, i int) int {
 	}
 
 	pointsPerInterval := populationSize / sampleSize
-	return (i * pointsPerInterval) + rand.Intn(pointsPerInterval)
+	return (i * pointsPerInterval) + mathRand.Intn(pointsPerInterval)
 }
