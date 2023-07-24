@@ -13,6 +13,7 @@
 name: Push Docker Image To Registries Workflow
 
 on:
+  pull_request:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
@@ -39,11 +40,15 @@ jobs:
         with:
           context: .
           file: tools/defradb.containerfile
+          platforms: linux/amd64,linux/arm64
           load: true
           tags: ${{ env.TEST_TAG }}
 
-      - name: Test Docker image
-        run: docker run --rm ${{ env.TEST_TAG }}
+      - name: Test Docker linux/amd64 image
+        run: docker run --rm --platform linux/amd64 ${{ env.TEST_TAG }}
+
+      - name: Test Docker linux/arm64 image
+        run: docker run --rm --platform linux/arm64 ${{ env.TEST_TAG }}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -71,6 +76,7 @@ jobs:
         with:
           context: .
           file: tools/defradb.containerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
