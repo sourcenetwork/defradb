@@ -13,6 +13,8 @@ package backup
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -68,24 +70,49 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 // This test documents undesirable behaviour, as the document is not linked to itself.
 // https://github.com/sourcenetwork/defradb/issues/1697
 func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
+	expectedExportData := `{` +
+		`"User":[` +
+		`{` +
+		`"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
+		`"_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
+		`"age":31,` +
+		`"boss_id":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
+		`"name":"Bob"` +
+		`}` +
+		`]` +
+		`}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.BackupImport{
-				// Note: Whilst generating the `boss_id` field value manually would be really difficult,
-				// the document may be exported with `_key`/`_newKey` values, resulting in an export that
-				// could not be fully imported, although all the information required is there.
-				ImportContent: `{
-					"User":[
-						{
-							"_key":"bae-790e7e49-f2e3-5ad6-83d9-5dfb6d8ba81d",
-							"age":31,
-							"boss_id":"bae-790e7e49-f2e3-5ad6-83d9-5dfb6d8ba81d",
-							"name":"Bob"
-						}
-					]
+			// Configure 2 nodes for this test, we will export from the first
+			// and import to the second.
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: schemas,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "Bob",
+					"age": 31
 				}`,
 			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"boss_id": "bae-0648f44e-74e8-593b-a662-3310ec278927"
+				}`,
+			},
+			testUtils.BackupExport{
+				NodeID:          immutable.Some(0),
+				ExpectedContent: expectedExportData,
+			},
+			testUtils.BackupImport{
+				NodeID:        immutable.Some(1),
+				ImportContent: expectedExportData,
+			},
 			testUtils.Request{
+				NodeID: immutable.Some(1),
 				Request: `
 					query  {
 						User {
@@ -105,7 +132,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"User"}, test)
 }
 
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *testing.T) {
@@ -239,8 +266,31 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 // This test documents undesirable behaviour, as the documents are not linked.
 // https://github.com/sourcenetwork/defradb/issues/1697
 func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t *testing.T) {
+	expectedExportData := `{` +
+		`"Author":[` +
+		`{` +
+		`"_key":"bae-d760e445-22ef-5956-9947-26de226891f6",` +
+		`"_newKey":"bae-e3a6ff01-33ff-55f4-88f9-d13db26274c8",` +
+		`"book_id":"bae-fd085408-9441-5323-9a26-79e16783098f",` +
+		`"name":"John"` +
+		`}` +
+		`],` +
+		`"Book":[` +
+		`{` +
+		`"_key":"bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4",` +
+		`"_newKey":"bae-c821a0a9-7afc-583b-accb-dc99a09c1ff8",` +
+		`"name":"John and the sourcerers' stone",` +
+		`"reviewedBy_id":"bae-e3a6ff01-33ff-55f4-88f9-d13db26274c8"` +
+		`}` +
+		`]` +
+		`}`
+
 	test := testUtils.TestCase{
 		Actions: []any{
+			// Configure 2 nodes for this test, we will export from the first
+			// and import to the second.
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Author {
@@ -255,28 +305,40 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					}
 				`,
 			},
-			testUtils.BackupImport{
-				// Note: Whilst generating the relation field values manually would be really difficult,
-				// the document may be exported with `_key`/`_newKey` values, resulting in an export that
-				// could not be fully imported, although all the information required is there.
-				ImportContent: `{
-					"Author":[
-						{
-							"_key":"bae-2570a325-7cd1-5f0a-9f00-197573a207e3",
-							"name":"John",
-							"book": "bae-69e58b41-3e41-5cc4-919d-b4f878dcdf21"
-						}
-					],
-					"Book":[
-						{
-							"_key":"bae-69e58b41-3e41-5cc4-919d-b4f878dcdf21",
-							"name":"John and the sourcerers' stone",
-							"reviewedBy":"bae-2570a325-7cd1-5f0a-9f00-197573a207e3"
-						}
-					]
+			testUtils.CreateDoc{
+				NodeID:       immutable.Some(0),
+				CollectionID: 1,
+				// bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4
+				Doc: `{
+					"name": "John and the sourcerers' stone"
 				}`,
 			},
+			testUtils.CreateDoc{
+				NodeID:       immutable.Some(0),
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"book": "bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID:       immutable.Some(0),
+				CollectionID: 1,
+				DocID:        0,
+				Doc: `{
+					"reviewedBy_id": "bae-d760e445-22ef-5956-9947-26de226891f6"
+				}`,
+			},
+			testUtils.BackupExport{
+				NodeID:          immutable.Some(0),
+				ExpectedContent: expectedExportData,
+			},
+			testUtils.BackupImport{
+				NodeID:        immutable.Some(1),
+				ImportContent: expectedExportData,
+			},
 			testUtils.Request{
+				NodeID: immutable.Some(1),
 				Request: `
 					query {
 						Book {
