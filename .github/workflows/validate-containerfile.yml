@@ -26,6 +26,9 @@ on:
       - master
       - develop
 
+env:
+  TEST_TAG: sourcenetwork/defradb:test
+
 jobs:
   validate-containerfile:
     name: Validate containerfile job
@@ -41,8 +44,12 @@ jobs:
         with:
           context: .
           file: tools/defradb.containerfile
+          platforms: linux/amd64,linux/arm64
           load: true
           tags: ${{ env.TEST_TAG }}
 
-      - name: Test Docker image
-        run: docker run --rm ${{ env.TEST_TAG }}
+      - name: Test Docker linux/amd64 image
+        run: docker run --rm --platform linux/amd64 ${{ env.TEST_TAG }}
+
+      - name: Test Docker linux/arm64 image
+        run: docker run --rm --platform linux/arm64 ${{ env.TEST_TAG }}

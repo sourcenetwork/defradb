@@ -10,8 +10,9 @@ COPY go.mod go.sum Makefile ./
 RUN make deps:modules
 COPY . .
 # manually copy libwasmer.so to fix linking issue https://github.com/wasmerio/wasmer-go/issues/281
-# NOTE: when building on arm64 change linux-amd64 to linux-aarch64
-RUN cp /go/pkg/mod/github.com/wasmerio/wasmer-go@v1.0.4/wasmer/packaged/lib/linux-amd64/libwasmer.so /lib/libwasmer.so
+RUN export WASMER_ARCH=$(go env GOHOSTARCH | sed "s/arm64/aarch64/") && \
+    export WASMER_PATH=$(go env GOMODCACHE)/github.com/wasmerio/wasmer-go@v1.0.4/wasmer/packaged/lib/linux-$WASMER_ARCH/libwasmer.so && \
+    cp $WASMER_PATH /lib/libwasmer.so
 RUN make build
 
 # Stage: RUN
