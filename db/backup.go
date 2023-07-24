@@ -69,6 +69,19 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				return NewErrJSONDecode(err)
 			}
 
+			// check if self referencing and remove from docMap for key creation
+			resetMap := map[string]any{}
+			for _, field := range col.Schema().Fields {
+				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+					if val, ok := docMap[field.Name+request.RelatedObjectID]; ok {
+						if docMap["_newKey"] == val {
+							resetMap[field.Name+request.RelatedObjectID] = val
+							delete(docMap, field.Name+request.RelatedObjectID)
+						}
+					}
+				}
+			}
+
 			delete(docMap, "_key")
 			delete(docMap, "_newKey")
 
@@ -80,6 +93,18 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			err = col.WithTxn(txn).Create(ctx, doc)
 			if err != nil {
 				return NewErrDocCreate(err)
+			}
+
+			// add back the self referencing fields and update doc.
+			for k, v := range resetMap {
+				err := doc.Set(k, v)
+				if err != nil {
+					return NewErrDocUpdate(err)
+				}
+				err = col.WithTxn(txn).Update(ctx, doc)
+				if err != nil {
+					return NewErrDocUpdate(err)
+				}
 			}
 		}
 		_, err = d.Token()
