@@ -162,3 +162,21 @@ func TestSchemaRelationErrorsGivenOneSidedRelationField(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Dog", "User"}, test)
 }
+
+func TestSchemaRelation_GivenSelfReferemceRelationField_ReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Dog {
+						name: String
+						bestMate: Dog
+					}
+				`,
+				ExpectedError: "relation must be defined on both schemas. Type: Dog",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Dog", "User"}, test)
+}
