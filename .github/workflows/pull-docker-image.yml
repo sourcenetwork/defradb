@@ -9,7 +9,7 @@
 # licenses/APL.txt.
 
 # This workflow validates that the images pushed to the container
-# registry can be pulled and run sucessfully.
+# registries can be pulled then run sucessfully.
 name: Pull Docker Image Workflow
 
 on:
@@ -28,10 +28,6 @@ on:
     types:
       - completed
 
-env:
-  DOCKERHUB_IMAGE_TAG: sourcenetwork/defradb:latest
-  GITHUB_IMAGE_TAG: ghcr.io/sourcenetwork/defradb:latest
-
 jobs:
   pull-docker-image:
     name: Pull docker image job
@@ -46,16 +42,13 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64
+        image_tag:
+          - sourcenetwork/defradb:latest
+          - ghcr.io/sourcenetwork/defradb:latest
 
     steps:
-      - name: Pull DockerHub image
-        run: docker pull --platform ${{ matrix.platform }} ${{ env.DOCKERHUB_IMAGE_TAG }}
+      - name: Pull Docker image
+        run: docker pull --platform ${{ matrix.platform }} ${{ matrix.image_tag }}
 
-      - name: Test DockerHub image
-        run: docker run --platform ${{ matrix.platform }} --rm ${{ env.DOCKERHUB_IMAGE_TAG }}
-
-      - name: Pull GitHub image
-        run: docker pull --platform ${{ matrix.platform }} ${{ env.GITHUB_IMAGE_TAG }}
-
-      - name: Test GitHub image
-        run: docker run --platform ${{ matrix.platform }} --rm ${{ env.GITHUB_IMAGE_TAG }}
+      - name: Test Docker image
+        run: docker run --platform ${{ matrix.platform }} --rm ${{ matrix.image_tag }}
