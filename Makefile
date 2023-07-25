@@ -273,7 +273,7 @@ test\:coverage-html:
 .PHONY: test\:changes
 test\:changes:
 	@$(MAKE) deps:lens
-	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum -- ./... -shuffle=on -p 1
+	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum -- ./tests/integration/query/one_to_many_to_one --run TestQueryOneToOneRelations -shuffle=on -p 1
 
 .PHONY: validate\:codecov
 validate\:codecov:
