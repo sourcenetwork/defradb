@@ -151,7 +151,8 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 }
 
 // note: This test should fail at the second book creation since the relationship is 1-to-1 and this
-// effectively creates a 1-to-many relationship
+// effectively creates a 1-to-many relationship:
+// https://github.com/sourcenetwork/defradb/issues/1646
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedDocs_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
