@@ -40,15 +40,22 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+
     steps:
       - name: Pull DockerHub image
-        run: docker pull ${{ env.DOCKERHUB_IMAGE_TAG }}
+        run: docker pull --platform ${{ matrix.platform }} ${{ env.DOCKERHUB_IMAGE_TAG }}
 
       - name: Test DockerHub image
-        run: docker run --rm ${{ env.DOCKERHUB_IMAGE_TAG }}
+        run: docker run --platform ${{ matrix.platform }} --rm ${{ env.DOCKERHUB_IMAGE_TAG }}
 
       - name: Pull GitHub image
-        run: docker pull ${{ env.GITHUB_IMAGE_TAG }}
+        run: docker pull --platform ${{ matrix.platform }} ${{ env.GITHUB_IMAGE_TAG }}
 
       - name: Test GitHub image
-        run: docker run --rm ${{ env.GITHUB_IMAGE_TAG }}
+        run: docker run --platform ${{ matrix.platform }} --rm ${{ env.GITHUB_IMAGE_TAG }}
