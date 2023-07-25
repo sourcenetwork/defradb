@@ -67,8 +67,6 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This test documents undesirable behaviour, as the document is not linked to itself.
-// https://github.com/sourcenetwork/defradb/issues/1697
 func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"User":[` +
@@ -125,7 +123,9 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "Bob",
-						"boss": nil,
+						"boss": map[string]any{
+							"name": "Bob",
+						},
 					},
 				},
 			},
@@ -264,7 +264,6 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 }
 
 // This test documents undesirable behaviour, as the documents are not linked.
-// https://github.com/sourcenetwork/defradb/issues/1697
 // https://github.com/sourcenetwork/defradb/issues/1704
 func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t *testing.T) {
 	expectedExportData := `{` +

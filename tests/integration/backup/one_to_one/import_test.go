@@ -237,3 +237,58 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 
 	executeTestCase(t, test)
 }
+
+func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+				type User {
+					name: String
+					age: Int
+					book: Book @relation(name: "written_books")
+					favouriteBook: Book @relation(name: "favourite_books")
+				}
+				type Book {
+					name: String
+					author: User @relation(name: "written_books")
+					favourite: User @relation(name: "favourite_books")
+				}
+				`,
+			},
+			testUtils.BackupImport{
+				ImportContent: `{"Book":[{"_key":"bae-236c14bd-4621-5d43-bc03-4442f3b8719e","_newKey":"bae-6dbb3738-d3db-5121-acee-6fbdd97ff7a8","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","favourite_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","name":"John and the sourcerers' stone"},{"_key":"bae-da7f2d88-05c4-528a-846a-0d18ab26603b","_newKey":"bae-da7f2d88-05c4-528a-846a-0d18ab26603b","name":"Game of chains"}],"User":[{"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927","_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","age":31,"name":"John"}]}`,
+			},
+			testUtils.Request{
+				Request: `
+					query  {
+						Book {
+							name
+							author {
+								name
+								favouriteBook {
+									name
+								}
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "John and the sourcerers' stone",
+						"author": map[string]any{
+							"name": "John",
+							"favouriteBook": map[string]any{
+								"name": "John and the sourcerers' stone",
+							},
+						},
+					},
+					{
+						"name": "Game of chains",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"User", "Book"}, test)
+}
