@@ -238,7 +238,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 	executeTestCase(t, test)
 }
 
-func TestBackupImport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
+func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
