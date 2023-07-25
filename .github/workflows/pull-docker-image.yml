@@ -13,6 +13,7 @@
 name: Pull Docker Image Workflow
 
 on:
+  workflow_dispatch:
   workflow_run:
     # Warning: this workflow must NOT:
     # - interact with any new code.
