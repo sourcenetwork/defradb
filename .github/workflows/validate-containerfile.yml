@@ -1,0 +1,58 @@
+# Copyright 2023 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+# This workflow tests that the container build is successful and
+# that the built container runs successfully.
+name: Validate Containerfile Workflow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - '.github/workflows/validate-containerfile.yml'
+      - 'tools/defradb.containerfile'
+
+  push:
+    branches:
+      - master
+      - develop
+
+env:
+  TEST_TAG: sourcenetwork/defradb:test
+
+jobs:
+  validate-containerfile:
+    name: Validate containerfile job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: tools/defradb.containerfile
+          load: true
+          tags: ${{ env.TEST_TAG }}
+
+      - name: Test Docker image
+        run: docker run --rm ${{ env.TEST_TAG }}
+
