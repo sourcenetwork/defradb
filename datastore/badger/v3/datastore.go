@@ -362,6 +362,18 @@ func (d *Datastore) Close() error {
 		return ErrClosed
 	}
 	d.closed = true
+
+	if !d.DB.Opts().InMemory {
+		// `d.DB.Close` struggles and may call os.Exit(1) if we do not manually trigger its
+		// GC beforehand.
+		// 0.5 is the recommended value.
+		// This call will error if run whilst in in-memory mode.
+		err := d.DB.RunValueLogGC(0.5)
+		if err != nil && !errors.Is(err, badger.ErrNoRewrite) {
+			return err
+		}
+	}
+
 	return d.DB.Close()
 }
 
