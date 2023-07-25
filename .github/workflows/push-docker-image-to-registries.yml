@@ -14,8 +14,8 @@ name: Push Docker Image To Registries Workflow
 
 on:
   push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+    # tags:
+    #   - 'v[0-9]+.[0-9]+.[0-9]+'
 
 env:
   TEST_TAG: sourcenetwork/defradb:test
