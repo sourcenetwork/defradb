@@ -41,8 +41,8 @@ jobs:
       fail-fast: false
       matrix:
         image_tag:
-          - sourcenetwork/defradb:latest
-          - ghcr.io/sourcenetwork/defradb:latest
+          - sourcenetwork/defradb:pr-1684
+          - ghcr.io/sourcenetwork/defradb:pr-1684
 
     steps:
       - name: Pull Docker image
