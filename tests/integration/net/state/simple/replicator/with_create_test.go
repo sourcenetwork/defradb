@@ -60,7 +60,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
@@ -105,7 +105,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
@@ -147,7 +147,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestP2POneToManyReplicator(t *testing.T) {
@@ -196,7 +196,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestP2POneToOneOfManyReplicator(t *testing.T) {
@@ -266,7 +266,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
@@ -321,7 +321,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
@@ -381,7 +381,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
@@ -451,7 +451,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
@@ -511,5 +511,5 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

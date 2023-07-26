@@ -53,5 +53,5 @@ func TestQuerySimpleWithRestart(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

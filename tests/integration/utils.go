@@ -82,9 +82,8 @@ func ExecuteRequestTestCase(
 		)
 	}
 
-	ExecuteTestCase(
+	ExecuteTEMP(
 		t,
-		collectionNames,
 		TestCase{
 			Description: test.Description,
 			Actions:     actions,

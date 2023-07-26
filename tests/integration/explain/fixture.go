@@ -56,9 +56,8 @@ var SchemaForExplainTests = testUtils.SchemaUpdate{
 }
 
 func ExecuteTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTestCase(
+	testUtils.ExecuteTEMP(
 		t,
-		[]string{"Article", "Book", "Author", "AuthorContact", "ContactAddress"},
 		test,
 	)
 }

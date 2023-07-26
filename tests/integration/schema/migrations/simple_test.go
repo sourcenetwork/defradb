@@ -65,7 +65,7 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaIDs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
@@ -143,7 +143,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
@@ -207,5 +207,5 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

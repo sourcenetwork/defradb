@@ -141,7 +141,7 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
@@ -189,7 +189,7 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 // note: This test should fail at the second book creation since the relationship is 1-to-1 and this
@@ -239,5 +239,5 @@ func TestBackupExport_DoubleReletionshipWithUpdateAndDoublylinked_NoError(t *tes
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

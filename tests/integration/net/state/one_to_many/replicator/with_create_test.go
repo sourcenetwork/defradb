@@ -80,5 +80,5 @@ func TestP2POneToManyReplicator(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

@@ -37,7 +37,7 @@ func TestSchemaUpdatesTestCollectionNameErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaUpdatesTestCollectionNamePasses(t *testing.T) {
@@ -60,7 +60,7 @@ func TestSchemaUpdatesTestCollectionNamePasses(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 /* WIP
@@ -116,6 +116,6 @@ func TestSchemaUpdatesTestCollectionNameDoesNotChangeVersionID(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 */

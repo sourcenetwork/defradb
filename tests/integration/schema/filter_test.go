@@ -118,7 +118,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 var testFilterForSimpleSchemaArgProps = map[string]any{
@@ -270,7 +270,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 var testFilterForOneToOneSchemaArgProps = map[string]any{

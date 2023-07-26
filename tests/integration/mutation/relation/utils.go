@@ -17,9 +17,8 @@ import (
 )
 
 func Execute(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTestCase(
+	testUtils.ExecuteTEMP(
 		t,
-		[]string{"Book", "Author", "Publisher"},
 		testUtils.TestCase{
 			Description: test.Description,
 			Actions: append(

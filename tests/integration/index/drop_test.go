@@ -60,5 +60,5 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

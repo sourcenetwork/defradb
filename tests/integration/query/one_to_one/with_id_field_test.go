@@ -72,7 +72,7 @@ func TestQueryOneToOneWithIdFieldOnSecondary(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 // This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
@@ -113,5 +113,5 @@ func TestQueryOneToOneWithIdFieldOnPrimary(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

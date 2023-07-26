@@ -43,5 +43,5 @@ func TestClientIntrospectionWithOneToManySchema(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

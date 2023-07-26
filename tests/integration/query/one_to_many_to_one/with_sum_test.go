@@ -112,5 +112,5 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

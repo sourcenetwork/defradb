@@ -56,7 +56,7 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
@@ -103,7 +103,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
@@ -127,5 +127,5 @@ func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

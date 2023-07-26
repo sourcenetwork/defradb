@@ -47,7 +47,7 @@ func TestP2PSubscribeAddRemoveGetSingle(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestP2PSubscribeAddRemoveGetMultiple(t *testing.T) {
@@ -85,5 +85,5 @@ func TestP2PSubscribeAddRemoveGetMultiple(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users", "Giraffes"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

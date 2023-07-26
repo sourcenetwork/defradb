@@ -88,7 +88,7 @@ func TestQueryOneToOneToMany(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Indicator", "Observable", "Observation"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
@@ -165,7 +165,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Indicator", "Observable", "Observation"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
@@ -240,7 +240,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Indicator", "Observable", "Observation"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
@@ -317,5 +317,5 @@ func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Indicator", "Observable", "Observation"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

@@ -38,7 +38,7 @@ func TestSchemaUpdatesRemoveFieldErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
@@ -63,7 +63,7 @@ func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
@@ -88,7 +88,7 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaUpdatesRemoveFieldIDErrors(t *testing.T) {
@@ -113,7 +113,7 @@ func TestSchemaUpdatesRemoveFieldIDErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
@@ -138,7 +138,7 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
@@ -163,7 +163,7 @@ func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaUpdatesRemoveFieldSchemaErrors(t *testing.T) {
@@ -192,7 +192,7 @@ func TestSchemaUpdatesRemoveFieldSchemaErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaUpdatesRemoveFieldRelationNameErrors(t *testing.T) {
@@ -221,7 +221,7 @@ func TestSchemaUpdatesRemoveFieldRelationNameErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestSchemaUpdatesRemoveFieldRelationTypeErrors(t *testing.T) {
@@ -250,5 +250,5 @@ func TestSchemaUpdatesRemoveFieldRelationTypeErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

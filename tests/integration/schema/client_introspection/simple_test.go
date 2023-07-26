@@ -28,5 +28,5 @@ func TestClientIntrospectionBasic(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

@@ -119,5 +119,5 @@ func TestQueryOneToOneToOneWithNestedOrder(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Publisher", "Book", "Author"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

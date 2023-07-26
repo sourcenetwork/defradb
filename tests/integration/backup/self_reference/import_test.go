@@ -132,7 +132,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *testing.T) {
@@ -196,7 +196,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoError(t *testing.T) {
@@ -260,7 +260,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 // This test documents undesirable behaviour, as the documents are not linked.
@@ -368,5 +368,5 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }

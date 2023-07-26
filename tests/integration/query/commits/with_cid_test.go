@@ -52,7 +52,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
@@ -85,7 +85,7 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestQueryCommitsWithInvalidCid(t *testing.T) {
@@ -113,7 +113,7 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
@@ -141,7 +141,7 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
 
 func TestQueryCommitsWithUnknownCid(t *testing.T) {
@@ -169,5 +169,5 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTEMP(t, test)
 }
