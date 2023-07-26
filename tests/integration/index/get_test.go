@@ -36,5 +36,5 @@ func TestIndexGet_IfThereAreNoIndexes_ReturnEmptyList(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

@@ -107,5 +107,5 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

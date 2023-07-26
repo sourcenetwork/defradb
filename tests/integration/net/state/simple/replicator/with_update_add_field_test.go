@@ -96,7 +96,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
@@ -169,5 +169,5 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

@@ -290,5 +290,5 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

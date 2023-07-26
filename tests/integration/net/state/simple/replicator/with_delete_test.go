@@ -69,7 +69,7 @@ func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfig(t *testing
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfigWithNodesInversed(t *testing.T) {
@@ -123,5 +123,5 @@ func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfigWithNodesIn
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

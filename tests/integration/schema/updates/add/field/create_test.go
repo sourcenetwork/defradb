@@ -58,7 +58,7 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
@@ -118,5 +118,5 @@ func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

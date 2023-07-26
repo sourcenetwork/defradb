@@ -74,5 +74,5 @@ func TestP2PPeerReplicatorWithUpdateAndRestart(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

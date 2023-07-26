@@ -68,7 +68,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) {
@@ -125,7 +125,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T) {
@@ -186,5 +186,5 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

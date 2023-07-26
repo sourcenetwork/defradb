@@ -119,7 +119,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
@@ -225,7 +225,7 @@ func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
@@ -331,7 +331,7 @@ func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToOneToOneSecondary(t *testing.T) {
@@ -437,5 +437,5 @@ func TestQueryOneToOneToOneSecondary(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

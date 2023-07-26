@@ -53,5 +53,5 @@ func TestQueryCommitsWithDockeyAndLinkCount(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

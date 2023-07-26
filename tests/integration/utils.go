@@ -82,7 +82,7 @@ func ExecuteRequestTestCase(
 		)
 	}
 
-	ExecuteTEMP(
+	ExecuteTestCase(
 		t,
 		TestCase{
 			Description: test.Description,

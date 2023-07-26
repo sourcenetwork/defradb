@@ -43,7 +43,7 @@ func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
@@ -80,5 +80,5 @@ func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

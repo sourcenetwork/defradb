@@ -44,7 +44,7 @@ func TestSchemaUpdatesAddFieldSimpleWithFilter(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldSimpleWithFilterOnPopulatedDatabase(t *testing.T) {
@@ -88,5 +88,5 @@ func TestSchemaUpdatesAddFieldSimpleWithFilterOnPopulatedDatabase(t *testing.T) 
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

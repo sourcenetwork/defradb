@@ -47,7 +47,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArray(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindNillableFloatArrayWithCreate(t *testing.T) {
@@ -95,7 +95,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArrayWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindNillableFloatArraySubstitutionWithCreate(t *testing.T) {
@@ -143,5 +143,5 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArraySubstitutionWithCreate(t *te
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

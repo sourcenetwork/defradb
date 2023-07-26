@@ -59,5 +59,5 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

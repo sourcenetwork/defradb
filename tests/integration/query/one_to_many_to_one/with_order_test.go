@@ -84,7 +84,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
@@ -155,5 +155,5 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

@@ -68,7 +68,7 @@ func TestDeletionOfADocumentUsingSingleKeyWhereDocExists(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
@@ -278,5 +278,5 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery_Success(t
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

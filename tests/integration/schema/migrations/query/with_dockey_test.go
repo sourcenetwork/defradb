@@ -84,7 +84,7 @@ func TestSchemaMigrationQueryByDocKey(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test asserts that lenses are being correctly returned to the pool for reuse after
@@ -260,5 +260,5 @@ func TestSchemaMigrationQueryMultipleQueriesByDocKey(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

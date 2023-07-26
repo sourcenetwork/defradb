@@ -267,25 +267,12 @@ func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB
 //
 // Will also attempt to detect incompatible changes in the persisted data if
 // configured to do so (the CI will do so, but disabled by default as it is slow).
-func ExecuteTEMP(
+func ExecuteTestCase(
 	t *testing.T,
 	testCase TestCase,
 ) {
 	collectionNames := getCollectionNames(testCase)
 
-	ExecuteTestCase(t, collectionNames, testCase)
-}
-
-// ExecuteTestCase executes the given TestCase against the configured database
-// instances.
-//
-// Will also attempt to detect incompatible changes in the persisted data if
-// configured to do so (the CI will do so, but disabled by default as it is slow).
-func ExecuteTestCase(
-	t *testing.T,
-	collectionNames []string,
-	testCase TestCase,
-) {
 	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames) {
 		return
 	}

@@ -77,5 +77,5 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

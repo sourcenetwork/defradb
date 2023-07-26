@@ -49,7 +49,7 @@ func TestQueryCommits(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
@@ -101,7 +101,7 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
@@ -141,7 +141,7 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithFieldNameField(t *testing.T) {
@@ -178,7 +178,7 @@ func TestQueryCommitsWithFieldNameField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
@@ -226,7 +226,7 @@ func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithFieldIDField(t *testing.T) {
@@ -263,7 +263,7 @@ func TestQueryCommitsWithFieldIDField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
@@ -311,5 +311,5 @@ func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

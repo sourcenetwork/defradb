@@ -43,7 +43,7 @@ func TestP2PSubscribeAddGetSingle(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PSubscribeAddGetMultiple(t *testing.T) {
@@ -79,5 +79,5 @@ func TestP2PSubscribeAddGetMultiple(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

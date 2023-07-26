@@ -37,7 +37,7 @@ func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
@@ -60,7 +60,7 @@ func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
@@ -84,7 +84,7 @@ func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
@@ -108,5 +108,5 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

@@ -84,7 +84,7 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
@@ -149,5 +149,5 @@ func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

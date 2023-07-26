@@ -39,7 +39,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
@@ -65,7 +65,7 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -93,7 +93,7 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -125,7 +125,7 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -157,5 +157,5 @@ func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

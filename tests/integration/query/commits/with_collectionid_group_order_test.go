@@ -53,7 +53,7 @@ func TestQueryCommitsWithCollectionIDGroupedAndOrderedDesc(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithCollectionIDGroupedAndOrderedAs(t *testing.T) {
@@ -93,5 +93,5 @@ func TestQueryCommitsWithCollectionIDGroupedAndOrderedAs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

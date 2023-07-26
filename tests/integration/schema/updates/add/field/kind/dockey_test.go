@@ -45,7 +45,7 @@ func TestSchemaUpdatesAddFieldKindDocKey(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindDocKeyWithCreate(t *testing.T) {
@@ -89,7 +89,7 @@ func TestSchemaUpdatesAddFieldKindDocKeyWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindDocKeySubstitutionWithCreate(t *testing.T) {
@@ -133,5 +133,5 @@ func TestSchemaUpdatesAddFieldKindDocKeySubstitutionWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

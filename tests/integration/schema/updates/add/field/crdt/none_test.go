@@ -45,7 +45,7 @@ func TestSchemaUpdatesAddFieldCRDTDefault(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldCRDTNone(t *testing.T) {
@@ -77,5 +77,5 @@ func TestSchemaUpdatesAddFieldCRDTNone(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

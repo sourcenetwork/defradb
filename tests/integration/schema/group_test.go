@@ -75,7 +75,7 @@ func TestGroupByFieldForTheManySideInSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestGroupByFieldForTheSingleSideInSchema(t *testing.T) {
@@ -138,5 +138,5 @@ func TestGroupByFieldForTheSingleSideInSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

@@ -45,7 +45,7 @@ func TestSchemaUpdatesAddFieldKindString(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindStringWithCreate(t *testing.T) {
@@ -89,7 +89,7 @@ func TestSchemaUpdatesAddFieldKindStringWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindStringSubstitutionWithCreate(t *testing.T) {
@@ -133,5 +133,5 @@ func TestSchemaUpdatesAddFieldKindStringSubstitutionWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

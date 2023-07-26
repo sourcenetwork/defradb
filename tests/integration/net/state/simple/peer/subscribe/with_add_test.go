@@ -87,7 +87,7 @@ func TestP2PSubscribeAddSingle(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PSubscribeAddMultiple(t *testing.T) {
@@ -177,7 +177,7 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
@@ -221,7 +221,7 @@ func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PSubscribeAddValidAndErroneousCollectionID(t *testing.T) {
@@ -266,7 +266,7 @@ func TestP2PSubscribeAddValidAndErroneousCollectionID(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
@@ -318,7 +318,7 @@ func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PSubscribeAddNone(t *testing.T) {
@@ -360,5 +360,5 @@ func TestP2PSubscribeAddNone(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

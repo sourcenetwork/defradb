@@ -66,7 +66,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeysWhereOneExists(t *testing.T)
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
@@ -416,7 +416,7 @@ func TestDeletionOfMultipleDocumentsUsingSingleKeyWithShowDeletedDocumentQuery_S
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestDeletionOfMultipleDocumentsUsingEmptySet(t *testing.T) {
@@ -474,5 +474,5 @@ func TestDeletionOfMultipleDocumentsUsingEmptySet(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

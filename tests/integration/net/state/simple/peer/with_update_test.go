@@ -67,7 +67,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // The parent-child distinction in these tests is as much documentation and test
@@ -119,7 +119,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestP2PWithSingleDocumentUpdatePerNode tests document syncing between two nodes with a single update per node
@@ -177,7 +177,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T) {
@@ -257,7 +257,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing.T) {
@@ -339,7 +339,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestP2PWithMultipleDocumentUpdatesPerNode tests document syncing between two nodes with multiple updates per node.
@@ -419,7 +419,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection tests document syncing between two nodes by
@@ -485,7 +485,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection tests document syncing between two nodes with multiple
@@ -601,5 +601,5 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

@@ -54,5 +54,5 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

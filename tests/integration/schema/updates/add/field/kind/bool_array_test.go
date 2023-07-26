@@ -45,7 +45,7 @@ func TestSchemaUpdatesAddFieldKindBoolArray(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindBoolArrayWithCreate(t *testing.T) {
@@ -89,7 +89,7 @@ func TestSchemaUpdatesAddFieldKindBoolArrayWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindBoolArraySubstitutionWithCreate(t *testing.T) {
@@ -133,5 +133,5 @@ func TestSchemaUpdatesAddFieldKindBoolArraySubstitutionWithCreate(t *testing.T) 
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

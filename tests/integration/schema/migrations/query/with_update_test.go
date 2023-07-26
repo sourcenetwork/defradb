@@ -95,7 +95,7 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
@@ -163,5 +163,5 @@ func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

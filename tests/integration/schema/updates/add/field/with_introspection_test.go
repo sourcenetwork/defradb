@@ -65,7 +65,7 @@ func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenBadPatch(t *testing.T) {
@@ -113,5 +113,5 @@ func TestSchemaUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenBadPatch(t *
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

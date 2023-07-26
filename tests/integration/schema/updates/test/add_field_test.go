@@ -46,7 +46,7 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
@@ -80,5 +80,5 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

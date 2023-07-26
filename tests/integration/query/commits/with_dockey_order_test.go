@@ -68,7 +68,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
@@ -123,7 +123,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
@@ -178,7 +178,7 @@ func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
@@ -233,7 +233,7 @@ func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
@@ -318,5 +318,5 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

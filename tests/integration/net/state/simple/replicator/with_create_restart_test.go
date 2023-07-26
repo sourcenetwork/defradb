@@ -60,5 +60,5 @@ func TestP2POneToOneReplicatorWithRestart(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

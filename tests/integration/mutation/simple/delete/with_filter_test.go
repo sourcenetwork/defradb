@@ -414,5 +414,5 @@ func TestDeletionOfDocumentsWithFilterWithShowDeletedDocumentQuery_Success(t *te
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

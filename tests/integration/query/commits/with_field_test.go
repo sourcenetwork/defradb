@@ -41,7 +41,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -73,7 +73,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -105,7 +105,7 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -139,5 +139,5 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

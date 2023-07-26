@@ -47,7 +47,7 @@ func TestSchemaUpdatesAddFieldKindNillableStringArray(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindNillableStringArrayWithCreate(t *testing.T) {
@@ -95,7 +95,7 @@ func TestSchemaUpdatesAddFieldKindNillableStringArrayWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindNillableStringArraySubstitutionWithCreate(t *testing.T) {
@@ -143,5 +143,5 @@ func TestSchemaUpdatesAddFieldKindNillableStringArraySubstitutionWithCreate(t *t
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

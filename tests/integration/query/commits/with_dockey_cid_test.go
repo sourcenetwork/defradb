@@ -42,7 +42,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
@@ -78,7 +78,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
@@ -118,5 +118,5 @@ func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

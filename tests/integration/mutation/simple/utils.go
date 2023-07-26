@@ -30,7 +30,7 @@ func ExecuteTestCase(t *testing.T, test testUtils.RequestTestCase) {
 }
 
 func Execute(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTEMP(
+	testUtils.ExecuteTestCase(
 		t,
 		testUtils.TestCase{
 			Description: test.Description,

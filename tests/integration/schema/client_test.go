@@ -49,5 +49,5 @@ func TestIntrospectionExplainTypeDefined(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

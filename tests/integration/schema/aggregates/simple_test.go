@@ -109,7 +109,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
@@ -213,7 +213,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
@@ -317,5 +317,5 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

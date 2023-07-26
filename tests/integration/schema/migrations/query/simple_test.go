@@ -77,7 +77,7 @@ func TestSchemaMigrationQuery(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
@@ -155,7 +155,7 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // Users may want to register migrations before the schema is locally updated. This may be particularly useful
@@ -217,7 +217,7 @@ func TestSchemaMigrationQueryWithMigrationRegisteredBeforeSchemaPatch(t *testing
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
@@ -288,7 +288,7 @@ func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
@@ -359,7 +359,7 @@ func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
@@ -445,7 +445,7 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is important as it tests that orphan migrations do not block the fetcher(s)
@@ -511,7 +511,7 @@ func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
@@ -572,7 +572,7 @@ func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing.T) {
@@ -633,7 +633,7 @@ func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
@@ -694,7 +694,7 @@ func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequested(t *testing.T) {
@@ -768,7 +768,7 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequested(t *testing.T) {
@@ -830,7 +830,7 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequeste
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRequested(t *testing.T) {
@@ -906,5 +906,5 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 		},
 	}
 
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

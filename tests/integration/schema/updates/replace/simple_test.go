@@ -51,7 +51,7 @@ func TestSchemaUpdatesReplaceCollectionErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 /* WIP
@@ -108,6 +108,6 @@ func TestSchemaUpdatesReplaceCollectionNameWithExistingDoesNotChangeVersionID(t 
 			},
 		},
 	}
-	testUtils.ExecuteTEMP(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 */
