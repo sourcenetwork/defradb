@@ -35,6 +35,7 @@ type Stats struct {
 	FieldsFetched uint64
 }
 
+// Add adds the other stats to the current stats.
 func (s Stats) Add(other Stats) Stats {
 	return Stats{
 		DocsFetched:   s.DocsFetched + other.DocsFetched,
@@ -42,6 +43,7 @@ func (s Stats) Add(other Stats) Stats {
 	}
 }
 
+// Reset resets the stats.
 func (s *Stats) Reset() {
 	s.DocsFetched = 0
 	s.FieldsFetched = 0
