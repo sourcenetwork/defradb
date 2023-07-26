@@ -27,8 +27,11 @@ import (
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
 
+// Stats contains statistics about the fetcher execution.
 type Stats struct {
-	DocsFetched   uint64
+	// Number of documents fetched.
+	DocsFetched uint64
+	// Number of fields fetched.
 	FieldsFetched uint64
 }
 
