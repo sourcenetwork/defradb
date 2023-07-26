@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
@@ -378,7 +377,7 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) (core.Doc, error) {
 
 	// We have to reset the scan node after appending the new key-filter
 	if err := n.subType.Init(); err != nil {
-		return doc, errors.Wrap("sub-type initialization error at scan node reset", err)
+		return doc, NewErrSubTypeInit(err)
 	}
 
 	next, err := n.subType.Next()
@@ -413,7 +412,7 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) (core.Doc, error) {
 
 	// re-initialize the sub type plan
 	if err := n.subType.Init(); err != nil {
-		return doc, errors.Wrap("sub-type initialization error at scan node reset", err)
+		return doc, NewErrSubTypeInit(err)
 	}
 
 	// if we don't find any docs from our point span lookup
