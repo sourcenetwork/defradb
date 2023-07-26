@@ -27,6 +27,23 @@ import (
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
 
+type Stats struct {
+	DocsFetched   uint64
+	FieldsFetched uint64
+}
+
+func (s Stats) Add(other Stats) Stats {
+	return Stats{
+		DocsFetched:   s.DocsFetched + other.DocsFetched,
+		FieldsFetched: s.FieldsFetched + other.FieldsFetched,
+	}
+}
+
+func (s *Stats) Reset() {
+	s.DocsFetched = 0
+	s.FieldsFetched = 0
+}
+
 // Fetcher is the interface for collecting documents from the underlying data store.
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
@@ -41,9 +58,9 @@ type Fetcher interface {
 		showDeleted bool,
 	) error
 	Start(ctx context.Context, spans core.Spans) error
-	FetchNext(ctx context.Context) (EncodedDocument, error)
-	FetchNextDecoded(ctx context.Context) (*client.Document, error)
-	FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, error)
+	FetchNext(ctx context.Context) (EncodedDocument, Stats, error)
+	FetchNextDecoded(ctx context.Context) (*client.Document, Stats, error)
+	FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, Stats, error)
 	Close() error
 }
 
@@ -105,6 +122,8 @@ type DocumentFetcher struct {
 	// we use a parallel fetcher to be able to return the documents in the expected order.
 	// That being lexicographically ordered dockeys.
 	deletedDocFetcher *DocumentFetcher
+
+	stats Stats
 }
 
 // Init implements DocumentFetcher.
@@ -490,6 +509,8 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		property.IsFilter = true
 	}
 
+	df.stats.FieldsFetched++
+
 	df.doc.Properties[fieldDesc] = property
 
 	return nil
@@ -497,25 +518,26 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 
 // FetchNext returns a raw binary encoded document. It iterates over all the relevant
 // keypairs from the underlying store and constructs the document.
-func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
+func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Stats, error) {
 	if df.kvEnd {
-		return nil, nil
+		return nil, Stats{}, nil
 	}
 
 	if df.kv == nil {
-		return nil, client.NewErrUninitializeProperty("DocumentFetcher", "kv")
+		return nil, Stats{}, client.NewErrUninitializeProperty("DocumentFetcher", "kv")
 	}
 	// save the DocKey of the current kv pair so we can track when we cross the doc pair boundries
 	// keyparts := df.kv.Key.List()
 	// key := keyparts[len(keyparts)-2]
 
+	df.stats.Reset()
 	// iterate until we have collected all the necessary kv pairs for the doc
 	// we'll know when were done when either
 	// A) Reach the end of the iterator
 	for {
 		err := df.processKV(df.kv)
 		if err != nil {
-			return nil, err
+			return nil, Stats{}, err
 		}
 
 		if df.filter != nil {
@@ -524,13 +546,13 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, erro
 			if df.filterSet.Equal(df.doc.filterSet) {
 				filterDoc, err := df.doc.decodeToDocForFilter()
 				if err != nil {
-					return nil, err
+					return nil, Stats{}, err
 				}
 
 				df.ranFilter = true
 				df.passedFilter, err = mapper.RunFilter(filterDoc, df.filter)
 				if err != nil {
-					return nil, err
+					return nil, Stats{}, err
 				}
 			}
 		}
@@ -540,36 +562,37 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, erro
 		// so we seek to the next doc
 		spansDone, docDone, err := df.nextKey(ctx, !df.passedFilter && df.ranFilter)
 		if err != nil {
-			return nil, err
+			return nil, Stats{}, err
 		}
 
 		if docDone {
+			df.stats.DocsFetched++
 			if df.filter != nil {
 				// if we passed, return
 				if df.passedFilter {
-					return df.doc, nil
+					return df.doc, df.stats, nil
 				} else if !df.ranFilter { // if we didn't run, run it
 					decodedDoc, err := df.doc.DecodeToDoc()
 					if err != nil {
-						return nil, err
+						return nil, Stats{}, err
 					}
 					df.passedFilter, err = mapper.RunFilter(decodedDoc, df.filter)
 					if err != nil {
-						return nil, err
+						return nil, Stats{}, err
 					}
 					if df.passedFilter {
-						return df.doc, nil
+						return df.doc, df.stats, nil
 					}
 				}
 			} else {
-				return df.doc, nil
+				return df.doc, df.stats, nil
 			}
 
 			if !spansDone {
 				continue
 			}
 
-			return nil, nil
+			return nil, df.stats, nil
 		}
 
 		// // crossed document kv boundary?
@@ -583,21 +606,21 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, erro
 }
 
 // FetchNextDecoded implements DocumentFetcher
-func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, error) {
-	encdoc, err := df.FetchNext(ctx)
+func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, Stats, error) {
+	encdoc, stats, err := df.FetchNext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, Stats{}, err
 	}
 	if encdoc == nil {
-		return nil, nil
+		return nil, Stats{}, nil
 	}
 
 	decodedDoc, err := encdoc.Decode()
 	if err != nil {
-		return nil, err
+		return nil, Stats{}, err
 	}
 
-	return decodedDoc, nil
+	return decodedDoc, stats, nil
 }
 
 // FetchNextDoc returns the next document as a core.Doc.
@@ -605,10 +628,11 @@ func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Docume
 func (df *DocumentFetcher) FetchNextDoc(
 	ctx context.Context,
 	mapping *core.DocumentMapping,
-) ([]byte, core.Doc, error) {
+) ([]byte, core.Doc, Stats, error) {
 	var err error
 	var encdoc EncodedDocument
 	var status client.DocumentStatus
+	var resultStats Stats
 
 	// If the deletedDocFetcher isn't nil, this means that the user requested to include the deleted documents
 	// in the query. To keep the active and deleted docs in lexicographic order of dockeys, we use the two distinct
@@ -619,19 +643,23 @@ func (df *DocumentFetcher) FetchNextDoc(
 		if !ddf.kvEnd {
 			if df.reverse {
 				if df.kvEnd || ddf.kv.Key.DocKey > df.kv.Key.DocKey {
-					encdoc, err = ddf.FetchNext(ctx)
+					var stats Stats
+					encdoc, stats, err = ddf.FetchNext(ctx)
 					if err != nil {
-						return nil, core.Doc{}, err
+						return nil, core.Doc{}, Stats{}, err
 					}
 					status = client.Deleted
+					resultStats = resultStats.Add(stats)
 				}
 			} else {
 				if df.kvEnd || ddf.kv.Key.DocKey < df.kv.Key.DocKey {
-					encdoc, err = ddf.FetchNext(ctx)
+					var stats Stats
+					encdoc, stats, err = ddf.FetchNext(ctx)
 					if err != nil {
-						return nil, core.Doc{}, err
+						return nil, core.Doc{}, Stats{}, err
 					}
 					status = client.Deleted
+					resultStats = resultStats.Add(stats)
 				}
 			}
 		}
@@ -640,22 +668,24 @@ func (df *DocumentFetcher) FetchNextDoc(
 	// At this point id encdoc is nil, it means that the next document to be
 	// returned will be from the active ones.
 	if encdoc == nil {
-		encdoc, err = df.FetchNext(ctx)
+		var stats Stats
+		encdoc, stats, err = df.FetchNext(ctx)
 		if err != nil {
-			return nil, core.Doc{}, err
+			return nil, core.Doc{}, Stats{}, err
 		}
+		resultStats = resultStats.Add(stats)
 		if encdoc == nil {
-			return nil, core.Doc{}, nil
+			return nil, core.Doc{}, resultStats, err
 		}
 		status = client.Active
 	}
 
 	doc, err := encdoc.DecodeToDoc()
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, Stats{}, err
 	}
 	doc.Status = status
-	return encdoc.Key(), doc, err
+	return encdoc.Key(), doc, resultStats, err
 }
 
 // Close closes the DocumentFetcher.
