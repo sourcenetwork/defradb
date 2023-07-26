@@ -347,14 +347,19 @@ func (n *typeJoinOne) Next() (bool, error) {
 
 	doc := n.root.Value()
 	if n.primary {
-		n.currentValue = n.valuesPrimary(doc)
+		n.currentValue, err = n.valuesPrimary(doc)
 	} else {
-		n.currentValue = n.valuesSecondary(doc)
+		n.currentValue, err = n.valuesSecondary(doc)
 	}
+
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
-func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
+func (n *typeJoinOne) valuesSecondary(doc core.Doc) (core.Doc, error) {
 	fkIndex := &mapper.PropertyIndex{
 		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + request.RelatedObjectID),
 	}
@@ -367,32 +372,31 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
 	// using the doc._key as a filter
 	err := appendFilterToScanNode(n.subType, filter)
 	if err != nil {
-		return core.Doc{}
+		return core.Doc{}, err
 	}
 
 	// We have to reset the scan node after appending the new key-filter
 	if err := n.subType.Init(); err != nil {
-		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
-		return doc
+		return doc, NewErrSubTypeInit(err)
 	}
 
 	next, err := n.subType.Next()
 	if !next || err != nil {
-		return doc
+		return doc, err
 	}
 
 	subdoc := n.subType.Value()
 	doc.Fields[n.subSelect.Index] = subdoc
-	return doc
+	return doc, nil
 }
 
-func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
+func (n *typeJoinOne) valuesPrimary(doc core.Doc) (core.Doc, error) {
 	// get the subtype doc key
 	subDocKey := n.docMapper.documentMapping.FirstOfName(doc, n.subTypeName+request.RelatedObjectID)
 
 	subDocKeyStr, ok := subDocKey.(string)
 	if !ok {
-		return doc
+		return doc, nil
 	}
 
 	// create the collection key for the sub doc
@@ -408,8 +412,7 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
 
 	// re-initialize the sub type plan
 	if err := n.subType.Init(); err != nil {
-		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
-		return doc
+		return doc, NewErrSubTypeInit(err)
 	}
 
 	// if we don't find any docs from our point span lookup
@@ -418,18 +421,17 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
 	next, err := n.subType.Next()
 
 	if err != nil {
-		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
-		return doc
+		return doc, err
 	}
 
 	if !next {
-		return doc
+		return doc, nil
 	}
 
 	subDoc := n.subType.Value()
 	doc.Fields[n.subSelect.Index] = subDoc
 
-	return doc
+	return doc, nil
 }
 
 func (n *typeJoinOne) Close() error {
