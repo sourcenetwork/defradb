@@ -267,6 +267,20 @@ func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB
 //
 // Will also attempt to detect incompatible changes in the persisted data if
 // configured to do so (the CI will do so, but disabled by default as it is slow).
+func ExecuteTEMP(
+	t *testing.T,
+	testCase TestCase,
+) {
+	collectionNames := getCollectionNames(testCase)
+
+	ExecuteTestCase(t, collectionNames, testCase)
+}
+
+// ExecuteTestCase executes the given TestCase against the configured database
+// instances.
+//
+// Will also attempt to detect incompatible changes in the persisted data if
+// configured to do so (the CI will do so, but disabled by default as it is slow).
 func ExecuteTestCase(
 	t *testing.T,
 	collectionNames []string,
@@ -415,6 +429,57 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
 		}
 	}
+}
+
+// getCollectionNames gets an ordered, unique set of collection names across all nodes
+// from the action set within the given test case.
+//
+// It preserves the order in which they are declared, and shares indexes across all nodes, so
+// if a second node adds a collection of a name that was previously declared in another node
+// the new node will respect the index originally assigned.  This allows collections to be
+// referenced across multiple nodes by a consistent, predictable index - allowing a single
+// action to target the same collection across multiple nodes.
+func getCollectionNames(testCase TestCase) []string {
+	nextIndex := 0
+	collectionIndexByName := map[string]int{}
+
+	for _, a := range testCase.Actions {
+		switch action := a.(type) {
+		case SchemaUpdate:
+			if action.ExpectedError != "" {
+				// If an error is expected then no collections should result from this action
+				continue
+			}
+
+			splitByType := strings.Split(action.Schema, "type ")
+			// Skip the first, as that preceeds `type ` if `type ` is present,
+			// else there are no types.
+			for i := 1; i < len(splitByType); i++ {
+				wipSplit := strings.TrimLeft(splitByType[i], " ")
+				indexOfLastChar := strings.IndexAny(wipSplit, " {")
+				if indexOfLastChar <= 0 {
+					// This should never happen
+					continue
+				}
+
+				collectionName := wipSplit[:indexOfLastChar]
+				if _, ok := collectionIndexByName[collectionName]; ok {
+					// Collection name has already been added, possibly via another node
+					continue
+				}
+
+				collectionIndexByName[collectionName] = nextIndex
+				nextIndex++
+			}
+		}
+	}
+
+	collectionNames := make([]string, len(collectionIndexByName))
+	for name, index := range collectionIndexByName {
+		collectionNames[index] = name
+	}
+
+	return collectionNames
 }
 
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
