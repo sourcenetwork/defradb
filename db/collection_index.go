@@ -403,6 +403,8 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	if err != nil {
 		return nil, err
 	}
+	defer c.discardImplicitTxn(ctx, txn)
+
 	err = c.loadIndexes(ctx, txn)
 	if err != nil {
 		return nil, err
