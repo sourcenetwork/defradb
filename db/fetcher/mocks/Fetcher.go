@@ -73,13 +73,13 @@ func (_c *Fetcher_Close_Call) RunAndReturn(run func() error) *Fetcher_Close_Call
 }
 
 // FetchNext provides a mock function with given fields: ctx
-func (_m *Fetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, fetcher.Stats, error) {
+func (_m *Fetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, fetcher.ExecInfo, error) {
 	ret := _m.Called(ctx)
 
 	var r0 fetcher.EncodedDocument
-	var r1 fetcher.Stats
+	var r1 fetcher.ExecInfo
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context) (fetcher.EncodedDocument, fetcher.Stats, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (fetcher.EncodedDocument, fetcher.ExecInfo, error)); ok {
 		return rf(ctx)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context) fetcher.EncodedDocument); ok {
@@ -90,10 +90,10 @@ func (_m *Fetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, fetc
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) fetcher.Stats); ok {
+	if rf, ok := ret.Get(1).(func(context.Context) fetcher.ExecInfo); ok {
 		r1 = rf(ctx)
 	} else {
-		r1 = ret.Get(1).(fetcher.Stats)
+		r1 = ret.Get(1).(fetcher.ExecInfo)
 	}
 
 	if rf, ok := ret.Get(2).(func(context.Context) error); ok {
@@ -123,24 +123,24 @@ func (_c *Fetcher_FetchNext_Call) Run(run func(ctx context.Context)) *Fetcher_Fe
 	return _c
 }
 
-func (_c *Fetcher_FetchNext_Call) Return(_a0 fetcher.EncodedDocument, _a1 fetcher.Stats, _a2 error) *Fetcher_FetchNext_Call {
+func (_c *Fetcher_FetchNext_Call) Return(_a0 fetcher.EncodedDocument, _a1 fetcher.ExecInfo, _a2 error) *Fetcher_FetchNext_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Fetcher_FetchNext_Call) RunAndReturn(run func(context.Context) (fetcher.EncodedDocument, fetcher.Stats, error)) *Fetcher_FetchNext_Call {
+func (_c *Fetcher_FetchNext_Call) RunAndReturn(run func(context.Context) (fetcher.EncodedDocument, fetcher.ExecInfo, error)) *Fetcher_FetchNext_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FetchNextDecoded provides a mock function with given fields: ctx
-func (_m *Fetcher) FetchNextDecoded(ctx context.Context) (*client.Document, fetcher.Stats, error) {
+func (_m *Fetcher) FetchNextDecoded(ctx context.Context) (*client.Document, fetcher.ExecInfo, error) {
 	ret := _m.Called(ctx)
 
 	var r0 *client.Document
-	var r1 fetcher.Stats
+	var r1 fetcher.ExecInfo
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*client.Document, fetcher.Stats, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*client.Document, fetcher.ExecInfo, error)); ok {
 		return rf(ctx)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context) *client.Document); ok {
@@ -151,10 +151,10 @@ func (_m *Fetcher) FetchNextDecoded(ctx context.Context) (*client.Document, fetc
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) fetcher.Stats); ok {
+	if rf, ok := ret.Get(1).(func(context.Context) fetcher.ExecInfo); ok {
 		r1 = rf(ctx)
 	} else {
-		r1 = ret.Get(1).(fetcher.Stats)
+		r1 = ret.Get(1).(fetcher.ExecInfo)
 	}
 
 	if rf, ok := ret.Get(2).(func(context.Context) error); ok {
@@ -184,25 +184,25 @@ func (_c *Fetcher_FetchNextDecoded_Call) Run(run func(ctx context.Context)) *Fet
 	return _c
 }
 
-func (_c *Fetcher_FetchNextDecoded_Call) Return(_a0 *client.Document, _a1 fetcher.Stats, _a2 error) *Fetcher_FetchNextDecoded_Call {
+func (_c *Fetcher_FetchNextDecoded_Call) Return(_a0 *client.Document, _a1 fetcher.ExecInfo, _a2 error) *Fetcher_FetchNextDecoded_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Fetcher_FetchNextDecoded_Call) RunAndReturn(run func(context.Context) (*client.Document, fetcher.Stats, error)) *Fetcher_FetchNextDecoded_Call {
+func (_c *Fetcher_FetchNextDecoded_Call) RunAndReturn(run func(context.Context) (*client.Document, fetcher.ExecInfo, error)) *Fetcher_FetchNextDecoded_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FetchNextDoc provides a mock function with given fields: ctx, mapping
-func (_m *Fetcher) FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, fetcher.Stats, error) {
+func (_m *Fetcher) FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, fetcher.ExecInfo, error) {
 	ret := _m.Called(ctx, mapping)
 
 	var r0 []byte
 	var r1 core.Doc
-	var r2 fetcher.Stats
+	var r2 fetcher.ExecInfo
 	var r3 error
-	if rf, ok := ret.Get(0).(func(context.Context, *core.DocumentMapping) ([]byte, core.Doc, fetcher.Stats, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *core.DocumentMapping) ([]byte, core.Doc, fetcher.ExecInfo, error)); ok {
 		return rf(ctx, mapping)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, *core.DocumentMapping) []byte); ok {
@@ -219,10 +219,10 @@ func (_m *Fetcher) FetchNextDoc(ctx context.Context, mapping *core.DocumentMappi
 		r1 = ret.Get(1).(core.Doc)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, *core.DocumentMapping) fetcher.Stats); ok {
+	if rf, ok := ret.Get(2).(func(context.Context, *core.DocumentMapping) fetcher.ExecInfo); ok {
 		r2 = rf(ctx, mapping)
 	} else {
-		r2 = ret.Get(2).(fetcher.Stats)
+		r2 = ret.Get(2).(fetcher.ExecInfo)
 	}
 
 	if rf, ok := ret.Get(3).(func(context.Context, *core.DocumentMapping) error); ok {
@@ -253,12 +253,12 @@ func (_c *Fetcher_FetchNextDoc_Call) Run(run func(ctx context.Context, mapping *
 	return _c
 }
 
-func (_c *Fetcher_FetchNextDoc_Call) Return(_a0 []byte, _a1 core.Doc, _a2 fetcher.Stats, _a3 error) *Fetcher_FetchNextDoc_Call {
+func (_c *Fetcher_FetchNextDoc_Call) Return(_a0 []byte, _a1 core.Doc, _a2 fetcher.ExecInfo, _a3 error) *Fetcher_FetchNextDoc_Call {
 	_c.Call.Return(_a0, _a1, _a2, _a3)
 	return _c
 }
 
-func (_c *Fetcher_FetchNextDoc_Call) RunAndReturn(run func(context.Context, *core.DocumentMapping) ([]byte, core.Doc, fetcher.Stats, error)) *Fetcher_FetchNextDoc_Call {
+func (_c *Fetcher_FetchNextDoc_Call) RunAndReturn(run func(context.Context, *core.DocumentMapping) ([]byte, core.Doc, fetcher.ExecInfo, error)) *Fetcher_FetchNextDoc_Call {
 	_c.Call.Return(run)
 	return _c
 }

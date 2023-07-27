@@ -27,7 +27,7 @@ type scanExecInfo struct {
 	iterations uint64
 
 	// Information about fetches.
-	fetches fetcher.Stats
+	fetches fetcher.ExecInfo
 }
 
 // scans an index for records
@@ -165,12 +165,12 @@ func (n *scanNode) Next() (bool, error) {
 	}
 
 	var err error
-	var stats fetcher.Stats
-	n.docKey, n.currentValue, stats, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
+	var execInfo fetcher.ExecInfo
+	n.docKey, n.currentValue, execInfo, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
 	if err != nil {
 		return false, err
 	}
-	n.execInfo.fetches = n.execInfo.fetches.Add(stats)
+	n.execInfo.fetches.Add(execInfo)
 
 	if len(n.currentValue.Fields) == 0 {
 		return false, nil
