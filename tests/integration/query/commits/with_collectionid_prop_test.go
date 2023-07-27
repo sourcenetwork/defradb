@@ -62,5 +62,5 @@ func TestQueryCommitsWithCollectionID(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users", "Companies"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

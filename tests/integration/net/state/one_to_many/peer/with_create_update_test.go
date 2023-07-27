@@ -113,5 +113,5 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

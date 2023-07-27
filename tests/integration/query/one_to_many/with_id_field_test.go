@@ -84,5 +84,5 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

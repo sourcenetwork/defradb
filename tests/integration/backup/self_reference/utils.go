@@ -28,7 +28,6 @@ var schemas = (`
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
-		[]string{"User"},
 		testUtils.TestCase{
 			Description: test.Description,
 			Actions: append(
