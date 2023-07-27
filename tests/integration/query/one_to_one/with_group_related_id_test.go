@@ -94,7 +94,7 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test documents unwanted behaviour, see:
@@ -172,5 +172,5 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondary(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Book", "Author"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

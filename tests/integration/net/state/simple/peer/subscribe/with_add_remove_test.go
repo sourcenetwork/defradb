@@ -72,7 +72,7 @@ func TestP2PSubscribeAddAndRemoveSingle(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PSubscribeAddAndRemoveMultiple(t *testing.T) {
@@ -144,7 +144,7 @@ func TestP2PSubscribeAddAndRemoveMultiple(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users", "Giraffes"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
@@ -196,7 +196,7 @@ func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestP2PSubscribeAddSingleAndRemoveNone(t *testing.T) {
@@ -246,5 +246,5 @@ func TestP2PSubscribeAddSingleAndRemoveNone(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

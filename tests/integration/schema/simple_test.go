@@ -41,7 +41,7 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
@@ -62,7 +62,7 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
@@ -78,7 +78,7 @@ func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
@@ -111,7 +111,7 @@ func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users", "Books"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
@@ -147,7 +147,7 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
@@ -164,7 +164,7 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
@@ -210,7 +210,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
@@ -227,7 +227,7 @@ func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
@@ -248,5 +248,5 @@ func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Dogs", "Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

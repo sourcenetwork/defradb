@@ -123,7 +123,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) {
@@ -163,7 +163,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
@@ -211,7 +211,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
@@ -282,5 +282,5 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

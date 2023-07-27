@@ -50,7 +50,7 @@ func TestMutationCreateSimpleErrorsGivenNonExistantField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestMutationCreateSimple(t *testing.T) {

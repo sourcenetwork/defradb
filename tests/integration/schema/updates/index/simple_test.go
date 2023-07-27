@@ -47,7 +47,7 @@ func TestPatching_ForCollectionWithIndex_StillWorks(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestPatching_IfAttemptToAddIndex_ReturnError(t *testing.T) {
@@ -90,7 +90,7 @@ func TestPatching_IfAttemptToAddIndex_ReturnError(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestPatching_IfAttemptToDropIndex_ReturnError(t *testing.T) {
@@ -123,7 +123,7 @@ func TestPatching_IfAttemptToDropIndex_ReturnError(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestPatching_IfAttemptToChangeIndexName_ReturnError(t *testing.T) {
@@ -156,7 +156,7 @@ func TestPatching_IfAttemptToChangeIndexName_ReturnError(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestPatching_IfAttemptToChangeIndexField_ReturnError(t *testing.T) {
@@ -228,6 +228,6 @@ func TestPatching_IfAttemptToChangeIndexField_ReturnError(t *testing.T) {
 				},
 			},
 		}
-		testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+		testUtils.ExecuteTestCase(t, test)
 	}
 }

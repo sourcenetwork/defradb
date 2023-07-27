@@ -83,7 +83,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // TestP2PCreateWithP2PCollection ensures that created documents reach the node that subscribes
@@ -184,5 +184,5 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

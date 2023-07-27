@@ -70,7 +70,7 @@ func TestSchemaRelationOneToOne(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Dog", "User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaRelationManyToOne(t *testing.T) {
@@ -120,7 +120,7 @@ func TestSchemaRelationManyToOne(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Dog", "User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaRelationErrorsGivenOneSidedManyRelationField(t *testing.T) {
@@ -140,7 +140,7 @@ func TestSchemaRelationErrorsGivenOneSidedManyRelationField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Dog", "User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaRelationErrorsGivenOneSidedRelationField(t *testing.T) {
@@ -160,7 +160,7 @@ func TestSchemaRelationErrorsGivenOneSidedRelationField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Dog", "User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaRelation_GivenSelfReferemceRelationField_ReturnError(t *testing.T) {
@@ -178,5 +178,5 @@ func TestSchemaRelation_GivenSelfReferemceRelationField_ReturnError(t *testing.T
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Dog", "User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
