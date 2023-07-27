@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -17,25 +17,28 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
+func TestExecuteExplainQueryDeletedDocs(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) request with count on one to many relation.",
+		Description: "Explain (execute) query with deleted documents.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
-
-			// Books
-			create3BookDocuments(),
-
-			// Authors
-			create2AuthorDocuments(),
-
+			create2AddressDocuments(),
+			testUtils.Request{
+				Request: `mutation  {
+					delete_ContactAddress(ids: ["bae-f01bf83f-1507-5fb5-a6a3-09ecffa3c692"]) {
+						_key
+					}
+				}`,
+				Results: []map[string]any{
+					{"_key": "bae-f01bf83f-1507-5fb5-a6a3-09ecffa3c692"},
+				},
+			},
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					Author {
-						name
-						numberOfBooks: _count(books: {})
+					ContactAddress(showDeleted: true) {
+						city
+						country
 					}
 				}`,
 
@@ -46,19 +49,13 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 							"sizeOfResult":     2,
 							"planExecutions":   uint64(3),
 							"selectTopNode": dataMap{
-								"countNode": dataMap{
-									"iterations": uint64(3),
-									"selectNode": dataMap{
-										"iterations":    uint64(3),
-										"filterMatches": uint64(2),
-										"typeIndexJoin": dataMap{
-											"iterations": uint64(3),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(2),
-											},
-										},
+								"selectNode": dataMap{
+									"iterations":    uint64(3),
+									"filterMatches": uint64(2),
+									"scanNode": dataMap{
+										"iterations":   uint64(3),
+										"docFetches":   uint64(2),
+										"fieldFetches": uint64(4),
 									},
 								},
 							},

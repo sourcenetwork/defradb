@@ -108,116 +108,122 @@ func (f *lensedFetcher) Start(ctx context.Context, spans core.Spans) error {
 	return f.source.Start(ctx, spans)
 }
 
-func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, error) {
+func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, fetcher.ExecInfo, error) {
 	panic("This function is never called and is dead code.  As this type is internal, panicing is okay for now")
 }
 
-func (f *lensedFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, error) {
-	doc, err := f.source.FetchNextDecoded(ctx)
+func (f *lensedFetcher) FetchNextDecoded(
+	ctx context.Context,
+) (*client.Document, fetcher.ExecInfo, error) {
+	doc, execInfo, err := f.source.FetchNextDecoded(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fetcher.ExecInfo{}, err
 	}
 
 	if doc == nil {
-		return nil, nil
+		return nil, execInfo, nil
 	}
 
 	if !f.hasMigrations || doc.SchemaVersionID == f.targetVersionID {
 		// If there are no migrations registered for this schema, or if the document is already
 		// at the target schema version, no migration is required and we can return it early.
-		return doc, nil
+		return doc, execInfo, nil
 	}
 
 	sourceLensDoc, err := clientDocToLensDoc(doc)
 	if err != nil {
-		return nil, err
+		return nil, fetcher.ExecInfo{}, err
 	}
 
 	err = f.lens.Put(doc.SchemaVersionID, sourceLensDoc)
 	if err != nil {
-		return nil, err
+		return nil, fetcher.ExecInfo{}, err
 	}
 
 	hasNext, err := f.lens.Next()
 	if err != nil {
-		return nil, err
+		return nil, fetcher.ExecInfo{}, err
 	}
 	if !hasNext {
 		// The migration decided to not yield a document, so we cycle through the next fetcher doc
-		return f.FetchNextDecoded(ctx)
+		doc, nextExecInfo, err := f.FetchNextDecoded(ctx)
+		execInfo.Add(nextExecInfo)
+		return doc, execInfo, err
 	}
 
 	migratedLensDoc, err := f.lens.Value()
 	if err != nil {
-		return nil, err
+		return nil, fetcher.ExecInfo{}, err
 	}
 
 	migratedDoc, err := f.lensDocToClientDoc(migratedLensDoc)
 	if err != nil {
-		return nil, err
+		return nil, fetcher.ExecInfo{}, err
 	}
 
 	err = f.updateDataStore(ctx, sourceLensDoc, migratedLensDoc)
 	if err != nil {
-		return nil, err
+		return nil, fetcher.ExecInfo{}, err
 	}
 
-	return migratedDoc, nil
+	return migratedDoc, execInfo, nil
 }
 
 func (f *lensedFetcher) FetchNextDoc(
 	ctx context.Context,
 	mapping *core.DocumentMapping,
-) ([]byte, core.Doc, error) {
-	key, doc, err := f.source.FetchNextDoc(ctx, mapping)
+) ([]byte, core.Doc, fetcher.ExecInfo, error) {
+	key, doc, execInfo, err := f.source.FetchNextDoc(ctx, mapping)
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, fetcher.ExecInfo{}, err
 	}
 
 	if len(doc.Fields) == 0 {
-		return key, doc, nil
+		return key, doc, execInfo, nil
 	}
 
 	if doc.SchemaVersionID == f.targetVersionID {
 		// If the document is already at the target schema version, no migration is required and
 		// we can return it early.
-		return key, doc, nil
+		return key, doc, execInfo, nil
 	}
 
 	sourceLensDoc, err := coreDocToLensDoc(mapping, doc)
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, fetcher.ExecInfo{}, err
 	}
 	err = f.lens.Put(doc.SchemaVersionID, sourceLensDoc)
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, fetcher.ExecInfo{}, err
 	}
 
 	hasNext, err := f.lens.Next()
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, fetcher.ExecInfo{}, err
 	}
 	if !hasNext {
 		// The migration decided to not yield a document, so we cycle through the next fetcher doc
-		return f.FetchNextDoc(ctx, mapping)
+		key, doc, nextExecInfo, err := f.FetchNextDoc(ctx, mapping)
+		execInfo.Add(nextExecInfo)
+		return key, doc, execInfo, err
 	}
 
 	migratedLensDoc, err := f.lens.Value()
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, fetcher.ExecInfo{}, err
 	}
 
 	migratedDoc, err := f.lensDocToCoreDoc(mapping, migratedLensDoc)
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, fetcher.ExecInfo{}, err
 	}
 
 	err = f.updateDataStore(ctx, sourceLensDoc, migratedLensDoc)
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, fetcher.ExecInfo{}, err
 	}
 
-	return key, migratedDoc, nil
+	return key, migratedDoc, execInfo, nil
 }
 
 func (f *lensedFetcher) Close() error {

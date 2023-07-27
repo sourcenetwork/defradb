@@ -267,7 +267,7 @@ func (c *collection) iterateAllDocs(
 
 	var doc *client.Document
 	for {
-		doc, err = df.FetchNextDecoded(ctx)
+		doc, _, err = df.FetchNextDecoded(ctx)
 		if err != nil {
 			_ = df.Close()
 			return err
