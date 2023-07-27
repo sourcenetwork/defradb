@@ -426,6 +426,8 @@ func executeTestCase(
 // the new node will respect the index originally assigned.  This allows collections to be
 // referenced across multiple nodes by a consistent, predictable index - allowing a single
 // action to target the same collection across multiple nodes.
+//
+// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
 func getCollectionNames(testCase TestCase) []string {
 	nextIndex := 0
 	collectionIndexByName := map[string]int{}
@@ -438,6 +440,7 @@ func getCollectionNames(testCase TestCase) []string {
 				continue
 			}
 
+			// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
 			splitByType := strings.Split(action.Schema, "type ")
 			// Skip the first, as that preceeds `type ` if `type ` is present,
 			// else there are no types.

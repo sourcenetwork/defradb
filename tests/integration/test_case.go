@@ -49,6 +49,9 @@ type ConfigureNode func() config.Config
 type Restart struct{}
 
 // SchemaUpdate is an action that will update the database schema.
+//
+// WARNING: getCollectionNames will not work with schemas ending in `type`, e.g. `user_type`
+// and should be updated if such a name is desired.
 type SchemaUpdate struct {
 	// NodeID may hold the ID (index) of a node to apply this update to.
 	//
