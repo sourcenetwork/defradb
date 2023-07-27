@@ -646,26 +646,16 @@ func (df *DocumentFetcher) FetchNextDoc(
 	if ddf != nil {
 		// If we've reached the end of the deleted docs, we can skip to getting the next active docs.
 		if !ddf.kvEnd {
-			if df.reverse {
-				if df.kvEnd || ddf.kv.Key.DocKey > df.kv.Key.DocKey {
-					var stats Stats
-					encdoc, stats, err = ddf.FetchNext(ctx)
-					if err != nil {
-						return nil, core.Doc{}, Stats{}, err
-					}
-					status = client.Deleted
-					resultStats = resultStats.Add(stats)
+			if df.kvEnd ||
+				(df.reverse && ddf.kv.Key.DocKey > df.kv.Key.DocKey) ||
+				(!df.reverse && ddf.kv.Key.DocKey < df.kv.Key.DocKey) {
+				var stats Stats
+				encdoc, stats, err = ddf.FetchNext(ctx)
+				if err != nil {
+					return nil, core.Doc{}, Stats{}, err
 				}
-			} else {
-				if df.kvEnd || ddf.kv.Key.DocKey < df.kv.Key.DocKey {
-					var stats Stats
-					encdoc, stats, err = ddf.FetchNext(ctx)
-					if err != nil {
-						return nil, core.Doc{}, Stats{}, err
-					}
-					status = client.Deleted
-					resultStats = resultStats.Add(stats)
-				}
+				status = client.Deleted
+				resultStats = resultStats.Add(stats)
 			}
 		}
 	}
