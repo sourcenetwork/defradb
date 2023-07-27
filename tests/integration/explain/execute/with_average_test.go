@@ -53,8 +53,9 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 												"iterations":    uint64(4),
 												"filterMatches": uint64(3),
 												"scanNode": dataMap{
-													"iterations": uint64(4),
-													"docFetches": uint64(4),
+													"iterations":   uint64(4),
+													"docFetches":   uint64(3),
+													"fieldFetches": uint64(5),
 												},
 											},
 										},
@@ -112,8 +113,9 @@ func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 												"typeIndexJoin": dataMap{
 													"iterations": uint64(3),
 													"scanNode": dataMap{
-														"iterations": uint64(3),
-														"docFetches": uint64(3),
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(2),
 													},
 												},
 											},

@@ -571,7 +571,7 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
 				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
-				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, testError)
+				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, fetcher.ExecInfo{}, testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -582,7 +582,7 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
 				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
-				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, nil)
+				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, fetcher.ExecInfo{}, nil)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(testError)
 				return f
@@ -855,7 +855,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
 				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
-				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, testError)
+				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, fetcher.ExecInfo{}, testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -868,7 +868,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
 				// By default the the stubbed fetcher returns an empty, invalid document
 				// here we need to make sure it reaches the Close call by overriding that default.
-				f.EXPECT().FetchNextDecoded(mock.Anything).Maybe().Return(nil, nil)
+				f.EXPECT().FetchNextDecoded(mock.Anything).Maybe().Return(nil, fetcher.ExecInfo{}, nil)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(testError)
 				return f
@@ -1001,7 +1001,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		f.users.fetcherFactory = func() fetcher.Fetcher {
 			df := fetcherMocks.NewStubbedFetcher(t)
 			df.EXPECT().FetchNextDecoded(mock.Anything).Unset()
-			df.EXPECT().FetchNextDecoded(mock.Anything).Return(doc, nil)
+			df.EXPECT().FetchNextDecoded(mock.Anything).Return(doc, fetcher.ExecInfo{}, nil)
 			return df
 		}
 
