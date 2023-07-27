@@ -59,9 +59,7 @@ func TestQueryWithIndex_WithOnlyIndexedField_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Islam",
-					},
+					{"name": "Islam"},
 				},
 			},
 		},
@@ -126,12 +124,8 @@ func TestQueryWithIndex_IfMoreThenOneDoc_ShouldFetchAll(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"age": uint64(32),
-					},
-					{
-						"age": uint64(18),
-					},
+					{"age": uint64(32)},
+					{"age": uint64(18)},
 				},
 			},
 		},
@@ -158,9 +152,7 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Chris",
-					},
+					{"name": "Chris"},
 				},
 			},
 		},
@@ -187,12 +179,8 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Keenan",
-					},
-					{
-						"name": "Chris",
-					},
+					{"name": "Keenan"},
+					{"name": "Chris"},
 				},
 			},
 		},
@@ -219,9 +207,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Shahzad",
-					},
+					{"name": "Shahzad"},
 				},
 			},
 		},
@@ -248,12 +234,8 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Shahzad",
-					},
-					{
-						"name": "Fred",
-					},
+					{"name": "Shahzad"},
+					{"name": "Fred"},
 				},
 			},
 		},
@@ -280,27 +262,13 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Addo",
-					},
-					{
-						"name": "Andy",
-					},
-					{
-						"name": "Fred",
-					},
-					{
-						"name": "John",
-					},
-					{
-						"name": "Chris",
-					},
-					{
-						"name": "Keenan",
-					},
-					{
-						"name": "Shahzad",
-					},
+					{"name": "Addo"},
+					{"name": "Andy"},
+					{"name": "Fred"},
+					{"name": "John"},
+					{"name": "Chris"},
+					{"name": "Keenan"},
+					{"name": "Shahzad"},
 				},
 			},
 		},
@@ -327,12 +295,8 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Shahzad",
-					},
-					{
-						"name": "Andy",
-					},
+					{"name": "Shahzad"},
+					{"name": "Andy"},
 				},
 			},
 		},
@@ -359,15 +323,9 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "John",
-					},
-					{
-						"name": "Islam",
-					},
-					{
-						"name": "Keenan",
-					},
+					{"name": "John"},
+					{"name": "Islam"},
+					{"name": "Keenan"},
 				},
 			},
 		},
@@ -394,12 +352,8 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Addo",
-					},
-					{
-						"name": "Andy",
-					},
+					{"name": "Addo"},
+					{"name": "Andy"},
 				},
 			},
 			testUtils.Request{
@@ -410,12 +364,8 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Fred",
-					},
-					{
-						"name": "Shahzad",
-					},
+					{"name": "Fred"},
+					{"name": "Shahzad"},
 				},
 			},
 			testUtils.Request{
@@ -426,12 +376,8 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Fred",
-					},
-					{
-						"name": "Keenan",
-					},
+					{"name": "Fred"},
+					{"name": "Keenan"},
 				},
 			},
 		},
@@ -458,21 +404,11 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 						}
 					}`,
 				Results: []map[string]any{
-					{
-						"name": "Addo",
-					},
-					{
-						"name": "Andy",
-					},
-					{
-						"name": "Fred",
-					},
-					{
-						"name": "Islam",
-					},
-					{
-						"name": "Keenan",
-					},
+					{"name": "Addo"},
+					{"name": "Andy"},
+					{"name": "Fred"},
+					{"name": "Islam"},
+					{"name": "Keenan"},
 				},
 			},
 		},
