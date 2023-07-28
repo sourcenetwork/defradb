@@ -16,19 +16,21 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type dataMap = map[string]any
 
-type explainResultAsserter struct {
-	iterations    int
-	docFetches    int
-	filterMatches int
+type ExplainResultAsserter struct {
+	iterations    immutable.Option[int]
+	docFetches    immutable.Option[int]
+	fieldFetches  immutable.Option[int]
+	filterMatches immutable.Option[int]
 }
 
-func (a explainResultAsserter) Assert(t *testing.T, result []dataMap) {
+func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
 	require.Len(t, result, 1, "Expected len(result) = 1, got %d", len(result))
 	explainNode, ok := result[0]["explain"].(dataMap)
 	require.True(t, ok, "Expected explain none")
@@ -36,31 +38,62 @@ func (a explainResultAsserter) Assert(t *testing.T, result []dataMap) {
 	assert.Equal(t, explainNode["sizeOfResult"], 1, "Expected sizeOfResult property")
 	assert.Equal(t, explainNode["planExecutions"], uint64(2), "Expected planExecutions property")
 	selectTopNode, ok := explainNode["selectTopNode"].(dataMap)
-	require.True(t, ok, "Expected selectTopNode", "Expected selectTopNode")
+	require.True(t, ok, "Expected selectTopNode")
 	selectNode, ok := selectTopNode["selectNode"].(dataMap)
-	require.True(t, ok, "Expected selectNode", "Expected selectNode")
+	require.True(t, ok, "Expected selectNode")
+
+	if a.filterMatches.HasValue() {
+		filterMatches, hasFilterMatches := selectNode["filterMatches"]
+		require.True(t, hasFilterMatches, "Expected filterMatches property")
+		assert.Equal(t, filterMatches, uint64(a.filterMatches.Value()),
+			"Expected %d filterMatches, got %d", a.filterMatches, filterMatches)
+	}
+
 	scanNode, ok := selectNode["scanNode"].(dataMap)
-	require.True(t, ok, "Expected scanNode", "Expected scanNode")
-	iterations, hasIterations := scanNode["iterations"]
-	require.True(t, hasIterations, "Expected iterations property")
-	assert.Equal(t, iterations, uint64(a.iterations),
-		"Expected %d iterations, got %d", a.iterations, iterations)
-	docFetches, hasDocFetches := scanNode["docFetches"]
-	require.True(t, hasDocFetches, "Expected docFetches property")
-	assert.Equal(t, docFetches, uint64(a.docFetches),
-		"Expected %d docFetches, got %d", a.docFetches, docFetches)
-	filterMatches, hasFilterMatches := selectNode["filterMatches"]
-	require.True(t, hasFilterMatches, "Expected filterMatches property")
-	assert.Equal(t, filterMatches, uint64(a.filterMatches),
-		"Expected %d filterMatches, got %d", a.filterMatches, filterMatches)
+	require.True(t, ok, "Expected scanNode")
+
+	if a.iterations.HasValue() {
+		iterations, hasIterations := scanNode["iterations"]
+		require.True(t, hasIterations, "Expected iterations property")
+		assert.Equal(t, iterations, uint64(a.iterations.Value()),
+			"Expected %d iterations, got %d", a.iterations.Value(), iterations)
+	}
+	if a.docFetches.HasValue() {
+		docFetches, hasDocFetches := scanNode["docFetches"]
+		require.True(t, hasDocFetches, "Expected docFetches property")
+		assert.Equal(t, docFetches, uint64(a.docFetches.Value()),
+			"Expected %d docFetches, got %d", a.docFetches.Value(), docFetches)
+	}
+	if a.fieldFetches.HasValue() {
+		fieldFetches, hasFieldFetches := scanNode["fieldFetches"]
+		require.True(t, hasFieldFetches, "Expected fieldFetches property")
+		assert.Equal(t, fieldFetches, uint64(a.fieldFetches.Value()),
+			"Expected %d fieldFetches, got %d", a.fieldFetches.Value(), fieldFetches)
+	}
 }
 
-func newExplainAsserter(iterations, docFetched, filterMatcher int) *explainResultAsserter {
-	return &explainResultAsserter{
-		iterations:    iterations,
-		docFetches:    docFetched,
-		filterMatches: filterMatcher,
-	}
+func (a *ExplainResultAsserter) WithIterations(iterations int) *ExplainResultAsserter {
+	a.iterations = immutable.Some[int](iterations)
+	return a
+}
+
+func (a *ExplainResultAsserter) WithDocFetches(docFetches int) *ExplainResultAsserter {
+	a.docFetches = immutable.Some[int](docFetches)
+	return a
+}
+
+func (a *ExplainResultAsserter) WithFieldFetches(fieldFetches int) *ExplainResultAsserter {
+	a.fieldFetches = immutable.Some[int](fieldFetches)
+	return a
+}
+
+func (a *ExplainResultAsserter) WithFilterMatches(filterMatches int) *ExplainResultAsserter {
+	a.filterMatches = immutable.Some[int](filterMatches)
+	return a
+}
+
+func NewExplainAsserter() *ExplainResultAsserter {
+	return &ExplainResultAsserter{}
 }
 
 func getDocs() []map[string]any {
