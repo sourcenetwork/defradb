@@ -139,6 +139,12 @@ func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
 	for field, prop := range otherEncDoc.Properties {
 		encdoc.Properties[field] = prop
 	}
+	if other.Key() != nil {
+		encdoc.key = other.Key()
+	}
+	if other.SchemaVersionID() != "" {
+		encdoc.schemaVersionID = other.SchemaVersionID()
+	}
 }
 
 // DecodeToDoc returns a decoded document as a
