@@ -325,7 +325,7 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
 
 	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
-	require.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+	require.ErrorContains(t, err, "invalid character")
 }
 
 func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
