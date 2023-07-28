@@ -18,7 +18,7 @@ import (
 	"github.com/ipfs/go-datastore/query"
 	"github.com/lens-vm/lens/host-go/config"
 	"github.com/lens-vm/lens/host-go/engine/module"
-	"github.com/lens-vm/lens/host-go/runtimes/wasmer"
+	"github.com/lens-vm/lens/host-go/runtimes/wazero"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -69,7 +69,7 @@ func NewRegistry(lensPoolSize immutable.Option[int]) *lensRegistry {
 
 	return &lensRegistry{
 		poolSize:                   size,
-		runtime:                    wasmer.New(),
+		runtime:                    wazero.New(),
 		modulesByPath:              map[string]module.Module{},
 		lensPoolsBySchemaVersionID: map[string]*lensPool{},
 		configs:                    map[string]client.LensConfig{},
