@@ -363,17 +363,17 @@ func (f *IndexFetcher) Start(ctx context.Context, spans core.Spans) error {
 	return nil
 }
 
-func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
+func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
 	f.doc.Reset()
 
 	res, hasValue := f.indexQuery.NextSync()
 	if !hasValue || res.Error != nil {
-		return nil, res.Error
+		return nil, ExecInfo{}, res.Error
 	}
 
 	indexKey, err := core.NewIndexDataStoreKey(res.Key)
 	if err != nil {
-		return nil, err
+		return nil, ExecInfo{}, err
 	}
 	property := &encProperty{
 		Desc: f.indexedField,
@@ -383,62 +383,67 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
 	f.doc.key = indexKey.FieldValues[1]
 	f.doc.Properties[f.indexedField] = property
 
+	var resultExecInfo ExecInfo
 	if f.docFetcher != nil {
 		targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
 		spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
 		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.filter, f.doc.mapping, false, false)
 		if err != nil {
-			return nil, err
+			return nil, ExecInfo{}, err
 		}
 		err = f.docFetcher.Start(ctx, spans)
 		if err != nil {
-			return nil, err
+			return nil, ExecInfo{}, err
 		}
-		encDoc, err := f.docFetcher.FetchNext(ctx)
+		encDoc, execInfo, err := f.docFetcher.FetchNext(ctx)
 		if err != nil {
-			return nil, err
+			return nil, ExecInfo{}, err
 		}
 		err = f.docFetcher.Close()
 		if err != nil {
-			return nil, err
+			return nil, ExecInfo{}, err
 		}
+		resultExecInfo.Add(execInfo)
 		f.doc.MergeProperties(encDoc)
 	}
-	return f.doc, nil
+	return f.doc, resultExecInfo, nil
 }
 
-func (f *IndexFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, error) {
-	encDoc, err := f.FetchNext(ctx)
+func (f *IndexFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, ExecInfo, error) {
+	encDoc, execInfo, err := f.FetchNext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, ExecInfo{}, err
 	}
 	if encDoc == nil {
-		return nil, nil
+		return nil, execInfo, nil
 	}
 
 	decodedDoc, err := encDoc.Decode()
 	if err != nil {
-		return nil, err
+		return nil, ExecInfo{}, err
 	}
 
-	return decodedDoc, nil
+	return decodedDoc, execInfo, nil
 }
 
-func (f *IndexFetcher) FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, error) {
-	encDoc, err := f.FetchNext(ctx)
+func (f *IndexFetcher) FetchNextDoc(
+	ctx context.Context,
+	mapping *core.DocumentMapping,
+) ([]byte, core.Doc, ExecInfo, error) {
+	encDoc, execInfo, err := f.FetchNext(ctx)
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, ExecInfo{}, err
 	}
 	if encDoc == nil {
-		return nil, core.Doc{}, nil
+		return nil, core.Doc{}, execInfo, nil
 	}
 
 	doc, err := encDoc.DecodeToDoc()
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, ExecInfo{}, err
 	}
 	doc.Status = client.Active
-	return encDoc.Key(), doc, err
+	return encDoc.Key(), doc, ExecInfo{}, err
 }
 
 func (f *IndexFetcher) Close() error {
