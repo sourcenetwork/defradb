@@ -22,6 +22,9 @@ import (
 type Txn interface {
 	MultiStore
 
+	// ID returns the unique immutable identifier for this transaction.
+	ID() uint64
+
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an
 	// error is an indication that the data was not committed to the Datastore.
@@ -40,6 +43,8 @@ type txn struct {
 	t ds.Txn
 	MultiStore
 
+	id uint64
+
 	successFns []func()
 	errorFns   []func()
 }
@@ -47,7 +52,7 @@ type txn struct {
 var _ Txn = (*txn)(nil)
 
 // NewTxnFrom returns a new Txn from the rootstore.
-func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (Txn, error) {
+func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, readonly bool) (Txn, error) {
 	// check if our datastore natively supports iterable transaction, transactions or batching
 	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
 		rootTxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
@@ -58,6 +63,7 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (
 		return &txn{
 			rootTxn,
 			multistore,
+			id,
 			[]func(){},
 			[]func(){},
 		}, nil
@@ -73,9 +79,15 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (
 	return &txn{
 		rootTxn,
 		multistore,
+		id,
 		[]func(){},
 		[]func(){},
 	}, nil
+}
+
+// ID returns the unique immutable identifier for this transaction.
+func (t *txn) ID() uint64 {
+	return t.id
 }
 
 // Commit finalizes a transaction, attempting to commit it to the Datastore.

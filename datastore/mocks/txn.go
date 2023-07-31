@@ -226,6 +226,47 @@ func (_c *Txn_Headstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 	return _c
 }
 
+// ID provides a mock function with given fields:
+func (_m *Txn) ID() uint64 {
+	ret := _m.Called()
+
+	var r0 uint64
+	if rf, ok := ret.Get(0).(func() uint64); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(uint64)
+	}
+
+	return r0
+}
+
+// Txn_ID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ID'
+type Txn_ID_Call struct {
+	*mock.Call
+}
+
+// ID is a helper method to define mock.On call
+func (_e *Txn_Expecter) ID() *Txn_ID_Call {
+	return &Txn_ID_Call{Call: _e.mock.On("ID")}
+}
+
+func (_c *Txn_ID_Call) Run(run func()) *Txn_ID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Txn_ID_Call) Return(_a0 uint64) *Txn_ID_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Txn_ID_Call) RunAndReturn(run func() uint64) *Txn_ID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // OnError provides a mock function with given fields: fn
 func (_m *Txn) OnError(fn func()) {
 	_m.Called(fn)

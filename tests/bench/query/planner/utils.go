@@ -133,3 +133,4 @@ func (*dummyTxn) Commit(ctx context.Context) error      { return nil }
 func (*dummyTxn) Discard(ctx context.Context)           {}
 func (*dummyTxn) OnSuccess(fn func())                   {}
 func (*dummyTxn) OnError(fn func())                     {}
+func (*dummyTxn) ID() uint64                            { return 0 }

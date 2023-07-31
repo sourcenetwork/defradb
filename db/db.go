@@ -17,6 +17,7 @@ package db
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
 	ds "github.com/ipfs/go-datastore"
@@ -50,6 +51,13 @@ const (
 // DB is the main interface for interacting with the
 // DefraDB storage system.
 type db struct {
+	// The ID of the last transaction created.
+	//
+	// Warning: we currently rely on this prop being 64-bit aligned in memory
+	// relative to the start of the `db` struct (for atomic.Add calls).  The
+	// easiest way to ensure this alignment is to declare it at the top.
+	previousTxnID uint64
+
 	glock sync.RWMutex
 
 	rootstore  datastore.RootStore
@@ -150,12 +158,15 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 
 // NewTxn creates a new transaction.
 func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
-	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
+	txnId := atomic.AddUint64(&db.previousTxnID, 1)
+
+	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
-	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, readonly)
+	txnId := atomic.AddUint64(&db.previousTxnID, 1)
+	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
 }
 
 // WithTxn returns a new [client.Store] that respects the given transaction.

@@ -121,6 +121,8 @@ func (vf *VersionedFetcher) Init(
 	vf.store, err = datastore.NewTxnFrom(
 		ctx,
 		vf.root,
+		// We can take the parent txn id here
+		txn.ID(),
 		false,
 	) // were going to discard and nuke this later
 	if err != nil {
