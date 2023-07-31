@@ -57,6 +57,7 @@ func NewConcurrentTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uin
 		id,
 		[]func(){},
 		[]func(){},
+		[]func(){},
 	}, nil
 }
 

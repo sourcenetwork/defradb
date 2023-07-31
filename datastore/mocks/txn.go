@@ -267,6 +267,39 @@ func (_c *Txn_ID_Call) RunAndReturn(run func() uint64) *Txn_ID_Call {
 	return _c
 }
 
+// OnDiscard provides a mock function with given fields: fn
+func (_m *Txn) OnDiscard(fn func()) {
+	_m.Called(fn)
+}
+
+// Txn_OnDiscard_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnDiscard'
+type Txn_OnDiscard_Call struct {
+	*mock.Call
+}
+
+// OnDiscard is a helper method to define mock.On call
+//   - fn func()
+func (_e *Txn_Expecter) OnDiscard(fn interface{}) *Txn_OnDiscard_Call {
+	return &Txn_OnDiscard_Call{Call: _e.mock.On("OnDiscard", fn)}
+}
+
+func (_c *Txn_OnDiscard_Call) Run(run func(fn func())) *Txn_OnDiscard_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *Txn_OnDiscard_Call) Return() *Txn_OnDiscard_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Txn_OnDiscard_Call) RunAndReturn(run func(func())) *Txn_OnDiscard_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // OnError provides a mock function with given fields: fn
 func (_m *Txn) OnError(fn func()) {
 	_m.Called(fn)

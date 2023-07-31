@@ -35,8 +35,14 @@ type Txn interface {
 	// state of the Datastore, making it safe to defer.
 	Discard(ctx context.Context)
 
+	// OnSuccess registers a function to be called when the transaction is committed.
 	OnSuccess(fn func())
+
+	// OnError registers a function to be called when the transaction is rolled back.
 	OnError(fn func())
+
+	// OnDiscard registers a function to be called when the transaction is discarded.
+	OnDiscard(fn func())
 }
 
 type txn struct {
@@ -47,6 +53,7 @@ type txn struct {
 
 	successFns []func()
 	errorFns   []func()
+	discardFns []func()
 }
 
 var _ Txn = (*txn)(nil)
@@ -66,6 +73,7 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, reado
 			id,
 			[]func(){},
 			[]func(){},
+			[]func(){},
 		}, nil
 	}
 
@@ -82,6 +90,7 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, reado
 		id,
 		[]func(){},
 		[]func(){},
+		[]func(){},
 	}, nil
 }
 
@@ -93,16 +102,17 @@ func (t *txn) ID() uint64 {
 // Commit finalizes a transaction, attempting to commit it to the Datastore.
 func (t *txn) Commit(ctx context.Context) error {
 	if err := t.t.Commit(ctx); err != nil {
-		t.runErrorFns(ctx)
+		runFns(t.errorFns)
 		return err
 	}
-	t.runSuccessFns(ctx)
+	runFns(t.successFns)
 	return nil
 }
 
 // Discard throws away changes recorded in a transaction without committing.
 func (t *txn) Discard(ctx context.Context) {
 	t.t.Discard(ctx)
+	runFns(t.discardFns)
 }
 
 // OnSuccess registers a function to be called when the transaction is committed.
@@ -121,14 +131,16 @@ func (txn *txn) OnError(fn func()) {
 	txn.errorFns = append(txn.errorFns, fn)
 }
 
-func (txn *txn) runErrorFns(ctx context.Context) {
-	for _, fn := range txn.errorFns {
-		fn()
+// OnDiscard registers a function to be called when the transaction is discarded.
+func (txn *txn) OnDiscard(fn func()) {
+	if fn == nil {
+		return
 	}
+	txn.discardFns = append(txn.discardFns, fn)
 }
 
-func (txn *txn) runSuccessFns(ctx context.Context) {
-	for _, fn := range txn.successFns {
+func runFns(fns []func()) {
+	for _, fn := range fns {
 		fn()
 	}
 }
