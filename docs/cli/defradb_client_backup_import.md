@@ -1,15 +1,22 @@
-## defradb client blocks get
+## defradb client backup import
 
-Get a block by its CID from the blockstore
+Import a JSON data file to the database
+
+### Synopsis
+
+Import a JSON data file to the database.
+
+Example: import data to the database:
+  defradb client import user_data.json
 
 ```
-defradb client blocks get [CID] [flags]
+defradb client backup import <input_path> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for get
+  -h, --help   help for import
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +34,5 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client backup](defradb_client_backup.md)	 - Interact with the backup utility
 

@@ -1,15 +1,15 @@
-## defradb client blocks get
+## defradb client schema migration
 
-Get a block by its CID from the blockstore
+Interact with the schema migration system of a running DefraDB instance
 
-```
-defradb client blocks get [CID] [flags]
-```
+### Synopsis
+
+Make set or look for existing schema migrations on a DefraDB node.
 
 ### Options
 
 ```
-  -h, --help   help for get
+  -h, --help   help for migration
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +27,7 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
+* [defradb client schema migration get](defradb_client_schema_migration_get.md)	 - Gets the schema migrations within DefraDB
+* [defradb client schema migration set](defradb_client_schema_migration_set.md)	 - Set a schema migration within DefraDB
 

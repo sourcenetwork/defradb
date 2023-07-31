@@ -4,7 +4,7 @@ Delete a replicator. It will stop synchronizing
 
 ### Synopsis
 
-Remove a replicator. It will stop synchronizing.
+Delete a replicator. It will stop synchronizing.
 
 ```
 defradb client rpc replicator delete [-f, --full | -c, --collection] <peer> [flags]

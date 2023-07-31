@@ -1,15 +1,15 @@
-## defradb client blocks get
+## defradb client schema list
 
-Get a block by its CID from the blockstore
+List schema types with their respective fields
 
 ```
-defradb client blocks get [CID] [flags]
+defradb client schema list [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for get
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +27,5 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
 

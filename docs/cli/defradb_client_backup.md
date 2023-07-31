@@ -1,15 +1,16 @@
-## defradb client blocks get
+## defradb client backup
 
-Get a block by its CID from the blockstore
+Interact with the backup utility
 
-```
-defradb client blocks get [CID] [flags]
-```
+### Synopsis
+
+Export to or Import from a backup file.
+Currently only supports JSON format.
 
 ### Options
 
 ```
-  -h, --help   help for get
+  -h, --help   help for backup
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +28,7 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client backup export](defradb_client_backup_export.md)	 - Export the database to a file
+* [defradb client backup import](defradb_client_backup_import.md)	 - Import a JSON data file to the database
 

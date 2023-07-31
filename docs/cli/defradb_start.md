@@ -18,7 +18,7 @@ defradb start [flags]
   -h, --help                          help for start
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --no-p2p                        Disable the peer-to-peer network synchronization system
-      --p2paddr string                Listener address for the P2P network (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9171")
+      --p2paddr string                Listener address for the p2p network (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9171")
       --peers string                  List of peers to connect to
       --privkeypath string            Path to the private key for tls (default "certs/server.crt")
       --pubkeypath string             Path to the public key for tls (default "certs/server.key")

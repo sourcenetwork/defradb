@@ -1,15 +1,15 @@
-## defradb client blocks get
+## defradb client index
 
-Get a block by its CID from the blockstore
+Manage collections' indexes of a running DefraDB instance
 
-```
-defradb client blocks get [CID] [flags]
-```
+### Synopsis
+
+Manage (create, drop, or list) collection indexes on a DefraDB node.
 
 ### Options
 
 ```
-  -h, --help   help for get
+  -h, --help   help for index
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +27,8 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client index create](defradb_client_index_create.md)	 - Creates a secondary index on a collection's field(s)
+* [defradb client index drop](defradb_client_index_drop.md)	 - Drop a collection's secondary index
+* [defradb client index list](defradb_client_index_list.md)	 - Shows the list indexes in the database or for a specific collection
 

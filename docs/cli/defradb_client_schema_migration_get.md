@@ -1,9 +1,18 @@
-## defradb client blocks get
+## defradb client schema migration get
 
-Get a block by its CID from the blockstore
+Gets the schema migrations within DefraDB
+
+### Synopsis
+
+Gets the schema migrations within the local DefraDB node.
+
+Example:
+  defradb client schema migration get'
+
+Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client blocks get [CID] [flags]
+defradb client schema migration get [flags]
 ```
 
 ### Options
@@ -27,5 +36,5 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client schema migration](defradb_client_schema_migration.md)	 - Interact with the schema migration system of a running DefraDB instance
 

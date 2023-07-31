@@ -1,15 +1,26 @@
-## defradb client blocks get
+## defradb client index list
 
-Get a block by its CID from the blockstore
+Shows the list indexes in the database or for a specific collection
+
+### Synopsis
+
+Shows the list indexes in the database or for a specific collection.
+		
+If the --collection flag is provided, only the indexes for that collection will be shown.
+Otherwise, all indexes in the database will be shown.
+
+Example: show all index for 'Users' collection:
+  defradb client index list --collection Users
 
 ```
-defradb client blocks get [CID] [flags]
+defradb client index list [-c --collection <collection>] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for get
+  -c, --collection string   Collection name
+  -h, --help                help for list
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +38,5 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
 
