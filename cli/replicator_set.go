@@ -32,8 +32,9 @@ func MakeReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "set [-f, --full | -c, --collection] <peer>",
 		Short: "Set a P2P replicator",
-		Long: `Use this command if you wish to add a new target replicator
-	for the p2p data sync system or add schemas to an existing one`,
+		Long: `Add a new target replicator.
+A replicator replicates one or all collection(s) from this node to another.
+`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 				return errors.New("must specify one argument: peer")
@@ -43,7 +44,7 @@ func MakeReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			peerAddr, err := ma.NewMultiaddr(args[0])
 			if err != nil {
-				return errors.Wrap("could not parse peer address", err)
+				return NewErrFailedParsePeerID(err)
 			}
 			if len(col) == 0 && !fullRep {
 				return errors.New("must run with either --full or --collection")
@@ -52,7 +53,7 @@ func MakeReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 			cred := insecure.NewCredentials()
 			client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
 			if err != nil {
-				return errors.Wrap("failed to create RPC client", err)
+				return ErrFailedToCreateRPCClient
 			}
 
 			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()

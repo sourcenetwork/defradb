@@ -14,76 +14,59 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainGroupByWithFilterOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a grouping with filter on parent.",
+func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Request: `query @explain {
-			Author (
-				groupBy: [age],
-				filter: {age: {_gt: 63}}
-			) {
-				age
-				_group {
-					name
-				}
-			}
-		}`,
+		Description: "Explain (default) request with filter on parent groupBy.",
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-                     "name": "John Grisham",
-                     "age": 65
-                 }`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-				`{
-                     "name": "Cornelia Funke",
-                     "age": 62
-                 }`,
+			testUtils.ExplainRequest{
 
-				`{
-                     "name": "John's Twin",
-                     "age": 65
-                 }`,
-			},
-		},
+				Request: `query @explain {
+					Author (
+						groupBy: [age],
+						filter: {age: {_gt: 63}}
+					) {
+						age
+						_group {
+							name
+						}
+					}
+				}`,
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"groupNode": dataMap{
+				ExpectedPatterns: []dataMap{groupPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
 							"groupByFields": []string{"age"},
 							"childSelects": []dataMap{
-								{
-									"collectionName": "Author",
-									"docKeys":        nil,
-									"groupBy":        nil,
-									"limit":          nil,
-									"orderBy":        nil,
-									"filter":         nil,
+								emptyChildSelectsAttributeForAuthor,
+							},
+						},
+					},
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "3",
+							"collectionName": "Author",
+							"filter": dataMap{
+								"age": dataMap{
+									"_gt": int32(63),
 								},
 							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"filter": dataMap{
-										"age": dataMap{
-											"_gt": int32(63),
-										},
-									},
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
+							"spans": []dataMap{
+								{
+									"start": "/3",
+									"end":   "/4",
 								},
 							},
 						},
@@ -93,82 +76,5 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
-}
-
-func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain a grouping with filter on the inner group selection.",
-
-		Request: `query @explain {
-			Author (groupBy: [age]) {
-				age
-				_group(filter: {age: {_gt: 63}}) {
-					name
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-                     "name": "John Grisham",
-                     "age": 65
-                 }`,
-
-				`{
-                     "name": "Cornelia Funke",
-                     "age": 62
-                 }`,
-
-				`{
-                     "name": "John's Twin",
-                     "age": 65
-                 }`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"groupNode": dataMap{
-							"groupByFields": []string{"age"},
-							"childSelects": []dataMap{
-								{
-									"collectionName": "Author",
-									"docKeys":        nil,
-									"groupBy":        nil,
-									"limit":          nil,
-									"orderBy":        nil,
-									"filter": dataMap{
-										"age": dataMap{
-											"_gt": int32(63),
-										},
-									},
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"filter":         nil,
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

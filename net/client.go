@@ -14,12 +14,10 @@ package net
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
@@ -35,20 +33,16 @@ var (
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
 func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) error {
-	dockey, err := client.NewDocKeyFromString(evt.DocKey)
-	if err != nil {
-		return errors.Wrap("failed to get DocKey from broadcast message", err)
-	}
 	log.Debug(
 		ctx,
 		"Preparing pushLog request",
-		logging.NewKV("DocKey", dockey),
+		logging.NewKV("DocKey", evt.DocKey),
 		logging.NewKV("CID", evt.Cid),
 		logging.NewKV("SchemaId", evt.SchemaID))
 
 	body := &pb.PushLogRequest_Body{
-		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
-		Cid:      &pb.ProtoCid{Cid: evt.Cid},
+		DocKey:   []byte(evt.DocKey),
+		Cid:      evt.Cid.Bytes(),
 		SchemaID: []byte(evt.SchemaID),
 		Creator:  s.peer.host.ID().String(),
 		Log: &pb.Document_Log{
@@ -61,20 +55,26 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 
 	log.Debug(
 		ctx, "Pushing log",
-		logging.NewKV("DocKey", dockey),
+		logging.NewKV("DocKey", evt.DocKey),
 		logging.NewKV("CID", evt.Cid),
-		logging.NewKV("PeerID", pid))
+		logging.NewKV("PeerID", pid),
+	)
 
-	client, err := s.dial(pid) // grpc dial over p2p stream
+	client, err := s.dial(pid) // grpc dial over P2P stream
 	if err != nil {
-		return errors.Wrap("failed to push log", err)
+		return NewErrPushLog(err)
 	}
 
 	cctx, cancel := context.WithTimeout(ctx, PushTimeout)
 	defer cancel()
 
 	if _, err := client.PushLog(cctx, req); err != nil {
-		return errors.Wrap(fmt.Sprintf("Failed PushLog RPC request %s for %s to %s", evt.Cid, dockey, pid), err)
+		return NewErrPushLog(
+			err,
+			errors.NewKV("CID", evt.Cid),
+			errors.NewKV("DocKey", evt.DocKey),
+			errors.NewKV("PeerID", pid),
+		)
 	}
 	return nil
 }

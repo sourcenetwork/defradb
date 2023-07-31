@@ -1,42 +1,67 @@
 # Source Network's codecov configuration file.
 
+
 github_checks:
-  annotations: true
+  annotations: true # This won't work if patch is `false` or has flags.
+
 
 codecov:
-  require_ci_to_pass: yes
+  require_ci_to_pass: false
+  allow_pseudo_compare: true
+  allow_coverage_offsets: true
+
 
 coverage:
   precision: 2
-  round: down
-  range: 65...100
+  round: "nearest"
+  range: 60...90
 
   status:
-    # Learn more at https://docs.codecov.io/docs/commit-status
+
     project:
       default:
-        target: 50%
-        threshold: 0.05 # allow this much decrease on project
-        flags:
-          - unit
+        only_pulls: true        # Only post the status if the commits are on a pull request.
+        informational: true     # Don't fail codcov action because of project's coverage.
+        if_ci_failed: "error"   # Give an error if CI fails (eg. upload to codecov failed).
+        if_not_found: "failure" # Fail if no report for HEAD found.
 
-    # Disable patch as it is not correct and buggy.
-    # Folks over at amazon's aws and mozilla's firefox tv also did the same LOL:
-    #   - https://github.com/aws/amazon-vpc-cni-k8s/pull/1226/files
-    #   - https://github.com/mozilla-mobile/firefox-tv/pull/779/files
+    # Note: Patch is needed for github annotations.
     patch:
       default:
-        enabled: no
-        if_not_found: success
+        informational: true     # Don't fail codcov action because of patch's coverage.
+        if_ci_failed: "error"   # Give an error if CI fails (eg. upload to codecov failed).
+        if_not_found: "failure" # Fail if no report for HEAD found.
 
-    changes: false
+    # Detect indirect coverage changes.
+    changes:
+      default:
+        informational: true     # Don't fail codcov action because of indirect coverage changes.
+        if_ci_failed: "error"   # Give an error if CI fails (eg. upload to codecov failed).
+        if_not_found: "failure" # Fail if no report for HEAD found.
+
+
+parsers:
+  go:
+    partials_as_hits: false     # Don't treat partials as hits.
+
 
 comment:
-  layout: "reach, diff, files"
-  behavior: default # update if exists else create new
-  require_changes: true
+  # First the reach graph, then the diff, then the file changes.
+  layout: "newheader, reach, diff, flags, files, footer"
+
+  # Change old comment with new results.
+  behavior: "default"
+
+  # Post comment even if there were no changes.
+  require_changes: false
+
+  # Post comment even if no head or base found.
+  require_head: false
+  require_base: false
+
 
 ignore:
   - "tests"
+  - "**/mocks/*"
   - "**/*_test.go"
   - "**/*.pb.go"

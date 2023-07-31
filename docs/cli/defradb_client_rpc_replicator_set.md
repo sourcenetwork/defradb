@@ -4,8 +4,9 @@ Set a P2P replicator
 
 ### Synopsis
 
-Use this command if you wish to add a new target replicator
-	for the p2p data sync system or add schemas to an existing one
+Add a new target replicator.
+A replicator replicates one or all collection(s) from this node to another.
+
 
 ```
 defradb client rpc replicator set [-f, --full | -c, --collection] <peer> [flags]
@@ -22,7 +23,7 @@ defradb client rpc replicator set [-f, --full | -c, --collection] <peer> [flags]
 ### Options inherited from parent commands
 
 ```
-      --addr string          gRPC endpoint address (default "0.0.0.0:9161")
+      --addr string          RPC endpoint address (default "0.0.0.0:9161")
       --logformat string     Log format to use. Options are csv, json (default "csv")
       --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
       --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
@@ -35,5 +36,5 @@ defradb client rpc replicator set [-f, --full | -c, --collection] <peer> [flags]
 
 ### SEE ALSO
 
-* [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Interact with the replicator system
+* [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Configure the replicator system
 

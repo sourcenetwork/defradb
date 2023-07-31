@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainCommitsDagScan(t *testing.T) {
@@ -22,12 +23,12 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 		Description: "Explain (execute) commits request - dagScan.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					commits (dockey: "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138") {
 						links {
@@ -36,7 +37,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -58,7 +59,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
@@ -67,12 +68,12 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 		Description: "Explain (execute) latest commits request - dagScan.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Author
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					latestCommits(dockey: "bae-7f54d9e0-cbde-5320-aa6c-5c8895a89138") {
 						cid
@@ -82,7 +83,7 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -104,5 +105,5 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

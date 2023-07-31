@@ -60,5 +60,5 @@ func TestP2POneToOneReplicatorWithRestart(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

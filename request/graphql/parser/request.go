@@ -109,11 +109,11 @@ func parseDirectives(astDirectives []*ast.Directive) (request.Directives, error)
 
 		if astDirective.Name.Value == request.ExplainLabel {
 			// Explain directive found, lets parse and validate the directive.
-			parsedExplainDirctive, err := parseExplainDirective(astDirective)
+			parsedExplainDirective, err := parseExplainDirective(astDirective)
 			if err != nil {
 				return request.Directives{}, err
 			}
-			explainDirective = parsedExplainDirctive
+			explainDirective = parsedExplainDirective
 		}
 	}
 
@@ -144,6 +144,9 @@ func parseExplainDirective(astDirective *ast.Directive) (immutable.Option[reques
 
 	case schemaTypes.ExplainArgExecute:
 		return immutable.Some(request.ExecuteExplain), nil
+
+	case schemaTypes.ExplainArgDebug:
+		return immutable.Some(request.DebugExplain), nil
 
 	default:
 		return immutable.None[request.ExplainType](), ErrUnknownExplainType

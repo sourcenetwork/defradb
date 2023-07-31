@@ -31,7 +31,7 @@ func MakeSchemaPatchCommand(cfg *config.Config) *cobra.Command {
 		Short: "Patch an existing schema type",
 		Long: `Patch an existing schema.
 
-Uses JSON PATCH formatting as a DDL.
+Uses JSON Patch to modify schema types.
 
 Example: patch from an argument string:
   defradb client schema patch '[{ "op": "add", "path": "...", "value": {...} }]'
@@ -54,7 +54,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				if err = cmd.Usage(); err != nil {
 					return err
 				}
-				return ErrTooManyArgs
+				return NewErrTooManyArgs(1, len(args))
 			}
 
 			if patchFile != "" {
@@ -95,12 +95,16 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				return ErrEmptyFile
 			}
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPatchPath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPath)
 			if err != nil {
 				return err
 			}
 
-			res, err := http.Post(endpoint.String(), "text", strings.NewReader(patch))
+			req, err := http.NewRequest(http.MethodPatch, endpoint.String(), strings.NewReader(patch))
+			if err != nil {
+				return NewErrFailedToSendRequest(err)
+			}
+			res, err := http.DefaultClient.Do(req)
 			if err != nil {
 				return NewErrFailedToSendRequest(err)
 			}

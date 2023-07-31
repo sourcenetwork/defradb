@@ -239,7 +239,7 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFound
 	}
 	if isDeleted {
-		return ErrDocumentDeleted
+		return NewErrDocumentDeleted(key.DocKey)
 	}
 
 	dsKey := key.ToDataStoreKey()

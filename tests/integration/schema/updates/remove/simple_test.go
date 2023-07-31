@@ -38,7 +38,7 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesRemoveCollectionIDErrors(t *testing.T) {
@@ -63,7 +63,7 @@ func TestSchemaUpdatesRemoveCollectionIDErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesRemoveSchemaIDErrors(t *testing.T) {
@@ -88,7 +88,7 @@ func TestSchemaUpdatesRemoveSchemaIDErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
@@ -122,7 +122,7 @@ func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
@@ -147,5 +147,5 @@ func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

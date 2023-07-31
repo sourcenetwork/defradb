@@ -13,51 +13,64 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
-func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-
-		{
-			Description: "Simple multi-key delete mutation with one key that exists.",
-			Docs: map[int][]string{
-				0: {
-					`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
-						"verified": true
-					}`,
-				},
+func TestDeletionOfMultipleDocumentUsingMultipleKeysWhereOneExists(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple multi-key delete mutation with one key that exists.",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+						points: Float
+						verified: Boolean
+					}
+				`,
 			},
-			TransactionalRequests: []testUtils.TransactionRequest{
-				{
-					TransactionId: 0,
-					Request: `mutation {
-						delete_User(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
-							_key
-						}
-					}`,
-					Results: []map[string]any{
-						{
-							"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-						},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"age":  26,
+					"points": 48.48,
+					"verified": true
+				}`,
+			},
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
+				Request: `mutation {
+					delete_User(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
+						_key
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
 					},
 				},
-				{
-					TransactionId: 0,
-					Request: `query {
-						User(dockeys: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
-							_key
-						}
-					}`,
-					Results: []map[string]any{},
-				},
+			},
+			testUtils.Request{
+				TransactionID: immutable.Some(0),
+				Request: `query {
+					User(dockeys: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
+						_key
+					}
+				}`,
+				Results: []map[string]any{},
 			},
 		},
+	}
 
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Delete multiple documents that exist, when given multiple keys.",
 			Request: `mutation {
@@ -403,7 +416,7 @@ func TestDeletionOfMultipleDocumentsUsingSingleKeyWithShowDeletedDocumentQuery_S
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestDeletionOfMultipleDocumentsUsingEmptySet(t *testing.T) {
@@ -461,5 +474,5 @@ func TestDeletionOfMultipleDocumentsUsingEmptySet(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

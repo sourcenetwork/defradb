@@ -49,7 +49,7 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
@@ -98,7 +98,7 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
@@ -165,7 +165,7 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
@@ -217,5 +217,5 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

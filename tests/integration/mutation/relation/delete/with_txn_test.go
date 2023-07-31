@@ -13,8 +13,9 @@ package relation_delete
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	relationTests "github.com/sourcenetwork/defradb/tests/integration/mutation/relation"
 )
 
@@ -41,9 +42,9 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.TransactionRequest2{
+			testUtils.Request{
 				// Delete a linked book that exists.
-				TransactionID: 0,
+				TransactionID: immutable.Some(0),
 				Request: `mutation {
 			        delete_Book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
 			            _key
@@ -107,9 +108,9 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.TransactionRequest2{
+			testUtils.Request{
 				// Delete a linked book that exists.
-				TransactionID: 0,
+				TransactionID: immutable.Some(0),
 				Request: `mutation {
 			        delete_Book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
 			            _key
@@ -167,9 +168,9 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.TransactionRequest2{
+			testUtils.Request{
 				// Delete a linked book that exists.
-				TransactionID: 0,
+				TransactionID: immutable.Some(0),
 				Request: `mutation {
 			        delete_Book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
 			            _key
@@ -181,9 +182,9 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 					},
 				},
 			},
-			testUtils.TransactionRequest2{
+			testUtils.Request{
 				// Read the book (forward) that was deleted (in the non-commited transaction) in another transaction.
-				TransactionID: 1,
+				TransactionID: immutable.Some(1),
 				Request: `query {
 					Publisher {
 						_key
@@ -257,9 +258,9 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.TransactionRequest2{
+			testUtils.Request{
 				// Delete a linked book that exists in transaction 0.
-				TransactionID: 0,
+				TransactionID: immutable.Some(0),
 				Request: `mutation {
 			        delete_Book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
 			            _key
@@ -271,9 +272,9 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 					},
 				},
 			},
-			testUtils.TransactionRequest2{
+			testUtils.Request{
 				// Read the book (backwards) that was deleted (in the non-commited transaction) in another transaction.
-				TransactionID: 1,
+				TransactionID: immutable.Some(1),
 				Request: `query {
 					Book {
 						_key
@@ -341,10 +342,10 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 					"address": "Manning Early Access Program (MEAP)"
 				}`,
 			},
-			testUtils.TransactionRequest2{
+			testUtils.Request{
 				// Delete a publisher and outside the transaction ensure it's linked
 				// book gets correctly unlinked too.
-				TransactionID: 0,
+				TransactionID: immutable.Some(0),
 				Request: `mutation {
 			        delete_Publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
 			            _key
@@ -402,10 +403,10 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 					"address": "Manning Early Access Program (MEAP)"
 				}`,
 			},
-			testUtils.TransactionRequest2{
+			testUtils.Request{
 				// Delete a publisher and outside the transaction ensure it's linked
 				// book gets correctly unlinked too.
-				TransactionID: 0,
+				TransactionID: immutable.Some(0),
 				Request: `mutation {
 			        delete_Publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
 			            _key

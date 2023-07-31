@@ -50,7 +50,7 @@ func TestMutationCreateSimpleErrorsGivenNonExistantField(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestMutationCreateSimple(t *testing.T) {
@@ -93,7 +93,7 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "a document with the given dockey already exists",
+		ExpectedError: "a document with the given dockey already exists. DocKey: ",
 	}
 
 	simpleTests.ExecuteTestCase(t, test)

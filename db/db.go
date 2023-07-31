@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/lens"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/request/graphql"
@@ -58,10 +59,14 @@ type db struct {
 
 	events events.Events
 
-	parser core.Parser
+	parser       core.Parser
+	lensRegistry client.LensRegistry
 
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
+
+	// The maximum number of cached migrations instances to preserve per schema version.
+	lensPoolSize immutable.Option[int]
 
 	// The options used to init the database
 	options any
@@ -85,6 +90,15 @@ func WithUpdateEvents() Option {
 func WithMaxRetries(num int) Option {
 	return func(db *db) {
 		db.maxTxnRetries = immutable.Some(num)
+	}
+}
+
+// WithLensPoolSize sets the maximum number of cached migrations instances to preserve per schema version.
+//
+// Will default to `5` if not set.
+func WithLensPoolSize(num int) Option {
+	return func(db *db) {
+		db.lensPoolSize = immutable.Some(num)
 	}
 }
 
@@ -121,6 +135,10 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 		}
 		opt(db)
 	}
+
+	// lensPoolSize may be set by `options`, and because they are funcs on db
+	// we have to mutate `db` here to set the registry.
+	db.lensRegistry = lens.NewRegistry(db.lensPoolSize)
 
 	err = db.initialize(ctx)
 	if err != nil {
@@ -162,6 +180,10 @@ func (db *db) systemstore() datastore.DSReaderWriter {
 	return db.multistore.Systemstore()
 }
 
+func (db *db) LensRegistry() client.LensRegistry {
+	return db.lensRegistry
+}
+
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters.
 func (db *db) initialize(ctx context.Context) error {
@@ -180,13 +202,19 @@ func (db *db) initialize(ctx context.Context) error {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
-	// and finish initialization
+	// and migrations and finish initialization
 	if exists {
 		log.Debug(ctx, "DB has already been initialized, continuing")
 		err = db.loadSchema(ctx, txn)
 		if err != nil {
 			return err
 		}
+
+		err = db.lensRegistry.ReloadLenses(ctx, txn)
+		if err != nil {
+			return err
+		}
+
 		// The query language types are only updated on successful commit
 		// so we must not forget to do so on success regardless of whether
 		// we have written to the datastores.

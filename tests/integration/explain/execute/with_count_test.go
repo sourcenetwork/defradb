@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 		Description: "Explain (execute) request with count on one to many relation.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Books
 			create3BookDocuments(),
@@ -30,7 +31,7 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -38,7 +39,7 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -53,9 +54,9 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
 											"scanNode": dataMap{
-												"iterations":    uint64(3),
-												"docFetches":    uint64(3),
-												"filterMatches": uint64(2),
+												"iterations":   uint64(3),
+												"docFetches":   uint64(2),
+												"fieldFetches": uint64(2),
 											},
 										},
 									},
@@ -68,5 +69,5 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

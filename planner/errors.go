@@ -16,6 +16,7 @@ const (
 	errUnknownDependency              string = "given field does not exist"
 	errFailedToClosePlan              string = "failed to close the plan"
 	errFailedToCollectExecExplainInfo string = "failed to collect execution explain information"
+	errSubTypeInit                    string = "sub-type initialization error at scan node reset"
 )
 
 var (
@@ -33,6 +34,7 @@ var (
 	ErrMissingChildValue                   = errors.New("expected child value, however none was yielded")
 	ErrUnknownRelationType                 = errors.New("failed sub selection, unknown relation type")
 	ErrUnknownExplainRequestType           = errors.New("can not explain request of unknown type")
+	ErrSubTypeInit                         = errors.New(errSubTypeInit)
 	ErrFailedToCollectExecExplainInfo      = errors.New(errFailedToCollectExecExplainInfo)
 	ErrUnknownDependency                   = errors.New(errUnknownDependency)
 )
@@ -47,4 +49,8 @@ func NewErrFailedToClosePlan(inner error, location string) error {
 
 func NewErrFailedToCollectExecExplainInfo(inner error) error {
 	return errors.Wrap(errFailedToCollectExecExplainInfo, inner)
+}
+
+func NewErrSubTypeInit(inner error) error {
+	return errors.Wrap(errSubTypeInit, inner)
 }

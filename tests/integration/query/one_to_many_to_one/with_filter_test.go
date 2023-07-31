@@ -123,7 +123,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) {
@@ -163,7 +163,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
@@ -211,5 +211,76 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "1-N-1 two level deep filter",
+		Actions: []any{
+			gqlSchemaOneToManyToOne(),
+			createDocsWith6BooksAnd5Publishers(),
+			testUtils.Request{
+				Request: `query {
+					Author (filter: {book: {publisher: {yearOpened: { _ge: 2020}}}}){
+						name
+						book {
+							name
+							publisher {
+								yearOpened
+							}
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"book": []map[string]any{
+							{
+								"name":      "The Associate",
+								"publisher": nil,
+							},
+							{
+								"name": "Sooley",
+								"publisher": map[string]any{
+									"yearOpened": uint64(1999),
+								},
+							},
+							{
+								"name": "Theif Lord",
+								"publisher": map[string]any{
+									"yearOpened": uint64(2020),
+								},
+							},
+							{
+								"name": "Painted House",
+								"publisher": map[string]any{
+									"yearOpened": uint64(1995),
+								},
+							},
+							{
+								"name": "A Time for Mercy",
+								"publisher": map[string]any{
+									"yearOpened": uint64(2013),
+								},
+							},
+						},
+						"name": "John Grisham",
+					},
+					{
+						"book": []map[string]any{
+							{
+								"name": "The Rooster Bar",
+								"publisher": map[string]any{
+									"yearOpened": uint64(2022),
+								},
+							},
+						},
+						"name": "Cornelia Funke",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
 }

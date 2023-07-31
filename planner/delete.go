@@ -91,10 +91,10 @@ func (n *deleteNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap[idsLabel] = n.ids
 
 	// Add the filter attribute if it exists, otherwise have it nil.
-	if n.filter == nil || n.filter.ExternalConditions == nil {
+	if n.filter == nil {
 		simpleExplainMap[filterLabel] = nil
 	} else {
-		simpleExplainMap[filterLabel] = n.filter.ExternalConditions
+		simpleExplainMap[filterLabel] = n.filter.ToMap(n.documentMapping)
 	}
 
 	return simpleExplainMap, nil
@@ -134,6 +134,6 @@ func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
 		ids:        parsed.DocKeys.Value(),
 		collection: col.WithTxn(p.txn),
 		source:     slctNode,
-		docMapper:  docMapper{&parsed.DocumentMapping},
+		docMapper:  docMapper{parsed.DocumentMapping},
 	}, nil
 }

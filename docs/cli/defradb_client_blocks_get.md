@@ -1,6 +1,6 @@
 ## defradb client blocks get
 
-Get a block by its CID from the blockstore.
+Get a block by its CID from the blockstore
 
 ```
 defradb client blocks get [CID] [flags]

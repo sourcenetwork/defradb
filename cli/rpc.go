@@ -21,12 +21,12 @@ import (
 func MakeRPCCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "rpc",
-		Short: "Interact with a DefraDB gRPC server",
-		Long:  "Interact with a DefraDB gRPC server.",
+		Short: "Interact with a DefraDB node via RPC",
+		Long:  "Interact with a DefraDB node via RPC.",
 	}
 	cmd.PersistentFlags().String(
 		"addr", cfg.Net.RPCAddress,
-		"gRPC endpoint address",
+		"RPC endpoint address",
 	)
 
 	if err := cfg.BindFlag("net.rpcaddress", cmd.PersistentFlags().Lookup("addr")); err != nil {

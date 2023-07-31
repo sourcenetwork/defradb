@@ -14,93 +14,66 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with ordered parent groupBy.",
-
-		Request: `query @explain {
-			Author(groupBy: [name], order: {name: DESC}) {
-				name
-				_group {
-					age
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
+var groupOrderPattern = dataMap{
+	"explain": dataMap{
+		"selectTopNode": dataMap{
+			"orderNode": dataMap{
+				"groupNode": dataMap{
+					"selectNode": dataMap{
+						"scanNode": dataMap{},
+					},
+				},
 			},
 		},
+	},
+}
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
+func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) request with order (descending) on parent groupBy.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author(
+						groupBy: [name],
+						order: {name: DESC}
+					) {
+						name
+						_group {
+							age
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{groupOrderPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
+								emptyChildSelectsAttributeForAuthor,
+							},
+						},
+					},
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
 							"orderings": []dataMap{
 								{
 									"direction": "DESC",
 									"fields":    []string{"name"},
-								},
-							},
-							"groupNode": dataMap{
-								"groupByFields": []string{"name"},
-								"childSelects": []dataMap{
-									{
-										"collectionName": "Author",
-										"docKeys":        nil,
-										"orderBy":        nil,
-										"groupBy":        nil,
-										"limit":          nil,
-										"filter":         nil,
-									},
-								},
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "Author",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
-											},
-										},
-									},
 								},
 							},
 						},
@@ -110,63 +83,93 @@ func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with groupBy string, and child order ascending.",
+func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
+	test := testUtils.TestCase{
 
-		Request: `query @explain {
-			Author(groupBy: [name]) {
-				name
-				_group (order: {age: ASC}){
-					age
-				}
-			}
-		}`,
+		Description: "Explain (default) request with order (ascending) on parent groupBy.",
 
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author(
+						groupBy: [name],
+						order: {name: ASC}
+					) {
+						name
+						_group {
+							age
+						}
+					}
 				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
+
+				ExpectedPatterns: []dataMap{groupOrderPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
+								emptyChildSelectsAttributeForAuthor,
+							},
+						},
+					},
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields":    []string{"name"},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
+	}
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"groupNode": dataMap{
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) request with order on parent groupBy and inner _group selection.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author(
+						groupBy: [name],
+						order: {name: DESC}
+					) {
+						name
+						_group (order: {age: ASC}){
+							age
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{groupOrderPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "groupNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
 							"groupByFields": []string{"name"},
 							"childSelects": []dataMap{
 								{
@@ -183,122 +186,18 @@ func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 									"filter":  nil,
 								},
 							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
 						},
 					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with parent groupBy order, and child order.",
-
-		Request: `query @explain {
-			Author(groupBy: [name], order: {name: DESC}) {
-				name
-				_group (order: {age: ASC}){
-					age
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
 							"orderings": []dataMap{
 								{
 									"direction": "DESC",
 									"fields":    []string{"name"},
 								},
 							},
-							"groupNode": dataMap{
-								"groupByFields": []string{"name"},
-								"childSelects": []dataMap{
-									{
-										"collectionName": "Author",
-										"orderBy": []dataMap{
-											{
-												"direction": "ASC",
-												"fields":    []string{"age"},
-											},
-										},
-										"docKeys": nil,
-										"groupBy": nil,
-										"limit":   nil,
-										"filter":  nil,
-									},
-								},
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "Author",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
-											},
-										},
-									},
-								},
-							},
 						},
 					},
 				},
@@ -306,105 +205,5 @@ func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
-}
-
-func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain query with parent groupBy order, and child order.",
-
-		Request: `query @explain {
-			Author(groupBy: [name]) {
-				name
-				_group (
-					groupBy: [verified],
-					order: {verified: ASC}
-				){
-					verified
-					_group (order: {age: DESC}) {
-						age
-					}
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": false,
-					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"groupNode": dataMap{
-							"groupByFields": []string{"name"},
-							"childSelects": []dataMap{
-								{
-									"collectionName": "Author",
-									"orderBy": []dataMap{
-										{
-											"direction": "ASC",
-											"fields":    []string{"verified"},
-										},
-									},
-									"groupBy": []string{"verified", "name"},
-									"docKeys": nil,
-									"limit":   nil,
-									"filter":  nil,
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "Author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

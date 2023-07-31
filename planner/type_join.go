@@ -79,7 +79,7 @@ func (p *Planner) makeTypeIndexJoin(
 	var err error
 
 	desc := parent.sourceInfo.collectionDescription
-	typeFieldDesc, ok := desc.GetField(subType.Name)
+	typeFieldDesc, ok := desc.Schema.GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -138,7 +138,6 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 		joinDirectionLabel          = "direction"
 		joinDirectionPrimaryLabel   = "primary"
 		joinDirectionSecondaryLabel = "secondary"
-		joinSubTypeLabel            = "subType"
 		joinSubTypeNameLabel        = "subTypeName"
 		joinRootLabel               = "rootName"
 	)
@@ -228,12 +227,17 @@ func splitFilterByType(filter *mapper.Filter, subType int) (*mapper.Filter, *map
 
 	keyFound, sub := removeConditionIndex(conditionKey, filter.Conditions)
 	if !keyFound {
-		return filter, &mapper.Filter{}
+		return filter, nil
 	}
 
 	// create new splitup filter
 	// our schema ensures that if sub exists, its of type map[string]any
 	splitF := &mapper.Filter{Conditions: map[connor.FilterKey]any{conditionKey: sub}}
+
+	// check if we have any remaining filters
+	if len(filter.Conditions) == 0 {
+		return nil, splitF
+	}
 	return filter, splitF
 }
 
@@ -264,7 +268,15 @@ func (p *Planner) makeTypeJoinOne(
 ) (*typeJoinOne, error) {
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
-		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
+		var parentfilter *mapper.Filter
+		scan.filter, parentfilter = splitFilterByType(scan.filter, subType.Index)
+		if parentfilter != nil {
+			if parent.filter == nil {
+				parent.filter = new(mapper.Filter)
+			}
+			parent.filter.Conditions = mergeFilterConditions(
+				parent.filter.Conditions, parentfilter.Conditions)
+		}
 		subType.ShowDeleted = parent.selectReq.ShowDeleted
 	}
 
@@ -274,7 +286,7 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.Schema.GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -335,50 +347,56 @@ func (n *typeJoinOne) Next() (bool, error) {
 
 	doc := n.root.Value()
 	if n.primary {
-		n.currentValue = n.valuesPrimary(doc)
+		n.currentValue, err = n.valuesPrimary(doc)
 	} else {
-		n.currentValue = n.valuesSecondary(doc)
+		n.currentValue, err = n.valuesSecondary(doc)
 	}
+
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
-func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
+func (n *typeJoinOne) valuesSecondary(doc core.Doc) (core.Doc, error) {
 	fkIndex := &mapper.PropertyIndex{
-		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + "_id"),
+		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + request.RelatedObjectID),
 	}
 	filter := map[connor.FilterKey]any{
-		fkIndex: doc.GetKey(),
-	}
-
-	// We have to reset the scan node after appending the new key-filter
-	if err := n.subType.Init(); err != nil {
-		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
-		return doc
+		fkIndex: map[connor.FilterKey]any{
+			mapper.FilterEqOp: doc.GetKey(),
+		},
 	}
 
 	// using the doc._key as a filter
 	err := appendFilterToScanNode(n.subType, filter)
 	if err != nil {
-		return core.Doc{}
+		return core.Doc{}, err
+	}
+
+	// We have to reset the scan node after appending the new key-filter
+	if err := n.subType.Init(); err != nil {
+		return doc, NewErrSubTypeInit(err)
 	}
 
 	next, err := n.subType.Next()
 	if !next || err != nil {
-		return doc
+		return doc, err
 	}
 
 	subdoc := n.subType.Value()
 	doc.Fields[n.subSelect.Index] = subdoc
-	return doc
+	return doc, nil
 }
 
-func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
+func (n *typeJoinOne) valuesPrimary(doc core.Doc) (core.Doc, error) {
 	// get the subtype doc key
-	subDocKey := n.docMapper.documentMapping.FirstOfName(doc, n.subTypeName+"_id")
+	subDocKey := n.docMapper.documentMapping.FirstOfName(doc, n.subTypeName+request.RelatedObjectID)
 
 	subDocKeyStr, ok := subDocKey.(string)
 	if !ok {
-		return doc
+		return doc, nil
 	}
 
 	// create the collection key for the sub doc
@@ -394,8 +412,7 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
 
 	// re-initialize the sub type plan
 	if err := n.subType.Init(); err != nil {
-		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
-		return doc
+		return doc, NewErrSubTypeInit(err)
 	}
 
 	// if we don't find any docs from our point span lookup
@@ -404,18 +421,17 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
 	next, err := n.subType.Next()
 
 	if err != nil {
-		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
-		return doc
+		return doc, err
 	}
 
 	if !next {
-		return doc
+		return doc, nil
 	}
 
 	subDoc := n.subType.Value()
 	doc.Fields[n.subSelect.Index] = subDoc
 
-	return doc
+	return doc, nil
 }
 
 func (n *typeJoinOne) Close() error {
@@ -453,7 +469,15 @@ func (p *Planner) makeTypeJoinMany(
 ) (*typeJoinMany, error) {
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
-		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
+		var parentfilter *mapper.Filter
+		scan.filter, parentfilter = splitFilterByType(scan.filter, subType.Index)
+		if parentfilter != nil {
+			if parent.filter == nil {
+				parent.filter = new(mapper.Filter)
+			}
+			parent.filter.Conditions = mergeFilterConditions(
+				parent.filter.Conditions, parentfilter.Conditions)
+		}
 		subType.ShowDeleted = parent.selectReq.ShowDeleted
 	}
 
@@ -462,7 +486,7 @@ func (p *Planner) makeTypeJoinMany(
 		return nil, err
 	}
 
-	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.Schema.GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -526,11 +550,14 @@ func (n *typeJoinMany) Next() (bool, error) {
 		// @todo: handle index for one-to-many setup
 	} else {
 		fkIndex := &mapper.PropertyIndex{
-			Index: n.subSelect.FirstIndexOfName(n.rootName + "_id"),
+			Index: n.subSelect.FirstIndexOfName(n.rootName + request.RelatedObjectID),
 		}
 		filter := map[connor.FilterKey]any{
-			fkIndex: n.currentValue.GetKey(), // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
+			fkIndex: map[connor.FilterKey]any{
+				mapper.FilterEqOp: n.currentValue.GetKey(),
+			},
 		}
+
 		// using the doc._key as a filter
 		err := appendFilterToScanNode(n.subType, filter)
 		if err != nil {
@@ -574,19 +601,11 @@ func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]
 	switch node := plan.(type) {
 	case *scanNode:
 		filter := node.filter
-		if filter == nil {
+		if filter == nil && len(filterCondition) > 0 {
 			filter = mapper.NewFilter()
 		}
 
-		// merge filter conditions
-		for k, v := range filterCondition {
-			indexKey, isIndexKey := k.(*mapper.PropertyIndex)
-			if !isIndexKey {
-				continue
-			}
-			removeConditionIndex(indexKey, filter.Conditions)
-			filter.Conditions[k] = v
-		}
+		filter.Conditions = mergeFilterConditions(filter.Conditions, filterCondition)
 
 		node.filter = filter
 	case nil:
@@ -595,6 +614,23 @@ func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]
 		return appendFilterToScanNode(node.Source(), filterCondition)
 	}
 	return nil
+}
+
+// merge into dest with src, return dest
+func mergeFilterConditions(dest map[connor.FilterKey]any, src map[connor.FilterKey]any) map[connor.FilterKey]any {
+	if dest == nil {
+		dest = make(map[connor.FilterKey]any)
+	}
+	// merge filter conditions
+	for k, v := range src {
+		indexKey, isIndexKey := k.(*mapper.PropertyIndex)
+		if !isIndexKey {
+			continue
+		}
+		removeConditionIndex(indexKey, dest)
+		dest[k] = v
+	}
+	return dest
 }
 
 func removeConditionIndex(

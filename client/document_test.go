@@ -13,9 +13,9 @@ package client
 import (
 	"testing"
 
-	"github.com/ipfs/go-cid"
-	mh "github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/assert"
+
+	ccid "github.com/sourcenetwork/defradb/core/cid"
 )
 
 var (
@@ -28,12 +28,7 @@ var (
 		}
 	}`)
 
-	pref = cid.Prefix{
-		Version:  1,
-		Codec:    cid.Raw,
-		MhType:   mh.SHA2_256,
-		MhLength: -1, // default length
-	}
+	pref = ccid.NewDefaultSHA256PrefixV1()
 )
 
 func TestNewFromJSON(t *testing.T) {

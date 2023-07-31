@@ -22,6 +22,12 @@ const (
 	ExplainArgNameType string = "type"
 	ExplainArgSimple   string = "simple"
 	ExplainArgExecute  string = "execute"
+	ExplainArgDebug    string = "debug"
+
+	IndexDirectiveLabel          = "index"
+	IndexDirectivePropName       = "name"
+	IndexDirectivePropFields     = "fields"
+	IndexDirectivePropDirections = "directions"
 )
 
 var (
@@ -46,12 +52,17 @@ var (
 		Values: gql.EnumValueConfigMap{
 			ExplainArgSimple: &gql.EnumValueConfig{
 				Value:       ExplainArgSimple,
-				Description: "Simple explaination - dump of the plan graph.",
+				Description: "Simple explanation - dump of the plan graph.",
 			},
 
 			ExplainArgExecute: &gql.EnumValueConfig{
 				Value:       ExplainArgExecute,
-				Description: "Deeper explaination - insights gathered by executing the plan graph.",
+				Description: "Deeper explanation - insights gathered by executing the plan graph.",
+			},
+
+			ExplainArgDebug: &gql.EnumValueConfig{
+				Value:       ExplainArgDebug,
+				Description: "Like simple explain, but more verbose nodes (no attributes).",
 			},
 		},
 	})
@@ -70,6 +81,38 @@ var (
 		Locations: []string{
 			gql.DirectiveLocationQuery,
 			gql.DirectiveLocationMutation,
+		},
+	})
+
+	IndexDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+		Name:        IndexDirectiveLabel,
+		Description: "@index is a directive that can be used to create an index on a type.",
+		Args: gql.FieldConfigArgument{
+			IndexDirectivePropName: &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+			IndexDirectivePropFields: &gql.ArgumentConfig{
+				Type: gql.NewList(gql.String),
+			},
+			IndexDirectivePropDirections: &gql.ArgumentConfig{
+				Type: gql.NewList(OrderingEnum),
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationObject,
+		},
+	})
+
+	IndexFieldDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+		Name:        IndexDirectiveLabel,
+		Description: "@index is a directive that can be used to create an index on a field.",
+		Args: gql.FieldConfigArgument{
+			IndexDirectivePropName: &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationField,
 		},
 	})
 

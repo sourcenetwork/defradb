@@ -4,7 +4,7 @@ Start a DefraDB node
 
 ### Synopsis
 
-Start a new instance of DefraDB node.
+Start a DefraDB node.
 
 ```
 defradb start [flags]

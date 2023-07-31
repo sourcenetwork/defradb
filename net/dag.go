@@ -30,7 +30,7 @@ var (
 	DAGSyncTimeout = time.Second * 60
 )
 
-// A DAGSyncer is an abstraction to an IPLD-based p2p storage layer.  A
+// A DAGSyncer is an abstraction to an IPLD-based P2P storage layer.  A
 // DAGSyncer is a DAGService with the ability to publish new ipld nodes to the
 // network, and retrieving others from it.
 type DAGSyncer interface {
@@ -55,7 +55,7 @@ type dagJob struct {
 	node       ipld.Node       // the current ipld Node
 
 	collection client.Collection // collection our document belongs to
-	dockey     core.DataStoreKey // dockey of our document
+	dsKey      core.DataStoreKey // datastore key of our document
 	fieldName  string            // field of the subgraph our node belongs to
 
 	// Transaction common to a pushlog event. It is used to pass it along to processLog
@@ -87,12 +87,13 @@ func (p *Peer) sendJobWorker() {
 			return
 
 		case newJob := <-p.sendJobs:
-			jobs, ok := docWorkerQueue[newJob.dockey.DocKey]
+			jobs, ok := docWorkerQueue[newJob.dsKey.DocKey]
 			if !ok {
 				jobs = make(chan *dagJob, numWorkers)
 				for i := 0; i < numWorkers; i++ {
 					go p.dagWorker(jobs)
 				}
+				docWorkerQueue[newJob.dsKey.DocKey] = jobs
 			}
 			jobs <- newJob
 
@@ -112,7 +113,7 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 		log.Debug(
 			p.ctx,
 			"Starting new job from DAG queue",
-			logging.NewKV("DocKey", job.dockey),
+			logging.NewKV("Datastore Key", job.dsKey),
 			logging.NewKV("CID", job.node.Cid()),
 		)
 
@@ -128,7 +129,7 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 			p.ctx,
 			job.txn,
 			job.collection,
-			job.dockey,
+			job.dsKey,
 			job.node.Cid(),
 			job.fieldName,
 			job.node,
@@ -140,7 +141,7 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 				p.ctx,
 				"Error processing log",
 				err,
-				logging.NewKV("DocKey", job.dockey),
+				logging.NewKV("Datastore key", job.dsKey),
 				logging.NewKV("CID", job.node.Cid()),
 			)
 			job.session.Done()
@@ -157,7 +158,7 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 				j.session,
 				j.txn,
 				j.collection,
-				j.dockey,
+				j.dsKey,
 				j.fieldName,
 				j.node,
 				children,

@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/db/fetcher"
 )
 
 func (c *collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
@@ -37,7 +36,7 @@ func (c *collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 		return nil, client.ErrDocumentNotFound
 	}
 
-	doc, err := c.get(ctx, txn, dsKey, showDeleted)
+	doc, err := c.get(ctx, txn, dsKey, nil, showDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -48,13 +47,14 @@ func (c *collection) get(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
+	fields []client.FieldDescription,
 	showDeleted bool,
 ) (*client.Document, error) {
 	// create a new document fetcher
-	df := new(fetcher.DocumentFetcher)
+	df := c.newFetcher()
 	desc := &c.desc
 	// initialize it with the primary index
-	err := df.Init(&c.desc, nil, false, showDeleted)
+	err := df.Init(ctx, txn, &c.desc, fields, nil, nil, false, showDeleted)
 	if err != nil {
 		_ = df.Close()
 		return nil, err
@@ -63,14 +63,14 @@ func (c *collection) get(
 	// construct target key for DocKey
 	targetKey := base.MakeDocKey(*desc, key.DocKey)
 	// run the doc fetcher
-	err = df.Start(ctx, txn, core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd())))
+	err = df.Start(ctx, core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd())))
 	if err != nil {
 		_ = df.Close()
 		return nil, err
 	}
 
 	// return first matched decoded doc
-	doc, err := df.FetchNextDecoded(ctx)
+	doc, _, err := df.FetchNextDecoded(ctx)
 	if err != nil {
 		_ = df.Close()
 		return nil, err

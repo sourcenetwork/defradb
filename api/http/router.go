@@ -11,12 +11,11 @@
 package http
 
 import (
+	"net/http"
 	"net/url"
 	"path"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
 	"github.com/pkg/errors"
 )
 
@@ -25,42 +24,42 @@ const (
 	Version          string = "v0"
 	versionedAPIPath string = "/api/" + Version
 
-	RootPath        string = versionedAPIPath + ""
-	PingPath        string = versionedAPIPath + "/ping"
-	DumpPath        string = versionedAPIPath + "/debug/dump"
-	BlocksPath      string = versionedAPIPath + "/blocks"
-	GraphQLPath     string = versionedAPIPath + "/graphql"
-	SchemaLoadPath  string = versionedAPIPath + "/schema/load"
-	SchemaPatchPath string = versionedAPIPath + "/schema/patch"
-	PeerIDPath      string = versionedAPIPath + "/peerid"
+	RootPath            string = versionedAPIPath + ""
+	PingPath            string = versionedAPIPath + "/ping"
+	DumpPath            string = versionedAPIPath + "/debug/dump"
+	BlocksPath          string = versionedAPIPath + "/blocks"
+	GraphQLPath         string = versionedAPIPath + "/graphql"
+	SchemaPath          string = versionedAPIPath + "/schema"
+	SchemaMigrationPath string = SchemaPath + "/migration"
+	IndexPath           string = versionedAPIPath + "/index"
+	PeerIDPath          string = versionedAPIPath + "/peerid"
+	BackupPath          string = versionedAPIPath + "/backup"
+	ExportPath          string = BackupPath + "/export"
+	ImportPath          string = BackupPath + "/import"
 )
 
+// playgroundHandler is set when building with the playground build tag
+var playgroundHandler http.Handler
+
 func setRoutes(h *handler) *handler {
-	h.Mux = chi.NewRouter()
-
-	// setup CORS
-	if len(h.options.allowedOrigins) != 0 {
-		h.Use(cors.Handler(cors.Options{
-			AllowedOrigins: h.options.allowedOrigins,
-			AllowedMethods: []string{"GET", "POST", "OPTIONS"},
-			AllowedHeaders: []string{"Content-Type"},
-			MaxAge:         300,
-		}))
-	}
-
-	// setup logger middleware
-	h.Use(loggerMiddleware)
-
-	// define routes
-	h.Get(RootPath, h.handle(rootHandler))
-	h.Get(PingPath, h.handle(pingHandler))
-	h.Get(DumpPath, h.handle(dumpHandler))
-	h.Get(BlocksPath+"/{cid}", h.handle(getBlockHandler))
-	h.Get(GraphQLPath, h.handle(execGQLHandler))
-	h.Post(GraphQLPath, h.handle(execGQLHandler))
-	h.Post(SchemaLoadPath, h.handle(loadSchemaHandler))
-	h.Post(SchemaPatchPath, h.handle(patchSchemaHandler))
-	h.Get(PeerIDPath, h.handle(peerIDHandler))
+	h.Get(RootPath, rootHandler)
+	h.Get(PingPath, pingHandler)
+	h.Get(DumpPath, dumpHandler)
+	h.Get(BlocksPath+"/{cid}", getBlockHandler)
+	h.Get(GraphQLPath, execGQLHandler)
+	h.Post(GraphQLPath, execGQLHandler)
+	h.Get(SchemaPath, listSchemaHandler)
+	h.Post(SchemaPath, loadSchemaHandler)
+	h.Patch(SchemaPath, patchSchemaHandler)
+	h.Post(SchemaMigrationPath, setMigrationHandler)
+	h.Get(SchemaMigrationPath, getMigrationHandler)
+	h.Post(IndexPath, createIndexHandler)
+	h.Delete(IndexPath, dropIndexHandler)
+	h.Get(IndexPath, listIndexHandler)
+	h.Get(PeerIDPath, peerIDHandler)
+	h.Post(ExportPath, exportHandler)
+	h.Post(ImportPath, importHandler)
+	h.Handle("/*", playgroundHandler)
 
 	return h
 }

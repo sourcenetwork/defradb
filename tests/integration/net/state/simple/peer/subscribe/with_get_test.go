@@ -36,5 +36,5 @@ func TestP2PSubscribeGetAll(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

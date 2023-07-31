@@ -14,26 +14,9 @@ import (
 	"testing"
 )
 
-// Represents a request assigned to a particular transaction.
-type TransactionRequest struct {
-	// Used to identify the transaction for this to run against (allows multiple
-	//  requtests to share a single transaction)
-	TransactionId int
-	// The request to run against the transaction
-	Request string
-	// The expected (data) results of the issued request
-	Results []map[string]any
-	// The expected error resulting from the issued request. Also checked against the txn commit.
-	ExpectedError string
-}
-
 type RequestTestCase struct {
 	Description string
 	Request     string
-
-	// A collection of requests that are tied to a specific transaction.
-	// These will be executed before `Request` (if specified), in the order that they are listed here.
-	TransactionalRequests []TransactionRequest
 
 	// docs is a map from Collection Index, to a list
 	// of docs in stringified JSON format
@@ -88,38 +71,6 @@ func ExecuteRequestTestCase(
 		}
 	}
 
-	for _, request := range test.TransactionalRequests {
-		actions = append(
-			actions,
-			TransactionRequest2{
-				TransactionID: request.TransactionId,
-				Request:       request.Request,
-				Results:       request.Results,
-				ExpectedError: request.ExpectedError,
-			},
-		)
-	}
-
-	// The old test framework commited all the transactions at the end
-	// so we can just lump these here, they must however be commited in
-	// the order in which they were first recieved.
-	txnIndexesCommited := map[int]struct{}{}
-	for _, request := range test.TransactionalRequests {
-		if _, alreadyCommited := txnIndexesCommited[request.TransactionId]; alreadyCommited {
-			// Only commit each transaction once.
-			continue
-		}
-
-		txnIndexesCommited[request.TransactionId] = struct{}{}
-		actions = append(
-			actions,
-			TransactionCommit{
-				TransactionID: request.TransactionId,
-				ExpectedError: request.ExpectedError,
-			},
-		)
-	}
-
 	if test.Request != "" {
 		actions = append(
 			actions,
@@ -133,7 +84,6 @@ func ExecuteRequestTestCase(
 
 	ExecuteTestCase(
 		t,
-		collectionNames,
 		TestCase{
 			Description: test.Description,
 			Actions:     actions,

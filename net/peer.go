@@ -34,6 +34,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/routing"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -63,7 +65,7 @@ type Peer struct {
 	ps   *pubsub.PubSub
 
 	server *server
-	p2pRPC *grpc.Server // rpc server over the p2p network
+	p2pRPC *grpc.Server // rpc server over the P2P network
 
 	// Used to close the dagWorker pool for a given document.
 	// The string represents a dockey.
@@ -84,6 +86,8 @@ type Peer struct {
 
 	ctx    context.Context
 	cancel context.CancelFunc
+
+	pb.UnimplementedCollectionServer
 }
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
@@ -98,7 +102,7 @@ func NewPeer(
 	dialOptions []grpc.DialOption,
 ) (*Peer, error) {
 	if db == nil {
-		return nil, errors.New("database object can't be empty")
+		return nil, ErrNilDB
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -167,7 +171,7 @@ func (p *Peer) Start() error {
 
 	if p.ps != nil {
 		if !p.db.Events().Updates.HasValue() {
-			return errors.New("tried to subscribe to update channel, but update channel is nil")
+			return ErrNilUpdateChannel
 		}
 
 		updateChannel, err := p.db.Events().Updates.Value().Subscribe()
@@ -180,7 +184,7 @@ func (p *Peer) Start() error {
 		go p.handleBroadcastLoop()
 	}
 
-	// register the p2p gRPC server
+	// register the P2P gRPC server
 	go func() {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
 		if err := p.p2pRPC.Serve(p2plistener); err != nil &&
@@ -294,8 +298,8 @@ func (p *Peer) RegisterNewDocument(
 
 	// publish log
 	body := &pb.PushLogRequest_Body{
-		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
-		Cid:      &pb.ProtoCid{Cid: c},
+		DocKey:   []byte(dockey.String()),
+		Cid:      c.Bytes(),
 		SchemaID: []byte(schemaID),
 		Creator:  p.host.ID().String(),
 		Log: &pb.Document_Log{
@@ -309,25 +313,36 @@ func (p *Peer) RegisterNewDocument(
 	return p.server.publishLog(p.ctx, schemaID, req)
 }
 
+func marshalPeerID(id peer.ID) []byte {
+	b, _ := id.Marshal() // This will never return an error
+	return b
+}
+
 // SetReplicator adds a target peer node as a replication destination for documents in our DB.
 func (p *Peer) SetReplicator(
 	ctx context.Context,
-	paddr ma.Multiaddr,
-	collectionNames ...string,
-) (peer.ID, error) {
+	req *pb.SetReplicatorRequest,
+) (*pb.SetReplicatorReply, error) {
+	addr, err := ma.NewMultiaddrBytes(req.Addr)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	txn, err := p.db.NewTxn(ctx, true)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	store := p.db.WithTxn(txn)
 
-	pid, err := p.setReplicator(ctx, store, paddr, collectionNames...)
+	pid, err := p.setReplicator(ctx, store, addr, req.Collections...)
 	if err != nil {
 		txn.Discard(ctx)
-		return "", err
+		return nil, err
 	}
 
-	return pid, txn.Commit(ctx)
+	return &pb.SetReplicatorReply{
+		PeerID: marshalPeerID(pid),
+	}, txn.Commit(ctx)
 }
 
 // setReplicator adds a target peer node as a replication destination for documents in our DB.
@@ -511,28 +526,30 @@ func (p *Peer) pushToReplicator(
 	}
 }
 
-// DeleteReplicator adds a target peer node as a replication destination for documents in our DB.
+// DeleteReplicator removes a peer node from the replicators.
 func (p *Peer) DeleteReplicator(
 	ctx context.Context,
-	pid peer.ID,
-	collectionNames ...string,
-) error {
+	req *pb.DeleteReplicatorRequest,
+) (*pb.DeleteReplicatorReply, error) {
+	log.Debug(ctx, "Received DeleteReplicator request")
+
 	txn, err := p.db.NewTxn(ctx, true)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	store := p.db.WithTxn(txn)
 
-	err = p.deleteReplicator(ctx, store, pid, collectionNames...)
+	err = p.deleteReplicator(ctx, store, peer.ID(req.PeerID), req.Collections...)
 	if err != nil {
 		txn.Discard(ctx)
-		return err
+		return nil, err
 	}
 
-	return txn.Commit(ctx)
+	return &pb.DeleteReplicatorReply{
+		PeerID: req.PeerID,
+	}, txn.Commit(ctx)
 }
 
-// DeleteReplicator adds a target peer node as a replication destination for documents in our DB.
 func (p *Peer) deleteReplicator(
 	ctx context.Context,
 	store client.Store,
@@ -541,7 +558,7 @@ func (p *Peer) deleteReplicator(
 ) error {
 	// make sure it's not ourselves
 	if pid == p.host.ID() {
-		return errors.New("can't target ourselves as a replicator")
+		return ErrSelfTargetForReplicator
 	}
 
 	// verify collections
@@ -595,9 +612,32 @@ func (p *Peer) deleteReplicator(
 	})
 }
 
-// GetAllReplicators adds a target peer node as a replication destination for documents in our DB.
-func (p *Peer) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	return p.db.GetAllReplicators(ctx)
+// GetAllReplicators returns all replicators and the schemas that are replicated to them.
+func (p *Peer) GetAllReplicators(
+	ctx context.Context,
+	req *pb.GetAllReplicatorRequest,
+) (*pb.GetAllReplicatorReply, error) {
+	log.Debug(ctx, "Received GetAllReplicators request")
+
+	reps, err := p.db.GetAllReplicators(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pbReps := []*pb.GetAllReplicatorReply_Replicators{}
+	for _, rep := range reps {
+		pbReps = append(pbReps, &pb.GetAllReplicatorReply_Replicators{
+			Info: &pb.GetAllReplicatorReply_Replicators_Info{
+				Id:    []byte(rep.Info.ID),
+				Addrs: rep.Info.Addrs[0].Bytes(),
+			},
+			Schemas: rep.Schemas,
+		})
+	}
+
+	return &pb.GetAllReplicatorReply{
+		Replicators: pbReps,
+	}, nil
 }
 
 func (p *Peer) loadReplicators(ctx context.Context) error {
@@ -651,7 +691,7 @@ func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, err
 func (p *Peer) handleDocCreateLog(evt events.Update) error {
 	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
-		return errors.Wrap("failed to get DocKey from broadcast message", err)
+		return NewErrFailedToGetDockey(err)
 	}
 
 	// We need to register the document before pushing to the replicators if we want to
@@ -669,7 +709,7 @@ func (p *Peer) handleDocCreateLog(evt events.Update) error {
 func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
-		return errors.Wrap("failed to get DocKey from broadcast message", err)
+		return NewErrFailedToGetDockey(err)
 	}
 	log.Debug(
 		p.ctx,
@@ -679,8 +719,8 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 		logging.NewKV("SchemaId", evt.SchemaID))
 
 	body := &pb.PushLogRequest_Body{
-		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
-		Cid:      &pb.ProtoCid{Cid: evt.Cid},
+		DocKey:   []byte(dockey.String()),
+		Cid:      evt.Cid.Bytes(),
 		SchemaID: []byte(evt.SchemaID),
 		Creator:  p.host.ID().String(),
 		Log: &pb.Document_Log{
@@ -695,11 +735,11 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	p.pushLogToReplicators(p.ctx, evt)
 
 	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
-		return errors.Wrap(fmt.Sprintf("can't publish log %s for dockey %s", evt.Cid, evt.DocKey), err)
+		return NewErrPublishingToDockeyTopic(err, evt.Cid.String(), evt.DocKey)
 	}
 
 	if err := p.server.publishLog(p.ctx, evt.SchemaID, req); err != nil {
-		return errors.Wrap(fmt.Sprintf("can't publish log %s for schemaID %s", evt.Cid, evt.SchemaID), err)
+		return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaID)
 	}
 
 	return nil
@@ -816,39 +856,44 @@ func (p *Peer) rollbackRemovePubSubTopics(topics []string, cause error) error {
 // changes to the server may still be applied.
 //
 // WARNING: Calling this on collections with a large number of documents may take a long time to process.
-func (p *Peer) AddP2PCollections(collections []string) error {
+func (p *Peer) AddP2PCollections(
+	ctx context.Context,
+	req *pb.AddP2PCollectionsRequest,
+) (*pb.AddP2PCollectionsReply, error) {
+	log.Debug(ctx, "Received AddP2PCollections request")
+
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer txn.Discard(p.ctx)
 	store := p.db.WithTxn(txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
-	for _, col := range collections {
+	for _, col := range req.Collections {
 		storeCol, err := store.GetCollectionBySchemaID(p.ctx, col)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		storeCollections = append(storeCollections, storeCol)
 	}
 
 	// Ensure we can add all the collections to the store on the transaction
 	// before adding to topics.
-	for _, col := range collections {
+	for _, col := range req.Collections {
 		err := store.AddP2PCollection(p.ctx, col)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	// Add pubsub topics and remove them if we get an error.
 	addedTopics := []string{}
-	for _, col := range collections {
+	for _, col := range req.Collections {
 		err = p.server.addPubSubTopic(col, true)
 		if err != nil {
-			return p.rollbackAddPubSubTopics(addedTopics, err)
+			return nil, p.rollbackAddPubSubTopics(addedTopics, err)
 		}
 		addedTopics = append(addedTopics, col)
 	}
@@ -859,12 +904,12 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 	for _, col := range storeCollections {
 		keyChan, err := col.GetAllDocKeys(p.ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for key := range keyChan {
 			err := p.server.removePubSubTopic(key.Key.String())
 			if err != nil {
-				return p.rollbackRemovePubSubTopics(removedTopics, err)
+				return nil, p.rollbackRemovePubSubTopics(removedTopics, err)
 			}
 			removedTopics = append(removedTopics, key.Key.String())
 		}
@@ -872,10 +917,10 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 
 	if err = txn.Commit(p.ctx); err != nil {
 		err = p.rollbackRemovePubSubTopics(removedTopics, err)
-		return p.rollbackAddPubSubTopics(addedTopics, err)
+		return nil, p.rollbackAddPubSubTopics(addedTopics, err)
 	}
 
-	return nil
+	return &pb.AddP2PCollectionsReply{}, nil
 }
 
 // RemoveP2PCollections removes the given collectionIDs from the pubsup topics.
@@ -884,39 +929,44 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 // changes to the server may still be applied.
 //
 // WARNING: Calling this on collections with a large number of documents may take a long time to process.
-func (p *Peer) RemoveP2PCollections(collections []string) error {
+func (p *Peer) RemoveP2PCollections(
+	ctx context.Context,
+	req *pb.RemoveP2PCollectionsRequest,
+) (*pb.RemoveP2PCollectionsReply, error) {
+	log.Debug(ctx, "Received RemoveP2PCollections request")
+
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer txn.Discard(p.ctx)
 	store := p.db.WithTxn(txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
-	for _, col := range collections {
+	for _, col := range req.Collections {
 		storeCol, err := store.GetCollectionBySchemaID(p.ctx, col)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		storeCollections = append(storeCollections, storeCol)
 	}
 
 	// Ensure we can remove all the collections to the store on the transaction
 	// before adding to topics.
-	for _, col := range collections {
+	for _, col := range req.Collections {
 		err := store.RemoveP2PCollection(p.ctx, col)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	// Remove pubsub topics and add them back if we get an error.
 	removedTopics := []string{}
-	for _, col := range collections {
+	for _, col := range req.Collections {
 		err = p.server.removePubSubTopic(col)
 		if err != nil {
-			return p.rollbackRemovePubSubTopics(removedTopics, err)
+			return nil, p.rollbackRemovePubSubTopics(removedTopics, err)
 		}
 		removedTopics = append(removedTopics, col)
 	}
@@ -927,12 +977,12 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 	for _, col := range storeCollections {
 		keyChan, err := col.GetAllDocKeys(p.ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for key := range keyChan {
 			err := p.server.addPubSubTopic(key.Key.String(), true)
 			if err != nil {
-				return p.rollbackAddPubSubTopics(addedTopics, err)
+				return nil, p.rollbackAddPubSubTopics(addedTopics, err)
 			}
 			addedTopics = append(addedTopics, key.Key.String())
 		}
@@ -940,38 +990,45 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 
 	if err = txn.Commit(p.ctx); err != nil {
 		err = p.rollbackAddPubSubTopics(addedTopics, err)
-		return p.rollbackRemovePubSubTopics(removedTopics, err)
+		return nil, p.rollbackRemovePubSubTopics(removedTopics, err)
 	}
 
-	return nil
+	return &pb.RemoveP2PCollectionsReply{}, nil
 }
 
-// GetAllP2PCollections gets all the collectionIDs that have been added to the
-// pubsub topics from the system store.
-func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
+// GetAllP2PCollections gets all the collectionIDs from the pubsup topics
+func (p *Peer) GetAllP2PCollections(
+	ctx context.Context,
+	req *pb.GetAllP2PCollectionsRequest,
+) (*pb.GetAllP2PCollectionsReply, error) {
+	log.Debug(ctx, "Received GetAllP2PCollections request")
+
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(p.ctx)
 	store := p.db.WithTxn(txn)
 
 	collections, err := p.db.GetAllP2PCollections(p.ctx)
 	if err != nil {
+		txn.Discard(p.ctx)
 		return nil, err
 	}
 
-	p2pCols := []client.P2PCollection{}
+	pbCols := []*pb.GetAllP2PCollectionsReply_Collection{}
 	for _, colID := range collections {
 		col, err := store.GetCollectionBySchemaID(p.ctx, colID)
 		if err != nil {
+			txn.Discard(p.ctx)
 			return nil, err
 		}
-		p2pCols = append(p2pCols, client.P2PCollection{
-			ID:   colID,
+		pbCols = append(pbCols, &pb.GetAllP2PCollectionsReply_Collection{
+			Id:   colID,
 			Name: col.Name(),
 		})
 	}
 
-	return p2pCols, txn.Commit(p.ctx)
+	return &pb.GetAllP2PCollectionsReply{
+		Collections: pbCols,
+	}, txn.Commit(p.ctx)
 }

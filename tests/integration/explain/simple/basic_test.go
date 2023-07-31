@@ -14,43 +14,44 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
+type dataMap = map[string]any
+
 func TestSimpleExplainRequest(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Explain (simple) a basic request.",
+	test := testUtils.TestCase{
+		Description: "Explain (simple) a basic request, assert full graph.",
 
-		Request: `query @explain(type: simple) {
-			Author {
-				_key
-				name
-				age
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			2: {
-				`{
-					"name": "John",
-					"age": 21
+			testUtils.ExplainRequest{
+				Request: `query @explain(type: simple) {
+					Author {
+						_key
+						name
+						age
+					}
 				}`,
-			},
-		},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"filter":         nil,
-								"collectionID":   "3",
-								"collectionName": "Author",
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
+				ExpectedFullGraph: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"_keys":  nil,
+									"filter": nil,
+									"scanNode": dataMap{
+										"filter":         nil,
+										"collectionID":   "3",
+										"collectionName": "Author",
+										"spans": []dataMap{
+											{
+												"start": "/3",
+												"end":   "/4",
+											},
+										},
 									},
 								},
 							},
@@ -61,5 +62,5 @@ func TestSimpleExplainRequest(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

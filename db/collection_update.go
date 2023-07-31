@@ -305,9 +305,19 @@ func (c *collection) applyMerge(
 			return ErrInvalidMergeValueType
 		}
 
-		fd, valid := c.desc.GetField(mfield)
-		if !valid {
-			return client.NewErrFieldNotExist(mfield)
+		fd, isValidAliasField := c.desc.Schema.GetField(mfield + request.RelatedObjectID)
+		if isValidAliasField {
+			// Overwrite the key with aliased name to the internal related object name.
+			oldKey := mfield
+			mfield = mfield + request.RelatedObjectID
+			mergeMap[mfield] = mval
+			delete(mergeMap, oldKey)
+		} else {
+			var isValidField bool
+			fd, isValidField = c.desc.Schema.GetField(mfield)
+			if !isValidField {
+				return client.NewErrFieldNotExist(mfield)
+			}
 		}
 
 		relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fd)
@@ -398,7 +408,9 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (clie
 		return client.FieldDescription{}, false
 	}
 
-	relationFieldDescription, valid := c.Description().GetField(strings.TrimSuffix(fieldDesc.Name, "_id"))
+	relationFieldDescription, valid := c.Description().Schema.GetField(
+		strings.TrimSuffix(fieldDesc.Name, request.RelatedObjectID),
+	)
 	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation()
 }
 
@@ -431,7 +443,7 @@ func (c *collection) patchPrimaryDoc(
 	_, err = primaryCol.UpdateWithKey(
 		ctx,
 		primaryDockey,
-		fmt.Sprintf(`{"%s": "%s"}`, primaryField.Name+"_id", docKey),
+		fmt.Sprintf(`{"%s": "%s"}`, primaryField.Name+request.RelatedObjectID, docKey),
 	)
 	if err != nil {
 		return err
@@ -491,7 +503,7 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 		return getNillableArray(val, getInt64)
 
 	case client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
-		return nil, ErrMergeSubTypeNotSupported
+		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
 	}
 
 	return nil, client.NewErrUnhandledType("FieldKind", field.Kind)

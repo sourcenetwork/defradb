@@ -53,7 +53,7 @@ func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
 		visitedNodes: make(map[string]bool),
 		queuedCids:   []*cid.Cid{},
 		commitSelect: commitSelect,
-		docMapper:    docMapper{&commitSelect.DocumentMapping},
+		docMapper:    docMapper{commitSelect.DocumentMapping},
 	}
 }
 
@@ -333,7 +333,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 			return core.Doc{}, nil, err
 		}
 
-		field, ok := c.Description().GetField(fieldName.(string))
+		field, ok := c.Description().Schema.GetField(fieldName.(string))
 		if !ok {
 			return core.Doc{}, nil, client.NewErrFieldNotExist(fieldName.(string))
 		}

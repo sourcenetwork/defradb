@@ -23,4 +23,5 @@ var (
 	ErrInvalidNumberOfExplainArgs     = errors.New("invalid number of arguments to an explain request")
 	ErrUnknownExplainType             = errors.New("invalid / unknown explain type")
 	ErrUnknownGQLOperation            = errors.New("unknown GraphQL operation type")
+	ErrInvalidFilterConditions        = errors.New("invalid filter condition type, expected map")
 )

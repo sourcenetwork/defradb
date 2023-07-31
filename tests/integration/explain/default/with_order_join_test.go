@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -32,75 +33,48 @@ var orderTypeJoinPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order field on a related child.",
 
-		Request: `query @explain {
-			Author {
-				name
-				articles(order: {name: DESC}) {
-					name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
+			testUtils.ExplainRequest{
 
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
+				Request: `query @explain {
+					Author {
+						name
+						articles(order: {name: DESC}) {
+							name
+						}
+					}
 				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"typeIndexJoin": orderTypeJoinPattern,
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"typeIndexJoin": orderTypeJoinPattern,
+								},
+							},
 						},
 					},
 				},
-			},
-		},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "orderNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "DESC",
-							"fields": []string{
-								"name",
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "orderNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "DESC",
+									"fields": []string{
+										"name",
+									},
+								},
 							},
 						},
 					},
@@ -109,97 +83,70 @@ func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with order field on parent and related child.",
 
-		Request: `query @explain {
-			Author(order: {name: ASC}) {
-				name
-				articles(order: {name: DESC}) {
-					name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
+			testUtils.ExplainRequest{
 
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
+				Request: `query @explain {
+					Author(order: {name: ASC}) {
+						name
+						articles(order: {name: DESC}) {
+							name
+						}
+					}
 				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
-							"selectNode": dataMap{
-								"typeIndexJoin": orderTypeJoinPattern,
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"orderNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": orderTypeJoinPattern,
+									},
+								},
 							},
 						},
 					},
 				},
-			},
-		},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "orderNode",
-				OccurancesToSkip:  0,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "ASC",
-							"fields": []string{
-								"name",
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "orderNode",
+						OccurancesToSkip:  0,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields": []string{
+										"name",
+									},
+								},
 							},
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "orderNode",
-				OccurancesToSkip:  1,
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "DESC",
-							"fields": []string{
-								"name",
+					{
+						TargetNodeName:    "orderNode",
+						OccurancesToSkip:  1,
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "DESC",
+									"fields": []string{
+										"name",
+									},
+								},
 							},
 						},
 					},
@@ -208,92 +155,35 @@ func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestDefaultExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request where parent is ordered by it's related child.",
 
-		Request: `query @explain {
-			Author(
-				order: {
-					articles: {name: ASC}
-				}
-			) {
-				articles {
-				    name
-				}
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			// articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
+			testUtils.ExplainRequest{
 
-			// authors
-			2: {
-				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
+				Request: `query @explain {
+					Author(
+						order: {
+							articles: {name: ASC}
+						}
+					) {
+						articles {
+							name
+						}
+					}
 				}`,
-				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
 
-		ExpectedPatterns: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"orderNode": dataMap{
-							"selectNode": dataMap{
-								"typeIndexJoin": normalTypeJoinPattern,
-							},
-						},
-					},
-				},
-			},
-		},
-
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "orderNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"orderings": []dataMap{
-						{
-							"direction": "ASC",
-							"fields": []string{
-								"articles",
-								"name",
-							},
-						},
-					},
-				},
+				ExpectedError: "Argument \"order\" has invalid value {articles: {name: ASC}}.\nIn field \"articles\": Unknown field.",
 			},
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

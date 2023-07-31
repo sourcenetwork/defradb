@@ -1,10 +1,11 @@
 ## defradb client rpc p2pcollection remove
 
-Add P2P collections
+Remove P2P collections
 
 ### Synopsis
 
-Use this command if you wish to remove P2P collections from the pubsub topics
+Remove P2P collections from the followed pubsub topics.
+The removed collections will no longer be synchronized between nodes.
 
 ```
 defradb client rpc p2pcollection remove [collectionID] [flags]
@@ -19,7 +20,7 @@ defradb client rpc p2pcollection remove [collectionID] [flags]
 ### Options inherited from parent commands
 
 ```
-      --addr string          gRPC endpoint address (default "0.0.0.0:9161")
+      --addr string          RPC endpoint address (default "0.0.0.0:9161")
       --logformat string     Log format to use. Options are csv, json (default "csv")
       --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
       --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
@@ -32,5 +33,5 @@ defradb client rpc p2pcollection remove [collectionID] [flags]
 
 ### SEE ALSO
 
-* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Interact with the P2P collection system
+* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the P2P collection system
 
