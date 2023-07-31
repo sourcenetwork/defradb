@@ -267,7 +267,7 @@ func (c *collection) iterateAllDocs(
 
 	var doc *client.Document
 	for {
-		doc, err = df.FetchNextDecoded(ctx)
+		doc, _, err = df.FetchNextDecoded(ctx)
 		if err != nil {
 			_ = df.Close()
 			return err
@@ -403,6 +403,8 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	if err != nil {
 		return nil, err
 	}
+	defer c.discardImplicitTxn(ctx, txn)
+
 	err = c.loadIndexes(ctx, txn)
 	if err != nil {
 		return nil, err

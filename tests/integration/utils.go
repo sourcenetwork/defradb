@@ -84,7 +84,6 @@ func ExecuteRequestTestCase(
 
 	ExecuteTestCase(
 		t,
-		collectionNames,
 		TestCase{
 			Description: test.Description,
 			Actions:     actions,

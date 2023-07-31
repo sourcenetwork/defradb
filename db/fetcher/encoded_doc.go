@@ -95,6 +95,7 @@ func (encdoc *encodedDocument) Reset() {
 	}
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
+	encdoc.schemaVersionID = ""
 }
 
 // Decode returns a properly decoded document object

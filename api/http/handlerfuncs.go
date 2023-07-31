@@ -53,7 +53,7 @@ func pingHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		simpleDataResponse("response", "pong", "test"),
+		simpleDataResponse("response", "pong"),
 		http.StatusOK,
 	)
 }
@@ -164,9 +164,10 @@ type fieldResponse struct {
 }
 
 type collectionResponse struct {
-	Name   string          `json:"name"`
-	ID     string          `json:"id"`
-	Fields []fieldResponse `json:"fields,omitempty"`
+	Name      string          `json:"name"`
+	ID        string          `json:"id"`
+	VersionID string          `json:"version_id"`
+	Fields    []fieldResponse `json:"fields,omitempty"`
 }
 
 func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
@@ -201,9 +202,10 @@ func listSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 			fields = append(fields, fieldRes)
 		}
 		colResp[i] = collectionResponse{
-			Name:   col.Name(),
-			ID:     col.SchemaID(),
-			Fields: fields,
+			Name:      col.Name(),
+			ID:        col.SchemaID(),
+			VersionID: col.Schema().VersionID,
+			Fields:    fields,
 		}
 	}
 
@@ -242,8 +244,9 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		colResp[i] = collectionResponse{
-			Name: col.Name(),
-			ID:   col.SchemaID(),
+			Name:      col.Name(),
+			ID:        col.SchemaID(),
+			VersionID: col.Schema().VersionID,
 		}
 	}
 

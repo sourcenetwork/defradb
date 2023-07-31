@@ -60,7 +60,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.T) {
@@ -128,7 +128,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
@@ -182,7 +182,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T) {
@@ -240,7 +240,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"User"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {

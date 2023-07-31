@@ -1,6 +1,6 @@
 ## defradb client dump
 
-Dump the contents of a database node-side
+Dump the contents of DefraDB node-side
 
 ```
 defradb client dump [flags]
@@ -27,5 +27,5 @@ defradb client dump [flags]
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 

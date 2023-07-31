@@ -12,7 +12,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -27,7 +26,7 @@ import (
 func MakePingCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "ping",
-		Short: "Ping to test connection to a node",
+		Short: "Ping to test connection with a node",
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
 			stdout, err := os.Stdout.Stat()
 			if err != nil {
@@ -49,7 +48,7 @@ func MakePingCommand(cfg *config.Config) *cobra.Command {
 
 			defer func() {
 				if e := res.Body.Close(); e != nil {
-					err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
+					err = NewErrFailedToCloseResponseBody(e, err)
 				}
 			}()
 

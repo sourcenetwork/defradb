@@ -17,12 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-)
-
-var (
-	log = logging.MustNewLogger("planner")
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.

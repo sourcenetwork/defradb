@@ -49,8 +49,9 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 										"filterMatches": uint64(2),
 										"iterations":    uint64(3),
 										"scanNode": dataMap{
-											"iterations": uint64(3),
-											"docFetches": uint64(3),
+											"iterations":   uint64(3),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(4),
 										},
 									},
 								},
@@ -131,8 +132,9 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 										"filterMatches": uint64(4),
 										"iterations":    uint64(5),
 										"scanNode": dataMap{
-											"iterations": uint64(5),
-											"docFetches": uint64(5),
+											"iterations":   uint64(5),
+											"docFetches":   uint64(4),
+											"fieldFetches": uint64(8),
 										},
 									},
 								},
@@ -184,8 +186,9 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 									"typeIndexJoin": dataMap{
 										"iterations": uint64(3),
 										"scanNode": dataMap{
-											"iterations": uint64(3),
-											"docFetches": uint64(3),
+											"iterations":   uint64(3),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(2),
 										},
 									},
 								},
@@ -240,8 +243,9 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
 											"scanNode": dataMap{
-												"iterations": uint64(3),
-												"docFetches": uint64(3),
+												"iterations":   uint64(3),
+												"docFetches":   uint64(2),
+												"fieldFetches": uint64(4),
 											},
 										},
 									},

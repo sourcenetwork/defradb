@@ -38,7 +38,7 @@ func TestSchemaUpdatesReplaceFieldErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesReplaceFieldWithIDErrors(t *testing.T) {
@@ -63,5 +63,5 @@ func TestSchemaUpdatesReplaceFieldWithIDErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

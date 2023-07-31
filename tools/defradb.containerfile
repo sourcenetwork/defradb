@@ -4,7 +4,7 @@
 
 # Stage: BUILD
 # Several steps are involved to enable caching and because of the behavior of COPY regarding directories.
-FROM docker.io/golang:1.19 AS BUILD
+FROM docker.io/golang:1.20 AS BUILD
 WORKDIR /repo/
 COPY go.mod go.sum Makefile ./
 RUN make deps:modules
@@ -12,7 +12,7 @@ COPY . .
 RUN make build
 
 # Stage: RUN
-FROM gcr.io/distroless/base-debian11
+FROM debian:bookworm-slim
 COPY --from=BUILD /repo/build/defradb /defradb
 
 # Documents which ports are normally used.

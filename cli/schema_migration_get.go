@@ -12,7 +12,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -36,13 +35,11 @@ Example:
   defradb client schema migration get'
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.NoArgs(cmd, args); err != nil {
-				return errors.New("this command take no arguments")
-			}
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if err := cobra.NoArgs(cmd, args); err != nil {
+				return NewErrTooManyArgs(0, len(args))
+			}
+
 			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaMigrationPath)
 			if err != nil {
 				return errors.Wrap("join paths failed", err)
@@ -55,7 +52,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 
 			defer func() {
 				if e := res.Body.Close(); e != nil {
-					err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
+					err = NewErrFailedToCloseResponseBody(e, err)
 				}
 			}()
 

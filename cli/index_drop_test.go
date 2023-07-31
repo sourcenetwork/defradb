@@ -31,7 +31,7 @@ func TestIndexDropCmd_IfInvalidAddress_ReturnError(t *testing.T) {
 }
 
 func TestIndexDropCmd_IfNoCollection_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 	indexDropCmd := MakeIndexDropCommand(cfg)
 
@@ -54,7 +54,7 @@ func TestIndexDropCmd_IfNoCollection_ReturnError(t *testing.T) {
 }
 
 func TestIndexDropCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 
 	execAddSchemaCmd(t, cfg, `type User { name: String }`)
@@ -80,7 +80,7 @@ func TestIndexDropCmd_IfNoErrors_ShouldReturnData(t *testing.T) {
 }
 
 func TestIndexDropCmd_WithConsoleOutputIfNoCollection_ReturnError(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 	indexDropCmd := MakeIndexDropCommand(cfg)
 
@@ -97,7 +97,7 @@ func TestIndexDropCmd_WithConsoleOutputIfNoCollection_ReturnError(t *testing.T) 
 }
 
 func TestIndexDropCmd_WithConsoleOutputIfNoErrors_ShouldReturnData(t *testing.T) {
-	cfg, close := startNode(t)
+	cfg, _, close := startTestNode(t)
 	defer close()
 
 	execAddSchemaCmd(t, cfg, `type User { name: String }`)

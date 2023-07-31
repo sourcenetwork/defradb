@@ -43,5 +43,5 @@ func TestQueryLastCommitsWithDockeyProperty(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

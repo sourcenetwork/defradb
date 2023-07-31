@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -109,7 +108,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 
 			defer func() {
 				if e := res.Body.Close(); e != nil {
-					err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
+					err = NewErrFailedToCloseResponseBody(e, err)
 				}
 			}()
 

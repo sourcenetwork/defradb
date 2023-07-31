@@ -53,7 +53,7 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
@@ -115,7 +115,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This is an odd test, but we need to make sure it works
@@ -170,7 +170,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
@@ -224,7 +224,7 @@ func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
@@ -267,7 +267,7 @@ func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
@@ -334,7 +334,7 @@ func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithGroupByFieldID(t *testing.T) {
@@ -377,7 +377,7 @@ func TestQueryCommitsWithGroupByFieldID(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithGroupByFieldIDWithChild(t *testing.T) {
@@ -444,5 +444,5 @@ func TestQueryCommitsWithGroupByFieldIDWithChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

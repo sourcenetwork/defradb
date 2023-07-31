@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/planner"
 )
@@ -58,25 +59,37 @@ func (db *db) handleSubscription(
 			continue
 		}
 
-		p := planner.New(ctx, db.WithTxn(txn), txn)
+		db.handleEvent(ctx, txn, pub, evt, r)
 
-		s := r.ToSelect(evt.DocKey, evt.Cid.String())
-
-		result, err := p.RunSubscriptionRequest(ctx, s)
-		if err != nil {
-			pub.Publish(client.GQLResult{
-				Errors: []error{err},
-			})
-			continue
-		}
-
-		// Don't send anything back to the client if the request yields an empty dataset.
-		if len(result) == 0 {
-			continue
-		}
-
-		pub.Publish(client.GQLResult{
-			Data: result,
-		})
+		txn.Discard(ctx)
 	}
+}
+
+func (db *db) handleEvent(
+	ctx context.Context,
+	txn datastore.Txn,
+	pub *events.Publisher[events.Update],
+	evt events.Update,
+	r *request.ObjectSubscription,
+) {
+	p := planner.New(ctx, db.WithTxn(txn), txn)
+
+	s := r.ToSelect(evt.DocKey, evt.Cid.String())
+
+	result, err := p.RunSubscriptionRequest(ctx, s)
+	if err != nil {
+		pub.Publish(client.GQLResult{
+			Errors: []error{err},
+		})
+		return
+	}
+
+	// Don't send anything back to the client if the request yields an empty dataset.
+	if len(result) == 0 {
+		return
+	}
+
+	pub.Publish(client.GQLResult{
+		Data: result,
+	})
 }

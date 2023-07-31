@@ -47,7 +47,7 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
@@ -85,7 +85,7 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This is an odd test, but still a possibility and we should still cover it.
@@ -136,7 +136,7 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This is an odd test, but still a possibility and we should still cover it.
@@ -166,5 +166,5 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndInvalidKindSubstitut
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

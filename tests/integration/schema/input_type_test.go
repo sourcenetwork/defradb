@@ -116,7 +116,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"user", "group"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
@@ -241,7 +241,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"book", "author"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any{

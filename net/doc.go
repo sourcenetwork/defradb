@@ -11,7 +11,7 @@
 // limitations under the License.
 
 /*
-Package net provides p2p network functions for the core DefraDB instance.
+Package net provides P2P network functions for the core DefraDB instance.
 
 Notable design descision: all DocKeys (Documents) have their own respective PubSub topics.
 

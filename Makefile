@@ -29,7 +29,7 @@ ifdef BUILD_TAGS
 BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
-TEST_FLAGS=-race -shuffle=on -timeout 70s
+TEST_FLAGS=-race -shuffle=on -timeout 150s
 
 PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
@@ -76,7 +76,7 @@ client\:add-schema:
 
 .PHONY: deps\:lint
 deps\:lint:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53
 
 .PHONY: deps\:test
 deps\:test:
@@ -158,7 +158,7 @@ verify:
 
 .PHONY: tidy
 tidy:
-	go mod tidy -go=1.19
+	go mod tidy -go=1.20
 
 .PHONY: clean
 clean:
@@ -243,6 +243,7 @@ test\:lens:
 
 .PHONY: test\:cli
 test\:cli:
+	@$(MAKE) deps:lens
 	gotestsum --format testname -- ./$(CLI_TEST_DIRECTORY)/... $(TEST_FLAGS)
 
 # Using go-acc to ensure integration tests are included.

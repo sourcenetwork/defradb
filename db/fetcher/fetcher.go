@@ -27,6 +27,26 @@ import (
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
 
+// ExecInfo contains statistics about the fetcher execution.
+type ExecInfo struct {
+	// Number of documents fetched.
+	DocsFetched uint64
+	// Number of fields fetched.
+	FieldsFetched uint64
+}
+
+// Add adds the other ExecInfo to the current ExecInfo.
+func (s *ExecInfo) Add(other ExecInfo) {
+	s.DocsFetched += other.DocsFetched
+	s.FieldsFetched += other.FieldsFetched
+}
+
+// Reset resets the ExecInfo.
+func (s *ExecInfo) Reset() {
+	s.DocsFetched = 0
+	s.FieldsFetched = 0
+}
+
 // Fetcher is the interface for collecting documents from the underlying data store.
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
@@ -41,9 +61,9 @@ type Fetcher interface {
 		showDeleted bool,
 	) error
 	Start(ctx context.Context, spans core.Spans) error
-	FetchNext(ctx context.Context) (EncodedDocument, error)
-	FetchNextDecoded(ctx context.Context) (*client.Document, error)
-	FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, error)
+	FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error)
+	FetchNextDecoded(ctx context.Context) (*client.Document, ExecInfo, error)
+	FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, ExecInfo, error)
 	Close() error
 }
 
@@ -105,6 +125,8 @@ type DocumentFetcher struct {
 	// we use a parallel fetcher to be able to return the documents in the expected order.
 	// That being lexicographically ordered dockeys.
 	deletedDocFetcher *DocumentFetcher
+
+	execInfo ExecInfo
 }
 
 // Init implements DocumentFetcher.
@@ -332,6 +354,10 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 
 	df.kvEnd = spanDone
 	if df.kvEnd {
+		err = df.kvResultsIter.Close()
+		if err != nil {
+			return false, false, err
+		}
 		moreSpans, err := df.startNextSpan(ctx)
 		if err != nil {
 			return false, false, err
@@ -486,6 +512,8 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		property.IsFilter = true
 	}
 
+	df.execInfo.FieldsFetched++
+
 	df.doc.Properties[fieldDesc] = property
 
 	return nil
@@ -493,25 +521,26 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 
 // FetchNext returns a raw binary encoded document. It iterates over all the relevant
 // keypairs from the underlying store and constructs the document.
-func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, error) {
+func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
 	if df.kvEnd {
-		return nil, nil
+		return nil, ExecInfo{}, nil
 	}
 
 	if df.kv == nil {
-		return nil, client.NewErrUninitializeProperty("DocumentFetcher", "kv")
+		return nil, ExecInfo{}, client.NewErrUninitializeProperty("DocumentFetcher", "kv")
 	}
 	// save the DocKey of the current kv pair so we can track when we cross the doc pair boundries
 	// keyparts := df.kv.Key.List()
 	// key := keyparts[len(keyparts)-2]
 
+	df.execInfo.Reset()
 	// iterate until we have collected all the necessary kv pairs for the doc
 	// we'll know when were done when either
 	// A) Reach the end of the iterator
 	for {
 		err := df.processKV(df.kv)
 		if err != nil {
-			return nil, err
+			return nil, ExecInfo{}, err
 		}
 
 		if df.filter != nil {
@@ -520,13 +549,13 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, erro
 			if df.filterSet.Equal(df.doc.filterSet) {
 				filterDoc, err := df.doc.decodeToDocForFilter()
 				if err != nil {
-					return nil, err
+					return nil, ExecInfo{}, err
 				}
 
 				df.ranFilter = true
 				df.passedFilter, err = mapper.RunFilter(filterDoc, df.filter)
 				if err != nil {
-					return nil, err
+					return nil, ExecInfo{}, err
 				}
 			}
 		}
@@ -536,36 +565,37 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, erro
 		// so we seek to the next doc
 		spansDone, docDone, err := df.nextKey(ctx, !df.passedFilter && df.ranFilter)
 		if err != nil {
-			return nil, err
+			return nil, ExecInfo{}, err
 		}
 
 		if docDone {
+			df.execInfo.DocsFetched++
 			if df.filter != nil {
 				// if we passed, return
 				if df.passedFilter {
-					return df.doc, nil
+					return df.doc, df.execInfo, nil
 				} else if !df.ranFilter { // if we didn't run, run it
 					decodedDoc, err := df.doc.DecodeToDoc()
 					if err != nil {
-						return nil, err
+						return nil, ExecInfo{}, err
 					}
 					df.passedFilter, err = mapper.RunFilter(decodedDoc, df.filter)
 					if err != nil {
-						return nil, err
+						return nil, ExecInfo{}, err
 					}
 					if df.passedFilter {
-						return df.doc, nil
+						return df.doc, df.execInfo, nil
 					}
 				}
 			} else {
-				return df.doc, nil
+				return df.doc, df.execInfo, nil
 			}
 
 			if !spansDone {
 				continue
 			}
 
-			return nil, nil
+			return nil, df.execInfo, nil
 		}
 
 		// // crossed document kv boundary?
@@ -579,21 +609,21 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, erro
 }
 
 // FetchNextDecoded implements DocumentFetcher
-func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, error) {
-	encdoc, err := df.FetchNext(ctx)
+func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, ExecInfo, error) {
+	encdoc, execInfo, err := df.FetchNext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, ExecInfo{}, err
 	}
 	if encdoc == nil {
-		return nil, nil
+		return nil, ExecInfo{}, nil
 	}
 
 	decodedDoc, err := encdoc.Decode()
 	if err != nil {
-		return nil, err
+		return nil, ExecInfo{}, err
 	}
 
-	return decodedDoc, nil
+	return decodedDoc, execInfo, nil
 }
 
 // FetchNextDoc returns the next document as a core.Doc.
@@ -601,10 +631,11 @@ func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Docume
 func (df *DocumentFetcher) FetchNextDoc(
 	ctx context.Context,
 	mapping *core.DocumentMapping,
-) ([]byte, core.Doc, error) {
+) ([]byte, core.Doc, ExecInfo, error) {
 	var err error
 	var encdoc EncodedDocument
 	var status client.DocumentStatus
+	var resultExecInfo ExecInfo
 
 	// If the deletedDocFetcher isn't nil, this means that the user requested to include the deleted documents
 	// in the query. To keep the active and deleted docs in lexicographic order of dockeys, we use the two distinct
@@ -613,22 +644,16 @@ func (df *DocumentFetcher) FetchNextDoc(
 	if ddf != nil {
 		// If we've reached the end of the deleted docs, we can skip to getting the next active docs.
 		if !ddf.kvEnd {
-			if df.reverse {
-				if df.kvEnd || ddf.kv.Key.DocKey > df.kv.Key.DocKey {
-					encdoc, err = ddf.FetchNext(ctx)
-					if err != nil {
-						return nil, core.Doc{}, err
-					}
-					status = client.Deleted
+			if df.kvEnd ||
+				(df.reverse && ddf.kv.Key.DocKey > df.kv.Key.DocKey) ||
+				(!df.reverse && ddf.kv.Key.DocKey < df.kv.Key.DocKey) {
+				var execInfo ExecInfo
+				encdoc, execInfo, err = ddf.FetchNext(ctx)
+				if err != nil {
+					return nil, core.Doc{}, ExecInfo{}, err
 				}
-			} else {
-				if df.kvEnd || ddf.kv.Key.DocKey < df.kv.Key.DocKey {
-					encdoc, err = ddf.FetchNext(ctx)
-					if err != nil {
-						return nil, core.Doc{}, err
-					}
-					status = client.Deleted
-				}
+				status = client.Deleted
+				resultExecInfo.Add(execInfo)
 			}
 		}
 	}
@@ -636,42 +661,40 @@ func (df *DocumentFetcher) FetchNextDoc(
 	// At this point id encdoc is nil, it means that the next document to be
 	// returned will be from the active ones.
 	if encdoc == nil {
-		encdoc, err = df.FetchNext(ctx)
+		var execInfo ExecInfo
+		encdoc, execInfo, err = df.FetchNext(ctx)
 		if err != nil {
-			return nil, core.Doc{}, err
+			return nil, core.Doc{}, ExecInfo{}, err
 		}
+		resultExecInfo.Add(execInfo)
 		if encdoc == nil {
-			return nil, core.Doc{}, nil
+			return nil, core.Doc{}, resultExecInfo, err
 		}
 		status = client.Active
 	}
 
 	doc, err := encdoc.DecodeToDoc()
 	if err != nil {
-		return nil, core.Doc{}, err
+		return nil, core.Doc{}, ExecInfo{}, err
 	}
 	doc.Status = status
-	return encdoc.Key(), doc, err
+	return encdoc.Key(), doc, resultExecInfo, err
 }
 
 // Close closes the DocumentFetcher.
 func (df *DocumentFetcher) Close() error {
-	if df.kvIter == nil {
-		return nil
+	if df.kvIter != nil {
+		err := df.kvIter.Close()
+		if err != nil {
+			return err
+		}
 	}
 
-	err := df.kvIter.Close()
-	if err != nil {
-		return err
-	}
-
-	if df.kvResultsIter == nil {
-		return nil
-	}
-
-	err = df.kvResultsIter.Close()
-	if err != nil {
-		return err
+	if df.kvResultsIter != nil {
+		err := df.kvResultsIter.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	if df.deletedDocFetcher != nil {

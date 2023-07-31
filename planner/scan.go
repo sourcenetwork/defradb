@@ -21,12 +21,13 @@ import (
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
 
+// scanExecInfo contains information about the execution of a scan.
 type scanExecInfo struct {
 	// Total number of times scan was issued.
 	iterations uint64
 
-	// Total number of times attempted to fetch documents.
-	docFetches uint64
+	// Information about fetches.
+	fetches fetcher.ExecInfo
 }
 
 // scans an index for records
@@ -47,8 +48,6 @@ type scanNode struct {
 
 	filter *mapper.Filter
 	slct   *mapper.Select
-
-	scanInitialized bool
 
 	fetcher fetcher.Fetcher
 
@@ -85,7 +84,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 	for _, r := range fields {
 		// add all the possible base level fields the fetcher is responsible
 		// for, including those that are needed by higher level aggregates
-		// or grouping alls, which them selves might have further dependants
+		// or grouping alls, which them selves might have further dependents
 		switch requestable := r.(type) {
 		// field is simple as its just a base level field
 		case *mapper.Field:
@@ -152,7 +151,6 @@ func (n *scanNode) initScan() error {
 		return err
 	}
 
-	n.scanInitialized = true
 	return nil
 }
 
@@ -167,11 +165,12 @@ func (n *scanNode) Next() (bool, error) {
 	}
 
 	var err error
-	n.docKey, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
+	var execInfo fetcher.ExecInfo
+	n.docKey, n.currentValue, execInfo, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
 	if err != nil {
 		return false, err
 	}
-	n.execInfo.docFetches++
+	n.execInfo.fetches.Add(execInfo)
 
 	if len(n.currentValue.Fields) == 0 {
 		return false, nil
@@ -231,10 +230,11 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 	return simpleExplainMap, nil
 }
 
-func (n *scanNode) excuteExplain() map[string]any {
+func (n *scanNode) executeExplain() map[string]any {
 	return map[string]any{
-		"iterations": n.execInfo.iterations,
-		"docFetches": n.execInfo.docFetches,
+		"iterations":   n.execInfo.iterations,
+		"docFetches":   n.execInfo.fetches.DocsFetched,
+		"fieldFetches": n.execInfo.fetches.FieldsFetched,
 	}
 }
 
@@ -246,7 +246,7 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return n.excuteExplain(), nil
+		return n.executeExplain(), nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType

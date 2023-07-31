@@ -70,7 +70,7 @@ func (c *collection) get(
 	}
 
 	// return first matched decoded doc
-	doc, err := df.FetchNextDecoded(ctx)
+	doc, _, err := df.FetchNextDecoded(ctx)
 	if err != nil {
 		_ = df.Close()
 		return nil, err

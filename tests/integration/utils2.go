@@ -65,7 +65,7 @@ var (
 
 const subscriptionTimeout = 1 * time.Second
 
-// Instantiating lenses is very expensive, and our tests do not benefit from a large number of them,
+// Instantiating lenses is expensive, and our tests do not benefit from a large number of them,
 // so we explicitly set it to a low value.
 const lensPoolSize = 2
 
@@ -269,9 +269,10 @@ func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB
 // configured to do so (the CI will do so, but disabled by default as it is slow).
 func ExecuteTestCase(
 	t *testing.T,
-	collectionNames []string,
 	testCase TestCase,
 ) {
+	collectionNames := getCollectionNames(testCase)
+
 	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames) {
 		return
 	}
@@ -366,6 +367,12 @@ func executeTestCase(
 		case GetIndexes:
 			getIndexes(s, action)
 
+		case BackupExport:
+			backupExport(s, action)
+
+		case BackupImport:
+			backupImport(s, action)
+
 		case TransactionCommit:
 			commitTransaction(s, action)
 
@@ -409,6 +416,60 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
 		}
 	}
+}
+
+// getCollectionNames gets an ordered, unique set of collection names across all nodes
+// from the action set within the given test case.
+//
+// It preserves the order in which they are declared, and shares indexes across all nodes, so
+// if a second node adds a collection of a name that was previously declared in another node
+// the new node will respect the index originally assigned.  This allows collections to be
+// referenced across multiple nodes by a consistent, predictable index - allowing a single
+// action to target the same collection across multiple nodes.
+//
+// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
+func getCollectionNames(testCase TestCase) []string {
+	nextIndex := 0
+	collectionIndexByName := map[string]int{}
+
+	for _, a := range testCase.Actions {
+		switch action := a.(type) {
+		case SchemaUpdate:
+			if action.ExpectedError != "" {
+				// If an error is expected then no collections should result from this action
+				continue
+			}
+
+			// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
+			splitByType := strings.Split(action.Schema, "type ")
+			// Skip the first, as that preceeds `type ` if `type ` is present,
+			// else there are no types.
+			for i := 1; i < len(splitByType); i++ {
+				wipSplit := strings.TrimLeft(splitByType[i], " ")
+				indexOfLastChar := strings.IndexAny(wipSplit, " {")
+				if indexOfLastChar <= 0 {
+					// This should never happen
+					continue
+				}
+
+				collectionName := wipSplit[:indexOfLastChar]
+				if _, ok := collectionIndexByName[collectionName]; ok {
+					// Collection name has already been added, possibly via another node
+					continue
+				}
+
+				collectionIndexByName[collectionName] = nextIndex
+				nextIndex++
+			}
+		}
+	}
+
+	collectionNames := make([]string, len(collectionIndexByName))
+	for name, index := range collectionIndexByName {
+		collectionNames[index] = name
+	}
+
+	return collectionNames
 }
 
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
@@ -1097,6 +1158,58 @@ func dropIndex(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
+// backupExport generates a backup using the db api.
+func backupExport(
+	s *state,
+	action BackupExport,
+) {
+	if action.Config.Filepath == "" {
+		action.Config.Filepath = s.t.TempDir() + "/test.json"
+	}
+
+	var expectedErrorRaised bool
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, node := range actionNodes {
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error { return node.DB.BasicExport(s.ctx, &action.Config) },
+		)
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+		if !expectedErrorRaised {
+			assertBackupContent(s.t, action.ExpectedContent, action.Config.Filepath)
+		}
+	}
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+// backupImport imports data from a backup using the db api.
+func backupImport(
+	s *state,
+	action BackupImport,
+) {
+	if action.Filepath == "" {
+		action.Filepath = s.t.TempDir() + "/test.json"
+	}
+
+	// we can avoid checking the error here as this would mean the filepath is invalid
+	// and we want to make sure that `BasicImport` fails in this case.
+	_ = os.WriteFile(action.Filepath, []byte(action.ImportContent), 0664)
+
+	var expectedErrorRaised bool
+	actionNodes := getNodes(action.NodeID, s.nodes)
+	for nodeID, node := range actionNodes {
+		err := withRetry(
+			actionNodes,
+			nodeID,
+			func() error { return node.DB.BasicImport(s.ctx, action.Filepath) },
+		)
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	}
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
 // withRetry attempts to perform the given action, retrying up to a DB-defined
 // maximum attempt count if a transaction conflict error is returned.
 //
@@ -1489,4 +1602,14 @@ func assertContains(t *testing.T, contains map[string]any, actual map[string]any
 			assert.Equal(t, expected, innerActual)
 		}
 	}
+}
+
+func assertBackupContent(t *testing.T, expectedContent, filepath string) {
+	b, err := os.ReadFile(filepath)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		expectedContent,
+		string(b),
+	)
 }

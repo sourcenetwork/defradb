@@ -373,3 +373,47 @@ func (db *implicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, er
 func (db *explicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return db.getAllP2PCollections(ctx, db.txn)
 }
+
+// BasicImport imports a json dataset.
+// filepath must be accessible to the node.
+func (db *implicitTxnDB) BasicImport(ctx context.Context, filepath string) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.basicImport(ctx, txn, filepath)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+// BasicImport imports a json dataset.
+// filepath must be accessible to the node.
+func (db *explicitTxnDB) BasicImport(ctx context.Context, filepath string) error {
+	return db.basicImport(ctx, db.txn, filepath)
+}
+
+// BasicExport exports the current data or subset of data to file in json format.
+func (db *implicitTxnDB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.basicExport(ctx, txn, config)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+// BasicExport exports the current data or subset of data to file in json format.
+func (db *explicitTxnDB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	return db.basicExport(ctx, db.txn, config)
+}

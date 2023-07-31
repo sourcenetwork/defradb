@@ -32,7 +32,6 @@ func ExecuteTestCase(t *testing.T, test testUtils.RequestTestCase) {
 func Execute(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
-		[]string{"User"},
 		testUtils.TestCase{
 			Description: test.Description,
 			Actions: append(
