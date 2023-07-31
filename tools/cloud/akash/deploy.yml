@@ -5,7 +5,8 @@ services:
   defradb:
     image: sourcenetwork/defradb:v0.6.0
     args:
-      - start
+      - start 
+      - --url=0.0.0.0:9181
     expose:
       - port: 9161
         as: 9161
