@@ -106,7 +106,7 @@ deps\:modules:
 
 .PHONY: deps\:mock
 deps\:mock:
-	go install github.com/vektra/mockery/v2@v2.30.1
+	go install github.com/vektra/mockery/v2@v2.32.0
 
 .PHONY: deps\:playground
 deps\:playground:
@@ -125,16 +125,7 @@ deps:
 .PHONY: mock
 mock:
 	@$(MAKE) deps:mock
-	mockery --dir ./client --output ./client/mocks --name DB --with-expecter
-	mockery --dir ./client --output ./client/mocks --name Collection --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name DAGStore --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name DSReaderWriter --with-expecter
-	mockery --srcpkg github.com/ipfs/go-datastore/query --output ./datastore/mocks --name Results --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name RootStore --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name Txn --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name DAGStore --with-expecter
-	mockery --dir ./db/fetcher --output ./db/fetcher/mocks --name Fetcher --with-expecter
-	mockery --dir ./db/fetcher --output ./db/fetcher/mocks --name EncodedDocument --with-expecter
+	mockery --config="tools/configs/mockery.yaml"
 
 .PHONY: dev\:start
 dev\:start:
