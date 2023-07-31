@@ -13,6 +13,7 @@ package tests
 import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -72,7 +73,8 @@ func getMigrations(
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		db := getStore(s, node.DB, action.TransactionID, "")
 
-		configs := db.LensRegistry().Config()
+		configs, err := db.LensRegistry().Config(s.ctx)
+		require.NoError(s.t, err)
 
 		// The order of the results is not deterministic, so do not assert on the element
 		// locations.

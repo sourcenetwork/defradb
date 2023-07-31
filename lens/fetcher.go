@@ -76,15 +76,25 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[field.Name] = field
 	}
 
-	history, err := getTargetedSchemaHistory(ctx, txn, f.registry.Config(), f.col.Schema.SchemaID, f.col.Schema.VersionID)
+	cfg, err := f.registry.Config(ctx)
 	if err != nil {
 		return err
 	}
-	f.lens = new(f.registry, f.col.Schema.VersionID, history)
+
+	history, err := getTargetedSchemaHistory(ctx, txn, cfg, f.col.Schema.SchemaID, f.col.Schema.VersionID)
+	if err != nil {
+		return err
+	}
+	f.lens = new(ctx, f.registry, f.col.Schema.VersionID, history)
 	f.txn = txn
 
 	for schemaVersionID := range history {
-		if f.registry.HasMigration(schemaVersionID) {
+		hasMigration, err := f.registry.HasMigration(ctx, schemaVersionID)
+		if err != nil {
+			return err
+		}
+
+		if hasMigration {
 			f.hasMigrations = true
 			break
 		}

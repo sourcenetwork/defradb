@@ -146,7 +146,7 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 
 	// lensPoolSize may be set by `options`, and because they are funcs on db
 	// we have to mutate `db` here to set the registry.
-	db.lensRegistry = lens.NewRegistry(db.lensPoolSize)
+	db.lensRegistry = lens.NewRegistry(db.lensPoolSize, db)
 
 	err = db.initialize(ctx)
 	if err != nil {
@@ -172,8 +172,9 @@ func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Tx
 // WithTxn returns a new [client.Store] that respects the given transaction.
 func (db *db) WithTxn(txn datastore.Txn) client.Store {
 	return &explicitTxnDB{
-		db:  db,
-		txn: txn,
+		db:           db,
+		txn:          txn,
+		lensRegistry: db.lensRegistry.WithTxn(txn),
 	}
 }
 
@@ -221,7 +222,7 @@ func (db *db) initialize(ctx context.Context) error {
 			return err
 		}
 
-		err = db.lensRegistry.ReloadLenses(ctx, txn)
+		err = db.lensRegistry.ReloadLenses(ctx)
 		if err != nil {
 			return err
 		}
