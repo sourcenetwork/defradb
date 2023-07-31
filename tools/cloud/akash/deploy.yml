@@ -3,7 +3,9 @@ version: "2.0"
 
 services:
   defradb:
-    image: sourcenetwork/defradb:pr-1684
+    image: sourcenetwork/defradb:v0.6.0
+    args:
+      - start
     expose:
       - port: 9161
         as: 9161
@@ -14,7 +16,7 @@ services:
         to:
           - global: true
       - port: 9181
-        as: 9181
+        as: 80
         to:
           - global: true
 
@@ -25,7 +27,7 @@ profiles:
         cpu:
           units: 1.0
         memory:
-          size: 4Gi
+          size: 1Gi
         storage:
           size: 1Gi
   placement:
