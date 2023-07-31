@@ -1,15 +1,31 @@
-## defradb client schema
+## defradb client schema migration set
 
-Interact with the schema system of a DefraDB node
+Set a schema migration within DefraDB
 
 ### Synopsis
 
-Make changes, updates, or look for existing schema types.
+Set a migration between two schema versions within the local DefraDB node.
+
+Example: set from an argument string:
+  defradb client schema migration set bae123 bae456 '{"lenses": [...'
+
+Example: set from file:
+  defradb client schema migration set bae123 bae456 -f schema_migration.lens
+
+Example: add from stdin:
+  cat schema_migration.lens | defradb client schema migration set bae123 bae456 -
+
+Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
+
+```
+defradb client schema migration set [src] [dst] [cfg] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for schema
+  -f, --file string   Lens configuration file
+  -h, --help          help for set
 ```
 
 ### Options inherited from parent commands
@@ -27,9 +43,5 @@ Make changes, updates, or look for existing schema types.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client schema add](defradb_client_schema_add.md)	 - Add new schema
-* [defradb client schema list](defradb_client_schema_list.md)	 - List schema types with their respective fields
 * [defradb client schema migration](defradb_client_schema_migration.md)	 - Interact with the schema migration system of a running DefraDB instance
-* [defradb client schema patch](defradb_client_schema_patch.md)	 - Patch an existing schema type
 

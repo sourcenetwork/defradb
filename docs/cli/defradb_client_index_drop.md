@@ -1,15 +1,24 @@
-## defradb client blocks get
+## defradb client index drop
 
-Get a block by its CID from the blockstore
+Drop a collection's secondary index
+
+### Synopsis
+
+Drop a collection's secondary index.
+		
+Example: drop the index 'UsersByName' for 'Users' collection:
+  defradb client index create --collection Users --name UsersByName
 
 ```
-defradb client blocks get [CID] [flags]
+defradb client index drop -c --collection <collection> -n --name <name> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for get
+  -c, --collection string   Collection name
+  -h, --help                help for drop
+  -n, --name string         Index name
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +36,5 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
 

@@ -5,7 +5,7 @@ Remove P2P collections
 ### Synopsis
 
 Remove P2P collections from the followed pubsub topics.
-The removed collections will not be synchronized between nodes.
+The removed collections will no longer be synchronized between nodes.
 
 ```
 defradb client rpc p2pcollection remove [collectionID] [flags]
