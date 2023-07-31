@@ -61,7 +61,6 @@ import (
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 var log = logging.MustNewLogger("config")
@@ -422,29 +421,6 @@ func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
 		return d, NewErrInvalidRPCMaxConnectionIdle(err, netcfg.RPCMaxConnectionIdle)
 	}
 	return d, nil
-}
-
-// NodeConfig provides the Node-specific configuration, from the top-level Net config.
-func (cfg *Config) NodeConfig() node.NodeOpt {
-	return func(opt *node.Options) error {
-		var err error
-		err = node.ListenP2PAddrStrings(cfg.Net.P2PAddress)(opt)
-		if err != nil {
-			return err
-		}
-		err = node.ListenTCPAddrString(cfg.Net.TCPAddress)(opt)
-		if err != nil {
-			return err
-		}
-		opt.EnableRelay = cfg.Net.RelayEnabled
-		opt.EnablePubSub = cfg.Net.PubSubEnabled
-		opt.DataPath = cfg.Datastore.Badger.Path
-		opt.ConnManager, err = node.NewConnManager(100, 400, time.Second*20)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
 }
 
 // LogConfig configures output and logger.

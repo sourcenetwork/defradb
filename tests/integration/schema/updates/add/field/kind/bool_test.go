@@ -45,7 +45,7 @@ func TestSchemaUpdatesAddFieldKindBool(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindBoolWithCreate(t *testing.T) {
@@ -89,7 +89,7 @@ func TestSchemaUpdatesAddFieldKindBoolWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindBoolSubstitutionWithCreate(t *testing.T) {
@@ -133,5 +133,5 @@ func TestSchemaUpdatesAddFieldKindBoolSubstitutionWithCreate(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

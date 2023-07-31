@@ -13,37 +13,33 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDefaultExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) multation request with delete having no sub-selection.",
 
-		Request: `mutation @explain {
-				delete_Author(ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"])
-			}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			2: {
-				// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
-				`{
-						"name": "Lone",
-						"age":  26,
-						"verified": false
-					}`,
-				// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
-				`{
-						"name":     "Shahzad Lone",
-						"age":      27,
-						"verified": true
-					}`,
+			testUtils.ExplainRequest{
+
+				Request: `mutation @explain {
+					delete_Author(
+						ids: [
+							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
+						]
+					)
+				}`,
+
+				ExpectedError: "Field \"delete_Author\" of type \"[Author]\" must have a sub selection.",
 			},
 		},
-
-		ExpectedError: "Field \"delete_Author\" of type \"[Author]\" must have a sub selection.",
 	}
 
-	runExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

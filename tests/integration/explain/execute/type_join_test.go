@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
@@ -22,7 +23,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 		Description: "Explain a one-to-one join relation query, with alias.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
@@ -30,7 +31,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 			// Contacts
 			create2AuthorContactDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -39,7 +40,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -52,9 +53,9 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 									"typeIndexJoin": dataMap{
 										"iterations": uint64(3),
 										"scanNode": dataMap{
-											"iterations":    uint64(3),
-											"docFetches":    uint64(3),
-											"filterMatches": uint64(2),
+											"iterations":   uint64(3),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(2),
 										},
 									},
 								},
@@ -66,7 +67,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
@@ -75,7 +76,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 		Description: "Explain (execute) with two one-to-one join relation.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
@@ -83,7 +84,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 			// Contacts
 			create2AuthorContactDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -96,7 +97,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -111,9 +112,9 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 											"typeIndexJoin": dataMap{
 												"iterations": uint64(3),
 												"scanNode": dataMap{
-													"iterations":    uint64(3),
-													"docFetches":    uint64(3),
-													"filterMatches": uint64(2),
+													"iterations":   uint64(3),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(2),
 												},
 											},
 										},
@@ -121,9 +122,9 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 											"typeIndexJoin": dataMap{
 												"iterations": uint64(3),
 												"scanNode": dataMap{
-													"iterations":    uint64(3),
-													"docFetches":    uint64(3),
-													"filterMatches": uint64(2),
+													"iterations":   uint64(3),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(2),
 												},
 											},
 										},
@@ -137,7 +138,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
@@ -146,7 +147,7 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 		Description: "Explain (execute) with two nested level deep one to one join.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
@@ -157,7 +158,7 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -170,7 +171,7 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -183,9 +184,9 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 									"typeIndexJoin": dataMap{
 										"iterations": uint64(3),
 										"scanNode": dataMap{
-											"iterations":    uint64(3),
-											"docFetches":    uint64(3),
-											"filterMatches": uint64(2),
+											"iterations":   uint64(3),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(4),
 										},
 									},
 								},
@@ -197,5 +198,5 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

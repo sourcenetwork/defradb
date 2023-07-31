@@ -37,7 +37,7 @@ func TestSchemaUpdatesAddFieldKind8(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKind9(t *testing.T) {
@@ -61,7 +61,7 @@ func TestSchemaUpdatesAddFieldKind9(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKind13(t *testing.T) {
@@ -85,7 +85,7 @@ func TestSchemaUpdatesAddFieldKind13(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKind14(t *testing.T) {
@@ -109,7 +109,7 @@ func TestSchemaUpdatesAddFieldKind14(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKind15(t *testing.T) {
@@ -133,7 +133,7 @@ func TestSchemaUpdatesAddFieldKind15(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is currently the first unsupported value, if it becomes supported
@@ -159,7 +159,7 @@ func TestSchemaUpdatesAddFieldKind22(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // Tests a semi-random but hardcoded unsupported kind to try and protect against anything odd permitting
@@ -185,7 +185,7 @@ func TestSchemaUpdatesAddFieldKind198(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddFieldKindInvalidSubstitution(t *testing.T) {
@@ -209,5 +209,5 @@ func TestSchemaUpdatesAddFieldKindInvalidSubstitution(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

@@ -45,7 +45,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddSimpleErrorsAddingCollectionProp(t *testing.T) {
@@ -69,7 +69,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingCollectionProp(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
@@ -93,7 +93,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.T) {
@@ -125,7 +125,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
@@ -157,5 +157,5 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

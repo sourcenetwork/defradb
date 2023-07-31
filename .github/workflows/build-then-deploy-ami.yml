@@ -1,0 +1,116 @@
+# Copyright 2023 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+# This workflow builds the AMI using packer, if the build is successfull
+# then it will deploy the AMI using terraform apply, onto AWS.
+name: Build Then Deploy AMI Workflow
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  AWS_REGION: 'us-east-1'
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_AMI_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_AMI_SECRET_ACCESS_KEY }}
+
+  # Logging verbosities (has to be named `PACKER_LOG` and `TF_LOG`).
+  PACKER_LOG: 1
+  TF_LOG: INFO
+
+  # Directories containing config files for AWS AMI.
+  PACKER_DIR: 'tools/cloud/aws/packer'
+  TF_DIR: 'tools/cloud/aws/terraform'
+
+  # Set environment type for terraform: `dev`, `test`, `prod`
+  ENVIRONMENT_TYPE: "dev"
+
+  # RELEASE_VERSION: v0.5.0
+
+jobs:
+  # This job is responsilble to build the AMI using packer.
+  build-ami-with-packer:
+    name: Build ami with packer job
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.PACKER_DIR }}
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Environment version target
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV}
+        # run: echo ${{ env.RELEASE_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Setup `packer`
+        uses: hashicorp/setup-packer@main
+        with:
+          version: "latest"
+
+      - name: Run `packer init`
+        run: "packer init build_aws_ami.pkr.hcl"
+
+      - name: Run `packer validate`
+        run: "packer validate -var \"commit=${{ env.RELEASE_VERSION }}\" build_aws_ami.pkr.hcl"
+
+      - name: Run `packer build`
+        run: "packer build -var \"commit=${{ env.RELEASE_VERSION }}\" build_aws_ami.pkr.hcl"
+
+  # This job is responsilble for deploying the built AMI onto AWS, using terraform apply.
+  deploy-ami-with-terraform-apply:
+    name: Deploy ami with terraform apply job
+    needs:
+      - build-ami-with-packer
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Terraform action setup
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.7
+
+      - name: Terraform format
+        run: terraform fmt -check
+
+      - name: Terraform initialization
+        run: terraform init -backend-config="workspaces/${ENVIRONMENT_TYPE}-backend.conf"
+
+      - name: Terraform workspace
+        # Select workspace if it exists, otherwise create a new workspace.
+        run: terraform workspace select ${ENVIRONMENT_TYPE} || terraform workspace new ${ENVIRONMENT_TYPE}
+
+      - name: Terraform validation
+        run: terraform validate -no-color
+
+      - name: List workspaces 
+        run: ls workspaces
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false -var-file="workspaces/source-ec2-${ENVIRONMENT_TYPE}.tfvars"

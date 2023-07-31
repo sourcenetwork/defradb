@@ -31,6 +31,8 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
   - [Collection subscription example](#collection-subscription-example)
   - [Replicator example](#replicator-example)
 - [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
+- [Supporting CORS](#supporting-cors)
+- [Backing up and restoring](#backing-up-and-restoring)
 - [Licensing](#licensing)
 - [Contributors](#contributors)
 
@@ -272,7 +274,7 @@ About the flags:
 
 - `--rootdir` specifies the root dir (config and data) to use
 - `--url` is the address to listen on for the client HTTP and GraphQL API
-- `--p2paddr` is the multiaddress for the p2p networking to listen on
+- `--p2paddr` is the multiaddress for the P2P networking to listen on
 - `--tcpaddr` is the multiaddress for the gRPC server to listen on
 - `--peers` is a comma-separated list of peer multiaddresses
 
@@ -386,6 +388,25 @@ defradb start --allowed-origins=http://localhost:3000
 ```
 
 The catch-all `*` is also a valid origin. 
+
+## Backing up and restoring
+
+It is currently not possible to do a full backup of DefraDB that includes the history of changes through the Merkle DAG. However, DefraDB currently supports a simple backup of the current data state in JSON format that can be used to seed a database or help with transitioning from one DefraDB version to another.
+
+To backup the data, run the following command:
+```shell
+defradb client backup export path/to/backup.json
+```
+
+To pretty print the JSON content when exporting, run the following command:
+```shell
+defradb client backup export --pretty path/to/backup.json
+```
+
+To restore the data, run the following command:
+```shell
+defradb client backup import path/to/backup.json
+```
 
 ## Community
 

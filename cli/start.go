@@ -36,17 +36,16 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-	netapi "github.com/sourcenetwork/defradb/net/api"
-	netpb "github.com/sourcenetwork/defradb/net/api/pb"
+	"github.com/sourcenetwork/defradb/net"
+	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "start",
 		Short: "Start a DefraDB node",
-		Long:  "Start a new instance of DefraDB node.",
+		Long:  "Start a DefraDB node.",
 		// Load the root config if it exists, otherwise create it.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
@@ -194,7 +193,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 }
 
 type defraInstance struct {
-	node   *node.Node
+	node   *net.Node
 	db     client.DB
 	server *httpapi.Server
 }
@@ -252,13 +251,13 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	}
 
 	// init the p2p node
-	var n *node.Node
+	var n *net.Node
 	if !cfg.Net.P2PDisabled {
 		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-		n, err = node.NewNode(
+		n, err = net.NewNode(
 			ctx,
 			db,
-			cfg.NodeConfig(),
+			net.WithConfig(cfg),
 		)
 		if err != nil {
 			db.Close(ctx)
@@ -315,11 +314,9 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 			return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", addr), err)
 		}
 
-		netService := netapi.NewService(n.Peer)
-
 		go func() {
 			log.FeedbackInfo(ctx, "Started RPC server", logging.NewKV("Address", addr))
-			netpb.RegisterServiceServer(server, netService)
+			netpb.RegisterCollectionServer(server, n.Peer)
 			if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 				log.FeedbackFatalE(ctx, "Failed to start RPC server", err)
 			}

@@ -8,3 +8,11 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "bot"
+  - package-ecosystem: "npm"
+    directory: "/playground"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "bot"

@@ -59,6 +59,7 @@ func TestQueryOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.
 										},
 									},
 									"selectNode": dataMap{
+										"_keys":  nil,
 										"filter": nil,
 										"typeIndexJoin": dataMap{
 											"joinType": "typeJoinMany",
@@ -80,6 +81,7 @@ func TestQueryOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.
 											"subType": dataMap{
 												"selectTopNode": dataMap{
 													"selectNode": dataMap{
+														"_keys":  nil,
 														"filter": nil,
 														"scanNode": dataMap{
 															"filter": dataMap{

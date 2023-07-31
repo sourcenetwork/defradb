@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -33,75 +34,68 @@ var averagePattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with average on array field.",
 
-		Request: `query @explain {
-			Book {
-				name
-				_avg(chapterPages: {})
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			// books
-			1: {
-				`{
-					"name": "Painted House",
-					"chapterPages": [1, 22, 33, 44, 55, 66]
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Book {
+						name
+						_avg(chapterPages: {})
+					}
 				}`,
-				`{
-					"name": "A Time for Mercy",
-					"chapterPages": [0, 22, 101, 321]
-				}`,
-			},
-		},
 
-		ExpectedPatterns: []dataMap{averagePattern},
+				ExpectedPatterns: []dataMap{averagePattern},
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:     "averageNode",
-				IncludeChildNodes:  false,
-				ExpectedAttributes: dataMap{}, // no attributes
-			},
-			{
-				TargetNodeName:    "countNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"filter":    dataMap{"_ne": nil},
-							"fieldName": "chapterPages",
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:     "averageNode",
+						IncludeChildNodes:  false,
+						ExpectedAttributes: dataMap{}, // no attributes
+					},
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"filter":    dataMap{"_ne": nil},
+									"fieldName": "chapterPages",
+								},
+							},
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "sumNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"filter":         dataMap{"_ne": nil},
-							"fieldName":      "chapterPages",
-							"childFieldName": nil,
+					{
+						TargetNodeName:    "sumNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"filter":         dataMap{"_ne": nil},
+									"fieldName":      "chapterPages",
+									"childFieldName": nil,
+								},
+							},
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"collectionID":   "2",
-					"collectionName": "Book",
-					"filter":         nil,
-					"spans": []dataMap{
-						{
-							"start": "/2",
-							"end":   "/3",
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "2",
+							"collectionName": "Book",
+							"filter":         nil,
+							"spans": []dataMap{
+								{
+									"start": "/2",
+									"end":   "/3",
+								},
+							},
 						},
 					},
 				},
@@ -109,5 +103,5 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

@@ -13,9 +13,7 @@ package bench
 import (
 	"context"
 	"fmt"
-	"hash/fnv"
 	"math"
-	"math/rand"
 	"os"
 	"sync"
 	"testing"
@@ -43,24 +41,10 @@ var (
 func init() {
 	logging.SetConfig(logging.Config{Level: logging.NewLogLevelOption(logging.Error)})
 
-	// create a consistent seed value for the random package
-	// so we don't have random fluctuations between runs
-	// (specifically thinking about the fixture generation stuff)
-	seed := hashToInt64("https://xkcd.com/221/")
-	rand.Seed(seed)
-
 	// assign if not empty
 	if s := os.Getenv(storageEnvName); s != "" {
 		storage = s
 	}
-}
-
-// hashToInt64 uses the FNV-1 hash to int
-// algorithm
-func hashToInt64(s string) int64 {
-	h := fnv.New64a()
-	h.Write([]byte(s))
-	return int64(h.Sum64())
 }
 
 func SetupCollections(

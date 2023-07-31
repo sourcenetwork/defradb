@@ -186,6 +186,26 @@ func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collec
 	return db.getAllCollections(ctx, db.txn)
 }
 
+// GetAllIndexes gets all the indexes in the database.
+func (db *implicitTxnDB) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getAllIndexes(ctx, txn)
+}
+
+// GetAllIndexes gets all the indexes in the database.
+func (db *explicitTxnDB) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	return db.getAllIndexes(ctx, db.txn)
+}
+
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
 // creating the necessary collections, request types, etc.
 //
@@ -257,6 +277,25 @@ func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string) er
 // will be applied.
 func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string) error {
 	return db.patchSchema(ctx, db.txn, patchString)
+}
+
+func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.lensRegistry.SetMigration(ctx, txn, cfg)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+func (db *explicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+	return db.lensRegistry.SetMigration(ctx, db.txn, cfg)
 }
 
 // SetReplicator adds a new replicator to the database.
@@ -333,4 +372,48 @@ func (db *implicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, er
 // the P2P system subscribes to.
 func (db *explicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return db.getAllP2PCollections(ctx, db.txn)
+}
+
+// BasicImport imports a json dataset.
+// filepath must be accessible to the node.
+func (db *implicitTxnDB) BasicImport(ctx context.Context, filepath string) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.basicImport(ctx, txn, filepath)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+// BasicImport imports a json dataset.
+// filepath must be accessible to the node.
+func (db *explicitTxnDB) BasicImport(ctx context.Context, filepath string) error {
+	return db.basicImport(ctx, db.txn, filepath)
+}
+
+// BasicExport exports the current data or subset of data to file in json format.
+func (db *implicitTxnDB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.basicExport(ctx, txn, config)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+// BasicExport exports the current data or subset of data to file in json format.
+func (db *explicitTxnDB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	return db.basicExport(ctx, db.txn, config)
 }

@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
@@ -29,91 +30,50 @@ var countPattern = dataMap{
 }
 
 func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
-	test := explainUtils.ExplainRequestTestCase{
+	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with count on an inline array field.",
 
-		Request: `query @explain {
-			Book {
-				name
-				_count(chapterPages: {})
-			}
-		}`,
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
 
-		Docs: map[int][]string{
-			//articles
-			0: {
-				`{
-					"name": "After Guantánamo, Another Injustice",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "To my dear readers",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`,
-				`{
-					"name": "Twinklestar's Favourite Xmas Cookie",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-			//books
-			1: {
-				`{
-					"name": "Painted House",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				`{
-					"name": "A Time for Mercy",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`,
-				`{
-					"name": "Theif Lord",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
-			//authors
-			2: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
-				}`,
-			},
-		},
+			testUtils.ExplainRequest{
 
-		ExpectedPatterns: []dataMap{countPattern},
+				Request: `query @explain {
+					Book {
+						name
+						_count(chapterPages: {})
+					}
+				}`,
 
-		ExpectedTargets: []explainUtils.PlanNodeTargetCase{
-			{
-				TargetNodeName:    "countNode",
-				IncludeChildNodes: false,
-				ExpectedAttributes: dataMap{
-					"sources": []dataMap{
-						{
-							"filter":    nil,
-							"fieldName": "chapterPages",
+				ExpectedPatterns: []dataMap{countPattern},
+
+				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "countNode",
+						IncludeChildNodes: false,
+						ExpectedAttributes: dataMap{
+							"sources": []dataMap{
+								{
+									"filter":    nil,
+									"fieldName": "chapterPages",
+								},
+							},
 						},
 					},
-				},
-			},
-			{
-				TargetNodeName:    "scanNode",
-				IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
-				ExpectedAttributes: dataMap{
-					"filter":         nil,
-					"collectionID":   "2",
-					"collectionName": "Book",
-					"spans": []dataMap{
-						{
-							"start": "/2",
-							"end":   "/3",
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"filter":         nil,
+							"collectionID":   "2",
+							"collectionName": "Book",
+							"spans": []dataMap{
+								{
+									"start": "/2",
+									"end":   "/3",
+								},
+							},
 						},
 					},
 				},
@@ -121,5 +81,5 @@ func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 		},
 	}
 
-	runExplainTest(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

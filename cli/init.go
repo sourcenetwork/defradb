@@ -32,7 +32,8 @@ func MakeInitCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "init",
 		Short: "Initialize DefraDB's root directory and configuration file",
-		Long:  "Initialize a directory for configuration and data at the given path.",
+		Long: `Initialize a directory for configuration and data at the given path.
+Passed flags will be persisted in the stored configuration.`,
 		// Load a default configuration, considering env. variables and CLI flags.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			if err := cfg.LoadWithRootdir(false); err != nil {

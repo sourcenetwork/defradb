@@ -36,6 +36,8 @@ var (
 	ErrPeerIdUnavailable    = errors.New("no PeerID available. P2P might be disabled")
 	ErrStreamingUnsupported = errors.New("streaming unsupported")
 	ErrNoEmail              = errors.New("email address must be specified for tls with autocert")
+	ErrPayloadFormat        = errors.New("invalid payload format")
+	ErrMissingNewKey        = errors.New("missing _newKey for imported doc")
 )
 
 // ErrorResponse is the GQL top level object holding error items for the response payload.

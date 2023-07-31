@@ -5,7 +5,7 @@ Add a new replicator
 ### Synopsis
 
 Use this command if you wish to add a new target replicator
-for the p2p data sync system.
+for the P2P data sync system.
 
 ```
 defradb client rpc addreplicator <collection> <peer> [flags]

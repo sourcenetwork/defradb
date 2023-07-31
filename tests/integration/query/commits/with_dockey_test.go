@@ -39,7 +39,7 @@ func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockey(t *testing.T) {
@@ -75,7 +75,7 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
@@ -127,7 +127,7 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
@@ -182,7 +182,7 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 // This test is for documentation reasons only. This is not
@@ -266,5 +266,5 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

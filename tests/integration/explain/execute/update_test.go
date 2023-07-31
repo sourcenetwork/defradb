@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
@@ -22,12 +23,12 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 		Description: "Explain (execute) mutation request with update using ids.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					update_ContactAddress(
 						ids: [
@@ -41,7 +42,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -55,9 +56,9 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 										"iterations":    uint64(6),
 										"filterMatches": uint64(4),
 										"scanNode": dataMap{
-											"iterations":    uint64(6),
-											"docFetches":    uint64(6),
-											"filterMatches": uint64(4),
+											"iterations":   uint64(6),
+											"docFetches":   uint64(4),
+											"fieldFetches": uint64(8),
 										},
 									},
 								},
@@ -69,7 +70,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
@@ -78,12 +79,12 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 		Description: "Explain (execute) mutation request with update using filter.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					update_ContactAddress(
 						filter: {
@@ -98,7 +99,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -112,9 +113,9 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 										"iterations":    uint64(4),
 										"filterMatches": uint64(2),
 										"scanNode": dataMap{
-											"iterations":    uint64(4),
-											"docFetches":    uint64(6),
-											"filterMatches": uint64(2),
+											"iterations":   uint64(4),
+											"docFetches":   uint64(4),
+											"fieldFetches": uint64(6),
 										},
 									},
 								},
@@ -126,5 +127,5 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

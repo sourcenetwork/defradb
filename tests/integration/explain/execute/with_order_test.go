@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
@@ -22,12 +23,12 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 		Description: "Explain (execute) with order field on parent.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(order: {age: ASC}) {
 						name
@@ -35,7 +36,7 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -48,9 +49,9 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 										"filterMatches": uint64(2),
 										"iterations":    uint64(3),
 										"scanNode": dataMap{
-											"iterations":    uint64(3),
-											"docFetches":    uint64(3),
-											"filterMatches": uint64(2),
+											"iterations":   uint64(3),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(4),
 										},
 									},
 								},
@@ -62,7 +63,7 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
@@ -71,7 +72,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 		Description: "Explain (execute) with multiple order fields on parent.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Authors
 			testUtils.CreateDoc{
@@ -110,7 +111,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(order: {age: ASC, name: DESC}) {
 						name
@@ -118,7 +119,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -131,9 +132,9 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 										"filterMatches": uint64(4),
 										"iterations":    uint64(5),
 										"scanNode": dataMap{
-											"iterations":    uint64(5),
-											"docFetches":    uint64(5),
-											"filterMatches": uint64(4),
+											"iterations":   uint64(5),
+											"docFetches":   uint64(4),
+											"fieldFetches": uint64(8),
 										},
 									},
 								},
@@ -145,7 +146,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
@@ -154,7 +155,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 		Description: "Explain (execute) with order field on child.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Articles
 			create3ArticleDocuments(),
@@ -162,7 +163,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -172,7 +173,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -185,9 +186,9 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 									"typeIndexJoin": dataMap{
 										"iterations": uint64(3),
 										"scanNode": dataMap{
-											"iterations":    uint64(3),
-											"docFetches":    uint64(3),
-											"filterMatches": uint64(2),
+											"iterations":   uint64(3),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(2),
 										},
 									},
 								},
@@ -199,7 +200,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
@@ -208,7 +209,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 		Description: "Explain (execute) with order field on both parent and child.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Articles
 			create3ArticleDocuments(),
@@ -216,7 +217,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(order: {age: ASC}) {
 						name
@@ -227,7 +228,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 					}
 				}`,
 
-				Results: []dataMap{
+				ExpectedFullGraph: []dataMap{
 					{
 						"explain": dataMap{
 							"executionSuccess": true,
@@ -242,9 +243,9 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
 											"scanNode": dataMap{
-												"iterations":    uint64(3),
-												"docFetches":    uint64(3),
-												"filterMatches": uint64(2),
+												"iterations":   uint64(3),
+												"docFetches":   uint64(2),
+												"fieldFetches": uint64(4),
 											},
 										},
 									},
@@ -257,7 +258,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }
 
 func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T) {
@@ -266,7 +267,7 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 		Description: "Explain (execute) where parent field is ordered by child field.",
 
 		Actions: []any{
-			gqlSchemaExecuteExplain(),
+			explainUtils.SchemaForExplainTests,
 
 			// Articles
 			create3ArticleDocuments(),
@@ -274,7 +275,7 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 			// Authors
 			create2AuthorDocuments(),
 
-			testUtils.Request{
+			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(
 						order: {
@@ -288,35 +289,10 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 					}
 				}`,
 
-				Results: []dataMap{
-					{
-						"explain": dataMap{
-							"executionSuccess": true,
-							"sizeOfResult":     2,
-							"planExecutions":   uint64(3),
-							"selectTopNode": dataMap{
-								"orderNode": dataMap{
-									"iterations": uint64(3),
-									"selectNode": dataMap{
-										"iterations":    uint64(3),
-										"filterMatches": uint64(2),
-										"typeIndexJoin": dataMap{
-											"iterations": uint64(3),
-											"scanNode": dataMap{
-												"iterations":    uint64(3),
-												"docFetches":    uint64(3),
-												"filterMatches": uint64(2),
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				ExpectedError: "Argument \"order\" has invalid value {articles: {pages: ASC}}.\nIn field \"articles\": Unknown field.",
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	explainUtils.ExecuteTestCase(t, test)
 }

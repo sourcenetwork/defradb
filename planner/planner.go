@@ -17,12 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-)
-
-var (
-	log = logging.MustNewLogger("planner")
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.
@@ -525,7 +520,11 @@ func (p *Planner) RunSubscriptionRequest(
 		return nil, err
 	}
 
-	return p.executeRequest(ctx, planNode)
+	data, err := p.executeRequest(ctx, planNode)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 // MakePlan makes a plan from the parsed request.

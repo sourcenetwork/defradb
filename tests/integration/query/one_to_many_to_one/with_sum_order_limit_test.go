@@ -63,7 +63,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 			},
 		},
 	}
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirections(t *testing.T) {
@@ -116,7 +116,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
@@ -156,7 +156,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
@@ -208,5 +208,5 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, []string{"Author", "Book", "Publisher"}, test)
+	testUtils.ExecuteTestCase(t, test)
 }

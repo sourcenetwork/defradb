@@ -12,7 +12,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -30,8 +29,8 @@ func MakeSchemaAddCommand(cfg *config.Config) *cobra.Command {
 	var schemaFile string
 	var cmd = &cobra.Command{
 		Use:   "add [schema]",
-		Short: "Add a new schema type to DefraDB",
-		Long: `Add a new schema type to DefraDB.
+		Short: "Add new schema",
+		Long: `Add new schema.
 
 Example: add from an argument string:
   defradb client schema add 'type Foo { ... }'
@@ -94,7 +93,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return errors.New("empty schema provided")
 			}
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaLoadPath)
+			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaPath)
 			if err != nil {
 				return errors.Wrap("join paths failed", err)
 			}
@@ -106,7 +105,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 
 			defer func() {
 				if e := res.Body.Close(); e != nil {
-					err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
+					err = NewErrFailedToCloseResponseBody(e, err)
 				}
 			}()
 
