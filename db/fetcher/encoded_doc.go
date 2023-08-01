@@ -69,7 +69,7 @@ type encodedDocument struct {
 	key             []byte
 	schemaVersionID string
 	status          client.DocumentStatus
-	Properties      map[client.FieldDescription]*encProperty
+	properties      map[client.FieldDescription]*encProperty
 
 	// tracking bitsets
 	// A value of 1 indicates a required field
@@ -96,7 +96,7 @@ func (encdoc *encodedDocument) Status() client.DocumentStatus {
 
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
-	encdoc.Properties = make(map[client.FieldDescription]*encProperty, 0)
+	encdoc.properties = make(map[client.FieldDescription]*encProperty, 0)
 	encdoc.key = nil
 	if encdoc.mapping != nil {
 		doc := encdoc.mapping.NewDoc()
@@ -115,7 +115,7 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 		return nil, err
 	}
 	doc := client.NewDocWithKey(key)
-	for _, prop := range encdoc.Properties {
+	for _, prop := range encdoc.properties {
 		val, err := prop.Decode()
 		if err != nil {
 			return nil, err
@@ -150,7 +150,7 @@ func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
 		encdoc.doc = &doc
 	}
 	encdoc.doc.SetKey(string(encdoc.key))
-	for _, prop := range encdoc.Properties {
+	for _, prop := range encdoc.properties {
 		if encdoc.doc.Fields[prop.Desc.ID] != nil { // used cached decoded fields
 			continue
 		}
