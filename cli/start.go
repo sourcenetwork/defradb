@@ -347,7 +347,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
 	}
 	// save the address on the config in case the port number was set to random
-	cfg.API.Address = s.Addr
+	cfg.API.Address = s.AssignedAddr()
 
 	// run the server in a separate goroutine
 	go func() {
