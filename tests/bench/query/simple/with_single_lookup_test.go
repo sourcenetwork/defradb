@@ -22,7 +22,7 @@ var (
 	userSimpleWithSingleLookupQuery = `
 	query {
 		User(dockey: "{{dockey}}") {
-			_key
+			_docID
 			Name
 			Age
 			Points

@@ -21,7 +21,7 @@ var (
 	userSimpleQuery = `
 	query {
 		User {
-			_key
+			_docID
 			Name
 			Age
 			Points

@@ -22,7 +22,7 @@ var (
 	userSimpleWithMultiLookupQuery = `
 	query {
 		User(dockeys: ["{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}"]) {
-			_key
+			_docID
 			Name
 			Age
 			Points
