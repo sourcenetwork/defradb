@@ -21,59 +21,6 @@ func (_m *EncodedDocument) EXPECT() *EncodedDocument_Expecter {
 	return &EncodedDocument_Expecter{mock: &_m.Mock}
 }
 
-// Decode provides a mock function with given fields:
-func (_m *EncodedDocument) Decode() (*client.Document, error) {
-	ret := _m.Called()
-
-	var r0 *client.Document
-	var r1 error
-	if rf, ok := ret.Get(0).(func() (*client.Document, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() *client.Document); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*client.Document)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// EncodedDocument_Decode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Decode'
-type EncodedDocument_Decode_Call struct {
-	*mock.Call
-}
-
-// Decode is a helper method to define mock.On call
-func (_e *EncodedDocument_Expecter) Decode() *EncodedDocument_Decode_Call {
-	return &EncodedDocument_Decode_Call{Call: _e.mock.On("Decode")}
-}
-
-func (_c *EncodedDocument_Decode_Call) Run(run func()) *EncodedDocument_Decode_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *EncodedDocument_Decode_Call) Return(_a0 *client.Document, _a1 error) *EncodedDocument_Decode_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *EncodedDocument_Decode_Call) RunAndReturn(run func() (*client.Document, error)) *EncodedDocument_Decode_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Key provides a mock function with given fields:
 func (_m *EncodedDocument) Key() []byte {
 	ret := _m.Called()

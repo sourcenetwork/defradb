@@ -31,8 +31,6 @@ type EncodedDocument interface {
 	Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error)
 	// Reset re-initializes the EncodedDocument object.
 	Reset()
-	// Decode returns a properly decoded document object
-	Decode() (*client.Document, error)
 }
 
 type EPTuple []encProperty
@@ -104,8 +102,8 @@ func (encdoc *encodedDocument) Reset() {
 }
 
 // Decode returns a properly decoded document object
-func (encdoc *encodedDocument) Decode() (*client.Document, error) {
-	key, err := client.NewDocKeyFromString(string(encdoc.key))
+func Decode(encdoc EncodedDocument) (*client.Document, error) {
+	key, err := client.NewDocKeyFromString(string(encdoc.Key()))
 	if err != nil {
 		return nil, err
 	}

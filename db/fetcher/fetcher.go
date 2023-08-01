@@ -663,7 +663,7 @@ func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Docume
 		return nil, ExecInfo{}, nil
 	}
 
-	decodedDoc, err := encdoc.Decode()
+	decodedDoc, err := Decode(encdoc)
 	if err != nil {
 		return nil, ExecInfo{}, err
 	}
