@@ -182,18 +182,14 @@ func (l *lens) Next() (bool, error) {
 
 				historyLocation = historyLocation.next.Value()
 			} else {
-				// The pipe head then becomes the schema version migration to the next version
-				// sourcing from any documents at schemaVersionID, or lower schema versions.
-				// This also ensures each document only passes through each migration once,
-				// in order, and through the same state container (in case migrations use state).
-				pipeHead, err = l.lensRegistry.MigrateDown(junctionPipe, historyLocation.schemaVersionID)
+				// Aquire a lens migration from the registery, using the junctionPipe as its source.
+				// The new pipeHead will then be connected as a source to the next migration-stage on
+				// the next loop.
+				pipeHead, err = l.lensRegistry.MigrateDown(junctionPipe, historyLocation.previous.Value().schemaVersionID)
 				if err != nil {
 					return false, err
 				}
 
-				// Aquire a lens migration from the registery, using the junctionPipe as its source.
-				// The new pipeHead will then be connected as a source to the next migration-stage on
-				// the next loop.
 				historyLocation = historyLocation.previous.Value()
 			}
 		}
