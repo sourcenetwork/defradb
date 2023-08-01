@@ -101,7 +101,7 @@ Submit a `mutation` request to create a document of the `User` type:
 defradb client query '
   mutation {
       create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
-          _key
+          _docID
       }
   }
 '
@@ -113,13 +113,13 @@ Expected response:
 {
   "data": [
     {
-      "_key": "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab",
+      "_docID": "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab",
     }
   ]
 }
 ```
 
-`_key` is the document's key, a unique identifier of the document, determined by its schema and initial data.
+`_docID` is the document's unique identifier determined by its schema and initial data.
 
 ## Query documents
 
@@ -129,7 +129,7 @@ Once you have populated your node with data, you can query it:
 defradb client query '
   query {
     User {
-      _key
+      _docID
       age
       name
       points
@@ -138,7 +138,7 @@ defradb client query '
 '
 ```
 
-This query obtains *all* users and returns their fields `_key, age, name, points`. GraphQL queries only return the exact fields requested.
+This query obtains *all* users and returns their fields `_docID, age, name, points`. GraphQL queries only return the exact fields requested.
 
 You can further filter results with the `filter` argument.
 
@@ -146,7 +146,7 @@ You can further filter results with the `filter` argument.
 defradb client query '
   query {
     User(filter: {points: {_ge: 50}}) {
-      _key
+      _docID
       age
       name
       points
