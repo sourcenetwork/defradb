@@ -55,7 +55,7 @@ func TestPingCommandToInvalidHost(t *testing.T) {
 
 func TestPingCommandNoHost(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
-	p, err := findFreePortInRange(49152, 65535)
+	p, err := findFreePortInRange(t, 49152, 65535)
 	assert.NoError(t, err)
 	addr := fmt.Sprintf("localhost:%d", p)
 	_, stderr := runDefraCommand(t, conf, []string{"client", "ping", "--url", addr})

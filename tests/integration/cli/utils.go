@@ -25,6 +25,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -46,11 +47,11 @@ type DefraNodeConfig struct {
 
 func NewDefraNodeDefaultConfig(t *testing.T) DefraNodeConfig {
 	t.Helper()
-	portAPI, err := findFreePortInRange(49152, 65535)
+	portAPI, err := findFreePortInRange(t, 49152, 65535)
 	if err != nil {
 		t.Fatal(err)
 	}
-	portGRPC, err := findFreePortInRange(49152, 65535)
+	portGRPC, err := findFreePortInRange(t, 49152, 65535)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,9 +197,12 @@ func captureOutput(f func()) (stdout, stderr []string) {
 	return
 }
 
+var portsInUse = make(map[int]struct{})
+var portMutex = sync.Mutex{}
+
 // findFreePortInRange returns a free port in the range [minPort, maxPort].
 // The range of ports that are unfrequently used is [49152, 65535].
-func findFreePortInRange(minPort, maxPort int) (int, error) {
+func findFreePortInRange(t *testing.T, minPort, maxPort int) (int, error) {
 	if minPort < 1 || maxPort > 65535 || minPort > maxPort {
 		return 0, errors.New("invalid port range")
 	}
@@ -206,9 +210,20 @@ func findFreePortInRange(minPort, maxPort int) (int, error) {
 	const maxAttempts = 100
 	for i := 0; i < maxAttempts; i++ {
 		port := rand.Intn(maxPort-minPort+1) + minPort
+		if _, ok := portsInUse[port]; ok {
+			continue
+		}
 		addr := fmt.Sprintf("127.0.0.1:%d", port)
 		listener, err := net.Listen("tcp", addr)
 		if err == nil {
+			portMutex.Lock()
+			portsInUse[port] = struct{}{}
+			portMutex.Unlock()
+			t.Cleanup(func() {
+				portMutex.Lock()
+				delete(portsInUse, port)
+				portMutex.Unlock()
+			})
 			_ = listener.Close()
 			return port, nil
 		}
