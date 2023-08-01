@@ -58,7 +58,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 						Root:      schemaVersion1ID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -149,7 +149,7 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 						Root:      schemaVersion1ID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.LWW_REGISTER,
 							},

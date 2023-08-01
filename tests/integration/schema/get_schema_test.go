@@ -103,7 +103,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						VersionID: usersSchemaVersion1ID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 							},
 						},
@@ -114,7 +114,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						VersionID: usersSchemaVersion2ID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -132,7 +132,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						VersionID: booksSchemaVersion1ID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 							},
 						},
@@ -178,7 +178,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 						VersionID: usersSchemaVersion1ID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 							},
 						},
@@ -189,7 +189,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 						VersionID: usersSchemaVersion2ID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -242,7 +242,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 						VersionID: usersSchemaVersion1ID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 							},
 						},
@@ -253,7 +253,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 						VersionID: usersSchemaVersion2ID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.LWW_REGISTER,
 							},

@@ -76,7 +76,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 														},
 													},
 													map[string]any{
-														"name": "_key",
+														"name": "_docID",
 														"type": map[string]any{
 															"name":   "IDOperatorBlock",
 															"ofType": nil,
@@ -214,7 +214,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 														},
 													},
 													map[string]any{
-														"name": "_key",
+														"name": "_docID",
 														"type": map[string]any{
 															"name":   "IDOperatorBlock",
 															"ofType": nil,

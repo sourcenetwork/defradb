@@ -98,7 +98,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 											"ofType": nil,
 											"inputFields": []any{
 												map[string]any{
-													"name": "_key",
+													"name": "_docID",
 													"type": map[string]any{
 														"name":   "Ordering",
 														"ofType": nil,
@@ -187,7 +187,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 											"ofType": nil,
 											"inputFields": []any{
 												map[string]any{
-													"name": "_key",
+													"name": "_docID",
 													"type": map[string]any{
 														"name":   "Ordering",
 														"ofType": nil,
