@@ -209,8 +209,6 @@ github.com/franela/goblin v0.0.0-20200105215937-c9ffbefa60db/go.mod h1:7dvUGVsVB
 github.com/franela/goreq v0.0.0-20171204163338-bcd34c9993f8/go.mod h1:ZhphrRTfi2rbfLwlschooIH4+wKKDR4Pdxhh+TRoA20=
 github.com/frankban/quicktest v1.11.3/go.mod h1:wRf/ReqHper53s+kmmSZizM8NamnL3IM0I9ntUbOk+k=
 github.com/frankban/quicktest v1.14.4 h1:g2rn0vABPOOXmZUj+vbmUp0lPoXEMuhTpIluN0XL9UY=
-github.com/fredcarle/badger/v4 v4.0.0-20230801145501-d3a57bd4c2ec h1:7m8NAUJVpgexcrcnB/mOSKy6jlP/vBDN/KTaJlFRr1Q=
-github.com/fredcarle/badger/v4 v4.0.0-20230801145501-d3a57bd4c2ec/go.mod h1:qfCqhPoWDFJRx1gp5QwwyGo8xk1lbHUxvK9nK0OGAak=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4HY=
@@ -1191,6 +1189,8 @@ github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4k
 github.com/sony/gobreaker v0.4.1/go.mod h1:ZKptC7FHNvhBz7dN2LGjPVBz2sZJmc0/PkyDJOjmxWY=
 github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:UdhH50NIW0fCiwBSr0co2m7BnFLdv4fQTgdqdJTHFeE=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
+github.com/sourcenetwork/badger/v4 v4.0.0-20230801145501-d3a57bd4c2ec h1:br39/Te7XrQmirI+QtT6YblhD9T6B2dzDNI9eoI26Pg=
+github.com/sourcenetwork/badger/v4 v4.0.0-20230801145501-d3a57bd4c2ec/go.mod h1:qfCqhPoWDFJRx1gp5QwwyGo8xk1lbHUxvK9nK0OGAak=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.0-20230209220544-e16d5e34c4fc h1:ZrkklfmN27eENGFmzblEcs35PJ02hmlNgMHE8XJqFAo=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.0-20230209220544-e16d5e34c4fc/go.mod h1:3rOV6TxePSwADKpnwXBKpTjAA4QyjZBus13xc6VCtSw=
 github.com/sourcenetwork/graphql-go v0.7.10-0.20230511091704-fe7085512c23 h1:QcSWSYlE1alUC0uOO/trppYMLpR8OuFIL8IqR+PR5sA=
