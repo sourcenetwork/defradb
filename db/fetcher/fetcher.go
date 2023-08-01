@@ -62,7 +62,6 @@ type Fetcher interface {
 	) error
 	Start(ctx context.Context, spans core.Spans) error
 	FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error)
-	FetchNextDecoded(ctx context.Context) (*client.Document, ExecInfo, error)
 	Close() error
 }
 
@@ -650,24 +649,6 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 		// 	return df.doc, nil
 		// }
 	}
-}
-
-// FetchNextDecoded implements DocumentFetcher
-func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, ExecInfo, error) {
-	encdoc, execInfo, err := df.FetchNext(ctx)
-	if err != nil {
-		return nil, ExecInfo{}, err
-	}
-	if encdoc == nil {
-		return nil, ExecInfo{}, nil
-	}
-
-	decodedDoc, err := Decode(encdoc)
-	if err != nil {
-		return nil, ExecInfo{}, err
-	}
-
-	return decodedDoc, execInfo, nil
 }
 
 // Close closes the DocumentFetcher.

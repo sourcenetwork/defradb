@@ -163,28 +163,6 @@ func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument,
 	return migratedDoc, execInfo, nil
 }
 
-func (f *lensedFetcher) FetchNextDecoded(
-	ctx context.Context,
-) (*client.Document, fetcher.ExecInfo, error) {
-	var execInfo fetcher.ExecInfo
-	encodedDoc, nextExecInfo, err := f.FetchNext(ctx)
-	if err != nil {
-		return nil, fetcher.ExecInfo{}, err
-	}
-	if encodedDoc == nil {
-		return nil, nextExecInfo, nil
-	}
-
-	execInfo.Add(nextExecInfo)
-
-	doc, err := fetcher.Decode(encodedDoc)
-	if err != nil {
-		return nil, fetcher.ExecInfo{}, err
-	}
-
-	return doc, execInfo, nil
-}
-
 func (f *lensedFetcher) Close() error {
 	if f.lens != nil {
 		f.lens.Reset()

@@ -530,7 +530,7 @@ func TestNonUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 	key2 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc2).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS())
-	require.NoError(t, err)
+	require.NoError(t, err, key1.ToString())
 	assert.Len(t, data, 0)
 	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS())
 	require.NoError(t, err)

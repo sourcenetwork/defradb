@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
@@ -265,16 +266,21 @@ func (c *collection) iterateAllDocs(
 		return err
 	}
 
-	var doc *client.Document
 	for {
-		doc, _, err = df.FetchNextDecoded(ctx)
+		encodedDoc, _, err := df.FetchNext(ctx)
 		if err != nil {
 			_ = df.Close()
 			return err
 		}
-		if doc == nil {
+		if encodedDoc == nil {
 			break
 		}
+
+		doc, err := fetcher.Decode(encodedDoc)
+		if err != nil {
+			return err
+		}
+
 		err = exec(doc)
 		if err != nil {
 			return err
