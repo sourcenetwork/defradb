@@ -112,7 +112,8 @@ type DocumentFetcher struct {
 	// for effectiently finding the next field to seek to.
 	filterSet *bitset.BitSet
 
-	doc *encodedDocument
+	doc     *encodedDocument
+	mapping *core.DocumentMapping
 
 	initialized bool
 
@@ -175,7 +176,7 @@ func (df *DocumentFetcher) init(
 	df.filter = filter
 	df.isReadingDocument = false
 	df.doc = new(encodedDocument)
-	df.doc.mapping = docMapper
+	df.mapping = docMapper
 
 	if df.filter != nil && docMapper == nil {
 		return ErrMissingMapper
@@ -209,7 +210,7 @@ func (df *DocumentFetcher) init(
 	}
 
 	if df.filter != nil {
-		conditions := df.filter.ToMap(df.doc.mapping)
+		conditions := df.filter.ToMap(df.mapping)
 		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, df.col.Schema)
 		if err != nil {
 			return err
@@ -591,7 +592,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 			// only run filter if we've collected all the fields
 			// required for filtering. This is tracked by the bitsets.
 			if df.filterSet.Equal(df.doc.filterSet) {
-				filterDoc, err := df.doc.decodeToDocForFilter()
+				filterDoc, err := DecodeToDoc(df.doc, df.mapping, true)
 				if err != nil {
 					return nil, ExecInfo{}, err
 				}
@@ -619,7 +620,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 				if df.passedFilter {
 					return df.doc, df.execInfo, nil
 				} else if !df.ranFilter { // if we didn't run, run it
-					decodedDoc, err := df.doc.DecodeToDoc()
+					decodedDoc, err := DecodeToDoc(df.doc, df.mapping, false)
 					if err != nil {
 						return nil, ExecInfo{}, err
 					}
@@ -685,7 +686,7 @@ func (df *DocumentFetcher) FetchNextDoc(
 		return nil, core.Doc{}, execInfo, err
 	}
 
-	doc, err := encdoc.DecodeToDoc()
+	doc, err := DecodeToDoc(encdoc, df.mapping, false)
 	if err != nil {
 		return nil, core.Doc{}, ExecInfo{}, err
 	}

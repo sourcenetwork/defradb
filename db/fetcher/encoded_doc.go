@@ -33,9 +33,6 @@ type EncodedDocument interface {
 	Reset()
 	// Decode returns a properly decoded document object
 	Decode() (*client.Document, error)
-	// DecodeToDoc returns a decoded document as a
-	// map of field/value pairs
-	DecodeToDoc() (core.Doc, error)
 }
 
 type EPTuple []encProperty
@@ -66,9 +63,6 @@ func (e encProperty) Decode() (any, error) {
 
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
-	mapping *core.DocumentMapping
-	doc     *core.Doc
-
 	key                  []byte
 	schemaVersionID      string
 	status               client.DocumentStatus
@@ -102,10 +96,6 @@ func (encdoc *encodedDocument) Status() client.DocumentStatus {
 func (encdoc *encodedDocument) Reset() {
 	encdoc.properties = make(map[client.FieldDescription]*encProperty, 0)
 	encdoc.key = nil
-	if encdoc.mapping != nil {
-		doc := encdoc.mapping.NewDoc()
-		encdoc.doc = &doc
-	}
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
 	encdoc.schemaVersionID = ""
@@ -140,23 +130,9 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 
 // DecodeToDoc returns a decoded document as a
 // map of field/value pairs
-func (encdoc *encodedDocument) DecodeToDoc() (core.Doc, error) {
-	return encdoc.decodeToDoc(false)
-}
-
-func (encdoc *encodedDocument) decodeToDocForFilter() (core.Doc, error) {
-	return encdoc.decodeToDoc(true)
-}
-
-func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
-	if encdoc.mapping == nil {
-		return core.Doc{}, ErrMissingMapper
-	}
-	if encdoc.doc == nil {
-		doc := encdoc.mapping.NewDoc()
-		encdoc.doc = &doc
-	}
-	encdoc.doc.SetKey(string(encdoc.key))
+func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter bool) (core.Doc, error) {
+	doc := mapping.NewDoc()
+	doc.SetKey(string(encdoc.Key()))
 
 	properties, err := encdoc.Properties(filter)
 	if err != nil {
@@ -164,13 +140,13 @@ func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
 	}
 
 	for desc, value := range properties {
-		encdoc.doc.Fields[desc.ID] = value
+		doc.Fields[desc.ID] = value
 	}
 
-	encdoc.doc.SchemaVersionID = encdoc.SchemaVersionID()
-	encdoc.doc.Status = encdoc.Status()
+	doc.SchemaVersionID = encdoc.SchemaVersionID()
+	doc.Status = encdoc.Status()
 
-	return *encdoc.doc, nil
+	return doc, nil
 }
 
 func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error) {
