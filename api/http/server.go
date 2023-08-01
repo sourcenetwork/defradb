@@ -52,7 +52,7 @@ type Server struct {
 	options     serverOptions
 	listener    net.Listener
 	certManager *autocert.Manager
-	// address that is assigne to the server on listen
+	// address that is assigned to the server on listen
 	address string
 
 	http.Server
