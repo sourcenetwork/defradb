@@ -30,6 +30,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				Schema: `
 					type Users {
 						name: String
+						verified: Boolean
 					}
 				`,
 			},
@@ -38,15 +39,15 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				NodeID: immutable.Some(1),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 			},
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq",
-					DestinationSchemaVersionID: "bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
+					SourceSchemaVersionID:      "bafkreifmgqtwpvepenteuvj27u4ewix6nb7ypvyz6j555wsk5u2n7hrldm",
+					DestinationSchemaVersionID: "bafkreigfqdqnj5dunwgcsf2a6ht6q6m2yv3ys6byw5ifsmi5lfcpeh5t7e",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -99,8 +100,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				Results: []map[string]any{
 					{
 						"name": "John",
-						// todo: The migration has not been run as P2P assumes it is being synced at the latest local version
-						"verified": nil,
+						// John has been migrated up to the newer schema version on node 1
+						"verified": true,
 					},
 				},
 			},

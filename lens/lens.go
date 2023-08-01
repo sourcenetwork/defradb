@@ -49,7 +49,8 @@ type lens struct {
 	lensInputPipesBySchemaVersionIDs map[schemaVersionID]enumerable.Queue[LensDoc]
 
 	// The output pipe, through which all outputs must exit.
-	outputPipe enumerable.Concatenation[LensDoc]
+	outputPipe         enumerable.Concatenation[LensDoc]
+	unknownVersionPipe enumerable.Queue[LensDoc]
 
 	schemaVersionHistory map[schemaVersionID]*targetedSchemaHistoryLink
 
@@ -70,6 +71,7 @@ func new(
 		lensRegistry:         lensRegistry,
 		source:               enumerable.NewQueue[lensInput](),
 		outputPipe:           outputPipe,
+		unknownVersionPipe:   targetSource,
 		schemaVersionHistory: schemaVersionHistory,
 		lensInputPipesBySchemaVersionIDs: map[schemaVersionID]enumerable.Queue[LensDoc]{
 			targetSchemaVersionID: targetSource,
@@ -128,7 +130,18 @@ func (l *lens) Next() (bool, error) {
 		// up to the output via any intermediary pipes.
 		inputPipe = p
 	} else {
-		historyLocation := l.schemaVersionHistory[doc.SchemaVersionID]
+		historyLocation, ok := l.schemaVersionHistory[doc.SchemaVersionID]
+		if !ok {
+			// We may recieve documents of unknown schema versions, they should
+			// still be fed through the pipe system in order to preserve order.
+			err = l.unknownVersionPipe.Put(doc.Doc)
+			if err != nil {
+				return false, err
+			}
+
+			return l.outputPipe.Next()
+		}
+
 		var pipeHead enumerable.Enumerable[LensDoc]
 
 		for {

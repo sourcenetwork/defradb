@@ -223,7 +223,7 @@ func (*lensRegistry) MigrateDown(
 	src enumerable.Enumerable[LensDoc],
 	schemaVersionID string,
 ) (enumerable.Enumerable[LensDoc], error) {
-	// todo: https://github.com/sourcenetwork/defradb/issues/1591
+	// todo: https://github.com/sourcenetwork/defradb/issues/1719
 	return src, nil
 }
 
