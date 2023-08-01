@@ -14,14 +14,14 @@ import (
 	"context"
 	"testing"
 
-	badger "github.com/dgraph-io/badger/v3"
+	badger "github.com/dgraph-io/badger/v4"
 	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 

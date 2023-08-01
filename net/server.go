@@ -29,7 +29,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore/badger/v3"
+	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"

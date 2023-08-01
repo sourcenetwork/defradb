@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/bits-and-blooms/bitset v1.8.0
 	github.com/bxcodec/faker v2.0.1+incompatible
-	github.com/dgraph-io/badger/v3 v3.2103.5
+	github.com/dgraph-io/badger/v4 v4.1.0
 	github.com/evanphx/json-patch/v5 v5.6.0
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/go-chi/chi/v5 v5.0.10
@@ -26,7 +26,7 @@ require (
 	github.com/lens-vm/lens/host-go v0.0.0-20230729032926-5acb4df9bd25
 	github.com/libp2p/go-libp2p v0.28.0
 	github.com/libp2p/go-libp2p-gostream v0.6.0
-	github.com/libp2p/go-libp2p-kad-dht v0.24.2
+	github.com/libp2p/go-libp2p-kad-dht v0.24.3
 	github.com/libp2p/go-libp2p-pubsub v0.9.3
 	github.com/libp2p/go-libp2p-record v0.2.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -49,14 +49,13 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.11.0
 	golang.org/x/net v0.12.0
-	google.golang.org/grpc v1.56.2
+	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 )
 
 require (
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
@@ -194,7 +193,7 @@ require (
 	golang.org/x/tools v0.9.1 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gonum.org/v1/gonum v0.13.0 // indirect
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
@@ -202,6 +201,7 @@ require (
 
 // SourceNetwork fork og graphql-go
 replace (
+	github.com/dgraph-io/badger/v4 => github.com/sourcenetwork/badger/v4 v4.0.0-20230801145501-d3a57bd4c2ec
 	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20230511091704-fe7085512c23
 	github.com/textileio/go-libp2p-pubsub-rpc => github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.0-20230209220544-e16d5e34c4fc
 )
