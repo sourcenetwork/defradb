@@ -215,6 +215,9 @@ func (s *Server) Listen(ctx context.Context) error {
 		return errors.WithStack(err)
 	}
 
+	// save the address on the server in case the port was set to random
+	s.Addr = s.listener.Addr().String()
+
 	return nil
 }
 
@@ -283,6 +286,9 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	// save the address on the server in case the port was set to random
+	s.Addr = s.listener.Addr().String()
 
 	return nil
 }
