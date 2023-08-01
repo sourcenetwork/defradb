@@ -63,7 +63,6 @@ type Fetcher interface {
 	Start(ctx context.Context, spans core.Spans) error
 	FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, ExecInfo, error)
-	FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, ExecInfo, error)
 	Close() error
 }
 
@@ -669,28 +668,6 @@ func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Docume
 	}
 
 	return decodedDoc, execInfo, nil
-}
-
-// FetchNextDoc returns the next document as a core.Doc.
-// The first return value is the parsed document key.
-func (df *DocumentFetcher) FetchNextDoc(
-	ctx context.Context,
-	mapping *core.DocumentMapping,
-) ([]byte, core.Doc, ExecInfo, error) {
-	encdoc, execInfo, err := df.FetchNext(ctx)
-	if err != nil {
-		return nil, core.Doc{}, ExecInfo{}, err
-	}
-
-	if encdoc == nil {
-		return nil, core.Doc{}, execInfo, err
-	}
-
-	doc, err := DecodeToDoc(encdoc, df.mapping, false)
-	if err != nil {
-		return nil, core.Doc{}, ExecInfo{}, err
-	}
-	return encdoc.Key(), doc, execInfo, err
 }
 
 // Close closes the DocumentFetcher.
