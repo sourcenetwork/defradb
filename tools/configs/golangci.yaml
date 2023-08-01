@@ -149,7 +149,7 @@ issues:
         - errorlint
 
     # Exclude running header check in these paths
-    - path: "(net|datastore/badger/v3/compat_logger.go|datastore/badger/v3/datastore.go|connor)"
+    - path: "(net|datastore/badger/v4/compat_logger.go|datastore/badger/v4/datastore.go|connor)"
       linters:
         - goheader
 
