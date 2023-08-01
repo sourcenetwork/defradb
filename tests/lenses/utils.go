@@ -21,6 +21,8 @@ import (
 //   - `dst` is a string and is the name of the property you wish to set
 //   - `value` can be any valid json value and is the value that you wish the `dst` property
 //     of all documents being transformed by this module to have.
+//
+// This module has an inverse, which will clear any value in the `dst` field.
 var SetDefaultModulePath string = getPathRelativeToProjectRoot(
 	"/tests/lenses/rust_wasm32_set_default/target/wasm32-unknown-unknown/debug/rust_wasm32_set_default.wasm",
 )

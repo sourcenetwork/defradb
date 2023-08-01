@@ -19,7 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/config"
 	ds "github.com/sourcenetwork/defradb/datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
