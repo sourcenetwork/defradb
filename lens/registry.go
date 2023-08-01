@@ -17,6 +17,7 @@ import (
 
 	"github.com/ipfs/go-datastore/query"
 	"github.com/lens-vm/lens/host-go/config"
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/runtimes/wazero"
 	"github.com/sourcenetwork/immutable"
@@ -45,7 +46,8 @@ type lensRegistry struct {
 	modulesByPath map[string]module.Module
 	moduleLock    sync.Mutex
 
-	lensPoolsBySchemaVersionID map[string]*lensPool
+	lensPoolsBySchemaVersionID     map[string]*lensPool
+	reversedPoolsBySchemaVersionID map[string]*lensPool
 
 	// lens configurations by source schema version ID
 	configs map[string]client.LensConfig
@@ -68,11 +70,12 @@ func NewRegistry(lensPoolSize immutable.Option[int]) *lensRegistry {
 	}
 
 	return &lensRegistry{
-		poolSize:                   size,
-		runtime:                    wazero.New(),
-		modulesByPath:              map[string]module.Module{},
-		lensPoolsBySchemaVersionID: map[string]*lensPool{},
-		configs:                    map[string]client.LensConfig{},
+		poolSize:                       size,
+		runtime:                        wazero.New(),
+		modulesByPath:                  map[string]module.Module{},
+		lensPoolsBySchemaVersionID:     map[string]*lensPool{},
+		reversedPoolsBySchemaVersionID: map[string]*lensPool{},
+		configs:                        map[string]client.LensConfig{},
 	}
 }
 
@@ -98,9 +101,53 @@ func (r *lensRegistry) SetMigration(ctx context.Context, txn datastore.Txn, cfg 
 }
 
 func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error {
-	locker, lockerAlreadyExists := r.lensPoolsBySchemaVersionID[cfg.SourceSchemaVersionID]
-	if !lockerAlreadyExists {
-		locker = r.newPool(r.poolSize, cfg)
+	inversedModuleCfgs := make([]model.LensModule, len(cfg.Lenses))
+	for i, moduleCfg := range cfg.Lenses {
+		// Reverse the order of the lenses for the inverse migration.
+		inversedModuleCfgs[len(cfg.Lenses)-i-1] = model.LensModule{
+			Path: moduleCfg.Path,
+			// Reverse the direction of the lens.
+			// This needs to be done on a clone of the original cfg or we may end up mutating
+			// the original.
+			Inverse:   !moduleCfg.Inverse,
+			Arguments: moduleCfg.Arguments,
+		}
+	}
+
+	reversedCfg := client.LensConfig{
+		SourceSchemaVersionID:      cfg.SourceSchemaVersionID,
+		DestinationSchemaVersionID: cfg.DestinationSchemaVersionID,
+		Lens: model.Lens{
+			Lenses: inversedModuleCfgs,
+		},
+	}
+
+	err := r.cachePool(txn, r.lensPoolsBySchemaVersionID, cfg)
+	if err != nil {
+		return err
+	}
+	err = r.cachePool(txn, r.reversedPoolsBySchemaVersionID, reversedCfg)
+	// For now, checking this error is the best way of determining if a migration has an inverse.
+	// Inverses are optional.
+	//nolint:revive
+	if err != nil && !errors.Is(errors.New("Export `inverse` does not exist"), err) {
+		return err
+	}
+
+	// todo - handling txns like this means that the migrations are not available within the current
+	// transaction if used for stuff (e.g. GQL requests) before commit.
+	// https://github.com/sourcenetwork/defradb/issues/1592
+	txn.OnSuccess(func() {
+		r.configs[cfg.SourceSchemaVersionID] = cfg
+	})
+
+	return nil
+}
+
+func (r *lensRegistry) cachePool(txn datastore.Txn, target map[string]*lensPool, cfg client.LensConfig) error {
+	pool, poolAlreadyExists := target[cfg.SourceSchemaVersionID]
+	if !poolAlreadyExists {
+		pool = r.newPool(r.poolSize, cfg)
 	}
 
 	newLensPipes := make([]*lensPipe, r.poolSize)
@@ -116,24 +163,22 @@ func (r *lensRegistry) cacheLens(txn datastore.Txn, cfg client.LensConfig) error
 	// transaction if used for stuff (e.g. GQL requests) before commit.
 	// https://github.com/sourcenetwork/defradb/issues/1592
 	txn.OnSuccess(func() {
-		if !lockerAlreadyExists {
-			r.lensPoolsBySchemaVersionID[cfg.SourceSchemaVersionID] = locker
+		if !poolAlreadyExists {
+			target[cfg.SourceSchemaVersionID] = pool
 		}
 
 	drainLoop:
 		for {
 			select {
-			case <-locker.pipes:
+			case <-pool.pipes:
 			default:
 				break drainLoop
 			}
 		}
 
 		for _, lensPipe := range newLensPipes {
-			locker.returnLens(lensPipe)
+			pool.returnLens(lensPipe)
 		}
-
-		r.configs[cfg.SourceSchemaVersionID] = cfg
 	})
 
 	return nil
@@ -203,7 +248,22 @@ func (r *lensRegistry) MigrateUp(
 	src enumerable.Enumerable[LensDoc],
 	schemaVersionID string,
 ) (enumerable.Enumerable[LensDoc], error) {
-	lensPool, ok := r.lensPoolsBySchemaVersionID[schemaVersionID]
+	return migrate(r.lensPoolsBySchemaVersionID, src, schemaVersionID)
+}
+
+func (r *lensRegistry) MigrateDown(
+	src enumerable.Enumerable[LensDoc],
+	schemaVersionID string,
+) (enumerable.Enumerable[LensDoc], error) {
+	return migrate(r.reversedPoolsBySchemaVersionID, src, schemaVersionID)
+}
+
+func migrate(
+	pools map[string]*lensPool,
+	src enumerable.Enumerable[LensDoc],
+	schemaVersionID string,
+) (enumerable.Enumerable[LensDoc], error) {
+	lensPool, ok := pools[schemaVersionID]
 	if !ok {
 		// If there are no migrations for this schema version, just return the given source.
 		return src, nil
@@ -217,14 +277,6 @@ func (r *lensRegistry) MigrateUp(
 	lens.SetSource(src)
 
 	return lens, nil
-}
-
-func (*lensRegistry) MigrateDown(
-	src enumerable.Enumerable[LensDoc],
-	schemaVersionID string,
-) (enumerable.Enumerable[LensDoc], error) {
-	// todo: https://github.com/sourcenetwork/defradb/issues/1591
-	return src, nil
 }
 
 func (r *lensRegistry) Config() []client.LensConfig {
