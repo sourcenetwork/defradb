@@ -22,6 +22,10 @@ type EncodedDocument interface {
 	// Key returns the key of the document
 	Key() []byte
 	SchemaVersionID() string
+	// Status returns the document status.
+	//
+	// For example, whether it is deleted or active.
+	Status() client.DocumentStatus
 	// Reset re-initializes the EncodedDocument object.
 	Reset()
 	// Decode returns a properly decoded document object
@@ -64,6 +68,7 @@ type encodedDocument struct {
 
 	key             []byte
 	schemaVersionID string
+	status          client.DocumentStatus
 	Properties      map[client.FieldDescription]*encProperty
 
 	// tracking bitsets
@@ -85,6 +90,10 @@ func (encdoc *encodedDocument) SchemaVersionID() string {
 	return encdoc.schemaVersionID
 }
 
+func (encdoc *encodedDocument) Status() client.DocumentStatus {
+	return encdoc.status
+}
+
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
 	encdoc.Properties = make(map[client.FieldDescription]*encProperty, 0)
@@ -96,6 +105,7 @@ func (encdoc *encodedDocument) Reset() {
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
 	encdoc.schemaVersionID = ""
+	encdoc.status = 0
 }
 
 // Decode returns a properly decoded document object
@@ -155,5 +165,7 @@ func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
 	}
 
 	encdoc.doc.SchemaVersionID = encdoc.SchemaVersionID()
+	encdoc.doc.Status = encdoc.Status()
+
 	return *encdoc.doc, nil
 }

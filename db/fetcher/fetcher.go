@@ -79,8 +79,9 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
-	col     *client.CollectionDescription
-	reverse bool
+	col         *client.CollectionDescription
+	reverse     bool
+	deletedDocs bool
 
 	txn          datastore.Txn
 	spans        core.Spans
@@ -245,6 +246,8 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 	if df.doc == nil {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "Document")
 	}
+
+	df.deletedDocs = withDeleted
 
 	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
 		start := base.MakeCollectionKey(*df.col)
@@ -475,6 +478,12 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		df.doc.key = []byte(kv.Key.DocKey)
 		df.passedFilter = false
 		df.ranFilter = false
+
+		if df.deletedDocs {
+			df.doc.status = client.Deleted
+		} else {
+			df.doc.status = client.Active
+		}
 	}
 
 	if kv.Key.FieldId == core.DATASTORE_DOC_VERSION_FIELD_ID {
@@ -634,7 +643,6 @@ func (df *DocumentFetcher) FetchNextDoc(
 ) ([]byte, core.Doc, ExecInfo, error) {
 	var err error
 	var encdoc EncodedDocument
-	var status client.DocumentStatus
 	var resultExecInfo ExecInfo
 
 	// If the deletedDocFetcher isn't nil, this means that the user requested to include the deleted documents
@@ -652,7 +660,6 @@ func (df *DocumentFetcher) FetchNextDoc(
 				if err != nil {
 					return nil, core.Doc{}, ExecInfo{}, err
 				}
-				status = client.Deleted
 				resultExecInfo.Add(execInfo)
 			}
 		}
@@ -670,14 +677,12 @@ func (df *DocumentFetcher) FetchNextDoc(
 		if encdoc == nil {
 			return nil, core.Doc{}, resultExecInfo, err
 		}
-		status = client.Active
 	}
 
 	doc, err := encdoc.DecodeToDoc()
 	if err != nil {
 		return nil, core.Doc{}, ExecInfo{}, err
 	}
-	doc.Status = status
 	return encdoc.Key(), doc, resultExecInfo, err
 }
 
