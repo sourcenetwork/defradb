@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/bits-and-blooms/bitset v1.8.0
 	github.com/bxcodec/faker v2.0.1+incompatible
-	github.com/dgraph-io/badger/v3 v3.2103.5
+	github.com/dgraph-io/badger/v4 v4.1.0
 	github.com/evanphx/json-patch/v5 v5.6.0
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/go-chi/chi/v5 v5.0.10
@@ -56,7 +56,6 @@ require (
 require (
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
@@ -202,6 +201,7 @@ require (
 
 // SourceNetwork fork og graphql-go
 replace (
+	github.com/dgraph-io/badger/v4 => github.com/sourcenetwork/badger/v4 v4.0.0-20230801145501-d3a57bd4c2ec
 	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20230511091704-fe7085512c23
 	github.com/textileio/go-libp2p-pubsub-rpc => github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.0-20230209220544-e16d5e34c4fc
 )
