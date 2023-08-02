@@ -230,9 +230,10 @@ func (db *db) createCollection(
 func (db *db) updateCollection(
 	ctx context.Context,
 	txn datastore.Txn,
+	existingDescriptionsByName map[string]client.CollectionDescription,
 	desc client.CollectionDescription,
 ) (client.Collection, error) {
-	hasChanged, err := db.validateUpdateCollection(ctx, txn, desc)
+	hasChanged, err := db.validateUpdateCollection(ctx, txn, existingDescriptionsByName, desc)
 	if err != nil {
 		return nil, err
 	}
@@ -311,17 +312,17 @@ func (db *db) updateCollection(
 func (db *db) validateUpdateCollection(
 	ctx context.Context,
 	txn datastore.Txn,
+	existingDescriptionsByName map[string]client.CollectionDescription,
 	proposedDesc client.CollectionDescription,
 ) (bool, error) {
-	existingCollection, err := db.getCollectionByName(ctx, txn, proposedDesc.Name)
-	if err != nil {
-		if errors.Is(err, ds.ErrNotFound) {
-			// Original error is quite unhelpful to users at the moment so we return a custom one
-			return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
-		}
-		return false, err
+	if proposedDesc.Name == "" {
+		return false, ErrCollectionNameEmpty
 	}
-	existingDesc := existingCollection.Description()
+
+	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
+	if !collectionExists {
+		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
+	}
 
 	if proposedDesc.ID != existingDesc.ID {
 		return false, NewErrCollectionIDDoesntMatch(proposedDesc.Name, existingDesc.ID, proposedDesc.ID)
