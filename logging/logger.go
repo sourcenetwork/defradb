@@ -290,7 +290,7 @@ func (l *goLogger) ApplyConfig(config Config) {
 }
 
 // goLoggerV2 is a wrapper for a go-log V2 logger
-// Used by github.com/sourcenetwork/defradb/datastore/badger/v3
+// Used by github.com/sourcenetwork/defradb/datastore/badger/v4
 type goLoggerV2 struct {
 	*logger
 	*gologV2.ZapEventLogger

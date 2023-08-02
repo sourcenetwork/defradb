@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/bits-and-blooms/bitset v1.8.0
 	github.com/bxcodec/faker v2.0.1+incompatible
-	github.com/dgraph-io/badger/v3 v3.2103.5
+	github.com/dgraph-io/badger/v4 v4.1.0
 	github.com/evanphx/json-patch/v5 v5.6.0
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/go-chi/chi/v5 v5.0.10
@@ -15,7 +15,7 @@ require (
 	github.com/graphql-go/graphql v0.8.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/iancoleman/strcase v0.3.0
-	github.com/ipfs/boxo v0.10.2
+	github.com/ipfs/boxo v0.11.0
 	github.com/ipfs/go-block-format v0.1.2
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-datastore v0.6.0
@@ -56,7 +56,6 @@ require (
 require (
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
@@ -99,6 +98,7 @@ require (
 	github.com/ipfs/go-bitswap v0.12.0 // indirect
 	github.com/ipfs/go-blockservice v0.5.1 // indirect
 	github.com/ipfs/go-fetcher v1.6.1 // indirect
+	github.com/ipfs/go-ipfs-blockstore v1.2.0 // indirect
 	github.com/ipfs/go-ipfs-config v0.19.0 // indirect
 	github.com/ipfs/go-ipfs-delay v0.0.1 // indirect
 	github.com/ipfs/go-ipfs-exchange-interface v0.2.0 // indirect
@@ -108,6 +108,7 @@ require (
 	github.com/ipfs/go-ipfs-util v0.0.2 // indirect
 	github.com/ipfs/go-ipld-cbor v0.0.6 // indirect
 	github.com/ipfs/go-ipld-legacy v0.2.1 // indirect
+	github.com/ipfs/go-ipns v0.3.0 // indirect
 	github.com/ipfs/go-libipfs v0.7.0 // indirect
 	github.com/ipfs/go-merkledag v0.9.0 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
@@ -202,6 +203,7 @@ require (
 
 // SourceNetwork fork og graphql-go
 replace (
+	github.com/dgraph-io/badger/v4 => github.com/sourcenetwork/badger/v4 v4.0.0-20230801145501-d3a57bd4c2ec
 	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20230511091704-fe7085512c23
 	github.com/textileio/go-libp2p-pubsub-rpc => github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.0-20230209220544-e16d5e34c4fc
 )
