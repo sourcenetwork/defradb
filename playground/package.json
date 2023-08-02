@@ -12,7 +12,7 @@
   "dependencies": {
     "@tanstack/react-query": "^4.32.0",
     "fast-json-patch": "^3.1.1",
-    "graphiql": "^3.0.4",
+    "graphiql": "^3.0.5",
     "graphql": "^16.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
