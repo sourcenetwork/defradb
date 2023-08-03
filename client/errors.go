@@ -100,6 +100,10 @@ func NewErrMaxTxnRetries(inner error) error {
 	return errors.Wrap(errMaxTxnRetries, inner)
 }
 
-func NewErrRelationOneSided(typeName string) error {
-	return errors.New(errRelationOneSided, errors.NewKV("Type", typeName))
+func NewErrRelationOneSided(fieldName string, typeName string) error {
+	return errors.New(
+		errRelationOneSided,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Type", typeName),
+	)
 }
