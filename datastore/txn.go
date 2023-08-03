@@ -22,6 +22,9 @@ import (
 type Txn interface {
 	MultiStore
 
+	// ID returns the unique immutable identifier for this transaction.
+	ID() uint64
+
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an
 	// error is an indication that the data was not committed to the Datastore.
@@ -32,22 +35,31 @@ type Txn interface {
 	// state of the Datastore, making it safe to defer.
 	Discard(ctx context.Context)
 
+	// OnSuccess registers a function to be called when the transaction is committed.
 	OnSuccess(fn func())
+
+	// OnError registers a function to be called when the transaction is rolled back.
 	OnError(fn func())
+
+	// OnDiscard registers a function to be called when the transaction is discarded.
+	OnDiscard(fn func())
 }
 
 type txn struct {
 	t ds.Txn
 	MultiStore
 
+	id uint64
+
 	successFns []func()
 	errorFns   []func()
+	discardFns []func()
 }
 
 var _ Txn = (*txn)(nil)
 
 // NewTxnFrom returns a new Txn from the rootstore.
-func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (Txn, error) {
+func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, readonly bool) (Txn, error) {
 	// check if our datastore natively supports iterable transaction, transactions or batching
 	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
 		rootTxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
@@ -58,6 +70,8 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (
 		return &txn{
 			rootTxn,
 			multistore,
+			id,
+			[]func(){},
 			[]func(){},
 			[]func(){},
 		}, nil
@@ -73,24 +87,32 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (
 	return &txn{
 		rootTxn,
 		multistore,
+		id,
+		[]func(){},
 		[]func(){},
 		[]func(){},
 	}, nil
 }
 
+// ID returns the unique immutable identifier for this transaction.
+func (t *txn) ID() uint64 {
+	return t.id
+}
+
 // Commit finalizes a transaction, attempting to commit it to the Datastore.
 func (t *txn) Commit(ctx context.Context) error {
 	if err := t.t.Commit(ctx); err != nil {
-		t.runErrorFns(ctx)
+		runFns(t.errorFns)
 		return err
 	}
-	t.runSuccessFns(ctx)
+	runFns(t.successFns)
 	return nil
 }
 
 // Discard throws away changes recorded in a transaction without committing.
 func (t *txn) Discard(ctx context.Context) {
 	t.t.Discard(ctx)
+	runFns(t.discardFns)
 }
 
 // OnSuccess registers a function to be called when the transaction is committed.
@@ -109,14 +131,16 @@ func (txn *txn) OnError(fn func()) {
 	txn.errorFns = append(txn.errorFns, fn)
 }
 
-func (txn *txn) runErrorFns(ctx context.Context) {
-	for _, fn := range txn.errorFns {
-		fn()
+// OnDiscard registers a function to be called when the transaction is discarded.
+func (txn *txn) OnDiscard(fn func()) {
+	if fn == nil {
+		return
 	}
+	txn.discardFns = append(txn.discardFns, fn)
 }
 
-func (txn *txn) runSuccessFns(ctx context.Context) {
-	for _, fn := range txn.successFns {
+func runFns(fns []func()) {
+	for _, fn := range fns {
 		fn()
 	}
 }

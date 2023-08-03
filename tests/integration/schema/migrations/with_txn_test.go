@@ -21,8 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-// todo: This test documents unwanted behaviour and should be fixed with
-// https://github.com/sourcenetwork/defradb/issues/1592
 func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema migration, with txn",
@@ -49,7 +47,23 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 				TransactionID: immutable.Some(0),
 				// This is the bug - although the GetMigrations call and migration are on the same transaction
 				// the migration is not returned in the results.
-				ExpectedResults: []client.LensConfig{},
+				ExpectedResults: []client.LensConfig{
+					{
+						SourceSchemaVersionID:      "does not exist",
+						DestinationSchemaVersionID: "also does not exist",
+						Lens: model.Lens{
+							Lenses: []model.LensModule{
+								{
+									Path: lenses.SetDefaultModulePath,
+									Arguments: map[string]any{
+										"dst":   "verified",
+										"value": false,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
