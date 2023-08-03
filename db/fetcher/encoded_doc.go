@@ -154,15 +154,15 @@ func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.Fiel
 	}
 
 	for _, prop := range encdoc.properties {
+		// only get filter fields if filter=true
+		if onlyFilterProps && !prop.IsFilter {
+			continue
+		}
+
 		// used cached decoded fields
 		cachedValue := encdoc.decodedpropertyCache[prop.Desc]
 		if cachedValue != nil {
 			result[prop.Desc] = cachedValue
-			continue
-		}
-
-		// only get filter fields if filter=true
-		if onlyFilterProps && !prop.IsFilter {
 			continue
 		}
 
