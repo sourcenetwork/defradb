@@ -155,7 +155,6 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 // NewTxn creates a new transaction.
 func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-
 	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
 }
 
