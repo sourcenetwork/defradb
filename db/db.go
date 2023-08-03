@@ -17,6 +17,7 @@ package db
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
 	ds "github.com/ipfs/go-datastore"
@@ -70,6 +71,9 @@ type db struct {
 
 	// The options used to init the database
 	options any
+
+	// The ID of the last transaction created.
+	previousTxnID atomic.Uint64
 }
 
 // Functional option type.
@@ -138,7 +142,7 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 
 	// lensPoolSize may be set by `options`, and because they are funcs on db
 	// we have to mutate `db` here to set the registry.
-	db.lensRegistry = lens.NewRegistry(db.lensPoolSize)
+	db.lensRegistry = lens.NewRegistry(db.lensPoolSize, db)
 
 	err = db.initialize(ctx)
 	if err != nil {
@@ -150,19 +154,22 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 
 // NewTxn creates a new transaction.
 func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
-	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
+	txnId := db.previousTxnID.Add(1)
+	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
-	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, readonly)
+	txnId := db.previousTxnID.Add(1)
+	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
 }
 
 // WithTxn returns a new [client.Store] that respects the given transaction.
 func (db *db) WithTxn(txn datastore.Txn) client.Store {
 	return &explicitTxnDB{
-		db:  db,
-		txn: txn,
+		db:           db,
+		txn:          txn,
+		lensRegistry: db.lensRegistry.WithTxn(txn),
 	}
 }
 
@@ -210,7 +217,7 @@ func (db *db) initialize(ctx context.Context) error {
 			return err
 		}
 
-		err = db.lensRegistry.ReloadLenses(ctx, txn)
+		err = db.lensRegistry.ReloadLenses(ctx)
 		if err != nil {
 			return err
 		}

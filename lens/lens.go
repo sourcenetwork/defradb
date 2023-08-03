@@ -11,6 +11,8 @@
 package lens
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -42,6 +44,8 @@ type Lens interface {
 type lens struct {
 	lensRegistry client.LensRegistry
 
+	ctx context.Context
+
 	// The primary access points to the lens pipes through which all things flow.
 	lensPipesBySchemaVersionIDs map[schemaVersionID]enumerable.Concatenation[LensDoc]
 
@@ -60,6 +64,7 @@ type lens struct {
 var _ Lens = (*lens)(nil)
 
 func new(
+	ctx context.Context,
 	lensRegistry client.LensRegistry,
 	targetSchemaVersionID schemaVersionID,
 	schemaVersionHistory map[schemaVersionID]*targetedSchemaHistoryLink,
@@ -69,6 +74,7 @@ func new(
 
 	return &lens{
 		lensRegistry:         lensRegistry,
+		ctx:                  ctx,
 		source:               enumerable.NewQueue[lensInput](),
 		outputPipe:           outputPipe,
 		unknownVersionPipe:   targetSource,
@@ -175,7 +181,7 @@ func (l *lens) Next() (bool, error) {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
-				pipeHead, err = l.lensRegistry.MigrateUp(junctionPipe, historyLocation.schemaVersionID)
+				pipeHead, err = l.lensRegistry.MigrateUp(l.ctx, junctionPipe, historyLocation.schemaVersionID)
 				if err != nil {
 					return false, err
 				}
@@ -185,7 +191,7 @@ func (l *lens) Next() (bool, error) {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
-				pipeHead, err = l.lensRegistry.MigrateDown(junctionPipe, historyLocation.previous.Value().schemaVersionID)
+				pipeHead, err = l.lensRegistry.MigrateDown(l.ctx, junctionPipe, historyLocation.previous.Value().schemaVersionID)
 				if err != nil {
 					return false, err
 				}
