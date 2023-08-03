@@ -65,7 +65,7 @@ type encodedDocument struct {
 	schemaVersionID      string
 	status               client.DocumentStatus
 	properties           map[client.FieldDescription]*encProperty
-	decodedpropertyCache map[client.FieldDescription]any
+	decodedPropertyCache map[client.FieldDescription]any
 
 	// tracking bitsets
 	// A value of 1 indicates a required field
@@ -98,7 +98,7 @@ func (encdoc *encodedDocument) Reset() {
 	encdoc.selectSet = nil
 	encdoc.schemaVersionID = ""
 	encdoc.status = 0
-	encdoc.decodedpropertyCache = nil
+	encdoc.decodedPropertyCache = nil
 }
 
 // Decode returns a properly decoded document object
@@ -149,8 +149,8 @@ func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter b
 
 func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error) {
 	result := map[client.FieldDescription]any{}
-	if encdoc.decodedpropertyCache == nil {
-		encdoc.decodedpropertyCache = map[client.FieldDescription]any{}
+	if encdoc.decodedPropertyCache == nil {
+		encdoc.decodedPropertyCache = map[client.FieldDescription]any{}
 	}
 
 	for _, prop := range encdoc.properties {
@@ -160,7 +160,7 @@ func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.Fiel
 		}
 
 		// used cached decoded fields
-		cachedValue := encdoc.decodedpropertyCache[prop.Desc]
+		cachedValue := encdoc.decodedPropertyCache[prop.Desc]
 		if cachedValue != nil {
 			result[prop.Desc] = cachedValue
 			continue
@@ -172,7 +172,7 @@ func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.Fiel
 		}
 
 		// cache value
-		encdoc.decodedpropertyCache[prop.Desc] = val
+		encdoc.decodedPropertyCache[prop.Desc] = val
 		result[prop.Desc] = val
 	}
 
