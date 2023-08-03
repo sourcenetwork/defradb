@@ -62,8 +62,6 @@ type Fetcher interface {
 	) error
 	Start(ctx context.Context, spans core.Spans) error
 	FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error)
-	FetchNextDecoded(ctx context.Context) (*client.Document, ExecInfo, error)
-	FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, ExecInfo, error)
 	Close() error
 }
 
@@ -79,8 +77,9 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
-	col     *client.CollectionDescription
-	reverse bool
+	col         *client.CollectionDescription
+	reverse     bool
+	deletedDocs bool
 
 	txn          datastore.Txn
 	spans        core.Spans
@@ -111,7 +110,8 @@ type DocumentFetcher struct {
 	// for effectiently finding the next field to seek to.
 	filterSet *bitset.BitSet
 
-	doc *encodedDocument
+	doc     *encodedDocument
+	mapping *core.DocumentMapping
 
 	initialized bool
 
@@ -174,7 +174,7 @@ func (df *DocumentFetcher) init(
 	df.filter = filter
 	df.isReadingDocument = false
 	df.doc = new(encodedDocument)
-	df.doc.mapping = docMapper
+	df.mapping = docMapper
 
 	if df.filter != nil && docMapper == nil {
 		return ErrMissingMapper
@@ -208,7 +208,7 @@ func (df *DocumentFetcher) init(
 	}
 
 	if df.filter != nil {
-		conditions := df.filter.ToMap(df.doc.mapping)
+		conditions := df.filter.ToMap(df.mapping)
 		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, df.col.Schema)
 		if err != nil {
 			return err
@@ -245,6 +245,8 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 	if df.doc == nil {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "Document")
 	}
+
+	df.deletedDocs = withDeleted
 
 	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
 		start := base.MakeCollectionKey(*df.col)
@@ -475,6 +477,12 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		df.doc.key = []byte(kv.Key.DocKey)
 		df.passedFilter = false
 		df.ranFilter = false
+
+		if df.deletedDocs {
+			df.doc.status = client.Deleted
+		} else {
+			df.doc.status = client.Active
+		}
 	}
 
 	if kv.Key.FieldId == core.DATASTORE_DOC_VERSION_FIELD_ID {
@@ -514,7 +522,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 
 	df.execInfo.FieldsFetched++
 
-	df.doc.Properties[fieldDesc] = property
+	df.doc.properties[fieldDesc] = property
 
 	return nil
 }
@@ -522,6 +530,41 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 // FetchNext returns a raw binary encoded document. It iterates over all the relevant
 // keypairs from the underlying store and constructs the document.
 func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
+	var resultExecInfo ExecInfo
+
+	// If the deletedDocFetcher isn't nil, this means that the user requested to include the deleted documents
+	// in the query. To keep the active and deleted docs in lexicographic order of dockeys, we use the two distinct
+	// fetchers and fetch the one that has the next lowest (or highest if requested in reverse order) dockey value.
+	ddf := df.deletedDocFetcher
+	if ddf != nil {
+		// If we've reached the end of the deleted docs, we can skip to getting the next active docs.
+		if !ddf.kvEnd {
+			if df.kvEnd ||
+				(df.reverse && ddf.kv.Key.DocKey > df.kv.Key.DocKey) ||
+				(!df.reverse && ddf.kv.Key.DocKey < df.kv.Key.DocKey) {
+				encdoc, execInfo, err := ddf.FetchNext(ctx)
+				if err != nil {
+					return nil, ExecInfo{}, err
+				}
+				if encdoc != nil {
+					return encdoc, execInfo, err
+				}
+
+				resultExecInfo.Add(execInfo)
+			}
+		}
+	}
+
+	encdoc, execInfo, err := df.fetchNext(ctx)
+	if err != nil {
+		return nil, ExecInfo{}, err
+	}
+	resultExecInfo.Add(execInfo)
+
+	return encdoc, resultExecInfo, err
+}
+
+func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
 	if df.kvEnd {
 		return nil, ExecInfo{}, nil
 	}
@@ -547,7 +590,7 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 			// only run filter if we've collected all the fields
 			// required for filtering. This is tracked by the bitsets.
 			if df.filterSet.Equal(df.doc.filterSet) {
-				filterDoc, err := df.doc.decodeToDocForFilter()
+				filterDoc, err := DecodeToDoc(df.doc, df.mapping, true)
 				if err != nil {
 					return nil, ExecInfo{}, err
 				}
@@ -575,7 +618,7 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 				if df.passedFilter {
 					return df.doc, df.execInfo, nil
 				} else if !df.ranFilter { // if we didn't run, run it
-					decodedDoc, err := df.doc.DecodeToDoc()
+					decodedDoc, err := DecodeToDoc(df.doc, df.mapping, false)
 					if err != nil {
 						return nil, ExecInfo{}, err
 					}
@@ -606,79 +649,6 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 		// 	return df.doc, nil
 		// }
 	}
-}
-
-// FetchNextDecoded implements DocumentFetcher
-func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, ExecInfo, error) {
-	encdoc, execInfo, err := df.FetchNext(ctx)
-	if err != nil {
-		return nil, ExecInfo{}, err
-	}
-	if encdoc == nil {
-		return nil, ExecInfo{}, nil
-	}
-
-	decodedDoc, err := encdoc.Decode()
-	if err != nil {
-		return nil, ExecInfo{}, err
-	}
-
-	return decodedDoc, execInfo, nil
-}
-
-// FetchNextDoc returns the next document as a core.Doc.
-// The first return value is the parsed document key.
-func (df *DocumentFetcher) FetchNextDoc(
-	ctx context.Context,
-	mapping *core.DocumentMapping,
-) ([]byte, core.Doc, ExecInfo, error) {
-	var err error
-	var encdoc EncodedDocument
-	var status client.DocumentStatus
-	var resultExecInfo ExecInfo
-
-	// If the deletedDocFetcher isn't nil, this means that the user requested to include the deleted documents
-	// in the query. To keep the active and deleted docs in lexicographic order of dockeys, we use the two distinct
-	// fetchers and fetch the one that has the next lowest (or highest if requested in reverse order) dockey value.
-	ddf := df.deletedDocFetcher
-	if ddf != nil {
-		// If we've reached the end of the deleted docs, we can skip to getting the next active docs.
-		if !ddf.kvEnd {
-			if df.kvEnd ||
-				(df.reverse && ddf.kv.Key.DocKey > df.kv.Key.DocKey) ||
-				(!df.reverse && ddf.kv.Key.DocKey < df.kv.Key.DocKey) {
-				var execInfo ExecInfo
-				encdoc, execInfo, err = ddf.FetchNext(ctx)
-				if err != nil {
-					return nil, core.Doc{}, ExecInfo{}, err
-				}
-				status = client.Deleted
-				resultExecInfo.Add(execInfo)
-			}
-		}
-	}
-
-	// At this point id encdoc is nil, it means that the next document to be
-	// returned will be from the active ones.
-	if encdoc == nil {
-		var execInfo ExecInfo
-		encdoc, execInfo, err = df.FetchNext(ctx)
-		if err != nil {
-			return nil, core.Doc{}, ExecInfo{}, err
-		}
-		resultExecInfo.Add(execInfo)
-		if encdoc == nil {
-			return nil, core.Doc{}, resultExecInfo, err
-		}
-		status = client.Active
-	}
-
-	doc, err := encdoc.DecodeToDoc()
-	if err != nil {
-		return nil, core.Doc{}, ExecInfo{}, err
-	}
-	doc.Status = status
-	return encdoc.Key(), doc, resultExecInfo, err
 }
 
 // Close closes the DocumentFetcher.

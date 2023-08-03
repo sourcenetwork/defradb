@@ -39,7 +39,6 @@ type scanNode struct {
 	desc client.CollectionDescription
 
 	fields []client.FieldDescription
-	docKey []byte
 
 	showDeleted bool
 
@@ -164,16 +163,19 @@ func (n *scanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	var err error
-	var execInfo fetcher.ExecInfo
-	n.docKey, n.currentValue, execInfo, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
+	doc, execInfo, err := n.fetcher.FetchNext(n.p.ctx)
 	if err != nil {
 		return false, err
 	}
 	n.execInfo.fetches.Add(execInfo)
 
-	if len(n.currentValue.Fields) == 0 {
+	if doc == nil {
 		return false, nil
+	}
+
+	n.currentValue, err = fetcher.DecodeToDoc(doc, n.documentMapping, false)
+	if err != nil {
+		return false, err
 	}
 
 	n.documentMapping.SetFirstOfName(

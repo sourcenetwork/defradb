@@ -109,13 +109,7 @@ func (f *lensedFetcher) Start(ctx context.Context, spans core.Spans) error {
 }
 
 func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument, fetcher.ExecInfo, error) {
-	panic("This function is never called and is dead code.  As this type is internal, panicing is okay for now")
-}
-
-func (f *lensedFetcher) FetchNextDecoded(
-	ctx context.Context,
-) (*client.Document, fetcher.ExecInfo, error) {
-	doc, execInfo, err := f.source.FetchNextDecoded(ctx)
+	doc, execInfo, err := f.source.FetchNext(ctx)
 	if err != nil {
 		return nil, fetcher.ExecInfo{}, err
 	}
@@ -124,18 +118,18 @@ func (f *lensedFetcher) FetchNextDecoded(
 		return nil, execInfo, nil
 	}
 
-	if !f.hasMigrations || doc.SchemaVersionID == f.targetVersionID {
+	if !f.hasMigrations || doc.SchemaVersionID() == f.targetVersionID {
 		// If there are no migrations registered for this schema, or if the document is already
 		// at the target schema version, no migration is required and we can return it early.
 		return doc, execInfo, nil
 	}
 
-	sourceLensDoc, err := clientDocToLensDoc(doc)
+	sourceLensDoc, err := encodedDocToLensDoc(doc)
 	if err != nil {
 		return nil, fetcher.ExecInfo{}, err
 	}
 
-	err = f.lens.Put(doc.SchemaVersionID, sourceLensDoc)
+	err = f.lens.Put(doc.SchemaVersionID(), sourceLensDoc)
 	if err != nil {
 		return nil, fetcher.ExecInfo{}, err
 	}
@@ -146,7 +140,7 @@ func (f *lensedFetcher) FetchNextDecoded(
 	}
 	if !hasNext {
 		// The migration decided to not yield a document, so we cycle through the next fetcher doc
-		doc, nextExecInfo, err := f.FetchNextDecoded(ctx)
+		doc, nextExecInfo, err := f.FetchNext(ctx)
 		execInfo.Add(nextExecInfo)
 		return doc, execInfo, err
 	}
@@ -156,7 +150,7 @@ func (f *lensedFetcher) FetchNextDecoded(
 		return nil, fetcher.ExecInfo{}, err
 	}
 
-	migratedDoc, err := f.lensDocToClientDoc(migratedLensDoc)
+	migratedDoc, err := f.lensDocToEncodedDoc(migratedLensDoc)
 	if err != nil {
 		return nil, fetcher.ExecInfo{}, err
 	}
@@ -169,63 +163,6 @@ func (f *lensedFetcher) FetchNextDecoded(
 	return migratedDoc, execInfo, nil
 }
 
-func (f *lensedFetcher) FetchNextDoc(
-	ctx context.Context,
-	mapping *core.DocumentMapping,
-) ([]byte, core.Doc, fetcher.ExecInfo, error) {
-	key, doc, execInfo, err := f.source.FetchNextDoc(ctx, mapping)
-	if err != nil {
-		return nil, core.Doc{}, fetcher.ExecInfo{}, err
-	}
-
-	if len(doc.Fields) == 0 {
-		return key, doc, execInfo, nil
-	}
-
-	if doc.SchemaVersionID == f.targetVersionID {
-		// If the document is already at the target schema version, no migration is required and
-		// we can return it early.
-		return key, doc, execInfo, nil
-	}
-
-	sourceLensDoc, err := coreDocToLensDoc(mapping, doc)
-	if err != nil {
-		return nil, core.Doc{}, fetcher.ExecInfo{}, err
-	}
-	err = f.lens.Put(doc.SchemaVersionID, sourceLensDoc)
-	if err != nil {
-		return nil, core.Doc{}, fetcher.ExecInfo{}, err
-	}
-
-	hasNext, err := f.lens.Next()
-	if err != nil {
-		return nil, core.Doc{}, fetcher.ExecInfo{}, err
-	}
-	if !hasNext {
-		// The migration decided to not yield a document, so we cycle through the next fetcher doc
-		key, doc, nextExecInfo, err := f.FetchNextDoc(ctx, mapping)
-		execInfo.Add(nextExecInfo)
-		return key, doc, execInfo, err
-	}
-
-	migratedLensDoc, err := f.lens.Value()
-	if err != nil {
-		return nil, core.Doc{}, fetcher.ExecInfo{}, err
-	}
-
-	migratedDoc, err := f.lensDocToCoreDoc(mapping, migratedLensDoc)
-	if err != nil {
-		return nil, core.Doc{}, fetcher.ExecInfo{}, err
-	}
-
-	err = f.updateDataStore(ctx, sourceLensDoc, migratedLensDoc)
-	if err != nil {
-		return nil, core.Doc{}, fetcher.ExecInfo{}, err
-	}
-
-	return key, migratedDoc, execInfo, nil
-}
-
 func (f *lensedFetcher) Close() error {
 	if f.lens != nil {
 		f.lens.Reset()
@@ -233,95 +170,44 @@ func (f *lensedFetcher) Close() error {
 	return f.source.Close()
 }
 
-// clientDocToLensDoc converts a client.Document to a LensDoc.
-func clientDocToLensDoc(doc *client.Document) (LensDoc, error) {
+// encodedDocToLensDoc converts a [fetcher.EncodedDocument] to a LensDoc.
+func encodedDocToLensDoc(doc fetcher.EncodedDocument) (LensDoc, error) {
 	docAsMap := map[string]any{}
 
-	for field, fieldValue := range doc.Values() {
-		docAsMap[field.Name()] = fieldValue.Value()
-	}
-	docAsMap[request.KeyFieldName] = doc.Key().String()
-
-	// Note: client.Document does not have a means of flagging as to whether it is
-	// deleted or not, and, currently the fetcher does not ever returned deleted items
-	// from the function that returs this type.
-
-	return docAsMap, nil
-}
-
-// coreDocToLensDoc converts a core.Doc to a LensDoc.
-func coreDocToLensDoc(mapping *core.DocumentMapping, doc core.Doc) (LensDoc, error) {
-	docAsMap := map[string]any{}
-
-	for fieldIndex, fieldValue := range doc.Fields {
-		fieldName, ok := mapping.TryToFindNameFromIndex(fieldIndex)
-		if !ok {
-			continue
-		}
-		docAsMap[fieldName] = fieldValue
-	}
-
-	docAsMap[request.DeletedFieldName] = doc.Status.IsDeleted()
-
-	return docAsMap, nil
-}
-
-// lensDocToCoreDoc converts a LensDoc to a core.Doc.
-func (f *lensedFetcher) lensDocToCoreDoc(mapping *core.DocumentMapping, docAsMap LensDoc) (core.Doc, error) {
-	doc := mapping.NewDoc()
-
-	for fieldName, fieldByteValue := range docAsMap {
-		if fieldName == request.KeyFieldName {
-			key, ok := fieldByteValue.(string)
-			if !ok {
-				return core.Doc{}, core.ErrInvalidKey
-			}
-
-			doc.SetKey(key)
-			continue
-		}
-
-		fieldDesc, fieldFound := f.fieldDescriptionsByName[fieldName]
-		if !fieldFound {
-			// Note: This can technically happen if a Lens migration returns a field that
-			// we do not know about. In which case we have to skip it.
-			continue
-		}
-
-		fieldValue, err := core.DecodeFieldValue(fieldDesc, fieldByteValue)
-		if err != nil {
-			return core.Doc{}, err
-		}
-
-		index := mapping.FirstIndexOfName(fieldName)
-		doc.Fields[index] = fieldValue
-	}
-
-	if value, ok := docAsMap[request.DeletedFieldName]; ok {
-		if wasDeleted, ok := value.(bool); ok {
-			if wasDeleted {
-				doc.Status = client.Deleted
-			} else {
-				doc.Status = client.Active
-			}
-		}
-	}
-
-	doc.SchemaVersionID = f.col.Schema.VersionID
-
-	return doc, nil
-}
-
-// lensDocToClientDoc converts a LensDoc to a client.Document.
-func (f *lensedFetcher) lensDocToClientDoc(docAsMap LensDoc) (*client.Document, error) {
-	key, err := client.NewDocKeyFromString(docAsMap[request.KeyFieldName].(string))
+	properties, err := doc.Properties(false)
 	if err != nil {
 		return nil, err
 	}
-	doc := client.NewDocWithKey(key)
+
+	for field, fieldValue := range properties {
+		docAsMap[field.Name] = fieldValue
+	}
+	docAsMap[request.KeyFieldName] = string(doc.Key())
+
+	// Note: client.Document does not have a means of flagging as to whether it is
+	// deleted or not, and, currently the fetcher does not ever returned deleted items
+	// from the function that returs this type.
+
+	return docAsMap, nil
+}
+
+func (f *lensedFetcher) lensDocToEncodedDoc(docAsMap LensDoc) (fetcher.EncodedDocument, error) {
+	var key string
+	status := client.Active
+	properties := map[client.FieldDescription]any{}
 
 	for fieldName, fieldByteValue := range docAsMap {
 		if fieldName == request.KeyFieldName {
+			key = fieldByteValue.(string)
+			continue
+		}
+
+		if fieldName == request.DeletedFieldName {
+			if wasDeleted, ok := fieldByteValue.(bool); ok {
+				if wasDeleted {
+					status = client.Deleted
+				}
+			}
 			continue
 		}
 
@@ -337,19 +223,15 @@ func (f *lensedFetcher) lensDocToClientDoc(docAsMap LensDoc) (*client.Document, 
 			return nil, err
 		}
 
-		err = doc.SetAs(fieldDesc.Name, fieldValue, fieldDesc.Typ)
-		if err != nil {
-			return nil, err
-		}
+		properties[fieldDesc] = fieldValue
 	}
 
-	doc.SchemaVersionID = f.col.Schema.VersionID
-
-	// Note: client.Document does not have a means of flagging as to whether it is
-	// deleted or not, and, currently the fetcher does not ever returned deleted items
-	// from the function that returs this type.
-
-	return doc, nil
+	return &lensEncodedDocument{
+		key:             []byte(key),
+		schemaVersionID: f.col.Schema.VersionID,
+		status:          status,
+		properties:      properties,
+	}, nil
 }
 
 // updateDataStore updates the datastore with the migrated values.
@@ -423,4 +305,36 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 	}
 
 	return nil
+}
+
+type lensEncodedDocument struct {
+	key             []byte
+	schemaVersionID string
+	status          client.DocumentStatus
+	properties      map[client.FieldDescription]any
+}
+
+var _ fetcher.EncodedDocument = (*lensEncodedDocument)(nil)
+
+func (encdoc *lensEncodedDocument) Key() []byte {
+	return encdoc.key
+}
+
+func (encdoc *lensEncodedDocument) SchemaVersionID() string {
+	return encdoc.schemaVersionID
+}
+
+func (encdoc *lensEncodedDocument) Status() client.DocumentStatus {
+	return encdoc.status
+}
+
+func (encdoc *lensEncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error) {
+	return encdoc.properties, nil
+}
+
+func (encdoc *lensEncodedDocument) Reset() {
+	encdoc.key = nil
+	encdoc.schemaVersionID = ""
+	encdoc.status = 0
+	encdoc.properties = map[client.FieldDescription]any{}
 }
