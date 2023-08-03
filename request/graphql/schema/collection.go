@@ -443,7 +443,7 @@ func finalizeRelations(relationManager *RelationManager, descriptions []client.C
 
 			// if not finalized then we are missing one side of the relationship
 			if !rel.finalized {
-				return NewErrRelationOneSided(field.Schema)
+				return client.NewErrRelationOneSided(field.Schema)
 			}
 
 			field.RelationType = rel.Kind() | fieldRelationType

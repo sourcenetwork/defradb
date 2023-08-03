@@ -22,6 +22,7 @@ const (
 	errParsingFailed        string = "failed to parse argument"
 	errUninitializeProperty string = "invalid state, required property is uninitialized"
 	errMaxTxnRetries        string = "reached maximum transaction reties"
+	errRelationOneSided     string = "relation must be defined on both schemas"
 )
 
 // Errors returnable from this package.
@@ -43,6 +44,7 @@ var (
 	ErrMalformedDocKey      = errors.New("malformed DocKey, missing either version or cid")
 	ErrInvalidDocKeyVersion = errors.New("invalid DocKey version")
 	ErrMaxTxnRetries        = errors.New(errMaxTxnRetries)
+	ErrRelationOneSided     = errors.New(errRelationOneSided)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -96,4 +98,8 @@ func NewErrUninitializeProperty(host string, propertyName string) error {
 // given location.
 func NewErrMaxTxnRetries(inner error) error {
 	return errors.Wrap(errMaxTxnRetries, inner)
+}
+
+func NewErrRelationOneSided(typeName string) error {
+	return errors.New(errRelationOneSided, errors.NewKV("Type", typeName))
 }
