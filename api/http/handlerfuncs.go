@@ -298,12 +298,6 @@ func setMigrationHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	txn, err := db.NewTxn(req.Context(), false)
-	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
-		return
-	}
-
 	var cfg client.LensConfig
 	err = json.Unmarshal(cfgStr, &cfg)
 	if err != nil {
@@ -312,12 +306,6 @@ func setMigrationHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	err = db.LensRegistry().SetMigration(req.Context(), cfg)
-	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
-		return
-	}
-
-	err = txn.Commit(req.Context())
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
