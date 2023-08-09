@@ -282,3 +282,106 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation primary direction, relation ID field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						published_id
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":         "John Grisham",
+						"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation secondary direction, relation ID field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						name
+						author_id
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Painted House",
+						// This is undesirable and needs to change within this PR
+						"author_id": nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
