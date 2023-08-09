@@ -804,39 +804,12 @@ sourceLoop:
 		propertyMapped := len(mapping.IndexesByName[key]) != 0
 
 		if !propertyMapped {
-			index := mapping.GetNextIndex()
-
-			dummyParsed := &request.Select{
-				Field: request.Field{
-					Name: key,
-				},
-			}
-
-			childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+			dummyJoin, err := constructDummyJoin(descriptionsRepo, parentCollectionName, mapping, key)
 			if err != nil {
 				return nil, err
-			}
-
-			childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
-			if err != nil {
-				return nil, err
-			}
-			childMapping = childMapping.CloneWithoutRender()
-			mapping.SetChildAt(index, childMapping)
-
-			dummyJoin := &Select{
-				Targetable: Targetable{
-					Field: Field{
-						Index: index,
-						Name:  key,
-					},
-				},
-				CollectionName:  childCollectionName,
-				DocumentMapping: childMapping,
 			}
 
 			newFields = append(newFields, dummyJoin)
-			mapping.Add(index, key)
 		}
 
 		keyIndex := mapping.FirstIndexOfName(key)
@@ -926,6 +899,46 @@ sourceLoop:
 	}
 
 	return newFields, nil
+}
+
+// constructDummyJoin constructs a valid empty join with no requested fields.
+func constructDummyJoin(
+	descriptionsRepo *DescriptionsRepo,
+	parentCollectionName string,
+	parentMapping *core.DocumentMapping,
+	name string,
+) (*Select, error) {
+	index := parentMapping.GetNextIndex()
+
+	dummyParsed := &request.Select{
+		Field: request.Field{
+			Name: name,
+		},
+	}
+
+	childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+	if err != nil {
+		return nil, err
+	}
+	childMapping = childMapping.CloneWithoutRender()
+	parentMapping.SetChildAt(index, childMapping)
+	parentMapping.Add(index, name)
+
+	return &Select{
+		Targetable: Targetable{
+			Field: Field{
+				Index: index,
+				Name:  name,
+			},
+		},
+		CollectionName:  childCollectionName,
+		DocumentMapping: childMapping,
+	}, nil
 }
 
 // ToCommitSelect converts the given [request.CommitSelect] into a [CommitSelect].
