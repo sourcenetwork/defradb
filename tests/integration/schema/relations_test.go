@@ -135,7 +135,7 @@ func TestSchemaRelationErrorsGivenOneSidedManyRelationField(t *testing.T) {
 						dogs: [Dog]
 					}
 				`,
-				ExpectedError: "relation must be defined on both schemas. Type: Dog",
+				ExpectedError: "relation must be defined on both schemas. Field: dogs, Type: Dog",
 			},
 		},
 	}
@@ -155,7 +155,7 @@ func TestSchemaRelationErrorsGivenOneSidedRelationField(t *testing.T) {
 						dog: Dog
 					}
 				`,
-				ExpectedError: "relation must be defined on both schemas. Type: Dog",
+				ExpectedError: "relation must be defined on both schemas. Field: dog, Type: Dog",
 			},
 		},
 	}
@@ -173,7 +173,7 @@ func TestSchemaRelation_GivenSelfReferemceRelationField_ReturnError(t *testing.T
 						bestMate: Dog
 					}
 				`,
-				ExpectedError: "relation must be defined on both schemas. Type: Dog",
+				ExpectedError: "relation must be defined on both schemas. Field: bestMate, Type: Dog",
 			},
 		},
 	}
