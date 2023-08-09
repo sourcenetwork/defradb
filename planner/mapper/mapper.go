@@ -93,6 +93,11 @@ func toSelect(
 		return nil, err
 	}
 
+	fields, err = resolveSecondaryRelationIDs(descriptionsRepo, desc, mapping, fields)
+	if err != nil {
+		return nil, err
+	}
+
 	// Resolve groupBy mappings i.e. alias remapping and handle missed inner group.
 	if selectRequest.GroupBy.HasValue() {
 		groupByFields := selectRequest.GroupBy.Value().Fields
@@ -939,6 +944,91 @@ func constructDummyJoin(
 		CollectionName:  childCollectionName,
 		DocumentMapping: childMapping,
 	}, nil
+}
+
+// resolveSecondaryRelationIDs contructs the required stuff needed to resolve secondary relation ids.
+//
+// They are handled by joining (if not already done so) the related object and copying its key into the
+// secondary relation id field.
+//
+// They copying itself is handled within [typeJoinOne].
+func resolveSecondaryRelationIDs(
+	descriptionsRepo *DescriptionsRepo,
+	desc *client.CollectionDescription,
+	mapping *core.DocumentMapping,
+	requestables []Requestable,
+) ([]Requestable, error) {
+	fields := requestables
+
+	for _, requestable := range requestables {
+		existingField, isField := requestable.(*Field)
+		if !isField {
+			continue
+		}
+
+		fieldDesc, descFound := desc.Schema.GetField(existingField.Name)
+		if !descFound {
+			continue
+		}
+
+		if !fieldDesc.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) {
+			continue
+		}
+
+		objectFieldDesc, descFound := desc.Schema.GetField(
+			strings.TrimSuffix(existingField.Name, request.RelatedObjectID),
+		)
+		if !descFound {
+			continue
+		}
+
+		if objectFieldDesc.RelationName == "" {
+			continue
+		}
+
+		var siblingFound bool
+		for _, siblingRequestable := range requestables {
+			siblingSelect, isSelect := siblingRequestable.(*Select)
+			if !isSelect {
+				continue
+			}
+
+			siblingFieldDesc, descFound := desc.Schema.GetField(siblingSelect.Field.Name)
+			if !descFound {
+				continue
+			}
+
+			if siblingFieldDesc.RelationName != objectFieldDesc.RelationName {
+				continue
+			}
+
+			if siblingFieldDesc.Kind != client.FieldKind_FOREIGN_OBJECT {
+				continue
+			}
+
+			siblingFound = true
+			break
+		}
+
+		if !siblingFound {
+			objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
+
+			// We only require the dockey of the related object, so an empty join is all we need.
+			dummyJoin, err := constructDummyJoin(
+				descriptionsRepo,
+				desc.Name,
+				mapping,
+				objectFieldName,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			fields = append(fields, dummyJoin)
+		}
+	}
+
+	return fields, nil
 }
 
 // ToCommitSelect converts the given [request.CommitSelect] into a [CommitSelect].

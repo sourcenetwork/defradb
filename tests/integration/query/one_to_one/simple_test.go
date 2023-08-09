@@ -374,9 +374,8 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "Painted House",
-						// This is undesirable and needs to change within this PR
-						"author_id": nil,
+						"name":      "Painted House",
+						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
 					},
 				},
 			},

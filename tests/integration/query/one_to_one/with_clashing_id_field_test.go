@@ -16,6 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+// This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
 func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation secondary direction, id field with name clash on secondary side",
@@ -62,7 +63,7 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name":      "Painted House",
-						"author_id": uint64(123456),
+						"author_id": "bae-9d67a886-64e3-520b-8cd5-1ca7b098fabe",
 						"author": map[string]any{
 							"name": "John Grisham",
 						},

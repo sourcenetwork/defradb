@@ -97,9 +97,152 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents unwanted behaviour, see:
-// https://github.com/sourcenetwork/defradb/issues/1654
-func TestQueryOneToOneWithGroupRelatedIDFromSecondary(t *testing.T) {
+func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation query with group by related id (secondary side)",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6
+				Doc: `{
+					"name": "Go Guide for Rust developers"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-6b624301-3d0a-5336-bd2c-ca00bca3de85
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c
+				Doc: `{
+					"name": "Andrew Lone",
+					"published_id": "bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(groupBy: [author_id]) {
+						author_id
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
+					},
+					{
+						"author_id": "bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation query with group by related id (secondary side)",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6
+				Doc: `{
+					"name": "Go Guide for Rust developers"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-6b624301-3d0a-5336-bd2c-ca00bca3de85
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c
+				Doc: `{
+					"name": "Andrew Lone",
+					"published_id": "bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(groupBy: [author_id]) {
+						author_id
+						author {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+					},
+					{
+						"author_id": "bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c",
+						"author": map[string]any{
+							"name": "Andrew Lone",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation query with group by related id (secondary side)",
 		Actions: []any{
@@ -157,11 +300,106 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondary(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"author_id": nil,
+						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
 						"_group": []map[string]any{
 							{
 								"name": "Painted House",
 							},
+						},
+					},
+					{
+						"author_id": "bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c",
+						"_group": []map[string]any{
+							{
+								"name": "Go Guide for Rust developers",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation query with group by related id (secondary side)",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-3d236f89-6a31-5add-a36a-27971a2eac76
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6
+				Doc: `{
+					"name": "Go Guide for Rust developers"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-6b624301-3d0a-5336-bd2c-ca00bca3de85
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c
+				Doc: `{
+					"name": "Andrew Lone",
+					"published_id": "bae-d6627fea-8bf7-511c-bcf9-bac4212bddd6"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(groupBy: [author_id]) {
+						author_id
+						author {
+							name
+						}
+						_group {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"author_id": "bae-6b624301-3d0a-5336-bd2c-ca00bca3de85",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+						"_group": []map[string]any{
+							{
+								"name": "Painted House",
+							},
+						},
+					},
+					{
+						"author_id": "bae-92fa9dcb-c1ee-5b84-b2f6-e9437c7f261c",
+						"author": map[string]any{
+							"name": "Andrew Lone",
+						},
+						"_group": []map[string]any{
 							{
 								"name": "Go Guide for Rust developers",
 							},

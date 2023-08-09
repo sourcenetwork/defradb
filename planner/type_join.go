@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
@@ -255,7 +257,8 @@ type typeJoinOne struct {
 	subTypeName      string
 	subTypeFieldName string
 
-	primary bool
+	primary             bool
+	secondaryFieldIndex immutable.Option[int]
 
 	spans     core.Spans
 	subSelect *mapper.Select
@@ -305,15 +308,24 @@ func (p *Planner) makeTypeJoinOne(
 		return nil, client.NewErrFieldNotExist(subTypeFieldDesc.RelationName)
 	}
 
+	var secondaryFieldIndex immutable.Option[int]
+	if !isPrimary {
+		idFieldName := subTypeFieldDesc.Name + request.RelatedObjectID
+		secondaryFieldIndex = immutable.Some(
+			parent.documentMapping.FirstIndexOfName(idFieldName),
+		)
+	}
+
 	return &typeJoinOne{
-		p:                p,
-		root:             source,
-		subSelect:        subType,
-		subTypeName:      subType.Name,
-		subTypeFieldName: subTypeField.Name,
-		subType:          selectPlan,
-		primary:          isPrimary,
-		docMapper:        docMapper{parent.documentMapping},
+		p:                   p,
+		root:                source,
+		subSelect:           subType,
+		subTypeName:         subType.Name,
+		subTypeFieldName:    subTypeField.Name,
+		subType:             selectPlan,
+		primary:             isPrimary,
+		secondaryFieldIndex: secondaryFieldIndex,
+		docMapper:           docMapper{parent.documentMapping},
 	}, nil
 }
 
@@ -387,6 +399,11 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) (core.Doc, error) {
 
 	subdoc := n.subType.Value()
 	doc.Fields[n.subSelect.Index] = subdoc
+
+	if n.secondaryFieldIndex.HasValue() {
+		doc.Fields[n.secondaryFieldIndex.Value()] = subdoc.GetKey()
+	}
+
 	return doc, nil
 }
 
