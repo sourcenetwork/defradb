@@ -308,16 +308,20 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 
 func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
 	var sourceNode planNode
-	var hasScanNode bool
-	// Find the first scan node in the topNodeSelect, we assume that it will be for the correct collection.
-	// This may be a commit node.
-	sourceNode, hasScanNode = walkAndFindPlanType[*scanNode](topNodeSelect.planNode)
-	if !hasScanNode {
-		commitNode, hasCommitNode := walkAndFindPlanType[*dagScanNode](topNodeSelect.planNode)
-		if !hasCommitNode {
-			return ErrFailedToFindGroupSource
+	var hasJoinNode bool
+	// Find the first join, scan, or commit node in the topNodeSelect,
+	// we assume that it will be for the correct collection.
+	sourceNode, hasJoinNode = walkAndFindPlanType[*typeIndexJoin](topNodeSelect.planNode)
+	if !hasJoinNode {
+		var hasScanNode bool
+		sourceNode, hasScanNode = walkAndFindPlanType[*scanNode](topNodeSelect.planNode)
+		if !hasScanNode {
+			commitNode, hasCommitNode := walkAndFindPlanType[*dagScanNode](topNodeSelect.planNode)
+			if !hasCommitNode {
+				return ErrFailedToFindGroupSource
+			}
+			sourceNode = commitNode
 		}
-		sourceNode = commitNode
 	}
 
 	// Check for any existing pipe nodes in the topNodeSelect, we should use it if there is one
