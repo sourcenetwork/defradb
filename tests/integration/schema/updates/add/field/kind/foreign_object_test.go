@@ -462,6 +462,38 @@ func TestSchemaUpdatesAddFieldKindForeignObject_RelatedRelationTypeMismatch(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestSchemaUpdatesAddFieldKindForeignObject_MissingSecondaryID(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind foreign object (16), valid, functional",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foobar", "Kind": 16, "RelationType": 5, "Schema": "Users", "RelationName": "foo"
+						}}
+					]
+				`,
+				ExpectedError: "missing id field for relation object field. Field: foobar, ExpectedIDFieldName: foobar_id",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
 
@@ -486,6 +518,9 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 						}},
 						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
 							"Name": "foobar", "Kind": 16, "RelationType": 5, "Schema": "Users", "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
 						}}
 					]
 				`,

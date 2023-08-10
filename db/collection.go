@@ -437,7 +437,9 @@ func validateUpdateCollectionFields(
 				if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 					return false, NewErrPrimarySideOnMany(proposedField.Name)
 				}
+			}
 
+			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
 				idFieldName := proposedField.Name + "_id"
 				idField, idFieldFound := proposedDesc.Schema.GetField(idFieldName)
 				if !idFieldFound {
