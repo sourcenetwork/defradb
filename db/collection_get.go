@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/fetcher"
 )
 
 func (c *collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
@@ -70,13 +71,22 @@ func (c *collection) get(
 	}
 
 	// return first matched decoded doc
-	doc, _, err := df.FetchNextDecoded(ctx)
+	encodedDoc, _, err := df.FetchNext(ctx)
 	if err != nil {
 		_ = df.Close()
 		return nil, err
 	}
 
 	err = df.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	if encodedDoc == nil {
+		return nil, nil
+	}
+
+	doc, err := fetcher.Decode(encodedDoc)
 	if err != nil {
 		return nil, err
 	}

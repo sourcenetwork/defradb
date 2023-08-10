@@ -530,7 +530,7 @@ func TestNonUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 	key2 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc2).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS())
-	require.NoError(t, err)
+	require.NoError(t, err, key1.ToString())
 	assert.Len(t, data, 0)
 	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS())
 	require.NoError(t, err)
@@ -570,8 +570,8 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			Name: "Fails to fetch next decoded",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
-				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, fetcher.ExecInfo{}, testError)
+				f.EXPECT().FetchNext(mock.Anything).Unset()
+				f.EXPECT().FetchNext(mock.Anything).Return(nil, fetcher.ExecInfo{}, testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -581,8 +581,8 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 			Name: "Fails to close",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
-				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, fetcher.ExecInfo{}, nil)
+				f.EXPECT().FetchNext(mock.Anything).Unset()
+				f.EXPECT().FetchNext(mock.Anything).Return(nil, fetcher.ExecInfo{}, nil)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(testError)
 				return f
@@ -854,8 +854,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to fetch next decoded",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
-				f.EXPECT().FetchNextDecoded(mock.Anything).Return(nil, fetcher.ExecInfo{}, testError)
+				f.EXPECT().FetchNext(mock.Anything).Unset()
+				f.EXPECT().FetchNext(mock.Anything).Return(nil, fetcher.ExecInfo{}, testError)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(nil)
 				return f
@@ -865,10 +865,10 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			Name: "Fails to close",
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
-				f.EXPECT().FetchNextDecoded(mock.Anything).Unset()
+				f.EXPECT().FetchNext(mock.Anything).Unset()
 				// By default the the stubbed fetcher returns an empty, invalid document
 				// here we need to make sure it reaches the Close call by overriding that default.
-				f.EXPECT().FetchNextDecoded(mock.Anything).Maybe().Return(nil, fetcher.ExecInfo{}, nil)
+				f.EXPECT().FetchNext(mock.Anything).Maybe().Return(nil, fetcher.ExecInfo{}, nil)
 				f.EXPECT().Close().Unset()
 				f.EXPECT().Close().Return(testError)
 				return f
@@ -994,14 +994,15 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		err := doc.Set(usersNameFieldName, "Islam")
 		require.NoError(t, err)
 
-		// This is only required as we are using it as a return value
-		// in production this value will have been set by the fetcher
-		doc.SchemaVersionID = f.users.Schema().VersionID
+		encodedDoc := shimEncodedDocument{
+			key:             []byte(doc.Key().String()),
+			schemaVersionID: f.users.Schema().VersionID,
+		}
 
 		f.users.fetcherFactory = func() fetcher.Fetcher {
 			df := fetcherMocks.NewStubbedFetcher(t)
-			df.EXPECT().FetchNextDecoded(mock.Anything).Unset()
-			df.EXPECT().FetchNextDecoded(mock.Anything).Return(doc, fetcher.ExecInfo{}, nil)
+			df.EXPECT().FetchNext(mock.Anything).Unset()
+			df.EXPECT().FetchNext(mock.Anything).Return(&encodedDoc, fetcher.ExecInfo{}, nil)
 			return df
 		}
 
@@ -1046,4 +1047,36 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	require.NoError(t, err)
 	_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
 	require.Error(t, err)
+}
+
+type shimEncodedDocument struct {
+	key             []byte
+	schemaVersionID string
+	status          client.DocumentStatus
+	properties      map[client.FieldDescription]any
+}
+
+var _ fetcher.EncodedDocument = (*shimEncodedDocument)(nil)
+
+func (encdoc *shimEncodedDocument) Key() []byte {
+	return encdoc.key
+}
+
+func (encdoc *shimEncodedDocument) SchemaVersionID() string {
+	return encdoc.schemaVersionID
+}
+
+func (encdoc *shimEncodedDocument) Status() client.DocumentStatus {
+	return encdoc.status
+}
+
+func (encdoc *shimEncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error) {
+	return encdoc.properties, nil
+}
+
+func (encdoc *shimEncodedDocument) Reset() {
+	encdoc.key = nil
+	encdoc.schemaVersionID = ""
+	encdoc.status = 0
+	encdoc.properties = map[client.FieldDescription]any{}
 }

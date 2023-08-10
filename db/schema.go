@@ -132,7 +132,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	}
 
 	for _, desc := range newDescriptions {
-		if _, err := db.updateCollection(ctx, txn, desc); err != nil {
+		if _, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc); err != nil {
 			return err
 		}
 	}

@@ -27,7 +27,7 @@ func TestNewTxnFrom(t *testing.T) {
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	require.NoError(t, err)
 
-	txn, err := NewTxnFrom(ctx, rootstore, false)
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
 
 	err = txn.Commit(ctx)
@@ -43,7 +43,7 @@ func TestNewTxnFromWithStoreClosed(t *testing.T) {
 	err = rootstore.Close()
 	require.NoError(t, err)
 
-	_, err = NewTxnFrom(ctx, rootstore, false)
+	_, err = NewTxnFrom(ctx, rootstore, 0, false)
 	require.ErrorIs(t, err, badgerds.ErrClosed)
 }
 
@@ -53,7 +53,7 @@ func TestOnSuccess(t *testing.T) {
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	require.NoError(t, err)
 
-	txn, err := NewTxnFrom(ctx, rootstore, false)
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
 
 	txn.OnSuccess(nil)
@@ -74,7 +74,7 @@ func TestOnError(t *testing.T) {
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	require.NoError(t, err)
 
-	txn, err := NewTxnFrom(ctx, rootstore, false)
+	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
 
 	txn.OnError(nil)

@@ -26,7 +26,6 @@ const (
 	errIndexUnknownArgument       string = "index with unknown argument"
 	errIndexInvalidArgument       string = "index with invalid argument"
 	errIndexInvalidName           string = "index with invalid name"
-	errRelationOneSided           string = "relation must be defined on both schemas"
 )
 
 var (
@@ -49,7 +48,6 @@ var (
 	ErrIndexMissingFields  = errors.New(errIndexMissingFields)
 	ErrIndexWithUnknownArg = errors.New(errIndexUnknownArgument)
 	ErrIndexWithInvalidArg = errors.New(errIndexInvalidArgument)
-	ErrRelationOneSided    = errors.New(errRelationOneSided)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -79,10 +77,6 @@ func NewErrRelationMissingField(objectName, fieldName string) error {
 		errors.NewKV("Object", objectName),
 		errors.NewKV("Field", fieldName),
 	)
-}
-
-func NewErrRelationOneSided(typeName string) error {
-	return errors.New(errRelationOneSided, errors.NewKV("Type", typeName))
 }
 
 func NewErrAggregateTargetNotFound(objectName, target string) error {

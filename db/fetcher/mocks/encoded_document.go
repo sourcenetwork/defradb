@@ -4,7 +4,6 @@ package mocks
 
 import (
 	client "github.com/sourcenetwork/defradb/client"
-	core "github.com/sourcenetwork/defradb/core"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -20,110 +19,6 @@ type EncodedDocument_Expecter struct {
 
 func (_m *EncodedDocument) EXPECT() *EncodedDocument_Expecter {
 	return &EncodedDocument_Expecter{mock: &_m.Mock}
-}
-
-// Decode provides a mock function with given fields:
-func (_m *EncodedDocument) Decode() (*client.Document, error) {
-	ret := _m.Called()
-
-	var r0 *client.Document
-	var r1 error
-	if rf, ok := ret.Get(0).(func() (*client.Document, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() *client.Document); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*client.Document)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// EncodedDocument_Decode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Decode'
-type EncodedDocument_Decode_Call struct {
-	*mock.Call
-}
-
-// Decode is a helper method to define mock.On call
-func (_e *EncodedDocument_Expecter) Decode() *EncodedDocument_Decode_Call {
-	return &EncodedDocument_Decode_Call{Call: _e.mock.On("Decode")}
-}
-
-func (_c *EncodedDocument_Decode_Call) Run(run func()) *EncodedDocument_Decode_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *EncodedDocument_Decode_Call) Return(_a0 *client.Document, _a1 error) *EncodedDocument_Decode_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *EncodedDocument_Decode_Call) RunAndReturn(run func() (*client.Document, error)) *EncodedDocument_Decode_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DecodeToDoc provides a mock function with given fields:
-func (_m *EncodedDocument) DecodeToDoc() (core.Doc, error) {
-	ret := _m.Called()
-
-	var r0 core.Doc
-	var r1 error
-	if rf, ok := ret.Get(0).(func() (core.Doc, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() core.Doc); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(core.Doc)
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// EncodedDocument_DecodeToDoc_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DecodeToDoc'
-type EncodedDocument_DecodeToDoc_Call struct {
-	*mock.Call
-}
-
-// DecodeToDoc is a helper method to define mock.On call
-func (_e *EncodedDocument_Expecter) DecodeToDoc() *EncodedDocument_DecodeToDoc_Call {
-	return &EncodedDocument_DecodeToDoc_Call{Call: _e.mock.On("DecodeToDoc")}
-}
-
-func (_c *EncodedDocument_DecodeToDoc_Call) Run(run func()) *EncodedDocument_DecodeToDoc_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *EncodedDocument_DecodeToDoc_Call) Return(_a0 core.Doc, _a1 error) *EncodedDocument_DecodeToDoc_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *EncodedDocument_DecodeToDoc_Call) RunAndReturn(run func() (core.Doc, error)) *EncodedDocument_DecodeToDoc_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // Key provides a mock function with given fields:
@@ -165,6 +60,60 @@ func (_c *EncodedDocument_Key_Call) Return(_a0 []byte) *EncodedDocument_Key_Call
 }
 
 func (_c *EncodedDocument_Key_Call) RunAndReturn(run func() []byte) *EncodedDocument_Key_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Properties provides a mock function with given fields: onlyFilterProps
+func (_m *EncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDescription]interface{}, error) {
+	ret := _m.Called(onlyFilterProps)
+
+	var r0 map[client.FieldDescription]interface{}
+	var r1 error
+	if rf, ok := ret.Get(0).(func(bool) (map[client.FieldDescription]interface{}, error)); ok {
+		return rf(onlyFilterProps)
+	}
+	if rf, ok := ret.Get(0).(func(bool) map[client.FieldDescription]interface{}); ok {
+		r0 = rf(onlyFilterProps)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[client.FieldDescription]interface{})
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(bool) error); ok {
+		r1 = rf(onlyFilterProps)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// EncodedDocument_Properties_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Properties'
+type EncodedDocument_Properties_Call struct {
+	*mock.Call
+}
+
+// Properties is a helper method to define mock.On call
+//   - onlyFilterProps bool
+func (_e *EncodedDocument_Expecter) Properties(onlyFilterProps interface{}) *EncodedDocument_Properties_Call {
+	return &EncodedDocument_Properties_Call{Call: _e.mock.On("Properties", onlyFilterProps)}
+}
+
+func (_c *EncodedDocument_Properties_Call) Run(run func(onlyFilterProps bool)) *EncodedDocument_Properties_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bool))
+	})
+	return _c
+}
+
+func (_c *EncodedDocument_Properties_Call) Return(_a0 map[client.FieldDescription]interface{}, _a1 error) *EncodedDocument_Properties_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *EncodedDocument_Properties_Call) RunAndReturn(run func(bool) (map[client.FieldDescription]interface{}, error)) *EncodedDocument_Properties_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -238,6 +187,47 @@ func (_c *EncodedDocument_SchemaVersionID_Call) Return(_a0 string) *EncodedDocum
 }
 
 func (_c *EncodedDocument_SchemaVersionID_Call) RunAndReturn(run func() string) *EncodedDocument_SchemaVersionID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Status provides a mock function with given fields:
+func (_m *EncodedDocument) Status() client.DocumentStatus {
+	ret := _m.Called()
+
+	var r0 client.DocumentStatus
+	if rf, ok := ret.Get(0).(func() client.DocumentStatus); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(client.DocumentStatus)
+	}
+
+	return r0
+}
+
+// EncodedDocument_Status_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Status'
+type EncodedDocument_Status_Call struct {
+	*mock.Call
+}
+
+// Status is a helper method to define mock.On call
+func (_e *EncodedDocument_Expecter) Status() *EncodedDocument_Status_Call {
+	return &EncodedDocument_Status_Call{Call: _e.mock.On("Status")}
+}
+
+func (_c *EncodedDocument_Status_Call) Run(run func()) *EncodedDocument_Status_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *EncodedDocument_Status_Call) Return(_a0 client.DocumentStatus) *EncodedDocument_Status_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *EncodedDocument_Status_Call) RunAndReturn(run func() client.DocumentStatus) *EncodedDocument_Status_Call {
 	_c.Call.Return(run)
 	return _c
 }
