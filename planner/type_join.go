@@ -293,7 +293,7 @@ func (p *Planner) makeTypeJoinOne(
 
 	// determine relation direction (primary or secondary?)
 	// check if the field we're querying is the primary side of the relation
-	isPrimary := subTypeFieldDesc.RelationType&client.Relation_Type_Primary > 0
+	isPrimary := subTypeFieldDesc.RelationType.IsSet(client.Relation_Type_Primary)
 
 	subTypeCollectionDesc, err := p.getCollectionDesc(subType.CollectionName)
 	if err != nil {
