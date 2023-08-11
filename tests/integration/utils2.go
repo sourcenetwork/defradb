@@ -13,6 +13,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"net/http/httptest"
 	"os"
 	"path"
 	"reflect"
@@ -31,11 +32,14 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 )
 
 const (
+	clientGoEnvName            = "DEFRA_CLIENT_GO"
+	clientHttpEnvName          = "DEFRA_CLIENT_HTTP"
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
@@ -56,11 +60,20 @@ const (
 	badgerFileType DatabaseType = "badger-file-system"
 )
 
+type ClientType string
+
+const (
+	goClientType   ClientType = "go"
+	httpClientType ClientType = "http"
+)
+
 var (
 	log            = logging.MustNewLogger("tests.integration")
 	badgerInMemory bool
 	badgerFile     bool
 	inMemoryStore  bool
+	httpClient     bool
+	goClient       bool
 )
 
 const subscriptionTimeout = 1 * time.Second
@@ -101,6 +114,8 @@ var previousTestCaseTestName string
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	//  that don't have the flag defined
+	httpClientValue, _ := os.LookupEnv(clientHttpEnvName)
+	goClientValue, _ := os.LookupEnv(clientGoEnvName)
 	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
 	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
 	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
@@ -111,6 +126,8 @@ func init() {
 	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
 	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
 
+	httpClient = getBool(httpClientValue)
+	goClient = getBool(goClientValue)
 	badgerFile = getBool(badgerFileValue)
 	badgerInMemory = getBool(badgerInMemoryValue)
 	inMemoryStore = getBool(inMemoryStoreValue)
@@ -131,6 +148,11 @@ func init() {
 		// Testing against the file system is off by default
 		badgerFile = false
 		inMemoryStore = true
+	}
+	// default is to run against all
+	if !goClient && !httpClient && !DetectDbChanges {
+		goClient = true
+		httpClient = true
 	}
 
 	if DetectDbChanges {
@@ -217,6 +239,20 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB,
 	return db, nil
 }
 
+func GetClientTypes() []ClientType {
+	clients := []ClientType{}
+
+	if httpClient {
+		clients = append(clients, httpClientType)
+	}
+
+	if goClient {
+		clients = append(clients, goClientType)
+	}
+
+	return clients
+}
+
 func GetDatabaseTypes() []DatabaseType {
 	databases := []DatabaseType{}
 
@@ -235,31 +271,30 @@ func GetDatabaseTypes() []DatabaseType {
 	return databases
 }
 
-func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB, string, error) {
-	switch dbt {
+func GetDatabase(s *state) (cdb client.DB, path string, err error) {
+	switch s.dbt {
 	case badgerIMType:
-		db, err := NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
-		if err != nil {
-			return nil, "", err
-		}
-		return db, "", nil
+		cdb, err = NewBadgerMemoryDB(s.ctx, db.WithUpdateEvents())
 
 	case badgerFileType:
-		db, path, err := NewBadgerFileDB(ctx, t)
-		if err != nil {
-			return nil, "", err
-		}
-		return db, path, nil
+		cdb, path, err = NewBadgerFileDB(s.ctx, s.t)
 
 	case defraIMType:
-		db, err := NewInMemoryDB(ctx)
+		cdb, err = NewInMemoryDB(s.ctx)
+	}
+
+	switch s.clientType {
+	case httpClientType:
+		s.httpServer = httptest.NewServer(http.NewServer(cdb))
+		// TODO close the server
+		store, err := http.NewClient(s.httpServer.URL)
 		if err != nil {
 			return nil, "", err
 		}
-		return db, "", nil
+		cdb = NewClient(cdb, store)
 	}
 
-	return nil, "", nil
+	return
 }
 
 // ExecuteTestCase executes the given TestCase against the configured database
@@ -278,14 +313,18 @@ func ExecuteTestCase(
 	}
 
 	ctx := context.Background()
+	cts := GetClientTypes()
 	dbts := GetDatabaseTypes()
 	// Assert that this is not empty to protect against accidental mis-configurations,
 	// otherwise an empty set would silently pass all the tests.
 	require.NotEmpty(t, dbts)
 
-	for _, dbt := range dbts {
-		executeTestCase(ctx, t, collectionNames, testCase, dbt)
+	for _, ct := range cts {
+		for _, dbt := range dbts {
+			executeTestCase(ctx, t, collectionNames, testCase, dbt, ct)
+		}
 	}
+
 }
 
 func executeTestCase(
@@ -294,13 +333,14 @@ func executeTestCase(
 	collectionNames []string,
 	testCase TestCase,
 	dbt DatabaseType,
+	clientType ClientType,
 ) {
 	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
 
 	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
 
-	s := newState(ctx, t, testCase, dbt, collectionNames)
+	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
 	setStartingNodes(s)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -621,7 +661,7 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		db, path, err := GetDatabase(s.ctx, s.t, s.dbt)
+		db, path, err := GetDatabase(s)
 		require.Nil(s.t, err)
 
 		s.nodes = append(s.nodes, &net.Node{
@@ -644,7 +684,7 @@ func restartNodes(
 	for i := len(s.nodes) - 1; i >= 0; i-- {
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[i]
-		db, _, err := GetDatabase(s.ctx, s.t, s.dbt)
+		db, _, err := GetDatabase(s)
 		require.Nil(s.t, err)
 		databaseDir = originalPath
 
@@ -762,7 +802,7 @@ func configureNode(
 	// an in memory store.
 	cfg.Datastore.Badger.Path = s.t.TempDir()
 
-	db, path, err := GetDatabase(s.ctx, s.t, s.dbt) //disable change dector, or allow it?
+	db, path, err := GetDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	var n *net.Node

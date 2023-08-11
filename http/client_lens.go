@@ -24,12 +24,13 @@ import (
 
 var _ client.LensRegistry = (*LensClient)(nil)
 
+// LensClient implements the client.LensRegistry interface over HTTP.
 type LensClient struct {
 	client  *http.Client
 	baseURL *url.URL
 }
 
-func NewLensClient(s *StoreClient) *LensClient {
+func NewLensClient(s *Client) *LensClient {
 	return &LensClient{
 		client:  s.client,
 		baseURL: s.baseURL.JoinPath("lens"),

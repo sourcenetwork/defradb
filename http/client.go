@@ -21,25 +21,26 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-var _ client.Store = (*StoreClient)(nil)
+var _ client.Store = (*Client)(nil)
 
-type StoreClient struct {
+// Client implements the client.Store interface over HTTP.
+type Client struct {
 	client  *http.Client
 	baseURL *url.URL
 }
 
-func NewStoreClient(rawURL string) (*StoreClient, error) {
+func NewClient(rawURL string) (*Client, error) {
 	baseURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err
 	}
-	return &StoreClient{
+	return &Client{
 		client:  http.DefaultClient,
-		baseURL: baseURL,
+		baseURL: baseURL.JoinPath("/api/v0"),
 	}, nil
 }
 
-func (c *StoreClient) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	methodURL := c.baseURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(rep)
@@ -59,7 +60,7 @@ func (c *StoreClient) SetReplicator(ctx context.Context, rep client.Replicator) 
 	return parseResponse(res)
 }
 
-func (c *StoreClient) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (c *Client) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
 	methodURL := c.baseURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(rep)
@@ -79,7 +80,7 @@ func (c *StoreClient) DeleteReplicator(ctx context.Context, rep client.Replicato
 	return parseResponse(res)
 }
 
-func (c *StoreClient) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	methodURL := c.baseURL.JoinPath("p2p", "replicators")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -99,7 +100,7 @@ func (c *StoreClient) GetAllReplicators(ctx context.Context) ([]client.Replicato
 	return reps, nil
 }
 
-func (c *StoreClient) AddP2PCollection(ctx context.Context, collectionID string) error {
+func (c *Client) AddP2PCollection(ctx context.Context, collectionID string) error {
 	methodURL := c.baseURL.JoinPath("p2p", "collections", collectionID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
@@ -115,7 +116,7 @@ func (c *StoreClient) AddP2PCollection(ctx context.Context, collectionID string)
 	return parseResponse(res)
 }
 
-func (c *StoreClient) RemoveP2PCollection(ctx context.Context, collectionID string) error {
+func (c *Client) RemoveP2PCollection(ctx context.Context, collectionID string) error {
 	methodURL := c.baseURL.JoinPath("p2p", "collections", collectionID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
@@ -131,7 +132,7 @@ func (c *StoreClient) RemoveP2PCollection(ctx context.Context, collectionID stri
 	return parseResponse(res)
 }
 
-func (c *StoreClient) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	methodURL := c.baseURL.JoinPath("p2p", "collections")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -151,7 +152,7 @@ func (c *StoreClient) GetAllP2PCollections(ctx context.Context) ([]string, error
 	return cols, nil
 }
 
-func (c *StoreClient) BasicImport(ctx context.Context, filepath string) error {
+func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	methodURL := c.baseURL.JoinPath("backup", "import")
 
 	body, err := json.Marshal(&client.BackupConfig{Filepath: filepath})
@@ -171,7 +172,7 @@ func (c *StoreClient) BasicImport(ctx context.Context, filepath string) error {
 	return parseResponse(res)
 }
 
-func (c *StoreClient) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) error {
 	methodURL := c.baseURL.JoinPath("backup", "export")
 
 	body, err := json.Marshal(config)
@@ -191,7 +192,7 @@ func (c *StoreClient) BasicExport(ctx context.Context, config *client.BackupConf
 	return parseResponse(res)
 }
 
-func (c *StoreClient) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
+func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
 	methodURL := c.baseURL.JoinPath("schema")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schema))
@@ -211,7 +212,7 @@ func (c *StoreClient) AddSchema(ctx context.Context, schema string) ([]client.Co
 	return cols, nil
 }
 
-func (c *StoreClient) PatchSchema(ctx context.Context, patch string) error {
+func (c *Client) PatchSchema(ctx context.Context, patch string) error {
 	methodURL := c.baseURL.JoinPath("schema")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), strings.NewReader(patch))
@@ -227,15 +228,15 @@ func (c *StoreClient) PatchSchema(ctx context.Context, patch string) error {
 	return parseResponse(res)
 }
 
-func (c *StoreClient) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
 	return c.LensRegistry().SetMigration(ctx, config)
 }
 
-func (c *StoreClient) LensRegistry() client.LensRegistry {
+func (c *Client) LensRegistry() client.LensRegistry {
 	return NewLensClient(c)
 }
 
-func (c *StoreClient) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
+func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
 	methodURL := c.baseURL.JoinPath("collections")
 	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
 
@@ -256,7 +257,7 @@ func (c *StoreClient) GetCollectionByName(ctx context.Context, name client.Colle
 	return NewCollectionClient(c, description), nil
 }
 
-func (c *StoreClient) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
+func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
 	methodURL := c.baseURL.JoinPath("collections")
 	methodURL.RawQuery = url.Values{"schema_id": []string{schemaId}}.Encode()
 
@@ -277,7 +278,7 @@ func (c *StoreClient) GetCollectionBySchemaID(ctx context.Context, schemaId stri
 	return NewCollectionClient(c, description), nil
 }
 
-func (c *StoreClient) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
+func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
 	methodURL := c.baseURL.JoinPath("collections")
 	methodURL.RawQuery = url.Values{"version_id": []string{versionId}}.Encode()
 
@@ -298,10 +299,10 @@ func (c *StoreClient) GetCollectionByVersionID(ctx context.Context, versionId st
 	return NewCollectionClient(c, description), nil
 }
 
-func (c *StoreClient) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
+func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	methodURL := c.baseURL.JoinPath("collections")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +323,7 @@ func (c *StoreClient) GetAllCollections(ctx context.Context) ([]client.Collectio
 	return collections, nil
 }
 
-func (c *StoreClient) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	methodURL := c.baseURL.JoinPath("indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -342,6 +343,6 @@ func (c *StoreClient) GetAllIndexes(ctx context.Context) (map[client.CollectionN
 	return indexes, nil
 }
 
-func (c *StoreClient) ExecRequest(context.Context, string) *client.RequestResult {
+func (c *Client) ExecRequest(context.Context, string) *client.RequestResult {
 	return nil
 }

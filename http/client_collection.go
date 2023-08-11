@@ -21,13 +21,14 @@ import (
 
 var _ client.Collection = (*CollectionClient)(nil)
 
+// LensClient implements the client.Collection interface over HTTP.
 type CollectionClient struct {
 	client      *http.Client
 	baseURL     *url.URL
 	description client.CollectionDescription
 }
 
-func NewCollectionClient(s *StoreClient, description client.CollectionDescription) *CollectionClient {
+func NewCollectionClient(s *Client, description client.CollectionDescription) *CollectionClient {
 	return &CollectionClient{
 		client:      s.client,
 		baseURL:     s.baseURL,
