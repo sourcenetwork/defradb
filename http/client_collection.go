@@ -21,7 +21,7 @@ import (
 
 var _ client.Collection = (*CollectionClient)(nil)
 
-// LensClient implements the client.Collection interface over HTTP.
+// CollectionClient implements the client.Collection interface over HTTP.
 type CollectionClient struct {
 	client      *http.Client
 	baseURL     *url.URL
@@ -84,11 +84,19 @@ func (c *CollectionClient) UpdateWith(ctx context.Context, target any, updater s
 	return nil, nil
 }
 
-func (c *CollectionClient) UpdateWithFilter(ctx context.Context, filter any, updater string) (*client.UpdateResult, error) {
+func (c *CollectionClient) UpdateWithFilter(
+	ctx context.Context,
+	filter any,
+	updater string,
+) (*client.UpdateResult, error) {
 	return nil, nil
 }
 
-func (c *CollectionClient) UpdateWithKey(ctx context.Context, key client.DocKey, updater string) (*client.UpdateResult, error) {
+func (c *CollectionClient) UpdateWithKey(
+	ctx context.Context,
+	key client.DocKey,
+	updater string,
+) (*client.UpdateResult, error) {
 	return nil, nil
 }
 

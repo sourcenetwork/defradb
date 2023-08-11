@@ -55,7 +55,7 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	return parseResponse(res)
 }
@@ -75,7 +75,7 @@ func (c *Client) DeleteReplicator(ctx context.Context, rep client.Replicator) er
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	return parseResponse(res)
 }
@@ -91,7 +91,7 @@ func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, er
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	var reps []client.Replicator
 	if err := parseJsonResponse(res, &reps); err != nil {
@@ -111,7 +111,7 @@ func (c *Client) AddP2PCollection(ctx context.Context, collectionID string) erro
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	return parseResponse(res)
 }
@@ -127,7 +127,7 @@ func (c *Client) RemoveP2PCollection(ctx context.Context, collectionID string) e
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	return parseResponse(res)
 }
@@ -143,7 +143,7 @@ func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	var cols []string
 	if err := parseJsonResponse(res, &cols); err != nil {
@@ -167,7 +167,7 @@ func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	return parseResponse(res)
 }
@@ -187,7 +187,7 @@ func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) e
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	return parseResponse(res)
 }
@@ -203,7 +203,7 @@ func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.Collect
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	var cols []client.CollectionDescription
 	if err := parseJsonResponse(res, &cols); err != nil {
@@ -223,7 +223,7 @@ func (c *Client) PatchSchema(ctx context.Context, patch string) error {
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	return parseResponse(res)
 }
@@ -248,7 +248,7 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	var description client.CollectionDescription
 	if err := parseJsonResponse(res, &description); err != nil {
@@ -269,7 +269,7 @@ func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	var description client.CollectionDescription
 	if err := parseJsonResponse(res, &description); err != nil {
@@ -290,7 +290,7 @@ func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string)
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	var description client.CollectionDescription
 	if err := parseJsonResponse(res, &description); err != nil {
@@ -310,7 +310,7 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	var descriptions []client.CollectionDescription
 	if err := parseJsonResponse(res, &descriptions); err != nil {
@@ -334,7 +334,7 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	var indexes map[client.CollectionName][]client.IndexDescription
 	if err := parseJsonResponse(res, &indexes); err != nil {

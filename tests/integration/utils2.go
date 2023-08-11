@@ -324,7 +324,6 @@ func ExecuteTestCase(
 			executeTestCase(ctx, t, collectionNames, testCase, dbt, ct)
 		}
 	}
-
 }
 
 func executeTestCase(

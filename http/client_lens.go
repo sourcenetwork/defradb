@@ -17,9 +17,10 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/sourcenetwork/immutable/enumerable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/immutable/enumerable"
 )
 
 var _ client.LensRegistry = (*LensClient)(nil)
@@ -56,7 +57,7 @@ func (c *LensClient) SetMigration(ctx context.Context, config client.LensConfig)
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	return parseResponse(res)
 }
@@ -65,11 +66,19 @@ func (c *LensClient) ReloadLenses(context.Context) error {
 	return nil
 }
 
-func (c *LensClient) MigrateUp(context.Context, enumerable.Enumerable[map[string]any], string) (enumerable.Enumerable[map[string]any], error) {
+func (c *LensClient) MigrateUp(
+	context.Context,
+	enumerable.Enumerable[map[string]any],
+	string,
+) (enumerable.Enumerable[map[string]any], error) {
 	return nil, nil
 }
 
-func (c *LensClient) MigrateDown(context.Context, enumerable.Enumerable[map[string]any], string) (enumerable.Enumerable[map[string]any], error) {
+func (c *LensClient) MigrateDown(
+	context.Context,
+	enumerable.Enumerable[map[string]any],
+	string,
+) (enumerable.Enumerable[map[string]any], error) {
 	return nil, nil
 }
 
