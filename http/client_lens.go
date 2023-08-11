@@ -32,7 +32,7 @@ type LensClient struct {
 func NewLensClient(s *StoreClient) *LensClient {
 	return &LensClient{
 		client:  s.client,
-		baseURL: s.baseURL,
+		baseURL: s.baseURL.JoinPath("lens"),
 	}
 }
 
@@ -41,13 +41,13 @@ func (c *LensClient) WithTxn(datastore.Txn) client.LensRegistry {
 }
 
 func (c *LensClient) SetMigration(ctx context.Context, config client.LensConfig) error {
-	url := c.baseURL.JoinPath("lens", "migration").String()
+	methodURL := c.baseURL.JoinPath("migration")
 
 	body, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
