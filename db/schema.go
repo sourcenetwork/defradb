@@ -183,13 +183,13 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 				}
 
 				if kind, isString := field["Kind"].(string); isString {
-					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
-					if substituteFound {
-						field["Kind"] = substitute
-						newPatchValue = immutable.Some[any](field)
-					} else {
-						return nil, NewErrFieldKindNotFound(kind)
+					substitute, err := getSubstituteFieldKind(kind)
+					if err != nil {
+						return nil, err
 					}
+
+					field["Kind"] = substitute
+					newPatchValue = immutable.Some[any](field)
 				}
 			} else if isFieldKind(path) {
 				var kind any
@@ -199,12 +199,12 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 				}
 
 				if kind, isString := kind.(string); isString {
-					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
-					if substituteFound {
-						newPatchValue = immutable.Some[any](substitute)
-					} else {
-						return nil, NewErrFieldKindNotFound(kind)
+					substitute, err := getSubstituteFieldKind(kind)
+					if err != nil {
+						return nil, err
 					}
+
+					newPatchValue = immutable.Some[any](substitute)
 				}
 			}
 
@@ -221,6 +221,17 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 	}
 
 	return patch, nil
+}
+
+// getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
+// Field Kind value. It will return the value if one is found, else returns an [ErrFieldKindNotFound].
+func getSubstituteFieldKind(kind string) (client.FieldKind, error) {
+	substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
+	if substituteFound {
+		return substitute, nil
+	} else {
+		return 0, NewErrFieldKindNotFound(kind)
+	}
 }
 
 // isField returns true if the given path points to a FieldDescription.
