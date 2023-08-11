@@ -187,12 +187,19 @@ func substituteSchemaPatch(
 				}
 
 				if kind, isString := field["Kind"].(string); isString {
-					substitute, err := getSubstituteFieldKind(kind, collectionsByName)
+					substitute, collectionName, err := getSubstituteFieldKind(kind, collectionsByName)
 					if err != nil {
 						return nil, err
 					}
 
 					field["Kind"] = substitute
+					if collectionName != "" {
+						if field["Schema"] != nil && field["Schema"] != collectionName {
+							return nil, NewErrFieldKindDoesNotMatchFieldSchema(kind, field["Schema"].(string))
+						}
+						field["Schema"] = collectionName
+					}
+
 					newPatchValue = immutable.Some[any](field)
 				}
 			} else if isFieldKind(path) {
@@ -203,7 +210,7 @@ func substituteSchemaPatch(
 				}
 
 				if kind, isString := kind.(string); isString {
-					substitute, err := getSubstituteFieldKind(kind, collectionsByName)
+					substitute, _, err := getSubstituteFieldKind(kind, collectionsByName)
 					if err != nil {
 						return nil, err
 					}
@@ -229,13 +236,15 @@ func substituteSchemaPatch(
 
 // getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
 // Field Kind value. It will return the value if one is found, else returns an [ErrFieldKindNotFound].
+//
+// If the value represents a foreign relation the collection name will also be returned.
 func getSubstituteFieldKind(
 	kind string,
 	collectionsByName map[string]client.CollectionDescription,
-) (client.FieldKind, error) {
+) (client.FieldKind, string, error) {
 	substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
 	if substituteFound {
-		return substitute, nil
+		return substitute, "", nil
 	} else {
 		var collectionName string
 		var substitute client.FieldKind
@@ -248,10 +257,10 @@ func getSubstituteFieldKind(
 		}
 
 		if _, substituteFound := collectionsByName[collectionName]; substituteFound {
-			return substitute, nil
+			return substitute, collectionName, nil
 		}
 
-		return 0, NewErrFieldKindNotFound(kind)
+		return 0, "", NewErrFieldKindNotFound(kind)
 	}
 }
 
