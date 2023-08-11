@@ -99,13 +99,14 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	if err != nil {
 		return err
 	}
-	// Here we swap out any string representations of enums for their integer values
-	patch, err = substituteSchemaPatch(patch)
+
+	collectionsByName, err := db.getCollectionsByName(ctx, txn)
 	if err != nil {
 		return err
 	}
 
-	collectionsByName, err := db.getCollectionsByName(ctx, txn)
+	// Here we swap out any string representations of enums for their integer values
+	patch, err = substituteSchemaPatch(patch, collectionsByName)
 	if err != nil {
 		return err
 	}
@@ -164,7 +165,10 @@ func (db *db) getCollectionsByName(
 //
 // For example Field [FieldKind] string representations will be replaced by the raw integer
 // value.
-func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
+func substituteSchemaPatch(
+	patch jsonpatch.Patch,
+	collectionsByName map[string]client.CollectionDescription,
+) (jsonpatch.Patch, error) {
 	for _, patchOperation := range patch {
 		path, err := patchOperation.Path()
 		if err != nil {
@@ -183,7 +187,7 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 				}
 
 				if kind, isString := field["Kind"].(string); isString {
-					substitute, err := getSubstituteFieldKind(kind)
+					substitute, err := getSubstituteFieldKind(kind, collectionsByName)
 					if err != nil {
 						return nil, err
 					}
@@ -199,7 +203,7 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 				}
 
 				if kind, isString := kind.(string); isString {
-					substitute, err := getSubstituteFieldKind(kind)
+					substitute, err := getSubstituteFieldKind(kind, collectionsByName)
 					if err != nil {
 						return nil, err
 					}
@@ -225,11 +229,28 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 
 // getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
 // Field Kind value. It will return the value if one is found, else returns an [ErrFieldKindNotFound].
-func getSubstituteFieldKind(kind string) (client.FieldKind, error) {
+func getSubstituteFieldKind(
+	kind string,
+	collectionsByName map[string]client.CollectionDescription,
+) (client.FieldKind, error) {
 	substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
 	if substituteFound {
 		return substitute, nil
 	} else {
+		var collectionName string
+		var substitute client.FieldKind
+		if len(kind) > 0 && kind[0] == '[' && kind[len(kind)-1] == ']' {
+			collectionName = kind[1 : len(kind)-1]
+			substitute = client.FieldKind_FOREIGN_OBJECT_ARRAY
+		} else {
+			collectionName = kind
+			substitute = client.FieldKind_FOREIGN_OBJECT
+		}
+
+		if _, substituteFound := collectionsByName[collectionName]; substituteFound {
+			return substitute, nil
+		}
+
 		return 0, NewErrFieldKindNotFound(kind)
 	}
 }

@@ -560,3 +560,240 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_Succeeds(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaUpdatesAddFieldKindForeignObjectArray_SinglePrimaryObjectKindSubstitution(t *testing.T) {
+	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind foreign object array (17), with single object Kind substitution",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo", "Kind": "Users", "RelationType": 137, "Schema": "Users", "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foobar", "Kind": 17, "RelationType": 10, "Schema": "Users", "RelationName": "foo"
+						}}
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(`{
+						"name": "Keenan",
+						"foo": "%s"
+					}`,
+					key1,
+				),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						foo {
+							name
+						}
+						foobar {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Keenan",
+						"foo": map[string]any{
+							"name": "John",
+						},
+						"foobar": []map[string]any{},
+					},
+					{
+						"name": "John",
+						"foo":  nil,
+						"foobar": []map[string]any{
+							{
+								"name": "Keenan",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObjectArray_SingleSecondaryObjectKindSubstitution(t *testing.T) {
+	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind foreign object array (17), with single object Kind substitution",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo", "Kind": 16, "RelationType": 137, "Schema": "Users", "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foobar", "Kind": "[Users]", "RelationType": 10, "Schema": "Users", "RelationName": "foo"
+						}}
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(`{
+						"name": "Keenan",
+						"foo": "%s"
+					}`,
+					key1,
+				),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						foo {
+							name
+						}
+						foobar {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Keenan",
+						"foo": map[string]any{
+							"name": "John",
+						},
+						"foobar": []map[string]any{},
+					},
+					{
+						"name": "John",
+						"foo":  nil,
+						"foobar": []map[string]any{
+							{
+								"name": "Keenan",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObjectArray_ObjectKindSubstitution(t *testing.T) {
+	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind foreign object array (17), with object Kind substitution",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo", "Kind": "Users", "RelationType": 137, "Schema": "Users", "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foobar", "Kind": "[Users]", "RelationType": 10, "Schema": "Users", "RelationName": "foo"
+						}}
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(`{
+						"name": "Keenan",
+						"foo": "%s"
+					}`,
+					key1,
+				),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						foo {
+							name
+						}
+						foobar {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Keenan",
+						"foo": map[string]any{
+							"name": "John",
+						},
+						"foobar": []map[string]any{},
+					},
+					{
+						"name": "John",
+						"foo":  nil,
+						"foobar": []map[string]any{
+							{
+								"name": "Keenan",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
