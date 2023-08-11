@@ -17,6 +17,8 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
@@ -170,6 +172,7 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 		}
 
 		if value, hasValue := patchOperation["value"]; hasValue {
+			var newPatchValue immutable.Option[any]
 			if isField(path) {
 				// We unmarshal the full field-value into a map to ensure that all user
 				// specified properties are maintained.
@@ -183,13 +186,7 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
 					if substituteFound {
 						field["Kind"] = substitute
-						substituteField, err := json.Marshal(field)
-						if err != nil {
-							return nil, err
-						}
-
-						substituteValue := json.RawMessage(substituteField)
-						patchOperation["value"] = &substituteValue
+						newPatchValue = immutable.Some[any](field)
 					} else {
 						return nil, NewErrFieldKindNotFound(kind)
 					}
@@ -204,17 +201,21 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 				if kind, isString := kind.(string); isString {
 					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
 					if substituteFound {
-						substituteKind, err := json.Marshal(substitute)
-						if err != nil {
-							return nil, err
-						}
-
-						substituteValue := json.RawMessage(substituteKind)
-						patchOperation["value"] = &substituteValue
+						newPatchValue = immutable.Some[any](substitute)
 					} else {
 						return nil, NewErrFieldKindNotFound(kind)
 					}
 				}
+			}
+
+			if newPatchValue.HasValue() {
+				substitute, err := json.Marshal(newPatchValue.Value())
+				if err != nil {
+					return nil, err
+				}
+
+				substitutedValue := json.RawMessage(substitute)
+				patchOperation["value"] = &substitutedValue
 			}
 		}
 	}
