@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -51,6 +52,9 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -71,6 +75,9 @@ func (c *Client) DeleteReplicator(ctx context.Context, rep client.Replicator) er
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -87,6 +94,8 @@ func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, er
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -107,6 +116,8 @@ func (c *Client) AddP2PCollection(ctx context.Context, collectionID string) erro
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -123,6 +134,8 @@ func (c *Client) RemoveP2PCollection(ctx context.Context, collectionID string) e
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -139,6 +152,8 @@ func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -163,6 +178,9 @@ func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -183,6 +201,9 @@ func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) e
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -199,6 +220,8 @@ func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.Collect
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -219,6 +242,8 @@ func (c *Client) PatchSchema(ctx context.Context, patch string) error {
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -244,6 +269,8 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -265,6 +292,8 @@ func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -286,6 +315,8 @@ func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string)
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -306,6 +337,8 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -330,6 +363,8 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Accept", "application/json")
+
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -343,6 +378,40 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 	return indexes, nil
 }
 
-func (c *Client) ExecRequest(context.Context, string) *client.RequestResult {
-	return nil
+func (c *Client) ExecRequest(ctx context.Context, query string) (result *client.RequestResult) {
+	methodURL := c.baseURL.JoinPath("graphql")
+	result = &client.RequestResult{}
+
+	body, err := json.Marshal(&GraphQLRequest{query})
+	if err != nil {
+		result.GQL.Errors = []error{err}
+		return
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		result.GQL.Errors = []error{err}
+		return
+	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := c.client.Do(req)
+	if err != nil {
+		result.GQL.Errors = []error{err}
+		return
+	}
+	defer res.Body.Close() //nolint:errcheck
+
+	// TODO handle subscriptions
+
+	var response GraphQLResponse
+	if err = parseJsonResponse(res, &response); err != nil {
+		result.GQL.Errors = []error{err}
+		return
+	}
+	result.GQL.Data = response.Data
+	for _, err := range response.Errors {
+		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf(err))
+	}
+	return
 }

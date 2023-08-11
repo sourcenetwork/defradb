@@ -19,6 +19,15 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+type GraphQLRequest struct {
+	Query string `json:"query" form:"query"`
+}
+
+type GraphQLResponse struct {
+	Errors []string         `json:"errors,omitempty"`
+	Data   []map[string]any `json:"data"`
+}
+
 type Server struct {
 	store client.Store
 }
@@ -43,6 +52,10 @@ func NewServer(store client.Store) *gin.Engine {
 	lens := api.Group("/lens")
 	lens_migration := lens.Group("/migration")
 	lens_migration.POST("/", server.SetMigration)
+
+	graphQL := api.Group("/graphql")
+	graphQL.GET("/", server.ExecRequest)
+	graphQL.POST("/", server.ExecRequest)
 
 	p2p := api.Group("/p2p")
 	p2p_replicators := p2p.Group("/replicators")
@@ -236,4 +249,27 @@ func (s *Server) GetAllIndexes(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, indexes)
+}
+
+func (s *Server) ExecRequest(c *gin.Context) {
+	var request GraphQLRequest
+	if err := c.ShouldBind(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if request.Query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing request"})
+		return
+	}
+	result := s.store.ExecRequest(c.Request.Context(), request.Query)
+	if result.Pub != nil {
+		// TODO handle subscription
+		return
+	}
+
+	var errors []string
+	for _, err := range result.GQL.Errors {
+		errors = append(errors, err.Error())
+	}
+	c.JSON(http.StatusOK, gin.H{"data": result.GQL.Data, "errors": errors})
 }
