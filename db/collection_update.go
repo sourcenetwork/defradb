@@ -280,6 +280,45 @@ func (c *collection) updateWithFilter(
 	return results, nil
 }
 
+// applyMergeToDoc applies the given json merge to the given Defra doc.
+//
+// It does not save the document.
+func (c *collection) applyMergeToDoc(
+	doc *client.Document,
+	merge *fastjson.Object,
+) error {
+	mergeMap := make(map[string]*fastjson.Value)
+	merge.Visit(func(k []byte, v *fastjson.Value) {
+		mergeMap[string(k)] = v
+	})
+
+	for mfield, mval := range mergeMap {
+		fd, isValidField := c.desc.Schema.GetField(mfield)
+		if !isValidField {
+			return client.NewErrFieldNotExist(mfield)
+		}
+
+		if fd.Kind == client.FieldKind_FOREIGN_OBJECT {
+			fd, isValidField = c.desc.Schema.GetField(mfield + request.RelatedObjectID)
+			if !isValidField {
+				return client.NewErrFieldNotExist(mfield)
+			}
+		}
+
+		cborVal, err := validateFieldSchema(mval, fd)
+		if err != nil {
+			return err
+		}
+
+		err = doc.Set(fd.Name, cborVal)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (c *collection) applyMerge(
 	ctx context.Context,
 	txn datastore.Txn,
