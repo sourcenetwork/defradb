@@ -37,6 +37,7 @@ type Server struct {
 
 func NewServer(store client.Store) *gin.Engine {
 	server := &Server{store}
+	collectionServer := &CollectionServer{store}
 
 	router := gin.Default()
 	api := router.Group("/api/v0")
@@ -51,6 +52,16 @@ func NewServer(store client.Store) *gin.Engine {
 
 	collections := api.Group("/collections")
 	collections.GET("/", server.GetCollection)
+	collections.POST("/:name", collectionServer.Create)
+	collections.PATCH("/:name", collectionServer.UpdateWith)
+	collections.DELETE("/:name", collectionServer.DeleteWith)
+	collections.POST("/:name/indexes", collectionServer.CreateIndex)
+	collections.GET("/:name/indexes", collectionServer.GetIndexes)
+	collections.DELETE("/:name/indexes/:index", collectionServer.DropIndex)
+	collections.GET("/:name/:key", collectionServer.Get)
+	collections.POST("/:name/:key", collectionServer.Save)
+	collections.PATCH("/:name/:key", collectionServer.Update)
+	collections.DELETE("/:name/:key", collectionServer.Delete)
 
 	lens := api.Group("/lens")
 	lens_migration := lens.Group("/migration")
