@@ -38,6 +38,7 @@ type Server struct {
 func NewServer(store client.Store) *gin.Engine {
 	server := &Server{store}
 	collectionServer := &CollectionServer{store}
+	lensServer := &LensServer{store}
 
 	router := gin.Default()
 	api := router.Group("/api/v0")
@@ -64,8 +65,12 @@ func NewServer(store client.Store) *gin.Engine {
 	collections.DELETE("/:name/:key", collectionServer.Delete)
 
 	lens := api.Group("/lens")
-	lens_migration := lens.Group("/migration")
-	lens_migration.POST("/", server.SetMigration)
+	lens.GET("/", lensServer.Config)
+	lens.POST("/", lensServer.SetMigration)
+	lens.POST("/reload", lensServer.ReloadLenses)
+	lens.GET("/:version", lensServer.HasMigration)
+	lens.POST("/:version/up", lensServer.MigrateUp)
+	lens.POST("/:version/down", lensServer.MigrateDown)
 
 	graphQL := api.Group("/graphql")
 	graphQL.GET("/", server.ExecRequest)
@@ -198,20 +203,6 @@ func (s *Server) PatchSchema(c *gin.Context) {
 		return
 	}
 	err = s.store.PatchSchema(c.Request.Context(), string(patch))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	c.Status(http.StatusOK)
-}
-
-func (s *Server) SetMigration(c *gin.Context) {
-	var req client.LensConfig
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	err := s.store.SetMigration(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
