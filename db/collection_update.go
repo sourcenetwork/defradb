@@ -133,16 +133,17 @@ func (c *collection) updateWithKey(
 	if err != nil {
 		return nil, err
 	}
-	v, err := doc.ToMap()
-	if err != nil {
-		return nil, err
-	}
 
 	if isPatch {
 		// todo
 	} else {
-		err = c.applyMerge(ctx, txn, v, parsedUpdater.GetObject())
+		err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = c.save(ctx, txn, doc, false)
 	if err != nil {
 		return nil, err
 	}
