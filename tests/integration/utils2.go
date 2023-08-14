@@ -286,7 +286,6 @@ func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 	switch s.clientType {
 	case httpClientType:
 		s.httpServer = httptest.NewServer(http.NewServer(cdb))
-		// TODO close the server
 		store, err := http.NewClient(s.httpServer.URL)
 		if err != nil {
 			return nil, "", err
@@ -519,6 +518,9 @@ func closeNodes(
 		if node.Peer != nil {
 			err := node.Close()
 			require.NoError(s.t, err)
+		}
+		if s.httpServer != nil {
+			s.httpServer.Close()
 		}
 		node.DB.Close(s.ctx)
 	}

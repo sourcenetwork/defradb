@@ -11,6 +11,7 @@
 package http
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -20,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/events"
 )
 
 var _ client.Store = (*Client)(nil)
@@ -393,6 +395,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) (result *client.
 		return
 	}
 	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Accept", "text/event-stream")
 	req.Header.Add("Content-Type", "application/json")
 
 	res, err := c.client.Do(req)
@@ -402,8 +405,9 @@ func (c *Client) ExecRequest(ctx context.Context, query string) (result *client.
 	}
 	defer res.Body.Close() //nolint:errcheck
 
-	// TODO handle subscriptions
-
+	if res.Header.Get("Content-Type") == "text/event-stream" {
+		return c.execRequestSubscription(ctx, res)
+	}
 	var response GraphQLResponse
 	if err = parseJsonResponse(res, &response); err != nil {
 		result.GQL.Errors = []error{err}
@@ -414,4 +418,32 @@ func (c *Client) ExecRequest(ctx context.Context, query string) (result *client.
 		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf(err))
 	}
 	return
+}
+
+func (c *Client) execRequestSubscription(ctx context.Context, res *http.Response) (result *client.RequestResult) {
+	result = &client.RequestResult{}
+
+	pubChan := events.New[events.Update](0, 0)
+	scanner := bufio.NewScanner(res.Body)
+
+	go func() {
+		for scanner.Scan() {
+			line := scanner.Text()
+			if !strings.HasPrefix(line, "data:") {
+				continue
+			}
+			var item events.Update
+			if err := json.Unmarshal([]byte(line[6:]), &item); err != nil {
+				continue
+			}
+			pubChan.Publish(item)
+		}
+	}()
+
+	pub, err := events.NewPublisher[events.Update](pubChan, 0)
+	if err != nil {
+		return result
+	}
+	result.Pub = pub
+	return result
 }

@@ -11,12 +11,15 @@
 package http
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/events"
 )
 
 type GraphQLRequest struct {
@@ -263,7 +266,7 @@ func (s *Server) ExecRequest(c *gin.Context) {
 	}
 	result := s.store.ExecRequest(c.Request.Context(), request.Query)
 	if result.Pub != nil {
-		// TODO handle subscription
+		s.execRequestSubscription(c, result.Pub)
 		return
 	}
 
@@ -272,4 +275,31 @@ func (s *Server) ExecRequest(c *gin.Context) {
 		errors = append(errors, err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{"data": result.GQL.Data, "errors": errors})
+}
+
+func (s *Server) execRequestSubscription(c *gin.Context, pub *events.Publisher[events.Update]) {
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+
+	c.Status(http.StatusOK)
+	c.Writer.Flush()
+
+	c.Stream(func(w io.Writer) bool {
+		select {
+		case <-c.Request.Context().Done():
+			pub.Unsubscribe()
+			return false
+		case item, open := <-pub.Stream():
+			if !open {
+				return false
+			}
+			data, err := json.Marshal(item)
+			if err != nil {
+				return false
+			}
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			return true
+		}
+	})
 }
