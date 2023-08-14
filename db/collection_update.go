@@ -307,11 +307,7 @@ func (c *collection) applyMerge(
 
 		fd, isValidAliasField := c.desc.Schema.GetField(mfield + request.RelatedObjectID)
 		if isValidAliasField {
-			// Overwrite the key with aliased name to the internal related object name.
-			oldKey := mfield
 			mfield = mfield + request.RelatedObjectID
-			mergeMap[mfield] = mval
-			delete(mergeMap, oldKey)
 		} else {
 			var isValidField bool
 			fd, isValidField = c.desc.Schema.GetField(mfield)
