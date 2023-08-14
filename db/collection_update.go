@@ -15,15 +15,12 @@ import (
 	"fmt"
 	"strings"
 
-	cbor "github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/planner"
 )
 
@@ -326,124 +323,6 @@ func (c *collection) applyMergeToDoc(
 		if err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (c *collection) applyMerge(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc map[string]any,
-	merge *fastjson.Object,
-) error {
-	keyStr, ok := doc["_key"].(string)
-	if !ok {
-		return ErrDocMissingKey
-	}
-	key := c.getPrimaryKey(keyStr)
-	links := make([]core.DAGLink, 0)
-
-	mergeMap := make(map[string]*fastjson.Value)
-	merge.Visit(func(k []byte, v *fastjson.Value) {
-		mergeMap[string(k)] = v
-	})
-
-	mergeCBOR := make(map[string]any)
-
-	for mfield, mval := range mergeMap {
-		if mval.Type() == fastjson.TypeObject {
-			return ErrInvalidMergeValueType
-		}
-
-		fd, isValidAliasField := c.desc.Schema.GetField(mfield + request.RelatedObjectID)
-		if isValidAliasField {
-			mfield = mfield + request.RelatedObjectID
-		} else {
-			var isValidField bool
-			fd, isValidField = c.desc.Schema.GetField(mfield)
-			if !isValidField {
-				return client.NewErrFieldNotExist(mfield)
-			}
-		}
-
-		relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fd)
-		if isSecondaryRelationID {
-			primaryId, err := getString(mval)
-			if err != nil {
-				return err
-			}
-
-			err = c.patchPrimaryDoc(ctx, txn, relationFieldDescription, keyStr, primaryId)
-			if err != nil {
-				return err
-			}
-
-			// If this field was a secondary relation ID the related document will have been
-			// updated instead and we should discard this merge item
-			continue
-		}
-
-		cborVal, err := validateFieldSchema(mval, fd)
-		if err != nil {
-			return err
-		}
-		mergeCBOR[mfield] = cborVal
-
-		val := client.NewCBORValue(fd.Typ, cborVal)
-		fieldKey, fieldExists := c.tryGetFieldKey(key, mfield)
-		if !fieldExists {
-			return client.NewErrFieldNotExist(mfield)
-		}
-
-		c, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
-		if err != nil {
-			return err
-		}
-
-		links = append(links, core.DAGLink{
-			Name: mfield,
-			Cid:  c.Cid(),
-		})
-	}
-
-	// Update CompositeDAG
-	em, err := cbor.CanonicalEncOptions().EncMode()
-	if err != nil {
-		return err
-	}
-	buf, err := em.Marshal(mergeCBOR)
-	if err != nil {
-		return err
-	}
-
-	headNode, priority, err := c.saveValueToMerkleCRDT(
-		ctx,
-		txn,
-		key.ToDataStoreKey(),
-		client.COMPOSITE,
-		buf,
-		links,
-		client.Active,
-	)
-	if err != nil {
-		return err
-	}
-
-	if c.db.events.Updates.HasValue() {
-		txn.OnSuccess(
-			func() {
-				c.db.events.Updates.Value().Publish(
-					events.Update{
-						DocKey:   keyStr,
-						Cid:      headNode.Cid(),
-						SchemaID: c.schemaID,
-						Block:    headNode,
-						Priority: priority,
-					},
-				)
-			},
-		)
 	}
 
 	return nil
