@@ -264,18 +264,28 @@ func (c *collection) updateWithFilter(
 		}
 
 		// Get the document, and apply the patch
-		doc := docMap.ToMap(selectionPlan.Value())
+		docAsMap := docMap.ToMap(selectionPlan.Value())
+		doc, err := client.NewDocFromMap(docAsMap)
+		if err != nil {
+			return nil, err
+		}
+
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
-			err = c.applyMerge(ctx, txn, doc, parsedUpdater.GetObject())
+			err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
 		}
 		if err != nil {
 			return nil, err
 		}
 
+		_, err = c.save(ctx, txn, doc, false)
+		if err != nil {
+			return nil, err
+		}
+
 		// add successful updated doc to results
-		results.DocKeys = append(results.DocKeys, doc[request.KeyFieldName].(string))
+		results.DocKeys = append(results.DocKeys, doc.Key().String())
 		results.Count++
 	}
 
