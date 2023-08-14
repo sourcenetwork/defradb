@@ -45,6 +45,7 @@ const (
 	errInvalidCRDTType                    string = "only default or LWW (last writer wins) CRDT types are supported"
 	errCannotDeleteField                  string = "deleting an existing field is not supported"
 	errFieldKindNotFound                  string = "no type found for given name"
+	errFieldKindDoesNotMatchFieldSchema   string = "field Kind does not match field Schema"
 	errSchemaNotFound                     string = "no schema found for given name"
 	errDocumentAlreadyExists              string = "a document with the given dockey already exists"
 	errDocumentDeleted                    string = "a document with the given dockey has been deleted"
@@ -138,6 +139,7 @@ var (
 	ErrInvalidCRDTType                    = errors.New(errInvalidCRDTType)
 	ErrCannotDeleteField                  = errors.New(errCannotDeleteField)
 	ErrFieldKindNotFound                  = errors.New(errFieldKindNotFound)
+	ErrFieldKindDoesNotMatchFieldSchema   = errors.New(errFieldKindDoesNotMatchFieldSchema)
 	ErrSchemaNotFound                     = errors.New(errSchemaNotFound)
 	ErrIndexMissingFields                 = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName              = errors.New(errIndexFieldMissingName)
@@ -384,6 +386,14 @@ func NewErrFieldKindNotFound(kind string) error {
 	return errors.New(
 		errFieldKindNotFound,
 		errors.NewKV("Kind", kind),
+	)
+}
+
+func NewErrFieldKindDoesNotMatchFieldSchema(kind string, schema string) error {
+	return errors.New(
+		errFieldKindDoesNotMatchFieldSchema,
+		errors.NewKV("Kind", kind),
+		errors.NewKV("Schema", schema),
 	)
 }
 
