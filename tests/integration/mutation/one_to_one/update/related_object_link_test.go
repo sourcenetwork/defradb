@@ -28,8 +28,6 @@ import (
 	fixture "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
-// Note: This test should probably not pass, as even after updating a link to a new document
-// from one side the previous link still remains on the other side of the link.
 func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
@@ -89,53 +87,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 					author2Key,
 					bookKey,
 				),
-				Results: []map[string]any{
-					{
-						"name": "New Shahzad",
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `query {
- 					Author {
- 						name
- 						published {
- 							name
- 						}
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": map[string]any{
-							"name": "Painted House",
-						},
-					},
-					{
-						"name": "New Shahzad",
-						"published": map[string]any{
-							"name": "Painted House",
-						},
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `query {
-					Book {
-						name
-						author {
-							name
-						}
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-					},
-				},
+				ExpectedError: "target document is already linked to another document.",
 			},
 		},
 	}
@@ -143,8 +95,6 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 	fixture.ExecuteTestCase(t, test)
 }
 
-// Note: This test should probably not pass, as even after updating a link to a new document
-// from one side the previous link still remains on the other side of the link.
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
@@ -204,53 +154,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 					bookKey,
 					author2Key,
 				),
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `query {
- 					Author {
- 						name
- 						published {
- 							name
- 						}
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-						"published": map[string]any{
-							"name": "Painted House",
-						},
-					},
-					{
-						"name": "New Shahzad",
-						"published": map[string]any{
-							"name": "Painted House",
-						},
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `query {
-					Book {
-						name
-						author {
-							name
-						}
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-					},
-				},
+				ExpectedError: "target document is already linked to another document.",
 			},
 		},
 	}
