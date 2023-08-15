@@ -109,7 +109,7 @@ func TestQueryOneToOneWithClashingIdFieldOnPrimary(t *testing.T) {
 					"name": "John Grisham",
 					"published_id": "bae-d82dbe47-9df1-5e33-bd87-f92e9c378161"
 				}`,
-				ExpectedError: "value doesn't contain number; it contains string",
+				ExpectedError: "target document is already linked to another document.",
 			},
 		},
 	}

@@ -266,3 +266,41 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 
 	simpleTests.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondary(t *testing.T) {
+	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+
+	test := testUtils.TestCase{
+		Description: "One to one create mutation, errors due to link already existing, secondary side",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
+					authorKey,
+				),
+			},
+			testUtils.Request{
+				Request: fmt.Sprintf(
+					`mutation {
+						create_Book(data: "{\"name\": \"Golestan\",\"author_id\": \"%s\"}") {
+							name
+						}
+					}`,
+					authorKey,
+				),
+				ExpectedError: "target document is already linked to another document.",
+			},
+		},
+	}
+
+	simpleTests.ExecuteTestCase(t, test)
+}
