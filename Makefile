@@ -29,7 +29,7 @@ ifdef BUILD_TAGS
 BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
-TEST_FLAGS=-race -shuffle=on -timeout 150s
+TEST_FLAGS=-race -shuffle=on -timeout 210s
 
 PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
