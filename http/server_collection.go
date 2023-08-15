@@ -18,9 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-type CollectionServer struct {
-	store client.Store
-}
+type CollectionHandler struct{}
 
 type CollectionDeleteRequest struct {
 	Key    string   `json:"key"`
@@ -35,8 +33,10 @@ type CollectionUpdateRequest struct {
 	Updater string   `json:"updater"`
 }
 
-func (s *CollectionServer) Create(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) Create(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -78,8 +78,10 @@ func (s *CollectionServer) Create(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (s *CollectionServer) Save(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) Save(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -106,8 +108,10 @@ func (s *CollectionServer) Save(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (s *CollectionServer) DeleteWith(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) DeleteWith(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -159,8 +163,10 @@ func (s *CollectionServer) DeleteWith(c *gin.Context) {
 	}
 }
 
-func (s *CollectionServer) UpdateWith(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) UpdateWith(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -212,8 +218,10 @@ func (s *CollectionServer) UpdateWith(c *gin.Context) {
 	}
 }
 
-func (s *CollectionServer) Update(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) Update(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -240,8 +248,10 @@ func (s *CollectionServer) Update(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (s *CollectionServer) Delete(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) Delete(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -259,8 +269,10 @@ func (s *CollectionServer) Delete(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (s *CollectionServer) Get(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) Get(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -278,8 +290,10 @@ func (s *CollectionServer) Get(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (s *CollectionServer) CreateIndex(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) CreateIndex(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -297,8 +311,10 @@ func (s *CollectionServer) CreateIndex(c *gin.Context) {
 	c.JSON(http.StatusOK, index)
 }
 
-func (s *CollectionServer) GetIndexes(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) GetIndexes(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -311,8 +327,10 @@ func (s *CollectionServer) GetIndexes(c *gin.Context) {
 	c.JSON(http.StatusOK, indexes)
 }
 
-func (s *CollectionServer) DropIndex(c *gin.Context) {
-	col, err := s.store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+func (s *CollectionHandler) DropIndex(c *gin.Context) {
+	store := c.MustGet("store").(client.Store)
+
+	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -12,7 +12,6 @@ package tests
 
 import (
 	"context"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -36,9 +35,6 @@ type state struct {
 
 	// The type of client currently being tested.
 	clientType ClientType
-
-	// Server for testing http clients.
-	httpServer *httptest.Server
 
 	// Any explicit transactions active in this test.
 	//

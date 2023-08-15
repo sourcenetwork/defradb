@@ -167,7 +167,7 @@ func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"Author": nil,
+				"author": nil,
 			},
 		},
 	}

@@ -11,51 +11,39 @@
 package http
 
 import (
-	"bufio"
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
-	"strings"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/events"
 )
 
-var _ client.Store = (*Client)(nil)
-
-// Client implements the client.Store interface over HTTP.
-type Client struct {
+type httpClient struct {
 	client  *http.Client
 	baseURL *url.URL
+	txValue string
 }
 
-func NewClient(rawURL string) (*Client, error) {
-	baseURL, err := url.Parse(rawURL)
-	if err != nil {
-		return nil, err
-	}
-	return &Client{
-		client:  http.DefaultClient,
-		baseURL: baseURL.JoinPath("/api/v0"),
-	}, nil
+type errorResponse struct {
+	Error string `json:"error"`
 }
 
-func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error {
-	methodURL := c.baseURL.JoinPath("p2p", "replicators")
+func (c *httpClient) withTxn(txValue string) *httpClient {
+	return &httpClient{
+		client:  c.client,
+		baseURL: c.baseURL,
+		txValue: txValue,
+	}
+}
 
-	body, err := json.Marshal(rep)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
+func (c *httpClient) setDefaultHeaders(req *http.Request) {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add(txHeaderName, c.txValue)
+}
+
+func (c *httpClient) request(req *http.Request) error {
+	c.setDefaultHeaders(req)
 
 	res, err := c.client.Do(req)
 	if err != nil {
@@ -63,22 +51,23 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error
 	}
 	defer res.Body.Close() //nolint:errcheck
 
-	return parseResponse(res)
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode == http.StatusOK {
+		return nil
+	}
+
+	var errRes errorResponse
+	if err := json.Unmarshal(data, &errRes); err != nil {
+		return fmt.Errorf("%s", data)
+	}
+	return fmt.Errorf(errRes.Error)
 }
 
-func (c *Client) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
-	methodURL := c.baseURL.JoinPath("p2p", "replicators")
-
-	body, err := json.Marshal(rep)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
+func (c *httpClient) requestJson(req *http.Request, out any) error {
+	c.setDefaultHeaders(req)
 
 	res, err := c.client.Do(req)
 	if err != nil {
@@ -86,364 +75,17 @@ func (c *Client) DeleteReplicator(ctx context.Context, rep client.Replicator) er
 	}
 	defer res.Body.Close() //nolint:errcheck
 
-	return parseResponse(res)
-}
-
-func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	methodURL := c.baseURL.JoinPath("p2p", "replicators")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	var reps []client.Replicator
-	if err := parseJsonResponse(res, &reps); err != nil {
-		return nil, err
-	}
-	return reps, nil
-}
-
-func (c *Client) AddP2PCollection(ctx context.Context, collectionID string) error {
-	methodURL := c.baseURL.JoinPath("p2p", "collections", collectionID)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
+	if res.StatusCode == http.StatusOK {
+		return json.Unmarshal(data, out)
 	}
-	defer res.Body.Close() //nolint:errcheck
 
-	return parseResponse(res)
-}
-
-func (c *Client) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	methodURL := c.baseURL.JoinPath("p2p", "collections", collectionID)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
-	if err != nil {
-		return err
+	var errRes errorResponse
+	if err := json.Unmarshal(data, &errRes); err != nil {
+		return fmt.Errorf("%s", data)
 	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
-}
-
-func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	methodURL := c.baseURL.JoinPath("p2p", "collections")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	var cols []string
-	if err := parseJsonResponse(res, &cols); err != nil {
-		return nil, err
-	}
-	return cols, nil
-}
-
-func (c *Client) BasicImport(ctx context.Context, filepath string) error {
-	methodURL := c.baseURL.JoinPath("backup", "import")
-
-	body, err := json.Marshal(&client.BackupConfig{Filepath: filepath})
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
-}
-
-func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	methodURL := c.baseURL.JoinPath("backup", "export")
-
-	body, err := json.Marshal(config)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
-}
-
-func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
-	methodURL := c.baseURL.JoinPath("schema")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schema))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	var cols []client.CollectionDescription
-	if err := parseJsonResponse(res, &cols); err != nil {
-		return nil, err
-	}
-	return cols, nil
-}
-
-func (c *Client) PatchSchema(ctx context.Context, patch string) error {
-	methodURL := c.baseURL.JoinPath("schema")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), strings.NewReader(patch))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
-}
-
-func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
-	return c.LensRegistry().SetMigration(ctx, config)
-}
-
-func (c *Client) LensRegistry() client.LensRegistry {
-	return NewLensClient(c)
-}
-
-func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	methodURL := c.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	var description client.CollectionDescription
-	if err := parseJsonResponse(res, &description); err != nil {
-		return nil, err
-	}
-	return NewCollectionClient(c, description), nil
-}
-
-func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
-	methodURL := c.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"schema_id": []string{schemaId}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	var description client.CollectionDescription
-	if err := parseJsonResponse(res, &description); err != nil {
-		return nil, err
-	}
-	return NewCollectionClient(c, description), nil
-}
-
-func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
-	methodURL := c.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"version_id": []string{versionId}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	var description client.CollectionDescription
-	if err := parseJsonResponse(res, &description); err != nil {
-		return nil, err
-	}
-	return NewCollectionClient(c, description), nil
-}
-
-func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	methodURL := c.baseURL.JoinPath("collections")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	var descriptions []client.CollectionDescription
-	if err := parseJsonResponse(res, &descriptions); err != nil {
-		return nil, err
-	}
-	collections := make([]client.Collection, len(descriptions))
-	for i, d := range descriptions {
-		collections[i] = NewCollectionClient(c, d)
-	}
-	return collections, nil
-}
-
-func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	methodURL := c.baseURL.JoinPath("indexes")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	var indexes map[client.CollectionName][]client.IndexDescription
-	if err := parseJsonResponse(res, &indexes); err != nil {
-		return nil, err
-	}
-	return indexes, nil
-}
-
-func (c *Client) ExecRequest(ctx context.Context, query string) (result *client.RequestResult) {
-	methodURL := c.baseURL.JoinPath("graphql")
-	result = &client.RequestResult{}
-
-	body, err := json.Marshal(&GraphQLRequest{query})
-	if err != nil {
-		result.GQL.Errors = []error{err}
-		return
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		result.GQL.Errors = []error{err}
-		return
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Accept", "text/event-stream")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		result.GQL.Errors = []error{err}
-		return
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	if res.Header.Get("Content-Type") == "text/event-stream" {
-		return c.execRequestSubscription(ctx, res)
-	}
-	var response GraphQLResponse
-	if err = parseJsonResponse(res, &response); err != nil {
-		result.GQL.Errors = []error{err}
-		return
-	}
-	result.GQL.Data = response.Data
-	for _, err := range response.Errors {
-		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf(err))
-	}
-	return
-}
-
-func (c *Client) execRequestSubscription(ctx context.Context, res *http.Response) (result *client.RequestResult) {
-	result = &client.RequestResult{}
-
-	pubChan := events.New[events.Update](0, 0)
-	scanner := bufio.NewScanner(res.Body)
-
-	go func() {
-		for scanner.Scan() {
-			line := scanner.Text()
-			if !strings.HasPrefix(line, "data:") {
-				continue
-			}
-			var item events.Update
-			if err := json.Unmarshal([]byte(line[6:]), &item); err != nil {
-				continue
-			}
-			pubChan.Publish(item)
-		}
-	}()
-
-	pub, err := events.NewPublisher[events.Update](pubChan, 0)
-	if err != nil {
-		return result
-	}
-	result.Pub = pub
-	return result
+	return fmt.Errorf(errRes.Error)
 }

@@ -12,8 +12,8 @@ package tests
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"net/http/httptest"
 	"os"
 	"path"
 	"reflect"
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/gin-gonic/gin"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -158,6 +159,9 @@ func init() {
 	if DetectDbChanges {
 		detectDbChangesInit(repositoryValue, targetBranchValue)
 	}
+
+	// disable debug logs in HTTP routes
+	gin.SetMode(gin.TestMode)
 }
 
 func getBool(val string) bool {
@@ -285,12 +289,7 @@ func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 
 	switch s.clientType {
 	case httpClientType:
-		s.httpServer = httptest.NewServer(http.NewServer(cdb))
-		store, err := http.NewClient(s.httpServer.URL)
-		if err != nil {
-			return nil, "", err
-		}
-		cdb = NewClient(cdb, store)
+		cdb, err = http.NewWrapper(cdb)
 	}
 
 	return
@@ -518,9 +517,6 @@ func closeNodes(
 		if node.Peer != nil {
 			err := node.Close()
 			require.NoError(s.t, err)
-		}
-		if s.httpServer != nil {
-			s.httpServer.Close()
 		}
 		node.DB.Close(s.ctx)
 	}
@@ -1493,37 +1489,14 @@ func assertRequestResults(
 		return true
 	}
 
-	// Note: if result.Data == nil this panics (the panic seems useful while testing).
-	resultantData := result.Data.([]map[string]any)
+	expectedJson, err := json.Marshal(expectedResults)
+	require.NoError(t, err)
 
+	resultJson, err := json.Marshal(result.Data)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, string(expectedJson), string(resultJson))
 	log.Info(ctx, "", logging.NewKV("RequestResults", result.Data))
-
-	// compare results
-	assert.Equal(t, len(expectedResults), len(resultantData), description)
-	if len(expectedResults) == 0 {
-		// Need `require` here otherwise will panic in the for loop that ranges over
-		// resultantData and tries to access expectedResults[0].
-		require.Equal(t, expectedResults, resultantData)
-	}
-
-	for docIndex, result := range resultantData {
-		expectedResult := expectedResults[docIndex]
-		for field, actualValue := range result {
-			expectedValue := expectedResult[field]
-
-			switch r := expectedValue.(type) {
-			case AnyOf:
-				assert.Contains(t, r, actualValue)
-
-				dfk := docFieldKey{docIndex, field}
-				valueSet := anyOfByField[dfk]
-				valueSet = append(valueSet, actualValue)
-				anyOfByField[dfk] = valueSet
-			default:
-				assert.Equal(t, expectedValue, actualValue, fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex))
-			}
-		}
-	}
 
 	return false
 }

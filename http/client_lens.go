@@ -15,7 +15,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/url"
 
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -27,23 +26,19 @@ var _ client.LensRegistry = (*LensClient)(nil)
 
 // LensClient implements the client.LensRegistry interface over HTTP.
 type LensClient struct {
-	client  *http.Client
-	baseURL *url.URL
+	http *httpClient
 }
 
-func NewLensClient(s *Client) *LensClient {
-	return &LensClient{
-		client:  s.client,
-		baseURL: s.baseURL,
-	}
+func NewLensClient(httpClient *httpClient) *LensClient {
+	return &LensClient{httpClient}
 }
 
 func (c *LensClient) WithTxn(datastore.Txn) client.LensRegistry {
-	return c
+	return c // TODO
 }
 
 func (c *LensClient) SetMigration(ctx context.Context, config client.LensConfig) error {
-	methodURL := c.baseURL.JoinPath("lens", "migrate")
+	methodURL := c.http.baseURL.JoinPath("lens", "migrate")
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -53,29 +48,17 @@ func (c *LensClient) SetMigration(ctx context.Context, config client.LensConfig)
 	if err != nil {
 		return err
 	}
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
+	return c.http.request(req)
 }
 
 func (c *LensClient) ReloadLenses(ctx context.Context) error {
-	methodURL := c.baseURL.JoinPath("lens", "reload")
+	methodURL := c.http.baseURL.JoinPath("lens", "reload")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
+	return c.http.request(req)
 }
 
 func (c *LensClient) MigrateUp(
@@ -83,7 +66,7 @@ func (c *LensClient) MigrateUp(
 	src enumerable.Enumerable[map[string]any],
 	schemaVersionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
-	methodURL := c.baseURL.JoinPath("lens", schemaVersionID, "up")
+	methodURL := c.http.baseURL.JoinPath("lens", schemaVersionID, "up")
 
 	body, err := json.Marshal(src)
 	if err != nil {
@@ -93,14 +76,8 @@ func (c *LensClient) MigrateUp(
 	if err != nil {
 		return nil, err
 	}
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
 	var result enumerable.Enumerable[map[string]any]
-	if err := parseJsonResponse(res, result); err != nil {
+	if err := c.http.requestJson(req, result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -111,7 +88,7 @@ func (c *LensClient) MigrateDown(
 	src enumerable.Enumerable[map[string]any],
 	schemaVersionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
-	methodURL := c.baseURL.JoinPath("lens", schemaVersionID, "down")
+	methodURL := c.http.baseURL.JoinPath("lens", schemaVersionID, "down")
 
 	body, err := json.Marshal(src)
 	if err != nil {
@@ -121,53 +98,35 @@ func (c *LensClient) MigrateDown(
 	if err != nil {
 		return nil, err
 	}
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
 	var result enumerable.Enumerable[map[string]any]
-	if err := parseJsonResponse(res, result); err != nil {
+	if err := c.http.requestJson(req, result); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
 func (c *LensClient) Config(ctx context.Context) ([]client.LensConfig, error) {
-	methodURL := c.baseURL.JoinPath("lens")
+	methodURL := c.http.baseURL.JoinPath("lens")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
 	var cfgs []client.LensConfig
-	if err := parseJsonResponse(res, cfgs); err != nil {
+	if err := c.http.requestJson(req, cfgs); err != nil {
 		return nil, err
 	}
 	return cfgs, nil
 }
 
 func (c *LensClient) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
-	methodURL := c.baseURL.JoinPath("lens", schemaVersionID)
+	methodURL := c.http.baseURL.JoinPath("lens", schemaVersionID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return false, err
 	}
-	res, err := c.client.Do(req)
-	if err != nil {
-		return false, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	err = parseResponse(res)
+	err = c.http.request(req)
 	if err != nil {
 		return false, err
 	}

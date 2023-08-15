@@ -16,7 +16,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -27,41 +26,39 @@ var _ client.Collection = (*CollectionClient)(nil)
 
 // CollectionClient implements the client.Collection interface over HTTP.
 type CollectionClient struct {
-	client      *http.Client
-	baseURL     *url.URL
-	description client.CollectionDescription
+	http *httpClient
+	desc client.CollectionDescription
 }
 
-func NewCollectionClient(s *Client, description client.CollectionDescription) *CollectionClient {
+func NewCollectionClient(httpClient *httpClient, desc client.CollectionDescription) *CollectionClient {
 	return &CollectionClient{
-		client:      s.client,
-		baseURL:     s.baseURL,
-		description: description,
+		http: httpClient,
+		desc: desc,
 	}
 }
 
 func (c *CollectionClient) Description() client.CollectionDescription {
-	return c.description
+	return c.desc
 }
 
 func (c *CollectionClient) Name() string {
-	return c.description.Name
+	return c.desc.Name
 }
 
 func (c *CollectionClient) Schema() client.SchemaDescription {
-	return c.description.Schema
+	return c.desc.Schema
 }
 
 func (c *CollectionClient) ID() uint32 {
-	return c.description.ID
+	return c.desc.ID
 }
 
 func (c *CollectionClient) SchemaID() string {
-	return c.description.Schema.SchemaID
+	return c.desc.Schema.SchemaID
 }
 
 func (c *CollectionClient) Create(ctx context.Context, doc *client.Document) error {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
 	docMap, err := doc.ToMap()
 	if err != nil {
@@ -75,20 +72,11 @@ func (c *CollectionClient) Create(ctx context.Context, doc *client.Document) err
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
+	return c.http.request(req)
 }
 
 func (c *CollectionClient) CreateMany(ctx context.Context, docs []*client.Document) error {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
 	var docMapList []map[string]any
 	for _, doc := range docs {
@@ -106,20 +94,11 @@ func (c *CollectionClient) CreateMany(ctx context.Context, docs []*client.Docume
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
+	return c.http.request(req)
 }
 
 func (c *CollectionClient) Update(ctx context.Context, doc *client.Document) error {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name, doc.Key().String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, doc.Key().String())
 
 	docMap, err := doc.ToMap()
 	if err != nil {
@@ -133,20 +112,11 @@ func (c *CollectionClient) Update(ctx context.Context, doc *client.Document) err
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
+	return c.http.request(req)
 }
 
 func (c *CollectionClient) Save(ctx context.Context, doc *client.Document) error {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name, doc.Key().String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, doc.Key().String())
 
 	docMap, err := doc.ToMap()
 	if err != nil {
@@ -160,35 +130,17 @@ func (c *CollectionClient) Save(ctx context.Context, doc *client.Document) error
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
+	return c.http.request(req)
 }
 
 func (c *CollectionClient) Delete(ctx context.Context, docKey client.DocKey) (bool, error) {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name, docKey.String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, docKey.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return false, err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return false, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	err = parseResponse(res)
+	err = c.http.request(req)
 	if err != nil {
 		return false, err
 	}
@@ -220,7 +172,7 @@ func (c *CollectionClient) updateWith(
 	ctx context.Context,
 	request CollectionUpdateRequest,
 ) (*client.UpdateResult, error) {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
 	body, err := json.Marshal(request)
 	if err != nil {
@@ -230,17 +182,8 @@ func (c *CollectionClient) updateWith(
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
 	var result client.UpdateResult
-	if err := parseJsonResponse(res, &result); err != nil {
+	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil
@@ -300,7 +243,7 @@ func (c *CollectionClient) deleteWith(
 	ctx context.Context,
 	request CollectionDeleteRequest,
 ) (*client.DeleteResult, error) {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
 	body, err := json.Marshal(request)
 	if err != nil {
@@ -310,17 +253,8 @@ func (c *CollectionClient) deleteWith(
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
 	var result client.DeleteResult
-	if err := parseJsonResponse(res, &result); err != nil {
+	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil
@@ -349,23 +283,14 @@ func (c *CollectionClient) DeleteWithKeys(ctx context.Context, docKeys []client.
 }
 
 func (c *CollectionClient) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name, key.String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, key.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
 	var docMap map[string]any
-	if err := parseJsonResponse(res, docMap); err != nil {
+	if err := c.http.requestJson(req, docMap); err != nil {
 		return nil, err
 	}
 	return client.NewDocFromMap(docMap)
@@ -383,7 +308,7 @@ func (c *CollectionClient) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name, "indexes")
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, "indexes")
 
 	body, err := json.Marshal(&indexDesc)
 	if err != nil {
@@ -393,60 +318,33 @@ func (c *CollectionClient) CreateIndex(
 	if err != nil {
 		return client.IndexDescription{}, nil
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return client.IndexDescription{}, nil
-	}
-	defer res.Body.Close() //nolint:errcheck
-
 	var index client.IndexDescription
-	if err := parseJsonResponse(res, &index); err != nil {
+	if err := c.http.requestJson(req, &index); err != nil {
 		return client.IndexDescription{}, nil
 	}
 	return index, nil
 }
 
 func (c *CollectionClient) DropIndex(ctx context.Context, indexName string) error {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name, "indexes", indexName)
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, "indexes", indexName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
-	return parseResponse(res)
+	return c.http.request(req)
 }
 
 func (c *CollectionClient) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	methodURL := c.baseURL.JoinPath("collections", c.description.Name, "indexes")
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close() //nolint:errcheck
-
 	var indexes []client.IndexDescription
-	if err := parseJsonResponse(res, indexes); err != nil {
+	if err := c.http.requestJson(req, indexes); err != nil {
 		return nil, err
 	}
-	return c.description.Indexes, nil
+	return c.desc.Indexes, nil
 }
