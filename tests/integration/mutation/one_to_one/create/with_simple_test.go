@@ -228,3 +228,79 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 
 	simpleTests.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(t *testing.T) {
+	bookKey := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+
+	test := testUtils.TestCase{
+		Description: "One to one create mutation, errors due to link already existing, primary side",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: fmt.Sprintf(`{
+						"name": "John Grisham",
+						"published_id": "%s"
+					}`,
+					bookKey,
+				),
+			},
+			testUtils.Request{
+				Request: fmt.Sprintf(
+					`mutation {
+						create_Author(data: "{\"name\": \"Saadi Shirazi\",\"published_id\": \"%s\"}") {
+							name
+						}
+					}`,
+					bookKey,
+				),
+				ExpectedError: "target document is already linked to another document.",
+			},
+		},
+	}
+
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondary(t *testing.T) {
+	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+
+	test := testUtils.TestCase{
+		Description: "One to one create mutation, errors due to link already existing, secondary side",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
+					authorKey,
+				),
+			},
+			testUtils.Request{
+				Request: fmt.Sprintf(
+					`mutation {
+						create_Book(data: "{\"name\": \"Golestan\",\"author_id\": \"%s\"}") {
+							name
+						}
+					}`,
+					authorKey,
+				),
+				ExpectedError: "target document is already linked to another document.",
+			},
+		},
+	}
+
+	simpleTests.ExecuteTestCase(t, test)
+}
