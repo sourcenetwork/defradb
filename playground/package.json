@@ -19,12 +19,12 @@
     "react-hook-form": "^7.45.4"
   },
   "devDependencies": {
-    "@types/react": "^18.2.15",
+    "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
-    "@typescript-eslint/eslint-plugin": "^6.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
     "@typescript-eslint/parser": "^6.3.0",
     "@vitejs/plugin-react-swc": "^3.0.0",
-    "eslint": "^8.46.0",
+    "eslint": "^8.47.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "typescript": "^5.1.6",
