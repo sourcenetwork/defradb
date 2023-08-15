@@ -52,6 +52,8 @@ type Server struct {
 	options     serverOptions
 	listener    net.Listener
 	certManager *autocert.Manager
+	// address that is assigned to the server on listen
+	address string
 
 	http.Server
 }
@@ -215,6 +217,10 @@ func (s *Server) Listen(ctx context.Context) error {
 		return errors.WithStack(err)
 	}
 
+	// Save the address on the server in case the port was set to random
+	// and that we want to see what was assigned.
+	s.address = s.listener.Addr().String()
+
 	return nil
 }
 
@@ -284,6 +290,10 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 		return errors.WithStack(err)
 	}
 
+	// Save the address on the server in case the port was set to random
+	// and that we want to see what was assigned.
+	s.address = s.listener.Addr().String()
+
 	return nil
 }
 
@@ -304,4 +314,9 @@ func (s *Server) Run(ctx context.Context) error {
 		}()
 	}
 	return s.Serve(s.listener)
+}
+
+// AssignedAddr returns the address that was assigned to the server on calls to listen.
+func (s *Server) AssignedAddr() string {
+	return s.address
 }
