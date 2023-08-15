@@ -809,12 +809,12 @@ sourceLoop:
 		propertyMapped := len(mapping.IndexesByName[key]) != 0
 
 		if !propertyMapped {
-			dummyJoin, err := constructDummyJoin(descriptionsRepo, parentCollectionName, mapping, key)
+			join, err := constructEmptyJoin(descriptionsRepo, parentCollectionName, mapping, key)
 			if err != nil {
 				return nil, err
 			}
 
-			newFields = append(newFields, dummyJoin)
+			newFields = append(newFields, join)
 		}
 
 		keyIndex := mapping.FirstIndexOfName(key)
@@ -906,8 +906,8 @@ sourceLoop:
 	return newFields, nil
 }
 
-// constructDummyJoin constructs a valid empty join with no requested fields.
-func constructDummyJoin(
+// constructEmptyJoin constructs a valid empty join with no requested fields.
+func constructEmptyJoin(
 	descriptionsRepo *DescriptionsRepo,
 	parentCollectionName string,
 	parentMapping *core.DocumentMapping,
@@ -1014,7 +1014,7 @@ func resolveSecondaryRelationIDs(
 			objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
 
 			// We only require the dockey of the related object, so an empty join is all we need.
-			dummyJoin, err := constructDummyJoin(
+			join, err := constructEmptyJoin(
 				descriptionsRepo,
 				desc.Name,
 				mapping,
@@ -1024,7 +1024,7 @@ func resolveSecondaryRelationIDs(
 				return nil, err
 			}
 
-			fields = append(fields, dummyJoin)
+			fields = append(fields, join)
 		}
 	}
 
