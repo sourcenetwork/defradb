@@ -12,15 +12,16 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
+	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
 )
 
@@ -364,13 +365,45 @@ func (c *collection) patchPrimaryDoc(
 	}
 	primaryCol = primaryCol.WithTxn(txn)
 
-	primaryField, _ := primaryCol.Description().GetRelation(relationFieldDescription.RelationName)
+	primaryField, ok := primaryCol.Description().GetRelation(relationFieldDescription.RelationName)
+	if !ok {
+		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
+	}
 
-	_, err = primaryCol.UpdateWithKey(
+	primaryIDField, ok := primaryCol.Description().Schema.GetField(primaryField.Name + request.RelatedObjectID)
+	if !ok {
+		return client.NewErrFieldNotExist(primaryField.Name + request.RelatedObjectID)
+	}
+
+	doc, err := primaryCol.Get(
 		ctx,
 		primaryDockey,
-		fmt.Sprintf(`{"%s": "%s"}`, primaryField.Name+request.RelatedObjectID, docKey),
+		false,
 	)
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+		return err
+	}
+
+	// If the document doesn't exist then there is nothing to update.
+	if doc == nil {
+		return nil
+	}
+
+	existingVal, err := doc.GetValue(primaryIDField.Name)
+	if err != nil && !errors.Is(err, client.ErrFieldNotExist) {
+		return err
+	}
+
+	if existingVal != nil && existingVal.Value() != "" && existingVal.Value() != docKey {
+		return NewErrOneOneAlreadyLinked(docKey, fieldValue, relationFieldDescription.RelationName)
+	}
+
+	err = doc.Set(primaryIDField.Name, docKey)
+	if err != nil {
+		return err
+	}
+
+	err = primaryCol.Update(ctx, doc)
 	if err != nil {
 		return err
 	}

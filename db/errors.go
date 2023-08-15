@@ -83,6 +83,7 @@ const (
 	errDocUpdate                          string = "failed to update doc to collection"
 	errExpectedJSONObject                 string = "expected JSON object"
 	errExpectedJSONArray                  string = "expected JSON array"
+	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 )
 
 var (
@@ -159,6 +160,7 @@ var (
 	ErrDocUpdate                          = errors.New(errDocUpdate)
 	ErrExpectedJSONObject                 = errors.New(errExpectedJSONObject)
 	ErrExpectedJSONArray                  = errors.New(errExpectedJSONArray)
+	ErrOneOneAlreadyLinked                = errors.New(errOneOneAlreadyLinked)
 )
 
 // NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
@@ -599,4 +601,13 @@ func NewErrDocCreate(inner error) error {
 // a doc to a collection
 func NewErrDocUpdate(inner error) error {
 	return errors.Wrap(errDocUpdate, inner)
+}
+
+func NewErrOneOneAlreadyLinked(documentId, targetId, relationName string) error {
+	return errors.New(
+		errOneOneAlreadyLinked,
+		errors.NewKV("DocumentID", documentId),
+		errors.NewKV("TargetID", targetId),
+		errors.NewKV("RelationName", relationName),
+	)
 }

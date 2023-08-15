@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -1019,6 +1020,11 @@ func (c *collection) save(
 				continue
 			}
 
+			err = c.validateOneToOneLinkDoesntAlreadyExist(ctx, txn, doc.Key().String(), fieldDescription, val.Value())
+			if err != nil {
+				return cid.Undef, err
+			}
+
 			node, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
@@ -1080,6 +1086,108 @@ func (c *collection) save(
 	})
 
 	return headNode.Cid(), nil
+}
+
+func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
+	ctx context.Context,
+	txn datastore.Txn,
+	docKey string,
+	fieldDescription client.FieldDescription,
+	value any,
+) error {
+	if !fieldDescription.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) {
+		return nil
+	}
+
+	if value == nil {
+		return nil
+	}
+
+	objFieldDescription, ok := c.desc.Schema.GetField(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
+	if !ok {
+		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
+	}
+	if !objFieldDescription.RelationType.IsSet(client.Relation_Type_ONEONE) {
+		return nil
+	}
+
+	fetcher := c.newFetcher()
+
+	err := fetcher.Init(ctx, txn, &c.desc, []client.FieldDescription{fieldDescription}, nil, nil, false, false)
+	if err != nil {
+		closeErr := fetcher.Close()
+		if closeErr != nil {
+			return errors.Wrap(err.Error(), closeErr)
+		}
+		return err
+	}
+
+	colPrefix := core.DataStoreKey{CollectionID: c.desc.IDString()}
+	err = fetcher.Start(ctx, core.NewSpans(core.NewSpan(colPrefix, colPrefix.PrefixEnd())))
+	if err != nil {
+		closeErr := fetcher.Close()
+		if closeErr != nil {
+			return errors.Wrap(err.Error(), closeErr)
+		}
+		return err
+	}
+
+	var alreadyLinked bool
+	var existingDocumentID string
+fetchLoop:
+	for {
+		doc, _, err := fetcher.FetchNext(ctx)
+		if err != nil {
+			closeErr := fetcher.Close()
+			if closeErr != nil {
+				return errors.Wrap(err.Error(), closeErr)
+			}
+			return err
+		}
+		if doc == nil {
+			err = fetcher.Close()
+			if err != nil {
+				return err
+			}
+			break
+		}
+
+		existingDocumentID = string(doc.Key())
+		if string(doc.Key()) == docKey {
+			continue
+		}
+
+		props, err := doc.Properties(false)
+		if err != nil {
+			closeErr := fetcher.Close()
+			if closeErr != nil {
+				return errors.Wrap(err.Error(), closeErr)
+			}
+			return err
+		}
+
+		for field, fetchedValue := range props {
+			if field.ID != fieldDescription.ID {
+				continue
+			}
+
+			if value == fetchedValue {
+				alreadyLinked = true
+				break fetchLoop
+			}
+		}
+	}
+
+	err = fetcher.Close()
+	if err != nil {
+		return err
+	}
+
+	if alreadyLinked {
+		return NewErrOneOneAlreadyLinked(docKey, existingDocumentID, objFieldDescription.RelationName)
+	}
+
+	return nil
 }
 
 // Delete will attempt to delete a document by key will return true if a deletion is successful,
