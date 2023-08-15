@@ -15,15 +15,12 @@ import (
 	"fmt"
 	"strings"
 
-	cbor "github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/planner"
 )
 
@@ -133,16 +130,17 @@ func (c *collection) updateWithKey(
 	if err != nil {
 		return nil, err
 	}
-	v, err := doc.ToMap()
-	if err != nil {
-		return nil, err
-	}
 
 	if isPatch {
 		// todo
 	} else {
-		err = c.applyMerge(ctx, txn, v, parsedUpdater.GetObject())
+		err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = c.save(ctx, txn, doc, false)
 	if err != nil {
 		return nil, err
 	}
@@ -180,16 +178,17 @@ func (c *collection) updateWithKeys(
 		if err != nil {
 			return nil, err
 		}
-		v, err := doc.ToMap()
-		if err != nil {
-			return nil, err
-		}
 
 		if isPatch {
 			// todo
 		} else {
-			err = c.applyMerge(ctx, txn, v, parsedUpdater.GetObject())
+			err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
 		}
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = c.save(ctx, txn, doc, false)
 		if err != nil {
 			return nil, err
 		}
@@ -262,141 +261,68 @@ func (c *collection) updateWithFilter(
 		}
 
 		// Get the document, and apply the patch
-		doc := docMap.ToMap(selectionPlan.Value())
+		docAsMap := docMap.ToMap(selectionPlan.Value())
+		doc, err := client.NewDocFromMap(docAsMap)
+		if err != nil {
+			return nil, err
+		}
+
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
-			err = c.applyMerge(ctx, txn, doc, parsedUpdater.GetObject())
+			err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
 		}
 		if err != nil {
 			return nil, err
 		}
 
+		_, err = c.save(ctx, txn, doc, false)
+		if err != nil {
+			return nil, err
+		}
+
 		// add successful updated doc to results
-		results.DocKeys = append(results.DocKeys, doc[request.KeyFieldName].(string))
+		results.DocKeys = append(results.DocKeys, doc.Key().String())
 		results.Count++
 	}
 
 	return results, nil
 }
 
-func (c *collection) applyMerge(
-	ctx context.Context,
-	txn datastore.Txn,
-	doc map[string]any,
+// applyMergeToDoc applies the given json merge to the given Defra doc.
+//
+// It does not save the document.
+func (c *collection) applyMergeToDoc(
+	doc *client.Document,
 	merge *fastjson.Object,
 ) error {
-	keyStr, ok := doc["_key"].(string)
-	if !ok {
-		return ErrDocMissingKey
-	}
-	key := c.getPrimaryKey(keyStr)
-	links := make([]core.DAGLink, 0)
-
 	mergeMap := make(map[string]*fastjson.Value)
 	merge.Visit(func(k []byte, v *fastjson.Value) {
 		mergeMap[string(k)] = v
 	})
 
-	mergeCBOR := make(map[string]any)
-
 	for mfield, mval := range mergeMap {
-		if mval.Type() == fastjson.TypeObject {
-			return ErrInvalidMergeValueType
+		fd, isValidField := c.desc.Schema.GetField(mfield)
+		if !isValidField {
+			return client.NewErrFieldNotExist(mfield)
 		}
 
-		fd, isValidAliasField := c.desc.Schema.GetField(mfield + request.RelatedObjectID)
-		if isValidAliasField {
-			// Overwrite the key with aliased name to the internal related object name.
-			oldKey := mfield
-			mfield = mfield + request.RelatedObjectID
-			mergeMap[mfield] = mval
-			delete(mergeMap, oldKey)
-		} else {
-			var isValidField bool
-			fd, isValidField = c.desc.Schema.GetField(mfield)
+		if fd.Kind == client.FieldKind_FOREIGN_OBJECT {
+			fd, isValidField = c.desc.Schema.GetField(mfield + request.RelatedObjectID)
 			if !isValidField {
 				return client.NewErrFieldNotExist(mfield)
 			}
-		}
-
-		relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fd)
-		if isSecondaryRelationID {
-			primaryId, err := getString(mval)
-			if err != nil {
-				return err
-			}
-
-			err = c.patchPrimaryDoc(ctx, txn, relationFieldDescription, keyStr, primaryId)
-			if err != nil {
-				return err
-			}
-
-			// If this field was a secondary relation ID the related document will have been
-			// updated instead and we should discard this merge item
-			continue
 		}
 
 		cborVal, err := validateFieldSchema(mval, fd)
 		if err != nil {
 			return err
 		}
-		mergeCBOR[mfield] = cborVal
 
-		val := client.NewCBORValue(fd.Typ, cborVal)
-		fieldKey, fieldExists := c.tryGetFieldKey(key, mfield)
-		if !fieldExists {
-			return client.NewErrFieldNotExist(mfield)
-		}
-
-		c, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
+		err = doc.Set(fd.Name, cborVal)
 		if err != nil {
 			return err
 		}
-
-		links = append(links, core.DAGLink{
-			Name: mfield,
-			Cid:  c.Cid(),
-		})
-	}
-
-	// Update CompositeDAG
-	em, err := cbor.CanonicalEncOptions().EncMode()
-	if err != nil {
-		return err
-	}
-	buf, err := em.Marshal(mergeCBOR)
-	if err != nil {
-		return err
-	}
-
-	headNode, priority, err := c.saveValueToMerkleCRDT(
-		ctx,
-		txn,
-		key.ToDataStoreKey(),
-		client.COMPOSITE,
-		buf,
-		links,
-		client.Active,
-	)
-	if err != nil {
-		return err
-	}
-
-	if c.db.events.Updates.HasValue() {
-		txn.OnSuccess(
-			func() {
-				c.db.events.Updates.Value().Publish(
-					events.Update{
-						DocKey:   keyStr,
-						Cid:      headNode.Cid(),
-						SchemaID: c.schemaID,
-						Block:    headNode,
-						Priority: priority,
-					},
-				)
-			},
-		)
 	}
 
 	return nil

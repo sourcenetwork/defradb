@@ -1282,13 +1282,6 @@ func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) e
 	return nil
 }
 
-func (c *collection) getPrimaryKey(docKey string) core.PrimaryDataStoreKey {
-	return core.PrimaryDataStoreKey{
-		CollectionId: fmt.Sprint(c.colID),
-		DocKey:       docKey,
-	}
-}
-
 func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryDataStoreKey {
 	return core.PrimaryDataStoreKey{
 		CollectionId: fmt.Sprint(c.colID),
