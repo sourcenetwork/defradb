@@ -93,6 +93,11 @@ func toSelect(
 		return nil, err
 	}
 
+	fields, err = resolveSecondaryRelationIDs(descriptionsRepo, desc, mapping, fields)
+	if err != nil {
+		return nil, err
+	}
+
 	// Resolve groupBy mappings i.e. alias remapping and handle missed inner group.
 	if selectRequest.GroupBy.HasValue() {
 		groupByFields := selectRequest.GroupBy.Value().Fields
@@ -804,39 +809,12 @@ sourceLoop:
 		propertyMapped := len(mapping.IndexesByName[key]) != 0
 
 		if !propertyMapped {
-			index := mapping.GetNextIndex()
-
-			dummyParsed := &request.Select{
-				Field: request.Field{
-					Name: key,
-				},
-			}
-
-			childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+			join, err := constructEmptyJoin(descriptionsRepo, parentCollectionName, mapping, key)
 			if err != nil {
 				return nil, err
 			}
 
-			childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
-			if err != nil {
-				return nil, err
-			}
-			childMapping = childMapping.CloneWithoutRender()
-			mapping.SetChildAt(index, childMapping)
-
-			dummyJoin := &Select{
-				Targetable: Targetable{
-					Field: Field{
-						Index: index,
-						Name:  key,
-					},
-				},
-				CollectionName:  childCollectionName,
-				DocumentMapping: childMapping,
-			}
-
-			newFields = append(newFields, dummyJoin)
-			mapping.Add(index, key)
+			newFields = append(newFields, join)
 		}
 
 		keyIndex := mapping.FirstIndexOfName(key)
@@ -926,6 +904,131 @@ sourceLoop:
 	}
 
 	return newFields, nil
+}
+
+// constructEmptyJoin constructs a valid empty join with no requested fields.
+func constructEmptyJoin(
+	descriptionsRepo *DescriptionsRepo,
+	parentCollectionName string,
+	parentMapping *core.DocumentMapping,
+	name string,
+) (*Select, error) {
+	index := parentMapping.GetNextIndex()
+
+	dummyParsed := &request.Select{
+		Field: request.Field{
+			Name: name,
+		},
+	}
+
+	childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+	if err != nil {
+		return nil, err
+	}
+	childMapping = childMapping.CloneWithoutRender()
+	parentMapping.SetChildAt(index, childMapping)
+	parentMapping.Add(index, name)
+
+	return &Select{
+		Targetable: Targetable{
+			Field: Field{
+				Index: index,
+				Name:  name,
+			},
+		},
+		CollectionName:  childCollectionName,
+		DocumentMapping: childMapping,
+	}, nil
+}
+
+// resolveSecondaryRelationIDs contructs the required stuff needed to resolve secondary relation ids.
+//
+// They are handled by joining (if not already done so) the related object and copying its key into the
+// secondary relation id field.
+//
+// They copying itself is handled within [typeJoinOne].
+func resolveSecondaryRelationIDs(
+	descriptionsRepo *DescriptionsRepo,
+	desc *client.CollectionDescription,
+	mapping *core.DocumentMapping,
+	requestables []Requestable,
+) ([]Requestable, error) {
+	fields := requestables
+
+	for _, requestable := range requestables {
+		existingField, isField := requestable.(*Field)
+		if !isField {
+			continue
+		}
+
+		fieldDesc, descFound := desc.Schema.GetField(existingField.Name)
+		if !descFound {
+			continue
+		}
+
+		if !fieldDesc.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) {
+			continue
+		}
+
+		objectFieldDesc, descFound := desc.Schema.GetField(
+			strings.TrimSuffix(existingField.Name, request.RelatedObjectID),
+		)
+		if !descFound {
+			continue
+		}
+
+		if objectFieldDesc.RelationName == "" {
+			continue
+		}
+
+		var siblingFound bool
+		for _, siblingRequestable := range requestables {
+			siblingSelect, isSelect := siblingRequestable.(*Select)
+			if !isSelect {
+				continue
+			}
+
+			siblingFieldDesc, descFound := desc.Schema.GetField(siblingSelect.Field.Name)
+			if !descFound {
+				continue
+			}
+
+			if siblingFieldDesc.RelationName != objectFieldDesc.RelationName {
+				continue
+			}
+
+			if siblingFieldDesc.Kind != client.FieldKind_FOREIGN_OBJECT {
+				continue
+			}
+
+			siblingFound = true
+			break
+		}
+
+		if !siblingFound {
+			objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
+
+			// We only require the dockey of the related object, so an empty join is all we need.
+			join, err := constructEmptyJoin(
+				descriptionsRepo,
+				desc.Name,
+				mapping,
+				objectFieldName,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			fields = append(fields, join)
+		}
+	}
+
+	return fields, nil
 }
 
 // ToCommitSelect converts the given [request.CommitSelect] into a [CommitSelect].
