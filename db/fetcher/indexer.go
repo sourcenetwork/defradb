@@ -1,3 +1,13 @@
+// Copyright 2023 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package fetcher
 
 import (
@@ -7,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/fxamacker/cbor/v2"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -16,12 +27,26 @@ import (
 	"github.com/ipfs/go-datastore/query"
 )
 
+const (
+	opEq    = "_eq"
+	opGt    = "_gt"
+	opGe    = "_ge"
+	opLt    = "_lt"
+	opLe    = "_le"
+	opNe    = "_ne"
+	opIn    = "_in"
+	opNin   = "_nin"
+	opLike  = "_like"
+	opNlike = "_nlike"
+)
+
 type IndexFetcher struct {
 	docFetcher         Fetcher
 	col                *client.CollectionDescription
 	txn                datastore.Txn
 	filter             *mapper.Filter
 	doc                *encodedDocument
+	mapping            *core.DocumentMapping
 	index              client.IndexDescription
 	indexedField       client.FieldDescription
 	docFields          []client.FieldDescription
@@ -241,7 +266,7 @@ func (f *IndexFetcher) createFilteredIndexQueryProvider(
 		break
 	}
 
-	if op == "_eq" || op == "_gt" || op == "_ge" || op == "_lt" || op == "_le" || op == "_ne" {
+	if op == opEq || op == opGt || op == opGe || op == opLt || op == opLe || op == opNe {
 		writableValue := client.NewCBORValue(client.LWW_REGISTER, filterVal)
 
 		valueBytes, err := writableValue.Bytes()
@@ -249,38 +274,38 @@ func (f *IndexFetcher) createFilteredIndexQueryProvider(
 			return nil, err
 		}
 
-		if op == "_eq" {
+		if op == opEq {
 			return &eqIndexQueryProvider{
 				indexKey:  f.indexDataStoreKey,
 				filterVal: valueBytes,
 			}, nil
-		} else if op == "_gt" {
+		} else if op == opGt {
 			return &cmpIndexQueryProvider{
 				indexKey: f.indexDataStoreKey,
 				filter:   &gtIndexCmp{value: valueBytes},
 			}, nil
-		} else if op == "_ge" {
+		} else if op == opGe {
 			return &cmpIndexQueryProvider{
 				indexKey: f.indexDataStoreKey,
 				filter:   &geIndexCmp{value: valueBytes},
 			}, nil
-		} else if op == "_lt" {
+		} else if op == opLt {
 			return &cmpIndexQueryProvider{
 				indexKey: f.indexDataStoreKey,
 				filter:   &ltIndexCmp{value: valueBytes},
 			}, nil
-		} else if op == "_le" {
+		} else if op == opLe {
 			return &cmpIndexQueryProvider{
 				indexKey: f.indexDataStoreKey,
 				filter:   &leIndexCmp{value: valueBytes},
 			}, nil
-		} else if op == "_ne" {
+		} else if op == opNe {
 			return &cmpIndexQueryProvider{
 				indexKey: f.indexDataStoreKey,
 				filter:   &neIndexCmp{value: valueBytes},
 			}, nil
 		}
-	} else if op == "_in" || op == "_nin" {
+	} else if op == opIn || op == opNin {
 		inArr, ok := filterVal.([]any)
 		if !ok {
 			return nil, errors.New("invalid _in/_nin value")
@@ -294,7 +319,7 @@ func (f *IndexFetcher) createFilteredIndexQueryProvider(
 			}
 			valArr = append(valArr, valueBytes)
 		}
-		if op == "_in" {
+		if op == opIn {
 			return &cmpIndexQueryProvider{
 				indexKey: f.indexDataStoreKey,
 				filter:   newNinIndexCmp(valArr, true),
@@ -305,12 +330,12 @@ func (f *IndexFetcher) createFilteredIndexQueryProvider(
 				filter:   newNinIndexCmp(valArr, false),
 			}, nil
 		}
-	} else if op == "_like" {
+	} else if op == opLike {
 		return &cmpIndexQueryProvider{
 			indexKey: f.indexDataStoreKey,
 			filter:   newLikeIndexCmp(filterVal.(string), true),
 		}, nil
-	} else if op == "_nlike" {
+	} else if op == opNlike {
 		return &cmpIndexQueryProvider{
 			indexKey: f.indexDataStoreKey,
 			filter:   newLikeIndexCmp(filterVal.(string), false),
@@ -333,7 +358,7 @@ func (f *IndexFetcher) Init(
 	f.col = col
 	f.filter = filter
 	f.doc = &encodedDocument{}
-	f.doc.mapping = docMapper
+	f.mapping = docMapper
 	f.txn = txn
 
 	f.indexDataStoreKey.CollectionID = f.col.ID
@@ -381,13 +406,13 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 	}
 
 	f.doc.key = indexKey.FieldValues[1]
-	f.doc.Properties[f.indexedField] = property
+	f.doc.properties[f.indexedField] = property
 
 	var resultExecInfo ExecInfo
 	if f.docFetcher != nil {
 		targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
 		spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
-		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.filter, f.doc.mapping, false, false)
+		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.filter, f.mapping, false, false)
 		if err != nil {
 			return nil, ExecInfo{}, err
 		}
@@ -407,43 +432,6 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		f.doc.MergeProperties(encDoc)
 	}
 	return f.doc, resultExecInfo, nil
-}
-
-func (f *IndexFetcher) FetchNextDecoded(ctx context.Context) (*client.Document, ExecInfo, error) {
-	encDoc, execInfo, err := f.FetchNext(ctx)
-	if err != nil {
-		return nil, ExecInfo{}, err
-	}
-	if encDoc == nil {
-		return nil, execInfo, nil
-	}
-
-	decodedDoc, err := encDoc.Decode()
-	if err != nil {
-		return nil, ExecInfo{}, err
-	}
-
-	return decodedDoc, execInfo, nil
-}
-
-func (f *IndexFetcher) FetchNextDoc(
-	ctx context.Context,
-	mapping *core.DocumentMapping,
-) ([]byte, core.Doc, ExecInfo, error) {
-	encDoc, execInfo, err := f.FetchNext(ctx)
-	if err != nil {
-		return nil, core.Doc{}, ExecInfo{}, err
-	}
-	if encDoc == nil {
-		return nil, core.Doc{}, execInfo, nil
-	}
-
-	doc, err := encDoc.DecodeToDoc()
-	if err != nil {
-		return nil, core.Doc{}, ExecInfo{}, err
-	}
-	doc.Status = client.Active
-	return encDoc.Key(), doc, ExecInfo{}, err
 }
 
 func (f *IndexFetcher) Close() error {

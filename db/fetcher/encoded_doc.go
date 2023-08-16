@@ -136,8 +136,8 @@ func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
 	if !ok {
 		return
 	}
-	for field, prop := range otherEncDoc.Properties {
-		encdoc.Properties[field] = prop
+	for field, prop := range otherEncDoc.properties {
+		encdoc.properties[field] = prop
 	}
 	if other.Key() != nil {
 		encdoc.key = other.Key()
