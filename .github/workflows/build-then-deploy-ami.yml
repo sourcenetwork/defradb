@@ -40,8 +40,7 @@ jobs:
   build-ami-with-packer:
     name: Build ami with packer job
 
-    runs-on: 
-      labels: bigboy-runner
+    runs-on: bigboy-runner
 
     defaults:
       run:
@@ -82,8 +81,7 @@ jobs:
     needs:
       - build-ami-with-packer
 
-    runs-on: 
-      labels: bigboy-runner
+    runs-on: bigboy-runner
 
     defaults:
       run:

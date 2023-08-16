@@ -27,8 +27,7 @@ jobs:
   code-test-coverage:
     name: Code test coverage job
 
-    runs-on: 
-      labels: bigboy-runner
+    runs-on: bigboy-runner
 
     steps:
       - name: Checkout code

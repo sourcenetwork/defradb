@@ -27,8 +27,7 @@ jobs:
   start-binary:
     name: Start binary job
 
-    runs-on: 
-      labels: bigboy-runner
+    runs-on: bigboy-runner
 
     steps:
 

@@ -24,8 +24,7 @@ jobs:
   push-docker-image-to-registries:
     name: Push Docker image to registries job
 
-    runs-on: 
-      labels: bigboy-runner
+    runs-on: bigboy-runner
 
     permissions:
       packages: write

@@ -34,8 +34,7 @@ jobs:
 
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
-    runs-on: 
-      labels: bigboy-runner
+    runs-on: bigboy-runner
 
     strategy:
       fail-fast: false
