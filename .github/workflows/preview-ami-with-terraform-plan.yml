@@ -39,7 +39,7 @@ env:
 jobs:
   preview-ami-with-terraform-plan:
     name: Preview ami with terraform plan job
-    runs-on: ubuntu-latest
+    runs-on: bigboy-runner
 
     defaults:
       run:

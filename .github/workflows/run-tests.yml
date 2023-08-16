@@ -22,7 +22,7 @@ jobs:
   run-tests:
     name: Run tests job
 
-    runs-on: ubuntu-latest
+    runs-on: bigboy-runner
 
     steps:
       - name: Checkout code into the directory

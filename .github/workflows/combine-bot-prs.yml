@@ -41,7 +41,7 @@ jobs:
   combine-bot-prs:
     name: Combine bot prs job
 
-    runs-on: ubuntu-latest
+    runs-on: bigboy-runner
 
     steps:
       - uses: actions/github-script@v6

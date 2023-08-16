@@ -24,7 +24,7 @@ jobs:
   push-docker-image-to-registries:
     name: Push Docker image to registries job
 
-    runs-on: ubuntu-latest
+    runs-on: bigboy-runner
 
     permissions:
       packages: write
