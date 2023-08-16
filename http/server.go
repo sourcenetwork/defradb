@@ -25,6 +25,7 @@ const txHeaderName = "x-defradb-tx"
 type Server struct {
 	db     client.DB
 	router *gin.Engine
+	txs    *sync.Map
 }
 
 func NewServer(db client.DB) *Server {
@@ -93,6 +94,7 @@ func NewServer(db client.DB) *Server {
 	return &Server{
 		db:     db,
 		router: router,
+		txs:    txs,
 	}
 }
 

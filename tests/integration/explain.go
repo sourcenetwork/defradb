@@ -157,7 +157,7 @@ func assertExplainRequestResults(
 		assert.Fail(t, "Expected an error however none was raised.", description)
 	}
 
-	resultantData, _ := actualResult.Data.([]map[string]any)
+	resultantData := actualResult.Data.([]map[string]any)
 	log.Info(ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph

@@ -30,7 +30,7 @@ type CreateTxResponse struct {
 
 func (h *TxHandler) NewTxn(c *gin.Context) {
 	db := c.MustGet("db").(client.DB)
-	readOnly, _ := strconv.ParseBool(c.Query("readOnly"))
+	readOnly, _ := strconv.ParseBool(c.Query("read_only"))
 
 	tx, err := db.NewTxn(c.Request.Context(), readOnly)
 	if err != nil {
@@ -44,7 +44,7 @@ func (h *TxHandler) NewTxn(c *gin.Context) {
 
 func (h *TxHandler) NewConcurrentTxn(c *gin.Context) {
 	db := c.MustGet("db").(client.DB)
-	readOnly, _ := strconv.ParseBool(c.Query("readOnly"))
+	readOnly, _ := strconv.ParseBool(c.Query("read_only"))
 
 	tx, err := db.NewConcurrentTxn(c.Request.Context(), readOnly)
 	if err != nil {
@@ -57,12 +57,17 @@ func (h *TxHandler) NewConcurrentTxn(c *gin.Context) {
 }
 
 func (h *TxHandler) Commit(c *gin.Context) {
-	txVal, ok := h.txs.LoadAndDelete(c.Param("id"))
+	txId, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
+		return
+	}
+	txVal, ok := h.txs.LoadAndDelete(txId)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
 		return
 	}
-	err := txVal.(datastore.Txn).Commit(c.Request.Context())
+	err = txVal.(datastore.Txn).Commit(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -71,7 +76,12 @@ func (h *TxHandler) Commit(c *gin.Context) {
 }
 
 func (h *TxHandler) Discard(c *gin.Context) {
-	txVal, ok := h.txs.LoadAndDelete(c.Param("id"))
+	txId, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
+		return
+	}
+	txVal, ok := h.txs.LoadAndDelete(txId)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
 		return

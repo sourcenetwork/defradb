@@ -124,11 +124,27 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 }
 
 func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
-	return w.client.NewTxn(ctx, readOnly)
+	client, err := w.client.NewTxn(ctx, readOnly)
+	if err != nil {
+		return nil, err
+	}
+	server, ok := w.server.txs.Load(client.ID())
+	if !ok {
+		return nil, fmt.Errorf("failed to get server transaction")
+	}
+	return &TxWrapper{server.(datastore.Txn), client}, nil
 }
 
 func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
-	return w.client.NewConcurrentTxn(ctx, readOnly)
+	client, err := w.client.NewConcurrentTxn(ctx, readOnly)
+	if err != nil {
+		return nil, err
+	}
+	server, ok := w.server.txs.Load(client.ID())
+	if !ok {
+		return nil, fmt.Errorf("failed to get server transaction")
+	}
+	return &TxWrapper{server.(datastore.Txn), client}, nil
 }
 
 func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {

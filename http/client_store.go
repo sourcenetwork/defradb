@@ -47,7 +47,7 @@ func NewStoreClient(rawURL string) (*StoreClient, error) {
 func (c *StoreClient) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
 	query := url.Values{}
 	if readOnly {
-		query.Add("readOnly", "true")
+		query.Add("read_only", "true")
 	}
 
 	methodURL := c.http.baseURL.JoinPath("tx")
@@ -67,7 +67,7 @@ func (c *StoreClient) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn,
 func (c *StoreClient) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
 	query := url.Values{}
 	if readOnly {
-		query.Add("readOnly", "true")
+		query.Add("read_only", "true")
 	}
 
 	methodURL := c.http.baseURL.JoinPath("tx", "concurrent")

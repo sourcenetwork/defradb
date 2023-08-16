@@ -50,15 +50,15 @@ func (c *TxClient) Discard(ctx context.Context) {
 }
 
 func (c *TxClient) OnSuccess(fn func()) {
-	// do nothing
+	panic("client side transaction")
 }
 
 func (c *TxClient) OnError(fn func()) {
-	// do nothing
+	panic("client side transaction")
 }
 
 func (c *TxClient) OnDiscard(fn func()) {
-	// do thing
+	panic("client side transaction")
 }
 
 func (c *TxClient) Rootstore() datastore.DSReaderWriter {

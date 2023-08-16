@@ -62,15 +62,11 @@ func (c *CollectionClient) SchemaID() string {
 func (c *CollectionClient) Create(ctx context.Context, doc *client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
-	docMap, err := doc.ToMap()
+	body, err := doc.String()
 	if err != nil {
 		return err
 	}
-	body, err := json.Marshal(docMap)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -292,7 +288,7 @@ func (c *CollectionClient) Get(ctx context.Context, key client.DocKey, showDelet
 		return nil, err
 	}
 	var docMap map[string]any
-	if err := c.http.requestJson(req, docMap); err != nil {
+	if err := c.http.requestJson(req, &docMap); err != nil {
 		return nil, err
 	}
 	return client.NewDocFromMap(docMap)
@@ -301,7 +297,11 @@ func (c *CollectionClient) Get(ctx context.Context, key client.DocKey, showDelet
 func (c *CollectionClient) WithTxn(tx datastore.Txn) client.Collection {
 	txId := fmt.Sprintf("%d", tx.ID())
 	http := c.http.withTxn(txId)
-	return &CollectionClient{http, c.desc}
+
+	return &CollectionClient{
+		http: http,
+		desc: c.desc,
+	}
 }
 
 func (c *CollectionClient) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
@@ -381,7 +381,7 @@ func (c *CollectionClient) GetIndexes(ctx context.Context) ([]client.IndexDescri
 		return nil, err
 	}
 	var indexes []client.IndexDescription
-	if err := c.http.requestJson(req, indexes); err != nil {
+	if err := c.http.requestJson(req, &indexes); err != nil {
 		return nil, err
 	}
 	return c.desc.Indexes, nil

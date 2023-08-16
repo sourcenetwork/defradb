@@ -80,7 +80,7 @@ func (c *LensClient) MigrateUp(
 		return nil, err
 	}
 	var result enumerable.Enumerable[map[string]any]
-	if err := c.http.requestJson(req, result); err != nil {
+	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -102,7 +102,7 @@ func (c *LensClient) MigrateDown(
 		return nil, err
 	}
 	var result enumerable.Enumerable[map[string]any]
-	if err := c.http.requestJson(req, result); err != nil {
+	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -116,7 +116,7 @@ func (c *LensClient) Config(ctx context.Context) ([]client.LensConfig, error) {
 		return nil, err
 	}
 	var cfgs []client.LensConfig
-	if err := c.http.requestJson(req, cfgs); err != nil {
+	if err := c.http.requestJson(req, &cfgs); err != nil {
 		return nil, err
 	}
 	return cfgs, nil
