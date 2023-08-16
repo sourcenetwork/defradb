@@ -11,6 +11,7 @@
 package http
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -34,13 +35,8 @@ type CollectionUpdateRequest struct {
 }
 
 func (s *CollectionHandler) Create(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 	var body any
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -79,13 +75,8 @@ func (s *CollectionHandler) Create(c *gin.Context) {
 }
 
 func (s *CollectionHandler) Save(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 	var docMap map[string]any
 	if err := c.ShouldBindJSON(&docMap); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -109,13 +100,8 @@ func (s *CollectionHandler) Save(c *gin.Context) {
 }
 
 func (s *CollectionHandler) DeleteWith(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 	var request CollectionDeleteRequest
 	if err := c.ShouldBind(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -164,13 +150,8 @@ func (s *CollectionHandler) DeleteWith(c *gin.Context) {
 }
 
 func (s *CollectionHandler) UpdateWith(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 	var request CollectionUpdateRequest
 	if err := c.ShouldBind(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -219,13 +200,8 @@ func (s *CollectionHandler) UpdateWith(c *gin.Context) {
 }
 
 func (s *CollectionHandler) Update(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 	var docMap map[string]any
 	if err := c.ShouldBindJSON(&docMap); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -249,13 +225,8 @@ func (s *CollectionHandler) Update(c *gin.Context) {
 }
 
 func (s *CollectionHandler) Delete(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 	docKey, err := client.NewDocKeyFromString(c.Param("key"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -270,13 +241,8 @@ func (s *CollectionHandler) Delete(c *gin.Context) {
 }
 
 func (s *CollectionHandler) Get(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 	docKey, err := client.NewDocKeyFromString(c.Param("key"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -290,14 +256,32 @@ func (s *CollectionHandler) Get(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (s *CollectionHandler) CreateIndex(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *CollectionHandler) GetAllDocKeys(c *gin.Context) {
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
+	docKeyCh, err := col.GetAllDocKeys(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+
+	c.Stream(func(w io.Writer) bool {
+		docKey, open := <-docKeyCh
+		if !open {
+			return false
+		}
+		c.SSEvent("next", docKey)
+		return true
+	})
+}
+
+func (s *CollectionHandler) CreateIndex(c *gin.Context) {
+	col := c.MustGet("col").(client.Collection)
+
 	var indexDesc client.IndexDescription
 	if err := c.ShouldBind(&indexDesc); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -312,13 +296,8 @@ func (s *CollectionHandler) CreateIndex(c *gin.Context) {
 }
 
 func (s *CollectionHandler) GetIndexes(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 	indexes, err := col.GetIndexes(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -328,14 +307,9 @@ func (s *CollectionHandler) GetIndexes(c *gin.Context) {
 }
 
 func (s *CollectionHandler) DropIndex(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	col := c.MustGet("col").(client.Collection)
 
-	col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	err = col.DropIndex(c.Request.Context(), c.Param("index"))
+	err := col.DropIndex(c.Request.Context(), c.Param("index"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

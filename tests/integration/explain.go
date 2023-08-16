@@ -12,6 +12,7 @@ package tests
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"sort"
 	"testing"
@@ -156,30 +157,26 @@ func assertExplainRequestResults(
 		assert.Fail(t, "Expected an error however none was raised.", description)
 	}
 
-	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
-	resultantData := actualResult.Data.([]map[string]any)
+	resultantData, _ := actualResult.Data.([]map[string]any)
 	log.Info(ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
-	if lengthOfExpectedFullGraph := len(action.ExpectedFullGraph); action.ExpectedFullGraph != nil {
-		require.Equal(t, lengthOfExpectedFullGraph, len(resultantData), description)
-		for index, actualResult := range resultantData {
-			if lengthOfExpectedFullGraph > index {
-				assert.Equal(
-					t,
-					action.ExpectedFullGraph[index],
-					actualResult,
-					description,
-				)
-			}
-		}
+	if action.ExpectedFullGraph != nil {
+		expectedJson, err := json.Marshal(action.ExpectedFullGraph)
+		require.NoError(t, err)
+
+		resultJson, err := json.Marshal(actualResult.Data)
+		require.NoError(t, err)
+
+		assert.JSONEq(t, string(expectedJson), string(resultJson))
 	}
 
 	// Ensure the complete high-level pattern matches, inother words check that all the
 	// explain graph nodes are in the correct expected ordering.
 	if action.ExpectedPatterns != nil {
 		require.Equal(t, len(action.ExpectedPatterns), len(resultantData), description)
+
 		for index, actualResult := range resultantData {
 			// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
 			actualResultWithoutAttributes := trimExplainAttributes(t, description, actualResult)

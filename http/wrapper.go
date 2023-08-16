@@ -14,9 +14,7 @@ import (
 	"context"
 	"fmt"
 	"net/http/httptest"
-	"strconv"
 
-	"github.com/gin-gonic/gin"
 	blockstore "github.com/ipfs/boxo/blockstore"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -24,41 +22,20 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
-var _ client.Store = (*Wrapper)(nil)
-var _ client.DB = (*Wrapper)(nil)
+var (
+	_ client.Store = (*Wrapper)(nil)
+	_ client.DB    = (*Wrapper)(nil)
+)
 
 type Wrapper struct {
-	db    client.DB
-	txMap map[uint64]datastore.Txn
-
+	db         client.DB
 	server     *Server
 	client     *StoreClient
 	httpServer *httptest.Server
 }
 
 func NewWrapper(db client.DB) (*Wrapper, error) {
-	txMap := make(map[uint64]datastore.Txn)
-	txMiddleware := func(c *gin.Context) {
-		txValue := c.GetHeader(txHeaderName)
-		if txValue == "" {
-			c.Next()
-			return
-		}
-		txId, err := strconv.ParseUint(txValue, 10, 64)
-		if err != nil {
-			c.Next()
-			return
-		}
-		tx, ok := txMap[txId]
-		if !ok {
-			c.Next()
-			return
-		}
-		c.Set("store", db.WithTxn(tx))
-		c.Next()
-	}
-
-	server := NewServer(db, txMiddleware)
+	server := NewServer(db)
 	httpServer := httptest.NewServer(server)
 
 	client, err := NewStoreClient(httpServer.URL)
@@ -68,7 +45,6 @@ func NewWrapper(db client.DB) (*Wrapper, error) {
 
 	return &Wrapper{
 		db,
-		txMap,
 		server,
 		client,
 		httpServer,
@@ -147,32 +123,12 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 	return w.client.ExecRequest(ctx, query)
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, b bool) (datastore.Txn, error) {
-	tx, err := w.db.NewTxn(ctx, b)
-	if err != nil {
-		return nil, err
-	}
-
-	w.txMap[tx.ID()] = tx
-	tx.OnError(func() { delete(w.txMap, tx.ID()) })
-	tx.OnSuccess(func() { delete(w.txMap, tx.ID()) })
-	tx.OnDiscard(func() { delete(w.txMap, tx.ID()) })
-
-	return tx, nil
+func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+	return w.client.NewTxn(ctx, readOnly)
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, b bool) (datastore.Txn, error) {
-	tx, err := w.db.NewConcurrentTxn(ctx, b)
-	if err != nil {
-		return nil, err
-	}
-
-	w.txMap[tx.ID()] = tx
-	tx.OnError(func() { delete(w.txMap, tx.ID()) })
-	tx.OnSuccess(func() { delete(w.txMap, tx.ID()) })
-	tx.OnDiscard(func() { delete(w.txMap, tx.ID()) })
-
-	return tx, nil
+func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+	return w.client.NewConcurrentTxn(ctx, readOnly)
 }
 
 func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {

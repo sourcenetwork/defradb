@@ -12,7 +12,6 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -253,9 +252,6 @@ func (s *StoreHandler) execRequestSubscription(c *gin.Context, pub *events.Publi
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
 
-	c.Status(http.StatusOK)
-	c.Writer.Flush()
-
 	c.Stream(func(w io.Writer) bool {
 		select {
 		case <-c.Request.Context().Done():
@@ -269,7 +265,7 @@ func (s *StoreHandler) execRequestSubscription(c *gin.Context, pub *events.Publi
 			if err != nil {
 				return false
 			}
-			fmt.Fprintf(w, "data: %s\n\n", data)
+			c.SSEvent("next", data)
 			return true
 		}
 	})

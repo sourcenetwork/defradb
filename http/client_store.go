@@ -11,15 +11,19 @@
 package http
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/events"
 )
 
 var _ client.Store = (*StoreClient)(nil)
@@ -38,6 +42,46 @@ func NewStoreClient(rawURL string) (*StoreClient, error) {
 		baseURL: baseURL.JoinPath("/api/v0"),
 	}
 	return &StoreClient{httpClient}, nil
+}
+
+func (c *StoreClient) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+	query := url.Values{}
+	if readOnly {
+		query.Add("readOnly", "true")
+	}
+
+	methodURL := c.http.baseURL.JoinPath("tx")
+	methodURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var txRes CreateTxResponse
+	if err := c.http.requestJson(req, &txRes); err != nil {
+		return nil, err
+	}
+	return &TxClient{txRes.ID, c.http}, nil
+}
+
+func (c *StoreClient) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+	query := url.Values{}
+	if readOnly {
+		query.Add("readOnly", "true")
+	}
+
+	methodURL := c.http.baseURL.JoinPath("tx", "concurrent")
+	methodURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var txRes CreateTxResponse
+	if err := c.http.requestJson(req, &txRes); err != nil {
+		return nil, err
+	}
+	return &TxClient{txRes.ID, c.http}, nil
 }
 
 func (c *StoreClient) SetReplicator(ctx context.Context, rep client.Replicator) error {
@@ -76,7 +120,7 @@ func (c *StoreClient) GetAllReplicators(ctx context.Context) ([]client.Replicato
 		return nil, err
 	}
 	var reps []client.Replicator
-	if err := c.http.requestJson(req, reps); err != nil {
+	if err := c.http.requestJson(req, &reps); err != nil {
 		return nil, err
 	}
 	return reps, nil
@@ -253,28 +297,73 @@ func (c *StoreClient) GetAllIndexes(ctx context.Context) (map[client.CollectionN
 	return indexes, nil
 }
 
-func (c *StoreClient) ExecRequest(ctx context.Context, query string) (result *client.RequestResult) {
+func (c *StoreClient) ExecRequest(ctx context.Context, query string) *client.RequestResult {
 	methodURL := c.http.baseURL.JoinPath("graphql")
-	result = &client.RequestResult{}
+	result := &client.RequestResult{}
 
 	body, err := json.Marshal(&GraphQLRequest{query})
 	if err != nil {
 		result.GQL.Errors = []error{err}
-		return
+		return result
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		result.GQL.Errors = []error{err}
-		return
+		return result
+	}
+	c.http.setDefaultHeaders(req)
+
+	res, err := c.http.client.Do(req)
+	if err != nil {
+		result.GQL.Errors = []error{err}
+		return result
+	}
+	defer res.Body.Close() //nolint:errcheck
+
+	if res.Header.Get("Content-Type") == "text/event-stream" {
+		result.Pub = c.execRequestSubscription(ctx, res.Body)
+		return result
+	}
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		result.GQL.Errors = []error{err}
+		return result
 	}
 	var response GraphQLResponse
-	if err = c.http.requestJson(req, &response); err != nil {
+	if err = json.Unmarshal(data, &response); err != nil {
 		result.GQL.Errors = []error{err}
-		return
+		return result
 	}
 	result.GQL.Data = response.Data
 	for _, err := range response.Errors {
 		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf(err))
 	}
-	return
+	return result
+}
+
+func (c *StoreClient) execRequestSubscription(ctx context.Context, r io.Reader) *events.Publisher[events.Update] {
+	pubCh := events.New[events.Update](0, 0)
+	pub, err := events.NewPublisher[events.Update](pubCh, 0)
+	if err != nil {
+		return nil
+	}
+
+	scanner := bufio.NewScanner(r)
+	go func() {
+		for scanner.Scan() {
+			line := scanner.Text()
+			if !strings.HasPrefix(line, "data:") {
+				continue
+			}
+			line = strings.TrimPrefix(line, "data:")
+
+			var item events.Update
+			if err := json.Unmarshal([]byte(line), &item); err != nil {
+				return
+			}
+			pub.Publish(item)
+		}
+	}()
+
+	return pub
 }

@@ -11,11 +11,13 @@
 package http
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -296,12 +298,48 @@ func (c *CollectionClient) Get(ctx context.Context, key client.DocKey, showDelet
 	return client.NewDocFromMap(docMap)
 }
 
-func (c *CollectionClient) WithTxn(datastore.Txn) client.Collection {
-	return c
+func (c *CollectionClient) WithTxn(tx datastore.Txn) client.Collection {
+	txId := fmt.Sprintf("%d", tx.ID())
+	http := c.http.withTxn(txId)
+	return &CollectionClient{http, c.desc}
 }
 
 func (c *CollectionClient) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
-	return nil, fmt.Errorf("not implemented")
+	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.http.setDefaultHeaders(req)
+
+	res, err := c.http.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close() // nolint:errcheck
+
+	docKeyCh := make(chan client.DocKeysResult)
+	defer close(docKeyCh)
+
+	scanner := bufio.NewScanner(res.Body)
+	go func() {
+		for scanner.Scan() {
+			line := scanner.Text()
+			if !strings.HasPrefix(line, "data:") {
+				continue
+			}
+			line = strings.TrimPrefix(line, "data:")
+
+			var docKey client.DocKeysResult
+			if err := json.Unmarshal([]byte(line), &docKey); err != nil {
+				return
+			}
+			docKeyCh <- docKey
+		}
+	}()
+
+	return docKeyCh, nil
 }
 
 func (c *CollectionClient) CreateIndex(

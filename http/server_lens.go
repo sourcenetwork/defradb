@@ -22,9 +22,9 @@ import (
 type LensHandler struct{}
 
 func (s *LensHandler) ReloadLenses(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	lens := c.MustGet("lens").(client.LensRegistry)
 
-	err := store.LensRegistry().ReloadLenses(c.Request.Context())
+	err := lens.ReloadLenses(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -33,14 +33,14 @@ func (s *LensHandler) ReloadLenses(c *gin.Context) {
 }
 
 func (s *LensHandler) SetMigration(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	lens := c.MustGet("lens").(client.LensRegistry)
 
 	var req client.LensConfig
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err := store.SetMigration(c.Request.Context(), req)
+	err := lens.SetMigration(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -49,14 +49,14 @@ func (s *LensHandler) SetMigration(c *gin.Context) {
 }
 
 func (s *LensHandler) MigrateUp(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	lens := c.MustGet("lens").(client.LensRegistry)
 
 	var src enumerable.Enumerable[map[string]any]
 	if err := c.ShouldBind(src); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := store.LensRegistry().MigrateUp(c.Request.Context(), src, c.Param("version"))
+	result, err := lens.MigrateUp(c.Request.Context(), src, c.Param("version"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -65,14 +65,14 @@ func (s *LensHandler) MigrateUp(c *gin.Context) {
 }
 
 func (s *LensHandler) MigrateDown(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	lens := c.MustGet("lens").(client.LensRegistry)
 
 	var src enumerable.Enumerable[map[string]any]
 	if err := c.ShouldBind(src); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := store.LensRegistry().MigrateDown(c.Request.Context(), src, c.Param("version"))
+	result, err := lens.MigrateDown(c.Request.Context(), src, c.Param("version"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -81,9 +81,9 @@ func (s *LensHandler) MigrateDown(c *gin.Context) {
 }
 
 func (s *LensHandler) Config(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	lens := c.MustGet("lens").(client.LensRegistry)
 
-	cfgs, err := store.LensRegistry().Config(c.Request.Context())
+	cfgs, err := lens.Config(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -92,9 +92,9 @@ func (s *LensHandler) Config(c *gin.Context) {
 }
 
 func (s *LensHandler) HasMigration(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+	lens := c.MustGet("lens").(client.LensRegistry)
 
-	exists, err := store.LensRegistry().HasMigration(c.Request.Context(), c.Param("version"))
+	exists, err := lens.HasMigration(c.Request.Context(), c.Param("version"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
