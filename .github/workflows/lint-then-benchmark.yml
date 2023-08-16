@@ -141,7 +141,8 @@ jobs:
 
     if: needs.decide-benchmark-type.outputs.benchmark-type != 'NONE'
 
-    runs-on: bigboy-runner
+    runs-on: 
+      labels: bigboy-runner
 
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
@@ -300,7 +301,8 @@ jobs:
       needs.start-runner.result == 'success' &&
       needs.decide-benchmark-type.outputs.benchmark-type != 'NONE'
 
-    runs-on: bigboy-runner
+    runs-on: 
+      labels: bigboy-runner
 
     steps:
       - name: Configure AWS credentials

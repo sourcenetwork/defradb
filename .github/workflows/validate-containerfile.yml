@@ -32,7 +32,8 @@ jobs:
   validate-containerfile:
     name: Validate containerfile job
 
-    runs-on: bigboy-runner
+    runs-on: 
+      labels: bigboy-runner
 
     steps:
       - name: Check out the repo

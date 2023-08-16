@@ -27,7 +27,8 @@ jobs:
   detect-change:
     name: Detect change job
 
-    runs-on: bigboy-runner
+    runs-on: 
+      labels: bigboy-runner
 
     steps:
       - name: Checkout code into the directory

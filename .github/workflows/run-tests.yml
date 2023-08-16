@@ -22,7 +22,8 @@ jobs:
   run-tests:
     name: Run tests job
 
-    runs-on: bigboy-runner
+    runs-on: 
+      labels: bigboy-runner
 
     steps:
       - name: Checkout code into the directory

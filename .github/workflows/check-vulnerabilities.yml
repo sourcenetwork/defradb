@@ -27,7 +27,8 @@ jobs:
   check-vulnerabilities:
     name: Check vulnerabilities job
 
-    runs-on: bigboy-runner
+    runs-on: 
+      labels: bigboy-runner
 
     steps:
       - name: Run govulncheck

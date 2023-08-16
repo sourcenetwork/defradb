@@ -24,7 +24,8 @@ jobs:
   validate-title:
     name: Validate title job
 
-    runs-on: bigboy-runner
+    runs-on: 
+      labels: bigboy-runner
 
     steps:
       - name: Checkout code into the directory
