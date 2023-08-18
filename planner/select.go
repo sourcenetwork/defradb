@@ -14,10 +14,12 @@ import (
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/lens"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -250,10 +252,10 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 	// apply the root filter to the source
 	// and rootSubType filters to the selectNode
 	// @todo: simulate splitting for now
-	origScan, ok := n.source.(*scanNode)
-	if ok {
-		origScan.filter = n.filter
+	origScan, isScanNode := n.source.(*scanNode)
+	if isScanNode {
 		origScan.showDeleted = n.selectReq.ShowDeleted
+		origScan.filter = n.filter
 		n.filter = nil
 
 		// If we have both a DocKey and a CID, then we need to run
@@ -285,7 +287,46 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		}
 	}
 
-	return n.initFields(n.selectReq)
+	aggregates, err := n.initFields(n.selectReq)
+	if err != nil {
+		return nil, err
+	}
+
+	if isScanNode {
+		var indexFilter *mapper.Filter
+		typeIndex, indexedFieldDesc := findFieldTypeIndex(origScan)
+		if typeIndex != -1 {
+			field := mapper.Field{Index: typeIndex, Name: indexedFieldDesc.Name}
+			origScan.filter, indexFilter = splitFilterByField(origScan.filter, field)
+		}
+
+		var f fetcher.Fetcher
+		if n.selectReq.Cid.HasValue() {
+			f = new(fetcher.VersionedFetcher)
+		} else {
+			f = new(fetcher.DocumentFetcher)
+			if indexFilter != nil {
+				f = fetcher.NewIndexFetcher(f, indexedFieldDesc, indexFilter)
+			}
+			f = lens.NewFetcher(f, origScan.p.db.LensRegistry())
+		}
+		origScan.fetcher = f
+	}
+
+	return aggregates, nil
+}
+
+func findFieldTypeIndex(scanNode *scanNode) (int, client.FieldDescription) {
+	if scanNode.filter != nil {
+		indexedFields := scanNode.desc.CollectIndexedFields()
+		for i := range indexedFields {
+			typeIndex := scanNode.documentMapping.FirstIndexOfName(indexedFields[i].Name)
+			if scanNode.filter.HasIndex(typeIndex) {
+				return typeIndex, indexedFields[i]
+			}
+		}
+	}
+	return -1, client.FieldDescription{}
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
@@ -374,31 +415,6 @@ func (n *selectNode) addTypeIndexJoin(subSelect *mapper.Select) error {
 }
 
 func (n *selectNode) Source() planNode { return n.source }
-
-// func appendSource() {}
-
-// func (n *selectNode) initRender(
-//     fields []*client.FieldDescription,
-//     aliases []string,
-//) error {
-// 	return n.planner.render(fields, aliases)
-// }
-
-// SubSelect is used for creating Select nodes used on sub selections,
-// not to be used on the top level selection node.
-// This allows us to disable rendering on all sub Select nodes
-// and only run it at the end on the top level select node.
-func (p *Planner) SubSelect(selectReq *mapper.Select) (planNode, error) {
-	plan, err := p.Select(selectReq)
-	if err != nil {
-		return nil, err
-	}
-
-	// if this is a sub select plan, we need to remove the render node
-	// as the final top level selectTopNode will handle all sub renders
-	top := plan.(*selectTopNode)
-	return top, nil
-}
 
 func (p *Planner) SelectFromSource(
 	selectReq *mapper.Select,

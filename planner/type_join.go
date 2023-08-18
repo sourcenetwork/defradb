@@ -239,7 +239,7 @@ func (p *Planner) makeTypeJoinOne(
 ) (*typeJoinOne, error) {
 	prepareScanNodeFilterForTypeJoin(parent, source, subType)
 
-	selectPlan, err := p.SubSelect(subType)
+	selectPlan, err := p.Select(subType)
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +470,7 @@ func (p *Planner) makeTypeJoinMany(
 ) (*typeJoinMany, error) {
 	prepareScanNodeFilterForTypeJoin(parent, source, subType)
 
-	selectPlan, err := p.SubSelect(subType)
+	selectPlan, err := p.Select(subType)
 	if err != nil {
 		return nil, err
 	}

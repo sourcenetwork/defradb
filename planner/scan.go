@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/lens"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
@@ -262,16 +261,8 @@ func (p *Planner) Scan(
 	mapperSelect *mapper.Select,
 	colDesc client.CollectionDescription,
 ) (*scanNode, error) {
-	var f fetcher.Fetcher
-	if mapperSelect.Cid.HasValue() {
-		f = new(fetcher.VersionedFetcher)
-	} else {
-		f = new(fetcher.FetcherSwitcher)
-		f = lens.NewFetcher(f, p.db.LensRegistry())
-	}
 	scan := &scanNode{
 		p:         p,
-		fetcher:   f,
 		slct:      mapperSelect,
 		docMapper: docMapper{mapperSelect.DocumentMapping},
 	}

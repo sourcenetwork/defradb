@@ -44,7 +44,8 @@ type IndexFetcher struct {
 	docFetcher         Fetcher
 	col                *client.CollectionDescription
 	txn                datastore.Txn
-	filter             *mapper.Filter
+	indexFilter        *mapper.Filter
+	docFilter          *mapper.Filter
 	doc                *encodedDocument
 	mapping            *core.DocumentMapping
 	index              client.IndexDescription
@@ -52,7 +53,6 @@ type IndexFetcher struct {
 	docFields          []client.FieldDescription
 	indexQuery         query.Results
 	indexDataStoreKey  core.IndexDataStoreKey
-	indexFilterCond    any
 	indexQueryProvider filteredIndexQueryProvider
 }
 
@@ -61,14 +61,12 @@ var _ Fetcher = (*IndexFetcher)(nil)
 func NewIndexFetcher(
 	docFetcher Fetcher,
 	indexedFieldDesc client.FieldDescription,
-	indexDesc client.IndexDescription,
-	filterCond any,
+	indexFilter *mapper.Filter,
 ) *IndexFetcher {
 	return &IndexFetcher{
-		docFetcher:      docFetcher,
-		indexedField:    indexedFieldDesc,
-		index:           indexDesc,
-		indexFilterCond: filterCond,
+		docFetcher:   docFetcher,
+		indexedField: indexedFieldDesc,
+		indexFilter:  indexFilter,
 	}
 }
 
@@ -184,11 +182,11 @@ type cmpIndexQueryProvider struct {
 	filter   query.Filter
 }
 
-func (i *cmpIndexQueryProvider) Get(ctx context.Context, txn datastore.Txn) (query.Results, error) {
+func (p *cmpIndexQueryProvider) Get(ctx context.Context, txn datastore.Txn) (query.Results, error) {
 	return txn.Datastore().Query(ctx, query.Query{
-		Prefix:   i.indexKey.ToString(),
+		Prefix:   p.indexKey.ToString(),
 		KeysOnly: true,
-		Filters:  []query.Filter{i.filter},
+		Filters:  []query.Filter{p.filter},
 	})
 }
 
@@ -254,8 +252,9 @@ func (cmp *likeIndexCmp) doesMatch(value string) bool {
 }
 
 func (f *IndexFetcher) createFilteredIndexQueryProvider(
-	indexFilterCond any,
+	indexFilter *mapper.Filter,
 ) (filteredIndexQueryProvider, error) {
+	indexFilterCond := indexFilter.ExternalConditions[f.indexedField.Name]
 	condMap, ok := indexFilterCond.(map[string]any)
 	if !ok {
 		return nil, errors.New("invalid index filter condition")
@@ -356,10 +355,17 @@ func (f *IndexFetcher) Init(
 	showDeleted bool,
 ) error {
 	f.col = col
-	f.filter = filter
+	f.docFilter = filter
 	f.doc = &encodedDocument{}
 	f.mapping = docMapper
 	f.txn = txn
+
+	for _, index := range col.Indexes {
+		if index.Fields[0].Name == f.indexedField.Name {
+			f.index = index
+			break
+		}
+	}
 
 	f.indexDataStoreKey.CollectionID = f.col.ID
 	f.indexDataStoreKey.IndexID = f.index.ID
@@ -367,10 +373,11 @@ func (f *IndexFetcher) Init(
 	for i := range fields {
 		if fields[i].Name == f.indexedField.Name {
 			f.docFields = append(fields[:i], fields[i+1:]...)
+			break
 		}
 	}
 
-	queryProvider, err := f.createFilteredIndexQueryProvider(f.indexFilterCond)
+	queryProvider, err := f.createFilteredIndexQueryProvider(f.indexFilter)
 	if err != nil {
 		return err
 	}
@@ -389,49 +396,59 @@ func (f *IndexFetcher) Start(ctx context.Context, spans core.Spans) error {
 }
 
 func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
-	f.doc.Reset()
-
-	res, hasValue := f.indexQuery.NextSync()
-	if !hasValue || res.Error != nil {
-		return nil, ExecInfo{}, res.Error
-	}
-
-	indexKey, err := core.NewIndexDataStoreKey(res.Key)
-	if err != nil {
-		return nil, ExecInfo{}, err
-	}
-	property := &encProperty{
-		Desc: f.indexedField,
-		Raw:  indexKey.FieldValues[0],
-	}
-
-	f.doc.key = indexKey.FieldValues[1]
-	f.doc.properties[f.indexedField] = property
-
 	var resultExecInfo ExecInfo
-	if f.docFetcher != nil {
-		targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
-		spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
-		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.filter, f.mapping, false, false)
+	for {
+		f.doc.Reset()
+
+		res, hasValue := f.indexQuery.NextSync()
+		if res.Error != nil {
+			return nil, ExecInfo{}, res.Error
+		}
+
+		if !hasValue {
+			return nil, resultExecInfo, nil
+		}
+
+		indexKey, err := core.NewIndexDataStoreKey(res.Key)
 		if err != nil {
 			return nil, ExecInfo{}, err
 		}
-		err = f.docFetcher.Start(ctx, spans)
-		if err != nil {
-			return nil, ExecInfo{}, err
+		property := &encProperty{
+			Desc: f.indexedField,
+			Raw:  indexKey.FieldValues[0],
 		}
-		encDoc, execInfo, err := f.docFetcher.FetchNext(ctx)
-		if err != nil {
-			return nil, ExecInfo{}, err
+
+		f.doc.key = indexKey.FieldValues[1]
+		f.doc.properties[f.indexedField] = property
+		resultExecInfo.FieldsFetched++
+
+		if f.docFetcher != nil {
+			targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
+			spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
+			err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.docFilter, f.mapping, false, false)
+			if err != nil {
+				return nil, ExecInfo{}, err
+			}
+			err = f.docFetcher.Start(ctx, spans)
+			if err != nil {
+				return nil, ExecInfo{}, err
+			}
+			encDoc, execInfo, err := f.docFetcher.FetchNext(ctx)
+			if err != nil {
+				return nil, ExecInfo{}, err
+			}
+			err = f.docFetcher.Close()
+			if err != nil {
+				return nil, ExecInfo{}, err
+			}
+			resultExecInfo.Add(execInfo)
+			if encDoc == nil {
+				continue
+			}
+			f.doc.MergeProperties(encDoc)
+			return f.doc, resultExecInfo, nil
 		}
-		err = f.docFetcher.Close()
-		if err != nil {
-			return nil, ExecInfo{}, err
-		}
-		resultExecInfo.Add(execInfo)
-		f.doc.MergeProperties(encDoc)
 	}
-	return f.doc, resultExecInfo, nil
 }
 
 func (f *IndexFetcher) Close() error {

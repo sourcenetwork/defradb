@@ -17,28 +17,31 @@ import (
 )
 
 func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
+	const queryBody = `users(filter: {
+			name: {_in: ["Fred", "Islam", "Addo"]}, 
+			age:  {_gt: 40}
+		}) {
+			name
+		}`
+
 	test := testUtils.TestCase{
 		Description: "If there is only one indexed field in the query, it should be fetched",
 		Actions: []any{
 			createSchemaWithDocs(`
 				type users {
-					name: String 
+					name: String @index
 					age: Int
 				} 
 			`),
 			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {
-							name: {_in: ["Fred", "Islam", "Addo"]}, 
-							age:  {_gt: 40}
-						}) {
-							name
-						}
-					}`,
+				Request: "query {" + queryBody + "}",
 				Results: []map[string]any{
 					{"name": "Addo"},
 				},
+			},
+			testUtils.Request{
+				Request:  "query @explain(type: execute) {" + queryBody + "}",
+				Asserter: NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6),
 			},
 		},
 	}
