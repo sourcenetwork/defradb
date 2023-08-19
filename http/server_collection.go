@@ -78,17 +78,13 @@ func (s *CollectionHandler) Save(c *gin.Context) {
 	col := c.MustGet("col").(client.Collection)
 
 	var docMap map[string]any
-	if err := c.ShouldBindJSON(&docMap); err != nil {
+	if err := c.ShouldBind(&docMap); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	doc, err := client.NewDocFromMap(docMap)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	if doc.Key().String() != c.Param("key") {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "document key does not match"})
 		return
 	}
 	err = col.Save(c.Request.Context(), doc)

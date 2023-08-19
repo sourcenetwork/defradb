@@ -11,7 +11,6 @@
 package http
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -70,7 +69,11 @@ func (c *CollectionClient) Create(ctx context.Context, doc *client.Document) err
 	if err != nil {
 		return err
 	}
-	return c.http.request(req)
+	if err := c.http.request(req); err != nil {
+		return err
+	}
+	doc.Clean()
+	return nil
 }
 
 func (c *CollectionClient) CreateMany(ctx context.Context, docs []*client.Document) error {
@@ -92,7 +95,13 @@ func (c *CollectionClient) CreateMany(ctx context.Context, docs []*client.Docume
 	if err != nil {
 		return err
 	}
-	return c.http.request(req)
+	if err := c.http.request(req); err != nil {
+		return err
+	}
+	for _, doc := range docs {
+		doc.Clean()
+	}
+	return nil
 }
 
 func (c *CollectionClient) Update(ctx context.Context, doc *client.Document) error {
@@ -102,6 +111,11 @@ func (c *CollectionClient) Update(ctx context.Context, doc *client.Document) err
 	if err != nil {
 		return err
 	}
+	for field, value := range doc.Values() {
+		if !value.IsDirty() {
+			delete(docMap, field.Name())
+		}
+	}
 	body, err := json.Marshal(docMap)
 	if err != nil {
 		return err
@@ -110,7 +124,11 @@ func (c *CollectionClient) Update(ctx context.Context, doc *client.Document) err
 	if err != nil {
 		return err
 	}
-	return c.http.request(req)
+	if err := c.http.request(req); err != nil {
+		return err
+	}
+	doc.Clean()
+	return nil
 }
 
 func (c *CollectionClient) Save(ctx context.Context, doc *client.Document) error {
@@ -120,6 +138,11 @@ func (c *CollectionClient) Save(ctx context.Context, doc *client.Document) error
 	if err != nil {
 		return err
 	}
+	for field, value := range doc.Values() {
+		if !value.IsDirty() {
+			delete(docMap, field.Name())
+		}
+	}
 	body, err := json.Marshal(docMap)
 	if err != nil {
 		return err
@@ -128,7 +151,11 @@ func (c *CollectionClient) Save(ctx context.Context, doc *client.Document) error
 	if err != nil {
 		return err
 	}
-	return c.http.request(req)
+	if err := c.http.request(req); err != nil {
+		return err
+	}
+	doc.Clean()
+	return nil
 }
 
 func (c *CollectionClient) Delete(ctx context.Context, docKey client.DocKey) (bool, error) {
@@ -322,22 +349,22 @@ func (c *CollectionClient) GetAllDocKeys(ctx context.Context) (<-chan client.Doc
 	docKeyCh := make(chan client.DocKeysResult)
 	defer close(docKeyCh)
 
-	scanner := bufio.NewScanner(res.Body)
-	go func() {
-		for scanner.Scan() {
-			line := scanner.Text()
-			if !strings.HasPrefix(line, "data:") {
-				continue
-			}
-			line = strings.TrimPrefix(line, "data:")
+	// scanner := bufio.NewScanner(res.Body)
+	// go func() {
+	// 	for scanner.Scan() {
+	// 		line := scanner.Text()
+	// 		if !strings.HasPrefix(line, "data:") {
+	// 			continue
+	// 		}
+	// 		line = strings.TrimPrefix(line, "data:")
 
-			var docKey client.DocKeysResult
-			if err := json.Unmarshal([]byte(line), &docKey); err != nil {
-				return
-			}
-			docKeyCh <- docKey
-		}
-	}()
+	// 		var docKey client.DocKeysResult
+	// 		if err := json.Unmarshal([]byte(line), &docKey); err != nil {
+	// 			return
+	// 		}
+	// 		docKeyCh <- docKey
+	// 	}
+	// }()
 
 	return docKeyCh, nil
 }
