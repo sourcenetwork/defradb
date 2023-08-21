@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tanstack/react-query": "^4.32.6",
+    "@tanstack/react-query": "^4.33.0",
     "fast-json-patch": "^3.1.1",
     "graphiql": "^3.0.5",
     "graphql": "^16.7.1",
