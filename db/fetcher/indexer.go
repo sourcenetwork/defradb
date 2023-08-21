@@ -383,7 +383,11 @@ func (f *IndexFetcher) Init(
 	}
 	f.indexQueryProvider = queryProvider
 
-	return nil
+	if f.docFetcher != nil && len(f.docFields) > 0 {
+		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.docFilter, f.mapping, false, false)
+	}
+
+	return err
 }
 
 func (f *IndexFetcher) Start(ctx context.Context, spans core.Spans) error {
@@ -422,13 +426,10 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		f.doc.properties[f.indexedField] = property
 		resultExecInfo.FieldsFetched++
 
-		if f.docFetcher != nil {
+		if f.docFetcher != nil && len(f.docFields) > 0 {
+
 			targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
 			spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
-			err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.docFilter, f.mapping, false, false)
-			if err != nil {
-				return nil, ExecInfo{}, err
-			}
 			err = f.docFetcher.Start(ctx, spans)
 			if err != nil {
 				return nil, ExecInfo{}, err
@@ -446,8 +447,10 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 				continue
 			}
 			f.doc.MergeProperties(encDoc)
-			return f.doc, resultExecInfo, nil
+		} else {
+			resultExecInfo.DocsFetched++
 		}
+		return f.doc, resultExecInfo, nil
 	}
 }
 

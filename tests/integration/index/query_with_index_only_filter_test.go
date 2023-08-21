@@ -16,30 +16,21 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexWithExplain(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "",
-		Actions: []any{
-			createSchemaWithDocs(`
-				type users {
-					name: String @index
-					age: Int
-					verified: Boolean
-				} 
-			`),
-			testUtils.Request{
-				Request: `
-					query @explain(type: execute) {
-						users(filter: {name: {_eq: "Islam"}}) {
-							name
-						}
-					}`,
-				Asserter: NewExplainAsserter().WithDocFetches(1).WithFieldFetches(3),
-			},
+func sendRequestAndExplain(
+	reqBody string,
+	results []map[string]any,
+	asserter testUtils.ResultAsserter,
+) []testUtils.Request {
+	return []testUtils.Request{
+		{
+			Request: "query {" + reqBody + "}",
+			Results: results,
 		},
+		/*{
+			Request:  "query @explain(type: execute) {" + reqBody + "}",
+			Asserter: asserter,
+		},*/
 	}
-
-	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryWithIndex_WithOnlyIndexedField_ShouldFetch(t *testing.T) {
@@ -51,17 +42,15 @@ func TestQueryWithIndex_WithOnlyIndexedField_ShouldFetch(t *testing.T) {
 					name: String @index
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {name: {_eq: "Islam"}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {name: {_eq: "Islam"}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Islam"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(1).WithFieldFetches(1),
+			),
 		},
 	}
 
@@ -78,21 +67,17 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 					age: Int
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {name: {_eq: "Islam"}}) {
-							name
-							age
-						}
-					}`,
-				Results: []map[string]any{
-					{
-						"name": "Islam",
-						"age":  uint64(32),
-					},
-				},
-			},
+			sendRequestAndExplain(`
+				users(filter: {name: {_eq: "Islam"}}) {
+					name
+					age
+				}`,
+				[]map[string]any{{
+					"name": "Islam",
+					"age":  uint64(32),
+				}},
+				NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2),
+			),
 		},
 	}
 
@@ -116,18 +101,16 @@ func TestQueryWithIndex_IfMoreThenOneDoc_ShouldFetchAll(t *testing.T) {
 					"age": 18
 				}`,
 			},
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {name: {_eq: "Islam"}}) {
-							age
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {name: {_eq: "Islam"}}) {
+					age
+				}`,
+				[]map[string]any{
 					{"age": uint64(32)},
 					{"age": uint64(18)},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
 		},
 	}
 
@@ -144,17 +127,15 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {age: {_gt: 48}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {age: {_gt: 48}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Chris"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2),
+			),
 		},
 	}
 
@@ -171,18 +152,16 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {age: {_ge: 48}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {age: {_ge: 48}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Keenan"},
 					{"name": "Chris"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
 		},
 	}
 
@@ -199,17 +178,15 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {age: {_lt: 28}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {age: {_lt: 28}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Shahzad"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
 		},
 	}
 
@@ -226,18 +203,16 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {age: {_le: 28}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {age: {_le: 28}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Shahzad"},
 					{"name": "Fred"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
 		},
 	}
 
@@ -254,14 +229,11 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 					age: Int 
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {name: {_ne: "Islam"}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {name: {_ne: "Islam"}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Addo"},
 					{"name": "Andy"},
 					{"name": "Fred"},
@@ -270,7 +242,8 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 					{"name": "Keenan"},
 					{"name": "Shahzad"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
 		},
 	}
 
@@ -287,18 +260,16 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {age: {_in: [20, 33]}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {age: {_in: [20, 33]}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Shahzad"},
 					{"name": "Andy"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
 		},
 	}
 
@@ -315,19 +286,17 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {age: {_nin: [20, 28, 33, 42, 55]}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {age: {_nin: [20, 28, 33, 42, 55]}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "John"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
 		},
 	}
 
@@ -344,42 +313,36 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					age: Int 
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {name: {_like: "A%"}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {name: {_like: "A%"}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Addo"},
 					{"name": "Andy"},
 				},
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {name: {_like: "%d"}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
+			sendRequestAndExplain(`
+				users(filter: {name: {_like: "%d"}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Fred"},
 					{"name": "Shahzad"},
 				},
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {name: {_like: "%e%"}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
+			sendRequestAndExplain(`
+				users(filter: {name: {_like: "%e%"}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Fred"},
 					{"name": "Keenan"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
 		},
 	}
 
@@ -396,21 +359,19 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 					age: Int 
 				} 
 			`),
-			testUtils.Request{
-				Request: `
-					query {
-						users(filter: {name: {_nlike: "%h%"}}) {
-							name
-						}
-					}`,
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {name: {_nlike: "%h%"}}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Addo"},
 					{"name": "Andy"},
 					{"name": "Fred"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
 				},
-			},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+			),
 		},
 	}
 

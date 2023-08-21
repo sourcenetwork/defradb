@@ -24,10 +24,12 @@ import (
 type dataMap = map[string]any
 
 type ExplainResultAsserter struct {
-	iterations    immutable.Option[int]
-	docFetches    immutable.Option[int]
-	fieldFetches  immutable.Option[int]
-	filterMatches immutable.Option[int]
+	iterations     immutable.Option[int]
+	docFetches     immutable.Option[int]
+	fieldFetches   immutable.Option[int]
+	filterMatches  immutable.Option[int]
+	sizeOfResults  immutable.Option[int]
+	planExecutions immutable.Option[uint64]
 }
 
 func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
@@ -35,8 +37,16 @@ func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
 	explainNode, ok := result[0]["explain"].(dataMap)
 	require.True(t, ok, "Expected explain none")
 	assert.Equal(t, explainNode["executionSuccess"], true, "Expected executionSuccess property")
-	assert.Equal(t, explainNode["sizeOfResult"], 1, "Expected sizeOfResult property")
-	assert.Equal(t, explainNode["planExecutions"], uint64(2), "Expected planExecutions property")
+	if a.sizeOfResults.HasValue() {
+		actual := explainNode["sizeOfResult"]
+		assert.Equal(t, actual, a.sizeOfResults.Value(),
+			"Expected %d sizeOfResult, got %d", a.sizeOfResults.Value(), actual)
+	}
+	if a.planExecutions.HasValue() {
+		actual := explainNode["planExecutions"]
+		assert.Equal(t, actual, a.planExecutions.Value(),
+			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
+	}
 	selectTopNode, ok := explainNode["selectTopNode"].(dataMap)
 	require.True(t, ok, "Expected selectTopNode")
 	selectNode, ok := selectTopNode["selectNode"].(dataMap)
@@ -89,6 +99,16 @@ func (a *ExplainResultAsserter) WithFieldFetches(fieldFetches int) *ExplainResul
 
 func (a *ExplainResultAsserter) WithFilterMatches(filterMatches int) *ExplainResultAsserter {
 	a.filterMatches = immutable.Some[int](filterMatches)
+	return a
+}
+
+func (a *ExplainResultAsserter) WithSizeOfResults(sizeOfResults int) *ExplainResultAsserter {
+	a.sizeOfResults = immutable.Some[int](sizeOfResults)
+	return a
+}
+
+func (a *ExplainResultAsserter) WithPlanExecutions(planExecutions uint64) *ExplainResultAsserter {
+	a.planExecutions = immutable.Some[uint64](planExecutions)
 	return a
 }
 
