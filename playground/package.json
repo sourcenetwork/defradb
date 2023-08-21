@@ -10,10 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tanstack/react-query": "^4.32.6",
+    "@tanstack/react-query": "^4.33.0",
     "fast-json-patch": "^3.1.1",
     "graphiql": "^3.0.5",
-    "graphql": "^16.7.1",
+    "graphql": "^16.8.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.45.4"
@@ -22,7 +22,7 @@
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.4.0",
-    "@typescript-eslint/parser": "^6.3.0",
+    "@typescript-eslint/parser": "^6.4.0",
     "@vitejs/plugin-react-swc": "^3.0.0",
     "eslint": "^8.47.0",
     "eslint-plugin-react-hooks": "^4.6.0",
