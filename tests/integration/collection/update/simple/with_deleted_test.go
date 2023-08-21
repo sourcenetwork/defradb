@@ -40,20 +40,7 @@ func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 				Doc: `{
 					"name": "Fred"
 				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users(showDeleted: true) {
-						_deleted
-						name
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"_deleted": true,
-						"name":     "John",
-					},
-				},
+				ExpectedError: "a document with the given dockey has been deleted",
 			},
 		},
 	}
