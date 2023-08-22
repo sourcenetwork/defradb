@@ -134,10 +134,12 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		newDescriptions = append(newDescriptions, desc)
 	}
 
-	for _, desc := range newDescriptions {
-		if _, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc); err != nil {
+	for i, desc := range newDescriptions {
+		col, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc)
+		if err != nil {
 			return err
 		}
+		newDescriptions[i] = col.Description()
 	}
 
 	return db.parser.SetSchema(ctx, txn, newDescriptions)
