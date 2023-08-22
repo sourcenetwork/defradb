@@ -26,10 +26,10 @@ func sendRequestAndExplain(
 			Request: "query {" + reqBody + "}",
 			Results: results,
 		},
-		/*{
+		{
 			Request:  "query @explain(type: execute) {" + reqBody + "}",
 			Asserter: asserter,
-		},*/
+		},
 	}
 }
 
@@ -185,7 +185,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 				[]map[string]any{
 					{"name": "Shahzad"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+				NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2),
 			),
 		},
 	}
@@ -242,7 +242,7 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 					{"name": "Keenan"},
 					{"name": "Shahzad"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+				NewExplainAsserter().WithDocFetches(7).WithFieldFetches(7),
 			),
 		},
 	}
@@ -295,7 +295,7 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 					{"name": "Islam"},
 					{"name": "Keenan"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+				NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6),
 			),
 		},
 	}
@@ -321,7 +321,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					{"name": "Addo"},
 					{"name": "Andy"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2),
 			),
 			sendRequestAndExplain(`
 				users(filter: {name: {_like: "%d"}}) {
@@ -331,7 +331,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					{"name": "Fred"},
 					{"name": "Shahzad"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2),
 			),
 			sendRequestAndExplain(`
 				users(filter: {name: {_like: "%e%"}}) {
@@ -341,7 +341,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					{"name": "Fred"},
 					{"name": "Keenan"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2),
 			),
 		},
 	}
@@ -370,7 +370,7 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 					{"name": "Islam"},
 					{"name": "Keenan"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4),
+				NewExplainAsserter().WithDocFetches(5).WithFieldFetches(5),
 			),
 		},
 	}

@@ -17,13 +17,6 @@ import (
 )
 
 func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
-	const queryBody = `users(filter: {
-			name: {_in: ["Fred", "Islam", "Addo"]}, 
-			age:  {_gt: 40}
-		}) {
-			name
-		}`
-
 	test := testUtils.TestCase{
 		Description: "If there is only one indexed field in the query, it should be fetched",
 		Actions: []any{
@@ -33,16 +26,48 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 					age: Int
 				} 
 			`),
-			testUtils.Request{
-				Request: "query {" + queryBody + "}",
-				Results: []map[string]any{
+			sendRequestAndExplain(`
+				users(filter: {
+					name: {_in: ["Fred", "Islam", "Addo"]}, 
+					age:  {_gt: 40}
+				}) {
+					name
+				}`,
+				[]map[string]any{
 					{"name": "Addo"},
 				},
-			},
-			testUtils.Request{
-				Request:  "query @explain(type: execute) {" + queryBody + "}",
-				Asserter: NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6),
-			},
+				NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6),
+			),
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If there is only one indexed field in the query, it should be fetched",
+		Actions: []any{
+			createSchemaWithDocs(`
+				type users {
+					name: String @index
+					age: Int @index
+					email: String 
+				} 
+			`),
+			sendRequestAndExplain(`
+				users(filter: {
+					name: {_like: "%a%"}, 
+					age:  {_gt: 30},
+					email: {_like: "%m@gmail.com"}
+				}) {
+					name
+				}`,
+				[]map[string]any{
+					{"name": "Islam"},
+				},
+				NewExplainAsserter().WithDocFetches(5).WithFieldFetches(15),
+			),
 		},
 	}
 
