@@ -41,7 +41,7 @@ func (c *LensClient) WithTxn(tx datastore.Txn) client.LensRegistry {
 }
 
 func (c *LensClient) SetMigration(ctx context.Context, config client.LensConfig) error {
-	methodURL := c.http.baseURL.JoinPath("lens", "migrate")
+	methodURL := c.http.baseURL.JoinPath("lens")
 
 	body, err := json.Marshal(config)
 	if err != nil {
