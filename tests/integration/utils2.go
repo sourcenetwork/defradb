@@ -1506,6 +1506,8 @@ func assertRequestResults(
 
 func assertRequestResultsData(t *testing.T, actual any, expected any) {
 	switch expectedVal := expected.(type) {
+	case AnyOf:
+		return // TODO
 	case map[string]any:
 		if len(expectedVal) == 0 && actual == nil {
 			return

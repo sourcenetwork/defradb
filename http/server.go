@@ -18,10 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// txHeaderName is the name of the custom
-// header containing the transaction id.
-const txHeaderName = "x-defradb-tx"
-
 type Server struct {
 	db     client.DB
 	router *gin.Engine
@@ -37,8 +33,10 @@ func NewServer(db client.DB) *Server {
 	lensHandler := &LensHandler{}
 
 	router := gin.Default()
+
+	// db tx context
 	api := router.Group("/api/v0")
-	api.Use(DatabaseMiddleware(db), TransactionMiddleware(txs))
+	api.Use(TransactionMiddleware(db, txs, TX_HEADER_NAME), DatabaseMiddleware(db))
 
 	tx := api.Group("/tx")
 	tx.POST("/", txHandler.NewTxn)
@@ -47,49 +45,57 @@ func NewServer(db client.DB) *Server {
 	tx.DELETE("/:id", txHandler.Discard)
 
 	backup := api.Group("/backup")
-	backup.POST("/export", StoreMiddleware(), storeHandler.BasicExport)
-	backup.POST("/import", StoreMiddleware(), storeHandler.BasicImport)
+	backup.POST("/export", storeHandler.BasicExport)
+	backup.POST("/import", storeHandler.BasicImport)
 
 	schema := api.Group("/schema")
-	schema.POST("/", StoreMiddleware(), storeHandler.AddSchema)
-	schema.PATCH("/", StoreMiddleware(), storeHandler.PatchSchema)
+	schema.POST("/", storeHandler.AddSchema)
+	schema.PATCH("/", storeHandler.PatchSchema)
 
 	collections := api.Group("/collections")
-	collections.GET("/", StoreMiddleware(), storeHandler.GetCollection)
-	collections.GET("/:name", CollectionMiddleware(), collectionHandler.GetAllDocKeys)
-	collections.POST("/:name", CollectionMiddleware(), collectionHandler.Create)
-	collections.PATCH("/:name", CollectionMiddleware(), collectionHandler.UpdateWith)
-	collections.DELETE("/:name", CollectionMiddleware(), collectionHandler.DeleteWith)
-	collections.POST("/:name/indexes", CollectionMiddleware(), collectionHandler.CreateIndex)
-	collections.GET("/:name/indexes", CollectionMiddleware(), collectionHandler.GetIndexes)
-	collections.DELETE("/:name/indexes/:index", CollectionMiddleware(), collectionHandler.DropIndex)
-	collections.GET("/:name/:key", CollectionMiddleware(), collectionHandler.Get)
-	collections.POST("/:name/:key", CollectionMiddleware(), collectionHandler.Save)
-	collections.PATCH("/:name/:key", CollectionMiddleware(), collectionHandler.Update)
-	collections.DELETE("/:name/:key", CollectionMiddleware(), collectionHandler.Delete)
+	collections.GET("/", storeHandler.GetCollection)
 
+	// collection tx context
+	collections_tx := collections.Group("/")
+	collections_tx.Use(TransactionMiddleware(db, txs, COL_TX_HEADER_NAME), CollectionMiddleware())
+
+	collections_tx.GET("/:name", collectionHandler.GetAllDocKeys)
+	collections_tx.POST("/:name", collectionHandler.Create)
+	collections_tx.PATCH("/:name", collectionHandler.UpdateWith)
+	collections_tx.DELETE("/:name", collectionHandler.DeleteWith)
+	collections_tx.POST("/:name/indexes", collectionHandler.CreateIndex)
+	collections_tx.GET("/:name/indexes", collectionHandler.GetIndexes)
+	collections_tx.DELETE("/:name/indexes/:index", collectionHandler.DropIndex)
+	collections_tx.GET("/:name/:key", collectionHandler.Get)
+	collections_tx.POST("/:name/:key", collectionHandler.Save)
+	collections_tx.PATCH("/:name/:key", collectionHandler.Update)
+	collections_tx.DELETE("/:name/:key", collectionHandler.Delete)
+
+	// lens tx context
 	lens := api.Group("/lens")
-	lens.GET("/", LensMiddleware(), lensHandler.Config)
-	lens.POST("/", LensMiddleware(), lensHandler.SetMigration)
-	lens.POST("/reload", LensMiddleware(), lensHandler.ReloadLenses)
-	lens.GET("/:version", LensMiddleware(), lensHandler.HasMigration)
-	lens.POST("/:version/up", LensMiddleware(), lensHandler.MigrateUp)
-	lens.POST("/:version/down", LensMiddleware(), lensHandler.MigrateDown)
+	lens.Use(TransactionMiddleware(db, txs, LENS_TX_HEADER_NAME), LensMiddleware())
+
+	lens.GET("/", lensHandler.Config)
+	lens.POST("/", lensHandler.SetMigration)
+	lens.POST("/reload", lensHandler.ReloadLenses)
+	lens.GET("/:version", lensHandler.HasMigration)
+	lens.POST("/:version/up", lensHandler.MigrateUp)
+	lens.POST("/:version/down", lensHandler.MigrateDown)
 
 	graphQL := api.Group("/graphql")
-	graphQL.GET("/", StoreMiddleware(), storeHandler.ExecRequest)
-	graphQL.POST("/", StoreMiddleware(), storeHandler.ExecRequest)
+	graphQL.GET("/", storeHandler.ExecRequest)
+	graphQL.POST("/", storeHandler.ExecRequest)
 
 	p2p := api.Group("/p2p")
 	p2p_replicators := p2p.Group("/replicators")
-	p2p_replicators.GET("/", StoreMiddleware(), storeHandler.GetAllReplicators)
-	p2p_replicators.POST("/", StoreMiddleware(), storeHandler.SetReplicator)
-	p2p_replicators.DELETE("/", StoreMiddleware(), storeHandler.DeleteReplicator)
+	p2p_replicators.GET("/", storeHandler.GetAllReplicators)
+	p2p_replicators.POST("/", storeHandler.SetReplicator)
+	p2p_replicators.DELETE("/", storeHandler.DeleteReplicator)
 
 	p2p_collections := p2p.Group("/collections")
-	p2p_collections.GET("/", StoreMiddleware(), storeHandler.GetAllP2PCollections)
-	p2p_collections.POST("/:id", StoreMiddleware(), storeHandler.AddP2PCollection)
-	p2p_collections.DELETE("/:id", StoreMiddleware(), storeHandler.RemoveP2PCollection)
+	p2p_collections.GET("/", storeHandler.GetAllP2PCollections)
+	p2p_collections.POST("/:id", storeHandler.AddP2PCollection)
+	p2p_collections.DELETE("/:id", storeHandler.RemoveP2PCollection)
 
 	return &Server{
 		db:     db,

@@ -36,7 +36,7 @@ func NewLensClient(httpClient *httpClient) *LensClient {
 
 func (c *LensClient) WithTxn(tx datastore.Txn) client.LensRegistry {
 	txId := fmt.Sprintf("%d", tx.ID())
-	http := c.http.withTxn(txId)
+	http := c.http.withLensTxn(txId)
 	return &LensClient{http}
 }
 

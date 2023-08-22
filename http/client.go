@@ -19,9 +19,11 @@ import (
 )
 
 type httpClient struct {
-	client  *http.Client
-	baseURL *url.URL
-	txValue string
+	client      *http.Client
+	baseURL     *url.URL
+	txValue     string
+	colTxValue  string
+	lensTxValue string
 }
 
 type errorResponse struct {
@@ -30,16 +32,47 @@ type errorResponse struct {
 
 func (c *httpClient) withTxn(txValue string) *httpClient {
 	return &httpClient{
-		client:  c.client,
-		baseURL: c.baseURL,
-		txValue: txValue,
+		client:      c.client,
+		baseURL:     c.baseURL,
+		txValue:     txValue,
+		colTxValue:  c.colTxValue,
+		lensTxValue: c.lensTxValue,
+	}
+}
+
+func (c *httpClient) withColTxn(txValue string) *httpClient {
+	return &httpClient{
+		client:      c.client,
+		baseURL:     c.baseURL,
+		txValue:     c.txValue,
+		colTxValue:  txValue,
+		lensTxValue: c.lensTxValue,
+	}
+}
+
+func (c *httpClient) withLensTxn(txValue string) *httpClient {
+	return &httpClient{
+		client:      c.client,
+		baseURL:     c.baseURL,
+		txValue:     c.txValue,
+		colTxValue:  c.colTxValue,
+		lensTxValue: txValue,
 	}
 }
 
 func (c *httpClient) setDefaultHeaders(req *http.Request) {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add(txHeaderName, c.txValue)
+
+	if c.txValue != "" {
+		req.Header.Add(TX_HEADER_NAME, c.txValue)
+	}
+	if c.colTxValue != "" {
+		req.Header.Add(COL_TX_HEADER_NAME, c.colTxValue)
+	}
+	if c.lensTxValue != "" {
+		req.Header.Add(LENS_TX_HEADER_NAME, c.lensTxValue)
+	}
 }
 
 func (c *httpClient) request(req *http.Request) error {

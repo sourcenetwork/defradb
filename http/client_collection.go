@@ -325,7 +325,7 @@ func (c *CollectionClient) Get(ctx context.Context, key client.DocKey, showDelet
 
 func (c *CollectionClient) WithTxn(tx datastore.Txn) client.Collection {
 	txId := fmt.Sprintf("%d", tx.ID())
-	http := c.http.withTxn(txId)
+	http := c.http.withColTxn(txId)
 
 	return &CollectionClient{
 		http: http,
@@ -358,11 +358,21 @@ func (c *CollectionClient) GetAllDocKeys(ctx context.Context) (<-chan client.Doc
 			if err != nil {
 				return
 			}
-			var docKeyRes client.DocKeysResult
-			if err := json.Unmarshal(evt.Data, &docKeyRes); err != nil {
+			var res DocKeyResult
+			if err := json.Unmarshal(evt.Data, &res); err != nil {
 				return
 			}
-			docKeyCh <- docKeyRes
+			key, err := client.NewDocKeyFromString(res.Key)
+			if err != nil {
+				return
+			}
+			docKey := client.DocKeysResult{
+				Key: key,
+			}
+			if res.Error != "" {
+				docKey.Err = fmt.Errorf(res.Error)
+			}
+			docKeyCh <- docKey
 		}
 	}()
 

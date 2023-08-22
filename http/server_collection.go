@@ -254,6 +254,11 @@ func (s *CollectionHandler) Get(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+type DocKeyResult struct {
+	Key   string `json:"key"`
+	Error string `json:"error"`
+}
+
 func (s *CollectionHandler) GetAllDocKeys(c *gin.Context) {
 	col := c.MustGet("col").(client.Collection)
 
@@ -275,7 +280,13 @@ func (s *CollectionHandler) GetAllDocKeys(c *gin.Context) {
 		if !open {
 			return false
 		}
-		data, err := json.Marshal(docKey)
+		results := &DocKeyResult{
+			Key: docKey.Key.String(),
+		}
+		if docKey.Err != nil {
+			results.Error = docKey.Err.Error()
+		}
+		data, err := json.Marshal(results)
 		if err != nil {
 			return false
 		}

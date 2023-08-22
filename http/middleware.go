@@ -10,18 +10,16 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-// DatabaseMiddleware sets the database for the current request context.
-func DatabaseMiddleware(db client.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set("db", db)
-		c.Next()
-	}
-}
+const (
+	TX_HEADER_NAME      = "x-defradb-tx"
+	COL_TX_HEADER_NAME  = "x-defradb-col-tx"
+	LENS_TX_HEADER_NAME = "x-defradb-lens-tx"
+)
 
-// TransactionMiddleware sets the transaction for the current request context.
-func TransactionMiddleware(txs *sync.Map) gin.HandlerFunc {
+// TransactionMiddleware sets the transaction context for the current request.
+func TransactionMiddleware(db client.DB, txs *sync.Map, header string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		txValue := c.GetHeader(txHeaderName)
+		txValue := c.GetHeader(header)
 		if txValue == "" {
 			c.Next()
 			return
@@ -37,58 +35,56 @@ func TransactionMiddleware(txs *sync.Map) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("tx", tx)
+		c.Set(header, tx)
 		c.Next()
 	}
 }
 
-func LensMiddleware() gin.HandlerFunc {
+// DatabaseMiddleware sets the db context for the current request.
+func DatabaseMiddleware(db client.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		db := c.MustGet("db").(client.DB)
-
-		tx, ok := c.Get("tx")
-		if ok {
-			c.Set("lens", db.LensRegistry().WithTxn(tx.(datastore.Txn)))
-		} else {
-			c.Set("lens", db.LensRegistry())
-		}
-
-		c.Next()
-	}
-}
-
-// StoreMiddleware sets the store for the current request
-func StoreMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		db := c.MustGet("db").(client.DB)
-
-		tx, ok := c.Get("tx")
+		tx, ok := c.Get(TX_HEADER_NAME)
 		if ok {
 			c.Set("store", db.WithTxn(tx.(datastore.Txn)))
 		} else {
 			c.Set("store", db)
 		}
-
+		c.Set("db", db)
 		c.Next()
 	}
 }
 
-// CollectionMiddleware sets the collection for the current request context.
+// LensMiddleware sets the lens context for the current request.
+func LensMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		store := c.MustGet("store").(client.Store)
+
+		tx, ok := c.Get(LENS_TX_HEADER_NAME)
+		if ok {
+			c.Set("lens", store.LensRegistry().WithTxn(tx.(datastore.Txn)))
+		} else {
+			c.Set("lens", store.LensRegistry())
+		}
+		c.Next()
+	}
+}
+
+// CollectionMiddleware sets the collection context for the current request.
 func CollectionMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		db := c.MustGet("db").(client.DB)
+		store := c.MustGet("store").(client.Store)
 
-		col, err := db.GetCollectionByName(c.Request.Context(), c.Param("name"))
+		col, err := store.GetCollectionByName(c.Request.Context(), c.Param("name"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		tx, ok := c.Get("tx")
+		tx, ok := c.Get(COL_TX_HEADER_NAME)
 		if ok {
-			col = col.WithTxn(tx.(datastore.Txn))
+			c.Set("col", col.WithTxn(tx.(datastore.Txn)))
+		} else {
+			c.Set("col", col)
 		}
-
-		c.Set("col", col)
 		c.Next()
 	}
 }

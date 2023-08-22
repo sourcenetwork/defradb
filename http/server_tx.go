@@ -82,12 +82,11 @@ func (h *TxHandler) Discard(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
 		return
 	}
-	txVal, ok := h.txs.Load(txId)
+	txVal, ok := h.txs.LoadAndDelete(txId)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
 		return
 	}
 	txVal.(datastore.Txn).Discard(c.Request.Context())
-	h.txs.Delete(txId)
 	c.Status(http.StatusOK)
 }
