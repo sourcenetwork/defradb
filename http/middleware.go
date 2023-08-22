@@ -21,16 +21,12 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-const (
-	TX_HEADER_NAME      = "x-defradb-tx"
-	COL_TX_HEADER_NAME  = "x-defradb-col-tx"
-	LENS_TX_HEADER_NAME = "x-defradb-lens-tx"
-)
+const TX_HEADER_NAME = "x-defradb-tx"
 
 // TransactionMiddleware sets the transaction context for the current request.
-func TransactionMiddleware(db client.DB, txs *sync.Map, header string) gin.HandlerFunc {
+func TransactionMiddleware(db client.DB, txs *sync.Map) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		txValue := c.GetHeader(header)
+		txValue := c.GetHeader(TX_HEADER_NAME)
 		if txValue == "" {
 			c.Next()
 			return
@@ -46,7 +42,7 @@ func TransactionMiddleware(db client.DB, txs *sync.Map, header string) gin.Handl
 			return
 		}
 
-		c.Set(header, tx)
+		c.Set("tx", tx)
 		c.Next()
 	}
 }
@@ -54,13 +50,14 @@ func TransactionMiddleware(db client.DB, txs *sync.Map, header string) gin.Handl
 // DatabaseMiddleware sets the db context for the current request.
 func DatabaseMiddleware(db client.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tx, ok := c.Get(TX_HEADER_NAME)
+		c.Set("db", db)
+
+		tx, ok := c.Get("tx")
 		if ok {
 			c.Set("store", db.WithTxn(tx.(datastore.Txn)))
 		} else {
 			c.Set("store", db)
 		}
-		c.Set("db", db)
 		c.Next()
 	}
 }
@@ -70,7 +67,7 @@ func LensMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		store := c.MustGet("store").(client.Store)
 
-		tx, ok := c.Get(LENS_TX_HEADER_NAME)
+		tx, ok := c.Get("tx")
 		if ok {
 			c.Set("lens", store.LensRegistry().WithTxn(tx.(datastore.Txn)))
 		} else {
@@ -90,7 +87,8 @@ func CollectionMiddleware() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		tx, ok := c.Get(COL_TX_HEADER_NAME)
+
+		tx, ok := c.Get("tx")
 		if ok {
 			c.Set("col", col.WithTxn(tx.(datastore.Txn)))
 		} else {

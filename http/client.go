@@ -16,63 +16,41 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync/atomic"
 )
-
-type httpClient struct {
-	client      *http.Client
-	baseURL     *url.URL
-	txValue     string
-	colTxValue  string
-	lensTxValue string
-}
 
 type errorResponse struct {
 	Error string `json:"error"`
 }
 
-func (c *httpClient) withTxn(txValue string) *httpClient {
-	return &httpClient{
-		client:      c.client,
-		baseURL:     c.baseURL,
-		txValue:     txValue,
-		colTxValue:  c.colTxValue,
-		lensTxValue: c.lensTxValue,
-	}
+type httpClient struct {
+	client  *http.Client
+	baseURL *url.URL
+	txValue atomic.Uint64
 }
 
-func (c *httpClient) withColTxn(txValue string) *httpClient {
-	return &httpClient{
-		client:      c.client,
-		baseURL:     c.baseURL,
-		txValue:     c.txValue,
-		colTxValue:  txValue,
-		lensTxValue: c.lensTxValue,
+func newHttpClient(baseURL *url.URL) *httpClient {
+	client := httpClient{
+		client:  http.DefaultClient,
+		baseURL: baseURL,
 	}
+	client.txValue.Store(0)
+	return &client
 }
 
-func (c *httpClient) withLensTxn(txValue string) *httpClient {
-	return &httpClient{
-		client:      c.client,
-		baseURL:     c.baseURL,
-		txValue:     c.txValue,
-		colTxValue:  c.colTxValue,
-		lensTxValue: txValue,
+func (c *httpClient) withTxn(value uint64) *httpClient {
+	client := httpClient{
+		client:  c.client,
+		baseURL: c.baseURL,
 	}
+	client.txValue.Store(value)
+	return &client
 }
 
 func (c *httpClient) setDefaultHeaders(req *http.Request) {
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	if c.txValue != "" {
-		req.Header.Add(TX_HEADER_NAME, c.txValue)
-	}
-	if c.colTxValue != "" {
-		req.Header.Add(COL_TX_HEADER_NAME, c.colTxValue)
-	}
-	if c.lensTxValue != "" {
-		req.Header.Add(LENS_TX_HEADER_NAME, c.lensTxValue)
-	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(TX_HEADER_NAME, fmt.Sprintf("%d", c.txValue.Load()))
 }
 
 func (c *httpClient) request(req *http.Request) error {

@@ -53,7 +53,6 @@ func (h *TxHandler) NewConcurrentTxn(c *gin.Context) {
 		return
 	}
 	h.txs.Store(tx.ID(), tx)
-
 	c.JSON(http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 

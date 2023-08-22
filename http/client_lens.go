@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -35,8 +34,7 @@ func NewLensClient(httpClient *httpClient) *LensClient {
 }
 
 func (c *LensClient) WithTxn(tx datastore.Txn) client.LensRegistry {
-	txId := fmt.Sprintf("%d", tx.ID())
-	http := c.http.withLensTxn(txId)
+	http := c.http.withTxn(tx.ID())
 	return &LensClient{http}
 }
 

@@ -35,9 +35,8 @@ func NewServer(db client.DB) *Server {
 
 	router := gin.Default()
 
-	// db tx context
 	api := router.Group("/api/v0")
-	api.Use(TransactionMiddleware(db, txs, TX_HEADER_NAME), DatabaseMiddleware(db))
+	api.Use(TransactionMiddleware(db, txs), DatabaseMiddleware(db))
 
 	tx := api.Group("/tx")
 	tx.POST("/", txHandler.NewTxn)
@@ -56,9 +55,8 @@ func NewServer(db client.DB) *Server {
 	collections := api.Group("/collections")
 	collections.GET("/", storeHandler.GetCollection)
 
-	// collection tx context
 	collections_tx := collections.Group("/")
-	collections_tx.Use(TransactionMiddleware(db, txs, COL_TX_HEADER_NAME), CollectionMiddleware())
+	collections_tx.Use(CollectionMiddleware())
 
 	collections_tx.GET("/:name", collectionHandler.GetAllDocKeys)
 	collections_tx.POST("/:name", collectionHandler.Create)
@@ -72,9 +70,8 @@ func NewServer(db client.DB) *Server {
 	collections_tx.PATCH("/:name/:key", collectionHandler.Update)
 	collections_tx.DELETE("/:name/:key", collectionHandler.Delete)
 
-	// lens tx context
 	lens := api.Group("/lens")
-	lens.Use(TransactionMiddleware(db, txs, LENS_TX_HEADER_NAME), LensMiddleware())
+	lens.Use(LensMiddleware())
 
 	lens.GET("/", lensHandler.Config)
 	lens.POST("/", lensHandler.SetMigration)

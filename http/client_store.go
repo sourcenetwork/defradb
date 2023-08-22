@@ -38,10 +38,7 @@ func NewStoreClient(rawURL string) (*StoreClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	httpClient := &httpClient{
-		client:  http.DefaultClient,
-		baseURL: baseURL.JoinPath("/api/v0"),
-	}
+	httpClient := newHttpClient(baseURL.JoinPath("/api/v0"))
 	return &StoreClient{httpClient}, nil
 }
 

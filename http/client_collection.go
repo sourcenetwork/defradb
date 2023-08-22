@@ -324,11 +324,8 @@ func (c *CollectionClient) Get(ctx context.Context, key client.DocKey, showDelet
 }
 
 func (c *CollectionClient) WithTxn(tx datastore.Txn) client.Collection {
-	txId := fmt.Sprintf("%d", tx.ID())
-	http := c.http.withColTxn(txId)
-
 	return &CollectionClient{
-		http: http,
+		http: c.http.withTxn(tx.ID()),
 		desc: c.desc,
 	}
 }

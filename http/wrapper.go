@@ -148,8 +148,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 }
 
 func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
-	txValue := fmt.Sprintf("%d", tx.ID())
-	client := w.client.http.withTxn(txValue)
+	client := w.client.http.withTxn(tx.ID())
 	return &StoreClient{client}
 }
 
