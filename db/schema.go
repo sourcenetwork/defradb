@@ -177,9 +177,12 @@ func substituteSchemaPatch(
 			return nil, err
 		}
 
+		path = strings.TrimPrefix(path, "/")
+		splitPath := strings.Split(path, "/")
+
 		if value, hasValue := patchOperation["value"]; hasValue {
 			var newPatchValue immutable.Option[any]
-			if isField(path) {
+			if isField(splitPath) {
 				// We unmarshal the full field-value into a map to ensure that all user
 				// specified properties are maintained.
 				var field map[string]any
@@ -204,7 +207,7 @@ func substituteSchemaPatch(
 
 					newPatchValue = immutable.Some[any](field)
 				}
-			} else if isFieldKind(path) {
+			} else if isFieldKind(splitPath) {
 				var kind any
 				err = json.Unmarshal(*value, &kind)
 				if err != nil {
@@ -267,19 +270,15 @@ func getSubstituteFieldKind(
 }
 
 // isField returns true if the given path points to a FieldDescription.
-func isField(path string) bool {
-	path = strings.TrimPrefix(path, "/")
-	elements := strings.Split(path, "/")
+func isField(path []string) bool {
 	//nolint:goconst
-	return len(elements) == 4 && elements[len(elements)-2] == "Fields" && elements[len(elements)-3] == "Schema"
+	return len(path) == 4 && path[len(path)-2] == "Fields" && path[len(path)-3] == "Schema"
 }
 
 // isField returns true if the given path points to a FieldDescription.Kind property.
-func isFieldKind(path string) bool {
-	path = strings.TrimPrefix(path, "/")
-	elements := strings.Split(path, "/")
-	return len(elements) == 5 &&
-		elements[len(elements)-1] == "Kind" &&
-		elements[len(elements)-3] == "Fields" &&
-		elements[len(elements)-4] == "Schema"
+func isFieldKind(path []string) bool {
+	return len(path) == 5 &&
+		path[len(path)-1] == "Kind" &&
+		path[len(path)-3] == "Fields" &&
+		path[len(path)-4] == "Schema"
 }
