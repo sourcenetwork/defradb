@@ -53,10 +53,10 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 									"typeIndexJoin": dataMap{
 										"iterations": uint64(3),
 										"scanNode": dataMap{
-											"iterations":     uint64(3),
-											"docFetches":     uint64(2),
-											"fieldFetches":   uint64(2),
-											"indexesFetches": uint64(0),
+											"iterations":   uint64(3),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(2),
+											"indexFetches": uint64(0),
 										},
 									},
 								},
@@ -113,10 +113,10 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 											"typeIndexJoin": dataMap{
 												"iterations": uint64(3),
 												"scanNode": dataMap{
-													"iterations":     uint64(3),
-													"docFetches":     uint64(2),
-													"fieldFetches":   uint64(2),
-													"indexesFetches": uint64(0),
+													"iterations":   uint64(3),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(2),
+													"indexFetches": uint64(0),
 												},
 											},
 										},
@@ -124,10 +124,10 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 											"typeIndexJoin": dataMap{
 												"iterations": uint64(3),
 												"scanNode": dataMap{
-													"iterations":     uint64(3),
-													"docFetches":     uint64(2),
-													"fieldFetches":   uint64(2),
-													"indexesFetches": uint64(0),
+													"iterations":   uint64(3),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(2),
+													"indexFetches": uint64(0),
 												},
 											},
 										},
@@ -187,10 +187,10 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 									"typeIndexJoin": dataMap{
 										"iterations": uint64(3),
 										"scanNode": dataMap{
-											"iterations":     uint64(3),
-											"docFetches":     uint64(2),
-											"fieldFetches":   uint64(4),
-											"indexesFetches": uint64(0),
+											"iterations":   uint64(3),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(4),
+											"indexFetches": uint64(0),
 										},
 									},
 								},

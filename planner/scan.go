@@ -233,10 +233,10 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 
 func (n *scanNode) executeExplain() map[string]any {
 	return map[string]any{
-		"iterations":     n.execInfo.iterations,
-		"docFetches":     n.execInfo.fetches.DocsFetched,
-		"fieldFetches":   n.execInfo.fetches.FieldsFetched,
-		"indexesFetches": n.execInfo.fetches.IndexesFetched,
+		"iterations":   n.execInfo.iterations,
+		"docFetches":   n.execInfo.fetches.DocsFetched,
+		"fieldFetches": n.execInfo.fetches.FieldsFetched,
+		"indexFetches": n.execInfo.fetches.IndexesFetched,
 	}
 }
 

@@ -54,10 +54,10 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
 											"scanNode": dataMap{
-												"iterations":     uint64(3),
-												"docFetches":     uint64(2),
-												"fieldFetches":   uint64(2),
-												"indexesFetches": uint64(0),
+												"iterations":   uint64(3),
+												"docFetches":   uint64(2),
+												"fieldFetches": uint64(2),
+												"indexFetches": uint64(0),
 											},
 										},
 									},
