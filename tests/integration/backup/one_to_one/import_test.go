@@ -150,9 +150,6 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 	executeTestCase(t, test)
 }
 
-// note: This test should fail at the second book creation since the relationship is 1-to-1 and this
-// effectively creates a 1-to-many relationship:
-// https://github.com/sourcenetwork/defradb/issues/1646
 func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedDocs_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -187,50 +184,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 						}
 					]
 				}`,
-			},
-			testUtils.Request{
-				Request: `
-					query  {
-						User {
-							name
-							age
-						}
-					}`,
-				Results: []map[string]any{
-					{
-						"name": "Bob",
-						"age":  uint64(31),
-					},
-					{
-						"name": "John",
-						"age":  uint64(31),
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `
-					query  {
-						Book {
-							name
-							author {
-								_key
-							}
-						}
-					}`,
-				Results: []map[string]any{
-					{
-						"name": "Game of chains",
-						"author": map[string]any{
-							"_key": "bae-807ea028-6c13-5f86-a72b-46e8b715a162",
-						},
-					},
-					{
-						"name": "John and the sourcerers' stone",
-						"author": map[string]any{
-							"_key": "bae-807ea028-6c13-5f86-a72b-46e8b715a162",
-						},
-					},
-				},
+				ExpectedError: "target document is already linked to another document.",
 			},
 		},
 	}

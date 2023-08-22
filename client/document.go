@@ -283,6 +283,12 @@ func (doc *Document) setAndParseType(field string, value any) error {
 		if err != nil {
 			return err
 		}
+	case uint64:
+		err := doc.setCBOR(LWW_REGISTER, field, int64(val))
+		if err != nil {
+			return err
+		}
+
 	case float64:
 		// case int64:
 
@@ -300,7 +306,7 @@ func (doc *Document) setAndParseType(field string, value any) error {
 		}
 
 	// string, bool, and more
-	case string, bool, []any:
+	case string, bool, int64, []any, []bool, []*bool, []int64, []*int64, []float64, []*float64, []string, []*string:
 		err := doc.setCBOR(LWW_REGISTER, field, val)
 		if err != nil {
 			return err

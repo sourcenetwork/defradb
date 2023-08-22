@@ -1,0 +1,51 @@
+---
+version: "2.0"
+
+services:
+  defradb:
+    image: sourcenetwork/defradb:v0.6.0
+    args:
+      - start 
+      - --url=0.0.0.0:9181
+    expose:
+      - port: 9161
+        as: 9161
+        to:
+          - global: true
+      - port: 9171
+        as: 9171
+        to:
+          - global: true
+      - port: 9181
+        as: 80
+        to:
+          - global: true
+
+profiles:
+  compute:
+    defradb:
+      resources:
+        cpu:
+          units: 1.0
+        memory:
+          size: 1Gi
+        storage:
+          size: 1Gi
+  placement:
+    akash:
+      attributes:
+        host: akash
+      signedBy:
+        anyOf:
+          - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
+          - "akash18qa2a2ltfyvkyj0ggj3hkvuj6twzyumuaru9s4"
+      pricing:
+        defradb: 
+          denom: uakt
+          amount: 10000
+
+deployment:
+  defradb:
+    akash:
+      profile: defradb
+      count: 1 

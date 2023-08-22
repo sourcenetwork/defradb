@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -22,43 +21,16 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/config"
 )
 
-// setTestingAddresses overrides the config addresses to be the ones reserved for testing.
-// Used to ensure the tests don't fail due to address clashes with the running server (with default config).
-func setTestingAddresses(cfg *config.Config) {
-	portAPI, err := findFreePortInRange(49152, 65535)
-	if err != nil {
-		panic(err)
-	}
-	portTCP, err := findFreePortInRange(49152, 65535)
-	if err != nil {
-		panic(err)
-	}
-	portP2P, err := findFreePortInRange(49152, 65535)
-	if err != nil {
-		panic(err)
-	}
-	portRPC, err := findFreePortInRange(49152, 65535)
-	if err != nil {
-		panic(err)
-	}
-	cfg.API.Address = fmt.Sprintf("localhost:%d", portAPI)
-	cfg.Net.P2PAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", portP2P)
-	cfg.Net.TCPAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", portTCP)
-	cfg.Net.RPCAddress = fmt.Sprintf("0.0.0.0:%d", portRPC)
-}
-
 func TestGetPeerIDCmd(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := getTestConfig(t)
 	peerIDCmd := MakePeerIDCommand(cfg)
 	dir := t.TempDir()
 	ctx := context.Background()
 	cfg.Datastore.Store = "memory"
 	cfg.Datastore.Badger.Path = dir
 	cfg.Net.P2PDisabled = false
-	setTestingAddresses(cfg)
 
 	di, err := start(ctx, cfg)
 	if err != nil {
@@ -89,14 +61,13 @@ func TestGetPeerIDCmd(t *testing.T) {
 }
 
 func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
-	cfg := config.DefaultConfig()
+	cfg := getTestConfig(t)
 	peerIDCmd := MakePeerIDCommand(cfg)
 	dir := t.TempDir()
 	ctx := context.Background()
 	cfg.Datastore.Store = "memory"
 	cfg.Datastore.Badger.Path = dir
 	cfg.Net.P2PDisabled = true
-	setTestingAddresses(cfg)
 
 	di, err := start(ctx, cfg)
 	if err != nil {

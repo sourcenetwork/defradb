@@ -17,6 +17,8 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
@@ -97,13 +99,14 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	if err != nil {
 		return err
 	}
-	// Here we swap out any string representations of enums for their integer values
-	patch, err = substituteSchemaPatch(patch)
+
+	collectionsByName, err := db.getCollectionsByName(ctx, txn)
 	if err != nil {
 		return err
 	}
 
-	collectionsByName, err := db.getCollectionsByName(ctx, txn)
+	// Here we swap out any string representations of enums for their integer values
+	patch, err = substituteSchemaPatch(patch, collectionsByName)
 	if err != nil {
 		return err
 	}
@@ -132,7 +135,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	}
 
 	for _, desc := range newDescriptions {
-		if _, err := db.updateCollection(ctx, txn, desc); err != nil {
+		if _, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc); err != nil {
 			return err
 		}
 	}
@@ -162,7 +165,10 @@ func (db *db) getCollectionsByName(
 //
 // For example Field [FieldKind] string representations will be replaced by the raw integer
 // value.
-func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
+func substituteSchemaPatch(
+	patch jsonpatch.Patch,
+	collectionsByName map[string]client.CollectionDescription,
+) (jsonpatch.Patch, error) {
 	for _, patchOperation := range patch {
 		path, err := patchOperation.Path()
 		if err != nil {
@@ -170,6 +176,7 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 		}
 
 		if value, hasValue := patchOperation["value"]; hasValue {
+			var newPatchValue immutable.Option[any]
 			if isField(path) {
 				// We unmarshal the full field-value into a map to ensure that all user
 				// specified properties are maintained.
@@ -180,19 +187,20 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 				}
 
 				if kind, isString := field["Kind"].(string); isString {
-					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
-					if substituteFound {
-						field["Kind"] = substitute
-						substituteField, err := json.Marshal(field)
-						if err != nil {
-							return nil, err
-						}
-
-						substituteValue := json.RawMessage(substituteField)
-						patchOperation["value"] = &substituteValue
-					} else {
-						return nil, NewErrFieldKindNotFound(kind)
+					substitute, collectionName, err := getSubstituteFieldKind(kind, collectionsByName)
+					if err != nil {
+						return nil, err
 					}
+
+					field["Kind"] = substitute
+					if collectionName != "" {
+						if field["Schema"] != nil && field["Schema"] != collectionName {
+							return nil, NewErrFieldKindDoesNotMatchFieldSchema(kind, field["Schema"].(string))
+						}
+						field["Schema"] = collectionName
+					}
+
+					newPatchValue = immutable.Some[any](field)
 				}
 			} else if isFieldKind(path) {
 				var kind any
@@ -202,24 +210,58 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 				}
 
 				if kind, isString := kind.(string); isString {
-					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
-					if substituteFound {
-						substituteKind, err := json.Marshal(substitute)
-						if err != nil {
-							return nil, err
-						}
-
-						substituteValue := json.RawMessage(substituteKind)
-						patchOperation["value"] = &substituteValue
-					} else {
-						return nil, NewErrFieldKindNotFound(kind)
+					substitute, _, err := getSubstituteFieldKind(kind, collectionsByName)
+					if err != nil {
+						return nil, err
 					}
+
+					newPatchValue = immutable.Some[any](substitute)
 				}
+			}
+
+			if newPatchValue.HasValue() {
+				substitute, err := json.Marshal(newPatchValue.Value())
+				if err != nil {
+					return nil, err
+				}
+
+				substitutedValue := json.RawMessage(substitute)
+				patchOperation["value"] = &substitutedValue
 			}
 		}
 	}
 
 	return patch, nil
+}
+
+// getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
+// Field Kind value. It will return the value if one is found, else returns an [ErrFieldKindNotFound].
+//
+// If the value represents a foreign relation the collection name will also be returned.
+func getSubstituteFieldKind(
+	kind string,
+	collectionsByName map[string]client.CollectionDescription,
+) (client.FieldKind, string, error) {
+	substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
+	if substituteFound {
+		return substitute, "", nil
+	} else {
+		var collectionName string
+		var substitute client.FieldKind
+		if len(kind) > 0 && kind[0] == '[' && kind[len(kind)-1] == ']' {
+			collectionName = kind[1 : len(kind)-1]
+			substitute = client.FieldKind_FOREIGN_OBJECT_ARRAY
+		} else {
+			collectionName = kind
+			substitute = client.FieldKind_FOREIGN_OBJECT
+		}
+
+		if _, substituteFound := collectionsByName[collectionName]; substituteFound {
+			return substitute, collectionName, nil
+		}
+
+		return 0, "", NewErrFieldKindNotFound(kind)
+	}
 }
 
 // isField returns true if the given path points to a FieldDescription.

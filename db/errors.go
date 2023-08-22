@@ -16,62 +16,74 @@ import (
 )
 
 const (
-	errFailedToGetHeads               string = "failed to get document heads"
-	errFailedToCreateCollectionQuery  string = "failed to create collection prefix query"
-	errFailedToGetCollection          string = "failed to get collection"
-	errFailedToGetAllCollections      string = "failed to get all collections"
-	errDocVerification                string = "the document verification failed"
-	errAddingP2PCollection            string = "cannot add collection ID"
-	errRemovingP2PCollection          string = "cannot remove collection ID"
-	errAddCollectionWithPatch         string = "unknown collection, adding collections via patch is not supported"
-	errCollectionIDDoesntMatch        string = "CollectionID does not match existing"
-	errSchemaIDDoesntMatch            string = "SchemaID does not match existing"
-	errCannotModifySchemaName         string = "modifying the schema name is not supported"
-	errCannotSetVersionID             string = "setting the VersionID is not supported. It is updated automatically"
-	errCannotSetFieldID               string = "explicitly setting a field ID value is not supported"
-	errCannotAddRelationalField       string = "the adding of new relation fields is not yet supported"
-	errDuplicateField                 string = "duplicate field"
-	errCannotMutateField              string = "mutating an existing field is not supported"
-	errCannotMoveField                string = "moving fields is not currently supported"
-	errInvalidCRDTType                string = "only default or LWW (last writer wins) CRDT types are supported"
-	errCannotDeleteField              string = "deleting an existing field is not supported"
-	errFieldKindNotFound              string = "no type found for given name"
-	errDocumentAlreadyExists          string = "a document with the given dockey already exists"
-	errDocumentDeleted                string = "a document with the given dockey has been deleted"
-	errIndexMissingFields             string = "index missing fields"
-	errNonZeroIndexIDProvided         string = "non-zero index ID provided"
-	errIndexFieldMissingName          string = "index field missing name"
-	errIndexFieldMissingDirection     string = "index field missing direction"
-	errIndexSingleFieldWrongDirection string = "wrong direction for index with a single field"
-	errIndexWithNameAlreadyExists     string = "index with name already exists"
-	errInvalidStoredIndex             string = "invalid stored index"
-	errInvalidStoredIndexKey          string = "invalid stored index key"
-	errNonExistingFieldForIndex       string = "creating an index on a non-existing property"
-	errCollectionDoesntExisting       string = "collection with given name doesn't exist"
-	errFailedToStoreIndexedField      string = "failed to store indexed field"
-	errFailedToReadStoredIndexDesc    string = "failed to read stored index description"
-	errCanNotDeleteIndexedField       string = "can not delete indexed field"
-	errCanNotAddIndexWithPatch        string = "adding indexes via patch is not supported"
-	errCanNotDropIndexWithPatch       string = "dropping indexes via patch is not supported"
-	errCanNotChangeIndexWithPatch     string = "changing indexes via patch is not supported"
-	errIndexWithNameDoesNotExists     string = "index with name doesn't exists"
-	errInvalidFieldValue              string = "invalid field value"
-	errUnsupportedIndexFieldType      string = "unsupported index field type"
-	errIndexDescriptionHasNoFields    string = "index description has no fields"
-	errIndexDescHasNonExistingField   string = "index description has non existing field"
-	errFieldOrAliasToFieldNotExist    string = "The given field or alias to field does not exist"
-	errCreateFile                     string = "failed to create file"
-	errOpenFile                       string = "failed to open file"
-	errCloseFile                      string = "failed to close file"
-	errRemoveFile                     string = "failed to remove file"
-	errFailedToReadByte               string = "failed to read byte"
-	errFailedToWriteString            string = "failed to write string"
-	errJSONDecode                     string = "failed to decode JSON"
-	errDocFromMap                     string = "failed to create a new doc from map"
-	errDocCreate                      string = "failed to save a new doc to collection"
-	errDocUpdate                      string = "failed to update doc to collection"
-	errExpectedJSONObject             string = "expected JSON object"
-	errExpectedJSONArray              string = "expected JSON array"
+	errFailedToGetHeads                   string = "failed to get document heads"
+	errFailedToCreateCollectionQuery      string = "failed to create collection prefix query"
+	errFailedToGetCollection              string = "failed to get collection"
+	errFailedToGetAllCollections          string = "failed to get all collections"
+	errDocVerification                    string = "the document verification failed"
+	errAddingP2PCollection                string = "cannot add collection ID"
+	errRemovingP2PCollection              string = "cannot remove collection ID"
+	errAddCollectionWithPatch             string = "unknown collection, adding collections via patch is not supported"
+	errCollectionIDDoesntMatch            string = "CollectionID does not match existing"
+	errSchemaIDDoesntMatch                string = "SchemaID does not match existing"
+	errCannotModifySchemaName             string = "modifying the schema name is not supported"
+	errCannotSetVersionID                 string = "setting the VersionID is not supported. It is updated automatically"
+	errCannotSetFieldID                   string = "explicitly setting a field ID value is not supported"
+	errRelationalFieldMissingSchema       string = "a `Schema` [name] must be provided when adding a new relation field"
+	errRelationalFieldInvalidRelationType string = "invalid RelationType"
+	errRelationalFieldMissingIDField      string = "missing id field for relation object field"
+	errRelationalFieldMissingRelationName string = "missing relation name"
+	errPrimarySideNotDefined              string = "primary side of relation not defined"
+	errPrimarySideOnMany                  string = "cannot set the many side of a relation as primary"
+	errBothSidesPrimary                   string = "both sides of a relation cannot be primary"
+	errRelatedFieldKindMismatch           string = "invalid Kind of the related field"
+	errRelatedFieldRelationTypeMismatch   string = "invalid RelationType of the related field"
+	errRelationalFieldIDInvalidType       string = "relational id field of invalid kind"
+	errDuplicateField                     string = "duplicate field"
+	errCannotMutateField                  string = "mutating an existing field is not supported"
+	errCannotMoveField                    string = "moving fields is not currently supported"
+	errInvalidCRDTType                    string = "only default or LWW (last writer wins) CRDT types are supported"
+	errCannotDeleteField                  string = "deleting an existing field is not supported"
+	errFieldKindNotFound                  string = "no type found for given name"
+	errFieldKindDoesNotMatchFieldSchema   string = "field Kind does not match field Schema"
+	errSchemaNotFound                     string = "no schema found for given name"
+	errDocumentAlreadyExists              string = "a document with the given dockey already exists"
+	errDocumentDeleted                    string = "a document with the given dockey has been deleted"
+	errIndexMissingFields                 string = "index missing fields"
+	errNonZeroIndexIDProvided             string = "non-zero index ID provided"
+	errIndexFieldMissingName              string = "index field missing name"
+	errIndexFieldMissingDirection         string = "index field missing direction"
+	errIndexSingleFieldWrongDirection     string = "wrong direction for index with a single field"
+	errIndexWithNameAlreadyExists         string = "index with name already exists"
+	errInvalidStoredIndex                 string = "invalid stored index"
+	errInvalidStoredIndexKey              string = "invalid stored index key"
+	errNonExistingFieldForIndex           string = "creating an index on a non-existing property"
+	errCollectionDoesntExisting           string = "collection with given name doesn't exist"
+	errFailedToStoreIndexedField          string = "failed to store indexed field"
+	errFailedToReadStoredIndexDesc        string = "failed to read stored index description"
+	errCanNotDeleteIndexedField           string = "can not delete indexed field"
+	errCanNotAddIndexWithPatch            string = "adding indexes via patch is not supported"
+	errCanNotDropIndexWithPatch           string = "dropping indexes via patch is not supported"
+	errCanNotChangeIndexWithPatch         string = "changing indexes via patch is not supported"
+	errIndexWithNameDoesNotExists         string = "index with name doesn't exists"
+	errInvalidFieldValue                  string = "invalid field value"
+	errUnsupportedIndexFieldType          string = "unsupported index field type"
+	errIndexDescriptionHasNoFields        string = "index description has no fields"
+	errIndexDescHasNonExistingField       string = "index description has non existing field"
+	errFieldOrAliasToFieldNotExist        string = "The given field or alias to field does not exist"
+	errCreateFile                         string = "failed to create file"
+	errOpenFile                           string = "failed to open file"
+	errCloseFile                          string = "failed to close file"
+	errRemoveFile                         string = "failed to remove file"
+	errFailedToReadByte                   string = "failed to read byte"
+	errFailedToWriteString                string = "failed to write string"
+	errJSONDecode                         string = "failed to decode JSON"
+	errDocFromMap                         string = "failed to create a new doc from map"
+	errDocCreate                          string = "failed to save a new doc to collection"
+	errDocUpdate                          string = "failed to update doc to collection"
+	errExpectedJSONObject                 string = "expected JSON object"
+	errExpectedJSONArray                  string = "expected JSON array"
+	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 )
 
 var (
@@ -90,53 +102,65 @@ var (
 	ErrInvalidMergeValueType   = errors.New(
 		"the type of value in the merge patch doesn't match the schema",
 	)
-	ErrMissingDocFieldToUpdate        = errors.New("missing document field to update")
-	ErrDocMissingKey                  = errors.New("document is missing key")
-	ErrInvalidFilter                  = errors.New("invalid filter")
-	ErrInvalidOpPath                  = errors.New("invalid patch op path")
-	ErrDocumentAlreadyExists          = errors.New(errDocumentAlreadyExists)
-	ErrDocumentDeleted                = errors.New(errDocumentDeleted)
-	ErrUnknownCRDTArgument            = errors.New("invalid CRDT arguments")
-	ErrUnknownCRDT                    = errors.New("unknown crdt")
-	ErrSchemaFirstFieldDocKey         = errors.New("collection schema first field must be a DocKey")
-	ErrCollectionAlreadyExists        = errors.New("collection already exists")
-	ErrCollectionNameEmpty            = errors.New("collection name can't be empty")
-	ErrSchemaIDEmpty                  = errors.New("schema ID can't be empty")
-	ErrSchemaVersionIDEmpty           = errors.New("schema version ID can't be empty")
-	ErrKeyEmpty                       = errors.New("key cannot be empty")
-	ErrAddingP2PCollection            = errors.New(errAddingP2PCollection)
-	ErrRemovingP2PCollection          = errors.New(errRemovingP2PCollection)
-	ErrAddCollectionWithPatch         = errors.New(errAddCollectionWithPatch)
-	ErrCollectionIDDoesntMatch        = errors.New(errCollectionIDDoesntMatch)
-	ErrSchemaIDDoesntMatch            = errors.New(errSchemaIDDoesntMatch)
-	ErrCannotModifySchemaName         = errors.New(errCannotModifySchemaName)
-	ErrCannotSetVersionID             = errors.New(errCannotSetVersionID)
-	ErrCannotSetFieldID               = errors.New(errCannotSetFieldID)
-	ErrCannotAddRelationalField       = errors.New(errCannotAddRelationalField)
-	ErrDuplicateField                 = errors.New(errDuplicateField)
-	ErrCannotMutateField              = errors.New(errCannotMutateField)
-	ErrCannotMoveField                = errors.New(errCannotMoveField)
-	ErrInvalidCRDTType                = errors.New(errInvalidCRDTType)
-	ErrCannotDeleteField              = errors.New(errCannotDeleteField)
-	ErrFieldKindNotFound              = errors.New(errFieldKindNotFound)
-	ErrIndexMissingFields             = errors.New(errIndexMissingFields)
-	ErrIndexFieldMissingName          = errors.New(errIndexFieldMissingName)
-	ErrIndexFieldMissingDirection     = errors.New(errIndexFieldMissingDirection)
-	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
-	ErrCanNotChangeIndexWithPatch     = errors.New(errCanNotChangeIndexWithPatch)
-	ErrFieldOrAliasToFieldNotExist    = errors.New(errFieldOrAliasToFieldNotExist)
-	ErrCreateFile                     = errors.New(errCreateFile)
-	ErrOpenFile                       = errors.New(errOpenFile)
-	ErrCloseFile                      = errors.New(errCloseFile)
-	ErrRemoveFile                     = errors.New(errRemoveFile)
-	ErrFailedToReadByte               = errors.New(errFailedToReadByte)
-	ErrFailedToWriteString            = errors.New(errFailedToWriteString)
-	ErrJSONDecode                     = errors.New(errJSONDecode)
-	ErrDocFromMap                     = errors.New(errDocFromMap)
-	ErrDocCreate                      = errors.New(errDocCreate)
-	ErrDocUpdate                      = errors.New(errDocUpdate)
-	ErrExpectedJSONObject             = errors.New(errExpectedJSONObject)
-	ErrExpectedJSONArray              = errors.New(errExpectedJSONArray)
+	ErrMissingDocFieldToUpdate            = errors.New("missing document field to update")
+	ErrDocMissingKey                      = errors.New("document is missing key")
+	ErrInvalidFilter                      = errors.New("invalid filter")
+	ErrInvalidOpPath                      = errors.New("invalid patch op path")
+	ErrDocumentAlreadyExists              = errors.New(errDocumentAlreadyExists)
+	ErrDocumentDeleted                    = errors.New(errDocumentDeleted)
+	ErrUnknownCRDTArgument                = errors.New("invalid CRDT arguments")
+	ErrUnknownCRDT                        = errors.New("unknown crdt")
+	ErrSchemaFirstFieldDocKey             = errors.New("collection schema first field must be a DocKey")
+	ErrCollectionAlreadyExists            = errors.New("collection already exists")
+	ErrCollectionNameEmpty                = errors.New("collection name can't be empty")
+	ErrSchemaIDEmpty                      = errors.New("schema ID can't be empty")
+	ErrSchemaVersionIDEmpty               = errors.New("schema version ID can't be empty")
+	ErrKeyEmpty                           = errors.New("key cannot be empty")
+	ErrAddingP2PCollection                = errors.New(errAddingP2PCollection)
+	ErrRemovingP2PCollection              = errors.New(errRemovingP2PCollection)
+	ErrAddCollectionWithPatch             = errors.New(errAddCollectionWithPatch)
+	ErrCollectionIDDoesntMatch            = errors.New(errCollectionIDDoesntMatch)
+	ErrSchemaIDDoesntMatch                = errors.New(errSchemaIDDoesntMatch)
+	ErrCannotModifySchemaName             = errors.New(errCannotModifySchemaName)
+	ErrCannotSetVersionID                 = errors.New(errCannotSetVersionID)
+	ErrCannotSetFieldID                   = errors.New(errCannotSetFieldID)
+	ErrRelationalFieldMissingSchema       = errors.New(errRelationalFieldMissingSchema)
+	ErrRelationalFieldInvalidRelationType = errors.New(errRelationalFieldInvalidRelationType)
+	ErrRelationalFieldMissingIDField      = errors.New(errRelationalFieldMissingIDField)
+	ErrRelationalFieldMissingRelationName = errors.New(errRelationalFieldMissingRelationName)
+	ErrPrimarySideNotDefined              = errors.New(errPrimarySideNotDefined)
+	ErrPrimarySideOnMany                  = errors.New(errPrimarySideOnMany)
+	ErrBothSidesPrimary                   = errors.New(errBothSidesPrimary)
+	ErrRelatedFieldKindMismatch           = errors.New(errRelatedFieldKindMismatch)
+	ErrRelatedFieldRelationTypeMismatch   = errors.New(errRelatedFieldRelationTypeMismatch)
+	ErrRelationalFieldIDInvalidType       = errors.New(errRelationalFieldIDInvalidType)
+	ErrDuplicateField                     = errors.New(errDuplicateField)
+	ErrCannotMutateField                  = errors.New(errCannotMutateField)
+	ErrCannotMoveField                    = errors.New(errCannotMoveField)
+	ErrInvalidCRDTType                    = errors.New(errInvalidCRDTType)
+	ErrCannotDeleteField                  = errors.New(errCannotDeleteField)
+	ErrFieldKindNotFound                  = errors.New(errFieldKindNotFound)
+	ErrFieldKindDoesNotMatchFieldSchema   = errors.New(errFieldKindDoesNotMatchFieldSchema)
+	ErrSchemaNotFound                     = errors.New(errSchemaNotFound)
+	ErrIndexMissingFields                 = errors.New(errIndexMissingFields)
+	ErrIndexFieldMissingName              = errors.New(errIndexFieldMissingName)
+	ErrIndexFieldMissingDirection         = errors.New(errIndexFieldMissingDirection)
+	ErrIndexSingleFieldWrongDirection     = errors.New(errIndexSingleFieldWrongDirection)
+	ErrCanNotChangeIndexWithPatch         = errors.New(errCanNotChangeIndexWithPatch)
+	ErrFieldOrAliasToFieldNotExist        = errors.New(errFieldOrAliasToFieldNotExist)
+	ErrCreateFile                         = errors.New(errCreateFile)
+	ErrOpenFile                           = errors.New(errOpenFile)
+	ErrCloseFile                          = errors.New(errCloseFile)
+	ErrRemoveFile                         = errors.New(errRemoveFile)
+	ErrFailedToReadByte                   = errors.New(errFailedToReadByte)
+	ErrFailedToWriteString                = errors.New(errFailedToWriteString)
+	ErrJSONDecode                         = errors.New(errJSONDecode)
+	ErrDocFromMap                         = errors.New(errDocFromMap)
+	ErrDocCreate                          = errors.New(errDocCreate)
+	ErrDocUpdate                          = errors.New(errDocUpdate)
+	ErrExpectedJSONObject                 = errors.New(errExpectedJSONObject)
+	ErrExpectedJSONArray                  = errors.New(errExpectedJSONArray)
+	ErrOneOneAlreadyLinked                = errors.New(errOneOneAlreadyLinked)
 )
 
 // NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
@@ -276,11 +300,87 @@ func NewErrCannotSetFieldID(name string, id client.FieldID) error {
 	)
 }
 
-func NewErrCannotAddRelationalField(name string, kind client.FieldKind) error {
+func NewErrRelationalFieldMissingSchema(name string, kind client.FieldKind) error {
 	return errors.New(
-		errCannotAddRelationalField,
+		errRelationalFieldMissingSchema,
 		errors.NewKV("Field", name),
 		errors.NewKV("Kind", kind),
+	)
+}
+
+func NewErrRelationalFieldInvalidRelationType(name string, expected any, actual client.RelationType) error {
+	return errors.New(
+		errRelationalFieldInvalidRelationType,
+		errors.NewKV("Field", name),
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
+	)
+}
+
+func NewErrRelationalFieldMissingIDField(name string, expectedName string) error {
+	return errors.New(
+		errRelationalFieldMissingIDField,
+		errors.NewKV("Field", name),
+		errors.NewKV("ExpectedIDFieldName", expectedName),
+	)
+}
+
+func NewErrRelationalFieldMissingRelationName(name string) error {
+	return errors.New(
+		errRelationalFieldMissingRelationName,
+		errors.NewKV("Field", name),
+	)
+}
+
+func NewErrPrimarySideNotDefined(relationName string) error {
+	return errors.New(
+		errPrimarySideNotDefined,
+		errors.NewKV("RelationName", relationName),
+	)
+}
+
+func NewErrPrimarySideOnMany(name string) error {
+	return errors.New(
+		errPrimarySideOnMany,
+		errors.NewKV("Field", name),
+	)
+}
+
+func NewErrBothSidesPrimary(relationName string) error {
+	return errors.New(
+		errBothSidesPrimary,
+		errors.NewKV("RelationName", relationName),
+	)
+}
+
+func NewErrRelatedFieldKindMismatch(relationName string, expected client.FieldKind, actual client.FieldKind) error {
+	return errors.New(
+		errRelatedFieldKindMismatch,
+		errors.NewKV("RelationName", relationName),
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
+	)
+}
+
+func NewErrRelatedFieldRelationTypeMismatch(
+	relationName string,
+	expected client.RelationType,
+	actual client.RelationType,
+) error {
+	return errors.New(
+		errRelatedFieldRelationTypeMismatch,
+		errors.NewKV("RelationName", relationName),
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
+	)
+}
+
+func NewErrRelationalFieldIDInvalidType(name string, expected, actual client.FieldKind) error {
+	return errors.New(
+		errRelationalFieldIDInvalidType,
+		errors.NewKV("Field", name),
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
 	)
 }
 
@@ -288,6 +388,22 @@ func NewErrFieldKindNotFound(kind string) error {
 	return errors.New(
 		errFieldKindNotFound,
 		errors.NewKV("Kind", kind),
+	)
+}
+
+func NewErrFieldKindDoesNotMatchFieldSchema(kind string, schema string) error {
+	return errors.New(
+		errFieldKindDoesNotMatchFieldSchema,
+		errors.NewKV("Kind", kind),
+		errors.NewKV("Schema", schema),
+	)
+}
+
+func NewErrSchemaNotFound(name string, schema string) error {
+	return errors.New(
+		errSchemaNotFound,
+		errors.NewKV("Field", name),
+		errors.NewKV("Schema", schema),
 	)
 }
 
@@ -485,4 +601,13 @@ func NewErrDocCreate(inner error) error {
 // a doc to a collection
 func NewErrDocUpdate(inner error) error {
 	return errors.Wrap(errDocUpdate, inner)
+}
+
+func NewErrOneOneAlreadyLinked(documentId, targetId, relationName string) error {
+	return errors.New(
+		errOneOneAlreadyLinked,
+		errors.NewKV("DocumentID", documentId),
+		errors.NewKV("TargetID", targetId),
+		errors.NewKV("RelationName", relationName),
+	)
 }

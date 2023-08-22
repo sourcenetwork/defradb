@@ -17,7 +17,7 @@ import (
 
 func TestReplicatorGetAllEmpty(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
-	portTCP, err := findFreePortInRange(49152, 65535)
+	portTCP, err := findFreePortInRange(t, 49152, 65535)
 	if err != nil {
 		t.Fatal(err)
 	}
