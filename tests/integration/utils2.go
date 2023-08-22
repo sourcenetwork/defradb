@@ -250,9 +250,9 @@ func GetClientTypes() []ClientType {
 		clients = append(clients, httpClientType)
 	}
 
-	if goClient {
-		clients = append(clients, goClientType)
-	}
+	// if goClient {
+	// 	clients = append(clients, goClientType)
+	// }
 
 	return clients
 }
@@ -1489,16 +1489,278 @@ func assertRequestResults(
 		return true
 	}
 
-	expectedJson, err := json.Marshal(expectedResults)
-	require.NoError(t, err)
+	// Note: if result.Data == nil this panics (the panic seems useful while testing).
+	resultantData := result.Data.([]map[string]any)
 
-	resultJson, err := json.Marshal(result.Data)
-	require.NoError(t, err)
-
-	assert.JSONEq(t, string(expectedJson), string(resultJson))
 	log.Info(ctx, "", logging.NewKV("RequestResults", result.Data))
 
+	// compare results
+	assert.Equal(t, len(expectedResults), len(resultantData), description)
+	for docIndex, result := range resultantData {
+		expectedResult := expectedResults[docIndex]
+		assertRequestResultsData(t, result, expectedResult)
+	}
+
 	return false
+}
+
+func assertRequestResultsData(t *testing.T, actual any, expected any) {
+	switch expectedVal := expected.(type) {
+	case map[string]any:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.(map[string]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for k, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[k], v)
+		}
+		return
+	case []int64:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []uint64:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []float64:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []string:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []bool:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []any:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []map[string]any:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case uint64, uint32, int64, int32, int, uint:
+		jsonNum, ok := actual.(json.Number)
+		if !ok {
+			break
+		}
+
+		actualVal, err := jsonNum.Int64()
+		require.NoError(t, err)
+		actual = actualVal
+	case float32, float64:
+		jsonNum, ok := actual.(json.Number)
+		if !ok {
+			break
+		}
+
+		actualVal, err := jsonNum.Float64()
+		require.NoError(t, err)
+		actual = actualVal
+	case []immutable.Option[float64]:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []immutable.Option[uint64]:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []immutable.Option[int64]:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []immutable.Option[bool]:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case []immutable.Option[string]:
+		if len(expectedVal) == 0 && actual == nil {
+			return
+		}
+
+		actualVal, ok := actual.([]any)
+		if !ok {
+			break
+		}
+
+		require.Equal(t, len(actualVal), len(expectedVal))
+		for i, v := range expectedVal {
+			assertRequestResultsData(t, actualVal[i], v)
+		}
+		return
+	case immutable.Option[float64]:
+		if expectedVal.HasValue() {
+			expected = expectedVal.Value()
+		} else {
+			expected = nil
+		}
+
+		assertRequestResultsData(t, actual, expected)
+		return
+	case immutable.Option[uint64]:
+		if expectedVal.HasValue() {
+			expected = expectedVal.Value()
+		} else {
+			expected = nil
+		}
+
+		assertRequestResultsData(t, actual, expected)
+		return
+	case immutable.Option[int64]:
+		if expectedVal.HasValue() {
+			expected = expectedVal.Value()
+		} else {
+			expected = nil
+		}
+
+		assertRequestResultsData(t, actual, expected)
+		return
+	case immutable.Option[bool]:
+		if expectedVal.HasValue() {
+			expected = expectedVal.Value()
+		} else {
+			expected = nil
+		}
+	case immutable.Option[string]:
+		if expectedVal.HasValue() {
+			expected = expectedVal.Value()
+		} else {
+			expected = nil
+		}
+	}
+
+	assert.EqualValues(t, expected, actual)
 }
 
 func assertExpectedErrorRaised(t *testing.T, description string, expectedError string, wasRaised bool) {

@@ -163,6 +163,7 @@ func (w *Wrapper) Blockstore() blockstore.Blockstore {
 
 func (w *Wrapper) Close(ctx context.Context) {
 	w.db.Close(ctx)
+	w.httpServer.CloseClientConnections()
 	w.httpServer.Close()
 }
 

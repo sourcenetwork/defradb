@@ -11,7 +11,6 @@
 package http
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -24,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
+	sse "github.com/vito/go-sse/sse"
 )
 
 var _ client.Store = (*StoreClient)(nil)
@@ -318,12 +318,12 @@ func (c *StoreClient) ExecRequest(ctx context.Context, query string) *client.Req
 		result.GQL.Errors = []error{err}
 		return result
 	}
-	defer res.Body.Close() //nolint:errcheck
-
 	if res.Header.Get("Content-Type") == "text/event-stream" {
 		result.Pub = c.execRequestSubscription(ctx, res.Body)
 		return result
 	}
+	defer res.Body.Close() //nolint:errcheck
+
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		result.GQL.Errors = []error{err}
@@ -341,27 +341,34 @@ func (c *StoreClient) ExecRequest(ctx context.Context, query string) *client.Req
 	return result
 }
 
-func (c *StoreClient) execRequestSubscription(ctx context.Context, r io.Reader) *events.Publisher[events.Update] {
+func (c *StoreClient) execRequestSubscription(ctx context.Context, r io.ReadCloser) *events.Publisher[events.Update] {
 	pubCh := events.New[events.Update](0, 0)
 	pub, err := events.NewPublisher[events.Update](pubCh, 0)
 	if err != nil {
 		return nil
 	}
 
-	scanner := bufio.NewScanner(r)
 	go func() {
-		for scanner.Scan() {
-			line := scanner.Text()
-			if !strings.HasPrefix(line, "data:") {
-				continue
-			}
-			line = strings.TrimPrefix(line, "data:")
+		eventReader := sse.NewReadCloser(r)
+		defer eventReader.Close()
 
-			var item events.Update
-			if err := json.Unmarshal([]byte(line), &item); err != nil {
+		for {
+			evt, err := eventReader.Next()
+			if err != nil {
 				return
 			}
-			pub.Publish(item)
+			var response GraphQLResponse
+			if err := json.Unmarshal(evt.Data, &response); err != nil {
+				return
+			}
+			var errors []error
+			for _, err := range response.Errors {
+				errors = append(errors, fmt.Errorf(err))
+			}
+			pub.Publish(client.GQLResult{
+				Errors: errors,
+				Data:   response.Data,
+			})
 		}
 	}()
 

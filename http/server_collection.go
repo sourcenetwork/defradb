@@ -11,6 +11,8 @@
 package http
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -265,12 +267,19 @@ func (s *CollectionHandler) GetAllDocKeys(c *gin.Context) {
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
 
+	c.Status(http.StatusOK)
+	c.Writer.Flush()
+
 	c.Stream(func(w io.Writer) bool {
 		docKey, open := <-docKeyCh
 		if !open {
 			return false
 		}
-		c.SSEvent("next", docKey)
+		data, err := json.Marshal(docKey)
+		if err != nil {
+			return false
+		}
+		fmt.Fprintf(w, "data: %s\n\n", data)
 		return true
 	})
 }

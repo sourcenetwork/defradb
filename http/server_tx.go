@@ -62,7 +62,7 @@ func (h *TxHandler) Commit(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
 		return
 	}
-	txVal, ok := h.txs.LoadAndDelete(txId)
+	txVal, ok := h.txs.Load(txId)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
 		return
@@ -72,6 +72,7 @@ func (h *TxHandler) Commit(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	h.txs.Delete(txId)
 	c.Status(http.StatusOK)
 }
 
@@ -81,11 +82,12 @@ func (h *TxHandler) Discard(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
 		return
 	}
-	txVal, ok := h.txs.LoadAndDelete(txId)
+	txVal, ok := h.txs.Load(txId)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
 		return
 	}
 	txVal.(datastore.Txn).Discard(c.Request.Context())
+	h.txs.Delete(txId)
 	c.Status(http.StatusOK)
 }

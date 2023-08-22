@@ -11,14 +11,15 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/events"
 )
 
 type GraphQLRequest struct {
@@ -28,6 +29,45 @@ type GraphQLRequest struct {
 type GraphQLResponse struct {
 	Errors []string `json:"errors,omitempty"`
 	Data   any      `json:"data"`
+}
+
+func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
+	// decode numbers to json.Number
+	dec := json.NewDecoder(bytes.NewBuffer(data))
+	dec.UseNumber()
+
+	var out map[string]any
+	if err := dec.Decode(&out); err != nil {
+		return err
+	}
+
+	// fix errors type to match tests
+	switch t := out["errors"].(type) {
+	case []any:
+		var errors []string
+		for _, v := range t {
+			errors = append(errors, v.(string))
+		}
+		res.Errors = errors
+	default:
+		res.Errors = nil
+	}
+
+	// fix data type to match tests
+	switch t := out["data"].(type) {
+	case []any:
+		var fixed []map[string]any
+		for _, v := range t {
+			fixed = append(fixed, v.(map[string]any))
+		}
+		res.Data = fixed
+	case map[string]any:
+		res.Data = t
+	default:
+		res.Data = []map[string]any{}
+	}
+
+	return nil
 }
 
 type StoreHandler struct{}
@@ -235,29 +275,29 @@ func (s *StoreHandler) ExecRequest(c *gin.Context) {
 		return
 	}
 	result := store.ExecRequest(c.Request.Context(), request.Query)
-	if result.Pub != nil {
-		s.execRequestSubscription(c, result.Pub)
-		return
-	}
 
 	var errors []string
 	for _, err := range result.GQL.Errors {
 		errors = append(errors, err.Error())
 	}
-	c.JSON(http.StatusOK, gin.H{"data": result.GQL.Data, "errors": errors})
-}
+	if result.Pub == nil {
+		c.JSON(http.StatusOK, gin.H{"data": result.GQL.Data, "errors": errors})
+		return
+	}
+	defer result.Pub.Unsubscribe()
 
-func (s *StoreHandler) execRequestSubscription(c *gin.Context, pub *events.Publisher[events.Update]) {
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
 
+	c.Status(http.StatusOK)
+	c.Writer.Flush()
+
 	c.Stream(func(w io.Writer) bool {
 		select {
 		case <-c.Request.Context().Done():
-			pub.Unsubscribe()
 			return false
-		case item, open := <-pub.Stream():
+		case item, open := <-result.Pub.Stream():
 			if !open {
 				return false
 			}
@@ -265,7 +305,7 @@ func (s *StoreHandler) execRequestSubscription(c *gin.Context, pub *events.Publi
 			if err != nil {
 				return false
 			}
-			c.SSEvent("next", data)
+			fmt.Fprintf(w, "data: %s\n\n", data)
 			return true
 		}
 	})

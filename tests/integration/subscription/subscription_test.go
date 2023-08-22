@@ -10,308 +10,308 @@
 
 package subscription
 
-// import (
-// 	"testing"
+import (
+	"testing"
 
-// 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-// )
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
 
-// func TestSubscriptionWithCreateMutations(t *testing.T) {
-// 	test := testUtils.TestCase{
-// 		Description: "Subscription with user creations",
-// 		Actions: []any{
-// 			testUtils.SubscriptionRequest{
-// 				Request: `subscription {
-// 					User {
-// 						_key
-// 						name
-// 						age
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-// 						"age":  uint64(27),
-// 						"name": "John",
-// 					},
-// 					{
-// 						"_key": "bae-18def051-7f0f-5dc9-8a69-2a5e423f6b55",
-// 						"age":  uint64(31),
-// 						"name": "Addo",
-// 					},
-// 				},
-// 			},
-// 			testUtils.Request{
-// 				Request: `mutation {
-// 					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
-// 						name
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"name": "John",
-// 					},
-// 				},
-// 			},
-// 			testUtils.Request{
-// 				Request: `mutation {
-// 					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
-// 						name
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"name": "Addo",
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+func TestSubscriptionWithCreateMutations(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Subscription with user creations",
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User {
+						_key
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+						"age":  uint64(27),
+						"name": "John",
+					},
+					{
+						"_key": "bae-18def051-7f0f-5dc9-8a69-2a5e423f6b55",
+						"age":  uint64(31),
+						"name": "Addo",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Addo",
+					},
+				},
+			},
+		},
+	}
 
-// 	execute(t, test)
-// }
+	execute(t, test)
+}
 
-// func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
-// 	test := testUtils.TestCase{
-// 		Description: "Subscription with filter and one user creation",
-// 		Actions: []any{
-// 			testUtils.SubscriptionRequest{
-// 				Request: `subscription {
-// 					User(filter: {age: {_lt: 30}}) {
-// 						_key
-// 						name
-// 						age
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-// 						"age":  uint64(27),
-// 						"name": "John",
-// 					},
-// 				},
-// 			},
-// 			testUtils.Request{
-// 				Request: `mutation {
-// 					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
-// 						name
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"name": "John",
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Subscription with filter and one user creation",
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User(filter: {age: {_lt: 30}}) {
+						_key
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+						"age":  uint64(27),
+						"name": "John",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+		},
+	}
 
-// 	execute(t, test)
-// }
+	execute(t, test)
+}
 
-// func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
-// 	test := testUtils.TestCase{
-// 		Description: "Subscription with filter and one user creation outside of the filter",
-// 		Actions: []any{
-// 			testUtils.SubscriptionRequest{
-// 				Request: `subscription {
-// 					User(filter: {age: {_gt: 30}}) {
-// 						_key
-// 						name
-// 						age
-// 					}
-// 				}`,
-// 				Results: []map[string]any{},
-// 			},
-// 			testUtils.Request{
-// 				Request: `mutation {
-// 					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
-// 						name
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"name": "John",
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Subscription with filter and one user creation outside of the filter",
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User(filter: {age: {_gt: 30}}) {
+						_key
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+		},
+	}
 
-// 	execute(t, test)
-// }
+	execute(t, test)
+}
 
-// func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
-// 	test := testUtils.TestCase{
-// 		Description: "Subscription with filter and user creation in and outside of the filter",
-// 		Actions: []any{
-// 			testUtils.SubscriptionRequest{
-// 				Request: `subscription {
-// 					User(filter: {age: {_lt: 30}}) {
-// 						_key
-// 						name
-// 						age
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-// 						"age":  uint64(27),
-// 						"name": "John",
-// 					},
-// 				},
-// 			},
-// 			testUtils.Request{
-// 				Request: `mutation {
-// 					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
-// 						name
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"name": "John",
-// 					},
-// 				},
-// 			},
-// 			testUtils.Request{
-// 				Request: `mutation {
-// 					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
-// 						name
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"name": "Addo",
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Subscription with filter and user creation in and outside of the filter",
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User(filter: {age: {_lt: 30}}) {
+						_key
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+						"age":  uint64(27),
+						"name": "John",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Addo",
+					},
+				},
+			},
+		},
+	}
 
-// 	execute(t, test)
-// }
+	execute(t, test)
+}
 
-// func TestSubscriptionWithUpdateMutations(t *testing.T) {
-// 	test := testUtils.TestCase{
-// 		Description: "Subscription with user creations and single mutation",
-// 		Actions: []any{
-// 			testUtils.CreateDoc{
-// 				CollectionID: 0,
-// 				Doc: `{
-// 					"name": "John",
-// 					"age": 27,
-// 					"verified": true,
-// 					"points": 42.1
-// 				}`,
-// 			},
-// 			testUtils.CreateDoc{
-// 				CollectionID: 0,
-// 				Doc: `{
-// 					"name": "Addo",
-// 					"age": 35,
-// 					"verified": true,
-// 					"points": 50
-// 				}`,
-// 			},
-// 			testUtils.SubscriptionRequest{
-// 				Request: `subscription {
-// 					User {
-// 						_key
-// 						name
-// 						age
-// 						points
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-// 						"age":    uint64(27),
-// 						"name":   "John",
-// 						"points": float64(45),
-// 					},
-// 				},
-// 			},
-// 			testUtils.Request{
-// 				Request: `mutation {
-// 					update_User(filter: {name: {_eq: "John"}}, data: "{\"points\": 45}") {
-// 						name
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"name": "John",
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+func TestSubscriptionWithUpdateMutations(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Subscription with user creations and single mutation",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 27,
+					"verified": true,
+					"points": 42.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Addo",
+					"age": 35,
+					"verified": true,
+					"points": 50
+				}`,
+			},
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User {
+						_key
+						name
+						age
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+						"age":    uint64(27),
+						"name":   "John",
+						"points": float64(45),
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					update_User(filter: {name: {_eq: "John"}}, data: "{\"points\": 45}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+		},
+	}
 
-// 	execute(t, test)
-// }
+	execute(t, test)
+}
 
-// func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
-// 	test := testUtils.TestCase{
-// 		Description: "Subscription with user creations and mutations for all",
-// 		Actions: []any{
-// 			testUtils.CreateDoc{
-// 				CollectionID: 0,
-// 				Doc: `{
-// 					"name": "John",
-// 					"age": 27,
-// 					"verified": true,
-// 					"points": 42.1
-// 				}`,
-// 			},
-// 			testUtils.CreateDoc{
-// 				CollectionID: 0,
-// 				Doc: `{
-// 					"name": "Addo",
-// 					"age": 31,
-// 					"verified": true,
-// 					"points": 50
-// 				}`,
-// 			},
-// 			testUtils.SubscriptionRequest{
-// 				Request: `subscription {
-// 					User {
-// 						_key
-// 						name
-// 						age
-// 						points
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-// 						"age":    uint64(27),
-// 						"name":   "John",
-// 						"points": float64(55),
-// 					},
-// 					{
-// 						"_key":   "bae-cf723876-5c6a-5dcf-a877-ab288eb30d57",
-// 						"age":    uint64(31),
-// 						"name":   "Addo",
-// 						"points": float64(55),
-// 					},
-// 				},
-// 			},
-// 			testUtils.Request{
-// 				Request: `mutation {
-// 					update_User(data: "{\"points\": 55}") {
-// 						name
-// 					}
-// 				}`,
-// 				Results: []map[string]any{
-// 					{
-// 						"name": "John",
-// 					},
-// 					{
-// 						"name": "Addo",
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Subscription with user creations and mutations for all",
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 27,
+					"verified": true,
+					"points": 42.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Addo",
+					"age": 31,
+					"verified": true,
+					"points": 50
+				}`,
+			},
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User {
+						_key
+						name
+						age
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+						"age":    uint64(27),
+						"name":   "John",
+						"points": float64(55),
+					},
+					{
+						"_key":   "bae-cf723876-5c6a-5dcf-a877-ab288eb30d57",
+						"age":    uint64(31),
+						"name":   "Addo",
+						"points": float64(55),
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					update_User(data: "{\"points\": 55}") {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+					{
+						"name": "Addo",
+					},
+				},
+			},
+		},
+	}
 
-// 	execute(t, test)
-// }
+	execute(t, test)
+}

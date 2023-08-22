@@ -12,7 +12,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 	"sort"
 	"testing"
@@ -157,19 +156,19 @@ func assertExplainRequestResults(
 		assert.Fail(t, "Expected an error however none was raised.", description)
 	}
 
+	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
 	resultantData := actualResult.Data.([]map[string]any)
 	log.Info(ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
-	if action.ExpectedFullGraph != nil {
-		expectedJson, err := json.Marshal(action.ExpectedFullGraph)
-		require.NoError(t, err)
-
-		resultJson, err := json.Marshal(actualResult.Data)
-		require.NoError(t, err)
-
-		assert.JSONEq(t, string(expectedJson), string(resultJson))
+	if lengthOfExpectedFullGraph := len(action.ExpectedFullGraph); action.ExpectedFullGraph != nil {
+		require.Equal(t, lengthOfExpectedFullGraph, len(resultantData), description)
+		for index, actualResult := range resultantData {
+			if lengthOfExpectedFullGraph > index {
+				assertRequestResultsData(t, actualResult, action.ExpectedFullGraph[index])
+			}
+		}
 	}
 
 	// Ensure the complete high-level pattern matches, inother words check that all the
@@ -180,12 +179,7 @@ func assertExplainRequestResults(
 		for index, actualResult := range resultantData {
 			// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
 			actualResultWithoutAttributes := trimExplainAttributes(t, description, actualResult)
-			assert.Equal(
-				t,
-				action.ExpectedPatterns[index],
-				actualResultWithoutAttributes,
-				description,
-			)
+			assertRequestResultsData(t, actualResultWithoutAttributes, action.ExpectedPatterns[index])
 		}
 	}
 
@@ -220,12 +214,7 @@ func assertExplainTargetCase(
 			)
 		}
 
-		assert.Equal(
-			t,
-			targetCase.ExpectedAttributes,
-			foundActualTarget,
-			description,
-		)
+		assertRequestResultsData(t, foundActualTarget, targetCase.ExpectedAttributes)
 	}
 }
 
@@ -309,6 +298,26 @@ func findTargetNode(
 			}
 		}
 
+	case []any:
+		for _, item := range r {
+			target, matches, found := findTargetNode(
+				targetName,
+				toSkip,
+				includeChildNodes,
+				item,
+			)
+
+			totalMatchedSoFar = totalMatchedSoFar + matches
+			toSkip -= matches
+
+			if found {
+				if includeChildNodes {
+					return target, totalMatchedSoFar, true
+				}
+				return trimSubNodes(target), totalMatchedSoFar, true
+			}
+		}
+
 	case []map[string]any:
 		for _, item := range r {
 			target, matches, found := findTargetNode(
@@ -375,6 +384,16 @@ func trimExplainAttributes(
 				trimmedArrayElements = append(
 					trimmedArrayElements,
 					trimExplainAttributes(t, description, valueItem),
+				)
+			}
+			trimmedMap[key] = trimmedArrayElements
+
+		case []any:
+			trimmedArrayElements := []map[string]any{}
+			for _, valueItem := range v {
+				trimmedArrayElements = append(
+					trimmedArrayElements,
+					trimExplainAttributes(t, description, valueItem.(map[string]any)),
 				)
 			}
 			trimmedMap[key] = trimmedArrayElements

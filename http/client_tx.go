@@ -46,7 +46,7 @@ func (c *TxClient) Discard(ctx context.Context) {
 	if err != nil {
 		return
 	}
-	c.http.request(req)
+	c.http.request(req) //nolint:errcheck
 }
 
 func (c *TxClient) OnSuccess(fn func()) {

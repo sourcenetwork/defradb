@@ -18,6 +18,8 @@ import (
 	"net/http"
 	"strings"
 
+	sse "github.com/vito/go-sse/sse"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -344,27 +346,25 @@ func (c *CollectionClient) GetAllDocKeys(ctx context.Context) (<-chan client.Doc
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close() // nolint:errcheck
-
 	docKeyCh := make(chan client.DocKeysResult)
-	defer close(docKeyCh)
 
-	// scanner := bufio.NewScanner(res.Body)
-	// go func() {
-	// 	for scanner.Scan() {
-	// 		line := scanner.Text()
-	// 		if !strings.HasPrefix(line, "data:") {
-	// 			continue
-	// 		}
-	// 		line = strings.TrimPrefix(line, "data:")
+	go func() {
+		eventReader := sse.NewReadCloser(res.Body)
+		defer eventReader.Close()
+		defer close(docKeyCh)
 
-	// 		var docKey client.DocKeysResult
-	// 		if err := json.Unmarshal([]byte(line), &docKey); err != nil {
-	// 			return
-	// 		}
-	// 		docKeyCh <- docKey
-	// 	}
-	// }()
+		for {
+			evt, err := eventReader.Next()
+			if err != nil {
+				return
+			}
+			var docKeyRes client.DocKeysResult
+			if err := json.Unmarshal(evt.Data, &docKeyRes); err != nil {
+				return
+			}
+			docKeyCh <- docKeyRes
+		}
+	}()
 
 	return docKeyCh, nil
 }
@@ -377,15 +377,15 @@ func (c *CollectionClient) CreateIndex(
 
 	body, err := json.Marshal(&indexDesc)
 	if err != nil {
-		return client.IndexDescription{}, nil
+		return client.IndexDescription{}, err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
-		return client.IndexDescription{}, nil
+		return client.IndexDescription{}, err
 	}
 	var index client.IndexDescription
 	if err := c.http.requestJson(req, &index); err != nil {
-		return client.IndexDescription{}, nil
+		return client.IndexDescription{}, err
 	}
 	return index, nil
 }
