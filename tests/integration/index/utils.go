@@ -27,6 +27,7 @@ type ExplainResultAsserter struct {
 	iterations     immutable.Option[int]
 	docFetches     immutable.Option[int]
 	fieldFetches   immutable.Option[int]
+	indexesFetches immutable.Option[int]
 	filterMatches  immutable.Option[int]
 	sizeOfResults  immutable.Option[int]
 	planExecutions immutable.Option[uint64]
@@ -80,6 +81,12 @@ func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
 		assert.Equal(t, fieldFetches, uint64(a.fieldFetches.Value()),
 			"Expected %d fieldFetches, got %d", a.fieldFetches.Value(), fieldFetches)
 	}
+	if a.indexesFetches.HasValue() {
+		indexesFetches, hasIndexesFetches := scanNode["indexesFetches"]
+		require.True(t, hasIndexesFetches, "Expected indexesFetches property")
+		assert.Equal(t, indexesFetches, uint64(a.indexesFetches.Value()),
+			"Expected %d indexesFetches, got %d", a.indexesFetches.Value(), indexesFetches)
+	}
 }
 
 func (a *ExplainResultAsserter) WithIterations(iterations int) *ExplainResultAsserter {
@@ -94,6 +101,11 @@ func (a *ExplainResultAsserter) WithDocFetches(docFetches int) *ExplainResultAss
 
 func (a *ExplainResultAsserter) WithFieldFetches(fieldFetches int) *ExplainResultAsserter {
 	a.fieldFetches = immutable.Some[int](fieldFetches)
+	return a
+}
+
+func (a *ExplainResultAsserter) WithIndexesFetches(indexesFetches int) *ExplainResultAsserter {
+	a.indexesFetches = immutable.Some[int](indexesFetches)
 	return a
 }
 

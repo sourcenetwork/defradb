@@ -53,6 +53,7 @@ type IndexFetcher struct {
 	docFields         []client.FieldDescription
 	indexIter         indexIterator
 	indexDataStoreKey core.IndexDataStoreKey
+	execInfo          ExecInfo
 }
 
 var _ Fetcher = (*IndexFetcher)(nil)
@@ -102,6 +103,7 @@ type eqIndexIterator struct {
 	queryResultIterator
 	indexKey  core.IndexDataStoreKey
 	filterVal []byte
+	execInfo  *ExecInfo
 }
 
 func (i *eqIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
@@ -117,17 +119,38 @@ func (i *eqIndexIterator) Init(ctx context.Context, store datastore.DSReaderWrit
 	return nil
 }
 
+func (i *eqIndexIterator) Next() (core.IndexDataStoreKey, bool, error) {
+	key, hasValue, err := i.queryResultIterator.Next()
+	if hasValue {
+		i.execInfo.IndexesFetched++
+	}
+	return key, hasValue, err
+}
+
 type filteredIndexIterator struct {
 	queryResultIterator
 	indexKey core.IndexDataStoreKey
 	filter   query.Filter
+	execInfo *ExecInfo
+}
+
+type fetchCounterFilterDecorator struct {
+	filter   query.Filter
+	execInfo *ExecInfo
+}
+
+func (f *fetchCounterFilterDecorator) Filter(e query.Entry) bool {
+	f.execInfo.IndexesFetched++
+	return f.filter.Filter(e)
 }
 
 func (i *filteredIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	iter, err := store.Query(ctx, query.Query{
 		Prefix:   i.indexKey.ToString(),
 		KeysOnly: true,
-		Filters:  []query.Filter{i.filter},
+		Filters: []query.Filter{
+			&fetchCounterFilterDecorator{filter: i.filter, execInfo: i.execInfo},
+		},
 	})
 	if err != nil {
 		return err
@@ -308,31 +331,37 @@ func (f *IndexFetcher) createIndexIterator(indexFilter *mapper.Filter) (indexIte
 			return &eqIndexIterator{
 				indexKey:  f.indexDataStoreKey,
 				filterVal: valueBytes,
+				execInfo:  &f.execInfo,
 			}, nil
 		} else if op == opGt {
 			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &gtIndexCmp{value: valueBytes},
+				execInfo: &f.execInfo,
 			}, nil
 		} else if op == opGe {
 			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &geIndexCmp{value: valueBytes},
+				execInfo: &f.execInfo,
 			}, nil
 		} else if op == opLt {
 			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &ltIndexCmp{value: valueBytes},
+				execInfo: &f.execInfo,
 			}, nil
 		} else if op == opLe {
 			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &leIndexCmp{value: valueBytes},
+				execInfo: &f.execInfo,
 			}, nil
 		} else if op == opNe {
 			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &neIndexCmp{value: valueBytes},
+				execInfo: &f.execInfo,
 			}, nil
 		}
 	} else if op == opIn || op == opNin {
@@ -353,22 +382,26 @@ func (f *IndexFetcher) createIndexIterator(indexFilter *mapper.Filter) (indexIte
 			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   newNinIndexCmp(valArr, true),
+				execInfo: &f.execInfo,
 			}, nil
 		} else {
 			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   newNinIndexCmp(valArr, false),
+				execInfo: &f.execInfo,
 			}, nil
 		}
 	} else if op == opLike {
 		return &filteredIndexIterator{
 			indexKey: f.indexDataStoreKey,
 			filter:   newLikeIndexCmp(filterVal.(string), true),
+			execInfo: &f.execInfo,
 		}, nil
 	} else if op == opNlike {
 		return &filteredIndexIterator{
 			indexKey: f.indexDataStoreKey,
 			filter:   newLikeIndexCmp(filterVal.(string), false),
+			execInfo: &f.execInfo,
 		}, nil
 	}
 
@@ -430,7 +463,7 @@ func (f *IndexFetcher) Start(ctx context.Context, spans core.Spans) error {
 }
 
 func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
-	var resultExecInfo ExecInfo
+	f.execInfo.Reset()
 	for {
 		f.doc.Reset()
 
@@ -440,7 +473,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		}
 
 		if !hasValue {
-			return nil, resultExecInfo, nil
+			return nil, f.execInfo, nil
 		}
 
 		property := &encProperty{
@@ -450,7 +483,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 
 		f.doc.key = indexKey.FieldValues[1]
 		f.doc.properties[f.indexedField] = property
-		resultExecInfo.FieldsFetched++
+		f.execInfo.FieldsFetched++
 
 		if f.docFetcher != nil && len(f.docFields) > 0 {
 			targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
@@ -467,15 +500,15 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			if err != nil {
 				return nil, ExecInfo{}, err
 			}
-			resultExecInfo.Add(execInfo)
+			f.execInfo.Add(execInfo)
 			if encDoc == nil {
 				continue
 			}
 			f.doc.MergeProperties(encDoc)
 		} else {
-			resultExecInfo.DocsFetched++
+			f.execInfo.DocsFetched++
 		}
-		return f.doc, resultExecInfo, nil
+		return f.doc, f.execInfo, nil
 	}
 }
 

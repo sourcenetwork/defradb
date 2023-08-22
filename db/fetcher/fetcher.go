@@ -33,18 +33,22 @@ type ExecInfo struct {
 	DocsFetched uint64
 	// Number of fields fetched.
 	FieldsFetched uint64
+	// Number of indexes fetched.
+	IndexesFetched uint64
 }
 
 // Add adds the other ExecInfo to the current ExecInfo.
 func (s *ExecInfo) Add(other ExecInfo) {
 	s.DocsFetched += other.DocsFetched
 	s.FieldsFetched += other.FieldsFetched
+	s.IndexesFetched += other.IndexesFetched
 }
 
 // Reset resets the ExecInfo.
 func (s *ExecInfo) Reset() {
 	s.DocsFetched = 0
 	s.FieldsFetched = 0
+	s.IndexesFetched = 0
 }
 
 // Fetcher is the interface for collecting documents from the underlying data store.
@@ -446,7 +450,7 @@ func (df *DocumentFetcher) nextKVRaw() (bool, core.DataStoreKey, dsq.Result, err
 	if err != nil {
 		return true, core.DataStoreKey{}, res, err
 	}
-
+	
 	return false, dsKey, res, nil
 }
 
