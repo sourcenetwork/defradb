@@ -350,7 +350,7 @@ func (c *CollectionClient) GetAllDocKeys(ctx context.Context) (<-chan client.Doc
 
 	go func() {
 		eventReader := sse.NewReadCloser(res.Body)
-		defer eventReader.Close()
+		defer eventReader.Close() //nolint:errcheck
 		defer close(docKeyCh)
 
 		for {

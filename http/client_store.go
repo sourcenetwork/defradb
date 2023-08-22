@@ -20,10 +20,11 @@ import (
 	"net/url"
 	"strings"
 
+	sse "github.com/vito/go-sse/sse"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
-	sse "github.com/vito/go-sse/sse"
 )
 
 var _ client.Store = (*StoreClient)(nil)
@@ -350,7 +351,7 @@ func (c *StoreClient) execRequestSubscription(ctx context.Context, r io.ReadClos
 
 	go func() {
 		eventReader := sse.NewReadCloser(r)
-		defer eventReader.Close()
+		defer eventReader.Close() //nolint:errcheck
 
 		for {
 			evt, err := eventReader.Next()

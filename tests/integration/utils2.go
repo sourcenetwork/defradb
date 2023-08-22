@@ -1329,7 +1329,6 @@ func executeRequest(
 		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
 		result := db.ExecRequest(s.ctx, action.Request)
 
-		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
 			s.ctx,
 			s.t,
@@ -1338,7 +1337,6 @@ func executeRequest(
 			action.Results,
 			action.ExpectedError,
 			nodeID,
-			anyOfByFieldKey,
 		)
 	}
 
@@ -1406,7 +1404,6 @@ func executeSubscriptionRequest(
 							action.ExpectedError,
 							// anyof is not yet supported by subscription requests
 							0,
-							map[docFieldKey][]any{},
 						)
 
 						assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1465,12 +1462,6 @@ func AssertErrors(
 	return false
 }
 
-// docFieldKey is an internal key type that wraps docIndex and fieldName
-type docFieldKey struct {
-	docIndex  int
-	fieldName string
-}
-
 func assertRequestResults(
 	ctx context.Context,
 	t *testing.T,
@@ -1479,7 +1470,6 @@ func assertRequestResults(
 	expectedResults []map[string]any,
 	expectedError string,
 	nodeID int,
-	anyOfByField map[docFieldKey][]any,
 ) bool {
 	if AssertErrors(t, description, result.Errors, expectedError) {
 		return true

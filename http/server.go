@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/sourcenetwork/defradb/client"
 )
 
