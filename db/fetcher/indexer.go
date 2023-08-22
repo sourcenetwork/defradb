@@ -41,19 +41,18 @@ const (
 )
 
 type IndexFetcher struct {
-	docFetcher         Fetcher
-	col                *client.CollectionDescription
-	txn                datastore.Txn
-	indexFilter        *mapper.Filter
-	docFilter          *mapper.Filter
-	doc                *encodedDocument
-	mapping            *core.DocumentMapping
-	index              client.IndexDescription
-	indexedField       client.FieldDescription
-	docFields          []client.FieldDescription
-	indexQuery         query.Results
-	indexDataStoreKey  core.IndexDataStoreKey
-	indexQueryProvider filteredIndexQueryProvider
+	docFetcher        Fetcher
+	col               *client.CollectionDescription
+	txn               datastore.Txn
+	indexFilter       *mapper.Filter
+	docFilter         *mapper.Filter
+	doc               *encodedDocument
+	mapping           *core.DocumentMapping
+	index             client.IndexDescription
+	indexedField      client.FieldDescription
+	docFields         []client.FieldDescription
+	indexIter         indexIterator
+	indexDataStoreKey core.IndexDataStoreKey
 }
 
 var _ Fetcher = (*IndexFetcher)(nil)
@@ -70,25 +69,72 @@ func NewIndexFetcher(
 	}
 }
 
-type filteredIndexQueryProvider interface {
-	Get(context.Context, datastore.Txn) (query.Results, error)
+type indexIterator interface {
+	Init(context.Context, datastore.DSReaderWriter) error
+	Next() (core.IndexDataStoreKey, bool, error)
+	Close() error
 }
 
-type eqIndexQueryProvider struct {
+type queryResultIterator struct {
+	resultIter query.Results
+}
+
+func (i queryResultIterator) Next() (core.IndexDataStoreKey, bool, error) {
+	res, hasVal := i.resultIter.NextSync()
+	if res.Error != nil {
+		return core.IndexDataStoreKey{}, false, res.Error
+	}
+	if !hasVal {
+		return core.IndexDataStoreKey{}, false, nil
+	}
+	key, err := core.NewIndexDataStoreKey(res.Key)
+	if err != nil {
+		return core.IndexDataStoreKey{}, false, err
+	}
+	return key, true, nil
+}
+
+func (i queryResultIterator) Close() error {
+	return i.resultIter.Close()
+}
+
+type eqIndexIterator struct {
+	queryResultIterator
 	indexKey  core.IndexDataStoreKey
 	filterVal []byte
 }
 
-func (i *eqIndexQueryProvider) Get(ctx context.Context, txn datastore.Txn) (query.Results, error) {
-	if len(i.indexKey.FieldValues) != 0 {
-		return nil, nil
-	}
-
+func (i *eqIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	i.indexKey.FieldValues = [][]byte{i.filterVal}
-	return txn.Datastore().Query(ctx, query.Query{
+	resultIter, err := store.Query(ctx, query.Query{
 		Prefix:   i.indexKey.ToString(),
 		KeysOnly: true,
 	})
+	if err != nil {
+		return err
+	}
+	i.resultIter = resultIter
+	return nil
+}
+
+type filteredIndexIterator struct {
+	queryResultIterator
+	indexKey core.IndexDataStoreKey
+	filter   query.Filter
+}
+
+func (i *filteredIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	iter, err := store.Query(ctx, query.Query{
+		Prefix:   i.indexKey.ToString(),
+		KeysOnly: true,
+		Filters:  []query.Filter{i.filter},
+	})
+	if err != nil {
+		return err
+	}
+	i.resultIter = iter
+
+	return nil
 }
 
 type gtIndexCmp struct {
@@ -177,19 +223,6 @@ func (cmp *arrIndexCmp) Filter(e query.Entry) bool {
 	return found == cmp.isIn
 }
 
-type cmpIndexQueryProvider struct {
-	indexKey core.IndexDataStoreKey
-	filter   query.Filter
-}
-
-func (p *cmpIndexQueryProvider) Get(ctx context.Context, txn datastore.Txn) (query.Results, error) {
-	return txn.Datastore().Query(ctx, query.Query{
-		Prefix:   p.indexKey.ToString(),
-		KeysOnly: true,
-		Filters:  []query.Filter{p.filter},
-	})
-}
-
 type likeIndexCmp struct {
 	filterValue string
 	hasPrefix   bool
@@ -251,9 +284,7 @@ func (cmp *likeIndexCmp) doesMatch(value string) bool {
 	}
 }
 
-func (f *IndexFetcher) createFilteredIndexQueryProvider(
-	indexFilter *mapper.Filter,
-) (filteredIndexQueryProvider, error) {
+func (f *IndexFetcher) createIndexIterator(indexFilter *mapper.Filter) (indexIterator, error) {
 	indexFilterCond := indexFilter.ExternalConditions[f.indexedField.Name]
 	condMap, ok := indexFilterCond.(map[string]any)
 	if !ok {
@@ -274,32 +305,32 @@ func (f *IndexFetcher) createFilteredIndexQueryProvider(
 		}
 
 		if op == opEq {
-			return &eqIndexQueryProvider{
+			return &eqIndexIterator{
 				indexKey:  f.indexDataStoreKey,
 				filterVal: valueBytes,
 			}, nil
 		} else if op == opGt {
-			return &cmpIndexQueryProvider{
+			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &gtIndexCmp{value: valueBytes},
 			}, nil
 		} else if op == opGe {
-			return &cmpIndexQueryProvider{
+			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &geIndexCmp{value: valueBytes},
 			}, nil
 		} else if op == opLt {
-			return &cmpIndexQueryProvider{
+			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &ltIndexCmp{value: valueBytes},
 			}, nil
 		} else if op == opLe {
-			return &cmpIndexQueryProvider{
+			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &leIndexCmp{value: valueBytes},
 			}, nil
 		} else if op == opNe {
-			return &cmpIndexQueryProvider{
+			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   &neIndexCmp{value: valueBytes},
 			}, nil
@@ -319,23 +350,23 @@ func (f *IndexFetcher) createFilteredIndexQueryProvider(
 			valArr = append(valArr, valueBytes)
 		}
 		if op == opIn {
-			return &cmpIndexQueryProvider{
+			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   newNinIndexCmp(valArr, true),
 			}, nil
 		} else {
-			return &cmpIndexQueryProvider{
+			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,
 				filter:   newNinIndexCmp(valArr, false),
 			}, nil
 		}
 	} else if op == opLike {
-		return &cmpIndexQueryProvider{
+		return &filteredIndexIterator{
 			indexKey: f.indexDataStoreKey,
 			filter:   newLikeIndexCmp(filterVal.(string), true),
 		}, nil
 	} else if op == opNlike {
-		return &cmpIndexQueryProvider{
+		return &filteredIndexIterator{
 			indexKey: f.indexDataStoreKey,
 			filter:   newLikeIndexCmp(filterVal.(string), false),
 		}, nil
@@ -377,11 +408,11 @@ func (f *IndexFetcher) Init(
 		}
 	}
 
-	queryProvider, err := f.createFilteredIndexQueryProvider(f.indexFilter)
+	iter, err := f.createIndexIterator(f.indexFilter)
 	if err != nil {
 		return err
 	}
-	f.indexQueryProvider = queryProvider
+	f.indexIter = iter
 
 	if f.docFetcher != nil && len(f.docFields) > 0 {
 		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.docFilter, f.mapping, false, false)
@@ -391,8 +422,7 @@ func (f *IndexFetcher) Init(
 }
 
 func (f *IndexFetcher) Start(ctx context.Context, spans core.Spans) error {
-	var err error
-	f.indexQuery, err = f.indexQueryProvider.Get(ctx, f.txn)
+	err := f.indexIter.Init(ctx, f.txn.Datastore())
 	if err != nil {
 		return err
 	}
@@ -404,19 +434,15 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 	for {
 		f.doc.Reset()
 
-		res, hasValue := f.indexQuery.NextSync()
-		if res.Error != nil {
-			return nil, ExecInfo{}, res.Error
+		indexKey, hasValue, err := f.indexIter.Next()
+		if err != nil {
+			return nil, ExecInfo{}, err
 		}
 
 		if !hasValue {
 			return nil, resultExecInfo, nil
 		}
 
-		indexKey, err := core.NewIndexDataStoreKey(res.Key)
-		if err != nil {
-			return nil, ExecInfo{}, err
-		}
 		property := &encProperty{
 			Desc: f.indexedField,
 			Raw:  indexKey.FieldValues[0],
@@ -455,8 +481,8 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 }
 
 func (f *IndexFetcher) Close() error {
-	if f.indexQuery != nil {
-		return f.indexQuery.Close()
+	if f.indexIter != nil {
+		return f.indexIter.Close()
 	}
 	return nil
 }
