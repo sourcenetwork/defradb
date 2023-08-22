@@ -946,16 +946,19 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 		return err
 	}
 
-	if !isDeleted {
-		if exists {
-			err = c.update(ctx, txn, doc)
-		} else {
-			err = c.create(ctx, txn, doc)
-		}
-		if err != nil {
-			return err
-		}
+	if isDeleted {
+		return NewErrDocumentDeleted(doc.Key().String())
 	}
+
+	if exists {
+		err = c.update(ctx, txn, doc)
+	} else {
+		err = c.create(ctx, txn, doc)
+	}
+	if err != nil {
+		return err
+	}
+
 	return c.commitImplicitTxn(ctx, txn)
 }
 
