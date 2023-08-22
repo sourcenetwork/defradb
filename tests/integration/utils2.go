@@ -250,9 +250,9 @@ func GetClientTypes() []ClientType {
 		clients = append(clients, httpClientType)
 	}
 
-	// if goClient {
-	// 	clients = append(clients, goClientType)
-	// }
+	if goClient {
+		clients = append(clients, goClientType)
+	}
 
 	return clients
 }
