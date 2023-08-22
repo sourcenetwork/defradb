@@ -1114,80 +1114,56 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	fetcher := c.newFetcher()
-
-	err := fetcher.Init(ctx, txn, &c.desc, []client.FieldDescription{fieldDescription}, nil, nil, false, false)
+	filter := fmt.Sprintf(
+		`{_and: [{%s: {_ne: "%s"}}, {%s: {_eq: "%s"}}]}`,
+		request.KeyFieldName,
+		docKey,
+		fieldDescription.Name,
+		value,
+	)
+	selectionPlan, err := c.makeSelectionPlan(ctx, txn, filter)
 	if err != nil {
-		closeErr := fetcher.Close()
+		return err
+	}
+
+	err = selectionPlan.Init()
+	if err != nil {
+		closeErr := selectionPlan.Close()
 		if closeErr != nil {
 			return errors.Wrap(err.Error(), closeErr)
 		}
 		return err
 	}
 
-	colPrefix := core.DataStoreKey{CollectionID: c.desc.IDString()}
-	err = fetcher.Start(ctx, core.NewSpans(core.NewSpan(colPrefix, colPrefix.PrefixEnd())))
-	if err != nil {
-		closeErr := fetcher.Close()
+	if err = selectionPlan.Start(); err != nil {
+		closeErr := selectionPlan.Close()
 		if closeErr != nil {
 			return errors.Wrap(err.Error(), closeErr)
 		}
 		return err
 	}
 
-	var alreadyLinked bool
-	var existingDocumentID string
-fetchLoop:
-	for {
-		doc, _, err := fetcher.FetchNext(ctx)
-		if err != nil {
-			closeErr := fetcher.Close()
-			if closeErr != nil {
-				return errors.Wrap(err.Error(), closeErr)
-			}
-			return err
-		}
-		if doc == nil {
-			err = fetcher.Close()
-			if err != nil {
-				return err
-			}
-			break
-		}
-
-		existingDocumentID = string(doc.Key())
-		if string(doc.Key()) == docKey {
-			continue
-		}
-
-		props, err := doc.Properties(false)
-		if err != nil {
-			closeErr := fetcher.Close()
-			if closeErr != nil {
-				return errors.Wrap(err.Error(), closeErr)
-			}
-			return err
-		}
-
-		for field, fetchedValue := range props {
-			if field.ID != fieldDescription.ID {
-				continue
-			}
-
-			if value == fetchedValue {
-				alreadyLinked = true
-				break fetchLoop
-			}
-		}
-	}
-
-	err = fetcher.Close()
+	alreadyLinked, err := selectionPlan.Next()
 	if err != nil {
+		closeErr := selectionPlan.Close()
+		if closeErr != nil {
+			return errors.Wrap(err.Error(), closeErr)
+		}
 		return err
 	}
 
 	if alreadyLinked {
-		return NewErrOneOneAlreadyLinked(docKey, existingDocumentID, objFieldDescription.RelationName)
+		existingDocument := selectionPlan.Value()
+		err := selectionPlan.Close()
+		if err != nil {
+			return err
+		}
+		return NewErrOneOneAlreadyLinked(docKey, existingDocument.GetKey(), objFieldDescription.RelationName)
+	}
+
+	err = selectionPlan.Close()
+	if err != nil {
+		return err
 	}
 
 	return nil
