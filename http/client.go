@@ -17,6 +17,8 @@ import (
 	"net/http"
 	"net/url"
 	"sync/atomic"
+
+	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
 
 type errorResponse struct {
@@ -74,7 +76,10 @@ func (c *httpClient) request(req *http.Request) error {
 	if err := json.Unmarshal(data, &errRes); err != nil {
 		return fmt.Errorf("%s", data)
 	}
-	return fmt.Errorf(errRes.Error)
+	if errRes.Error == "Transaction Conflict. Please retry" {
+		return badger.ErrTxnConflict
+	}
+	return fmt.Errorf("%s", errRes.Error)
 }
 
 func (c *httpClient) requestJson(req *http.Request, out any) error {
@@ -98,5 +103,8 @@ func (c *httpClient) requestJson(req *http.Request, out any) error {
 	if err := json.Unmarshal(data, &errRes); err != nil {
 		return fmt.Errorf("%s", data)
 	}
-	return fmt.Errorf(errRes.Error)
+	if errRes.Error == "Transaction Conflict. Please retry" {
+		return badger.ErrTxnConflict
+	}
+	return fmt.Errorf("%s", errRes.Error)
 }
