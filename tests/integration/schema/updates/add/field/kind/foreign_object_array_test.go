@@ -973,6 +973,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_MissingPrimaryIDField(t *te
 				Request: `query {
 					Users {
 						name
+						foo_id
 						foo {
 							name
 						}
@@ -983,15 +984,17 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_MissingPrimaryIDField(t *te
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "Keenan",
+						"name":   "Keenan",
+						"foo_id": key1,
 						"foo": map[string]any{
 							"name": "John",
 						},
 						"foobar": []map[string]any{},
 					},
 					{
-						"name": "John",
-						"foo":  nil,
+						"name":   "John",
+						"foo":    nil,
+						"foo_id": nil,
 						"foobar": []map[string]any{
 							{
 								"name": "Keenan",
