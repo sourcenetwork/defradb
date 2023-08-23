@@ -128,51 +128,70 @@ func (i *eqIndexIterator) Next() (core.IndexDataStoreKey, bool, error) {
 }
 
 type inIndexIterator struct {
-	indexKey     core.IndexDataStoreKey
+	eqIndexIterator
 	filterValues [][]byte
-	currentIndex int
-	execInfo     *ExecInfo
+	nextValIndex int
 	ctx          context.Context
 	store        datastore.DSReaderWriter
+	hasIterator  bool
+}
+
+func newInIndexIterator(
+	indexKey core.IndexDataStoreKey,
+	filterValues [][]byte,
+	execInfo *ExecInfo,
+) *inIndexIterator {
+	return &inIndexIterator{
+		eqIndexIterator: eqIndexIterator{
+			indexKey: indexKey,
+			execInfo: execInfo,
+		},
+		filterValues: filterValues,
+	}
+}
+
+func (i *inIndexIterator) nextIterator() (bool, error) {
+	if i.nextValIndex > 0 {
+		err := i.eqIndexIterator.Close()
+		if err != nil {
+			return false, err
+		}
+	}
+
+	if i.nextValIndex >= len(i.filterValues) {
+		return false, nil
+	}
+
+	i.filterVal = i.filterValues[i.nextValIndex]
+	i.eqIndexIterator.Init(i.ctx, i.store)
+	i.nextValIndex++
+	return true, nil
 }
 
 func (i *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	i.ctx = ctx
 	i.store = store
-	return nil
+	var err error
+	i.hasIterator, err = i.nextIterator()
+	return err
 }
 
 func (i *inIndexIterator) Next() (core.IndexDataStoreKey, bool, error) {
-	if i.currentIndex >= len(i.filterValues) {
-		return core.IndexDataStoreKey{}, false, nil
+	for i.hasIterator {
+		key, hasValue, err := i.eqIndexIterator.Next()
+		if err != nil {
+			return core.IndexDataStoreKey{}, false, err
+		}
+		if !hasValue {
+			i.hasIterator, err = i.nextIterator()
+			if err != nil {
+				return core.IndexDataStoreKey{}, false, err
+			}
+			continue
+		}
+		return key, true, nil
 	}
-
-	i.indexKey.FieldValues = [][]byte{i.filterValues[i.currentIndex]}
-	queryIter, err := i.store.Query(i.ctx, query.Query{
-		Prefix:   i.indexKey.ToString(),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return core.IndexDataStoreKey{}, false, err
-	}
-	res, hasValue := queryIter.NextSync()
-	if res.Error != nil {
-		return core.IndexDataStoreKey{}, false, res.Error
-	}
-	if !hasValue {
-		return core.IndexDataStoreKey{}, false, nil
-	}
-	key, err := core.NewIndexDataStoreKey(res.Key)
-	if err != nil {
-		return core.IndexDataStoreKey{}, false, err
-	}
-	err = queryIter.Close()
-	if err != nil {
-		return core.IndexDataStoreKey{}, false, err
-	}
-	i.currentIndex++
-	i.execInfo.IndexesFetched++
-	return key, true, nil
+	return core.IndexDataStoreKey{}, false, nil
 }
 
 func (i *inIndexIterator) Close() error {
@@ -431,11 +450,7 @@ func (f *IndexFetcher) createIndexIterator(indexFilter *mapper.Filter) (indexIte
 			valArr = append(valArr, valueBytes)
 		}
 		if op == opIn {
-			return &inIndexIterator{
-				indexKey:     f.indexDataStoreKey,
-				filterValues: valArr,
-				execInfo:     &f.execInfo,
-			}, nil
+			return newInIndexIterator(f.indexDataStoreKey, valArr, &f.execInfo), nil
 		} else {
 			return &filteredIndexIterator{
 				indexKey: f.indexDataStoreKey,

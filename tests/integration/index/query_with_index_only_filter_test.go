@@ -33,30 +33,6 @@ func sendRequestAndExplain(
 	}
 }
 
-func TestQueryWithIndex_WithOnlyIndexedField_ShouldFetch(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "If there is only one indexed field in the query, it should be fetched",
-		Actions: []any{
-			createSchemaWithDocs(`
-				type users {
-					name: String @index
-				} 
-			`),
-			sendRequestAndExplain(`
-				users(filter: {name: {_eq: "Islam"}}) {
-					name
-				}`,
-				[]map[string]any{
-					{"name": "Islam"},
-				},
-				NewExplainAsserter().WithDocFetches(1).WithFieldFetches(1).WithIndexFetches(1),
-			),
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there are non-indexed fields in the query, they should be fetched",
@@ -84,9 +60,33 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndex_IfMoreThenOneDoc_ShouldFetchAll(t *testing.T) {
+func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If there are more than one doc with the same indexed field, they should be fetched",
+		Description: "Test index filtering with _eq filter",
+		Actions: []any{
+			createSchemaWithDocs(`
+				type users {
+					name: String @index
+				} 
+			`),
+			sendRequestAndExplain(`
+				users(filter: {name: {_eq: "Islam"}}) {
+					name
+				}`,
+				[]map[string]any{
+					{"name": "Islam"},
+				},
+				NewExplainAsserter().WithDocFetches(1).WithFieldFetches(1).WithIndexFetches(1),
+			),
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If there are several docs matching _eq filter, they should be fetched",
 		Actions: []any{
 			createSchemaWithDocs(`
 				type users {
@@ -267,6 +267,39 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 				[]map[string]any{
 					{"name": "Shahzad"},
 					{"name": "Andy"},
+				},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(2),
+			),
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If there are several docs matching _in filter, they should be fetched",
+		Actions: []any{
+			createSchemaWithDocs(`
+				type users {
+					name: String @index
+					age: Int
+				} 
+			`),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Islam",
+					"age": 18
+				}`,
+			},
+			sendRequestAndExplain(`
+				users(filter: {name: {_in: ["Islam"]}}) {
+					age
+				}`,
+				[]map[string]any{
+					{"age": uint64(32)},
+					{"age": uint64(18)},
 				},
 				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(2),
 			),
