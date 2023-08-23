@@ -1007,3 +1007,39 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_MissingPrimaryIDField(t *te
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaUpdatesAddFieldKindForeignObjectArray_MissingPrimaryIDField_DoesNotCreateIdOnManySide(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind foreign object array (17), with auto id field generation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo", "Kind": "Users", "RelationType": 137, "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foobar", "Kind": "[Users]", "RelationType": 10, "RelationName": "foo"
+						}}
+					]
+				`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						foobar_id
+					}
+				}`,
+				ExpectedError: `Cannot query field "foobar_id" on type "Users"`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
