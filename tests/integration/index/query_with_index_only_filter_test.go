@@ -268,7 +268,7 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 					{"name": "Shahzad"},
 					{"name": "Andy"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(8),
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(2),
 			),
 		},
 	}
