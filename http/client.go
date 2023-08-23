@@ -77,7 +77,7 @@ func (c *httpClient) request(req *http.Request) error {
 	if err := json.Unmarshal(data, &errRes); err != nil {
 		return fmt.Errorf("%s", data)
 	}
-	if errRes.Error == "Transaction Conflict. Please retry" {
+	if errRes.Error == badger.ErrTxnConflict.Error() {
 		return badger.ErrTxnConflict
 	}
 	return fmt.Errorf("%s", errRes.Error)
@@ -108,7 +108,7 @@ func (c *httpClient) requestJson(req *http.Request, out any) error {
 	if err := json.Unmarshal(data, &errRes); err != nil {
 		return fmt.Errorf("%s", data)
 	}
-	if errRes.Error == "Transaction Conflict. Please retry" {
+	if errRes.Error == badger.ErrTxnConflict.Error() {
 		return badger.ErrTxnConflict
 	}
 	return fmt.Errorf("%s", errRes.Error)
