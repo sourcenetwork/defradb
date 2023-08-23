@@ -141,32 +141,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_MissingRelationName(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObject_MissingIDField(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), missing id field",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "missing id field for relation object field. Field: foo, ExpectedIDFieldName: foo_id",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object (16), id field missing kind",
@@ -456,38 +430,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_RelatedRelationTypeMismatch(t *t
 					]
 				`,
 				ExpectedError: "invalid RelationType of the related field. RelationName: foo, Expected: 4, Actual: 9",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_MissingSecondaryID(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), valid, functional",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "RelationType": 5, "Schema": "Users", "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "missing id field for relation object field. Field: foobar, ExpectedIDFieldName: foobar_id",
 			},
 		},
 	}
@@ -950,5 +892,161 @@ func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindAndSchemaMismatch(t *t
 			},
 		},
 	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObject_MissingPrimaryIDField(t *testing.T) {
+	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind foreign object (16), with auto primary ID field creation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo", "Kind": "Users", "RelationType": 133, "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foobar", "Kind": "Users", "RelationType": 5, "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+						}}
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(`{
+						"name": "Keenan",
+						"foo": "%s"
+					}`,
+					key1,
+				),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						foo {
+							name
+						}
+						foobar {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Keenan",
+						"foo": map[string]any{
+							"name": "John",
+						},
+						"foobar": nil,
+					},
+					{
+						"name": "John",
+						"foo":  nil,
+						"foobar": map[string]any{
+							"name": "Keenan",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObject_MissingSecondaryIDField(t *testing.T) {
+	key1 := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
+
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind foreign object (16), with auto secondary ID field creation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo", "Kind": "Users", "RelationType": 133, "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+						}},
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {
+							"Name": "foobar", "Kind": "Users", "RelationType": 5, "RelationName": "foo"
+						}}
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(`{
+						"name": "Keenan",
+						"foo": "%s"
+					}`,
+					key1,
+				),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						foo {
+							name
+						}
+						foobar {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Keenan",
+						"foo": map[string]any{
+							"name": "John",
+						},
+						"foobar": nil,
+					},
+					{
+						"name": "John",
+						"foo":  nil,
+						"foobar": map[string]any{
+							"name": "Keenan",
+						},
+					},
+				},
+			},
+		},
+	}
+
 	testUtils.ExecuteTestCase(t, test)
 }
