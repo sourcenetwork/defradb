@@ -11,6 +11,7 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -95,8 +96,12 @@ func (c *httpClient) requestJson(req *http.Request, out any) error {
 	if err != nil {
 		return err
 	}
+
+	dec := json.NewDecoder(bytes.NewBuffer(data))
+	dec.UseNumber()
+
 	if res.StatusCode == http.StatusOK {
-		return json.Unmarshal(data, out)
+		return dec.Decode(out)
 	}
 
 	var errRes errorResponse
