@@ -101,10 +101,11 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "test", "path": "/Users/Schema/Fields/1", "value": {"ID":1, "Name": "name", "Kind": 11} }
+						{ "op": "test", "path": "/Users/Schema/Fields/1", "value": {
+							"ID":1, "Name": "name", "Kind": 11, "Schema":"","RelationName":"","Typ":1,"RelationType":0
+						} }
 					]
 				`,
-				ExpectedError: "testing value /Users/Schema/Fields/1 failed: test failed",
 			},
 		},
 	}
