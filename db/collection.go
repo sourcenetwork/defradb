@@ -455,7 +455,7 @@ func validateUpdateCollectionFields(
 			}
 
 			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
-				idFieldName := proposedField.Name + "_id"
+				idFieldName := proposedField.Name + request.RelatedObjectID
 				idField, idFieldFound := proposedDesc.Schema.GetField(idFieldName)
 				if idFieldFound {
 					if idField.Kind != client.FieldKind_DocKey {
