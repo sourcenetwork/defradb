@@ -23,6 +23,12 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
+const (
+	schemaNamePathIndex int = 0
+	schemaPathIndex     int = 1
+	fieldsPathIndex     int = 2
+)
+
 // addSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, request types, etc.
 func (db *db) addSchema(
@@ -271,14 +277,13 @@ func getSubstituteFieldKind(
 
 // isField returns true if the given path points to a FieldDescription.
 func isField(path []string) bool {
-	//nolint:goconst
-	return len(path) == 4 && path[len(path)-2] == "Fields" && path[len(path)-3] == "Schema"
+	return len(path) == 4 && path[fieldsPathIndex] == "Fields" && path[schemaPathIndex] == "Schema"
 }
 
 // isField returns true if the given path points to a FieldDescription.Kind property.
 func isFieldKind(path []string) bool {
 	return len(path) == 5 &&
-		path[len(path)-1] == "Kind" &&
-		path[len(path)-3] == "Fields" &&
-		path[len(path)-4] == "Schema"
+		path[fieldIndexPathIndex+1] == "Kind" &&
+		path[fieldsPathIndex] == "Fields" &&
+		path[schemaPathIndex] == "Schema"
 }
