@@ -123,6 +123,11 @@ func Decode(encdoc EncodedDocument) (*client.Document, error) {
 
 	doc.SchemaVersionID = encdoc.SchemaVersionID()
 
+	// client.Document tracks which fields have been set ('dirtied'), here we
+	// are simply decoding a clean document and the dirty flag is an artifact
+	// of the current client.Document interface.
+	doc.Clean()
+
 	return doc, nil
 }
 
