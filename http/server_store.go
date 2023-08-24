@@ -284,6 +284,7 @@ func (s *StoreHandler) ExecRequest(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"data": result.GQL.Data, "errors": errors})
 		return
 	}
+	defer result.Pub.Unsubscribe()
 
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
@@ -308,4 +309,5 @@ func (s *StoreHandler) ExecRequest(c *gin.Context) {
 			return true
 		}
 	})
+
 }

@@ -10,7 +10,9 @@
 
 package events
 
-import "time"
+import (
+	"time"
+)
 
 // time limit we set for the client to read after publishing.
 var clientTimeout = 60 * time.Second
@@ -22,6 +24,7 @@ type Publisher[T any] struct {
 	ch     Channel[T]
 	event  Subscription[T]
 	stream chan any
+	closed bool
 }
 
 // NewPublisher creates a new Publisher with the given event Channel, subscribes to the
@@ -52,6 +55,10 @@ func (p *Publisher[T]) Stream() chan any {
 // Publish sends data to the streaming channel and unsubscribes if
 // the client hangs for too long.
 func (p *Publisher[T]) Publish(data any) {
+	if p.closed {
+		return
+	}
+
 	select {
 	case p.stream <- data:
 	case <-time.After(clientTimeout):
@@ -63,6 +70,7 @@ func (p *Publisher[T]) Publish(data any) {
 
 // Unsubscribe unsubscribes the client for the event channel and closes the stream.
 func (p *Publisher[T]) Unsubscribe() {
+	p.closed = true
 	p.ch.Unsubscribe(p.event)
 	close(p.stream)
 }
