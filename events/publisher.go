@@ -61,7 +61,10 @@ func (p *Publisher[T]) Publish(data any) {
 		return
 	}
 
+	// don't allow closing while sending is in flight
 	p.wg.Add(1)
+	defer p.wg.Done()
+
 	select {
 	case p.stream <- data:
 	case <-time.After(clientTimeout):
@@ -69,7 +72,6 @@ func (p *Publisher[T]) Publish(data any) {
 		// unsubscribe them from the event stream
 		p.unsubscribe()
 	}
-	p.wg.Done()
 }
 
 // Unsubscribe unsubscribes the client for the event channel and closes the stream.

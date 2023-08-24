@@ -160,8 +160,8 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 
 // Query implements ds.Query.
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
-	t.closeLk.RLock()
-	defer t.closeLk.RUnlock()
+	t.ds.closeLk.RLock()
+	defer t.ds.closeLk.RUnlock()
 	if t.ds.closed {
 		return nil, ErrClosed
 	}
