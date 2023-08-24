@@ -1093,6 +1093,20 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
+	if action.SupportedMutationTypes.HasValue() {
+		var isTypeSupported bool
+		for _, supportedMutationType := range action.SupportedMutationTypes.Value() {
+			if supportedMutationType == mutationType {
+				isTypeSupported = true
+				break
+			}
+		}
+
+		if !isTypeSupported {
+			s.t.Skipf("test does not support given mutation type. Type: %s", mutationType)
+		}
+	}
+
 	var mutation func(*state, UpdateDoc, *net.Node, []client.Collection) error
 
 	switch mutationType {

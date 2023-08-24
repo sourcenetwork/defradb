@@ -152,6 +152,13 @@ type UpdateDoc struct {
 
 	// Setting DontSync to true will prevent waiting for that update.
 	DontSync bool
+
+	// If provided a value, SupportedMutationTypes will cause this test to be skipped
+	// if the active mutation type is not within the given set.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between mutation types, or we need to temporarily document a bug.
+	SupportedMutationTypes immutable.Option[[]MutationType]
 }
 
 // CreateIndex will attempt to create the given secondary index for the given collection
