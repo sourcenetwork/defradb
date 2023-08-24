@@ -45,6 +45,7 @@ const (
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
 	repositoryEnvName          = "DEFRA_CODE_REPOSITORY"
 	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
+	mutationTypeEnvName        = "DEFRA_MUTATION_TYPE"
 	documentationDirectoryName = "data_format_changes"
 )
 
@@ -56,11 +57,31 @@ const (
 	badgerFileType DatabaseType = "badger-file-system"
 )
 
+// The MutationType that tests will run using.
+//
+// For example if set to [CollectionSaveMutationType], all supporting
+// actions (such as [UpdateDoc]) will execute via [Collection.Save].
+//
+// Defaults to CollectionSaveMutationType.
+type MutationType string
+
+const (
+	// CollectionSaveMutationType will cause all supporting actions
+	// to run their mutations via [Collection.Save].
+	CollectionSaveMutationType MutationType = "collection-save"
+
+	// GQLRequestMutationType will cause all supporting actions to
+	// run their mutations using GQL requests, typically these will
+	// include a `id` parameter to target the specified document.
+	GQLRequestMutationType MutationType = "gql"
+)
+
 var (
 	log            = logging.MustNewLogger("tests.integration")
 	badgerInMemory bool
 	badgerFile     bool
 	inMemoryStore  bool
+	mutationType   MutationType
 )
 
 const subscriptionTimeout = 1 * time.Second
@@ -110,6 +131,7 @@ func init() {
 	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
 	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
 	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
+	mutType, mutationTypeSpecified := os.LookupEnv(mutationTypeEnvName)
 
 	badgerFile = getBool(badgerFileValue)
 	badgerInMemory = getBool(badgerInMemoryValue)
@@ -123,6 +145,15 @@ func init() {
 
 	if !targetBranchSpecified {
 		targetBranchValue = "develop"
+	}
+
+	if mutationTypeSpecified {
+		mutationType = MutationType(mutType)
+	} else {
+		// Default to testing mutations via Collection.Save - it should be simpler and
+		// faster. We assume this is desirable when not explicitly testing any particular
+		// mutation type.
+		mutationType = CollectionSaveMutationType
 	}
 
 	// default is to run against all
