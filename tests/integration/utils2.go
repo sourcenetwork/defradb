@@ -12,6 +12,7 @@ package tests
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -1087,16 +1088,20 @@ func deleteDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
-// updateDoc updates a document using the collection api.
+// updateDoc updates a document using the chosen [mutationType].
 func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	doc := s.documents[action.CollectionID][action.DocID]
+	var mutation func(*state, UpdateDoc, *net.Node, []client.Collection) error
 
-	err := doc.SetWithJSON([]byte(action.Doc))
-	if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-		return
+	switch mutationType {
+	case CollectionSaveMutationType:
+		mutation = updateDocViaColSave
+	case GQLRequestMutationType:
+		mutation = updateDocViaGQL
+	default:
+		s.t.Fatalf("invalid mutationType: %v", mutationType)
 	}
 
 	var expectedErrorRaised bool
@@ -1105,12 +1110,60 @@ func updateDoc(
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return collections[action.CollectionID].Save(s.ctx, doc) },
+			func() error { return mutation(s, action, actionNodes[nodeID], collections) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+func updateDocViaColSave(
+	s *state,
+	action UpdateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) error {
+	doc := s.documents[action.CollectionID][action.DocID]
+
+	err := doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	return collections[action.CollectionID].Save(s.ctx, doc)
+}
+
+func updateDocViaGQL(
+	s *state,
+	action UpdateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) error {
+	doc := s.documents[action.CollectionID][action.DocID]
+	collection := collections[action.CollectionID]
+
+	escapedJson, err := json.Marshal(action.Doc)
+	require.NoError(s.t, err)
+
+	request := fmt.Sprintf(
+		`mutation {
+			update_%s(id: "%s", data: %s) {
+				_key
+			}
+		}`,
+		collection.Name(),
+		doc.Key().String(),
+		escapedJson,
+	)
+
+	db := getStore(s, node.DB, immutable.None[int](), action.ExpectedError)
+
+	result := db.ExecRequest(s.ctx, request)
+	if len(result.GQL.Errors) > 0 {
+		return result.GQL.Errors[0]
+	}
+	return nil
 }
 
 // createIndex creates a secondary index using the collection api.

@@ -125,8 +125,7 @@ type DeleteDoc struct {
 	DontSync bool
 }
 
-// UpdateDoc will attempt to update the given document in the given collection
-// using the collection api.
+// UpdateDoc will attempt to update the given document using the set [MutationType].
 type UpdateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this update to.
 	//
