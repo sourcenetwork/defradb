@@ -82,6 +82,11 @@ func (c *StoreClient) NewConcurrentTxn(ctx context.Context, readOnly bool) (data
 	return &TxClient{txRes.ID, c.http}, nil
 }
 
+func (c *StoreClient) WithTxn(tx datastore.Txn) client.Store {
+	client := c.http.withTxn(tx.ID())
+	return &StoreClient{client}
+}
+
 func (c *StoreClient) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
 

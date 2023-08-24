@@ -33,7 +33,8 @@ func NewServer(db client.DB) *Server {
 	collectionHandler := &CollectionHandler{}
 	lensHandler := &LensHandler{}
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Recovery())
 
 	api := router.Group("/api/v0")
 	api.Use(TransactionMiddleware(db, txs), DatabaseMiddleware(db))
