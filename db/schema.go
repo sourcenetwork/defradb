@@ -181,12 +181,12 @@ func substituteSchemaPatch(
 	patch jsonpatch.Patch,
 	collectionsByName map[string]client.CollectionDescription,
 ) (jsonpatch.Patch, error) {
-	fieldIndexesByName := make(map[string]map[string]int, len(collectionsByName))
+	fieldIndexesByCollection := make(map[string]map[string]int, len(collectionsByName))
 	for colName, col := range collectionsByName {
-		colFieldIndexesByName := make(map[string]int, len(col.Schema.Fields))
-		fieldIndexesByName[colName] = colFieldIndexesByName
+		fieldIndexesByName := make(map[string]int, len(col.Schema.Fields))
+		fieldIndexesByCollection[colName] = fieldIndexesByName
 		for i, field := range col.Schema.Fields {
-			colFieldIndexesByName[field.Name] = i
+			fieldIndexesByName[field.Name] = i
 		}
 	}
 
@@ -230,12 +230,12 @@ func substituteSchemaPatch(
 
 					desc := collectionsByName[splitPath[schemaNamePathIndex]]
 					var index string
-					if colFieldIndexesByName, ok := fieldIndexesByName[desc.Name]; ok {
-						if i, ok := colFieldIndexesByName[fieldIndexer]; ok {
+					if fieldIndexesByName, ok := fieldIndexesByCollection[desc.Name]; ok {
+						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
 							index = fmt.Sprint(i)
 						}
 					} else {
-						fieldIndexesByName[desc.Name] = map[string]int{
+						fieldIndexesByCollection[desc.Name] = map[string]int{
 							// The DocKey field is always at the zero index and we need to account for it
 							request.KeyFieldName: 0,
 						}
@@ -244,7 +244,7 @@ func substituteSchemaPatch(
 						index = "-"
 						// If this is a new field we need to track its location so that subsequent operations
 						// within the patch may access it by field name.
-						fieldIndexesByName[desc.Name][fieldIndexer] = len(fieldIndexesByName[desc.Name])
+						fieldIndexesByCollection[desc.Name][fieldIndexer] = len(fieldIndexesByCollection[desc.Name])
 					}
 
 					splitPath[fieldIndexPathIndex] = index
