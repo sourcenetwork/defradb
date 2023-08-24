@@ -123,9 +123,9 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 
 // Has implements ds.Has.
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
+	t.closeLk.RLock()
+	defer t.closeLk.RUnlock()
+	if t.closed {
 		return false, ErrClosed
 	}
 
