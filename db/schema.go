@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -233,11 +232,6 @@ func substituteSchemaPatch(
 					if fieldIndexesByName, ok := fieldIndexesByCollection[desc.Name]; ok {
 						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
 							index = fmt.Sprint(i)
-						}
-					} else {
-						fieldIndexesByCollection[desc.Name] = map[string]int{
-							// The DocKey field is always at the zero index and we need to account for it
-							request.KeyFieldName: 0,
 						}
 					}
 					if index == "" {
