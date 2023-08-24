@@ -11,6 +11,7 @@
 package events
 
 import (
+	"sync"
 	"time"
 )
 
@@ -25,6 +26,7 @@ type Publisher[T any] struct {
 	event  Subscription[T]
 	stream chan any
 	closed bool
+	wg     sync.WaitGroup
 }
 
 // NewPublisher creates a new Publisher with the given event Channel, subscribes to the
@@ -59,17 +61,24 @@ func (p *Publisher[T]) Publish(data any) {
 		return
 	}
 
+	p.wg.Add(1)
 	select {
 	case p.stream <- data:
 	case <-time.After(clientTimeout):
 		// if sending to the client times out, we assume an inactive or problematic client and
 		// unsubscribe them from the event stream
-		p.Unsubscribe()
+		p.unsubscribe()
 	}
+	p.wg.Done()
 }
 
 // Unsubscribe unsubscribes the client for the event channel and closes the stream.
 func (p *Publisher[T]) Unsubscribe() {
+	p.wg.Wait()
+	p.unsubscribe()
+}
+
+func (p *Publisher[T]) unsubscribe() {
 	p.closed = true
 	p.ch.Unsubscribe(p.event)
 	close(p.stream)
