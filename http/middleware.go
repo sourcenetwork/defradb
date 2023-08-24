@@ -66,13 +66,14 @@ func DatabaseMiddleware(db client.DB) gin.HandlerFunc {
 func LensMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		store := c.MustGet("store").(client.Store)
+		c.Set("lens", store.LensRegistry())
 
-		tx, ok := c.Get("tx")
-		if ok {
-			c.Set("lens", store.LensRegistry().WithTxn(tx.(datastore.Txn)))
-		} else {
-			c.Set("lens", store.LensRegistry())
-		}
+		// tx, ok := c.Get("tx")
+		// if ok {
+		// 	c.Set("lens", store.LensRegistry().WithTxn(tx.(datastore.Txn)))
+		// } else {
+		// 	c.Set("lens", store.LensRegistry())
+		// }
 		c.Next()
 	}
 }
