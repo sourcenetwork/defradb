@@ -230,16 +230,14 @@ func substituteSchemaPatch(
 
 					desc := collectionsByName[splitPath[schemaNamePathIndex]]
 					var index string
-					if index == "" {
-						if colFieldIndexesByName, ok := fieldIndexesByName[desc.Name]; ok {
-							if i, ok := colFieldIndexesByName[fieldIndexer]; ok {
-								index = fmt.Sprint(i)
-							}
-						} else {
-							fieldIndexesByName[desc.Name] = map[string]int{
-								// The DocKey field is always at the zero index and we need to account for it
-								request.KeyFieldName: 0,
-							}
+					if colFieldIndexesByName, ok := fieldIndexesByName[desc.Name]; ok {
+						if i, ok := colFieldIndexesByName[fieldIndexer]; ok {
+							index = fmt.Sprint(i)
+						}
+					} else {
+						fieldIndexesByName[desc.Name] = map[string]int{
+							// The DocKey field is always at the zero index and we need to account for it
+							request.KeyFieldName: 0,
 						}
 					}
 					if index == "" {
