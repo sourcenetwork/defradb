@@ -84,6 +84,7 @@ const (
 	errExpectedJSONObject                 string = "expected JSON object"
 	errExpectedJSONArray                  string = "expected JSON array"
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
+	errIndexDoesNotMatchName              string = "the index used does not match the given name"
 )
 
 var (
@@ -161,6 +162,7 @@ var (
 	ErrExpectedJSONObject                 = errors.New(errExpectedJSONObject)
 	ErrExpectedJSONArray                  = errors.New(errExpectedJSONArray)
 	ErrOneOneAlreadyLinked                = errors.New(errOneOneAlreadyLinked)
+	ErrIndexDoesNotMatchName              = errors.New(errIndexDoesNotMatchName)
 )
 
 // NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
@@ -609,5 +611,13 @@ func NewErrOneOneAlreadyLinked(documentId, targetId, relationName string) error 
 		errors.NewKV("DocumentID", documentId),
 		errors.NewKV("TargetID", targetId),
 		errors.NewKV("RelationName", relationName),
+	)
+}
+
+func NewErrIndexDoesNotMatchName(index, name string) error {
+	return errors.New(
+		errIndexDoesNotMatchName,
+		errors.NewKV("Index", index),
+		errors.NewKV("Name", name),
 	)
 }
