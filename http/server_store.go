@@ -17,13 +17,13 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
 type GraphQLRequest struct {
-	Query string `json:"query" form:"query"`
+	Query string `json:"query"`
 }
 
 type GraphQLResponse struct {
@@ -72,240 +72,249 @@ func (res *GraphQLResponse) UnmarshalJSON(data []byte) error {
 
 type StoreHandler struct{}
 
-func (s *StoreHandler) SetReplicator(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
-	var req client.Replicator
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var rep client.Replicator
+	if err := requestJSON(req, &rep); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	err := store.SetReplicator(c.Request.Context(), req)
+	err := store.SetReplicator(req.Context(), rep)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *StoreHandler) DeleteReplicator(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
-	var req client.Replicator
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var rep client.Replicator
+	if err := requestJSON(req, &rep); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	err := store.DeleteReplicator(c.Request.Context(), req)
+	err := store.DeleteReplicator(req.Context(), rep)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *StoreHandler) GetAllReplicators(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
-	reps, err := store.GetAllReplicators(c.Request.Context())
+	reps, err := store.GetAllReplicators(req.Context())
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, reps)
+	responseJSON(rw, http.StatusOK, reps)
 }
 
-func (s *StoreHandler) AddP2PCollection(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
-	err := store.AddP2PCollection(c.Request.Context(), c.Param("id"))
+	err := store.AddP2PCollection(req.Context(), chi.URLParam(req, "id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *StoreHandler) RemoveP2PCollection(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
-	err := store.RemoveP2PCollection(c.Request.Context(), c.Param("id"))
+	err := store.RemoveP2PCollection(req.Context(), chi.URLParam(req, "id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *StoreHandler) GetAllP2PCollections(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
-	cols, err := store.GetAllP2PCollections(c.Request.Context())
+	cols, err := store.GetAllP2PCollections(req.Context())
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, cols)
+	responseJSON(rw, http.StatusOK, cols)
 }
 
-func (s *StoreHandler) BasicImport(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
 	var config client.BackupConfig
-	if err := c.ShouldBindJSON(&config); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := requestJSON(req, &config); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	err := store.BasicImport(c.Request.Context(), config.Filepath)
+	err := store.BasicImport(req.Context(), config.Filepath)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *StoreHandler) BasicExport(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
 	var config client.BackupConfig
-	if err := c.ShouldBindJSON(&config); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := requestJSON(req, &config); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	err := store.BasicExport(c.Request.Context(), &config)
+	err := store.BasicExport(req.Context(), &config)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *StoreHandler) AddSchema(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
-	schema, err := io.ReadAll(c.Request.Body)
+	schema, err := io.ReadAll(req.Body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	cols, err := store.AddSchema(c.Request.Context(), string(schema))
+	cols, err := store.AddSchema(req.Context(), string(schema))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, cols)
+	responseJSON(rw, http.StatusOK, cols)
 }
 
-func (s *StoreHandler) PatchSchema(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
-	patch, err := io.ReadAll(c.Request.Body)
+	patch, err := io.ReadAll(req.Body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	err = store.PatchSchema(c.Request.Context(), string(patch))
+	err = store.PatchSchema(req.Context(), string(patch))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *StoreHandler) GetCollection(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
 	switch {
-	case c.Query("name") != "":
-		col, err := store.GetCollectionByName(c.Request.Context(), c.Query("name"))
+	case req.URL.Query().Has("name"):
+		col, err := store.GetCollectionByName(req.Context(), req.URL.Query().Get("name"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, col.Description())
-	case c.Query("schema_id") != "":
-		col, err := store.GetCollectionBySchemaID(c.Request.Context(), c.Query("schema_id"))
+		responseJSON(rw, http.StatusOK, col.Description())
+	case req.URL.Query().Has("schema_id"):
+		col, err := store.GetCollectionBySchemaID(req.Context(), req.URL.Query().Get("schema_id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, col.Description())
-	case c.Query("version_id") != "":
-		col, err := store.GetCollectionByVersionID(c.Request.Context(), c.Query("version_id"))
+		responseJSON(rw, http.StatusOK, col.Description())
+	case req.URL.Query().Has("version_id"):
+		col, err := store.GetCollectionByVersionID(req.Context(), req.URL.Query().Get("version_id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, col.Description())
+		responseJSON(rw, http.StatusOK, col.Description())
 	default:
-		cols, err := store.GetAllCollections(c.Request.Context())
+		cols, err := store.GetAllCollections(req.Context())
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
 		colDesc := make([]client.CollectionDescription, len(cols))
 		for i, col := range cols {
 			colDesc[i] = col.Description()
 		}
-		c.JSON(http.StatusOK, colDesc)
+		responseJSON(rw, http.StatusOK, colDesc)
 	}
 }
 
-func (s *StoreHandler) GetAllIndexes(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
-	indexes, err := store.GetAllIndexes(c.Request.Context())
+	indexes, err := store.GetAllIndexes(req.Context())
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, indexes)
+	responseJSON(rw, http.StatusOK, indexes)
 }
 
-func (s *StoreHandler) ExecRequest(c *gin.Context) {
-	store := c.MustGet("store").(client.Store)
+func (s *StoreHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
 
 	var request GraphQLRequest
-	if err := c.ShouldBind(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	switch {
+	case req.URL.Query().Get("query") != "":
+		request.Query = req.URL.Query().Get("query")
+	case req.Body != nil:
+		if err := requestJSON(req, &request); err != nil {
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
+			return
+		}
+	default:
+		responseJSON(rw, http.StatusBadRequest, H{"error": "missing request"})
 		return
 	}
-	if request.Query == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing request"})
-		return
-	}
-	result := store.ExecRequest(c.Request.Context(), request.Query)
+	result := store.ExecRequest(req.Context(), request.Query)
 
 	var errors []string
 	for _, err := range result.GQL.Errors {
 		errors = append(errors, err.Error())
 	}
 	if result.Pub == nil {
-		c.JSON(http.StatusOK, gin.H{"data": result.GQL.Data, "errors": errors})
+		responseJSON(rw, http.StatusOK, H{"data": result.GQL.Data, "errors": errors})
+		return
+	}
+	flusher, ok := rw.(http.Flusher)
+	if !ok {
+		responseJSON(rw, http.StatusBadRequest, H{"error": "streaming not supported"})
 		return
 	}
 
-	c.Header("Content-Type", "text/event-stream")
-	c.Header("Cache-Control", "no-cache")
-	c.Header("Connection", "keep-alive")
+	rw.Header().Add("Content-Type", "text/event-stream")
+	rw.Header().Add("Cache-Control", "no-cache")
+	rw.Header().Add("Connection", "keep-alive")
 
-	c.Status(http.StatusOK)
-	c.Writer.Flush()
+	rw.WriteHeader(http.StatusOK)
+	flusher.Flush()
 
-	c.Stream(func(w io.Writer) bool {
+	for {
 		select {
-		case <-c.Request.Context().Done():
-			return false
+		case <-req.Context().Done():
+			return
 		case item, open := <-result.Pub.Stream():
 			if !open {
-				return false
+				return
 			}
 			data, err := json.Marshal(item)
 			if err != nil {
-				return false
+				return
 			}
-			fmt.Fprintf(w, "data: %s\n\n", data)
-			return true
+			fmt.Fprintf(rw, "data: %s\n\n", data)
+			flusher.Flush()
 		}
-	})
+	}
 }

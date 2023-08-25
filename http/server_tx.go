@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -29,64 +29,63 @@ type CreateTxResponse struct {
 	ID uint64 `json:"id"`
 }
 
-func (h *TxHandler) NewTxn(c *gin.Context) {
-	db := c.MustGet("db").(client.DB)
-	readOnly, _ := strconv.ParseBool(c.Query("read_only"))
+func (h *TxHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
+	db := req.Context().Value(dbContextKey).(client.DB)
+	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
-	tx, err := db.NewTxn(c.Request.Context(), readOnly)
+	tx, err := db.NewTxn(req.Context(), readOnly)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
 	h.txs.Store(tx.ID(), tx)
-
-	c.JSON(http.StatusOK, &CreateTxResponse{tx.ID()})
+	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
-func (h *TxHandler) NewConcurrentTxn(c *gin.Context) {
-	db := c.MustGet("db").(client.DB)
-	readOnly, _ := strconv.ParseBool(c.Query("read_only"))
+func (h *TxHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
+	db := req.Context().Value(dbContextKey).(client.DB)
+	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
-	tx, err := db.NewConcurrentTxn(c.Request.Context(), readOnly)
+	tx, err := db.NewConcurrentTxn(req.Context(), readOnly)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
 	h.txs.Store(tx.ID(), tx)
-	c.JSON(http.StatusOK, &CreateTxResponse{tx.ID()})
+	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
-func (h *TxHandler) Commit(c *gin.Context) {
-	txId, err := strconv.ParseUint(c.Param("id"), 10, 64)
+func (h *TxHandler) Commit(rw http.ResponseWriter, req *http.Request) {
+	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
+		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid transaction id"})
 		return
 	}
 	txVal, ok := h.txs.Load(txId)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
+		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid transaction id"})
 		return
 	}
-	err = txVal.(datastore.Txn).Commit(c.Request.Context())
+	err = txVal.(datastore.Txn).Commit(req.Context())
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
 	h.txs.Delete(txId)
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *TxHandler) Discard(c *gin.Context) {
-	txId, err := strconv.ParseUint(c.Param("id"), 10, 64)
+func (h *TxHandler) Discard(rw http.ResponseWriter, req *http.Request) {
+	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
+		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid transaction id"})
 		return
 	}
 	txVal, ok := h.txs.LoadAndDelete(txId)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction id"})
+		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid transaction id"})
 		return
 	}
-	txVal.(datastore.Txn).Discard(c.Request.Context())
-	c.Status(http.StatusOK)
+	txVal.(datastore.Txn).Discard(req.Context())
+	rw.WriteHeader(http.StatusOK)
 }

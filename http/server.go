@@ -11,17 +11,21 @@
 package http
 
 import (
+	"context"
 	"net/http"
 	"sync"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
+type H map[string]any
+
 type Server struct {
 	db     client.DB
-	router *gin.Engine
+	router *chi.Mux
 	txs    *sync.Map
 }
 
@@ -33,68 +37,78 @@ func NewServer(db client.DB) *Server {
 	collectionHandler := &CollectionHandler{}
 	lensHandler := &LensHandler{}
 
-	router := gin.New()
-	router.Use(gin.Recovery())
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
 
-	api := router.Group("/api/v0")
-	api.Use(TransactionMiddleware(db, txs), DatabaseMiddleware(db))
+	apiMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			ctx := req.Context()
+			ctx = context.WithValue(ctx, dbContextKey, db)
+			ctx = context.WithValue(ctx, txsContextKey, txs)
+			next.ServeHTTP(rw, req.WithContext(ctx))
+		})
+	}
 
-	tx := api.Group("/tx")
-	tx.POST("/", txHandler.NewTxn)
-	tx.POST("/concurrent", txHandler.NewConcurrentTxn)
-	tx.POST("/:id", txHandler.Commit)
-	tx.DELETE("/:id", txHandler.Discard)
-
-	backup := api.Group("/backup")
-	backup.POST("/export", storeHandler.BasicExport)
-	backup.POST("/import", storeHandler.BasicImport)
-
-	schema := api.Group("/schema")
-	schema.POST("/", storeHandler.AddSchema)
-	schema.PATCH("/", storeHandler.PatchSchema)
-
-	collections := api.Group("/collections")
-	collections.GET("/", storeHandler.GetCollection)
-
-	collections_tx := collections.Group("/")
-	collections_tx.Use(CollectionMiddleware())
-
-	collections_tx.GET("/:name", collectionHandler.GetAllDocKeys)
-	collections_tx.POST("/:name", collectionHandler.Create)
-	collections_tx.PATCH("/:name", collectionHandler.UpdateWith)
-	collections_tx.DELETE("/:name", collectionHandler.DeleteWith)
-	collections_tx.POST("/:name/indexes", collectionHandler.CreateIndex)
-	collections_tx.GET("/:name/indexes", collectionHandler.GetIndexes)
-	collections_tx.DELETE("/:name/indexes/:index", collectionHandler.DropIndex)
-	collections_tx.GET("/:name/:key", collectionHandler.Get)
-	collections_tx.POST("/:name/:key", collectionHandler.Save)
-	collections_tx.PATCH("/:name/:key", collectionHandler.Update)
-	collections_tx.DELETE("/:name/:key", collectionHandler.Delete)
-
-	lens := api.Group("/lens")
-	lens.Use(LensMiddleware())
-
-	lens.GET("/", lensHandler.Config)
-	lens.POST("/", lensHandler.SetMigration)
-	lens.POST("/reload", lensHandler.ReloadLenses)
-	lens.GET("/:version", lensHandler.HasMigration)
-	lens.POST("/:version/up", lensHandler.MigrateUp)
-	lens.POST("/:version/down", lensHandler.MigrateDown)
-
-	graphQL := api.Group("/graphql")
-	graphQL.GET("/", storeHandler.ExecRequest)
-	graphQL.POST("/", storeHandler.ExecRequest)
-
-	p2p := api.Group("/p2p")
-	p2p_replicators := p2p.Group("/replicators")
-	p2p_replicators.GET("/", storeHandler.GetAllReplicators)
-	p2p_replicators.POST("/", storeHandler.SetReplicator)
-	p2p_replicators.DELETE("/", storeHandler.DeleteReplicator)
-
-	p2p_collections := p2p.Group("/collections")
-	p2p_collections.GET("/", storeHandler.GetAllP2PCollections)
-	p2p_collections.POST("/:id", storeHandler.AddP2PCollection)
-	p2p_collections.DELETE("/:id", storeHandler.RemoveP2PCollection)
+	router.Route("/api/v0", func(api chi.Router) {
+		api.Use(apiMiddleware, TransactionMiddleware, StoreMiddleware)
+		api.Route("/tx", func(tx chi.Router) {
+			tx.Post("/", txHandler.NewTxn)
+			tx.Post("/concurrent", txHandler.NewConcurrentTxn)
+			tx.Post("/{id}", txHandler.Commit)
+			tx.Delete("/{id}", txHandler.Discard)
+		})
+		api.Route("/backup", func(backup chi.Router) {
+			backup.Post("/export", storeHandler.BasicExport)
+			backup.Post("/import", storeHandler.BasicImport)
+		})
+		api.Route("/schema", func(schema chi.Router) {
+			schema.Post("/", storeHandler.AddSchema)
+			schema.Patch("/", storeHandler.PatchSchema)
+		})
+		api.Route("/collections", func(collections chi.Router) {
+			collections.Get("/", storeHandler.GetCollection)
+			// with collection middleware
+			collections_tx := collections.With(CollectionMiddleware)
+			collections_tx.Get("/{name}", collectionHandler.GetAllDocKeys)
+			collections_tx.Post("/{name}", collectionHandler.Create)
+			collections_tx.Patch("/{name}", collectionHandler.UpdateWith)
+			collections_tx.Delete("/{name}", collectionHandler.DeleteWith)
+			collections_tx.Post("/{name}/indexes", collectionHandler.CreateIndex)
+			collections_tx.Get("/{name}/indexes", collectionHandler.GetIndexes)
+			collections_tx.Delete("/{name}/indexes/{index}", collectionHandler.DropIndex)
+			collections_tx.Get("/{name}/{key}", collectionHandler.Get)
+			collections_tx.Post("/{name}/{key}", collectionHandler.Save)
+			collections_tx.Patch("/{name}/{key}", collectionHandler.Update)
+			collections_tx.Delete("/{name}/{key}", collectionHandler.Delete)
+		})
+		api.Route("/lens", func(lens chi.Router) {
+			lens.Use(LensMiddleware)
+			lens.Get("/", lensHandler.Config)
+			lens.Post("/", lensHandler.SetMigration)
+			lens.Post("/reload", lensHandler.ReloadLenses)
+			lens.Get("/{version}", lensHandler.HasMigration)
+			lens.Post("/{version}/up", lensHandler.MigrateUp)
+			lens.Post("/{version}/down", lensHandler.MigrateDown)
+		})
+		api.Route("/graphql", func(graphQL chi.Router) {
+			graphQL.Get("/", storeHandler.ExecRequest)
+			graphQL.Post("/", storeHandler.ExecRequest)
+		})
+		api.Route("/p2p", func(p2p chi.Router) {
+			p2p.Route("/replicators", func(p2p_replicators chi.Router) {
+				p2p_replicators.Get("/", storeHandler.GetAllReplicators)
+				p2p_replicators.Post("/", storeHandler.SetReplicator)
+				p2p_replicators.Delete("/", storeHandler.DeleteReplicator)
+			})
+			p2p.Route("/collections", func(p2p_collections chi.Router) {
+				p2p_collections.Get("/", storeHandler.GetAllP2PCollections)
+				p2p_collections.Post("/{id}", storeHandler.AddP2PCollection)
+				p2p_collections.Delete("/{id}", storeHandler.RemoveP2PCollection)
+			})
+		})
+	})
 
 	return &Server{
 		db:     db,

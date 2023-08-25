@@ -22,7 +22,6 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
-	"github.com/gin-gonic/gin"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -159,9 +158,6 @@ func init() {
 	if DetectDbChanges {
 		detectDbChangesInit(repositoryValue, targetBranchValue)
 	}
-
-	// disable debug logs in HTTP routes
-	gin.SetMode(gin.TestMode)
 }
 
 func getBool(val string) bool {

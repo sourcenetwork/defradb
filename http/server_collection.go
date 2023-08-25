@@ -13,10 +13,10 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -36,222 +36,224 @@ type CollectionUpdateRequest struct {
 	Updater string   `json:"updater"`
 }
 
-func (s *CollectionHandler) Create(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
 	var body any
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := requestJSON(req, &body); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
+
 	switch t := body.(type) {
 	case []map[string]any:
 		var docList []*client.Document
 		for _, docMap := range t {
 			doc, err := client.NewDocFromMap(docMap)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 				return
 			}
 			docList = append(docList, doc)
 		}
-		if err := col.CreateMany(c.Request.Context(), docList); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		if err := col.CreateMany(req.Context(), docList); err != nil {
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
+		rw.WriteHeader(http.StatusOK)
 	case map[string]any:
 		doc, err := client.NewDocFromMap(t)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		if err := col.Create(c.Request.Context(), doc); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		if err := col.Create(req.Context(), doc); err != nil {
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
+		rw.WriteHeader(http.StatusOK)
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-		return
+		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid request body"})
 	}
-	c.Status(http.StatusOK)
 }
 
-func (s *CollectionHandler) Save(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) Save(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
 	var docMap map[string]any
-	if err := c.ShouldBind(&docMap); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := requestJSON(req, &docMap); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
 	doc, err := client.NewDocFromMap(docMap)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	err = col.Save(c.Request.Context(), doc)
+	err = col.Save(req.Context(), doc)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *CollectionHandler) DeleteWith(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) DeleteWith(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
 	var request CollectionDeleteRequest
-	if err := c.ShouldBind(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := requestJSON(req, &request); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
 
 	switch {
 	case request.Filter != nil:
-		result, err := col.DeleteWith(c.Request.Context(), request.Filter)
+		result, err := col.DeleteWith(req.Context(), request.Filter)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, result)
+		responseJSON(rw, http.StatusOK, result)
 	case request.Key != "":
 		docKey, err := client.NewDocKeyFromString(request.Key)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		result, err := col.DeleteWith(c.Request.Context(), docKey)
+		result, err := col.DeleteWith(req.Context(), docKey)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, result)
+		responseJSON(rw, http.StatusOK, result)
 	case request.Keys != nil:
 		var docKeys []client.DocKey
 		for _, key := range request.Keys {
 			docKey, err := client.NewDocKeyFromString(key)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 				return
 			}
 			docKeys = append(docKeys, docKey)
 		}
-		result, err := col.DeleteWith(c.Request.Context(), docKeys)
+		result, err := col.DeleteWith(req.Context(), docKeys)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, result)
+		responseJSON(rw, http.StatusOK, result)
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid delete request"})
+		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid delete request"})
 	}
 }
 
-func (s *CollectionHandler) UpdateWith(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) UpdateWith(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
 	var request CollectionUpdateRequest
-	if err := c.ShouldBind(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := requestJSON(req, &request); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
 
 	switch {
 	case request.Filter != nil:
-		result, err := col.UpdateWith(c.Request.Context(), request.Filter, request.Updater)
+		result, err := col.UpdateWith(req.Context(), request.Filter, request.Updater)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, result)
+		responseJSON(rw, http.StatusOK, result)
 	case request.Key != "":
 		docKey, err := client.NewDocKeyFromString(request.Key)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		result, err := col.UpdateWith(c.Request.Context(), docKey, request.Updater)
+		result, err := col.UpdateWith(req.Context(), docKey, request.Updater)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, result)
+		responseJSON(rw, http.StatusOK, result)
 	case request.Keys != nil:
 		var docKeys []client.DocKey
 		for _, key := range request.Keys {
 			docKey, err := client.NewDocKeyFromString(key)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 				return
 			}
 			docKeys = append(docKeys, docKey)
 		}
-		result, err := col.UpdateWith(c.Request.Context(), docKeys, request.Updater)
+		result, err := col.UpdateWith(req.Context(), docKeys, request.Updater)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, result)
+		responseJSON(rw, http.StatusOK, result)
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid update request"})
+		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid update request"})
 	}
 }
 
-func (s *CollectionHandler) Update(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
 	var docMap map[string]any
-	if err := c.ShouldBindJSON(&docMap); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := requestJSON(req, &docMap); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
 	doc, err := client.NewDocFromMap(docMap)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	if doc.Key().String() != c.Param("key") {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "document key does not match"})
+	if doc.Key().String() != chi.URLParam(req, "key") {
+		responseJSON(rw, http.StatusBadRequest, H{"error": "document key does not match"})
 		return
 	}
-	err = col.Update(c.Request.Context(), doc)
+	err = col.Update(req.Context(), doc)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *CollectionHandler) Delete(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
-	docKey, err := client.NewDocKeyFromString(c.Param("key"))
+	docKey, err := client.NewDocKeyFromString(chi.URLParam(req, "key"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	_, err = col.Delete(c.Request.Context(), docKey)
+	_, err = col.Delete(req.Context(), docKey)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *CollectionHandler) Get(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
+	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("deleted"))
 
-	docKey, err := client.NewDocKeyFromString(c.Param("key"))
+	docKey, err := client.NewDocKeyFromString(chi.URLParam(req, "key"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	_, err = col.Get(c.Request.Context(), docKey, c.Query("deleted") != "")
+	_, err = col.Get(req.Context(), docKey, showDeleted)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
 
 type DocKeyResult struct {
@@ -259,27 +261,29 @@ type DocKeyResult struct {
 	Error string `json:"error"`
 }
 
-func (s *CollectionHandler) GetAllDocKeys(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) GetAllDocKeys(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
-	docKeyCh, err := col.GetAllDocKeys(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	flusher, ok := rw.(http.Flusher)
+	if !ok {
+		responseJSON(rw, http.StatusBadRequest, H{"error": "streaming not supported"})
 		return
 	}
 
-	c.Header("Content-Type", "text/event-stream")
-	c.Header("Cache-Control", "no-cache")
-	c.Header("Connection", "keep-alive")
+	docKeyCh, err := col.GetAllDocKeys(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
+		return
+	}
 
-	c.Status(http.StatusOK)
-	c.Writer.Flush()
+	rw.Header().Set("Content-Type", "text/event-stream")
+	rw.Header().Set("Cache-Control", "no-cache")
+	rw.Header().Set("Connection", "keep-alive")
 
-	c.Stream(func(w io.Writer) bool {
-		docKey, open := <-docKeyCh
-		if !open {
-			return false
-		}
+	rw.WriteHeader(http.StatusOK)
+	flusher.Flush()
+
+	for docKey := range docKeyCh {
 		results := &DocKeyResult{
 			Key: docKey.Key.String(),
 		}
@@ -288,47 +292,47 @@ func (s *CollectionHandler) GetAllDocKeys(c *gin.Context) {
 		}
 		data, err := json.Marshal(results)
 		if err != nil {
-			return false
+			return
 		}
-		fmt.Fprintf(w, "data: %s\n\n", data)
-		return true
-	})
+		fmt.Fprintf(rw, "data: %s\n\n", data)
+		flusher.Flush()
+	}
 }
 
-func (s *CollectionHandler) CreateIndex(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
 	var indexDesc client.IndexDescription
-	if err := c.ShouldBind(&indexDesc); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := requestJSON(req, &indexDesc); err != nil {
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	index, err := col.CreateIndex(c.Request.Context(), indexDesc)
+	index, err := col.CreateIndex(req.Context(), indexDesc)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, index)
+	responseJSON(rw, http.StatusOK, index)
 }
 
-func (s *CollectionHandler) GetIndexes(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
-	indexes, err := col.GetIndexes(c.Request.Context())
+	indexes, err := col.GetIndexes(req.Context())
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, indexes)
+	responseJSON(rw, http.StatusOK, indexes)
 }
 
-func (s *CollectionHandler) DropIndex(c *gin.Context) {
-	col := c.MustGet("col").(client.Collection)
+func (s *CollectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request) {
+	col := req.Context().Value(colContextKey).(client.Collection)
 
-	err := col.DropIndex(c.Request.Context(), c.Param("index"))
+	err := col.DropIndex(req.Context(), chi.URLParam(req, "index"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
