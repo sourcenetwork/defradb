@@ -270,7 +270,13 @@ func GetDatabaseTypes() []DatabaseType {
 	return databases
 }
 
-func GetDatabase(s *state) (cdb client.DB, path string, err error) {
+func GetDatabase(s *state) (client.DB, string, error) {
+	var (
+		cdb  client.DB
+		path string
+		err  error
+	)
+
 	switch s.dbt {
 	case badgerIMType:
 		cdb, err = NewBadgerMemoryDB(s.ctx, db.WithUpdateEvents())
@@ -280,14 +286,31 @@ func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 
 	case defraIMType:
 		cdb, err = NewInMemoryDB(s.ctx)
+
+	default:
+		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
+	}
+
+	if err != nil {
+		return nil, "", err
 	}
 
 	switch s.clientType {
 	case httpClientType:
 		cdb, err = http.NewWrapper(cdb)
+
+	case goClientType:
+		// do nothing
+
+	default:
+		return nil, "", fmt.Errorf("invalid client type: %v", s.dbt)
 	}
 
-	return
+	if err != nil {
+		return nil, "", err
+	}
+
+	return cdb, path, nil
 }
 
 // ExecuteTestCase executes the given TestCase against the configured database
