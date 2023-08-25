@@ -17,7 +17,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sync/atomic"
 
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
@@ -29,7 +28,7 @@ type errorResponse struct {
 type httpClient struct {
 	client  *http.Client
 	baseURL *url.URL
-	txValue atomic.Uint64
+	txValue string
 }
 
 func newHttpClient(baseURL *url.URL) *httpClient {
@@ -37,7 +36,6 @@ func newHttpClient(baseURL *url.URL) *httpClient {
 		client:  http.DefaultClient,
 		baseURL: baseURL,
 	}
-	client.txValue.Store(0)
 	return &client
 }
 
@@ -45,15 +43,18 @@ func (c *httpClient) withTxn(value uint64) *httpClient {
 	client := httpClient{
 		client:  c.client,
 		baseURL: c.baseURL,
+		txValue: fmt.Sprintf("%d", value),
 	}
-	client.txValue.Store(value)
 	return &client
 }
 
 func (c *httpClient) setDefaultHeaders(req *http.Request) {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(TX_HEADER_NAME, fmt.Sprintf("%d", c.txValue.Load()))
+
+	if c.txValue != "" {
+		req.Header.Set(TX_HEADER_NAME, c.txValue)
+	}
 }
 
 func (c *httpClient) request(req *http.Request) error {

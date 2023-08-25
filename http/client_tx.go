@@ -20,6 +20,7 @@ import (
 
 var _ datastore.Txn = (*TxClient)(nil)
 
+// TxClient implements the datastore.Txn interface over HTTP.
 type TxClient struct {
 	id   uint64
 	http *httpClient

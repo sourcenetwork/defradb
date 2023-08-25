@@ -29,6 +29,7 @@ import (
 
 var _ client.Store = (*StoreClient)(nil)
 
+// StoreClient implements the client.Store interface over HTTP.
 type StoreClient struct {
 	http *httpClient
 }

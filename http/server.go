@@ -21,8 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-type H map[string]any
-
 type Server struct {
 	db     client.DB
 	router *chi.Mux
@@ -32,14 +30,12 @@ type Server struct {
 func NewServer(db client.DB) *Server {
 	txs := &sync.Map{}
 
-	txHandler := &TxHandler{txs}
+	txHandler := &TxHandler{}
 	storeHandler := &StoreHandler{}
 	collectionHandler := &CollectionHandler{}
 	lensHandler := &LensHandler{}
 
 	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
 	router.Route("/api/v0", func(api chi.Router) {

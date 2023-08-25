@@ -21,9 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-type TxHandler struct {
-	txs *sync.Map
-}
+type TxHandler struct{}
 
 type CreateTxResponse struct {
 	ID uint64 `json:"id"`
@@ -31,6 +29,7 @@ type CreateTxResponse struct {
 
 func (h *TxHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	db := req.Context().Value(dbContextKey).(client.DB)
+	txs := req.Context().Value(txsContextKey).(*sync.Map)
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
 	tx, err := db.NewTxn(req.Context(), readOnly)
@@ -38,12 +37,13 @@ func (h *TxHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	h.txs.Store(tx.ID(), tx)
+	txs.Store(tx.ID(), tx)
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
 func (h *TxHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
 	db := req.Context().Value(dbContextKey).(client.DB)
+	txs := req.Context().Value(txsContextKey).(*sync.Map)
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
 	tx, err := db.NewConcurrentTxn(req.Context(), readOnly)
@@ -51,17 +51,19 @@ func (h *TxHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	h.txs.Store(tx.ID(), tx)
+	txs.Store(tx.ID(), tx)
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
 func (h *TxHandler) Commit(rw http.ResponseWriter, req *http.Request) {
+	txs := req.Context().Value(txsContextKey).(*sync.Map)
+
 	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid transaction id"})
 		return
 	}
-	txVal, ok := h.txs.Load(txId)
+	txVal, ok := txs.Load(txId)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid transaction id"})
 		return
@@ -71,17 +73,19 @@ func (h *TxHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
-	h.txs.Delete(txId)
+	txs.Delete(txId)
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *TxHandler) Discard(rw http.ResponseWriter, req *http.Request) {
+	txs := req.Context().Value(txsContextKey).(*sync.Map)
+
 	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid transaction id"})
 		return
 	}
-	txVal, ok := h.txs.LoadAndDelete(txId)
+	txVal, ok := txs.LoadAndDelete(txId)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, H{"error": "invalid transaction id"})
 		return

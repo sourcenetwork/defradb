@@ -16,6 +16,8 @@ import (
 	"net/http"
 )
 
+type H map[string]any
+
 func requestJSON(req *http.Request, out any) error {
 	data, err := io.ReadAll(req.Body)
 	if err != nil {
