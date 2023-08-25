@@ -12,7 +12,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -1325,6 +1324,7 @@ func executeRequest(
 		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
 		result := db.ExecRequest(s.ctx, action.Request)
 
+		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
 			s.ctx,
 			s.t,
@@ -1333,6 +1333,7 @@ func executeRequest(
 			action.Results,
 			action.ExpectedError,
 			nodeID,
+			anyOfByFieldKey,
 		)
 	}
 
@@ -1400,6 +1401,7 @@ func executeSubscriptionRequest(
 							action.ExpectedError,
 							// anyof is not yet supported by subscription requests
 							0,
+							map[docFieldKey][]any{},
 						)
 
 						assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1458,6 +1460,12 @@ func AssertErrors(
 	return false
 }
 
+// docFieldKey is an internal key type that wraps docIndex and fieldName
+type docFieldKey struct {
+	docIndex  int
+	fieldName string
+}
+
 func assertRequestResults(
 	ctx context.Context,
 	t *testing.T,
@@ -1466,6 +1474,7 @@ func assertRequestResults(
 	expectedResults []map[string]any,
 	expectedError string,
 	nodeID int,
+	anyOfByField map[docFieldKey][]any,
 ) bool {
 	if AssertErrors(t, description, result.Errors, expectedError) {
 		return true
@@ -1480,275 +1489,40 @@ func assertRequestResults(
 
 	log.Info(ctx, "", logging.NewKV("RequestResults", result.Data))
 
-	// compare results
-	assert.Equal(t, len(expectedResults), len(resultantData), description)
+	require.Equal(t, len(expectedResults), len(resultantData), description)
+
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
-		assertRequestResultsData(t, result, expectedResult)
+		for field, actualValue := range result {
+			expectedValue := expectedResult[field]
+
+			switch r := expectedValue.(type) {
+			case AnyOf:
+				assertResultsAnyOf(t, r, actualValue)
+
+				dfk := docFieldKey{docIndex, field}
+				valueSet := anyOfByField[dfk]
+				valueSet = append(valueSet, actualValue)
+				anyOfByField[dfk] = valueSet
+			default:
+				assertResultsEqual(t, expectedValue, actualValue, fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex))
+			}
+		}
 	}
 
 	return false
 }
 
-func assertRequestResultsData(t *testing.T, actual any, expected any) {
-	switch expectedVal := expected.(type) {
-	case AnyOf:
-		return // TODO
-	case map[string]any:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.(map[string]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for k, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[k], v)
-		}
-		return
-	case []int64:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []uint64:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []float64:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []string:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []bool:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []any:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []map[string]any:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case uint64, uint32, int64, int32, int, uint:
-		jsonNum, ok := actual.(json.Number)
-		if !ok {
-			break
-		}
-
-		actualVal, err := jsonNum.Int64()
-		require.NoError(t, err)
-		actual = actualVal
-	case float32, float64:
-		jsonNum, ok := actual.(json.Number)
-		if !ok {
-			break
-		}
-
-		actualVal, err := jsonNum.Float64()
-		require.NoError(t, err)
-		actual = actualVal
-	case []immutable.Option[float64]:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []immutable.Option[uint64]:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []immutable.Option[int64]:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []immutable.Option[bool]:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case []immutable.Option[string]:
-		if len(expectedVal) == 0 && actual == nil {
-			return
-		}
-
-		actualVal, ok := actual.([]any)
-		if !ok {
-			break
-		}
-
-		require.Equal(t, len(actualVal), len(expectedVal))
-		for i, v := range expectedVal {
-			assertRequestResultsData(t, actualVal[i], v)
-		}
-		return
-	case immutable.Option[float64]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
-
-		assertRequestResultsData(t, actual, expected)
-		return
-	case immutable.Option[uint64]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
-
-		assertRequestResultsData(t, actual, expected)
-		return
-	case immutable.Option[int64]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
-
-		assertRequestResultsData(t, actual, expected)
-		return
-	case immutable.Option[bool]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
-	case immutable.Option[string]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
+func assertResultsAnyOf(t *testing.T, expected AnyOf, actual any, msgAndArgs ...any) {
+	if !resultsAreAnyOf(expected, actual) {
+		assert.Contains(t, expected, actual, msgAndArgs...)
 	}
+}
 
-	assert.EqualValues(t, expected, actual)
+func assertResultsEqual(t *testing.T, expected any, actual any, msgAndArgs ...any) {
+	if !resultsAreEqual(expected, actual) {
+		assert.EqualValues(t, expected, actual, msgAndArgs...)
+	}
 }
 
 func assertExpectedErrorRaised(t *testing.T, description string, expectedError string, wasRaised bool) {

@@ -166,7 +166,7 @@ func assertExplainRequestResults(
 		require.Equal(t, lengthOfExpectedFullGraph, len(resultantData), description)
 		for index, actualResult := range resultantData {
 			if lengthOfExpectedFullGraph > index {
-				assertRequestResultsData(t, actualResult, action.ExpectedFullGraph[index])
+				assertResultsEqual(t, action.ExpectedFullGraph[index], actualResult, description)
 			}
 		}
 	}
@@ -179,7 +179,7 @@ func assertExplainRequestResults(
 		for index, actualResult := range resultantData {
 			// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
 			actualResultWithoutAttributes := trimExplainAttributes(t, description, actualResult)
-			assertRequestResultsData(t, actualResultWithoutAttributes, action.ExpectedPatterns[index])
+			assertResultsEqual(t, action.ExpectedPatterns[index], actualResultWithoutAttributes, description)
 		}
 	}
 
@@ -214,7 +214,7 @@ func assertExplainTargetCase(
 			)
 		}
 
-		assertRequestResultsData(t, foundActualTarget, targetCase.ExpectedAttributes)
+		assertResultsEqual(t, targetCase.ExpectedAttributes, foundActualTarget, description)
 	}
 }
 

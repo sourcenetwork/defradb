@@ -77,31 +77,31 @@ func getMigrations(
 		require.NoError(s.t, err)
 		require.Equal(s.t, len(configs), len(action.ExpectedResults))
 
-		for _, expectedConfig := range action.ExpectedResults {
-			var actualConfig client.LensConfig
-			var actualConfigFound bool
+		for _, expected := range action.ExpectedResults {
+			var actual client.LensConfig
+			var actualFound bool
 
 			for _, config := range configs {
-				if config.SourceSchemaVersionID != expectedConfig.SourceSchemaVersionID {
+				if config.SourceSchemaVersionID != expected.SourceSchemaVersionID {
 					continue
 				}
-				if config.DestinationSchemaVersionID != expectedConfig.DestinationSchemaVersionID {
+				if config.DestinationSchemaVersionID != expected.DestinationSchemaVersionID {
 					continue
 				}
-				actualConfig = config
-				actualConfigFound = true
+				actual = config
+				actualFound = true
 			}
 
-			require.True(s.t, actualConfigFound, "matching lens config not found")
-			require.Equal(s.t, len(actualConfig.Lenses), len(expectedConfig.Lenses))
+			require.True(s.t, actualFound, "matching lens config not found")
+			require.Equal(s.t, len(expected.Lenses), len(actual.Lenses))
 
-			for j, expectedLens := range actualConfig.Lenses {
-				actualLens := actualConfig.Lenses[j]
+			for j, actualLens := range actual.Lenses {
+				expectedLens := expected.Lenses[j]
 
 				assert.Equal(s.t, expectedLens.Inverse, actualLens.Inverse)
 				assert.Equal(s.t, expectedLens.Path, actualLens.Path)
 
-				assertRequestResultsData(s.t, expectedLens.Arguments, actualLens.Arguments)
+				assertResultsEqual(s.t, expectedLens.Arguments, actualLens.Arguments)
 			}
 		}
 	}

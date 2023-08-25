@@ -42,17 +42,16 @@ func NewServer(db client.DB) *Server {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
-	apiMiddleware := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			ctx := req.Context()
-			ctx = context.WithValue(ctx, dbContextKey, db)
-			ctx = context.WithValue(ctx, txsContextKey, txs)
-			next.ServeHTTP(rw, req.WithContext(ctx))
-		})
-	}
-
 	router.Route("/api/v0", func(api chi.Router) {
-		api.Use(apiMiddleware, TransactionMiddleware, StoreMiddleware)
+		api.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				ctx := req.Context()
+				ctx = context.WithValue(ctx, dbContextKey, db)
+				ctx = context.WithValue(ctx, txsContextKey, txs)
+				next.ServeHTTP(rw, req.WithContext(ctx))
+			})
+		})
+		api.Use(TransactionMiddleware, StoreMiddleware)
 		api.Route("/tx", func(tx chi.Router) {
 			tx.Post("/", txHandler.NewTxn)
 			tx.Post("/concurrent", txHandler.NewConcurrentTxn)

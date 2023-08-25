@@ -22,11 +22,10 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
-var (
-	_ client.Store = (*Wrapper)(nil)
-	_ client.DB    = (*Wrapper)(nil)
-)
+var _ client.DB = (*Wrapper)(nil)
 
+// Wrapper combines an HTTP client and server into a
+// single struct that implements the client.DB interface.
 type Wrapper struct {
 	db         client.DB
 	server     *Server
@@ -148,8 +147,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 }
 
 func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
-	client := w.client.http.withTxn(tx.ID())
-	return &StoreClient{client}
+	return w.client.WithTxn(tx)
 }
 
 func (w *Wrapper) Root() datastore.RootStore {

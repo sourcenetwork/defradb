@@ -10,9 +10,7 @@
 
 package events
 
-import (
-	"time"
-)
+import "time"
 
 // time limit we set for the client to read after publishing.
 var clientTimeout = 60 * time.Second

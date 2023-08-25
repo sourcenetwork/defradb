@@ -121,11 +121,6 @@ type GetAllP2PCollections struct {
 // node 1 to see if it has been replicated.
 type WaitForSync struct{}
 
-// AnyOf may be used as `Results` field where the value may
-// be one of several values, yet the value of that field must be the same
-// across all nodes due to strong eventual consistency.
-type AnyOf []any
-
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.
 //
