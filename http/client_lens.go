@@ -29,10 +29,6 @@ type LensClient struct {
 	http *httpClient
 }
 
-func NewLensClient(httpClient *httpClient) *LensClient {
-	return &LensClient{httpClient}
-}
-
 func (c *LensClient) WithTxn(tx datastore.Txn) client.LensRegistry {
 	http := c.http.withTxn(tx.ID())
 	return &LensClient{http}
@@ -49,7 +45,8 @@ func (c *LensClient) SetMigration(ctx context.Context, config client.LensConfig)
 	if err != nil {
 		return err
 	}
-	return c.http.request(req)
+	_, err = c.http.request(req)
+	return err
 }
 
 func (c *LensClient) ReloadLenses(ctx context.Context) error {
@@ -59,7 +56,8 @@ func (c *LensClient) ReloadLenses(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.http.request(req)
+	_, err = c.http.request(req)
+	return err
 }
 
 func (c *LensClient) MigrateUp(
@@ -127,7 +125,7 @@ func (c *LensClient) HasMigration(ctx context.Context, schemaVersionID string) (
 	if err != nil {
 		return false, err
 	}
-	err = c.http.request(req)
+	_, err = c.http.request(req)
 	if err != nil {
 		return false, err
 	}

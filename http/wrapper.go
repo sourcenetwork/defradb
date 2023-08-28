@@ -29,7 +29,7 @@ var _ client.DB = (*Wrapper)(nil)
 type Wrapper struct {
 	db         client.DB
 	server     *Server
-	client     *StoreClient
+	client     *Client
 	httpServer *httptest.Server
 }
 
@@ -37,7 +37,7 @@ func NewWrapper(db client.DB) (*Wrapper, error) {
 	server := NewServer(db)
 	httpServer := httptest.NewServer(server)
 
-	client, err := NewStoreClient(httpServer.URL)
+	client, err := NewClient(httpServer.URL)
 	if err != nil {
 		return nil, err
 	}

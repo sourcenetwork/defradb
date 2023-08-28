@@ -33,13 +33,6 @@ type CollectionClient struct {
 	desc client.CollectionDescription
 }
 
-func NewCollectionClient(httpClient *httpClient, desc client.CollectionDescription) *CollectionClient {
-	return &CollectionClient{
-		http: httpClient,
-		desc: desc,
-	}
-}
-
 func (c *CollectionClient) Description() client.CollectionDescription {
 	return c.desc
 }
@@ -71,7 +64,8 @@ func (c *CollectionClient) Create(ctx context.Context, doc *client.Document) err
 	if err != nil {
 		return err
 	}
-	if err := c.http.request(req); err != nil {
+	_, err = c.http.request(req)
+	if err != nil {
 		return err
 	}
 	doc.Clean()
@@ -97,7 +91,8 @@ func (c *CollectionClient) CreateMany(ctx context.Context, docs []*client.Docume
 	if err != nil {
 		return err
 	}
-	if err := c.http.request(req); err != nil {
+	_, err = c.http.request(req)
+	if err != nil {
 		return err
 	}
 	for _, doc := range docs {
@@ -126,7 +121,8 @@ func (c *CollectionClient) Update(ctx context.Context, doc *client.Document) err
 	if err != nil {
 		return err
 	}
-	if err := c.http.request(req); err != nil {
+	_, err = c.http.request(req)
+	if err != nil {
 		return err
 	}
 	doc.Clean()
@@ -153,7 +149,8 @@ func (c *CollectionClient) Save(ctx context.Context, doc *client.Document) error
 	if err != nil {
 		return err
 	}
-	if err := c.http.request(req); err != nil {
+	_, err = c.http.request(req)
+	if err != nil {
 		return err
 	}
 	doc.Clean()
@@ -167,7 +164,7 @@ func (c *CollectionClient) Delete(ctx context.Context, docKey client.DocKey) (bo
 	if err != nil {
 		return false, err
 	}
-	err = c.http.request(req)
+	_, err = c.http.request(req)
 	if err != nil {
 		return false, err
 	}
@@ -404,7 +401,8 @@ func (c *CollectionClient) DropIndex(ctx context.Context, indexName string) erro
 	if err != nil {
 		return err
 	}
-	return c.http.request(req)
+	_, err = c.http.request(req)
+	return err
 }
 
 func (c *CollectionClient) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {

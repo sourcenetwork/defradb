@@ -37,7 +37,8 @@ func (c *TxClient) Commit(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.http.request(req)
+	_, err = c.http.request(req)
+	return err
 }
 
 func (c *TxClient) Discard(ctx context.Context) {
