@@ -314,43 +314,40 @@ func findTargetNode(
 		}
 
 	case []any:
-		for _, item := range r {
-			target, matches, found := findTargetNode(
-				targetName,
-				toSkip,
-				includeChildNodes,
-				item,
-			)
-
-			totalMatchedSoFar = totalMatchedSoFar + matches
-			toSkip -= matches
-
-			if found {
-				if includeChildNodes {
-					return target, totalMatchedSoFar, true
-				}
-				return trimSubNodes(target), totalMatchedSoFar, true
-			}
-		}
+		return findTargetNodeFromArray[any](targetName, toSkip, includeChildNodes, r)
 
 	case []map[string]any:
-		for _, item := range r {
-			target, matches, found := findTargetNode(
-				targetName,
-				toSkip,
-				includeChildNodes,
-				item,
-			)
+		return findTargetNodeFromArray[map[string]any](targetName, toSkip, includeChildNodes, r)
+	}
 
-			totalMatchedSoFar = totalMatchedSoFar + matches
-			toSkip -= matches
+	return nil, totalMatchedSoFar, false
+}
 
-			if found {
-				if includeChildNodes {
-					return target, totalMatchedSoFar, true
-				}
-				return trimSubNodes(target), totalMatchedSoFar, true
+// findTargetNodeFromArray runs findTargetNode for each item of an array.
+func findTargetNodeFromArray[T any](
+	targetName string,
+	toSkip uint,
+	includeChildNodes bool,
+	actualResult []T,
+) (any, uint, bool) {
+	var totalMatchedSoFar uint = 0
+
+	for _, item := range actualResult {
+		target, matches, found := findTargetNode(
+			targetName,
+			toSkip,
+			includeChildNodes,
+			item,
+		)
+
+		totalMatchedSoFar = totalMatchedSoFar + matches
+		toSkip -= matches
+
+		if found {
+			if includeChildNodes {
+				return target, totalMatchedSoFar, true
 			}
+			return trimSubNodes(target), totalMatchedSoFar, true
 		}
 	}
 
