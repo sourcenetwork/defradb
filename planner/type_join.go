@@ -271,14 +271,14 @@ func (p *Planner) makeTypeJoinOne(
 ) (*typeJoinOne, error) {
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
-		var parentfilter *mapper.Filter
-		scan.filter, parentfilter = splitFilterByType(scan.filter, subType.Index)
-		if parentfilter != nil {
+		var parentFilter *mapper.Filter
+		scan.filter, parentFilter = splitFilterByType(scan.filter, subType.Index)
+		if parentFilter != nil {
 			if parent.filter == nil {
 				parent.filter = new(mapper.Filter)
 			}
 			parent.filter.Conditions = mergeFilterConditions(
-				parent.filter.Conditions, parentfilter.Conditions)
+				parent.filter.Conditions, parentFilter.Conditions)
 		}
 		subType.ShowDeleted = parent.selectReq.ShowDeleted
 	}
@@ -397,11 +397,11 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) (core.Doc, error) {
 		return doc, err
 	}
 
-	subdoc := n.subType.Value()
-	doc.Fields[n.subSelect.Index] = subdoc
+	subDoc := n.subType.Value()
+	doc.Fields[n.subSelect.Index] = subDoc
 
 	if n.secondaryFieldIndex.HasValue() {
-		doc.Fields[n.secondaryFieldIndex.Value()] = subdoc.GetKey()
+		doc.Fields[n.secondaryFieldIndex.Value()] = subDoc.GetKey()
 	}
 
 	return doc, nil
@@ -434,7 +434,7 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) (core.Doc, error) {
 
 	// if we don't find any docs from our point span lookup
 	// or if we encounter an error just return the base doc,
-	// with an empty map for the subdoc
+	// with an empty map for the subDoc
 	next, err := n.subType.Next()
 
 	if err != nil {
@@ -486,14 +486,14 @@ func (p *Planner) makeTypeJoinMany(
 ) (*typeJoinMany, error) {
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
-		var parentfilter *mapper.Filter
-		scan.filter, parentfilter = splitFilterByType(scan.filter, subType.Index)
-		if parentfilter != nil {
+		var parentFilter *mapper.Filter
+		scan.filter, parentFilter = splitFilterByType(scan.filter, subType.Index)
+		if parentFilter != nil {
 			if parent.filter == nil {
 				parent.filter = new(mapper.Filter)
 			}
 			parent.filter.Conditions = mergeFilterConditions(
-				parent.filter.Conditions, parentfilter.Conditions)
+				parent.filter.Conditions, parentFilter.Conditions)
 		}
 		subType.ShowDeleted = parent.selectReq.ShowDeleted
 	}
@@ -560,9 +560,9 @@ func (n *typeJoinMany) Next() (bool, error) {
 	n.currentValue = n.root.Value()
 
 	// check if theres an index
-	// if there is, scan and aggregate resuts
+	// if there is, scan and aggregate results
 	// if not, then manually scan the subtype table
-	subdocs := make([]core.Doc, 0)
+	subDocs := make([]core.Doc, 0)
 	if n.index != nil {
 		// @todo: handle index for one-to-many setup
 	} else {
@@ -595,12 +595,12 @@ func (n *typeJoinMany) Next() (bool, error) {
 				break
 			}
 
-			subdoc := n.subType.Value()
-			subdocs = append(subdocs, subdoc)
+			subDoc := n.subType.Value()
+			subDocs = append(subDocs, subDoc)
 		}
 	}
 
-	n.currentValue.Fields[n.subSelect.Index] = subdocs
+	n.currentValue.Fields[n.subSelect.Index] = subDocs
 	return true, nil
 }
 
