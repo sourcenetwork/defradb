@@ -28,14 +28,14 @@ var _ client.DB = (*Wrapper)(nil)
 // single struct that implements the client.DB interface.
 type Wrapper struct {
 	db         client.DB
-	server     *Server
+	handler    *handler
 	client     *Client
 	httpServer *httptest.Server
 }
 
 func NewWrapper(db client.DB) (*Wrapper, error) {
-	server := NewServer(db)
-	httpServer := httptest.NewServer(server)
+	handler := newHandler(db, serverOptions{})
+	httpServer := httptest.NewServer(handler)
 
 	client, err := NewClient(httpServer.URL)
 	if err != nil {
@@ -44,7 +44,7 @@ func NewWrapper(db client.DB) (*Wrapper, error) {
 
 	return &Wrapper{
 		db,
-		server,
+		handler,
 		client,
 		httpServer,
 	}, nil
@@ -127,7 +127,7 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, err
 	if err != nil {
 		return nil, err
 	}
-	server, ok := w.server.txs.Load(client.ID())
+	server, ok := w.handler.txs.Load(client.ID())
 	if !ok {
 		return nil, fmt.Errorf("failed to get server transaction")
 	}
@@ -139,7 +139,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	if err != nil {
 		return nil, err
 	}
-	server, ok := w.server.txs.Load(client.ID())
+	server, ok := w.handler.txs.Load(client.ID())
 	if !ok {
 		return nil, fmt.Errorf("failed to get server transaction")
 	}

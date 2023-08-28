@@ -11,102 +11,312 @@
 package http
 
 import (
+	"context"
+	"crypto/tls"
+	"fmt"
+	"net"
 	"net/http"
-	"sync"
+	"path"
+	"strings"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/sourcenetwork/immutable"
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
+const (
+	// These constants are best effort durations that fit our current API
+	// and possibly prevent from running out of file descriptors.
+	// readTimeout  = 5 * time.Second
+	// writeTimeout = 10 * time.Second
+	// idleTimeout  = 120 * time.Second
+
+	// Temparily disabling timeouts until [this proposal](https://github.com/golang/go/issues/54136) is merged.
+	// https://github.com/sourcenetwork/defradb/issues/927
+	readTimeout  = 0
+	writeTimeout = 0
+	idleTimeout  = 0
+)
+
+const (
+	httpPort  = ":80"
+	httpsPort = ":443"
+)
+
+// Server struct holds the Handler for the HTTP API.
 type Server struct {
-	db     client.DB
-	router *chi.Mux
-	txs    *sync.Map
+	options     serverOptions
+	listener    net.Listener
+	certManager *autocert.Manager
+	// address that is assigned to the server on listen
+	address string
+
+	http.Server
 }
 
-func NewServer(db client.DB) *Server {
-	txs := &sync.Map{}
+type serverOptions struct {
+	// list of allowed origins for CORS.
+	allowedOrigins []string
+	// ID of the server node.
+	peerID string
+	// when the value is present, the server will run with tls
+	tls immutable.Option[tlsOptions]
+	// root directory for the node config.
+	rootDir string
+	// The domain for the API (optional).
+	domain immutable.Option[string]
+}
 
-	tx_handler := &txHandler{}
-	store_handler := &storeHandler{}
-	collection_handler := &collectionHandler{}
-	lens_handler := &lensHandler{}
+type tlsOptions struct {
+	// Public key for TLS. Ignored if domain is set.
+	pubKey string
+	// Private key for TLS. Ignored if domain is set.
+	privKey string
+	// email address for the CA to send problem notifications (optional)
+	email string
+	// specify the tls port
+	port string
+}
 
-	router := chi.NewRouter()
-	router.Use(middleware.RequestLogger(&logFormatter{}))
-	router.Use(middleware.Recoverer)
+// NewServer instantiates a new server with the given http.Handler.
+func NewServer(db client.DB, options ...func(*Server)) *Server {
+	srv := &Server{
+		Server: http.Server{
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+			IdleTimeout:  idleTimeout,
+		},
+	}
 
-	router.Route("/api/v0", func(api chi.Router) {
-		api.Use(ApiMiddleware(db, txs), TransactionMiddleware, StoreMiddleware)
-		api.Route("/tx", func(tx chi.Router) {
-			tx.Post("/", tx_handler.NewTxn)
-			tx.Post("/concurrent", tx_handler.NewConcurrentTxn)
-			tx.Post("/{id}", tx_handler.Commit)
-			tx.Delete("/{id}", tx_handler.Discard)
-		})
-		api.Route("/backup", func(backup chi.Router) {
-			backup.Post("/export", store_handler.BasicExport)
-			backup.Post("/import", store_handler.BasicImport)
-		})
-		api.Route("/schema", func(schema chi.Router) {
-			schema.Post("/", store_handler.AddSchema)
-			schema.Patch("/", store_handler.PatchSchema)
-		})
-		api.Route("/collections", func(collections chi.Router) {
-			collections.Get("/", store_handler.GetCollection)
-			// with collection middleware
-			collections_tx := collections.With(CollectionMiddleware)
-			collections_tx.Get("/{name}", collection_handler.GetAllDocKeys)
-			collections_tx.Post("/{name}", collection_handler.Create)
-			collections_tx.Patch("/{name}", collection_handler.UpdateWith)
-			collections_tx.Delete("/{name}", collection_handler.DeleteWith)
-			collections_tx.Post("/{name}/indexes", collection_handler.CreateIndex)
-			collections_tx.Get("/{name}/indexes", collection_handler.GetIndexes)
-			collections_tx.Delete("/{name}/indexes/{index}", collection_handler.DropIndex)
-			collections_tx.Get("/{name}/{key}", collection_handler.Get)
-			collections_tx.Post("/{name}/{key}", collection_handler.Save)
-			collections_tx.Patch("/{name}/{key}", collection_handler.Update)
-			collections_tx.Delete("/{name}/{key}", collection_handler.Delete)
-		})
-		api.Route("/lens", func(lens chi.Router) {
-			lens.Use(LensMiddleware)
-			lens.Get("/", lens_handler.Config)
-			lens.Post("/", lens_handler.SetMigration)
-			lens.Post("/reload", lens_handler.ReloadLenses)
-			lens.Get("/{version}", lens_handler.HasMigration)
-			lens.Post("/{version}/up", lens_handler.MigrateUp)
-			lens.Post("/{version}/down", lens_handler.MigrateDown)
-		})
-		api.Route("/graphql", func(graphQL chi.Router) {
-			graphQL.Get("/", store_handler.ExecRequest)
-			graphQL.Post("/", store_handler.ExecRequest)
-		})
-		api.Route("/p2p", func(p2p chi.Router) {
-			p2p.Route("/replicators", func(p2p_replicators chi.Router) {
-				p2p_replicators.Get("/", store_handler.GetAllReplicators)
-				p2p_replicators.Post("/", store_handler.SetReplicator)
-				p2p_replicators.Delete("/", store_handler.DeleteReplicator)
-			})
-			p2p.Route("/collections", func(p2p_collections chi.Router) {
-				p2p_collections.Get("/", store_handler.GetAllP2PCollections)
-				p2p_collections.Post("/{id}", store_handler.AddP2PCollection)
-				p2p_collections.Delete("/{id}", store_handler.RemoveP2PCollection)
-			})
-		})
-		api.Route("/debug", func(debug chi.Router) {
-			debug.Get("/dump", store_handler.PrintDump)
-		})
-	})
+	for _, opt := range append(options, DefaultOpts()) {
+		opt(srv)
+	}
 
-	return &Server{
-		db:     db,
-		router: router,
-		txs:    txs,
+	srv.Handler = newHandler(db, srv.options)
+
+	return srv
+}
+
+func newHTTPRedirServer(m *autocert.Manager) *Server {
+	srv := &Server{
+		Server: http.Server{
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+			IdleTimeout:  idleTimeout,
+		},
+	}
+
+	srv.Addr = httpPort
+	srv.Handler = m.HTTPHandler(nil)
+
+	return srv
+}
+
+// DefaultOpts returns the default options for the server.
+func DefaultOpts() func(*Server) {
+	return func(s *Server) {
+		if s.Addr == "" {
+			s.Addr = "localhost:9181"
+		}
 	}
 }
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	s.router.ServeHTTP(w, req)
+// WithAllowedOrigins returns an option to set the allowed origins for CORS.
+func WithAllowedOrigins(origins ...string) func(*Server) {
+	return func(s *Server) {
+		s.options.allowedOrigins = append(s.options.allowedOrigins, origins...)
+	}
+}
+
+// WithAddress returns an option to set the address for the server.
+func WithAddress(addr string) func(*Server) {
+	return func(s *Server) {
+		s.Addr = addr
+
+		// If the address is not localhost, we check to see if it's a valid IP address.
+		// If it's not a valid IP, we assume that it's a domain name to be used with TLS.
+		if !strings.HasPrefix(addr, "localhost:") && !strings.HasPrefix(addr, ":") {
+			host, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				host = addr
+			}
+			ip := net.ParseIP(host)
+			if ip == nil {
+				s.Addr = httpPort
+				s.options.domain = immutable.Some(host)
+			}
+		}
+	}
+}
+
+// WithCAEmail returns an option to set the email address for the CA to send problem notifications.
+func WithCAEmail(email string) func(*Server) {
+	return func(s *Server) {
+		tlsOpt := s.options.tls.Value()
+		tlsOpt.email = email
+		s.options.tls = immutable.Some(tlsOpt)
+	}
+}
+
+// WithPeerID returns an option to set the identifier of the server node.
+func WithPeerID(id string) func(*Server) {
+	return func(s *Server) {
+		s.options.peerID = id
+	}
+}
+
+// WithRootDir returns an option to set the root directory for the node config.
+func WithRootDir(rootDir string) func(*Server) {
+	return func(s *Server) {
+		s.options.rootDir = rootDir
+	}
+}
+
+// WithSelfSignedCert returns an option to set the public and private keys for TLS.
+func WithSelfSignedCert(pubKey, privKey string) func(*Server) {
+	return func(s *Server) {
+		tlsOpt := s.options.tls.Value()
+		tlsOpt.pubKey = pubKey
+		tlsOpt.privKey = privKey
+		s.options.tls = immutable.Some(tlsOpt)
+	}
+}
+
+// WithTLS returns an option to enable TLS.
+func WithTLS() func(*Server) {
+	return func(s *Server) {
+		tlsOpt := s.options.tls.Value()
+		tlsOpt.port = httpsPort
+		s.options.tls = immutable.Some(tlsOpt)
+	}
+}
+
+// WithTLSPort returns an option to set the port for TLS.
+func WithTLSPort(port int) func(*Server) {
+	return func(s *Server) {
+		tlsOpt := s.options.tls.Value()
+		tlsOpt.port = fmt.Sprintf(":%d", port)
+		s.options.tls = immutable.Some(tlsOpt)
+	}
+}
+
+// Listen creates a new net.Listener and saves it on the receiver.
+func (s *Server) Listen(ctx context.Context) error {
+	var err error
+	if s.options.tls.HasValue() {
+		return s.listenWithTLS(ctx)
+	}
+
+	lc := net.ListenConfig{}
+	s.listener, err = lc.Listen(ctx, "tcp", s.Addr)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// Save the address on the server in case the port was set to random
+	// and that we want to see what was assigned.
+	s.address = s.listener.Addr().String()
+
+	return nil
+}
+
+func (s *Server) listenWithTLS(ctx context.Context) error {
+	cfg := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		// We only allow cipher suites that are marked secure
+		// by ssllabs
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+		ServerName: "DefraDB",
+	}
+
+	if s.options.domain.HasValue() && s.options.domain.Value() != "" {
+		s.Addr = s.options.tls.Value().port
+
+		if s.options.tls.Value().email == "" || s.options.tls.Value().email == config.DefaultAPIEmail {
+			return ErrNoEmail
+		}
+
+		certCache := path.Join(s.options.rootDir, "autocerts")
+
+		log.FeedbackInfo(
+			ctx,
+			"Generating auto certificate",
+			logging.NewKV("Domain", s.options.domain.Value()),
+			logging.NewKV("Certificate cache", certCache),
+		)
+
+		m := &autocert.Manager{
+			Cache:      autocert.DirCache(certCache),
+			Prompt:     autocert.AcceptTOS,
+			Email:      s.options.tls.Value().email,
+			HostPolicy: autocert.HostWhitelist(s.options.domain.Value()),
+		}
+
+		cfg.GetCertificate = m.GetCertificate
+
+		// We set manager on the server instance to later start
+		// a redirection server.
+		s.certManager = m
+	} else {
+		// When not using auto cert, we create a self signed certificate
+		// with the provided public and prive keys.
+		log.FeedbackInfo(ctx, "Generating self signed certificate")
+
+		cert, err := tls.LoadX509KeyPair(
+			s.options.tls.Value().privKey,
+			s.options.tls.Value().pubKey,
+		)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		cfg.Certificates = []tls.Certificate{cert}
+	}
+
+	var err error
+	s.listener, err = tls.Listen("tcp", s.Addr, cfg)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// Save the address on the server in case the port was set to random
+	// and that we want to see what was assigned.
+	s.address = s.listener.Addr().String()
+
+	return nil
+}
+
+// Run calls Serve with the receiver's listener.
+func (s *Server) Run(ctx context.Context) error {
+	if s.listener == nil {
+		return ErrNoListener
+	}
+
+	if s.certManager != nil {
+		// When using TLS it's important to redirect http requests to https
+		go func() {
+			srv := newHTTPRedirServer(s.certManager)
+			err := srv.ListenAndServe()
+			if err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Info(ctx, "Something went wrong with the redirection server", logging.NewKV("Error", err))
+			}
+		}()
+	}
+	return s.Serve(s.listener)
+}
+
+// AssignedAddr returns the address that was assigned to the server on calls to listen.
+func (s *Server) AssignedAddr() string {
+	return s.address
 }

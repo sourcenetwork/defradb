@@ -14,9 +14,12 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
+	"golang.org/x/exp/slices"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -35,10 +38,26 @@ var (
 	colContextKey   = contextKey("col")
 )
 
+// CorsMiddleware handles cross origin request
+func CorsMiddleware(opts serverOptions) func(http.Handler) http.Handler {
+	return cors.Handler(cors.Options{
+		AllowOriginFunc: func(r *http.Request, origin string) bool {
+			return slices.Contains[string](opts.allowedOrigins, strings.ToLower(origin))
+		},
+		AllowedMethods: []string{"GET", "HEAD", "POST", "PATCH", "DELETE"},
+		AllowedHeaders: []string{"Content-Type"},
+		MaxAge:         300,
+	})
+}
+
 // ApiMiddleware sets the required context values for all API requests.
-func ApiMiddleware(db client.DB, txs *sync.Map) func(http.Handler) http.Handler {
+func ApiMiddleware(db client.DB, txs *sync.Map, opts serverOptions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if opts.tls.HasValue() {
+				rw.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+			}
+
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, dbContextKey, db)
 			ctx = context.WithValue(ctx, txsContextKey, txs)
