@@ -323,7 +323,7 @@ func findTargetNode(
 	return nil, totalMatchedSoFar, false
 }
 
-// findTargetNodeFromArray runs findTargetNode for each item of an array.
+// findTargetNodeFromArray is a helper that runs findTargetNode for each item in an array.
 func findTargetNodeFromArray[T any](
 	targetName string,
 	toSkip uint,
@@ -376,9 +376,9 @@ func trimSubNodes(graph any) any {
 func trimExplainAttributes(
 	t *testing.T,
 	description string,
-	actualResult map[string]any,
+	actualResult any,
 ) map[string]any {
-	trimmedMap := copyMap(actualResult)
+	trimmedMap := copyMap(actualResult.(map[string]any))
 
 	for key, value := range trimmedMap {
 		if !isPlanNode(key) {
@@ -391,24 +391,10 @@ func trimExplainAttributes(
 			trimmedMap[key] = trimExplainAttributes(t, description, v)
 
 		case []map[string]any:
-			trimmedArrayElements := []map[string]any{}
-			for _, valueItem := range v {
-				trimmedArrayElements = append(
-					trimmedArrayElements,
-					trimExplainAttributes(t, description, valueItem),
-				)
-			}
-			trimmedMap[key] = trimmedArrayElements
+			trimmedMap[key] = trimExplainAttributesArray[map[string]any](t, description, v)
 
 		case []any:
-			trimmedArrayElements := []map[string]any{}
-			for _, valueItem := range v {
-				trimmedArrayElements = append(
-					trimmedArrayElements,
-					trimExplainAttributes(t, description, valueItem.(map[string]any)),
-				)
-			}
-			trimmedMap[key] = trimmedArrayElements
+			trimmedMap[key] = trimExplainAttributesArray[any](t, description, v)
 
 		default:
 			assert.Fail(
@@ -420,6 +406,22 @@ func trimExplainAttributes(
 	}
 
 	return trimmedMap
+}
+
+// trimExplainAttributesArray is a helper that runs trimExplainAttributes for each item in an array.
+func trimExplainAttributesArray[T any](
+	t *testing.T,
+	description string,
+	actualResult []T,
+) []map[string]any {
+	trimmedArrayElements := []map[string]any{}
+	for _, valueItem := range actualResult {
+		trimmedArrayElements = append(
+			trimmedArrayElements,
+			trimExplainAttributes(t, description, valueItem),
+		)
+	}
+	return trimmedArrayElements
 }
 
 // isPlanNode returns true if someName matches a plan node name, retruns false otherwise.
