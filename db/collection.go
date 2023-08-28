@@ -244,6 +244,20 @@ func (db *db) updateCollection(
 		return db.getCollectionByName(ctx, txn, desc.Name)
 	}
 
+	for _, field := range desc.Schema.Fields {
+		if field.RelationType.IsSet(client.Relation_Type_ONE) {
+			idFieldName := field.Name + "_id"
+			if _, ok := desc.Schema.GetField(idFieldName); !ok {
+				desc.Schema.Fields = append(desc.Schema.Fields, client.FieldDescription{
+					Name:         idFieldName,
+					Kind:         client.FieldKind_DocKey,
+					RelationType: client.Relation_Type_INTERNAL_ID,
+					RelationName: field.RelationName,
+				})
+			}
+		}
+	}
+
 	for i, field := range desc.Schema.Fields {
 		if field.ID == client.FieldID(0) {
 			// This is not wonderful and will probably break when we add the ability
@@ -441,26 +455,24 @@ func validateUpdateCollectionFields(
 			}
 
 			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
-				idFieldName := proposedField.Name + "_id"
+				idFieldName := proposedField.Name + request.RelatedObjectID
 				idField, idFieldFound := proposedDesc.Schema.GetField(idFieldName)
-				if !idFieldFound {
-					return false, NewErrRelationalFieldMissingIDField(proposedField.Name, idFieldName)
-				}
+				if idFieldFound {
+					if idField.Kind != client.FieldKind_DocKey {
+						return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocKey, idField.Kind)
+					}
 
-				if idField.Kind != client.FieldKind_DocKey {
-					return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocKey, idField.Kind)
-				}
+					if idField.RelationType != client.Relation_Type_INTERNAL_ID {
+						return false, NewErrRelationalFieldInvalidRelationType(
+							idField.Name,
+							client.Relation_Type_INTERNAL_ID,
+							idField.RelationType,
+						)
+					}
 
-				if idField.RelationType != client.Relation_Type_INTERNAL_ID {
-					return false, NewErrRelationalFieldInvalidRelationType(
-						idField.Name,
-						client.Relation_Type_INTERNAL_ID,
-						idField.RelationType,
-					)
-				}
-
-				if idField.RelationName == "" {
-					return false, NewErrRelationalFieldMissingRelationName(idField.Name)
+					if idField.RelationName == "" {
+						return false, NewErrRelationalFieldMissingRelationName(idField.Name)
+					}
 				}
 			}
 

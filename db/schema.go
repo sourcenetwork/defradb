@@ -13,7 +13,9 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"unicode"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
 
@@ -21,6 +23,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+)
+
+const (
+	schemaNamePathIndex int = 0
+	schemaPathIndex     int = 1
+	fieldsPathIndex     int = 2
+	fieldIndexPathIndex int = 3
 )
 
 // addSchema takes the provided schema in SDL format, and applies it to the database,
@@ -134,10 +143,12 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		newDescriptions = append(newDescriptions, desc)
 	}
 
-	for _, desc := range newDescriptions {
-		if _, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc); err != nil {
+	for i, desc := range newDescriptions {
+		col, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc)
+		if err != nil {
 			return err
 		}
+		newDescriptions[i] = col.Description()
 	}
 
 	return db.parser.SetSchema(ctx, txn, newDescriptions)
@@ -169,23 +180,75 @@ func substituteSchemaPatch(
 	patch jsonpatch.Patch,
 	collectionsByName map[string]client.CollectionDescription,
 ) (jsonpatch.Patch, error) {
+	fieldIndexesByCollection := make(map[string]map[string]int, len(collectionsByName))
+	for colName, col := range collectionsByName {
+		fieldIndexesByName := make(map[string]int, len(col.Schema.Fields))
+		fieldIndexesByCollection[colName] = fieldIndexesByName
+		for i, field := range col.Schema.Fields {
+			fieldIndexesByName[field.Name] = i
+		}
+	}
+
 	for _, patchOperation := range patch {
 		path, err := patchOperation.Path()
 		if err != nil {
 			return nil, err
 		}
 
+		path = strings.TrimPrefix(path, "/")
+		splitPath := strings.Split(path, "/")
+
 		if value, hasValue := patchOperation["value"]; hasValue {
 			var newPatchValue immutable.Option[any]
-			if isField(path) {
+			var field map[string]any
+			isField := isField(splitPath)
+
+			if isField {
 				// We unmarshal the full field-value into a map to ensure that all user
 				// specified properties are maintained.
-				var field map[string]any
 				err = json.Unmarshal(*value, &field)
 				if err != nil {
 					return nil, err
 				}
+			}
 
+			if isFieldOrInner(splitPath) {
+				fieldIndexer := splitPath[fieldIndexPathIndex]
+
+				if containsLetter(fieldIndexer) {
+					if isField {
+						if nameValue, hasName := field["Name"]; hasName {
+							if name, isString := nameValue.(string); isString && name != fieldIndexer {
+								return nil, NewErrIndexDoesNotMatchName(fieldIndexer, name)
+							}
+						} else {
+							field["Name"] = fieldIndexer
+						}
+						newPatchValue = immutable.Some[any](field)
+					}
+
+					desc := collectionsByName[splitPath[schemaNamePathIndex]]
+					var index string
+					if fieldIndexesByName, ok := fieldIndexesByCollection[desc.Name]; ok {
+						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
+							index = fmt.Sprint(i)
+						}
+					}
+					if index == "" {
+						index = "-"
+						// If this is a new field we need to track its location so that subsequent operations
+						// within the patch may access it by field name.
+						fieldIndexesByCollection[desc.Name][fieldIndexer] = len(fieldIndexesByCollection[desc.Name])
+					}
+
+					splitPath[fieldIndexPathIndex] = index
+					path = strings.Join(splitPath, "/")
+					opPath := json.RawMessage([]byte(fmt.Sprintf(`"/%s"`, path)))
+					patchOperation["path"] = &opPath
+				}
+			}
+
+			if isField {
 				if kind, isString := field["Kind"].(string); isString {
 					substitute, collectionName, err := getSubstituteFieldKind(kind, collectionsByName)
 					if err != nil {
@@ -202,7 +265,7 @@ func substituteSchemaPatch(
 
 					newPatchValue = immutable.Some[any](field)
 				}
-			} else if isFieldKind(path) {
+			} else if isFieldKind(splitPath) {
 				var kind any
 				err = json.Unmarshal(*value, &kind)
 				if err != nil {
@@ -264,20 +327,31 @@ func getSubstituteFieldKind(
 	}
 }
 
-// isField returns true if the given path points to a FieldDescription.
-func isField(path string) bool {
-	path = strings.TrimPrefix(path, "/")
-	elements := strings.Split(path, "/")
+// isFieldOrInner returns true if the given path points to a FieldDescription or a property within it.
+func isFieldOrInner(path []string) bool {
 	//nolint:goconst
-	return len(elements) == 4 && elements[len(elements)-2] == "Fields" && elements[len(elements)-3] == "Schema"
+	return len(path) >= 4 && path[fieldsPathIndex] == "Fields" && path[schemaPathIndex] == "Schema"
+}
+
+// isField returns true if the given path points to a FieldDescription.
+func isField(path []string) bool {
+	return len(path) == 4 && path[fieldsPathIndex] == "Fields" && path[schemaPathIndex] == "Schema"
 }
 
 // isField returns true if the given path points to a FieldDescription.Kind property.
-func isFieldKind(path string) bool {
-	path = strings.TrimPrefix(path, "/")
-	elements := strings.Split(path, "/")
-	return len(elements) == 5 &&
-		elements[len(elements)-1] == "Kind" &&
-		elements[len(elements)-3] == "Fields" &&
-		elements[len(elements)-4] == "Schema"
+func isFieldKind(path []string) bool {
+	return len(path) == 5 &&
+		path[fieldIndexPathIndex+1] == "Kind" &&
+		path[fieldsPathIndex] == "Fields" &&
+		path[schemaPathIndex] == "Schema"
+}
+
+// containsLetter returns true if the string contains a single unicode character.
+func containsLetter(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			return true
+		}
+	}
+	return false
 }
