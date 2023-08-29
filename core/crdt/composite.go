@@ -102,6 +102,8 @@ type CompositeDAG struct {
 	fieldName string
 }
 
+var _ core.ReplicatedData = CompositeDAG{}
+
 func NewCompositeDAG(
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
