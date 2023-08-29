@@ -41,14 +41,13 @@ func init() {
 func main() {
 	flag.Parse()
 
+	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
+
 	if err := os.MkdirAll(dir, defaultPerm); err != nil {
 		log.Fatal("Failed to create directory", err)
 	}
-	defraCmd, err := cli.NewDefraCommand(config.DefaultConfig())
-	if err != nil {
-		log.Fatal("Failed to create command", err)
-	}
-	if err = doc.GenManTree(defraCmd, header, dir); err != nil {
+
+	if err := doc.GenManTree(defraCmd, header, dir); err != nil {
 		log.Fatal("Failed generation of man pages", err)
 	}
 }

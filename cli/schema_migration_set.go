@@ -23,9 +23,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeSchemaMigrationSetCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeSchemaMigrationSetCommand(cfg *config.Config) *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
 		Use:   "set [src] [dst] [cfg]",
@@ -43,7 +44,12 @@ Example: add from stdin:
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.RangeArgs(2, 3),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
+
 			var lensCfgJson string
 			switch {
 			case lensFile != "":

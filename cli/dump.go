@@ -13,15 +13,19 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeDumpCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeDumpCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "dump",
 		Short: "Dump the contents of DefraDB node-side",
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
 			return db.PrintDump(cmd.Context())
 		},
 	}

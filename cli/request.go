@@ -11,18 +11,17 @@
 package cli
 
 import (
-	"encoding/json"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeRequestCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeRequestCommand(cfg *config.Config) *cobra.Command {
 	var filePath string
 	var cmd = &cobra.Command{
 		Use:   "query [query request]",
@@ -43,6 +42,11 @@ with the database more conveniently.
 
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
+
 			var request string
 			switch {
 			case filePath != "":
@@ -66,11 +70,10 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			}
 			result := db.ExecRequest(cmd.Context(), request)
 			if result.Pub == nil {
-				return json.NewEncoder(cmd.OutOrStdout()).Encode(result.GQL)
+				return writeJSON(cmd, result.GQL)
 			}
-			enc := json.NewEncoder(cmd.OutOrStdout())
 			for item := range result.Pub.Stream() {
-				enc.Encode(item) //nolint:errcheck
+				writeJSON(cmd, item) //nolint:errcheck
 			}
 			return nil
 		},

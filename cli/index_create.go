@@ -11,15 +11,14 @@
 package cli
 
 import (
-	"encoding/json"
-
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeIndexCreateCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeIndexCreateCommand(cfg *config.Config) *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var fieldsArg []string
@@ -37,6 +36,10 @@ Example: create a named index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name --name UsersByName`,
 		ValidArgs: []string{"collection", "fields", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
 			var fields []client.IndexedFieldDescription
 			for _, name := range fieldsArg {
 				fields = append(fields, client.IndexedFieldDescription{Name: name})
@@ -53,7 +56,7 @@ Example: create a named index for 'Users' collection on 'name' field:
 			if err != nil {
 				return err
 			}
-			return json.NewEncoder(cmd.OutOrStdout()).Encode(desc)
+			return writeJSON(cmd, desc)
 		},
 	}
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")

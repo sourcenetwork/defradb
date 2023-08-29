@@ -13,11 +13,11 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeBackupImportCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeBackupImportCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "import <input_path>",
 		Short: "Import a JSON data file to the database",
@@ -32,6 +32,10 @@ Example: import data to the database:
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
 			return db.BasicImport(cmd.Context(), args[0])
 		},
 	}

@@ -33,15 +33,14 @@ func init() {
 func main() {
 	flag.Parse()
 
+	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
+	defraCmd.DisableAutoGenTag = true
+
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		log.Fatal("Creating the filesystem path failed", err)
 	}
-	defraCmd, err := cli.NewDefraCommand(config.DefaultConfig())
-	if err != nil {
-		log.Fatal("Creating the filesystem path failed", err)
-	}
-	defraCmd.DisableAutoGenTag = true
-	if err = doc.GenMarkdownTree(defraCmd, path); err != nil {
+
+	if err := doc.GenMarkdownTree(defraCmd, path); err != nil {
 		log.Fatal("Generating cmd docs failed", err)
 	}
 }

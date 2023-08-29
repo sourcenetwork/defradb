@@ -11,15 +11,13 @@
 package cli
 
 import (
-	"encoding/json"
-
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeSchemaMigrationGetCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeSchemaMigrationGetCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "get",
 		Short: "Gets the schema migrations within DefraDB",
@@ -29,12 +27,16 @@ Example:
   defradb client schema migration get'
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
 			cfgs, err := db.LensRegistry().Config(cmd.Context())
 			if err != nil {
 				return err
 			}
-			return json.NewEncoder(cmd.OutOrStdout()).Encode(cfgs)
+			return writeJSON(cmd, cfgs)
 		},
 	}
 	return cmd

@@ -11,16 +11,14 @@
 package cli
 
 import (
-	"encoding/json"
-
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeP2PCollectionGetallCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeP2PCollectionGetallCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all P2P collections",
@@ -33,11 +31,15 @@ This is the list of collections of the node that are synchronized on the pubsub 
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
 			cols, err := db.GetAllP2PCollections(cmd.Context())
 			if err != nil {
 				return err
 			}
-			return json.NewEncoder(cmd.OutOrStdout()).Encode(cols)
+			return writeJSON(cmd, cols)
 		},
 	}
 	return cmd

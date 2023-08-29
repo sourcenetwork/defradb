@@ -17,11 +17,12 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/http"
 )
 
 const jsonFileType = "json"
 
-func MakeBackupExportCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeBackupExportCommand(cfg *config.Config) *cobra.Command {
 	var collections []string
 	var pretty bool
 	var format string
@@ -44,6 +45,10 @@ Example: export data for the 'Users' collection:
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
 			if !isValidExportFormat(format) {
 				return ErrInvalidExportFormat
 			}

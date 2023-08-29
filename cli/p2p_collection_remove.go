@@ -13,12 +13,12 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeP2PCollectionRemoveCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeP2PCollectionRemoveCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "remove [collectionID]",
 		Short: "Remove P2P collections",
@@ -31,6 +31,10 @@ The removed collections will no longer be synchronized between nodes.`,
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
 			return db.RemoveP2PCollection(cmd.Context(), args[0])
 		},
 	}

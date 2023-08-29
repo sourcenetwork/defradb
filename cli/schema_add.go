@@ -11,18 +11,17 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeSchemaAddCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeSchemaAddCommand(cfg *config.Config) *cobra.Command {
 	var schemaFile string
 	var cmd = &cobra.Command{
 		Use:   "add [schema]",
@@ -40,6 +39,11 @@ Example: add from stdin:
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
+
 			var schema string
 			switch {
 			case schemaFile != "":
@@ -64,7 +68,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			if err != nil {
 				return err
 			}
-			return json.NewEncoder(cmd.OutOrStdout()).Encode(cols)
+			return writeJSON(cmd, cols)
 		},
 	}
 	cmd.Flags().StringVarP(&schemaFile, "file", "f", "", "File to load a schema from")

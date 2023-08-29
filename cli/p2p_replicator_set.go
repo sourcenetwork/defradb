@@ -17,9 +17,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeP2PReplicatorSetCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeP2PReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
 		Use:   "set [-c, --collection] <peer>",
@@ -34,6 +35,10 @@ A replicator replicates one or all collection(s) from this node to another.
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
 			addr, err := peer.AddrInfoFromString(args[0])
 			if err != nil {
 				return err

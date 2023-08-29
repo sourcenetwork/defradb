@@ -18,9 +18,6 @@ import (
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
-	defraCmd, err := cli.NewDefraCommand(config.DefaultConfig())
-	if err != nil {
-		panic(err)
-	}
+	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
 	defraCmd.Execute() //nolint:errcheck
 }

@@ -13,15 +13,19 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeServerDumpCmd(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeServerDumpCmd(cfg *config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "server-dump",
 		Short: "Dumps the state of the entire database",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			db, err := http.NewClient("http://" + cfg.API.Address)
+			if err != nil {
+				return err
+			}
 			return db.PrintDump(cmd.Context())
 		},
 	}

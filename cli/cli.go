@@ -14,24 +14,20 @@ Package cli provides the command-line interface.
 package cli
 
 import (
+	"encoding/json"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
 var log = logging.MustNewLogger("cli")
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
-func NewDefraCommand(cfg *config.Config) (*cobra.Command, error) {
-	db, err := http.NewClient("http://" + cfg.API.Address)
-	if err != nil {
-		return nil, err
-	}
-
+func NewDefraCommand(cfg *config.Config) *cobra.Command {
 	rootCmd := MakeRootCommand(cfg)
-	p2pCmd := MakeP2PCommand(cfg)
+	p2pCmd := MakeP2PCommand()
 	schemaCmd := MakeSchemaCommand()
 	schemaMigrationCmd := MakeSchemaMigrationCommand()
 	indexCmd := MakeIndexCommand()
@@ -40,40 +36,40 @@ func NewDefraCommand(cfg *config.Config) (*cobra.Command, error) {
 	p2pReplicatorCmd := MakeP2PReplicatorCommand()
 	p2pCollectionCmd := MakeP2PCollectionCommand()
 	p2pCollectionCmd.AddCommand(
-		MakeP2PCollectionAddCommand(cfg, db),
-		MakeP2PCollectionRemoveCommand(cfg, db),
-		MakeP2PCollectionGetallCommand(cfg, db),
+		MakeP2PCollectionAddCommand(cfg),
+		MakeP2PCollectionRemoveCommand(cfg),
+		MakeP2PCollectionGetallCommand(cfg),
 	)
 	p2pReplicatorCmd.AddCommand(
-		MakeP2PReplicatorGetallCommand(cfg, db),
-		MakeP2PReplicatorSetCommand(cfg, db),
-		MakeP2PReplicatorDeleteCommand(cfg, db),
+		MakeP2PReplicatorGetallCommand(cfg),
+		MakeP2PReplicatorSetCommand(cfg),
+		MakeP2PReplicatorDeleteCommand(cfg),
 	)
 	p2pCmd.AddCommand(
 		p2pReplicatorCmd,
 		p2pCollectionCmd,
 	)
 	schemaMigrationCmd.AddCommand(
-		MakeSchemaMigrationSetCommand(cfg, db),
-		MakeSchemaMigrationGetCommand(cfg, db),
+		MakeSchemaMigrationSetCommand(cfg),
+		MakeSchemaMigrationGetCommand(cfg),
 	)
 	schemaCmd.AddCommand(
-		MakeSchemaAddCommand(cfg, db),
-		MakeSchemaPatchCommand(cfg, db),
+		MakeSchemaAddCommand(cfg),
+		MakeSchemaPatchCommand(cfg),
 		schemaMigrationCmd,
 	)
 	indexCmd.AddCommand(
-		MakeIndexCreateCommand(cfg, db),
-		MakeIndexDropCommand(cfg, db),
-		MakeIndexListCommand(cfg, db),
+		MakeIndexCreateCommand(cfg),
+		MakeIndexDropCommand(cfg),
+		MakeIndexListCommand(cfg),
 	)
 	backupCmd.AddCommand(
-		MakeBackupExportCommand(cfg, db),
-		MakeBackupImportCommand(cfg, db),
+		MakeBackupExportCommand(cfg),
+		MakeBackupImportCommand(cfg),
 	)
 	clientCmd.AddCommand(
-		MakeDumpCommand(cfg, db),
-		MakeRequestCommand(cfg, db),
+		MakeDumpCommand(cfg),
+		MakeRequestCommand(cfg),
 		schemaCmd,
 		indexCmd,
 		p2pCmd,
@@ -82,10 +78,16 @@ func NewDefraCommand(cfg *config.Config) (*cobra.Command, error) {
 	rootCmd.AddCommand(
 		clientCmd,
 		MakeStartCommand(cfg),
-		MakeServerDumpCmd(cfg, db),
+		MakeServerDumpCmd(cfg),
 		MakeVersionCommand(),
 		MakeInitCommand(cfg),
 	)
 
-	return rootCmd, nil
+	return rootCmd
+}
+
+func writeJSON(cmd *cobra.Command, out any) error {
+	enc := json.NewEncoder(cmd.OutOrStdout())
+	enc.SetIndent("", "  ")
+	return enc.Encode(out)
 }
