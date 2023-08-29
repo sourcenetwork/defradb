@@ -109,7 +109,6 @@ func (mc *MerkleClock) AddDAGNode(
 		ctx,
 		&CrdtNodeGetter{DeltaExtractor: mc.crdt.DeltaDecode},
 		nd.Cid(),
-		height,
 		delta,
 		nd,
 	)
@@ -122,11 +121,12 @@ func (mc *MerkleClock) ProcessNode(
 	ctx context.Context,
 	ng core.NodeGetter,
 	root cid.Cid,
-	rootPrio uint64,
 	delta core.Delta,
 	node ipld.Node,
 ) ([]cid.Cid, error) {
 	current := node.Cid()
+	priority := delta.GetPriority()
+
 	log.Debug(ctx, "Running ProcessNode", logging.NewKV("CID", current))
 	err := mc.crdt.Merge(ctx, delta, dshelp.MultihashToDsKey(current.Hash()).String())
 	if err != nil {
@@ -146,7 +146,7 @@ func (mc *MerkleClock) ProcessNode(
 	}
 	if !hasHeads { // reached the bottom, at a leaf
 		log.Debug(ctx, "No heads found")
-		err := mc.headset.Write(ctx, root, rootPrio)
+		err := mc.headset.Write(ctx, root, priority)
 		if err != nil {
 			return nil, NewErrAddingHead(root, err)
 		}
@@ -166,7 +166,7 @@ func (mc *MerkleClock) ProcessNode(
 			log.Debug(ctx, "Found head, replacing!")
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err = mc.headset.Replace(ctx, linkCid, root, rootPrio)
+			err = mc.headset.Replace(ctx, linkCid, root, priority)
 			if err != nil {
 				return nil, NewErrReplacingHead(linkCid, root, err)
 			}
@@ -182,7 +182,7 @@ func (mc *MerkleClock) ProcessNode(
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
 			log.Debug(ctx, "Adding head")
-			err := mc.headset.Write(ctx, root, rootPrio)
+			err := mc.headset.Write(ctx, root, priority)
 			if err != nil {
 				log.ErrorE(
 					ctx,

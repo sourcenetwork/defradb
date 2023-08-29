@@ -404,8 +404,7 @@ func (vf *VersionedFetcher) processNode(
 		return err
 	}
 
-	height := delta.GetPriority()
-	_, err = mcrdt.Clock().ProcessNode(vf.ctx, nil, nd.Cid(), height, delta, nd)
+	_, err = mcrdt.Clock().ProcessNode(vf.ctx, nil, nd.Cid(), delta, nd)
 	return err
 }
 

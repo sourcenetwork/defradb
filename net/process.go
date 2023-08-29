@@ -70,7 +70,7 @@ func (p *Peer) processLog(
 	}
 
 	ng := p.createNodeGetter(crdt, getter)
-	cids, err := crdt.Clock().ProcessNode(ctx, ng, c, delta.GetPriority(), delta, nd)
+	cids, err := crdt.Clock().ProcessNode(ctx, ng, c, delta, nd)
 	if err != nil {
 		return nil, err
 	}

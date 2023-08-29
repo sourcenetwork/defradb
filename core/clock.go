@@ -24,5 +24,5 @@ type MerkleClock interface {
 		ctx context.Context,
 		delta Delta,
 	) (ipld.Node, error) // possibly change to AddDeltaNode?
-	ProcessNode(context.Context, NodeGetter, cid.Cid, uint64, Delta, ipld.Node) ([]cid.Cid, error)
+	ProcessNode(context.Context, NodeGetter, cid.Cid, Delta, ipld.Node) ([]cid.Cid, error)
 }
