@@ -11,8 +11,7 @@
 package cli
 
 import (
-	"encoding/json"
-
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -20,25 +19,34 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-func MakeP2PCollectionGetallCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeP2PReplicatorSetCommand(cfg *config.Config, db client.DB) *cobra.Command {
+	var collections []string
 	var cmd = &cobra.Command{
-		Use:   "getall",
-		Short: "Get all P2P collections",
-		Long: `Get all P2P collections in the pubsub topics.
-This is the list of collections of the node that are synchronized on the pubsub network.`,
+		Use:   "set [-c, --collection] <peer>",
+		Short: "Set a P2P replicator",
+		Long: `Add a new target replicator.
+A replicator replicates one or all collection(s) from this node to another.
+`,
 		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.NoArgs(cmd, args); err != nil {
-				return errors.New("must specify no argument")
+			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+				return errors.New("must specify one argument: peer")
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cols, err := db.GetAllP2PCollections(cmd.Context())
+			addr, err := peer.AddrInfoFromString(args[0])
 			if err != nil {
 				return err
 			}
-			return json.NewEncoder(cmd.OutOrStdout()).Encode(cols)
+			rep := client.Replicator{
+				Info:    *addr,
+				Schemas: collections,
+			}
+			return db.SetReplicator(cmd.Context(), rep)
 		},
 	}
+
+	cmd.Flags().StringArrayVarP(&collections, "collection", "c",
+		[]string{}, "Define the collection for the replicator")
 	return cmd
 }

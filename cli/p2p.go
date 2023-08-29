@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,21 +8,19 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build playground
-
-package http
+package cli
 
 import (
-	"io/fs"
-	"net/http"
+	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/playground"
+	"github.com/sourcenetwork/defradb/config"
 )
 
-func init() {
-	sub, err := fs.Sub(playground.Dist, "dist")
-	if err != nil {
-		panic(err)
+func MakeP2PCommand(cfg *config.Config) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "p2p",
+		Short: "Interact with the DefraDB P2P system",
+		Long:  "Interact with the DefraDB P2P system",
 	}
-	playgroundHandler = http.FileServer(http.FS(sub))
+	return cmd
 }

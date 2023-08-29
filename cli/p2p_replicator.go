@@ -8,11 +8,18 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-/*
-Package http provides DefraDB's HTTP API, offering various capabilities.
-*/
-package http
+package cli
 
-import "github.com/sourcenetwork/defradb/logging"
+import (
+	"github.com/spf13/cobra"
+)
 
-var log = logging.MustNewLogger("http")
+func MakeP2PReplicatorCommand() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "replicator",
+		Short: "Configure the replicator system",
+		Long: `Configure the replicator system. Add, delete, or get the list of persisted replicators.
+A replicator replicates one or all collection(s) from one node to another.`,
+	}
+	return cmd
+}

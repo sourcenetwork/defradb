@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,28 +11,31 @@
 package cli
 
 import (
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
-func MakeBackupImportCommand(cfg *config.Config, db client.DB) *cobra.Command {
+func MakeP2PReplicatorDeleteCommand(cfg *config.Config, db client.DB) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "import <input_path>",
-		Short: "Import a JSON data file to the database",
-		Long: `Import a JSON data file to the database.
-
-Example: import data to the database:
-  defradb client import user_data.json`,
+		Use:   "delete <peer>",
+		Short: "Delete a replicator. It will stop synchronizing",
+		Long:  `Delete a replicator. It will stop synchronizing.`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return NewErrInvalidArgumentLength(err, 1)
+				return errors.New("must specify one argument: PeerID")
 			}
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			return db.BasicImport(cmd.Context(), args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			addr, err := peer.AddrInfoFromString(args[0])
+			if err != nil {
+				return err
+			}
+			return db.DeleteReplicator(cmd.Context(), client.Replicator{Info: *addr})
 		},
 	}
 	return cmd

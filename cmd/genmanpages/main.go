@@ -15,40 +15,40 @@ installation is packaging and system dependent.
 package main
 
 import (
-	"context"
 	"flag"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra/doc"
 
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 const defaultPerm os.FileMode = 0o777
 
-var log = logging.MustNewLogger("genmanpages")
+var dir string
 
-func main() {
-	dirFlag := flag.String("o", "build/man", "Directory in which to generate DefraDB man pages")
-	flag.Parse()
-	genRootManPages(*dirFlag)
+var header = &doc.GenManHeader{
+	Title:   "defradb - Peer-to-Peer Edge Database",
+	Section: "1",
 }
 
-func genRootManPages(dir string) {
-	ctx := context.Background()
-	header := &doc.GenManHeader{
-		Title:   "defradb - Peer-to-Peer Edge Database",
-		Section: "1",
+func init() {
+	flag.StringVar(&dir, "o", "build/man", "Directory in which to generate DefraDB man pages")
+}
+
+func main() {
+	flag.Parse()
+
+	if err := os.MkdirAll(dir, defaultPerm); err != nil {
+		log.Fatal("Failed to create directory", err)
 	}
-	err := os.MkdirAll(dir, defaultPerm)
+	defraCmd, err := cli.NewDefraCommand(config.DefaultConfig())
 	if err != nil {
-		log.FatalE(ctx, "Failed to create directory", err, logging.NewKV("dir", dir))
+		log.Fatal("Failed to create command", err)
 	}
-	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
-	err = doc.GenManTree(defraCmd.RootCmd, header, dir)
-	if err != nil {
-		log.FatalE(ctx, "Failed generation of man pages", err)
+	if err = doc.GenManTree(defraCmd, header, dir); err != nil {
+		log.Fatal("Failed generation of man pages", err)
 	}
 }

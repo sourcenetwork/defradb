@@ -12,13 +12,18 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/config"
 )
 
-func MakeBlocksCommand() *cobra.Command {
-	var cmd = &cobra.Command{
-		Use:   "blocks",
-		Short: "Interact with the database's blockstore",
+func MakeServerDumpCmd(cfg *config.Config, db client.DB) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "server-dump",
+		Short: "Dumps the state of the entire database",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return db.PrintDump(cmd.Context())
+		},
 	}
-
 	return cmd
 }

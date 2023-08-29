@@ -20,6 +20,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+// Version is the identifier for the current API version.
+var Version string = "v0"
+
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler = http.HandlerFunc(http.NotFound)
 
@@ -43,7 +46,7 @@ func newHandler(db client.DB, opts serverOptions) *handler {
 	router.Use(CorsMiddleware(opts))
 	router.Use(ApiMiddleware(db, txs, opts))
 
-	router.Route("/api/v0", func(api chi.Router) {
+	router.Route("/api/"+Version, func(api chi.Router) {
 		api.Use(TransactionMiddleware, StoreMiddleware)
 		api.Route("/tx", func(tx chi.Router) {
 			tx.Post("/", tx_handler.NewTxn)

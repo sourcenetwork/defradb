@@ -12,22 +12,20 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/spf13/cobra"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
-func MakeSchemaMigrationSetCommand(cfg *config.Config) *cobra.Command {
+func MakeSchemaMigrationSetCommand(cfg *config.Config, db client.DB) *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
 		Use:   "set [src] [dst] [cfg]",
@@ -44,72 +42,36 @@ Example: add from stdin:
   cat schema_migration.lens | defradb client schema migration set bae123 bae456 -
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
+		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			if err := cobra.MinimumNArgs(2)(cmd, args); err != nil {
-				return NewErrMissingArgs([]string{"src", "dst", "cfg"})
-			}
-			if err := cobra.MaximumNArgs(3)(cmd, args); err != nil {
-				return NewErrTooManyArgs(3, len(args))
-			}
-
 			var lensCfgJson string
-			var srcSchemaVersionID string
-			var dstSchemaVersionID string
-			fi, err := os.Stdin.Stat()
-			if err != nil {
-				return err
-			}
-
-			if lensFile != "" {
-				buf, err := os.ReadFile(lensFile)
+			switch {
+			case lensFile != "":
+				data, err := os.ReadFile(lensFile)
 				if err != nil {
-					return errors.Wrap("failed to read schema file", err)
+					return err
 				}
-				lensCfgJson = string(buf)
-			} else if len(args) == 2 {
-				// If the lensFile flag has not been provided then it must be provided as an arg
-				// and thus len(args) cannot be 2
-				return NewErrMissingArg("cfg")
-			} else if isFileInfoPipe(fi) && args[2] != "-" {
-				log.FeedbackInfo(
-					cmd.Context(),
-					"Run 'defradb client schema migration set -' to read from stdin."+
-						" Example: 'cat schema_migration.lens | defradb client schema migration set -').",
-				)
-				return nil
-			} else if args[2] == "-" {
-				stdin, err := readStdin()
+				lensCfgJson = string(data)
+			case len(args) == 3 && args[2] == "-":
+				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return errors.Wrap("failed to read stdin", err)
+					return err
 				}
-				if len(stdin) == 0 {
-					return errors.New("no lens cfg in stdin provided")
-				} else {
-					lensCfgJson = stdin
-				}
-			} else {
+				lensCfgJson = string(data)
+			case len(args) == 3:
 				lensCfgJson = args[2]
+			default:
+				return fmt.Errorf("lens config cannot be empty")
 			}
 
-			srcSchemaVersionID = args[0]
-			dstSchemaVersionID = args[1]
-
-			if lensCfgJson == "" {
-				return NewErrMissingArg("cfg")
-			}
-			if srcSchemaVersionID == "" {
-				return NewErrMissingArg("src")
-			}
-			if dstSchemaVersionID == "" {
-				return NewErrMissingArg("dst")
-			}
+			srcSchemaVersionID := args[0]
+			dstSchemaVersionID := args[1]
 
 			decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
 			decoder.DisallowUnknownFields()
 
 			var lensCfg model.Lens
-			err = decoder.Decode(&lensCfg)
-			if err != nil {
+			if err = decoder.Decode(&lensCfg); err != nil {
 				return errors.Wrap("invalid lens configuration", err)
 			}
 
@@ -119,58 +81,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				Lens:                       lensCfg,
 			}
 
-			migrationCfgJson, err := json.Marshal(migrationCfg)
-			if err != nil {
-				return errors.Wrap("failed to marshal cfg", err)
-			}
-
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaMigrationPath)
-			if err != nil {
-				return errors.Wrap("join paths failed", err)
-			}
-
-			res, err := http.Post(endpoint.String(), "application/json", strings.NewReader(string(migrationCfgJson)))
-			if err != nil {
-				return errors.Wrap("failed to post schema migration", err)
-			}
-
-			defer func() {
-				if e := res.Body.Close(); e != nil {
-					err = NewErrFailedToCloseResponseBody(e, err)
-				}
-			}()
-
-			response, err := io.ReadAll(res.Body)
-			if err != nil {
-				return errors.Wrap("failed to read response body", err)
-			}
-
-			stdout, err := os.Stdout.Stat()
-			if err != nil {
-				return errors.Wrap("failed to stat stdout", err)
-			}
-			if isFileInfoPipe(stdout) {
-				cmd.Println(string(response))
-			} else {
-				type migrationSetResponse struct {
-					Errors []struct {
-						Message string `json:"message"`
-					} `json:"errors"`
-				}
-				r := migrationSetResponse{}
-				err = json.Unmarshal(response, &r)
-				if err != nil {
-					return NewErrFailedToUnmarshalResponse(err)
-				}
-				if len(r.Errors) > 0 {
-					log.FeedbackError(cmd.Context(), "Failed to set schema migration",
-						logging.NewKV("Errors", r.Errors))
-				} else {
-					log.FeedbackInfo(cmd.Context(), "Successfully set schema migration")
-				}
-			}
-
-			return nil
+			return db.LensRegistry().SetMigration(cmd.Context(), migrationCfg)
 		},
 	}
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")

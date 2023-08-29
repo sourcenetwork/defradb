@@ -12,19 +12,15 @@
 package main
 
 import (
-	"context"
-	"os"
-
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/config"
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
-	cfg := config.DefaultConfig()
-	ctx := context.Background()
-	defraCmd := cli.NewDefraCommand(cfg)
-	if err := defraCmd.Execute(ctx); err != nil {
-		os.Exit(1)
+	defraCmd, err := cli.NewDefraCommand(config.DefaultConfig())
+	if err != nil {
+		panic(err)
 	}
+	defraCmd.Execute() //nolint:errcheck
 }

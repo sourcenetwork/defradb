@@ -28,18 +28,20 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	ds "github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	httpapi "github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
+
+const badgerDatastoreName = "badger"
 
 func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
@@ -351,16 +353,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 
 	// run the server in a separate goroutine
 	go func() {
-		log.FeedbackInfo(
-			ctx,
-			fmt.Sprintf(
-				"Providing HTTP API at %s%s. Use the GraphQL request endpoint at %s%s/graphql ",
-				cfg.API.AddressToURL(),
-				httpapi.RootPath,
-				cfg.API.AddressToURL(),
-				httpapi.RootPath,
-			),
-		)
+		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", cfg.API.AddressToURL()))
 		if err := s.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if n != nil {

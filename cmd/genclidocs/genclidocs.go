@@ -14,30 +14,34 @@ genclidocs is a tool to generate the command line interface documentation.
 package main
 
 import (
-	"context"
 	"flag"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra/doc"
 
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
-var log = logging.MustNewLogger("genclidocs")
+var path string
+
+func init() {
+	flag.StringVar(&path, "o", "docs/cmd", "path to write the cmd docs to")
+}
 
 func main() {
-	path := flag.String("o", "docs/cmd", "path to write the cmd docs to")
 	flag.Parse()
-	err := os.MkdirAll(*path, os.ModePerm)
-	if err != nil {
-		log.FatalE(context.Background(), "Creating the filesystem path failed", err)
+
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		log.Fatal("Creating the filesystem path failed", err)
 	}
-	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
-	defraCmd.RootCmd.DisableAutoGenTag = true
-	err = doc.GenMarkdownTree(defraCmd.RootCmd, *path)
+	defraCmd, err := cli.NewDefraCommand(config.DefaultConfig())
 	if err != nil {
-		log.FatalE(context.Background(), "Generating cmd docs failed", err)
+		log.Fatal("Creating the filesystem path failed", err)
+	}
+	defraCmd.DisableAutoGenTag = true
+	if err = doc.GenMarkdownTree(defraCmd, path); err != nil {
+		log.Fatal("Generating cmd docs failed", err)
 	}
 }
