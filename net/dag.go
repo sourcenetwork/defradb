@@ -130,7 +130,6 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 			job.txn,
 			job.collection,
 			job.dsKey,
-			job.node.Cid(),
 			job.fieldName,
 			job.node,
 			job.nodeGetter,

@@ -404,7 +404,7 @@ func (vf *VersionedFetcher) processNode(
 		return err
 	}
 
-	_, err = mcrdt.Clock().ProcessNode(vf.ctx, nil, nd.Cid(), delta, nd)
+	_, err = mcrdt.Clock().ProcessNode(vf.ctx, nil, delta, nd)
 	return err
 }
 
