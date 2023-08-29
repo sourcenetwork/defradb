@@ -133,6 +133,6 @@ func (m *MerkleCompositeDAG) Value(ctx context.Context) ([]byte, error) {
 
 // Merge writes the provided delta to state using a supplied merge semantic.
 // @todo
-func (m *MerkleCompositeDAG) Merge(ctx context.Context, other core.Delta, id string) error {
-	return m.reg.Merge(ctx, other, id)
+func (m *MerkleCompositeDAG) Merge(ctx context.Context, other core.Delta) error {
+	return m.reg.Merge(ctx, other)
 }

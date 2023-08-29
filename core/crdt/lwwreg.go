@@ -145,7 +145,7 @@ func (reg LWWRegister) ID() string {
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta, id string) error {
+func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta) error {
 	d, ok := delta.(*LWWRegDelta)
 	if !ok {
 		return ErrMismatchedMergeType

@@ -40,7 +40,7 @@ func setupLoadedLWWRegster(ctx context.Context) LWWRegister {
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
 	addDelta.SetPriority(1)
-	lww.Merge(ctx, addDelta, "test")
+	lww.Merge(ctx, addDelta)
 	return lww
 }
 
@@ -57,7 +57,7 @@ func TestLWWRegisterInitialMerge(t *testing.T) {
 	ctx := context.Background()
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
-	err := lww.Merge(ctx, addDelta, "test")
+	err := lww.Merge(ctx, addDelta)
 	if err != nil {
 		t.Errorf("Unexpected error: %s\n", err)
 		return
@@ -80,7 +80,7 @@ func TestLWWReisterFollowupMerge(t *testing.T) {
 	lww := setupLoadedLWWRegster(ctx)
 	addDelta := lww.Set([]byte("test2"))
 	addDelta.SetPriority(2)
-	lww.Merge(ctx, addDelta, "test")
+	lww.Merge(ctx, addDelta)
 
 	val, err := lww.Value(ctx)
 	if err != nil {
@@ -97,7 +97,7 @@ func TestLWWRegisterOldMerge(t *testing.T) {
 	lww := setupLoadedLWWRegster(ctx)
 	addDelta := lww.Set([]byte("test-1"))
 	addDelta.SetPriority(0)
-	lww.Merge(ctx, addDelta, "test")
+	lww.Merge(ctx, addDelta)
 
 	val, err := lww.Value(ctx)
 	if err != nil {

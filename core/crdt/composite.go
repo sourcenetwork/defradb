@@ -147,7 +147,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 // Merge implements ReplicatedData interface.
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
-func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
+func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 	dagDelta, isDagDelta := delta.(*CompositeDAGDelta)
 
 	if isDagDelta && dagDelta.Status.IsDeleted() {
