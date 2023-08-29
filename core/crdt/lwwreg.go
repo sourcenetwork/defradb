@@ -174,7 +174,10 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(ctx, key.ToDS())
+		curValue, err := reg.store.Get(ctx, key.ToDS())
+		if err != nil {
+			return err
+		}
 
 		if bytes.Compare(curValue, val) >= 0 {
 			return nil

@@ -57,6 +57,7 @@ func TestLWWRegisterInitialMerge(t *testing.T) {
 	ctx := context.Background()
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
+	addDelta.SetPriority(1)
 	err := lww.Merge(ctx, addDelta)
 	if err != nil {
 		t.Errorf("Unexpected error: %s\n", err)
