@@ -56,13 +56,8 @@ func NewMerkleClock(
 func (mc *MerkleClock) putBlock(
 	ctx context.Context,
 	heads []cid.Cid,
-	height uint64,
 	delta core.Delta,
 ) (ipld.Node, error) {
-	if delta != nil {
-		delta.SetPriority(height)
-	}
-
 	node, err := makeNode(delta, heads)
 	if err != nil {
 		return nil, NewErrCreatingBlock(err)
@@ -103,7 +98,7 @@ func (mc *MerkleClock) AddDAGNode(
 	delta.SetPriority(height)
 
 	// write the delta and heads to a new block
-	nd, err := mc.putBlock(ctx, heads, height, delta)
+	nd, err := mc.putBlock(ctx, heads, delta)
 	if err != nil {
 		return nil, err
 	}
