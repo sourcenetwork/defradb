@@ -13,6 +13,8 @@ package update
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -41,6 +43,10 @@ func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 					"name": "Fred"
 				}`,
 				ExpectedError: "a document with the given dockey has been deleted",
+				SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+					// We only wish to test collection.Save in this test.
+					testUtils.CollectionSaveMutationType,
+				}),
 			},
 		},
 	}
