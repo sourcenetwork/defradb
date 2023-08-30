@@ -100,6 +100,6 @@ func (mlwwreg *MerkleLWWRegister) Value(ctx context.Context) ([]byte, error) {
 
 // Merge writes the provided delta to state using a supplied
 // merge semantic.
-func (mlwwreg *MerkleLWWRegister) Merge(ctx context.Context, other core.Delta, id string) error {
-	return mlwwreg.reg.Merge(ctx, other, id)
+func (mlwwreg *MerkleLWWRegister) Merge(ctx context.Context, other core.Delta) error {
+	return mlwwreg.reg.Merge(ctx, other)
 }
