@@ -1,0 +1,61 @@
+# Copyright 2022 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Run Collection.[Named] Mutations Tests Workflow
+
+# This workflow runs the test suite with any supporting mutation test actions
+# running their mutations via their corresponding named [Collection] call.
+#
+# For example, CreateDoc will call [Collection.Create], and
+# UpdateDoc will call [Collection.Update].
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
+
+jobs:
+  test-gql-mutations:
+    name: Test Collection.[Named] Mutations job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+          check-latest: true
+
+      - name: Build dependencies
+        run: |
+          make deps:modules
+          make deps:test
+
+      - name: Run tests with Collection.[Named] mutations
+        run: make test:ci-col-named-mutations
+
+      ## Uncomment to enable ability to SSH into the runner.
+      #- name: Setup upterm ssh session for debugging
+      #  uses: lhotari/action-upterm@v1
+      #  with:
+      #    limit-access-to-actor: true
+      #    limit-access-to-users: shahzadlone
