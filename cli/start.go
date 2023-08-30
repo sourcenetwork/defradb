@@ -48,6 +48,16 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 		Use:   "start",
 		Short: "Start a DefraDB node",
 		Long:  "Start a DefraDB node.",
+		// Load the root config if it exists, otherwise create it.
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			if err := loadConfig(cfg); err != nil {
+				return err
+			}
+			if !cfg.ConfigFileExists() {
+				return createConfig(cfg)
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			di, err := start(cmd.Context(), cfg)
 			if err != nil {

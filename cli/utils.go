@@ -13,19 +13,27 @@ package cli
 import (
 	"encoding/json"
 
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/spf13/cobra"
 )
 
-// func newHttpClient(cfg *config.Config) (client.Store, error) {
-// 	db, err := http.NewClient(cfg.API.Address)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if txId != 0 {
-// 		return db.WithTxnID(txId), nil
-// 	}
-// 	return db, nil
-// }
+// loadConfig loads the rootDir containing the configuration file,
+// otherwise warn about it and load a default configuration.
+func loadConfig(cfg *config.Config) error {
+	if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
+		return err
+	}
+	return cfg.LoadWithRootdir(cfg.ConfigFileExists())
+}
+
+// createConfig creates the config directories and writes
+// the current config to a file.
+func createConfig(cfg *config.Config) error {
+	if config.FolderExists(cfg.Rootdir) {
+		return cfg.WriteConfigFile()
+	}
+	return cfg.CreateRootDirAndConfigFile()
+}
 
 func writeJSON(cmd *cobra.Command, out any) error {
 	enc := json.NewEncoder(cmd.OutOrStdout())

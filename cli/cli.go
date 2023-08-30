@@ -77,7 +77,7 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 		MakeTxDiscardCommand(cfg),
 	)
 
-	client := MakeClientCommand()
+	client := MakeClientCommand(cfg)
 	client.AddCommand(
 		MakeDumpCommand(cfg),
 		MakeRequestCommand(cfg),

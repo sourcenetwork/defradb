@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -26,7 +27,7 @@ type cliWrapper struct {
 
 func newCliWrapper(address string) *cliWrapper {
 	return &cliWrapper{
-		address: address,
+		address: strings.TrimPrefix(address, "http://"),
 	}
 }
 
@@ -63,11 +64,9 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	if w.txValue != "" {
 		args = append(args, "--tx", w.txValue)
 	}
+	args = append(args, "--url", w.address)
 
-	cfg := config.DefaultConfig()
-	cfg.API.Address = w.address
-
-	cmd := NewDefraCommand(cfg)
+	cmd := NewDefraCommand(config.DefaultConfig())
 	cmd.SetOut(stdOutWrite)
 	cmd.SetErr(stdErrWrite)
 	cmd.SetArgs(args)

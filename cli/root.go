@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 type contextKey string
@@ -27,7 +26,6 @@ var (
 )
 
 func MakeRootCommand(cfg *config.Config) *cobra.Command {
-	var txID uint64
 	var cmd = &cobra.Command{
 		Use:   "defradb",
 		Short: "DefraDB Edge Database",
@@ -36,19 +34,7 @@ func MakeRootCommand(cfg *config.Config) *cobra.Command {
 Start a DefraDB node, interact with a local or remote node, and much more.
 `,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient(cfg.API.Address)
-			if err != nil {
-				return err
-			}
-			ctx := cmd.Context()
-			if txID != 0 {
-				ctx = context.WithValue(ctx, storeContextKey, db.WithTxnID(txID))
-			} else {
-				ctx = context.WithValue(ctx, storeContextKey, db)
-			}
-			ctx = context.WithValue(ctx, dbContextKey, db)
-			cmd.SetContext(ctx)
-			return nil
+			return loadConfig(cfg)
 		},
 	}
 
@@ -123,8 +109,6 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind api.address", err)
 	}
-
-	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
 
 	return cmd
 }
