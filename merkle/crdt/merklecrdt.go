@@ -53,8 +53,8 @@ func (base *baseMerkleCRDT) Clock() core.MerkleClock {
 	return base.clock
 }
 
-func (base *baseMerkleCRDT) Merge(ctx context.Context, other core.Delta, id string) error {
-	return base.crdt.Merge(ctx, other, id)
+func (base *baseMerkleCRDT) Merge(ctx context.Context, other core.Delta) error {
+	return base.crdt.Merge(ctx, other)
 }
 
 func (base *baseMerkleCRDT) DeltaDecode(node ipld.Node) (core.Delta, error) {

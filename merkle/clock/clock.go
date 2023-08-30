@@ -16,7 +16,6 @@ package clock
 import (
 	"context"
 
-	dshelp "github.com/ipfs/boxo/datastore/dshelp"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
@@ -56,13 +55,8 @@ func NewMerkleClock(
 func (mc *MerkleClock) putBlock(
 	ctx context.Context,
 	heads []cid.Cid,
-	height uint64,
 	delta core.Delta,
 ) (ipld.Node, error) {
-	if delta != nil {
-		delta.SetPriority(height)
-	}
-
 	node, err := makeNode(delta, heads)
 	if err != nil {
 		return nil, NewErrCreatingBlock(err)
@@ -103,7 +97,7 @@ func (mc *MerkleClock) AddDAGNode(
 	delta.SetPriority(height)
 
 	// write the delta and heads to a new block
-	nd, err := mc.putBlock(ctx, heads, height, delta)
+	nd, err := mc.putBlock(ctx, heads, delta)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +107,6 @@ func (mc *MerkleClock) AddDAGNode(
 	_, err = mc.ProcessNode(
 		ctx,
 		&CrdtNodeGetter{DeltaExtractor: mc.crdt.DeltaDecode},
-		nd.Cid(),
-		height,
 		delta,
 		nd,
 	)
@@ -126,16 +118,16 @@ func (mc *MerkleClock) AddDAGNode(
 func (mc *MerkleClock) ProcessNode(
 	ctx context.Context,
 	ng core.NodeGetter,
-	root cid.Cid,
-	rootPrio uint64,
 	delta core.Delta,
 	node ipld.Node,
 ) ([]cid.Cid, error) {
-	current := node.Cid()
-	log.Debug(ctx, "Running ProcessNode", logging.NewKV("CID", current))
-	err := mc.crdt.Merge(ctx, delta, dshelp.MultihashToDsKey(current.Hash()).String())
+	nodeCid := node.Cid()
+	priority := delta.GetPriority()
+
+	log.Debug(ctx, "Running ProcessNode", logging.NewKV("CID", nodeCid))
+	err := mc.crdt.Merge(ctx, delta)
 	if err != nil {
-		return nil, NewErrMergingDelta(current, err)
+		return nil, NewErrMergingDelta(nodeCid, err)
 	}
 
 	links := node.Links()
@@ -151,9 +143,9 @@ func (mc *MerkleClock) ProcessNode(
 	}
 	if !hasHeads { // reached the bottom, at a leaf
 		log.Debug(ctx, "No heads found")
-		err := mc.headset.Write(ctx, root, rootPrio)
+		err := mc.headset.Write(ctx, nodeCid, priority)
 		if err != nil {
-			return nil, NewErrAddingHead(root, err)
+			return nil, NewErrAddingHead(nodeCid, err)
 		}
 	}
 
@@ -171,9 +163,9 @@ func (mc *MerkleClock) ProcessNode(
 			log.Debug(ctx, "Found head, replacing!")
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err = mc.headset.Replace(ctx, linkCid, root, rootPrio)
+			err = mc.headset.Replace(ctx, linkCid, nodeCid, priority)
 			if err != nil {
-				return nil, NewErrReplacingHead(linkCid, root, err)
+				return nil, NewErrReplacingHead(linkCid, nodeCid, err)
 			}
 
 			continue
@@ -187,13 +179,13 @@ func (mc *MerkleClock) ProcessNode(
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
 			log.Debug(ctx, "Adding head")
-			err := mc.headset.Write(ctx, root, rootPrio)
+			err := mc.headset.Write(ctx, nodeCid, priority)
 			if err != nil {
 				log.ErrorE(
 					ctx,
 					"Failure adding head (when root is a new head)",
 					err,
-					logging.NewKV("Root", root),
+					logging.NewKV("Root", nodeCid),
 				)
 				// OR should this also return like below comment??
 				// return nil, errors.Wrap("error adding head (when root is new head): %s ", root, err)
