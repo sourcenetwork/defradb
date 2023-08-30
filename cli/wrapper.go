@@ -11,14 +11,16 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http/httptest"
 	"strings"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -40,6 +42,8 @@ func NewWrapper(db client.DB) *Wrapper {
 	handler := http.NewHandler(db, http.ServerOptions{})
 	httpServer := httptest.NewServer(handler)
 	cmd := newCliWrapper(httpServer.URL)
+
+	// TODO use http.Wrapper here to make a lot of this obsolete
 
 	return &Wrapper{
 		db:         db,
@@ -131,8 +135,10 @@ func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 
 func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) error {
 	args := []string{"client", "backup", "export"}
-	args = append(args, "--collections", strings.Join(config.Collections, ","))
 
+	if len(config.Collections) > 0 {
+		args = append(args, "--collections", strings.Join(config.Collections, ","))
+	}
 	if config.Format != "" {
 		args = append(args, "--format", config.Format)
 	}
@@ -215,11 +221,36 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 
 	result := &client.RequestResult{}
 
-	data, err := w.cmd.execute(ctx, args)
+	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
 	if err != nil {
 		result.GQL.Errors = []error{err}
 		return result
 	}
+	buffer := bufio.NewReader(stdOut)
+	header, err := buffer.ReadString('\n')
+	if err != nil {
+		result.GQL.Errors = []error{err}
+		return result
+	}
+	if header == SUB_RESULTS_HEADER {
+		result.Pub = w.execRequestSubscription(ctx, buffer)
+		return result
+	}
+	data, err := io.ReadAll(buffer)
+	if err != nil {
+		result.GQL.Errors = []error{err}
+		return result
+	}
+	errData, err := io.ReadAll(stdErr)
+	if err != nil {
+		result.GQL.Errors = []error{err}
+		return result
+	}
+	if len(errData) > 0 {
+		result.GQL.Errors = []error{fmt.Errorf("%s", errData)}
+		return result
+	}
+
 	var response http.GraphQLResponse
 	if err = json.Unmarshal(data, &response); err != nil {
 		result.GQL.Errors = []error{err}
@@ -230,6 +261,35 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf(err))
 	}
 	return result
+}
+
+func (w *Wrapper) execRequestSubscription(ctx context.Context, r io.Reader) *events.Publisher[events.Update] {
+	pubCh := events.New[events.Update](0, 0)
+	pub, err := events.NewPublisher[events.Update](pubCh, 0)
+	if err != nil {
+		return nil
+	}
+
+	go func() {
+		dec := json.NewDecoder(r)
+
+		for {
+			var response http.GraphQLResponse
+			if err := dec.Decode(&response); err != nil {
+				return
+			}
+			var errors []error
+			for _, err := range response.Errors {
+				errors = append(errors, fmt.Errorf(err))
+			}
+			pub.Publish(client.GQLResult{
+				Errors: errors,
+				Data:   response.Data,
+			})
+		}
+	}()
+
+	return pub
 }
 
 func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {

@@ -21,6 +21,11 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
+const (
+	REQ_RESULTS_HEADER = "------ Request Results ------\n"
+	SUB_RESULTS_HEADER = "------ Subscription Results ------\n"
+)
+
 func MakeRequestCommand(cfg *config.Config) *cobra.Command {
 	var filePath string
 	var cmd = &cobra.Command{
@@ -72,8 +77,10 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				errors = append(errors, err.Error())
 			}
 			if result.Pub == nil {
+				cmd.Print(REQ_RESULTS_HEADER)
 				return writeJSON(cmd, map[string]any{"data": result.GQL.Data, "errors": errors})
 			}
+			cmd.Print(SUB_RESULTS_HEADER)
 			for item := range result.Pub.Stream() {
 				writeJSON(cmd, item) //nolint:errcheck
 			}

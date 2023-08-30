@@ -11,9 +11,9 @@
 package cli
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -38,8 +38,27 @@ func (w *cliWrapper) withTxn(tx datastore.Txn) *cliWrapper {
 }
 
 func (w *cliWrapper) execute(ctx context.Context, args []string) ([]byte, error) {
-	var stdOut bytes.Buffer
-	var stdErr bytes.Buffer
+	stdOut, stdErr, err := w.executeStream(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	stdOutData, err := io.ReadAll(stdOut)
+	if err != nil {
+		return nil, err
+	}
+	stdErrData, err := io.ReadAll(stdErr)
+	if err != nil {
+		return nil, err
+	}
+	if len(stdErrData) != 0 {
+		return nil, fmt.Errorf("%s", stdErrData)
+	}
+	return stdOutData, nil
+}
+
+func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadCloser, io.ReadCloser, error) {
+	stdOutRead, stdOutWrite := io.Pipe()
+	stdErrRead, stdErrWrite := io.Pipe()
 
 	if w.txValue != "" {
 		args = append(args, "--tx", w.txValue)
@@ -49,15 +68,18 @@ func (w *cliWrapper) execute(ctx context.Context, args []string) ([]byte, error)
 	cfg.API.Address = w.address
 
 	cmd := NewDefraCommand(cfg)
-	cmd.SetOut(&stdOut)
-	cmd.SetErr(&stdErr)
+	cmd.SetOut(stdOutWrite)
+	cmd.SetErr(stdErrWrite)
 	cmd.SetArgs(args)
 
-	if err := cmd.Execute(); err != nil {
-		return nil, err
-	}
-	if stdErr.Len() > 0 {
-		return nil, fmt.Errorf("%s", stdErr.String())
-	}
-	return stdOut.Bytes(), nil
+	cmd.SilenceErrors = true
+	cmd.SilenceUsage = true
+
+	go func() {
+		err := cmd.Execute()
+		stdOutWrite.CloseWithError(err)
+		stdErrWrite.CloseWithError(err)
+	}()
+
+	return stdOutRead, stdErrRead, nil
 }
