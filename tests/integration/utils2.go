@@ -1093,19 +1093,7 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	if action.SupportedMutationTypes.HasValue() {
-		var isTypeSupported bool
-		for _, supportedMutationType := range action.SupportedMutationTypes.Value() {
-			if supportedMutationType == mutationType {
-				isTypeSupported = true
-				break
-			}
-		}
-
-		if !isTypeSupported {
-			s.t.Skipf("test does not support given mutation type. Type: %s", mutationType)
-		}
-	}
+	skipIfMutationTypeUnsupported(s.t, action.SupportedMutationTypes)
 
 	var mutation func(*state, UpdateDoc, *net.Node, []client.Collection) error
 
@@ -1710,4 +1698,22 @@ func assertBackupContent(t *testing.T, expectedContent, filepath string) {
 		expectedContent,
 		string(b),
 	)
+}
+
+// skipIfMutationTypeUnsupported skips the current test if the given supportedMutationTypes option has value
+// and the active mutation type is not contained within that value set.
+func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutable.Option[[]MutationType]) {
+	if supportedMutationTypes.HasValue() {
+		var isTypeSupported bool
+		for _, supportedMutationType := range supportedMutationTypes.Value() {
+			if supportedMutationType == mutationType {
+				isTypeSupported = true
+				break
+			}
+		}
+
+		if !isTypeSupported {
+			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
+		}
+	}
 }
