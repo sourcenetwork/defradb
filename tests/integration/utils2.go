@@ -71,6 +71,14 @@ const (
 	// to run their mutations via [Collection.Save].
 	CollectionSaveMutationType MutationType = "collection-save"
 
+	// CollectionNamedMutationType will cause all supporting actions
+	// to run their mutations via their corresponding named [Collection]
+	// call.
+	//
+	// For example, CreateDoc will call [Collection.Create], and
+	// UpdateDoc will call [Collection.Update].
+	CollectionNamedMutationType MutationType = "collection-named"
+
 	// GQLRequestMutationType will cause all supporting actions to
 	// run their mutations using GQL requests, typically these will
 	// include a `id` parameter to target the specified document.
@@ -1040,6 +1048,8 @@ func createDoc(
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = createDocViaColSave
+	case CollectionNamedMutationType:
+		mutation = createDocViaColCreate
 	case GQLRequestMutationType:
 		mutation = createDocViaGQL
 	default:
@@ -1084,6 +1094,21 @@ func createDocViaColSave(
 	}
 
 	return doc, collections[action.CollectionID].Save(s.ctx, doc)
+}
+
+func createDocViaColCreate(
+	s *state,
+	action CreateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) (*client.Document, error) {
+	var err error
+	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	if err != nil {
+		return nil, err
+	}
+
+	return doc, collections[action.CollectionID].Create(s.ctx, doc)
 }
 
 func createDocViaGQL(
@@ -1166,6 +1191,8 @@ func updateDoc(
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = updateDocViaColSave
+	case CollectionNamedMutationType:
+		mutation = updateDocViaColUpdate
 	case GQLRequestMutationType:
 		mutation = updateDocViaGQL
 	default:
@@ -1200,6 +1227,22 @@ func updateDocViaColSave(
 	}
 
 	return collections[action.CollectionID].Save(s.ctx, doc)
+}
+
+func updateDocViaColUpdate(
+	s *state,
+	action UpdateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) error {
+	doc := s.documents[action.CollectionID][action.DocID]
+
+	err := doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	return collections[action.CollectionID].Update(s.ctx, doc)
 }
 
 func updateDocViaGQL(
