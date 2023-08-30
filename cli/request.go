@@ -16,9 +16,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeRequestCommand(cfg *config.Config) *cobra.Command {
@@ -42,10 +42,7 @@ with the database more conveniently.
 
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
+			store := cmd.Context().Value(storeContextKey).(client.Store)
 
 			var request string
 			switch {
@@ -68,9 +65,14 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			if request == "" {
 				return errors.New("request cannot be empty")
 			}
-			result := db.ExecRequest(cmd.Context(), request)
+			result := store.ExecRequest(cmd.Context(), request)
+
+			var errors []string
+			for _, err := range result.GQL.Errors {
+				errors = append(errors, err.Error())
+			}
 			if result.Pub == nil {
-				return writeJSON(cmd, result.GQL)
+				return writeJSON(cmd, map[string]any{"data": result.GQL.Data, "errors": errors})
 			}
 			for item := range result.Pub.Stream() {
 				writeJSON(cmd, item) //nolint:errcheck

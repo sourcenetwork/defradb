@@ -1,15 +1,16 @@
-## defradb server-dump
+## defradb client p2p p2pcollection
 
-Dumps the state of the entire database
+Configure the P2P collection system
 
-```
-defradb server-dump [flags]
-```
+### Synopsis
+
+Add, delete, or get the list of P2P collections.
+The selected collections synchronize their events on the pubsub network.
 
 ### Options
 
 ```
-  -h, --help   help for server-dump
+  -h, --help   help for p2pcollection
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +28,8 @@ defradb server-dump [flags]
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
+* [defradb client p2p p2pcollection add](defradb_client_p2p_p2pcollection_add.md)	 - Add P2P collections
+* [defradb client p2p p2pcollection getall](defradb_client_p2p_p2pcollection_getall.md)	 - Get all P2P collections
+* [defradb client p2p p2pcollection remove](defradb_client_p2p_p2pcollection_remove.md)	 - Remove P2P collections
 

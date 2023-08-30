@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
@@ -39,6 +40,7 @@ import (
 const (
 	clientGoEnvName            = "DEFRA_CLIENT_GO"
 	clientHttpEnvName          = "DEFRA_CLIENT_HTTP"
+	clientCliEnvName           = "DEFRA_CLIENT_CLI"
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
@@ -64,6 +66,7 @@ type ClientType string
 const (
 	goClientType   ClientType = "go"
 	httpClientType ClientType = "http"
+	cliClientType  ClientType = "cli"
 )
 
 var (
@@ -73,6 +76,7 @@ var (
 	inMemoryStore  bool
 	httpClient     bool
 	goClient       bool
+	cliClient      bool
 )
 
 const subscriptionTimeout = 1 * time.Second
@@ -115,6 +119,7 @@ func init() {
 	//  that don't have the flag defined
 	httpClientValue, _ := os.LookupEnv(clientHttpEnvName)
 	goClientValue, _ := os.LookupEnv(clientGoEnvName)
+	cliClientValue, _ := os.LookupEnv(clientCliEnvName)
 	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
 	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
 	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
@@ -127,6 +132,7 @@ func init() {
 
 	httpClient = getBool(httpClientValue)
 	goClient = getBool(goClientValue)
+	cliClient = getBool(cliClientValue)
 	badgerFile = getBool(badgerFileValue)
 	badgerInMemory = getBool(badgerInMemoryValue)
 	inMemoryStore = getBool(inMemoryStoreValue)
@@ -149,9 +155,10 @@ func init() {
 		inMemoryStore = true
 	}
 	// default is to run against all
-	if !goClient && !httpClient && !DetectDbChanges {
+	if !goClient && !httpClient && !cliClient && !DetectDbChanges {
 		goClient = true
 		httpClient = true
+		cliClient = true
 	}
 
 	if DetectDbChanges {
@@ -249,6 +256,10 @@ func GetClientTypes() []ClientType {
 		clients = append(clients, goClientType)
 	}
 
+	if cliClient {
+		clients = append(clients, cliClientType)
+	}
+
 	return clients
 }
 
@@ -298,6 +309,9 @@ func GetDatabase(s *state) (client.DB, string, error) {
 	switch s.clientType {
 	case httpClientType:
 		cdb, err = http.NewWrapper(cdb)
+
+	case cliClientType:
+		cdb = cli.NewWrapper(cdb)
 
 	case goClientType:
 		// do nothing

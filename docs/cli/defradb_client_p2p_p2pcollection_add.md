@@ -1,15 +1,20 @@
-## defradb server-dump
+## defradb client p2p p2pcollection add
 
-Dumps the state of the entire database
+Add P2P collections
+
+### Synopsis
+
+Add P2P collections to the synchronized pubsub topics.
+The collections are synchronized between nodes of a pubsub network.
 
 ```
-defradb server-dump [flags]
+defradb client p2p p2pcollection add [collectionID] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for server-dump
+  -h, --help   help for add
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +32,5 @@ defradb server-dump [flags]
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client p2p p2pcollection](defradb_client_p2p_p2pcollection.md)	 - Configure the P2P collection system
 

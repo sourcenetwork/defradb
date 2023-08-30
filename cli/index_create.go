@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeIndexCreateCommand(cfg *config.Config) *cobra.Command {
@@ -36,10 +35,8 @@ Example: create a named index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name --name UsersByName`,
 		ValidArgs: []string{"collection", "fields", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
+			store := cmd.Context().Value(storeContextKey).(client.Store)
+
 			var fields []client.IndexedFieldDescription
 			for _, name := range fieldsArg {
 				fields = append(fields, client.IndexedFieldDescription{Name: name})
@@ -48,7 +45,7 @@ Example: create a named index for 'Users' collection on 'name' field:
 				Name:   nameArg,
 				Fields: fields,
 			}
-			col, err := db.GetCollectionByName(cmd.Context(), collectionArg)
+			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {
 				return err
 			}

@@ -11,27 +11,31 @@
 package cli
 
 import (
+	"strconv"
+
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeBackupImportCommand(cfg *config.Config) *cobra.Command {
+func MakeTxDiscardCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "import <input_path>",
-		Short: "Import a JSON data file to the database",
-		Long: `Import a JSON data file to the database.
-
-Example: import data to the database:
-  defradb client import user_data.json`,
-		Args: cobra.ExactArgs(1),
+		Use:   "discard [id]",
+		Short: "Discard a DefraDB transaction",
+		Long:  `Discard a DefraDB transaction`,
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			id, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
-			return store.BasicImport(cmd.Context(), args[0])
+			tx, err := http.NewTransaction(cfg.API.Address, id)
+			if err != nil {
+				return err
+			}
+			tx.Discard(cmd.Context())
+			return nil
 		},
 	}
 	return cmd

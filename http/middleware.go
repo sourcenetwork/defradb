@@ -39,10 +39,10 @@ var (
 )
 
 // CorsMiddleware handles cross origin request
-func CorsMiddleware(opts serverOptions) func(http.Handler) http.Handler {
+func CorsMiddleware(opts ServerOptions) func(http.Handler) http.Handler {
 	return cors.Handler(cors.Options{
 		AllowOriginFunc: func(r *http.Request, origin string) bool {
-			return slices.Contains[string](opts.allowedOrigins, strings.ToLower(origin))
+			return slices.Contains[string](opts.AllowedOrigins, strings.ToLower(origin))
 		},
 		AllowedMethods: []string{"GET", "HEAD", "POST", "PATCH", "DELETE"},
 		AllowedHeaders: []string{"Content-Type"},
@@ -51,10 +51,10 @@ func CorsMiddleware(opts serverOptions) func(http.Handler) http.Handler {
 }
 
 // ApiMiddleware sets the required context values for all API requests.
-func ApiMiddleware(db client.DB, txs *sync.Map, opts serverOptions) func(http.Handler) http.Handler {
+func ApiMiddleware(db client.DB, txs *sync.Map, opts ServerOptions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if opts.tls.HasValue() {
+			if opts.TLS.HasValue() {
 				rw.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 			}
 

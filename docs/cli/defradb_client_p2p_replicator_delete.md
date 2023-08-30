@@ -1,15 +1,19 @@
-## defradb server-dump
+## defradb client p2p replicator delete
 
-Dumps the state of the entire database
+Delete a replicator. It will stop synchronizing
+
+### Synopsis
+
+Delete a replicator. It will stop synchronizing.
 
 ```
-defradb server-dump [flags]
+defradb client p2p replicator delete <peer> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for server-dump
+  -h, --help   help for delete
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +31,5 @@ defradb server-dump [flags]
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
 

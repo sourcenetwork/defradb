@@ -1,15 +1,15 @@
-## defradb server-dump
+## defradb client p2p
 
-Dumps the state of the entire database
+Interact with the DefraDB P2P system
 
-```
-defradb server-dump [flags]
-```
+### Synopsis
+
+Interact with the DefraDB P2P system
 
 ### Options
 
 ```
-  -h, --help   help for server-dump
+  -h, --help   help for p2p
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +27,7 @@ defradb server-dump [flags]
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client p2p p2pcollection](defradb_client_p2p_p2pcollection.md)	 - Configure the P2P collection system
+* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
 

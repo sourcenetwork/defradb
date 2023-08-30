@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,12 +14,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionCommand() *cobra.Command {
+func MakeTxCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "collection",
-		Short: "Configure the P2P collection system",
-		Long: `Add, delete, or get the list of P2P collections.
-The selected collections synchronize their events on the pubsub network.`,
+		Use:   "tx",
+		Short: "Create, commit, and discard DefraDB transactions",
+		Long:  `Create, commit, and discard DefraDB transactions`,
 	}
+
 	return cmd
 }

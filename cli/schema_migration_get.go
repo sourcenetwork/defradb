@@ -13,8 +13,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeSchemaMigrationGetCommand(cfg *config.Config) *cobra.Command {
@@ -28,11 +28,9 @@ Example:
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
-			cfgs, err := db.LensRegistry().Config(cmd.Context())
+			store := cmd.Context().Value(storeContextKey).(client.Store)
+
+			cfgs, err := store.LensRegistry().Config(cmd.Context())
 			if err != nil {
 				return err
 			}

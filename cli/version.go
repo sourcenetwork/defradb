@@ -11,9 +11,7 @@
 package cli
 
 import (
-	"bytes"
-
-	"encoding/json"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -31,25 +29,17 @@ func MakeVersionCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			switch format {
-			case "json":
-				var buf bytes.Buffer
-				dvj, err := json.Marshal(dv)
-				if err != nil {
-					return err
-				}
-				err = json.Indent(&buf, dvj, "", "    ")
-				if err != nil {
-					return err
-				}
-				cmd.Println(buf.String())
-			default:
-				if full {
-					cmd.Println(dv.StringFull())
-				} else {
-					cmd.Println(dv.String())
-				}
+
+			if strings.ToLower(format) == "json" {
+				return writeJSON(cmd, dv)
 			}
+
+			if full {
+				cmd.Println(dv.StringFull())
+			} else {
+				cmd.Println(dv.String())
+			}
+
 			return nil
 		},
 	}

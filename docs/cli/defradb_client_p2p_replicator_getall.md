@@ -1,15 +1,20 @@
-## defradb server-dump
+## defradb client p2p replicator getall
 
-Dumps the state of the entire database
+Get all replicators
+
+### Synopsis
+
+Get all the replicators active in the P2P data sync system.
+These are the replicators that are currently replicating data from one node to another.
 
 ```
-defradb server-dump [flags]
+defradb client p2p replicator getall [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for server-dump
+  -h, --help   help for getall
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +32,5 @@ defradb server-dump [flags]
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
 

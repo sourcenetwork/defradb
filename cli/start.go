@@ -48,32 +48,6 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 		Use:   "start",
 		Short: "Start a DefraDB node",
 		Long:  "Start a DefraDB node.",
-		// Load the root config if it exists, otherwise create it.
-		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
-				return err
-			}
-			if cfg.ConfigFileExists() {
-				if err := cfg.LoadWithRootdir(true); err != nil {
-					return config.NewErrLoadingConfig(err)
-				}
-				log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
-			} else {
-				if err := cfg.LoadWithRootdir(false); err != nil {
-					return config.NewErrLoadingConfig(err)
-				}
-				if config.FolderExists(cfg.Rootdir) {
-					if err := cfg.WriteConfigFile(); err != nil {
-						return err
-					}
-				} else {
-					if err := cfg.CreateRootDirAndConfigFile(); err != nil {
-						return err
-					}
-				}
-			}
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			di, err := start(cmd.Context(), cfg)
 			if err != nil {

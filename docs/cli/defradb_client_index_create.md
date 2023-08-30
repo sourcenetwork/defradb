@@ -22,7 +22,7 @@ defradb client index create -c --collection <collection> --fields <fields> [-n -
 
 ```
   -c, --collection string   Collection name
-      --fields string       Fields to index
+      --fields strings      Fields to index
   -h, --help                help for create
   -n, --name string         Index name
 ```

@@ -36,11 +36,10 @@ type Client struct {
 }
 
 func NewClient(rawURL string) (*Client, error) {
-	baseURL, err := url.Parse(rawURL)
+	httpClient, err := newHttpClient(rawURL)
 	if err != nil {
 		return nil, err
 	}
-	httpClient := newHttpClient(baseURL.JoinPath("/api/v0"))
 	return &Client{httpClient}, nil
 }
 
@@ -61,7 +60,7 @@ func (c *Client) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, erro
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &TxClient{txRes.ID, c.http}, nil
+	return &Transaction{txRes.ID, c.http}, nil
 }
 
 func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
@@ -81,11 +80,16 @@ func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &TxClient{txRes.ID, c.http}, nil
+	return &Transaction{txRes.ID, c.http}, nil
 }
 
 func (c *Client) WithTxn(tx datastore.Txn) client.Store {
 	client := c.http.withTxn(tx.ID())
+	return &Client{client}
+}
+
+func (c *Client) WithTxnID(id uint64) client.Store {
+	client := c.http.withTxn(id)
 	return &Client{client}
 }
 
@@ -229,7 +233,7 @@ func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) err
 }
 
 func (c *Client) LensRegistry() client.LensRegistry {
-	return &LensClient{c.http}
+	return &LensRegistry{c.http}
 }
 
 func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
@@ -244,7 +248,7 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	if err := c.http.requestJson(req, &description); err != nil {
 		return nil, err
 	}
-	return &CollectionClient{c.http, description}, nil
+	return &Collection{c.http, description}, nil
 }
 
 func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
@@ -259,7 +263,7 @@ func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (
 	if err := c.http.requestJson(req, &description); err != nil {
 		return nil, err
 	}
-	return &CollectionClient{c.http, description}, nil
+	return &Collection{c.http, description}, nil
 }
 
 func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
@@ -274,7 +278,7 @@ func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string)
 	if err := c.http.requestJson(req, &description); err != nil {
 		return nil, err
 	}
-	return &CollectionClient{c.http, description}, nil
+	return &Collection{c.http, description}, nil
 }
 
 func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
@@ -290,7 +294,7 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 	}
 	collections := make([]client.Collection, len(descriptions))
 	for i, d := range descriptions {
-		collections[i] = &CollectionClient{c.http, d}
+		collections[i] = &Collection{c.http, d}
 	}
 	return collections, nil
 }

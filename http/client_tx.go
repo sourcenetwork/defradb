@@ -18,19 +18,27 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-var _ datastore.Txn = (*TxClient)(nil)
+var _ datastore.Txn = (*Transaction)(nil)
 
-// TxClient implements the datastore.Txn interface over HTTP.
-type TxClient struct {
+// Transaction implements the datastore.Txn interface over HTTP.
+type Transaction struct {
 	id   uint64
 	http *httpClient
 }
 
-func (c *TxClient) ID() uint64 {
+func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
+	httpClient, err := newHttpClient(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	return &Transaction{id, httpClient}, nil
+}
+
+func (c *Transaction) ID() uint64 {
 	return c.id
 }
 
-func (c *TxClient) Commit(ctx context.Context) error {
+func (c *Transaction) Commit(ctx context.Context) error {
 	methodURL := c.http.baseURL.JoinPath("tx", fmt.Sprintf("%d", c.id))
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
@@ -41,7 +49,7 @@ func (c *TxClient) Commit(ctx context.Context) error {
 	return err
 }
 
-func (c *TxClient) Discard(ctx context.Context) {
+func (c *Transaction) Discard(ctx context.Context) {
 	methodURL := c.http.baseURL.JoinPath("tx", fmt.Sprintf("%d", c.id))
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
@@ -51,34 +59,34 @@ func (c *TxClient) Discard(ctx context.Context) {
 	c.http.request(req) //nolint:errcheck
 }
 
-func (c *TxClient) OnSuccess(fn func()) {
+func (c *Transaction) OnSuccess(fn func()) {
 	panic("client side transaction")
 }
 
-func (c *TxClient) OnError(fn func()) {
+func (c *Transaction) OnError(fn func()) {
 	panic("client side transaction")
 }
 
-func (c *TxClient) OnDiscard(fn func()) {
+func (c *Transaction) OnDiscard(fn func()) {
 	panic("client side transaction")
 }
 
-func (c *TxClient) Rootstore() datastore.DSReaderWriter {
+func (c *Transaction) Rootstore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }
 
-func (c *TxClient) Datastore() datastore.DSReaderWriter {
+func (c *Transaction) Datastore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }
 
-func (c *TxClient) Headstore() datastore.DSReaderWriter {
+func (c *Transaction) Headstore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }
 
-func (c *TxClient) DAGstore() datastore.DAGStore {
+func (c *Transaction) DAGstore() datastore.DAGStore {
 	panic("client side transaction")
 }
 
-func (c *TxClient) Systemstore() datastore.DSReaderWriter {
+func (c *Transaction) Systemstore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }

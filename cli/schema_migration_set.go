@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeSchemaMigrationSetCommand(cfg *config.Config) *cobra.Command {
@@ -45,10 +44,7 @@ Example: add from stdin:
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
+			store := cmd.Context().Value(storeContextKey).(client.Store)
 
 			var lensCfgJson string
 			switch {
@@ -77,7 +73,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			decoder.DisallowUnknownFields()
 
 			var lensCfg model.Lens
-			if err = decoder.Decode(&lensCfg); err != nil {
+			if err := decoder.Decode(&lensCfg); err != nil {
 				return errors.Wrap("invalid lens configuration", err)
 			}
 
@@ -87,7 +83,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				Lens:                       lensCfg,
 			}
 
-			return db.LensRegistry().SetMigration(cmd.Context(), migrationCfg)
+			return store.LensRegistry().SetMigration(cmd.Context(), migrationCfg)
 		},
 	}
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")

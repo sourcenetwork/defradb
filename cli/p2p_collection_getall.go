@@ -13,9 +13,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeP2PCollectionGetallCommand(cfg *config.Config) *cobra.Command {
@@ -24,18 +23,11 @@ func MakeP2PCollectionGetallCommand(cfg *config.Config) *cobra.Command {
 		Short: "Get all P2P collections",
 		Long: `Get all P2P collections in the pubsub topics.
 This is the list of collections of the node that are synchronized on the pubsub network.`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.NoArgs(cmd, args); err != nil {
-				return errors.New("must specify no argument")
-			}
-			return nil
-		},
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
-			cols, err := db.GetAllP2PCollections(cmd.Context())
+			store := cmd.Context().Value(storeContextKey).(client.Store)
+
+			cols, err := store.GetAllP2PCollections(cmd.Context())
 			if err != nil {
 				return err
 			}

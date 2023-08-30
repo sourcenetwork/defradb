@@ -301,7 +301,7 @@ docs:
 
 .PHONY: docs\:cli
 docs\:cli:
-	go run cmd/genclidocs/genclidocs.go -o docs/cli/
+	go run cmd/genclidocs/main.go -o docs/cli/
 
 .PHONY: docs\:manpages
 docs\:manpages:

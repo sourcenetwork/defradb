@@ -13,8 +13,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeIndexDropCommand(cfg *config.Config) *cobra.Command {
@@ -29,11 +29,9 @@ Example: drop the index 'UsersByName' for 'Users' collection:
   defradb client index create --collection Users --name UsersByName`,
 		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
-			col, err := db.GetCollectionByName(cmd.Context(), collectionArg)
+			store := cmd.Context().Value(storeContextKey).(client.Store)
+
+			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {
 				return err
 			}

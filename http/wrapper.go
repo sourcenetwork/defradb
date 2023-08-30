@@ -28,13 +28,13 @@ var _ client.DB = (*Wrapper)(nil)
 // single struct that implements the client.DB interface.
 type Wrapper struct {
 	db         client.DB
-	handler    *handler
+	handler    *Handler
 	client     *Client
 	httpServer *httptest.Server
 }
 
 func NewWrapper(db client.DB) (*Wrapper, error) {
-	handler := newHandler(db, serverOptions{})
+	handler := NewHandler(db, ServerOptions{})
 	httpServer := httptest.NewServer(handler)
 
 	client, err := NewClient(httpServer.URL)

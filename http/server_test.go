@@ -197,7 +197,7 @@ func TestNewServerAndRunWithSelfSignedCert(t *testing.T) {
 func TestNewServerWithoutOptions(t *testing.T) {
 	s := NewServer(nil)
 	assert.Equal(t, "localhost:9181", s.Addr)
-	assert.Equal(t, []string(nil), s.options.allowedOrigins)
+	assert.Equal(t, []string(nil), s.options.AllowedOrigins)
 }
 
 func TestNewServerWithAddress(t *testing.T) {
@@ -207,41 +207,41 @@ func TestNewServerWithAddress(t *testing.T) {
 
 func TestNewServerWithDomainAddress(t *testing.T) {
 	s := NewServer(nil, WithAddress("example.com"))
-	assert.Equal(t, "example.com", s.options.domain.Value())
-	assert.NotNil(t, s.options.tls)
+	assert.Equal(t, "example.com", s.options.Domain.Value())
+	assert.NotNil(t, s.options.TLS)
 }
 
 func TestNewServerWithAllowedOrigins(t *testing.T) {
 	s := NewServer(nil, WithAllowedOrigins("https://source.network", "https://app.source.network"))
-	assert.Equal(t, []string{"https://source.network", "https://app.source.network"}, s.options.allowedOrigins)
+	assert.Equal(t, []string{"https://source.network", "https://app.source.network"}, s.options.AllowedOrigins)
 }
 
 func TestNewServerWithCAEmail(t *testing.T) {
 	s := NewServer(nil, WithCAEmail("me@example.com"))
-	assert.Equal(t, "me@example.com", s.options.tls.Value().email)
+	assert.Equal(t, "me@example.com", s.options.TLS.Value().Email)
 }
 
 func TestNewServerWithPeerID(t *testing.T) {
 	s := NewServer(nil, WithPeerID("12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR"))
-	assert.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", s.options.peerID)
+	assert.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", s.options.PeerID)
 }
 
 func TestNewServerWithRootDir(t *testing.T) {
 	dir := t.TempDir()
 	s := NewServer(nil, WithRootDir(dir))
-	assert.Equal(t, dir, s.options.rootDir)
+	assert.Equal(t, dir, s.options.RootDir)
 }
 
 func TestNewServerWithTLSPort(t *testing.T) {
 	s := NewServer(nil, WithTLSPort(44343))
-	assert.Equal(t, ":44343", s.options.tls.Value().port)
+	assert.Equal(t, ":44343", s.options.TLS.Value().Port)
 }
 
 func TestNewServerWithSelfSignedCert(t *testing.T) {
 	s := NewServer(nil, WithSelfSignedCert("pub.key", "priv.key"))
-	assert.Equal(t, "pub.key", s.options.tls.Value().pubKey)
-	assert.Equal(t, "priv.key", s.options.tls.Value().privKey)
-	assert.NotNil(t, s.options.tls)
+	assert.Equal(t, "pub.key", s.options.TLS.Value().PublicKey)
+	assert.Equal(t, "priv.key", s.options.TLS.Value().PrivateKey)
+	assert.NotNil(t, s.options.TLS)
 }
 
 func TestNewHTTPRedirServer(t *testing.T) {

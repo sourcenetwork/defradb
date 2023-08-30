@@ -13,9 +13,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeP2PCollectionRemoveCommand(cfg *config.Config) *cobra.Command {
@@ -24,18 +23,10 @@ func MakeP2PCollectionRemoveCommand(cfg *config.Config) *cobra.Command {
 		Short: "Remove P2P collections",
 		Long: `Remove P2P collections from the followed pubsub topics.
 The removed collections will no longer be synchronized between nodes.`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return errors.New("must specify collectionID")
-			}
-			return nil
-		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
-			return db.RemoveP2PCollection(cmd.Context(), args[0])
+			store := cmd.Context().Value(storeContextKey).(client.Store)
+			return store.RemoveP2PCollection(cmd.Context(), args[0])
 		},
 	}
 	return cmd

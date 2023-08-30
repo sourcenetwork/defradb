@@ -11,10 +11,12 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -26,13 +28,13 @@ var Version string = "v0"
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler = http.HandlerFunc(http.NotFound)
 
-type handler struct {
+type Handler struct {
 	db     client.DB
 	router *chi.Mux
 	txs    *sync.Map
 }
 
-func newHandler(db client.DB, opts serverOptions) *handler {
+func NewHandler(db client.DB, opts ServerOptions) *Handler {
 	txs := &sync.Map{}
 
 	tx_handler := &txHandler{}
@@ -110,13 +112,21 @@ func newHandler(db client.DB, opts serverOptions) *handler {
 
 	router.Handle("/*", playgroundHandler)
 
-	return &handler{
+	return &Handler{
 		db:     db,
 		router: router,
 		txs:    txs,
 	}
 }
 
-func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (h *Handler) Transaction(id uint64) (datastore.Txn, error) {
+	tx, ok := h.txs.Load(id)
+	if !ok {
+		return nil, fmt.Errorf("invalid transaction id")
+	}
+	return tx.(datastore.Txn), nil
+}
+
+func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h.router.ServeHTTP(w, req)
 }

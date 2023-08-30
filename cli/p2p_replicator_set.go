@@ -16,8 +16,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeP2PReplicatorSetCommand(cfg *config.Config) *cobra.Command {
@@ -28,17 +26,10 @@ func MakeP2PReplicatorSetCommand(cfg *config.Config) *cobra.Command {
 		Long: `Add a new target replicator.
 A replicator replicates one or all collection(s) from this node to another.
 `,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return errors.New("must specify one argument: peer")
-			}
-			return nil
-		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
+			store := cmd.Context().Value(storeContextKey).(client.Store)
+
 			addr, err := peer.AddrInfoFromString(args[0])
 			if err != nil {
 				return err
@@ -47,11 +38,11 @@ A replicator replicates one or all collection(s) from this node to another.
 				Info:    *addr,
 				Schemas: collections,
 			}
-			return db.SetReplicator(cmd.Context(), rep)
+			return store.SetReplicator(cmd.Context(), rep)
 		},
 	}
 
-	cmd.Flags().StringArrayVarP(&collections, "collection", "c",
+	cmd.Flags().StringSliceVarP(&collections, "collection", "c",
 		[]string{}, "Define the collection for the replicator")
 	return cmd
 }

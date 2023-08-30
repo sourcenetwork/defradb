@@ -1,15 +1,22 @@
-## defradb server-dump
+## defradb client p2p replicator set
 
-Dumps the state of the entire database
+Set a P2P replicator
+
+### Synopsis
+
+Add a new target replicator.
+A replicator replicates one or all collection(s) from this node to another.
+
 
 ```
-defradb server-dump [flags]
+defradb client p2p replicator set [-c, --collection] <peer> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for server-dump
+  -c, --collection stringArray   Define the collection for the replicator
+  -h, --help                     help for set
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +34,5 @@ defradb server-dump [flags]
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
 

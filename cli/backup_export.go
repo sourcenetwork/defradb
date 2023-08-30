@@ -17,7 +17,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 const jsonFileType = "json"
@@ -38,17 +37,10 @@ If the --pretty flag is provided, the JSON will be pretty printed.
 
 Example: export data for the 'Users' collection:
   defradb client export --collection Users user_data.json`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return NewErrInvalidArgumentLength(err, 1)
-			}
-			return nil
-		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
+			store := cmd.Context().Value(storeContextKey).(client.Store)
+
 			if !isValidExportFormat(format) {
 				return ErrInvalidExportFormat
 			}
@@ -65,7 +57,7 @@ Example: export data for the 'Users' collection:
 				Collections: collections,
 			}
 
-			return db.BasicExport(cmd.Context(), &data)
+			return store.BasicExport(cmd.Context(), &data)
 		},
 	}
 	cmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Set the output JSON to be pretty printed")

@@ -16,8 +16,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeP2PReplicatorDeleteCommand(cfg *config.Config) *cobra.Command {
@@ -25,22 +23,15 @@ func MakeP2PReplicatorDeleteCommand(cfg *config.Config) *cobra.Command {
 		Use:   "delete <peer>",
 		Short: "Delete a replicator. It will stop synchronizing",
 		Long:  `Delete a replicator. It will stop synchronizing.`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return errors.New("must specify one argument: PeerID")
-			}
-			return nil
-		},
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
+			store := cmd.Context().Value(storeContextKey).(client.Store)
+
 			addr, err := peer.AddrInfoFromString(args[0])
 			if err != nil {
 				return err
 			}
-			return db.DeleteReplicator(cmd.Context(), client.Replicator{Info: *addr})
+			return store.DeleteReplicator(cmd.Context(), client.Replicator{Info: *addr})
 		},
 	}
 	return cmd

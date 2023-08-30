@@ -13,8 +13,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeP2PReplicatorGetallCommand(cfg *config.Config) *cobra.Command {
@@ -24,11 +24,9 @@ func MakeP2PReplicatorGetallCommand(cfg *config.Config) *cobra.Command {
 		Long: `Get all the replicators active in the P2P data sync system.
 These are the replicators that are currently replicating data from one node to another.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
-			reps, err := db.GetAllReplicators(cmd.Context())
+			store := cmd.Context().Value(storeContextKey).(client.Store)
+
+			reps, err := store.GetAllReplicators(cmd.Context())
 			if err != nil {
 				return err
 			}

@@ -1,15 +1,20 @@
-## defradb server-dump
+## defradb client p2p p2pcollection getall
 
-Dumps the state of the entire database
+Get all P2P collections
+
+### Synopsis
+
+Get all P2P collections in the pubsub topics.
+This is the list of collections of the node that are synchronized on the pubsub network.
 
 ```
-defradb server-dump [flags]
+defradb client p2p p2pcollection getall [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for server-dump
+  -h, --help   help for getall
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +32,5 @@ defradb server-dump [flags]
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client p2p p2pcollection](defradb_client_p2p_p2pcollection.md)	 - Configure the P2P collection system
 

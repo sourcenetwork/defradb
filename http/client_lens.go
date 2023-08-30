@@ -22,19 +22,19 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-var _ client.LensRegistry = (*LensClient)(nil)
+var _ client.LensRegistry = (*LensRegistry)(nil)
 
-// LensClient implements the client.LensRegistry interface over HTTP.
-type LensClient struct {
+// LensRegistry implements the client.LensRegistry interface over HTTP.
+type LensRegistry struct {
 	http *httpClient
 }
 
-func (c *LensClient) WithTxn(tx datastore.Txn) client.LensRegistry {
+func (c *LensRegistry) WithTxn(tx datastore.Txn) client.LensRegistry {
 	http := c.http.withTxn(tx.ID())
-	return &LensClient{http}
+	return &LensRegistry{http}
 }
 
-func (c *LensClient) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (c *LensRegistry) SetMigration(ctx context.Context, config client.LensConfig) error {
 	methodURL := c.http.baseURL.JoinPath("lens")
 
 	body, err := json.Marshal(config)
@@ -49,7 +49,7 @@ func (c *LensClient) SetMigration(ctx context.Context, config client.LensConfig)
 	return err
 }
 
-func (c *LensClient) ReloadLenses(ctx context.Context) error {
+func (c *LensRegistry) ReloadLenses(ctx context.Context) error {
 	methodURL := c.http.baseURL.JoinPath("lens", "reload")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
@@ -60,7 +60,7 @@ func (c *LensClient) ReloadLenses(ctx context.Context) error {
 	return err
 }
 
-func (c *LensClient) MigrateUp(
+func (c *LensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
 	schemaVersionID string,
@@ -82,7 +82,7 @@ func (c *LensClient) MigrateUp(
 	return result, nil
 }
 
-func (c *LensClient) MigrateDown(
+func (c *LensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
 	schemaVersionID string,
@@ -104,7 +104,7 @@ func (c *LensClient) MigrateDown(
 	return result, nil
 }
 
-func (c *LensClient) Config(ctx context.Context) ([]client.LensConfig, error) {
+func (c *LensRegistry) Config(ctx context.Context) ([]client.LensConfig, error) {
 	methodURL := c.http.baseURL.JoinPath("lens")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -118,7 +118,7 @@ func (c *LensClient) Config(ctx context.Context) ([]client.LensConfig, error) {
 	return cfgs, nil
 }
 
-func (c *LensClient) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
+func (c *LensRegistry) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
 	methodURL := c.http.baseURL.JoinPath("lens", schemaVersionID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

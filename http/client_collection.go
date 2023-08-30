@@ -25,35 +25,35 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-var _ client.Collection = (*CollectionClient)(nil)
+var _ client.Collection = (*Collection)(nil)
 
-// CollectionClient implements the client.Collection interface over HTTP.
-type CollectionClient struct {
+// Collection implements the client.Collection interface over HTTP.
+type Collection struct {
 	http *httpClient
 	desc client.CollectionDescription
 }
 
-func (c *CollectionClient) Description() client.CollectionDescription {
+func (c *Collection) Description() client.CollectionDescription {
 	return c.desc
 }
 
-func (c *CollectionClient) Name() string {
+func (c *Collection) Name() string {
 	return c.desc.Name
 }
 
-func (c *CollectionClient) Schema() client.SchemaDescription {
+func (c *Collection) Schema() client.SchemaDescription {
 	return c.desc.Schema
 }
 
-func (c *CollectionClient) ID() uint32 {
+func (c *Collection) ID() uint32 {
 	return c.desc.ID
 }
 
-func (c *CollectionClient) SchemaID() string {
+func (c *Collection) SchemaID() string {
 	return c.desc.Schema.SchemaID
 }
 
-func (c *CollectionClient) Create(ctx context.Context, doc *client.Document) error {
+func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
 	body, err := doc.String()
@@ -72,7 +72,7 @@ func (c *CollectionClient) Create(ctx context.Context, doc *client.Document) err
 	return nil
 }
 
-func (c *CollectionClient) CreateMany(ctx context.Context, docs []*client.Document) error {
+func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
 	var docMapList []map[string]any
@@ -101,7 +101,7 @@ func (c *CollectionClient) CreateMany(ctx context.Context, docs []*client.Docume
 	return nil
 }
 
-func (c *CollectionClient) Update(ctx context.Context, doc *client.Document) error {
+func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, doc.Key().String())
 
 	docMap, err := doc.ToMap()
@@ -129,7 +129,7 @@ func (c *CollectionClient) Update(ctx context.Context, doc *client.Document) err
 	return nil
 }
 
-func (c *CollectionClient) Save(ctx context.Context, doc *client.Document) error {
+func (c *Collection) Save(ctx context.Context, doc *client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, doc.Key().String())
 
 	docMap, err := doc.ToMap()
@@ -157,7 +157,7 @@ func (c *CollectionClient) Save(ctx context.Context, doc *client.Document) error
 	return nil
 }
 
-func (c *CollectionClient) Delete(ctx context.Context, docKey client.DocKey) (bool, error) {
+func (c *Collection) Delete(ctx context.Context, docKey client.DocKey) (bool, error) {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, docKey.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
@@ -171,7 +171,7 @@ func (c *CollectionClient) Delete(ctx context.Context, docKey client.DocKey) (bo
 	return true, nil
 }
 
-func (c *CollectionClient) Exists(ctx context.Context, docKey client.DocKey) (bool, error) {
+func (c *Collection) Exists(ctx context.Context, docKey client.DocKey) (bool, error) {
 	_, err := c.Get(ctx, docKey, false)
 	if err != nil {
 		return false, err
@@ -179,7 +179,7 @@ func (c *CollectionClient) Exists(ctx context.Context, docKey client.DocKey) (bo
 	return true, nil
 }
 
-func (c *CollectionClient) UpdateWith(ctx context.Context, target any, updater string) (*client.UpdateResult, error) {
+func (c *Collection) UpdateWith(ctx context.Context, target any, updater string) (*client.UpdateResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
 		return c.UpdateWithFilter(ctx, t, updater)
@@ -192,7 +192,7 @@ func (c *CollectionClient) UpdateWith(ctx context.Context, target any, updater s
 	}
 }
 
-func (c *CollectionClient) updateWith(
+func (c *Collection) updateWith(
 	ctx context.Context,
 	request CollectionUpdateRequest,
 ) (*client.UpdateResult, error) {
@@ -213,7 +213,7 @@ func (c *CollectionClient) updateWith(
 	return &result, nil
 }
 
-func (c *CollectionClient) UpdateWithFilter(
+func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
@@ -224,7 +224,7 @@ func (c *CollectionClient) UpdateWithFilter(
 	})
 }
 
-func (c *CollectionClient) UpdateWithKey(
+func (c *Collection) UpdateWithKey(
 	ctx context.Context,
 	key client.DocKey,
 	updater string,
@@ -235,7 +235,7 @@ func (c *CollectionClient) UpdateWithKey(
 	})
 }
 
-func (c *CollectionClient) UpdateWithKeys(
+func (c *Collection) UpdateWithKeys(
 	ctx context.Context,
 	docKeys []client.DocKey,
 	updater string,
@@ -250,7 +250,7 @@ func (c *CollectionClient) UpdateWithKeys(
 	})
 }
 
-func (c *CollectionClient) DeleteWith(ctx context.Context, target any) (*client.DeleteResult, error) {
+func (c *Collection) DeleteWith(ctx context.Context, target any) (*client.DeleteResult, error) {
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
 		return c.DeleteWithFilter(ctx, t)
@@ -263,7 +263,7 @@ func (c *CollectionClient) DeleteWith(ctx context.Context, target any) (*client.
 	}
 }
 
-func (c *CollectionClient) deleteWith(
+func (c *Collection) deleteWith(
 	ctx context.Context,
 	request CollectionDeleteRequest,
 ) (*client.DeleteResult, error) {
@@ -284,19 +284,19 @@ func (c *CollectionClient) deleteWith(
 	return &result, nil
 }
 
-func (c *CollectionClient) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
+func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
 	return c.deleteWith(ctx, CollectionDeleteRequest{
 		Filter: filter,
 	})
 }
 
-func (c *CollectionClient) DeleteWithKey(ctx context.Context, docKey client.DocKey) (*client.DeleteResult, error) {
+func (c *Collection) DeleteWithKey(ctx context.Context, docKey client.DocKey) (*client.DeleteResult, error) {
 	return c.deleteWith(ctx, CollectionDeleteRequest{
 		Key: docKey.String(),
 	})
 }
 
-func (c *CollectionClient) DeleteWithKeys(ctx context.Context, docKeys []client.DocKey) (*client.DeleteResult, error) {
+func (c *Collection) DeleteWithKeys(ctx context.Context, docKeys []client.DocKey) (*client.DeleteResult, error) {
 	var keys []string
 	for _, key := range docKeys {
 		keys = append(keys, key.String())
@@ -306,7 +306,7 @@ func (c *CollectionClient) DeleteWithKeys(ctx context.Context, docKeys []client.
 	})
 }
 
-func (c *CollectionClient) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
+func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, key.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -320,14 +320,14 @@ func (c *CollectionClient) Get(ctx context.Context, key client.DocKey, showDelet
 	return client.NewDocFromMap(docMap)
 }
 
-func (c *CollectionClient) WithTxn(tx datastore.Txn) client.Collection {
-	return &CollectionClient{
+func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
+	return &Collection{
 		http: c.http.withTxn(tx.ID()),
 		desc: c.desc,
 	}
 }
 
-func (c *CollectionClient) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
+func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -373,7 +373,7 @@ func (c *CollectionClient) GetAllDocKeys(ctx context.Context) (<-chan client.Doc
 	return docKeyCh, nil
 }
 
-func (c *CollectionClient) CreateIndex(
+func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexDescription,
 ) (client.IndexDescription, error) {
@@ -394,7 +394,7 @@ func (c *CollectionClient) CreateIndex(
 	return index, nil
 }
 
-func (c *CollectionClient) DropIndex(ctx context.Context, indexName string) error {
+func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, "indexes", indexName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
@@ -405,7 +405,7 @@ func (c *CollectionClient) DropIndex(ctx context.Context, indexName string) erro
 	return err
 }
 
-func (c *CollectionClient) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

@@ -13,8 +13,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeIndexListCommand(cfg *config.Config) *cobra.Command {
@@ -31,14 +31,11 @@ Example: show all index for 'Users' collection:
   defradb client index list --collection Users`,
 		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
+			store := cmd.Context().Value(storeContextKey).(client.Store)
 
 			switch {
 			case collectionArg != "":
-				col, err := db.GetCollectionByName(cmd.Context(), collectionArg)
+				col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 				if err != nil {
 					return err
 				}
@@ -48,7 +45,7 @@ Example: show all index for 'Users' collection:
 				}
 				return writeJSON(cmd, cols)
 			default:
-				cols, err := db.GetAllIndexes(cmd.Context())
+				cols, err := store.GetAllIndexes(cmd.Context())
 				if err != nil {
 					return err
 				}

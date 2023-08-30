@@ -22,7 +22,7 @@ func MakeServerDumpCmd(cfg *config.Config) *cobra.Command {
 		Use:   "server-dump",
 		Short: "Dumps the state of the entire database",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
+			db, err := http.NewClient(cfg.API.Address)
 			if err != nil {
 				return err
 			}

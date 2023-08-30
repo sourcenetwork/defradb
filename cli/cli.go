@@ -14,8 +14,6 @@ Package cli provides the command-line interface.
 package cli
 
 import (
-	"encoding/json"
-
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/config"
@@ -26,68 +24,78 @@ var log = logging.MustNewLogger("cli")
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
 func NewDefraCommand(cfg *config.Config) *cobra.Command {
-	rootCmd := MakeRootCommand(cfg)
-	p2pCmd := MakeP2PCommand()
-	schemaCmd := MakeSchemaCommand()
-	schemaMigrationCmd := MakeSchemaMigrationCommand()
-	indexCmd := MakeIndexCommand()
-	clientCmd := MakeClientCommand()
-	backupCmd := MakeBackupCommand()
-	p2pReplicatorCmd := MakeP2PReplicatorCommand()
-	p2pCollectionCmd := MakeP2PCollectionCommand()
-	p2pCollectionCmd.AddCommand(
+	p2p_collection := MakeP2PCollectionCommand()
+	p2p_collection.AddCommand(
 		MakeP2PCollectionAddCommand(cfg),
 		MakeP2PCollectionRemoveCommand(cfg),
 		MakeP2PCollectionGetallCommand(cfg),
 	)
-	p2pReplicatorCmd.AddCommand(
+
+	p2p_replicator := MakeP2PReplicatorCommand()
+	p2p_replicator.AddCommand(
 		MakeP2PReplicatorGetallCommand(cfg),
 		MakeP2PReplicatorSetCommand(cfg),
 		MakeP2PReplicatorDeleteCommand(cfg),
 	)
-	p2pCmd.AddCommand(
-		p2pReplicatorCmd,
-		p2pCollectionCmd,
+
+	p2p := MakeP2PCommand()
+	p2p.AddCommand(
+		p2p_replicator,
+		p2p_collection,
 	)
-	schemaMigrationCmd.AddCommand(
+
+	schema_migrate := MakeSchemaMigrationCommand()
+	schema_migrate.AddCommand(
 		MakeSchemaMigrationSetCommand(cfg),
 		MakeSchemaMigrationGetCommand(cfg),
 	)
-	schemaCmd.AddCommand(
+
+	schema := MakeSchemaCommand()
+	schema.AddCommand(
 		MakeSchemaAddCommand(cfg),
 		MakeSchemaPatchCommand(cfg),
-		schemaMigrationCmd,
+		schema_migrate,
 	)
-	indexCmd.AddCommand(
+
+	index := MakeIndexCommand()
+	index.AddCommand(
 		MakeIndexCreateCommand(cfg),
 		MakeIndexDropCommand(cfg),
 		MakeIndexListCommand(cfg),
 	)
-	backupCmd.AddCommand(
+
+	backup := MakeBackupCommand()
+	backup.AddCommand(
 		MakeBackupExportCommand(cfg),
 		MakeBackupImportCommand(cfg),
 	)
-	clientCmd.AddCommand(
+
+	tx := MakeTxCommand()
+	tx.AddCommand(
+		MakeTxCreateCommand(cfg),
+		MakeTxCommitCommand(cfg),
+		MakeTxDiscardCommand(cfg),
+	)
+
+	client := MakeClientCommand()
+	client.AddCommand(
 		MakeDumpCommand(cfg),
 		MakeRequestCommand(cfg),
-		schemaCmd,
-		indexCmd,
-		p2pCmd,
-		backupCmd,
+		schema,
+		index,
+		p2p,
+		backup,
+		tx,
 	)
-	rootCmd.AddCommand(
-		clientCmd,
+
+	root := MakeRootCommand(cfg)
+	root.AddCommand(
+		client,
 		MakeStartCommand(cfg),
 		MakeServerDumpCmd(cfg),
 		MakeVersionCommand(),
 		MakeInitCommand(cfg),
 	)
 
-	return rootCmd
-}
-
-func writeJSON(cmd *cobra.Command, out any) error {
-	enc := json.NewEncoder(cmd.OutOrStdout())
-	enc.SetIndent("", "  ")
-	return enc.Encode(out)
+	return root
 }

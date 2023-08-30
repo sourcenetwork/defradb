@@ -17,8 +17,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeSchemaPatchCommand(cfg *config.Config) *cobra.Command {
@@ -42,10 +42,7 @@ Example: patch from stdin:
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
+			store := cmd.Context().Value(storeContextKey).(client.Store)
 
 			var patch string
 			switch {
@@ -67,7 +64,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				return fmt.Errorf("patch cannot be empty")
 			}
 
-			return db.PatchSchema(cmd.Context(), patch)
+			return store.PatchSchema(cmd.Context(), patch)
 		},
 	}
 	cmd.Flags().StringVarP(&patchFile, "file", "f", "", "File to load a patch from")

@@ -1,15 +1,16 @@
-## defradb server-dump
+## defradb client p2p replicator
 
-Dumps the state of the entire database
+Configure the replicator system
 
-```
-defradb server-dump [flags]
-```
+### Synopsis
+
+Configure the replicator system. Add, delete, or get the list of persisted replicators.
+A replicator replicates one or all collection(s) from one node to another.
 
 ### Options
 
 ```
-  -h, --help   help for server-dump
+  -h, --help   help for replicator
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +28,8 @@ defradb server-dump [flags]
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
+* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
+* [defradb client p2p replicator delete](defradb_client_p2p_replicator_delete.md)	 - Delete a replicator. It will stop synchronizing
+* [defradb client p2p replicator getall](defradb_client_p2p_replicator_getall.md)	 - Get all replicators
+* [defradb client p2p replicator set](defradb_client_p2p_replicator_set.md)	 - Set a P2P replicator
 

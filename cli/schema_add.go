@@ -17,8 +17,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeSchemaAddCommand(cfg *config.Config) *cobra.Command {
@@ -39,10 +39,7 @@ Example: add from stdin:
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := http.NewClient("http://" + cfg.API.Address)
-			if err != nil {
-				return err
-			}
+			store := cmd.Context().Value(storeContextKey).(client.Store)
 
 			var schema string
 			switch {
@@ -64,7 +61,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return fmt.Errorf("schema cannot be empty")
 			}
 
-			cols, err := db.AddSchema(cmd.Context(), schema)
+			cols, err := store.AddSchema(cmd.Context(), schema)
 			if err != nil {
 				return err
 			}

@@ -22,7 +22,7 @@ func MakeDumpCommand(cfg *config.Config) *cobra.Command {
 		Use:   "dump",
 		Short: "Dump the contents of DefraDB node-side",
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
-			db, err := http.NewClient("http://" + cfg.API.Address)
+			db, err := http.NewClient(cfg.API.Address)
 			if err != nil {
 				return err
 			}
