@@ -52,10 +52,3 @@ jobs:
 
       - name: Run tests with Collection Named mutations
         run: make test:ci-col-named-mutations
-
-      ## Uncomment to enable ability to SSH into the runner.
-      #- name: Setup upterm ssh session for debugging
-      #  uses: lhotari/action-upterm@v1
-      #  with:
-      #    limit-access-to-actor: true
-      #    limit-access-to-users: shahzadlone
