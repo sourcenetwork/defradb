@@ -34,7 +34,7 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 
 	tx, err := db.NewTxn(req.Context(), readOnly)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	txs.Store(tx.ID(), tx)
@@ -48,7 +48,7 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 
 	tx, err := db.NewConcurrentTxn(req.Context(), readOnly)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	txs.Store(tx.ID(), tx)
@@ -60,17 +60,17 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 
 	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{"invalid transaction id"})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 	txVal, ok := txs.Load(txId)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{"invalid transaction id"})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 	err = txVal.(datastore.Txn).Commit(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	txs.Delete(txId)
@@ -82,12 +82,12 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 
 	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{"invalid transaction id"})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 	txVal, ok := txs.LoadAndDelete(txId)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{"invalid transaction id"})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 	txVal.(datastore.Txn).Discard(req.Context())
