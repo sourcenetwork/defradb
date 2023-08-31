@@ -14,10 +14,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 )
 
-func MakeP2PCollectionAddCommand(cfg *config.Config) *cobra.Command {
+func MakeP2PCollectionAddCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "add [collectionID]",
 		Short: "Add P2P collections",

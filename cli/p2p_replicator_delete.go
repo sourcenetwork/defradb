@@ -15,10 +15,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 )
 
-func MakeP2PReplicatorDeleteCommand(cfg *config.Config) *cobra.Command {
+func MakeP2PReplicatorDeleteCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "delete <peer>",
 		Short: "Delete a replicator. It will stop synchronizing",

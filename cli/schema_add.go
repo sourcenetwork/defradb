@@ -18,10 +18,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 )
 
-func MakeSchemaAddCommand(cfg *config.Config) *cobra.Command {
+func MakeSchemaAddCommand() *cobra.Command {
 	var schemaFile string
 	var cmd = &cobra.Command{
 		Use:   "add [schema]",

@@ -26,16 +26,16 @@ var log = logging.MustNewLogger("cli")
 func NewDefraCommand(cfg *config.Config) *cobra.Command {
 	p2p_collection := MakeP2PCollectionCommand()
 	p2p_collection.AddCommand(
-		MakeP2PCollectionAddCommand(cfg),
-		MakeP2PCollectionRemoveCommand(cfg),
-		MakeP2PCollectionGetallCommand(cfg),
+		MakeP2PCollectionAddCommand(),
+		MakeP2PCollectionRemoveCommand(),
+		MakeP2PCollectionGetallCommand(),
 	)
 
 	p2p_replicator := MakeP2PReplicatorCommand()
 	p2p_replicator.AddCommand(
-		MakeP2PReplicatorGetallCommand(cfg),
-		MakeP2PReplicatorSetCommand(cfg),
-		MakeP2PReplicatorDeleteCommand(cfg),
+		MakeP2PReplicatorGetallCommand(),
+		MakeP2PReplicatorSetCommand(),
+		MakeP2PReplicatorDeleteCommand(),
 	)
 
 	p2p := MakeP2PCommand()
@@ -46,28 +46,28 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 
 	schema_migrate := MakeSchemaMigrationCommand()
 	schema_migrate.AddCommand(
-		MakeSchemaMigrationSetCommand(cfg),
-		MakeSchemaMigrationGetCommand(cfg),
+		MakeSchemaMigrationSetCommand(),
+		MakeSchemaMigrationGetCommand(),
 	)
 
 	schema := MakeSchemaCommand()
 	schema.AddCommand(
-		MakeSchemaAddCommand(cfg),
-		MakeSchemaPatchCommand(cfg),
+		MakeSchemaAddCommand(),
+		MakeSchemaPatchCommand(),
 		schema_migrate,
 	)
 
 	index := MakeIndexCommand()
 	index.AddCommand(
-		MakeIndexCreateCommand(cfg),
-		MakeIndexDropCommand(cfg),
-		MakeIndexListCommand(cfg),
+		MakeIndexCreateCommand(),
+		MakeIndexDropCommand(),
+		MakeIndexListCommand(),
 	)
 
 	backup := MakeBackupCommand()
 	backup.AddCommand(
-		MakeBackupExportCommand(cfg),
-		MakeBackupImportCommand(cfg),
+		MakeBackupExportCommand(),
+		MakeBackupImportCommand(),
 	)
 
 	tx := MakeTxCommand()
@@ -77,15 +77,26 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 		MakeTxDiscardCommand(cfg),
 	)
 
+	document := MakeDocumentCommand()
+	document.AddCommand(
+		MakeDocumentGetCommand(),
+		MakeDocumentKeysCommand(),
+		MakeDocumentDeleteCommand(),
+		MakeDocumentUpdateCommand(),
+		MakeDocumentSaveCommand(),
+	)
+
 	client := MakeClientCommand(cfg)
 	client.AddCommand(
-		MakeDumpCommand(cfg),
-		MakeRequestCommand(cfg),
+		MakeDumpCommand(),
+		MakeRequestCommand(),
+		MakeCollectionCommand(),
 		schema,
 		index,
 		p2p,
 		backup,
 		tx,
+		document,
 	)
 
 	root := MakeRootCommand(cfg)

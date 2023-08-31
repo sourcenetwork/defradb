@@ -11,11 +11,9 @@
 package cli
 
 import (
-	"context"
+	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/http"
-	"github.com/spf13/cobra"
 )
 
 func MakeClientCommand(cfg *config.Config) *cobra.Command {
@@ -29,19 +27,10 @@ Execute queries, add schema types, obtain node info, etc.`,
 			if err := loadConfig(cfg); err != nil {
 				return err
 			}
-			db, err := http.NewClient(cfg.API.Address)
-			if err != nil {
+			if err := setTransactionContext(cmd, cfg, txID); err != nil {
 				return err
 			}
-			ctx := cmd.Context()
-			if txID != 0 {
-				ctx = context.WithValue(ctx, storeContextKey, db.WithTxnID(txID))
-			} else {
-				ctx = context.WithValue(ctx, storeContextKey, db)
-			}
-			ctx = context.WithValue(ctx, dbContextKey, db)
-			cmd.SetContext(ctx)
-			return nil
+			return setStoreContext(cmd, cfg)
 		},
 	}
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")

@@ -18,13 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/config"
 )
 
-type contextKey string
-
-var (
-	dbContextKey    = contextKey("db")
-	storeContextKey = contextKey("store")
-)
-
 func MakeRootCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "defradb",

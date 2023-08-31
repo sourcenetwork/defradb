@@ -21,11 +21,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-func MakeSchemaMigrationSetCommand(cfg *config.Config) *cobra.Command {
+func MakeSchemaMigrationSetCommand() *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
 		Use:   "set [src] [dst] [cfg]",

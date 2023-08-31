@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -26,7 +25,7 @@ const (
 	SUB_RESULTS_HEADER = "------ Subscription Results ------\n"
 )
 
-func MakeRequestCommand(cfg *config.Config) *cobra.Command {
+func MakeRequestCommand() *cobra.Command {
 	var filePath string
 	var cmd = &cobra.Command{
 		Use:   "query [query request]",

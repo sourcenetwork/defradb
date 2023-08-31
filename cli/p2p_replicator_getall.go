@@ -14,10 +14,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 )
 
-func MakeP2PReplicatorGetallCommand(cfg *config.Config) *cobra.Command {
+func MakeP2PReplicatorGetallCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all replicators",

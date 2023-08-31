@@ -14,10 +14,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func MakeIndexListCommand(cfg *config.Config) *cobra.Command {
+func MakeIndexListCommand() *cobra.Command {
 	var collectionArg string
 	var cmd = &cobra.Command{
 		Use:   "list [-c --collection <collection>]",
@@ -39,17 +39,20 @@ Example: show all index for 'Users' collection:
 				if err != nil {
 					return err
 				}
-				cols, err := col.GetIndexes(cmd.Context())
+				if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
+					col = col.WithTxn(tx)
+				}
+				indexes, err := col.GetIndexes(cmd.Context())
 				if err != nil {
 					return err
 				}
-				return writeJSON(cmd, cols)
+				return writeJSON(cmd, indexes)
 			default:
-				cols, err := store.GetAllIndexes(cmd.Context())
+				indexes, err := store.GetAllIndexes(cmd.Context())
 				if err != nil {
 					return err
 				}
-				return writeJSON(cmd, cols)
+				return writeJSON(cmd, indexes)
 			}
 		},
 	}

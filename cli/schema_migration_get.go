@@ -14,10 +14,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 )
 
-func MakeSchemaMigrationGetCommand(cfg *config.Config) *cobra.Command {
+func MakeSchemaMigrationGetCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "get",
 		Short: "Gets the schema migrations within DefraDB",

@@ -18,10 +18,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 )
 
-func MakeSchemaPatchCommand(cfg *config.Config) *cobra.Command {
+func MakeSchemaPatchCommand() *cobra.Command {
 	var patchFile string
 
 	var cmd = &cobra.Command{

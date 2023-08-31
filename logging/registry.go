@@ -44,6 +44,9 @@ func setConfig(newConfig Config) Config {
 }
 
 func updateLoggers(config Config) {
+	registryMutex.Lock()
+	defer registryMutex.Unlock()
+
 	for loggerName, loggers := range registry {
 		newLoggerConfig := config.forLogger(loggerName)
 

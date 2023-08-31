@@ -17,18 +17,18 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-var _ datastore.Txn = (*TxWrapper)(nil)
+var _ datastore.Txn = (*Transaction)(nil)
 
-type TxWrapper struct {
+type Transaction struct {
 	tx  datastore.Txn
 	cmd *cliWrapper
 }
 
-func (w *TxWrapper) ID() uint64 {
+func (w *Transaction) ID() uint64 {
 	return w.tx.ID()
 }
 
-func (w *TxWrapper) Commit(ctx context.Context) error {
+func (w *Transaction) Commit(ctx context.Context) error {
 	args := []string{"client", "tx", "commit"}
 	args = append(args, fmt.Sprintf("%d", w.tx.ID()))
 
@@ -36,41 +36,41 @@ func (w *TxWrapper) Commit(ctx context.Context) error {
 	return err
 }
 
-func (w *TxWrapper) Discard(ctx context.Context) {
+func (w *Transaction) Discard(ctx context.Context) {
 	args := []string{"client", "tx", "discard"}
 	args = append(args, fmt.Sprintf("%d", w.tx.ID()))
 
-	w.cmd.execute(ctx, args)
+	w.cmd.execute(ctx, args) //nolint:errcheck
 }
 
-func (w *TxWrapper) OnSuccess(fn func()) {
+func (w *Transaction) OnSuccess(fn func()) {
 	w.tx.OnSuccess(fn)
 }
 
-func (w *TxWrapper) OnError(fn func()) {
+func (w *Transaction) OnError(fn func()) {
 	w.tx.OnError(fn)
 }
 
-func (w *TxWrapper) OnDiscard(fn func()) {
+func (w *Transaction) OnDiscard(fn func()) {
 	w.tx.OnDiscard(fn)
 }
 
-func (w *TxWrapper) Rootstore() datastore.DSReaderWriter {
+func (w *Transaction) Rootstore() datastore.DSReaderWriter {
 	return w.tx.Rootstore()
 }
 
-func (w *TxWrapper) Datastore() datastore.DSReaderWriter {
+func (w *Transaction) Datastore() datastore.DSReaderWriter {
 	return w.tx.Datastore()
 }
 
-func (w *TxWrapper) Headstore() datastore.DSReaderWriter {
+func (w *Transaction) Headstore() datastore.DSReaderWriter {
 	return w.tx.Headstore()
 }
 
-func (w *TxWrapper) DAGstore() datastore.DAGStore {
+func (w *Transaction) DAGstore() datastore.DAGStore {
 	return w.tx.DAGstore()
 }
 
-func (w *TxWrapper) Systemstore() datastore.DSReaderWriter {
+func (w *Transaction) Systemstore() datastore.DSReaderWriter {
 	return w.tx.Systemstore()
 }

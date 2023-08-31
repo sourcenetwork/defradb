@@ -14,26 +14,27 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/sourcenetwork/immutable/enumerable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/immutable/enumerable"
 )
 
-var _ client.LensRegistry = (*lensWrapper)(nil)
+var _ client.LensRegistry = (*LensRegistry)(nil)
 
-type lensWrapper struct {
-	lens client.LensRegistry
+type LensRegistry struct {
 	cmd  *cliWrapper
+	lens client.LensRegistry
 }
 
-func (w *lensWrapper) WithTxn(tx datastore.Txn) client.LensRegistry {
-	return &lensWrapper{
+func (w *LensRegistry) WithTxn(tx datastore.Txn) client.LensRegistry {
+	return &LensRegistry{
 		lens: w.lens.WithTxn(tx),
 		cmd:  w.cmd.withTxn(tx),
 	}
 }
 
-func (w *lensWrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (w *LensRegistry) SetMigration(ctx context.Context, config client.LensConfig) error {
 	args := []string{"client", "schema", "migration", "set"}
 	args = append(args, config.SourceSchemaVersionID)
 	args = append(args, config.DestinationSchemaVersionID)
@@ -48,11 +49,11 @@ func (w *lensWrapper) SetMigration(ctx context.Context, config client.LensConfig
 	return err
 }
 
-func (w *lensWrapper) ReloadLenses(ctx context.Context) error {
+func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
 	return w.lens.ReloadLenses(ctx)
 }
 
-func (w *lensWrapper) MigrateUp(
+func (w *LensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
 	schemaVersionID string,
@@ -60,7 +61,7 @@ func (w *lensWrapper) MigrateUp(
 	return w.lens.MigrateUp(ctx, src, schemaVersionID)
 }
 
-func (w *lensWrapper) MigrateDown(
+func (w *LensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
 	schemaVersionID string,
@@ -68,7 +69,7 @@ func (w *lensWrapper) MigrateDown(
 	return w.lens.MigrateDown(ctx, src, schemaVersionID)
 }
 
-func (w *lensWrapper) Config(ctx context.Context) ([]client.LensConfig, error) {
+func (w *LensRegistry) Config(ctx context.Context) ([]client.LensConfig, error) {
 	args := []string{"client", "schema", "migration", "get"}
 
 	data, err := w.cmd.execute(ctx, args)
@@ -82,6 +83,6 @@ func (w *lensWrapper) Config(ctx context.Context) ([]client.LensConfig, error) {
 	return cfgs, nil
 }
 
-func (w *lensWrapper) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
+func (w *LensRegistry) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
 	return w.lens.HasMigration(ctx, schemaVersionID)
 }

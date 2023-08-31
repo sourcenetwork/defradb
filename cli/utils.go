@@ -11,11 +11,55 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/http"
 )
+
+type contextKey string
+
+var (
+	txContextKey    = contextKey("tx")
+	dbContextKey    = contextKey("db")
+	storeContextKey = contextKey("store")
+)
+
+// setTransactionContext sets the transaction for the current command context.
+func setTransactionContext(cmd *cobra.Command, cfg *config.Config, txId uint64) error {
+	if txId == 0 {
+		return nil
+	}
+	tx, err := http.NewTransaction(cfg.API.Address, txId)
+	if err != nil {
+		return err
+	}
+	ctx := cmd.Context()
+	ctx = context.WithValue(ctx, txContextKey, tx)
+	cmd.SetContext(ctx)
+	return nil
+}
+
+// setStoreContext sets the store for the current command context.
+func setStoreContext(cmd *cobra.Command, cfg *config.Config) error {
+	db, err := http.NewClient(cfg.API.Address)
+	if err != nil {
+		return err
+	}
+	ctx := cmd.Context()
+	ctx = context.WithValue(ctx, dbContextKey, db)
+	if tx, ok := ctx.Value(txContextKey).(datastore.Txn); ok {
+		ctx = context.WithValue(ctx, storeContextKey, db.WithTxn(tx))
+	} else {
+		ctx = context.WithValue(ctx, storeContextKey, db)
+	}
+	cmd.SetContext(ctx)
+	return nil
+}
 
 // loadConfig loads the rootDir containing the configuration file,
 // otherwise warn about it and load a default configuration.

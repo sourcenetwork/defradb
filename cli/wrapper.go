@@ -179,26 +179,70 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) er
 }
 
 func (w *Wrapper) LensRegistry() client.LensRegistry {
-	return &lensWrapper{
-		lens: w.store.LensRegistry(),
-		cmd:  w.cmd,
-	}
+	return &LensRegistry{w.cmd, w.store.LensRegistry()}
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	return w.store.GetCollectionByName(ctx, name)
+	args := []string{"client", "collection"}
+	args = append(args, "--name", name)
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var colDesc client.CollectionDescription
+	if err := json.Unmarshal(data, &colDesc); err != nil {
+		return nil, err
+	}
+	return &Collection{w.cmd, colDesc}, nil
 }
 
 func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
-	return w.store.GetCollectionBySchemaID(ctx, schemaId)
+	args := []string{"client", "collection"}
+	args = append(args, "--schema", schemaId)
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var colDesc client.CollectionDescription
+	if err := json.Unmarshal(data, &colDesc); err != nil {
+		return nil, err
+	}
+	return &Collection{w.cmd, colDesc}, nil
 }
 
 func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
-	return w.store.GetCollectionByVersionID(ctx, versionId)
+	args := []string{"client", "collection"}
+	args = append(args, "--versionId", versionId)
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var colDesc client.CollectionDescription
+	if err := json.Unmarshal(data, &colDesc); err != nil {
+		return nil, err
+	}
+	return &Collection{w.cmd, colDesc}, nil
 }
 
 func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	return w.store.GetAllCollections(ctx)
+	args := []string{"client", "collection"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var colDesc []client.CollectionDescription
+	if err := json.Unmarshal(data, &colDesc); err != nil {
+		return nil, err
+	}
+	cols := make([]client.Collection, len(colDesc))
+	for i, v := range colDesc {
+		cols[i] = &Collection{w.cmd, v}
+	}
+	return cols, err
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
@@ -208,11 +252,11 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 	if err != nil {
 		return nil, err
 	}
-	var index map[client.CollectionName][]client.IndexDescription
-	if err := json.Unmarshal(data, &index); err != nil {
+	var indexes map[client.CollectionName][]client.IndexDescription
+	if err := json.Unmarshal(data, &indexes); err != nil {
 		return nil, err
 	}
-	return index, nil
+	return indexes, nil
 }
 
 func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.RequestResult {
@@ -310,7 +354,7 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, err
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{tx, w.cmd}, nil
+	return &Transaction{tx, w.cmd}, nil
 }
 
 func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
@@ -333,7 +377,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{tx, w.cmd}, nil
+	return &Transaction{tx, w.cmd}, nil
 }
 
 func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {

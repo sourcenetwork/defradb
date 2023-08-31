@@ -25,7 +25,6 @@ require (
 	github.com/jbenet/goprocess v0.1.4
 	github.com/lens-vm/lens/host-go v0.0.0-20230729032926-5acb4df9bd25
 	github.com/libp2p/go-libp2p v0.29.2
-	github.com/libp2p/go-libp2p-core v0.20.0
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.25.0
 	github.com/libp2p/go-libp2p-pubsub v0.9.3
@@ -127,6 +126,7 @@ require (
 	github.com/libp2p/go-flow-metrics v0.1.0 // indirect
 	github.com/libp2p/go-libp2p-asn-util v0.3.0 // indirect
 	github.com/libp2p/go-libp2p-connmgr v0.4.0 // indirect
+	github.com/libp2p/go-libp2p-core v0.20.0 // indirect
 	github.com/libp2p/go-libp2p-kbucket v0.6.3 // indirect
 	github.com/libp2p/go-libp2p-routing-helpers v0.7.0 // indirect
 	github.com/libp2p/go-msgio v0.3.0 // indirect

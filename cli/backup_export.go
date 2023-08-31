@@ -16,12 +16,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 )
 
 const jsonFileType = "json"
 
-func MakeBackupExportCommand(cfg *config.Config) *cobra.Command {
+func MakeBackupExportCommand() *cobra.Command {
 	var collections []string
 	var pretty bool
 	var format string
@@ -38,7 +37,7 @@ If the --pretty flag is provided, the JSON will be pretty printed.
 Example: export data for the 'Users' collection:
   defradb client export --collection Users user_data.json`,
 		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 
 			if !isValidExportFormat(format) {

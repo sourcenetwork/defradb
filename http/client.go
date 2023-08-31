@@ -88,11 +88,6 @@ func (c *Client) WithTxn(tx datastore.Txn) client.Store {
 	return &Client{client}
 }
 
-func (c *Client) WithTxnID(id uint64) client.Store {
-	client := c.http.withTxn(id)
-	return &Client{client}
-}
-
 func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
 

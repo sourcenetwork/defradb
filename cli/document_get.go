@@ -17,32 +17,40 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func MakeIndexDropCommand() *cobra.Command {
-	var collectionArg string
-	var nameArg string
+func MakeDocumentGetCommand() *cobra.Command {
+	var showDeleted bool
+	var collection string
 	var cmd = &cobra.Command{
-		Use:   "drop -c --collection <collection> -n --name <name>",
-		Short: "Drop a collection's secondary index",
-		Long: `Drop a collection's secondary index.
-		
-Example: drop the index 'UsersByName' for 'Users' collection:
-  defradb client index create --collection Users --name UsersByName`,
-		ValidArgs: []string{"collection", "name"},
+		Use:   "get --collection <collection> <docKey> [--show-deleted]",
+		Short: "View detailed document info.",
+		Long:  `View detailed document info.`,
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 
-			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
+			col, err := store.GetCollectionByName(cmd.Context(), collection)
 			if err != nil {
 				return err
 			}
 			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
 				col = col.WithTxn(tx)
 			}
-			return col.DropIndex(cmd.Context(), nameArg)
+			docKey, err := client.NewDocKeyFromString(args[0])
+			if err != nil {
+				return err
+			}
+			doc, err := col.Get(cmd.Context(), docKey, showDeleted)
+			if err != nil {
+				return err
+			}
+			docMap, err := doc.ToMap()
+			if err != nil {
+				return err
+			}
+			return writeJSON(cmd, docMap)
 		},
 	}
-	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
-	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
-
+	cmd.Flags().BoolVar(&showDeleted, "show-deleted", false, "Show deleted documents")
+	cmd.Flags().StringVarP(&collection, "collection", "c", "", "Collection name")
 	return cmd
 }

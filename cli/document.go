@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,18 +12,14 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeDumpCommand() *cobra.Command {
+func MakeDocumentCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "dump",
-		Short: "Dump the contents of DefraDB node-side",
-		RunE: func(cmd *cobra.Command, _ []string) (err error) {
-			db := cmd.Context().Value(dbContextKey).(client.DB)
-			return db.PrintDump(cmd.Context())
-		},
+		Use:   "document",
+		Short: "Create, read, update, and delete documents.",
+		Long:  `Create, read, update, and delete documents.`,
 	}
+
 	return cmd
 }
