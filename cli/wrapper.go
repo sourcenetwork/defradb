@@ -43,8 +43,6 @@ func NewWrapper(db client.DB) *Wrapper {
 	httpServer := httptest.NewServer(handler)
 	cmd := newCliWrapper(httpServer.URL)
 
-	// TODO use http.Wrapper here to make a lot of this obsolete
-
 	return &Wrapper{
 		db:         db,
 		store:      db,
