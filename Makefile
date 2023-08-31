@@ -189,6 +189,27 @@ test\:build:
 test\:ci:
 	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:all
 
+.PHONY: test\:ci-gql-mutations
+test\:ci-gql-mutations:
+	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true $(MAKE) test:all
+
+.PHONY: test\:gql-mutations
+test\:gql-mutations:
+	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+
+# This action and the test:col-named-mutations (below) runs the test suite with any supporting mutation test
+# actions running their mutations via their corresponding named [Collection] call.
+#
+# For example, CreateDoc will call [Collection.Create], and
+# UpdateDoc will call [Collection.Update].
+.PHONY: test\:ci-col-named-mutations
+test\:ci-col-named-mutations:
+	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true $(MAKE) test:all
+
+.PHONY: test\:col-named-mutations
+test\:col-named-mutations:
+	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+
 .PHONY: test\:go
 test\:go:
 	go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
