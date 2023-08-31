@@ -12,13 +12,12 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
-)
 
-type errorResponse struct {
-	Error string `json:"error"`
-}
+	"github.com/sourcenetwork/defradb/datastore/badger/v4"
+)
 
 func requestJSON(req *http.Request, out any) error {
 	data, err := io.ReadAll(req.Body)
@@ -32,4 +31,11 @@ func responseJSON(rw http.ResponseWriter, status int, out any) {
 	rw.Header().Add("Content-Type", "application/json")
 	rw.WriteHeader(status)
 	json.NewEncoder(rw).Encode(out) //nolint:errcheck
+}
+
+func parseError(msg any) error {
+	if msg == badger.ErrTxnConflict.Error() {
+		return badger.ErrTxnConflict
+	}
+	return fmt.Errorf("%s", msg)
 }

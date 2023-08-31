@@ -79,7 +79,7 @@ type SchemaPatch struct {
 }
 
 // CreateDoc will attempt to create the given document in the given collection
-// using the collection api.
+// using the set [MutationType].
 type CreateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this create to.
 	//
@@ -97,6 +97,13 @@ type CreateDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// If provided a value, SupportedMutationTypes will cause this test to be skipped
+	// if the active mutation type is not within the given set.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between mutation types, or we need to temporarily document a bug.
+	SupportedMutationTypes immutable.Option[[]MutationType]
 }
 
 // DeleteDoc will attempt to delete the given document in the given collection
@@ -125,8 +132,7 @@ type DeleteDoc struct {
 	DontSync bool
 }
 
-// UpdateDoc will attempt to update the given document in the given collection
-// using the collection api.
+// UpdateDoc will attempt to update the given document using the set [MutationType].
 type UpdateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this update to.
 	//
@@ -153,6 +159,13 @@ type UpdateDoc struct {
 
 	// Setting DontSync to true will prevent waiting for that update.
 	DontSync bool
+
+	// If provided a value, SupportedMutationTypes will cause this test to be skipped
+	// if the active mutation type is not within the given set.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between mutation types, or we need to temporarily document a bug.
+	SupportedMutationTypes immutable.Option[[]MutationType]
 }
 
 // CreateIndex will attempt to create the given secondary index for the given collection

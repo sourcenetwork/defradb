@@ -12,6 +12,7 @@ package tests
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -50,6 +51,7 @@ const (
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
 	repositoryEnvName          = "DEFRA_CODE_REPOSITORY"
 	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
+	mutationTypeEnvName        = "DEFRA_MUTATION_TYPE"
 	documentationDirectoryName = "data_format_changes"
 )
 
@@ -69,6 +71,33 @@ const (
 	cliClientType  ClientType = "cli"
 )
 
+// The MutationType that tests will run using.
+//
+// For example if set to [CollectionSaveMutationType], all supporting
+// actions (such as [UpdateDoc]) will execute via [Collection.Save].
+//
+// Defaults to CollectionSaveMutationType.
+type MutationType string
+
+const (
+	// CollectionSaveMutationType will cause all supporting actions
+	// to run their mutations via [Collection.Save].
+	CollectionSaveMutationType MutationType = "collection-save"
+
+	// CollectionNamedMutationType will cause all supporting actions
+	// to run their mutations via their corresponding named [Collection]
+	// call.
+	//
+	// For example, CreateDoc will call [Collection.Create], and
+	// UpdateDoc will call [Collection.Update].
+	CollectionNamedMutationType MutationType = "collection-named"
+
+	// GQLRequestMutationType will cause all supporting actions to
+	// run their mutations using GQL requests, typically these will
+	// include a `id` parameter to target the specified document.
+	GQLRequestMutationType MutationType = "gql"
+)
+
 var (
 	log            = logging.MustNewLogger("tests.integration")
 	badgerInMemory bool
@@ -77,6 +106,7 @@ var (
 	httpClient     bool
 	goClient       bool
 	cliClient      bool
+	mutationType   MutationType
 )
 
 const subscriptionTimeout = 1 * time.Second
@@ -129,6 +159,7 @@ func init() {
 	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
 	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
 	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
+	mutType, mutationTypeSpecified := os.LookupEnv(mutationTypeEnvName)
 
 	httpClient = getBool(httpClientValue)
 	goClient = getBool(goClientValue)
@@ -145,6 +176,15 @@ func init() {
 
 	if !targetBranchSpecified {
 		targetBranchValue = "develop"
+	}
+
+	if mutationTypeSpecified {
+		mutationType = MutationType(mutType)
+	} else {
+		// Default to testing mutations via Collection.Save - it should be simpler and
+		// faster. We assume this is desirable when not explicitly testing any particular
+		// mutation type.
+		mutationType = CollectionSaveMutationType
 	}
 
 	// default is to run against all
@@ -1064,40 +1104,123 @@ func patchSchema(
 	refreshIndexes(s)
 }
 
-// createDoc creates a document using the collection api and caches it in the
-// given documents slice.
+// createDoc creates a document using the chosen [mutationType] and caches it in the
+// test state object.
 func createDoc(
 	s *state,
 	action CreateDoc,
 ) {
-	// All the docs should be identical, and we only need 1 copy so taking the last
-	// is okay.
+	skipIfMutationTypeUnsupported(s.t, action.SupportedMutationTypes)
+
+	var mutation func(*state, CreateDoc, *net.Node, []client.Collection) (*client.Document, error)
+
+	switch mutationType {
+	case CollectionSaveMutationType:
+		mutation = createDocViaColSave
+	case CollectionNamedMutationType:
+		mutation = createDocViaColCreate
+	case GQLRequestMutationType:
+		mutation = createDocViaGQL
+	default:
+		s.t.Fatalf("invalid mutationType: %v", mutationType)
+	}
+
+	var expectedErrorRaised bool
 	var doc *client.Document
 	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
-		var err error
-		doc, err = client.NewDocFromJSON([]byte(action.Doc))
-		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-			return
-		}
-
-		err = withRetry(
+		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return collections[action.CollectionID].Save(s.ctx, doc) },
+			func() error {
+				var err error
+				doc, err = mutation(s, action, actionNodes[nodeID], collections)
+				return err
+			},
 		)
-		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-			return
-		}
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, false)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.CollectionID >= len(s.documents) {
 		// Expand the slice if required, so that the document can be accessed by collection index
 		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
 	}
 	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
+}
+
+func createDocViaColSave(
+	s *state,
+	action CreateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) (*client.Document, error) {
+	var err error
+	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	if err != nil {
+		return nil, err
+	}
+
+	return doc, collections[action.CollectionID].Save(s.ctx, doc)
+}
+
+func createDocViaColCreate(
+	s *state,
+	action CreateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) (*client.Document, error) {
+	var err error
+	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	if err != nil {
+		return nil, err
+	}
+
+	return doc, collections[action.CollectionID].Create(s.ctx, doc)
+}
+
+func createDocViaGQL(
+	s *state,
+	action CreateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) (*client.Document, error) {
+	collection := collections[action.CollectionID]
+
+	escapedJson, err := json.Marshal(action.Doc)
+	require.NoError(s.t, err)
+
+	request := fmt.Sprintf(
+		`mutation {
+			create_%s(data: %s) {
+				_key
+			}
+		}`,
+		collection.Name(),
+		escapedJson,
+	)
+
+	db := getStore(s, node.DB, immutable.None[int](), action.ExpectedError)
+
+	result := db.ExecRequest(s.ctx, request)
+	if len(result.GQL.Errors) > 0 {
+		return nil, result.GQL.Errors[0]
+	}
+
+	resultantDocs, ok := result.GQL.Data.([]map[string]any)
+	if !ok || len(resultantDocs) == 0 {
+		return nil, nil
+	}
+
+	docKeyString := resultantDocs[0]["_key"].(string)
+	docKey, err := client.NewDocKeyFromString(docKeyString)
+	require.NoError(s.t, err)
+
+	doc, err := collection.Get(s.ctx, docKey, false)
+	require.NoError(s.t, err)
+
+	return doc, nil
 }
 
 // deleteDoc deletes a document using the collection api and caches it in the
@@ -1125,16 +1248,24 @@ func deleteDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
-// updateDoc updates a document using the collection api.
+// updateDoc updates a document using the chosen [mutationType].
 func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	doc := s.documents[action.CollectionID][action.DocID]
+	skipIfMutationTypeUnsupported(s.t, action.SupportedMutationTypes)
 
-	err := doc.SetWithJSON([]byte(action.Doc))
-	if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-		return
+	var mutation func(*state, UpdateDoc, *net.Node, []client.Collection) error
+
+	switch mutationType {
+	case CollectionSaveMutationType:
+		mutation = updateDocViaColSave
+	case CollectionNamedMutationType:
+		mutation = updateDocViaColUpdate
+	case GQLRequestMutationType:
+		mutation = updateDocViaGQL
+	default:
+		s.t.Fatalf("invalid mutationType: %v", mutationType)
 	}
 
 	var expectedErrorRaised bool
@@ -1143,12 +1274,76 @@ func updateDoc(
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return collections[action.CollectionID].Save(s.ctx, doc) },
+			func() error { return mutation(s, action, actionNodes[nodeID], collections) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+func updateDocViaColSave(
+	s *state,
+	action UpdateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) error {
+	doc := s.documents[action.CollectionID][action.DocID]
+
+	err := doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	return collections[action.CollectionID].Save(s.ctx, doc)
+}
+
+func updateDocViaColUpdate(
+	s *state,
+	action UpdateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) error {
+	doc := s.documents[action.CollectionID][action.DocID]
+
+	err := doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	return collections[action.CollectionID].Update(s.ctx, doc)
+}
+
+func updateDocViaGQL(
+	s *state,
+	action UpdateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) error {
+	doc := s.documents[action.CollectionID][action.DocID]
+	collection := collections[action.CollectionID]
+
+	escapedJson, err := json.Marshal(action.Doc)
+	require.NoError(s.t, err)
+
+	request := fmt.Sprintf(
+		`mutation {
+			update_%s(id: "%s", data: %s) {
+				_key
+			}
+		}`,
+		collection.Name(),
+		doc.Key().String(),
+		escapedJson,
+	)
+
+	db := getStore(s, node.DB, immutable.None[int](), action.ExpectedError)
+
+	result := db.ExecRequest(s.ctx, request)
+	if len(result.GQL.Errors) > 0 {
+		return result.GQL.Errors[0]
+	}
+	return nil
 }
 
 // createIndex creates a secondary index using the collection api.
@@ -1687,4 +1882,22 @@ func assertBackupContent(t *testing.T, expectedContent, filepath string) {
 		expectedContent,
 		string(b),
 	)
+}
+
+// skipIfMutationTypeUnsupported skips the current test if the given supportedMutationTypes option has value
+// and the active mutation type is not contained within that value set.
+func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutable.Option[[]MutationType]) {
+	if supportedMutationTypes.HasValue() {
+		var isTypeSupported bool
+		for _, supportedMutationType := range supportedMutationTypes.Value() {
+			if supportedMutationType == mutationType {
+				isTypeSupported = true
+				break
+			}
+		}
+
+		if !isTypeSupported {
+			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
+		}
+	}
 }

@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -346,9 +345,7 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 		return result
 	}
 	result.GQL.Data = response.Data
-	for _, err := range response.Errors {
-		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf(err))
-	}
+	result.GQL.Errors = response.Errors
 	return result
 }
 
@@ -372,12 +369,8 @@ func (c *Client) execRequestSubscription(ctx context.Context, r io.ReadCloser) *
 			if err := json.Unmarshal(evt.Data, &response); err != nil {
 				return
 			}
-			var errors []error
-			for _, err := range response.Errors {
-				errors = append(errors, fmt.Errorf(err))
-			}
 			pub.Publish(client.GQLResult{
-				Errors: errors,
+				Errors: response.Errors,
 				Data:   response.Data,
 			})
 		}

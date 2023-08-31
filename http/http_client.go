@@ -17,8 +17,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
 
 type httpClient struct {
@@ -81,10 +79,7 @@ func (c *httpClient) request(req *http.Request) ([]byte, error) {
 	if err := json.Unmarshal(data, &errRes); err != nil {
 		return nil, fmt.Errorf("%s", data)
 	}
-	if errRes.Error == badger.ErrTxnConflict.Error() {
-		return nil, badger.ErrTxnConflict
-	}
-	return nil, fmt.Errorf("%s", errRes.Error)
+	return nil, errRes.Error
 }
 
 func (c *httpClient) requestJson(req *http.Request, out any) error {

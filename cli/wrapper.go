@@ -299,9 +299,7 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 		return result
 	}
 	result.GQL.Data = response.Data
-	for _, err := range response.Errors {
-		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf(err))
-	}
+	result.GQL.Errors = response.Errors
 	return result
 }
 
@@ -320,12 +318,8 @@ func (w *Wrapper) execRequestSubscription(ctx context.Context, r io.Reader) *eve
 			if err := dec.Decode(&response); err != nil {
 				return
 			}
-			var errors []error
-			for _, err := range response.Errors {
-				errors = append(errors, fmt.Errorf(err))
-			}
 			pub.Publish(client.GQLResult{
-				Errors: errors,
+				Errors: response.Errors,
 				Data:   response.Data,
 			})
 		}

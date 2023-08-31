@@ -26,7 +26,7 @@ func (s *lensHandler) ReloadLenses(rw http.ResponseWriter, req *http.Request) {
 
 	err := lens.ReloadLenses(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -37,12 +37,12 @@ func (s *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 
 	var cfg client.LensConfig
 	if err := requestJSON(req, &cfg); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	err := lens.SetMigration(req.Context(), cfg)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -53,12 +53,12 @@ func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
 
 	var src enumerable.Enumerable[map[string]any]
 	if err := requestJSON(req, &src); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	result, err := lens.MigrateUp(req.Context(), src, chi.URLParam(req, "version"))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
@@ -69,12 +69,12 @@ func (s *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
 
 	var src enumerable.Enumerable[map[string]any]
 	if err := requestJSON(req, &src); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	result, err := lens.MigrateDown(req.Context(), src, chi.URLParam(req, "version"))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
@@ -85,7 +85,7 @@ func (s *lensHandler) Config(rw http.ResponseWriter, req *http.Request) {
 
 	cfgs, err := lens.Config(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, cfgs)
@@ -96,11 +96,11 @@ func (s *lensHandler) HasMigration(rw http.ResponseWriter, req *http.Request) {
 
 	exists, err := lens.HasMigration(req.Context(), chi.URLParam(req, "version"))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err.Error()})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	if !exists {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{"migration not found"})
+		responseJSON(rw, http.StatusNotFound, errorResponse{ErrMigrationNotFound})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)

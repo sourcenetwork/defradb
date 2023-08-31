@@ -58,7 +58,7 @@ func TestMerkleClockPutBlock(t *testing.T) {
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
-	node, err := clk.putBlock(ctx, nil, 0, delta)
+	node, err := clk.putBlock(ctx, nil, delta)
 	if err != nil {
 		t.Errorf("Failed to putBlock, err: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 		return
 	}
 	heads := []cid.Cid{c}
-	node, err := clk.putBlock(ctx, heads, 0, delta)
+	node, err := clk.putBlock(ctx, heads, delta)
 	if err != nil {
 		t.Error("Failed to putBlock with heads:", err)
 		return
