@@ -24,7 +24,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 
 		Request: `query {
 			Book(groupBy: [author]) {
-				author_id
 				_group {
 					name
 					rating
