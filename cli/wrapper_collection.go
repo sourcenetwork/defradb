@@ -100,6 +100,9 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 }
 
 func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
+	args := []string{"client", "document", "update"}
+	args = append(args, "--collection", c.desc.Name)
+
 	docMap, err := doc.ToMap()
 	if err != nil {
 		return err
@@ -109,11 +112,13 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 			delete(docMap, field.Name())
 		}
 	}
-	updater, err := json.Marshal(docMap)
+	document, err := json.Marshal(docMap)
 	if err != nil {
 		return err
 	}
-	_, err = c.UpdateWithKey(ctx, doc.Key(), string(updater))
+	args = append(args, string(document))
+
+	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
 		return err
 	}

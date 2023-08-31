@@ -87,6 +87,7 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 		MakeDocumentDeleteCommand(),
 		MakeDocumentUpdateCommand(),
 		MakeDocumentSaveCommand(),
+		MakeDocumentCreateCommand(),
 	)
 
 	client := MakeClientCommand(cfg)

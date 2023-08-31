@@ -11,7 +11,7 @@
 package cli
 
 import (
-	"fmt"
+	"encoding/json"
 
 	"github.com/spf13/cobra"
 
@@ -24,7 +24,7 @@ func MakeDocumentUpdateCommand() *cobra.Command {
 	var keys []string
 	var filter string
 	var cmd = &cobra.Command{
-		Use:   "update --collection <collection> [--filter <filter> --key <key>] <updater>",
+		Use:   "update --collection <collection> [--filter <filter> --key <key>] <document_or_updater>",
 		Short: "Update documents by key or filter.",
 		Long:  `Update documents by key or filter`,
 		Args:  cobra.ExactArgs(1),
@@ -71,7 +71,15 @@ func MakeDocumentUpdateCommand() *cobra.Command {
 				}
 				return writeJSON(cmd, res)
 			default:
-				return fmt.Errorf("document key or filter must be defined")
+				var docMap map[string]any
+				if err := json.Unmarshal([]byte(args[0]), &docMap); err != nil {
+					return err
+				}
+				doc, err := client.NewDocFromMap(docMap)
+				if err != nil {
+					return err
+				}
+				return col.Update(cmd.Context(), doc)
 			}
 		},
 	}
