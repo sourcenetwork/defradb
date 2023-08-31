@@ -1,4 +1,4 @@
-# Copyright 2022 Democratized Data Foundation
+# Copyright 2023 Democratized Data Foundation
 #
 # Use of this software is governed by the Business Source License
 # included in the file licenses/BSL.txt.
@@ -8,7 +8,13 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: Run GQL Mutations Tests Workflow
+name: Run Collection Named Mutations Tests Workflow
+
+# This workflow runs the test suite with any supporting mutation test actions
+# running their mutations via their corresponding named [Collection] call.
+#
+# For example, CreateDoc will call [Collection.Create], and
+# UpdateDoc will call [Collection.Update].
 
 on:
   pull_request:
@@ -24,8 +30,8 @@ on:
       - develop
 
 jobs:
-  test-gql-mutations:
-    name: Test GQL mutations job
+  test-collection-named-mutations:
+    name: Test Collection Named Mutations job
 
     runs-on: ubuntu-latest
 
@@ -44,5 +50,5 @@ jobs:
           make deps:modules
           make deps:test
 
-      - name: Run tests with gql mutations
-        run: make test:ci-gql-mutations
+      - name: Run tests with Collection Named mutations
+        run: make test:ci-col-named-mutations
