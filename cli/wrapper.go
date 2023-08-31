@@ -179,7 +179,7 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) er
 }
 
 func (w *Wrapper) LensRegistry() client.LensRegistry {
-	return &LensRegistry{w.cmd, w.store.LensRegistry()}
+	return &LensRegistry{w.cmd}
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

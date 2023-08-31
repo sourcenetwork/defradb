@@ -23,15 +23,11 @@ import (
 var _ client.LensRegistry = (*LensRegistry)(nil)
 
 type LensRegistry struct {
-	cmd  *cliWrapper
-	lens client.LensRegistry
+	cmd *cliWrapper
 }
 
 func (w *LensRegistry) WithTxn(tx datastore.Txn) client.LensRegistry {
-	return &LensRegistry{
-		lens: w.lens.WithTxn(tx),
-		cmd:  w.cmd.withTxn(tx),
-	}
+	return &LensRegistry{w.cmd.withTxn(tx)}
 }
 
 func (w *LensRegistry) SetMigration(ctx context.Context, config client.LensConfig) error {
@@ -50,7 +46,10 @@ func (w *LensRegistry) SetMigration(ctx context.Context, config client.LensConfi
 }
 
 func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
-	return w.lens.ReloadLenses(ctx)
+	args := []string{"client", "schema", "migration", "reload"}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }
 
 func (w *LensRegistry) MigrateUp(
@@ -58,7 +57,24 @@ func (w *LensRegistry) MigrateUp(
 	src enumerable.Enumerable[map[string]any],
 	schemaVersionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
-	return w.lens.MigrateUp(ctx, src, schemaVersionID)
+	args := []string{"client", "schema", "migration", "up"}
+	args = append(args, "--version", schemaVersionID)
+
+	srcJSON, err := json.Marshal(src)
+	if err != nil {
+		return nil, err
+	}
+	args = append(args, string(srcJSON))
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var out enumerable.Enumerable[map[string]any]
+	if err := json.Unmarshal(data, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (w *LensRegistry) MigrateDown(
@@ -66,7 +82,24 @@ func (w *LensRegistry) MigrateDown(
 	src enumerable.Enumerable[map[string]any],
 	schemaVersionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
-	return w.lens.MigrateDown(ctx, src, schemaVersionID)
+	args := []string{"client", "schema", "migration", "down"}
+	args = append(args, "--version", schemaVersionID)
+
+	srcJSON, err := json.Marshal(src)
+	if err != nil {
+		return nil, err
+	}
+	args = append(args, string(srcJSON))
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var out enumerable.Enumerable[map[string]any]
+	if err := json.Unmarshal(data, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (w *LensRegistry) Config(ctx context.Context) ([]client.LensConfig, error) {
@@ -84,5 +117,15 @@ func (w *LensRegistry) Config(ctx context.Context) ([]client.LensConfig, error) 
 }
 
 func (w *LensRegistry) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
-	return w.lens.HasMigration(ctx, schemaVersionID)
+	cfgs, err := w.Config(ctx)
+	if err != nil {
+		return false, err
+	}
+	found := false
+	for _, cfg := range cfgs {
+		if cfg.SourceSchemaVersionID == schemaVersionID {
+			found = true
+		}
+	}
+	return found, nil
 }
