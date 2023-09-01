@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"context"
 	"reflect"
 	"sort"
 	"testing"
@@ -127,50 +126,43 @@ func executeExplainRequest(
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.DB.ExecRequest(s.ctx, action.Request)
-		assertExplainRequestResults(
-			s.ctx,
-			s.t,
-			s.testCase.Description,
-			&result.GQL,
-			action,
-		)
+		assertExplainRequestResults(s, &result.GQL, action)
 	}
 }
 
 func assertExplainRequestResults(
-	ctx context.Context,
-	t *testing.T,
-	description string,
+	s *state,
 	actualResult *client.GQLResult,
 	action ExplainRequest,
 ) {
 	// Check expected error matches actual error. If it does we are done.
 	if AssertErrors(
-		t,
-		description,
+		s.t,
+		s.testCase.Description,
 		actualResult.Errors,
 		action.ExpectedError,
 	) {
 		return
 	} else if action.ExpectedError != "" { // If didn't find a match but did expected an error, then fail.
-		assert.Fail(t, "Expected an error however none was raised.", description)
+		assert.Fail(s.t, "Expected an error however none was raised.", s.testCase.Description)
 	}
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
 	resultantData := actualResult.Data.([]map[string]any)
-	log.Info(ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
+	log.Info(s.ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
 	if lengthOfExpectedFullGraph := len(action.ExpectedFullGraph); action.ExpectedFullGraph != nil {
-		require.Equal(t, lengthOfExpectedFullGraph, len(resultantData), description)
+		require.Equal(s.t, lengthOfExpectedFullGraph, len(resultantData), s.testCase.Description)
 		for index, actualResult := range resultantData {
 			if lengthOfExpectedFullGraph > index {
 				assertResultsEqual(
-					t,
+					s.t,
+					s.clientType,
 					action.ExpectedFullGraph[index],
 					actualResult,
-					description,
+					s.testCase.Description,
 				)
 			}
 		}
@@ -179,16 +171,17 @@ func assertExplainRequestResults(
 	// Ensure the complete high-level pattern matches, inother words check that all the
 	// explain graph nodes are in the correct expected ordering.
 	if action.ExpectedPatterns != nil {
-		require.Equal(t, len(action.ExpectedPatterns), len(resultantData), description)
+		require.Equal(s.t, len(action.ExpectedPatterns), len(resultantData), s.testCase.Description)
 
 		for index, actualResult := range resultantData {
 			// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
-			actualResultWithoutAttributes := trimExplainAttributes(t, description, actualResult)
+			actualResultWithoutAttributes := trimExplainAttributes(s.t, s.testCase.Description, actualResult)
 			assertResultsEqual(
-				t,
+				s.t,
+				s.clientType,
 				action.ExpectedPatterns[index],
 				actualResultWithoutAttributes,
-				description,
+				s.testCase.Description,
 			)
 		}
 	}
@@ -197,14 +190,13 @@ func assertExplainRequestResults(
 	// Note: This does not check if the node is in correct location or not.
 	if action.ExpectedTargets != nil {
 		for _, target := range action.ExpectedTargets {
-			assertExplainTargetCase(t, description, target, resultantData)
+			assertExplainTargetCase(s, target, resultantData)
 		}
 	}
 }
 
 func assertExplainTargetCase(
-	t *testing.T,
-	description string,
+	s *state,
 	targetCase PlanNodeTargetCase,
 	actualResults []map[string]any,
 ) {
@@ -218,17 +210,18 @@ func assertExplainTargetCase(
 
 		if !isFound {
 			assert.Fail(
-				t,
+				s.t,
 				"Expected target ["+targetCase.TargetNodeName+"], was not found in the explain graph.",
-				description,
+				s.testCase.Description,
 			)
 		}
 
 		assertResultsEqual(
-			t,
+			s.t,
+			s.clientType,
 			targetCase.ExpectedAttributes,
 			foundActualTarget,
-			description,
+			s.testCase.Description,
 		)
 	}
 }

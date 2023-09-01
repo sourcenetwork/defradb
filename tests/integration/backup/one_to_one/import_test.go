@@ -237,8 +237,7 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 						},
 					},
 					{
-						"name":   "Game of chains",
-						"author": nil,
+						"name": "Game of chains",
 					},
 				},
 			},

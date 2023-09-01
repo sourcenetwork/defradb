@@ -22,7 +22,6 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 		Request: `query {
 					Users(order: {}) {
 						Name
-						Age
 					}
 				}`,
 		Docs: map[int][]string{

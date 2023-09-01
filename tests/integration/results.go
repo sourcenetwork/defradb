@@ -12,6 +12,7 @@ package tests
 
 import (
 	"encoding/json"
+	"testing"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -21,6 +22,34 @@ import (
 // be one of several values, yet the value of that field must be the same
 // across all nodes due to strong eventual consistency.
 type AnyOf []any
+
+// assertResultsAnyOf asserts that actual result is equal to at least one of the expected results.
+//
+// NOTE: the comparison is relaxed when using client types other than goClientType
+func assertResultsAnyOf(t *testing.T, client ClientType, expected AnyOf, actual any, msgAndArgs ...any) {
+	switch client {
+	case goClientType:
+		assert.Contains(t, expected, actual, msgAndArgs...)
+	default:
+		if !resultsAreAnyOf(expected, actual) {
+			assert.Contains(t, expected, actual, msgAndArgs...)
+		}
+	}
+}
+
+// assertResultsEqual asserts that actual result is equal to the expected result.
+//
+// NOTE: the comparison is relaxed when using client types other than goClientType
+func assertResultsEqual(t *testing.T, client ClientType, expected any, actual any, msgAndArgs ...any) {
+	switch client {
+	case goClientType:
+		assert.EqualValues(t, expected, actual, msgAndArgs...)
+	default:
+		if !resultsAreEqual(expected, actual) {
+			assert.EqualValues(t, expected, actual, msgAndArgs...)
+		}
+	}
+}
 
 // resultsAreAnyOf returns true if any of the expected results are of equal value.
 //
@@ -77,40 +106,15 @@ func resultsAreEqual(expected any, actual any) bool {
 		}
 		return assert.ObjectsAreEqualValues(expected, actualVal)
 	case immutable.Option[float64]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
-		return resultsAreEqual(expected, actual)
+		return resultOptionsAreEqual[float64](expectedVal, actual)
 	case immutable.Option[uint64]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
-		return resultsAreEqual(expected, actual)
+		return resultOptionsAreEqual[uint64](expectedVal, actual)
 	case immutable.Option[int64]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
-		return resultsAreEqual(expected, actual)
+		return resultOptionsAreEqual[int64](expectedVal, actual)
 	case immutable.Option[bool]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
-		return resultsAreEqual(expected, actual)
+		return resultOptionsAreEqual[bool](expectedVal, actual)
 	case immutable.Option[string]:
-		if expectedVal.HasValue() {
-			expected = expectedVal.Value()
-		} else {
-			expected = nil
-		}
-		return resultsAreEqual(expected, actual)
+		return resultOptionsAreEqual[string](expectedVal, actual)
 	case []int64:
 		return resultArraysAreEqual[int64](expectedVal, actual)
 	case []uint64:
@@ -138,6 +142,18 @@ func resultsAreEqual(expected any, actual any) bool {
 	default:
 		return assert.ObjectsAreEqualValues(expected, actual)
 	}
+}
+
+// resultArraysAreEqual returns true if the value of the expected immutable.Option
+// and actual result are of equal value.
+//
+// NOTE: Values of type json.Number and immutable.Option will be reduced to their underlying types.
+func resultOptionsAreEqual[S any](expected immutable.Option[S], actual any) bool {
+	var expectedVal any
+	if expected.HasValue() {
+		expectedVal = expected.Value()
+	}
+	return resultsAreEqual(expectedVal, actual)
 }
 
 // resultArraysAreEqual returns true if the array of expected results and actual results

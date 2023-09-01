@@ -101,7 +101,7 @@ func getMigrations(
 				assert.Equal(s.t, expectedLens.Inverse, actualLens.Inverse)
 				assert.Equal(s.t, expectedLens.Path, actualLens.Path)
 
-				assertResultsEqual(s.t, expectedLens.Arguments, actualLens.Arguments)
+				assertResultsEqual(s.t, s.clientType, expectedLens.Arguments, actualLens.Arguments)
 			}
 		}
 	}

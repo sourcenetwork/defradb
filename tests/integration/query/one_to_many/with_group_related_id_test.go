@@ -22,7 +22,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 		Description: "One-to-many query with groupBy on related id (from many side).",
 		Request: `query {
 				Book(groupBy: [author_id]) {
-					author_id
 					_group {
 						name
 						rating
