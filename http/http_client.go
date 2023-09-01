@@ -56,6 +56,9 @@ func (c *httpClient) request(req *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// ignore close errors because they have
+	// no perceivable effect on the end user
+	// and cannot be reconciled easily
 	defer res.Body.Close() //nolint:errcheck
 
 	data, err := io.ReadAll(res.Body)
