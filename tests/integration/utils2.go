@@ -17,6 +17,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -64,7 +65,11 @@ const (
 type ClientType string
 
 const (
-	goClientType   ClientType = "go"
+	// goClientType enables running the test suite using
+	// the go implementation of the client.DB interface.
+	goClientType ClientType = "go"
+	// httpClientType enables running the test suite using
+	// the http implementation of the client.DB interface.
 	httpClientType ClientType = "http"
 )
 
@@ -143,37 +148,30 @@ var previousTestCaseTestName string
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	//  that don't have the flag defined
-	httpClientValue, _ := os.LookupEnv(clientHttpEnvName)
-	goClientValue, _ := os.LookupEnv(clientGoEnvName)
-	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
-	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
-	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
-	rootDatabaseDir, _ = os.LookupEnv(rootDBFilePathEnvName)
-	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
-	inMemoryStoreValue, _ := os.LookupEnv(inMemoryEnvName)
-	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
-	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
-	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
-	mutType, mutationTypeSpecified := os.LookupEnv(mutationTypeEnvName)
+	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
+	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
+	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
+	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
+	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+	DetectDbChanges, _ = strconv.ParseBool(os.Getenv(detectDbChangesEnvName))
+	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
 
-	httpClient = getBool(httpClientValue)
-	goClient = getBool(goClientValue)
-	badgerFile = getBool(badgerFileValue)
-	badgerInMemory = getBool(badgerInMemoryValue)
-	inMemoryStore = getBool(inMemoryStoreValue)
-	DetectDbChanges = getBool(detectDbChangesValue)
-	SetupOnly = getBool(setupOnlyValue)
-
-	if !repositorySpecified {
+	var repositoryValue string
+	if value, ok := os.LookupEnv(repositoryEnvName); ok {
+		repositoryValue = value
+	} else {
 		repositoryValue = "https://github.com/sourcenetwork/defradb.git"
 	}
 
-	if !targetBranchSpecified {
+	var targetBranchValue string
+	if value, ok := os.LookupEnv(targetBranchEnvName); ok {
+		targetBranchValue = value
+	} else {
 		targetBranchValue = "develop"
 	}
 
-	if mutationTypeSpecified {
-		mutationType = MutationType(mutType)
+	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
+		mutationType = MutationType(value)
 	} else {
 		// Default to testing mutations via Collection.Save - it should be simpler and
 		// faster. We assume this is desirable when not explicitly testing any particular
@@ -181,30 +179,26 @@ func init() {
 		mutationType = CollectionSaveMutationType
 	}
 
-	// default is to run against all
-	if !badgerInMemory && !badgerFile && !inMemoryStore && !DetectDbChanges {
-		badgerInMemory = true
-		// Testing against the file system is off by default
-		badgerFile = false
-		inMemoryStore = true
-	}
-	// default is to run against all
-	if !goClient && !httpClient && !DetectDbChanges {
+	// Set default values for the specified testing mode.
+	switch {
+	case DetectDbChanges:
+		// Change detector runs using only the go client type.
 		goClient = true
-		httpClient = true
-	}
-
-	if DetectDbChanges {
+		httpClient = false
 		detectDbChangesInit(repositoryValue, targetBranchValue)
-	}
-}
 
-func getBool(val string) bool {
-	switch strings.ToLower(val) {
-	case "true":
-		return true
 	default:
-		return false
+		// Default is to test all client types.
+		if !goClient && !httpClient {
+			goClient = true
+			httpClient = true
+		}
+		// Default is to test all but filesystem db types.
+		if !badgerInMemory && !badgerFile && !inMemoryStore {
+			badgerFile = false
+			badgerInMemory = true
+			inMemoryStore = true
+		}
 	}
 }
 
@@ -278,45 +272,10 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB,
 	return db, nil
 }
 
-func GetClientTypes() []ClientType {
-	clients := []ClientType{}
-
-	if httpClient {
-		clients = append(clients, httpClientType)
-	}
-
-	if goClient {
-		clients = append(clients, goClientType)
-	}
-
-	return clients
-}
-
-func GetDatabaseTypes() []DatabaseType {
-	databases := []DatabaseType{}
-
-	if badgerInMemory {
-		databases = append(databases, badgerIMType)
-	}
-
-	if badgerFile {
-		databases = append(databases, badgerFileType)
-	}
-
-	if inMemoryStore {
-		databases = append(databases, defraIMType)
-	}
-
-	return databases
-}
-
-func GetDatabase(s *state) (client.DB, string, error) {
-	var (
-		cdb  client.DB
-		path string
-		err  error
-	)
-
+// GetDatabase returns the database implementation for the current
+// testing state. The database type and client type on the test state
+// are used to select the datastore and client implementation to use.
+func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 	switch s.dbt {
 	case badgerIMType:
 		cdb, err = NewBadgerMemoryDB(s.ctx, db.WithUpdateEvents())
@@ -328,7 +287,7 @@ func GetDatabase(s *state) (client.DB, string, error) {
 		cdb, err = NewInMemoryDB(s.ctx)
 
 	default:
-		return nil, "", fmt.Errorf("invalid database type: %v", s.dbt)
+		err = fmt.Errorf("invalid database type: %v", s.dbt)
 	}
 
 	if err != nil {
@@ -340,17 +299,17 @@ func GetDatabase(s *state) (client.DB, string, error) {
 		cdb, err = http.NewWrapper(cdb)
 
 	case goClientType:
-		// do nothing
+		return
 
 	default:
-		return nil, "", fmt.Errorf("invalid client type: %v", s.dbt)
+		err = fmt.Errorf("invalid client type: %v", s.dbt)
 	}
 
 	if err != nil {
 		return nil, "", err
 	}
 
-	return cdb, path, nil
+	return
 }
 
 // ExecuteTestCase executes the given TestCase against the configured database
@@ -368,15 +327,33 @@ func ExecuteTestCase(
 		return
 	}
 
-	ctx := context.Background()
-	cts := GetClientTypes()
-	dbts := GetDatabaseTypes()
-	// Assert that this is not empty to protect against accidental mis-configurations,
-	// otherwise an empty set would silently pass all the tests.
-	require.NotEmpty(t, dbts)
+	var clients []ClientType
+	if httpClient {
+		clients = append(clients, httpClientType)
+	}
+	if goClient {
+		clients = append(clients, goClientType)
+	}
 
-	for _, ct := range cts {
-		for _, dbt := range dbts {
+	var databases []DatabaseType
+	if badgerInMemory {
+		databases = append(databases, badgerIMType)
+	}
+	if badgerFile {
+		databases = append(databases, badgerFileType)
+	}
+	if inMemoryStore {
+		databases = append(databases, defraIMType)
+	}
+
+	// Assert that these are not empty to protect against accidental mis-configurations,
+	// otherwise an empty set would silently pass all the tests.
+	require.NotEmpty(t, databases)
+	require.NotEmpty(t, clients)
+
+	ctx := context.Background()
+	for _, ct := range clients {
+		for _, dbt := range databases {
 			executeTestCase(ctx, t, collectionNames, testCase, dbt, ct)
 		}
 	}
