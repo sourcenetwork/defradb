@@ -1521,9 +1521,7 @@ func executeRequest(
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
-			s.ctx,
-			s.t,
-			s.testCase.Description,
+			s,
 			&result.GQL,
 			action.Results,
 			action.ExpectedError,
@@ -1588,9 +1586,7 @@ func executeSubscriptionRequest(
 						// This assert should be executed from the main test routine
 						// so that failures will be properly handled.
 						expectedErrorRaised := assertRequestResults(
-							s.ctx,
-							s.t,
-							s.testCase.Description,
+							s,
 							finalResult,
 							action.Results,
 							action.ExpectedError,
@@ -1662,16 +1658,14 @@ type docFieldKey struct {
 }
 
 func assertRequestResults(
-	ctx context.Context,
-	t *testing.T,
-	description string,
+	s *state,
 	result *client.GQLResult,
 	expectedResults []map[string]any,
 	expectedError string,
 	nodeID int,
 	anyOfByField map[docFieldKey][]any,
 ) bool {
-	if AssertErrors(t, description, result.Errors, expectedError) {
+	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) {
 		return true
 	}
 
@@ -1682,9 +1676,9 @@ func assertRequestResults(
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]any)
 
-	log.Info(ctx, "", logging.NewKV("RequestResults", result.Data))
+	log.Info(s.ctx, "", logging.NewKV("RequestResults", result.Data))
 
-	require.Equal(t, len(expectedResults), len(resultantData), description)
+	require.Equal(s.t, len(expectedResults), len(resultantData), s.testCase.Description)
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
@@ -1693,31 +1687,25 @@ func assertRequestResults(
 
 			switch r := expectedValue.(type) {
 			case AnyOf:
-				assertResultsAnyOf(t, r, actualValue)
+				assertResultsAnyOf(s.t, s.clientType, r, actualValue)
 
 				dfk := docFieldKey{docIndex, field}
 				valueSet := anyOfByField[dfk]
 				valueSet = append(valueSet, actualValue)
 				anyOfByField[dfk] = valueSet
 			default:
-				assertResultsEqual(t, expectedValue, actualValue, fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex))
+				assertResultsEqual(
+					s.t,
+					s.clientType,
+					expectedValue,
+					actualValue,
+					fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex),
+				)
 			}
 		}
 	}
 
 	return false
-}
-
-func assertResultsAnyOf(t *testing.T, expected AnyOf, actual any, msgAndArgs ...any) {
-	if !resultsAreAnyOf(expected, actual) {
-		assert.Contains(t, expected, actual, msgAndArgs...)
-	}
-}
-
-func assertResultsEqual(t *testing.T, expected any, actual any, msgAndArgs ...any) {
-	if !resultsAreEqual(expected, actual) {
-		assert.EqualValues(t, expected, actual, msgAndArgs...)
-	}
 }
 
 func assertExpectedErrorRaised(t *testing.T, description string, expectedError string, wasRaised bool) {

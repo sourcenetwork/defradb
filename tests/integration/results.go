@@ -12,6 +12,7 @@ package tests
 
 import (
 	"encoding/json"
+	"testing"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -21,6 +22,34 @@ import (
 // be one of several values, yet the value of that field must be the same
 // across all nodes due to strong eventual consistency.
 type AnyOf []any
+
+// assertResultsAnyOf asserts that actual result is equal to at least one of the expected results.
+//
+// NOTE: the comparison is relaxed when using client types other than goClientType
+func assertResultsAnyOf(t *testing.T, client ClientType, expected AnyOf, actual any, msgAndArgs ...any) {
+	switch client {
+	case goClientType:
+		assert.Contains(t, expected, actual, msgAndArgs...)
+	default:
+		if !resultsAreAnyOf(expected, actual) {
+			assert.Contains(t, expected, actual, msgAndArgs...)
+		}
+	}
+}
+
+// assertResultsEqual asserts that actual result is equal to the expected result.
+//
+// NOTE: the comparison is relaxed when using client types other than goClientType
+func assertResultsEqual(t *testing.T, client ClientType, expected any, actual any, msgAndArgs ...any) {
+	switch client {
+	case goClientType:
+		assert.EqualValues(t, expected, actual, msgAndArgs...)
+	default:
+		if !resultsAreEqual(expected, actual) {
+			assert.EqualValues(t, expected, actual, msgAndArgs...)
+		}
+	}
+}
 
 // resultsAreAnyOf returns true if any of the expected results are of equal value.
 //
