@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package delete
+package one_to_many
 
 import (
 	"fmt"
@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	fixture "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_many"
 )
 
 func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testing.T) {
@@ -48,6 +47,20 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 	test := testUtils.TestCase{
 		Description: "One to many delete document using single key show deleted.",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float
+						author: Author
+					}
+					type Author {
+						name: String
+						age: Int
+						published: [Book]
+					}
+				`,
+			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc:          jsonString1,
@@ -108,5 +121,5 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
