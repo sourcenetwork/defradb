@@ -8,33 +8,22 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// Copyright 2023 Democratized Data Foundation
-//
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
-//
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
-
-package update
+package one_to_one
 
 import (
 	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	fixture "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
-func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
+func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
 	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using relation id from single side (wrong)",
+		Description: "One to one update mutation using alias relation id from single side",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
@@ -63,7 +52,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+ 						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
  							_key
  							name
  						}
@@ -80,7 +69,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
- 						update_Author(id: "%s", data: "{\"published_id\": \"%s\"}") {
+ 						update_Author(id: "%s", data: "{\"published\": \"%s\"}") {
  							name
  						}
  					}`,
@@ -92,16 +81,16 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
-func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) {
+func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
 	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using relation id from secondary side",
+		Description: "One to one update mutation using alias relation id from secondary side",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
@@ -130,7 +119,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+ 						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
  							_key
  							name
  						}
@@ -147,7 +136,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
- 						update_Book(id: "%s", data: "{\"author_id\": \"%s\"}") {
+ 						update_Book(id: "%s", data: "{\"author\": \"%s\"}") {
  							name
  						}
  					}`,
@@ -159,17 +148,17 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
-func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T) {
+func TestMutationUpdateOneToOne_AliasWithInvalidLengthRelationIDToLink_Error(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	invalidLenSubKey := "35953ca-518d-9e6b-9ce6cd00eff5"
 	invalidAuthorKey := "bae-" + invalidLenSubKey
 	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using invalid relation id",
+		Description: "One to one update mutation using invalid alias relation id",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
@@ -186,7 +175,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+ 						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
  							_key
  							name
  						}
@@ -203,7 +192,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
-						update_Book(id: "%s", data: "{\"author_id\": \"%s\"}") {
+						update_Book(id: "%s", data: "{\"author\": \"%s\"}") {
 							name
 						}
 					}`,
@@ -215,16 +204,16 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
-func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t *testing.T) {
+func TestMutationUpdateOneToOne_InvalidAliasRelationNameToLinkFromSecondarySide_Error(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	invalidAuthorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ee"
 	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using relation id from secondary side",
+		Description: "One to one update mutation using alias relation id from secondary side",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
@@ -241,7 +230,7 @@ func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+ 						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
  							_key
  							name
  						}
@@ -258,7 +247,7 @@ func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
-						update_Book(id: "%s", data: "{\"author_id\": \"%s\"}") {
+						update_Book(id: "%s", data: "{\"author\": \"%s\"}") {
 							name
 						}
 					}`,
@@ -270,16 +259,16 @@ func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
-func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_Error(t *testing.T) {
+func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySideWithWrongField_Error(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
 	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using relation id from secondary side, with a wrong field.",
+		Description: "One to one update mutation using relation alias name from secondary side, with a wrong field.",
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
@@ -308,7 +297,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
+ 						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
  							_key
  							name
  						}
@@ -325,7 +314,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
- 						update_Book(id: "%s", data: "{\"notName\": \"Unpainted Condo\",\"author_id\": \"%s\"}") {
+ 						update_Book(id: "%s", data: "{\"notName\": \"Unpainted Condo\",\"author\": \"%s\"}") {
  							name
  						}
  					}`,
@@ -337,5 +326,5 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }

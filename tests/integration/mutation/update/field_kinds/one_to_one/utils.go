@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func ExecuteTestCase(t *testing.T, test testUtils.TestCase) {
+func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
 		testUtils.TestCase{
