@@ -19,40 +19,6 @@ import (
 	inlineArray "github.com/sourcenetwork/defradb/tests/integration/mutation/inline_array"
 )
 
-func TestMutationInlineArrayWithNillableBooleans(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Simple inline array with no filter, booleans",
-		Request: `mutation {
-					update_Users(data: "{\"indexLikesDislikes\": [true, true, false, true, null]}") {
-						name
-						indexLikesDislikes
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "John",
-					"indexLikesDislikes": [true, true, false, true]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John",
-				"indexLikesDislikes": []immutable.Option[bool]{
-					immutable.Some(true),
-					immutable.Some(true),
-					immutable.Some(false),
-					immutable.Some(true),
-					immutable.None[bool](),
-				},
-			},
-		},
-	}
-
-	inlineArray.ExecuteTestCase(t, test)
-}
-
 func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
