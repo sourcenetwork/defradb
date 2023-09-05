@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package relation_create
+package one_to_one_to_one
 
 import (
 	"testing"
@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	relationTests "github.com/sourcenetwork/defradb/tests/integration/mutation/relation"
 )
 
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.T) {
@@ -168,7 +167,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 		},
 	}
 
-	relationTests.Execute(t, test)
+	execute(t, test)
 }
 
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing.T) {
@@ -308,5 +307,5 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 		},
 	}
 
-	relationTests.Execute(t, test)
+	execute(t, test)
 }
