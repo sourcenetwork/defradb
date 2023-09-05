@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,13 +8,12 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package relation_delete
+package one_to_one_to_one
 
 import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	relationTests "github.com/sourcenetwork/defradb/tests/integration/mutation/relation"
 )
 
 func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
@@ -182,6 +181,6 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		relationTests.Execute(t, test)
+		execute(t, test)
 	}
 }

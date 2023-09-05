@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package relation
+package one_to_one_to_one
 
 import (
 	"testing"
@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func Execute(t *testing.T, test testUtils.TestCase) {
+func execute(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
 		testUtils.TestCase{

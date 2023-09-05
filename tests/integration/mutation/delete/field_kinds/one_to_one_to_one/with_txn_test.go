@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package relation_delete
+package one_to_one_to_one
 
 import (
 	"testing"
@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	relationTests "github.com/sourcenetwork/defradb/tests/integration/mutation/relation"
 )
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
@@ -82,7 +81,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 		},
 	}
 
-	relationTests.Execute(t, test)
+	execute(t, test)
 }
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
@@ -142,7 +141,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 		},
 	}
 
-	relationTests.Execute(t, test)
+	execute(t, test)
 }
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *testing.T) {
@@ -232,7 +231,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 		},
 	}
 
-	relationTests.Execute(t, test)
+	execute(t, test)
 }
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *testing.T) {
@@ -316,7 +315,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 		},
 	}
 
-	relationTests.Execute(t, test)
+	execute(t, test)
 }
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T) {
@@ -377,7 +376,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 		},
 	}
 
-	relationTests.Execute(t, test)
+	execute(t, test)
 }
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T) {
@@ -444,5 +443,5 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 		},
 	}
 
-	relationTests.Execute(t, test)
+	execute(t, test)
 }
