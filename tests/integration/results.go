@@ -25,35 +25,35 @@ type AnyOf []any
 
 // assertResultsAnyOf asserts that actual result is equal to at least one of the expected results.
 //
-// NOTE: the comparison is relaxed when using client types other than goClientType
+// The comparison is relaxed when using client types other than goClientType.
 func assertResultsAnyOf(t *testing.T, client ClientType, expected AnyOf, actual any, msgAndArgs ...any) {
 	switch client {
-	case goClientType:
-		assert.Contains(t, expected, actual, msgAndArgs...)
-	default:
+	case httpClientType:
 		if !resultsAreAnyOf(expected, actual) {
 			assert.Contains(t, expected, actual, msgAndArgs...)
 		}
+	default:
+		assert.Contains(t, expected, actual, msgAndArgs...)
 	}
 }
 
 // assertResultsEqual asserts that actual result is equal to the expected result.
 //
-// NOTE: the comparison is relaxed when using client types other than goClientType
+// The comparison is relaxed when using client types other than goClientType.
 func assertResultsEqual(t *testing.T, client ClientType, expected any, actual any, msgAndArgs ...any) {
 	switch client {
-	case goClientType:
-		assert.EqualValues(t, expected, actual, msgAndArgs...)
-	default:
+	case httpClientType:
 		if !resultsAreEqual(expected, actual) {
 			assert.EqualValues(t, expected, actual, msgAndArgs...)
 		}
+	default:
+		assert.EqualValues(t, expected, actual, msgAndArgs...)
 	}
 }
 
 // resultsAreAnyOf returns true if any of the expected results are of equal value.
 //
-// NOTE: Values of type json.Number and immutable.Option will be reduced to their underlying types.
+// Values of type json.Number and immutable.Option will be reduced to their underlying types.
 func resultsAreAnyOf(expected AnyOf, actual any) bool {
 	for _, v := range expected {
 		if resultsAreEqual(v, actual) {
@@ -65,7 +65,7 @@ func resultsAreAnyOf(expected AnyOf, actual any) bool {
 
 // resultsAreEqual returns true if the expected and actual results are of equal value.
 //
-// NOTE: Values of type json.Number and immutable.Option will be reduced to their underlying types.
+// Values of type json.Number and immutable.Option will be reduced to their underlying types.
 func resultsAreEqual(expected any, actual any) bool {
 	switch expectedVal := expected.(type) {
 	case map[string]any:
@@ -106,39 +106,39 @@ func resultsAreEqual(expected any, actual any) bool {
 		}
 		return assert.ObjectsAreEqualValues(expected, actualVal)
 	case immutable.Option[float64]:
-		return resultOptionsAreEqual[float64](expectedVal, actual)
+		return resultOptionsAreEqual(expectedVal, actual)
 	case immutable.Option[uint64]:
-		return resultOptionsAreEqual[uint64](expectedVal, actual)
+		return resultOptionsAreEqual(expectedVal, actual)
 	case immutable.Option[int64]:
-		return resultOptionsAreEqual[int64](expectedVal, actual)
+		return resultOptionsAreEqual(expectedVal, actual)
 	case immutable.Option[bool]:
-		return resultOptionsAreEqual[bool](expectedVal, actual)
+		return resultOptionsAreEqual(expectedVal, actual)
 	case immutable.Option[string]:
-		return resultOptionsAreEqual[string](expectedVal, actual)
+		return resultOptionsAreEqual(expectedVal, actual)
 	case []int64:
-		return resultArraysAreEqual[int64](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []uint64:
-		return resultArraysAreEqual[uint64](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []float64:
-		return resultArraysAreEqual[float64](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []string:
-		return resultArraysAreEqual[string](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []bool:
-		return resultArraysAreEqual[bool](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []any:
-		return resultArraysAreEqual[any](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []map[string]any:
-		return resultArraysAreEqual[map[string]any](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []immutable.Option[float64]:
-		return resultArraysAreEqual[immutable.Option[float64]](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []immutable.Option[uint64]:
-		return resultArraysAreEqual[immutable.Option[uint64]](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []immutable.Option[int64]:
-		return resultArraysAreEqual[immutable.Option[int64]](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []immutable.Option[bool]:
-		return resultArraysAreEqual[immutable.Option[bool]](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	case []immutable.Option[string]:
-		return resultArraysAreEqual[immutable.Option[string]](expectedVal, actual)
+		return resultArraysAreEqual(expectedVal, actual)
 	default:
 		return assert.ObjectsAreEqualValues(expected, actual)
 	}
@@ -147,7 +147,7 @@ func resultsAreEqual(expected any, actual any) bool {
 // resultArraysAreEqual returns true if the value of the expected immutable.Option
 // and actual result are of equal value.
 //
-// NOTE: Values of type json.Number and immutable.Option will be reduced to their underlying types.
+// Values of type json.Number and immutable.Option will be reduced to their underlying types.
 func resultOptionsAreEqual[S any](expected immutable.Option[S], actual any) bool {
 	var expectedVal any
 	if expected.HasValue() {
@@ -159,7 +159,7 @@ func resultOptionsAreEqual[S any](expected immutable.Option[S], actual any) bool
 // resultArraysAreEqual returns true if the array of expected results and actual results
 // are of equal value.
 //
-// NOTE: Values of type json.Number and immutable.Option will be reduced to their underlying types.
+// Values of type json.Number and immutable.Option will be reduced to their underlying types.
 func resultArraysAreEqual[S any](expected []S, actual any) bool {
 	if len(expected) == 0 && actual == nil {
 		return true

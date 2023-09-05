@@ -307,10 +307,10 @@ func findTargetNode(
 		}
 
 	case []any:
-		return findTargetNodeFromArray[any](targetName, toSkip, includeChildNodes, r)
+		return findTargetNodeFromArray(targetName, toSkip, includeChildNodes, r)
 
 	case []map[string]any:
-		return findTargetNodeFromArray[map[string]any](targetName, toSkip, includeChildNodes, r)
+		return findTargetNodeFromArray(targetName, toSkip, includeChildNodes, r)
 	}
 
 	return nil, totalMatchedSoFar, false
@@ -384,10 +384,10 @@ func trimExplainAttributes(
 			trimmedMap[key] = trimExplainAttributes(t, description, v)
 
 		case []map[string]any:
-			trimmedMap[key] = trimExplainAttributesArray[map[string]any](t, description, v)
+			trimmedMap[key] = trimExplainAttributesArray(t, description, v)
 
 		case []any:
-			trimmedMap[key] = trimExplainAttributesArray[any](t, description, v)
+			trimmedMap[key] = trimExplainAttributesArray(t, description, v)
 
 		default:
 			assert.Fail(

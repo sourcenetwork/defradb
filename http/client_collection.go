@@ -344,9 +344,9 @@ func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 
 	go func() {
 		eventReader := sse.NewReadCloser(res.Body)
-		// ignore close errors because the headers
-		// and body are already written and we
-		// cannot do anything useful with the error
+		// ignore close errors because the status
+		// and body of the request are already
+		// checked and it cannot be handled properly
 		defer eventReader.Close() //nolint:errcheck
 		defer close(docKeyCh)
 

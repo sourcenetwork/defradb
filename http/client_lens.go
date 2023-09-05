@@ -75,11 +75,11 @@ func (c *LensRegistry) MigrateUp(
 	if err != nil {
 		return nil, err
 	}
-	var result enumerable.Enumerable[map[string]any]
+	var result []map[string]any
 	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
 	}
-	return result, nil
+	return enumerable.New(result), nil
 }
 
 func (c *LensRegistry) MigrateDown(
@@ -97,11 +97,11 @@ func (c *LensRegistry) MigrateDown(
 	if err != nil {
 		return nil, err
 	}
-	var result enumerable.Enumerable[map[string]any]
+	var result []map[string]any
 	if err := c.http.requestJson(req, &result); err != nil {
 		return nil, err
 	}
-	return result, nil
+	return enumerable.New(result), nil
 }
 
 func (c *LensRegistry) Config(ctx context.Context) ([]client.LensConfig, error) {

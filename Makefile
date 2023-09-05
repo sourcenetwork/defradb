@@ -186,11 +186,15 @@ test\:build:
 
 .PHONY: test\:ci
 test\:ci:
-	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:all
+	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true \
+	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
+	$(MAKE) test:all
 
 .PHONY: test\:ci-gql-mutations
 test\:ci-gql-mutations:
-	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true $(MAKE) test:all
+	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true \
+	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
+	$(MAKE) test:all
 
 .PHONY: test\:gql-mutations
 test\:gql-mutations:
@@ -203,7 +207,9 @@ test\:gql-mutations:
 # UpdateDoc will call [Collection.Update].
 .PHONY: test\:ci-col-named-mutations
 test\:ci-col-named-mutations:
-	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true $(MAKE) test:all
+	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true \
+	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
+	$(MAKE) test:all
 
 .PHONY: test\:col-named-mutations
 test\:col-named-mutations:
@@ -212,6 +218,10 @@ test\:col-named-mutations:
 .PHONY: test\:go
 test\:go:
 	go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+
+.PHONY: test\:http
+test\:http:
+	DEFRA_CLIENT_HTTP=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
@@ -278,7 +288,7 @@ test\:coverage-html:
 .PHONY: test\:changes
 test\:changes:
 	@$(MAKE) deps:lens
-	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum -- ./... -shuffle=on -p 1
+	env DEFRA_DETECT_DATABASE_CHANGES=true DEFRA_CLIENT_GO=true gotestsum -- ./... -shuffle=on -p 1
 
 .PHONY: validate\:codecov
 validate\:codecov:

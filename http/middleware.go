@@ -36,22 +36,22 @@ var (
 	dbContextKey = contextKey("db")
 	// txContextKey is the context key for the datastore.Txn
 	//
-	// NOTE: this will only be set if a transaction id is specified
+	// This will only be set if a transaction id is specified.
 	txContextKey = contextKey("tx")
 	// storeContextKey is the context key for the client.Store
 	//
-	// NOTE: if a transaction exists, all operations will be executed
-	// in the current transaction context
+	// If a transaction exists, all operations will be executed
+	// in the current transaction context.
 	storeContextKey = contextKey("store")
 	// lensContextKey is the context key for the client.LensRegistry
 	//
-	// NOTE: if a transaction exists, all operations will be executed
-	// in the current transaction context
+	// If a transaction exists, all operations will be executed
+	// in the current transaction context.
 	lensContextKey = contextKey("lens")
 	// colContextKey is the context key for the client.Collection
 	//
-	// NOTE: if a transaction exists, all operations will be executed
-	// in the current transaction context
+	// If a transaction exists, all operations will be executed
+	// in the current transaction context.
 	colContextKey = contextKey("col")
 )
 
