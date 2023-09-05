@@ -8,14 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package create
+package one_to_many
 
 import (
 	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	fixture "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_many"
 )
 
 func TestMutationCreateOneToMany_AliasedRelationNameWithInvalidField_Error(t *testing.T) {
@@ -32,7 +31,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameWithInvalidField_Error(t *te
 			},
 		},
 	}
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationSingleSide_NoIDFieldError(t *testing.T) {
@@ -49,7 +48,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationSingleSid
 			},
 		},
 	}
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 // Note: This test should probably not pass, as it contains a
@@ -72,7 +71,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationManySide_
 			},
 		},
 	}
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToMany_AliasedRelationNamToLinkFromSingleSide_NoIDFieldError(t *testing.T) {
@@ -107,7 +106,7 @@ func TestMutationCreateOneToMany_AliasedRelationNamToLinkFromSingleSide_NoIDFiel
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testing.T) {
@@ -184,7 +183,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDocID(t *testing.T) {
@@ -226,7 +225,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 			},
 		},
 	}
-	fixture.ExecuteTestCase(t, nonAliasedTest)
+	executeTestCase(t, nonAliasedTest)
 
 	// Check that `bookKey` is same in both above and the alised version below.
 	// Note: Everything should be same, only diff should be the use of alias.
@@ -265,5 +264,5 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 			},
 		},
 	}
-	fixture.ExecuteTestCase(t, aliasedTest)
+	executeTestCase(t, aliasedTest)
 }

@@ -8,14 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package create
+package one_to_many
 
 import (
 	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	fixture "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_many"
 )
 
 func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
@@ -32,7 +31,7 @@ func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 			},
 		},
 	}
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t *testing.T) {
@@ -49,7 +48,7 @@ func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t 
 			},
 		},
 	}
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 // Note: This test should probably not pass, as it contains a
@@ -72,7 +71,7 @@ func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testi
 			},
 		},
 	}
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToMany_RelationIDToLinkFromSingleSide_NoIDFieldError(t *testing.T) {
@@ -107,7 +106,7 @@ func TestMutationCreateOneToMany_RelationIDToLinkFromSingleSide_NoIDFieldError(t
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
@@ -184,5 +183,5 @@ func TestMutationCreateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 		},
 	}
 
-	fixture.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }

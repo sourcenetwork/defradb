@@ -66,6 +66,51 @@ func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestMutationUpdate_WithArrayOfStringsToNil_Errors(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple update mutation with string array, replace with nil",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						preferredStrings: [String!]
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"preferredStrings": ["", "the previous", "the first", "empty string"]
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"preferredStrings": null
+				}`,
+				// This is a bug, this test should be removed in
+				// https://github.com/sourcenetwork/defradb/issues/1842
+				SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+					testUtils.CollectionNamedMutationType,
+					testUtils.CollectionSaveMutationType,
+				}),
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						Users {
+							preferredStrings
+						}
+					}
+				`,
+				ExpectedError: "EOF",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with string array, replace with empty",
