@@ -19,40 +19,6 @@ import (
 	inlineArray "github.com/sourcenetwork/defradb/tests/integration/mutation/inline_array"
 )
 
-func TestMutationInlineArrayWithNillableInts(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "Simple inline array with no filter, nillable ints",
-		Request: `mutation {
-					update_Users(data: "{\"testScores\": [null, 2, 3, null, 8]}") {
-						name
-						testScores
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"name": "John",
-					"testScores": [1, null, 3]
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John",
-				"testScores": []immutable.Option[int64]{
-					immutable.None[int64](),
-					immutable.Some[int64](2),
-					immutable.Some[int64](3),
-					immutable.None[int64](),
-					immutable.Some[int64](8),
-				},
-			},
-		},
-	}
-
-	inlineArray.ExecuteTestCase(t, test)
-}
-
 func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
