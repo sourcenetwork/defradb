@@ -8,14 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package create
+package one_to_one
 
 import (
 	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
 func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
@@ -32,7 +31,7 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 			},
 		},
 	}
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 // Note: This test should probably not pass, as it contains a
@@ -55,7 +54,7 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 			},
 		},
 	}
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testing.T) {
@@ -72,7 +71,7 @@ func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testin
 			},
 		},
 	}
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToOne(t *testing.T) {
@@ -149,7 +148,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
@@ -226,7 +225,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(t *testing.T) {
@@ -264,7 +263,7 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondary(t *testing.T) {
@@ -302,5 +301,5 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondar
 		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }

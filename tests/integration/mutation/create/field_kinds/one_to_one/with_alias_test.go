@@ -8,14 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package create
+package one_to_one
 
 import (
 	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
 func TestMutationCreateOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
@@ -32,7 +31,7 @@ func TestMutationCreateOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 			},
 		},
 	}
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 // Note: This test should probably not pass, as it contains a
@@ -55,7 +54,7 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationPrimarySide_Creat
 			},
 		},
 	}
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationSecondarySide_Error(t *testing.T) {
@@ -72,7 +71,7 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationSecondarySide_Err
 			},
 		},
 	}
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySide(t *testing.T) {
@@ -147,7 +146,7 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySid
 		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromSecondarySide(t *testing.T) {
@@ -222,5 +221,5 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromSecondaryS
 		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
