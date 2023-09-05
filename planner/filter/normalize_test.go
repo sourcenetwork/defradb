@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -282,12 +281,7 @@ func TestNormalizeConditions(t *testing.T) {
 		},
 	}
 
-	mapping := &core.DocumentMapping{
-		IndexesByName: map[string][]int{"name": {0}, "age": {1}, "published": {2}, "verified": {3}},
-		ChildMappings: []*core.DocumentMapping{nil, nil, {
-			IndexesByName: map[string][]int{"rating": {11}, "genre": {12}},
-		}},
-	}
+	mapping := getDocMapping()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			inputFilter := mapper.ToFilter(request.Filter{Conditions: tt.input}, mapping)

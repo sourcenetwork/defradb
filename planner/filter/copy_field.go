@@ -11,10 +11,8 @@ func traverseFilterByType(
 ) map[connor.FilterKey]any {
 	result := make(map[connor.FilterKey]any)
 	for targetKey, clause := range conditions {
-		if indexKey, isIndexKey := targetKey.(*mapper.PropertyIndex); isIndexKey {
-			if key.Index == indexKey.Index {
-				result[key] = clause
-			}
+		if targetKey.Equal(key) {
+			result[key] = clause
 		} else if opKey, isOpKey := targetKey.(*mapper.Operator); isOpKey {
 			clauseArr, isArr := clause.([]any)
 			if isArr {
