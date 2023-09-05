@@ -333,6 +333,9 @@ func (c *Client) ExecRequest(ctx context.Context, query string) *client.RequestR
 		result.Pub = c.execRequestSubscription(ctx, res.Body)
 		return result
 	}
+	// ignore close errors because they have
+	// no perceivable effect on the end user
+	// and cannot be reconciled easily
 	defer res.Body.Close() //nolint:errcheck
 
 	data, err := io.ReadAll(res.Body)
@@ -359,6 +362,9 @@ func (c *Client) execRequestSubscription(ctx context.Context, r io.ReadCloser) *
 
 	go func() {
 		eventReader := sse.NewReadCloser(r)
+		// ignore close errors because the status
+		// and body of the request are already
+		// checked and it cannot be handled properly
 		defer eventReader.Close() //nolint:errcheck
 
 		for {

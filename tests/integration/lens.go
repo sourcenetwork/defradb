@@ -77,6 +77,7 @@ func getMigrations(
 		require.NoError(s.t, err)
 		require.Equal(s.t, len(configs), len(action.ExpectedResults))
 
+		// The order of the results is not deterministic, so do not assert on the element
 		for _, expected := range action.ExpectedResults {
 			var actual client.LensConfig
 			var actualFound bool
