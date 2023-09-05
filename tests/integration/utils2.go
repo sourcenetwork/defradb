@@ -179,26 +179,20 @@ func init() {
 		mutationType = CollectionSaveMutationType
 	}
 
-	// Set default values for the specified testing mode.
-	switch {
-	case DetectDbChanges:
-		// Change detector runs using only the go client type.
+	// Default is to test go client type.
+	if !goClient && !httpClient {
 		goClient = true
-		httpClient = false
-		detectDbChangesInit(repositoryValue, targetBranchValue)
+	}
 
-	default:
-		// Default is to test all client types.
-		if !goClient && !httpClient {
-			goClient = true
-			httpClient = true
-		}
-		// Default is to test all but filesystem db types.
-		if !badgerInMemory && !badgerFile && !inMemoryStore {
-			badgerFile = false
-			badgerInMemory = true
-			inMemoryStore = true
-		}
+	// Default is to test all but filesystem db types.
+	if !badgerInMemory && !badgerFile && !inMemoryStore && !DetectDbChanges {
+		badgerFile = false
+		badgerInMemory = true
+		inMemoryStore = true
+	}
+
+	if DetectDbChanges {
+		detectDbChangesInit(repositoryValue, targetBranchValue)
 	}
 }
 
