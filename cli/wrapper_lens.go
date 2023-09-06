@@ -60,7 +60,14 @@ func (w *LensRegistry) MigrateUp(
 	args := []string{"client", "schema", "migration", "up"}
 	args = append(args, "--version", schemaVersionID)
 
-	srcJSON, err := json.Marshal(src)
+	var srcData []map[string]any
+	err := enumerable.ForEach(src, func(item map[string]any) {
+		srcData = append(srcData, item)
+	})
+	if err != nil {
+		return nil, err
+	}
+	srcJSON, err := json.Marshal(srcData)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +92,14 @@ func (w *LensRegistry) MigrateDown(
 	args := []string{"client", "schema", "migration", "down"}
 	args = append(args, "--version", schemaVersionID)
 
-	srcJSON, err := json.Marshal(src)
+	var srcData []map[string]any
+	err := enumerable.ForEach(src, func(item map[string]any) {
+		srcData = append(srcData, item)
+	})
+	if err != nil {
+		return nil, err
+	}
+	srcJSON, err := json.Marshal(srcData)
 	if err != nil {
 		return nil, err
 	}

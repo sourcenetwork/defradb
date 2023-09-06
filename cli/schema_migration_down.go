@@ -30,7 +30,7 @@ func MakeSchemaMigrationDownCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 
-			var src enumerable.Enumerable[map[string]any]
+			var src []map[string]any
 			if err := json.Unmarshal([]byte(args[0]), &src); err != nil {
 				return err
 			}
@@ -38,7 +38,7 @@ func MakeSchemaMigrationDownCommand() *cobra.Command {
 			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
 				lens = lens.WithTxn(tx)
 			}
-			out, err := lens.MigrateDown(cmd.Context(), src, schemaVersionID)
+			out, err := lens.MigrateDown(cmd.Context(), enumerable.New(src), schemaVersionID)
 			if err != nil {
 				return err
 			}
