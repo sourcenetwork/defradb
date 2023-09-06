@@ -67,7 +67,14 @@ func (c *LensRegistry) MigrateUp(
 ) (enumerable.Enumerable[map[string]any], error) {
 	methodURL := c.http.baseURL.JoinPath("lens", schemaVersionID, "up")
 
-	body, err := json.Marshal(src)
+	var data []map[string]any
+	err := enumerable.ForEach(src, func(item map[string]any) {
+		data = append(data, item)
+	})
+	if err != nil {
+		return nil, err
+	}
+	body, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +96,14 @@ func (c *LensRegistry) MigrateDown(
 ) (enumerable.Enumerable[map[string]any], error) {
 	methodURL := c.http.baseURL.JoinPath("lens", schemaVersionID, "down")
 
-	body, err := json.Marshal(src)
+	var data []map[string]any
+	err := enumerable.ForEach(src, func(item map[string]any) {
+		data = append(data, item)
+	})
+	if err != nil {
+		return nil, err
+	}
+	body, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
