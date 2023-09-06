@@ -187,13 +187,13 @@ test\:build:
 .PHONY: test\:ci
 test\:ci:
 	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true \
-	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
+	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true DEFRA_CLIENT_CLI=true \
 	$(MAKE) test:all
 
 .PHONY: test\:ci-gql-mutations
 test\:ci-gql-mutations:
 	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true \
-	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
+	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true DEFRA_CLIENT_CLI=true \
 	$(MAKE) test:all
 
 .PHONY: test\:gql-mutations
@@ -208,7 +208,7 @@ test\:gql-mutations:
 .PHONY: test\:ci-col-named-mutations
 test\:ci-col-named-mutations:
 	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true \
-	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
+	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true DEFRA_CLIENT_CLI=true \
 	$(MAKE) test:all
 
 .PHONY: test\:col-named-mutations
@@ -222,6 +222,10 @@ test\:go:
 .PHONY: test\:http
 test\:http:
 	DEFRA_CLIENT_HTTP=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+
+.PHONY: test\:cli
+test\:cli:
+	DEFRA_CLIENT_CLI=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
