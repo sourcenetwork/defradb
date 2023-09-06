@@ -49,7 +49,7 @@ func TestMergeFilterConditions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			leftFilter := mapper.ToFilter(request.Filter{Conditions: tt.left}, mapping)
 			rightFilter := mapper.ToFilter(request.Filter{Conditions: tt.right}, mapping)
-			actualFilter := MergeFilterConditions(leftFilter.Conditions, rightFilter.Conditions)
+			actualFilter := Merge(leftFilter.Conditions, rightFilter.Conditions)
 			expectedFilter := mapper.ToFilter(request.Filter{Conditions: tt.expected}, mapping)
 			AssertEqualFilterMap(t, expectedFilter.Conditions, actualFilter)
 		})

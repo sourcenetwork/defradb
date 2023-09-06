@@ -4,7 +4,7 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-func RemoveFieldFromFilter(filter *mapper.Filter, field mapper.Field) {
+func RemoveField(filter *mapper.Filter, field mapper.Field) {
 	if filter == nil {
 		return
 	}

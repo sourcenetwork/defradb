@@ -114,7 +114,7 @@ func TestFilterConditionsToExternal(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			output := FilterConditionsToExternal(test.inputConditions, test.inputMapping)
+			output := BuildExternalConditions(test.inputConditions, test.inputMapping)
 			if !reflect.DeepEqual(output, test.expectedOutput) {
 				t.Errorf("Expected %v, but got %v", test.expectedOutput, output)
 			}

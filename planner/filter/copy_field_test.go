@@ -66,7 +66,7 @@ func TestCopyFilterTreeNodesForField(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			inputFilter := mapper.ToFilter(request.Filter{Conditions: test.inputFilter}, mapping)
-			actualFilter := CopyFilterTreeNodesForField(inputFilter, test.inputField)
+			actualFilter := CopyField(inputFilter, test.inputField)
 			expectedFilter := mapper.ToFilter(request.Filter{Conditions: test.expectedFilter}, mapping)
 			AssertEqualFilterMap(t, expectedFilter.Conditions, actualFilter.Conditions)
 		})

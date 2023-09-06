@@ -126,6 +126,6 @@ func normalizeConditions(conditions any, skipRoot bool) any {
 	}
 }
 
-func NormalizeConditions(conditions map[connor.FilterKey]any) map[connor.FilterKey]any {
+func Normalize(conditions map[connor.FilterKey]any) map[connor.FilterKey]any {
 	return normalizeConditions(conditions, false).(map[connor.FilterKey]any)
 }

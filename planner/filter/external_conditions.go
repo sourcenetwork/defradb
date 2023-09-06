@@ -6,7 +6,7 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-func FilterConditionsToExternal(conditions map[connor.FilterKey]any, mapping *core.DocumentMapping) map[string]any {
+func BuildExternalConditions(conditions map[connor.FilterKey]any, mapping *core.DocumentMapping) map[string]any {
 	externalConditions := make(map[string]any)
 
 	for key, clause := range conditions {
@@ -40,7 +40,7 @@ func FilterConditionsToExternal(conditions map[connor.FilterKey]any, mapping *co
 				if !isFilterMap {
 					continue
 				}
-				externalClauses = append(externalClauses, FilterConditionsToExternal(extMap, mapping))
+				externalClauses = append(externalClauses, BuildExternalConditions(extMap, mapping))
 			}
 			externalConditions[sourceKey] = externalClauses
 		case map[connor.FilterKey]any:
@@ -48,7 +48,7 @@ func FilterConditionsToExternal(conditions map[connor.FilterKey]any, mapping *co
 			if propIndex < len(mapping.ChildMappings) && mapping.ChildMappings[propIndex] != nil {
 				m = mapping.ChildMappings[propIndex]
 			}
-			innerExternalClause := FilterConditionsToExternal(typedClause, m)
+			innerExternalClause := BuildExternalConditions(typedClause, m)
 			externalConditions[sourceKey] = innerExternalClause
 		default:
 			externalConditions[sourceKey] = typedClause

@@ -44,7 +44,7 @@ func traverseFilterByProperty(
 	return result
 }
 
-func CopyFilterTreeNodesForField(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
+func CopyField(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
 	if filter == nil {
 		return nil
 	}

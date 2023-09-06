@@ -5,7 +5,7 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-func MergeFilterConditions(dest map[connor.FilterKey]any, src map[connor.FilterKey]any) map[connor.FilterKey]any {
+func Merge(dest map[connor.FilterKey]any, src map[connor.FilterKey]any) map[connor.FilterKey]any {
 	if dest == nil {
 		dest = make(map[connor.FilterKey]any)
 	}
@@ -16,5 +16,5 @@ func MergeFilterConditions(dest map[connor.FilterKey]any, src map[connor.FilterK
 		},
 	}
 
-	return NormalizeConditions(result)
+	return Normalize(result)
 }

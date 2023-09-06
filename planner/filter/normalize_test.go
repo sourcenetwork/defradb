@@ -285,7 +285,7 @@ func TestNormalizeConditions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			inputFilter := mapper.ToFilter(request.Filter{Conditions: tt.input}, mapping)
-			actualFilter := NormalizeConditions(inputFilter.Conditions)
+			actualFilter := Normalize(inputFilter.Conditions)
 			expectedFilter := mapper.ToFilter(request.Filter{Conditions: tt.expected}, mapping)
 			AssertEqualFilterMap(t, expectedFilter.Conditions, actualFilter)
 		})
