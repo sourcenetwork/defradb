@@ -14,19 +14,29 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
 func TestMutationInvalidMutation(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple invalid mutation",
-		Request: `mutation {
-			dostuff_User(data: "") {
-				_key
-			}
-		}`,
-		ExpectedError: "Cannot query field \"dostuff_User\" on type \"Mutation\".",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					dostuff_User(data: "") {
+						_key
+					}
+				}`,
+				ExpectedError: "Cannot query field \"dostuff_User\" on type \"Mutation\".",
+			},
+		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }

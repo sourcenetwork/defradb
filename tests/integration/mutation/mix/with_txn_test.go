@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
 func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
@@ -247,6 +246,14 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "Update by two different transactions",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
@@ -315,5 +322,5 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 		},
 	}
 
-	simpleTests.Execute(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
