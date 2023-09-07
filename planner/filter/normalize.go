@@ -43,7 +43,7 @@ func addNormalizedCondition(key connor.FilterKey, val any, m map[connor.FilterKe
 		var andOp *mapper.Operator
 		var andContent []any
 		for existingKey := range m {
-			if op, isOp := existingKey.(*mapper.Operator); isOp && op.Operation == "_and" {
+			if op, isOp := existingKey.(*mapper.Operator); isOp && op.Operation == andID {
 				andOp = op
 				andContent = m[existingKey].([]any)
 				break
@@ -54,7 +54,7 @@ func addNormalizedCondition(key connor.FilterKey, val any, m map[connor.FilterKe
 				existingVal := m[existingKey]
 				delete(m, existingKey)
 				if andOp == nil {
-					andOp = &mapper.Operator{Operation: "_and"}
+					andOp = &mapper.Operator{Operation: andID}
 				}
 				m[andOp] = append(
 					andContent,
@@ -84,9 +84,9 @@ func normalizeConditions(conditions any, skipRoot bool) any {
 		for rootKey, rootVal := range typedConditions {
 			rootOpKey, isRootOp := rootKey.(*mapper.Operator)
 			if isRootOp {
-				if rootOpKey.Operation == "_and" || rootOpKey.Operation == "_or" {
+				if rootOpKey.Operation == andID || rootOpKey.Operation == orID {
 					rootValArr := rootVal.([]any)
-					if len(rootValArr) == 1 || rootOpKey.Operation == "_and" && !skipRoot {
+					if len(rootValArr) == 1 || rootOpKey.Operation == andID && !skipRoot {
 						flat := normalizeConditions(conditionsArrToMap(rootValArr), false)
 						flatMap := flat.(map[connor.FilterKey]any)
 						for k, v := range flatMap {
@@ -107,7 +107,7 @@ func normalizeConditions(conditions any, skipRoot bool) any {
 						}
 						addNormalizedCondition(rootKey, resultArr, result)
 					}
-				} else if rootOpKey.Operation == "_not" {
+				} else if rootOpKey.Operation == notID {
 					notMap := rootVal.(map[connor.FilterKey]any)
 					if len(notMap) == 1 {
 						var k connor.FilterKey
@@ -120,7 +120,7 @@ func normalizeConditions(conditions any, skipRoot bool) any {
 						for k, v = range norm {
 							break
 						}
-						if opKey, ok := k.(*mapper.Operator); ok && opKey.Operation == "_not" {
+						if opKey, ok := k.(*mapper.Operator); ok && opKey.Operation == notID {
 							notNotMap := normalizeConditions(v, false).(map[connor.FilterKey]any)
 							for notNotKey, notNotVal := range notNotMap {
 								addNormalizedCondition(notNotKey, notNotVal, result)

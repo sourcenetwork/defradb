@@ -22,7 +22,7 @@ func Merge(dest map[connor.FilterKey]any, src map[connor.FilterKey]any) map[conn
 	}
 
 	result := map[connor.FilterKey]any{
-		&mapper.Operator{Operation: "_and"}: []any{
+		&mapper.Operator{Operation: andID}: []any{
 			dest, src,
 		},
 	}

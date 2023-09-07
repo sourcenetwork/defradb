@@ -29,7 +29,7 @@ func isComplex(conditions any, isInsideOr bool) bool {
 	switch typedCond := conditions.(type) {
 	case map[connor.FilterKey]any:
 		for k, v := range typedCond {
-			if op, ok := k.(*mapper.Operator); ok && op.Operation == "_or" && len(v.([]any)) > 1 {
+			if op, ok := k.(*mapper.Operator); ok && op.Operation == orID && len(v.([]any)) > 1 {
 				if isComplex(v, true) {
 					return true
 				}

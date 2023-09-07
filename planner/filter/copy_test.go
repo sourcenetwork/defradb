@@ -12,9 +12,10 @@ package filter
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCopyFilter(t *testing.T) {

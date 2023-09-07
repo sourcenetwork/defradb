@@ -24,6 +24,12 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
+const (
+	opAnd = "_and"
+	opOr  = "_or"
+	opNot = "_not"
+)
+
 var (
 	FilterEqOp = &Operator{Operation: "_eq"}
 )
@@ -802,7 +808,7 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key := range source {
-		if key == "_and" || key == "_or" { // handle _not
+		if key == opAnd || key == opOr { // handle _not
 			andFilter := source[key].([]any)
 			for _, innerFilter := range andFilter {
 				innerFields, err := resolveInnerFilterDependencies(
@@ -931,7 +937,7 @@ func constructEmptyJoin(
 	}, nil
 }
 
-// resolveSecondaryRelationIDs contructs the required stuff needed to resolve secondary relation ids.
+// resolveSecondaryRelationIDs constructs the required stuff needed to resolve secondary relation ids.
 //
 // They are handled by joining (if not already done so) the related object and copying its key into the
 // secondary relation id field.
