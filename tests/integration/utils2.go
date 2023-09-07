@@ -1155,7 +1155,7 @@ func createDocViaGQL(
 	request := fmt.Sprintf(
 		`mutation {
 			create_%s(data: %s) {
-				_key
+				_docID
 			}
 		}`,
 		collection.Name(),
@@ -1174,7 +1174,7 @@ func createDocViaGQL(
 		return nil, nil
 	}
 
-	docKeyString := resultantDocs[0]["_key"].(string)
+	docKeyString := resultantDocs[0]["_docID"].(string)
 	docKey, err := client.NewDocKeyFromString(docKeyString)
 	require.NoError(s.t, err)
 
@@ -1288,7 +1288,7 @@ func updateDocViaGQL(
 	request := fmt.Sprintf(
 		`mutation {
 			update_%s(id: "%s", data: %s) {
-				_key
+				_docID
 			}
 		}`,
 		collection.Name(),
