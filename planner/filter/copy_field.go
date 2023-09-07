@@ -5,6 +5,25 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
+// CopyField copies the given field from the provided filter.
+// The result filter preserves the structure of the original filter.
+func CopyField(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
+	if filter == nil {
+		return nil
+	}
+	conditionKey := &mapper.PropertyIndex{
+		Index: field.Index,
+	}
+
+	resultFilter := &mapper.Filter{}
+	conditionMap := traverseFilterByProperty(conditionKey, filter.Conditions, false)
+	if len(conditionMap) > 0 {
+		resultFilter.Conditions = conditionMap
+		return resultFilter
+	}
+	return nil
+}
+
 func traverseFilterByProperty(
 	key *mapper.PropertyIndex,
 	conditions map[connor.FilterKey]any,
@@ -42,21 +61,4 @@ func traverseFilterByProperty(
 		}
 	}
 	return result
-}
-
-func CopyField(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
-	if filter == nil {
-		return nil
-	}
-	conditionKey := &mapper.PropertyIndex{
-		Index: field.Index,
-	}
-
-	resultFilter := &mapper.Filter{}
-	conditionMap := traverseFilterByProperty(conditionKey, filter.Conditions, false)
-	if len(conditionMap) > 0 {
-		resultFilter.Conditions = conditionMap
-		return resultFilter
-	}
-	return nil
 }

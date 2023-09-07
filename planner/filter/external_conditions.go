@@ -6,6 +6,7 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
+// BuildExternalConditions builds a map of external conditions from the provided conditions.
 func BuildExternalConditions(conditions map[connor.FilterKey]any, mapping *core.DocumentMapping) map[string]any {
 	externalConditions := make(map[string]any)
 

@@ -1,11 +1,10 @@
 package filter
 
 import (
-	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-// split the provided filter into 2 filters based on field.
+// SplitByField splits the provided filter into 2 filters based on field.
 // It can be used for extracting a supType
 // Eg. (filter: {age: 10, name: "bob", author: {birthday: "June 26, 1990", ...}, ...})
 //
@@ -23,19 +22,4 @@ func SplitByField(filter *mapper.Filter, field mapper.Field) (*mapper.Filter, *m
 	RemoveField(filter, field)
 
 	return filter, splitF
-}
-
-func removeConditionIndex(
-	key *mapper.PropertyIndex,
-	filterConditions map[connor.FilterKey]any,
-) (bool, any) {
-	for targetKey, clause := range filterConditions {
-		if indexKey, isIndexKey := targetKey.(*mapper.PropertyIndex); isIndexKey {
-			if key.Index == indexKey.Index {
-				delete(filterConditions, targetKey)
-				return true, clause
-			}
-		}
-	}
-	return false, nil
 }

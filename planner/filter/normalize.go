@@ -5,6 +5,18 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
+// Normalize normalizes the provided filter conditions.
+// The following cases are subject of normalization:
+// - _and or _or with one element is removed flattened
+// - double _not is removed
+// - any number of consecutive _ands with any number of elements is flattened
+// As the result object is a map with unique keys (a.k.a. properties),
+// while performing flattening of compound operators if the same property
+// is present in the result map, both conditions will be moved into an _and 
+func Normalize(conditions map[connor.FilterKey]any) map[connor.FilterKey]any {
+	return normalizeConditions(conditions, false).(map[connor.FilterKey]any)
+}
+
 func conditionsArrToMap(conditions []any) map[connor.FilterKey]any {
 	result := make(map[connor.FilterKey]any)
 	for _, clause := range conditions {
@@ -124,8 +136,4 @@ func normalizeConditions(conditions any, skipRoot bool) any {
 	default:
 		return conditions
 	}
-}
-
-func Normalize(conditions map[connor.FilterKey]any) map[connor.FilterKey]any {
-	return normalizeConditions(conditions, false).(map[connor.FilterKey]any)
 }

@@ -4,6 +4,11 @@ import (
 	"github.com/sourcenetwork/defradb/connor"
 )
 
+// Copy performs a deep copy of the provided filter.
+func Copy(filter map[connor.FilterKey]any) map[connor.FilterKey]any {
+	return copyFilterConditions(filter).(map[connor.FilterKey]any)
+}
+
 func copyFilterConditions(conditions any) any {
 	switch typedCond := conditions.(type) {
 	case map[connor.FilterKey]any:
@@ -21,8 +26,4 @@ func copyFilterConditions(conditions any) any {
 	default:
 		return conditions
 	}
-}
-
-func Copy(filter map[connor.FilterKey]any) map[connor.FilterKey]any {
-	return copyFilterConditions(filter).(map[connor.FilterKey]any)
 }

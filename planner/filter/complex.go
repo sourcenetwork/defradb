@@ -5,6 +5,17 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
+// IsComplex returns true if the provided filter is complex.
+// A filter is considered complex if it contains a relation
+// object withing an _or operator not necessarily being
+// its direct  child.
+func IsComplex(filter *mapper.Filter) bool {
+	if filter == nil {
+		return false
+	}
+	return isComplex(filter.Conditions, false)
+}
+
 func isComplex(conditions any, isInsideOr bool) bool {
 	switch typedCond := conditions.(type) {
 	case map[connor.FilterKey]any:
@@ -37,11 +48,4 @@ func isComplex(conditions any, isInsideOr bool) bool {
 		return false
 	}
 	return false
-}
-
-func IsComplex(filter *mapper.Filter) bool {
-	if filter == nil {
-		return false
-	}
-	return isComplex(filter.Conditions, false)
 }
