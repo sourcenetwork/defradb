@@ -42,18 +42,6 @@ func SplitFilterByField(filter *mapper.Filter, field mapper.Field) (*mapper.Filt
 	return filter, splitF
 }
 
-func IsFilterComplex(filter *mapper.Filter) bool {
-	if filter == nil {
-		return false
-	}
-	for op, _ := range filter.ExternalConditions {
-		if op == "_or" {
-			return true
-		}
-	}
-	return false
-}
-
 func removeConditionIndex(
 	key *mapper.PropertyIndex,
 	filterConditions map[connor.FilterKey]any,
