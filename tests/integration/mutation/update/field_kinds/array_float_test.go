@@ -21,6 +21,11 @@ import (
 func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with float array, replace with nil",
+		// This restriction should be removed when we can, it is here because of
+		// https://github.com/sourcenetwork/defradb/issues/1842
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.GQLRequestMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -40,11 +45,6 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 				Doc: `{
 					"favouriteFloats": null
 				}`,
-				// This restriction should be removed when we can, it is here because of
-				// https://github.com/sourcenetwork/defradb/issues/1842
-				SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-					testUtils.GQLRequestMutationType,
-				}),
 			},
 			testUtils.Request{
 				Request: `
@@ -69,6 +69,12 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 func TestMutationUpdate_WithArrayOfFloatsToNil_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with float array, replace with nil",
+		// This is a bug, this test should be removed in
+		// https://github.com/sourcenetwork/defradb/issues/1842
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -88,12 +94,6 @@ func TestMutationUpdate_WithArrayOfFloatsToNil_Errors(t *testing.T) {
 				Doc: `{
 					"favouriteFloats": null
 				}`,
-				// This is a bug, this test should be removed in
-				// https://github.com/sourcenetwork/defradb/issues/1842
-				SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-					testUtils.CollectionNamedMutationType,
-					testUtils.CollectionSaveMutationType,
-				}),
 			},
 			testUtils.Request{
 				Request: `

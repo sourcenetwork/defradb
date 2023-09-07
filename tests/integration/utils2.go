@@ -317,6 +317,8 @@ func ExecuteTestCase(
 		return
 	}
 
+	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
+
 	ctx := context.Background()
 	dbts := GetDatabaseTypes()
 	// Assert that this is not empty to protect against accidental mis-configurations,
@@ -1041,8 +1043,6 @@ func createDoc(
 	s *state,
 	action CreateDoc,
 ) {
-	skipIfMutationTypeUnsupported(s.t, action.SupportedMutationTypes)
-
 	var mutation func(*state, CreateDoc, *net.Node, []client.Collection) (*client.Document, error)
 
 	switch mutationType {
@@ -1184,8 +1184,6 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	skipIfMutationTypeUnsupported(s.t, action.SupportedMutationTypes)
-
 	var mutation func(*state, UpdateDoc, *net.Node, []client.Collection) error
 
 	switch mutationType {
