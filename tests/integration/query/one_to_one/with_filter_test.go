@@ -17,9 +17,32 @@ import (
 )
 
 func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one relation query with simple filter on sub type",
-		Request: `query {
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true,
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
 					Book {
 						name
 						rating
@@ -29,43 +52,50 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
+				Results: []map[string]any{
+					{
+						"name":   "Painted House",
+						"rating": 4.9,
+						"author": map[string]any{
+							"name": "John Grisham",
+							"age":  uint64(65),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation query with simple filter on parent",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			//authors
-			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-				"author": map[string]any{
-					"name": "John Grisham",
-					"age":  uint64(65),
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "One-to-one relation query with simple filter on parent",
-		Request: `query {
+			testUtils.Request{
+				Request: `query {
 					Book(filter: {name: {_eq: "Painted House"}}) {
 						name
 						rating
@@ -75,43 +105,50 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
+				Results: []map[string]any{
+					{
+						"name":   "Painted House",
+						"rating": 4.9,
+						"author": map[string]any{
+							"name": "John Grisham",
+							"age":  uint64(65),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation query with simple sub filter on child",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			//authors
-			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-				"author": map[string]any{
-					"name": "John Grisham",
-					"age":  uint64(65),
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "One-to-one relation query with simple sub filter on child",
-		Request: `query {
+			testUtils.Request{
+				Request: `query {
 					Book(filter: {author: {verified: {_eq: true}}}) {
 						name
 						rating
@@ -121,43 +158,68 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
+				Results: []map[string]any{
+					{
+						"name":   "Painted House",
+						"rating": 4.9,
+						"author": map[string]any{
+							"name": "John Grisham",
+							"age":  uint64(65),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation query with filter on parent referencing parent through child",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			//authors
-			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-d432bdfb-787d-5a1c-ac29-dc025ab80095
+				Doc: `{
+					"name": "Theif Lord",
+					"rating": 4.8
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-				"author": map[string]any{
-					"name": "John Grisham",
-					"age":  uint64(65),
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false,
+					"published_id": "bae-d432bdfb-787d-5a1c-ac29-dc025ab80095"
+				}`,
 			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Description: "One-to-one relation query with filter on parent referencing parent through child",
-		Request: `query {
+			testUtils.Request{
+				Request: `query {
 					Book(filter: {author: {published: {rating: {_eq: 4.9}}}}) {
 						name
 						rating
@@ -167,85 +229,160 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 						}
 					}
 				}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
-					"name": "Painted House",
-					"rating": 4.9
-				}`,
-				// bae-d432bdfb-787d-5a1c-ac29-dc025ab80095
-				`{
-					"name": "Theif Lord",
-					"rating": 4.8
-				}`,
-			},
-			//authors
-			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true,
-					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false,
-					"published_id": "bae-d432bdfb-787d-5a1c-ac29-dc025ab80095"
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
-				"author": map[string]any{
-					"name": "John Grisham",
-					"age":  uint64(65),
+				Results: []map[string]any{
+					{
+						"name":   "Painted House",
+						"rating": 4.9,
+						"author": map[string]any{
+							"name": "John Grisham",
+							"age":  uint64(65),
+						},
+					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-one relation with simple sub filter on child, but not child selections",
-		Request: `query {
-					Book(filter: {author: {verified: {_eq: true}}}) {
-						name
-						rating
-					}
-				}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			//authors
-			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
 					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name":   "Painted House",
-				"rating": 4.9,
+			testUtils.Request{
+				Request: `query {
+					Book(filter: {author: {verified: {_eq: true}}}) {
+						name
+						rating
+					}
+				}`,
+				Results: []map[string]any{{
+					"name":   "Painted House",
+					"rating": 4.9,
+				}},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation with _and filter that includes relation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true,
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(filter: {_and: [
+						{name: {_eq: "Painted House"}},
+						{author: {verified: {_eq: true}}}
+					]}) {
+						name
+						rating
+					}
+				}`,
+				Results: []map[string]any{{
+					"name":   "Painted House",
+					"rating": 4.9,
+				}},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-one relation with _or filter that includes relation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true,
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Book(filter: {_or: [
+						{_and: [
+							{rating: {_gt: 4}},
+							{author: {verified: {_eq: true}}}
+						]},
+						{_and: [
+							{rating: {_lt: 4}},
+							{author: {verified: {_eq: false}}}
+						]}
+					]}) {
+						name
+						rating
+					}
+				}`,
+				Results: []map[string]any{{
+					"name":   "Painted House",
+					"rating": 4.9,
+				}},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
 }

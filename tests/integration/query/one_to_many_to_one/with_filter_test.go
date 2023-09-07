@@ -284,3 +284,103 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "1-N-1 two level deep filter with compound operator and relation",
+		Actions: []any{
+			gqlSchemaOneToManyToOne(),
+			createDocsWith6BooksAnd5Publishers(),
+			testUtils.Request{
+				Request: `query {
+					Author (filter: {_and: [
+						{age: {_gt: 20}},
+						{_or: [
+							{book: {publisher: {yearOpened: {_le: 2020}}}},
+							{book: {rating: { _lt: 1}}}
+						]}
+					]}){
+						name
+					}
+				}`,
+				Results: []map[string]any{{
+					"name": "John Grisham",
+				}},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author (filter: {_and: [
+						{age: {_gt: 20}},
+						{_or: [
+							{book: {publisher: {yearOpened: {_gt: 2020}}}},
+							{book: {rating: { _lt: 1}}}
+						]}
+					]}){
+						name
+					}
+				}`,
+				Results: []map[string]any{{
+					"name": "Cornelia Funke",
+				}},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author (filter: {_and: [
+						{age: {_gt: 20}},
+						{_and: [
+							{book: {publisher: {yearOpened: {_gt: 2020}}}},
+							{book: {rating: { _gt: 1}}}
+						]}
+					]}){
+						name
+					}
+				}`,
+				Results: []map[string]any{{
+					"name": "Cornelia Funke",
+				}},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOneToManyToOneWithCompoundOperatorInSubFilterAndRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "sub filter with compound operator and relation",
+		Actions: []any{
+			gqlSchemaOneToManyToOne(),
+			createDocsWith6BooksAnd5Publishers(),
+			testUtils.Request{
+				Request: `query {
+					Author (filter: {_and: [
+						{age: {_gt: 20}},
+						{_or: [
+							{book: {publisher: {yearOpened: {_lt: 2020}}}},
+							{book: {rating: { _lt: 1}}}
+						]}
+					]}){
+						name
+						book (filter: {_and: [
+							{publisher: {yearOpened: {_lt: 2020}}},
+							{_or: [
+								{rating: { _lt: 3.4}},
+								{publisher: {name: {_eq: "Not existing publisher"}}}
+							]}
+						]}){
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{{
+					"name": "John Grisham",
+					"book": []map[string]any{{
+						"name": "Sooley",
+					}},
+				}},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
