@@ -14,31 +14,14 @@ import (
 //
 // And the subType filter is the conditions that apply to the queried sub type
 // ie: {birthday: "June 26, 1990", ...}.
-func SplitFilterByField(filter *mapper.Filter, field mapper.Field) (*mapper.Filter, *mapper.Filter) {
+func SplitByField(filter *mapper.Filter, field mapper.Field) (*mapper.Filter, *mapper.Filter) {
 	if filter == nil {
 		return nil, nil
 	}
-	conditionKey := &mapper.PropertyIndex{
-		Index: field.Index,
-	}
 
-	keyFound, sub := removeConditionIndex(conditionKey, filter.Conditions)
-	if !keyFound {
-		return filter, nil
-	}
+	splitF := CopyField(filter, field)
+	RemoveField(filter, field)
 
-	// create new splitup filter
-	// our schema ensures that if sub exists, its of type map[string]any
-	splitF := &mapper.Filter{
-		Conditions:         map[connor.FilterKey]any{conditionKey: sub},
-		ExternalConditions: map[string]any{field.Name: filter.ExternalConditions[field.Name]},
-	}
-
-	// check if we have any remaining filters
-	if len(filter.Conditions) == 0 {
-		return nil, splitF
-	}
-	delete(filter.ExternalConditions, field.Name)
 	return filter, splitF
 }
 

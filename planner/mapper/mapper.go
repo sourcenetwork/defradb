@@ -802,6 +802,27 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key := range source {
+		if key == "_and" || key == "_or" { // handle _not
+			andFilter := source[key].([]any)
+			for _, innerFilter := range andFilter {
+				innerFields, err := resolveInnerFilterDependencies(
+					descriptionsRepo,
+					parentCollectionName,
+					innerFilter.(map[string]any),
+					mapping,
+					existingFields,
+					resolvedFields,
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				resolvedFields = append(resolvedFields, innerFields...)
+				newFields = append(newFields, innerFields...)
+			}
+			continue
+		}
+
 		if strings.HasPrefix(key, "_") && key != request.KeyFieldName { // does it handle only _and and _or?
 			continue
 		}

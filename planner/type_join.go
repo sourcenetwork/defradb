@@ -429,21 +429,34 @@ func prepareScanNodeFilterForTypeJoin(
 	source planNode,
 	subType *mapper.Select,
 ) {
+	subType.ShowDeleted = parent.selectReq.ShowDeleted
+
 	scan, ok := source.(*scanNode)
-	if !ok {
+	if !ok || scan.filter == nil {
 		return
 	}
 
-	var parentFilter *mapper.Filter
-	scan.filter, parentFilter = filter.SplitFilterByField(scan.filter, subType.Field)
-	if parentFilter != nil {
+	if filter.IsComplex(scan.filter) {
 		if parent.filter == nil {
 			parent.filter = new(mapper.Filter)
+			parent.filter.Conditions = filter.Copy(scan.filter.Conditions)
+		} else {
+			parent.filter.Conditions = filter.Merge(
+				parent.filter.Conditions, scan.filter.Conditions)
 		}
-		parent.filter.Conditions = filter.MergeFilterConditions(
-			parent.filter.Conditions, parentFilter.Conditions)
+		filter.RemoveField(scan.filter, subType.Field)
+	} else {
+		var parentFilter *mapper.Filter
+		scan.filter, parentFilter = filter.SplitByField(scan.filter, subType.Field)
+		if parentFilter != nil {
+			if parent.filter == nil {
+				parent.filter = parentFilter
+			} else {
+				parent.filter.Conditions = filter.Merge(
+					parent.filter.Conditions, parentFilter.Conditions)
+			}
+		}
 	}
-	subType.ShowDeleted = parent.selectReq.ShowDeleted
 }
 
 func (p *Planner) makeTypeJoinMany(
@@ -575,8 +588,8 @@ func setSubTypeFilterToScanNode(plan planNode, propIndex int, key string) {
 		},
 	}
 
-	filter.RemoveFieldFromFilter(scan.filter, mapper.Field{Index: propIndex})
-	scan.filter.Conditions = filter.MergeFilterConditions(scan.filter.Conditions, filterConditions)
+	filter.RemoveField(scan.filter, mapper.Field{Index: propIndex})
+	scan.filter.Conditions = filter.Merge(scan.filter.Conditions, filterConditions)
 }
 
 func getScanNode(plan planNode) *scanNode {
