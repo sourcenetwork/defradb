@@ -823,10 +823,6 @@ func resolveInnerFilterDependencies(
 			continue
 		}
 
-		if strings.HasPrefix(key, "_") && key != request.KeyFieldName { // does it handle only _and and _or?
-			continue
-		}
-
 		propertyMapped := len(mapping.IndexesByName[key]) != 0
 
 		var childSelect *Select
