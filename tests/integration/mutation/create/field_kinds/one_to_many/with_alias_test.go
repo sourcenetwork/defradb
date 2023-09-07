@@ -21,11 +21,10 @@ func TestMutationCreateOneToMany_AliasedRelationNameWithInvalidField_Error(t *te
 	test := testUtils.TestCase{
 		Description: "One to many create mutation, with an invalid field, with alias.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Book(data: "{\"notName\": \"Painted House\",\"author\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-						name
-					}
+			testUtils.CreateDoc{
+				Doc: `{
+					"notName": "Painted House",
+					"author": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 				ExpectedError: "The given field does not exist. Name: notName",
 			},
@@ -38,11 +37,11 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationSingleSid
 	test := testUtils.TestCase{
 		Description: "One to many create mutation, non-existing id, from the single side, no id relation field, with alias.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Author(data: "{\"name\": \"John Grisham\",\"published\": \"bae--b44b-e5c2af3e374d\"}") {
-						name
-					}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John Grisham",
+					"published": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 				ExpectedError: "The given field does not exist. Name: published",
 			},
@@ -57,9 +56,16 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationManySide_
 	test := testUtils.TestCase{
 		Description: "One to many create mutation, non-existing id, from the many side, with alias",
 		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"author": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
+			},
 			testUtils.Request{
-				Request: `mutation {
-					create_Book(data: "{\"name\": \"Painted House\",\"author\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+				Request: `query {
+					Book {
 						name
 					}
 				}`,
@@ -74,73 +80,27 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationManySide_
 	executeTestCase(t, test)
 }
 
-func TestMutationCreateOneToMany_AliasedRelationNamToLinkFromSingleSide_NoIDFieldError(t *testing.T) {
-	bookKey := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-
-	test := testUtils.TestCase{
-		Description: "One to many create mutation with relation id from single side, with alias.",
-		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Book(data: "{\"name\": \"Painted House\"}") {
-						_key
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-					},
-				},
-			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Author(data: "{\"name\": \"John Grisham\",\"published\": \"%s\"}") {
-							name
-						}
-					}`,
-					bookKey,
-				),
-				ExpectedError: "The given field does not exist. Name: published",
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
 func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testing.T) {
 	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 
 	test := testUtils.TestCase{
 		Description: "One to many create mutation using relation id from many side, with alias.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Author(data: "{\"name\": \"John Grisham\"}") {
-						_key
-					}
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
 				}`,
-				Results: []map[string]any{
-					{
-						"_key": authorKey,
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
-							name
-						}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author": "%s"
 					}`,
 					authorKey,
 				),
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-					},
-				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -194,32 +154,31 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 	nonAliasedTest := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": authorKey,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					authorKey,
 				),
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						_key
+					}
+				}`,
 				Results: []map[string]any{
 					{
 						"_key": bookKey, // Must be same as below.
-						"name": "Painted House",
 					},
 				},
 			},
@@ -233,32 +192,31 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 	aliasedTest := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": authorKey,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author": "%s"
+					}`,
 					authorKey,
 				),
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						_key
+					}
+				}`,
 				Results: []map[string]any{
 					{
-						"_key": bookKey, // Must be same as below.
-						"name": "Painted House",
+						"_key": bookKey, // Must be same as above.
 					},
 				},
 			},
