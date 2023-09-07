@@ -21,6 +21,10 @@ import (
 func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Save existing, deleted document",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// We only wish to test collection.Save in this test.
+			testUtils.CollectionSaveMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -43,10 +47,6 @@ func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 					"name": "Fred"
 				}`,
 				ExpectedError: "a document with the given dockey has been deleted",
-				SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-					// We only wish to test collection.Save in this test.
-					testUtils.CollectionSaveMutationType,
-				}),
 			},
 		},
 	}

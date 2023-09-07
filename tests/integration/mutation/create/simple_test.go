@@ -90,6 +90,12 @@ func TestMutationCreate(t *testing.T) {
 func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation where document already exists.",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// Collection.Save would treat the second create as an update, and so
+			// is excluded from this test.
+			testUtils.CollectionNamedMutationType,
+			testUtils.GQLRequestMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -110,12 +116,6 @@ func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 					"name": "John",
 					"age": 27
 				}`,
-				SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-					// Collection.Save would treat the second create as an update, and so
-					// is excluded from this test.
-					testUtils.CollectionNamedMutationType,
-					testUtils.GQLRequestMutationType,
-				}),
 				ExpectedError: "a document with the given dockey already exists.",
 			},
 		},
