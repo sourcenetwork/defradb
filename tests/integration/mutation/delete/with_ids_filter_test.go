@@ -8,45 +8,41 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package update
+package delete
 
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
+func TestMutationDeletion_WithIDsAndEmptyFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Save existing, deleted document",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// We only wish to test collection.Save in this test.
-			testUtils.CollectionSaveMutationType,
-		}),
+		Description: "Deletion of using ids and filter, known id and empty filter.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name":	"John"
+					"name": "Shahzad"
 				}`,
 			},
-			testUtils.DeleteDoc{
-				DocID: 0,
-			},
-			testUtils.UpdateDoc{
-				DocID: 0,
-				Doc: `{
-					"name": "Fred"
+			testUtils.Request{
+				Request: `mutation {
+					delete_User(ids: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"], filter: {}) {
+						_key
+					}
 				}`,
-				ExpectedError: "a document with the given dockey has been deleted",
+				Results: []map[string]any{
+					{
+						"_key": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
+					},
+				},
 			},
 		},
 	}

@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package update
+package field_kinds
 
 import (
 	"testing"
@@ -18,35 +18,48 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
+func TestMutationUpdate_WithArrayOfNillableBooleans(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Save existing, deleted document",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// We only wish to test collection.Save in this test.
-			testUtils.CollectionSaveMutationType,
-		}),
+		Description: "Simple update mutation with boolean array, replace with nil",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
+						likedIndexes: [Boolean]
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name":	"John"
+					"name": "John",
+					"likedIndexes": [true, true, false, true]
 				}`,
-			},
-			testUtils.DeleteDoc{
-				DocID: 0,
 			},
 			testUtils.UpdateDoc{
-				DocID: 0,
 				Doc: `{
-					"name": "Fred"
+					"likedIndexes": [true, true, false, true, null]
 				}`,
-				ExpectedError: "a document with the given dockey has been deleted",
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						Users {
+							likedIndexes
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"likedIndexes": []immutable.Option[bool]{
+							immutable.Some(true),
+							immutable.Some(true),
+							immutable.Some(false),
+							immutable.Some(true),
+							immutable.None[bool](),
+						},
+					},
+				},
 			},
 		},
 	}

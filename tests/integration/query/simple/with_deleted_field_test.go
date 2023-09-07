@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,45 +8,57 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package update
+package simple
 
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
+func TestQuerySimple_WithDeletedField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Save existing, deleted document",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// We only wish to test collection.Save in this test.
-			testUtils.CollectionSaveMutationType,
-		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name":	"John"
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Andy"
 				}`,
 			},
 			testUtils.DeleteDoc{
 				DocID: 0,
 			},
-			testUtils.UpdateDoc{
-				DocID: 0,
-				Doc: `{
-					"name": "Fred"
-				}`,
-				ExpectedError: "a document with the given dockey has been deleted",
+			testUtils.DeleteDoc{
+				DocID: 1,
+			},
+			testUtils.Request{
+				Request: `query {
+						User(showDeleted: true) {
+							_deleted
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_deleted": true,
+						"name":     "Andy",
+					},
+					{
+						"_deleted": true,
+						"name":     "John",
+					},
+				},
 			},
 		},
 	}

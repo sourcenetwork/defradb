@@ -321,6 +321,8 @@ func ExecuteTestCase(
 		return
 	}
 
+	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
+
 	var clients []ClientType
 	if httpClient {
 		clients = append(clients, httpClientType)
@@ -1067,8 +1069,6 @@ func createDoc(
 	s *state,
 	action CreateDoc,
 ) {
-	skipIfMutationTypeUnsupported(s.t, action.SupportedMutationTypes)
-
 	var mutation func(*state, CreateDoc, *net.Node, []client.Collection) (*client.Document, error)
 
 	switch mutationType {
@@ -1210,8 +1210,6 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	skipIfMutationTypeUnsupported(s.t, action.SupportedMutationTypes)
-
 	var mutation func(*state, UpdateDoc, *net.Node, []client.Collection) error
 
 	switch mutationType {
