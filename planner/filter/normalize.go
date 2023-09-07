@@ -21,7 +21,7 @@ import (
 // - any number of consecutive _ands with any number of elements is flattened
 // As the result object is a map with unique keys (a.k.a. properties),
 // while performing flattening of compound operators if the same property
-// is present in the result map, both conditions will be moved into an _and 
+// is present in the result map, both conditions will be moved into an _and
 func Normalize(conditions map[connor.FilterKey]any) map[connor.FilterKey]any {
 	return normalizeConditions(conditions, false).(map[connor.FilterKey]any)
 }
