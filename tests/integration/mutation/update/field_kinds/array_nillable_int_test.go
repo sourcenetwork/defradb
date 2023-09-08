@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package update
+package field_kinds
 
 import (
 	"testing"
@@ -18,35 +18,48 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
+func TestMutationUpdate_WithArrayOfNillableInts(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Save existing, deleted document",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// We only wish to test collection.Save in this test.
-			testUtils.CollectionSaveMutationType,
-		}),
+		Description: "Simple inline array with no filter, nillable ints",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
+						favouriteIntegers: [Int]
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name":	"John"
+					"name": "John",
+					"favouriteIntegers": [1, null, 3]
 				}`,
-			},
-			testUtils.DeleteDoc{
-				DocID: 0,
 			},
 			testUtils.UpdateDoc{
-				DocID: 0,
 				Doc: `{
-					"name": "Fred"
+					"favouriteIntegers": [null, 2, 3, null, 8]
 				}`,
-				ExpectedError: "a document with the given dockey has been deleted",
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						Users {
+							favouriteIntegers
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"favouriteIntegers": []immutable.Option[int64]{
+							immutable.None[int64](),
+							immutable.Some[int64](2),
+							immutable.Some[int64](3),
+							immutable.None[int64](),
+							immutable.Some[int64](8),
+						},
+					},
+				},
 			},
 		},
 	}

@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package update
+package field_kinds
 
 import (
 	"testing"
@@ -18,35 +18,47 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
+func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Save existing, deleted document",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// We only wish to test collection.Save in this test.
-			testUtils.CollectionSaveMutationType,
-		}),
+		Description: "Simple inline array with no filter, nillable floats",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
+						favouriteFloats: [Float]
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name":	"John"
+					"name": "John",
+					"favouriteFloats": [3.1425, null, -0.00000000001, 10]
 				}`,
-			},
-			testUtils.DeleteDoc{
-				DocID: 0,
 			},
 			testUtils.UpdateDoc{
-				DocID: 0,
 				Doc: `{
-					"name": "Fred"
+					"favouriteFloats": [3.1425, -0.00000000001, null, 10]
 				}`,
-				ExpectedError: "a document with the given dockey has been deleted",
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						Users {
+							favouriteFloats
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"favouriteFloats": []immutable.Option[float64]{
+							immutable.Some(3.1425),
+							immutable.Some(-0.00000000001),
+							immutable.None[float64](),
+							immutable.Some[float64](10),
+						},
+					},
+				},
 			},
 		},
 	}

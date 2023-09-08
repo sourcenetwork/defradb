@@ -102,17 +102,9 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	args := []string{"client", "document", "update"}
 	args = append(args, "--collection", c.desc.Name)
+	args = append(args, "--key", doc.Key().String())
 
-	docMap, err := doc.ToMap()
-	if err != nil {
-		return err
-	}
-	for field, value := range doc.Values() {
-		if !value.IsDirty() {
-			delete(docMap, field.Name())
-		}
-	}
-	document, err := json.Marshal(docMap)
+	document, err := documentJSON(doc)
 	if err != nil {
 		return err
 	}
@@ -129,17 +121,9 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 func (c *Collection) Save(ctx context.Context, doc *client.Document) error {
 	args := []string{"client", "document", "save"}
 	args = append(args, "--collection", c.desc.Name)
+	args = append(args, "--key", doc.Key().String())
 
-	docMap, err := doc.ToMap()
-	if err != nil {
-		return err
-	}
-	for field, value := range doc.Values() {
-		if !value.IsDirty() {
-			delete(docMap, field.Name())
-		}
-	}
-	document, err := json.Marshal(docMap)
+	document, err := documentJSON(doc)
 	if err != nil {
 		return err
 	}
@@ -204,13 +188,13 @@ func (c *Collection) UpdateWithFilter(
 ) (*client.UpdateResult, error) {
 	args := []string{"client", "document", "update"}
 	args = append(args, "--collection", c.desc.Name)
+	args = append(args, "--updater", updater)
 
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
 		return nil, err
 	}
 	args = append(args, "--filter", string(filterJSON))
-	args = append(args, updater)
 
 	return c.updateWith(ctx, args)
 }
@@ -223,7 +207,7 @@ func (c *Collection) UpdateWithKey(
 	args := []string{"client", "document", "update"}
 	args = append(args, "--collection", c.desc.Name)
 	args = append(args, "--key", key.String())
-	args = append(args, updater)
+	args = append(args, "--updater", updater)
 
 	return c.updateWith(ctx, args)
 }
@@ -235,13 +219,13 @@ func (c *Collection) UpdateWithKeys(
 ) (*client.UpdateResult, error) {
 	args := []string{"client", "document", "update"}
 	args = append(args, "--collection", c.desc.Name)
+	args = append(args, "--updater", updater)
 
 	keys := make([]string, len(docKeys))
 	for i, v := range docKeys {
 		keys[i] = v.String()
 	}
 	args = append(args, "--key", strings.Join(keys, ","))
-	args = append(args, updater)
 
 	return c.updateWith(ctx, args)
 }

@@ -13,6 +13,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -75,27 +76,6 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	default:
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidRequestBody})
 	}
-}
-
-func (s *collectionHandler) Save(rw http.ResponseWriter, req *http.Request) {
-	col := req.Context().Value(colContextKey).(client.Collection)
-
-	var docMap map[string]any
-	if err := requestJSON(req, &docMap); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	doc, err := client.NewDocFromMap(docMap)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	err = col.Save(req.Context(), doc)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
 }
 
 func (s *collectionHandler) DeleteWith(rw http.ResponseWriter, req *http.Request) {
@@ -201,18 +181,23 @@ func (s *collectionHandler) UpdateWith(rw http.ResponseWriter, req *http.Request
 func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	col := req.Context().Value(colContextKey).(client.Collection)
 
-	var docMap map[string]any
-	if err := requestJSON(req, &docMap); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	doc, err := client.NewDocFromMap(docMap)
+	docKey, err := client.NewDocKeyFromString(chi.URLParam(req, "key"))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	if doc.Key().String() != chi.URLParam(req, "key") {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrDocKeyDoesNotMatch})
+	doc, err := col.Get(req.Context(), docKey, true)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	patch, err := io.ReadAll(req.Body)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	if err := doc.SetWithJSON(patch); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 	err = col.Update(req.Context(), doc)
@@ -241,7 +226,7 @@ func (s *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 
 func (s *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 	col := req.Context().Value(colContextKey).(client.Collection)
-	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("deleted"))
+	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("show_deleted"))
 
 	docKey, err := client.NewDocKeyFromString(chi.URLParam(req, "key"))
 	if err != nil {

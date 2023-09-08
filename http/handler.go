@@ -76,7 +76,6 @@ func NewHandler(db client.DB, opts ServerOptions) *Handler {
 			collections_tx.Get("/{name}/indexes", collection_handler.GetIndexes)
 			collections_tx.Delete("/{name}/indexes/{index}", collection_handler.DropIndex)
 			collections_tx.Get("/{name}/{key}", collection_handler.Get)
-			collections_tx.Post("/{name}/{key}", collection_handler.Save)
 			collections_tx.Patch("/{name}/{key}", collection_handler.Update)
 			collections_tx.Delete("/{name}/{key}", collection_handler.Delete)
 		})

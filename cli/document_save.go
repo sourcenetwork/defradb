@@ -11,18 +11,18 @@
 package cli
 
 import (
-	"encoding/json"
-
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 func MakeDocumentSaveCommand() *cobra.Command {
 	var collection string
+	var key string
 	var cmd = &cobra.Command{
-		Use:   "save --collection <collection> <document>",
+		Use:   "save --collection <collection> --key <docKey> <document>",
 		Short: "Create or update a docment.",
 		Long:  `Create or update a docment.`,
 		Args:  cobra.ExactArgs(1),
@@ -37,11 +37,16 @@ func MakeDocumentSaveCommand() *cobra.Command {
 				col = col.WithTxn(tx)
 			}
 
-			var docMap map[string]any
-			if err := json.Unmarshal([]byte(args[0]), &docMap); err != nil {
+			docKey, err := client.NewDocKeyFromString(key)
+			if err != nil {
 				return err
 			}
-			doc, err := client.NewDocFromMap(docMap)
+			doc, err := col.Get(cmd.Context(), docKey, true)
+			if err == nil {
+				err = doc.SetWithJSON([]byte(args[0]))
+			} else if errors.Is(err, client.ErrDocumentNotFound) {
+				doc, err = client.NewDocFromJSON([]byte(args[0]))
+			}
 			if err != nil {
 				return err
 			}
@@ -49,5 +54,6 @@ func MakeDocumentSaveCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&collection, "collection", "c", "", "Collection name")
+	cmd.Flags().StringVar(&key, "key", "", "Document key")
 	return cmd
 }

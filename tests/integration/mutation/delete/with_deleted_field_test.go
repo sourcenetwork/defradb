@@ -8,45 +8,46 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package update
+package delete
 
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
+// This test documents a bug, see:
+// https://github.com/sourcenetwork/defradb/issues/1846
+func TestMutationDeletion_WithoDeletedField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Save existing, deleted document",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// We only wish to test collection.Save in this test.
-			testUtils.CollectionSaveMutationType,
-		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
+				CollectionID: 0,
 				Doc: `{
-					"name":	"John"
+					"name": "John"
 				}`,
 			},
-			testUtils.DeleteDoc{
-				DocID: 0,
-			},
-			testUtils.UpdateDoc{
-				DocID: 0,
-				Doc: `{
-					"name": "Fred"
-				}`,
-				ExpectedError: "a document with the given dockey has been deleted",
+			testUtils.Request{
+				Request: `mutation {
+						delete_User(id: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad") {
+							_deleted
+							_key
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						// This should be true, as it has been deleted.
+						"_deleted": false,
+						"_key":     "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
+					},
+				},
 			},
 		},
 	}

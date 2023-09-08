@@ -11,7 +11,7 @@
 package cli
 
 import (
-	"encoding/json"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -23,11 +23,12 @@ func MakeDocumentUpdateCommand() *cobra.Command {
 	var collection string
 	var keys []string
 	var filter string
+	var updater string
 	var cmd = &cobra.Command{
-		Use:   "update --collection <collection> [--filter <filter> --key <key>] <document_or_updater>",
+		Use:   "update --collection <collection> [--filter <filter> --key <key> --updater <updater>] <document>",
 		Short: "Update documents by key or filter.",
 		Long:  `Update documents by key or filter`,
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 
@@ -40,17 +41,17 @@ func MakeDocumentUpdateCommand() *cobra.Command {
 			}
 
 			switch {
-			case len(keys) == 1:
+			case len(keys) == 1 && updater != "":
 				docKey, err := client.NewDocKeyFromString(keys[0])
 				if err != nil {
 					return err
 				}
-				res, err := col.UpdateWithKey(cmd.Context(), docKey, args[0])
+				res, err := col.UpdateWithKey(cmd.Context(), docKey, updater)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, res)
-			case len(keys) > 1:
+			case len(keys) > 1 && updater != "":
 				docKeys := make([]client.DocKey, len(keys))
 				for i, v := range keys {
 					docKey, err := client.NewDocKeyFromString(v)
@@ -59,32 +60,38 @@ func MakeDocumentUpdateCommand() *cobra.Command {
 					}
 					docKeys[i] = docKey
 				}
-				res, err := col.UpdateWithKeys(cmd.Context(), docKeys, args[0])
+				res, err := col.UpdateWithKeys(cmd.Context(), docKeys, updater)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, res)
-			case filter != "":
-				res, err := col.UpdateWithFilter(cmd.Context(), filter, args[0])
+			case filter != "" && updater != "":
+				res, err := col.UpdateWithFilter(cmd.Context(), filter, updater)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, res)
-			default:
-				var docMap map[string]any
-				if err := json.Unmarshal([]byte(args[0]), &docMap); err != nil {
+			case len(keys) == 1 && len(args) == 1:
+				docKey, err := client.NewDocKeyFromString(keys[0])
+				if err != nil {
 					return err
 				}
-				doc, err := client.NewDocFromMap(docMap)
+				doc, err := col.Get(cmd.Context(), docKey, true)
 				if err != nil {
+					return err
+				}
+				if err := doc.SetWithJSON([]byte(args[0])); err != nil {
 					return err
 				}
 				return col.Update(cmd.Context(), doc)
+			default:
+				return fmt.Errorf("document key or filter must be defined")
 			}
 		},
 	}
 	cmd.Flags().StringVarP(&collection, "collection", "c", "", "Collection name")
 	cmd.Flags().StringSliceVar(&keys, "key", nil, "Document key")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
 	return cmd
 }

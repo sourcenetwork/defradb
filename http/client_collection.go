@@ -14,8 +14,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	sse "github.com/vito/go-sse/sse"
@@ -104,16 +106,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, doc.Key().String())
 
-	docMap, err := doc.ToMap()
-	if err != nil {
-		return err
-	}
-	for field, value := range doc.Values() {
-		if !value.IsDirty() {
-			delete(docMap, field.Name())
-		}
-	}
-	body, err := json.Marshal(docMap)
+	body, err := documentJSON(doc)
 	if err != nil {
 		return err
 	}
@@ -130,31 +123,14 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 }
 
 func (c *Collection) Save(ctx context.Context, doc *client.Document) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, doc.Key().String())
-
-	docMap, err := doc.ToMap()
-	if err != nil {
-		return err
+	_, err := c.Get(ctx, doc.Key(), true)
+	if err == nil {
+		return c.Update(ctx, doc)
 	}
-	for field, value := range doc.Values() {
-		if !value.IsDirty() {
-			delete(docMap, field.Name())
-		}
+	if errors.Is(err, client.ErrDocumentNotFound) {
+		return c.Create(ctx, doc)
 	}
-	body, err := json.Marshal(docMap)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	if err != nil {
-		return err
-	}
-	doc.Clean()
-	return nil
+	return err
 }
 
 func (c *Collection) Delete(ctx context.Context, docKey client.DocKey) (bool, error) {
@@ -307,7 +283,13 @@ func (c *Collection) DeleteWithKeys(ctx context.Context, docKeys []client.DocKey
 }
 
 func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
+	query := url.Values{}
+	if showDeleted {
+		query.Add("show_deleted", "true")
+	}
+
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, key.String())
+	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -317,7 +299,12 @@ func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 	if err := c.http.requestJson(req, &docMap); err != nil {
 		return nil, err
 	}
-	return client.NewDocFromMap(docMap)
+	doc, err := client.NewDocFromMap(docMap)
+	if err != nil {
+		return nil, err
+	}
+	doc.Clean()
+	return doc, nil
 }
 
 func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
