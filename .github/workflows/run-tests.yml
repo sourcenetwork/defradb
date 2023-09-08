@@ -20,9 +20,23 @@ on:
 
 jobs:
   run-tests:
-    name: Run tests job
+    name: Run tests job matrix
 
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        client-type: [go, http]
+        database-type: [badger-file, badger-memory]
+        mutation-type: [gql, collection-named, collection-save]
+        tests: [names, lens, cli]
+
+    env:
+      DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
+      DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
+      DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'badger-memory' }}
+      DEFRA_BADGER_FILE: ${{ matrix.database-type == 'badger-file' }}
+      DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
 
     steps:
       - name: Checkout code into the directory
@@ -38,13 +52,6 @@ jobs:
         run: |
           make deps:modules
           make deps:test
-
-      - name: Build binary
-        run: make build
-
-        # This is to ensure tests pass with a running server.
-      - name: Start server from binary
-        run: ./build/defradb start &
-
-      - name: Run the tests, showing name of each test
-        run: make test:ci
+      
+      - name: Run the tests
+        run: make test:${{ matrix.tests }}
