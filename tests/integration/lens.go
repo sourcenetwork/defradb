@@ -75,9 +75,35 @@ func getMigrations(
 
 		configs, err := db.LensRegistry().Config(s.ctx)
 		require.NoError(s.t, err)
+		require.Equal(s.t, len(configs), len(action.ExpectedResults))
 
 		// The order of the results is not deterministic, so do not assert on the element
-		// locations.
-		assert.ElementsMatch(s.t, configs, action.ExpectedResults)
+		for _, expected := range action.ExpectedResults {
+			var actual client.LensConfig
+			var actualFound bool
+
+			for _, config := range configs {
+				if config.SourceSchemaVersionID != expected.SourceSchemaVersionID {
+					continue
+				}
+				if config.DestinationSchemaVersionID != expected.DestinationSchemaVersionID {
+					continue
+				}
+				actual = config
+				actualFound = true
+			}
+
+			require.True(s.t, actualFound, "matching lens config not found")
+			require.Equal(s.t, len(expected.Lenses), len(actual.Lenses))
+
+			for j, actualLens := range actual.Lenses {
+				expectedLens := expected.Lenses[j]
+
+				assert.Equal(s.t, expectedLens.Inverse, actualLens.Inverse)
+				assert.Equal(s.t, expectedLens.Path, actualLens.Path)
+
+				assertResultsEqual(s.t, s.clientType, expectedLens.Arguments, actualLens.Arguments)
+			}
+		}
 	}
 }
