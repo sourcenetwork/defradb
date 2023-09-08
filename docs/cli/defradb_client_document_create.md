@@ -7,10 +7,10 @@ Create a new document.
 Create a new document.
 
 Example: create document
-  defradb client collection create --collection User '{ "name": "Bob" }'
+  defradb client document create --collection User '{ "name": "Bob" }'
 
 Example: create documents
-  defradb client collection create --collection User '[{ "name": "Alice" }, { "name": "Bob" }]'
+  defradb client document create --collection User '[{ "name": "Alice" }, { "name": "Bob" }]'
 		
 
 ```

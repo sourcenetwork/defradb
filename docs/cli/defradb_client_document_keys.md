@@ -7,7 +7,7 @@ List all collection document keys.
 List all collection document keys.
 		
 Example:
-  defradb client collection keys --collection User keys
+  defradb client document keys --collection User keys
 		
 
 ```

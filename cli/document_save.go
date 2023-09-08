@@ -27,7 +27,7 @@ func MakeDocumentSaveCommand() *cobra.Command {
 		Long: `Create or update a document.
 		
 Example:
-  defradb client document save --collection User --key bae123 '{ "name": "Bob" }'
+  defradb client document save --collection User --key bae-123 '{ "name": "Bob" }'
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -30,7 +30,7 @@ func MakeDocumentUpdateCommand() *cobra.Command {
 		Long: `Update documents by key or filter.
 		
 Example:
-  defradb client document update --collection User --key bae123 '{ "name": "Bob" }'
+  defradb client document update --collection User --key bae-123 '{ "name": "Bob" }'
 
 Example: update by filter
   defradb client document update --collection User \
@@ -38,7 +38,7 @@ Example: update by filter
 
 Example: update by keys
   defradb client document update --collection User \
-  --key bae123,bae456 --updater '{ "verified": true }'
+  --key bae-123,bae-456 --updater '{ "verified": true }'
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -28,10 +28,10 @@ func MakeDocumentCreateCommand() *cobra.Command {
 		Long: `Create a new document.
 
 Example: create document
-  defradb client collection create --collection User '{ "name": "Bob" }'
+  defradb client document create --collection User '{ "name": "Bob" }'
 
 Example: create documents
-  defradb client collection create --collection User '[{ "name": "Alice" }, { "name": "Bob" }]'
+  defradb client document create --collection User '[{ "name": "Alice" }, { "name": "Bob" }]'
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

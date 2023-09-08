@@ -7,7 +7,7 @@ View detailed document info.
 View detailed document info.
 
 Example:
-  defradb client document get --collection User bae123
+  defradb client document get --collection User bae-123
 		
 
 ```

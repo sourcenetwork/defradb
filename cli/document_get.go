@@ -26,7 +26,7 @@ func MakeDocumentGetCommand() *cobra.Command {
 		Long: `View detailed document info.
 
 Example:
-  defradb client document get --collection User bae123
+  defradb client document get --collection User bae-123
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

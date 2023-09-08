@@ -29,7 +29,7 @@ func MakeDocumentDeleteCommand() *cobra.Command {
 		Long: `Delete documents by key or filter and lists the number of documents deleted.
 		
 Example: delete by key(s)
-  defradb client document delete --collection User --key bae123,bae456,...
+  defradb client document delete --collection User --key bae-123,bae-456
 
 Example: delete by filter
   defradb client document delete --collection User --filter '{ "_gte": { "points": 100 } }'
