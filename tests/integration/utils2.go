@@ -17,6 +17,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -32,11 +33,14 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 )
 
 const (
+	clientGoEnvName            = "DEFRA_CLIENT_GO"
+	clientHttpEnvName          = "DEFRA_CLIENT_HTTP"
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
@@ -56,6 +60,17 @@ const (
 	badgerIMType   DatabaseType = "badger-in-memory"
 	defraIMType    DatabaseType = "defra-memory-datastore"
 	badgerFileType DatabaseType = "badger-file-system"
+)
+
+type ClientType string
+
+const (
+	// goClientType enables running the test suite using
+	// the go implementation of the client.DB interface.
+	goClientType ClientType = "go"
+	// httpClientType enables running the test suite using
+	// the http implementation of the client.DB interface.
+	httpClientType ClientType = "http"
 )
 
 // The MutationType that tests will run using.
@@ -90,6 +105,8 @@ var (
 	badgerInMemory bool
 	badgerFile     bool
 	inMemoryStore  bool
+	httpClient     bool
+	goClient       bool
 	mutationType   MutationType
 )
 
@@ -131,33 +148,30 @@ var previousTestCaseTestName string
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	//  that don't have the flag defined
-	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
-	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
-	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
-	rootDatabaseDir, _ = os.LookupEnv(rootDBFilePathEnvName)
-	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
-	inMemoryStoreValue, _ := os.LookupEnv(inMemoryEnvName)
-	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
-	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
-	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
-	mutType, mutationTypeSpecified := os.LookupEnv(mutationTypeEnvName)
+	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
+	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
+	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
+	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
+	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+	DetectDbChanges, _ = strconv.ParseBool(os.Getenv(detectDbChangesEnvName))
+	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
 
-	badgerFile = getBool(badgerFileValue)
-	badgerInMemory = getBool(badgerInMemoryValue)
-	inMemoryStore = getBool(inMemoryStoreValue)
-	DetectDbChanges = getBool(detectDbChangesValue)
-	SetupOnly = getBool(setupOnlyValue)
-
-	if !repositorySpecified {
+	var repositoryValue string
+	if value, ok := os.LookupEnv(repositoryEnvName); ok {
+		repositoryValue = value
+	} else {
 		repositoryValue = "https://github.com/sourcenetwork/defradb.git"
 	}
 
-	if !targetBranchSpecified {
+	var targetBranchValue string
+	if value, ok := os.LookupEnv(targetBranchEnvName); ok {
+		targetBranchValue = value
+	} else {
 		targetBranchValue = "develop"
 	}
 
-	if mutationTypeSpecified {
-		mutationType = MutationType(mutType)
+	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
+		mutationType = MutationType(value)
 	} else {
 		// Default to testing mutations via Collection.Save - it should be simpler and
 		// faster. We assume this is desirable when not explicitly testing any particular
@@ -165,25 +179,20 @@ func init() {
 		mutationType = CollectionSaveMutationType
 	}
 
-	// default is to run against all
+	// Default is to test go client type.
+	if !goClient && !httpClient {
+		goClient = true
+	}
+
+	// Default is to test all but filesystem db types.
 	if !badgerInMemory && !badgerFile && !inMemoryStore && !DetectDbChanges {
-		badgerInMemory = true
-		// Testing against the file system is off by default
 		badgerFile = false
+		badgerInMemory = true
 		inMemoryStore = true
 	}
 
 	if DetectDbChanges {
 		detectDbChangesInit(repositoryValue, targetBranchValue)
-	}
-}
-
-func getBool(val string) bool {
-	switch strings.ToLower(val) {
-	case "true":
-		return true
-	default:
-		return false
 	}
 }
 
@@ -257,49 +266,44 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB,
 	return db, nil
 }
 
-func GetDatabaseTypes() []DatabaseType {
-	databases := []DatabaseType{}
-
-	if badgerInMemory {
-		databases = append(databases, badgerIMType)
-	}
-
-	if badgerFile {
-		databases = append(databases, badgerFileType)
-	}
-
-	if inMemoryStore {
-		databases = append(databases, defraIMType)
-	}
-
-	return databases
-}
-
-func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB, string, error) {
-	switch dbt {
+// GetDatabase returns the database implementation for the current
+// testing state. The database type and client type on the test state
+// are used to select the datastore and client implementation to use.
+func GetDatabase(s *state) (cdb client.DB, path string, err error) {
+	switch s.dbt {
 	case badgerIMType:
-		db, err := NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
-		if err != nil {
-			return nil, "", err
-		}
-		return db, "", nil
+		cdb, err = NewBadgerMemoryDB(s.ctx, db.WithUpdateEvents())
 
 	case badgerFileType:
-		db, path, err := NewBadgerFileDB(ctx, t)
-		if err != nil {
-			return nil, "", err
-		}
-		return db, path, nil
+		cdb, path, err = NewBadgerFileDB(s.ctx, s.t)
 
 	case defraIMType:
-		db, err := NewInMemoryDB(ctx)
-		if err != nil {
-			return nil, "", err
-		}
-		return db, "", nil
+		cdb, err = NewInMemoryDB(s.ctx)
+
+	default:
+		err = fmt.Errorf("invalid database type: %v", s.dbt)
 	}
 
-	return nil, "", nil
+	if err != nil {
+		return nil, "", err
+	}
+
+	switch s.clientType {
+	case httpClientType:
+		cdb, err = http.NewWrapper(cdb)
+
+	case goClientType:
+		return
+
+	default:
+		err = fmt.Errorf("invalid client type: %v", s.dbt)
+	}
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	return
 }
 
 // ExecuteTestCase executes the given TestCase against the configured database
@@ -319,14 +323,35 @@ func ExecuteTestCase(
 
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 
-	ctx := context.Background()
-	dbts := GetDatabaseTypes()
-	// Assert that this is not empty to protect against accidental mis-configurations,
-	// otherwise an empty set would silently pass all the tests.
-	require.NotEmpty(t, dbts)
+	var clients []ClientType
+	if httpClient {
+		clients = append(clients, httpClientType)
+	}
+	if goClient {
+		clients = append(clients, goClientType)
+	}
 
-	for _, dbt := range dbts {
-		executeTestCase(ctx, t, collectionNames, testCase, dbt)
+	var databases []DatabaseType
+	if badgerInMemory {
+		databases = append(databases, badgerIMType)
+	}
+	if badgerFile {
+		databases = append(databases, badgerFileType)
+	}
+	if inMemoryStore {
+		databases = append(databases, defraIMType)
+	}
+
+	// Assert that these are not empty to protect against accidental mis-configurations,
+	// otherwise an empty set would silently pass all the tests.
+	require.NotEmpty(t, databases)
+	require.NotEmpty(t, clients)
+
+	ctx := context.Background()
+	for _, ct := range clients {
+		for _, dbt := range databases {
+			executeTestCase(ctx, t, collectionNames, testCase, dbt, ct)
+		}
 	}
 }
 
@@ -336,13 +361,14 @@ func executeTestCase(
 	collectionNames []string,
 	testCase TestCase,
 	dbt DatabaseType,
+	clientType ClientType,
 ) {
 	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
 
 	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
 
-	s := newState(ctx, t, testCase, dbt, collectionNames)
+	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
 	setStartingNodes(s)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -663,7 +689,7 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		db, path, err := GetDatabase(s.ctx, s.t, s.dbt)
+		db, path, err := GetDatabase(s)
 		require.Nil(s.t, err)
 
 		s.nodes = append(s.nodes, &net.Node{
@@ -686,7 +712,7 @@ func restartNodes(
 	for i := len(s.nodes) - 1; i >= 0; i-- {
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[i]
-		db, _, err := GetDatabase(s.ctx, s.t, s.dbt)
+		db, _, err := GetDatabase(s)
 		require.Nil(s.t, err)
 		databaseDir = originalPath
 
@@ -804,7 +830,7 @@ func configureNode(
 	// an in memory store.
 	cfg.Datastore.Badger.Path = s.t.TempDir()
 
-	db, path, err := GetDatabase(s.ctx, s.t, s.dbt) //disable change dector, or allow it?
+	db, path, err := GetDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	var n *net.Node
@@ -1487,9 +1513,7 @@ func executeRequest(
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
-			s.ctx,
-			s.t,
-			s.testCase.Description,
+			s,
 			&result.GQL,
 			action.Results,
 			action.ExpectedError,
@@ -1554,9 +1578,7 @@ func executeSubscriptionRequest(
 						// This assert should be executed from the main test routine
 						// so that failures will be properly handled.
 						expectedErrorRaised := assertRequestResults(
-							s.ctx,
-							s.t,
-							s.testCase.Description,
+							s,
 							finalResult,
 							action.Results,
 							action.ExpectedError,
@@ -1628,16 +1650,14 @@ type docFieldKey struct {
 }
 
 func assertRequestResults(
-	ctx context.Context,
-	t *testing.T,
-	description string,
+	s *state,
 	result *client.GQLResult,
 	expectedResults []map[string]any,
 	expectedError string,
 	nodeID int,
 	anyOfByField map[docFieldKey][]any,
 ) bool {
-	if AssertErrors(t, description, result.Errors, expectedError) {
+	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) {
 		return true
 	}
 
@@ -1648,15 +1668,9 @@ func assertRequestResults(
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]any)
 
-	log.Info(ctx, "", logging.NewKV("RequestResults", result.Data))
+	log.Info(s.ctx, "", logging.NewKV("RequestResults", result.Data))
 
-	// compare results
-	assert.Equal(t, len(expectedResults), len(resultantData), description)
-	if len(expectedResults) == 0 {
-		// Need `require` here otherwise will panic in the for loop that ranges over
-		// resultantData and tries to access expectedResults[0].
-		require.Equal(t, expectedResults, resultantData)
-	}
+	require.Equal(s.t, len(expectedResults), len(resultantData), s.testCase.Description)
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
@@ -1665,14 +1679,20 @@ func assertRequestResults(
 
 			switch r := expectedValue.(type) {
 			case AnyOf:
-				assert.Contains(t, r, actualValue)
+				assertResultsAnyOf(s.t, s.clientType, r, actualValue)
 
 				dfk := docFieldKey{docIndex, field}
 				valueSet := anyOfByField[dfk]
 				valueSet = append(valueSet, actualValue)
 				anyOfByField[dfk] = valueSet
 			default:
-				assert.Equal(t, expectedValue, actualValue, fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex))
+				assertResultsEqual(
+					s.t,
+					s.clientType,
+					expectedValue,
+					actualValue,
+					fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex),
+				)
 			}
 		}
 	}

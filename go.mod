@@ -44,6 +44,7 @@ require (
 	github.com/tidwall/btree v1.6.0
 	github.com/ugorji/go/codec v1.2.11
 	github.com/valyala/fastjson v1.6.4
+	github.com/vito/go-sse v1.0.0
 	go.opentelemetry.io/otel/metric v1.17.0
 	go.opentelemetry.io/otel/sdk/metric v0.40.0
 	go.uber.org/zap v1.25.0
