@@ -10,6 +10,7 @@
 package filter
 
 import (
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -22,7 +23,7 @@ func Merge(dest map[connor.FilterKey]any, src map[connor.FilterKey]any) map[conn
 	}
 
 	result := map[connor.FilterKey]any{
-		&mapper.Operator{Operation: andID}: []any{
+		&mapper.Operator{Operation: request.FilterOpAnd}: []any{
 			dest, src,
 		},
 	}

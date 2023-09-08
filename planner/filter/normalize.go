@@ -10,6 +10,7 @@
 package filter
 
 import (
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -43,7 +44,7 @@ func addNormalizedCondition(key connor.FilterKey, val any, m map[connor.FilterKe
 		var andOp *mapper.Operator
 		var andContent []any
 		for existingKey := range m {
-			if op, isOp := existingKey.(*mapper.Operator); isOp && op.Operation == andID {
+			if op, isOp := existingKey.(*mapper.Operator); isOp && op.Operation == request.FilterOpAnd {
 				andOp = op
 				andContent = m[existingKey].([]any)
 				break
@@ -54,7 +55,7 @@ func addNormalizedCondition(key connor.FilterKey, val any, m map[connor.FilterKe
 				existingVal := m[existingKey]
 				delete(m, existingKey)
 				if andOp == nil {
-					andOp = &mapper.Operator{Operation: andID}
+					andOp = &mapper.Operator{Operation: request.FilterOpAnd}
 				}
 				m[andOp] = append(
 					andContent,
@@ -84,9 +85,9 @@ func normalizeConditions(conditions any, skipRoot bool) any {
 		for rootKey, rootVal := range typedConditions {
 			rootOpKey, isRootOp := rootKey.(*mapper.Operator)
 			if isRootOp {
-				if rootOpKey.Operation == andID || rootOpKey.Operation == orID {
+				if rootOpKey.Operation == request.FilterOpAnd || rootOpKey.Operation == request.FilterOpOr {
 					rootValArr := rootVal.([]any)
-					if len(rootValArr) == 1 || rootOpKey.Operation == andID && !skipRoot {
+					if len(rootValArr) == 1 || rootOpKey.Operation == request.FilterOpAnd && !skipRoot {
 						flat := normalizeConditions(conditionsArrToMap(rootValArr), false)
 						flatMap := flat.(map[connor.FilterKey]any)
 						for k, v := range flatMap {
@@ -107,7 +108,7 @@ func normalizeConditions(conditions any, skipRoot bool) any {
 						}
 						addNormalizedCondition(rootKey, resultArr, result)
 					}
-				} else if rootOpKey.Operation == notID {
+				} else if rootOpKey.Operation == request.FilterOpNot {
 					notMap := rootVal.(map[connor.FilterKey]any)
 					if len(notMap) == 1 {
 						var k connor.FilterKey
@@ -120,7 +121,7 @@ func normalizeConditions(conditions any, skipRoot bool) any {
 						for k, v = range norm {
 							break
 						}
-						if opKey, ok := k.(*mapper.Operator); ok && opKey.Operation == notID {
+						if opKey, ok := k.(*mapper.Operator); ok && opKey.Operation == request.FilterOpNot {
 							notNotMap := normalizeConditions(v, false).(map[connor.FilterKey]any)
 							for notNotKey, notNotVal := range notNotMap {
 								addNormalizedCondition(notNotKey, notNotVal, result)

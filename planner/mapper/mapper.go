@@ -24,12 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-const (
-	opAnd = "_and"
-	opOr  = "_or"
-	opNot = "_not"
-)
-
 var (
 	FilterEqOp = &Operator{Operation: "_eq"}
 )
@@ -808,7 +802,7 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key := range source {
-		if key == opAnd || key == opOr { // handle _not
+		if key == request.FilterOpAnd || key == request.FilterOpOr { // handle _not
 			andFilter := source[key].([]any)
 			for _, innerFilter := range andFilter {
 				innerFields, err := resolveInnerFilterDependencies(

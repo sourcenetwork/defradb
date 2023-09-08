@@ -10,6 +10,7 @@
 package filter
 
 import (
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -29,7 +30,7 @@ func isComplex(conditions any, isInsideOr bool) bool {
 	switch typedCond := conditions.(type) {
 	case map[connor.FilterKey]any:
 		for k, v := range typedCond {
-			if op, ok := k.(*mapper.Operator); ok && op.Operation == orID && len(v.([]any)) > 1 {
+			if op, ok := k.(*mapper.Operator); ok && op.Operation == request.FilterOpOr && len(v.([]any)) > 1 {
 				if isComplex(v, true) {
 					return true
 				}
