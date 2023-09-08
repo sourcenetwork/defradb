@@ -33,10 +33,12 @@ Example:
   defradb client document update --collection User --key bae123 '{ "name": "Bob" }'
 
 Example: update by filter
-  defradb client document update --collection User --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
+  defradb client document update --collection User \
+  --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
 Example: update by keys
-  defradb client document update --collection User --key bae123,bae456 --updater '{ "verified": true }'
+  defradb client document update --collection User \
+  --key bae123,bae456 --updater '{ "verified": true }'
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
