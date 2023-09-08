@@ -187,15 +187,19 @@ test\:build:
 
 .PHONY: test\:ci
 test\:ci:
+	@$(MAKE) deps:coverage
 	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true \
 	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
-	$(MAKE) test:all
+	go-acc ./... --output=coverage.txt --covermode=atomic -- -coverpkg=./... $(TEST_FLAGS)
+	go tool cover -func coverage.txt | grep total | awk '{print $$3}'
 
 .PHONY: test\:ci-gql-mutations
 test\:ci-gql-mutations:
+	@$(MAKE) deps:coverage
 	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true \
 	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
-	$(MAKE) test:all
+	go-acc ./... --output=coverage.txt --covermode=atomic -- -coverpkg=./... $(TEST_FLAGS)
+	go tool cover -func coverage.txt | grep total | awk '{print $$3}'
 
 .PHONY: test\:gql-mutations
 test\:gql-mutations:
@@ -208,9 +212,11 @@ test\:gql-mutations:
 # UpdateDoc will call [Collection.Update].
 .PHONY: test\:ci-col-named-mutations
 test\:ci-col-named-mutations:
+	@$(MAKE) deps:coverage
 	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true \
 	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
-	$(MAKE) test:all
+	go-acc ./... --output=coverage.txt --covermode=atomic -- -coverpkg=./... $(TEST_FLAGS)
+	go tool cover -func coverage.txt | grep total | awk '{print $$3}'
 
 .PHONY: test\:col-named-mutations
 test\:col-named-mutations:
@@ -296,6 +302,13 @@ test\:coverage-html:
 test\:changes:
 	@$(MAKE) deps:lens
 	env DEFRA_DETECT_DATABASE_CHANGES=true DEFRA_CLIENT_GO=true gotestsum -- ./... -shuffle=on -p 1
+
+.PHONY: test\:changes-ci
+test\:changes-ci:
+	@$(MAKE) deps:coverage
+	env DEFRA_DETECT_DATABASE_CHANGES=true DEFRA_CLIENT_GO=true \
+	go-acc ./... --output=coverage.txt --covermode=atomic -- -coverpkg=./... -shuffle=on -p 1
+	go tool cover -func coverage.txt | grep total | awk '{print $$3}'
 
 .PHONY: validate\:codecov
 validate\:codecov:

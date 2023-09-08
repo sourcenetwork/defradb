@@ -48,3 +48,32 @@ jobs:
 
       - name: Run the tests, showing name of each test
         run: make test:ci
+
+      - name: Upload coverage to Codecov without token, retry on failure
+        env: 
+          codecov_secret: ${{ secrets.CODECOV_TOKEN }}
+        if: env.codecov_secret == ''
+        uses: Wandalen/wretry.action@v1.0.36
+        with:
+          attempt_limit: 5
+          attempt_delay: 10000
+          action: codecov/codecov-action@v3
+          with: |
+            name: defradb-codecov
+            files: ./coverage.txt
+            os: 'linux'
+            fail_ci_if_error: true
+            verbose: true
+
+      - name: Upload coverage to Codecov with token
+        env: 
+          codecov_secret: ${{ secrets.CODECOV_TOKEN }}
+        if: env.codecov_secret != ''
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ env.codecov_secret }}
+          name: defradb-codecov
+          files: ./coverage.txt
+          os: 'linux'
+          fail_ci_if_error: true
+          verbose: true
