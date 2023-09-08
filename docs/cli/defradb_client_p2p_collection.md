@@ -1,26 +1,21 @@
-## defradb client rpc p2pcollection add
+## defradb client p2p collection
 
-Add P2P collections
+Configure the P2P collection system
 
 ### Synopsis
 
-Add P2P collections to the synchronized pubsub topics.
-The collections are synchronized between nodes of a pubsub network.
-
-```
-defradb client rpc p2pcollection add [collectionID] [flags]
-```
+Add, delete, or get the list of P2P collections.
+The selected collections synchronize their events on the pubsub network.
 
 ### Options
 
 ```
-  -h, --help   help for add
+  -h, --help   help for collection
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --addr string          RPC endpoint address (default "0.0.0.0:9161")
       --logformat string     Log format to use. Options are csv, json (default "csv")
       --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
       --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
@@ -28,10 +23,14 @@ defradb client rpc p2pcollection add [collectionID] [flags]
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the P2P collection system
+* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
+* [defradb client p2p collection add](defradb_client_p2p_collection_add.md)	 - Add P2P collections
+* [defradb client p2p collection getall](defradb_client_p2p_collection_getall.md)	 - Get all P2P collections
+* [defradb client p2p collection remove](defradb_client_p2p_collection_remove.md)	 - Remove P2P collections
 

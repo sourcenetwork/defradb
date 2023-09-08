@@ -1,16 +1,20 @@
-## defradb client p2p p2pcollection
+## defradb client p2p collection remove
 
-Configure the P2P collection system
+Remove P2P collections
 
 ### Synopsis
 
-Add, delete, or get the list of P2P collections.
-The selected collections synchronize their events on the pubsub network.
+Remove P2P collections from the followed pubsub topics.
+The removed collections will no longer be synchronized between nodes.
+
+```
+defradb client p2p collection remove [collectionID] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for p2pcollection
+  -h, --help   help for remove
 ```
 
 ### Options inherited from parent commands
@@ -23,13 +27,11 @@ The selected collections synchronize their events on the pubsub network.
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
-* [defradb client p2p p2pcollection add](defradb_client_p2p_p2pcollection_add.md)	 - Add P2P collections
-* [defradb client p2p p2pcollection getall](defradb_client_p2p_p2pcollection_getall.md)	 - Get all P2P collections
-* [defradb client p2p p2pcollection remove](defradb_client_p2p_p2pcollection_remove.md)	 - Remove P2P collections
+* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
 

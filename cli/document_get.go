@@ -23,8 +23,12 @@ func MakeDocumentGetCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "get --collection <collection> <docKey> [--show-deleted]",
 		Short: "View detailed document info.",
-		Long:  `View detailed document info.`,
-		Args:  cobra.ExactArgs(1),
+		Long: `View detailed document info.
+
+Example:
+  defradb client document get --collection User bae123
+		`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 

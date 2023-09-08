@@ -1,37 +1,36 @@
-## defradb client rpc addreplicator
+## defradb client tx discard
 
-Add a new replicator
+Discard a DefraDB transaction.
 
 ### Synopsis
 
-Use this command if you wish to add a new target replicator
-for the P2P data sync system.
+Discard a DefraDB transaction.
 
 ```
-defradb client rpc addreplicator <collection> <peer> [flags]
+defradb client tx discard [id] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for addreplicator
+  -h, --help   help for discard
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --addr string          gRPC endpoint address (default "0.0.0.0:9161")
       --logformat string     Log format to use. Options are csv, json (default "csv")
       --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
       --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
-      --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
+      --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb client rpc](defradb_client_rpc.md)	 - Interact with a DefraDB gRPC server
+* [defradb client tx](defradb_client_tx.md)	 - Create, commit, and discard DefraDB transactions
 

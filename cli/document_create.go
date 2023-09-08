@@ -24,9 +24,16 @@ func MakeDocumentCreateCommand() *cobra.Command {
 	var collection string
 	var cmd = &cobra.Command{
 		Use:   "create --collection <collection> <document>",
-		Short: "Create a new docment.",
-		Long:  `Create a new docment.`,
-		Args:  cobra.ExactArgs(1),
+		Short: "Create a new document.",
+		Long: `Create a new document.
+
+Example: create document
+  defradb client collection create --collection User '{ "name": "Bob" }'
+
+Example: create documents
+  defradb client collection create --collection User '[{ "name": "Alice" }, { "name": "Bob" }]'
+		`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 

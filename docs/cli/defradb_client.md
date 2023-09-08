@@ -10,7 +10,8 @@ Execute queries, add schema types, obtain node info, etc.
 ### Options
 
 ```
-  -h, --help   help for client
+  -h, --help      help for client
+      --tx uint   Transaction ID
 ```
 
 ### Options inherited from parent commands
@@ -30,9 +31,12 @@ Execute queries, add schema types, obtain node info, etc.
 
 * [defradb](defradb.md)	 - DefraDB Edge Database
 * [defradb client backup](defradb_client_backup.md)	 - Interact with the backup utility
+* [defradb client collection](defradb_client_collection.md)	 - View detailed collection info.
+* [defradb client document](defradb_client_document.md)	 - Create, read, update, and delete documents.
 * [defradb client dump](defradb_client_dump.md)	 - Dump the contents of DefraDB node-side
 * [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
 * [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
 * [defradb client query](defradb_client_query.md)	 - Send a DefraDB GraphQL query request
 * [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
+* [defradb client tx](defradb_client_tx.md)	 - Create, commit, and discard DefraDB transactions
 

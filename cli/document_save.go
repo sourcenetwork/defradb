@@ -23,9 +23,13 @@ func MakeDocumentSaveCommand() *cobra.Command {
 	var key string
 	var cmd = &cobra.Command{
 		Use:   "save --collection <collection> --key <docKey> <document>",
-		Short: "Create or update a docment.",
-		Long:  `Create or update a docment.`,
-		Args:  cobra.ExactArgs(1),
+		Short: "Create or update a document.",
+		Long: `Create or update a document.
+		
+Example:
+  defradb client document save --collection User --key bae123 '{ "name": "Bob" }'
+		`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 

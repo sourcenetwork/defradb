@@ -1,11 +1,20 @@
-## defradb client blocks
+## defradb client p2p collection add
 
-Interact with the database's blockstore
+Add P2P collections
+
+### Synopsis
+
+Add P2P collections to the synchronized pubsub topics.
+The collections are synchronized between nodes of a pubsub network.
+
+```
+defradb client p2p collection add [collectionID] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for blocks
+  -h, --help   help for add
 ```
 
 ### Options inherited from parent commands
@@ -18,11 +27,11 @@ Interact with the database's blockstore
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client blocks get](defradb_client_blocks_get.md)	 - Get a block by its CID from the blockstore
+* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
 

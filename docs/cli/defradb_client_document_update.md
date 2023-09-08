@@ -1,30 +1,33 @@
-## defradb client index create
+## defradb client document update
 
-Creates a secondary index on a collection's field(s)
+Update documents by key or filter.
 
 ### Synopsis
 
-Creates a secondary index on a collection's field(s).
+Update documents by key or filter.
 		
-The --name flag is optional. If not provided, a name will be generated automatically.
+Example:
+  defradb client document update --collection User --key bae123 '{ "name": "Bob" }'
 
-Example: create an index for 'Users' collection on 'name' field:
-  defradb client index create --collection Users --fields name
+Example: update by filter
+  defradb client document update --collection User --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
-Example: create a named index for 'Users' collection on 'name' field:
-  defradb client index create --collection Users --fields name --name UsersByName
+Example: update by keys
+  defradb client document update --collection User --key bae123,bae456 --updater '{ "verified": true }'
+		
 
 ```
-defradb client index create -c --collection <collection> --fields <fields> [-n --name <name>] [flags]
+defradb client document update --collection <collection> [--filter <filter> --key <key> --updater <updater>] <document> [flags]
 ```
 
 ### Options
 
 ```
   -c, --collection string   Collection name
-      --fields strings      Fields to index
-  -h, --help                help for create
-  -n, --name string         Index name
+      --filter string       Document filter
+  -h, --help                help for update
+      --key strings         Document key
+      --updater string      Document updater
 ```
 
 ### Options inherited from parent commands
@@ -43,5 +46,5 @@ defradb client index create -c --collection <collection> --fields <fields> [-n -
 
 ### SEE ALSO
 
-* [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
+* [defradb client document](defradb_client_document.md)	 - Create, read, update, and delete documents.
 

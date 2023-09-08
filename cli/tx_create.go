@@ -23,8 +23,8 @@ func MakeTxCreateCommand(cfg *config.Config) *cobra.Command {
 	var readOnly bool
 	var cmd = &cobra.Command{
 		Use:   "create",
-		Short: "Create a new DefraDB transaction",
-		Long:  `Create a new DefraDB transaction`,
+		Short: "Create a new DefraDB transaction.",
+		Long:  `Create a new DefraDB transaction.`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			db := cmd.Context().Value(dbContextKey).(client.DB)
 

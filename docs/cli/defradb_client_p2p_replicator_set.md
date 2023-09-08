@@ -15,8 +15,8 @@ defradb client p2p replicator set [-c, --collection] <peer> [flags]
 ### Options
 
 ```
-  -c, --collection stringArray   Define the collection for the replicator
-  -h, --help                     help for set
+  -c, --collection strings   Define the collection for the replicator
+  -h, --help                 help for set
 ```
 
 ### Options inherited from parent commands
@@ -29,6 +29,7 @@ defradb client p2p replicator set [-c, --collection] <peer> [flags]
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 

@@ -21,9 +21,22 @@ func MakeCollectionCommand() *cobra.Command {
 	var schemaID string
 	var versionID string
 	var cmd = &cobra.Command{
-		Use:   "collection",
+		Use:   "collection [--name <name> --schema <schemaID> --version <versionID>]",
 		Short: "View detailed collection info.",
-		Long:  `View detailed collection info.`,
+		Long: `View detailed collection info.
+		
+Example: view all collections
+  defradb client collection
+
+Example: view collection by name
+  defradb client collection --name User
+
+Example: view collection by schema id
+  defradb client collection --schema bae123
+
+Example: view collection by version id
+  defradb client collection --version bae123
+		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 

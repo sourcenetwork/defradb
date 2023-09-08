@@ -9,7 +9,8 @@ defradb server-dump [flags]
 ### Options
 
 ```
-  -h, --help   help for server-dump
+  -h, --help           help for server-dump
+      --store string   Datastore to use. Options are badger, memory (default "badger")
 ```
 
 ### Options inherited from parent commands

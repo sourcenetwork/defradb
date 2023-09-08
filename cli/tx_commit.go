@@ -22,8 +22,8 @@ import (
 func MakeTxCommitCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "commit [id]",
-		Short: "Commit a DefraDB transaction",
-		Long:  `Commit a DefraDB transaction`,
+		Short: "Commit a DefraDB transaction.",
+		Long:  `Commit a DefraDB transaction.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			id, err := strconv.ParseUint(args[0], 10, 64)

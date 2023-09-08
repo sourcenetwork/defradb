@@ -1,20 +1,19 @@
-## defradb client p2p p2pcollection getall
+## defradb client tx commit
 
-Get all P2P collections
+Commit a DefraDB transaction.
 
 ### Synopsis
 
-Get all P2P collections in the pubsub topics.
-This is the list of collections of the node that are synchronized on the pubsub network.
+Commit a DefraDB transaction.
 
 ```
-defradb client p2p p2pcollection getall [flags]
+defradb client tx commit [id] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for getall
+  -h, --help   help for commit
 ```
 
 ### Options inherited from parent commands
@@ -27,10 +26,11 @@ defradb client p2p p2pcollection getall [flags]
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb client p2p p2pcollection](defradb_client_p2p_p2pcollection.md)	 - Configure the P2P collection system
+* [defradb client tx](defradb_client_tx.md)	 - Create, commit, and discard DefraDB transactions
 

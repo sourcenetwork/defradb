@@ -26,7 +26,14 @@ func MakeDocumentDeleteCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "delete --collection <collection> [--filter <filter> --key <key>]",
 		Short: "Delete documents by key or filter.",
-		Long:  `Delete documents by key or filter`,
+		Long: `Delete documents by key or filter and lists the number of documents deleted.
+		
+Example: delete by key(s)
+  defradb client document delete --collection User --key bae123,bae456,...
+
+Example: delete by filter
+  defradb client document delete --collection User --filter '{ "_gte": { "points": 100 } }'
+		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 

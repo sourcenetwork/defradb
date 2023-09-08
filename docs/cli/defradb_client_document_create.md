@@ -1,20 +1,27 @@
-## defradb client p2p p2pcollection add
+## defradb client document create
 
-Add P2P collections
+Create a new document.
 
 ### Synopsis
 
-Add P2P collections to the synchronized pubsub topics.
-The collections are synchronized between nodes of a pubsub network.
+Create a new document.
+
+Example: create document
+  defradb client collection create --collection User '{ "name": "Bob" }'
+
+Example: create documents
+  defradb client collection create --collection User '[{ "name": "Alice" }, { "name": "Bob" }]'
+		
 
 ```
-defradb client p2p p2pcollection add [collectionID] [flags]
+defradb client document create --collection <collection> <document> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for add
+  -c, --collection string   Collection name
+  -h, --help                help for create
 ```
 
 ### Options inherited from parent commands
@@ -27,10 +34,11 @@ defradb client p2p p2pcollection add [collectionID] [flags]
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb client p2p p2pcollection](defradb_client_p2p_p2pcollection.md)	 - Configure the P2P collection system
+* [defradb client document](defradb_client_document.md)	 - Create, read, update, and delete documents.
 

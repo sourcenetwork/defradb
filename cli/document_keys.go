@@ -23,7 +23,11 @@ func MakeDocumentKeysCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "keys --collection <collection>",
 		Short: "List all collection document keys.",
-		Long:  `List all collection document keys`,
+		Long: `List all collection document keys.
+		
+Example:
+  defradb client collection keys --collection User keys
+		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 

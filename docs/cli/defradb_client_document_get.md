@@ -1,26 +1,30 @@
-## defradb client rpc p2pcollection remove
+## defradb client document get
 
-Remove P2P collections
+View detailed document info.
 
 ### Synopsis
 
-Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.
+View detailed document info.
+
+Example:
+  defradb client document get --collection User bae123
+		
 
 ```
-defradb client rpc p2pcollection remove [collectionID] [flags]
+defradb client document get --collection <collection> <docKey> [--show-deleted] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -c, --collection string   Collection name
+  -h, --help                help for get
+      --show-deleted        Show deleted documents
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --addr string          RPC endpoint address (default "0.0.0.0:9161")
       --logformat string     Log format to use. Options are csv, json (default "csv")
       --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
       --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
@@ -28,10 +32,11 @@ defradb client rpc p2pcollection remove [collectionID] [flags]
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
 
-* [defradb client rpc p2pcollection](defradb_client_rpc_p2pcollection.md)	 - Configure the P2P collection system
+* [defradb client document](defradb_client_document.md)	 - Create, read, update, and delete documents.
 

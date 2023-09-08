@@ -22,8 +22,8 @@ import (
 func MakeTxDiscardCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "discard [id]",
-		Short: "Discard a DefraDB transaction",
-		Long:  `Discard a DefraDB transaction`,
+		Short: "Discard a DefraDB transaction.",
+		Long:  `Discard a DefraDB transaction.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			id, err := strconv.ParseUint(args[0], 10, 64)
