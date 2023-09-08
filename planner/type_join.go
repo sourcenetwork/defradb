@@ -438,7 +438,7 @@ func prepareScanNodeFilterForTypeJoin(
 
 	if filter.IsComplex(scan.filter) {
 		if parent.filter == nil {
-			parent.filter = new(mapper.Filter)
+			parent.filter = mapper.NewFilter()
 			parent.filter.Conditions = filter.Copy(scan.filter.Conditions)
 		} else {
 			parent.filter.Conditions = filter.Merge(

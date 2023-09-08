@@ -803,8 +803,8 @@ func resolveInnerFilterDependencies(
 
 	for key := range source {
 		if key == request.FilterOpAnd || key == request.FilterOpOr { // handle _not
-			andFilter := source[key].([]any)
-			for _, innerFilter := range andFilter {
+			compoundFilter := source[key].([]any)
+			for _, innerFilter := range compoundFilter {
 				innerFields, err := resolveInnerFilterDependencies(
 					descriptionsRepo,
 					parentCollectionName,
