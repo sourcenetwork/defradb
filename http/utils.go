@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
 
@@ -33,9 +34,32 @@ func responseJSON(rw http.ResponseWriter, status int, out any) {
 	json.NewEncoder(rw).Encode(out) //nolint:errcheck
 }
 
-func parseError(msg any) error {
-	if msg == badger.ErrTxnConflict.Error() {
-		return badger.ErrTxnConflict
+func documentJSON(doc *client.Document) ([]byte, error) {
+	docMap, err := doc.ToMap()
+	if err != nil {
+		return nil, err
 	}
-	return fmt.Errorf("%s", msg)
+	delete(docMap, "_key")
+
+	for field, value := range doc.Values() {
+		if !value.IsDirty() {
+			delete(docMap, field.Name())
+		}
+		if value.IsDelete() {
+			docMap[field.Name()] = nil
+		}
+	}
+
+	return json.Marshal(docMap)
+}
+
+func parseError(msg any) error {
+	switch msg {
+	case client.ErrDocumentNotFound.Error():
+		return client.ErrDocumentNotFound
+	case badger.ErrTxnConflict.Error():
+		return badger.ErrTxnConflict
+	default:
+		return fmt.Errorf("%s", msg)
+	}
 }
