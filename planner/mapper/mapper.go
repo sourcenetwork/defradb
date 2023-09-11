@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -788,6 +787,7 @@ func resolveFilterDependencies(
 		source.Value().Conditions,
 		mapping,
 		existingFields,
+		nil,
 	)
 }
 
@@ -797,50 +797,83 @@ func resolveInnerFilterDependencies(
 	source map[string]any,
 	mapping *core.DocumentMapping,
 	existingFields []Requestable,
+	resolvedFields []Requestable,
 ) ([]Requestable, error) {
 	newFields := []Requestable{}
 
-sourceLoop:
 	for key := range source {
-		if strings.HasPrefix(key, "_") && key != request.KeyFieldName {
+		if key == request.FilterOpAnd || key == request.FilterOpOr {
+			compoundFilter := source[key].([]any)
+			for _, innerFilter := range compoundFilter {
+				innerFields, err := resolveInnerFilterDependencies(
+					descriptionsRepo,
+					parentCollectionName,
+					innerFilter.(map[string]any),
+					mapping,
+					existingFields,
+					resolvedFields,
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				resolvedFields = append(resolvedFields, innerFields...)
+				newFields = append(newFields, innerFields...)
+			}
+			continue
+		} else if key == request.FilterOpNot {
+			notFilter := source[key].(map[string]any)
+			innerFields, err := resolveInnerFilterDependencies(
+				descriptionsRepo,
+				parentCollectionName,
+				notFilter,
+				mapping,
+				existingFields,
+				resolvedFields,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			resolvedFields = append(resolvedFields, innerFields...)
+			newFields = append(newFields, innerFields...)
 			continue
 		}
 
 		propertyMapped := len(mapping.IndexesByName[key]) != 0
 
-		if !propertyMapped {
-			join, err := constructEmptyJoin(descriptionsRepo, parentCollectionName, mapping, key)
+		var childSelect *Select
+		if propertyMapped {
+			var field Requestable
+			for _, f := range existingFields {
+				if f.GetIndex() == mapping.FirstIndexOfName(key) {
+					field = f
+					break
+				}
+			}
+			for _, f := range resolvedFields {
+				if f.GetIndex() == mapping.FirstIndexOfName(key) {
+					field = f
+					break
+				}
+			}
+			if field == nil {
+				newFields = append(newFields, &Field{Index: mapping.FirstIndexOfName(key), Name: key})
+				continue
+			}
+			var isSelect bool
+			childSelect, isSelect = field.(*Select)
+			if !isSelect {
+				continue
+			}
+		} else {
+			var err error
+			childSelect, err = constructEmptyJoin(descriptionsRepo, parentCollectionName, mapping, key)
 			if err != nil {
 				return nil, err
 			}
 
-			newFields = append(newFields, join)
-		}
-
-		keyIndex := mapping.FirstIndexOfName(key)
-
-		if keyIndex >= len(mapping.ChildMappings) {
-			// If the key index is outside the bounds of the child mapping array, then
-			// this is not a relation/join and we can add it to the fields and
-			// continue (no child props to process)
-			for _, field := range existingFields {
-				if field.GetIndex() == keyIndex {
-					continue sourceLoop
-				}
-			}
-			newFields = append(existingFields, &Field{
-				Index: keyIndex,
-				Name:  key,
-			})
-
-			continue
-		}
-
-		childMap := mapping.ChildMappings[keyIndex]
-		if childMap == nil {
-			// If childMap is nil, then this is not a relation/join and we can continue
-			// (no child props to process)
-			continue
+			newFields = append(newFields, childSelect)
 		}
 
 		childSource := source[key]
@@ -851,56 +884,25 @@ sourceLoop:
 			continue
 		}
 
-		dummyParsed := &request.Select{
-			Field: request.Field{
-				Name: key,
-			},
-		}
-
+		dummyParsed := &request.Select{Field: request.Field{Name: key}}
 		childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
 		if err != nil {
 			return nil, err
-		}
-
-		allFields := enumerable.Concat(
-			enumerable.New(newFields),
-			enumerable.New(existingFields),
-		)
-
-		matchingFields := enumerable.Where[Requestable](allFields, func(existingField Requestable) (bool, error) {
-			return existingField.GetIndex() == keyIndex, nil
-		})
-
-		matchingHosts := enumerable.Select(matchingFields, func(existingField Requestable) (*Select, error) {
-			host, isSelect := existingField.AsSelect()
-			if !isSelect {
-				// This should never be possible
-				return nil, client.NewErrUnhandledType("host", existingField)
-			}
-			return host, nil
-		})
-
-		host, hasHost, err := enumerable.TryGetFirst(matchingHosts)
-		if err != nil {
-			return nil, err
-		}
-		if !hasHost {
-			// This should never be possible
-			return nil, ErrFailedToFindHostField
 		}
 
 		childFields, err := resolveInnerFilterDependencies(
 			descriptionsRepo,
 			childCollectionName,
 			childFilter,
-			childMap,
-			host.Fields,
+			childSelect.DocumentMapping,
+			childSelect.Fields,
+			nil,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		host.Fields = append(host.Fields, childFields...)
+		childSelect.Fields = append(childSelect.Fields, childFields...)
 	}
 
 	return newFields, nil
@@ -946,7 +948,7 @@ func constructEmptyJoin(
 	}, nil
 }
 
-// resolveSecondaryRelationIDs contructs the required stuff needed to resolve secondary relation ids.
+// resolveSecondaryRelationIDs constructs the required stuff needed to resolve secondary relation ids.
 //
 // They are handled by joining (if not already done so) the related object and copying its key into the
 // secondary relation id field.
