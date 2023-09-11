@@ -14,6 +14,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/planner/mapper"
+
 	"github.com/stretchr/testify/assert"
 )
 
