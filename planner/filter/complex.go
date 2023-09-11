@@ -26,17 +26,20 @@ func IsComplex(filter *mapper.Filter) bool {
 	return isComplex(filter.Conditions, false)
 }
 
-func isComplex(conditions any, isInsideOr bool) bool {
+func isComplex(conditions any, seekRelation bool) bool {
 	switch typedCond := conditions.(type) {
 	case map[connor.FilterKey]any:
 		for k, v := range typedCond {
-			if op, ok := k.(*mapper.Operator); ok && op.Operation == request.FilterOpOr && len(v.([]any)) > 1 {
-				if isComplex(v, true) {
-					return true
+			if op, ok := k.(*mapper.Operator); ok {
+				if (op.Operation == request.FilterOpOr && len(v.([]any)) > 1) ||
+					op.Operation == request.FilterOpNot {
+					if isComplex(v, true) {
+						return true
+					}
+					continue
 				}
-				continue
 			}
-			if _, isProp := k.(*mapper.PropertyIndex); isProp && isInsideOr {
+			if _, isProp := k.(*mapper.PropertyIndex); isProp && seekRelation {
 				objMap := v.(map[connor.FilterKey]any)
 				for objK := range objMap {
 					if _, isRelation := objK.(*mapper.PropertyIndex); isRelation {
@@ -44,13 +47,13 @@ func isComplex(conditions any, isInsideOr bool) bool {
 					}
 				}
 			}
-			if isComplex(v, isInsideOr) {
+			if isComplex(v, seekRelation) {
 				return true
 			}
 		}
 	case []any:
 		for _, v := range typedCond {
-			if isComplex(v, isInsideOr) {
+			if isComplex(v, seekRelation) {
 				return true
 			}
 		}
