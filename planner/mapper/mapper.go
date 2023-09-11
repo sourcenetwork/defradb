@@ -802,7 +802,7 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key := range source {
-		if key == request.FilterOpAnd || key == request.FilterOpOr { 
+		if key == request.FilterOpAnd || key == request.FilterOpOr {
 			compoundFilter := source[key].([]any)
 			for _, innerFilter := range compoundFilter {
 				innerFields, err := resolveInnerFilterDependencies(
