@@ -381,6 +381,14 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				}`,
 			},
 			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "The Lord of the Rings",
+					"rating": 5.0,
+					"author_id": "bae-61d279c1-eab9-56ec-8654-dce0324ebfda"
+				}`,
+			},
+			testUtils.CreateDoc{
 				CollectionID: 1,
 				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 				Doc: `{
@@ -398,78 +406,44 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 					"verified": false
 				}`,
 			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-61d279c1-eab9-56ec-8654-dce0324ebfda
+				Doc: `{
+					"name": "John Tolkien",
+					"age": 70,
+					"verified": true
+				}`,
+			},
 			testUtils.Request{
 				Request: `query {
 					Author(filter: {_or: [
-						{ name: {_eq: "Not existing author"}},
-						{ _and: [
-							{age: {_gt: 64}},
+						{_and: [
+							{published: {rating: {_lt: 5.0}}},
 							{published: {rating: {_gt: 4.8}}}
 						]},
-						{ _and: [
-							{age: {_gt: 80}},
-							{published: {rating: {_lt: 4.9}}}
+						{_and: [
+							{age: {_le: 65}},
+							{published: {name: {_like: "%Lord%"}}}
 						]},
 					]}) {
 						name
 					}
 				}`,
-				Results: []map[string]any{{
-					"name": "John Grisham",
-				}},
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+					{
+						"name": "Cornelia Funke",
+					},
+				},
 			},
 			testUtils.Request{
 				Request: `query {
-					Author(filter: {_or: [
-						{ name: {_eq: "Not existing author"}},
-						{ _and: [
-							{age: {_gt: 80}},
-							{published: {rating: {_gt: 4.8}}}
-						]},
-						{ _and: [
-							{age: {_lt: 64}},
-							{published: {rating: {_lt: 4.9}}}
-						]},
-					]}) {
-						name
-					}
-				}`,
-				Results: []map[string]any{{
-					"name": "Cornelia Funke",
-				}},
-			},
-			testUtils.Request{
-				Request: `query {
-					Author(filter: {_or: [
-						{ name: {_eq: "Not existing author"}},
-						{ _and: [
-							{age: {_gt: 30}},
-							{published: {rating: {_eq: 4.5}}}
-						]},
-						{ _and: [
-							{age: {_gt: 80}},
-							{published: {rating: {_lt: 4.9}}}
-						]},
-					]}) {
-						name
-					}
-				}`,
-				Results: []map[string]any{{
-					"name": "John Grisham",
-				}},
-			},
-			testUtils.Request{
-				Request: `query {
-					Author(filter: {_or: [
-						{ name: {_eq: "Not existing author"}},
-						{ _and: [
-							{age: {_gt: 30}},
-							{published: {rating: {_eq: 4.8}}}
-						]},
-						{ _and: [
-							{age: {_gt: 80}},
-							{published: {rating: {_lt: 4.9}}}
-						]},
+					Author(filter: {_and: [
+						{ _not: {published: {rating: {_gt: 4.8}}}},
+						{ _not: {published: {rating: {_lt: 4.8}}}}
 					]}) {
 						name
 					}

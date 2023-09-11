@@ -469,6 +469,24 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 					},
 				},
 			},
+			testUtils.Request{
+				Request: `query {
+					Book(filter: {_or: [
+						{_not: {author: {age: {_lt: 65}}} },
+						{_not: {author: {age: {_gt: 30}}} }
+					]}) {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Yet Another Book",
+					},
+					{
+						"name": "Painted House",
+					},
+				},
+			},
 		},
 	}
 

@@ -64,6 +64,46 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuerySimple_WithNotAndComparisonXFilter_NoError(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with _not filter with _gt condition)",
+		Request: `query {
+					Users(filter: {_not: {Age: {_gt: 20}}}) {
+						Name
+						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Alice",
+				"Age":  uint64(19),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with logical compound filter (not)",
