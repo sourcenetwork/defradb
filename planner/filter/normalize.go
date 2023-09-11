@@ -15,7 +15,7 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-// Normalize normalizes the provided filter conditions.
+// normalize normalizes the provided filter conditions.
 // The following cases are subject of normalization:
 // - _and or _or with one element is removed flattened
 // - double _not is removed
@@ -23,7 +23,7 @@ import (
 // As the result object is a map with unique keys (a.k.a. properties),
 // while performing flattening of compound operators if the same property
 // is present in the result map, both conditions will be moved into an _and
-func Normalize(conditions map[connor.FilterKey]any) map[connor.FilterKey]any {
+func normalize(conditions map[connor.FilterKey]any) map[connor.FilterKey]any {
 	return normalizeConditions(conditions, false).(map[connor.FilterKey]any)
 }
 

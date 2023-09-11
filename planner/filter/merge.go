@@ -30,6 +30,10 @@ func Merge(c1 map[connor.FilterKey]any, c2 map[connor.FilterKey]any) map[connor.
 			c1, c2,
 		},
 	}
-
-	return Normalize(result)
+	// we don't use any intelligent way of merging 2 filters using
+	// some kind of field-by-field analysis.
+	// The way we merge filters is rather artificial: create a root _and operator
+	// and put both filters as its children. This makes the resulting filter
+	// more complex, that's why simplify if by normalizing it.
+	return normalize(result)
 }

@@ -14,9 +14,9 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-// CopyField copies the given field from the provided filter.
+// copyField copies the given field from the provided filter.
 // The result filter preserves the structure of the original filter.
-func CopyField(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
+func copyField(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
 	if filter == nil {
 		return nil
 	}
