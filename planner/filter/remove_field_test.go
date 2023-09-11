@@ -81,3 +81,7 @@ func TestRemoveFieldFromFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveFieldFromNullFilter(t *testing.T) {
+	RemoveField(nil, mapper.Field{Index: 1})
+}

@@ -169,3 +169,7 @@ func TestIsComplex(t *testing.T) {
 		})
 	}
 }
+
+func TestIsComplexNullFilter(t *testing.T) {
+	assert.False(t, IsComplex(nil))
+}

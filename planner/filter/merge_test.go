@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -63,4 +64,12 @@ func TestMergeFilterConditions(t *testing.T) {
 			AssertEqualFilterMap(t, expectedFilter.Conditions, actualFilter)
 		})
 	}
+}
+
+func TestMergeNullFilter(t *testing.T) {
+	f := map[connor.FilterKey]any{
+		&mapper.PropertyIndex{Index: 0}: "value1",
+	}
+	AssertEqualFilterMap(t, f, Merge(f, nil))
+	AssertEqualFilterMap(t, f, Merge(nil, f))
 }

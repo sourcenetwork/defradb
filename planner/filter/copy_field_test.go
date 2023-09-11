@@ -14,9 +14,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/planner/mapper"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestCopyFilterTreeNodesForField(t *testing.T) {
+func TestCopyField(t *testing.T) {
 	tests := []struct {
 		name           string
 		inputField     mapper.Field
@@ -80,4 +81,9 @@ func TestCopyFilterTreeNodesForField(t *testing.T) {
 			AssertEqualFilterMap(t, expectedFilter.Conditions, actualFilter.Conditions)
 		})
 	}
+}
+
+func TestCopyFieldOfNullFilter(t *testing.T) {
+	actualFilter := copyField(nil, mapper.Field{Index: 1})
+	assert.Nil(t, actualFilter)
 }
