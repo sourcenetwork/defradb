@@ -17,14 +17,17 @@ import (
 
 // Merge merges two filters into one.
 // It basically applies _and to both filters and normalizes them.
-func Merge(dest map[connor.FilterKey]any, src map[connor.FilterKey]any) map[connor.FilterKey]any {
-	if dest == nil {
-		dest = make(map[connor.FilterKey]any)
+func Merge(c1 map[connor.FilterKey]any, c2 map[connor.FilterKey]any) map[connor.FilterKey]any {
+	if len(c1) == 0 {
+		return c2
+	}
+	if len(c2) == 0 {
+		return c1
 	}
 
 	result := map[connor.FilterKey]any{
 		&mapper.Operator{Operation: request.FilterOpAnd}: []any{
-			dest, src,
+			c1, c2,
 		},
 	}
 
