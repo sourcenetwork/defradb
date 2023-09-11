@@ -110,7 +110,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 		},
 	}
 
-	testUtils.AssertPanicAndSkipChangeDetection(
+	testUtils.AssertPanic(
 		t,
 		func() {
 			testUtils.ExecuteTestCase(t, test)
