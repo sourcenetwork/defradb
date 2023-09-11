@@ -802,7 +802,7 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key := range source {
-		if key == request.FilterOpAnd || key == request.FilterOpOr { // handle _not
+		if key == request.FilterOpAnd || key == request.FilterOpOr { 
 			compoundFilter := source[key].([]any)
 			for _, innerFilter := range compoundFilter {
 				innerFields, err := resolveInnerFilterDependencies(
@@ -820,6 +820,23 @@ func resolveInnerFilterDependencies(
 				resolvedFields = append(resolvedFields, innerFields...)
 				newFields = append(newFields, innerFields...)
 			}
+			continue
+		} else if key == request.FilterOpNot {
+			notFilter := source[key].(map[string]any)
+			innerFields, err := resolveInnerFilterDependencies(
+				descriptionsRepo,
+				parentCollectionName,
+				notFilter,
+				mapping,
+				existingFields,
+				resolvedFields,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			resolvedFields = append(resolvedFields, innerFields...)
+			newFields = append(newFields, innerFields...)
 			continue
 		}
 
