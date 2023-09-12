@@ -149,7 +149,7 @@ func init() {
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
 	DetectDbChanges, _ = strconv.ParseBool(os.Getenv(detectDbChangesEnvName))
 	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
-	rootDatabaseDir = os.Getenv(rootDBFilePathEnvName)
+	databaseDir = os.Getenv(rootDBFilePathEnvName)
 
 	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
 		mutationType = MutationType(value)
