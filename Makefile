@@ -30,6 +30,7 @@ BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 300s
+COVER_FLAGS=-covermode=atomic -coverprofile=coverage.txt
 
 PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
@@ -190,6 +191,11 @@ test\:ci:
 	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true \
 	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
 	$(MAKE) test:all
+
+.PHONY: test\:ci-matrix
+test\:ci-matrix:
+	@$(MAKE) deps:lens
+	gotestsum --format testname -- ./... $(COVER_FLAGS) $(TEST_FLAGS)
 
 .PHONY: test\:ci-gql-mutations
 test\:ci-gql-mutations:

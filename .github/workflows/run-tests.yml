@@ -47,50 +47,36 @@ jobs:
           go-version: "1.20"
           check-latest: true
 
-      - name: Install Go dependencies
+      - name: Build dependencies
         run: |
-          go mod download
-          go install gotest.tools/gotestsum@latest
-          go install github.com/ory/go-acc@latest
-
-      - name: Build Lens dependencies
-        run: |
-          rustup target add wasm32-unknown-unknown
-          cargo build --target wasm32-unknown-unknown --manifest-path "./tests/lenses/rust_wasm32_set_default/Cargo.toml"
-	        cargo build --target wasm32-unknown-unknown --manifest-path "./tests/lenses/rust_wasm32_remove/Cargo.toml"
-	        cargo build --target wasm32-unknown-unknown --manifest-path "./tests/lenses/rust_wasm32_copy/Cargo.toml"
+          make deps:modules
+          make deps:test
 
       - name: Run the tests
-        run: gotestsum ./... --format testname -- -race -shuffle=on -timeout 300s
+        run: make test:ci-matrix
 
-      - name: Generate test coverage
-        run: go-acc ./... --output=coverage.txt --covermode=atomic -- -failfast
-
-      - name: Upload coverage to Codecov without token, retry on failure
-        env: 
-          codecov_secret: ${{ secrets.CODECOV_TOKEN }}
-        if: env.codecov_secret == ''
-        uses: Wandalen/wretry.action@v1.0.36
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v3
         with:
-          attempt_limit: 5
-          attempt_delay: 10000
-          action: codecov/codecov-action@v3
-          with: |
-            name: defradb-codecov
-            files: ./coverage.txt
-            os: 'linux'
-            fail_ci_if_error: true
-            verbose: true
+          name: ${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
+          path: coverage.txt
+          if-no-files-found: error
 
-      - name: Upload coverage to Codecov with token
-        env: 
-          codecov_secret: ${{ secrets.CODECOV_TOKEN }}
-        if: env.codecov_secret != ''
+  upload-coverage:
+    name: Upload test code coverage
+    
+    needs: run-tests
+    
+    steps:
+      - name: Download coverage reports
+        uses: actions/download-artifact@v3
+
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ env.codecov_secret }}
+          token: ${{ secrets.CODECOV_TOKEN }}
           name: defradb-codecov
-          files: ./coverage.txt
+          flags: all-tests
           os: 'linux'
           fail_ci_if_error: true
           verbose: true
