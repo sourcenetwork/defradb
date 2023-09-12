@@ -216,7 +216,7 @@ func NewInMemoryDB(ctx context.Context) (client.DB, error) {
 }
 
 func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, string, error) {
-	if badgerFilePath != "" {
+	if badgerFilePath == "" {
 		badgerFilePath = t.TempDir()
 	}
 	opts := &badgerds.Options{
