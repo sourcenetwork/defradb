@@ -75,7 +75,7 @@ func TestChanges(t *testing.T) {
 		pkgName := strings.TrimPrefix(pkg, "github.com/sourcenetwork/defradb/")
 
 		t.Run(pkgName, func(t *testing.T) {
-			t.Parallel()
+			//t.Parallel()
 			dataDir := t.TempDir()
 
 			fromTestPkg := filepath.Join(sourceRepoDir, pkgName)
@@ -111,11 +111,10 @@ func execTest(t *testing.T, dir, pkg string, setupOnly bool) {
 	)
 	cmd.Dir = pkg
 	cmd.Env = append(os.Environ(), "DEFRA_BADGER_FILE_PATH="+dir)
+	cmd.Env = append(cmd.Env, "DEFRA_DETECT_DATABASE_CHANGES=true")
 
 	if setupOnly {
 		cmd.Env = append(cmd.Env, "DEFRA_SETUP_ONLY=true")
-	} else {
-		cmd.Env = append(cmd.Env, "DEFRA_DETECT_DATABASE_CHANGES=true")
 	}
 
 	out, err := cmd.Output()
