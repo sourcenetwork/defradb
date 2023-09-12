@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -43,6 +44,7 @@ const (
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
+	rootDBFilePathEnvName      = "DEFRA_TEST_ROOT"
 	inMemoryEnvName            = "DEFRA_IN_MEMORY"
 	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
@@ -100,11 +102,16 @@ var (
 	log            = logging.MustNewLogger("tests.integration")
 	badgerInMemory bool
 	badgerFile     bool
-	badgerFilePath string
 	inMemoryStore  bool
 	httpClient     bool
 	goClient       bool
 	mutationType   MutationType
+	// databaseDir is the directory of the badger file db.
+	databaseDir string
+	// rootDatabaseDir is the root directroy of the badger file db.
+	rootDatabaseDir string
+	// previousTestCaseName is the name of the previous test.
+	previousTestCaseTestName string
 )
 
 const subscriptionTimeout = 1 * time.Second
@@ -145,7 +152,7 @@ func init() {
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
 	DetectDbChanges, _ = strconv.ParseBool(os.Getenv(detectDbChangesEnvName))
 	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
-	badgerFilePath = os.Getenv(fileBadgerPathEnvName)
+	rootDatabaseDir = os.Getenv(rootDBFilePathEnvName)
 
 	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
 		mutationType = MutationType(value)
@@ -216,13 +223,18 @@ func NewInMemoryDB(ctx context.Context) (client.DB, error) {
 }
 
 func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, string, error) {
-	if badgerFilePath == "" {
-		badgerFilePath = t.TempDir()
+	var dbPath string
+	if databaseDir != "" {
+		dbPath = databaseDir
+	} else if rootDatabaseDir != "" {
+		dbPath = path.Join(rootDatabaseDir, t.Name())
+	} else {
+		dbPath = t.TempDir()
 	}
 	opts := &badgerds.Options{
-		Options: badger.DefaultOptions(badgerFilePath),
+		Options: badger.DefaultOptions(dbPath),
 	}
-	rootstore, err := badgerds.NewDatastore(badgerFilePath, opts)
+	rootstore, err := badgerds.NewDatastore(dbPath, opts)
 	if err != nil {
 		return nil, "", err
 	}
@@ -230,7 +242,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, string, erro
 	if err != nil {
 		return nil, "", err
 	}
-	return db, badgerFilePath, err
+	return db, dbPath, err
 }
 
 // GetDatabase returns the database implementation for the current
@@ -283,6 +295,10 @@ func ExecuteTestCase(
 	testCase TestCase,
 ) {
 	collectionNames := getCollectionNames(testCase)
+
+	if DetectDbChanges {
+		DetectDbChangesPreTestChecks(t, collectionNames)
+	}
 
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 
@@ -673,8 +689,11 @@ func restartNodes(
 
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for i := len(s.nodes) - 1; i >= 0; i-- {
+		originalPath := databaseDir
+		databaseDir = s.dbPaths[i]
 		db, _, err := GetDatabase(s)
 		require.Nil(s.t, err)
+		databaseDir = originalPath
 
 		if len(s.nodeConfigs) == 0 {
 			// If there are no explicit node configuration actions the node will be
