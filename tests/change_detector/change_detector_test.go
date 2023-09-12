@@ -70,7 +70,7 @@ func TestChanges(t *testing.T) {
 
 	for _, pkg := range targetRepoPkgList {
 		if pkg == "" || !sourceRepoPkgMap[pkg] {
-			continue
+			continue // ignore new packages
 		}
 		pkgName := strings.TrimPrefix(pkg, "github.com/sourcenetwork/defradb/")
 
@@ -79,20 +79,17 @@ func TestChanges(t *testing.T) {
 			dataDir := t.TempDir()
 
 			fromTestPkg := filepath.Join(sourceRepoDir, pkgName)
-			execTest(t, dataDir, fromTestPkg, true)
+			execTest(t, fromTestPkg, dataDir, true)
 
 			toTestPkg := filepath.Join(targetRepoDir, pkgName)
-			execTest(t, dataDir, toTestPkg, false)
+			execTest(t, toTestPkg, dataDir, false)
 		})
 	}
 }
 
+// execList returns a list of all packages in the given directory.
 func execList(t *testing.T, dir string) []string {
-	cmd := exec.Command(
-		"go",
-		"list",
-		"./...",
-	)
+	cmd := exec.Command("go", "list", "./...")
 	cmd.Dir = dir
 
 	out, err := cmd.Output()
@@ -101,16 +98,12 @@ func execList(t *testing.T, dir string) []string {
 	return strings.Split(string(out), "\n")
 }
 
-func execTest(t *testing.T, dir, pkg string, setupOnly bool) {
-	cmd := exec.Command(
-		"go",
-		"test",
-		".",
-		"-count", "1",
-		"-v",
-	)
-	cmd.Dir = pkg
-	cmd.Env = append(os.Environ(), "DEFRA_BADGER_FILE_PATH="+dir)
+// execTest runs the tests in the given directory and sets the data
+// directory and setup only environment variables.
+func execTest(t *testing.T, dir, dataDir string, setupOnly bool) {
+	cmd := exec.Command("go", "test", ".", "-count", "1", "-v")
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "DEFRA_BADGER_FILE_PATH="+dataDir)
 	cmd.Env = append(cmd.Env, "DEFRA_DETECT_DATABASE_CHANGES=true")
 
 	if setupOnly {
@@ -121,12 +114,14 @@ func execTest(t *testing.T, dir, pkg string, setupOnly bool) {
 	require.NoError(t, err, string(out))
 }
 
+// execClone clones the repo from the given url and branch into the directory.
 func execClone(t *testing.T, dir, url, branch string) {
 	cmd := exec.Command(
 		"git",
 		"clone",
-		"--branch", branch,
 		"--single-branch",
+		"--branch", branch,
+		"--depth", "1",
 		url,
 		dir,
 	)
@@ -135,11 +130,9 @@ func execClone(t *testing.T, dir, url, branch string) {
 	require.NoError(t, err, string(out))
 }
 
+// execMakeDeps runs make:deps in the given directory.
 func execMakeDeps(t *testing.T, dir string) {
-	cmd := exec.Command(
-		"make",
-		"deps:lens",
-	)
+	cmd := exec.Command("make", "deps:lens")
 	cmd.Dir = dir
 
 	out, err := cmd.Output()
