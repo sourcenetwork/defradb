@@ -11,6 +11,7 @@
 package change_detector
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,36 +21,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	repositoryEnvName   = "DEFRA_CODE_REPOSITORY"
-	sourceBranchEnvName = "DEFRA_SOURCE_BRANCH"
-	targetBranchEnvName = "DEFRA_TARGET_BRANCH"
-)
-
 func TestChanges(t *testing.T) {
-	var repository string
-	if value, ok := os.LookupEnv(repositoryEnvName); ok {
-		repository = value
-	} else {
-		repository = "https://github.com/nasdf/defradb.git"
-	}
-
-	var sourceBranch string
-	if value, ok := os.LookupEnv(sourceBranchEnvName); ok {
-		sourceBranch = value
-	} else {
-		sourceBranch = "nasdf/test/parallel-change-detector"
-	}
-
-	var targetBranch string
-	if value, ok := os.LookupEnv(targetBranchEnvName); ok {
-		targetBranch = value
-	} else {
-		targetBranch = "nasdf/test/parallel-change-detector"
-	}
-
 	sourceRepoDir := t.TempDir()
 	execClone(t, sourceRepoDir, repository, sourceBranch)
+
+	if checkIfDatabaseFormatChangesAreDocumented(sourceRepoDir) {
+		t.Skip("skipping test with documented database format changes")
+	}
 
 	targetRepoDir := t.TempDir()
 	execClone(t, targetRepoDir, repository, targetBranch)
@@ -69,20 +47,20 @@ func TestChanges(t *testing.T) {
 	}
 
 	for _, pkg := range targetRepoPkgList {
-		if pkg == "" || !sourceRepoPkgMap[pkg] {
-			continue // ignore new packages
-		}
 		pkgName := strings.TrimPrefix(pkg, "github.com/sourcenetwork/defradb/")
-
 		t.Run(pkgName, func(t *testing.T) {
+			if pkg == "" || !sourceRepoPkgMap[pkg] {
+				t.Skip("skipping unknown or new test package")
+			}
+
 			t.Parallel()
 			dataDir := t.TempDir()
 
-			fromTestPkg := filepath.Join(sourceRepoDir, pkgName)
-			execTest(t, fromTestPkg, dataDir, true)
+			sourceTestPkg := filepath.Join(sourceRepoDir, pkgName)
+			execTest(t, sourceTestPkg, dataDir, true)
 
-			toTestPkg := filepath.Join(targetRepoDir, pkgName)
-			execTest(t, toTestPkg, dataDir, false)
+			targetTestPkg := filepath.Join(targetRepoDir, pkgName)
+			execTest(t, targetTestPkg, dataDir, false)
 		})
 	}
 }
@@ -103,11 +81,14 @@ func execList(t *testing.T, dir string) []string {
 func execTest(t *testing.T, dir, dataDir string, setupOnly bool) {
 	cmd := exec.Command("go", "test", ".", "-count", "1", "-v")
 	cmd.Dir = dir
-	cmd.Env = append(os.Environ(), "DEFRA_BADGER_FILE_PATH="+dataDir)
-	cmd.Env = append(cmd.Env, "DEFRA_DETECT_DATABASE_CHANGES=true")
+	cmd.Env = append(
+		os.Environ(),
+		fmt.Sprintf("%s=%s", enableEnvName, "true"),
+		fmt.Sprintf("%s=%s", rootDataDirEnvName, dataDir),
+	)
 
 	if setupOnly {
-		cmd.Env = append(cmd.Env, "DEFRA_SETUP_ONLY=true")
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", setupOnlyEnvName, "true"))
 	}
 
 	out, err := cmd.Output()
