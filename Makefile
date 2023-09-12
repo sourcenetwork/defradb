@@ -295,7 +295,7 @@ test\:coverage-html:
 
 .PHONY: test\:changes
 test\:changes:
-	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... $(TEST_FLAGS)
+	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -shuffle=on
 
 .PHONY: validate\:codecov
 validate\:codecov:
