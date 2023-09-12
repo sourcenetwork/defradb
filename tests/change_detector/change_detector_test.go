@@ -109,7 +109,7 @@ func execTest(t *testing.T, dir, pkg string, setupOnly bool) {
 		"-v",
 	)
 	cmd.Dir = pkg
-	cmd.Env = append(os.Environ(), "DEFRA_TEST_ROOT="+dir)
+	cmd.Env = append(os.Environ(), "DEFRA_BADGER_FILE_PATH="+dir)
 
 	if setupOnly {
 		cmd.Env = append(cmd.Env, "DEFRA_SETUP_ONLY=true")

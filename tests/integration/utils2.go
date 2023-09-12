@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -44,7 +43,6 @@ const (
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
-	rootDBFilePathEnvName      = "DEFRA_TEST_ROOT"
 	inMemoryEnvName            = "DEFRA_IN_MEMORY"
 	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
@@ -102,6 +100,7 @@ var (
 	log            = logging.MustNewLogger("tests.integration")
 	badgerInMemory bool
 	badgerFile     bool
+	badgerFilePath string
 	inMemoryStore  bool
 	httpClient     bool
 	goClient       bool
@@ -113,9 +112,6 @@ const subscriptionTimeout = 1 * time.Second
 // Instantiating lenses is expensive, and our tests do not benefit from a large number of them,
 // so we explicitly set it to a low value.
 const lensPoolSize = 2
-
-var databaseDir string
-var rootDatabaseDir string
 
 /*
 If this is set to true the integration test suite will instead of its normal profile do
@@ -149,7 +145,7 @@ func init() {
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
 	DetectDbChanges, _ = strconv.ParseBool(os.Getenv(detectDbChangesEnvName))
 	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
-	databaseDir = os.Getenv(rootDBFilePathEnvName)
+	badgerFilePath = os.Getenv(fileBadgerPathEnvName)
 
 	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
 		mutationType = MutationType(value)
@@ -220,32 +216,21 @@ func NewInMemoryDB(ctx context.Context) (client.DB, error) {
 }
 
 func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, string, error) {
-	var dbPath string
-	if databaseDir != "" {
-		dbPath = databaseDir
-	} else if rootDatabaseDir != "" {
-		dbPath = path.Join(rootDatabaseDir, t.Name())
-	} else {
-		dbPath = t.TempDir()
+	if badgerFilePath != "" {
+		badgerFilePath = t.TempDir()
 	}
-
-	db, err := newBadgerFileDB(ctx, t, dbPath)
-	return db, dbPath, err
-}
-
-func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB, error) {
-	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
-	rootstore, err := badgerds.NewDatastore(path, &opts)
+	opts := &badgerds.Options{
+		Options: badger.DefaultOptions(badgerFilePath),
+	}
+	rootstore, err := badgerds.NewDatastore(badgerFilePath, opts)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-
 	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents(), db.WithLensPoolSize(lensPoolSize))
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-
-	return db, nil
+	return db, badgerFilePath, err
 }
 
 // GetDatabase returns the database implementation for the current
@@ -688,11 +673,8 @@ func restartNodes(
 
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for i := len(s.nodes) - 1; i >= 0; i-- {
-		originalPath := databaseDir
-		databaseDir = s.dbPaths[i]
 		db, _, err := GetDatabase(s)
 		require.Nil(s.t, err)
-		databaseDir = originalPath
 
 		if len(s.nodeConfigs) == 0 {
 			// If there are no explicit node configuration actions the node will be
