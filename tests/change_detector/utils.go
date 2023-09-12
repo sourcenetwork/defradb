@@ -108,10 +108,10 @@ func PreTestChecks(t *testing.T, collectionNames []string) {
 	require.NoError(t, err)
 }
 
-func checkIfDatabaseFormatChangesAreDocumented(codeDir string) bool {
-	previousDbChangeFiles, targetDirFound := getDatabaseFormatDocumentation(codeDir, false)
+func checkIfDatabaseFormatChangesAreDocumented(t *testing.T, codeDir string) bool {
+	previousDbChangeFiles, targetDirFound := getDatabaseFormatDocumentation(t, codeDir, false)
 	if !targetDirFound {
-		panic("Documentation directory not found")
+		t.Fatalf("Documentation directory not found")
 	}
 
 	previousDbChanges := make(map[string]struct{}, len(previousDbChangeFiles))
@@ -121,9 +121,9 @@ func checkIfDatabaseFormatChangesAreDocumented(codeDir string) bool {
 	}
 
 	_, thisFilePath, _, _ := runtime.Caller(0)
-	currentDbChanges, currentDirFound := getDatabaseFormatDocumentation(thisFilePath, true)
+	currentDbChanges, currentDirFound := getDatabaseFormatDocumentation(t, thisFilePath, true)
 	if !currentDirFound {
-		panic("Documentation directory not found")
+		t.Fatalf("Documentation directory not found")
 	}
 
 	for _, f := range currentDbChanges {
@@ -137,10 +137,10 @@ func checkIfDatabaseFormatChangesAreDocumented(codeDir string) bool {
 	return false
 }
 
-func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.DirEntry, bool) {
+func getDatabaseFormatDocumentation(t *testing.T, startPath string, allowDescend bool) ([]fs.DirEntry, bool) {
 	startInfo, err := os.Stat(startPath)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	var currentDirectory string
@@ -153,7 +153,7 @@ func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.D
 	for {
 		directoryContents, err := os.ReadDir(currentDirectory)
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 
 		for _, directoryItem := range directoryContents {
@@ -161,7 +161,7 @@ func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.D
 			if directoryItem.Name() == documentationDirectoryName {
 				probableFormatChangeDirectoryContents, err := os.ReadDir(directoryItemPath)
 				if err != nil {
-					panic(err)
+					t.Fatal(err)
 				}
 				for _, possibleDocumentationItem := range probableFormatChangeDirectoryContents {
 					if path.Ext(possibleDocumentationItem.Name()) == ".md" {
@@ -172,7 +172,7 @@ func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.D
 				}
 			} else {
 				if directoryItem.IsDir() {
-					childContents, directoryFound := getDatabaseFormatDocumentation(directoryItemPath, false)
+					childContents, directoryFound := getDatabaseFormatDocumentation(t, directoryItemPath, false)
 					if directoryFound {
 						return childContents, true
 					}
@@ -185,7 +185,7 @@ func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.D
 			currentDirectory = path.Dir(currentDirectory)
 
 			if currentDirectory == "." || currentDirectory == "/" {
-				panic("Database documentation directory not found")
+				t.Fatal(err)
 			}
 		} else {
 			return []fs.DirEntry{}, false

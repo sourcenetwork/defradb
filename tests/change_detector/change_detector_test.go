@@ -25,7 +25,7 @@ func TestChanges(t *testing.T) {
 	sourceRepoDir := t.TempDir()
 	execClone(t, sourceRepoDir, repository, sourceBranch)
 
-	if checkIfDatabaseFormatChangesAreDocumented(sourceRepoDir) {
+	if checkIfDatabaseFormatChangesAreDocumented(t, sourceRepoDir) {
 		t.Skip("skipping test with documented database format changes")
 	}
 
