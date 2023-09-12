@@ -75,7 +75,7 @@ func TestChanges(t *testing.T) {
 		pkgName := strings.TrimPrefix(pkg, "github.com/sourcenetwork/defradb/")
 
 		t.Run(pkgName, func(t *testing.T) {
-			//t.Parallel()
+			t.Parallel()
 			dataDir := t.TempDir()
 
 			fromTestPkg := filepath.Join(sourceRepoDir, pkgName)
