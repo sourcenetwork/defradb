@@ -48,8 +48,6 @@ const (
 	inMemoryEnvName            = "DEFRA_IN_MEMORY"
 	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
-	repositoryEnvName          = "DEFRA_CODE_REPOSITORY"
-	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
 	mutationTypeEnvName        = "DEFRA_MUTATION_TYPE"
 	documentationDirectoryName = "data_format_changes"
 )
@@ -141,10 +139,6 @@ For each test:
 var DetectDbChanges bool
 var SetupOnly bool
 
-var detectDbChangesCodeDir string
-var areDatabaseFormatChangesDocumented bool
-var previousTestCaseTestName string
-
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	//  that don't have the flag defined
@@ -156,20 +150,6 @@ func init() {
 	DetectDbChanges, _ = strconv.ParseBool(os.Getenv(detectDbChangesEnvName))
 	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
 
-	var repositoryValue string
-	if value, ok := os.LookupEnv(repositoryEnvName); ok {
-		repositoryValue = value
-	} else {
-		repositoryValue = "https://github.com/sourcenetwork/defradb.git"
-	}
-
-	var targetBranchValue string
-	if value, ok := os.LookupEnv(targetBranchEnvName); ok {
-		targetBranchValue = value
-	} else {
-		targetBranchValue = "develop"
-	}
-
 	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
 		mutationType = MutationType(value)
 	} else {
@@ -179,20 +159,21 @@ func init() {
 		mutationType = CollectionSaveMutationType
 	}
 
-	// Default is to test go client type.
 	if !goClient && !httpClient {
+		// Default is to test go client type.
 		goClient = true
 	}
 
-	// Default is to test all but filesystem db types.
-	if !badgerInMemory && !badgerFile && !inMemoryStore && !DetectDbChanges {
+	if DetectDbChanges {
+		// Change detector only uses badger file db type.
+		badgerFile = true
+		badgerInMemory = false
+		inMemoryStore = false
+	} else if !badgerInMemory && !badgerFile && !inMemoryStore {
+		// Default is to test all but filesystem db types.
 		badgerFile = false
 		badgerInMemory = true
 		inMemoryStore = true
-	}
-
-	if DetectDbChanges {
-		detectDbChangesInit(repositoryValue, targetBranchValue)
 	}
 }
 
@@ -202,7 +183,7 @@ func init() {
 //
 //	Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
 func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) bool {
-	if IsDetectingDbChanges() {
+	if DetectDbChanges {
 		// The `assert.Panics` call will falsely fail if this test is executed during
 		// a detect changes test run
 		t.Skip()
@@ -316,10 +297,6 @@ func ExecuteTestCase(
 	testCase TestCase,
 ) {
 	collectionNames := getCollectionNames(testCase)
-
-	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames) {
-		return
-	}
 
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 
