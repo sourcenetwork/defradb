@@ -64,6 +64,8 @@ jobs:
 
   upload-coverage:
     name: Upload test code coverage
+
+    runs-on: ubuntu-latest
     
     needs: run-tests
     
