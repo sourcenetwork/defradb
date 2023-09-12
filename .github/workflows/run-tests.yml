@@ -53,7 +53,7 @@ jobs:
           make deps:test
 
       - name: Run the tests
-        run: make test:ci-matrix
+        run: make test:ci
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v3
