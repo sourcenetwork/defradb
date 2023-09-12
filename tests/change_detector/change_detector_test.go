@@ -31,21 +31,21 @@ func TestChanges(t *testing.T) {
 	if value, ok := os.LookupEnv(repositoryEnvName); ok {
 		repository = value
 	} else {
-		repository = "https://github.com/sourcenetwork/defradb.git"
+		repository = "https://github.com/nasdf/defradb.git"
 	}
 
 	var sourceBranch string
 	if value, ok := os.LookupEnv(sourceBranchEnvName); ok {
 		sourceBranch = value
 	} else {
-		sourceBranch = "develop"
+		sourceBranch = "nasdf/test/parallel-change-detector"
 	}
 
 	var targetBranch string
 	if value, ok := os.LookupEnv(targetBranchEnvName); ok {
 		targetBranch = value
 	} else {
-		targetBranch = "develop"
+		targetBranch = "nasdf/test/parallel-change-detector"
 	}
 
 	sourceRepoDir := t.TempDir()
