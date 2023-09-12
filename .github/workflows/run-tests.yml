@@ -61,6 +61,7 @@ jobs:
           name: ${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
           path: coverage.txt
           if-no-files-found: error
+          retention-days: 1
 
   upload-coverage:
     name: Upload test code coverage

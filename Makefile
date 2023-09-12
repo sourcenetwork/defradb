@@ -30,7 +30,7 @@ BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 300s
-COVER_FLAGS=-covermode=atomic -coverprofile=coverage.txt
+COVER_FLAGS=-covermode=atomic -coverprofile=coverage.txt -coverpkg=./...
 
 PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
@@ -188,20 +188,8 @@ test\:build:
 
 .PHONY: test\:ci
 test\:ci:
-	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true \
-	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
-	$(MAKE) test:all
-
-.PHONY: test\:ci-matrix
-test\:ci-matrix:
 	@$(MAKE) deps:lens
 	gotestsum --format testname -- ./... $(COVER_FLAGS) $(TEST_FLAGS)
-
-.PHONY: test\:ci-gql-mutations
-test\:ci-gql-mutations:
-	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true \
-	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
-	$(MAKE) test:all
 
 .PHONY: test\:gql-mutations
 test\:gql-mutations:
@@ -212,12 +200,6 @@ test\:gql-mutations:
 #
 # For example, CreateDoc will call [Collection.Create], and
 # UpdateDoc will call [Collection.Update].
-.PHONY: test\:ci-col-named-mutations
-test\:ci-col-named-mutations:
-	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true \
-	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
-	$(MAKE) test:all
-
 .PHONY: test\:col-named-mutations
 test\:col-named-mutations:
 	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
