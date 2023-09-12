@@ -106,6 +106,7 @@ func execTest(t *testing.T, dir, pkg string, setupOnly bool) {
 		"go",
 		"test",
 		".",
+		"-count", "1",
 		"-v",
 	)
 	cmd.Dir = pkg
