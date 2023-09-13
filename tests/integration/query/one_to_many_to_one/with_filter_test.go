@@ -284,3 +284,122 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "1-N-1 two level deep filter with compound operator and relation",
+		Actions: []any{
+			gqlSchemaOneToManyToOne(),
+			createDocsWith6BooksAnd5Publishers(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-61d279c1-eab9-56ec-8654-dce0324ebfda
+				Doc: `{
+					"name": "John Tolkien",
+					"age": 70,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-0718e995-e7b5-55b1-874a-8f7d956be53c
+				Doc: `{
+					"name": "The Lord of the Rings",
+					"rating": 5.0,
+					"author_id": "bae-61d279c1-eab9-56ec-8654-dce0324ebfda"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				Doc: `{
+					"name": "Allen & Unwin",
+					"address": "1 Allen Ave., Sydney, Australia",
+					"yearOpened": 1954,
+					"book_id": "bae-0718e995-e7b5-55b1-874a-8f7d956be53c"
+			    }`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Author (filter: {_and: [
+						{age: {_gt: 50}},
+						{_or: [
+							{book: {publisher: {yearOpened: {_gt: 2020}}}},
+							{book: {publisher: {yearOpened: {_lt: 1960}}}}
+						]}
+					]}){
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John Tolkien",
+					},
+					{
+						"name": "Cornelia Funke",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author (filter: {_and: [
+						{_not: {age: {_ge: 70}}},
+						{book: {rating: {_gt: 2.5}}},
+						{_or: [
+							{book: {publisher: {yearOpened: {_le: 2020}}}},
+							{_not: {book: {rating: {_le: 4.0}}}}
+						]}
+					]}){
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOneToManyToOneWithCompoundOperatorInSubFilterAndRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "1-N-1 with sub filter with compound operator and relation",
+		Actions: []any{
+			gqlSchemaOneToManyToOne(),
+			createDocsWith6BooksAnd5Publishers(),
+			testUtils.Request{
+				Request: `query {
+					Author (filter: {_and: [
+						{age: {_gt: 20}},
+						{_or: [
+							{book: {publisher: {yearOpened: {_lt: 2020}}}},
+							{book: {rating: { _lt: 1}}}
+						]}
+					]}){
+						name
+						book (filter: {_and: [
+							{publisher: {yearOpened: {_lt: 2020}}},
+							{_or: [
+								{rating: { _lt: 3.4}},
+								{publisher: {name: {_eq: "Not existing publisher"}}}
+							]}
+						]}){
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{{
+					"name": "John Grisham",
+					"book": []map[string]any{{
+						"name": "Sooley",
+					}},
+				}},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
