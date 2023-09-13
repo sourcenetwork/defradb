@@ -19,6 +19,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -379,14 +380,16 @@ func (cmp *likeIndexCmp) doesMatch(value string) bool {
 }
 
 func (f *IndexFetcher) createIndexIterator(indexFilter *mapper.Filter) (indexIterator, error) {
-	indexFilterCond := indexFilter.ExternalConditions[f.indexedField.Name]
-	condMap, ok := indexFilterCond.(map[string]any)
-	if !ok {
-		return nil, errors.New("invalid index filter condition")
-	}
 	var op string
 	var filterVal any
-	for op, filterVal = range condMap {
+	for _, indexFilterCond := range indexFilter.Conditions {
+		condMap := indexFilterCond.(map[connor.FilterKey]any)
+		var key connor.FilterKey
+		for key, filterVal = range condMap {
+			break
+		}
+		opKey := key.(*mapper.Operator)
+		op = opKey.Operation
 		break
 	}
 

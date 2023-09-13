@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/lens"
+	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -297,7 +298,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		typeIndex, indexedFieldDesc := findFieldTypeIndex(origScan)
 		if typeIndex != -1 {
 			field := mapper.Field{Index: typeIndex, Name: indexedFieldDesc.Name}
-			origScan.filter, indexFilter = splitFilterByField(origScan.filter, field)
+			origScan.filter, indexFilter = filter.SplitByField(origScan.filter, field)
 		}
 
 		var f fetcher.Fetcher
