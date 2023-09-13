@@ -228,3 +228,20 @@ func getSchemaProps(schema string) []string {
 	}
 	return props
 }
+
+func sendRequestAndExplain(
+	reqBody string,
+	results []map[string]any,
+	asserter testUtils.ResultAsserter,
+) []testUtils.Request {
+	return []testUtils.Request{
+		{
+			Request: "query {" + reqBody + "}",
+			Results: results,
+		},
+		{
+			Request:  "query @explain(type: execute) {" + reqBody + "}",
+			Asserter: asserter,
+		},
+	}
+}

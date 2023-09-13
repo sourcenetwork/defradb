@@ -16,23 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func sendRequestAndExplain(
-	reqBody string,
-	results []map[string]any,
-	asserter testUtils.ResultAsserter,
-) []testUtils.Request {
-	return []testUtils.Request{
-		{
-			Request: "query {" + reqBody + "}",
-			Results: results,
-		},
-		{
-			Request:  "query @explain(type: execute) {" + reqBody + "}",
-			Asserter: asserter,
-		},
-	}
-}
-
 func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there are non-indexed fields in the query, they should be fetched",

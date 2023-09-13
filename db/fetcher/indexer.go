@@ -164,7 +164,10 @@ func (i *inIndexIterator) nextIterator() (bool, error) {
 	}
 
 	i.filterVal = i.filterValues[i.nextValIndex]
-	i.eqIndexIterator.Init(i.ctx, i.store)
+	err := i.eqIndexIterator.Init(i.ctx, i.store)
+	if err != nil {
+		return false, err
+	}
 	i.nextValIndex++
 	return true, nil
 }
