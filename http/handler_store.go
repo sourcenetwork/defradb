@@ -224,6 +224,18 @@ func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
+type PeerInfoResponse struct {
+	PeerID string `json:"peerID"`
+}
+
+func (s *storeHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
+	var res PeerInfoResponse
+	if value, ok := req.Context().Value(peerIdContextKey).(string); ok {
+		res.PeerID = value
+	}
+	responseJSON(rw, http.StatusOK, &res)
+}
+
 type GraphQLRequest struct {
 	Query string `json:"query"`
 }

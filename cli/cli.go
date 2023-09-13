@@ -42,6 +42,7 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 	p2p.AddCommand(
 		p2p_replicator,
 		p2p_collection,
+		MakeP2PInfoCommand(),
 	)
 
 	schema_migrate := MakeSchemaMigrationCommand()

@@ -93,6 +93,7 @@ func NewHandler(db client.DB, opts ServerOptions) *Handler {
 			graphQL.Post("/", store_handler.ExecRequest)
 		})
 		api.Route("/p2p", func(p2p chi.Router) {
+			p2p.Get("/info", store_handler.PeerInfo)
 			p2p.Route("/replicators", func(p2p_replicators chi.Router) {
 				p2p_replicators.Get("/", store_handler.GetAllReplicators)
 				p2p_replicators.Post("/", store_handler.SetReplicator)
