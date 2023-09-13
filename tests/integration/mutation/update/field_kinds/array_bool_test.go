@@ -13,19 +13,12 @@ package field_kinds
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with boolean array, replace with nil",
-		// This restriction should be removed when we can, it is here because of
-		// https://github.com/sourcenetwork/defradb/issues/1842
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -59,51 +52,6 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 						"likedIndexes": nil,
 					},
 				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestMutationUpdate_WithArrayOfBooleansToNil_Errors(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with nil",
-		// This is a bug, this test should be removed in
-		// https://github.com/sourcenetwork/defradb/issues/1842
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						likedIndexes: [Boolean!]
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "John",
-					"likedIndexes": [true, true, false, true]
-				}`,
-			},
-			testUtils.UpdateDoc{
-				Doc: `{
-					"likedIndexes": null
-				}`,
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						Users {
-							likedIndexes
-						}
-					}
-				`,
-				ExpectedError: "EOF",
 			},
 		},
 	}
