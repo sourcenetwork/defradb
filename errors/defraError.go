@@ -58,7 +58,7 @@ func (e *defraError) Error() string {
 }
 
 func (e *defraError) Is(other error) bool {
-	switch otherTyped := other.(type) { //nolint:errorlint
+	switch otherTyped := other.(type) {
 	case *defraError:
 		return e.message == otherTyped.message
 	default:
