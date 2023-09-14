@@ -16,8 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-type dataMap = map[string]any
-
 var bookAuthorGQLSchema = (`
 	type Book {
 		name: String

@@ -27,6 +27,7 @@ var SchemaForExplainTests = testUtils.SchemaUpdate{
 		type Book {
 			name: String
 			author: Author
+			rating: Float
 			pages: Int
 			chapterPages: [Int!]
 		}
