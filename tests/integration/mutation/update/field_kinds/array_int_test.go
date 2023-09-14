@@ -13,19 +13,12 @@ package field_kinds
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with integer array, replace with nil",
-		// This restriction should be removed when we can, it is here because of
-		// https://github.com/sourcenetwork/defradb/issues/1842
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -59,51 +52,6 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 						"favouriteIntegers": nil,
 					},
 				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestMutationUpdate_WithArrayOfIntsToNil_Errors(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple update mutation with integer array, replace with nil",
-		// This is a bug, this test should be removed in
-		// https://github.com/sourcenetwork/defradb/issues/1842
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						favouriteIntegers: [Int!]
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "John",
-					"favouriteIntegers": [1, 2, 3, 5, 8]
-				}`,
-			},
-			testUtils.UpdateDoc{
-				Doc: `{
-					"favouriteIntegers": null
-				}`,
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						Users {
-							favouriteIntegers
-						}
-					}
-				`,
-				ExpectedError: "EOF",
 			},
 		},
 	}
