@@ -60,7 +60,7 @@ import (
 // 		},
 // 	}
 
-// 	testUtils.AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
+// 	testUtils.AssertPanic(t, func() { executeTestCase(t, test) })
 // }
 
 func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
