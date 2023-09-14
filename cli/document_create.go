@@ -13,6 +13,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -22,6 +23,7 @@ import (
 
 func MakeDocumentCreateCommand() *cobra.Command {
 	var collection string
+	var file string
 	var cmd = &cobra.Command{
 		Use:   "create --collection <collection> <document>",
 		Short: "Create a new document.",
@@ -33,7 +35,7 @@ Example: create document
 Example: create documents
   defradb client document create --collection User '[{ "name": "Alice" }, { "name": "Bob" }]'
 		`,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := cmd.Context().Value(storeContextKey).(client.Store)
 
@@ -45,8 +47,22 @@ Example: create documents
 				col = col.WithTxn(tx)
 			}
 
+			var docData []byte
+			switch {
+			case len(args) == 1:
+				docData = []byte(args[0])
+			case file != "":
+				data, err := os.ReadFile(file)
+				if err != nil {
+					return err
+				}
+				docData = data
+			default:
+				return fmt.Errorf("Document or file must be defined")
+			}
+
 			var docMap any
-			if err := json.Unmarshal([]byte(args[0]), &docMap); err != nil {
+			if err := json.Unmarshal(docData, &docMap); err != nil {
 				return err
 			}
 
@@ -57,10 +73,14 @@ Example: create documents
 					return err
 				}
 				return col.Create(cmd.Context(), doc)
-			case []map[string]any:
+			case []any:
 				docs := make([]*client.Document, len(t))
 				for i, v := range t {
-					doc, err := client.NewDocFromMap(v)
+					docMap, ok := v.(map[string]any)
+					if !ok {
+						return fmt.Errorf("invalid document")
+					}
+					doc, err := client.NewDocFromMap(docMap)
 					if err != nil {
 						return err
 					}
@@ -72,6 +92,7 @@ Example: create documents
 			}
 		},
 	}
+	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	cmd.Flags().StringVarP(&collection, "collection", "c", "", "Collection name")
 	return cmd
 }
