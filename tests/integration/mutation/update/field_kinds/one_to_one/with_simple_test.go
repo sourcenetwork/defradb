@@ -14,27 +14,41 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationUpdateOneToOneNoChild(t *testing.T) {
+	unknownKey := "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
-					"name": "John"
+					"name": "John Grisham"
 				}`,
 			},
+			testUtils.UpdateDoc{
+				CollectionID: 1,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"published_id": "%s"
+					}`,
+					unknownKey,
+				),
+			},
 			testUtils.Request{
-				Request: `mutation {
-							update_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-								name
-							}
-						}`,
+				Request: `query {
+						Author {
+							name
+						}
+					}`,
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
@@ -47,6 +61,8 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne(t *testing.T) {
+	bookKey := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+
 	test := testUtils.TestCase{
 		Description: "One to one update mutation",
 		Actions: []any{
@@ -62,18 +78,15 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.Request{
-				Request: `
-				mutation {
-					update_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-3d236f89-6a31-5add-a36a-27971a2eac76\"}") {
-						name
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-					},
-				},
+			testUtils.UpdateDoc{
+				CollectionID: 1,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"published_id": "%s"
+					}`,
+					bookKey,
+				),
 			},
 			testUtils.Request{
 				Request: `
@@ -120,6 +133,8 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
+	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the secondary side",
 		Actions: []any{
@@ -135,18 +150,15 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.Request{
-				Request: `
-				mutation {
-					update_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed\"}") {
-						name
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-					},
-				},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"author_id": "%s"
+					}`,
+					authorKey,
+				),
 			},
 			testUtils.Request{
 				Request: `
@@ -193,61 +205,40 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
 	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from single side (wrong)",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author1Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"New Shahzad\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author2Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "New Shahzad"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					author1Key,
 				),
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-						"name": "Painted House",
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						update_Author(id: "%s", data: "{\"published_id\": \"%s\"}") {
- 							name
- 						}
- 					}`,
-					author2Key,
+			testUtils.UpdateDoc{
+				CollectionID: 1,
+				DocID:        1,
+				Doc: fmt.Sprintf(
+					`{
+						"published_id": "%s"
+					}`,
 					bookKey,
 				),
 				ExpectedError: "target document is already linked to another document.",
@@ -261,60 +252,39 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
-	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author1Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"New Shahzad\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author2Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "New Shahzad"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					author1Key,
 				),
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-						"name": "Painted House",
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						update_Book(id: "%s", data: "{\"author_id\": \"%s\"}") {
- 							name
- 						}
- 					}`,
-					bookKey,
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"author_id": "%s"
+					}`,
 					author2Key,
 				),
 				ExpectedError: "target document is already linked to another document.",
@@ -329,48 +299,33 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	invalidLenSubKey := "35953ca-518d-9e6b-9ce6cd00eff5"
 	invalidAuthorKey := "bae-" + invalidLenSubKey
-	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using invalid relation id",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author1Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					author1Key,
 				),
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-						"name": "Painted House",
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						update_Book(id: "%s", data: "{\"author_id\": \"%s\"}") {
-							name
-						}
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"author_id": "%s"
 					}`,
-					bookKey,
 					invalidAuthorKey,
 				),
 				ExpectedError: "uuid: incorrect UUID length 30 in string \"" + invalidLenSubKey + "\"",
@@ -384,48 +339,33 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	invalidAuthorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ee"
-	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author1Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					author1Key,
 				),
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-						"name": "Painted House",
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						update_Book(id: "%s", data: "{\"author_id\": \"%s\"}") {
-							name
-						}
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"author_id": "%s"
 					}`,
-					bookKey,
 					invalidAuthorKey,
 				),
 				ExpectedError: "no document for the given key exists",
@@ -439,60 +379,45 @@ func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_Error(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
-	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side, with a wrong field.",
+		// This restiction is temporary due to a bug in the collection api, see
+		// https://github.com/sourcenetwork/defradb/issues/1852 for more info.
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			testUtils.GQLRequestMutationType,
+		}),
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author1Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"New Shahzad\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author2Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "New Shahzad"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					author1Key,
 				),
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-						"name": "Painted House",
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						update_Book(id: "%s", data: "{\"notName\": \"Unpainted Condo\",\"author_id\": \"%s\"}") {
- 							name
- 						}
- 					}`,
-					bookKey,
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"notName": "Unpainted Condo",
+						"author_id": "%s"
+					}`,
 					author2Key,
 				),
 				ExpectedError: "The given field does not exist. Name: notName",

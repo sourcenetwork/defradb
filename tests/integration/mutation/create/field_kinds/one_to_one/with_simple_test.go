@@ -21,12 +21,12 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, with an invalid field.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Author(data: "{\"notName\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-					name
-				}
-			}`,
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"notName": "John Grisham",
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
 				ExpectedError: "The given field does not exist. Name: notName",
 			},
 		},
@@ -40,12 +40,19 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
 		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
+			},
 			testUtils.Request{
-				Request: `mutation {
-							create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-								name
-							}
-						}`,
+				Request: `query {
+					Author {
+						name
+					}
+				}`,
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
@@ -61,11 +68,11 @@ func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testin
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the secondary side",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-						name
-					}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"author_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 				ExpectedError: "no document for the given key exists",
 			},
@@ -80,32 +87,21 @@ func TestMutationCreateOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-						create_Book(data: "{\"name\": \"Painted House\"}") {
-							_key
-						}
-					}`,
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
-							name
-						}
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "John Grisham",
+						"published_id": "%s"
 					}`,
 					bookKey,
 				),
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-					},
-				},
 			},
 			testUtils.Request{
 				Request: `
@@ -157,32 +153,21 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation from secondary side",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-						create_Author(data: "{\"name\": \"John Grisham\"}") {
-							_key
-						}
-					}`,
-				Results: []map[string]any{
-					{
-						"_key": authorKey,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
-							name
-						}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
 					}`,
 					authorKey,
 				),
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-					},
-				},
 			},
 			testUtils.Request{
 				Request: `
@@ -249,12 +234,11 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 					bookKey,
 				),
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Author(data: "{\"name\": \"Saadi Shirazi\",\"published_id\": \"%s\"}") {
-							name
-						}
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: fmt.Sprintf(`{
+						"name": "Saadi Shirazi",
+						"published_id": "%s"
 					}`,
 					bookKey,
 				),
@@ -287,12 +271,11 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondar
 					authorKey,
 				),
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Book(data: "{\"name\": \"Golestan\",\"author_id\": \"%s\"}") {
-							name
-						}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(`{
+						"name": "Golestan",
+						"author_id": "%s"
 					}`,
 					authorKey,
 				),
