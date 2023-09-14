@@ -21,12 +21,12 @@ func TestMutationCreateOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, alias relation, with an invalid field.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Author(data: "{\"notName\": \"John Grisham\",\"published\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-					name
-				}
-			}`,
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"notName": "John Grisham",
+					"published": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
 				ExpectedError: "The given field does not exist. Name: notName",
 			},
 		},
@@ -40,12 +40,19 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationPrimarySide_Creat
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, alias relation, from the wrong side",
 		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"published": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
+			},
 			testUtils.Request{
-				Request: `mutation {
-					create_Author(data: "{\"name\": \"John Grisham\",\"published\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-					name
-				}
-			}`,
+				Request: `query {
+					Author {
+						name
+					}
+				}`,
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
@@ -61,11 +68,11 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationSecondarySide_Err
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, alias relation, from the secondary side",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Book(data: "{\"name\": \"Painted House\",\"author\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-						name
-					}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"author": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 				ExpectedError: "no document for the given key exists",
 			},
@@ -80,32 +87,21 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySid
 	test := testUtils.TestCase{
 		Description: "One to one create mutation with an alias relation.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Book(data: "{\"name\": \"Painted House\"}") {
-						_key
-					}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House"
 				}`,
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Author(data: "{\"name\": \"John Grisham\",\"published\": \"%s\"}") {
-							name
-						}
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "John Grisham",
+						"published": "%s"
 					}`,
 					bookKey,
 				),
-				Results: []map[string]any{
-					{
-						"name": "John Grisham",
-					},
-				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -155,32 +151,21 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromSecondaryS
 	test := testUtils.TestCase{
 		Description: "One to one create mutation from secondary side with alias relation.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Author(data: "{\"name\": \"John Grisham\"}") {
-						_key
-					}
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
 				}`,
-				Results: []map[string]any{
-					{
-						"_key": authorKey,
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Book(data: "{\"name\": \"Painted House\",\"author\": \"%s\"}") {
-							name
-						}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author": "%s"
 					}`,
 					authorKey,
 				),
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-					},
-				},
 			},
 			testUtils.Request{
 				Request: `query {

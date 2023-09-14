@@ -65,14 +65,22 @@ func TestMutationCreate(t *testing.T) {
 					}
 				`,
 			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 27
+				}`,
+			},
 			testUtils.Request{
-				Request: `mutation {
-							create_Users(data: "{\"name\": \"John\",\"age\": 27}") {
-								_key
-								name
-								age
-							}
-						}`,
+				Request: `
+					query {
+						Users {
+							_key
+							name
+							age
+						}
+					}
+				`,
 				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
