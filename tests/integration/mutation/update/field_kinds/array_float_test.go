@@ -13,19 +13,12 @@ package field_kinds
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with float array, replace with nil",
-		// This restriction should be removed when we can, it is here because of
-		// https://github.com/sourcenetwork/defradb/issues/1842
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -59,51 +52,6 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 						"favouriteFloats": nil,
 					},
 				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestMutationUpdate_WithArrayOfFloatsToNil_Errors(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple update mutation with float array, replace with nil",
-		// This is a bug, this test should be removed in
-		// https://github.com/sourcenetwork/defradb/issues/1842
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						favouriteFloats: [Float!]
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "John",
-					"favouriteFloats": [3.1425, 0.00000000001, 10]
-				}`,
-			},
-			testUtils.UpdateDoc{
-				Doc: `{
-					"favouriteFloats": null
-				}`,
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						Users {
-							favouriteFloats
-						}
-					}
-				`,
-				ExpectedError: "EOF",
 			},
 		},
 	}
