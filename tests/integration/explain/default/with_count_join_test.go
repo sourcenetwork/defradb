@@ -260,3 +260,265 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 
 	explainUtils.ExecuteTestCase(t, test)
 }
+
+// This test asserts that only a single index join is used (not parallelNode) because the
+// _count reuses the rendered join as they have matching filters.
+func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) 1-to-M relation request from many side with count filter shared.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						_count(books: {filter: {rating: {_ne: null}}})
+						books(filter: {rating: {_ne: null}}){
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"countNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": normalTypeJoinPattern,
+									},
+								},
+							},
+						},
+					},
+				},
+
+				ExpectedFullGraph: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"countNode": dataMap{
+									"sources": []dataMap{
+										{
+											"filter": dataMap{
+												"rating": dataMap{
+													"_ne": nil,
+												},
+											},
+											"fieldName": "books",
+										},
+									},
+									"selectNode": dataMap{
+										"_keys":  nil,
+										"filter": nil,
+										"typeIndexJoin": dataMap{
+											"joinType": "typeJoinMany",
+											"rootName": "author",
+											"root": dataMap{
+												"scanNode": dataMap{
+													"filter":         nil,
+													"collectionID":   "3",
+													"collectionName": "Author",
+													"spans": []dataMap{
+														{
+															"start": "/3",
+															"end":   "/4",
+														},
+													},
+												},
+											},
+											"subTypeName": "books",
+											"subType": dataMap{
+												"selectTopNode": dataMap{
+													"selectNode": dataMap{
+														"_keys":  nil,
+														"filter": nil,
+														"scanNode": dataMap{
+															"filter": dataMap{
+																"rating": dataMap{
+																	"_ne": nil,
+																},
+															},
+															"collectionID":   "2",
+															"collectionName": "Book",
+															"spans": []dataMap{
+																{
+																	"start": "/2",
+																	"end":   "/3",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+// This test asserts that two joins are used (with parallelNode) because _count cannot
+// reuse the rendered join as they dont have matching filters.
+func TestDefaultExplainRequestOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) 1-to-M relation request from many side with count filter not shared.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						_count(books: {})
+						books(filter: {rating: {_ne: null}}){
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"countNode": dataMap{
+									"selectNode": dataMap{
+										"parallelNode": []dataMap{
+											{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
+											{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+
+				ExpectedFullGraph: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"countNode": dataMap{
+									"sources": []dataMap{
+										{
+											"fieldName": "books",
+											"filter":    nil,
+										},
+									},
+									"selectNode": dataMap{
+										"_keys":  nil,
+										"filter": nil,
+										"parallelNode": []dataMap{
+											{
+												"typeIndexJoin": dataMap{
+													"joinType": "typeJoinMany",
+													"rootName": "author",
+													"root": dataMap{
+														"scanNode": dataMap{
+															"collectionID":   "3",
+															"collectionName": "Author",
+															"filter":         nil,
+															"spans": []dataMap{
+																{
+																	"start": "/3",
+																	"end":   "/4",
+																},
+															},
+														},
+													},
+													"subTypeName": "books",
+													"subType": dataMap{
+														"selectTopNode": dataMap{
+															"selectNode": dataMap{
+																"_keys":  nil,
+																"filter": nil,
+																"scanNode": dataMap{
+																	"collectionID":   "2",
+																	"collectionName": "Book",
+																	"filter": dataMap{
+																		"rating": dataMap{
+																			"_ne": nil,
+																		},
+																	},
+																	"spans": []dataMap{
+																		{
+																			"start": "/2",
+																			"end":   "/3",
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+											{
+												"typeIndexJoin": dataMap{
+													"joinType": "typeJoinMany",
+													"rootName": "author",
+													"root": dataMap{
+														"scanNode": dataMap{
+															"collectionID":   "3",
+															"collectionName": "Author",
+															"filter":         nil,
+															"spans": []dataMap{
+																{
+																	"start": "/3",
+																	"end":   "/4",
+																},
+															},
+														},
+													},
+													"subTypeName": "books",
+													"subType": dataMap{
+														"selectTopNode": dataMap{
+															"selectNode": dataMap{
+																"_keys":  nil,
+																"filter": nil,
+																"scanNode": dataMap{
+																	"collectionID":   "2",
+																	"collectionName": "Book",
+																	"filter":         nil,
+																	"spans": []dataMap{
+																		{
+																			"start": "/2",
+																			"end":   "/3",
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
