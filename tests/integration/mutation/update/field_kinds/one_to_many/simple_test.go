@@ -19,61 +19,41 @@ import (
 
 func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
 	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation id from single side (wrong)",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author1Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"New Shahzad\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author2Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "New Shahzad"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					author1Key,
 				),
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-						"name": "Painted House",
-					},
-				},
 			},
-			testUtils.Request{ // NOTE: There is no `published_id` on book.
-				Request: fmt.Sprintf(
-					`mutation {
- 						update_Author(id: "%s", data: "{\"published_id\": \"%s\"}") {
- 							name
- 						}
- 					}`,
-					author2Key,
+			testUtils.UpdateDoc{
+				CollectionID: 1,
+				DocID:        1,
+				// NOTE: There is no `published_id` on book.
+				Doc: fmt.Sprintf(
+					`{
+						"published_id": "%s"
+					}`,
 					bookKey,
 				),
 				ExpectedError: "The given field does not exist. Name: published_id",
@@ -89,55 +69,35 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing
 func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	invalidAuthorKey := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
-	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation id from many side",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author1Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					author1Key,
 				),
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-						"name": "Painted House",
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						update_Book(id: "%s", data: "{\"author_id\": \"%s\"}") {
- 							name
- 						}
- 					}`,
-					bookKey,
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"author_id": "%s"
+					}`,
 					invalidAuthorKey,
 				),
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-					},
-				},
 			},
 			testUtils.Request{
 				Request: `query {
@@ -180,60 +140,40 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
 func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Error(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
-	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation id from many side, with a wrong field.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author1Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"New Shahzad\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author2Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "New Shahzad"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					author1Key,
 				),
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-						"name": "Painted House",
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						update_Book(id: "%s", data: "{\"notName\": \"Unpainted Condo\",\"author_id\": \"%s\"}") {
- 							name
- 						}
- 					}`,
-					bookKey,
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"notName": "Unpainted Condo",
+						"author_id": "%s"
+					}`,
 					author2Key,
 				),
 				ExpectedError: "The given field does not exist. Name: notName",
@@ -247,67 +187,41 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Erro
 func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
-	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation id from many side",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"John Grisham\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author1Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
+				}`,
 			},
-			testUtils.Request{
-				Request: `mutation {
- 					create_Author(data: "{\"name\": \"New Shahzad\"}") {
- 						_key
- 					}
- 				}`,
-				Results: []map[string]any{
-					{
-						"_key": author2Key,
-					},
-				},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "New Shahzad"
+				}`,
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
- 							_key
- 							name
- 						}
- 					}`,
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
+					}`,
 					author1Key,
 				),
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-						"name": "Painted House",
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
- 						update_Book(id: "%s", data: "{\"author_id\": \"%s\"}") {
- 							name
- 						}
- 					}`,
-					bookKey,
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: fmt.Sprintf(
+					`{
+						"author_id": "%s"
+					}`,
 					author2Key,
 				),
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-					},
-				},
 			},
 			testUtils.Request{
 				Request: `query {
