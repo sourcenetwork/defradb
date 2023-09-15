@@ -300,14 +300,7 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	collectionSchemaKey := core.NewCollectionSchemaKey(desc.Schema.SchemaID)
-	err = txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
-	}
-
-	collectionKey := core.NewCollectionKey(desc.Name)
-	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
+	err = db.setDefaultSchemaVersion(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
 	if err != nil {
 		return nil, err
 	}
@@ -589,6 +582,23 @@ func validateUpdateCollectionIndexes(
 		}
 	}
 	return false, nil
+}
+
+func (db *db) setDefaultSchemaVersion(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionName string,
+	schemaID string,
+	schemaVersionID string,
+) error {
+	collectionSchemaKey := core.NewCollectionSchemaKey(schemaID)
+	err := txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
+	if err != nil {
+		return err
+	}
+
+	collectionKey := core.NewCollectionKey(collectionName)
+	return txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
 }
 
 // getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.
