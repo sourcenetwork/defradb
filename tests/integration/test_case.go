@@ -81,8 +81,12 @@ type SchemaPatch struct {
 	// If a value is not provided the patch will be applied to all nodes.
 	NodeID immutable.Option[int]
 
-	Patch         string
-	ExpectedError string
+	Patch string
+
+	// If SetAsDefaultVersion has a value, and that value is false then the schema version
+	// resulting from this patch will not be made default.
+	SetAsDefaultVersion immutable.Option[bool]
+	ExpectedError       string
 }
 
 // SetDefaultSchemaVersion is an action that will set the default schema version to the

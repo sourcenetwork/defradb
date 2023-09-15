@@ -992,13 +992,13 @@ func (_c *DB_NewTxn_Call) RunAndReturn(run func(context.Context, bool) (datastor
 	return _c
 }
 
-// PatchSchema provides a mock function with given fields: _a0, _a1
-func (_m *DB) PatchSchema(_a0 context.Context, _a1 string) error {
-	ret := _m.Called(_a0, _a1)
+// PatchSchema provides a mock function with given fields: _a0, _a1, _a2
+func (_m *DB) PatchSchema(_a0 context.Context, _a1 string, _a2 bool) error {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1014,13 +1014,14 @@ type DB_PatchSchema_Call struct {
 // PatchSchema is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 string
-func (_e *DB_Expecter) PatchSchema(_a0 interface{}, _a1 interface{}) *DB_PatchSchema_Call {
-	return &DB_PatchSchema_Call{Call: _e.mock.On("PatchSchema", _a0, _a1)}
+//   - _a2 bool
+func (_e *DB_Expecter) PatchSchema(_a0 interface{}, _a1 interface{}, _a2 interface{}) *DB_PatchSchema_Call {
+	return &DB_PatchSchema_Call{Call: _e.mock.On("PatchSchema", _a0, _a1, _a2)}
 }
 
-func (_c *DB_PatchSchema_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_PatchSchema_Call {
+func (_c *DB_PatchSchema_Call) Run(run func(_a0 context.Context, _a1 string, _a2 bool)) *DB_PatchSchema_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(bool))
 	})
 	return _c
 }
@@ -1030,7 +1031,7 @@ func (_c *DB_PatchSchema_Call) Return(_a0 error) *DB_PatchSchema_Call {
 	return _c
 }
 
-func (_c *DB_PatchSchema_Call) RunAndReturn(run func(context.Context, string) error) *DB_PatchSchema_Call {
+func (_c *DB_PatchSchema_Call) RunAndReturn(run func(context.Context, string, bool) error) *DB_PatchSchema_Call {
 	_c.Call.Return(run)
 	return _c
 }

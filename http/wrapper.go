@@ -86,8 +86,8 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return w.client.AddSchema(ctx, schema)
 }
 
-func (w *Wrapper) PatchSchema(ctx context.Context, patch string) error {
-	return w.client.PatchSchema(ctx, patch)
+func (w *Wrapper) PatchSchema(ctx context.Context, patch string, setAsDefaultVersion bool) error {
+	return w.client.PatchSchema(ctx, patch, setAsDefaultVersion)
 }
 
 func (w *Wrapper) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {

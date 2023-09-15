@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -45,6 +46,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
+				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
@@ -107,6 +109,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
+				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.SetDefaultSchemaVersion{
 				SchemaVersionID: schemaVersionID2,
@@ -188,6 +191,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt
 						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
+				SetAsDefaultVersion: immutable.Some(true),
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{

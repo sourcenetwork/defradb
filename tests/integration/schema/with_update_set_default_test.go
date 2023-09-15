@@ -13,6 +13,8 @@ package schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -87,6 +89,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
+				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.SetDefaultSchemaVersion{
 				SchemaVersionID: "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq",
@@ -123,6 +126,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
+				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.SetDefaultSchemaVersion{
 				SchemaVersionID: "bafkreidejaxpsevyijnr4nah4e2l263emwhdaj57fwwv34eu5rea4ff54e",

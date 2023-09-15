@@ -96,7 +96,8 @@ type Store interface {
 	AddSchema(context.Context, string) ([]CollectionDescription, error)
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
-	// present in the database.
+	// present in the database. If true is provided, the new schema versions will be made default, otherwise
+	// [SetDefaultSchemaVersion] should be called to set them so.
 	//
 	// It will also update the GQL types used by the query system. It will error and not apply any of the
 	// requested, valid updates should the net result of the patch result in an invalid state.  The
@@ -109,7 +110,7 @@ type Store interface {
 	//
 	// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
 	// [FieldKindStringToEnumMapping].
-	PatchSchema(context.Context, string) error
+	PatchSchema(context.Context, string, bool) error
 
 	// SetDefaultSchemaVersion sets the default schema version to the ID provided.  It will be applied to all
 	// collections using the schema.

@@ -234,6 +234,7 @@ func (db *db) updateCollection(
 	existingDescriptionsByName map[string]client.CollectionDescription,
 	proposedDescriptionsByName map[string]client.CollectionDescription,
 	desc client.CollectionDescription,
+	setAsDefaultVersion bool,
 ) (client.Collection, error) {
 	hasChanged, err := db.validateUpdateCollection(ctx, txn, existingDescriptionsByName, proposedDescriptionsByName, desc)
 	if err != nil {
@@ -300,15 +301,17 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
-	if err != nil {
-		return nil, err
-	}
-
 	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, previousSchemaVersionID)
 	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
 	if err != nil {
 		return nil, err
+	}
+
+	if setAsDefaultVersion {
+		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return db.getCollectionByName(ctx, txn, desc.Name)
