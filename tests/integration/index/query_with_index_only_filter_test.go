@@ -21,13 +21,13 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 		Description: "If there are non-indexed fields in the query, they should be fetched",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String @index
 					age: Int
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {name: {_eq: "Islam"}}) {
+				User(filter: {name: {_eq: "Islam"}}) {
 					name
 					age
 				}`,
@@ -48,12 +48,12 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _eq filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String @index
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {name: {_eq: "Islam"}}) {
+				User(filter: {name: {_eq: "Islam"}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -72,7 +72,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 		Description: "If there are several docs matching _eq filter, they should be fetched",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String @index
 					age: Int
 				} 
@@ -85,7 +85,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 				}`,
 			},
 			sendRequestAndExplain(`
-				users(filter: {name: {_eq: "Islam"}}) {
+				User(filter: {name: {_eq: "Islam"}}) {
 					age
 				}`,
 				[]map[string]any{
@@ -105,13 +105,13 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String 
 					age: Int @index
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {age: {_gt: 48}}) {
+				User(filter: {age: {_gt: 48}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -130,13 +130,13 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String 
 					age: Int @index
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {age: {_ge: 48}}) {
+				User(filter: {age: {_ge: 48}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -156,13 +156,13 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String 
 					age: Int @index
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {age: {_lt: 28}}) {
+				User(filter: {age: {_lt: 28}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -181,13 +181,13 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String 
 					age: Int @index
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {age: {_le: 28}}) {
+				User(filter: {age: {_le: 28}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -207,13 +207,13 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _ne filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String @index
 					age: Int 
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {name: {_ne: "Islam"}}) {
+				User(filter: {name: {_ne: "Islam"}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -238,13 +238,13 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String 
 					age: Int @index
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {age: {_in: [20, 33]}}) {
+				User(filter: {age: {_in: [20, 33]}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -264,7 +264,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 		Description: "If there are several docs matching _in filter, they should be fetched",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String @index
 					age: Int
 				} 
@@ -277,7 +277,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 				}`,
 			},
 			sendRequestAndExplain(`
-				users(filter: {name: {_in: ["Islam"]}}) {
+				User(filter: {name: {_in: ["Islam"]}}) {
 					age
 				}`,
 				[]map[string]any{
@@ -297,13 +297,13 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _nin filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String 
 					age: Int @index
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {age: {_nin: [20, 28, 33, 42, 55]}}) {
+				User(filter: {age: {_nin: [20, 28, 33, 42, 55]}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -324,13 +324,13 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _like filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String @index
 					age: Int 
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {name: {_like: "A%"}}) {
+				User(filter: {name: {_like: "A%"}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -340,7 +340,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
 			),
 			sendRequestAndExplain(`
-				users(filter: {name: {_like: "%d"}}) {
+				User(filter: {name: {_like: "%d"}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -350,7 +350,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
 			),
 			sendRequestAndExplain(`
-				users(filter: {name: {_like: "%e%"}}) {
+				User(filter: {name: {_like: "%e%"}}) {
 					name
 				}`,
 				[]map[string]any{
@@ -370,13 +370,13 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _nlike filter",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String @index
 					age: Int 
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {name: {_nlike: "%h%"}}) {
+				User(filter: {name: {_nlike: "%h%"}}) {
 					name
 				}`,
 				[]map[string]any{

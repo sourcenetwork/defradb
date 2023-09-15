@@ -18,16 +18,16 @@ import (
 
 func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If there is only one indexed field in the query, it should be fetched",
+		Description: "Combination of a filter on regular and of an indexed field",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String @index
 					age: Int
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {
+				User(filter: {
 					name: {_in: ["Fred", "Islam", "Addo"]}, 
 					age:  {_gt: 40}
 				}) {
@@ -46,17 +46,17 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 
 func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If there is only one indexed field in the query, it should be fetched",
+		Description: "Combination of a filter on regular and of 2 indexed fields",
 		Actions: []any{
 			createSchemaWithDocs(`
-				type users {
+				type User {
 					name: String @index
 					age: Int @index
 					email: String 
 				} 
 			`),
 			sendRequestAndExplain(`
-				users(filter: {
+				User(filter: {
 					name: {_like: "%a%"}, 
 					age:  {_gt: 30},
 					email: {_like: "%m@gmail.com"}
