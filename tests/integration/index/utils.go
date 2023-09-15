@@ -13,173 +13,10 @@ package index
 import (
 	"fmt"
 	"strings"
-	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-type dataMap = map[string]any
-
-type ExplainResultAsserter struct {
-	iterations     immutable.Option[int]
-	docFetches     immutable.Option[int]
-	fieldFetches   immutable.Option[int]
-	indexFetches   immutable.Option[int]
-	filterMatches  immutable.Option[int]
-	sizeOfResults  immutable.Option[int]
-	planExecutions immutable.Option[uint64]
-}
-
-func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
-	require.Len(t, result, 1, "Expected len(result) = 1, got %d", len(result))
-	explainNode, ok := result[0]["explain"].(dataMap)
-	require.True(t, ok, "Expected explain none")
-	assert.Equal(t, explainNode["executionSuccess"], true, "Expected executionSuccess property")
-	if a.sizeOfResults.HasValue() {
-		actual := explainNode["sizeOfResult"]
-		assert.Equal(t, actual, a.sizeOfResults.Value(),
-			"Expected %d sizeOfResult, got %d", a.sizeOfResults.Value(), actual)
-	}
-	if a.planExecutions.HasValue() {
-		actual := explainNode["planExecutions"]
-		assert.Equal(t, actual, a.planExecutions.Value(),
-			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
-	}
-	selectTopNode, ok := explainNode["selectTopNode"].(dataMap)
-	require.True(t, ok, "Expected selectTopNode")
-	selectNode, ok := selectTopNode["selectNode"].(dataMap)
-	require.True(t, ok, "Expected selectNode")
-
-	if a.filterMatches.HasValue() {
-		filterMatches, hasFilterMatches := selectNode["filterMatches"]
-		require.True(t, hasFilterMatches, "Expected filterMatches property")
-		assert.Equal(t, filterMatches, uint64(a.filterMatches.Value()),
-			"Expected %d filterMatches, got %d", a.filterMatches, filterMatches)
-	}
-
-	scanNode, ok := selectNode["scanNode"].(dataMap)
-	require.True(t, ok, "Expected scanNode")
-
-	if a.iterations.HasValue() {
-		iterations, hasIterations := scanNode["iterations"]
-		require.True(t, hasIterations, "Expected iterations property")
-		assert.Equal(t, iterations, uint64(a.iterations.Value()),
-			"Expected %d iterations, got %d", a.iterations.Value(), iterations)
-	}
-	if a.docFetches.HasValue() {
-		docFetches, hasDocFetches := scanNode["docFetches"]
-		require.True(t, hasDocFetches, "Expected docFetches property")
-		assert.Equal(t, docFetches, uint64(a.docFetches.Value()),
-			"Expected %d docFetches, got %d", a.docFetches.Value(), docFetches)
-	}
-	if a.fieldFetches.HasValue() {
-		fieldFetches, hasFieldFetches := scanNode["fieldFetches"]
-		require.True(t, hasFieldFetches, "Expected fieldFetches property")
-		assert.Equal(t, fieldFetches, uint64(a.fieldFetches.Value()),
-			"Expected %d fieldFetches, got %d", a.fieldFetches.Value(), fieldFetches)
-	}
-	if a.indexFetches.HasValue() {
-		indexFetches, hasIndexFetches := scanNode["indexFetches"]
-		require.True(t, hasIndexFetches, "Expected indexFetches property")
-		assert.Equal(t, indexFetches, uint64(a.indexFetches.Value()),
-			"Expected %d indexFetches, got %d", a.indexFetches.Value(), indexFetches)
-	}
-}
-
-func (a *ExplainResultAsserter) WithIterations(iterations int) *ExplainResultAsserter {
-	a.iterations = immutable.Some[int](iterations)
-	return a
-}
-
-func (a *ExplainResultAsserter) WithDocFetches(docFetches int) *ExplainResultAsserter {
-	a.docFetches = immutable.Some[int](docFetches)
-	return a
-}
-
-func (a *ExplainResultAsserter) WithFieldFetches(fieldFetches int) *ExplainResultAsserter {
-	a.fieldFetches = immutable.Some[int](fieldFetches)
-	return a
-}
-
-func (a *ExplainResultAsserter) WithIndexFetches(indexFetches int) *ExplainResultAsserter {
-	a.indexFetches = immutable.Some[int](indexFetches)
-	return a
-}
-
-func (a *ExplainResultAsserter) WithFilterMatches(filterMatches int) *ExplainResultAsserter {
-	a.filterMatches = immutable.Some[int](filterMatches)
-	return a
-}
-
-func (a *ExplainResultAsserter) WithSizeOfResults(sizeOfResults int) *ExplainResultAsserter {
-	a.sizeOfResults = immutable.Some[int](sizeOfResults)
-	return a
-}
-
-func (a *ExplainResultAsserter) WithPlanExecutions(planExecutions uint64) *ExplainResultAsserter {
-	a.planExecutions = immutable.Some[uint64](planExecutions)
-	return a
-}
-
-func NewExplainAsserter() *ExplainResultAsserter {
-	return &ExplainResultAsserter{}
-}
-
-func getDocs() []map[string]any {
-	return []map[string]any{
-		{
-			"name":     "Shahzad",
-			"age":      20,
-			"verified": false,
-			"email":    "shahzad@gmail.com",
-		},
-		{
-			"name":     "Fred",
-			"age":      28,
-			"verified": false,
-			"email":    "fred@gmail.com",
-		},
-		{
-			"name":     "John",
-			"age":      30,
-			"verified": false,
-			"email":    "john@gmail.com",
-		},
-		{
-			"name":     "Islam",
-			"age":      32,
-			"verified": false,
-			"email":    "islam@gmail.com",
-		},
-		{
-			"name":     "Andy",
-			"age":      33,
-			"verified": true,
-			"email":    "andy@gmail.com",
-		},
-		{
-			"name":     "Addo",
-			"age":      42,
-			"verified": true,
-			"email":    "addo@gmail.com",
-		},
-		{
-			"name":     "Keenan",
-			"age":      48,
-			"verified": true,
-			"email":    "keenan@gmail.com",
-		},
-		{
-			"name":     "Chris",
-			"age":      55,
-			"verified": true,
-			"email":    "chris@gmail.com",
-		},
-	}
-}
 
 // createSchemaWithDocs returns UpdateSchema action and CreateDoc actions
 // with the documents that match the schema.
@@ -188,45 +25,175 @@ func getDocs() []map[string]any {
 // This allows us to have only one large list of docs with predefined
 // properties, and create schemas with different properties from it.
 func createSchemaWithDocs(schema string) []any {
-	docs := getDocs()
-	actions := make([]any, 0, len(docs)+1)
-	actions = append(actions, testUtils.SchemaUpdate{Schema: schema})
-	props := getSchemaProps(schema)
-	for _, doc := range docs {
-		docDesc := makeDocWithProps(doc, props)
-		actions = append(actions, testUtils.CreateDoc{CollectionID: 0, Doc: docDesc})
+	userDocs := getUserDocs()
+	resultActions := make([]any, 0, len(userDocs.docs)+1)
+	resultActions = append(resultActions, testUtils.SchemaUpdate{Schema: schema})
+	typeDefs := getSchemaProps(schema)
+	for _, doc := range userDocs.docs {
+		actions := makeCreateDocActions(doc, userDocs.colName, typeDefs)
+		resultActions = append(resultActions, actions...)
 	}
-	return actions
+	return resultActions
 }
 
-func makeDocWithProps(doc map[string]any, props []string) string {
+func createDocJSON(doc map[string]any, typeDef *typeDefinition) (string, []propDefinition) {
 	sb := strings.Builder{}
-	sb.WriteString("{\n")
-	for i := range props {
+	relationProps := []propDefinition{}
+	for _, prop := range typeDef.props {
+		propName := prop.name
 		format := `"%s": %v`
-		if _, isStr := doc[props[i]].(string); isStr {
+		if prop.isRelation {
+			if !prop.isPrimary {
+				if _, hasProp := doc[prop.name]; hasProp {
+					relationProps = append(relationProps, prop)
+				}
+				continue
+			} else {
+				propName = propName + "_id"
+			}
+		}
+		if _, isStr := doc[propName].(string); isStr {
 			format = `"%s": "%v"`
 		}
-		sb.WriteString(fmt.Sprintf(format, props[i], doc[props[i]]))
-		if i != len(props)-1 {
-			sb.WriteString(",")
+		if sb.Len() == 0 {
+			sb.WriteString("{\n")
+		} else {
+			sb.WriteString(",\n")
 		}
-		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf(format, propName, doc[propName]))
 	}
-	sb.WriteString("}")
-	return sb.String()
+	sb.WriteString("\n}")
+	return sb.String(), relationProps
 }
 
-func getSchemaProps(schema string) []string {
-	props := make([]string, 0)
-	lines := strings.Split(schema, "\n")
-	for _, line := range lines {
-		pos := strings.Index(line, ":")
-		if pos != -1 {
-			props = append(props, strings.TrimSpace(line[:pos]))
+func makeCreateDocActions(
+	doc map[string]any,
+	typeName string,
+	types map[string]typeDefinition,
+) []any {
+	result := []any{}
+	typeDef := types[typeName]
+
+	docStr, relationProps := createDocJSON(doc, &typeDef)
+
+	result = append(result, testUtils.CreateDoc{CollectionID: typeDef.index, Doc: docStr})
+	if len(relationProps) > 0 {
+		clientDoc, err := client.NewDocFromJSON([]byte(docStr))
+		if err != nil {
+			panic("Failed to create doc from JSON: " + err.Error())
+		}
+		docKey := clientDoc.Key().String()
+		for _, relProp := range relationProps {
+			actions := makeCreateDocActionForRelatedDocs(doc, typeName, &relProp, docKey, types)
+			result = append(result, actions...)
 		}
 	}
-	return props
+	return result
+}
+
+func makeCreateDocActionForRelatedDocs(
+	primaryDoc map[string]any,
+	primaryTypeName string,
+	relProp *propDefinition,
+	primaryDocKey string,
+	types map[string]typeDefinition,
+) []any {
+	result := []any{}
+	relTypeDef := types[relProp.typeStr]
+	primaryPropName := ""
+	for _, relDocProp := range relTypeDef.props {
+		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary {
+			primaryPropName = relDocProp.name + "_id"
+			relDocsCol := primaryDoc[relProp.name].(docsCollection)
+			for _, relDoc := range relDocsCol.docs {
+				relDoc[primaryPropName] = primaryDocKey
+				actions := makeCreateDocActions(relDoc, relTypeDef.name, types)
+				result = append(result, actions...)
+			}
+		}
+	}
+	return result
+}
+
+type propDefinition struct {
+	name       string
+	typeStr    string
+	isArray    bool
+	isRelation bool
+	isPrimary  bool
+}
+
+type typeDefinition struct {
+	name  string
+	index int
+	props map[string]propDefinition
+}
+
+func getSchemaProps(schema string) map[string]typeDefinition {
+	result := make(map[string]typeDefinition)
+	lines := strings.Split(schema, "\n")
+	typeIndex := 0
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "type ") {
+			typeNameEndPos := strings.Index(line[5:], " ")
+			typeName := strings.TrimSpace(line[5 : 5+typeNameEndPos])
+			result[typeName] = typeDefinition{name: typeName, index: typeIndex, props: make(map[string]propDefinition)}
+			typeIndex++
+		}
+	}
+
+	primaryTypesMap := make(map[string][]string)
+	var typeDef typeDefinition
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "type ") {
+			typeNameEndPos := strings.Index(line[5:], " ")
+			typeName := strings.TrimSpace(line[5 : 5+typeNameEndPos])
+			typeDef = result[typeName]
+			continue
+		}
+		if strings.HasPrefix(line, "}") {
+			result[typeDef.name] = typeDef
+			continue
+		}
+		pos := strings.Index(line, ":")
+		if pos != -1 {
+			prop := propDefinition{name: line[:pos]}
+			prop.typeStr = strings.TrimSpace(line[pos+1:])
+			typeEndPos := strings.Index(prop.typeStr, " ")
+			if typeEndPos != -1 {
+				prop.typeStr = prop.typeStr[:typeEndPos]
+			}
+			if prop.typeStr[0] == '[' {
+				prop.isArray = true
+				prop.typeStr = prop.typeStr[1 : len(prop.typeStr)-1]
+			}
+			if _, isRelation := result[prop.typeStr]; isRelation {
+				prop.isRelation = true
+				prop.isPrimary = !prop.isArray
+				if !prop.isPrimary {
+					primaryTypesMap[prop.typeStr] = append(primaryTypesMap[typeDef.name], typeDef.name)
+				}
+			}
+			typeDef.props[prop.name] = prop
+		}
+	}
+	for secondaryTypeName, primaryTypes := range primaryTypesMap {
+		secTypeDef := result[secondaryTypeName]
+		for _, prop := range secTypeDef.props {
+			for _, primaryType := range primaryTypes {
+				if prop.typeStr == primaryType {
+					p := secTypeDef.props[prop.name]
+					p.isRelation = true
+					p.isPrimary = true
+					secTypeDef.props[prop.name] = p
+				}
+			}
+		}
+		result[secondaryTypeName] = secTypeDef
+	}
+	return result
 }
 
 func sendRequestAndExplain(
