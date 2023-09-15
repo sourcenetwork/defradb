@@ -85,6 +85,18 @@ type SchemaPatch struct {
 	ExpectedError string
 }
 
+// SetDefaultSchemaVersion is an action that will set the default schema version to the
+// given value.
+type SetDefaultSchemaVersion struct {
+	// NodeID may hold the ID (index) of a node to set the default schema version on.
+	//
+	// If a value is not provided the default will be set on all nodes.
+	NodeID immutable.Option[int]
+
+	SchemaVersionID string
+	ExpectedError   string
+}
+
 // CreateDoc will attempt to create the given document in the given collection
 // using the set [MutationType].
 type CreateDoc struct {

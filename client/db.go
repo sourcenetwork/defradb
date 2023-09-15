@@ -111,6 +111,15 @@ type Store interface {
 	// [FieldKindStringToEnumMapping].
 	PatchSchema(context.Context, string) error
 
+	// SetDefaultSchemaVersion sets the default schema version to the ID provided.  It will be applied to all
+	// collections using the schema.
+	//
+	// This will affect all operations interacting with the schema where a schema version is not explicitly
+	// provided.  This includes GQL queries and Collection operations.
+	//
+	// It will return an error if the provided schema version ID does not exist.
+	SetDefaultSchemaVersion(context.Context, string) error
+
 	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivilent to
 	// calling `LensRegistry().SetMigration(ctx, cfg)`.
 	//

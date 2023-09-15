@@ -1163,6 +1163,49 @@ func (_c *DB_Root_Call) RunAndReturn(run func() datastore.RootStore) *DB_Root_Ca
 	return _c
 }
 
+// SetDefaultSchemaVersion provides a mock function with given fields: _a0, _a1
+func (_m *DB) SetDefaultSchemaVersion(_a0 context.Context, _a1 string) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_SetDefaultSchemaVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetDefaultSchemaVersion'
+type DB_SetDefaultSchemaVersion_Call struct {
+	*mock.Call
+}
+
+// SetDefaultSchemaVersion is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 string
+func (_e *DB_Expecter) SetDefaultSchemaVersion(_a0 interface{}, _a1 interface{}) *DB_SetDefaultSchemaVersion_Call {
+	return &DB_SetDefaultSchemaVersion_Call{Call: _e.mock.On("SetDefaultSchemaVersion", _a0, _a1)}
+}
+
+func (_c *DB_SetDefaultSchemaVersion_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_SetDefaultSchemaVersion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_SetDefaultSchemaVersion_Call) Return(_a0 error) *DB_SetDefaultSchemaVersion_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_SetDefaultSchemaVersion_Call) RunAndReturn(run func(context.Context, string) error) *DB_SetDefaultSchemaVersion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetMigration provides a mock function with given fields: _a0, _a1
 func (_m *DB) SetMigration(_a0 context.Context, _a1 client.LensConfig) error {
 	ret := _m.Called(_a0, _a1)

@@ -90,6 +90,10 @@ func (w *Wrapper) PatchSchema(ctx context.Context, patch string) error {
 	return w.client.PatchSchema(ctx, patch)
 }
 
+func (w *Wrapper) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	return w.client.SetDefaultSchemaVersion(ctx, schemaVersionID)
+}
+
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
 	return w.client.SetMigration(ctx, config)
 }

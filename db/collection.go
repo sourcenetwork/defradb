@@ -300,7 +300,7 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	err = db.setDefaultSchemaVersion(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
+	err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
 	if err != nil {
 		return nil, err
 	}
@@ -585,6 +585,30 @@ func validateUpdateCollectionIndexes(
 }
 
 func (db *db) setDefaultSchemaVersion(
+	ctx context.Context,
+	txn datastore.Txn,
+	schemaVersionID string,
+) error {
+	col, err := db.getCollectionByVersionID(ctx, txn, schemaVersionID)
+	if err != nil {
+		return err
+	}
+
+	desc := col.Description()
+	err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
+	if err != nil {
+		return err
+	}
+
+	cols, err := db.getCollectionDescriptions(ctx, txn)
+	if err != nil {
+		return err
+	}
+
+	return db.parser.SetSchema(ctx, txn, cols)
+}
+
+func (db *db) setDefaultSchemaVersionExplicit(
 	ctx context.Context,
 	txn datastore.Txn,
 	collectionName string,

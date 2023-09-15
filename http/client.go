@@ -223,6 +223,17 @@ func (c *Client) PatchSchema(ctx context.Context, patch string) error {
 	return err
 }
 
+func (c *Client) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	methodURL := c.http.baseURL.JoinPath("schema", "default")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
 func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
 	return c.LensRegistry().SetMigration(ctx, config)
 }

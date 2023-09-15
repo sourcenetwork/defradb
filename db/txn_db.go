@@ -280,6 +280,25 @@ func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string) er
 	return db.patchSchema(ctx, db.txn, patchString)
 }
 
+func (db *implicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.setDefaultSchemaVersion(ctx, txn, schemaVersionID)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+func (db *explicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	return db.setDefaultSchemaVersion(ctx, db.txn, schemaVersionID)
+}
+
 func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {

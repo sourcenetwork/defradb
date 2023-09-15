@@ -54,6 +54,7 @@ func NewServer(db client.DB) *Server {
 		api.Route("/schema", func(schema chi.Router) {
 			schema.Post("/", store_handler.AddSchema)
 			schema.Patch("/", store_handler.PatchSchema)
+			schema.Post("/default", store_handler.SetDefaultSchemaVersion)
 		})
 		api.Route("/collections", func(collections chi.Router) {
 			collections.Get("/", store_handler.GetCollection)
