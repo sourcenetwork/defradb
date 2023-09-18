@@ -14,7 +14,6 @@ import (
 	"io/fs"
 	"os"
 	"path"
-	"runtime"
 	"strconv"
 	"testing"
 
@@ -48,8 +47,8 @@ const (
 )
 
 const (
-	defaultRepository          = "https://github.com/nasdf/defradb.git"
-	defaultSourceBranch        = "nasdf/test/parallel-change-detector"
+	defaultRepository          = "https://github.com/sourcenetwork/defradb.git"
+	defaultSourceBranch        = "develop"
 	documentationDirectoryName = "data_format_changes"
 )
 
@@ -103,26 +102,21 @@ func PreTestChecks(t *testing.T, collectionNames []string) {
 	require.NoError(t, err)
 }
 
-func checkIfDatabaseFormatChangesAreDocumented(t *testing.T, codeDir string) bool {
-	previousDbChangeFiles, targetDirFound := getDatabaseFormatDocumentation(t, codeDir, false)
-	if !targetDirFound {
-		t.Fatalf("Documentation directory not found")
-	}
+func checkIfDatabaseFormatChangesAreDocumented(t *testing.T, sourceDir, targetDir string) bool {
+	sourceChanges, ok := getDatabaseFormatDocumentation(t, sourceDir, false)
+	require.True(t, ok, "Documentation directory not found")
 
-	previousDbChanges := make(map[string]struct{}, len(previousDbChangeFiles))
-	for _, f := range previousDbChangeFiles {
+	changes := make(map[string]struct{}, len(sourceChanges))
+	for _, f := range sourceChanges {
 		// Note: we assume flat directory for now - sub directories are not expanded
-		previousDbChanges[f.Name()] = struct{}{}
+		changes[f.Name()] = struct{}{}
 	}
 
-	_, thisFilePath, _, _ := runtime.Caller(0)
-	currentDbChanges, currentDirFound := getDatabaseFormatDocumentation(t, thisFilePath, true)
-	if !currentDirFound {
-		t.Fatalf("Documentation directory not found")
-	}
+	targetChanges, ok := getDatabaseFormatDocumentation(t, targetDir, true)
+	require.True(t, ok, "Documentation directory not found")
 
-	for _, f := range currentDbChanges {
-		if _, isChangeOld := previousDbChanges[f.Name()]; !isChangeOld {
+	for _, f := range targetChanges {
+		if _, isChangeOld := changes[f.Name()]; !isChangeOld {
 			// If there is a new file in the directory then the change
 			// has been documented and the test should pass
 			return true
@@ -134,9 +128,7 @@ func checkIfDatabaseFormatChangesAreDocumented(t *testing.T, codeDir string) boo
 
 func getDatabaseFormatDocumentation(t *testing.T, startPath string, allowDescend bool) ([]fs.DirEntry, bool) {
 	startInfo, err := os.Stat(startPath)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var currentDirectory string
 	if startInfo.IsDir() {
@@ -147,17 +139,14 @@ func getDatabaseFormatDocumentation(t *testing.T, startPath string, allowDescend
 
 	for {
 		directoryContents, err := os.ReadDir(currentDirectory)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		for _, directoryItem := range directoryContents {
 			directoryItemPath := path.Join(currentDirectory, directoryItem.Name())
 			if directoryItem.Name() == documentationDirectoryName {
 				probableFormatChangeDirectoryContents, err := os.ReadDir(directoryItemPath)
-				if err != nil {
-					t.Fatal(err)
-				}
+				require.NoError(t, err)
+
 				for _, possibleDocumentationItem := range probableFormatChangeDirectoryContents {
 					if path.Ext(possibleDocumentationItem.Name()) == ".md" {
 						// If the directory's name matches the expected, and contains .md files
@@ -178,10 +167,7 @@ func getDatabaseFormatDocumentation(t *testing.T, startPath string, allowDescend
 		if allowDescend {
 			// If not found in this directory, continue down the path
 			currentDirectory = path.Dir(currentDirectory)
-
-			if currentDirectory == "." || currentDirectory == "/" {
-				t.Fatal(err)
-			}
+			require.True(t, currentDirectory != "." && currentDirectory != "/")
 		} else {
 			return []fs.DirEntry{}, false
 		}

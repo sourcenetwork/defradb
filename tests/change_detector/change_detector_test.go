@@ -26,10 +26,7 @@ import (
 func TestChanges(t *testing.T) {
 	sourceRepoDir := t.TempDir()
 	execClone(t, sourceRepoDir, repository, sourceBranch)
-
-	if checkIfDatabaseFormatChangesAreDocumented(t, sourceRepoDir) {
-		t.Skip("skipping test with documented database format changes")
-	}
+	execMakeDeps(t, sourceRepoDir)
 
 	var targetRepoDir string
 	if targetBranch == "" {
@@ -44,7 +41,9 @@ func TestChanges(t *testing.T) {
 		execMakeDeps(t, targetRepoDir)
 	}
 
-	execMakeDeps(t, sourceRepoDir)
+	if checkIfDatabaseFormatChangesAreDocumented(t, sourceRepoDir, targetRepoDir) {
+		t.Skip("skipping test with documented database format changes")
+	}
 
 	targetRepoTestDir := filepath.Join(targetRepoDir, "tests", "integration")
 	targetRepoPkgList := execList(t, targetRepoTestDir)
