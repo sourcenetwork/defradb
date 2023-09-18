@@ -35,7 +35,7 @@ PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
 CLI_TEST_DIRECTORY=tests/integration/cli
 CHANGE_DETECTOR_TEST_DIRECTORY=tests/change_detector
-DEFAULT_TEST_DIRECTORIES=$$(go list ./... | grep -v -e $(LENS_TEST_DIRECTORY) -e $(CLI_TEST_DIRECTORY) -e $(CHANGE_DETECTOR_TEST_DIRECTORY))
+DEFAULT_TEST_DIRECTORIES=$$(go list ./... | grep -v -e $(LENS_TEST_DIRECTORY) -e $(CLI_TEST_DIRECTORY))
 
 default:
 	@go run $(BUILD_FLAGS) cmd/defradb/main.go
@@ -295,7 +295,7 @@ test\:coverage-html:
 
 .PHONY: test\:changes
 test\:changes:
-	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -shuffle=on
+	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... --tags change_detector
 
 .PHONY: validate\:codecov
 validate\:codecov:

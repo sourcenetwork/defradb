@@ -35,7 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
-	"github.com/sourcenetwork/defradb/tests/change_detector"
+	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
 
 const (
@@ -136,7 +136,7 @@ func init() {
 		goClient = true
 	}
 
-	if change_detector.Enabled {
+	if changeDetector.Enabled {
 		// Change detector only uses badger file db type.
 		badgerFile = true
 		badgerInMemory = false
@@ -155,7 +155,7 @@ func init() {
 //
 //	Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
 func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) bool {
-	if change_detector.Enabled {
+	if changeDetector.Enabled {
 		// The `assert.Panics` call will falsely fail if this test is executed during
 		// a detect changes test run
 		t.Skip()
@@ -193,9 +193,9 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 		// restarting database
 		dbPath = databaseDir
 
-	case change_detector.Enabled:
+	case changeDetector.Enabled:
 		// change detector
-		dbPath = change_detector.DatabaseDir(t)
+		dbPath = changeDetector.DatabaseDir(t)
 
 	default:
 		// default test case
@@ -271,7 +271,7 @@ func ExecuteTestCase(
 	testCase TestCase,
 ) {
 	collectionNames := getCollectionNames(testCase)
-	change_detector.PreTestChecks(t, collectionNames)
+	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 
 	var clients []ClientType
@@ -576,7 +576,7 @@ func getActionRange(testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
 
-	if !change_detector.Enabled {
+	if !changeDetector.Enabled {
 		return startIndex, endIndex
 	}
 
@@ -600,7 +600,7 @@ ActionLoop:
 		}
 	}
 
-	if change_detector.SetupOnly {
+	if changeDetector.SetupOnly {
 		if setupCompleteIndex > -1 {
 			endIndex = setupCompleteIndex
 		} else if firstNonSetupIndex > -1 {
@@ -769,7 +769,7 @@ func configureNode(
 	s *state,
 	action ConfigureNode,
 ) {
-	if change_detector.Enabled {
+	if changeDetector.Enabled {
 		// We do not yet support the change detector for tests running across multiple nodes.
 		s.t.SkipNow()
 		return
