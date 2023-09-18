@@ -27,11 +27,11 @@ import (
 
 func TestChanges(t *testing.T) {
 	sourceRepoDir := t.TempDir()
-	execClone(t, sourceRepoDir, repository, sourceBranch)
+	execClone(t, sourceRepoDir, Repository, SourceBranch)
 	execMakeDeps(t, sourceRepoDir)
 
 	var targetRepoDir string
-	if targetBranch == "" {
+	if TargetBranch == "" {
 		// default to the local branch
 		out, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
 		require.NoError(t, err, string(out))
@@ -39,7 +39,7 @@ func TestChanges(t *testing.T) {
 	} else {
 		// check out the target branch
 		targetRepoDir = t.TempDir()
-		execClone(t, targetRepoDir, repository, targetBranch)
+		execClone(t, targetRepoDir, Repository, TargetBranch)
 		execMakeDeps(t, targetRepoDir)
 	}
 
