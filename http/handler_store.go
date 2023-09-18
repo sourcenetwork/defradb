@@ -12,12 +12,10 @@ package http
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -331,54 +329,4 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 			flusher.Flush()
 		}
 	}
-}
-
-type CCIPRequest struct {
-	Sender string `json:"sender"`
-	Data   string `json:"data"`
-}
-
-type CCIPResponse struct {
-	Data string `json:"data"`
-}
-
-// ExecCCIP handles GraphQL over Cross Chain Interoperability Protocol requests.
-func (s *storeHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
-
-	var ccipReq CCIPRequest
-	switch req.Method {
-	case http.MethodGet:
-		ccipReq.Sender = chi.URLParam(req, "sender")
-		ccipReq.Data = chi.URLParam(req, "data")
-	case http.MethodPost:
-		if err := requestJSON(req, &ccipReq); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-	}
-
-	data, err := hex.DecodeString(strings.TrimPrefix(ccipReq.Data, "0x"))
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	var request GraphQLRequest
-	if err := json.Unmarshal(data, &request); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	result := store.ExecRequest(req.Context(), request.Query)
-	if result.Pub != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
-		return
-	}
-	resultJSON, err := json.Marshal(result.GQL)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	resultHex := "0x" + hex.EncodeToString(resultJSON)
-	responseJSON(rw, http.StatusOK, CCIPResponse{Data: resultHex})
 }
