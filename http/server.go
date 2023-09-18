@@ -82,6 +82,10 @@ func NewServer(db client.DB) *Server {
 			graphQL.Get("/", store_handler.ExecRequest)
 			graphQL.Post("/", store_handler.ExecRequest)
 		})
+		api.Route("/ccip", func(ccip chi.Router) {
+			ccip.Get("/{sender}/{data}", store_handler.ExecCCIP)
+			ccip.Post("/", store_handler.ExecCCIP)
+		})
 		api.Route("/p2p", func(p2p chi.Router) {
 			p2p.Route("/replicators", func(p2p_replicators chi.Router) {
 				p2p_replicators.Get("/", store_handler.GetAllReplicators)
