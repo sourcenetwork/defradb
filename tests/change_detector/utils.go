@@ -11,7 +11,6 @@
 package change_detector
 
 import (
-	"io/fs"
 	"os"
 	"path"
 	"strconv"
@@ -25,14 +24,14 @@ var (
 	Enabled bool
 	// SetupOnly is true when the change detector is running in setup mode.
 	SetupOnly bool
+	// Repository is the url of the repository to run change detector on.
+	Repository string
+	// SourceBranch is the name of the source branch to run change detector on.
+	SourceBranch string
+	// TargetBranch is the name of the target branch to run change detector on.
+	TargetBranch string
 	// rootDatabaseDir is the shared database directory for running tests.
 	rootDatabaseDir string
-	// repository is the url of the repository to run change detector on.
-	repository string
-	// sourceBranch is the name of the source branch to run change detector on.
-	sourceBranch string
-	// targetBranch is the name of the target branch to run change detector on.
-	targetBranch string
 	// previousTestCaseTestName is the name of the previous test.
 	previousTestCaseTestName string
 )
@@ -55,19 +54,19 @@ const (
 func init() {
 	Enabled, _ = strconv.ParseBool(os.Getenv(enableEnvName))
 	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
+	TargetBranch = os.Getenv(targetBranchEnvName)
 	rootDatabaseDir = os.Getenv(rootDataDirEnvName)
-	targetBranch = os.Getenv(targetBranchEnvName)
 
 	if value, ok := os.LookupEnv(repositoryEnvName); ok {
-		repository = value
+		Repository = value
 	} else {
-		repository = defaultRepository
+		Repository = defaultRepository
 	}
 
 	if value, ok := os.LookupEnv(sourceBranchEnvName); ok {
-		sourceBranch = value
+		SourceBranch = value
 	} else {
-		sourceBranch = defaultSourceBranch
+		SourceBranch = defaultSourceBranch
 	}
 }
 
@@ -100,76 +99,4 @@ func PreTestChecks(t *testing.T, collectionNames []string) {
 		t.Skip("skipping new test package")
 	}
 	require.NoError(t, err)
-}
-
-func checkIfDatabaseFormatChangesAreDocumented(t *testing.T, sourceDir, targetDir string) bool {
-	sourceChanges, ok := getDatabaseFormatDocumentation(t, sourceDir, false)
-	require.True(t, ok, "Documentation directory not found")
-
-	changes := make(map[string]struct{}, len(sourceChanges))
-	for _, f := range sourceChanges {
-		// Note: we assume flat directory for now - sub directories are not expanded
-		changes[f.Name()] = struct{}{}
-	}
-
-	targetChanges, ok := getDatabaseFormatDocumentation(t, targetDir, true)
-	require.True(t, ok, "Documentation directory not found")
-
-	for _, f := range targetChanges {
-		if _, isChangeOld := changes[f.Name()]; !isChangeOld {
-			// If there is a new file in the directory then the change
-			// has been documented and the test should pass
-			return true
-		}
-	}
-
-	return false
-}
-
-func getDatabaseFormatDocumentation(t *testing.T, startPath string, allowDescend bool) ([]fs.DirEntry, bool) {
-	startInfo, err := os.Stat(startPath)
-	require.NoError(t, err)
-
-	var currentDirectory string
-	if startInfo.IsDir() {
-		currentDirectory = startPath
-	} else {
-		currentDirectory = path.Dir(startPath)
-	}
-
-	for {
-		directoryContents, err := os.ReadDir(currentDirectory)
-		require.NoError(t, err)
-
-		for _, directoryItem := range directoryContents {
-			directoryItemPath := path.Join(currentDirectory, directoryItem.Name())
-			if directoryItem.Name() == documentationDirectoryName {
-				probableFormatChangeDirectoryContents, err := os.ReadDir(directoryItemPath)
-				require.NoError(t, err)
-
-				for _, possibleDocumentationItem := range probableFormatChangeDirectoryContents {
-					if path.Ext(possibleDocumentationItem.Name()) == ".md" {
-						// If the directory's name matches the expected, and contains .md files
-						// we assume it is the documentation directory
-						return probableFormatChangeDirectoryContents, true
-					}
-				}
-			} else {
-				if directoryItem.IsDir() {
-					childContents, directoryFound := getDatabaseFormatDocumentation(t, directoryItemPath, false)
-					if directoryFound {
-						return childContents, true
-					}
-				}
-			}
-		}
-
-		if allowDescend {
-			// If not found in this directory, continue down the path
-			currentDirectory = path.Dir(currentDirectory)
-			require.True(t, currentDirectory != "." && currentDirectory != "/")
-		} else {
-			return []fs.DirEntry{}, false
-		}
-	}
 }

@@ -14,8 +14,10 @@ package change_detector
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -128,4 +130,76 @@ func execMakeDeps(t *testing.T, dir string) {
 
 	out, err := cmd.Output()
 	require.NoError(t, err, string(out))
+}
+
+func checkIfDatabaseFormatChangesAreDocumented(t *testing.T, sourceDir, targetDir string) bool {
+	sourceChanges, ok := getDatabaseFormatDocumentation(t, sourceDir, false)
+	require.True(t, ok, "Documentation directory not found")
+
+	changes := make(map[string]struct{}, len(sourceChanges))
+	for _, f := range sourceChanges {
+		// Note: we assume flat directory for now - sub directories are not expanded
+		changes[f.Name()] = struct{}{}
+	}
+
+	targetChanges, ok := getDatabaseFormatDocumentation(t, targetDir, true)
+	require.True(t, ok, "Documentation directory not found")
+
+	for _, f := range targetChanges {
+		if _, isChangeOld := changes[f.Name()]; !isChangeOld {
+			// If there is a new file in the directory then the change
+			// has been documented and the test should pass
+			return true
+		}
+	}
+
+	return false
+}
+
+func getDatabaseFormatDocumentation(t *testing.T, startPath string, allowDescend bool) ([]fs.DirEntry, bool) {
+	startInfo, err := os.Stat(startPath)
+	require.NoError(t, err)
+
+	var currentDirectory string
+	if startInfo.IsDir() {
+		currentDirectory = startPath
+	} else {
+		currentDirectory = path.Dir(startPath)
+	}
+
+	for {
+		directoryContents, err := os.ReadDir(currentDirectory)
+		require.NoError(t, err)
+
+		for _, directoryItem := range directoryContents {
+			directoryItemPath := path.Join(currentDirectory, directoryItem.Name())
+			if directoryItem.Name() == documentationDirectoryName {
+				probableFormatChangeDirectoryContents, err := os.ReadDir(directoryItemPath)
+				require.NoError(t, err)
+
+				for _, possibleDocumentationItem := range probableFormatChangeDirectoryContents {
+					if path.Ext(possibleDocumentationItem.Name()) == ".md" {
+						// If the directory's name matches the expected, and contains .md files
+						// we assume it is the documentation directory
+						return probableFormatChangeDirectoryContents, true
+					}
+				}
+			} else {
+				if directoryItem.IsDir() {
+					childContents, directoryFound := getDatabaseFormatDocumentation(t, directoryItemPath, false)
+					if directoryFound {
+						return childContents, true
+					}
+				}
+			}
+		}
+
+		if allowDescend {
+			// If not found in this directory, continue down the path
+			currentDirectory = path.Dir(currentDirectory)
+			require.True(t, currentDirectory != "." && currentDirectory != "/")
+		} else {
+			return []fs.DirEntry{}, false
+		}
+	}
 }
