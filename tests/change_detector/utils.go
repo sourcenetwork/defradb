@@ -49,7 +49,7 @@ const (
 
 const (
 	defaultRepository          = "https://github.com/nasdf/defradb.git"
-	defaultBranch              = "nasdf/test/parallel-change-detector"
+	defaultSourceBranch        = "nasdf/test/parallel-change-detector"
 	documentationDirectoryName = "data_format_changes"
 )
 
@@ -57,6 +57,7 @@ func init() {
 	Enabled, _ = strconv.ParseBool(os.Getenv(enableEnvName))
 	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
 	rootDatabaseDir = os.Getenv(rootDataDirEnvName)
+	targetBranch = os.Getenv(targetBranchEnvName)
 
 	if value, ok := os.LookupEnv(repositoryEnvName); ok {
 		repository = value
@@ -67,13 +68,7 @@ func init() {
 	if value, ok := os.LookupEnv(sourceBranchEnvName); ok {
 		sourceBranch = value
 	} else {
-		sourceBranch = defaultBranch
-	}
-
-	if value, ok := os.LookupEnv(targetBranchEnvName); ok {
-		targetBranch = value
-	} else {
-		targetBranch = defaultBranch
+		sourceBranch = defaultSourceBranch
 	}
 }
 

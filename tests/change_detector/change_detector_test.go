@@ -31,11 +31,20 @@ func TestChanges(t *testing.T) {
 		t.Skip("skipping test with documented database format changes")
 	}
 
-	targetRepoDir := t.TempDir()
-	execClone(t, targetRepoDir, repository, targetBranch)
+	var targetRepoDir string
+	if targetBranch == "" {
+		// default to the local branch
+		out, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
+		require.NoError(t, err, string(out))
+		targetRepoDir = strings.TrimSpace(string(out))
+	} else {
+		// check out the target branch
+		targetRepoDir = t.TempDir()
+		execClone(t, targetRepoDir, repository, targetBranch)
+		execMakeDeps(t, targetRepoDir)
+	}
 
 	execMakeDeps(t, sourceRepoDir)
-	execMakeDeps(t, targetRepoDir)
 
 	targetRepoTestDir := filepath.Join(targetRepoDir, "tests", "integration")
 	targetRepoPkgList := execList(t, targetRepoTestDir)
