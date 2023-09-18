@@ -149,17 +149,24 @@ func init() {
 	}
 }
 
-// AssertPanicAndSkipChangeDetection asserts that the code of function actually panics,
+// AssertPanic asserts that the code inside the specified PanicTestFunc panics.
 //
-//	also ensures the change detection is skipped so no false fails happen.
+// This function is not supported by either the change detector, or the http-client.
+// Calling this within either of them will result in the test being skipped.
 //
-//	Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
-func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) bool {
+// Usage: AssertPanic(t, func() { executeTestCase(t, test) })
+func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
 	if changeDetector.Enabled {
 		// The `assert.Panics` call will falsely fail if this test is executed during
-		// a detect changes test run
-		t.Skip()
+		// a detect changes test run.
+		t.Skip("Assert panic with the change detector is not currently supported.")
 	}
+
+	if httpClient {
+		// The http-client will return an error instead of panicing at the moment.
+		t.Skip("Assert panic with the http client is not currently supported.")
+	}
+
 	return assert.Panics(t, f, "expected a panic, but none found.")
 }
 

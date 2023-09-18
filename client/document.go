@@ -209,11 +209,7 @@ func (doc *Document) SetWithJSON(patch []byte) error {
 	}
 
 	for k, v := range patchObj {
-		if v == nil {
-			err = doc.Delete(k)
-		} else {
-			err = doc.Set(k, v)
-		}
+		err = doc.Set(k, v)
 		if err != nil {
 			return err
 		}
@@ -273,7 +269,7 @@ func (doc *Document) setObject(t CType, field string, val *Document) error {
 // @todo: Update with document schemas
 func (doc *Document) setAndParseType(field string, value any) error {
 	if value == nil {
-		return nil
+		return doc.setCBOR(LWW_REGISTER, field, value)
 	}
 
 	switch val := value.(type) {
