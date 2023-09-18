@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"context"
 	"reflect"
 	"sort"
 	"testing"
@@ -127,50 +126,43 @@ func executeExplainRequest(
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		result := node.DB.ExecRequest(s.ctx, action.Request)
-		assertExplainRequestResults(
-			s.ctx,
-			s.t,
-			s.testCase.Description,
-			&result.GQL,
-			action,
-		)
+		assertExplainRequestResults(s, &result.GQL, action)
 	}
 }
 
 func assertExplainRequestResults(
-	ctx context.Context,
-	t *testing.T,
-	description string,
+	s *state,
 	actualResult *client.GQLResult,
 	action ExplainRequest,
 ) {
 	// Check expected error matches actual error. If it does we are done.
 	if AssertErrors(
-		t,
-		description,
+		s.t,
+		s.testCase.Description,
 		actualResult.Errors,
 		action.ExpectedError,
 	) {
 		return
 	} else if action.ExpectedError != "" { // If didn't find a match but did expected an error, then fail.
-		assert.Fail(t, "Expected an error however none was raised.", description)
+		assert.Fail(s.t, "Expected an error however none was raised.", s.testCase.Description)
 	}
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
 	resultantData := actualResult.Data.([]map[string]any)
-	log.Info(ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
+	log.Info(s.ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
 	if lengthOfExpectedFullGraph := len(action.ExpectedFullGraph); action.ExpectedFullGraph != nil {
-		require.Equal(t, lengthOfExpectedFullGraph, len(resultantData), description)
+		require.Equal(s.t, lengthOfExpectedFullGraph, len(resultantData), s.testCase.Description)
 		for index, actualResult := range resultantData {
 			if lengthOfExpectedFullGraph > index {
-				assert.Equal(
-					t,
+				assertResultsEqual(
+					s.t,
+					s.clientType,
 					action.ExpectedFullGraph[index],
 					actualResult,
-					description,
+					s.testCase.Description,
 				)
 			}
 		}
@@ -179,15 +171,17 @@ func assertExplainRequestResults(
 	// Ensure the complete high-level pattern matches, inother words check that all the
 	// explain graph nodes are in the correct expected ordering.
 	if action.ExpectedPatterns != nil {
-		require.Equal(t, len(action.ExpectedPatterns), len(resultantData), description)
+		require.Equal(s.t, len(action.ExpectedPatterns), len(resultantData), s.testCase.Description)
+
 		for index, actualResult := range resultantData {
 			// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
-			actualResultWithoutAttributes := trimExplainAttributes(t, description, actualResult)
-			assert.Equal(
-				t,
+			actualResultWithoutAttributes := trimExplainAttributes(s.t, s.testCase.Description, actualResult)
+			assertResultsEqual(
+				s.t,
+				s.clientType,
 				action.ExpectedPatterns[index],
 				actualResultWithoutAttributes,
-				description,
+				s.testCase.Description,
 			)
 		}
 	}
@@ -196,14 +190,13 @@ func assertExplainRequestResults(
 	// Note: This does not check if the node is in correct location or not.
 	if action.ExpectedTargets != nil {
 		for _, target := range action.ExpectedTargets {
-			assertExplainTargetCase(t, description, target, resultantData)
+			assertExplainTargetCase(s, target, resultantData)
 		}
 	}
 }
 
 func assertExplainTargetCase(
-	t *testing.T,
-	description string,
+	s *state,
 	targetCase PlanNodeTargetCase,
 	actualResults []map[string]any,
 ) {
@@ -217,17 +210,18 @@ func assertExplainTargetCase(
 
 		if !isFound {
 			assert.Fail(
-				t,
+				s.t,
 				"Expected target ["+targetCase.TargetNodeName+"], was not found in the explain graph.",
-				description,
+				s.testCase.Description,
 			)
 		}
 
-		assert.Equal(
-			t,
+		assertResultsEqual(
+			s.t,
+			s.clientType,
 			targetCase.ExpectedAttributes,
 			foundActualTarget,
-			description,
+			s.testCase.Description,
 		)
 	}
 }
@@ -312,24 +306,41 @@ func findTargetNode(
 			}
 		}
 
+	case []any:
+		return findTargetNodeFromArray(targetName, toSkip, includeChildNodes, r)
+
 	case []map[string]any:
-		for _, item := range r {
-			target, matches, found := findTargetNode(
-				targetName,
-				toSkip,
-				includeChildNodes,
-				item,
-			)
+		return findTargetNodeFromArray(targetName, toSkip, includeChildNodes, r)
+	}
 
-			totalMatchedSoFar = totalMatchedSoFar + matches
-			toSkip -= matches
+	return nil, totalMatchedSoFar, false
+}
 
-			if found {
-				if includeChildNodes {
-					return target, totalMatchedSoFar, true
-				}
-				return trimSubNodes(target), totalMatchedSoFar, true
+// findTargetNodeFromArray is a helper that runs findTargetNode for each item in an array.
+func findTargetNodeFromArray[T any](
+	targetName string,
+	toSkip uint,
+	includeChildNodes bool,
+	actualResult []T,
+) (any, uint, bool) {
+	var totalMatchedSoFar uint = 0
+
+	for _, item := range actualResult {
+		target, matches, found := findTargetNode(
+			targetName,
+			toSkip,
+			includeChildNodes,
+			item,
+		)
+
+		totalMatchedSoFar = totalMatchedSoFar + matches
+		toSkip -= matches
+
+		if found {
+			if includeChildNodes {
+				return target, totalMatchedSoFar, true
 			}
+			return trimSubNodes(target), totalMatchedSoFar, true
 		}
 	}
 
@@ -358,9 +369,9 @@ func trimSubNodes(graph any) any {
 func trimExplainAttributes(
 	t *testing.T,
 	description string,
-	actualResult map[string]any,
+	actualResult any,
 ) map[string]any {
-	trimmedMap := copyMap(actualResult)
+	trimmedMap := copyMap(actualResult.(map[string]any))
 
 	for key, value := range trimmedMap {
 		if !isPlanNode(key) {
@@ -373,14 +384,10 @@ func trimExplainAttributes(
 			trimmedMap[key] = trimExplainAttributes(t, description, v)
 
 		case []map[string]any:
-			trimmedArrayElements := []map[string]any{}
-			for _, valueItem := range v {
-				trimmedArrayElements = append(
-					trimmedArrayElements,
-					trimExplainAttributes(t, description, valueItem),
-				)
-			}
-			trimmedMap[key] = trimmedArrayElements
+			trimmedMap[key] = trimExplainAttributesArray(t, description, v)
+
+		case []any:
+			trimmedMap[key] = trimExplainAttributesArray(t, description, v)
 
 		default:
 			assert.Fail(
@@ -392,6 +399,22 @@ func trimExplainAttributes(
 	}
 
 	return trimmedMap
+}
+
+// trimExplainAttributesArray is a helper that runs trimExplainAttributes for each item in an array.
+func trimExplainAttributesArray[T any](
+	t *testing.T,
+	description string,
+	actualResult []T,
+) []map[string]any {
+	trimmedArrayElements := []map[string]any{}
+	for _, valueItem := range actualResult {
+		trimmedArrayElements = append(
+			trimmedArrayElements,
+			trimExplainAttributes(t, description, valueItem),
+		)
+	}
+	return trimmedArrayElements
 }
 
 // isPlanNode returns true if someName matches a plan node name, retruns false otherwise.

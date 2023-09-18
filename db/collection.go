@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -230,15 +231,31 @@ func (db *db) createCollection(
 func (db *db) updateCollection(
 	ctx context.Context,
 	txn datastore.Txn,
+	existingDescriptionsByName map[string]client.CollectionDescription,
+	proposedDescriptionsByName map[string]client.CollectionDescription,
 	desc client.CollectionDescription,
 ) (client.Collection, error) {
-	hasChanged, err := db.validateUpdateCollection(ctx, txn, desc)
+	hasChanged, err := db.validateUpdateCollection(ctx, txn, existingDescriptionsByName, proposedDescriptionsByName, desc)
 	if err != nil {
 		return nil, err
 	}
 
 	if !hasChanged {
 		return db.getCollectionByName(ctx, txn, desc.Name)
+	}
+
+	for _, field := range desc.Schema.Fields {
+		if field.RelationType.IsSet(client.Relation_Type_ONE) {
+			idFieldName := field.Name + "_id"
+			if _, ok := desc.Schema.GetField(idFieldName); !ok {
+				desc.Schema.Fields = append(desc.Schema.Fields, client.FieldDescription{
+					Name:         idFieldName,
+					Kind:         client.FieldKind_DocKey,
+					RelationType: client.Relation_Type_INTERNAL_ID,
+					RelationName: field.RelationName,
+				})
+			}
+		}
 	}
 
 	for i, field := range desc.Schema.Fields {
@@ -311,17 +328,18 @@ func (db *db) updateCollection(
 func (db *db) validateUpdateCollection(
 	ctx context.Context,
 	txn datastore.Txn,
+	existingDescriptionsByName map[string]client.CollectionDescription,
+	proposedDescriptionsByName map[string]client.CollectionDescription,
 	proposedDesc client.CollectionDescription,
 ) (bool, error) {
-	existingCollection, err := db.getCollectionByName(ctx, txn, proposedDesc.Name)
-	if err != nil {
-		if errors.Is(err, ds.ErrNotFound) {
-			// Original error is quite unhelpful to users at the moment so we return a custom one
-			return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
-		}
-		return false, err
+	if proposedDesc.Name == "" {
+		return false, ErrCollectionNameEmpty
 	}
-	existingDesc := existingCollection.Description()
+
+	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
+	if !collectionExists {
+		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
+	}
 
 	if proposedDesc.ID != existingDesc.ID {
 		return false, NewErrCollectionIDDoesntMatch(proposedDesc.Name, existingDesc.ID, proposedDesc.ID)
@@ -346,7 +364,7 @@ func (db *db) validateUpdateCollection(
 		return false, ErrCannotSetVersionID
 	}
 
-	hasChangedFields, err := validateUpdateCollectionFields(existingDesc, proposedDesc)
+	hasChangedFields, err := validateUpdateCollectionFields(proposedDescriptionsByName, existingDesc, proposedDesc)
 	if err != nil {
 		return hasChangedFields, err
 	}
@@ -356,6 +374,7 @@ func (db *db) validateUpdateCollection(
 }
 
 func validateUpdateCollectionFields(
+	descriptionsByName map[string]client.CollectionDescription,
 	existingDesc client.CollectionDescription,
 	proposedDesc client.CollectionDescription,
 ) (bool, error) {
@@ -386,7 +405,130 @@ func validateUpdateCollectionFields(
 
 		if !fieldAlreadyExists && (proposedField.Kind == client.FieldKind_FOREIGN_OBJECT ||
 			proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY) {
-			return false, NewErrCannotAddRelationalField(proposedField.Name, proposedField.Kind)
+			if proposedField.Schema == "" {
+				return false, NewErrRelationalFieldMissingSchema(proposedField.Name, proposedField.Kind)
+			}
+
+			relatedDesc, relatedDescFound := descriptionsByName[proposedField.Schema]
+
+			if !relatedDescFound {
+				return false, NewErrSchemaNotFound(proposedField.Name, proposedField.Schema)
+			}
+
+			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
+				if !proposedField.RelationType.IsSet(client.Relation_Type_ONE) ||
+					!(proposedField.RelationType.IsSet(client.Relation_Type_ONEONE) ||
+						proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY)) {
+					return false, NewErrRelationalFieldInvalidRelationType(
+						proposedField.Name,
+						fmt.Sprintf(
+							"%v and %v or %v, with optionally %v",
+							client.Relation_Type_ONE,
+							client.Relation_Type_ONEONE,
+							client.Relation_Type_ONEMANY,
+							client.Relation_Type_Primary,
+						),
+						proposedField.RelationType,
+					)
+				}
+			}
+
+			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+				if !proposedField.RelationType.IsSet(client.Relation_Type_MANY) ||
+					!proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY) {
+					return false, NewErrRelationalFieldInvalidRelationType(
+						proposedField.Name,
+						client.Relation_Type_MANY|client.Relation_Type_ONEMANY,
+						proposedField.RelationType,
+					)
+				}
+			}
+
+			if proposedField.RelationName == "" {
+				return false, NewErrRelationalFieldMissingRelationName(proposedField.Name)
+			}
+
+			if proposedField.RelationType.IsSet(client.Relation_Type_Primary) {
+				if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+					return false, NewErrPrimarySideOnMany(proposedField.Name)
+				}
+			}
+
+			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
+				idFieldName := proposedField.Name + request.RelatedObjectID
+				idField, idFieldFound := proposedDesc.Schema.GetField(idFieldName)
+				if idFieldFound {
+					if idField.Kind != client.FieldKind_DocKey {
+						return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocKey, idField.Kind)
+					}
+
+					if idField.RelationType != client.Relation_Type_INTERNAL_ID {
+						return false, NewErrRelationalFieldInvalidRelationType(
+							idField.Name,
+							client.Relation_Type_INTERNAL_ID,
+							idField.RelationType,
+						)
+					}
+
+					if idField.RelationName == "" {
+						return false, NewErrRelationalFieldMissingRelationName(idField.Name)
+					}
+				}
+			}
+
+			var relatedFieldFound bool
+			var relatedField client.FieldDescription
+			for _, field := range relatedDesc.Schema.Fields {
+				if field.RelationName == proposedField.RelationName &&
+					!field.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) &&
+					!(relatedDesc.Name == proposedDesc.Name && field.Name == proposedField.Name) {
+					relatedFieldFound = true
+					relatedField = field
+					break
+				}
+			}
+
+			if !relatedFieldFound {
+				return false, client.NewErrRelationOneSided(proposedField.Name, proposedField.Schema)
+			}
+
+			if !(proposedField.RelationType.IsSet(client.Relation_Type_Primary) ||
+				relatedField.RelationType.IsSet(client.Relation_Type_Primary)) {
+				return false, NewErrPrimarySideNotDefined(proposedField.RelationName)
+			}
+
+			if proposedField.RelationType.IsSet(client.Relation_Type_Primary) &&
+				relatedField.RelationType.IsSet(client.Relation_Type_Primary) {
+				return false, NewErrBothSidesPrimary(proposedField.RelationName)
+			}
+
+			if proposedField.RelationType.IsSet(client.Relation_Type_ONEONE) &&
+				relatedField.Kind != client.FieldKind_FOREIGN_OBJECT {
+				return false, NewErrRelatedFieldKindMismatch(
+					proposedField.RelationName,
+					client.FieldKind_FOREIGN_OBJECT,
+					relatedField.Kind,
+				)
+			}
+
+			if proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY) &&
+				proposedField.Kind == client.FieldKind_FOREIGN_OBJECT &&
+				relatedField.Kind != client.FieldKind_FOREIGN_OBJECT_ARRAY {
+				return false, NewErrRelatedFieldKindMismatch(
+					proposedField.RelationName,
+					client.FieldKind_FOREIGN_OBJECT_ARRAY,
+					relatedField.Kind,
+				)
+			}
+
+			if proposedField.RelationType.IsSet(client.Relation_Type_ONEONE) &&
+				!relatedField.RelationType.IsSet(client.Relation_Type_ONEONE) {
+				return false, NewErrRelatedFieldRelationTypeMismatch(
+					proposedField.RelationName,
+					client.Relation_Type_ONEONE,
+					relatedField.RelationType,
+				)
+			}
 		}
 
 		if _, isDuplicate := newFieldNames[proposedField.Name]; isDuplicate {
@@ -816,16 +958,19 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 		return err
 	}
 
-	if !isDeleted {
-		if exists {
-			err = c.update(ctx, txn, doc)
-		} else {
-			err = c.create(ctx, txn, doc)
-		}
-		if err != nil {
-			return err
-		}
+	if isDeleted {
+		return NewErrDocumentDeleted(doc.Key().String())
 	}
+
+	if exists {
+		err = c.update(ctx, txn, doc)
+	} else {
+		err = c.create(ctx, txn, doc)
+	}
+	if err != nil {
+		return err
+	}
+
 	return c.commitImplicitTxn(ctx, txn)
 }
 
@@ -890,6 +1035,11 @@ func (c *collection) save(
 				continue
 			}
 
+			err = c.validateOneToOneLinkDoesntAlreadyExist(ctx, txn, doc.Key().String(), fieldDescription, val.Value())
+			if err != nil {
+				return cid.Undef, err
+			}
+
 			node, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
@@ -951,6 +1101,84 @@ func (c *collection) save(
 	})
 
 	return headNode.Cid(), nil
+}
+
+func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
+	ctx context.Context,
+	txn datastore.Txn,
+	docKey string,
+	fieldDescription client.FieldDescription,
+	value any,
+) error {
+	if !fieldDescription.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) {
+		return nil
+	}
+
+	if value == nil {
+		return nil
+	}
+
+	objFieldDescription, ok := c.desc.Schema.GetField(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
+	if !ok {
+		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
+	}
+	if !objFieldDescription.RelationType.IsSet(client.Relation_Type_ONEONE) {
+		return nil
+	}
+
+	filter := fmt.Sprintf(
+		`{_and: [{%s: {_ne: "%s"}}, {%s: {_eq: "%s"}}]}`,
+		request.KeyFieldName,
+		docKey,
+		fieldDescription.Name,
+		value,
+	)
+	selectionPlan, err := c.makeSelectionPlan(ctx, txn, filter)
+	if err != nil {
+		return err
+	}
+
+	err = selectionPlan.Init()
+	if err != nil {
+		closeErr := selectionPlan.Close()
+		if closeErr != nil {
+			return errors.Wrap(err.Error(), closeErr)
+		}
+		return err
+	}
+
+	if err = selectionPlan.Start(); err != nil {
+		closeErr := selectionPlan.Close()
+		if closeErr != nil {
+			return errors.Wrap(err.Error(), closeErr)
+		}
+		return err
+	}
+
+	alreadyLinked, err := selectionPlan.Next()
+	if err != nil {
+		closeErr := selectionPlan.Close()
+		if closeErr != nil {
+			return errors.Wrap(err.Error(), closeErr)
+		}
+		return err
+	}
+
+	if alreadyLinked {
+		existingDocument := selectionPlan.Value()
+		err := selectionPlan.Close()
+		if err != nil {
+			return err
+		}
+		return NewErrOneOneAlreadyLinked(docKey, existingDocument.GetKey(), objFieldDescription.RelationName)
+	}
+
+	err = selectionPlan.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Delete will attempt to delete a document by key will return true if a deletion is successful,
@@ -1151,13 +1379,6 @@ func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) e
 		return txn.Commit(ctx)
 	}
 	return nil
-}
-
-func (c *collection) getPrimaryKey(docKey string) core.PrimaryDataStoreKey {
-	return core.PrimaryDataStoreKey{
-		CollectionId: fmt.Sprint(c.colID),
-		DocKey:       docKey,
-	}
 }
 
 func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryDataStoreKey {

@@ -11,11 +11,14 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
@@ -208,39 +211,6 @@ func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any
 // Merge implements mergeNode
 func (n *typeIndexJoin) Merge() bool { return true }
 
-// split the provided filter
-// into the root and subType components.
-// Eg. (filter: {age: 10, name: "bob", author: {birthday: "June 26, 1990", ...}, ...})
-//
-// The root filter is the conditions that apply to the main
-// type ie: {age: 10, name: "bob", ...}.
-//
-// The subType filter is the conditions that apply to the
-// queried sub type ie: {birthday: "June 26, 1990", ...}.
-func splitFilterByType(filter *mapper.Filter, subType int) (*mapper.Filter, *mapper.Filter) {
-	if filter == nil {
-		return nil, nil
-	}
-	conditionKey := &mapper.PropertyIndex{
-		Index: subType,
-	}
-
-	keyFound, sub := removeConditionIndex(conditionKey, filter.Conditions)
-	if !keyFound {
-		return filter, nil
-	}
-
-	// create new splitup filter
-	// our schema ensures that if sub exists, its of type map[string]any
-	splitF := &mapper.Filter{Conditions: map[connor.FilterKey]any{conditionKey: sub}}
-
-	// check if we have any remaining filters
-	if len(filter.Conditions) == 0 {
-		return nil, splitF
-	}
-	return filter, splitF
-}
-
 // typeJoinOne is the plan node for a type index join
 // where the root type is the primary in a one-to-one relation request.
 type typeJoinOne struct {
@@ -255,7 +225,8 @@ type typeJoinOne struct {
 	subTypeName      string
 	subTypeFieldName string
 
-	primary bool
+	primary             bool
+	secondaryFieldIndex immutable.Option[int]
 
 	spans     core.Spans
 	subSelect *mapper.Select
@@ -266,19 +237,7 @@ func (p *Planner) makeTypeJoinOne(
 	source planNode,
 	subType *mapper.Select,
 ) (*typeJoinOne, error) {
-	// split filter
-	if scan, ok := source.(*scanNode); ok {
-		var parentfilter *mapper.Filter
-		scan.filter, parentfilter = splitFilterByType(scan.filter, subType.Index)
-		if parentfilter != nil {
-			if parent.filter == nil {
-				parent.filter = new(mapper.Filter)
-			}
-			parent.filter.Conditions = mergeFilterConditions(
-				parent.filter.Conditions, parentfilter.Conditions)
-		}
-		subType.ShowDeleted = parent.selectReq.ShowDeleted
-	}
+	prepareScanNodeFilterForTypeJoin(parent, source, subType)
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
@@ -293,7 +252,7 @@ func (p *Planner) makeTypeJoinOne(
 
 	// determine relation direction (primary or secondary?)
 	// check if the field we're querying is the primary side of the relation
-	isPrimary := subTypeFieldDesc.RelationType&client.Relation_Type_Primary > 0
+	isPrimary := subTypeFieldDesc.RelationType.IsSet(client.Relation_Type_Primary)
 
 	subTypeCollectionDesc, err := p.getCollectionDesc(subType.CollectionName)
 	if err != nil {
@@ -305,15 +264,24 @@ func (p *Planner) makeTypeJoinOne(
 		return nil, client.NewErrFieldNotExist(subTypeFieldDesc.RelationName)
 	}
 
+	var secondaryFieldIndex immutable.Option[int]
+	if !isPrimary {
+		idFieldName := subTypeFieldDesc.Name + request.RelatedObjectID
+		secondaryFieldIndex = immutable.Some(
+			parent.documentMapping.FirstIndexOfName(idFieldName),
+		)
+	}
+
 	return &typeJoinOne{
-		p:                p,
-		root:             source,
-		subSelect:        subType,
-		subTypeName:      subType.Name,
-		subTypeFieldName: subTypeField.Name,
-		subType:          selectPlan,
-		primary:          isPrimary,
-		docMapper:        docMapper{parent.documentMapping},
+		p:                   p,
+		root:                source,
+		subSelect:           subType,
+		subTypeName:         subType.Name,
+		subTypeFieldName:    subTypeField.Name,
+		subType:             selectPlan,
+		primary:             isPrimary,
+		secondaryFieldIndex: secondaryFieldIndex,
+		docMapper:           docMapper{parent.documentMapping},
 	}, nil
 }
 
@@ -360,20 +328,9 @@ func (n *typeJoinOne) Next() (bool, error) {
 }
 
 func (n *typeJoinOne) valuesSecondary(doc core.Doc) (core.Doc, error) {
-	fkIndex := &mapper.PropertyIndex{
-		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + request.RelatedObjectID),
-	}
-	filter := map[connor.FilterKey]any{
-		fkIndex: map[connor.FilterKey]any{
-			mapper.FilterEqOp: doc.GetKey(),
-		},
-	}
-
+	propIndex := n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + request.RelatedObjectID)
 	// using the doc._key as a filter
-	err := appendFilterToScanNode(n.subType, filter)
-	if err != nil {
-		return core.Doc{}, err
-	}
+	setSubTypeFilterToScanNode(n.subType, propIndex, doc.GetKey())
 
 	// We have to reset the scan node after appending the new key-filter
 	if err := n.subType.Init(); err != nil {
@@ -385,8 +342,13 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) (core.Doc, error) {
 		return doc, err
 	}
 
-	subdoc := n.subType.Value()
-	doc.Fields[n.subSelect.Index] = subdoc
+	subDoc := n.subType.Value()
+	doc.Fields[n.subSelect.Index] = subDoc
+
+	if n.secondaryFieldIndex.HasValue() {
+		doc.Fields[n.secondaryFieldIndex.Value()] = subDoc.GetKey()
+	}
+
 	return doc, nil
 }
 
@@ -417,7 +379,7 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) (core.Doc, error) {
 
 	// if we don't find any docs from our point span lookup
 	// or if we encounter an error just return the base doc,
-	// with an empty map for the subdoc
+	// with an empty map for the subDoc
 	next, err := n.subType.Next()
 
 	if err != nil {
@@ -462,24 +424,47 @@ type typeJoinMany struct {
 	subSelect *mapper.Select
 }
 
+func prepareScanNodeFilterForTypeJoin(
+	parent *selectNode,
+	source planNode,
+	subType *mapper.Select,
+) {
+	subType.ShowDeleted = parent.selectReq.ShowDeleted
+
+	scan, ok := source.(*scanNode)
+	if !ok || scan.filter == nil {
+		return
+	}
+
+	if filter.IsComplex(scan.filter) {
+		if parent.filter == nil {
+			parent.filter = mapper.NewFilter()
+			parent.filter.Conditions = filter.Copy(scan.filter.Conditions)
+		} else {
+			parent.filter.Conditions = filter.Merge(
+				parent.filter.Conditions, scan.filter.Conditions)
+		}
+		filter.RemoveField(scan.filter, subType.Field)
+	} else {
+		var parentFilter *mapper.Filter
+		scan.filter, parentFilter = filter.SplitByField(scan.filter, subType.Field)
+		if parentFilter != nil {
+			if parent.filter == nil {
+				parent.filter = parentFilter
+			} else {
+				parent.filter.Conditions = filter.Merge(
+					parent.filter.Conditions, parentFilter.Conditions)
+			}
+		}
+	}
+}
+
 func (p *Planner) makeTypeJoinMany(
 	parent *selectNode,
 	source planNode,
 	subType *mapper.Select,
 ) (*typeJoinMany, error) {
-	// split filter
-	if scan, ok := source.(*scanNode); ok {
-		var parentfilter *mapper.Filter
-		scan.filter, parentfilter = splitFilterByType(scan.filter, subType.Index)
-		if parentfilter != nil {
-			if parent.filter == nil {
-				parent.filter = new(mapper.Filter)
-			}
-			parent.filter.Conditions = mergeFilterConditions(
-				parent.filter.Conditions, parentfilter.Conditions)
-		}
-		subType.ShowDeleted = parent.selectReq.ShowDeleted
-	}
+	prepareScanNodeFilterForTypeJoin(parent, source, subType)
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
@@ -543,26 +528,15 @@ func (n *typeJoinMany) Next() (bool, error) {
 	n.currentValue = n.root.Value()
 
 	// check if theres an index
-	// if there is, scan and aggregate resuts
+	// if there is, scan and aggregate results
 	// if not, then manually scan the subtype table
-	subdocs := make([]core.Doc, 0)
+	subDocs := make([]core.Doc, 0)
 	if n.index != nil {
 		// @todo: handle index for one-to-many setup
 	} else {
-		fkIndex := &mapper.PropertyIndex{
-			Index: n.subSelect.FirstIndexOfName(n.rootName + request.RelatedObjectID),
-		}
-		filter := map[connor.FilterKey]any{
-			fkIndex: map[connor.FilterKey]any{
-				mapper.FilterEqOp: n.currentValue.GetKey(),
-			},
-		}
-
+		propIndex := n.subSelect.FirstIndexOfName(n.rootName + request.RelatedObjectID)
 		// using the doc._key as a filter
-		err := appendFilterToScanNode(n.subType, filter)
-		if err != nil {
-			return false, err
-		}
+		setSubTypeFilterToScanNode(n.subType, propIndex, n.currentValue.GetKey())
 
 		// reset scan node
 		if err := n.subType.Init(); err != nil {
@@ -578,12 +552,12 @@ func (n *typeJoinMany) Next() (bool, error) {
 				break
 			}
 
-			subdoc := n.subType.Value()
-			subdocs = append(subdocs, subdoc)
+			subDoc := n.subType.Value()
+			subDocs = append(subDocs, subDoc)
 		}
 	}
 
-	n.currentValue.Fields[n.subSelect.Index] = subdocs
+	n.currentValue.Fields[n.subSelect.Index] = subDocs
 	return true, nil
 }
 
@@ -597,53 +571,35 @@ func (n *typeJoinMany) Close() error {
 
 func (n *typeJoinMany) Source() planNode { return n.root }
 
-func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]any) error {
-	switch node := plan.(type) {
-	case *scanNode:
-		filter := node.filter
-		if filter == nil && len(filterCondition) > 0 {
-			filter = mapper.NewFilter()
+func setSubTypeFilterToScanNode(plan planNode, propIndex int, key string) {
+	scan := getScanNode(plan)
+	if scan == nil {
+		return
+	}
+
+	if scan.filter == nil {
+		scan.filter = mapper.NewFilter()
+	}
+
+	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
+	filterConditions := map[connor.FilterKey]any{
+		propertyIndex: map[connor.FilterKey]any{
+			mapper.FilterEqOp: key,
+		},
+	}
+
+	filter.RemoveField(scan.filter, mapper.Field{Index: propIndex})
+	scan.filter.Conditions = filter.Merge(scan.filter.Conditions, filterConditions)
+}
+
+func getScanNode(plan planNode) *scanNode {
+	node := plan
+	for node != nil {
+		scanNode, ok := node.(*scanNode)
+		if ok {
+			return scanNode
 		}
-
-		filter.Conditions = mergeFilterConditions(filter.Conditions, filterCondition)
-
-		node.filter = filter
-	case nil:
-		return nil
-	default:
-		return appendFilterToScanNode(node.Source(), filterCondition)
+		node = node.Source()
 	}
 	return nil
-}
-
-// merge into dest with src, return dest
-func mergeFilterConditions(dest map[connor.FilterKey]any, src map[connor.FilterKey]any) map[connor.FilterKey]any {
-	if dest == nil {
-		dest = make(map[connor.FilterKey]any)
-	}
-	// merge filter conditions
-	for k, v := range src {
-		indexKey, isIndexKey := k.(*mapper.PropertyIndex)
-		if !isIndexKey {
-			continue
-		}
-		removeConditionIndex(indexKey, dest)
-		dest[k] = v
-	}
-	return dest
-}
-
-func removeConditionIndex(
-	key *mapper.PropertyIndex,
-	filterConditions map[connor.FilterKey]any,
-) (bool, any) {
-	for targetKey, clause := range filterConditions {
-		if indexKey, isIndexKey := targetKey.(*mapper.PropertyIndex); isIndexKey {
-			if key.Index == indexKey.Index {
-				delete(filterConditions, targetKey)
-				return true, clause
-			}
-		}
-	}
-	return false, nil
 }

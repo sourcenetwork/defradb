@@ -20,7 +20,7 @@ import (
 	"strings"
 	"syscall"
 
-	badger "github.com/dgraph-io/badger/v3"
+	badger "github.com/dgraph-io/badger/v4"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	ma "github.com/multiformats/go-multiaddr"
@@ -32,7 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	ds "github.com/sourcenetwork/defradb/datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
@@ -346,6 +346,8 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	if err := s.Listen(ctx); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
 	}
+	// save the address on the config in case the port number was set to random
+	cfg.API.Address = s.AssignedAddr()
 
 	// run the server in a separate goroutine
 	go func() {

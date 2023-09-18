@@ -22,7 +22,6 @@ import (
 
 func TestBackupImportCmd_WithNoArgument_ReturnError(t *testing.T) {
 	cfg := getTestConfig(t)
-	setTestingAddresses(cfg)
 
 	dbImportCmd := MakeBackupImportCommand(cfg)
 	err := dbImportCmd.ValidateArgs([]string{})

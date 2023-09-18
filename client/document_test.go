@@ -132,7 +132,8 @@ func TestSetWithJSON(t *testing.T) {
 	assert.Equal(t, doc.values[doc.fields["Name"]].IsDocument(), false)
 	assert.Equal(t, doc.values[doc.fields["Age"]].Value(), int64(27))
 	assert.Equal(t, doc.values[doc.fields["Age"]].IsDocument(), false)
-	assert.Equal(t, doc.values[doc.fields["Address"]].IsDelete(), true)
+	assert.Equal(t, doc.values[doc.fields["Address"]].Value(), nil)
+	assert.Equal(t, doc.values[doc.fields["Address"]].IsDocument(), false)
 
 	//subdoc fields
 	// subDoc := doc.values[doc.fields["Address"]].Value().(*Document)

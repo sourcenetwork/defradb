@@ -145,7 +145,7 @@ func (reg LWWRegister) ID() string {
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta, id string) error {
+func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta) error {
 	d, ok := delta.(*LWWRegDelta)
 	if !ok {
 		return ErrMismatchedMergeType
@@ -174,12 +174,11 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(ctx, key.ToDS())
-		// Do not use the first byte of the current value in the comparison.
-		// It's metadata that will falsify the result.
-		if len(curValue) > 0 {
-			curValue = curValue[1:]
+		curValue, err := reg.store.Get(ctx, key.ToDS())
+		if err != nil {
+			return err
 		}
+
 		if bytes.Compare(curValue, val) >= 0 {
 			return nil
 		}

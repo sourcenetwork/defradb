@@ -29,7 +29,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore/badger/v3"
+	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -278,7 +278,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, errors.Wrap("failed to decode block to ipld.Node", err)
 		}
 
-		cids, err := s.peer.processLog(ctx, txn, col, docKey, cid, "", nd, getter, false)
+		cids, err := s.peer.processLog(ctx, txn, col, docKey, "", nd, getter, false)
 		if err != nil {
 			log.ErrorE(
 				ctx,

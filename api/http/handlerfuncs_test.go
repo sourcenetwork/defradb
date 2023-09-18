@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v3"
+	badger "github.com/dgraph-io/badger/v4"
 	dshelp "github.com/ipfs/boxo/datastore/dshelp"
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 )

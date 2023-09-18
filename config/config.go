@@ -59,7 +59,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/net/idna"
 
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/logging"
 )
 

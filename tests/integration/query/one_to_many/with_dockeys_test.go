@@ -50,7 +50,7 @@ func TestQueryOneToManyWithChildDocKeys(t *testing.T) {
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 				}`,
 				`{
-					"name": "A Time for Mercy",
+					"name": "The Firm",
 					"rating": 4.5,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 				}`,

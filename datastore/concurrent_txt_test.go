@@ -14,11 +14,11 @@ import (
 	"context"
 	"testing"
 
-	badger "github.com/dgraph-io/badger/v3"
+	badger "github.com/dgraph-io/badger/v4"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/require"
 
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 )
 
@@ -28,7 +28,7 @@ func TestNewConcurrentTxnFrom(t *testing.T) {
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	require.NoError(t, err)
 
-	txn, err := NewConcurrentTxnFrom(ctx, rootstore, false)
+	txn, err := NewConcurrentTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
 
 	err = txn.Commit(ctx)
@@ -44,7 +44,7 @@ func TestNewConcurrentTxnFromWithStoreClosed(t *testing.T) {
 	err = rootstore.Close()
 	require.NoError(t, err)
 
-	_, err = NewConcurrentTxnFrom(ctx, rootstore, false)
+	_, err = NewConcurrentTxnFrom(ctx, rootstore, 0, false)
 	require.ErrorIs(t, err, badgerds.ErrClosed)
 }
 
@@ -52,7 +52,7 @@ func TestNewConcurrentTxnFromNonIterable(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn, err := NewConcurrentTxnFrom(ctx, rootstore, false)
+	txn, err := NewConcurrentTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
 
 	err = txn.Commit(ctx)
@@ -66,7 +66,7 @@ func TestNewConcurrentTxnFromNonIterableWithStoreClosed(t *testing.T) {
 	err := rootstore.Close()
 	require.NoError(t, err)
 
-	_, err = NewConcurrentTxnFrom(ctx, rootstore, false)
+	_, err = NewConcurrentTxnFrom(ctx, rootstore, 0, false)
 	require.ErrorIs(t, err, badgerds.ErrClosed)
 }
 
