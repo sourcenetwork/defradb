@@ -40,7 +40,6 @@ func (p *Peer) processLog(
 	txn datastore.Txn,
 	col client.Collection,
 	dsKey core.DataStoreKey,
-	c cid.Cid,
 	field string,
 	nd ipld.Node,
 	getter ipld.NodeGetter,
@@ -62,7 +61,7 @@ func (p *Peer) processLog(
 		ctx,
 		"Processing PushLog request",
 		logging.NewKV("Datastore key", dsKey),
-		logging.NewKV("CID", c),
+		logging.NewKV("CID", nd.Cid()),
 	)
 
 	if err := txn.DAGstore().Put(ctx, nd); err != nil {
@@ -70,14 +69,14 @@ func (p *Peer) processLog(
 	}
 
 	ng := p.createNodeGetter(crdt, getter)
-	cids, err := crdt.Clock().ProcessNode(ctx, ng, c, delta.GetPriority(), delta, nd)
+	cids, err := crdt.Clock().ProcessNode(ctx, ng, delta, nd)
 	if err != nil {
 		return nil, err
 	}
 
 	if removeChildren {
 		// mark this obj as done
-		p.queuedChildren.Remove(c)
+		p.queuedChildren.Remove(nd.Cid())
 	}
 
 	return cids, nil

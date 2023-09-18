@@ -121,6 +121,8 @@ func (vf *VersionedFetcher) Init(
 	vf.store, err = datastore.NewTxnFrom(
 		ctx,
 		vf.root,
+		// We can take the parent txn id here
+		txn.ID(),
 		false,
 	) // were going to discard and nuke this later
 	if err != nil {
@@ -402,8 +404,7 @@ func (vf *VersionedFetcher) processNode(
 		return err
 	}
 
-	height := delta.GetPriority()
-	_, err = mcrdt.Clock().ProcessNode(vf.ctx, nil, nd.Cid(), height, delta, nd)
+	_, err = mcrdt.Clock().ProcessNode(vf.ctx, nil, delta, nd)
 	return err
 }
 

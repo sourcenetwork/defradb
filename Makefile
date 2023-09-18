@@ -29,7 +29,7 @@ ifdef BUILD_TAGS
 BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
-TEST_FLAGS=-race -shuffle=on -timeout 150s
+TEST_FLAGS=-race -shuffle=on -timeout 300s
 
 PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
@@ -76,7 +76,7 @@ client\:add-schema:
 
 .PHONY: deps\:lint
 deps\:lint:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54
 
 .PHONY: deps\:test
 deps\:test:
@@ -106,7 +106,7 @@ deps\:modules:
 
 .PHONY: deps\:mock
 deps\:mock:
-	go install github.com/vektra/mockery/v2@v2.30.1
+	go install github.com/vektra/mockery/v2@v2.32.0
 
 .PHONY: deps\:playground
 deps\:playground:
@@ -125,16 +125,7 @@ deps:
 .PHONY: mock
 mock:
 	@$(MAKE) deps:mock
-	mockery --dir ./client --output ./client/mocks --name DB --with-expecter
-	mockery --dir ./client --output ./client/mocks --name Collection --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name DAGStore --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name DSReaderWriter --with-expecter
-	mockery --srcpkg github.com/ipfs/go-datastore/query --output ./datastore/mocks --name Results --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name RootStore --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name Txn --with-expecter
-	mockery --dir ./datastore --output ./datastore/mocks --name DAGStore --with-expecter
-	mockery --dir ./db/fetcher --output ./db/fetcher/mocks --name Fetcher --with-expecter
-	mockery --dir ./db/fetcher --output ./db/fetcher/mocks --name EncodedDocument --with-expecter
+	mockery --config="tools/configs/mockery.yaml"
 
 .PHONY: dev\:start
 dev\:start:
@@ -196,11 +187,42 @@ test\:build:
 
 .PHONY: test\:ci
 test\:ci:
-	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:all
+	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true \
+	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
+	$(MAKE) test:all
+
+.PHONY: test\:ci-gql-mutations
+test\:ci-gql-mutations:
+	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true \
+	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
+	$(MAKE) test:all
+
+.PHONY: test\:gql-mutations
+test\:gql-mutations:
+	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+
+# This action and the test:col-named-mutations (below) runs the test suite with any supporting mutation test
+# actions running their mutations via their corresponding named [Collection] call.
+#
+# For example, CreateDoc will call [Collection.Create], and
+# UpdateDoc will call [Collection.Update].
+.PHONY: test\:ci-col-named-mutations
+test\:ci-col-named-mutations:
+	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true \
+	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true \
+	$(MAKE) test:all
+
+.PHONY: test\:col-named-mutations
+test\:col-named-mutations:
+	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
 .PHONY: test\:go
 test\:go:
 	go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+
+.PHONY: test\:http
+test\:http:
+	DEFRA_CLIENT_HTTP=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
@@ -273,7 +295,7 @@ test\:coverage-html:
 .PHONY: test\:changes
 test\:changes:
 	@$(MAKE) deps:lens
-	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum -- ./... -shuffle=on -p 1
+	env DEFRA_DETECT_DATABASE_CHANGES=true DEFRA_CLIENT_GO=true gotestsum -- ./... -shuffle=on -p 1
 
 .PHONY: validate\:codecov
 validate\:codecov:

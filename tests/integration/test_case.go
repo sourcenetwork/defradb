@@ -26,6 +26,13 @@ type TestCase struct {
 	// this test should execute.  They will execute in the order that they
 	// are provided.
 	Actions []any
+
+	// If provided a value, SupportedMutationTypes will cause this test to be skipped
+	// if the active mutation type is not within the given set.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between mutation types, or we need to temporarily document a bug.
+	SupportedMutationTypes immutable.Option[[]MutationType]
 }
 
 // SetupComplete is a flag to explicitly notify the change detector at which point
@@ -79,7 +86,7 @@ type SchemaPatch struct {
 }
 
 // CreateDoc will attempt to create the given document in the given collection
-// using the collection api.
+// using the set [MutationType].
 type CreateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this create to.
 	//
@@ -125,8 +132,7 @@ type DeleteDoc struct {
 	DontSync bool
 }
 
-// UpdateDoc will attempt to update the given document in the given collection
-// using the collection api.
+// UpdateDoc will attempt to update the given document using the set [MutationType].
 type UpdateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this update to.
 	//

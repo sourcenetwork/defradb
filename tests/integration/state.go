@@ -33,6 +33,9 @@ type state struct {
 	// The type of database currently being tested.
 	dbt DatabaseType
 
+	// The type of client currently being tested.
+	clientType ClientType
+
 	// Any explicit transactions active in this test.
 	//
 	// This is order dependent and the property is accessed by index.
@@ -83,6 +86,7 @@ func newState(
 	t *testing.T,
 	testCase TestCase,
 	dbt DatabaseType,
+	clientType ClientType,
 	collectionNames []string,
 ) *state {
 	return &state{
@@ -90,6 +94,7 @@ func newState(
 		t:                        t,
 		testCase:                 testCase,
 		dbt:                      dbt,
+		clientType:               clientType,
 		txns:                     []datastore.Txn{},
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},

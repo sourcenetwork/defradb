@@ -37,12 +37,12 @@ func getTestConfig(t *testing.T) *config.Config {
 	cfg.Net.P2PAddress = randomMultiaddr
 	cfg.Net.RPCAddress = "0.0.0.0:0"
 	cfg.Net.TCPAddress = randomMultiaddr
+	cfg.API.Address = "0.0.0.0:0"
 	return cfg
 }
 
 func startTestNode(t *testing.T) (*config.Config, *defraInstance, func()) {
 	cfg := getTestConfig(t)
-	setTestingAddresses(cfg)
 
 	ctx := context.Background()
 	di, err := start(ctx, cfg)

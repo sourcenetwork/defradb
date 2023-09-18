@@ -102,6 +102,8 @@ type CompositeDAG struct {
 	fieldName string
 }
 
+var _ core.ReplicatedData = CompositeDAG{}
+
 func NewCompositeDAG(
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
@@ -145,8 +147,10 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 // Merge implements ReplicatedData interface.
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
-func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
-	if dagDelta, ok := delta.(*CompositeDAGDelta); ok && dagDelta.Status.IsDeleted() {
+func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
+	dagDelta, isDagDelta := delta.(*CompositeDAGDelta)
+
+	if isDagDelta && dagDelta.Status.IsDeleted() {
 		err := c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
 		if err != nil {
 			return err
@@ -168,7 +172,17 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 		versionKey = versionKey.WithDeletedFlag()
 	}
 
-	err = c.store.Put(ctx, versionKey.ToDS(), []byte(c.schemaVersionKey.SchemaVersionId))
+	var schemaVersionId string
+	if isDagDelta {
+		// If this is a CompositeDAGDelta take the datastore schema version from there.
+		// This is particularly important for P2P synced dags, as they may arrive here without having
+		// been migrated yet locally.
+		schemaVersionId = dagDelta.SchemaVersionID
+	} else {
+		schemaVersionId = c.schemaVersionKey.SchemaVersionId
+	}
+
+	err = c.store.Put(ctx, versionKey.ToDS(), []byte(schemaVersionId))
 	if err != nil {
 		return err
 	}

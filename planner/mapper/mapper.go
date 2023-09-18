@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -89,6 +88,11 @@ func toSelect(
 		descriptionsRepo,
 	)
 
+	if err != nil {
+		return nil, err
+	}
+
+	fields, err = resolveSecondaryRelationIDs(descriptionsRepo, desc, mapping, fields)
 	if err != nil {
 		return nil, err
 	}
@@ -783,6 +787,7 @@ func resolveFilterDependencies(
 		source.Value().Conditions,
 		mapping,
 		existingFields,
+		nil,
 	)
 }
 
@@ -792,77 +797,83 @@ func resolveInnerFilterDependencies(
 	source map[string]any,
 	mapping *core.DocumentMapping,
 	existingFields []Requestable,
+	resolvedFields []Requestable,
 ) ([]Requestable, error) {
 	newFields := []Requestable{}
 
-sourceLoop:
 	for key := range source {
-		if strings.HasPrefix(key, "_") && key != request.KeyFieldName {
+		if key == request.FilterOpAnd || key == request.FilterOpOr {
+			compoundFilter := source[key].([]any)
+			for _, innerFilter := range compoundFilter {
+				innerFields, err := resolveInnerFilterDependencies(
+					descriptionsRepo,
+					parentCollectionName,
+					innerFilter.(map[string]any),
+					mapping,
+					existingFields,
+					resolvedFields,
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				resolvedFields = append(resolvedFields, innerFields...)
+				newFields = append(newFields, innerFields...)
+			}
+			continue
+		} else if key == request.FilterOpNot {
+			notFilter := source[key].(map[string]any)
+			innerFields, err := resolveInnerFilterDependencies(
+				descriptionsRepo,
+				parentCollectionName,
+				notFilter,
+				mapping,
+				existingFields,
+				resolvedFields,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			resolvedFields = append(resolvedFields, innerFields...)
+			newFields = append(newFields, innerFields...)
 			continue
 		}
 
 		propertyMapped := len(mapping.IndexesByName[key]) != 0
 
-		if !propertyMapped {
-			index := mapping.GetNextIndex()
-
-			dummyParsed := &request.Select{
-				Field: request.Field{
-					Name: key,
-				},
-			}
-
-			childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
-			if err != nil {
-				return nil, err
-			}
-
-			childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
-			if err != nil {
-				return nil, err
-			}
-			childMapping = childMapping.CloneWithoutRender()
-			mapping.SetChildAt(index, childMapping)
-
-			dummyJoin := &Select{
-				Targetable: Targetable{
-					Field: Field{
-						Index: index,
-						Name:  key,
-					},
-				},
-				CollectionName:  childCollectionName,
-				DocumentMapping: childMapping,
-			}
-
-			newFields = append(newFields, dummyJoin)
-			mapping.Add(index, key)
-		}
-
-		keyIndex := mapping.FirstIndexOfName(key)
-
-		if keyIndex >= len(mapping.ChildMappings) {
-			// If the key index is outside the bounds of the child mapping array, then
-			// this is not a relation/join and we can add it to the fields and
-			// continue (no child props to process)
-			for _, field := range existingFields {
-				if field.GetIndex() == keyIndex {
-					continue sourceLoop
+		var childSelect *Select
+		if propertyMapped {
+			var field Requestable
+			for _, f := range existingFields {
+				if f.GetIndex() == mapping.FirstIndexOfName(key) {
+					field = f
+					break
 				}
 			}
-			newFields = append(existingFields, &Field{
-				Index: keyIndex,
-				Name:  key,
-			})
+			for _, f := range resolvedFields {
+				if f.GetIndex() == mapping.FirstIndexOfName(key) {
+					field = f
+					break
+				}
+			}
+			if field == nil {
+				newFields = append(newFields, &Field{Index: mapping.FirstIndexOfName(key), Name: key})
+				continue
+			}
+			var isSelect bool
+			childSelect, isSelect = field.(*Select)
+			if !isSelect {
+				continue
+			}
+		} else {
+			var err error
+			childSelect, err = constructEmptyJoin(descriptionsRepo, parentCollectionName, mapping, key)
+			if err != nil {
+				return nil, err
+			}
 
-			continue
-		}
-
-		childMap := mapping.ChildMappings[keyIndex]
-		if childMap == nil {
-			// If childMap is nil, then this is not a relation/join and we can continue
-			// (no child props to process)
-			continue
+			newFields = append(newFields, childSelect)
 		}
 
 		childSource := source[key]
@@ -873,59 +884,153 @@ sourceLoop:
 			continue
 		}
 
-		dummyParsed := &request.Select{
-			Field: request.Field{
-				Name: key,
-			},
-		}
-
+		dummyParsed := &request.Select{Field: request.Field{Name: key}}
 		childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
 		if err != nil {
 			return nil, err
-		}
-
-		allFields := enumerable.Concat(
-			enumerable.New(newFields),
-			enumerable.New(existingFields),
-		)
-
-		matchingFields := enumerable.Where[Requestable](allFields, func(existingField Requestable) (bool, error) {
-			return existingField.GetIndex() == keyIndex, nil
-		})
-
-		matchingHosts := enumerable.Select(matchingFields, func(existingField Requestable) (*Select, error) {
-			host, isSelect := existingField.AsSelect()
-			if !isSelect {
-				// This should never be possible
-				return nil, client.NewErrUnhandledType("host", existingField)
-			}
-			return host, nil
-		})
-
-		host, hasHost, err := enumerable.TryGetFirst(matchingHosts)
-		if err != nil {
-			return nil, err
-		}
-		if !hasHost {
-			// This should never be possible
-			return nil, ErrFailedToFindHostField
 		}
 
 		childFields, err := resolveInnerFilterDependencies(
 			descriptionsRepo,
 			childCollectionName,
 			childFilter,
-			childMap,
-			host.Fields,
+			childSelect.DocumentMapping,
+			childSelect.Fields,
+			nil,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		host.Fields = append(host.Fields, childFields...)
+		childSelect.Fields = append(childSelect.Fields, childFields...)
 	}
 
 	return newFields, nil
+}
+
+// constructEmptyJoin constructs a valid empty join with no requested fields.
+func constructEmptyJoin(
+	descriptionsRepo *DescriptionsRepo,
+	parentCollectionName string,
+	parentMapping *core.DocumentMapping,
+	name string,
+) (*Select, error) {
+	index := parentMapping.GetNextIndex()
+
+	dummyParsed := &request.Select{
+		Field: request.Field{
+			Name: name,
+		},
+	}
+
+	childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+	if err != nil {
+		return nil, err
+	}
+	childMapping = childMapping.CloneWithoutRender()
+	parentMapping.SetChildAt(index, childMapping)
+	parentMapping.Add(index, name)
+
+	return &Select{
+		Targetable: Targetable{
+			Field: Field{
+				Index: index,
+				Name:  name,
+			},
+		},
+		CollectionName:  childCollectionName,
+		DocumentMapping: childMapping,
+	}, nil
+}
+
+// resolveSecondaryRelationIDs constructs the required stuff needed to resolve secondary relation ids.
+//
+// They are handled by joining (if not already done so) the related object and copying its key into the
+// secondary relation id field.
+//
+// They copying itself is handled within [typeJoinOne].
+func resolveSecondaryRelationIDs(
+	descriptionsRepo *DescriptionsRepo,
+	desc *client.CollectionDescription,
+	mapping *core.DocumentMapping,
+	requestables []Requestable,
+) ([]Requestable, error) {
+	fields := requestables
+
+	for _, requestable := range requestables {
+		existingField, isField := requestable.(*Field)
+		if !isField {
+			continue
+		}
+
+		fieldDesc, descFound := desc.Schema.GetField(existingField.Name)
+		if !descFound {
+			continue
+		}
+
+		if !fieldDesc.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) {
+			continue
+		}
+
+		objectFieldDesc, descFound := desc.Schema.GetField(
+			strings.TrimSuffix(existingField.Name, request.RelatedObjectID),
+		)
+		if !descFound {
+			continue
+		}
+
+		if objectFieldDesc.RelationName == "" {
+			continue
+		}
+
+		var siblingFound bool
+		for _, siblingRequestable := range requestables {
+			siblingSelect, isSelect := siblingRequestable.(*Select)
+			if !isSelect {
+				continue
+			}
+
+			siblingFieldDesc, descFound := desc.Schema.GetField(siblingSelect.Field.Name)
+			if !descFound {
+				continue
+			}
+
+			if siblingFieldDesc.RelationName != objectFieldDesc.RelationName {
+				continue
+			}
+
+			if siblingFieldDesc.Kind != client.FieldKind_FOREIGN_OBJECT {
+				continue
+			}
+
+			siblingFound = true
+			break
+		}
+
+		if !siblingFound {
+			objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
+
+			// We only require the dockey of the related object, so an empty join is all we need.
+			join, err := constructEmptyJoin(
+				descriptionsRepo,
+				desc.Name,
+				mapping,
+				objectFieldName,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			fields = append(fields, join)
+		}
+	}
+
+	return fields, nil
 }
 
 // ToCommitSelect converts the given [request.CommitSelect] into a [CommitSelect].

@@ -13,6 +13,7 @@ package mapper
 import (
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -109,7 +110,7 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 
 		case *Operator:
 			switch keyType.Operation {
-			case "_and", "_or":
+			case request.FilterOpAnd, request.FilterOpOr:
 				v := v.([]any)
 				logicMapEntries := make([]any, len(v))
 				for i, item := range v {
@@ -117,7 +118,7 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 					logicMapEntries[i] = filterObjectToMap(mapping, itemMap)
 				}
 				outmap[keyType.Operation] = logicMapEntries
-			case "_not":
+			case request.FilterOpNot:
 				itemMap := v.(map[connor.FilterKey]any)
 				outmap[keyType.Operation] = filterObjectToMap(mapping, itemMap)
 			default:

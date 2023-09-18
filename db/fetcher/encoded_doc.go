@@ -22,13 +22,15 @@ type EncodedDocument interface {
 	// Key returns the key of the document
 	Key() []byte
 	SchemaVersionID() string
+	// Status returns the document status.
+	//
+	// For example, whether it is deleted or active.
+	Status() client.DocumentStatus
+	// Properties returns a copy of the decoded property values mapped by their field
+	// description.
+	Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error)
 	// Reset re-initializes the EncodedDocument object.
 	Reset()
-	// Decode returns a properly decoded document object
-	Decode() (*client.Document, error)
-	// DecodeToDoc returns a decoded document as a
-	// map of field/value pairs
-	DecodeToDoc() (core.Doc, error)
 }
 
 type EPTuple []encProperty
@@ -59,12 +61,11 @@ func (e encProperty) Decode() (any, error) {
 
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
-	mapping *core.DocumentMapping
-	doc     *core.Doc
-
-	key             []byte
-	schemaVersionID string
-	Properties      map[client.FieldDescription]*encProperty
+	key                  []byte
+	schemaVersionID      string
+	status               client.DocumentStatus
+	properties           map[client.FieldDescription]*encProperty
+	decodedPropertyCache map[client.FieldDescription]any
 
 	// tracking bitsets
 	// A value of 1 indicates a required field
@@ -85,32 +86,36 @@ func (encdoc *encodedDocument) SchemaVersionID() string {
 	return encdoc.schemaVersionID
 }
 
+func (encdoc *encodedDocument) Status() client.DocumentStatus {
+	return encdoc.status
+}
+
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
-	encdoc.Properties = make(map[client.FieldDescription]*encProperty, 0)
+	encdoc.properties = make(map[client.FieldDescription]*encProperty, 0)
 	encdoc.key = nil
-	if encdoc.mapping != nil {
-		doc := encdoc.mapping.NewDoc()
-		encdoc.doc = &doc
-	}
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
 	encdoc.schemaVersionID = ""
+	encdoc.status = 0
+	encdoc.decodedPropertyCache = nil
 }
 
 // Decode returns a properly decoded document object
-func (encdoc *encodedDocument) Decode() (*client.Document, error) {
-	key, err := client.NewDocKeyFromString(string(encdoc.key))
+func Decode(encdoc EncodedDocument) (*client.Document, error) {
+	key, err := client.NewDocKeyFromString(string(encdoc.Key()))
 	if err != nil {
 		return nil, err
 	}
+
 	doc := client.NewDocWithKey(key)
-	for _, prop := range encdoc.Properties {
-		val, err := prop.Decode()
-		if err != nil {
-			return nil, err
-		}
-		err = doc.SetAs(prop.Desc.Name, val, prop.Desc.Typ)
+	properties, err := encdoc.Properties(false)
+	if err != nil {
+		return nil, err
+	}
+
+	for desc, val := range properties {
+		err = doc.SetAs(desc.Name, val, desc.Typ)
 		if err != nil {
 			return nil, err
 		}
@@ -118,42 +123,63 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 
 	doc.SchemaVersionID = encdoc.SchemaVersionID()
 
+	// client.Document tracks which fields have been set ('dirtied'), here we
+	// are simply decoding a clean document and the dirty flag is an artifact
+	// of the current client.Document interface.
+	doc.Clean()
+
 	return doc, nil
 }
 
 // DecodeToDoc returns a decoded document as a
 // map of field/value pairs
-func (encdoc *encodedDocument) DecodeToDoc() (core.Doc, error) {
-	return encdoc.decodeToDoc(false)
+func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter bool) (core.Doc, error) {
+	doc := mapping.NewDoc()
+	doc.SetKey(string(encdoc.Key()))
+
+	properties, err := encdoc.Properties(filter)
+	if err != nil {
+		return core.Doc{}, err
+	}
+
+	for desc, value := range properties {
+		doc.Fields[desc.ID] = value
+	}
+
+	doc.SchemaVersionID = encdoc.SchemaVersionID()
+	doc.Status = encdoc.Status()
+
+	return doc, nil
 }
 
-func (encdoc *encodedDocument) decodeToDocForFilter() (core.Doc, error) {
-	return encdoc.decodeToDoc(true)
-}
+func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error) {
+	result := map[client.FieldDescription]any{}
+	if encdoc.decodedPropertyCache == nil {
+		encdoc.decodedPropertyCache = map[client.FieldDescription]any{}
+	}
 
-func (encdoc *encodedDocument) decodeToDoc(filter bool) (core.Doc, error) {
-	if encdoc.mapping == nil {
-		return core.Doc{}, ErrMissingMapper
-	}
-	if encdoc.doc == nil {
-		doc := encdoc.mapping.NewDoc()
-		encdoc.doc = &doc
-	}
-	encdoc.doc.SetKey(string(encdoc.key))
-	for _, prop := range encdoc.Properties {
-		if encdoc.doc.Fields[prop.Desc.ID] != nil { // used cached decoded fields
+	for _, prop := range encdoc.properties {
+		// only get filter fields if filter=true
+		if onlyFilterProps && !prop.IsFilter {
 			continue
 		}
-		if filter && !prop.IsFilter { // only get filter fields if filter=true
+
+		// used cached decoded fields
+		cachedValue := encdoc.decodedPropertyCache[prop.Desc]
+		if cachedValue != nil {
+			result[prop.Desc] = cachedValue
 			continue
 		}
+
 		val, err := prop.Decode()
 		if err != nil {
-			return core.Doc{}, err
+			return nil, err
 		}
-		encdoc.doc.Fields[prop.Desc.ID] = val
+
+		// cache value
+		encdoc.decodedPropertyCache[prop.Desc] = val
+		result[prop.Desc] = val
 	}
 
-	encdoc.doc.SchemaVersionID = encdoc.SchemaVersionID()
-	return *encdoc.doc, nil
+	return result, nil
 }

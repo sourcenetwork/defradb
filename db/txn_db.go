@@ -28,7 +28,8 @@ type implicitTxnDB struct {
 
 type explicitTxnDB struct {
 	*db
-	txn datastore.Txn
+	txn          datastore.Txn
+	lensRegistry client.LensRegistry
 }
 
 // ExecRequest executes a request against the database.
@@ -286,7 +287,7 @@ func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig
 	}
 	defer txn.Discard(ctx)
 
-	err = db.lensRegistry.SetMigration(ctx, txn, cfg)
+	err = db.lensRegistry.SetMigration(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -295,7 +296,7 @@ func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig
 }
 
 func (db *explicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
-	return db.lensRegistry.SetMigration(ctx, db.txn, cfg)
+	return db.lensRegistry.SetMigration(ctx, cfg)
 }
 
 // SetReplicator adds a new replicator to the database.
@@ -416,4 +417,11 @@ func (db *implicitTxnDB) BasicExport(ctx context.Context, config *client.BackupC
 // BasicExport exports the current data or subset of data to file in json format.
 func (db *explicitTxnDB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
 	return db.basicExport(ctx, db.txn, config)
+}
+
+// LensRegistry returns the LensRegistry in use by this database instance.
+//
+// It exposes several useful thread-safe migration related functions.
+func (db *explicitTxnDB) LensRegistry() client.LensRegistry {
+	return db.lensRegistry
 }

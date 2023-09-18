@@ -21,8 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-// todo: This test documents unwanted behaviour and should be fixed with
-// https://github.com/sourcenetwork/defradb/issues/1592
 func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema migration, with transaction",
@@ -74,10 +72,8 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "John",
-						// This is the bug - although the request and migration are on the same transaction
-						// the migration is not picked up during the request.
-						"verified": nil,
+						"name":     "John",
+						"verified": true,
 					},
 				},
 			},

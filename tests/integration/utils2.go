@@ -12,30 +12,35 @@ package tests
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v3"
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 )
 
 const (
+	clientGoEnvName            = "DEFRA_CLIENT_GO"
+	clientHttpEnvName          = "DEFRA_CLIENT_HTTP"
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
@@ -45,6 +50,7 @@ const (
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
 	repositoryEnvName          = "DEFRA_CODE_REPOSITORY"
 	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
+	mutationTypeEnvName        = "DEFRA_MUTATION_TYPE"
 	documentationDirectoryName = "data_format_changes"
 )
 
@@ -56,11 +62,52 @@ const (
 	badgerFileType DatabaseType = "badger-file-system"
 )
 
+type ClientType string
+
+const (
+	// goClientType enables running the test suite using
+	// the go implementation of the client.DB interface.
+	goClientType ClientType = "go"
+	// httpClientType enables running the test suite using
+	// the http implementation of the client.DB interface.
+	httpClientType ClientType = "http"
+)
+
+// The MutationType that tests will run using.
+//
+// For example if set to [CollectionSaveMutationType], all supporting
+// actions (such as [UpdateDoc]) will execute via [Collection.Save].
+//
+// Defaults to CollectionSaveMutationType.
+type MutationType string
+
+const (
+	// CollectionSaveMutationType will cause all supporting actions
+	// to run their mutations via [Collection.Save].
+	CollectionSaveMutationType MutationType = "collection-save"
+
+	// CollectionNamedMutationType will cause all supporting actions
+	// to run their mutations via their corresponding named [Collection]
+	// call.
+	//
+	// For example, CreateDoc will call [Collection.Create], and
+	// UpdateDoc will call [Collection.Update].
+	CollectionNamedMutationType MutationType = "collection-named"
+
+	// GQLRequestMutationType will cause all supporting actions to
+	// run their mutations using GQL requests, typically these will
+	// include a `id` parameter to target the specified document.
+	GQLRequestMutationType MutationType = "gql"
+)
+
 var (
 	log            = logging.MustNewLogger("tests.integration")
 	badgerInMemory bool
 	badgerFile     bool
 	inMemoryStore  bool
+	httpClient     bool
+	goClient       bool
+	mutationType   MutationType
 )
 
 const subscriptionTimeout = 1 * time.Second
@@ -101,35 +148,46 @@ var previousTestCaseTestName string
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	//  that don't have the flag defined
-	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
-	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
-	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
-	rootDatabaseDir, _ = os.LookupEnv(rootDBFilePathEnvName)
-	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
-	inMemoryStoreValue, _ := os.LookupEnv(inMemoryEnvName)
-	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
-	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
-	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
+	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
+	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
+	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
+	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
+	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+	DetectDbChanges, _ = strconv.ParseBool(os.Getenv(detectDbChangesEnvName))
+	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
 
-	badgerFile = getBool(badgerFileValue)
-	badgerInMemory = getBool(badgerInMemoryValue)
-	inMemoryStore = getBool(inMemoryStoreValue)
-	DetectDbChanges = getBool(detectDbChangesValue)
-	SetupOnly = getBool(setupOnlyValue)
-
-	if !repositorySpecified {
+	var repositoryValue string
+	if value, ok := os.LookupEnv(repositoryEnvName); ok {
+		repositoryValue = value
+	} else {
 		repositoryValue = "https://github.com/sourcenetwork/defradb.git"
 	}
 
-	if !targetBranchSpecified {
+	var targetBranchValue string
+	if value, ok := os.LookupEnv(targetBranchEnvName); ok {
+		targetBranchValue = value
+	} else {
 		targetBranchValue = "develop"
 	}
 
-	// default is to run against all
+	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
+		mutationType = MutationType(value)
+	} else {
+		// Default to testing mutations via Collection.Save - it should be simpler and
+		// faster. We assume this is desirable when not explicitly testing any particular
+		// mutation type.
+		mutationType = CollectionSaveMutationType
+	}
+
+	// Default is to test go client type.
+	if !goClient && !httpClient {
+		goClient = true
+	}
+
+	// Default is to test all but filesystem db types.
 	if !badgerInMemory && !badgerFile && !inMemoryStore && !DetectDbChanges {
-		badgerInMemory = true
-		// Testing against the file system is off by default
 		badgerFile = false
+		badgerInMemory = true
 		inMemoryStore = true
 	}
 
@@ -138,26 +196,24 @@ func init() {
 	}
 }
 
-func getBool(val string) bool {
-	switch strings.ToLower(val) {
-	case "true":
-		return true
-	default:
-		return false
-	}
-}
-
-// AssertPanicAndSkipChangeDetection asserts that the code of function actually panics,
+// AssertPanic asserts that the code inside the specified PanicTestFunc panics.
 //
-//	also ensures the change detection is skipped so no false fails happen.
+// This function is not supported by either the change detector, or the http-client.
+// Calling this within either of them will result in the test being skipped.
 //
-//	Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
-func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) bool {
+// Usage: AssertPanic(t, func() { executeTestCase(t, test) })
+func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
 	if IsDetectingDbChanges() {
 		// The `assert.Panics` call will falsely fail if this test is executed during
-		// a detect changes test run
-		t.Skip()
+		// a detect changes test run.
+		t.Skip("Assert panic with the change detector is not currently supported.")
 	}
+
+	if httpClient {
+		// The http-client will return an error instead of panicing at the moment.
+		t.Skip("Assert panic with the http client is not currently supported.")
+	}
+
 	return assert.Panics(t, f, "expected a panic, but none found.")
 }
 
@@ -217,49 +273,44 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB,
 	return db, nil
 }
 
-func GetDatabaseTypes() []DatabaseType {
-	databases := []DatabaseType{}
-
-	if badgerInMemory {
-		databases = append(databases, badgerIMType)
-	}
-
-	if badgerFile {
-		databases = append(databases, badgerFileType)
-	}
-
-	if inMemoryStore {
-		databases = append(databases, defraIMType)
-	}
-
-	return databases
-}
-
-func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB, string, error) {
-	switch dbt {
+// GetDatabase returns the database implementation for the current
+// testing state. The database type and client type on the test state
+// are used to select the datastore and client implementation to use.
+func GetDatabase(s *state) (cdb client.DB, path string, err error) {
+	switch s.dbt {
 	case badgerIMType:
-		db, err := NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
-		if err != nil {
-			return nil, "", err
-		}
-		return db, "", nil
+		cdb, err = NewBadgerMemoryDB(s.ctx, db.WithUpdateEvents())
 
 	case badgerFileType:
-		db, path, err := NewBadgerFileDB(ctx, t)
-		if err != nil {
-			return nil, "", err
-		}
-		return db, path, nil
+		cdb, path, err = NewBadgerFileDB(s.ctx, s.t)
 
 	case defraIMType:
-		db, err := NewInMemoryDB(ctx)
-		if err != nil {
-			return nil, "", err
-		}
-		return db, "", nil
+		cdb, err = NewInMemoryDB(s.ctx)
+
+	default:
+		err = fmt.Errorf("invalid database type: %v", s.dbt)
 	}
 
-	return nil, "", nil
+	if err != nil {
+		return nil, "", err
+	}
+
+	switch s.clientType {
+	case httpClientType:
+		cdb, err = http.NewWrapper(cdb)
+
+	case goClientType:
+		return
+
+	default:
+		err = fmt.Errorf("invalid client type: %v", s.dbt)
+	}
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	return
 }
 
 // ExecuteTestCase executes the given TestCase against the configured database
@@ -277,14 +328,37 @@ func ExecuteTestCase(
 		return
 	}
 
-	ctx := context.Background()
-	dbts := GetDatabaseTypes()
-	// Assert that this is not empty to protect against accidental mis-configurations,
-	// otherwise an empty set would silently pass all the tests.
-	require.NotEmpty(t, dbts)
+	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 
-	for _, dbt := range dbts {
-		executeTestCase(ctx, t, collectionNames, testCase, dbt)
+	var clients []ClientType
+	if httpClient {
+		clients = append(clients, httpClientType)
+	}
+	if goClient {
+		clients = append(clients, goClientType)
+	}
+
+	var databases []DatabaseType
+	if badgerInMemory {
+		databases = append(databases, badgerIMType)
+	}
+	if badgerFile {
+		databases = append(databases, badgerFileType)
+	}
+	if inMemoryStore {
+		databases = append(databases, defraIMType)
+	}
+
+	// Assert that these are not empty to protect against accidental mis-configurations,
+	// otherwise an empty set would silently pass all the tests.
+	require.NotEmpty(t, databases)
+	require.NotEmpty(t, clients)
+
+	ctx := context.Background()
+	for _, ct := range clients {
+		for _, dbt := range databases {
+			executeTestCase(ctx, t, collectionNames, testCase, dbt, ct)
+		}
 	}
 }
 
@@ -294,13 +368,14 @@ func executeTestCase(
 	collectionNames []string,
 	testCase TestCase,
 	dbt DatabaseType,
+	clientType ClientType,
 ) {
 	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
 
 	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
 
-	s := newState(ctx, t, testCase, dbt, collectionNames)
+	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
 	setStartingNodes(s)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -621,7 +696,7 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		db, path, err := GetDatabase(s.ctx, s.t, s.dbt)
+		db, path, err := GetDatabase(s)
 		require.Nil(s.t, err)
 
 		s.nodes = append(s.nodes, &net.Node{
@@ -644,7 +719,7 @@ func restartNodes(
 	for i := len(s.nodes) - 1; i >= 0; i-- {
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[i]
-		db, _, err := GetDatabase(s.ctx, s.t, s.dbt)
+		db, _, err := GetDatabase(s)
 		require.Nil(s.t, err)
 		databaseDir = originalPath
 
@@ -762,7 +837,7 @@ func configureNode(
 	// an in memory store.
 	cfg.Datastore.Badger.Path = s.t.TempDir()
 
-	db, path, err := GetDatabase(s.ctx, s.t, s.dbt) //disable change dector, or allow it?
+	db, path, err := GetDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	var n *net.Node
@@ -995,40 +1070,121 @@ func patchSchema(
 	refreshIndexes(s)
 }
 
-// createDoc creates a document using the collection api and caches it in the
-// given documents slice.
+// createDoc creates a document using the chosen [mutationType] and caches it in the
+// test state object.
 func createDoc(
 	s *state,
 	action CreateDoc,
 ) {
-	// All the docs should be identical, and we only need 1 copy so taking the last
-	// is okay.
+	var mutation func(*state, CreateDoc, *net.Node, []client.Collection) (*client.Document, error)
+
+	switch mutationType {
+	case CollectionSaveMutationType:
+		mutation = createDocViaColSave
+	case CollectionNamedMutationType:
+		mutation = createDocViaColCreate
+	case GQLRequestMutationType:
+		mutation = createDocViaGQL
+	default:
+		s.t.Fatalf("invalid mutationType: %v", mutationType)
+	}
+
+	var expectedErrorRaised bool
 	var doc *client.Document
 	actionNodes := getNodes(action.NodeID, s.nodes)
 	for nodeID, collections := range getNodeCollections(action.NodeID, s.collections) {
-		var err error
-		doc, err = client.NewDocFromJSON([]byte(action.Doc))
-		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-			return
-		}
-
-		err = withRetry(
+		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return collections[action.CollectionID].Save(s.ctx, doc) },
+			func() error {
+				var err error
+				doc, err = mutation(s, action, actionNodes[nodeID], collections)
+				return err
+			},
 		)
-		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-			return
-		}
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, false)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.CollectionID >= len(s.documents) {
 		// Expand the slice if required, so that the document can be accessed by collection index
 		s.documents = append(s.documents, make([][]*client.Document, action.CollectionID-len(s.documents)+1)...)
 	}
 	s.documents[action.CollectionID] = append(s.documents[action.CollectionID], doc)
+}
+
+func createDocViaColSave(
+	s *state,
+	action CreateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) (*client.Document, error) {
+	var err error
+	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	if err != nil {
+		return nil, err
+	}
+
+	return doc, collections[action.CollectionID].Save(s.ctx, doc)
+}
+
+func createDocViaColCreate(
+	s *state,
+	action CreateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) (*client.Document, error) {
+	var err error
+	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	if err != nil {
+		return nil, err
+	}
+
+	return doc, collections[action.CollectionID].Create(s.ctx, doc)
+}
+
+func createDocViaGQL(
+	s *state,
+	action CreateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) (*client.Document, error) {
+	collection := collections[action.CollectionID]
+
+	escapedJson, err := json.Marshal(action.Doc)
+	require.NoError(s.t, err)
+
+	request := fmt.Sprintf(
+		`mutation {
+			create_%s(data: %s) {
+				_key
+			}
+		}`,
+		collection.Name(),
+		escapedJson,
+	)
+
+	db := getStore(s, node.DB, immutable.None[int](), action.ExpectedError)
+
+	result := db.ExecRequest(s.ctx, request)
+	if len(result.GQL.Errors) > 0 {
+		return nil, result.GQL.Errors[0]
+	}
+
+	resultantDocs, ok := result.GQL.Data.([]map[string]any)
+	if !ok || len(resultantDocs) == 0 {
+		return nil, nil
+	}
+
+	docKeyString := resultantDocs[0]["_key"].(string)
+	docKey, err := client.NewDocKeyFromString(docKeyString)
+	require.NoError(s.t, err)
+
+	doc, err := collection.Get(s.ctx, docKey, false)
+	require.NoError(s.t, err)
+
+	return doc, nil
 }
 
 // deleteDoc deletes a document using the collection api and caches it in the
@@ -1056,16 +1212,22 @@ func deleteDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
-// updateDoc updates a document using the collection api.
+// updateDoc updates a document using the chosen [mutationType].
 func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	doc := s.documents[action.CollectionID][action.DocID]
+	var mutation func(*state, UpdateDoc, *net.Node, []client.Collection) error
 
-	err := doc.SetWithJSON([]byte(action.Doc))
-	if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
-		return
+	switch mutationType {
+	case CollectionSaveMutationType:
+		mutation = updateDocViaColSave
+	case CollectionNamedMutationType:
+		mutation = updateDocViaColUpdate
+	case GQLRequestMutationType:
+		mutation = updateDocViaGQL
+	default:
+		s.t.Fatalf("invalid mutationType: %v", mutationType)
 	}
 
 	var expectedErrorRaised bool
@@ -1074,12 +1236,76 @@ func updateDoc(
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return collections[action.CollectionID].Save(s.ctx, doc) },
+			func() error { return mutation(s, action, actionNodes[nodeID], collections) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+func updateDocViaColSave(
+	s *state,
+	action UpdateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) error {
+	doc := s.documents[action.CollectionID][action.DocID]
+
+	err := doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	return collections[action.CollectionID].Save(s.ctx, doc)
+}
+
+func updateDocViaColUpdate(
+	s *state,
+	action UpdateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) error {
+	doc := s.documents[action.CollectionID][action.DocID]
+
+	err := doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	return collections[action.CollectionID].Update(s.ctx, doc)
+}
+
+func updateDocViaGQL(
+	s *state,
+	action UpdateDoc,
+	node *net.Node,
+	collections []client.Collection,
+) error {
+	doc := s.documents[action.CollectionID][action.DocID]
+	collection := collections[action.CollectionID]
+
+	escapedJson, err := json.Marshal(action.Doc)
+	require.NoError(s.t, err)
+
+	request := fmt.Sprintf(
+		`mutation {
+			update_%s(id: "%s", data: %s) {
+				_key
+			}
+		}`,
+		collection.Name(),
+		doc.Key().String(),
+		escapedJson,
+	)
+
+	db := getStore(s, node.DB, immutable.None[int](), action.ExpectedError)
+
+	result := db.ExecRequest(s.ctx, request)
+	if len(result.GQL.Errors) > 0 {
+		return result.GQL.Errors[0]
+	}
+	return nil
 }
 
 // createIndex creates a secondary index using the collection api.
@@ -1294,9 +1520,7 @@ func executeRequest(
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
 		expectedErrorRaised = assertRequestResults(
-			s.ctx,
-			s.t,
-			s.testCase.Description,
+			s,
 			&result.GQL,
 			action.Results,
 			action.ExpectedError,
@@ -1361,9 +1585,7 @@ func executeSubscriptionRequest(
 						// This assert should be executed from the main test routine
 						// so that failures will be properly handled.
 						expectedErrorRaised := assertRequestResults(
-							s.ctx,
-							s.t,
-							s.testCase.Description,
+							s,
 							finalResult,
 							action.Results,
 							action.ExpectedError,
@@ -1435,16 +1657,14 @@ type docFieldKey struct {
 }
 
 func assertRequestResults(
-	ctx context.Context,
-	t *testing.T,
-	description string,
+	s *state,
 	result *client.GQLResult,
 	expectedResults []map[string]any,
 	expectedError string,
 	nodeID int,
 	anyOfByField map[docFieldKey][]any,
 ) bool {
-	if AssertErrors(t, description, result.Errors, expectedError) {
+	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) {
 		return true
 	}
 
@@ -1455,15 +1675,9 @@ func assertRequestResults(
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]any)
 
-	log.Info(ctx, "", logging.NewKV("RequestResults", result.Data))
+	log.Info(s.ctx, "", logging.NewKV("RequestResults", result.Data))
 
-	// compare results
-	assert.Equal(t, len(expectedResults), len(resultantData), description)
-	if len(expectedResults) == 0 {
-		// Need `require` here otherwise will panic in the for loop that ranges over
-		// resultantData and tries to access expectedResults[0].
-		require.Equal(t, expectedResults, resultantData)
-	}
+	require.Equal(s.t, len(expectedResults), len(resultantData), s.testCase.Description)
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
@@ -1472,14 +1686,20 @@ func assertRequestResults(
 
 			switch r := expectedValue.(type) {
 			case AnyOf:
-				assert.Contains(t, r, actualValue)
+				assertResultsAnyOf(s.t, s.clientType, r, actualValue)
 
 				dfk := docFieldKey{docIndex, field}
 				valueSet := anyOfByField[dfk]
 				valueSet = append(valueSet, actualValue)
 				anyOfByField[dfk] = valueSet
 			default:
-				assert.Equal(t, expectedValue, actualValue, fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex))
+				assertResultsEqual(
+					s.t,
+					s.clientType,
+					expectedValue,
+					actualValue,
+					fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex),
+				)
 			}
 		}
 	}
@@ -1612,4 +1832,22 @@ func assertBackupContent(t *testing.T, expectedContent, filepath string) {
 		expectedContent,
 		string(b),
 	)
+}
+
+// skipIfMutationTypeUnsupported skips the current test if the given supportedMutationTypes option has value
+// and the active mutation type is not contained within that value set.
+func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutable.Option[[]MutationType]) {
+	if supportedMutationTypes.HasValue() {
+		var isTypeSupported bool
+		for _, supportedMutationType := range supportedMutationTypes.Value() {
+			if supportedMutationType == mutationType {
+				isTypeSupported = true
+				break
+			}
+		}
+
+		if !isTypeSupported {
+			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
+		}
+	}
 }

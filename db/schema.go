@@ -13,12 +13,23 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"unicode"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+)
+
+const (
+	schemaNamePathIndex int = 0
+	schemaPathIndex     int = 1
+	fieldsPathIndex     int = 2
+	fieldIndexPathIndex int = 3
 )
 
 // addSchema takes the provided schema in SDL format, and applies it to the database,
@@ -97,13 +108,14 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	if err != nil {
 		return err
 	}
-	// Here we swap out any string representations of enums for their integer values
-	patch, err = substituteSchemaPatch(patch)
+
+	collectionsByName, err := db.getCollectionsByName(ctx, txn)
 	if err != nil {
 		return err
 	}
 
-	collectionsByName, err := db.getCollectionsByName(ctx, txn)
+	// Here we swap out any string representations of enums for their integer values
+	patch, err = substituteSchemaPatch(patch, collectionsByName)
 	if err != nil {
 		return err
 	}
@@ -131,10 +143,12 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		newDescriptions = append(newDescriptions, desc)
 	}
 
-	for _, desc := range newDescriptions {
-		if _, err := db.updateCollection(ctx, txn, desc); err != nil {
+	for i, desc := range newDescriptions {
+		col, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc)
+		if err != nil {
 			return err
 		}
+		newDescriptions[i] = col.Description()
 	}
 
 	return db.parser.SetSchema(ctx, txn, newDescriptions)
@@ -162,39 +176,96 @@ func (db *db) getCollectionsByName(
 //
 // For example Field [FieldKind] string representations will be replaced by the raw integer
 // value.
-func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
+func substituteSchemaPatch(
+	patch jsonpatch.Patch,
+	collectionsByName map[string]client.CollectionDescription,
+) (jsonpatch.Patch, error) {
+	fieldIndexesByCollection := make(map[string]map[string]int, len(collectionsByName))
+	for colName, col := range collectionsByName {
+		fieldIndexesByName := make(map[string]int, len(col.Schema.Fields))
+		fieldIndexesByCollection[colName] = fieldIndexesByName
+		for i, field := range col.Schema.Fields {
+			fieldIndexesByName[field.Name] = i
+		}
+	}
+
 	for _, patchOperation := range patch {
 		path, err := patchOperation.Path()
 		if err != nil {
 			return nil, err
 		}
 
+		path = strings.TrimPrefix(path, "/")
+		splitPath := strings.Split(path, "/")
+
 		if value, hasValue := patchOperation["value"]; hasValue {
-			if isField(path) {
+			var newPatchValue immutable.Option[any]
+			var field map[string]any
+			isField := isField(splitPath)
+
+			if isField {
 				// We unmarshal the full field-value into a map to ensure that all user
 				// specified properties are maintained.
-				var field map[string]any
 				err = json.Unmarshal(*value, &field)
 				if err != nil {
 					return nil, err
 				}
+			}
 
-				if kind, isString := field["Kind"].(string); isString {
-					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
-					if substituteFound {
-						field["Kind"] = substitute
-						substituteField, err := json.Marshal(field)
-						if err != nil {
-							return nil, err
+			if isFieldOrInner(splitPath) {
+				fieldIndexer := splitPath[fieldIndexPathIndex]
+
+				if containsLetter(fieldIndexer) {
+					if isField {
+						if nameValue, hasName := field["Name"]; hasName {
+							if name, isString := nameValue.(string); isString && name != fieldIndexer {
+								return nil, NewErrIndexDoesNotMatchName(fieldIndexer, name)
+							}
+						} else {
+							field["Name"] = fieldIndexer
 						}
-
-						substituteValue := json.RawMessage(substituteField)
-						patchOperation["value"] = &substituteValue
-					} else {
-						return nil, NewErrFieldKindNotFound(kind)
+						newPatchValue = immutable.Some[any](field)
 					}
+
+					desc := collectionsByName[splitPath[schemaNamePathIndex]]
+					var index string
+					if fieldIndexesByName, ok := fieldIndexesByCollection[desc.Name]; ok {
+						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
+							index = fmt.Sprint(i)
+						}
+					}
+					if index == "" {
+						index = "-"
+						// If this is a new field we need to track its location so that subsequent operations
+						// within the patch may access it by field name.
+						fieldIndexesByCollection[desc.Name][fieldIndexer] = len(fieldIndexesByCollection[desc.Name])
+					}
+
+					splitPath[fieldIndexPathIndex] = index
+					path = strings.Join(splitPath, "/")
+					opPath := json.RawMessage([]byte(fmt.Sprintf(`"/%s"`, path)))
+					patchOperation["path"] = &opPath
 				}
-			} else if isFieldKind(path) {
+			}
+
+			if isField {
+				if kind, isString := field["Kind"].(string); isString {
+					substitute, collectionName, err := getSubstituteFieldKind(kind, collectionsByName)
+					if err != nil {
+						return nil, err
+					}
+
+					field["Kind"] = substitute
+					if collectionName != "" {
+						if field["Schema"] != nil && field["Schema"] != collectionName {
+							return nil, NewErrFieldKindDoesNotMatchFieldSchema(kind, field["Schema"].(string))
+						}
+						field["Schema"] = collectionName
+					}
+
+					newPatchValue = immutable.Some[any](field)
+				}
+			} else if isFieldKind(splitPath) {
 				var kind any
 				err = json.Unmarshal(*value, &kind)
 				if err != nil {
@@ -202,19 +273,23 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 				}
 
 				if kind, isString := kind.(string); isString {
-					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
-					if substituteFound {
-						substituteKind, err := json.Marshal(substitute)
-						if err != nil {
-							return nil, err
-						}
-
-						substituteValue := json.RawMessage(substituteKind)
-						patchOperation["value"] = &substituteValue
-					} else {
-						return nil, NewErrFieldKindNotFound(kind)
+					substitute, _, err := getSubstituteFieldKind(kind, collectionsByName)
+					if err != nil {
+						return nil, err
 					}
+
+					newPatchValue = immutable.Some[any](substitute)
 				}
+			}
+
+			if newPatchValue.HasValue() {
+				substitute, err := json.Marshal(newPatchValue.Value())
+				if err != nil {
+					return nil, err
+				}
+
+				substitutedValue := json.RawMessage(substitute)
+				patchOperation["value"] = &substitutedValue
 			}
 		}
 	}
@@ -222,20 +297,61 @@ func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
 	return patch, nil
 }
 
-// isField returns true if the given path points to a FieldDescription.
-func isField(path string) bool {
-	path = strings.TrimPrefix(path, "/")
-	elements := strings.Split(path, "/")
+// getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
+// Field Kind value. It will return the value if one is found, else returns an [ErrFieldKindNotFound].
+//
+// If the value represents a foreign relation the collection name will also be returned.
+func getSubstituteFieldKind(
+	kind string,
+	collectionsByName map[string]client.CollectionDescription,
+) (client.FieldKind, string, error) {
+	substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
+	if substituteFound {
+		return substitute, "", nil
+	} else {
+		var collectionName string
+		var substitute client.FieldKind
+		if len(kind) > 0 && kind[0] == '[' && kind[len(kind)-1] == ']' {
+			collectionName = kind[1 : len(kind)-1]
+			substitute = client.FieldKind_FOREIGN_OBJECT_ARRAY
+		} else {
+			collectionName = kind
+			substitute = client.FieldKind_FOREIGN_OBJECT
+		}
+
+		if _, substituteFound := collectionsByName[collectionName]; substituteFound {
+			return substitute, collectionName, nil
+		}
+
+		return 0, "", NewErrFieldKindNotFound(kind)
+	}
+}
+
+// isFieldOrInner returns true if the given path points to a FieldDescription or a property within it.
+func isFieldOrInner(path []string) bool {
 	//nolint:goconst
-	return len(elements) == 4 && elements[len(elements)-2] == "Fields" && elements[len(elements)-3] == "Schema"
+	return len(path) >= 4 && path[fieldsPathIndex] == "Fields" && path[schemaPathIndex] == "Schema"
+}
+
+// isField returns true if the given path points to a FieldDescription.
+func isField(path []string) bool {
+	return len(path) == 4 && path[fieldsPathIndex] == "Fields" && path[schemaPathIndex] == "Schema"
 }
 
 // isField returns true if the given path points to a FieldDescription.Kind property.
-func isFieldKind(path string) bool {
-	path = strings.TrimPrefix(path, "/")
-	elements := strings.Split(path, "/")
-	return len(elements) == 5 &&
-		elements[len(elements)-1] == "Kind" &&
-		elements[len(elements)-3] == "Fields" &&
-		elements[len(elements)-4] == "Schema"
+func isFieldKind(path []string) bool {
+	return len(path) == 5 &&
+		path[fieldIndexPathIndex+1] == "Kind" &&
+		path[fieldsPathIndex] == "Fields" &&
+		path[schemaPathIndex] == "Schema"
+}
+
+// containsLetter returns true if the string contains a single unicode character.
+func containsLetter(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			return true
+		}
+	}
+	return false
 }

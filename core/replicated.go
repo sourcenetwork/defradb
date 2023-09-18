@@ -21,7 +21,7 @@ import (
 // replicated data so as to converge on the same state.
 type ReplicatedData interface {
 	ID() string
-	Merge(ctx context.Context, other Delta, id string) error
+	Merge(ctx context.Context, other Delta) error
 	DeltaDecode(node ipld.Node) (Delta, error) // possibly rename to just Decode
 	Value(ctx context.Context) ([]byte, error)
 }

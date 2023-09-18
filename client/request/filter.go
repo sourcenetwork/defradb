@@ -10,6 +10,12 @@
 
 package request
 
+const (
+	FilterOpOr  = "_or"
+	FilterOpAnd = "_and"
+	FilterOpNot = "_not"
+)
+
 // Filter contains the parsed condition map to be
 // run by the Filter Evaluator.
 // @todo: Cache filter structure for faster condition

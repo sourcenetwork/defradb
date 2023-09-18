@@ -347,3 +347,49 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 
 	explainUtils.ExecuteTestCase(t, test)
 }
+
+// This test asserts that only a single index join is used (not parallelNode) because the
+// _avg reuses the rendered join as they have matching filters (average adds a ne nil filter).
+func TestDefaultExplainRequestOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) 1-to-M relation request from many side with average filter shared.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						_avg(books: {field: rating})
+						books(filter: {rating: {_ne: null}}){
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"averageNode": dataMap{
+									"countNode": dataMap{
+										"sumNode": dataMap{
+											"selectNode": dataMap{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}

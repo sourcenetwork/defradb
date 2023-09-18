@@ -52,7 +52,7 @@ func TestStartCommandWithStoreMemory(t *testing.T) {
 
 func TestStartCommandWithP2PAddr(t *testing.T) {
 	conf := NewDefraNodeDefaultConfig(t)
-	p2pport, err := findFreePortInRange(49152, 65535)
+	p2pport, err := findFreePortInRange(t, 49152, 65535)
 	if err != nil {
 		t.Fatal(err)
 	}
