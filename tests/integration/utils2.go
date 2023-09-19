@@ -900,6 +900,11 @@ func refreshDocuments(
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
+			if err := doc.RemapAliasFieldsAndDockey(collection.Schema().Fields); err != nil {
+				// If an err has been returned, ignore it - it may be expected and if not
+				// the test will fail later anyway
+				continue
+			}
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
