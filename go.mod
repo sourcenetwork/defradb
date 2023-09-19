@@ -41,7 +41,7 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/textileio/go-libp2p-pubsub-rpc v0.0.9
-	github.com/tidwall/btree v1.6.0
+	github.com/tidwall/btree v1.7.0
 	github.com/ugorji/go/codec v1.2.11
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.0.0
