@@ -18,7 +18,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -104,7 +103,6 @@ var (
 	goClient       bool
 	mutationType   MutationType
 	databaseDir    string
-	logConfigOnce  sync.Once
 )
 
 const (
@@ -279,26 +277,6 @@ func ExecuteTestCase(
 	t *testing.T,
 	testCase TestCase,
 ) {
-	logConfigOnce.Do(func() {
-		log.Info(
-			context.Background(),
-			"**** Running tests with config ****",
-			logging.NewKV("badgerFile", badgerFile),
-			logging.NewKV("badgerInMemoryStore", badgerInMemory),
-			logging.NewKV("inMemoryStore", inMemoryStore),
-			logging.NewKV("httpClient", httpClient),
-			logging.NewKV("httpClient", goClient),
-			logging.NewKV("mutationType", mutationType),
-			logging.NewKV("databaseDir", databaseDir),
-			logging.NewKV("changeDetector.Enabled", changeDetector.Enabled),
-			logging.NewKV("changeDetector.SetupOnly", changeDetector.SetupOnly),
-			logging.NewKV("changeDetector.SourceBranch", changeDetector.SourceBranch),
-			logging.NewKV("changeDetector.TargetBranch", changeDetector.TargetBranch),
-			logging.NewKV("changeDetector.Repository", changeDetector.Repository),
-			logging.NewKV("changeDetector.DatabaseDir", changeDetector.DatabaseDir(t)),
-		)
-	})
-
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
@@ -343,7 +321,22 @@ func executeTestCase(
 	dbt DatabaseType,
 	clientType ClientType,
 ) {
-	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
+	log.Info(
+		ctx,
+		testCase.Description,
+		logging.NewKV("badgerFile", badgerFile),
+		logging.NewKV("badgerInMemory", badgerInMemory),
+		logging.NewKV("inMemoryStore", inMemoryStore),
+		logging.NewKV("httpClient", httpClient),
+		logging.NewKV("goClient", goClient),
+		logging.NewKV("mutationType", mutationType),
+		logging.NewKV("databaseDir", databaseDir),
+		logging.NewKV("changeDetector.Enabled", changeDetector.Enabled),
+		logging.NewKV("changeDetector.SetupOnly", changeDetector.SetupOnly),
+		logging.NewKV("changeDetector.SourceBranch", changeDetector.SourceBranch),
+		logging.NewKV("changeDetector.TargetBranch", changeDetector.TargetBranch),
+		logging.NewKV("changeDetector.Repository", changeDetector.Repository),
+	)
 
 	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
