@@ -260,3 +260,94 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 
 	explainUtils.ExecuteTestCase(t, test)
 }
+
+// This test asserts that only a single index join is used (not parallelNode) because the
+// _count reuses the rendered join as they have matching filters.
+func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) 1-to-M relation request from many side with count filter shared.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						_count(books: {filter: {rating: {_ne: null}}})
+						books(filter: {rating: {_ne: null}}){
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"countNode": dataMap{
+									"selectNode": dataMap{
+										"typeIndexJoin": normalTypeJoinPattern,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+// This test asserts that two joins are used (with parallelNode) because _count cannot
+// reuse the rendered join as they dont have matching filters.
+func TestDefaultExplainRequestOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Explain (default) 1-to-M relation request from many side with count filter not shared.",
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			testUtils.ExplainRequest{
+
+				Request: `query @explain {
+					Author {
+						name
+						_count(books: {})
+						books(filter: {rating: {_ne: null}}){
+							name
+						}
+					}
+				}`,
+
+				ExpectedPatterns: []dataMap{
+					{
+						"explain": dataMap{
+							"selectTopNode": dataMap{
+								"countNode": dataMap{
+									"selectNode": dataMap{
+										"parallelNode": []dataMap{
+											{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
+											{
+												"typeIndexJoin": normalTypeJoinPattern,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}

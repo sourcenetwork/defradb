@@ -58,7 +58,7 @@ Example: create documents
 				}
 				docData = data
 			default:
-				return fmt.Errorf("Document or file must be defined")
+				return fmt.Errorf("document or file must be defined")
 			}
 
 			var docMap any

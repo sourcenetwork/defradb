@@ -58,6 +58,13 @@ func (c *Collection) SchemaID() string {
 func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
+	// We must call this here, else the doc key on the given object will not match
+	// that of the document saved in the database
+	err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
+	if err != nil {
+		return err
+	}
+
 	body, err := doc.String()
 	if err != nil {
 		return err
@@ -77,9 +84,16 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
 
-	var docMapList []map[string]any
+	var docMapList []json.RawMessage
 	for _, doc := range docs {
-		docMap, err := doc.ToMap()
+		// We must call this here, else the doc key on the given object will not match
+		// that of the document saved in the database
+		err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
+		if err != nil {
+			return err
+		}
+
+		docMap, err := documentJSON(doc)
 		if err != nil {
 			return err
 		}

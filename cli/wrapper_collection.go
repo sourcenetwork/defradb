@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 )
 
@@ -53,11 +54,13 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	args := []string{"client", "document", "create"}
 	args = append(args, "--collection", c.desc.Name)
 
-	docMap, err := doc.ToMap()
+	// We must call this here, else the doc key on the given object will not match
+	// that of the document saved in the database
+	err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
 	if err != nil {
 		return err
 	}
-	document, err := json.Marshal(docMap)
+	document, err := doc.String()
 	if err != nil {
 		return err
 	}
@@ -77,6 +80,12 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 
 	docMapList := make([]map[string]any, len(docs))
 	for i, doc := range docs {
+		// We must call this here, else the doc key on the given object will not match
+		// that of the document saved in the database
+		err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
+		if err != nil {
+			return err
+		}
 		docMap, err := doc.ToMap()
 		if err != nil {
 			return err
@@ -119,22 +128,14 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 }
 
 func (c *Collection) Save(ctx context.Context, doc *client.Document) error {
-	args := []string{"client", "document", "save"}
-	args = append(args, "--collection", c.desc.Name)
-	args = append(args, "--key", doc.Key().String())
-
-	document, err := documentJSON(doc)
-	if err != nil {
-		return err
+	_, err := c.Get(ctx, doc.Key(), true)
+	if err == nil {
+		return c.Update(ctx, doc)
 	}
-	args = append(args, string(document))
-
-	_, err = c.cmd.execute(ctx, args)
-	if err != nil {
-		return err
+	if errors.Is(err, client.ErrDocumentNotFound) {
+		return c.Create(ctx, doc)
 	}
-	doc.Clean()
-	return nil
+	return err
 }
 
 func (c *Collection) Delete(ctx context.Context, docKey client.DocKey) (bool, error) {

@@ -11,8 +11,9 @@
 package cli
 
 import (
-	"github.com/sourcenetwork/defradb/http"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeP2PInfoCommand() *cobra.Command {
