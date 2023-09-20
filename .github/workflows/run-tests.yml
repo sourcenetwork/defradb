@@ -39,6 +39,7 @@ jobs:
     env:
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
       DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
+      DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
       DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'badger-memory' }}
       DEFRA_BADGER_FILE: ${{ matrix.database-type == 'badger-file' }}
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
