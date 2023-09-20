@@ -29,7 +29,7 @@ ifdef BUILD_TAGS
 BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
-TEST_FLAGS=-race -shuffle=on -timeout 300s
+TEST_FLAGS=-race -shuffle=on -timeout 5m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
@@ -275,7 +275,7 @@ test\:coverage-html:
 
 .PHONY: test\:changes
 test\:changes:
-	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... --tags change_detector
+	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 15m --tags change_detector
 
 .PHONY: validate\:codecov
 validate\:codecov:
