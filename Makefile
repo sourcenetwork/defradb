@@ -117,7 +117,6 @@ deps:
 	@$(MAKE) deps:modules && \
 	$(MAKE) deps:bench && \
 	$(MAKE) deps:chglog && \
-	$(MAKE) deps:coverage && \
 	$(MAKE) deps:lint && \
 	$(MAKE) deps:test && \
 	$(MAKE) deps:mock
