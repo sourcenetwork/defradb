@@ -30,7 +30,10 @@ BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 300s
-COVER_FLAGS=-covermode=atomic -coverprofile=coverage.txt -coverpkg=./...
+
+COVERAGE_DIRECTORY=$(PWD)/coverage
+COVERAGE_FILE=coverage.txt
+COVERAGE_FLAGS=-covermode=atomic -coverpkg=./... -args -test.gocoverdir=$(COVERAGE_DIRECTORY)
 
 PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
@@ -88,11 +91,6 @@ deps\:test:
 deps\:lens:
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
-
-.PHONY: deps\:coverage
-deps\:coverage:
-	go install github.com/ory/go-acc@latest
-	@$(MAKE) deps:lens
 
 .PHONY: deps\:bench
 deps\:bench:
@@ -162,6 +160,11 @@ clean:
 clean\:test:
 	go clean -testcache
 
+.PHONY: clean\:coverage
+clean\:coverage:
+	rm -rf $(COVERAGE_DIRECTORY) 
+	rm -f $(COVERAGE_FILE)
+
 # Example: `make tls-certs path="~/.defradb/certs"`
 .PHONY: tls-certs
 tls-certs:
@@ -190,7 +193,10 @@ test\:build:
 .PHONY: test\:ci
 test\:ci:
 	@$(MAKE) deps:lens
-	gotestsum --format testname -- ./... $(COVER_FLAGS) $(TEST_FLAGS)
+	@$(MAKE) clean:coverage
+	mkdir $(COVERAGE_DIRECTORY)
+	gotestsum --format testname -- ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
 .PHONY: test\:gql-mutations
 test\:gql-mutations:
@@ -257,29 +263,20 @@ test\:cli:
 	@$(MAKE) deps:lens
 	gotestsum --format testname -- ./$(CLI_TEST_DIRECTORY)/... $(TEST_FLAGS)
 
-# Using go-acc to ensure integration tests are included.
-# Usage: `make test:coverage` or `make test:coverage path="{pathToPackage}"`
-# Example: `make test:coverage path="./api/..."`
+
 .PHONY: test\:coverage
 test\:coverage:
-	@$(MAKE) deps:coverage
-ifeq ($(path),)
-	go-acc ./... --output=coverage.txt --covermode=atomic -- -failfast -coverpkg=./...
-	@echo "Show coverage information for each function in ./..."
-else
-	go-acc $(path) --output=coverage.txt --covermode=atomic -- -failfast -coverpkg=$(path)
-	@echo "Show coverage information for each function in" path=$(path)
-endif
-	go tool cover -func coverage.txt | grep total | awk '{print $$3}'
+	@$(MAKE) deps:lens
+	@$(MAKE) clean:coverage
+	mkdir $(COVERAGE_DIRECTORY)
+	go test ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
+	go tool cover -func $(COVERAGE_FILE)
 
-# Usage: `make test:coverage-html` or `make test:coverage-html path="{pathToPackage}"`
-# Example: `make test:coverage-html path="./api/..."`
 .PHONY: test\:coverage-html
 test\:coverage-html:
-	@$(MAKE) test:coverage path=$(path)
-	@echo "Generate coverage information in HTML"
-	go tool cover -html=coverage.txt
-	rm ./coverage.txt
+	@$(MAKE) test:coverage
+	go tool cover -html=$(COVERAGE_FILE)
 
 .PHONY: test\:changes
 test\:changes:

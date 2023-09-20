@@ -29,6 +29,11 @@ jobs:
         client-type: [go, http]
         database-type: [badger-file, badger-memory]
         mutation-type: [gql, collection-named, collection-save]
+        include:
+          - client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            detect-changes: true
 
     env:
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
@@ -52,8 +57,13 @@ jobs:
           make deps:modules
           make deps:test
 
-      - name: Run the tests
+      - name: Run integration tests
+        if: ${{ !matrix.detect-changes }}
         run: make test:ci
+
+      - name: Run change detector tests
+        if: ${{ matrix.detect-changes }}
+        run: make test:changes
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v3
