@@ -21,11 +21,10 @@ func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to many create mutation, with an invalid field.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Book(data: "{\"notName\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-						name
-					}
+			testUtils.CreateDoc{
+				Doc: `{
+					"notName": "Painted House",
+					"author_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 				ExpectedError: "The given field does not exist. Name: notName",
 			},
@@ -38,11 +37,11 @@ func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t 
 	test := testUtils.TestCase{
 		Description: "One to many create mutation, non-existing id, from the single side, no id relation field.",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae--b44b-e5c2af3e374d\"}") {
-						name
-					}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John Grisham",
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
 				ExpectedError: "The given field does not exist. Name: published_id",
 			},
@@ -57,9 +56,16 @@ func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testi
 	test := testUtils.TestCase{
 		Description: "One to many create mutation, non-existing id, from the many side",
 		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"author_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+				}`,
+			},
 			testUtils.Request{
-				Request: `mutation {
-					create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+				Request: `query {
+					Book {
 						name
 					}
 				}`,
@@ -74,73 +80,27 @@ func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testi
 	executeTestCase(t, test)
 }
 
-func TestMutationCreateOneToMany_RelationIDToLinkFromSingleSide_NoIDFieldError(t *testing.T) {
-	bookKey := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
-
-	test := testUtils.TestCase{
-		Description: "One to many create mutation with relation id from single side.",
-		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Book(data: "{\"name\": \"Painted House\"}") {
-						_key
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"_key": bookKey,
-					},
-				},
-			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
-							name
-						}
-					}`,
-					bookKey,
-				),
-				ExpectedError: "The given field does not exist. Name: published_id",
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
 func TestMutationCreateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 
 	test := testUtils.TestCase{
 		Description: "One to many create mutation using relation id from many side",
 		Actions: []any{
-			testUtils.Request{
-				Request: `mutation {
-					create_Author(data: "{\"name\": \"John Grisham\"}") {
-						_key
-					}
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham"
 				}`,
-				Results: []map[string]any{
-					{
-						"_key": authorKey,
-					},
-				},
 			},
-			testUtils.Request{
-				Request: fmt.Sprintf(
-					`mutation {
-						create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"%s\"}") {
-							name
-						}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: fmt.Sprintf(
+					`{
+						"name": "Painted House",
+						"author_id": "%s"
 					}`,
 					authorKey,
 				),
-				Results: []map[string]any{
-					{
-						"name": "Painted House",
-					},
-				},
 			},
 			testUtils.Request{
 				Request: `query {

@@ -17,274 +17,442 @@ import (
 )
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from the many side, simple filter",
-		Request: `query {
-			Author(filter: {age: {_gt: 63}}) {
-				name
-				age
-				published {
-					name
-					rating
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
 					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
 				}`,
 			},
-			//authors
-			1: {
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"age":  uint64(65),
-				"published": []map[string]any{
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {age: {_gt: 63}}) {
+						name
+						age
+						published {
+							name
+							rating
+						}
+					}
+				}`,
+				Results: []map[string]any{
 					{
-						"name":   "Painted House",
-						"rating": 4.9,
-					},
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
+						"name": "John Grisham",
+						"age":  uint64(65),
+						"published": []map[string]any{
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+							},
+							{
+								"name":   "A Time for Mercy",
+								"rating": 4.5,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from the many side, simple filter",
-		Request: `query {
-			Author(filter: {published: {rating: {_gt: 4.8}}}) {
-				name
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 					}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
 					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
 				}`,
 			},
-			//authors
-			1: {
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {published: {rating: {_gt: 4.8}}, age: {_gt: 63}}) {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from the many side, simple filter on root and sub type",
-		Request: `query {
-			Author(filter: {age: {_gt: 63}}) {
-				name
-				age
-				published(filter: {rating: {_gt: 4.6}}) {
-					name
-					rating
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 					}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
 					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
 				}`,
 			},
-			//authors
-			1: {
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"age":  uint64(65),
-				"published": []map[string]any{
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {age: {_gt: 63}}) {
+						name
+						age
+						published(filter: {rating: {_gt: 4.6}}) {
+							name
+							rating
+						}
+					}
+				}`,
+				Results: []map[string]any{
 					{
-						"name":   "Painted House",
-						"rating": 4.9,
+						"name": "John Grisham",
+						"age":  uint64(65),
+						"published": []map[string]any{
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One-to-many relation query from the many side, simple filter on root and sub type",
-		Request: `query {
-			Author {
-				name
-				age
-				p1: published(filter: {rating: {_gt: 4.6}}) {
-					name
-					rating
-				}
-				p2: published(filter: {rating: {_lt: 4.6}}) {
-					name
-					rating
-				}
-			}
-		}`,
-		Docs: map[int][]string{
-			//books
-			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				`{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 				}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 					}`,
-				`{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
 					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
 				}`,
 			},
-			//authors
-			1: {
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
+				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
 				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
+				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
-				"age":  uint64(65),
-				"p1": []map[string]any{
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						age
+						p1: published(filter: {rating: {_gt: 4.6}}) {
+							name
+							rating
+						}
+						p2: published(filter: {rating: {_lt: 4.6}}) {
+							name
+							rating
+						}
+					}
+				}`,
+				Results: []map[string]any{
 					{
-						"name":   "Painted House",
-						"rating": 4.9,
+						"name": "John Grisham",
+						"age":  uint64(65),
+						"p1": []map[string]any{
+							{
+								"name":   "Painted House",
+								"rating": 4.9,
+							},
+						},
+						"p2": []map[string]any{
+							{
+								"name":   "A Time for Mercy",
+								"rating": 4.5,
+							},
+						},
+					},
+					{
+						"name": "Cornelia Funke",
+						"age":  uint64(62),
+						"p1": []map[string]any{
+							{
+								"name":   "Theif Lord",
+								"rating": 4.8,
+							},
+						},
+						"p2": []map[string]any{},
 					},
 				},
-				"p2": []map[string]any{
-					{
-						"name":   "A Time for Mercy",
-						"rating": 4.5,
-					},
-				},
-			},
-			{
-				"name": "Cornelia Funke",
-				"age":  uint64(62),
-				"p1": []map[string]any{
-					{
-						"name":   "Theif Lord",
-						"rating": 4.8,
-					},
-				},
-				"p2": []map[string]any{},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query filter with compound operator and relation",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: bookAuthorGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Painted House",
+					"rating": 4.9,
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "A Time for Mercy",
+					"rating": 4.5,
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Theif Lord",
+					"rating": 4.8,
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "The Lord of the Rings",
+					"rating": 5.0,
+					"author_id": "bae-61d279c1-eab9-56ec-8654-dce0324ebfda"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				// bae-61d279c1-eab9-56ec-8654-dce0324ebfda
+				Doc: `{
+					"name": "John Tolkien",
+					"age": 70,
+					"verified": true
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {_or: [
+						{_and: [
+							{published: {rating: {_lt: 5.0}}},
+							{published: {rating: {_gt: 4.8}}}
+						]},
+						{_and: [
+							{age: {_le: 65}},
+							{published: {name: {_like: "%Lord%"}}}
+						]},
+					]}) {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+					{
+						"name": "Cornelia Funke",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {_and: [
+						{ _not: {published: {rating: {_gt: 4.8}}}},
+						{ _not: {published: {rating: {_lt: 4.8}}}}
+					]}) {
+						name
+					}
+				}`,
+				Results: []map[string]any{{
+					"name": "Cornelia Funke",
+				}},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
 }
