@@ -135,7 +135,8 @@ func TestCopyFilter(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for i := range tests {
+		test := tests[i]
 		t.Run(test.name, func(t *testing.T) {
 			f := getFilter()
 			test.act(t, f, Copy(f))

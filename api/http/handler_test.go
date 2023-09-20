@@ -247,7 +247,8 @@ func TestCORSRequest(t *testing.T) {
 
 	s := NewServer(nil, WithAllowedOrigins("https://source.network"))
 
-	for _, c := range cases {
+	for i := range cases {
+		c := cases[i]
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(c.method, PingPath, nil)
 			if err != nil {
@@ -289,7 +290,8 @@ func TestTLSRequestResponseHeader(t *testing.T) {
 
 	s := NewServer(nil, WithTLS(), WithAddress("example.com"), WithRootDir(dir))
 
-	for _, c := range cases {
+	for i := range cases {
+		c := cases[i]
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(c.method, PingPath, nil)
 			if err != nil {

@@ -291,7 +291,8 @@ func TestNormalizeConditions(t *testing.T) {
 	}
 
 	mapping := getDocMapping()
-	for _, tt := range tests {
+	for i := range tests {
+		tt := tests[i]
 		t.Run(tt.name, func(t *testing.T) {
 			inputFilter := mapper.ToFilter(request.Filter{Conditions: tt.input}, mapping)
 			actualFilter := normalize(inputFilter.Conditions)

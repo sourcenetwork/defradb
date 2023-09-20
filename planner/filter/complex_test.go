@@ -161,7 +161,8 @@ func TestIsComplex(t *testing.T) {
 	}
 
 	mapping := getDocMapping()
-	for _, test := range tests {
+	for i := range tests {
+		test := tests[i]
 		t.Run(test.name, func(t *testing.T) {
 			inputFilter := mapper.ToFilter(request.Filter{Conditions: test.inputFilter}, mapping)
 			actual := IsComplex(inputFilter)

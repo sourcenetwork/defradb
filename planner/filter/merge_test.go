@@ -55,7 +55,8 @@ func TestMergeFilterConditions(t *testing.T) {
 	}
 
 	mapping := getDocMapping()
-	for _, tt := range tests {
+	for i := range tests {
+		tt := tests[i]
 		t.Run(tt.name, func(t *testing.T) {
 			leftFilter := mapper.ToFilter(request.Filter{Conditions: tt.left}, mapping)
 			rightFilter := mapper.ToFilter(request.Filter{Conditions: tt.right}, mapping)

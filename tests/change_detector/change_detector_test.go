@@ -59,7 +59,8 @@ func TestChanges(t *testing.T) {
 		sourceRepoPkgMap[pkg] = true
 	}
 
-	for _, pkg := range targetRepoPkgList {
+	for key := range targetRepoPkgList {
+		pkg := key
 		pkgName := strings.TrimPrefix(pkg, "github.com/sourcenetwork/defradb/")
 		t.Run(pkgName, func(t *testing.T) {
 			if pkg == "" || !sourceRepoPkgMap[pkg] {
