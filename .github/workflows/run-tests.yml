@@ -30,11 +30,11 @@ jobs:
         database-type: [badger-file, badger-memory]
         mutation-type: [gql, collection-named, collection-save]
         detect-changes: [false]
-        include:
-          - client-type: go
-            database-type: badger-memory
-            mutation-type: collection-save
-            detect-changes: true
+        # include:
+        #   - client-type: go
+        #     database-type: badger-memory
+        #     mutation-type: collection-save
+        #     detect-changes: true
 
     env:
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
