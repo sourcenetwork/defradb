@@ -20,8 +20,9 @@ import (
 
 func MakeRootCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "defradb",
-		Short: "DefraDB Edge Database",
+		SilenceUsage: true,
+		Use:          "defradb",
+		Short:        "DefraDB Edge Database",
 		Long: `DefraDB is the edge database to power the user-centric future.
 
 Start a DefraDB node, interact with a local or remote node, and much more.
