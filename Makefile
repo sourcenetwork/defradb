@@ -29,11 +29,14 @@ ifdef BUILD_TAGS
 BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
-TEST_FLAGS=-race -shuffle=on -timeout 600s
+TEST_FLAGS=-race -shuffle=on -timeout 300s
+
+COVERAGE_DIRECTORY=$(PWD)/coverage
+COVERAGE_FILE=coverage.txt
+COVERAGE_FLAGS=-covermode=atomic -coverpkg=./... -args -test.gocoverdir=$(COVERAGE_DIRECTORY)
 
 PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
-CLI_TEST_DIRECTORY=tests/integration/cli
 CHANGE_DETECTOR_TEST_DIRECTORY=tests/change_detector
 DEFAULT_TEST_DIRECTORIES=$$(go list ./... | grep -v -e $(LENS_TEST_DIRECTORY))
 
@@ -88,11 +91,6 @@ deps\:lens:
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
 
-.PHONY: deps\:coverage
-deps\:coverage:
-	go install github.com/ory/go-acc@latest
-	@$(MAKE) deps:lens
-
 .PHONY: deps\:bench
 deps\:bench:
 	go install golang.org/x/perf/cmd/benchstat@latest
@@ -118,7 +116,6 @@ deps:
 	@$(MAKE) deps:modules && \
 	$(MAKE) deps:bench && \
 	$(MAKE) deps:chglog && \
-	$(MAKE) deps:coverage && \
 	$(MAKE) deps:lint && \
 	$(MAKE) deps:test && \
 	$(MAKE) deps:mock
@@ -161,6 +158,11 @@ clean:
 clean\:test:
 	go clean -testcache
 
+.PHONY: clean\:coverage
+clean\:coverage:
+	rm -rf $(COVERAGE_DIRECTORY) 
+	rm -f $(COVERAGE_FILE)
+
 # Example: `make tls-certs path="~/.defradb/certs"`
 .PHONY: tls-certs
 tls-certs:
@@ -188,15 +190,11 @@ test\:build:
 
 .PHONY: test\:ci
 test\:ci:
-	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true \
-	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true DEFRA_CLIENT_CLI=true \
-	$(MAKE) test:all
-
-.PHONY: test\:ci-gql-mutations
-test\:ci-gql-mutations:
-	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true \
-	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true DEFRA_CLIENT_CLI=true \
-	$(MAKE) test:all
+	@$(MAKE) deps:lens
+	@$(MAKE) clean:coverage
+	mkdir $(COVERAGE_DIRECTORY)
+	gotestsum --format testname -- ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
 .PHONY: test\:gql-mutations
 test\:gql-mutations:
@@ -207,12 +205,6 @@ test\:gql-mutations:
 #
 # For example, CreateDoc will call [Collection.Create], and
 # UpdateDoc will call [Collection.Update].
-.PHONY: test\:ci-col-named-mutations
-test\:ci-col-named-mutations:
-	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true \
-	DEFRA_CLIENT_GO=true DEFRA_CLIENT_HTTP=true DEFRA_CLIENT_CLI=true \
-	$(MAKE) test:all
-
 .PHONY: test\:col-named-mutations
 test\:col-named-mutations:
 	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
@@ -267,29 +259,19 @@ test\:lens:
 	@$(MAKE) deps:lens
 	gotestsum --format testname -- ./$(LENS_TEST_DIRECTORY)/... $(TEST_FLAGS)
 
-# Using go-acc to ensure integration tests are included.
-# Usage: `make test:coverage` or `make test:coverage path="{pathToPackage}"`
-# Example: `make test:coverage path="./api/..."`
 .PHONY: test\:coverage
 test\:coverage:
-	@$(MAKE) deps:coverage
-ifeq ($(path),)
-	go-acc ./... --output=coverage.txt --covermode=atomic -- -failfast -coverpkg=./...
-	@echo "Show coverage information for each function in ./..."
-else
-	go-acc $(path) --output=coverage.txt --covermode=atomic -- -failfast -coverpkg=$(path)
-	@echo "Show coverage information for each function in" path=$(path)
-endif
-	go tool cover -func coverage.txt | grep total | awk '{print $$3}'
+	@$(MAKE) deps:lens
+	@$(MAKE) clean:coverage
+	mkdir $(COVERAGE_DIRECTORY)
+	go test ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
+	go tool cover -func $(COVERAGE_FILE)
 
-# Usage: `make test:coverage-html` or `make test:coverage-html path="{pathToPackage}"`
-# Example: `make test:coverage-html path="./api/..."`
 .PHONY: test\:coverage-html
 test\:coverage-html:
-	@$(MAKE) test:coverage path=$(path)
-	@echo "Generate coverage information in HTML"
-	go tool cover -html=coverage.txt
-	rm ./coverage.txt
+	@$(MAKE) test:coverage
+	go tool cover -html=$(COVERAGE_FILE)
 
 .PHONY: test\:changes
 test\:changes:
