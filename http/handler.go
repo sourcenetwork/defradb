@@ -26,7 +26,7 @@ import (
 var Version string = "v0"
 
 // playgroundHandler is set when building with the playground build tag
-var playgroundHandler = http.HandlerFunc(http.NotFound)
+var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
 
 type Handler struct {
 	db     client.DB
