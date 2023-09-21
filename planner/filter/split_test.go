@@ -32,7 +32,7 @@ func TestSplitFilter(t *testing.T) {
 				"name": m("_eq", "John"),
 				"age":  m("_gt", 55),
 			},
-			inputField:      mapper.Field{Index: 1}, // age
+			inputField:      mapper.Field{Index: authorAgeInd},
 			expectedFilter1: m("name", m("_eq", "John")),
 			expectedFilter2: m("age", m("_gt", 55)),
 		},
@@ -52,7 +52,7 @@ func TestSplitFilter(t *testing.T) {
 }
 
 func TestSplitNullFilter(t *testing.T) {
-	actualFilter1, actualFilter2 := SplitByField(nil, mapper.Field{Index: 1})
+	actualFilter1, actualFilter2 := SplitByField(nil, mapper.Field{Index: authorAgeInd})
 	assert.Nil(t, actualFilter1)
 	assert.Nil(t, actualFilter2)
 }
