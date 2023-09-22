@@ -34,14 +34,27 @@ func TestQueryWithIndex_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
 			`),
 			sendRequestAndExplain(`
 				User(filter: {
-					devices: {model: {_eq: "iPhone 10"}} 
+					devices: {model: {_eq: "MacBook Pro"}}
+				}) {
+					name
+				}`,
+				[]map[string]any{
+					{"name": "Islam"},
+					{"name": "Shahzad"},
+					{"name": "Keenan"},
+				},
+				NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
+			),
+			sendRequestAndExplain(`
+				User(filter: {
+					devices: {model: {_eq: "iPhone 10"}}
 				}) {
 					name
 				}`,
 				[]map[string]any{
 					{"name": "Addo"},
 				},
-				NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6).WithIndexFetches(3),
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
 			),
 		},
 	}

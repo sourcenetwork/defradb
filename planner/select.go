@@ -19,8 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/lens"
-	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -294,40 +292,24 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 	}
 
 	if isScanNode {
-		var indexFilter *mapper.Filter
-		typeIndex, indexedFieldDesc := findFieldTypeIndex(origScan)
-		if typeIndex != -1 {
-			field := mapper.Field{Index: typeIndex, Name: indexedFieldDesc.Name}
-			origScan.filter, indexFilter = filter.SplitByField(origScan.filter, field)
-		}
+		origScan.initFetcher(n.selectReq.Cid, findFilteredByIndexedField(origScan))
 
-		var f fetcher.Fetcher
-		if n.selectReq.Cid.HasValue() {
-			f = new(fetcher.VersionedFetcher)
-		} else {
-			f = new(fetcher.DocumentFetcher)
-			if indexFilter != nil {
-				f = fetcher.NewIndexFetcher(f, indexedFieldDesc, indexFilter)
-			}
-			f = lens.NewFetcher(f, origScan.p.db.LensRegistry())
-		}
-		origScan.fetcher = f
 	}
 
 	return aggregates, nil
 }
 
-func findFieldTypeIndex(scanNode *scanNode) (int, client.FieldDescription) {
+func findFilteredByIndexedField(scanNode *scanNode) immutable.Option[client.FieldDescription] {
 	if scanNode.filter != nil {
 		indexedFields := scanNode.desc.CollectIndexedFields()
 		for i := range indexedFields {
 			typeIndex := scanNode.documentMapping.FirstIndexOfName(indexedFields[i].Name)
 			if scanNode.filter.HasIndex(typeIndex) {
-				return typeIndex, indexedFields[i]
+				return immutable.Some(indexedFields[i])
 			}
 		}
 	}
-	return -1, client.FieldDescription{}
+	return immutable.None[client.FieldDescription]()
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {

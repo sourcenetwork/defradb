@@ -15,8 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -301,9 +303,89 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinOne:
 		return p.expandPlan(node.subType, parentPlan)
 	case *typeJoinMany:
-		return p.expandPlan(node.subType, parentPlan)
+		return p.expandTypeJoinMany(node, parentPlan)
 	}
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
+}
+
+func getFilterProperties(f map[connor.FilterKey]any) map[*mapper.PropertyIndex]any {
+	properties := make(map[*mapper.PropertyIndex]any)
+	for k, v := range f {
+		switch typedKey := k.(type) {
+		case *mapper.PropertyIndex:
+			m := getFilterProperties(v.(map[connor.FilterKey]any))
+			properties[typedKey] = m
+		case *mapper.Operator:
+			if typedKey.Operation == request.FilterOpAnd || typedKey.Operation == request.FilterOpOr {
+				compoundContent := v.([]any)
+				for _, compoundFilter := range compoundContent {
+					m := getFilterProperties(compoundFilter.(map[connor.FilterKey]any))
+					for subK, subV := range m {
+						properties[subK] = subV
+					}
+				}
+			} else if typedKey.Operation == request.FilterOpNot {
+				m := getFilterProperties(v.(map[connor.FilterKey]any))
+				for subK, subV := range m {
+					properties[subK] = subV
+				}
+			}
+		}
+	}
+	return properties
+}
+
+func findFilteredByRelationFields(
+	conditions map[connor.FilterKey]any,
+	mapping *core.DocumentMapping,
+) map[string]int {
+	filterProperties := getFilterProperties(conditions)
+	filteredSubFields := make(map[string]int)
+	for prop, propVal := range filterProperties {
+		if childMapping := mapping.ChildMappings[prop.Index]; childMapping != nil {
+			subProp, hasSubProp := propVal.(map[*mapper.PropertyIndex]any)
+			if !hasSubProp {
+				continue
+			}
+			for subPropKey := range subProp {
+				for fieldName, indices := range childMapping.IndexesByName {
+					if indices[0] == subPropKey.Index {
+						filteredSubFields[fieldName] = subPropKey.Index
+					}
+				}
+			}
+		}
+	}
+	return filteredSubFields
+}
+
+func (p *Planner) expandTypeJoinMany(node *typeJoinMany, parentPlan *selectTopNode) error {
+	scan := getScanNode(parentPlan.selectNode)
+	if scan == nil {
+		return p.expandPlan(node.subType, parentPlan)
+	}
+	filteredSubFields := findFilteredByRelationFields(
+		parentPlan.selectNode.filter.Conditions,
+		node.documentMapping,
+	)
+	slct := node.subType.(*selectTopNode).selectNode
+	desc := slct.sourceInfo.collectionDescription
+	indexedFields := desc.CollectIndexedFields()
+	for _, indField := range indexedFields {
+		if ind, ok := filteredSubFields[indField.Name]; ok {
+			subInd := node.documentMapping.FirstIndexOfName(node.subTypeName)
+			relatedField := mapper.Field{Name: node.subTypeName, Index: subInd}
+			fieldFilter := filter.UnwrapRelation(filter.CopyField(
+				parentPlan.selectNode.filter,
+				relatedField,
+				mapper.Field{Name: indField.Name, Index: ind},
+			), relatedField)
+			node.invertJoinDirectionWithIndex(fieldFilter, indField)
+			break
+		}
+	}
+
+	return p.expandPlan(node.subType, parentPlan)
 }
 
 func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {

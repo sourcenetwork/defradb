@@ -346,26 +346,46 @@ func (n *typeJoinOne) Next() (bool, error) {
 	return true, nil
 }
 
+func fetchDocsWithFieldValue(plan planNode, fieldName string, val any, limit uint) ([]core.Doc, error) {
+	propIndex := plan.DocumentMap().FirstIndexOfName(fieldName)
+	setSubTypeFilterToScanNode(plan, propIndex, val)
+
+	if err := plan.Init(); err != nil {
+		return nil, NewErrSubTypeInit(err)
+	}
+
+	docs := make([]core.Doc, 0, limit)
+	for {
+		next, err := plan.Next()
+		if err != nil {
+			return nil, err
+		}
+		if !next {
+			break
+		}
+
+		docs = append(docs, plan.Value())
+
+		if limit > 0 && len(docs) >= int(limit) {
+			break
+		}
+	}
+
+	return docs, nil
+}
+
 func (n *typeJoinOne) valuesSecondary(doc core.Doc) (core.Doc, error) {
-	propIndex := n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + request.RelatedObjectID)
-	// using the doc._key as a filter
-	setSubTypeFilterToScanNode(n.subType, propIndex, doc.GetKey())
-
-	// We have to reset the scan node after appending the new key-filter
-	if err := n.subType.Init(); err != nil {
-		return doc, NewErrSubTypeInit(err)
+	fieldName := n.subTypeFieldName + request.RelatedObjectID
+	subDocs, err := fetchDocsWithFieldValue(n.subType, fieldName, doc.GetKey(), 1)
+	if err != nil {
+		return core.Doc{}, err
 	}
 
-	next, err := n.subType.Next()
-	if !next || err != nil {
-		return doc, err
-	}
-
-	subDoc := n.subType.Value()
-	doc.Fields[n.subSelect.Index] = subDoc
-
-	if n.secondaryFieldIndex.HasValue() {
-		doc.Fields[n.secondaryFieldIndex.Value()] = subDoc.GetKey()
+	if len(subDocs) > 0 {
+		doc.Fields[n.subSelect.Index] = subDocs[0]
+		if n.secondaryFieldIndex.HasValue() {
+			doc.Fields[n.secondaryFieldIndex.Value()] = subDocs[0].GetKey()
+		}
 	}
 
 	return doc, nil
@@ -441,6 +461,8 @@ type typeJoinMany struct {
 	subTypeName string
 
 	subSelect *mapper.Select
+
+	invertedDirection bool
 }
 
 func prepareScanNodeFilterForTypeJoin(
@@ -543,7 +565,63 @@ func (n *typeJoinMany) Spans(spans core.Spans) {
 	n.root.Spans(spans)
 }
 
+func (n *typeJoinMany) fetchPrimaryDoc() (bool, error) {
+	subDoc := n.subType.Value()
+	ind := n.subType.DocumentMap().FirstIndexOfName(n.rootName + request.RelatedObjectID)
+
+	rootDocKey := base.MakeDocKey(n.root.(*scanNode).desc, subDoc.Fields[ind].(string))
+
+	spans := core.NewSpans(core.NewSpan(rootDocKey, rootDocKey.PrefixEnd()))
+
+	n.root.Spans(spans)
+
+	if err := n.root.Init(); err != nil {
+		return false, NewErrSubTypeInit(err)
+	}
+
+	hasValue, err := n.root.Next()
+
+	if err != nil || !hasValue {
+		return false, err
+	}
+
+	n.currentValue = n.root.Value()
+
+	return true, nil
+}
+
 func (n *typeJoinMany) Next() (bool, error) {
+	if n.invertedDirection {
+		for {
+			hasValue, err := n.subType.Next()
+
+			if err != nil {
+				return false, err
+			}
+
+			if !hasValue {
+				return false, nil
+			}
+
+			hasPrimaryDoc, err := n.fetchPrimaryDoc()
+			if err != nil {
+				return false, err
+			}
+
+			if !hasPrimaryDoc {
+				continue
+			}
+
+			doc := n.root.Value()
+			subDoc := n.subType.Value()
+			doc.Fields[n.subSelect.Index] = subDoc
+			//if n.secondaryFieldIndex.HasValue() {
+			//doc.Fields[n.secondaryFieldIndex.Value()] = subDoc.GetKey()
+			//}
+
+			return true, nil
+		}
+	}
 	hasNext, err := n.root.Next()
 	if err != nil || !hasNext {
 		return hasNext, err
@@ -558,26 +636,10 @@ func (n *typeJoinMany) Next() (bool, error) {
 	if n.index != nil {
 		// @todo: handle index for one-to-many setup
 	} else {
-		propIndex := n.subSelect.FirstIndexOfName(n.rootName + request.RelatedObjectID)
-		// using the doc._key as a filter
-		setSubTypeFilterToScanNode(n.subType, propIndex, n.currentValue.GetKey())
-
-		// reset scan node
-		if err := n.subType.Init(); err != nil {
+		fieldName := n.rootName + request.RelatedObjectID
+		subDocs, err = fetchDocsWithFieldValue(n.subType, fieldName, n.currentValue.GetKey(), 0)
+		if err != nil {
 			return false, err
-		}
-
-		for {
-			next, err := n.subType.Next()
-			if err != nil {
-				return false, err
-			}
-			if !next {
-				break
-			}
-
-			subDoc := n.subType.Value()
-			subDocs = append(subDocs, subDoc)
 		}
 	}
 
@@ -595,7 +657,18 @@ func (n *typeJoinMany) Close() error {
 
 func (n *typeJoinMany) Source() planNode { return n.root }
 
-func setSubTypeFilterToScanNode(plan planNode, propIndex int, key string) {
+func (n *typeJoinMany) invertJoinDirectionWithIndex(fieldFilter *mapper.Filter, field client.FieldDescription) error {
+	n.invertedDirection = true
+
+	subScan := getScanNode(n.subType)
+	subScan.tryAddField(n.rootName + request.RelatedObjectID)
+	subScan.filter = fieldFilter
+	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(field))
+
+	return nil
+}
+
+func setSubTypeFilterToScanNode(plan planNode, propIndex int, val any) {
 	scan := getScanNode(plan)
 	if scan == nil {
 		return
@@ -608,7 +681,7 @@ func setSubTypeFilterToScanNode(plan planNode, propIndex int, key string) {
 	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
 	filterConditions := map[connor.FilterKey]any{
 		propertyIndex: map[connor.FilterKey]any{
-			mapper.FilterEqOp: key,
+			mapper.FilterEqOp: val,
 		},
 	}
 
@@ -624,6 +697,11 @@ func getScanNode(plan planNode) *scanNode {
 			return scanNode
 		}
 		node = node.Source()
+		if node == nil {
+			if topSelect, ok := plan.(*selectTopNode); ok {
+				node = topSelect.selectNode
+			}
+		}
 	}
 	return nil
 }

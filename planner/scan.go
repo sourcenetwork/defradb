@@ -16,8 +16,11 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/lens"
+	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
+	"github.com/sourcenetwork/immutable"
 )
 
 // scanExecInfo contains information about the execution of a scan.
@@ -89,7 +92,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 			n.tryAddField(requestable.GetName())
 		// select might have its own select fields and filters fields
 		case *mapper.Select:
-			n.tryAddField(requestable.Field.Name + "_id") // foreign key for type joins
+			n.tryAddField(requestable.Field.Name + request.RelatedObjectID) // foreign key for type joins
 			err := n.initFields(requestable.Fields)
 			if err != nil {
 				return err
@@ -130,6 +133,32 @@ func (n *scanNode) tryAddField(fieldName string) bool {
 	}
 	n.fields = append(n.fields, fd)
 	return true
+}
+
+func (scan *scanNode) initFetcher(
+	cid immutable.Option[string],
+	indexedField immutable.Option[client.FieldDescription],
+) {
+	var f fetcher.Fetcher
+	if cid.HasValue() {
+		f = new(fetcher.VersionedFetcher)
+	} else {
+		f = new(fetcher.DocumentFetcher)
+
+		var indexFilter *mapper.Filter
+		if indexedField.HasValue() {
+			typeIndex := scan.documentMapping.FirstIndexOfName(indexedField.Value().Name)
+			field := mapper.Field{Index: typeIndex, Name: indexedField.Value().Name}
+			scan.filter, indexFilter = filter.SplitByField(scan.filter, field)
+		}
+
+		if indexFilter != nil {
+			fieldDesc, _ := scan.desc.Schema.GetField(indexedField.Value().Name)
+			f = fetcher.NewIndexFetcher(f, fieldDesc, indexFilter)
+		}
+		f = lens.NewFetcher(f, scan.p.db.LensRegistry())
+	}
+	scan.fetcher = f
 }
 
 // Start starts the internal logic of the scanner
