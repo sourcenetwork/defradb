@@ -199,9 +199,24 @@ func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		return map[string]any{
+		result := map[string]any{
 			"iterations": n.execInfo.iterations,
-		}, nil
+		}
+		var subScan *scanNode
+		if joinMany, isJoinMany := n.joinPlan.(*typeJoinMany); isJoinMany {
+			subScan = getScanNode(joinMany.subType)
+		}
+		if joinOne, isJoinOne := n.joinPlan.(*typeJoinOne); isJoinOne {
+			subScan = getScanNode(joinOne.subType)
+		}
+		if subScan != nil {
+			subScanExplain, err := subScan.Explain(explainType)
+			if err != nil {
+				return nil, err
+			}
+			result["subTypeScan"] = subScanExplain
+		}
+		return result, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType

@@ -450,7 +450,7 @@ func (df *DocumentFetcher) nextKVRaw() (bool, core.DataStoreKey, dsq.Result, err
 	if err != nil {
 		return true, core.DataStoreKey{}, res, err
 	}
-	
+
 	return false, dsKey, res, nil
 }
 
@@ -580,6 +580,8 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 	// keyparts := df.kv.Key.List()
 	// key := keyparts[len(keyparts)-2]
 
+	prevExecInfo := df.execInfo
+	defer func() { df.execInfo.Add(prevExecInfo) }()
 	df.execInfo.Reset()
 	// iterate until we have collected all the necessary kv pairs for the doc
 	// we'll know when were done when either

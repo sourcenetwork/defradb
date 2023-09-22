@@ -18,6 +18,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	iterationsProp   = "iterations"
+	docFetchesProp   = "docFetches"
+	fieldFetchesProp = "fieldFetches"
+	indexFetchesProp = "indexFetches"
+)
+
 type dataMap = map[string]any
 
 type ExplainResultAsserter struct {
@@ -58,34 +65,40 @@ func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
 	}
 
 	scanNode, ok := selectNode["scanNode"].(dataMap)
+	subScanNode := map[string]any{}
 	if indexJoin, isJoin := selectNode["typeIndexJoin"].(dataMap); isJoin {
 		scanNode, ok = indexJoin["scanNode"].(dataMap)
+		subScanNode, _ = indexJoin["subTypeScan"].(dataMap)
 	}
 	require.True(t, ok, "Expected scanNode")
 
 	if a.iterations.HasValue() {
-		iterations, hasIterations := scanNode["iterations"]
+		iterations, hasIterations := scanNode[iterationsProp]
 		require.True(t, hasIterations, "Expected iterations property")
-		assert.Equal(t, iterations, uint64(a.iterations.Value()),
-			"Expected %d iterations, got %d", a.iterations.Value(), iterations)
+		actual := iterations.(uint64) + subScanNode[iterationsProp].(uint64)
+		assert.Equal(t, actual, uint64(a.iterations.Value()),
+			"Expected %d iterations, got %d", a.iterations.Value(), actual)
 	}
 	if a.docFetches.HasValue() {
-		docFetches, hasDocFetches := scanNode["docFetches"]
+		docFetches, hasDocFetches := scanNode[docFetchesProp]
 		require.True(t, hasDocFetches, "Expected docFetches property")
-		assert.Equal(t, docFetches, uint64(a.docFetches.Value()),
-			"Expected %d docFetches, got %d", a.docFetches.Value(), docFetches)
+		actual := docFetches.(uint64) + subScanNode[docFetchesProp].(uint64)
+		assert.Equal(t, actual, uint64(a.docFetches.Value()),
+			"Expected %d docFetches, got %d", a.docFetches.Value(), actual)
 	}
 	if a.fieldFetches.HasValue() {
-		fieldFetches, hasFieldFetches := scanNode["fieldFetches"]
+		fieldFetches, hasFieldFetches := scanNode[fieldFetchesProp]
 		require.True(t, hasFieldFetches, "Expected fieldFetches property")
-		assert.Equal(t, fieldFetches, uint64(a.fieldFetches.Value()),
-			"Expected %d fieldFetches, got %d", a.fieldFetches.Value(), fieldFetches)
+		actual := fieldFetches.(uint64) + subScanNode[fieldFetchesProp].(uint64)
+		assert.Equal(t, actual, uint64(a.fieldFetches.Value()),
+			"Expected %d fieldFetches, got %d", a.fieldFetches.Value(), actual)
 	}
 	if a.indexFetches.HasValue() {
-		indexFetches, hasIndexFetches := scanNode["indexFetches"]
+		indexFetches, hasIndexFetches := scanNode[indexFetchesProp]
 		require.True(t, hasIndexFetches, "Expected indexFetches property")
-		assert.Equal(t, indexFetches, uint64(a.indexFetches.Value()),
-			"Expected %d indexFetches, got %d", a.indexFetches.Value(), indexFetches)
+		actual := indexFetches.(uint64) + subScanNode[indexFetchesProp].(uint64)
+		assert.Equal(t, actual, uint64(a.indexFetches.Value()),
+			"Expected %d indexFetches, got %d", a.indexFetches.Value(), actual)
 	}
 }
 

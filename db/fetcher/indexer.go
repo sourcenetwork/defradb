@@ -536,6 +536,8 @@ func (f *IndexFetcher) Start(ctx context.Context, spans core.Spans) error {
 }
 
 func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
+	totalExecInfo := f.execInfo
+	defer func() { f.execInfo.Add(totalExecInfo) }()
 	f.execInfo.Reset()
 	for {
 		f.doc.Reset()
