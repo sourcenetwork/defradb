@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExtractRelation(t *testing.T) {
+func TestUnwrapRelation(t *testing.T) {
 	tests := []struct {
 		name           string
 		inputFilter    map[string]any
@@ -73,7 +73,7 @@ func TestExtractRelation(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			inputFilter := mapper.ToFilter(request.Filter{Conditions: test.inputFilter}, mapping)
-			actualFilter := ExtractRelation(inputFilter, mapper.Field{Index: authorPublishedInd})
+			actualFilter := UnwrapRelation(inputFilter, mapper.Field{Index: authorPublishedInd})
 			childMapping := mapping.ChildMappings[authorPublishedInd]
 			expectedFilter := mapper.ToFilter(request.Filter{Conditions: test.expectedFilter}, childMapping)
 			if expectedFilter == nil && actualFilter == nil {
@@ -84,12 +84,12 @@ func TestExtractRelation(t *testing.T) {
 	}
 }
 
-func TestExtractRelationOfNullFilter(t *testing.T) {
+func TestUnwrapRelationOfNullFilter(t *testing.T) {
 	actualFilter := CopyField(nil, mapper.Field{Index: 1})
 	assert.Nil(t, actualFilter)
 }
 
-func TestExtractRelationWithNoFieldGiven(t *testing.T) {
+func TestUnwrapRelationWithNoFieldGiven(t *testing.T) {
 	filter := mapper.NewFilter()
 	filter.Conditions = map[connor.FilterKey]any{
 		&mapper.PropertyIndex{Index: 0}: &mapper.Operator{Operation: "_eq"},

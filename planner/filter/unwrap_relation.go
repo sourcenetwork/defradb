@@ -14,9 +14,23 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-// ExtractRelation runs through the filter and returns a new filter with only the
+// UnwrapRelation runs through the filter and returns a new filter with only the
 // fields of a given relation object
-func ExtractRelation(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
+// Example:
+// 	{
+// 		"published": {
+// 			"rating": {
+// 				"_gt": 4.0
+// 			}
+// 		}
+// 	}
+// with given "published" field will return
+// 	{
+// 		"rating": {
+// 			"_gt": 4.0
+// 		}
+// 	}
+func UnwrapRelation(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
 	if filter == nil {
 		return nil
 	}
