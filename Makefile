@@ -34,6 +34,7 @@ TEST_FLAGS=-race -shuffle=on -timeout 300s
 PLAYGROUND_DIRECTORY=playground
 LENS_TEST_DIRECTORY=tests/integration/schema/migrations
 CLI_TEST_DIRECTORY=tests/integration/cli
+CHANGE_DETECTOR_TEST_DIRECTORY=tests/change_detector
 DEFAULT_TEST_DIRECTORIES=$$(go list ./... | grep -v -e $(LENS_TEST_DIRECTORY) -e $(CLI_TEST_DIRECTORY))
 
 default:
@@ -294,8 +295,7 @@ test\:coverage-html:
 
 .PHONY: test\:changes
 test\:changes:
-	@$(MAKE) deps:lens
-	env DEFRA_DETECT_DATABASE_CHANGES=true DEFRA_CLIENT_GO=true gotestsum -- ./... -shuffle=on -p 1
+	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... --tags change_detector
 
 .PHONY: validate\:codecov
 validate\:codecov:

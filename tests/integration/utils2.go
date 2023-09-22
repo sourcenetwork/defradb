@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -36,22 +35,17 @@ import (
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
+	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
 
 const (
-	clientGoEnvName            = "DEFRA_CLIENT_GO"
-	clientHttpEnvName          = "DEFRA_CLIENT_HTTP"
-	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
-	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
-	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
-	rootDBFilePathEnvName      = "DEFRA_TEST_ROOT"
-	inMemoryEnvName            = "DEFRA_IN_MEMORY"
-	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
-	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
-	repositoryEnvName          = "DEFRA_CODE_REPOSITORY"
-	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
-	mutationTypeEnvName        = "DEFRA_MUTATION_TYPE"
-	documentationDirectoryName = "data_format_changes"
+	clientGoEnvName       = "DEFRA_CLIENT_GO"
+	clientHttpEnvName     = "DEFRA_CLIENT_HTTP"
+	memoryBadgerEnvName   = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName     = "DEFRA_BADGER_FILE"
+	fileBadgerPathEnvName = "DEFRA_BADGER_FILE_PATH"
+	inMemoryEnvName       = "DEFRA_IN_MEMORY"
+	mutationTypeEnvName   = "DEFRA_MUTATION_TYPE"
 )
 
 type DatabaseType string
@@ -108,42 +102,16 @@ var (
 	httpClient     bool
 	goClient       bool
 	mutationType   MutationType
+	databaseDir    string
 )
 
-const subscriptionTimeout = 1 * time.Second
-
-// Instantiating lenses is expensive, and our tests do not benefit from a large number of them,
-// so we explicitly set it to a low value.
-const lensPoolSize = 2
-
-var databaseDir string
-var rootDatabaseDir string
-
-/*
-If this is set to true the integration test suite will instead of its normal profile do
-the following:
-
-On [package] Init:
-  - Get the (local) latest commit from the target/parent branch // code assumes
-    git fetch has been done
-  - Check to see if a clone of that commit/branch is available in the temp dir, and
-    if not clone the target branch
-  - Check to see if there are any new .md files in the current branch's data_format_changes
-    dir (vs the target branch)
-
-For each test:
-  - If new documentation detected, pass the test and exit
-  - Create a new (test/auto-deleted) temp dir for defra to live/run in
-  - Run the test setup (add initial schema, docs, updates) using the target branch (test is skipped
-    if test does not exist in target and is new to this branch)
-  - Run the test request and assert results (as per normal tests) using the current branch
-*/
-var DetectDbChanges bool
-var SetupOnly bool
-
-var detectDbChangesCodeDir string
-var areDatabaseFormatChangesDocumented bool
-var previousTestCaseTestName string
+const (
+	// subscriptionTimeout is the maximum time to wait for subscription results to be returned.
+	subscriptionTimeout = 1 * time.Second
+	// Instantiating lenses is expensive, and our tests do not benefit from a large number of them,
+	// so we explicitly set it to a low value.
+	lensPoolSize = 2
+)
 
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
@@ -153,22 +121,6 @@ func init() {
 	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
 	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
-	DetectDbChanges, _ = strconv.ParseBool(os.Getenv(detectDbChangesEnvName))
-	SetupOnly, _ = strconv.ParseBool(os.Getenv(setupOnlyEnvName))
-
-	var repositoryValue string
-	if value, ok := os.LookupEnv(repositoryEnvName); ok {
-		repositoryValue = value
-	} else {
-		repositoryValue = "https://github.com/sourcenetwork/defradb.git"
-	}
-
-	var targetBranchValue string
-	if value, ok := os.LookupEnv(targetBranchEnvName); ok {
-		targetBranchValue = value
-	} else {
-		targetBranchValue = "develop"
-	}
 
 	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
 		mutationType = MutationType(value)
@@ -179,20 +131,21 @@ func init() {
 		mutationType = CollectionSaveMutationType
 	}
 
-	// Default is to test go client type.
 	if !goClient && !httpClient {
+		// Default is to test go client type.
 		goClient = true
 	}
 
-	// Default is to test all but filesystem db types.
-	if !badgerInMemory && !badgerFile && !inMemoryStore && !DetectDbChanges {
+	if changeDetector.Enabled {
+		// Change detector only uses badger file db type.
+		badgerFile = true
+		badgerInMemory = false
+		inMemoryStore = false
+	} else if !badgerInMemory && !badgerFile && !inMemoryStore {
+		// Default is to test all but filesystem db types.
 		badgerFile = false
 		badgerInMemory = true
 		inMemoryStore = true
-	}
-
-	if DetectDbChanges {
-		detectDbChangesInit(repositoryValue, targetBranchValue)
 	}
 }
 
@@ -203,7 +156,7 @@ func init() {
 //
 // Usage: AssertPanic(t, func() { executeTestCase(t, test) })
 func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
-	if IsDetectingDbChanges() {
+	if changeDetector.Enabled {
 		// The `assert.Panics` call will falsely fail if this test is executed during
 		// a detect changes test run.
 		t.Skip("Assert panic with the change detector is not currently supported.")
@@ -218,74 +171,76 @@ func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
 }
 
 func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	opts := badgerds.Options{
+		Options: badger.DefaultOptions("").WithInMemory(true),
+	}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
 		return nil, err
 	}
-
-	dbopts = append(dbopts, db.WithUpdateEvents(), db.WithLensPoolSize(lensPoolSize))
-
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
 		return nil, err
 	}
-
 	return db, nil
 }
 
-func NewInMemoryDB(ctx context.Context) (client.DB, error) {
-	rootstore := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents(), db.WithLensPoolSize(lensPoolSize))
+func NewInMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
+	db, err := db.NewDB(ctx, memory.NewDatastore(ctx), dbopts...)
 	if err != nil {
 		return nil, err
 	}
-
 	return db, nil
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, string, error) {
+func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (client.DB, string, error) {
 	var dbPath string
-	if databaseDir != "" {
+	switch {
+	case databaseDir != "":
+		// restarting database
 		dbPath = databaseDir
-	} else if rootDatabaseDir != "" {
-		dbPath = path.Join(rootDatabaseDir, t.Name())
-	} else {
+
+	case changeDetector.Enabled:
+		// change detector
+		dbPath = changeDetector.DatabaseDir(t)
+
+	default:
+		// default test case
 		dbPath = t.TempDir()
 	}
 
-	db, err := newBadgerFileDB(ctx, t, dbPath)
+	opts := &badgerds.Options{
+		Options: badger.DefaultOptions(dbPath),
+	}
+	rootstore, err := badgerds.NewDatastore(dbPath, opts)
+	if err != nil {
+		return nil, "", err
+	}
+	db, err := db.NewDB(ctx, rootstore, dbopts...)
+	if err != nil {
+		return nil, "", err
+	}
 	return db, dbPath, err
-}
-
-func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB, error) {
-	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
-	rootstore, err := badgerds.NewDatastore(path, &opts)
-	if err != nil {
-		return nil, err
-	}
-
-	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents(), db.WithLensPoolSize(lensPoolSize))
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
 }
 
 // GetDatabase returns the database implementation for the current
 // testing state. The database type and client type on the test state
 // are used to select the datastore and client implementation to use.
 func GetDatabase(s *state) (cdb client.DB, path string, err error) {
+	dbopts := []db.Option{
+		db.WithUpdateEvents(),
+		db.WithLensPoolSize(lensPoolSize),
+	}
+
 	switch s.dbt {
 	case badgerIMType:
-		cdb, err = NewBadgerMemoryDB(s.ctx, db.WithUpdateEvents())
+		cdb, err = NewBadgerMemoryDB(s.ctx, dbopts...)
 
 	case badgerFileType:
-		cdb, path, err = NewBadgerFileDB(s.ctx, s.t)
+		cdb, path, err = NewBadgerFileDB(s.ctx, s.t, dbopts...)
 
 	case defraIMType:
-		cdb, err = NewInMemoryDB(s.ctx)
+		cdb, err = NewInMemoryDB(s.ctx, dbopts...)
 
 	default:
 		err = fmt.Errorf("invalid database type: %v", s.dbt)
@@ -323,11 +278,7 @@ func ExecuteTestCase(
 	testCase TestCase,
 ) {
 	collectionNames := getCollectionNames(testCase)
-
-	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames) {
-		return
-	}
-
+	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 
 	var clients []ClientType
@@ -370,7 +321,22 @@ func executeTestCase(
 	dbt DatabaseType,
 	clientType ClientType,
 ) {
-	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
+	log.Info(
+		ctx,
+		testCase.Description,
+		logging.NewKV("badgerFile", badgerFile),
+		logging.NewKV("badgerInMemory", badgerInMemory),
+		logging.NewKV("inMemoryStore", inMemoryStore),
+		logging.NewKV("httpClient", httpClient),
+		logging.NewKV("goClient", goClient),
+		logging.NewKV("mutationType", mutationType),
+		logging.NewKV("databaseDir", databaseDir),
+		logging.NewKV("changeDetector.Enabled", changeDetector.Enabled),
+		logging.NewKV("changeDetector.SetupOnly", changeDetector.SetupOnly),
+		logging.NewKV("changeDetector.SourceBranch", changeDetector.SourceBranch),
+		logging.NewKV("changeDetector.TargetBranch", changeDetector.TargetBranch),
+		logging.NewKV("changeDetector.Repository", changeDetector.Repository),
+	)
 
 	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
@@ -632,7 +598,7 @@ func getActionRange(testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
 
-	if !DetectDbChanges {
+	if !changeDetector.Enabled {
 		return startIndex, endIndex
 	}
 
@@ -656,7 +622,7 @@ ActionLoop:
 		}
 	}
 
-	if SetupOnly {
+	if changeDetector.SetupOnly {
 		if setupCompleteIndex > -1 {
 			endIndex = setupCompleteIndex
 		} else if firstNonSetupIndex > -1 {
@@ -825,7 +791,7 @@ func configureNode(
 	s *state,
 	action ConfigureNode,
 ) {
-	if DetectDbChanges {
+	if changeDetector.Enabled {
 		// We do not yet support the change detector for tests running across multiple nodes.
 		s.t.SkipNow()
 		return
@@ -900,6 +866,11 @@ func refreshDocuments(
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
+			if err := doc.RemapAliasFieldsAndDockey(collection.Schema().Fields); err != nil {
+				// If an err has been returned, ignore it - it may be expected and if not
+				// the test will fail later anyway
+				continue
+			}
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.

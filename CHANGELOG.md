@@ -1,3 +1,75 @@
+<a name="v0.7.0"></a>
+## [v0.7.0](https://github.com/sourcenetwork/defradb/compare/v0.6.0...v0.7.0)
+
+> 2023-09-18
+
+DefraDB v0.7 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+This release has focused on robustness, testing, and schema management. Some highlight new features include notable expansions to the expressiveness of schema migrations.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.5.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
+
+### Features
+
+* Allow field indexing by name in PatchSchema ([#1810](https://github.com/sourcenetwork/defradb/issues/1810))
+* Auto-create relation id fields via PatchSchema ([#1807](https://github.com/sourcenetwork/defradb/issues/1807))
+* Support PatchSchema relational field kind substitution ([#1777](https://github.com/sourcenetwork/defradb/issues/1777))
+* Add support for adding of relational fields ([#1766](https://github.com/sourcenetwork/defradb/issues/1766))
+* Enable downgrading of documents via Lens inverses ([#1721](https://github.com/sourcenetwork/defradb/issues/1721))
+
+### Fixes
+
+* Correctly handle serialisation of nil field values ([#1872](https://github.com/sourcenetwork/defradb/issues/1872))
+* Compound filter operators with relations ([#1855](https://github.com/sourcenetwork/defradb/issues/1855))
+* Only update updated fields via update requests ([#1817](https://github.com/sourcenetwork/defradb/issues/1817))
+* Error when saving a deleted document ([#1806](https://github.com/sourcenetwork/defradb/issues/1806))
+* Prevent multiple docs from being linked in one one ([#1790](https://github.com/sourcenetwork/defradb/issues/1790))
+* Handle the querying of secondary relation id fields ([#1768](https://github.com/sourcenetwork/defradb/issues/1768))
+* Improve the way migrations handle transactions ([#1737](https://github.com/sourcenetwork/defradb/issues/1737))
+
+### Tooling
+
+* Add Akash deployment configuration ([#1736](https://github.com/sourcenetwork/defradb/issues/1736))
+
+### Refactoring
+
+* HTTP client interface ([#1776](https://github.com/sourcenetwork/defradb/issues/1776))
+* Simplify fetcher interface ([#1746](https://github.com/sourcenetwork/defradb/issues/1746))
+
+### Testing
+
+* Convert and move out of place explain tests ([#1878](https://github.com/sourcenetwork/defradb/issues/1878))
+* Update mutation tests to make use of mutation system ([#1853](https://github.com/sourcenetwork/defradb/issues/1853))
+* Test top level agg. with compound relational filter ([#1870](https://github.com/sourcenetwork/defradb/issues/1870))
+* Skip unsupported mutation types at test level ([#1850](https://github.com/sourcenetwork/defradb/issues/1850))
+* Extend mutation tests with col.Update and Create ([#1838](https://github.com/sourcenetwork/defradb/issues/1838))
+* Add tests for multiple one-one joins ([#1793](https://github.com/sourcenetwork/defradb/issues/1793))
+
+### Chore
+
+* Update Badger version to v4 ([#1740](https://github.com/sourcenetwork/defradb/issues/1740))
+* Update go-libp2p to 0.29.2 ([#1780](https://github.com/sourcenetwork/defradb/issues/1780))
+* Bump golangci-lint to v1.54 ([#1881](https://github.com/sourcenetwork/defradb/issues/1881))
+* Bump go.opentelemetry.io/otel/metric from 1.17.0 to 1.18.0 ([#1890](https://github.com/sourcenetwork/defradb/issues/1890))
+* Bump [@tanstack](https://github.com/tanstack)/react-query from 4.35.0 to 4.35.3 in /playground ([#1876](https://github.com/sourcenetwork/defradb/issues/1876))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 6.5.0 to 6.7.0 in /playground ([#1874](https://github.com/sourcenetwork/defradb/issues/1874))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 6.6.0 to 6.7.0 in /playground ([#1875](https://github.com/sourcenetwork/defradb/issues/1875))
+* Combined PRs 2023-09-14 ([#1873](https://github.com/sourcenetwork/defradb/issues/1873))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 6.4.0 to 6.5.0 in /playground ([#1827](https://github.com/sourcenetwork/defradb/issues/1827))
+* Bump go.opentelemetry.io/otel/sdk/metric from 0.39.0 to 0.40.0 ([#1829](https://github.com/sourcenetwork/defradb/issues/1829))
+* Bump github.com/ipfs/go-block-format from 0.1.2 to 0.2.0 ([#1819](https://github.com/sourcenetwork/defradb/issues/1819))
+* Combined PRs ([#1826](https://github.com/sourcenetwork/defradb/issues/1826))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 6.4.0 to 6.4.1 in /playground ([#1804](https://github.com/sourcenetwork/defradb/issues/1804))
+* Combined PRs ([#1803](https://github.com/sourcenetwork/defradb/issues/1803))
+* Combined PRs ([#1791](https://github.com/sourcenetwork/defradb/issues/1791))
+* Combined PRs ([#1778](https://github.com/sourcenetwork/defradb/issues/1778))
+* Bump dependencies ([#1761](https://github.com/sourcenetwork/defradb/issues/1761))
+* Bump vite from 4.3.9 to 4.4.8 in /playground ([#1748](https://github.com/sourcenetwork/defradb/issues/1748))
+* Bump graphiql from 3.0.4 to 3.0.5 in /playground ([#1730](https://github.com/sourcenetwork/defradb/issues/1730))
+* Combined bumps of dependencies under /playground ([#1744](https://github.com/sourcenetwork/defradb/issues/1744))
+* Bump github.com/ipfs/boxo from 0.10.2 to 0.11.0 ([#1726](https://github.com/sourcenetwork/defradb/issues/1726))
+* Bump github.com/libp2p/go-libp2p-kad-dht from 0.24.2 to 0.24.3 ([#1724](https://github.com/sourcenetwork/defradb/issues/1724))
+* Bump google.golang.org/grpc from 1.56.2 to 1.57.0 ([#1725](https://github.com/sourcenetwork/defradb/issues/1725))
 
 <a name="v0.6.0"></a>
 ## [v0.6.0](https://github.com/sourcenetwork/defradb/compare/v0.5.1...v0.6.0)
