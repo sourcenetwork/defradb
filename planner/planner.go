@@ -308,49 +308,21 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
 }
 
-func getFilterProperties(f map[connor.FilterKey]any) map[*mapper.PropertyIndex]any {
-	properties := make(map[*mapper.PropertyIndex]any)
-	for k, v := range f {
-		switch typedKey := k.(type) {
-		case *mapper.PropertyIndex:
-			m := getFilterProperties(v.(map[connor.FilterKey]any))
-			properties[typedKey] = m
-		case *mapper.Operator:
-			if typedKey.Operation == request.FilterOpAnd || typedKey.Operation == request.FilterOpOr {
-				compoundContent := v.([]any)
-				for _, compoundFilter := range compoundContent {
-					m := getFilterProperties(compoundFilter.(map[connor.FilterKey]any))
-					for subK, subV := range m {
-						properties[subK] = subV
-					}
-				}
-			} else if typedKey.Operation == request.FilterOpNot {
-				m := getFilterProperties(v.(map[connor.FilterKey]any))
-				for subK, subV := range m {
-					properties[subK] = subV
-				}
-			}
-		}
-	}
-	return properties
-}
-
 func findFilteredByRelationFields(
 	conditions map[connor.FilterKey]any,
 	mapping *core.DocumentMapping,
 ) map[string]int {
-	filterProperties := getFilterProperties(conditions)
+	filterProperties := filter.ExtractProperties(conditions)
 	filteredSubFields := make(map[string]int)
-	for prop, propVal := range filterProperties {
+	for _, prop := range filterProperties {
 		if childMapping := mapping.ChildMappings[prop.Index]; childMapping != nil {
-			subProp, hasSubProp := propVal.(map[*mapper.PropertyIndex]any)
-			if !hasSubProp {
+			if !prop.IsRelation() {
 				continue
 			}
-			for subPropKey := range subProp {
+			for _, subProp := range prop.Fields {
 				for fieldName, indices := range childMapping.IndexesByName {
-					if indices[0] == subPropKey.Index {
-						filteredSubFields[fieldName] = subPropKey.Index
+					if indices[0] == subProp.Index {
+						filteredSubFields[fieldName] = subProp.Index
 					}
 				}
 			}
