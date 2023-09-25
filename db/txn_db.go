@@ -250,14 +250,14 @@ func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) ([]
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string) error {
+func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string, setAsDefaultVersion bool) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = db.patchSchema(ctx, txn, patchString)
+	err = db.patchSchema(ctx, txn, patchString, setAsDefaultVersion)
 	if err != nil {
 		return err
 	}
@@ -276,8 +276,27 @@ func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string) er
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string) error {
-	return db.patchSchema(ctx, db.txn, patchString)
+func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string, setAsDefaultVersion bool) error {
+	return db.patchSchema(ctx, db.txn, patchString, setAsDefaultVersion)
+}
+
+func (db *implicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.setDefaultSchemaVersion(ctx, txn, schemaVersionID)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+func (db *explicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	return db.setDefaultSchemaVersion(ctx, db.txn, schemaVersionID)
 }
 
 func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {

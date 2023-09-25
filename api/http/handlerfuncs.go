@@ -271,7 +271,10 @@ func patchSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = db.PatchSchema(req.Context(), string(patch))
+	// Hardcode setDefault to true here, as that preserves the existing behaviour.
+	// This function will be ripped out very shortly and I don't think it is worth
+	// spending time/thought here.  The new http api handles this correctly.
+	err = db.PatchSchema(req.Context(), string(patch), true)
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
