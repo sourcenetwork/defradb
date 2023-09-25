@@ -81,8 +81,24 @@ type SchemaPatch struct {
 	// If a value is not provided the patch will be applied to all nodes.
 	NodeID immutable.Option[int]
 
-	Patch         string
-	ExpectedError string
+	Patch string
+
+	// If SetAsDefaultVersion has a value, and that value is false then the schema version
+	// resulting from this patch will not be made default.
+	SetAsDefaultVersion immutable.Option[bool]
+	ExpectedError       string
+}
+
+// SetDefaultSchemaVersion is an action that will set the default schema version to the
+// given value.
+type SetDefaultSchemaVersion struct {
+	// NodeID may hold the ID (index) of a node to set the default schema version on.
+	//
+	// If a value is not provided the default will be set on all nodes.
+	NodeID immutable.Option[int]
+
+	SchemaVersionID string
+	ExpectedError   string
 }
 
 // CreateDoc will attempt to create the given document in the given collection

@@ -13,6 +13,8 @@ package field
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -42,6 +44,39 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 					}
 				}`,
 				Results: []map[string]any{},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_Errors(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+					]
+				`,
+				SetAsDefaultVersion: immutable.Some(false),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						email
+					}
+				}`,
+				ExpectedError: `Cannot query field "email" on type "Users".`,
 			},
 		},
 	}
