@@ -447,7 +447,6 @@ func (n *typeJoinOne) Source() planNode { return n.root }
 
 type typeJoinMany struct {
 	*twoWayFetchDirector
-	docMapper
 
 	p *Planner
 }
@@ -521,14 +520,14 @@ func (p *Planner) makeTypeJoinMany(
 
 	return &typeJoinMany{
 		twoWayFetchDirector: &twoWayFetchDirector{
+			docMapper:   docMapper{parent.documentMapping},
 			root:        source,
 			subType:     selectPlan,
 			subSelect:   subType,
 			rootName:    rootField.Name,
 			subTypeName: subType.Name,
 		},
-		p:         p,
-		docMapper: docMapper{parent.documentMapping},
+		p: p,
 	}, nil
 }
 
@@ -538,17 +537,6 @@ func (n *typeJoinMany) Kind() string {
 
 func (n *typeJoinMany) Next() (bool, error) {
 	return n.fetchNext()
-}
-
-func (n *typeJoinMany) invertJoinDirectionWithIndex(fieldFilter *mapper.Filter, field client.FieldDescription) error {
-	subScan := getScanNode(n.subType)
-	subScan.tryAddField(n.rootName + request.RelatedObjectID)
-	subScan.filter = fieldFilter
-	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(field))
-
-	n.invert()
-
-	return nil
 }
 
 func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
@@ -576,6 +564,7 @@ func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
 
 type twoWayFetchDirector struct {
 	documentIterator
+	docMapper
 
 	root        planNode
 	subType     planNode
@@ -677,6 +666,17 @@ func (d *twoWayFetchDirector) fetchInverted() (bool, error) {
 
 		return true, nil
 	}
+}
+
+func (n *twoWayFetchDirector) invertJoinDirectionWithIndex(fieldFilter *mapper.Filter, field client.FieldDescription) error {
+	subScan := getScanNode(n.subType)
+	subScan.tryAddField(n.rootName + request.RelatedObjectID)
+	subScan.filter = fieldFilter
+	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(field))
+
+	n.invert()
+
+	return nil
 }
 
 func setSubTypeFilterToScanNode(plan planNode, propIndex int, val any) {

@@ -303,7 +303,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinOne:
 		return p.expandPlan(node.subType, parentPlan)
 	case *typeJoinMany:
-		return p.expandTypeJoinMany(node, parentPlan)
+		return p.expandTypeJoinMany(node.twoWayFetchDirector, parentPlan)
 	}
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
 }
@@ -331,7 +331,7 @@ func findFilteredByRelationFields(
 	return filteredSubFields
 }
 
-func (p *Planner) expandTypeJoinMany(node *typeJoinMany, parentPlan *selectTopNode) error {
+func (p *Planner) expandTypeJoinMany(node *twoWayFetchDirector, parentPlan *selectTopNode) error {
 	filteredSubFields := findFilteredByRelationFields(
 		parentPlan.selectNode.filter.Conditions,
 		node.documentMapping,
