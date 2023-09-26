@@ -332,10 +332,6 @@ func findFilteredByRelationFields(
 }
 
 func (p *Planner) expandTypeJoinMany(node *typeJoinMany, parentPlan *selectTopNode) error {
-	scan := getScanNode(parentPlan.selectNode)
-	if scan == nil {
-		return p.expandPlan(node.subType, parentPlan)
-	}
 	filteredSubFields := findFilteredByRelationFields(
 		parentPlan.selectNode.filter.Conditions,
 		node.documentMapping,
