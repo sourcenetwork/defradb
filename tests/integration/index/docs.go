@@ -39,6 +39,10 @@ func getUserDocs() docsCollection {
 						},
 					},
 				},
+				"address": map[string]any{
+					"postalCode": 667,
+					"city":       "Montreal",
+				},
 			},
 			{
 				"name":     "Fred",
@@ -59,6 +63,10 @@ func getUserDocs() docsCollection {
 							"type":  "laptop",
 						},
 					},
+				},
+				"address": map[string]any{
+					"postalCode": 666,
+					"city":       "Montreal",
 				},
 			},
 			{
@@ -85,6 +93,10 @@ func getUserDocs() docsCollection {
 							"type":  "computer",
 						},
 					},
+				},
+				"address": map[string]any{
+					"postalCode": 666,
+					"city":       "Montreal",
 				},
 			},
 			{
@@ -122,6 +134,10 @@ func getUserDocs() docsCollection {
 						},
 					},
 				},
+				"address": map[string]any{
+					"postalCode": 81825,
+					"city":       "Munich",
+				},
 			},
 			{
 				"name":     "Andy",
@@ -142,6 +158,10 @@ func getUserDocs() docsCollection {
 							"type":  "laptop",
 						},
 					},
+				},
+				"address": map[string]any{
+					"postalCode": 555,
+					"city":       "London",
 				},
 			},
 			{
@@ -174,6 +194,10 @@ func getUserDocs() docsCollection {
 						},
 					},
 				},
+				"address": map[string]any{
+					"postalCode": 199,
+					"city":       "Ottawa",
+				},
 			},
 			{
 				"name":     "Keenan",
@@ -200,6 +224,10 @@ func getUserDocs() docsCollection {
 						},
 					},
 				},
+				"address": map[string]any{
+					"postalCode": 34524,
+					"city":       "San Francisco",
+				},
 			},
 			{
 				"name":     "Chris",
@@ -215,6 +243,10 @@ func getUserDocs() docsCollection {
 							"type":  "phone",
 						},
 					},
+				},
+				"address": map[string]any{
+					"postalCode": 422,
+					"city":       "Toronto",
 				},
 			},
 		},

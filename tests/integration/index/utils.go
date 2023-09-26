@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 )
 
 // createSchemaWithDocs returns UpdateSchema action and CreateDoc actions
@@ -43,7 +44,7 @@ func createDocJSON(doc map[string]any, typeDef *typeDefinition) (string, []propD
 		propName := prop.name
 		format := `"%s": %v`
 		if prop.isRelation {
-			if !prop.isPrimary {
+			if !prop.isPrimary.Value() {
 				if _, hasProp := doc[prop.name]; hasProp {
 					relationProps = append(relationProps, prop)
 				}
@@ -102,12 +103,18 @@ func makeCreateDocActionForRelatedDocs(
 	relTypeDef := types[relProp.typeStr]
 	primaryPropName := ""
 	for _, relDocProp := range relTypeDef.props {
-		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary {
+		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary.Value() {
 			primaryPropName = relDocProp.name + "_id"
-			relDocsCol := primaryDoc[relProp.name].(docsCollection)
-			for _, relDoc := range relDocsCol.docs {
-				relDoc[primaryPropName] = primaryDocKey
-				actions := makeCreateDocActions(relDoc, relTypeDef.name, types)
+			switch relVal := primaryDoc[relProp.name].(type) {
+			case docsCollection:
+				for _, relDoc := range relVal.docs {
+					relDoc[primaryPropName] = primaryDocKey
+					actions := makeCreateDocActions(relDoc, relTypeDef.name, types)
+					result = append(result, actions...)
+				}
+			case map[string]any:
+				relVal[primaryPropName] = primaryDocKey
+				actions := makeCreateDocActions(relVal, relTypeDef.name, types)
 				result = append(result, actions...)
 			}
 		}
@@ -120,7 +127,7 @@ type propDefinition struct {
 	typeStr    string
 	isArray    bool
 	isRelation bool
-	isPrimary  bool
+	isPrimary  immutable.Option[bool]
 }
 
 type typeDefinition struct {
@@ -143,8 +150,9 @@ func getSchemaProps(schema string) map[string]typeDefinition {
 		}
 	}
 
-	primaryTypesMap := make(map[string][]string)
+	relationTypesMap := make(map[string]map[string]string)
 	var typeDef typeDefinition
+	var firstRelationType string
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "type ") {
@@ -171,29 +179,52 @@ func getSchemaProps(schema string) map[string]typeDefinition {
 			}
 			if _, isRelation := result[prop.typeStr]; isRelation {
 				prop.isRelation = true
-				prop.isPrimary = !prop.isArray
-				if !prop.isPrimary {
-					primaryTypesMap[prop.typeStr] = append(primaryTypesMap[typeDef.name], typeDef.name)
+				if prop.isArray {
+					prop.isPrimary = immutable.Some(false)
+				}
+				relMap := relationTypesMap[prop.typeStr]
+				if relMap == nil {
+					relMap = make(map[string]string)
+				}
+				relMap[prop.name] = typeDef.name
+				relationTypesMap[prop.typeStr] = relMap
+				if firstRelationType == "" {
+					firstRelationType = typeDef.name
 				}
 			}
 			typeDef.props[prop.name] = prop
 		}
 	}
-	for secondaryTypeName, primaryTypes := range primaryTypesMap {
-		secTypeDef := result[secondaryTypeName]
-		for _, prop := range secTypeDef.props {
-			for _, primaryType := range primaryTypes {
-				if prop.typeStr == primaryType {
-					p := secTypeDef.props[prop.name]
-					p.isRelation = true
-					p.isPrimary = true
-					secTypeDef.props[prop.name] = p
+	resolvePrimaryRelations(result, relationTypesMap, firstRelationType)
+	return result
+}
+
+func resolvePrimaryRelations(
+	types map[string]typeDefinition,
+	relationTypesMap map[string]map[string]string,
+	firstRelationType string,
+) {
+	for typeName, relationProps := range relationTypesMap {
+		typeDef := types[typeName]
+		for _, prop := range typeDef.props {
+			for relPropName, relPropType := range relationProps {
+				if prop.typeStr == relPropType {
+					relatedTypeDef := types[relPropType]
+					relatedProp := relatedTypeDef.props[relPropName]
+					if relatedProp.isPrimary.HasValue() {
+						continue
+					}
+					prop.isPrimary = immutable.Some(typeName != firstRelationType)
+					relatedProp.isPrimary = immutable.Some(typeName == firstRelationType)
+					typeDef.props[prop.name] = prop
+					relatedTypeDef.props[relPropName] = relatedProp
+					types[relPropType] = relatedTypeDef
+					delete(relationTypesMap, relPropType)
 				}
 			}
 		}
-		result[secondaryTypeName] = secTypeDef
+		types[typeName] = typeDef
 	}
-	return result
 }
 
 func sendRequestAndExplain(
