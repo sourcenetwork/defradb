@@ -160,7 +160,7 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 		}
 
 		// Add the attribute(s).
-		simpleExplainMap[joinRootLabel] = joinType.subTypeFieldName
+		simpleExplainMap[joinRootLabel] = joinType.rootName
 		simpleExplainMap[joinSubTypeNameLabel] = joinType.subTypeName
 
 		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
@@ -229,22 +229,11 @@ func (n *typeIndexJoin) Merge() bool { return true }
 // typeJoinOne is the plan node for a type index join
 // where the root type is the primary in a one-to-one relation request.
 type typeJoinOne struct {
-	documentIterator
-	docMapper
-
+	twoWayFetchDirector
 	p *Planner
-
-	root    planNode
-	subType planNode
-
-	subTypeName      string
-	subTypeFieldName string
 
 	primary             bool
 	secondaryFieldIndex immutable.Option[int]
-
-	spans     core.Spans
-	subSelect *mapper.Select
 }
 
 func (p *Planner) makeTypeJoinOne(
@@ -292,58 +281,22 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	return &typeJoinOne{
+		twoWayFetchDirector: twoWayFetchDirector{
+			docMapper:   docMapper{parent.documentMapping},
+			root:        source,
+			subType:     selectPlan,
+			subSelect:   subType,
+			rootName:    subTypeField.Name,
+			subTypeName: subType.Name,
+		},
 		p:                   p,
-		root:                source,
-		subSelect:           subType,
-		subTypeName:         subType.Name,
-		subTypeFieldName:    subTypeField.Name,
-		subType:             selectPlan,
 		primary:             isPrimary,
 		secondaryFieldIndex: secondaryFieldIndex,
-		docMapper:           docMapper{parent.documentMapping},
 	}, nil
 }
 
 func (n *typeJoinOne) Kind() string {
 	return "typeJoinOne"
-}
-
-func (n *typeJoinOne) Init() error {
-	if err := n.subType.Init(); err != nil {
-		return err
-	}
-	return n.root.Init()
-}
-
-func (n *typeJoinOne) Start() error {
-	if err := n.subType.Start(); err != nil {
-		return err
-	}
-	return n.root.Start()
-}
-
-func (n *typeJoinOne) Spans(spans core.Spans) {
-	n.root.Spans(spans)
-}
-
-func (n *typeJoinOne) Next() (bool, error) {
-	hasNext, err := n.root.Next()
-	if err != nil || !hasNext {
-		return hasNext, err
-	}
-
-	doc := n.root.Value()
-	if n.primary {
-		n.currentValue, err = n.valuesPrimary(doc)
-	} else {
-		n.currentValue, err = n.valuesSecondary(doc)
-	}
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
 }
 
 func fetchDocsWithFieldValue(plan planNode, fieldName string, val any, limit uint) ([]core.Doc, error) {
@@ -375,7 +328,7 @@ func fetchDocsWithFieldValue(plan planNode, fieldName string, val any, limit uin
 }
 
 func (n *typeJoinOne) valuesSecondary(doc core.Doc) (core.Doc, error) {
-	fieldName := n.subTypeFieldName + request.RelatedObjectID
+	fieldName := n.rootName + request.RelatedObjectID
 	subDocs, err := fetchDocsWithFieldValue(n.subType, fieldName, doc.GetKey(), 1)
 	if err != nil {
 		return core.Doc{}, err
@@ -405,11 +358,8 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) (core.Doc, error) {
 	desc := slct.sourceInfo.collectionDescription
 	subKeyIndexKey := base.MakeDocKey(desc, subDocKeyStr)
 
-	// reset span
-	n.spans = core.NewSpans(core.NewSpan(subKeyIndexKey, subKeyIndexKey.PrefixEnd()))
-
 	// do a point lookup with the new span (index key)
-	n.subType.Spans(n.spans)
+	n.subType.Spans(core.NewSpans(core.NewSpan(subKeyIndexKey, subKeyIndexKey.PrefixEnd())))
 
 	// re-initialize the sub type plan
 	if err := n.subType.Init(); err != nil {
@@ -434,16 +384,6 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) (core.Doc, error) {
 
 	return doc, nil
 }
-
-func (n *typeJoinOne) Close() error {
-	err := n.root.Close()
-	if err != nil {
-		return err
-	}
-	return n.subType.Close()
-}
-
-func (n *typeJoinOne) Source() planNode { return n.root }
 
 type typeJoinMany struct {
 	twoWayFetchDirector
@@ -535,10 +475,6 @@ func (n *typeJoinMany) Kind() string {
 	return "typeJoinMany"
 }
 
-func (n *typeJoinMany) Next() (bool, error) {
-	return n.fetchNext()
-}
-
 func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
 	subDoc := subNode.Value()
 	ind := subNode.DocumentMap().FirstIndexOfName(parentProp)
@@ -608,7 +544,7 @@ func (d *twoWayFetchDirector) invert() {
 	d.isInverted = !d.isInverted
 }
 
-func (d *twoWayFetchDirector) fetchNext() (bool, error) {
+func (d *twoWayFetchDirector) Next() (bool, error) {
 	if d.isInverted {
 		return d.fetchInverted()
 	} else {

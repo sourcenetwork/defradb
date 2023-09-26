@@ -301,9 +301,9 @@ func (p *Planner) expandMultiNode(multiNode MultiNode, parentPlan *selectTopNode
 func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
-		return p.expandPlan(node.subType, parentPlan)
+		return p.expandTypeJoin(&node.twoWayFetchDirector, parentPlan)
 	case *typeJoinMany:
-		return p.expandTypeJoinMany(&node.twoWayFetchDirector, parentPlan)
+		return p.expandTypeJoin(&node.twoWayFetchDirector, parentPlan)
 	}
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
 }
@@ -331,7 +331,10 @@ func findFilteredByRelationFields(
 	return filteredSubFields
 }
 
-func (p *Planner) expandTypeJoinMany(node *twoWayFetchDirector, parentPlan *selectTopNode) error {
+func (p *Planner) expandTypeJoin(node *twoWayFetchDirector, parentPlan *selectTopNode) error {
+	if parentPlan.selectNode.filter == nil {
+		return p.expandPlan(node.subType, parentPlan)
+	}
 	filteredSubFields := findFilteredByRelationFields(
 		parentPlan.selectNode.filter.Conditions,
 		node.documentMapping,
