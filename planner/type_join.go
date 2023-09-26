@@ -446,7 +446,7 @@ func (n *typeJoinOne) Close() error {
 func (n *typeJoinOne) Source() planNode { return n.root }
 
 type typeJoinMany struct {
-	*twoWayFetchDirector
+	twoWayFetchDirector
 
 	p *Planner
 }
@@ -519,7 +519,7 @@ func (p *Planner) makeTypeJoinMany(
 	}
 
 	return &typeJoinMany{
-		twoWayFetchDirector: &twoWayFetchDirector{
+		twoWayFetchDirector: twoWayFetchDirector{
 			docMapper:   docMapper{parent.documentMapping},
 			root:        source,
 			subType:     selectPlan,

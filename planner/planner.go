@@ -303,7 +303,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinOne:
 		return p.expandPlan(node.subType, parentPlan)
 	case *typeJoinMany:
-		return p.expandTypeJoinMany(node.twoWayFetchDirector, parentPlan)
+		return p.expandTypeJoinMany(&node.twoWayFetchDirector, parentPlan)
 	}
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
 }
@@ -348,7 +348,10 @@ func (p *Planner) expandTypeJoinMany(node *twoWayFetchDirector, parentPlan *sele
 				relatedField,
 				mapper.Field{Name: indField.Name, Index: ind},
 			), relatedField)
-			node.invertJoinDirectionWithIndex(fieldFilter, indField)
+			err := node.invertJoinDirectionWithIndex(fieldFilter, indField)
+			if err != nil {
+				return err
+			}
 			break
 		}
 	}
