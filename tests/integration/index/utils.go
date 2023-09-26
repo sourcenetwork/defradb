@@ -30,7 +30,7 @@ func createSchemaWithDocs(schema string) []any {
 	resultActions := make([]any, 0, len(userDocs.docs)+1)
 	resultActions = append(resultActions, testUtils.SchemaUpdate{Schema: schema})
 	parser := schemaParser{}
-	typeDefs := parser.parse(schema)
+	typeDefs := parser.Parse(schema)
 	for _, doc := range userDocs.docs {
 		actions := makeCreateDocActions(doc, userDocs.colName, typeDefs)
 		resultActions = append(resultActions, actions...)
@@ -145,7 +145,7 @@ type schemaParser struct {
 	relationTypesMap  map[string]map[string]string
 }
 
-func (p *schemaParser) parse(schema string) map[string]typeDefinition {
+func (p *schemaParser) Parse(schema string) map[string]typeDefinition {
 	p.types = make(map[string]typeDefinition)
 	p.relationTypesMap = make(map[string]map[string]string)
 	p.schemaLines = strings.Split(schema, "\n")
@@ -200,6 +200,8 @@ func (p *schemaParser) defineProp(line string, pos int) {
 		prop.isRelation = true
 		if prop.isArray {
 			prop.isPrimary = immutable.Some(false)
+		} else if strings.Contains(line[pos+len(prop.typeStr)+2:], "@primary") {
+			prop.isPrimary = immutable.Some(true)
 		}
 		relMap := p.relationTypesMap[prop.typeStr]
 		if relMap == nil {
@@ -222,15 +224,20 @@ func (p *schemaParser) resolvePrimaryRelations() {
 				if prop.typeStr == relPropType {
 					relatedTypeDef := p.types[relPropType]
 					relatedProp := relatedTypeDef.props[relPropName]
-					if relatedProp.isPrimary.HasValue() {
-						continue
+					if !relatedProp.isPrimary.HasValue() {
+						relatedProp.isPrimary = immutable.Some(typeName == p.firstRelationType)
+						relatedTypeDef.props[relPropName] = relatedProp
+						p.types[relPropType] = relatedTypeDef
+						delete(p.relationTypesMap, relPropType)
 					}
-					prop.isPrimary = immutable.Some(typeName != p.firstRelationType)
-					relatedProp.isPrimary = immutable.Some(typeName == p.firstRelationType)
-					typeDef.props[prop.name] = prop
-					relatedTypeDef.props[relPropName] = relatedProp
-					p.types[relPropType] = relatedTypeDef
-					delete(p.relationTypesMap, relPropType)
+					if !prop.isPrimary.HasValue() {
+						val := typeName != p.firstRelationType
+						if relatedProp.isPrimary.HasValue() {
+							val = !relatedProp.isPrimary.Value()
+						}
+						prop.isPrimary = immutable.Some(val)
+						typeDef.props[prop.name] = prop
+					}
 				}
 			}
 		}
