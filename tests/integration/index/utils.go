@@ -29,7 +29,8 @@ func createSchemaWithDocs(schema string) []any {
 	userDocs := getUserDocs()
 	resultActions := make([]any, 0, len(userDocs.docs)+1)
 	resultActions = append(resultActions, testUtils.SchemaUpdate{Schema: schema})
-	typeDefs := getSchemaProps(schema)
+	parser := schemaParser{}
+	typeDefs := parser.parse(schema)
 	for _, doc := range userDocs.docs {
 		actions := makeCreateDocActions(doc, userDocs.colName, typeDefs)
 		resultActions = append(resultActions, actions...)
@@ -136,94 +137,104 @@ type typeDefinition struct {
 	props map[string]propDefinition
 }
 
-func getSchemaProps(schema string) map[string]typeDefinition {
-	result := make(map[string]typeDefinition)
-	lines := strings.Split(schema, "\n")
-	typeIndex := 0
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "type ") {
-			typeNameEndPos := strings.Index(line[5:], " ")
-			typeName := strings.TrimSpace(line[5 : 5+typeNameEndPos])
-			result[typeName] = typeDefinition{name: typeName, index: typeIndex, props: make(map[string]propDefinition)}
-			typeIndex++
-		}
-	}
+type schemaParser struct {
+	types             map[string]typeDefinition
+	schemaLines       []string
+	firstRelationType string
+	currentTypeDef    typeDefinition
+	relationTypesMap  map[string]map[string]string
+}
 
-	relationTypesMap := make(map[string]map[string]string)
-	var typeDef typeDefinition
-	var firstRelationType string
-	for _, line := range lines {
+func (p *schemaParser) parse(schema string) map[string]typeDefinition {
+	p.types = make(map[string]typeDefinition)
+	p.relationTypesMap = make(map[string]map[string]string)
+	p.schemaLines = strings.Split(schema, "\n")
+	p.findTypes()
+
+	for _, line := range p.schemaLines {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "type ") {
 			typeNameEndPos := strings.Index(line[5:], " ")
 			typeName := strings.TrimSpace(line[5 : 5+typeNameEndPos])
-			typeDef = result[typeName]
+			p.currentTypeDef = p.types[typeName]
 			continue
 		}
 		if strings.HasPrefix(line, "}") {
-			result[typeDef.name] = typeDef
+			p.types[p.currentTypeDef.name] = p.currentTypeDef
 			continue
 		}
 		pos := strings.Index(line, ":")
 		if pos != -1 {
-			prop := propDefinition{name: line[:pos]}
-			prop.typeStr = strings.TrimSpace(line[pos+1:])
-			typeEndPos := strings.Index(prop.typeStr, " ")
-			if typeEndPos != -1 {
-				prop.typeStr = prop.typeStr[:typeEndPos]
-			}
-			if prop.typeStr[0] == '[' {
-				prop.isArray = true
-				prop.typeStr = prop.typeStr[1 : len(prop.typeStr)-1]
-			}
-			if _, isRelation := result[prop.typeStr]; isRelation {
-				prop.isRelation = true
-				if prop.isArray {
-					prop.isPrimary = immutable.Some(false)
-				}
-				relMap := relationTypesMap[prop.typeStr]
-				if relMap == nil {
-					relMap = make(map[string]string)
-				}
-				relMap[prop.name] = typeDef.name
-				relationTypesMap[prop.typeStr] = relMap
-				if firstRelationType == "" {
-					firstRelationType = typeDef.name
-				}
-			}
-			typeDef.props[prop.name] = prop
+			p.defineProp(line, pos)
 		}
 	}
-	resolvePrimaryRelations(result, relationTypesMap, firstRelationType)
-	return result
+	p.resolvePrimaryRelations()
+	return p.types
 }
 
-func resolvePrimaryRelations(
-	types map[string]typeDefinition,
-	relationTypesMap map[string]map[string]string,
-	firstRelationType string,
-) {
-	for typeName, relationProps := range relationTypesMap {
-		typeDef := types[typeName]
+func (p *schemaParser) findTypes() {
+	typeIndex := 0
+	for _, line := range p.schemaLines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "type ") {
+			typeNameEndPos := strings.Index(line[5:], " ")
+			typeName := strings.TrimSpace(line[5 : 5+typeNameEndPos])
+			p.types[typeName] = typeDefinition{name: typeName, index: typeIndex, props: make(map[string]propDefinition)}
+			typeIndex++
+		}
+	}
+}
+
+func (p *schemaParser) defineProp(line string, pos int) {
+	prop := propDefinition{name: line[:pos]}
+	prop.typeStr = strings.TrimSpace(line[pos+1:])
+	typeEndPos := strings.Index(prop.typeStr, " ")
+	if typeEndPos != -1 {
+		prop.typeStr = prop.typeStr[:typeEndPos]
+	}
+	if prop.typeStr[0] == '[' {
+		prop.isArray = true
+		prop.typeStr = prop.typeStr[1 : len(prop.typeStr)-1]
+	}
+	if _, isRelation := p.types[prop.typeStr]; isRelation {
+		prop.isRelation = true
+		if prop.isArray {
+			prop.isPrimary = immutable.Some(false)
+		}
+		relMap := p.relationTypesMap[prop.typeStr]
+		if relMap == nil {
+			relMap = make(map[string]string)
+		}
+		relMap[prop.name] = p.currentTypeDef.name
+		p.relationTypesMap[prop.typeStr] = relMap
+		if p.firstRelationType == "" {
+			p.firstRelationType = p.currentTypeDef.name
+		}
+	}
+	p.currentTypeDef.props[prop.name] = prop
+}
+
+func (p *schemaParser) resolvePrimaryRelations() {
+	for typeName, relationProps := range p.relationTypesMap {
+		typeDef := p.types[typeName]
 		for _, prop := range typeDef.props {
 			for relPropName, relPropType := range relationProps {
 				if prop.typeStr == relPropType {
-					relatedTypeDef := types[relPropType]
+					relatedTypeDef := p.types[relPropType]
 					relatedProp := relatedTypeDef.props[relPropName]
 					if relatedProp.isPrimary.HasValue() {
 						continue
 					}
-					prop.isPrimary = immutable.Some(typeName != firstRelationType)
-					relatedProp.isPrimary = immutable.Some(typeName == firstRelationType)
+					prop.isPrimary = immutable.Some(typeName != p.firstRelationType)
+					relatedProp.isPrimary = immutable.Some(typeName == p.firstRelationType)
 					typeDef.props[prop.name] = prop
 					relatedTypeDef.props[relPropName] = relatedProp
-					types[relPropType] = relatedTypeDef
-					delete(relationTypesMap, relPropType)
+					p.types[relPropType] = relatedTypeDef
+					delete(p.relationTypesMap, relPropType)
 				}
 			}
 		}
-		types[typeName] = typeDef
+		p.types[typeName] = typeDef
 	}
 }
 
