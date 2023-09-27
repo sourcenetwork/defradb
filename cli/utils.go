@@ -25,8 +25,16 @@ import (
 type contextKey string
 
 var (
-	txContextKey    = contextKey("tx")
-	dbContextKey    = contextKey("db")
+	// txContextKey is the context key for the datastore.Txn
+	//
+	// This will only be set if a transaction id is specified.
+	txContextKey = contextKey("tx")
+	// dbContextKey is the context key for the client.DB
+	dbContextKey = contextKey("db")
+	// storeContextKey is the context key for the client.Store
+	//
+	// If a transaction exists, all operations will be executed
+	// in the current transaction context.
 	storeContextKey = contextKey("store")
 )
 
@@ -39,8 +47,7 @@ func setTransactionContext(cmd *cobra.Command, cfg *config.Config, txId uint64) 
 	if err != nil {
 		return err
 	}
-	ctx := cmd.Context()
-	ctx = context.WithValue(ctx, txContextKey, tx)
+	ctx := context.WithValue(cmd.Context(), txContextKey, tx)
 	cmd.SetContext(ctx)
 	return nil
 }
@@ -51,8 +58,7 @@ func setStoreContext(cmd *cobra.Command, cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-	ctx := cmd.Context()
-	ctx = context.WithValue(ctx, dbContextKey, db)
+	ctx := context.WithValue(cmd.Context(), dbContextKey, db)
 	if tx, ok := ctx.Value(txContextKey).(datastore.Txn); ok {
 		ctx = context.WithValue(ctx, storeContextKey, db.WithTxn(tx))
 	} else {
