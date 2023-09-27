@@ -41,8 +41,8 @@ func (col CollectionDescription) IDString() string {
 
 // GetFieldByID searches for a field with the given ID. If such a field is found it
 // will return it and true, if it is not found it will return false.
-func (col CollectionDescription) GetFieldByID(id FieldID) (FieldDescription, bool) {
-	for _, field := range col.Schema.Fields {
+func (col CollectionDescription) GetFieldByID(id FieldID, schema *SchemaDescription) (FieldDescription, bool) {
+	for _, field := range schema.Fields {
 		if field.ID == id {
 			return field, true
 		}
