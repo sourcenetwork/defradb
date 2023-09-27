@@ -350,6 +350,7 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (clie
 func (c *collection) patchPrimaryDoc(
 	ctx context.Context,
 	txn datastore.Txn,
+	secondaryCollectionName string,
 	relationFieldDescription client.FieldDescription,
 	docKey string,
 	fieldValue string,
@@ -365,7 +366,11 @@ func (c *collection) patchPrimaryDoc(
 	}
 	primaryCol = primaryCol.WithTxn(txn)
 
-	primaryField, ok := primaryCol.Description().GetRelation(relationFieldDescription.RelationName)
+	primaryField, ok := primaryCol.Description().GetFieldByRelation(
+		relationFieldDescription.RelationName,
+		secondaryCollectionName,
+		relationFieldDescription.Name,
+	)
 	if !ok {
 		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
 	}
