@@ -84,8 +84,13 @@ jobs:
     needs: run-tests
     
     steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
       - name: Download coverage reports
         uses: actions/download-artifact@v3
+        with:
+          path: coverage_reports
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
