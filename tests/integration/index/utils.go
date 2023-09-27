@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/immutable"
 )
@@ -31,29 +32,22 @@ func createSchemaWithDocs(schema string) []any {
 	resultActions = append(resultActions, testUtils.SchemaUpdate{Schema: schema})
 	parser := schemaParser{}
 	typeDefs := parser.Parse(schema)
+	generator := createDocGenerator{types: typeDefs}
 	for _, doc := range userDocs.docs {
-		actions := makeCreateDocActions(doc, userDocs.colName, typeDefs)
+		actions := generator.GenerateDocs(doc, userDocs.colName)
 		resultActions = append(resultActions, actions...)
 	}
 	return resultActions
 }
 
-func createDocJSON(doc map[string]any, typeDef *typeDefinition) (string, []propDefinition) {
+type createDocGenerator struct {
+	types map[string]typeDefinition
+}
+
+func createDocJSON(doc map[string]any, typeDef *typeDefinition) string {
 	sb := strings.Builder{}
-	relationProps := []propDefinition{}
-	for _, prop := range typeDef.props {
-		propName := prop.name
+	for propName := range doc {
 		format := `"%s": %v`
-		if prop.isRelation {
-			if !prop.isPrimary.Value() {
-				if _, hasProp := doc[prop.name]; hasProp {
-					relationProps = append(relationProps, prop)
-				}
-				continue
-			} else {
-				propName = propName + "_id"
-			}
-		}
 		if _, isStr := doc[propName].(string); isStr {
 			format = `"%s": "%v"`
 		}
@@ -65,57 +59,102 @@ func createDocJSON(doc map[string]any, typeDef *typeDefinition) (string, []propD
 		sb.WriteString(fmt.Sprintf(format, propName, doc[propName]))
 	}
 	sb.WriteString("\n}")
-	return sb.String(), relationProps
+	return sb.String()
 }
 
-func makeCreateDocActions(
-	doc map[string]any,
-	typeName string,
-	types map[string]typeDefinition,
-) []any {
-	result := []any{}
-	typeDef := types[typeName]
-
-	docStr, relationProps := createDocJSON(doc, &typeDef)
-
-	result = append(result, testUtils.CreateDoc{CollectionID: typeDef.index, Doc: docStr})
-	if len(relationProps) > 0 {
-		clientDoc, err := client.NewDocFromJSON([]byte(docStr))
-		if err != nil {
-			panic("Failed to create doc from JSON: " + err.Error())
+func toRequestedDoc(doc map[string]any, typeDef *typeDefinition) map[string]any {
+	result := make(map[string]any)
+	for _, prop := range typeDef.props {
+		if prop.isRelation {
+			continue
 		}
-		docKey := clientDoc.Key().String()
-		for _, relProp := range relationProps {
-			actions := makeCreateDocActionForRelatedDocs(doc, typeName, &relProp, docKey, types)
-			result = append(result, actions...)
+		result[prop.name] = doc[prop.name]
+	}
+	for name, val := range doc {
+		if strings.HasSuffix(name, request.RelatedObjectID) {
+			result[name] = val
 		}
 	}
 	return result
 }
 
-func makeCreateDocActionForRelatedDocs(
+func (this *createDocGenerator) generatePrimary(
+	doc map[string]any,
+	typeDef *typeDefinition,
+) (map[string]any, []any) {
+	result := []any{}
+	requested := toRequestedDoc(doc, typeDef)
+	for _, prop := range typeDef.props {
+		if prop.isRelation {
+			if _, hasProp := doc[prop.name]; hasProp {
+				if prop.isPrimary.Value() {
+					subType := this.types[prop.typeStr]
+					subDoc := toRequestedDoc(doc[prop.name].(map[string]any), &subType)
+					jsonSubDoc := createDocJSON(subDoc, &subType)
+					clientSubDoc, err := client.NewDocFromJSON([]byte(jsonSubDoc))
+					if err != nil {
+						panic("Failed to create doc from JSON: " + err.Error())
+					}
+					requested[prop.name+request.RelatedObjectID] = clientSubDoc.Key().String()
+					result = append(result, testUtils.CreateDoc{CollectionID: subType.index, Doc: jsonSubDoc})
+				}
+			}
+		}
+	}
+	return requested, result
+}
+
+func (this *createDocGenerator) GenerateDocs(doc map[string]any, typeName string) []any {
+	typeDef := this.types[typeName]
+
+	requested, result := this.generatePrimary(doc, &typeDef)
+	docStr := createDocJSON(requested, &typeDef)
+
+	result = append(result, testUtils.CreateDoc{CollectionID: typeDef.index, Doc: docStr})
+
+	var docKey string
+	for _, prop := range typeDef.props {
+		if prop.isRelation {
+			if _, hasProp := doc[prop.name]; hasProp {
+				if !prop.isPrimary.Value() {
+					if docKey == "" {
+						clientDoc, err := client.NewDocFromJSON([]byte(docStr))
+						if err != nil {
+							panic("Failed to create doc from JSON: " + err.Error())
+						}
+						docKey = clientDoc.Key().String()
+					}
+					actions := this.generateSecondaryDocs(doc, typeName, &prop, docKey)
+					result = append(result, actions...)
+				}
+			}
+		}
+	}
+	return result
+}
+
+func (this *createDocGenerator) generateSecondaryDocs(
 	primaryDoc map[string]any,
 	primaryTypeName string,
 	relProp *propDefinition,
 	primaryDocKey string,
-	types map[string]typeDefinition,
 ) []any {
 	result := []any{}
-	relTypeDef := types[relProp.typeStr]
+	relTypeDef := this.types[relProp.typeStr]
 	primaryPropName := ""
 	for _, relDocProp := range relTypeDef.props {
 		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary.Value() {
-			primaryPropName = relDocProp.name + "_id"
+			primaryPropName = relDocProp.name + request.RelatedObjectID
 			switch relVal := primaryDoc[relProp.name].(type) {
 			case docsCollection:
 				for _, relDoc := range relVal.docs {
 					relDoc[primaryPropName] = primaryDocKey
-					actions := makeCreateDocActions(relDoc, relTypeDef.name, types)
+					actions := this.GenerateDocs(relDoc, relTypeDef.name)
 					result = append(result, actions...)
 				}
 			case map[string]any:
 				relVal[primaryPropName] = primaryDocKey
-				actions := makeCreateDocActions(relVal, relTypeDef.name, types)
+				actions := this.GenerateDocs(relVal, relTypeDef.name)
 				result = append(result, actions...)
 			}
 		}

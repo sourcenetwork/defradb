@@ -40,8 +40,10 @@ func getUserDocs() docsCollection {
 					},
 				},
 				"address": map[string]any{
-					"postalCode": 667,
+					"postalCode": 4635,
 					"city":       "Montreal",
+					"country":    "Canada",
+					"street":     "Queen Mary Rd",
 				},
 			},
 			{
@@ -65,8 +67,10 @@ func getUserDocs() docsCollection {
 					},
 				},
 				"address": map[string]any{
-					"postalCode": 666,
+					"postalCode": 6512,
 					"city":       "Montreal",
+					"country":    "Canada",
+					"street":     "Park Ave",
 				},
 			},
 			{
@@ -95,8 +99,10 @@ func getUserDocs() docsCollection {
 					},
 				},
 				"address": map[string]any{
-					"postalCode": 666,
+					"postalCode": 690,
 					"city":       "Montreal",
+					"country":    "Canada",
+					"street":     "Notre-Dame St W",
 				},
 			},
 			{
@@ -135,8 +141,10 @@ func getUserDocs() docsCollection {
 					},
 				},
 				"address": map[string]any{
-					"postalCode": 81825,
+					"postalCode": 80804,
 					"city":       "Munich",
+					"country":    "Germany",
+					"street":     "Leopold Str",
 				},
 			},
 			{
@@ -160,8 +168,10 @@ func getUserDocs() docsCollection {
 					},
 				},
 				"address": map[string]any{
-					"postalCode": 555,
+					"postalCode": 101103,
 					"city":       "London",
+					"country":    "UK",
+					"street":     "Baker St",
 				},
 			},
 			{
@@ -195,8 +205,10 @@ func getUserDocs() docsCollection {
 					},
 				},
 				"address": map[string]any{
-					"postalCode": 199,
+					"postalCode": 403,
 					"city":       "Ottawa",
+					"country":    "Canada",
+					"street":     "Bank St",
 				},
 			},
 			{
@@ -225,8 +237,10 @@ func getUserDocs() docsCollection {
 					},
 				},
 				"address": map[string]any{
-					"postalCode": 34524,
+					"postalCode": 1600,
 					"city":       "San Francisco",
+					"country":    "USA",
+					"street":     "Market St",
 				},
 			},
 			{
@@ -245,8 +259,10 @@ func getUserDocs() docsCollection {
 					},
 				},
 				"address": map[string]any{
-					"postalCode": 422,
+					"postalCode": 11680,
 					"city":       "Toronto",
+					"country":    "Canada",
+					"street":     "Yonge St",
 				},
 			},
 		},
