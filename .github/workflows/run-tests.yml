@@ -68,6 +68,7 @@ jobs:
         run: make test:changes
 
       - name: Upload coverage artifact
+        if: ${{ !matrix.detect-changes }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
