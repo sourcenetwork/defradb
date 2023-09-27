@@ -141,9 +141,6 @@ func (df *DocumentFetcher) Init(
 	showDeleted bool,
 ) error {
 	df.txn = txn
-	if col.Schema.IsEmpty() {
-		return client.NewErrUninitializeProperty("DocumentFetcher", "Schema")
-	}
 
 	err := df.init(col, fields, filter, docmapper, reverse)
 	if err != nil {

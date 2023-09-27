@@ -42,11 +42,9 @@ func (col CollectionDescription) IDString() string {
 // GetFieldByID searches for a field with the given ID. If such a field is found it
 // will return it and true, if it is not found it will return false.
 func (col CollectionDescription) GetFieldByID(id FieldID) (FieldDescription, bool) {
-	if !col.Schema.IsEmpty() {
-		for _, field := range col.Schema.Fields {
-			if field.ID == id {
-				return field, true
-			}
+	for _, field := range col.Schema.Fields {
+		if field.ID == id {
+			return field, true
 		}
 	}
 	return FieldDescription{}, false
@@ -93,11 +91,6 @@ type SchemaDescription struct {
 	Fields []FieldDescription
 }
 
-// IsEmpty returns true if the SchemaDescription is empty and uninitialized
-func (sd SchemaDescription) IsEmpty() bool {
-	return len(sd.Fields) == 0
-}
-
 // GetFieldKey returns the field ID for the given field name.
 func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
 	for _, field := range sd.Fields {
@@ -110,11 +103,9 @@ func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
 
 // GetField returns the field of the given name.
 func (sd SchemaDescription) GetField(name string) (FieldDescription, bool) {
-	if !sd.IsEmpty() {
-		for _, field := range sd.Fields {
-			if field.Name == name {
-				return field, true
-			}
+	for _, field := range sd.Fields {
+		if field.Name == name {
+			return field, true
 		}
 	}
 	return FieldDescription{}, false

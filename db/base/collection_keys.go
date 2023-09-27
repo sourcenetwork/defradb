@@ -42,19 +42,7 @@ func MakePrimaryIndexKeyForCRDT(
 	case client.COMPOSITE:
 		return MakeCollectionKey(c).WithInstanceInfo(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
 	case client.LWW_REGISTER:
-		fieldKey := getFieldKey(c, key, fieldName)
-		return MakeCollectionKey(c).WithInstanceInfo(fieldKey), nil
+		return MakeCollectionKey(c).WithInstanceInfo(key).WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName))), nil
 	}
 	return core.DataStoreKey{}, ErrInvalidCrdtType
-}
-
-func getFieldKey(
-	c client.CollectionDescription,
-	key core.DataStoreKey,
-	fieldName string,
-) core.DataStoreKey {
-	if !c.Schema.IsEmpty() {
-		return key.WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
-	}
-	return key.WithFieldId(fieldName)
 }
