@@ -22,7 +22,7 @@ import (
 
 func MakeSchemaPatchCommand() *cobra.Command {
 	var patchFile string
-
+	var setDefault bool
 	var cmd = &cobra.Command{
 		Use:   "patch [schema]",
 		Short: "Patch an existing schema type",
@@ -63,9 +63,10 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				return fmt.Errorf("patch cannot be empty")
 			}
 
-			return store.PatchSchema(cmd.Context(), patch)
+			return store.PatchSchema(cmd.Context(), patch, setDefault)
 		},
 	}
+	cmd.Flags().BoolVar(&setDefault, "set-default", false, "Set default schema version")
 	cmd.Flags().StringVarP(&patchFile, "file", "f", "", "File to load a patch from")
 	return cmd
 }

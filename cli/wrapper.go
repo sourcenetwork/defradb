@@ -164,9 +164,20 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return cols, nil
 }
 
-func (w *Wrapper) PatchSchema(ctx context.Context, patch string) error {
+func (w *Wrapper) PatchSchema(ctx context.Context, patch string, setDefault bool) error {
 	args := []string{"client", "schema", "patch"}
+	if setDefault {
+		args = append(args, "--set-default")
+	}
 	args = append(args, patch)
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	args := []string{"client", "schema", "set-default"}
+	args = append(args, schemaVersionID)
 
 	_, err := w.cmd.execute(ctx, args)
 	return err

@@ -151,12 +151,30 @@ func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
-	patch, err := io.ReadAll(req.Body)
+	var message patchSchemaRequest
+	err := requestJSON(req, &message)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err = store.PatchSchema(req.Context(), string(patch))
+
+	err = store.PatchSchema(req.Context(), message.Patch, message.SetAsDefaultVersion)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (s *storeHandler) SetDefaultSchemaVersion(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
+
+	schemaVersionID, err := io.ReadAll(req.Body)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	err = store.SetDefaultSchemaVersion(req.Context(), string(schemaVersionID))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

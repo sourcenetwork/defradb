@@ -211,10 +211,31 @@ func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.Collect
 	return cols, nil
 }
 
-func (c *Client) PatchSchema(ctx context.Context, patch string) error {
+type patchSchemaRequest struct {
+	Patch               string
+	SetAsDefaultVersion bool
+}
+
+func (c *Client) PatchSchema(ctx context.Context, patch string, setAsDefaultVersion bool) error {
 	methodURL := c.http.baseURL.JoinPath("schema")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), strings.NewReader(patch))
+	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion})
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	methodURL := c.http.baseURL.JoinPath("schema", "default")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
 	if err != nil {
 		return err
 	}
