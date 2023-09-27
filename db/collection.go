@@ -1321,14 +1321,16 @@ func (c *collection) saveValueToMerkleCRDT(
 			return nil, 0, err
 		}
 
-		field, ok := c.Description().GetFieldByID(client.FieldID(fieldID))
+		schema := c.Schema()
+
+		field, ok := c.Description().GetFieldByID(client.FieldID(fieldID), &schema)
 		if !ok {
 			return nil, 0, client.NewErrFieldIndexNotExist(fieldID)
 		}
 
 		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
-			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
+			core.NewCollectionSchemaVersionKey(schema.VersionID),
 			c.db.events.Updates,
 			ctype,
 			key,
