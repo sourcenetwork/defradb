@@ -73,6 +73,12 @@ func normalizeConditions(parentKey connor.FilterKey, conditions map[connor.Filte
 				result[key] = val
 			}
 		}
+
+		// if the merged filter was an _or operator
+		// there may be child filters that can be merged
+		if op.Operation == request.FilterOpOr {
+			result = normalizeConditions(parentKey, result)
+		}
 	}
 	return result
 }
@@ -176,7 +182,7 @@ func normalizeProperties(parentKey connor.FilterKey, conditions []any) []any {
 	canMergeAnd := !isParentOp || parentOp.Operation != request.FilterOpOr
 
 	// accumulate properties that can be merged into a single _and
-	// if canMergeAnd is true all _and groups will be merged
+	// if canMergeAnd is true, all _and groups will be merged
 	props := make(map[int][]any)
 	for _, c := range conditions {
 		for key, val := range c.(map[connor.FilterKey]any) {
