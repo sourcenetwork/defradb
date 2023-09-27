@@ -103,8 +103,6 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-/*
-This test will enter an infinite loop
 func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
 	user1ID := "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"
 
@@ -191,4 +189,3 @@ func TestMutationUpdateOneToOne_SelfReferencingFromSecondary(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
