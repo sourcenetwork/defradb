@@ -103,7 +103,7 @@ func (db *db) getCollectionDescriptions(
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString string) error {
+func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString string, setAsDefaultVersion bool) error {
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
 		return err
@@ -144,10 +144,11 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	}
 
 	for i, desc := range newDescriptions {
-		col, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc)
+		col, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc, setAsDefaultVersion)
 		if err != nil {
 			return err
 		}
+
 		newDescriptions[i] = col.Description()
 	}
 

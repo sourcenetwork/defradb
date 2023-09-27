@@ -234,6 +234,7 @@ func (db *db) updateCollection(
 	existingDescriptionsByName map[string]client.CollectionDescription,
 	proposedDescriptionsByName map[string]client.CollectionDescription,
 	desc client.CollectionDescription,
+	setAsDefaultVersion bool,
 ) (client.Collection, error) {
 	hasChanged, err := db.validateUpdateCollection(ctx, txn, existingDescriptionsByName, proposedDescriptionsByName, desc)
 	if err != nil {
@@ -300,22 +301,17 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	collectionSchemaKey := core.NewCollectionSchemaKey(desc.Schema.SchemaID)
-	err = txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
-	}
-
-	collectionKey := core.NewCollectionKey(desc.Name)
-	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
-	}
-
 	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, previousSchemaVersionID)
 	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
 	if err != nil {
 		return nil, err
+	}
+
+	if setAsDefaultVersion {
+		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return db.getCollectionByName(ctx, txn, desc.Name)
@@ -589,6 +585,47 @@ func validateUpdateCollectionIndexes(
 		}
 	}
 	return false, nil
+}
+
+func (db *db) setDefaultSchemaVersion(
+	ctx context.Context,
+	txn datastore.Txn,
+	schemaVersionID string,
+) error {
+	col, err := db.getCollectionByVersionID(ctx, txn, schemaVersionID)
+	if err != nil {
+		return err
+	}
+
+	desc := col.Description()
+	err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
+	if err != nil {
+		return err
+	}
+
+	cols, err := db.getCollectionDescriptions(ctx, txn)
+	if err != nil {
+		return err
+	}
+
+	return db.parser.SetSchema(ctx, txn, cols)
+}
+
+func (db *db) setDefaultSchemaVersionExplicit(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionName string,
+	schemaID string,
+	schemaVersionID string,
+) error {
+	collectionSchemaKey := core.NewCollectionSchemaKey(schemaID)
+	err := txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
+	if err != nil {
+		return err
+	}
+
+	collectionKey := core.NewCollectionKey(collectionName)
+	return txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
 }
 
 // getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.

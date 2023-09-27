@@ -33,6 +33,7 @@ func NewServer(db client.DB) *Server {
 	store_handler := &storeHandler{}
 	collection_handler := &collectionHandler{}
 	lens_handler := &lensHandler{}
+	ccip_handler := &ccipHandler{}
 
 	router := chi.NewRouter()
 	router.Use(middleware.RequestLogger(&logFormatter{}))
@@ -53,6 +54,7 @@ func NewServer(db client.DB) *Server {
 		api.Route("/schema", func(schema chi.Router) {
 			schema.Post("/", store_handler.AddSchema)
 			schema.Patch("/", store_handler.PatchSchema)
+			schema.Post("/default", store_handler.SetDefaultSchemaVersion)
 		})
 		api.Route("/collections", func(collections chi.Router) {
 			collections.Get("/", store_handler.GetCollection)
@@ -81,6 +83,10 @@ func NewServer(db client.DB) *Server {
 		api.Route("/graphql", func(graphQL chi.Router) {
 			graphQL.Get("/", store_handler.ExecRequest)
 			graphQL.Post("/", store_handler.ExecRequest)
+		})
+		api.Route("/ccip", func(ccip chi.Router) {
+			ccip.Get("/{sender}/{data}", ccip_handler.ExecCCIP)
+			ccip.Post("/", ccip_handler.ExecCCIP)
 		})
 		api.Route("/p2p", func(p2p chi.Router) {
 			p2p.Route("/replicators", func(p2p_replicators chi.Router) {

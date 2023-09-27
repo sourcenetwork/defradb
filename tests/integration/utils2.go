@@ -384,6 +384,9 @@ func executeTestCase(
 		case SchemaPatch:
 			patchSchema(s, action)
 
+		case SetDefaultSchemaVersion:
+			setDefaultSchemaVersion(s, action)
+
 		case ConfigureMigration:
 			configureMigration(s, action)
 
@@ -1030,13 +1033,35 @@ func patchSchema(
 	action SchemaPatch,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		err := node.DB.PatchSchema(s.ctx, action.Patch)
+		var setAsDefaultVersion bool
+		if action.SetAsDefaultVersion.HasValue() {
+			setAsDefaultVersion = action.SetAsDefaultVersion.Value()
+		} else {
+			setAsDefaultVersion = true
+		}
+
+		err := node.DB.PatchSchema(s.ctx, action.Patch, setAsDefaultVersion)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 	}
 
 	// If the schema was updated we need to refresh the collection definitions.
+	refreshCollections(s)
+	refreshIndexes(s)
+}
+
+func setDefaultSchemaVersion(
+	s *state,
+	action SetDefaultSchemaVersion,
+) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		err := node.DB.SetDefaultSchemaVersion(s.ctx, action.SchemaVersionID)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
+
 	refreshCollections(s)
 	refreshIndexes(s)
 }
