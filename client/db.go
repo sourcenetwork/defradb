@@ -82,9 +82,6 @@ type DB interface {
 
 // Store contains the core DefraDB read-write operations.
 type Store interface {
-	// P2P holds the P2P related methods that must be implemented by the database.
-	P2P
-
 	// Backup holds the backup related methods that must be implemented by the database.
 	Backup
 

@@ -14,13 +14,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 
-	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -293,15 +294,12 @@ func configureReplicator(
 	targetNode := s.nodes[cfg.TargetNodeID]
 	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
-	addr, err := ma.NewMultiaddr(targetAddress)
+	info, err := peer.AddrInfoFromString(targetAddress)
 	require.NoError(s.t, err)
 
-	_, err = sourceNode.Peer.SetReplicator(
-		s.ctx,
-		&pb.SetReplicatorRequest{
-			Addr: addr.Bytes(),
-		},
-	)
+	err = sourceNode.Peer.SetReplicator(s.ctx, client.Replicator{
+		Info: *info,
+	})
 	require.NoError(s.t, err)
 	setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
 }
@@ -460,26 +458,17 @@ func getAllP2PCollections(
 	s *state,
 	action GetAllP2PCollections,
 ) {
-	expectedCollections := []*pb.GetAllP2PCollectionsReply_Collection{}
+	var expectedCollections []string
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
 		col := s.collections[action.NodeID][collectionIndex]
-		expectedCollections = append(
-			expectedCollections,
-			&pb.GetAllP2PCollectionsReply_Collection{
-				Id:   col.SchemaID(),
-				Name: col.Name(),
-			},
-		)
+		expectedCollections = append(expectedCollections, col.Name())
 	}
 
 	n := s.nodes[action.NodeID]
-	cols, err := n.Peer.GetAllP2PCollections(
-		s.ctx,
-		&pb.GetAllP2PCollectionsRequest{},
-	)
+	cols, err := n.Peer.GetAllP2PCollections(s.ctx)
 	require.NoError(s.t, err)
 
-	assert.Equal(s.t, expectedCollections, cols.Collections)
+	assert.Equal(s.t, expectedCollections, cols)
 }
 
 // waitForSync waits for all given wait channels to receive an item signaling completion.

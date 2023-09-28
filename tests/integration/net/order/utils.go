@@ -16,7 +16,7 @@ import (
 	"strings"
 	"testing"
 
-	ma "github.com/multiformats/go-multiaddr"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
-	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -301,16 +300,13 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		for i, n := range nodes {
 			if reps, ok := test.NodeReplicators[i]; ok {
 				for _, r := range reps {
-					addr, err := ma.NewMultiaddr(
-						fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
-					)
-					require.NoError(t, err)
-					_, err = n.Peer.SetReplicator(
-						ctx,
-						&netpb.SetReplicatorRequest{
-							Addr: addr.Bytes(),
-						},
-					)
+					info := peer.AddrInfo{
+						ID:    nodes[r].PeerID(),
+						Addrs: nodes[r].ListenAddrs(),
+					}
+					err := n.Peer.SetReplicator(ctx, client.Replicator{
+						Info: info,
+					})
 					require.NoError(t, err)
 				}
 			}
