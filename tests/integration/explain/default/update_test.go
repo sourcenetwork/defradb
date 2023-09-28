@@ -48,7 +48,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 						},
 						data: "{\"age\": 59}"
 					) {
-						_key
+						_docID
 						name
 						age
 					}
@@ -117,7 +117,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 						],
 						data: "{\"age\": 59}"
 					) {
-						_key
+						_docID
 						name
 						age
 					}
@@ -182,7 +182,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 						id: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 						data: "{\"age\": 59}"
 					) {
-						_key
+						_docID
 						name
 						age
 					}
@@ -250,7 +250,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 						],
 						data: "{\"age\": 59}"
 					) {
-						_key
+						_docID
 						name
 						age
 					}

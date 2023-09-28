@@ -140,7 +140,7 @@ func TestDebugExplainRequestWithMatchingKeyFilter(t *testing.T) {
 				Request: `query @explain(type: debug) {
 					Author(
 						filter: {
-							_key: {
+							_docID: {
 								_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 							}
 						}

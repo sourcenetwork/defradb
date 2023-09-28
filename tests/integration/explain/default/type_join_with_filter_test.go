@@ -55,7 +55,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": nil,
+							"docIDs": nil,
 							"filter": dataMap{
 								"books": dataMap{
 									"name": dataMap{
@@ -138,7 +138,7 @@ func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": nil,
+							"docIDs": nil,
 							"filter": dataMap{
 								"articles": dataMap{
 									"name": dataMap{

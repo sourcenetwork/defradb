@@ -29,6 +29,8 @@ const (
 	Ids         = "ids"
 	ShowDeleted = "showDeleted"
 
+	DocIDs = "docIDs"
+
 	FilterClause  = "filter"
 	GroupByClause = "groupBy"
 	LimitClause   = "limit"

@@ -59,7 +59,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndKeys(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": []string{
+							"docIDs": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e",
 							},
@@ -150,7 +150,7 @@ func TestDefaultExplainRequestWithManyRelatedFiltersAndKey(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": []string{
+							"docIDs": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 							"filter": dataMap{

@@ -59,7 +59,6 @@ const (
 	idsLabel            = "ids"
 	joinRootLabel       = "root"
 	joinSubTypeLabel    = "subType"
-	keysLabel           = "_keys"
 	limitLabel          = "limit"
 	offsetLabel         = "offset"
 	sourcesLabel        = "sources"

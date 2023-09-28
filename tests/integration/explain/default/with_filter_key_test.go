@@ -40,7 +40,7 @@ func TestDefaultExplainRequestWithDocKeyFilter(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": []string{
+							"docIDs": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 							"filter": nil,
@@ -92,7 +92,7 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": []string{
+							"docIDs": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 							"filter": nil,
@@ -149,7 +149,7 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": []string{
+							"docIDs": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
@@ -211,7 +211,7 @@ func TestDefaultExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testin
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys": []string{
+							"docIDs": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
@@ -258,7 +258,7 @@ func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
 				Request: `query @explain {
 					Author(
 						filter: {
-							_key: {
+							_docID: {
 								_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 							}
 						}
@@ -274,7 +274,7 @@ func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
-							"_keys":  nil,
+							"docIDs": nil,
 							"filter": nil,
 						},
 					},
@@ -285,7 +285,7 @@ func TestDefaultExplainRequestWithMatchingKeyFilter(t *testing.T) {
 							"collectionID":   "3",
 							"collectionName": "Author",
 							"filter": dataMap{
-								"_key": dataMap{
+								"_docID": dataMap{
 									"_eq": "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								},
 							},
