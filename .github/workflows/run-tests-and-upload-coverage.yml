@@ -8,7 +8,7 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: Run Tests Workflow
+name: Run Tests And Upload Coverage Workflow
 
 on:
   pull_request:
