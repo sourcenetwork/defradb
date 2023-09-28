@@ -20,7 +20,7 @@ on:
 
 jobs:
   run-tests:
-    name: Run tests job matrix
+    name: Run tests matrix job
 
     runs-on: ubuntu-latest
 
@@ -61,7 +61,7 @@ jobs:
 
       - name: Run integration tests
         if: ${{ !matrix.detect-changes }}
-        run: make test:ci
+        run: make test:coverage
 
       - name: Run change detector tests
         if: ${{ matrix.detect-changes }}
@@ -77,7 +77,7 @@ jobs:
           retention-days: 1
 
   upload-coverage:
-    name: Upload test code coverage
+    name: Upload test code coverage job
 
     runs-on: ubuntu-latest
     

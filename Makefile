@@ -188,14 +188,6 @@ test\:quick:
 test\:build:
 	gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS) -run=nope
 
-.PHONY: test\:ci
-test\:ci:
-	@$(MAKE) deps:lens
-	@$(MAKE) clean:coverage
-	mkdir $(COVERAGE_DIRECTORY)
-	gotestsum --format testname -- ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
-	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
-
 .PHONY: test\:gql-mutations
 test\:gql-mutations:
 	DEFRA_MUTATION_TYPE=gql DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
@@ -264,9 +256,13 @@ test\:coverage:
 	@$(MAKE) deps:lens
 	@$(MAKE) clean:coverage
 	mkdir $(COVERAGE_DIRECTORY)
-	go test ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	gotestsum --format testname -- ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
-	go tool cover -func $(COVERAGE_FILE)
+
+.PHONY: test\:coverage-func
+test\:coverage-func:
+	@$(MAKE) test:coverage
+	go tool cover -func=$(COVERAGE_FILE)
 
 .PHONY: test\:coverage-html
 test\:coverage-html:
