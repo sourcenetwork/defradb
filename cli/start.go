@@ -258,7 +258,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 				return nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", cfg.Net.Peers), err)
 			}
 			log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
-			n.Boostrap(addrs)
+			n.Bootstrap(addrs)
 		}
 
 		if err := n.Start(); err != nil {

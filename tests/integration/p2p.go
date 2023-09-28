@@ -142,7 +142,7 @@ func connectPeers(
 		s.t.Fatal(fmt.Sprintf("failed to parse bootstrap peers %v", targetAddress), err)
 	}
 	log.Info(s.ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
-	sourceNode.Boostrap(addrs)
+	sourceNode.Bootstrap(addrs)
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
