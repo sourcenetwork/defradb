@@ -16,8 +16,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeSchemaAddCommand() *cobra.Command {
@@ -38,7 +36,7 @@ Example: add from stdin:
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			var schema string
 			switch {

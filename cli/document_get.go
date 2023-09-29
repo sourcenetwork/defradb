@@ -30,7 +30,7 @@ Example:
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			col, err := store.GetCollectionByName(cmd.Context(), collection)
 			if err != nil {

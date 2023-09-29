@@ -16,8 +16,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeSchemaPatchCommand() *cobra.Command {
@@ -41,7 +39,7 @@ Example: patch from stdin:
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			var patch string
 			switch {

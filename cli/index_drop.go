@@ -13,7 +13,6 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -29,7 +28,7 @@ Example: drop the index 'UsersByName' for 'Users' collection:
   defradb client index create --collection Users --name UsersByName`,
 		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {

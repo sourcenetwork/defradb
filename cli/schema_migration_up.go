@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -28,7 +27,7 @@ func MakeSchemaMigrationUpCommand() *cobra.Command {
 		Long:  `Runs a migration on the specified schema version.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			var src []map[string]any
 			if err := json.Unmarshal([]byte(args[0]), &src); err != nil {

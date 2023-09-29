@@ -27,7 +27,7 @@ A replicator replicates one or all collection(s) from this node to another.
 `,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			addr, err := peer.AddrInfoFromString(args[0])
 			if err != nil {

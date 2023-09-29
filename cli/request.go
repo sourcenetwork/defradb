@@ -16,7 +16,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -46,7 +45,7 @@ with the database more conveniently.
 
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			var request string
 			switch {

@@ -13,7 +13,6 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/http"
 )
@@ -29,7 +28,7 @@ Example:
   defradb client document keys --collection User keys
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			col, err := store.GetCollectionByName(cmd.Context(), collection)
 			if err != nil {

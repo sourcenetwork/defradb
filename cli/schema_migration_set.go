@@ -43,7 +43,7 @@ Example: add from stdin:
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			var lensCfgJson string
 			switch {

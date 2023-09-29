@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeP2PCollectionAddCommand() *cobra.Command {
@@ -24,7 +22,7 @@ func MakeP2PCollectionAddCommand() *cobra.Command {
 The collections are synchronized between nodes of a pubsub network.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 			return store.AddP2PCollection(cmd.Context(), args[0])
 		},
 	}

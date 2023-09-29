@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeBackupImportCommand() *cobra.Command {
@@ -26,7 +24,7 @@ Example: import data to the database:
   defradb client import user_data.json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 			return store.BasicImport(cmd.Context(), args[0])
 		},
 	}

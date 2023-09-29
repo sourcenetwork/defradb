@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeSchemaMigrationGetCommand() *cobra.Command {
@@ -27,7 +25,7 @@ Example:
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			cfgs, err := store.LensRegistry().Config(cmd.Context())
 			if err != nil {

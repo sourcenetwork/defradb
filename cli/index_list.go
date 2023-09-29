@@ -13,7 +13,6 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -31,7 +30,7 @@ Example: show all index for 'Users' collection:
   defradb client index list --collection Users`,
 		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			switch {
 			case collectionArg != "":

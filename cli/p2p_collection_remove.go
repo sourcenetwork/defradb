@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeP2PCollectionRemoveCommand() *cobra.Command {
@@ -24,7 +22,7 @@ func MakeP2PCollectionRemoveCommand() *cobra.Command {
 The removed collections will no longer be synchronized between nodes.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 			return store.RemoveP2PCollection(cmd.Context(), args[0])
 		},
 	}

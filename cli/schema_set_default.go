@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeSchemaSetDefaultCommand() *cobra.Command {
@@ -23,7 +21,7 @@ func MakeSchemaSetDefaultCommand() *cobra.Command {
 		Long:  `Set the default schema version`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 			return store.SetDefaultSchemaVersion(cmd.Context(), args[0])
 		},
 	}

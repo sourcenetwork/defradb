@@ -12,8 +12,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeP2PReplicatorGetallCommand() *cobra.Command {
@@ -23,7 +21,7 @@ func MakeP2PReplicatorGetallCommand() *cobra.Command {
 		Long: `Get all the replicators active in the P2P data sync system.
 These are the replicators that are currently replicating data from one node to another.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := cmd.Context().Value(storeContextKey).(client.Store)
+			store := mustGetStoreContext(cmd)
 
 			reps, err := store.GetAllReplicators(cmd.Context())
 			if err != nil {

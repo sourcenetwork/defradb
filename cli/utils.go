@@ -38,6 +38,13 @@ var (
 	storeContextKey = contextKey("store")
 )
 
+// mustGetStoreContext returns the store for the current command context.
+//
+// If a store is not set in the current context this function panics.
+func mustGetStoreContext(cmd *cobra.Command) client.Store {
+	return cmd.Context().Value(storeContextKey).(client.Store)
+}
+
 // setTransactionContext sets the transaction for the current command context.
 func setTransactionContext(cmd *cobra.Command, cfg *config.Config, txId uint64) error {
 	if txId == 0 {
