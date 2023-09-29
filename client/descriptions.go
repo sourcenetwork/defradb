@@ -55,8 +55,9 @@ func (col CollectionDescription) GetFieldByRelation(
 	relationName string,
 	otherCollectionName string,
 	otherFieldName string,
+	schema *SchemaDescription,
 ) (FieldDescription, bool) {
-	for _, field := range col.Schema.Fields {
+	for _, field := range schema.Fields {
 		if field.RelationName == relationName && !(col.Name == otherCollectionName && otherFieldName == field.Name) {
 			return field, true
 		}

@@ -263,6 +263,7 @@ func (p *Planner) makeTypeJoinOne(
 		subTypeFieldDesc.RelationName,
 		parent.sourceInfo.collectionDescription.Name,
 		subTypeFieldDesc.Name,
+		&subTypeCollectionDesc.Schema,
 	)
 	if !subTypeFieldNameFound {
 		return nil, client.NewErrFieldNotExist(subTypeFieldDesc.RelationName)
@@ -396,6 +397,7 @@ func (p *Planner) makeTypeJoinMany(
 		subTypeFieldDesc.RelationName,
 		parent.sourceInfo.collectionDescription.Name,
 		subTypeFieldDesc.Name,
+		&subTypeCollectionDesc.Schema,
 	)
 
 	if !rootNameFound {
