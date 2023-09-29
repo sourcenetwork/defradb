@@ -369,6 +369,10 @@ func (n *multiScanNode) Close() error {
 	return n.scanNode.Close()
 }
 
+func (n *multiScanNode) DocumentMap() *core.DocumentMapping {
+	return n.scanNode.DocumentMap()
+}
+
 func (n *multiScanNode) addReader() {
 	n.numReaders++
 }

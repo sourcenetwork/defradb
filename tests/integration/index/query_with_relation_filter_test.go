@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryWithIndex_IfFilterOnIndexedOneToManyRelation_ShouldFilter(t *testing.T) {
+func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field",
 		Actions: []any{
@@ -62,7 +62,7 @@ func TestQueryWithIndex_IfFilterOnIndexedOneToManyRelation_ShouldFilter(t *testi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndex_IfFilterOnIndexedOneToOneRelation_ShouldFilter(t *testing.T) {
+func TestQueryWithIndexOnOneToOneRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field",
 		Actions: []any{
@@ -101,6 +101,53 @@ func TestQueryWithIndex_IfFilterOnIndexedOneToOneRelation_ShouldFilter(t *testin
 					{"name": "John"},
 				},
 				NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
+			),
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToOneSecondaryRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field",
+		Actions: []any{
+			createSchemaWithDocs(`
+				type User {
+					name: String 
+					age: Int
+					address: Address @primary 
+				} 
+
+				type Address {
+					user: User
+					city: String @index
+					street: String 
+				} 
+			`),
+			sendRequestAndExplain(`
+				User(filter: {
+					address: {city: {_eq: "Munich"}}
+				}) {
+					name
+				}`,
+				[]map[string]any{
+					{"name": "Islam"},
+				},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+			),
+			sendRequestAndExplain(`
+				User(filter: {
+					address: {city: {_eq: "Montreal"}}
+				}) {
+					name
+				}`,
+				[]map[string]any{
+					{"name": "John"},
+					{"name": "Fred"},
+					{"name": "Shahzad"},
+				},
+				NewExplainAsserter().WithDocFetches(14).WithFieldFetches(17).WithIndexFetches(3),
 			),
 		},
 	}
