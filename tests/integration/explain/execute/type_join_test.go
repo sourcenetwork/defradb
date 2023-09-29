@@ -58,6 +58,12 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 											"fieldFetches": uint64(2),
 											"indexFetches": uint64(0),
 										},
+										"subTypeScanNode": dataMap{
+											"iterations":   uint64(2),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(2),
+											"indexFetches": uint64(0),
+										},
 									},
 								},
 							},
@@ -118,6 +124,12 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 													"fieldFetches": uint64(2),
 													"indexFetches": uint64(0),
 												},
+												"subTypeScanNode": dataMap{
+													"iterations":   uint64(2),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(2),
+													"indexFetches": uint64(0),
+												},
 											},
 										},
 										{
@@ -127,6 +139,12 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 													"iterations":   uint64(3),
 													"docFetches":   uint64(2),
 													"fieldFetches": uint64(2),
+													"indexFetches": uint64(0),
+												},
+												"subTypeScanNode": dataMap{
+													"iterations":   uint64(2),
+													"docFetches":   uint64(2),
+													"fieldFetches": uint64(4),
 													"indexFetches": uint64(0),
 												},
 											},
@@ -188,6 +206,12 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 										"iterations": uint64(3),
 										"scanNode": dataMap{
 											"iterations":   uint64(3),
+											"docFetches":   uint64(2),
+											"fieldFetches": uint64(4),
+											"indexFetches": uint64(0),
+										},
+										"subTypeScanNode": dataMap{
+											"iterations":   uint64(2),
 											"docFetches":   uint64(2),
 											"fieldFetches": uint64(4),
 											"indexFetches": uint64(0),

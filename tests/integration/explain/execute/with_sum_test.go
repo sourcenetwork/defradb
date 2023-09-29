@@ -113,6 +113,12 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 												"fieldFetches": uint64(2),
 												"indexFetches": uint64(0),
 											},
+											"subTypeScanNode": dataMap{
+												"iterations":   uint64(5),
+												"docFetches":   uint64(6),
+												"fieldFetches": uint64(9),
+												"indexFetches": uint64(0),
+											},
 										},
 									},
 								},
