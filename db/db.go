@@ -183,10 +183,6 @@ func (db *db) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
 }
 
-func (db *db) systemstore() datastore.DSReaderWriter {
-	return db.multistore.Systemstore()
-}
-
 func (db *db) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
 }

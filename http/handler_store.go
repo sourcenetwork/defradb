@@ -17,87 +17,85 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-
 	"github.com/sourcenetwork/defradb/client"
 )
 
 type storeHandler struct{}
 
 func (s *storeHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
+	// store := req.Context().Value(storeContextKey).(client.Store)
 
-	var rep client.Replicator
-	if err := requestJSON(req, &rep); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	err := store.SetReplicator(req.Context(), rep)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
+	// var rep client.Replicator
+	// if err := requestJSON(req, &rep); err != nil {
+	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// 	return
+	// }
+	// err := store.SetReplicator(req.Context(), rep)
+	// if err != nil {
+	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// 	return
+	// }
+	// rw.WriteHeader(http.StatusOK)
 }
 
 func (s *storeHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
+	// store := req.Context().Value(storeContextKey).(client.Store)
 
-	var rep client.Replicator
-	if err := requestJSON(req, &rep); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	err := store.DeleteReplicator(req.Context(), rep)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
+	// var rep client.Replicator
+	// if err := requestJSON(req, &rep); err != nil {
+	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// 	return
+	// }
+	// err := store.DeleteReplicator(req.Context(), rep)
+	// if err != nil {
+	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// 	return
+	// }
+	// rw.WriteHeader(http.StatusOK)
 }
 
 func (s *storeHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
+	// store := req.Context().Value(storeContextKey).(client.Store)
 
-	reps, err := store.GetAllReplicators(req.Context())
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	responseJSON(rw, http.StatusOK, reps)
+	// reps, err := store.GetAllReplicators(req.Context())
+	// if err != nil {
+	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// 	return
+	// }
+	// responseJSON(rw, http.StatusOK, reps)
 }
 
 func (s *storeHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
+	// store := req.Context().Value(storeContextKey).(client.Store)
 
-	err := store.AddP2PCollection(req.Context(), chi.URLParam(req, "id"))
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
+	// err := store.AddP2PCollection(req.Context(), chi.URLParam(req, "id"))
+	// if err != nil {
+	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// 	return
+	// }
+	// rw.WriteHeader(http.StatusOK)
 }
 
 func (s *storeHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
+	// store := req.Context().Value(storeContextKey).(client.Store)
 
-	err := store.RemoveP2PCollection(req.Context(), chi.URLParam(req, "id"))
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
+	// err := store.RemoveP2PCollection(req.Context(), chi.URLParam(req, "id"))
+	// if err != nil {
+	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// 	return
+	// }
+	// rw.WriteHeader(http.StatusOK)
 }
 
 func (s *storeHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
+	// store := req.Context().Value(storeContextKey).(client.Store)
 
-	cols, err := store.GetAllP2PCollections(req.Context())
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	responseJSON(rw, http.StatusOK, cols)
+	// cols, err := store.GetAllP2PCollections(req.Context())
+	// if err != nil {
+	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// 	return
+	// }
+	// responseJSON(rw, http.StatusOK, cols)
 }
 
 func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {

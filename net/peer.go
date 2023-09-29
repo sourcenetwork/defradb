@@ -23,11 +23,13 @@ import (
 	exchange "github.com/ipfs/boxo/exchange"
 	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
+	peerstore "github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/core/routing"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
@@ -377,11 +379,51 @@ func (p *Peer) pushToReplicator(
 }
 
 func (p *Peer) loadReplicators(ctx context.Context) error {
-	panic("not implemented")
+	reps, err := p.GetAllReplicators(ctx)
+	if err != nil {
+		return errors.Wrap("failed to get replicators", err)
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, rep := range reps {
+		for _, schema := range rep.Schemas {
+			if pReps, exists := p.replicators[schema]; exists {
+				if _, exists := pReps[rep.Info.ID]; exists {
+					continue
+				}
+			} else {
+				p.replicators[schema] = make(map[peer.ID]struct{})
+			}
+
+			// add to replicators list
+			p.replicators[schema][rep.Info.ID] = struct{}{}
+		}
+
+		// Add the destination's peer multiaddress in the peerstore.
+		// This will be used during connection and stream creation by libp2p.
+		p.host.Peerstore().AddAddrs(rep.Info.ID, rep.Info.Addrs, peerstore.PermanentAddrTTL)
+
+		log.Info(ctx, "loaded replicators from datastore", logging.NewKV("Replicator", rep))
+	}
+
+	return nil
 }
 
 func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, error) {
-	panic("not implemented")
+	collections, err := p.GetAllP2PCollections(ctx)
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+		return nil, err
+	}
+	colMap := make(map[string]struct{})
+	for _, col := range collections {
+		err := p.server.addPubSubTopic(col, true)
+		if err != nil {
+			return nil, err
+		}
+		colMap[col] = struct{}{}
+	}
+
+	return colMap, nil
 }
 
 func (p *Peer) handleDocCreateLog(evt events.Update) error {
@@ -527,7 +569,7 @@ type EvtPubSub struct {
 }
 
 // rollbackAddPubSubTopics removes the given topics from the pubsub system.
-func (p *Peer) rollbackAddPubSubTopics(topics []string, cause error) error {
+func (p *Peer) rollbackAddPubSubTopics(cause error, topics ...string) error {
 	for _, topic := range topics {
 		if err := p.server.removePubSubTopic(topic); err != nil {
 			return errors.WithStack(err, errors.NewKV("Cause", cause))
@@ -537,7 +579,7 @@ func (p *Peer) rollbackAddPubSubTopics(topics []string, cause error) error {
 }
 
 // rollbackRemovePubSubTopics adds back the given topics from the pubsub system.
-func (p *Peer) rollbackRemovePubSubTopics(topics []string, cause error) error {
+func (p *Peer) rollbackRemovePubSubTopics(cause error, topics ...string) error {
 	for _, topic := range topics {
 		if err := p.server.addPubSubTopic(topic, true); err != nil {
 			return errors.WithStack(err, errors.NewKV("Cause", cause))

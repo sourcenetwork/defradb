@@ -121,56 +121,6 @@ func (db *explicitTxnDB) GetCollectionByVersionID(
 	return db.getCollectionByVersionID(ctx, db.txn, schemaVersionID)
 }
 
-// AddP2PCollection adds the given collection ID that the P2P system
-// subscribes to to the the persisted list. It will error if the provided
-// collection ID is invalid.
-func (db *implicitTxnDB) AddP2PCollection(ctx context.Context, collectionID string) error {
-	txn, err := db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
-	err = db.addP2PCollection(ctx, txn, collectionID)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit(ctx)
-}
-
-// AddP2PCollection adds the given collection ID that the P2P system
-// subscribes to to the the persisted list. It will error if the provided
-// collection ID is invalid.
-func (db *explicitTxnDB) AddP2PCollection(ctx context.Context, collectionID string) error {
-	return db.addP2PCollection(ctx, db.txn, collectionID)
-}
-
-// RemoveP2PCollection removes the given collection ID that the P2P system
-// subscribes to from the the persisted list. It will error if the provided
-// collection ID is invalid.
-func (db *implicitTxnDB) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	txn, err := db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
-	err = db.removeP2PCollection(ctx, txn, collectionID)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit(ctx)
-}
-
-// RemoveP2PCollection removes the given collection ID that the P2P system
-// subscribes to from the the persisted list. It will error if the provided
-// collection ID is invalid.
-func (db *explicitTxnDB) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	return db.removeP2PCollection(ctx, db.txn, collectionID)
-}
-
 // GetAllCollections gets all the currently defined collections.
 func (db *implicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	txn, err := db.NewTxn(ctx, true)
@@ -316,82 +266,6 @@ func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig
 
 func (db *explicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
 	return db.lensRegistry.SetMigration(ctx, cfg)
-}
-
-// SetReplicator adds a new replicator to the database.
-func (db *implicitTxnDB) SetReplicator(ctx context.Context, rep client.Replicator) error {
-	txn, err := db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
-	err = db.setReplicator(ctx, txn, rep)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit(ctx)
-}
-
-// SetReplicator adds a new replicator to the database.
-func (db *explicitTxnDB) SetReplicator(ctx context.Context, rep client.Replicator) error {
-	return db.setReplicator(ctx, db.txn, rep)
-}
-
-// DeleteReplicator removes a replicator from the database.
-func (db *implicitTxnDB) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
-	txn, err := db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
-	err = db.deleteReplicator(ctx, txn, rep)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit(ctx)
-}
-
-// DeleteReplicator removes a replicator from the database.
-func (db *explicitTxnDB) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
-	return db.deleteReplicator(ctx, db.txn, rep)
-}
-
-// GetAllReplicators returns all replicators of the database.
-func (db *implicitTxnDB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getAllReplicators(ctx, txn)
-}
-
-// GetAllReplicators returns all replicators of the database.
-func (db *explicitTxnDB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	return db.getAllReplicators(ctx, db.txn)
-}
-
-// GetAllP2PCollections returns the list of persisted collection IDs that
-// the P2P system subscribes to.
-func (db *implicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getAllP2PCollections(ctx, txn)
-}
-
-// GetAllP2PCollections returns the list of persisted collection IDs that
-// the P2P system subscribes to.
-func (db *explicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	return db.getAllP2PCollections(ctx, db.txn)
 }
 
 // BasicImport imports a json dataset.
