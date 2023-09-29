@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionGetallCommand() *cobra.Command {
+func MakeP2PCollectionGetAllCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all P2P collections",

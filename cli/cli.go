@@ -28,12 +28,12 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 	p2p_collection.AddCommand(
 		MakeP2PCollectionAddCommand(),
 		MakeP2PCollectionRemoveCommand(),
-		MakeP2PCollectionGetallCommand(),
+		MakeP2PCollectionGetAllCommand(),
 	)
 
 	p2p_replicator := MakeP2PReplicatorCommand()
 	p2p_replicator.AddCommand(
-		MakeP2PReplicatorGetallCommand(),
+		MakeP2PReplicatorGetAllCommand(),
 		MakeP2PReplicatorSetCommand(),
 		MakeP2PReplicatorDeleteCommand(),
 	)

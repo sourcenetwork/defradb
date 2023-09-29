@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PReplicatorGetallCommand() *cobra.Command {
+func MakeP2PReplicatorGetAllCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all replicators",
