@@ -35,7 +35,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
-	pb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
@@ -429,7 +428,7 @@ func TestSetReplicator_NoError(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestSetReplicator_WithInvalidAddress_InvalidArgumentError(t *testing.T) {
+func TestSetReplicator_WithInvalidAddress_EmptyPeerIDError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
@@ -443,7 +442,7 @@ func TestSetReplicator_WithInvalidAddress_InvalidArgumentError(t *testing.T) {
 		Info:    peer.AddrInfo{},
 		Schemas: []string{"User"},
 	})
-	require.ErrorContains(t, err, "InvalidArgument")
+	require.ErrorContains(t, err, "empty peer ID")
 }
 
 func TestSetReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
@@ -473,7 +472,7 @@ func TestSetReplicator_WithUndefinedCollection_KeyNotFoundError(t *testing.T) {
 		Info:    *info,
 		Schemas: []string{"User"},
 	})
-	require.ErrorContains(t, err, "failed to get collection for replicator: datastore: key not found")
+	require.ErrorContains(t, err, "failed to get collections for replicator: datastore: key not found")
 }
 
 func TestSetReplicator_ForAllCollections_NoError(t *testing.T) {
@@ -590,7 +589,7 @@ func TestDeleteReplicator_WithInvalidCollection_KeyNotFoundError(t *testing.T) {
 		Info:    info,
 		Schemas: []string{"User"},
 	})
-	require.ErrorContains(t, err, "failed to get collection for replicator: datastore: key not found")
+	require.ErrorContains(t, err, "failed to get collections for replicator: datastore: key not found")
 }
 
 func TestDeleteReplicator_WithCollectionAndPreviouslySetReplicator_NoError(t *testing.T) {
@@ -837,19 +836,14 @@ func TestGetAllP2PCollections(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	_, err = n.Peer.AddP2PCollections(
-		ctx,
-		&pb.AddP2PCollectionsRequest{
-			Collections: []string{col.SchemaID()},
-		},
-	)
+	err = n.Peer.AddP2PCollection(ctx, col.SchemaID())
 	require.NoError(t, err)
 
 	cols, err := n.Peer.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
 
 	require.Len(t, cols, 1)
-	assert.Equal(t, cols[0], col.Name())
+	assert.Equal(t, cols[0], col.SchemaID())
 }
 
 func TestHandleDocCreateLog_NoError(t *testing.T) {

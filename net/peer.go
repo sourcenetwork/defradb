@@ -85,8 +85,6 @@ type Peer struct {
 
 	ctx    context.Context
 	cancel context.CancelFunc
-
-	pb.UnimplementedCollectionServer
 }
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.

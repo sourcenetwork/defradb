@@ -14,14 +14,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
-	pb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -400,14 +399,11 @@ func subscribeToCollection(
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
-	_, err := n.Peer.AddP2PCollections(
-		s.ctx,
-		&pb.AddP2PCollectionsRequest{
-			Collections: schemaIDs,
-		},
-	)
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	for _, schemaID := range schemaIDs {
+		err := n.Peer.AddP2PCollection(s.ctx, schemaID)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -435,14 +431,11 @@ func unsubscribeToCollection(
 		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
-	_, err := n.Peer.RemoveP2PCollections(
-		s.ctx,
-		&pb.RemoveP2PCollectionsRequest{
-			Collections: schemaIDs,
-		},
-	)
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	for _, schemaID := range schemaIDs {
+		err := n.Peer.RemoveP2PCollection(s.ctx, schemaID)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
 
 	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,

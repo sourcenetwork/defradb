@@ -1,3 +1,13 @@
+// Copyright 2023 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package net
 
 import (
@@ -16,14 +26,18 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if rep.Info.ID == p.host.ID() {
-		return ErrSelfTargetForReplicator
-	}
 	txn, err := p.db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
+
+	if rep.Info.ID == p.host.ID() {
+		return ErrSelfTargetForReplicator
+	}
+	if err := rep.Info.ID.Validate(); err != nil {
+		return err
+	}
 
 	var collections []client.Collection
 	switch {
@@ -32,7 +46,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		for _, name := range rep.Schemas {
 			col, err := p.db.WithTxn(txn).GetCollectionByName(ctx, name)
 			if err != nil {
-				return err
+				return NewErrReplicatorCollections(err)
 			}
 			collections = append(collections, col)
 		}
@@ -41,7 +55,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		// default to all collections
 		collections, err = p.db.WithTxn(txn).GetAllCollections(ctx)
 		if err != nil {
-			return err
+			return NewErrReplicatorCollections(err)
 		}
 	}
 	rep.Schemas = nil
@@ -92,14 +106,18 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if rep.Info.ID == p.host.ID() {
-		return ErrSelfTargetForReplicator
-	}
 	txn, err := p.db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
+
+	if rep.Info.ID == p.host.ID() {
+		return ErrSelfTargetForReplicator
+	}
+	if err := rep.Info.ID.Validate(); err != nil {
+		return err
+	}
 
 	var collections []client.Collection
 	switch {
@@ -108,16 +126,22 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 		for _, name := range rep.Schemas {
 			col, err := p.db.WithTxn(txn).GetCollectionByName(ctx, name)
 			if err != nil {
-				return err
+				return NewErrReplicatorCollections(err)
 			}
 			collections = append(collections, col)
+		}
+		// make sure the replicator exists in the datastore
+		key := core.NewReplicatorKey(rep.Info.ID.String())
+		_, err = txn.Systemstore().Get(ctx, key.ToDS())
+		if err != nil {
+			return err
 		}
 
 	default:
 		// default to all collections
 		collections, err = p.db.WithTxn(txn).GetAllCollections(ctx)
 		if err != nil {
-			return err
+			return NewErrReplicatorCollections(err)
 		}
 	}
 	rep.Schemas = nil
