@@ -365,11 +365,13 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 	primaryCol = primaryCol.WithTxn(txn)
+	primarySchema := primaryCol.Schema()
 
 	primaryField, ok := primaryCol.Description().GetFieldByRelation(
 		relationFieldDescription.RelationName,
 		secondaryCollectionName,
 		relationFieldDescription.Name,
+		&primarySchema,
 	)
 	if !ok {
 		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
