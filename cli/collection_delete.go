@@ -11,8 +11,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -70,7 +68,7 @@ Example: delete by filter
 				}
 				return writeJSON(cmd, res)
 			default:
-				return fmt.Errorf("document key or filter must be defined")
+				return ErrNoDocKeyOrFilter
 			}
 		},
 	}

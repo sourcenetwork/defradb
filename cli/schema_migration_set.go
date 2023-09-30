@@ -12,7 +12,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -21,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 func MakeSchemaMigrationSetCommand() *cobra.Command {
@@ -62,7 +60,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			case len(args) == 3:
 				lensCfgJson = args[2]
 			default:
-				return fmt.Errorf("lens config cannot be empty")
+				return ErrNoLensConfig
 			}
 
 			srcSchemaVersionID := args[0]
@@ -73,7 +71,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 
 			var lensCfg model.Lens
 			if err := decoder.Decode(&lensCfg); err != nil {
-				return errors.Wrap("invalid lens configuration", err)
+				return NewErrInvalidLensConfig(err)
 			}
 
 			migrationCfg := client.LensConfig{

@@ -11,8 +11,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -90,7 +88,7 @@ Example: update by keys
 				}
 				return col.Update(cmd.Context(), doc)
 			default:
-				return fmt.Errorf("document key or filter must be defined")
+				return ErrNoDocKeyOrFilter
 			}
 		},
 	}

@@ -12,7 +12,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -51,7 +50,7 @@ Example: create documents
 				}
 				docData = data
 			default:
-				return fmt.Errorf("document or file must be defined")
+				return ErrNoDocOrFile
 			}
 
 			var docMap any
@@ -71,7 +70,7 @@ Example: create documents
 				for i, v := range t {
 					docMap, ok := v.(map[string]any)
 					if !ok {
-						return fmt.Errorf("invalid document")
+						return ErrInvalidDocument
 					}
 					doc, err := client.NewDocFromMap(docMap)
 					if err != nil {
@@ -81,7 +80,7 @@ Example: create documents
 				}
 				return col.CreateMany(cmd.Context(), docs)
 			default:
-				return fmt.Errorf("invalid document")
+				return ErrInvalidDocument
 			}
 		},
 	}
