@@ -51,8 +51,8 @@ func (c *Collection) SchemaID() string {
 }
 
 func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
-	args := []string{"client", "document", "create"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "create"}
+	args = append(args, "--name", c.desc.Name)
 
 	// We must call this here, else the doc key on the given object will not match
 	// that of the document saved in the database
@@ -75,8 +75,8 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 }
 
 func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
-	args := []string{"client", "document", "create"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "create"}
+	args = append(args, "--name", c.desc.Name)
 
 	docMapList := make([]map[string]any, len(docs))
 	for i, doc := range docs {
@@ -109,8 +109,8 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 }
 
 func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
-	args := []string{"client", "document", "update"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "update"}
+	args = append(args, "--name", c.desc.Name)
 	args = append(args, "--key", doc.Key().String())
 
 	document, err := documentJSON(doc)
@@ -187,8 +187,8 @@ func (c *Collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	args := []string{"client", "document", "update"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "update"}
+	args = append(args, "--name", c.desc.Name)
 	args = append(args, "--updater", updater)
 
 	filterJSON, err := json.Marshal(filter)
@@ -205,8 +205,8 @@ func (c *Collection) UpdateWithKey(
 	key client.DocKey,
 	updater string,
 ) (*client.UpdateResult, error) {
-	args := []string{"client", "document", "update"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "update"}
+	args = append(args, "--name", c.desc.Name)
 	args = append(args, "--key", key.String())
 	args = append(args, "--updater", updater)
 
@@ -218,8 +218,8 @@ func (c *Collection) UpdateWithKeys(
 	docKeys []client.DocKey,
 	updater string,
 ) (*client.UpdateResult, error) {
-	args := []string{"client", "document", "update"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "update"}
+	args = append(args, "--name", c.desc.Name)
 	args = append(args, "--updater", updater)
 
 	keys := make([]string, len(docKeys))
@@ -260,8 +260,8 @@ func (c *Collection) deleteWith(
 }
 
 func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
-	args := []string{"client", "document", "delete"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "delete"}
+	args = append(args, "--name", c.desc.Name)
 
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -273,16 +273,16 @@ func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.
 }
 
 func (c *Collection) DeleteWithKey(ctx context.Context, docKey client.DocKey) (*client.DeleteResult, error) {
-	args := []string{"client", "document", "delete"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "delete"}
+	args = append(args, "--name", c.desc.Name)
 	args = append(args, "--key", docKey.String())
 
 	return c.deleteWith(ctx, args)
 }
 
 func (c *Collection) DeleteWithKeys(ctx context.Context, docKeys []client.DocKey) (*client.DeleteResult, error) {
-	args := []string{"client", "document", "delete"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "delete"}
+	args = append(args, "--name", c.desc.Name)
 
 	keys := make([]string, len(docKeys))
 	for i, v := range docKeys {
@@ -294,8 +294,8 @@ func (c *Collection) DeleteWithKeys(ctx context.Context, docKeys []client.DocKey
 }
 
 func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
-	args := []string{"client", "document", "get"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "get"}
+	args = append(args, "--name", c.desc.Name)
 	args = append(args, key.String())
 
 	if showDeleted {
@@ -321,8 +321,8 @@ func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
 }
 
 func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
-	args := []string{"client", "document", "keys"}
-	args = append(args, "--collection", c.desc.Name)
+	args := []string{"client", "collection", "keys"}
+	args = append(args, "--name", c.desc.Name)
 
 	stdOut, _, err := c.cmd.executeStream(ctx, args)
 	if err != nil {

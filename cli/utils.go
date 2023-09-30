@@ -36,6 +36,11 @@ var (
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
 	storeContextKey = contextKey("store")
+	// colContextKey is the context key for the client.Collection
+	//
+	// If a transaction exists, all operations will be executed
+	// in the current transaction context.
+	colContextKey = contextKey("col")
 )
 
 // mustGetStoreContext returns the store for the current command context.

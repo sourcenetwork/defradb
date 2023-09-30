@@ -16,33 +16,26 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func MakeDocumentDeleteCommand() *cobra.Command {
-	var collection string
+func MakeCollectionDeleteCommand() *cobra.Command {
 	var keys []string
 	var filter string
 	var cmd = &cobra.Command{
-		Use:   "delete --collection <collection> [--filter <filter> --key <key>]",
+		Use:   "delete [--filter <filter> --key <key>]",
 		Short: "Delete documents by key or filter.",
 		Long: `Delete documents by key or filter and lists the number of documents deleted.
 		
 Example: delete by key(s)
-  defradb client document delete --collection User --key bae-123,bae-456
+  defradb client collection delete --name User --key bae-123,bae-456
 
 Example: delete by filter
-  defradb client document delete --collection User --filter '{ "_gte": { "points": 100 } }'
+  defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
-
-			col, err := store.GetCollectionByName(cmd.Context(), collection)
-			if err != nil {
-				return err
-			}
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				col = col.WithTxn(tx)
+			col, ok := cmd.Context().Value(colContextKey).(client.Collection)
+			if !ok {
+				return cmd.Usage()
 			}
 
 			switch {
@@ -81,7 +74,6 @@ Example: delete by filter
 			}
 		},
 	}
-	cmd.Flags().StringVarP(&collection, "collection", "c", "", "Collection name")
 	cmd.Flags().StringSliceVar(&keys, "key", nil, "Document key")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	return cmd

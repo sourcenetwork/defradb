@@ -16,40 +16,33 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func MakeDocumentUpdateCommand() *cobra.Command {
-	var collection string
+func MakeCollectionUpdateCommand() *cobra.Command {
 	var keys []string
 	var filter string
 	var updater string
 	var cmd = &cobra.Command{
-		Use:   "update --collection <collection> [--filter <filter> --key <key> --updater <updater>] <document>",
+		Use:   "update [--filter <filter> --key <key> --updater <updater>] <document>",
 		Short: "Update documents by key or filter.",
 		Long: `Update documents by key or filter.
 		
 Example:
-  defradb client document update --collection User --key bae-123 '{ "name": "Bob" }'
+  defradb client collection update --name User --key bae-123 '{ "name": "Bob" }'
 
 Example: update by filter
-  defradb client document update --collection User \
+  defradb client collection update --name User \
   --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
 Example: update by keys
-  defradb client document update --collection User \
+  defradb client collection update --name User \
   --key bae-123,bae-456 --updater '{ "verified": true }'
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
-
-			col, err := store.GetCollectionByName(cmd.Context(), collection)
-			if err != nil {
-				return err
-			}
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				col = col.WithTxn(tx)
+			col, ok := cmd.Context().Value(colContextKey).(client.Collection)
+			if !ok {
+				return cmd.Usage()
 			}
 
 			switch {
@@ -101,7 +94,6 @@ Example: update by keys
 			}
 		},
 	}
-	cmd.Flags().StringVarP(&collection, "collection", "c", "", "Collection name")
 	cmd.Flags().StringSliceVar(&keys, "key", nil, "Document key")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")

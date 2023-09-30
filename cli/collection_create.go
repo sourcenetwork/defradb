@@ -18,33 +18,26 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func MakeDocumentCreateCommand() *cobra.Command {
-	var collection string
+func MakeCollectionCreateCommand() *cobra.Command {
 	var file string
 	var cmd = &cobra.Command{
-		Use:   "create --collection <collection> <document>",
+		Use:   "create <document>",
 		Short: "Create a new document.",
 		Long: `Create a new document.
 
 Example: create document
-  defradb client document create --collection User '{ "name": "Bob" }'
+  defradb client collection create --name User '{ "name": "Bob" }'
 
 Example: create documents
-  defradb client document create --collection User '[{ "name": "Alice" }, { "name": "Bob" }]'
+  defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
-
-			col, err := store.GetCollectionByName(cmd.Context(), collection)
-			if err != nil {
-				return err
-			}
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				col = col.WithTxn(tx)
+			col, ok := cmd.Context().Value(colContextKey).(client.Collection)
+			if !ok {
+				return cmd.Usage()
 			}
 
 			var docData []byte
@@ -93,6 +86,5 @@ Example: create documents
 		},
 	}
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
-	cmd.Flags().StringVarP(&collection, "collection", "c", "", "Collection name")
 	return cmd
 }

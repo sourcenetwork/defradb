@@ -11,69 +11,67 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func MakeCollectionCommand() *cobra.Command {
+func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
+	var txID uint64
 	var name string
 	var schemaID string
 	var versionID string
 	var cmd = &cobra.Command{
 		Use:   "collection [--name <name> --schema <schemaID> --version <versionID>]",
-		Short: "View detailed collection info.",
-		Long: `View detailed collection info.
-		
-Example: view all collections
-  defradb client collection
-
-Example: view collection by name
-  defradb client collection --name User
-
-Example: view collection by schema id
-  defradb client collection --schema bae123
-
-Example: view collection by version id
-  defradb client collection --version bae123
-		`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Short: "Interact with a collection.",
+		Long:  `Create, read, update, and delete documents within a collection.`,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
+			// cobra does not chain pre run calls so we have to run them again here
+			if err := loadConfig(cfg); err != nil {
+				return err
+			}
+			if err := setTransactionContext(cmd, cfg, txID); err != nil {
+				return err
+			}
+			if err := setStoreContext(cmd, cfg); err != nil {
+				return err
+			}
 			store := mustGetStoreContext(cmd)
 
+			var col client.Collection
 			switch {
-			case name != "":
-				col, err := store.GetCollectionByName(cmd.Context(), name)
-				if err != nil {
-					return err
-				}
-				return writeJSON(cmd, col.Description())
-			case schemaID != "":
-				col, err := store.GetCollectionBySchemaID(cmd.Context(), schemaID)
-				if err != nil {
-					return err
-				}
-				return writeJSON(cmd, col.Description())
 			case versionID != "":
-				col, err := store.GetCollectionByVersionID(cmd.Context(), versionID)
-				if err != nil {
-					return err
-				}
-				return writeJSON(cmd, col.Description())
+				col, err = store.GetCollectionByVersionID(cmd.Context(), versionID)
+
+			case schemaID != "":
+				col, err = store.GetCollectionBySchemaID(cmd.Context(), schemaID)
+
+			case name != "":
+				col, err = store.GetCollectionByName(cmd.Context(), name)
+
 			default:
-				cols, err := store.GetAllCollections(cmd.Context())
-				if err != nil {
-					return err
-				}
-				colDesc := make([]client.CollectionDescription, len(cols))
-				for i, col := range cols {
-					colDesc[i] = col.Description()
-				}
-				return writeJSON(cmd, colDesc)
+				return nil
 			}
+
+			if err != nil {
+				return err
+			}
+			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
+				col = col.WithTxn(tx)
+			}
+
+			ctx := context.WithValue(cmd.Context(), colContextKey, col)
+			cmd.SetContext(ctx)
+			return nil
 		},
 	}
-	cmd.Flags().StringVar(&name, "name", "", "Get collection by name")
-	cmd.Flags().StringVar(&schemaID, "schema", "", "Get collection by schema ID")
-	cmd.Flags().StringVar(&versionID, "version", "", "Get collection by version ID")
+	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
+	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")
+	cmd.PersistentFlags().StringVar(&schemaID, "schema", "", "Collection schema ID")
+	cmd.PersistentFlags().StringVar(&versionID, "version", "", "Collection version ID")
 	return cmd
 }

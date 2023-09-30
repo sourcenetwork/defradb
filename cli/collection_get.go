@@ -14,31 +14,25 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func MakeDocumentGetCommand() *cobra.Command {
+func MakeCollectionGetCommand() *cobra.Command {
 	var showDeleted bool
-	var collection string
 	var cmd = &cobra.Command{
-		Use:   "get --collection <collection> <docKey> [--show-deleted]",
-		Short: "View detailed document info.",
-		Long: `View detailed document info.
+		Use:   "get <docKey> [--show-deleted]",
+		Short: "View document fields.",
+		Long: `View document fields.
 
 Example:
-  defradb client document get --collection User bae-123
+  defradb client collection get --name User bae-123
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			col, ok := cmd.Context().Value(colContextKey).(client.Collection)
+			if !ok {
+				return cmd.Usage()
+			}
 
-			col, err := store.GetCollectionByName(cmd.Context(), collection)
-			if err != nil {
-				return err
-			}
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				col = col.WithTxn(tx)
-			}
 			docKey, err := client.NewDocKeyFromString(args[0])
 			if err != nil {
 				return err
@@ -55,6 +49,5 @@ Example:
 		},
 	}
 	cmd.Flags().BoolVar(&showDeleted, "show-deleted", false, "Show deleted documents")
-	cmd.Flags().StringVarP(&collection, "collection", "c", "", "Collection name")
 	return cmd
 }

@@ -192,7 +192,7 @@ func (w *Wrapper) LensRegistry() client.LensRegistry {
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	args := []string{"client", "collection"}
+	args := []string{"client", "collection", "describe"}
 	args = append(args, "--name", name)
 
 	data, err := w.cmd.execute(ctx, args)
@@ -207,7 +207,7 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 }
 
 func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
-	args := []string{"client", "collection"}
+	args := []string{"client", "collection", "describe"}
 	args = append(args, "--schema", schemaId)
 
 	data, err := w.cmd.execute(ctx, args)
@@ -222,8 +222,8 @@ func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) 
 }
 
 func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
-	args := []string{"client", "collection"}
-	args = append(args, "--versionId", versionId)
+	args := []string{"client", "collection", "describe"}
+	args = append(args, "--version", versionId)
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -237,7 +237,7 @@ func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string
 }
 
 func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	args := []string{"client", "collection"}
+	args := []string{"client", "collection", "describe"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

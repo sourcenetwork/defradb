@@ -13,30 +13,25 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeDocumentKeysCommand() *cobra.Command {
-	var collection string
+func MakeCollectionKeysCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "keys --collection <collection>",
-		Short: "List all collection document keys.",
-		Long: `List all collection document keys.
+		Use:   "keys",
+		Short: "List all document keys.",
+		Long: `List all document keys.
 		
 Example:
-  defradb client document keys --collection User keys
+  defradb client collection keys --name User
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			col, ok := cmd.Context().Value(colContextKey).(client.Collection)
+			if !ok {
+				return cmd.Usage()
+			}
 
-			col, err := store.GetCollectionByName(cmd.Context(), collection)
-			if err != nil {
-				return err
-			}
-			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
-				col = col.WithTxn(tx)
-			}
 			docCh, err := col.GetAllDocKeys(cmd.Context())
 			if err != nil {
 				return err
@@ -48,11 +43,12 @@ Example:
 				if docKey.Err != nil {
 					results.Error = docKey.Err.Error()
 				}
-				writeJSON(cmd, results) //nolint:errcheck
+				if err := writeJSON(cmd, results); err != nil {
+					return err
+				}
 			}
 			return nil
 		},
 	}
-	cmd.Flags().StringVarP(&collection, "collection", "c", "", "Collection name")
 	return cmd
 }

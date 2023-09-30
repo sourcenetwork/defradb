@@ -82,26 +82,26 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 		MakeTxDiscardCommand(cfg),
 	)
 
-	document := MakeDocumentCommand()
-	document.AddCommand(
-		MakeDocumentGetCommand(),
-		MakeDocumentKeysCommand(),
-		MakeDocumentDeleteCommand(),
-		MakeDocumentUpdateCommand(),
-		MakeDocumentCreateCommand(),
+	collection := MakeCollectionCommand(cfg)
+	collection.AddCommand(
+		MakeCollectionGetCommand(),
+		MakeCollectionKeysCommand(),
+		MakeCollectionDeleteCommand(),
+		MakeCollectionUpdateCommand(),
+		MakeCollectionCreateCommand(),
+		MakeCollectionDescribeCommand(),
 	)
 
 	client := MakeClientCommand(cfg)
 	client.AddCommand(
 		MakeDumpCommand(),
 		MakeRequestCommand(),
-		MakeCollectionCommand(),
 		schema,
 		index,
 		p2p,
 		backup,
 		tx,
-		document,
+		collection,
 	)
 
 	root := MakeRootCommand(cfg)
