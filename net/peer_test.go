@@ -124,8 +124,6 @@ func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 
 	cfg := config.DefaultConfig()
 	cfg.Net.P2PAddress = randomMultiaddr
-	cfg.Net.RPCAddress = "0.0.0.0:0"
-	cfg.Net.TCPAddress = randomMultiaddr
 
 	n, err := NewNode(
 		ctx,
@@ -147,7 +145,7 @@ func TestNewPeer_NoError(t *testing.T) {
 	h, err := libp2p.New()
 	require.NoError(t, err)
 
-	_, err = NewPeer(ctx, db, h, nil, nil, nil, nil, nil)
+	_, err = NewPeer(ctx, db, h, nil, nil, nil, nil)
 	require.NoError(t, err)
 }
 
@@ -157,7 +155,7 @@ func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 	h, err := libp2p.New()
 	require.NoError(t, err)
 
-	_, err = NewPeer(ctx, nil, h, nil, nil, nil, nil, nil)
+	_, err = NewPeer(ctx, nil, h, nil, nil, nil, nil)
 	require.ErrorIs(t, err, ErrNilDB)
 }
 
@@ -196,7 +194,7 @@ func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 	_, err = rpc.NewTopic(ctx, ps, h.ID(), doc.Key().String(), true)
 	require.NoError(t, err)
 
-	_, err = NewPeer(ctx, db, h, nil, ps, nil, nil, nil)
+	_, err = NewPeer(ctx, db, h, nil, ps, nil, nil)
 	require.ErrorContains(t, err, "topic already exists")
 }
 

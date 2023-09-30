@@ -490,8 +490,6 @@ func RandomNetworkingConfig() ConfigureNode {
 	return func() config.Config {
 		cfg := config.DefaultConfig()
 		cfg.Net.P2PAddress = randomMultiaddr
-		cfg.Net.RPCAddress = "0.0.0.0:0"
-		cfg.Net.TCPAddress = randomMultiaddr
 		return *cfg
 	}
 }

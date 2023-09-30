@@ -31,7 +31,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	peerstore "github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/core/routing"
-	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -94,7 +93,6 @@ func NewPeer(
 	h host.Host,
 	dht routing.Routing,
 	ps *pubsub.PubSub,
-	tcpAddr ma.Multiaddr,
 	serverOptions []grpc.ServerOption,
 	dialOptions []grpc.DialOption,
 ) (*Peer, error) {

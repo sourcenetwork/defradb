@@ -154,7 +154,6 @@ func NewNode(
 		h,
 		ddht,
 		ps,
-		options.TCPAddr,
 		options.GRPCServerOptions,
 		options.GRPCDialOptions,
 	)
