@@ -11,8 +11,9 @@
 package cli
 
 import (
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeCollectionDescribeCommand() *cobra.Command {

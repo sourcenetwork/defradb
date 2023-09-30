@@ -93,7 +93,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 			return err
 		}
 
-		docMap, err := documentJSON(doc)
+		docMap, err := doc.ToJSONPatch()
 		if err != nil {
 			return err
 		}
@@ -120,7 +120,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, doc.Key().String())
 
-	body, err := documentJSON(doc)
+	body, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
 	}

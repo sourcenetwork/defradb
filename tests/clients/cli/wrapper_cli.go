@@ -16,6 +16,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 )
@@ -66,7 +67,7 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	}
 	args = append(args, "--url", w.address)
 
-	cmd := NewDefraCommand(config.DefaultConfig())
+	cmd := cli.NewDefraCommand(config.DefaultConfig())
 	cmd.SetOut(stdOutWrite)
 	cmd.SetErr(stdErrWrite)
 	cmd.SetArgs(args)

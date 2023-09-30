@@ -113,7 +113,7 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	args = append(args, "--name", c.desc.Name)
 	args = append(args, "--key", doc.Key().String())
 
-	document, err := documentJSON(doc)
+	document, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
 	}

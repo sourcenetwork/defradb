@@ -103,22 +103,3 @@ func writeJSON(cmd *cobra.Command, out any) error {
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)
 }
-
-func documentJSON(doc *client.Document) ([]byte, error) {
-	docMap, err := doc.ToMap()
-	if err != nil {
-		return nil, err
-	}
-	delete(docMap, "_key")
-
-	for field, value := range doc.Values() {
-		if !value.IsDirty() {
-			delete(docMap, field.Name())
-		}
-		if value.IsDelete() {
-			docMap[field.Name()] = nil
-		}
-	}
-
-	return json.Marshal(docMap)
-}

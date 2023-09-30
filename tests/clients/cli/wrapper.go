@@ -22,6 +22,7 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
@@ -285,7 +286,7 @@ func (w *Wrapper) ExecRequest(ctx context.Context, query string) *client.Request
 		result.GQL.Errors = []error{err}
 		return result
 	}
-	if header == SUB_RESULTS_HEADER {
+	if header == cli.SUB_RESULTS_HEADER {
 		result.Pub = w.execRequestSubscription(ctx, buffer)
 		return result
 	}

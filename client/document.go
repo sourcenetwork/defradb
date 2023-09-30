@@ -398,6 +398,26 @@ func (doc *Document) ToMap() (map[string]any, error) {
 	return doc.toMapWithKey()
 }
 
+// ToJSONPatch returns a json patch that can be used to update
+// a document by calling SetWithJSON.
+func (doc *Document) ToJSONPatch() ([]byte, error) {
+	docMap, err := doc.toMap()
+	if err != nil {
+		return nil, err
+	}
+
+	for field, value := range doc.Values() {
+		if !value.IsDirty() {
+			delete(docMap, field.Name())
+		}
+		if value.IsDelete() {
+			docMap[field.Name()] = nil
+		}
+	}
+
+	return json.Marshal(docMap)
+}
+
 // Clean cleans the document by removing all dirty fields.
 func (doc *Document) Clean() {
 	for _, v := range doc.Fields() {

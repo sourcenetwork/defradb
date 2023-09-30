@@ -12,7 +12,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http/httptest"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
@@ -20,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/http"
 )
 
 var _ client.DB = (*Wrapper)(nil)
@@ -28,16 +28,16 @@ var _ client.DB = (*Wrapper)(nil)
 // single struct that implements the client.DB interface.
 type Wrapper struct {
 	db         client.DB
-	handler    *Handler
-	client     *Client
+	handler    *http.Handler
+	client     *http.Client
 	httpServer *httptest.Server
 }
 
 func NewWrapper(db client.DB) (*Wrapper, error) {
-	handler := NewHandler(db, ServerOptions{})
+	handler := http.NewHandler(db, http.ServerOptions{})
 	httpServer := httptest.NewServer(handler)
 
-	client, err := NewClient(httpServer.URL)
+	client, err := http.NewClient(httpServer.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -131,11 +131,11 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, err
 	if err != nil {
 		return nil, err
 	}
-	server, ok := w.handler.txs.Load(client.ID())
-	if !ok {
-		return nil, fmt.Errorf("failed to get server transaction")
+	server, err := w.handler.Transaction(client.ID())
+	if err != nil {
+		return nil, err
 	}
-	return &TxWrapper{server.(datastore.Txn), client}, nil
+	return &TxWrapper{server, client}, nil
 }
 
 func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
@@ -143,11 +143,11 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	if err != nil {
 		return nil, err
 	}
-	server, ok := w.handler.txs.Load(client.ID())
-	if !ok {
-		return nil, fmt.Errorf("failed to get server transaction")
+	server, err := w.handler.Transaction(client.ID())
+	if err != nil {
+		return nil, err
 	}
-	return &TxWrapper{server.(datastore.Txn), client}, nil
+	return &TxWrapper{server, client}, nil
 }
 
 func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
