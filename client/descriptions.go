@@ -52,13 +52,15 @@ func (col CollectionDescription) GetFieldByID(id FieldID) (FieldDescription, boo
 	return FieldDescription{}, false
 }
 
-// GetRelation returns the field that supports the relation of the given name.
-func (col CollectionDescription) GetRelation(name string) (FieldDescription, bool) {
-	if !col.Schema.IsEmpty() {
-		for _, field := range col.Schema.Fields {
-			if field.RelationName == name {
-				return field, true
-			}
+// GetFieldByRelation returns the field that supports the relation of the given name.
+func (col CollectionDescription) GetFieldByRelation(
+	relationName string,
+	otherCollectionName string,
+	otherFieldName string,
+) (FieldDescription, bool) {
+	for _, field := range col.Schema.Fields {
+		if field.RelationName == relationName && !(col.Name == otherCollectionName && otherFieldName == field.Name) {
+			return field, true
 		}
 	}
 	return FieldDescription{}, false
