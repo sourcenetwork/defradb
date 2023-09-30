@@ -22,10 +22,15 @@ import (
 func MakeSchemaMigrationUpCommand() *cobra.Command {
 	var schemaVersionID string
 	var cmd = &cobra.Command{
-		Use:   "up --version <version> <src>",
-		Short: "Runs a migration on the specified schema version.",
-		Long:  `Runs a migration on the specified schema version.`,
-		Args:  cobra.ExactArgs(1),
+		Use:   "up --version <version> <documents>",
+		Short: "Applies the migration to the specified schema version.",
+		Long: `Applies the migration to the specified schema version.
+Documents is a list of documents to apply the migration to.		
+
+Example:
+  defradb client schema migration down --version bae123 '[{"name": "Bob"}]'
+		`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetStoreContext(cmd)
 
