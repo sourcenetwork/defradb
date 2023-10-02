@@ -35,11 +35,10 @@ type Client struct {
 }
 
 func NewClient(rawURL string) (*Client, error) {
-	baseURL, err := url.Parse(rawURL)
+	httpClient, err := newHttpClient(rawURL)
 	if err != nil {
 		return nil, err
 	}
-	httpClient := newHttpClient(baseURL.JoinPath("/api/v0"))
 	return &Client{httpClient}, nil
 }
 
@@ -416,6 +415,20 @@ func (c *Client) PrintDump(ctx context.Context) error {
 	}
 	_, err = c.http.request(req)
 	return err
+}
+
+func (c *Client) PeerInfo(ctx context.Context) (*PeerInfoResponse, error) {
+	methodURL := c.http.baseURL.JoinPath("p2p", "info")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var res PeerInfoResponse
+	if err := c.http.requestJson(req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
 }
 
 func (c *Client) Close(ctx context.Context) {

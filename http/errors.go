@@ -15,22 +15,28 @@ import (
 	"errors"
 )
 
-const (
-	errInvalidRequestBody    = "invalid request body"
-	errDocKeyDoesNotMatch    = "document key does not match"
-	errStreamingNotSupported = "streaming not supported"
-	errMigrationNotFound     = "migration not found"
-	errMissingRequest        = "missing request"
-	errInvalidTransactionId  = "invalid transaction id"
-)
-
+// Errors returnable from this package.
+//
+// This list is incomplete. Undefined errors may also be returned.
+// Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrInvalidRequestBody    = errors.New(errInvalidRequestBody)
-	ErrDocKeyDoesNotMatch    = errors.New(errDocKeyDoesNotMatch)
-	ErrStreamingNotSupported = errors.New(errStreamingNotSupported)
-	ErrMigrationNotFound     = errors.New(errMigrationNotFound)
-	ErrMissingRequest        = errors.New(errMissingRequest)
-	ErrInvalidTransactionId  = errors.New(errInvalidTransactionId)
+	ErrNoListener            = errors.New("cannot serve with no listener")
+	ErrSchema                = errors.New("base must start with the http or https scheme")
+	ErrDatabaseNotAvailable  = errors.New("no database available")
+	ErrFormNotSupported      = errors.New("content type application/x-www-form-urlencoded not yet supported")
+	ErrBodyEmpty             = errors.New("body cannot be empty")
+	ErrMissingGQLRequest     = errors.New("missing GraphQL request")
+	ErrPeerIdUnavailable     = errors.New("no PeerID available. P2P might be disabled")
+	ErrStreamingUnsupported  = errors.New("streaming unsupported")
+	ErrNoEmail               = errors.New("email address must be specified for tls with autocert")
+	ErrPayloadFormat         = errors.New("invalid payload format")
+	ErrMissingNewKey         = errors.New("missing _newKey for imported doc")
+	ErrInvalidRequestBody    = errors.New("invalid request body")
+	ErrDocKeyDoesNotMatch    = errors.New("document key does not match")
+	ErrStreamingNotSupported = errors.New("streaming not supported")
+	ErrMigrationNotFound     = errors.New("migration not found")
+	ErrMissingRequest        = errors.New("missing request")
+	ErrInvalidTransactionId  = errors.New("invalid transaction id")
 )
 
 type errorResponse struct {

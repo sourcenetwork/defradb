@@ -11,24 +11,16 @@
 package cli
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
-	"net/http"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 const jsonFileType = "json"
 
-func MakeBackupExportCommand(cfg *config.Config) *cobra.Command {
+func MakeBackupExportCommand() *cobra.Command {
 	var collections []string
 	var pretty bool
 	var format string
@@ -44,21 +36,14 @@ If the --pretty flag is provided, the JSON will be pretty printed.
 
 Example: export data for the 'Users' collection:
   defradb client export --collection Users user_data.json`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-				return NewErrInvalidArgumentLength(err, 1)
-			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			store := mustGetStoreContext(cmd)
+
 			if !isValidExportFormat(format) {
 				return ErrInvalidExportFormat
 			}
 			outputPath := args[0]
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.ExportPath)
-			if err != nil {
-				return NewErrFailedToJoinEndpoint(err)
-			}
 
 			for i := range collections {
 				collections[i] = strings.Trim(collections[i], " ")
@@ -71,57 +56,7 @@ Example: export data for the 'Users' collection:
 				Collections: collections,
 			}
 
-			b, err := json.Marshal(data)
-			if err != nil {
-				return err
-			}
-
-			res, err := http.Post(endpoint.String(), "application/json", bytes.NewBuffer(b))
-			if err != nil {
-				return NewErrFailedToSendRequest(err)
-			}
-
-			defer func() {
-				if e := res.Body.Close(); e != nil {
-					err = NewErrFailedToCloseResponseBody(e, err)
-				}
-			}()
-
-			response, err := io.ReadAll(res.Body)
-			if err != nil {
-				return NewErrFailedToReadResponseBody(err)
-			}
-
-			stdout, err := os.Stdout.Stat()
-			if err != nil {
-				return err
-			}
-
-			if isFileInfoPipe(stdout) {
-				cmd.Println(string(response))
-			} else {
-				type exportResponse struct {
-					Errors []struct {
-						Message string `json:"message"`
-					} `json:"errors"`
-				}
-				r := exportResponse{}
-				err = json.Unmarshal(response, &r)
-				if err != nil {
-					return NewErrFailedToUnmarshalResponse(err)
-				}
-				if len(r.Errors) > 0 {
-					log.FeedbackError(cmd.Context(), "Failed to export data",
-						logging.NewKV("Errors", r.Errors))
-				} else if len(collections) == 1 {
-					log.FeedbackInfo(cmd.Context(), "Data exported for collection "+collections[0])
-				} else if len(collections) > 1 {
-					log.FeedbackInfo(cmd.Context(), "Data exported for collections "+strings.Join(collections, ", "))
-				} else {
-					log.FeedbackInfo(cmd.Context(), "Data exported for all collections")
-				}
-			}
-			return nil
+			return store.BasicExport(cmd.Context(), &data)
 		},
 	}
 	cmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Set the output JSON to be pretty printed")

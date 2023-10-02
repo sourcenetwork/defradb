@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core/net"
+	"github.com/sourcenetwork/defradb/http"
 )
 
 const commitHashMaxLength = 8

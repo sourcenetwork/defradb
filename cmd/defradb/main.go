@@ -12,7 +12,6 @@
 package main
 
 import (
-	"context"
 	"os"
 
 	"github.com/sourcenetwork/defradb/cli"
@@ -21,10 +20,13 @@ import (
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
-	cfg := config.DefaultConfig()
-	ctx := context.Background()
-	defraCmd := cli.NewDefraCommand(cfg)
-	if err := defraCmd.Execute(ctx); err != nil {
+	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
+	if err := defraCmd.Execute(); err != nil {
+		// this error is okay to discard because cobra
+		// logs any errors encountered during execution
+		//
+		// exiting with a non-zero status code signals
+		// that an error has ocurred during execution
 		os.Exit(1)
 	}
 }

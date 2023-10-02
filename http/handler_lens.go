@@ -61,7 +61,15 @@ func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	responseJSON(rw, http.StatusOK, result)
+	var value []map[string]any
+	err = enumerable.ForEach(result, func(item map[string]any) {
+		value = append(value, item)
+	})
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, value)
 }
 
 func (s *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
@@ -77,7 +85,15 @@ func (s *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	responseJSON(rw, http.StatusOK, result)
+	var value []map[string]any
+	err = enumerable.ForEach(result, func(item map[string]any) {
+		value = append(value, item)
+	})
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, value)
 }
 
 func (s *lensHandler) Config(rw http.ResponseWriter, req *http.Request) {

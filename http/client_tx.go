@@ -26,6 +26,14 @@ type Transaction struct {
 	http *httpClient
 }
 
+func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
+	httpClient, err := newHttpClient(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	return &Transaction{id, httpClient}, nil
+}
+
 func (c *Transaction) ID() uint64 {
 	return c.id
 }

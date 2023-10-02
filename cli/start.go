@@ -28,18 +28,20 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	ds "github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	httpapi "github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
+
+const badgerDatastoreName = "badger"
 
 func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
@@ -48,27 +50,11 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 		Long:  "Start a DefraDB node.",
 		// Load the root config if it exists, otherwise create it.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
+			if err := loadConfig(cfg); err != nil {
 				return err
 			}
-			if cfg.ConfigFileExists() {
-				if err := cfg.LoadWithRootdir(true); err != nil {
-					return config.NewErrLoadingConfig(err)
-				}
-				log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
-			} else {
-				if err := cfg.LoadWithRootdir(false); err != nil {
-					return config.NewErrLoadingConfig(err)
-				}
-				if config.FolderExists(cfg.Rootdir) {
-					if err := cfg.WriteConfigFile(); err != nil {
-						return err
-					}
-				} else {
-					if err := cfg.CreateRootDirAndConfigFile(); err != nil {
-						return err
-					}
-				}
+			if !cfg.ConfigFileExists() {
+				return createConfig(cfg)
 			}
 			return nil
 		},
@@ -351,16 +337,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 
 	// run the server in a separate goroutine
 	go func() {
-		log.FeedbackInfo(
-			ctx,
-			fmt.Sprintf(
-				"Providing HTTP API at %s%s. Use the GraphQL request endpoint at %s%s/graphql ",
-				cfg.API.AddressToURL(),
-				httpapi.RootPath,
-				cfg.API.AddressToURL(),
-				httpapi.RootPath,
-			),
-		)
+		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", cfg.API.AddressToURL()))
 		if err := s.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if n != nil {

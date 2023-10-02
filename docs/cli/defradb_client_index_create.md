@@ -22,7 +22,7 @@ defradb client index create -c --collection <collection> --fields <fields> [-n -
 
 ```
   -c, --collection string   Collection name
-      --fields string       Fields to index
+      --fields strings      Fields to index
   -h, --help                help for create
   -n, --name string         Index name
 ```
@@ -37,6 +37,7 @@ defradb client index create -c --collection <collection> --fields <fields> [-n -
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 

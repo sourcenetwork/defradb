@@ -32,15 +32,17 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/clients/cli"
+	"github.com/sourcenetwork/defradb/tests/clients/http"
 )
 
 const (
 	clientGoEnvName       = "DEFRA_CLIENT_GO"
 	clientHttpEnvName     = "DEFRA_CLIENT_HTTP"
+	clientCliEnvName      = "DEFRA_CLIENT_CLI"
 	memoryBadgerEnvName   = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName     = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName = "DEFRA_BADGER_FILE_PATH"
@@ -65,6 +67,9 @@ const (
 	// httpClientType enables running the test suite using
 	// the http implementation of the client.DB interface.
 	httpClientType ClientType = "http"
+	// cliClientType enables running the test suite using
+	// the cli implementation of the client.DB interface.
+	cliClientType ClientType = "cli"
 )
 
 // The MutationType that tests will run using.
@@ -101,6 +106,7 @@ var (
 	inMemoryStore  bool
 	httpClient     bool
 	goClient       bool
+	cliClient      bool
 	mutationType   MutationType
 	databaseDir    string
 )
@@ -118,6 +124,7 @@ func init() {
 	//  that don't have the flag defined
 	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
 	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
+	cliClient, _ = strconv.ParseBool(os.Getenv(clientCliEnvName))
 	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
 	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
@@ -131,7 +138,7 @@ func init() {
 		mutationType = CollectionSaveMutationType
 	}
 
-	if !goClient && !httpClient {
+	if !goClient && !httpClient && !cliClient {
 		// Default is to test go client type.
 		goClient = true
 	}
@@ -162,8 +169,8 @@ func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
 		t.Skip("Assert panic with the change detector is not currently supported.")
 	}
 
-	if httpClient {
-		// The http-client will return an error instead of panicing at the moment.
+	if httpClient || cliClient {
+		// The http / cli client will return an error instead of panicing at the moment.
 		t.Skip("Assert panic with the http client is not currently supported.")
 	}
 
@@ -254,6 +261,9 @@ func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 	case httpClientType:
 		cdb, err = http.NewWrapper(cdb)
 
+	case cliClientType:
+		cdb = cli.NewWrapper(cdb)
+
 	case goClientType:
 		return
 
@@ -287,6 +297,9 @@ func ExecuteTestCase(
 	}
 	if goClient {
 		clients = append(clients, goClientType)
+	}
+	if cliClient {
+		clients = append(clients, cliClientType)
 	}
 
 	var databases []DatabaseType
