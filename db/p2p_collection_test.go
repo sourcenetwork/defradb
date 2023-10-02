@@ -28,6 +28,7 @@ func newTestCollection(
 	desc := client.CollectionDescription{
 		Name: name,
 		Schema: client.SchemaDescription{
+			Name: name,
 			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
