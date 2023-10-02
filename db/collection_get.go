@@ -55,7 +55,7 @@ func (c *collection) get(
 	df := c.newFetcher()
 	desc := &c.desc
 	// initialize it with the primary index
-	err := df.Init(ctx, txn, &c.desc, fields, nil, nil, false, showDeleted)
+	err := df.Init(ctx, txn, c, fields, nil, nil, false, showDeleted)
 	if err != nil {
 		_ = df.Close()
 		return nil, err

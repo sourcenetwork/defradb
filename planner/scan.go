@@ -35,8 +35,8 @@ type scanNode struct {
 	documentIterator
 	docMapper
 
-	p    *Planner
-	desc client.CollectionDescription
+	p   *Planner
+	col client.Collection
 
 	fields []client.FieldDescription
 
@@ -62,7 +62,7 @@ func (n *scanNode) Init() error {
 	if err := n.fetcher.Init(
 		n.p.ctx,
 		n.p.txn,
-		&n.desc,
+		n.col,
 		n.fields,
 		n.filter,
 		n.slct.DocumentMapping,
@@ -74,8 +74,8 @@ func (n *scanNode) Init() error {
 	return n.initScan()
 }
 
-func (n *scanNode) initCollection(desc client.CollectionDescription) error {
-	n.desc = desc
+func (n *scanNode) initCollection(col client.Collection) error {
+	n.col = col
 	return n.initFields(n.slct.Fields)
 }
 
@@ -101,7 +101,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 				if target.Filter != nil {
 					fieldDescs, err := parser.ParseFilterFieldsForDescription(
 						target.Filter.ExternalConditions,
-						n.desc.Schema,
+						n.col.Schema(),
 					)
 					if err != nil {
 						return err
@@ -122,7 +122,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 }
 
 func (n *scanNode) tryAddField(fieldName string) bool {
-	fd, ok := n.desc.Schema.GetField(fieldName)
+	fd, ok := n.col.Schema().GetField(fieldName)
 	if !ok {
 		// skip fields that are not part of the
 		// schema description. The scanner (and fetcher)
@@ -141,7 +141,7 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if !n.spans.HasValue {
-		start := base.MakeCollectionKey(n.desc)
+		start := base.MakeCollectionKey(n.col.Description())
 		n.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 	}
 
@@ -223,8 +223,8 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 	}
 
 	// Add the collection attributes.
-	simpleExplainMap[collectionNameLabel] = n.desc.Name
-	simpleExplainMap[collectionIDLabel] = n.desc.IDString()
+	simpleExplainMap[collectionNameLabel] = n.col.Name()
+	simpleExplainMap[collectionIDLabel] = n.col.Description().IDString()
 
 	// Add the spans attribute.
 	simpleExplainMap[spansLabel] = n.explainSpans()
@@ -273,11 +273,11 @@ func (p *Planner) Scan(parsed *mapper.Select) (*scanNode, error) {
 		docMapper: docMapper{parsed.DocumentMapping},
 	}
 
-	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.CollectionName)
 	if err != nil {
 		return nil, err
 	}
-	err = scan.initCollection(colDesc)
+	err = scan.initCollection(col)
 	if err != nil {
 		return nil, err
 	}

@@ -938,7 +938,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 			RunAndReturn(func(
 				ctx context.Context,
 				txn datastore.Txn,
-				col *client.CollectionDescription,
+				col client.Collection,
 				fields []client.FieldDescription,
 				filter *mapper.Filter,
 				mapping *core.DocumentMapping,

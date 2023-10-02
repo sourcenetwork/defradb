@@ -34,7 +34,7 @@ type lensedFetcher struct {
 
 	txn datastore.Txn
 
-	col *client.CollectionDescription
+	col client.Collection
 	// Cache the fieldDescriptions mapped by name to allow for cheaper access within the fetcher loop
 	fieldDescriptionsByName map[string]client.FieldDescription
 
@@ -58,7 +58,7 @@ func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fe
 func (f *lensedFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
-	col *client.CollectionDescription,
+	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
@@ -67,12 +67,12 @@ func (f *lensedFetcher) Init(
 ) error {
 	f.col = col
 
-	f.fieldDescriptionsByName = make(map[string]client.FieldDescription, len(col.Schema.Fields))
+	f.fieldDescriptionsByName = make(map[string]client.FieldDescription, len(col.Schema().Fields))
 	// Add cache the field descriptions in reverse, allowing smaller-index fields to overwrite any later
 	// ones.  This should never really happen here, but it ensures the result is consistent with col.GetField
 	// which returns the first one it finds with a matching name.
-	for i := len(col.Schema.Fields) - 1; i >= 0; i-- {
-		field := col.Schema.Fields[i]
+	for i := len(col.Schema().Fields) - 1; i >= 0; i-- {
+		field := col.Schema().Fields[i]
 		f.fieldDescriptionsByName[field.Name] = field
 	}
 
@@ -81,11 +81,11 @@ func (f *lensedFetcher) Init(
 		return err
 	}
 
-	history, err := getTargetedSchemaHistory(ctx, txn, cfg, f.col.Schema.SchemaID, f.col.Schema.VersionID)
+	history, err := getTargetedSchemaHistory(ctx, txn, cfg, f.col.Schema().SchemaID, f.col.Schema().VersionID)
 	if err != nil {
 		return err
 	}
-	f.lens = new(ctx, f.registry, f.col.Schema.VersionID, history)
+	f.lens = new(ctx, f.registry, f.col.Schema().VersionID, history)
 	f.txn = txn
 
 	for schemaVersionID := range history {
@@ -100,7 +100,7 @@ func (f *lensedFetcher) Init(
 		}
 	}
 
-	f.targetVersionID = col.Schema.VersionID
+	f.targetVersionID = col.Schema().VersionID
 
 	var innerFetcherFields []client.FieldDescription
 	if f.hasMigrations {
@@ -238,7 +238,7 @@ func (f *lensedFetcher) lensDocToEncodedDoc(docAsMap LensDoc) (fetcher.EncodedDo
 
 	return &lensEncodedDocument{
 		key:             []byte(key),
-		schemaVersionID: f.col.Schema.VersionID,
+		schemaVersionID: f.col.Schema().VersionID,
 		status:          status,
 		properties:      properties,
 	}, nil
@@ -283,7 +283,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 	}
 
 	datastoreKeyBase := core.DataStoreKey{
-		CollectionID: f.col.IDString(),
+		CollectionID: f.col.Description().IDString(),
 		DocKey:       dockey,
 		InstanceType: core.ValueKey,
 	}
