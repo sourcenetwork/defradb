@@ -47,9 +47,14 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	switch t := body.(type) {
-	case []map[string]any:
+	case []any:
 		var docList []*client.Document
-		for _, docMap := range t {
+		for _, v := range t {
+			docMap, ok := v.(map[string]any)
+			if !ok {
+				responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidRequestBody})
+				return
+			}
 			doc, err := client.NewDocFromMap(docMap)
 			if err != nil {
 				responseJSON(rw, http.StatusBadRequest, errorResponse{err})

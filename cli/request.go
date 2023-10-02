@@ -12,18 +12,19 @@ package cli
 
 import (
 	"io"
-	"net/http"
-	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-func MakeRequestCommand(cfg *config.Config) *cobra.Command {
+const (
+	REQ_RESULTS_HEADER = "------ Request Results ------\n"
+	SUB_RESULTS_HEADER = "------ Subscription Results ------\n"
+)
+
+func MakeRequestCommand() *cobra.Command {
 	var filePath string
 	var cmd = &cobra.Command{
 		Use:   "query [query request]",
@@ -43,101 +44,43 @@ A GraphQL client such as GraphiQL (https://github.com/graphql/graphiql) can be u
 with the database more conveniently.
 
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			store := mustGetStoreContext(cmd)
+
 			var request string
-
-			fi, err := os.Stdin.Stat()
-			if err != nil {
-				return err
-			}
-
-			if filePath != "" {
-				bytes, err := os.ReadFile(filePath)
+			switch {
+			case filePath != "":
+				data, err := os.ReadFile(filePath)
 				if err != nil {
-					return ErrFailedToReadFile
-				}
-				request = string(bytes)
-			} else if len(args) > 1 {
-				if err = cmd.Usage(); err != nil {
 					return err
 				}
-				return errors.New("too many arguments")
-			} else if isFileInfoPipe(fi) && (len(args) == 0 || args[0] != "-") {
-				log.FeedbackInfo(
-					cmd.Context(),
-					"Run 'defradb client query -' to read from stdin. Example: 'cat my.graphql | defradb client query -').",
-				)
-				return nil
-			} else if len(args) == 0 {
-				err := cmd.Help()
+				request = string(data)
+			case len(args) > 0 && args[0] == "-":
+				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return errors.Wrap("failed to print help", err)
+					return err
 				}
-				return nil
-			} else if args[0] == "-" {
-				stdin, err := readStdin()
-				if err != nil {
-					return errors.Wrap("failed to read stdin", err)
-				}
-				if len(stdin) == 0 {
-					return errors.New("no query request in stdin provided")
-				} else {
-					request = stdin
-				}
-			} else {
-				request = args[0]
+				request = string(data)
+			case len(args) > 0:
+				request = string(args[0])
 			}
 
 			if request == "" {
 				return errors.New("request cannot be empty")
 			}
+			result := store.ExecRequest(cmd.Context(), request)
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.GraphQLPath)
-			if err != nil {
-				return errors.Wrap("joining paths failed", err)
+			var errors []string
+			for _, err := range result.GQL.Errors {
+				errors = append(errors, err.Error())
 			}
-
-			p := url.Values{}
-			p.Add("query", request)
-			endpoint.RawQuery = p.Encode()
-
-			res, err := http.Get(endpoint.String())
-			if err != nil {
-				return errors.Wrap("failed request", err)
+			if result.Pub == nil {
+				cmd.Print(REQ_RESULTS_HEADER)
+				return writeJSON(cmd, map[string]any{"data": result.GQL.Data, "errors": errors})
 			}
-
-			defer func() {
-				if e := res.Body.Close(); e != nil {
-					err = NewErrFailedToCloseResponseBody(e, err)
-				}
-			}()
-
-			response, err := io.ReadAll(res.Body)
-			if err != nil {
-				return errors.Wrap("failed to read response body", err)
-			}
-
-			fi, err = os.Stdout.Stat()
-			if err != nil {
-				return errors.Wrap("failed to stat stdout", err)
-			}
-
-			if isFileInfoPipe(fi) {
-				cmd.Println(string(response))
-			} else {
-				graphlErr, err := hasGraphQLErrors(response)
-				if err != nil {
-					return errors.Wrap("failed to handle GraphQL errors", err)
-				}
-				indentedResult, err := indentJSON(response)
-				if err != nil {
-					return errors.Wrap("failed to pretty print result", err)
-				}
-				if graphlErr {
-					log.FeedbackError(cmd.Context(), indentedResult)
-				} else {
-					log.FeedbackInfo(cmd.Context(), indentedResult)
-				}
+			cmd.Print(SUB_RESULTS_HEADER)
+			for item := range result.Pub.Stream() {
+				writeJSON(cmd, item) //nolint:errcheck
 			}
 			return nil
 		},

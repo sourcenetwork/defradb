@@ -11,51 +11,19 @@
 package cli
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
-	netclient "github.com/sourcenetwork/defradb/net/api/client"
 )
 
-func MakeP2PCollectionAddCommand(cfg *config.Config) *cobra.Command {
+func MakeP2PCollectionAddCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "add [collectionID]",
 		Short: "Add P2P collections",
 		Long: `Add P2P collections to the synchronized pubsub topics.
 The collections are synchronized between nodes of a pubsub network.`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
-				return errors.New("must specify at least one collectionID")
-			}
-			return nil
-		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cred := insecure.NewCredentials()
-			client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
-			if err != nil {
-				return ErrFailedToCreateRPCClient
-			}
-
-			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
-			if err != nil {
-				return errors.Wrap("failed to parse RPC timeout duration", err)
-			}
-
-			ctx, cancel := context.WithTimeout(cmd.Context(), rpcTimeoutDuration)
-			defer cancel()
-
-			err = client.AddP2PCollections(ctx, args...)
-			if err != nil {
-				return errors.Wrap("failed to add P2P collections, request failed", err)
-			}
-			log.FeedbackInfo(ctx, "Successfully added P2P collections", logging.NewKV("Collections", args))
-			return nil
+			store := mustGetStoreContext(cmd)
+			return store.AddP2PCollection(cmd.Context(), args[0])
 		},
 	}
 	return cmd

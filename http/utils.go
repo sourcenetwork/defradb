@@ -34,25 +34,6 @@ func responseJSON(rw http.ResponseWriter, status int, out any) {
 	json.NewEncoder(rw).Encode(out) //nolint:errcheck
 }
 
-func documentJSON(doc *client.Document) ([]byte, error) {
-	docMap, err := doc.ToMap()
-	if err != nil {
-		return nil, err
-	}
-	delete(docMap, "_key")
-
-	for field, value := range doc.Values() {
-		if !value.IsDirty() {
-			delete(docMap, field.Name())
-		}
-		if value.IsDelete() {
-			docMap[field.Name()] = nil
-		}
-	}
-
-	return json.Marshal(docMap)
-}
-
 func parseError(msg any) error {
 	switch msg {
 	case client.ErrDocumentNotFound.Error():

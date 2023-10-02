@@ -16,34 +16,19 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 func MakeRootCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "defradb",
-		Short: "DefraDB Edge Database",
+		SilenceUsage: true,
+		Use:          "defradb",
+		Short:        "DefraDB Edge Database",
 		Long: `DefraDB is the edge database to power the user-centric future.
 
 Start a DefraDB node, interact with a local or remote node, and much more.
 `,
-		// Runs on subcommands before their Run function, to handle configuration and top-level flags.
-		// Loads the rootDir containing the configuration file, otherwise warn about it and load a default configuration.
-		// This allows some subcommands (`init`, `start`) to override the PreRun to create a rootDir by default.
-		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
-				return err
-			}
-			if cfg.ConfigFileExists() {
-				if err := cfg.LoadWithRootdir(true); err != nil {
-					return errors.Wrap("failed to load config", err)
-				}
-			} else {
-				if err := cfg.LoadWithRootdir(false); err != nil {
-					return errors.Wrap("failed to load config", err)
-				}
-			}
-			return nil
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return loadConfig(cfg)
 		},
 	}
 

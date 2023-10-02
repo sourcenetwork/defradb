@@ -11,29 +11,12 @@
 package cli
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
-	"net/http"
-	"os"
-
 	"github.com/spf13/cobra"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
-type indexDropResponse struct {
-	Data struct {
-		Result string `json:"result"`
-	} `json:"data"`
-	Errors []struct {
-		Message string `json:"message"`
-	} `json:"errors"`
-}
-
-func MakeIndexDropCommand(cfg *config.Config) *cobra.Command {
+func MakeIndexDropCommand() *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var cmd = &cobra.Command{
@@ -44,74 +27,17 @@ func MakeIndexDropCommand(cfg *config.Config) *cobra.Command {
 Example: drop the index 'UsersByName' for 'Users' collection:
   defradb client index create --collection Users --name UsersByName`,
 		ValidArgs: []string{"collection", "name"},
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			if collectionArg == "" || nameArg == "" {
-				if collectionArg == "" {
-					return NewErrMissingArg("collection")
-				} else {
-					return NewErrMissingArg("name")
-				}
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			store := mustGetStoreContext(cmd)
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexPath)
-			if err != nil {
-				return NewErrFailedToJoinEndpoint(err)
-			}
-
-			data := map[string]string{
-				"collection": collectionArg,
-				"name":       nameArg,
-			}
-
-			jsonData, err := json.Marshal(data)
+			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {
 				return err
 			}
-
-			req, err := http.NewRequest("DELETE", endpoint.String(), bytes.NewBuffer(jsonData))
-			if err != nil {
-				return NewErrFailedToSendRequest(err)
+			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
+				col = col.WithTxn(tx)
 			}
-			req.Header.Add("Content-Type", "application/json")
-			client := &http.Client{}
-			res, err := client.Do(req)
-			if err != nil {
-				return NewErrFailedToSendRequest(err)
-			}
-
-			defer func() {
-				if e := res.Body.Close(); e != nil {
-					err = NewErrFailedToCloseResponseBody(e, err)
-				}
-			}()
-
-			response, err := io.ReadAll(res.Body)
-			if err != nil {
-				return NewErrFailedToReadResponseBody(err)
-			}
-
-			stdout, err := os.Stdout.Stat()
-			if err != nil {
-				return err
-			}
-
-			if isFileInfoPipe(stdout) {
-				cmd.Println(string(response))
-			} else {
-				r := indexDropResponse{}
-				err = json.Unmarshal(response, &r)
-				if err != nil {
-					return NewErrFailedToUnmarshalResponse(err)
-				}
-				if len(r.Errors) > 0 {
-					log.FeedbackError(cmd.Context(), "Failed to drop index",
-						logging.NewKV("Errors", r.Errors))
-				} else {
-					log.FeedbackInfo(cmd.Context(), "Successfully dropped index",
-						logging.NewKV("Result", r.Data.Result))
-				}
-			}
-			return nil
+			return col.DropIndex(cmd.Context(), nameArg)
 		},
 	}
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")

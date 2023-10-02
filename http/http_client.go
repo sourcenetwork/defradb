@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type httpClient struct {
@@ -24,12 +25,19 @@ type httpClient struct {
 	txValue string
 }
 
-func newHttpClient(baseURL *url.URL) *httpClient {
+func newHttpClient(rawURL string) (*httpClient, error) {
+	if !strings.HasPrefix(rawURL, "http") {
+		rawURL = "http://" + rawURL
+	}
+	baseURL, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, err
+	}
 	client := httpClient{
 		client:  http.DefaultClient,
-		baseURL: baseURL,
+		baseURL: baseURL.JoinPath("/api/v0"),
 	}
-	return &client
+	return &client, nil
 }
 
 func (c *httpClient) withTxn(value uint64) *httpClient {
