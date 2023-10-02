@@ -31,8 +31,9 @@ var _ client.Collection = (*Collection)(nil)
 
 // Collection implements the client.Collection interface over HTTP.
 type Collection struct {
-	http *httpClient
-	desc client.CollectionDescription
+	http   *httpClient
+	desc   client.CollectionDescription
+	schema client.SchemaDescription
 }
 
 func (c *Collection) Description() client.CollectionDescription {
@@ -44,7 +45,7 @@ func (c *Collection) Name() string {
 }
 
 func (c *Collection) Schema() client.SchemaDescription {
-	return c.desc.Schema
+	return c.schema
 }
 
 func (c *Collection) ID() uint32 {
@@ -52,7 +53,7 @@ func (c *Collection) ID() uint32 {
 }
 
 func (c *Collection) SchemaID() string {
-	return c.desc.Schema.SchemaID
+	return c.Schema().SchemaID
 }
 
 func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
@@ -60,7 +61,7 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 
 	// We must call this here, else the doc key on the given object will not match
 	// that of the document saved in the database
-	err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
+	err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields)
 	if err != nil {
 		return err
 	}
@@ -88,7 +89,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 	for _, doc := range docs {
 		// We must call this here, else the doc key on the given object will not match
 		// that of the document saved in the database
-		err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
+		err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields)
 		if err != nil {
 			return err
 		}
@@ -323,8 +324,9 @@ func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 
 func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
 	return &Collection{
-		http: c.http.withTxn(tx.ID()),
-		desc: c.desc,
+		http:   c.http.withTxn(tx.ID()),
+		desc:   c.desc,
+		schema: c.schema,
 	}
 }
 

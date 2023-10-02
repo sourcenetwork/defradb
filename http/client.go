@@ -271,7 +271,7 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	if err := c.http.requestJson(req, &description); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description}, nil
+	return &Collection{c.http, description, description.Schema}, nil
 }
 
 func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
@@ -286,7 +286,7 @@ func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (
 	if err := c.http.requestJson(req, &description); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description}, nil
+	return &Collection{c.http, description, description.Schema}, nil
 }
 
 func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
@@ -301,7 +301,7 @@ func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string)
 	if err := c.http.requestJson(req, &description); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description}, nil
+	return &Collection{c.http, description, description.Schema}, nil
 }
 
 func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
@@ -317,7 +317,7 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 	}
 	collections := make([]client.Collection, len(descriptions))
 	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
+		collections[i] = &Collection{c.http, d, d.Schema}
 	}
 	return collections, nil
 }
