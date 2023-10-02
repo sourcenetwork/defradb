@@ -200,8 +200,8 @@ func TestSchemaMigrationSet_GivenCfgWithLenses_ShouldSucceedAndMigrateDoc(t *tes
 
 	stdout, _ = runDefraCommand(t, conf, []string{
 		"client", "schema", "migration", "set",
-		"bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq",
-		"bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
+		"bafkreibqw2l325up2tljc5oyjpjzftg4x7nhluzqoezrmz645jto6tnylu",
+		"bafkreihcyy243ed46jxlpwyryo3cfcvxcbnilpj63gy7smf4fqzyzxadze",
 		fmt.Sprintf(`{"lenses": [{"path":"%s","arguments":{"dst":"verified","value":true}}]}`, lenses.SetDefaultModulePath),
 	})
 	assertContainsSubstring(t, stdout, "success")
@@ -229,8 +229,8 @@ func TestSchemaMigrationSet_GivenCfgWithLenseError_ShouldError(t *testing.T) {
 
 	stdout, _ = runDefraCommand(t, conf, []string{
 		"client", "schema", "migration", "set",
-		"bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq",
-		"bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
+		"bafkreibqw2l325up2tljc5oyjpjzftg4x7nhluzqoezrmz645jto6tnylu",
+		"bafkreihcyy243ed46jxlpwyryo3cfcvxcbnilpj63gy7smf4fqzyzxadze",
 		// Do not set lens parameters in order to generate error
 		fmt.Sprintf(`{"lenses": [{"path":"%s"}]}`, lenses.SetDefaultModulePath),
 	})

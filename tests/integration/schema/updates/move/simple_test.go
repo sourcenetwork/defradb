@@ -17,7 +17,7 @@ import (
 )
 
 func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
-	schemaVersionID := "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq"
+	schemaVersionID := "bafkreibqw2l325up2tljc5oyjpjzftg4x7nhluzqoezrmz645jto6tnylu"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, move collection",

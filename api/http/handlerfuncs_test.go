@@ -652,8 +652,8 @@ type group {
 			"collections": []any{
 				map[string]any{
 					"name":       "group",
-					"id":         "bafkreieunyhcyupkdppyo2g4zcqtdxvj5xi4f422gp2jwene6ohndvcobe",
-					"version_id": "bafkreieunyhcyupkdppyo2g4zcqtdxvj5xi4f422gp2jwene6ohndvcobe",
+					"id":         "bafkreicdtcgmgjjjao4zzaoacy26cl7xtnnev4qotvflellmdrzi57m5re",
+					"version_id": "bafkreicdtcgmgjjjao4zzaoacy26cl7xtnnev4qotvflellmdrzi57m5re",
 					"fields": []any{
 						map[string]any{
 							"id":       "0",
@@ -683,8 +683,8 @@ type group {
 				},
 				map[string]any{
 					"name":       "user",
-					"id":         "bafkreigrucdl7x3lsa4xwgz2bn7lbqmiwkifnspgx7hlkpaal3o55325bq",
-					"version_id": "bafkreigrucdl7x3lsa4xwgz2bn7lbqmiwkifnspgx7hlkpaal3o55325bq",
+					"id":         "bafkreigl2v5trzfznb7dm3dubmsbzkw73s3phjm6laegswzl4625wc2grm",
+					"version_id": "bafkreigl2v5trzfznb7dm3dubmsbzkw73s3phjm6laegswzl4625wc2grm",
 					"fields": []any{
 						map[string]any{
 							"id":       "0",
@@ -852,8 +852,8 @@ type User {
 			"collections": []any{
 				map[string]any{
 					"name":       "User",
-					"id":         "bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske",
-					"version_id": "bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske",
+					"id":         "bafkreiet7xqehjsjsthy6nafvtbz4el376uudhkjyeifuvvsr64se33swm",
+					"version_id": "bafkreiet7xqehjsjsthy6nafvtbz4el376uudhkjyeifuvvsr64se33swm",
 				},
 			},
 		}, v)
