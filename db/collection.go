@@ -207,24 +207,38 @@ func (db *db) updateCollection(
 	ctx context.Context,
 	txn datastore.Txn,
 	existingDescriptionsByName map[string]client.CollectionDescription,
-	proposedDescriptionsByName map[string]client.CollectionDescription,
+	existingSchemaByName map[string]client.SchemaDescription,
+	proposedDescriptionsByName map[string]client.SchemaDescription,
 	desc client.CollectionDescription,
+	schema client.SchemaDescription,
 	setAsDefaultVersion bool,
 ) (client.Collection, error) {
-	hasChanged, err := db.validateUpdateCollection(ctx, txn, existingDescriptionsByName, proposedDescriptionsByName, desc)
+	hasChanged, err := db.validateUpdateCollection(ctx, existingDescriptionsByName, desc)
 	if err != nil {
 		return nil, err
 	}
 
+	hasSchemaChanged, err := db.validateUpdateSchema(
+		ctx,
+		txn,
+		existingSchemaByName,
+		proposedDescriptionsByName,
+		desc.Schema,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	hasChanged = hasChanged || hasSchemaChanged
 	if !hasChanged {
 		return db.getCollectionByName(ctx, txn, desc.Name)
 	}
 
-	for _, field := range desc.Schema.Fields {
+	for _, field := range schema.Fields {
 		if field.RelationType.IsSet(client.Relation_Type_ONE) {
 			idFieldName := field.Name + "_id"
-			if _, ok := desc.Schema.GetField(idFieldName); !ok {
-				desc.Schema.Fields = append(desc.Schema.Fields, client.FieldDescription{
+			if _, ok := schema.GetField(idFieldName); !ok {
+				schema.Fields = append(schema.Fields, client.FieldDescription{
 					Name:         idFieldName,
 					Kind:         client.FieldKind_DocKey,
 					RelationType: client.Relation_Type_INTERNAL_ID,
@@ -234,23 +248,23 @@ func (db *db) updateCollection(
 		}
 	}
 
-	for i, field := range desc.Schema.Fields {
+	for i, field := range schema.Fields {
 		if field.ID == client.FieldID(0) {
 			// This is not wonderful and will probably break when we add the ability
 			// to delete fields, however it is good enough for now and matches the
 			// create behaviour.
 			field.ID = client.FieldID(i)
-			desc.Schema.Fields[i] = field
+			schema.Fields[i] = field
 		}
 
 		if field.Typ == client.NONE_CRDT {
 			// If no CRDT Type has been provided, default to LWW_REGISTER.
 			field.Typ = client.LWW_REGISTER
-			desc.Schema.Fields[i] = field
+			schema.Fields[i] = field
 		}
 	}
 
-	globalSchemaBuf, err := json.Marshal(desc.Schema)
+	globalSchemaBuf, err := json.Marshal(schema)
 	if err != nil {
 		return nil, err
 	}
@@ -259,9 +273,10 @@ func (db *db) updateCollection(
 	if err != nil {
 		return nil, err
 	}
-	previousSchemaVersionID := desc.Schema.VersionID
+	previousSchemaVersionID := schema.VersionID
 	schemaVersionID := cid.String()
-	desc.Schema.VersionID = schemaVersionID
+	schema.VersionID = schemaVersionID
+	desc.Schema = schema
 
 	buf, err := json.Marshal(desc)
 	if err != nil {
@@ -276,14 +291,14 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, previousSchemaVersionID)
+	schemaVersionHistoryKey := core.NewSchemaHistoryKey(schema.SchemaID, previousSchemaVersionID)
 	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
 	if err != nil {
 		return nil, err
 	}
 
 	if setAsDefaultVersion {
-		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
+		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, schema.SchemaID, schemaVersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -298,9 +313,7 @@ func (db *db) updateCollection(
 // collection. Will return an error if it fails validation.
 func (db *db) validateUpdateCollection(
 	ctx context.Context,
-	txn datastore.Txn,
 	existingDescriptionsByName map[string]client.CollectionDescription,
-	proposedDescriptionsByName map[string]client.CollectionDescription,
 	proposedDesc client.CollectionDescription,
 ) (bool, error) {
 	if proposedDesc.Name == "" {
@@ -316,50 +329,73 @@ func (db *db) validateUpdateCollection(
 		return false, NewErrCollectionIDDoesntMatch(proposedDesc.Name, existingDesc.ID, proposedDesc.ID)
 	}
 
-	if proposedDesc.Schema.SchemaID != existingDesc.Schema.SchemaID {
+	hasChangedIndexes, err := validateUpdateCollectionIndexes(existingDesc.Indexes, proposedDesc.Indexes)
+	return hasChangedIndexes, err
+}
+
+// validateUpdateSchema validates that the given schema description is a valid update.
+//
+// Will return true if the given description differs from the current persisted state of the
+// schema. Will return an error if it fails validation.
+func (db *db) validateUpdateSchema(
+	ctx context.Context,
+	txn datastore.Txn,
+	existingDescriptionsByName map[string]client.SchemaDescription,
+	proposedDescriptionsByName map[string]client.SchemaDescription,
+	proposedDesc client.SchemaDescription,
+) (bool, error) {
+	if proposedDesc.Name == "" {
+		return false, ErrSchemaNameEmpty
+	}
+
+	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
+	if !collectionExists {
+		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
+	}
+
+	if proposedDesc.SchemaID != existingDesc.SchemaID {
 		return false, NewErrSchemaIDDoesntMatch(
 			proposedDesc.Name,
-			existingDesc.Schema.SchemaID,
-			proposedDesc.Schema.SchemaID,
+			existingDesc.SchemaID,
+			proposedDesc.SchemaID,
 		)
 	}
 
-	if proposedDesc.Schema.Name != existingDesc.Schema.Name {
+	if proposedDesc.Name != existingDesc.Name {
 		// There is actually little reason to not support this atm besides controlling the surface area
 		// of the new feature.  Changing this should not break anything, but it should be tested first.
-		return false, NewErrCannotModifySchemaName(existingDesc.Schema.Name, proposedDesc.Schema.Name)
+		return false, NewErrCannotModifySchemaName(existingDesc.Name, proposedDesc.Name)
 	}
 
-	if proposedDesc.Schema.VersionID != "" && proposedDesc.Schema.VersionID != existingDesc.Schema.VersionID {
+	if proposedDesc.VersionID != "" && proposedDesc.VersionID != existingDesc.VersionID {
 		// If users specify this it will be overwritten, an error is prefered to quietly ignoring it.
 		return false, ErrCannotSetVersionID
 	}
 
-	hasChangedFields, err := validateUpdateCollectionFields(proposedDescriptionsByName, existingDesc, proposedDesc)
+	hasChangedFields, err := validateUpdateSchemaFields(proposedDescriptionsByName, existingDesc, proposedDesc)
 	if err != nil {
 		return hasChangedFields, err
 	}
 
-	hasChangedIndexes, err := validateUpdateCollectionIndexes(existingDesc.Indexes, proposedDesc.Indexes)
-	return hasChangedFields || hasChangedIndexes, err
+	return hasChangedFields, err
 }
 
-func validateUpdateCollectionFields(
-	descriptionsByName map[string]client.CollectionDescription,
-	existingDesc client.CollectionDescription,
-	proposedDesc client.CollectionDescription,
+func validateUpdateSchemaFields(
+	descriptionsByName map[string]client.SchemaDescription,
+	existingDesc client.SchemaDescription,
+	proposedDesc client.SchemaDescription,
 ) (bool, error) {
 	hasChanged := false
 	existingFieldsByID := map[client.FieldID]client.FieldDescription{}
 	existingFieldIndexesByName := map[string]int{}
-	for i, field := range existingDesc.Schema.Fields {
+	for i, field := range existingDesc.Fields {
 		existingFieldIndexesByName[field.Name] = i
 		existingFieldsByID[field.ID] = field
 	}
 
 	newFieldNames := map[string]struct{}{}
 	newFieldIds := map[client.FieldID]struct{}{}
-	for proposedIndex, proposedField := range proposedDesc.Schema.Fields {
+	for proposedIndex, proposedField := range proposedDesc.Fields {
 		var existingField client.FieldDescription
 		var fieldAlreadyExists bool
 		if proposedField.ID != client.FieldID(0) ||
@@ -427,7 +463,7 @@ func validateUpdateCollectionFields(
 
 			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
 				idFieldName := proposedField.Name + request.RelatedObjectID
-				idField, idFieldFound := proposedDesc.Schema.GetField(idFieldName)
+				idField, idFieldFound := proposedDesc.GetField(idFieldName)
 				if idFieldFound {
 					if idField.Kind != client.FieldKind_DocKey {
 						return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocKey, idField.Kind)
@@ -449,7 +485,7 @@ func validateUpdateCollectionFields(
 
 			var relatedFieldFound bool
 			var relatedField client.FieldDescription
-			for _, field := range relatedDesc.Schema.Fields {
+			for _, field := range relatedDesc.Fields {
 				if field.RelationName == proposedField.RelationName &&
 					!field.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) &&
 					!(relatedDesc.Name == proposedDesc.Name && field.Name == proposedField.Name) {
@@ -523,7 +559,7 @@ func validateUpdateCollectionFields(
 		newFieldIds[proposedField.ID] = struct{}{}
 	}
 
-	for _, field := range existingDesc.Schema.Fields {
+	for _, field := range existingDesc.Fields {
 		if _, stillExists := newFieldIds[field.ID]; !stillExists {
 			return false, NewErrCannotDeleteField(field.Name, field.ID)
 		}

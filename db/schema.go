@@ -107,6 +107,11 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		return err
 	}
 
+	existingSchemaByName := map[string]client.SchemaDescription{}
+	for _, col := range collectionsByName {
+		existingSchemaByName[col.Schema.Name] = col.Schema
+	}
+
 	// Here we swap out any string representations of enums for their integer values
 	patch, err = substituteSchemaPatch(patch, collectionsByName)
 	if err != nil {
@@ -132,6 +137,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	}
 
 	newCollections := []client.CollectionDefinition{}
+	newSchemaByName := map[string]client.SchemaDescription{}
 	for _, desc := range newDescriptionsByName {
 		col, err := db.newCollection(desc)
 		if err != nil {
@@ -139,6 +145,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		}
 
 		newCollections = append(newCollections, col)
+		newSchemaByName[col.schema.Name] = col.schema
 	}
 
 	for i, col := range newCollections {
@@ -146,8 +153,10 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 			ctx,
 			txn,
 			collectionsByName,
-			newDescriptionsByName,
+			existingSchemaByName,
+			newSchemaByName,
 			col.Description(),
+			col.Schema(),
 			setAsDefaultVersion,
 		)
 		if err != nil {
