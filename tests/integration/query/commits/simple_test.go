@@ -36,13 +36,13 @@ func TestQueryCommits(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
+						"cid": "bafybeic4x7hxoh7yhqmvo7c3mqoyv6j7lnnajkt2hzf2j3mjaf6wmwwl6u",
 					},
 					{
-						"cid": "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
+						"cid": "bafybeidd6rsya2q5gxaarx52da22ih5jdn5wgxsfehcuwquffgjvmdrh34",
 					},
 					{
-						"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
+						"cid": "bafybeiax37emgcmyjjsiae7kwqis675whyc73wth44amhcmsndfygfhl7m",
 					},
 				},
 			},
@@ -79,22 +79,22 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeiepxkcirsd56mtrnzv3nbuqsfjeu77jk7dw5pmxvzmye2agyhzfta",
+						"cid": "bafybeidvkbxozsr7qkhghljwth7g2sfipttevkyxbstqchoa26tqeopdjq",
 					},
 					{
-						"cid": "bafybeidjkzqj3yub3k4sulnaa444zuuy7yo2ku4gl4qxvmcopgoynafyae",
+						"cid": "bafybeifwd2xgjtokmauglml4jotv2sszmdux27ttiqtbc6vvfdzaabsw7y",
 					},
 					{
-						"cid": "bafybeiexzvyjil7s5cxicetgu4kriiuqspbzm7hpd353q5kmqbpqky26hq",
+						"cid": "bafybeihbevhd4dcydunuhq4otjdpw4uyk2lfcqa5zfrrn7jyk3e4rcieom",
 					},
 					{
-						"cid": "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
+						"cid": "bafybeic4x7hxoh7yhqmvo7c3mqoyv6j7lnnajkt2hzf2j3mjaf6wmwwl6u",
 					},
 					{
-						"cid": "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
+						"cid": "bafybeidd6rsya2q5gxaarx52da22ih5jdn5wgxsfehcuwquffgjvmdrh34",
 					},
 					{
-						"cid": "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
+						"cid": "bafybeiax37emgcmyjjsiae7kwqis675whyc73wth44amhcmsndfygfhl7m",
 					},
 				},
 			},
@@ -125,16 +125,16 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":             "bafybeic5oodfpnixl6uf4bi63m3eouuhj3gafudlsd4tqryhx2wy7rczoe",
-						"schemaVersionId": "bafkreicihc56up4gzd4pf6lsmg5fc7dugyuigoaywgtjwy5c2suvj5zhtm",
+						"cid":             "bafybeic4x7hxoh7yhqmvo7c3mqoyv6j7lnnajkt2hzf2j3mjaf6wmwwl6u",
+						"schemaVersionId": "bafkreig2vbhp6udwzcn2grqjnr7b3qbzperexbdazyovgwvkotpq3ehmny",
 					},
 					{
-						"cid":             "bafybeifukwb3t73k7pph3ctp5khosoycp53ywjl6btravzk6decggkjtl4",
-						"schemaVersionId": "bafkreicihc56up4gzd4pf6lsmg5fc7dugyuigoaywgtjwy5c2suvj5zhtm",
+						"cid":             "bafybeidd6rsya2q5gxaarx52da22ih5jdn5wgxsfehcuwquffgjvmdrh34",
+						"schemaVersionId": "bafkreig2vbhp6udwzcn2grqjnr7b3qbzperexbdazyovgwvkotpq3ehmny",
 					},
 					{
-						"cid":             "bafybeig3wrpwi6q7vjchizcwnenslasyxop6wey7jahbiszlubdglfq2fq",
-						"schemaVersionId": "bafkreicihc56up4gzd4pf6lsmg5fc7dugyuigoaywgtjwy5c2suvj5zhtm",
+						"cid":             "bafybeiax37emgcmyjjsiae7kwqis675whyc73wth44amhcmsndfygfhl7m",
+						"schemaVersionId": "bafkreig2vbhp6udwzcn2grqjnr7b3qbzperexbdazyovgwvkotpq3ehmny",
 					},
 				},
 			},
