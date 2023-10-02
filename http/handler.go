@@ -17,7 +17,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/net"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -35,7 +34,7 @@ type Handler struct {
 	txs    *sync.Map
 }
 
-func NewHandler(db client.DB, node *net.Node, opts ServerOptions) *Handler {
+func NewHandler(db client.DB, opts ServerOptions) *Handler {
 	txs := &sync.Map{}
 
 	tx_handler := &txHandler{}
@@ -49,7 +48,7 @@ func NewHandler(db client.DB, node *net.Node, opts ServerOptions) *Handler {
 	router.Use(middleware.RequestLogger(&logFormatter{}))
 	router.Use(middleware.Recoverer)
 	router.Use(CorsMiddleware(opts))
-	router.Use(ApiMiddleware(db, node, txs, opts))
+	router.Use(ApiMiddleware(db, txs, opts))
 
 	router.Route("/api/"+Version, func(api chi.Router) {
 		api.Use(TransactionMiddleware, StoreMiddleware)

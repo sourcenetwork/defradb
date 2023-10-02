@@ -26,7 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-	p2p "github.com/sourcenetwork/defradb/net"
 )
 
 const (
@@ -82,7 +81,7 @@ type TLSOptions struct {
 }
 
 // NewServer instantiates a new server with the given http.Handler.
-func NewServer(db client.DB, node *p2p.Node, options ...func(*Server)) *Server {
+func NewServer(db client.DB, options ...func(*Server)) *Server {
 	srv := &Server{
 		Server: http.Server{
 			ReadTimeout:  readTimeout,
@@ -95,7 +94,7 @@ func NewServer(db client.DB, node *p2p.Node, options ...func(*Server)) *Server {
 		opt(srv)
 	}
 
-	srv.Handler = NewHandler(db, node, srv.options)
+	srv.Handler = NewHandler(db, srv.options)
 
 	return srv
 }
