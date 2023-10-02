@@ -61,7 +61,10 @@ var (
 func CorsMiddleware(opts ServerOptions) func(http.Handler) http.Handler {
 	return cors.Handler(cors.Options{
 		AllowOriginFunc: func(r *http.Request, origin string) bool {
-			return slices.Contains[string](opts.AllowedOrigins, strings.ToLower(origin))
+			if slices.Contains(opts.AllowedOrigins, "*") {
+				return true
+			}
+			return slices.Contains(opts.AllowedOrigins, strings.ToLower(origin))
 		},
 		AllowedMethods: []string{"GET", "HEAD", "POST", "PATCH", "DELETE"},
 		AllowedHeaders: []string{"Content-Type"},
