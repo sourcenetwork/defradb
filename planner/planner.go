@@ -338,8 +338,9 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 		node.documentMapping,
 	)
 	slct := node.subType.(*selectTopNode).selectNode
-	desc := slct.sourceInfo.collectionDescription
-	indexedFields := desc.CollectIndexedFields(&desc.Schema)
+	desc := slct.collection.Description()
+	schema := slct.collection.Schema()
+	indexedFields := desc.CollectIndexedFields(&schema)
 	for _, indField := range indexedFields {
 		if ind, ok := filteredSubFields[indField.Name]; ok {
 			subInd := node.documentMapping.FirstIndexOfName(node.subTypeName)
@@ -412,7 +413,7 @@ func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
 			childSelect,
 			pipe,
 			false,
-			&topNodeSelect.selectNode.sourceInfo,
+			topNodeSelect.selectNode.collection,
 		)
 		if err != nil {
 			return err
