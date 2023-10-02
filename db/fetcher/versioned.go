@@ -357,13 +357,13 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return err
 		}
 
-		fieldID := vf.col.Schema.GetFieldKey(l.Name)
-		if fieldID == uint32(0) {
+		field, ok := vf.col.GetFieldByName(l.Name, &vf.col.Schema)
+		if !ok {
 			return client.NewErrFieldNotExist(l.Name)
 		}
 		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
 		//        get CType from descriptions
-		if err := vf.processNode(fieldID, subNd, client.LWW_REGISTER, l.Name); err != nil {
+		if err := vf.processNode(uint32(field.ID), subNd, client.LWW_REGISTER, l.Name); err != nil {
 			return err
 		}
 	}
@@ -380,7 +380,7 @@ func (vf *VersionedFetcher) processNode(
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {
-		key, err := base.MakePrimaryIndexKeyForCRDT(*vf.col, ctype, vf.key, fieldName)
+		key, err := base.MakePrimaryIndexKeyForCRDT(*vf.col, vf.col.Schema, ctype, vf.key, fieldName)
 		if err != nil {
 			return err
 		}
