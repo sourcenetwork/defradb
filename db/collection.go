@@ -54,8 +54,6 @@ type collection struct {
 	// of the operation in question.
 	txn immutable.Option[datastore.Txn]
 
-	colID uint32
-
 	desc   client.CollectionDescription
 	schema client.SchemaDescription
 
@@ -80,7 +78,6 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 			Indexes: desc.Indexes,
 		},
 		schema: desc.Schema,
-		colID:  desc.ID,
 	}, nil
 }
 
@@ -636,7 +633,6 @@ func (db *db) getCollectionByVersionID(
 		db:     db,
 		desc:   desc,
 		schema: desc.Schema,
-		colID:  desc.ID,
 	}
 
 	err = col.loadIndexes(ctx, txn)
@@ -734,7 +730,7 @@ func (c *collection) getAllDocKeysChan(
 	txn datastore.Txn,
 ) (<-chan client.DocKeysResult, error) {
 	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
-		CollectionId: fmt.Sprint(c.colID),
+		CollectionId: fmt.Sprint(c.ID()),
 	}
 	q, err := txn.Datastore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
@@ -804,7 +800,7 @@ func (c *collection) Schema() client.SchemaDescription {
 
 // ID returns the ID of the collection.
 func (c *collection) ID() uint32 {
-	return c.colID
+	return c.desc.ID
 }
 
 func (c *collection) SchemaID() string {
@@ -819,7 +815,6 @@ func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 		txn:            immutable.Some(txn),
 		desc:           c.desc,
 		schema:         c.schema,
-		colID:          c.colID,
 		indexes:        c.indexes,
 		fetcherFactory: c.fetcherFactory,
 	}
@@ -1406,14 +1401,14 @@ func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) e
 
 func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryDataStoreKey {
 	return core.PrimaryDataStoreKey{
-		CollectionId: fmt.Sprint(c.colID),
+		CollectionId: fmt.Sprint(c.ID()),
 		DocKey:       docKey.String(),
 	}
 }
 
 func (c *collection) getDSKeyFromDockey(docKey client.DocKey) core.DataStoreKey {
 	return core.DataStoreKey{
-		CollectionID: fmt.Sprint(c.colID),
+		CollectionID: fmt.Sprint(c.ID()),
 		DocKey:       docKey.String(),
 		InstanceType: core.ValueKey,
 	}

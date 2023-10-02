@@ -207,7 +207,7 @@ func (c *collection) deleteWithFilter(
 
 		// Convert from string to client.DocKey.
 		key := core.PrimaryDataStoreKey{
-			CollectionId: fmt.Sprint(c.colID),
+			CollectionId: fmt.Sprint(c.ID()),
 			DocKey:       docKey,
 		}
 
