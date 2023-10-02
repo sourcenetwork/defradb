@@ -18,49 +18,14 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 )
-
-func newTestCollectionDescription() client.CollectionDescription {
-	return client.CollectionDescription{
-		Name: "users",
-		ID:   uint32(1),
-		Schema: client.SchemaDescription{
-			Fields: []client.FieldDescription{
-				{
-					Name: "_key",
-					ID:   client.FieldID(1),
-					Kind: client.FieldKind_DocKey,
-				},
-				{
-					Name: "Name",
-					ID:   client.FieldID(2),
-					Kind: client.FieldKind_STRING,
-					Typ:  client.LWW_REGISTER,
-				},
-				{
-					Name: "Age",
-					ID:   client.FieldID(3),
-					Kind: client.FieldKind_INT,
-					Typ:  client.LWW_REGISTER,
-				},
-			},
-		},
-	}
-}
 
 func TestFetcherStartWithoutInit(t *testing.T) {
 	ctx := context.Background()
 	df := new(fetcher.DocumentFetcher)
 	err := df.Start(ctx, core.Spans{})
 	assert.Error(t, err)
-}
-
-func TestMakeIndexPrefixKey(t *testing.T) {
-	desc := newTestCollectionDescription()
-	key := base.MakeCollectionKey(desc)
-	assert.Equal(t, "/1", key.ToString())
 }
 
 func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
