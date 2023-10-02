@@ -45,8 +45,8 @@ func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq",
-					DestinationSchemaVersionID: "bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
+					SourceSchemaVersionID:      "bafkreibqw2l325up2tljc5oyjpjzftg4x7nhluzqoezrmz645jto6tnylu",
+					DestinationSchemaVersionID: "bafkreihcyy243ed46jxlpwyryo3cfcvxcbnilpj63gy7smf4fqzyzxadze",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

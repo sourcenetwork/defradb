@@ -46,8 +46,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreifmgqtwpvepenteuvj27u4ewix6nb7ypvyz6j555wsk5u2n7hrldm",
-					DestinationSchemaVersionID: "bafkreigfqdqnj5dunwgcsf2a6ht6q6m2yv3ys6byw5ifsmi5lfcpeh5t7e",
+					SourceSchemaVersionID:      "bafkreicpuajqg5f4i3vkrdn5jhhcqbkxd5g4aaypkxbo52hfx53vuhjbhm",
+					DestinationSchemaVersionID: "bafkreig22ggpbxpf42hderhl36hb46ypovlljtkpgospl7dyaon4rdnida",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -136,8 +136,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreifmgqtwpvepenteuvj27u4ewix6nb7ypvyz6j555wsk5u2n7hrldm",
-					DestinationSchemaVersionID: "bafkreigfqdqnj5dunwgcsf2a6ht6q6m2yv3ys6byw5ifsmi5lfcpeh5t7e",
+					SourceSchemaVersionID:      "bafkreicpuajqg5f4i3vkrdn5jhhcqbkxd5g4aaypkxbo52hfx53vuhjbhm",
+					DestinationSchemaVersionID: "bafkreig22ggpbxpf42hderhl36hb46ypovlljtkpgospl7dyaon4rdnida",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -238,8 +238,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				// Register a migration from version 2 to version 3 on both nodes.
 				// There is no migration from version 1 to 2, thus node 1 has no knowledge of schema version 2.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
-					DestinationSchemaVersionID: "bafkreiadb2rps7a2zykywfxwfpgkvet5vmzaig4nvzl5sgfqquzr3qrvsq",
+					SourceSchemaVersionID:      "bafkreihcyy243ed46jxlpwyryo3cfcvxcbnilpj63gy7smf4fqzyzxadze",
+					DestinationSchemaVersionID: "bafkreigmkj5aa7qnqgszkzf5r5buqwmowtqu7m34ym5ycsozp7nh73aiwe",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

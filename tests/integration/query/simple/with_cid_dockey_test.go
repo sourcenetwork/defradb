@@ -73,7 +73,7 @@ func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
 		Description: "Simple query with cid and dockey",
 		Request: `query {
 					Users (
-							cid: "bafybeicloiyf5zl5k54cjuhfg6rpsj7rnhxswvnuizpagd2kwq4px6aqn4",
+							cid: "bafybeigyyj2jvd4265aalvq6wctzz7jz36rluxrevlnx2hewvowlq672na",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -102,7 +102,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 		Description: "Simple query with (first) cid and dockey",
 		Request: `query {
 					Users (
-							cid: "bafybeicloiyf5zl5k54cjuhfg6rpsj7rnhxswvnuizpagd2kwq4px6aqn4",
+							cid: "bafybeigyyj2jvd4265aalvq6wctzz7jz36rluxrevlnx2hewvowlq672na",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -143,7 +143,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 		Description: "Simple query with (last) cid and dockey",
 		Request: `query {
 					Users (
-							cid: "bafybeih4is4so2tw47gfjsty6nk7fvcggd3uyq5tgiw4yjnobtbdwnqdoi"
+							cid: "bafybeihldrl36evcdi23igf3zjimmduhd65cgbnu25k5kw74yppou5x37a"
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -184,7 +184,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 		Description: "Simple query with (middle) cid and dockey",
 		Request: `query {
 					Users (
-							cid: "bafybeigvkbbe6e5ztwz7qtwu3xg2zj4stpiwkhyj6qbu6ir3qdmrd3bhem",
+							cid: "bafybeidc7zcwnhto3pvsrtph3txv57no5xdjrca4jv5dzzacuedkr2osmm",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -225,7 +225,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKeyAndSchemaVersion(t *testing.T)
 		Description: "Simple query with (first) cid and dockey and yielded schema version",
 		Request: `query {
 					Users (
-							cid: "bafybeicloiyf5zl5k54cjuhfg6rpsj7rnhxswvnuizpagd2kwq4px6aqn4",
+							cid: "bafybeigyyj2jvd4265aalvq6wctzz7jz36rluxrevlnx2hewvowlq672na",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -259,7 +259,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKeyAndSchemaVersion(t *testing.T)
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"schemaVersionId": "bafkreicl3pjcorfcaexxmqcrilkhx7xl37o6b34nxgtiauygtl7hrqbhoq",
+						"schemaVersionId": "bafkreigrd4xdnprbzdh5bx3igtx2tayfbwp2f27pw3j3xjcbys7jekxfsm",
 					},
 				},
 			},
