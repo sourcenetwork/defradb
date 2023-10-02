@@ -221,11 +221,12 @@ func (db *db) updateCollection(
 		return db.getCollectionByName(ctx, txn, desc.Name)
 	}
 
-	for _, field := range desc.Schema.Fields {
+	schema := desc.Schema
+	for _, field := range schema.Fields {
 		if field.RelationType.IsSet(client.Relation_Type_ONE) {
 			idFieldName := field.Name + "_id"
-			if _, ok := desc.Schema.GetField(idFieldName); !ok {
-				desc.Schema.Fields = append(desc.Schema.Fields, client.FieldDescription{
+			if _, ok := schema.GetField(idFieldName); !ok {
+				schema.Fields = append(schema.Fields, client.FieldDescription{
 					Name:         idFieldName,
 					Kind:         client.FieldKind_DocKey,
 					RelationType: client.Relation_Type_INTERNAL_ID,
@@ -235,23 +236,23 @@ func (db *db) updateCollection(
 		}
 	}
 
-	for i, field := range desc.Schema.Fields {
+	for i, field := range schema.Fields {
 		if field.ID == client.FieldID(0) {
 			// This is not wonderful and will probably break when we add the ability
 			// to delete fields, however it is good enough for now and matches the
 			// create behaviour.
 			field.ID = client.FieldID(i)
-			desc.Schema.Fields[i] = field
+			schema.Fields[i] = field
 		}
 
 		if field.Typ == client.NONE_CRDT {
 			// If no CRDT Type has been provided, default to LWW_REGISTER.
 			field.Typ = client.LWW_REGISTER
-			desc.Schema.Fields[i] = field
+			schema.Fields[i] = field
 		}
 	}
 
-	globalSchemaBuf, err := json.Marshal(desc.Schema)
+	globalSchemaBuf, err := json.Marshal(schema)
 	if err != nil {
 		return nil, err
 	}
@@ -260,9 +261,10 @@ func (db *db) updateCollection(
 	if err != nil {
 		return nil, err
 	}
-	previousSchemaVersionID := desc.Schema.VersionID
+	previousSchemaVersionID := schema.VersionID
 	schemaVersionID := cid.String()
-	desc.Schema.VersionID = schemaVersionID
+	schema.VersionID = schemaVersionID
+	desc.Schema = schema
 
 	buf, err := json.Marshal(desc)
 	if err != nil {
@@ -277,14 +279,14 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, previousSchemaVersionID)
+	schemaVersionHistoryKey := core.NewSchemaHistoryKey(schema.SchemaID, previousSchemaVersionID)
 	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
 	if err != nil {
 		return nil, err
 	}
 
 	if setAsDefaultVersion {
-		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
+		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, schema.SchemaID, schemaVersionID)
 		if err != nil {
 			return nil, err
 		}
