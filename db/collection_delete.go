@@ -281,7 +281,7 @@ func (c *collection) applyDelete(
 					events.Update{
 						DocKey:   key.DocKey,
 						Cid:      headNode.Cid(),
-						SchemaID: c.schemaID,
+						SchemaID: c.Schema().SchemaID,
 						Block:    headNode,
 						Priority: priority,
 					},
