@@ -50,6 +50,13 @@ func mustGetStoreContext(cmd *cobra.Command) client.Store {
 	return cmd.Context().Value(storeContextKey).(client.Store)
 }
 
+// tryGetCollectionContext returns the collection for the current command context
+// and a boolean indicating if the collection was set.
+func tryGetCollectionContext(cmd *cobra.Command) (client.Collection, bool) {
+	col, ok := cmd.Context().Value(colContextKey).(client.Collection)
+	return col, ok
+}
+
 // setTransactionContext sets the transaction for the current command context.
 func setTransactionContext(cmd *cobra.Command, cfg *config.Config, txId uint64) error {
 	if txId == 0 {

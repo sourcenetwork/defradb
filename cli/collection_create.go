@@ -34,7 +34,7 @@ Example: create documents
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			col, ok := cmd.Context().Value(colContextKey).(client.Collection)
+			col, ok := tryGetCollectionContext(cmd)
 			if !ok {
 				return cmd.Usage()
 			}

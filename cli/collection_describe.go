@@ -37,7 +37,7 @@ func MakeCollectionDescribeCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetStoreContext(cmd)
 
-			col, ok := cmd.Context().Value(colContextKey).(client.Collection)
+			col, ok := tryGetCollectionContext(cmd)
 			if ok {
 				return writeJSON(cmd, col.Description())
 			}
