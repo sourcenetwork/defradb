@@ -149,6 +149,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	}
 
 	newCollections := []client.CollectionDefinition{}
+	newSchemaByName := map[string]client.SchemaDescription{}
 	for _, desc := range newDescriptionsByName {
 		col, err := db.newCollection(desc)
 		if err != nil {
@@ -156,10 +157,11 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		}
 
 		newCollections = append(newCollections, col)
+		newSchemaByName[col.schema.Name] = col.schema
 	}
 
 	for i, col := range newCollections {
-		col, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, col.Description(), setAsDefaultVersion)
+		col, err := db.updateCollection(ctx, txn, collectionsByName, newSchemaByName, col.Description(), col.Schema(), setAsDefaultVersion)
 		if err != nil {
 			return err
 		}

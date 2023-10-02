@@ -113,6 +113,7 @@ var (
 	ErrUnknownCRDT                        = errors.New("unknown crdt")
 	ErrCollectionAlreadyExists            = errors.New("collection already exists")
 	ErrCollectionNameEmpty                = errors.New("collection name can't be empty")
+	ErrSchemaNameEmpty                    = errors.New("schema name can't be empty")
 	ErrSchemaIDEmpty                      = errors.New("schema ID can't be empty")
 	ErrSchemaVersionIDEmpty               = errors.New("schema version ID can't be empty")
 	ErrKeyEmpty                           = errors.New("key cannot be empty")
