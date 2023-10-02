@@ -12,6 +12,7 @@ package cli
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -26,11 +27,17 @@ func MakeCollectionCreateCommand() *cobra.Command {
 		Short: "Create a new document.",
 		Long: `Create a new document.
 
-Example: create document
+Example: create from string
   defradb client collection create --name User '{ "name": "Bob" }'
 
-Example: create documents
+Example: create multiple from string
   defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
+
+Example: create from file
+  defradb client collection create --name User -f document.json
+
+Example: create from stdin
+  cat document.json | defradb client collection create --name User -
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -41,14 +48,20 @@ Example: create documents
 
 			var docData []byte
 			switch {
-			case len(args) == 1:
-				docData = []byte(args[0])
 			case file != "":
 				data, err := os.ReadFile(file)
 				if err != nil {
 					return err
 				}
 				docData = data
+			case len(args) == 1 && args[0] == "-":
+				data, err := io.ReadAll(cmd.InOrStdin())
+				if err != nil {
+					return err
+				}
+				docData = data
+			case len(args) == 1:
+				docData = []byte(args[0])
 			default:
 				return ErrNoDocOrFile
 			}

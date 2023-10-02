@@ -22,17 +22,17 @@ func MakeCollectionDescribeCommand() *cobra.Command {
 		Short: "View collection description.",
 		Long: `Introspect collection types.
 
-		Example: view all collections
-		  defradb client collection describe
+Example: view all collections
+  defradb client collection describe
 		
-		Example: view collection by name
-		  defradb client collection describe --name User
+Example: view collection by name
+  defradb client collection describe --name User
 		
-		Example: view collection by schema id
-		  defradb client collection describe --schema bae123
+Example: view collection by schema id
+  defradb client collection describe --schema bae123
 		
-		Example: view collection by version id
-		  defradb client collection describe --version bae123
+Example: view collection by version id
+  defradb client collection describe --version bae123
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetStoreContext(cmd)

@@ -25,7 +25,7 @@ func MakeCollectionUpdateCommand() *cobra.Command {
 		Short: "Update documents by key or filter.",
 		Long: `Update documents by key or filter.
 		
-Example:
+Example: update from string
   defradb client collection update --name User --key bae-123 '{ "name": "Bob" }'
 
 Example: update by filter

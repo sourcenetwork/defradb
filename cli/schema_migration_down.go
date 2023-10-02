@@ -12,6 +12,7 @@ package cli
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -29,8 +30,14 @@ func MakeSchemaMigrationDownCommand() *cobra.Command {
 		Long: `Reverses the migration from the specified schema version.
 Documents is a list of documents to reverse the migration from.
 
-Example:
+Example: migrate from string
   defradb client schema migration down --version bae123 '[{"name": "Bob"}]'
+
+Example: migrate from file
+  defradb client schema migration down --version bae123 -f documents.json
+
+Example: migrate from stdin
+  cat documents.json | defradb client schema migration down --version bae123 -
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -40,6 +47,12 @@ Example:
 			switch {
 			case file != "":
 				data, err := os.ReadFile(file)
+				if err != nil {
+					return err
+				}
+				srcData = data
+			case len(args) == 1 && args[0] == "-":
+				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
 					return err
 				}
