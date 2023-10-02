@@ -234,11 +234,9 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	systemStoreOn.Get(mock.Anything, colKey.ToDS()).Maybe().Return([]byte(userColVersionID), nil)
 
 	colVersionIDKey := core.NewCollectionSchemaVersionKey(userColVersionID)
-	colDesc := getUsersCollectionDesc()
-	colDesc.ID = 1
-	for i := range colDesc.Schema.Fields {
-		colDesc.Schema.Fields[i].ID = client.FieldID(i)
-	}
+	usersCol, err := f.db.GetCollectionByName(f.ctx, usersColName)
+	require.NoError(f.t, err)
+	colDesc := usersCol.Description()
 	colDescBytes, err := json.Marshal(colDesc)
 	require.NoError(f.t, err)
 	systemStoreOn.Get(mock.Anything, colVersionIDKey.ToDS()).Maybe().Return(colDescBytes, nil)
@@ -361,8 +359,8 @@ func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 
 func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.createCollection(getUsersCollectionDesc())
-	products := f.createCollection(getProductsCollectionDesc())
+	users := f.getUsersCollectionDesc()
+	products := f.getProductsCollectionDesc()
 
 	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
@@ -437,24 +435,23 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 	}
 
 	for i, tc := range testCase {
-		desc := client.CollectionDescription{
-			Name: "testTypeCol" + strconv.Itoa(i),
-			Schema: client.SchemaDescription{
-				Fields: []client.FieldDescription{
-					{
-						Name: "_key",
-						Kind: client.FieldKind_DocKey,
-					},
-					{
-						Name: "field",
-						Kind: tc.FieldKind,
-						Typ:  client.LWW_REGISTER,
-					},
-				},
-			},
-		}
+		_, err := f.db.AddSchema(
+			f.ctx,
+			fmt.Sprintf(
+				`type %s {
+					field: %s
+				}`,
+				"testTypeCol"+strconv.Itoa(i),
+				tc.FieldKind.String(),
+			),
+		)
+		require.NoError(f.t, err)
 
-		collection := f.createCollection(desc)
+		collection, err := f.db.GetCollectionByName(f.ctx, "testTypeCol"+strconv.Itoa(i))
+		require.NoError(f.t, err)
+
+		f.txn, err = f.db.NewTxn(f.ctx, false)
+		require.NoError(f.t, err)
 
 		indexDesc := client.IndexDescription{
 			Fields: []client.IndexedFieldDescription{
@@ -462,7 +459,7 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 			},
 		}
 
-		_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
+		_, err = f.createCollectionIndexFor(collection.Name(), indexDesc)
 		require.NoError(f.t, err)
 		f.commitTxn()
 
@@ -596,7 +593,7 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 		doc := f.newUserDoc("John", 21)
 		f.saveDocToCollection(doc, f.users)
 
-		f.users.fetcherFactory = tc.PrepareFetcher
+		f.users.(*collection).fetcherFactory = tc.PrepareFetcher
 		key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
 		_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
@@ -614,7 +611,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	f.saveDocToCollection(doc, f.users)
 
 	fieldKeyString := core.DataStoreKey{
-		CollectionID: f.users.desc.IDString(),
+		CollectionID: f.users.Description().IDString(),
 	}.WithDocKey(doc.Key().String()).
 		WithFieldId("1").
 		WithValueFlag().
@@ -623,7 +620,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	invalidKeyString := fieldKeyString + "/doesn't matter/"
 
 	// Insert an invalid key within the document prefix, this will generate an error within the fetcher.
-	f.users.db.multistore.Datastore().Put(f.ctx, ipfsDatastore.NewKey(invalidKeyString), []byte("doesn't matter"))
+	f.db.multistore.Datastore().Put(f.ctx, ipfsDatastore.NewKey(invalidKeyString), []byte("doesn't matter"))
 
 	_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 	require.ErrorIs(f.t, err, core.ErrInvalidKey)
@@ -631,7 +628,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 
 func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.createCollection(getUsersCollectionDesc())
+	users := f.getUsersCollectionDesc()
 	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
 	_, err = f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnAge())
@@ -643,7 +640,7 @@ func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f.saveDocToCollection(f.newUserDoc("John", 21), users)
 	f.saveDocToCollection(f.newUserDoc("Islam", 23), users)
 
-	products := f.createCollection(getProductsCollectionDesc())
+	products := f.getProductsCollectionDesc()
 	_, err = f.createCollectionIndexFor(products.Name(), getProductsIndexDescOnCategory())
 	require.NoError(f.t, err)
 	f.commitTxn()
@@ -885,7 +882,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 		doc := f.newUserDoc("John", 21)
 		f.saveDocToCollection(doc, f.users)
 
-		f.users.fetcherFactory = tc.PrepareFetcher
+		f.users.(*collection).fetcherFactory = tc.PrepareFetcher
 		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
 		err := doc.Set(usersNameFieldName, "Islam")
@@ -931,7 +928,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 	f.createUserCollectionIndexOnName()
 	f.createUserCollectionIndexOnAge()
 
-	f.users.fetcherFactory = func() fetcher.Fetcher {
+	f.users.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		f := fetcherMocks.NewStubbedFetcher(t)
 		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
 		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -999,7 +996,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			schemaVersionID: f.users.Schema().VersionID,
 		}
 
-		f.users.fetcherFactory = func() fetcher.Fetcher {
+		f.users.(*collection).fetcherFactory = func() fetcher.Fetcher {
 			df := fetcherMocks.NewStubbedFetcher(t)
 			df.EXPECT().FetchNext(mock.Anything).Unset()
 			df.EXPECT().FetchNext(mock.Anything).Return(&encodedDoc, fetcher.ExecInfo{}, nil)

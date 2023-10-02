@@ -15,6 +15,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -55,71 +56,62 @@ type indexTestFixture struct {
 	ctx   context.Context
 	db    *implicitTxnDB
 	txn   datastore.Txn
-	users *collection
+	users client.Collection
 	t     *testing.T
 }
 
-func getUsersCollectionDesc() client.CollectionDescription {
-	return client.CollectionDescription{
-		Name: usersColName,
-		Schema: client.SchemaDescription{
-			Fields: []client.FieldDescription{
-				{
-					Name: "_key",
-					Kind: client.FieldKind_DocKey,
-				},
-				{
-					Name: usersNameFieldName,
-					Kind: client.FieldKind_STRING,
-					Typ:  client.LWW_REGISTER,
-				},
-				{
-					Name: usersAgeFieldName,
-					Kind: client.FieldKind_INT,
-					Typ:  client.LWW_REGISTER,
-				},
-				{
-					Name: usersWeightFieldName,
-					Kind: client.FieldKind_FLOAT,
-					Typ:  client.LWW_REGISTER,
-				},
-			},
-		},
-	}
+func (f *indexTestFixture) getUsersCollectionDesc() client.Collection {
+	_, err := f.db.AddSchema(
+		f.ctx,
+		fmt.Sprintf(
+			`type %s {
+				%s: String
+				%s: Int
+				%s: Float
+			}`,
+			usersColName,
+			usersNameFieldName,
+			usersAgeFieldName,
+			usersWeightFieldName,
+		),
+	)
+	require.NoError(f.t, err)
+
+	col, err := f.db.GetCollectionByName(f.ctx, usersColName)
+	require.NoError(f.t, err)
+
+	f.txn, err = f.db.NewTxn(f.ctx, false)
+	require.NoError(f.t, err)
+
+	return col
 }
 
-func getProductsCollectionDesc() client.CollectionDescription {
-	return client.CollectionDescription{
-		Name: productsColName,
-		Schema: client.SchemaDescription{
-			Fields: []client.FieldDescription{
-				{
-					Name: "_key",
-					Kind: client.FieldKind_DocKey,
-				},
-				{
-					Name: productsIDFieldName,
-					Kind: client.FieldKind_INT,
-					Typ:  client.LWW_REGISTER,
-				},
-				{
-					Name: productsPriceFieldName,
-					Kind: client.FieldKind_FLOAT,
-					Typ:  client.LWW_REGISTER,
-				},
-				{
-					Name: productsCategoryFieldName,
-					Kind: client.FieldKind_STRING,
-					Typ:  client.LWW_REGISTER,
-				},
-				{
-					Name: productsAvailableFieldName,
-					Kind: client.FieldKind_BOOL,
-					Typ:  client.LWW_REGISTER,
-				},
-			},
-		},
-	}
+func (f *indexTestFixture) getProductsCollectionDesc() client.Collection {
+	_, err := f.db.AddSchema(
+		f.ctx,
+		fmt.Sprintf(
+			`type %s {
+				%s: Int
+				%s: Float
+				%s: String
+				%s: Boolean
+			}`,
+			productsColName,
+			productsIDFieldName,
+			productsPriceFieldName,
+			productsCategoryFieldName,
+			productsAvailableFieldName,
+		),
+	)
+	require.NoError(f.t, err)
+
+	col, err := f.db.GetCollectionByName(f.ctx, productsColName)
+	require.NoError(f.t, err)
+
+	f.txn, err = f.db.NewTxn(f.ctx, false)
+	require.NoError(f.t, err)
+
+	return col
 }
 
 func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
@@ -139,7 +131,7 @@ func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
 
 func newIndexTestFixture(t *testing.T) *indexTestFixture {
 	f := newIndexTestFixtureBare(t)
-	f.users = f.createCollection(getUsersCollectionDesc())
+	f.users = f.getUsersCollectionDesc()
 	return f
 }
 
@@ -247,18 +239,6 @@ func (f *indexTestFixture) getCollectionIndexes(colName string) ([]client.IndexD
 	return f.db.fetchCollectionIndexDescriptions(f.ctx, f.txn, colName)
 }
 
-func (f *indexTestFixture) createCollection(
-	desc client.CollectionDescription,
-) *collection {
-	col, err := f.db.createCollection(f.ctx, f.txn, desc)
-	assert.NoError(f.t, err)
-	err = f.txn.Commit(f.ctx)
-	assert.NoError(f.t, err)
-	f.txn, err = f.db.NewTxn(f.ctx, false)
-	assert.NoError(f.t, err)
-	return col.(*collection)
-}
-
 func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
@@ -322,28 +302,6 @@ func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	newDesc, err := f.createCollectionIndex(desc)
 	assert.NoError(t, err)
 	assert.Equal(t, client.Ascending, newDesc.Fields[0].Direction)
-}
-
-func TestCreateIndex_IfNameIsNotSpecified_Generate(t *testing.T) {
-	f := newIndexTestFixtureBare(t)
-	colDesc := getUsersCollectionDesc()
-	const colName = "UsErS"
-	const fieldName = "NaMe"
-	colDesc.Name = colName
-	colDesc.Schema.Name = colName // Which one should we use?
-	colDesc.Schema.Fields[1].Name = fieldName
-	f.users = f.createCollection(colDesc)
-
-	desc := client.IndexDescription{
-		Name: "",
-		Fields: []client.IndexedFieldDescription{
-			{Name: fieldName, Direction: client.Ascending},
-		},
-	}
-
-	newDesc, err := f.createCollectionIndex(desc)
-	assert.NoError(t, err)
-	assert.Equal(t, colName+"_"+fieldName+"_ASC", newDesc.Name)
 }
 
 func TestCreateIndex_IfSingleFieldInDescOrder_ReturnError(t *testing.T) {
@@ -515,8 +473,8 @@ func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 
 func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCollection(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.createCollection(getUsersCollectionDesc())
-	products := f.createCollection(getProductsCollectionDesc())
+	users := f.getUsersCollectionDesc()
+	products := f.getProductsCollectionDesc()
 
 	makeIndex := func(fieldName string) client.IndexDescription {
 		return client.IndexDescription{
@@ -606,24 +564,16 @@ func TestCreateIndex_IfAttemptToIndexOnUnsupportedType_ReturnError(t *testing.T)
 
 	const unsupportedKind = client.FieldKind_BOOL_ARRAY
 
-	desc := client.CollectionDescription{
-		Name: "testTypeCol",
-		Schema: client.SchemaDescription{
-			Fields: []client.FieldDescription{
-				{
-					Name: "_key",
-					Kind: client.FieldKind_DocKey,
-				},
-				{
-					Name: "field",
-					Kind: unsupportedKind,
-					Typ:  client.LWW_REGISTER,
-				},
-			},
-		},
-	}
+	_, err := f.db.AddSchema(
+		f.ctx,
+		`type testTypeCol {
+			field: [Boolean!]
+		}`,
+	)
+	require.NoError(f.t, err)
 
-	collection := f.createCollection(desc)
+	collection, err := f.db.GetCollectionByName(f.ctx, "testTypeCol")
+	require.NoError(f.t, err)
 
 	indexDesc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
@@ -631,7 +581,10 @@ func TestCreateIndex_IfAttemptToIndexOnUnsupportedType_ReturnError(t *testing.T)
 		},
 	}
 
-	_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
+	f.txn, err = f.db.NewTxn(f.ctx, false)
+	require.NoError(f.t, err)
+
+	_, err = f.createCollectionIndexFor(collection.Name(), indexDesc)
 	require.ErrorIs(f.t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
 	f.commitTxn()
 }
@@ -652,7 +605,7 @@ func TestCreateIndex_IfFailedToReadIndexUponRetrievingCollectionDesc_ReturnError
 
 	onSystemStore.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).Return(nil, testErr)
 
-	descData, err := json.Marshal(getUsersCollectionDesc())
+	descData, err := json.Marshal(f.users.Description())
 	require.NoError(t, err)
 
 	onSystemStore.Query(mock.Anything, mock.Anything).
@@ -676,7 +629,9 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
 	assert.NoError(t, err)
 
-	f.createCollection(getProductsCollectionDesc())
+	f.commitTxn()
+
+	f.getProductsCollectionDesc()
 	productsIndexDesc := client.IndexDescription{
 		Name:   "products_description_index",
 		Fields: []client.IndexedFieldDescription{{Name: productsPriceFieldName}},
@@ -829,11 +784,17 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
 	assert.NoError(t, err)
 
-	f.createCollection(getProductsCollectionDesc())
+	f.commitTxn()
+
+	f.getProductsCollectionDesc()
 	productsIndexDesc := client.IndexDescription{
 		Name:   "products_description_index",
 		Fields: []client.IndexedFieldDescription{{Name: productsPriceFieldName}},
 	}
+
+	f.txn, err = f.db.NewTxn(f.ctx, false)
+	require.NoError(f.t, err)
+
 	_, err = f.createCollectionIndexFor(productsColName, productsIndexDesc)
 	assert.NoError(t, err)
 
@@ -1019,27 +980,23 @@ func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
 
 func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
+	f.getUsersCollectionDesc()
 
 	const unsupportedKind = client.FieldKind_BOOL_ARRAY
+	_, err := f.db.AddSchema(
+		f.ctx,
+		`type testTypeCol {
+			name: String
+			field: [Boolean!]
+		}`,
+	)
+	require.NoError(f.t, err)
 
-	desc := client.CollectionDescription{
-		Name: "testTypeCol",
-		Schema: client.SchemaDescription{
-			Fields: []client.FieldDescription{
-				{
-					Name: "_key",
-					Kind: client.FieldKind_DocKey,
-				},
-				{
-					Name: "field",
-					Kind: unsupportedKind,
-					Typ:  client.LWW_REGISTER,
-				},
-			},
-		},
-	}
+	collection, err := f.db.GetCollectionByName(f.ctx, "testTypeCol")
+	require.NoError(f.t, err)
 
-	collection := f.createCollection(desc)
+	f.txn, err = f.db.NewTxn(f.ctx, false)
+	require.NoError(f.t, err)
 
 	indexDesc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
@@ -1119,17 +1076,6 @@ func TestCollectionGetIndexes_IfIndexIsDropped_ReturnUpdateIndexes(t *testing.T)
 
 func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	colDesc := client.CollectionDescription{
-		Name: "testCollection",
-		Schema: client.SchemaDescription{
-			Fields: []client.FieldDescription{
-				{
-					Name: "_key",
-					Kind: client.FieldKind_DocKey,
-				},
-			},
-		},
-	}
 	const (
 		num             = 30
 		fieldNamePrefix = "field_"
@@ -1140,17 +1086,34 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 		return fmt.Sprintf("%02d", i)
 	}
 
+	builder := strings.Builder{}
+	builder.WriteString("type testCollection {\n")
+
 	for i := 1; i <= num; i++ {
-		colDesc.Schema.Fields = append(colDesc.Schema.Fields,
-			client.FieldDescription{
-				Name: fieldNamePrefix + toSuffix(i),
-				Kind: client.FieldKind_STRING,
-				Typ:  client.LWW_REGISTER,
-			})
+		_, err := builder.WriteString(fieldNamePrefix)
+		require.NoError(f.t, err)
+
+		_, err = builder.WriteString(toSuffix(i))
+		require.NoError(f.t, err)
+
+		_, err = builder.WriteString(": String\n")
+		require.NoError(f.t, err)
 	}
+	_, err := builder.WriteString("}")
+	require.NoError(f.t, err)
 
-	collection := f.createCollection(colDesc)
+	const unsupportedKind = client.FieldKind_BOOL_ARRAY
+	_, err = f.db.AddSchema(
+		f.ctx,
+		builder.String(),
+	)
+	require.NoError(f.t, err)
 
+	collection, err := f.db.GetCollectionByName(f.ctx, "testCollection")
+	require.NoError(f.t, err)
+
+	f.txn, err = f.db.NewTxn(f.ctx, false)
+	require.NoError(f.t, err)
 	for i := 1; i <= num; i++ {
 		iStr := toSuffix(i)
 		indexDesc := client.IndexDescription{
@@ -1317,7 +1280,7 @@ func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 
 	assert.Equal(t, 2, f.countIndexPrefixes(usersColName, ""))
 
-	err = f.users.dropAllIndexes(f.ctx, f.txn)
+	err = f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 0, f.countIndexPrefixes(usersColName, ""))
@@ -1329,7 +1292,7 @@ func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
 
 	f.db.Close(f.ctx)
 
-	err := f.users.dropAllIndexes(f.ctx, f.txn)
+	err := f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
 	assert.Error(t, err)
 }
 
@@ -1384,7 +1347,7 @@ func TestDropAllIndexes_IfSystemStorageFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Systemstore().Unset()
 		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-		err := f.users.dropAllIndexes(f.ctx, f.txn)
+		err := f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
 		assert.ErrorIs(t, err, testErr, testCase.Name)
 	}
 }
@@ -1404,7 +1367,7 @@ func TestDropAllIndexes_ShouldCloseQueryIterator(t *testing.T) {
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
-	_ = f.users.dropAllIndexes(f.ctx, f.txn)
+	_ = f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
 }
 
 func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
