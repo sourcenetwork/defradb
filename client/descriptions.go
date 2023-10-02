@@ -50,6 +50,17 @@ func (col CollectionDescription) GetFieldByID(id FieldID, schema *SchemaDescript
 	return FieldDescription{}, false
 }
 
+// GetFieldByName returns the field for the given field name. If such a field is found it
+// will return it and true, if it is not found it will return false.
+func (col CollectionDescription) GetFieldByName(fieldName string, schema *SchemaDescription) (FieldDescription, bool) {
+	for _, field := range schema.Fields {
+		if field.Name == fieldName {
+			return field, true
+		}
+	}
+	return FieldDescription{}, false
+}
+
 // GetFieldByRelation returns the field that supports the relation of the given name.
 func (col CollectionDescription) GetFieldByRelation(
 	relationName string,
@@ -90,16 +101,6 @@ type SchemaDescription struct {
 	//
 	// Currently new fields may be added after initial declaration, but they cannot be removed.
 	Fields []FieldDescription
-}
-
-// GetFieldKey returns the field ID for the given field name.
-func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
-	for _, field := range sd.Fields {
-		if field.Name == fieldName {
-			return uint32(field.ID)
-		}
-	}
-	return uint32(0)
 }
 
 // GetField returns the field of the given name.

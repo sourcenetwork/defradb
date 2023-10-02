@@ -34,6 +34,7 @@ func MakeDocKey(col client.CollectionDescription, docKey string) core.DataStoreK
 
 func MakePrimaryIndexKeyForCRDT(
 	c client.CollectionDescription,
+	schema client.SchemaDescription,
 	ctype client.CType,
 	key core.DataStoreKey,
 	fieldName string,
@@ -42,7 +43,12 @@ func MakePrimaryIndexKeyForCRDT(
 	case client.COMPOSITE:
 		return MakeCollectionKey(c).WithInstanceInfo(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
 	case client.LWW_REGISTER:
-		return MakeCollectionKey(c).WithInstanceInfo(key).WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName))), nil
+		field, ok := c.GetFieldByName(fieldName, &schema)
+		if !ok {
+			return core.DataStoreKey{}, client.NewErrFieldNotExist(fieldName)
+		}
+
+		return MakeCollectionKey(c).WithInstanceInfo(key).WithFieldId(fmt.Sprint(field.ID)), nil
 	}
 	return core.DataStoreKey{}, ErrInvalidCrdtType
 }
