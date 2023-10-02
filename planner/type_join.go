@@ -254,16 +254,17 @@ func (p *Planner) makeTypeJoinOne(
 	// check if the field we're querying is the primary side of the relation
 	isPrimary := subTypeFieldDesc.RelationType.IsSet(client.Relation_Type_Primary)
 
-	subTypeCollectionDesc, err := p.getCollectionDesc(subType.CollectionName)
+	subTypeCollection, err := p.db.GetCollectionByName(p.ctx, subType.CollectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	subTypeField, subTypeFieldNameFound := subTypeCollectionDesc.GetFieldByRelation(
+	subTypeSchema := subTypeCollection.Schema()
+	subTypeField, subTypeFieldNameFound := subTypeCollection.Description().GetFieldByRelation(
 		subTypeFieldDesc.RelationName,
 		parent.sourceInfo.collectionDescription.Name,
 		subTypeFieldDesc.Name,
-		&subTypeCollectionDesc.Schema,
+		&subTypeSchema,
 	)
 	if !subTypeFieldNameFound {
 		return nil, client.NewErrFieldNotExist(subTypeFieldDesc.RelationName)
@@ -481,16 +482,17 @@ func (p *Planner) makeTypeJoinMany(
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 
-	subTypeCollectionDesc, err := p.getCollectionDesc(subType.CollectionName)
+	subTypeCollection, err := p.db.GetCollectionByName(p.ctx, subType.CollectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	rootField, rootNameFound := subTypeCollectionDesc.GetFieldByRelation(
+	subTypeSchema := subTypeCollection.Schema()
+	rootField, rootNameFound := subTypeCollection.Description().GetFieldByRelation(
 		subTypeFieldDesc.RelationName,
 		parent.sourceInfo.collectionDescription.Name,
 		subTypeFieldDesc.Name,
-		&subTypeCollectionDesc.Schema,
+		&subTypeSchema,
 	)
 
 	if !rootNameFound {

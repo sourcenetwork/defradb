@@ -11,11 +11,7 @@
 package planner
 
 import (
-	"encoding/json"
-
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -36,7 +32,7 @@ func (p *Planner) getSource(parsed *mapper.Select) (planSource, error) {
 }
 
 func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, error) {
-	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.CollectionName)
 	if err != nil {
 		return planSource{}, err
 	}
@@ -49,30 +45,7 @@ func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, erro
 	return planSource{
 		plan: scan,
 		info: sourceInfo{
-			collectionDescription: colDesc,
+			collectionDescription: col.Description(),
 		},
 	}, nil
-}
-
-func (p *Planner) getCollectionDesc(name string) (client.CollectionDescription, error) {
-	collectionKey := core.NewCollectionKey(name)
-	var desc client.CollectionDescription
-	schemaVersionIdBytes, err := p.txn.Systemstore().Get(p.ctx, collectionKey.ToDS())
-	if err != nil {
-		return desc, errors.Wrap("failed to get collection description", err)
-	}
-
-	schemaVersionId := string(schemaVersionIdBytes)
-	schemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionId)
-	buf, err := p.txn.Systemstore().Get(p.ctx, schemaVersionKey.ToDS())
-	if err != nil {
-		return desc, err
-	}
-
-	err = json.Unmarshal(buf, &desc)
-	if err != nil {
-		return desc, err
-	}
-
-	return desc, nil
 }
