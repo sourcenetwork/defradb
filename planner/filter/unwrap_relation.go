@@ -17,19 +17,22 @@ import (
 // UnwrapRelation runs through the filter and returns a new filter with only the
 // fields of a given relation object
 // Example:
-// 	{
-// 		"published": {
-// 			"rating": {
-// 				"_gt": 4.0
-// 			}
-// 		}
-// 	}
+//
+//	{
+//		"published": {
+//			"rating": {
+//				"_gt": 4.0
+//			}
+//		}
+//	}
+//
 // with given "published" field will return
-// 	{
-// 		"rating": {
-// 			"_gt": 4.0
-// 		}
-// 	}
+//
+//	{
+//		"rating": {
+//			"_gt": 4.0
+//		}
+//	}
 func UnwrapRelation(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
 	if filter == nil {
 		return nil

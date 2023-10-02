@@ -567,7 +567,12 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 	firstDoc := join.dir.firstNode.Value()
 
 	if join.isSecondary {
-		secondDocs, err := fetchDocsWithFieldValue(join.dir.secondNode, join.dir.secondaryField, firstDoc.GetKey(), join.secondaryFetchLimit)
+		secondDocs, err := fetchDocsWithFieldValue(
+			join.dir.secondNode,
+			join.dir.secondaryField,
+			firstDoc.GetKey(),
+			join.secondaryFetchLimit,
+		)
 		if err != nil {
 			return false, err
 		}
@@ -596,7 +601,10 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 	return true, nil
 }
 
-func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(fieldFilter *mapper.Filter, field client.FieldDescription) error {
+func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
+	fieldFilter *mapper.Filter,
+	field client.FieldDescription,
+) error {
 	subScan := getScanNode(join.subType)
 	subScan.tryAddField(join.rootName + request.RelatedObjectID)
 	subScan.filter = fieldFilter

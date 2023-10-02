@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -20,7 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
-	"github.com/sourcenetwork/immutable"
 )
 
 // scanExecInfo contains information about the execution of a scan.
@@ -314,8 +315,6 @@ func (p *Planner) Scan(
 // we call Next() on the underlying scanNode only
 // once every 2 Next() calls on the multiScan
 type multiScanNode struct {
-	docMapper
-
 	scanNode   *scanNode
 	numReaders int
 	numCalls   int

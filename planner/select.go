@@ -293,7 +293,6 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 
 	if isScanNode {
 		origScan.initFetcher(n.selectReq.Cid, findFilteredByIndexedField(origScan))
-
 	}
 
 	return aggregates, nil
