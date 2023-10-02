@@ -58,7 +58,8 @@ type collection struct {
 
 	schemaID string
 
-	desc client.CollectionDescription
+	desc   client.CollectionDescription
+	schema client.SchemaDescription
 
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
@@ -80,7 +81,8 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 			Schema:  desc.Schema,
 			Indexes: desc.Indexes,
 		},
-		colID: desc.ID,
+		schema: desc.Schema,
+		colID:  desc.ID,
 	}, nil
 }
 
@@ -157,6 +159,7 @@ func (db *db) createCollection(
 	schema.VersionID = schemaVersionID
 	schema.SchemaID = schemaID
 	col.desc.Schema = schema
+	col.schema = schema
 
 	// buffer must include all the ids, as it is saved and loaded from the store later.
 	buf, err := json.Marshal(col.desc)
@@ -635,6 +638,7 @@ func (db *db) getCollectionByVersionID(
 	col := &collection{
 		db:       db,
 		desc:     desc,
+		schema:   desc.Schema,
 		colID:    desc.ID,
 		schemaID: desc.Schema.SchemaID,
 	}
@@ -799,7 +803,7 @@ func (c *collection) Name() string {
 
 // Schema returns the Schema of the collection.
 func (c *collection) Schema() client.SchemaDescription {
-	return c.desc.Schema
+	return c.schema
 }
 
 // ID returns the ID of the collection.
@@ -818,6 +822,7 @@ func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 		db:             c.db,
 		txn:            immutable.Some(txn),
 		desc:           c.desc,
+		schema:         c.schema,
 		colID:          c.colID,
 		schemaID:       c.schemaID,
 		indexes:        c.indexes,
@@ -877,7 +882,7 @@ func (c *collection) getKeysFromDoc(
 
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
 	// This has to be done before dockey verification happens in the next step.
-	if err := doc.RemapAliasFieldsAndDockey(c.desc.Schema.Fields); err != nil {
+	if err := doc.RemapAliasFieldsAndDockey(c.schema.Fields); err != nil {
 		return err
 	}
 
@@ -1033,7 +1038,7 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			fieldDescription, valid := c.desc.Schema.GetField(k)
+			fieldDescription, valid := c.schema.GetField(k)
 			if !valid {
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
@@ -1135,7 +1140,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	objFieldDescription, ok := c.desc.Schema.GetField(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
+	objFieldDescription, ok := c.schema.GetField(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	if !ok {
 		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	}
