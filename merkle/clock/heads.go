@@ -56,7 +56,6 @@ func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
 // Replace replaces a head with a new CID.
 func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height uint64) error {
 	log.Info(
-		ctx,
 		"Replacing DAG head",
 		logging.NewKV("Old", old),
 		logging.NewKV("CID", new),
@@ -91,7 +90,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 	defer func() {
 		err := results.Close()
 		if err != nil {
-			log.ErrorE(ctx, "Error closing results", err)
+			log.ErrorE("Error closing results", err)
 		}
 	}()
 

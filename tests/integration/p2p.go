@@ -136,12 +136,12 @@ func connectPeers(
 	targetNode := s.nodes[cfg.TargetNodeID]
 	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
-	log.Info(s.ctx, "Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
+	log.Info("Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
 	addrs, err := netutils.ParsePeers([]string{targetAddress})
 	if err != nil {
 		s.t.Fatal(fmt.Sprintf("failed to parse bootstrap peers %v", targetAddress), err)
 	}
-	log.Info(s.ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
+	log.Info("Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 	sourceNode.Boostrap(addrs)
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be

@@ -335,7 +335,6 @@ func executeTestCase(
 	clientType ClientType,
 ) {
 	log.Info(
-		ctx,
 		testCase.Description,
 		logging.NewKV("badgerFile", badgerFile),
 		logging.NewKV("badgerInMemory", badgerInMemory),
@@ -538,7 +537,7 @@ func closeNodes(
 			err := node.Close()
 			require.NoError(s.t, err)
 		}
-		node.DB.Close(s.ctx)
+		node.DB.Close()
 	}
 }
 
@@ -823,7 +822,7 @@ func configureNode(
 	require.NoError(s.t, err)
 
 	var n *net.Node
-	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+	log.Info("Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
 	n, err = net.NewNode(
 		s.ctx,
 		db,
@@ -1684,7 +1683,7 @@ func assertRequestResults(
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]any)
 
-	log.Info(s.ctx, "", logging.NewKV("RequestResults", result.Data))
+	log.Info("", logging.NewKV("RequestResults", result.Data))
 
 	require.Equal(s.t, len(expectedResults), len(resultantData), s.testCase.Description)
 

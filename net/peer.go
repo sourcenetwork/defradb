@@ -154,7 +154,6 @@ func (p *Peer) Start() error {
 			err := p.host.Connect(p.ctx, addr)
 			if err != nil {
 				log.Info(
-					p.ctx,
 					"Failure while reconnecting to a known peer",
 					logging.NewKV("peer", id),
 					logging.NewKV("error", err),
@@ -180,7 +179,7 @@ func (p *Peer) Start() error {
 		}
 		p.updateChannel = updateChannel
 
-		log.Info(p.ctx, "Starting internal broadcaster for pubsub network")
+		log.Info("Starting internal broadcaster for pubsub network")
 		go p.handleBroadcastLoop()
 	}
 
@@ -189,7 +188,7 @@ func (p *Peer) Start() error {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
 		if err := p.p2pRPC.Serve(p2plistener); err != nil &&
 			!errors.Is(err, grpc.ErrServerStopped) {
-			log.FatalE(p.ctx, "Fatal P2P RPC server error", err)
+			log.FatalE("Fatal P2P RPC server error", err)
 		}
 	}()
 
@@ -203,13 +202,13 @@ func (p *Peer) Start() error {
 func (p *Peer) Close() error {
 	// close topics
 	if err := p.server.removeAllPubsubTopics(); err != nil {
-		log.ErrorE(p.ctx, "Error closing pubsub topics", err)
+		log.ErrorE("Error closing pubsub topics", err)
 	}
 
 	// stop gRPC server
 	for _, c := range p.server.conns {
 		if err := c.Close(); err != nil {
-			log.ErrorE(p.ctx, "Failed closing server RPC connections", err)
+			log.ErrorE("Failed closing server RPC connections", err)
 		}
 	}
 	stopGRPCServer(p.ctx, p.p2pRPC)
@@ -218,12 +217,12 @@ func (p *Peer) Close() error {
 	// close event emitters
 	if p.server.pubSubEmitter != nil {
 		if err := p.server.pubSubEmitter.Close(); err != nil {
-			log.Info(p.ctx, "Could not close pubsub event emitter", logging.NewKV("Error", err.Error()))
+			log.Info("Could not close pubsub event emitter", logging.NewKV("Error", err.Error()))
 		}
 	}
 	if p.server.pushLogEmitter != nil {
 		if err := p.server.pushLogEmitter.Close(); err != nil {
-			log.Info(p.ctx, "Could not close push log event emitter", logging.NewKV("Error", err.Error()))
+			log.Info("Could not close push log event emitter", logging.NewKV("Error", err.Error()))
 		}
 	}
 
@@ -232,11 +231,11 @@ func (p *Peer) Close() error {
 	}
 
 	if err := p.bserv.Close(); err != nil {
-		log.ErrorE(p.ctx, "Error closing block service", err)
+		log.ErrorE("Error closing block service", err)
 	}
 
 	if err := p.host.Close(); err != nil {
-		log.ErrorE(p.ctx, "Error closing host", err)
+		log.ErrorE("Error closing host", err)
 	}
 
 	p.cancel()
@@ -246,9 +245,9 @@ func (p *Peer) Close() error {
 // handleBroadcast loop manages the transition of messages
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleBroadcastLoop() {
-	log.Debug(p.ctx, "Waiting for messages on internal broadcaster")
+	log.Debug("Waiting for messages on internal broadcaster")
 	for {
-		log.Debug(p.ctx, "Handling internal broadcast bus message")
+		log.Debug("Handling internal broadcast bus message")
 		update, isOpen := <-p.updateChannel
 		if !isOpen {
 			return
@@ -262,11 +261,11 @@ func (p *Peer) handleBroadcastLoop() {
 		} else if update.Priority > 1 {
 			err = p.handleDocUpdateLog(update)
 		} else {
-			log.Info(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", update.Cid))
+			log.Info("Skipping log with invalid priority of 0", logging.NewKV("CID", update.Cid))
 		}
 
 		if err != nil {
-			log.ErrorE(p.ctx, "Error while handling broadcast log", err)
+			log.ErrorE("Error while handling broadcast log", err)
 		}
 	}
 }
@@ -280,7 +279,6 @@ func (p *Peer) RegisterNewDocument(
 	schemaID string,
 ) error {
 	log.Debug(
-		p.ctx,
 		"Registering a new document for our peer node",
 		logging.NewKV("DocKey", dockey.String()),
 	)
@@ -288,7 +286,6 @@ func (p *Peer) RegisterNewDocument(
 	// register topic
 	if err := p.server.addPubSubTopic(dockey.String(), !p.server.hasPubSubTopic(schemaID)); err != nil {
 		log.ErrorE(
-			p.ctx,
 			"Failed to create new pubsub topic",
 			err,
 			logging.NewKV("DocKey", dockey.String()),
@@ -469,7 +466,7 @@ func (p *Peer) pushToReplicator(
 ) {
 	for key := range keysCh {
 		if key.Err != nil {
-			log.ErrorE(ctx, "Key channel error", key.Err)
+			log.ErrorE("Key channel error", key.Err)
 			continue
 		}
 		dockey := core.DataStoreKeyFromDocKey(key.Key)
@@ -480,7 +477,6 @@ func (p *Peer) pushToReplicator(
 		cids, priority, err := headset.List(ctx)
 		if err != nil {
 			log.ErrorE(
-				ctx,
 				"Failed to get heads",
 				err,
 				logging.NewKV("DocKey", key.Key.String()),
@@ -492,7 +488,7 @@ func (p *Peer) pushToReplicator(
 		for _, c := range cids {
 			blk, err := txn.DAGstore().Get(ctx, c)
 			if err != nil {
-				log.ErrorE(ctx, "Failed to get block", err,
+				log.ErrorE("Failed to get block", err,
 					logging.NewKV("CID", c),
 					logging.NewKV("PeerID", pid),
 					logging.NewKV("Collection", collection.Name()))
@@ -502,7 +498,7 @@ func (p *Peer) pushToReplicator(
 			// @todo: remove encode/decode loop for core.Log data
 			nd, err := dag.DecodeProtobuf(blk.RawData())
 			if err != nil {
-				log.ErrorE(ctx, "Failed to decode protobuf", err, logging.NewKV("CID", c))
+				log.ErrorE("Failed to decode protobuf", err, logging.NewKV("CID", c))
 				continue
 			}
 
@@ -515,7 +511,6 @@ func (p *Peer) pushToReplicator(
 			}
 			if err := p.server.pushLog(ctx, evt, pid); err != nil {
 				log.ErrorE(
-					ctx,
 					"Failed to replicate log",
 					err,
 					logging.NewKV("CID", c),
@@ -531,7 +526,7 @@ func (p *Peer) DeleteReplicator(
 	ctx context.Context,
 	req *pb.DeleteReplicatorRequest,
 ) (*pb.DeleteReplicatorReply, error) {
-	log.Debug(ctx, "Received DeleteReplicator request")
+	log.Debug("Received DeleteReplicator request")
 
 	txn, err := p.db.NewTxn(ctx, true)
 	if err != nil {
@@ -617,7 +612,7 @@ func (p *Peer) GetAllReplicators(
 	ctx context.Context,
 	req *pb.GetAllReplicatorRequest,
 ) (*pb.GetAllReplicatorReply, error) {
-	log.Debug(ctx, "Received GetAllReplicators request")
+	log.Debug("Received GetAllReplicators request")
 
 	reps, err := p.db.GetAllReplicators(ctx)
 	if err != nil {
@@ -665,7 +660,7 @@ func (p *Peer) loadReplicators(ctx context.Context) error {
 		// This will be used during connection and stream creation by libp2p.
 		p.host.Peerstore().AddAddrs(rep.Info.ID, rep.Info.Addrs, peerstore.PermanentAddrTTL)
 
-		log.Info(ctx, "loaded replicators from datastore", logging.NewKV("Replicator", rep))
+		log.Info("loaded replicators from datastore", logging.NewKV("Replicator", rep))
 	}
 
 	return nil
@@ -712,7 +707,6 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 		return NewErrFailedToGetDockey(err)
 	}
 	log.Debug(
-		p.ctx,
 		"Preparing pubsub pushLog request from broadcast",
 		logging.NewKV("DocKey", dockey),
 		logging.NewKV("CID", evt.Cid),
@@ -769,7 +763,6 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 			go func(peerID peer.ID) {
 				if err := p.server.pushLog(p.ctx, lg, peerID); err != nil {
 					log.ErrorE(
-						p.ctx,
 						"Failed pushing log",
 						err,
 						logging.NewKV("DocKey", lg.DocKey),
@@ -800,7 +793,7 @@ func (p *Peer) newDAGSyncerTxn(txn datastore.Txn) ipld.DAGService {
 func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
 	ng := dag.NewSession(ctx, p.DAGService)
 	if ng == p.DAGService {
-		log.Info(ctx, "DAGService does not support sessions")
+		log.Info("DAGService does not support sessions")
 	}
 	return ng
 }
@@ -815,7 +808,7 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	select {
 	case <-timer.C:
 		server.Stop()
-		log.Info(ctx, "Peer gRPC server was shutdown ungracefully")
+		log.Info("Peer gRPC server was shutdown ungracefully")
 	case <-stopped:
 		timer.Stop()
 	}
@@ -860,7 +853,7 @@ func (p *Peer) AddP2PCollections(
 	ctx context.Context,
 	req *pb.AddP2PCollectionsRequest,
 ) (*pb.AddP2PCollectionsReply, error) {
-	log.Debug(ctx, "Received AddP2PCollections request")
+	log.Debug("Received AddP2PCollections request")
 
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
@@ -933,7 +926,7 @@ func (p *Peer) RemoveP2PCollections(
 	ctx context.Context,
 	req *pb.RemoveP2PCollectionsRequest,
 ) (*pb.RemoveP2PCollectionsReply, error) {
-	log.Debug(ctx, "Received RemoveP2PCollections request")
+	log.Debug("Received RemoveP2PCollections request")
 
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
@@ -1001,7 +994,7 @@ func (p *Peer) GetAllP2PCollections(
 	ctx context.Context,
 	req *pb.GetAllP2PCollectionsRequest,
 ) (*pb.GetAllP2PCollectionsReply, error) {
-	log.Debug(ctx, "Received GetAllP2PCollections request")
+	log.Debug("Received GetAllP2PCollections request")
 
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {

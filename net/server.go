@@ -95,7 +95,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		}
 
 		// Get all DocKeys across all collections in the DB
-		log.Debug(p.ctx, "Getting all existing DocKey...")
+		log.Debug("Getting all existing DocKey...")
 		cols, err := s.db.GetAllCollections(s.peer.ctx)
 		if err != nil {
 			return nil, err
@@ -114,7 +114,6 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 
 			for key := range keyChan {
 				log.Debug(
-					p.ctx,
 					"Registering existing DocKey pubsub topic",
 					logging.NewKV("DocKey", key.Key.String()),
 				)
@@ -124,17 +123,17 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 				i++
 			}
 		}
-		log.Debug(p.ctx, "Finished registering all DocKey pubsub topics", logging.NewKV("Count", i))
+		log.Debug("Finished registering all DocKey pubsub topics", logging.NewKV("Count", i))
 	}
 
 	var err error
 	s.pubSubEmitter, err = s.peer.host.EventBus().Emitter(new(EvtPubSub))
 	if err != nil {
-		log.Info(s.peer.ctx, "could not create event emitter", logging.NewKV("Error", err.Error()))
+		log.Info("could not create event emitter", logging.NewKV("Error", err.Error()))
 	}
 	s.pushLogEmitter, err = s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	if err != nil {
-		log.Info(s.peer.ctx, "could not create event emitter", logging.NewKV("Error", err.Error()))
+		log.Info("could not create event emitter", logging.NewKV("Error", err.Error()))
 	}
 
 	return s, nil
@@ -199,7 +198,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-	log.Debug(ctx, "Received a PushLog request", logging.NewKV("PeerID", pid))
+	log.Debug("Received a PushLog request", logging.NewKV("PeerID", pid))
 
 	cid, err := cid.Cast(req.Body.Cid)
 	if err != nil {
@@ -216,7 +215,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		if s.pushLogEmitter != nil {
 			byPeer, err := libpeer.Decode(req.Body.Creator)
 			if err != nil {
-				log.Info(ctx, "could not decode the PeerID of the log creator", logging.NewKV("Error", err.Error()))
+				log.Info("could not decode the PeerID of the log creator", logging.NewKV("Error", err.Error()))
 			}
 			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
 				FromPeer: pid,
@@ -225,7 +224,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			if err != nil {
 				// logging instead of returning an error because the event bus should
 				// not break the PushLog execution.
-				log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err.Error()))
+				log.Info("could not emit push log event", logging.NewKV("Error", err.Error()))
 			}
 		}
 	}()
@@ -242,7 +241,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return nil, errors.Wrap(fmt.Sprintf("failed to check for existing block %s", cid), err)
 	}
 	if exists {
-		log.Debug(ctx, fmt.Sprintf("Already have block %s locally, skipping.", cid))
+		log.Debug(fmt.Sprintf("Already have block %s locally, skipping.", cid))
 		return &pb.PushLogReply{}, nil
 	}
 
@@ -268,7 +267,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		// Create a new DAG service with the current transaction
 		var getter format.NodeGetter = s.peer.newDAGSyncerTxn(txn)
 		if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-			log.Debug(ctx, "Upgrading DAGSyncer with a session")
+			log.Debug("Upgrading DAGSyncer with a session")
 			getter = sessionMaker.Session(ctx)
 		}
 
@@ -281,7 +280,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		cids, err := s.peer.processLog(ctx, txn, col, docKey, "", nd, getter, false)
 		if err != nil {
 			log.ErrorE(
-				ctx,
 				"Failed to process PushLog node",
 				err,
 				logging.NewKV("DocKey", docKey),
@@ -292,7 +290,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		// handleChildren
 		if len(cids) > 0 { // we have child nodes to get
 			log.Debug(
-				ctx,
 				"Handling children for log",
 				logging.NewKV("NChildren", len(cids)),
 				logging.NewKV("CID", cid),
@@ -304,7 +301,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			// Once we are done with the dag syncing process, we can get rid of those workers.
 			s.peer.closeJob <- docKey.DocKey
 		} else {
-			log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
+			log.Debug("No more children to process for log", logging.NewKV("CID", cid))
 		}
 
 		if txnErr = txn.Commit(ctx); txnErr != nil {
@@ -440,7 +437,6 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 	}
 
 	log.Debug(
-		ctx,
 		"Published log",
 		logging.NewKV("CID", cid),
 		logging.NewKV("DocKey", topic),
@@ -451,14 +447,13 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
 	log.Debug(
-		s.peer.ctx,
 		"Handling new pubsub message",
 		logging.NewKV("SenderID", from),
 		logging.NewKV("Topic", topic),
 	)
 	req := new(pb.PushLogRequest)
 	if err := proto.Unmarshal(msg, req); err != nil {
-		log.ErrorE(s.peer.ctx, "Failed to unmarshal pubsub message %s", err)
+		log.ErrorE("Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
 
@@ -466,7 +461,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		Addr: addr{from},
 	})
 	if _, err := s.PushLog(ctx, req); err != nil {
-		log.ErrorE(ctx, "Failed pushing log for doc", err, logging.NewKV("Topic", topic))
+		log.ErrorE("Failed pushing log for doc", err, logging.NewKV("Topic", topic))
 		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
 	}
 	return nil, nil
@@ -475,7 +470,6 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 // pubSubEventHandler logs events from the subscribed dockey topics.
 func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 	log.Info(
-		s.peer.ctx,
 		"Received new pubsub event",
 		logging.NewKV("SenderId", from),
 		logging.NewKV("Topic", topic),
@@ -487,7 +481,7 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 			Peer: from,
 		})
 		if err != nil {
-			log.Info(s.peer.ctx, "could not emit pubsub event", logging.NewKV("Error", err.Error()))
+			log.Info("could not emit pubsub event", logging.NewKV("Error", err.Error()))
 		}
 	}
 }

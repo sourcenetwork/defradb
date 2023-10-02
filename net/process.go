@@ -45,7 +45,7 @@ func (p *Peer) processLog(
 	getter ipld.NodeGetter,
 	removeChildren bool,
 ) ([]cid.Cid, error) {
-	log.Debug(ctx, "Running processLog")
+	log.Debug("Running processLog")
 
 	crdt, err := initCRDTForType(ctx, txn, col, dsKey, field)
 	if err != nil {
@@ -58,7 +58,6 @@ func (p *Peer) processLog(
 	}
 
 	log.Debug(
-		ctx,
 		"Processing PushLog request",
 		logging.NewKV("Datastore key", dsKey),
 		logging.NewKV("CID", nd.Cid()),
@@ -110,7 +109,7 @@ func initCRDTForType(
 		fieldID := fd.ID.String()
 		key = base.MakeCollectionKey(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
 	}
-	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
+	log.Debug("Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return crdt.DefaultFactory.InstanceWithStores(
 		txn,
 		core.NewCollectionSchemaVersionKey(col.Schema().VersionID),
@@ -179,12 +178,11 @@ func (p *Peer) handleChildBlocks(
 		// get object
 		cNode, err := getter.Get(ctx, c)
 		if err != nil {
-			log.ErrorE(ctx, "Failed to get node", err, logging.NewKV("CID", c))
+			log.ErrorE("Failed to get node", err, logging.NewKV("CID", c))
 			continue
 		}
 
 		log.Debug(
-			ctx,
 			"Submitting new job to DAG queue",
 			logging.NewKV("Collection", col.Name()),
 			logging.NewKV("Datastore key", dsKey),

@@ -97,7 +97,7 @@ func (m *MerkleCompositeDAG) Delete(
 ) (ipld.Node, uint64, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
-	log.Debug(ctx, "Applying delta-mutator 'Delete' on CompositeDAG")
+	log.Debug("Applying delta-mutator 'Delete' on CompositeDAG")
 	delta := m.reg.Set([]byte{}, links)
 	delta.Status = client.Deleted
 	nd, err := m.Publish(ctx, delta)
@@ -116,7 +116,7 @@ func (m *MerkleCompositeDAG) Set(
 ) (ipld.Node, uint64, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
-	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
+	log.Debug("Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
 	nd, err := m.Publish(ctx, delta)
 	if err != nil {

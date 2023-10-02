@@ -111,7 +111,6 @@ func (p *Peer) sendJobWorker() {
 func (p *Peer) dagWorker(jobs chan *dagJob) {
 	for job := range jobs {
 		log.Debug(
-			p.ctx,
 			"Starting new job from DAG queue",
 			logging.NewKV("Datastore Key", job.dsKey),
 			logging.NewKV("CID", job.node.Cid()),
@@ -137,7 +136,6 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 		)
 		if err != nil {
 			log.ErrorE(
-				p.ctx,
 				"Error processing log",
 				err,
 				logging.NewKV("Datastore key", job.dsKey),

@@ -59,7 +59,7 @@ func TestAddP2PCollection(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer db.Close()
 
 	col := newTestCollection(t, ctx, db, "test")
 
@@ -71,7 +71,7 @@ func TestGetAllP2PCollection(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer db.Close()
 
 	col1 := newTestCollection(t, ctx, db, "test1")
 	err = db.AddP2PCollection(ctx, col1.SchemaID())
@@ -94,7 +94,7 @@ func TestRemoveP2PCollection(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer db.Close()
 
 	col1 := newTestCollection(t, ctx, db, "test1")
 	err = db.AddP2PCollection(ctx, col1.SchemaID())

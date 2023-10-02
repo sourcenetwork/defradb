@@ -74,7 +74,7 @@ func (base *baseMerkleCRDT) Publish(
 	ctx context.Context,
 	delta core.Delta,
 ) (ipld.Node, error) {
-	log.Debug(ctx, "Processing CRDT state", logging.NewKV("DocKey", base.crdt.ID()))
+	log.Debug("Processing CRDT state", logging.NewKV("DocKey", base.crdt.ID()))
 	nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {
 		return nil, err

@@ -11,7 +11,6 @@
 package logging
 
 import (
-	"context"
 	"io"
 	"os"
 )
@@ -237,11 +236,11 @@ func validatePaths(paths []string) []string {
 		}
 
 		if f, err := os.OpenFile(p, os.O_CREATE|os.O_APPEND, 0644); err != nil {
-			log.Info(context.Background(), "cannot use provided path", NewKV("err", err))
+			log.Info("cannot use provided path", NewKV("err", err))
 		} else {
 			err := f.Close()
 			if err != nil {
-				log.Info(context.Background(), "problem closing file", NewKV("err", err))
+				log.Info("problem closing file", NewKV("err", err))
 			}
 
 			validatedPaths = append(validatedPaths, p)

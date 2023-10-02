@@ -32,7 +32,7 @@ func MakeServerDumpCmd(cfg *config.Config) *cobra.Command {
 		Use:   "server-dump",
 		Short: "Dumps the state of the entire database",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			log.FeedbackInfo(cmd.Context(), "Starting DefraDB process...")
+			log.FeedbackInfo("Starting DefraDB process...")
 
 			// setup signal handlers
 			signalCh := make(chan os.Signal, 1)
@@ -49,7 +49,7 @@ func MakeServerDumpCmd(cfg *config.Config) *cobra.Command {
 						cfg.Datastore.Badger.Path,
 					))
 				}
-				log.FeedbackInfo(cmd.Context(), "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
+				log.FeedbackInfo("Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
 				rootstore, err = badgerds.NewDatastore(cfg.Datastore.Badger.Path, cfg.Datastore.Badger.Options)
 				if err != nil {
 					return errors.Wrap("could not open badger datastore", err)
@@ -63,7 +63,7 @@ func MakeServerDumpCmd(cfg *config.Config) *cobra.Command {
 				return errors.Wrap("failed to initialize database", err)
 			}
 
-			log.FeedbackInfo(cmd.Context(), "Dumping DB state...")
+			log.FeedbackInfo("Dumping DB state...")
 			return db.PrintDump(cmd.Context())
 		},
 	}

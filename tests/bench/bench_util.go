@@ -175,7 +175,6 @@ func BackfillBenchmarkDB(
 							if err := cols[j].Create(ctx, doc); err != nil &&
 								err.Error() == badger.ErrConflict.Error() {
 								log.Info(
-									ctx,
 									"Failed to commit TX for doc %s, retrying...\n",
 									logging.NewKV("DocKey", doc.Key()),
 								)

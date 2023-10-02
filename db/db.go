@@ -112,7 +112,7 @@ func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 }
 
 func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*implicitTxnDB, error) {
-	log.Debug(ctx, "Loading: internal datastores")
+	log.Debug("Loading: internal datastores")
 	root := datastore.AsDSReaderWriter(rootstore)
 	multistore := datastore.MultiStoreFrom(root)
 	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
@@ -203,7 +203,7 @@ func (db *db) initialize(ctx context.Context) error {
 	}
 	defer txn.Discard(ctx)
 
-	log.Debug(ctx, "Checking if DB has already been initialized...")
+	log.Debug("Checking if DB has already been initialized...")
 	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
@@ -211,7 +211,7 @@ func (db *db) initialize(ctx context.Context) error {
 	// if we're loading an existing database, just load the schema
 	// and migrations and finish initialization
 	if exists {
-		log.Debug(ctx, "DB has already been initialized, continuing")
+		log.Debug("DB has already been initialized, continuing")
 		err = db.loadSchema(ctx, txn)
 		if err != nil {
 			return err
@@ -228,7 +228,7 @@ func (db *db) initialize(ctx context.Context) error {
 		return txn.Commit(ctx)
 	}
 
-	log.Debug(ctx, "Opened a new DB, needs full initialization")
+	log.Debug("Opened a new DB, needs full initialization")
 
 	// init meta data
 	// collection sequence
@@ -266,17 +266,17 @@ func (db *db) PrintDump(ctx context.Context) error {
 
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
-func (db *db) Close(ctx context.Context) {
-	log.Info(ctx, "Closing DefraDB process...")
+func (db *db) Close() {
+	log.Info("Closing DefraDB process...")
 	if db.events.Updates.HasValue() {
 		db.events.Updates.Value().Close()
 	}
 
 	err := db.rootstore.Close()
 	if err != nil {
-		log.ErrorE(ctx, "Failure closing running process", err)
+		log.ErrorE("Failure closing running process", err)
 	}
-	log.Info(ctx, "Successfully closed running process")
+	log.Info("Successfully closed running process")
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
@@ -292,7 +292,7 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
 	}
 
 	for r := range results.Next() {
-		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
+		log.Info("", logging.NewKV(r.Key, r.Value))
 	}
 
 	return results.Close()

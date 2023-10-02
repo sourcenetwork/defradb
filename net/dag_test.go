@@ -236,7 +236,7 @@ func TestSendJobWorker_WithPeerAndNoChildren_NoError(t *testing.T) {
 
 	var getter format.NodeGetter = n2.Peer.newDAGSyncerTxn(txn)
 	if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-		log.Debug(ctx, "Upgrading DAGSyncer with a session")
+		log.Debug("Upgrading DAGSyncer with a session")
 		getter = sessionMaker.Session(ctx)
 	}
 
@@ -333,7 +333,7 @@ func TestSendJobWorker_WithPeerAndChildren_NoError(t *testing.T) {
 
 	var getter format.NodeGetter = n2.Peer.newDAGSyncerTxn(txn)
 	if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-		log.Debug(ctx, "Upgrading DAGSyncer with a session")
+		log.Debug("Upgrading DAGSyncer with a session")
 		getter = sessionMaker.Session(ctx)
 	}
 

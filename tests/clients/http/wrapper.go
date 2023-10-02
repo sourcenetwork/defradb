@@ -162,10 +162,10 @@ func (w *Wrapper) Blockstore() blockstore.Blockstore {
 	return w.db.Blockstore()
 }
 
-func (w *Wrapper) Close(ctx context.Context) {
+func (w *Wrapper) Close() {
 	w.httpServer.CloseClientConnections()
 	w.httpServer.Close()
-	w.db.Close(ctx)
+	w.db.Close()
 }
 
 func (w *Wrapper) Events() events.Events {

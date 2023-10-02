@@ -64,7 +64,7 @@ func (bs *bstore) HashOnRead(enabled bool) {
 // Get returns a block from the blockstore.
 func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	if !k.Defined() {
-		log.Error(ctx, "Undefined CID in blockstore")
+		log.Error("Undefined CID in blockstore")
 		return nil, ipld.ErrNotFound{Cid: k}
 	}
 	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()))
@@ -164,13 +164,13 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 				return
 			}
 			if e.Error != nil {
-				log.ErrorE(ctx, "Blockstore.AllKeysChan errored", e.Error)
+				log.ErrorE("Blockstore.AllKeysChan errored", e.Error)
 				return
 			}
 
 			hash, err := dshelp.DsKeyToMultihash(ds.RawKey(e.Key))
 			if err != nil {
-				log.ErrorE(ctx, "Error parsing key from binary", err)
+				log.ErrorE("Error parsing key from binary", err)
 				continue
 			}
 			k := cid.NewCidV1(cid.Raw, hash)

@@ -34,7 +34,6 @@ var (
 // over libp2p grpc connection
 func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) error {
 	log.Debug(
-		ctx,
 		"Preparing pushLog request",
 		logging.NewKV("DocKey", evt.DocKey),
 		logging.NewKV("CID", evt.Cid),
@@ -54,7 +53,7 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 	}
 
 	log.Debug(
-		ctx, "Pushing log",
+		"Pushing log",
 		logging.NewKV("DocKey", evt.DocKey),
 		logging.NewKV("CID", evt.Cid),
 		logging.NewKV("PeerID", pid),

@@ -74,7 +74,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err := cfg.BindFlag("net.peers", cmd.Flags().Lookup("peers"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind net.peers", err)
+		log.FeedbackFatalE("Could not bind net.peers", err)
 	}
 
 	cmd.Flags().Int(
@@ -83,7 +83,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("datastore.maxtxnretries", cmd.Flags().Lookup("max-txn-retries"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind datastore.maxtxnretries", err)
+		log.FeedbackFatalE("Could not bind datastore.maxtxnretries", err)
 	}
 
 	cmd.Flags().String(
@@ -92,7 +92,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("datastore.store", cmd.Flags().Lookup("store"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind datastore.store", err)
+		log.FeedbackFatalE("Could not bind datastore.store", err)
 	}
 
 	cmd.Flags().Var(
@@ -101,7 +101,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("datastore.badger.valuelogfilesize", cmd.Flags().Lookup("valuelogfilesize"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind datastore.badger.valuelogfilesize", err)
+		log.FeedbackFatalE("Could not bind datastore.badger.valuelogfilesize", err)
 	}
 
 	cmd.Flags().String(
@@ -110,7 +110,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("net.p2paddress", cmd.Flags().Lookup("p2paddr"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind net.p2paddress", err)
+		log.FeedbackFatalE("Could not bind net.p2paddress", err)
 	}
 
 	cmd.Flags().String(
@@ -119,7 +119,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("net.tcpaddress", cmd.Flags().Lookup("tcpaddr"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind net.tcpaddress", err)
+		log.FeedbackFatalE("Could not bind net.tcpaddress", err)
 	}
 
 	cmd.Flags().Bool(
@@ -128,7 +128,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("net.p2pdisabled", cmd.Flags().Lookup("no-p2p"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind net.p2pdisabled", err)
+		log.FeedbackFatalE("Could not bind net.p2pdisabled", err)
 	}
 
 	cmd.Flags().Bool(
@@ -137,7 +137,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("api.tls", cmd.Flags().Lookup("tls"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.tls", err)
+		log.FeedbackFatalE("Could not bind api.tls", err)
 	}
 
 	cmd.Flags().StringArray(
@@ -146,7 +146,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("api.allowed-origins", cmd.Flags().Lookup("allowed-origins"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.allowed-origins", err)
+		log.FeedbackFatalE("Could not bind api.allowed-origins", err)
 	}
 
 	cmd.Flags().String(
@@ -155,7 +155,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("api.pubkeypath", cmd.Flags().Lookup("pubkeypath"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.pubkeypath", err)
+		log.FeedbackFatalE("Could not bind api.pubkeypath", err)
 	}
 
 	cmd.Flags().String(
@@ -164,7 +164,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("api.privkeypath", cmd.Flags().Lookup("privkeypath"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.privkeypath", err)
+		log.FeedbackFatalE("Could not bind api.privkeypath", err)
 	}
 
 	cmd.Flags().String(
@@ -173,7 +173,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	)
 	err = cfg.BindFlag("api.email", cmd.Flags().Lookup("email"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.email", err)
+		log.FeedbackFatalE("Could not bind api.email", err)
 	}
 	return cmd
 }
@@ -184,20 +184,18 @@ type defraInstance struct {
 	server *httpapi.Server
 }
 
-func (di *defraInstance) close(ctx context.Context) {
+func (di *defraInstance) close() {
 	if di.node != nil {
 		if err := di.node.Close(); err != nil {
 			log.FeedbackInfo(
-				ctx,
 				"The node could not be closed successfully",
 				logging.NewKV("Error", err.Error()),
 			)
 		}
 	}
-	di.db.Close(ctx)
+	di.db.Close()
 	if err := di.server.Close(); err != nil {
 		log.FeedbackInfo(
-			ctx,
 			"The server could not be closed successfully",
 			logging.NewKV("Error", err.Error()),
 		)
@@ -205,19 +203,19 @@ func (di *defraInstance) close(ctx context.Context) {
 }
 
 func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
-	log.FeedbackInfo(ctx, "Starting DefraDB service...")
+	log.FeedbackInfo("Starting DefraDB service...")
 
 	var rootstore ds.RootStore
 
 	var err error
 	if cfg.Datastore.Store == badgerDatastoreName {
-		log.FeedbackInfo(ctx, "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
+		log.FeedbackInfo("Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
 		rootstore, err = badgerds.NewDatastore(
 			cfg.Datastore.Badger.Path,
 			cfg.Datastore.Badger.Options,
 		)
 	} else if cfg.Datastore.Store == "memory" {
-		log.FeedbackInfo(ctx, "Building new memory store")
+		log.FeedbackInfo("Building new memory store")
 		opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 		rootstore, err = badgerds.NewDatastore("", &opts)
 	}
@@ -239,25 +237,25 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	// init the p2p node
 	var n *net.Node
 	if !cfg.Net.P2PDisabled {
-		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+		log.FeedbackInfo("Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
 		n, err = net.NewNode(
 			ctx,
 			db,
 			net.WithConfig(cfg),
 		)
 		if err != nil {
-			db.Close(ctx)
+			db.Close()
 			return nil, errors.Wrap("failed to start P2P node", err)
 		}
 
 		// parse peers and bootstrap
 		if len(cfg.Net.Peers) != 0 {
-			log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
+			log.Debug("Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
 			addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
 			if err != nil {
 				return nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", cfg.Net.Peers), err)
 			}
-			log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
+			log.Debug("Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 			n.Boostrap(addrs)
 		}
 
@@ -265,7 +263,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 			if e := n.Close(); e != nil {
 				err = errors.Wrap(fmt.Sprintf("failed to close node: %v", e.Error()), err)
 			}
-			db.Close(ctx)
+			db.Close()
 			return nil, errors.Wrap("failed to start P2P listeners", err)
 		}
 
@@ -301,10 +299,10 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		}
 
 		go func() {
-			log.FeedbackInfo(ctx, "Started RPC server", logging.NewKV("Address", addr))
+			log.FeedbackInfo("Started RPC server", logging.NewKV("Address", addr))
 			netpb.RegisterCollectionServer(server, n.Peer)
 			if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-				log.FeedbackFatalE(ctx, "Failed to start RPC server", err)
+				log.FeedbackFatalE("Failed to start RPC server", err)
 			}
 		}()
 	}
@@ -337,15 +335,15 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 
 	// run the server in a separate goroutine
 	go func() {
-		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", cfg.API.AddressToURL()))
+		log.FeedbackInfo(fmt.Sprintf("Providing HTTP API at %s.", cfg.API.AddressToURL()))
 		if err := s.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
+			log.FeedbackErrorE("Failed to run the HTTP server", err)
 			if n != nil {
 				if err := n.Close(); err != nil {
-					log.FeedbackErrorE(ctx, "Failed to close node", err)
+					log.FeedbackErrorE("Failed to close node", err)
 				}
 			}
-			db.Close(ctx)
+			db.Close()
 			os.Exit(1)
 		}
 	}()
@@ -365,12 +363,12 @@ func wait(ctx context.Context, di *defraInstance) error {
 
 	select {
 	case <-ctx.Done():
-		log.FeedbackInfo(ctx, "Received context cancellation; closing database...")
-		di.close(ctx)
+		log.FeedbackInfo("Received context cancellation; closing database...")
+		di.close()
 		return ctx.Err()
 	case <-signalCh:
-		log.FeedbackInfo(ctx, "Received interrupt; closing database...")
-		di.close(ctx)
+		log.FeedbackInfo("Received interrupt; closing database...")
+		di.close()
 		return ctx.Err()
 	}
 }

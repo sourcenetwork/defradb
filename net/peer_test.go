@@ -209,7 +209,7 @@ func TestStartAndClose_NoError(t *testing.T) {
 	err := n.Start()
 	require.NoError(t, err)
 
-	db.Close(ctx)
+	db.Close()
 }
 
 func TestStart_WithKnownPeer_NoError(t *testing.T) {
@@ -248,8 +248,8 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	err = n2.Start()
 	require.NoError(t, err)
 
-	db1.Close(ctx)
-	db2.Close(ctx)
+	db1.Close()
+	db2.Close()
 }
 
 func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
@@ -313,8 +313,8 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	// reset logger
 	log = logging.MustNewLogger("defra.net")
 
-	db1.Close(ctx)
-	db2.Close(ctx)
+	db1.Close()
+	db2.Close()
 }
 
 func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
@@ -335,7 +335,7 @@ func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
 	err = n.Start()
 	require.ErrorIs(t, err, ErrNilUpdateChannel)
 
-	db.Close(ctx)
+	db.Close()
 }
 
 func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
@@ -358,7 +358,7 @@ func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
 	err = n.Start()
 	require.ErrorContains(t, err, "cannot subscribe to a closed channel")
 
-	db.Close(ctx)
+	db.Close()
 }
 
 func TestRegisterNewDocument_NoError(t *testing.T) {
@@ -457,7 +457,7 @@ func TestSetReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
-	db.Close(ctx)
+	db.Close()
 
 	addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
 	require.NoError(t, err)
@@ -561,7 +561,7 @@ func TestDeleteReplicator_WithDBClosed_DataStoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
-	db.Close(ctx)
+	db.Close()
 
 	_, err := n.Peer.DeleteReplicator(
 		ctx,
@@ -714,7 +714,7 @@ func TestGetAllReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
-	db.Close(ctx)
+	db.Close()
 
 	_, err := n.Peer.GetAllReplicators(
 		ctx,
@@ -727,7 +727,7 @@ func TestLoadReplicators_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
-	db.Close(ctx)
+	db.Close()
 
 	err := n.Peer.loadReplicators(ctx)
 	require.ErrorContains(t, err, "datastore closed")

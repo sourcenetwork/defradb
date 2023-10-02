@@ -75,6 +75,6 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) {
 	defer results.Close()
 
 	for r := range results.Next() {
-		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
+		log.Info("", logging.NewKV(r.Key, r.Value))
 	}
 }

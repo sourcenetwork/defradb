@@ -208,7 +208,7 @@ func WithTLSPort(port int) func(*Server) {
 func (s *Server) Listen(ctx context.Context) error {
 	var err error
 	if s.options.TLS.HasValue() {
-		return s.listenWithTLS(ctx)
+		return s.listenWithTLS()
 	}
 
 	lc := net.ListenConfig{}
@@ -224,7 +224,7 @@ func (s *Server) Listen(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) listenWithTLS(ctx context.Context) error {
+func (s *Server) listenWithTLS() error {
 	cfg := &tls.Config{
 		MinVersion: tls.VersionTLS12,
 		// We only allow cipher suites that are marked secure
@@ -250,7 +250,6 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 		certCache := path.Join(s.options.RootDir, "autocerts")
 
 		log.FeedbackInfo(
-			ctx,
 			"Generating auto certificate",
 			logging.NewKV("Domain", s.options.Domain.Value()),
 			logging.NewKV("Certificate cache", certCache),
@@ -271,7 +270,7 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 	} else {
 		// When not using auto cert, we create a self signed certificate
 		// with the provided public and prive keys.
-		log.FeedbackInfo(ctx, "Generating self signed certificate")
+		log.FeedbackInfo("Generating self signed certificate")
 
 		cert, err := tls.LoadX509KeyPair(
 			s.options.TLS.Value().PrivateKey,
@@ -309,7 +308,7 @@ func (s *Server) Run(ctx context.Context) error {
 			srv := newHTTPRedirServer(s.certManager)
 			err := srv.ListenAndServe()
 			if err != nil && !errors.Is(err, http.ErrServerClosed) {
-				log.Info(ctx, "Something went wrong with the redirection server", logging.NewKV("Error", err))
+				log.Info("Something went wrong with the redirection server", logging.NewKV("Error", err))
 			}
 		}()
 	}

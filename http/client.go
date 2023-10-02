@@ -431,7 +431,7 @@ func (c *Client) PeerInfo(ctx context.Context) (*PeerInfoResponse, error) {
 	return &res, nil
 }
 
-func (c *Client) Close(ctx context.Context) {
+func (c *Client) Close() {
 	// do nothing
 }
 

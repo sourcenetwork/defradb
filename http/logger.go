@@ -29,7 +29,6 @@ var _ middleware.LogEntry = (*logEntry)(nil)
 
 func (e *logEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra any) {
 	log.Info(
-		e.req.Context(),
 		"Request",
 		logging.NewKV("Method", e.req.Method),
 		logging.NewKV("Path", e.req.URL.Path),

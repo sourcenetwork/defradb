@@ -181,7 +181,7 @@ func (c *collection) deleteWithFilter(
 	// If the plan isn't properly closed at any exit point log the error.
 	defer func() {
 		if err := selectionPlan.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close the request plan, after filter delete", err)
+			log.ErrorE("Failed to close the request plan, after filter delete", err)
 		}
 	}()
 

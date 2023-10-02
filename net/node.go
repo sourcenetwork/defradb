@@ -127,7 +127,6 @@ func NewNode(
 		return nil, fin.Cleanup(err)
 	}
 	log.Info(
-		ctx,
 		"Created LibP2P host",
 		logging.NewKV("PeerId", h.ID()),
 		logging.NewKV("Address", options.ListenAddrs),
@@ -197,10 +196,10 @@ func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 			defer wg.Done()
 			err := n.host.Connect(n.ctx, pinfo)
 			if err != nil {
-				log.Info(n.ctx, "Cannot connect to peer", logging.NewKV("Error", err))
+				log.Info("Cannot connect to peer", logging.NewKV("Error", err))
 				return
 			}
-			log.Info(n.ctx, "Connected", logging.NewKV("PeerID", pinfo.ID))
+			log.Info("Connected", logging.NewKV("PeerID", pinfo.ID))
 			atomic.AddUint64(&connected, 1)
 		}(pinfo)
 	}
@@ -208,12 +207,12 @@ func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 	wg.Wait()
 
 	if nPeers := len(addrs); int(connected) < nPeers/2 {
-		log.Info(n.ctx, fmt.Sprintf("Only connected to %d bootstrap peers out of %d", connected, nPeers))
+		log.Info(fmt.Sprintf("Only connected to %d bootstrap peers out of %d", connected, nPeers))
 	}
 
 	err := n.dht.Bootstrap(n.ctx)
 	if err != nil {
-		log.ErrorE(n.ctx, "Problem bootstraping using DHT", err)
+		log.ErrorE("Problem bootstraping using DHT", err)
 		return
 	}
 }
@@ -233,7 +232,6 @@ func (n *Node) subscribeToPeerConnectionEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
 	if err != nil {
 		log.Info(
-			n.ctx,
 			fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
 		)
 		return
@@ -255,7 +253,6 @@ func (n *Node) subscribeToPubSubEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(EvtPubSub))
 	if err != nil {
 		log.Info(
-			n.ctx,
 			fmt.Sprintf("failed to subscribe to pubsub event: %v", err),
 		)
 		return
@@ -277,7 +274,6 @@ func (n *Node) subscribeToPushLogEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(EvtReceivedPushLog))
 	if err != nil {
 		log.Info(
-			n.ctx,
 			fmt.Sprintf("failed to subscribe to push log event: %v", err),
 		)
 		return

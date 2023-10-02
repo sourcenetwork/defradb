@@ -13,7 +13,6 @@ package logging
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -29,13 +28,12 @@ func TestLogWritesFatalMessageToLogAndKillsProcess(t *testing.T) {
 	logMessage := "test log message"
 
 	if os.Getenv("OS_EXIT") == "1" {
-		ctx := context.Background()
 		logPath := os.Getenv("LOG_PATH")
 		logger, logPath := getLogger(t, func(c *Config) {
 			c.OutputPaths = []string{logPath}
 		})
 
-		logger.Fatal(ctx, logMessage)
+		logger.Fatal(logMessage)
 		return
 	}
 
@@ -70,14 +68,13 @@ func TestLogWritesFatalMessageWithStackTraceToLogAndKillsProcessGivenStackTraceE
 	logMessage := "test log message"
 
 	if os.Getenv("OS_EXIT") == "1" {
-		ctx := context.Background()
 		logPath := os.Getenv("LOG_PATH")
 		logger, logPath := getLogger(t, func(c *Config) {
 			c.OutputPaths = []string{logPath}
 			c.EnableStackTrace = NewEnableStackTraceOption(true)
 		})
 
-		logger.Fatal(ctx, logMessage)
+		logger.Fatal(logMessage)
 		return
 	}
 
@@ -112,13 +109,12 @@ func TestLogWritesFatalEMessageToLogAndKillsProcess(t *testing.T) {
 	logMessage := "test log message"
 
 	if os.Getenv("OS_EXIT") == "1" {
-		ctx := context.Background()
 		logPath := os.Getenv("LOG_PATH")
 		logger, logPath := getLogger(t, func(c *Config) {
 			c.OutputPaths = []string{logPath}
 		})
 
-		logger.FatalE(ctx, logMessage, errors.New("dummy error"))
+		logger.FatalE(logMessage, errors.New("dummy error"))
 		return
 	}
 
@@ -153,14 +149,13 @@ func TestLogWritesFatalEMessageWithStackTraceToLogAndKillsProcessGivenStackTrace
 	logMessage := "test log message"
 
 	if os.Getenv("OS_EXIT") == "1" {
-		ctx := context.Background()
 		logPath := os.Getenv("LOG_PATH")
 		logger, logPath := getLogger(t, func(c *Config) {
 			c.OutputPaths = []string{logPath}
 			c.EnableStackTrace = NewEnableStackTraceOption(true)
 		})
 
-		logger.FatalE(ctx, logMessage, errors.New("dummy error"))
+		logger.FatalE(logMessage, errors.New("dummy error"))
 		return
 	}
 
@@ -192,17 +187,17 @@ func TestLogWritesFatalEMessageWithStackTraceToLogAndKillsProcessGivenStackTrace
 
 type LogLevelTestCase struct {
 	LogLevel         LogLevel
-	LogFunc          func(Logger, context.Context, string)
+	LogFunc          func(Logger, string)
 	ExpectedLogLevel string
 	WithStackTrace   bool
 	ExpectStackTrace bool
 	WithCaller       bool
 }
 
-func logDebug(l Logger, c context.Context, m string)  { l.Debug(c, m) }
-func logInfo(l Logger, c context.Context, m string)   { l.Info(c, m) }
-func logError(l Logger, c context.Context, m string)  { l.Error(c, m) }
-func logErrorE(l Logger, c context.Context, m string) { l.ErrorE(c, m, errors.New("test error")) }
+func logDebug(l Logger, m string)  { l.Debug(m) }
+func logInfo(l Logger, m string)   { l.Info(m) }
+func logError(l Logger, m string)  { l.Error(m) }
+func logErrorE(l Logger, m string) { l.ErrorE(m, errors.New("test error")) }
 
 func getLogLevelTestCase() []LogLevelTestCase {
 	return []LogLevelTestCase{
@@ -245,7 +240,6 @@ func TestLogWritesMessagesToLog(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
-		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.EnableStackTrace = NewEnableStackTraceOption(tc.WithStackTrace)
@@ -253,7 +247,7 @@ func TestLogWritesMessagesToLog(t *testing.T) {
 		})
 		logMessage := "test log message"
 
-		tc.LogFunc(logger, ctx, logMessage)
+		tc.LogFunc(logger, logMessage)
 		logger.Flush()
 
 		logLines, err := getLogLines(t, logPath)
@@ -285,7 +279,6 @@ func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
-		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(Fatal)
 		})
@@ -296,7 +289,7 @@ func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
 		})
 		logMessage := "test log message"
 
-		tc.LogFunc(logger, ctx, logMessage)
+		tc.LogFunc(logger, logMessage)
 		logger.Flush()
 
 		logLines, err := getLogLines(t, logPath)
@@ -328,7 +321,6 @@ func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
-		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(Fatal)
 		})
@@ -342,7 +334,7 @@ func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
 		})
 		logMessage := "test log message"
 
-		tc.LogFunc(logger, ctx, logMessage)
+		tc.LogFunc(logger, logMessage)
 		logger.Flush()
 
 		logLines, err := getLogLines(t, logPath)
@@ -374,7 +366,6 @@ func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
-		ctx := context.Background()
 		b := &bytes.Buffer{}
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
@@ -384,7 +375,7 @@ func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
 
 		logMessage := "test log message"
 
-		tc.LogFunc(logger, ctx, logMessage)
+		tc.LogFunc(logger, logMessage)
 		logger.Flush()
 
 		logLines, err := parseLines(b)
@@ -411,7 +402,6 @@ func TestLogDoesntWriteMessagesToLogGivenNotFoundLogPath(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
-		ctx := context.Background()
 		b := &bytes.Buffer{}
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
@@ -421,7 +411,7 @@ func TestLogDoesntWriteMessagesToLogGivenNotFoundLogPath(t *testing.T) {
 
 		logMessage := "test log message"
 
-		tc.LogFunc(logger, ctx, logMessage)
+		tc.LogFunc(logger, logMessage)
 		logger.Flush()
 
 		logLines, err := parseLines(b)
@@ -448,7 +438,6 @@ func TestLogDoesntWriteMessagesToLogGivenStderrLogPath(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
-		ctx := context.Background()
 		b := &bytes.Buffer{}
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
@@ -458,7 +447,7 @@ func TestLogDoesntWriteMessagesToLogGivenStderrLogPath(t *testing.T) {
 
 		logMessage := "test log message"
 
-		tc.LogFunc(logger, ctx, logMessage)
+		tc.LogFunc(logger, logMessage)
 		logger.Flush()
 
 		logLines, err := parseLines(b)
@@ -485,7 +474,6 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
-		ctx := context.Background()
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{}
@@ -498,7 +486,7 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 		})
 		logMessage := "test log message"
 
-		tc.LogFunc(logger, ctx, logMessage)
+		tc.LogFunc(logger, logMessage)
 		logger.Flush()
 
 		logLines, err := getLogLines(t, logPath)
@@ -522,10 +510,10 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 	}
 }
 
-func logFeedbackInfo(l Logger, c context.Context, m string)  { l.FeedbackInfo(c, m) }
-func logFeedbackError(l Logger, c context.Context, m string) { l.FeedbackError(c, m) }
-func logFeedbackErrorE(l Logger, c context.Context, m string) {
-	l.FeedbackErrorE(c, m, errors.New("test error"))
+func logFeedbackInfo(l Logger, m string)  { l.FeedbackInfo(m) }
+func logFeedbackError(l Logger, m string) { l.FeedbackError(m) }
+func logFeedbackErrorE(l Logger, m string) {
+	l.FeedbackErrorE(m, errors.New("test error"))
 }
 
 func getFeedbackLogLevelTestCase() []LogLevelTestCase {
@@ -562,7 +550,6 @@ func TestLogWritesMessagesToFeedbackLog(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
 	for i, tc := range getFeedbackLogLevelTestCase() {
-		ctx := context.Background()
 		b := &bytes.Buffer{}
 		logger, logPath := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
@@ -572,7 +559,7 @@ func TestLogWritesMessagesToFeedbackLog(t *testing.T) {
 		})
 		logMessage := "test log message"
 
-		tc.LogFunc(logger, ctx, logMessage)
+		tc.LogFunc(logger, logMessage)
 		logger.Flush()
 
 		logLines, err := getLogLines(t, logPath)
@@ -609,7 +596,6 @@ func TestLogWritesMessagesToFeedbackLog(t *testing.T) {
 func TestLogWritesMessagesToLogGivenPipeWithValidPath(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
-	ctx := context.Background()
 	b := &bytes.Buffer{}
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
@@ -617,7 +603,7 @@ func TestLogWritesMessagesToLogGivenPipeWithValidPath(t *testing.T) {
 	})
 	logMessage := "test log message"
 
-	logger.Info(ctx, logMessage)
+	logger.Info(logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -639,7 +625,6 @@ func TestLogWritesMessagesToLogGivenPipeWithValidPath(t *testing.T) {
 func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
-	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
 		c.OverridesByLoggerName = map[string]Config{
@@ -648,7 +633,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLev
 	})
 	logMessage := "test log message"
 
-	logger.Info(ctx, logMessage)
+	logger.Info(logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -662,7 +647,6 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLev
 func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
-	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
 		c.OverridesByLoggerName = map[string]Config{
@@ -671,7 +655,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 	})
 	logMessage := "test log message"
 
-	logger.Info(ctx, logMessage)
+	logger.Info(logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -693,7 +677,6 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
-	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
 		c.OverridesByLoggerName = map[string]Config{
@@ -702,7 +685,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 	})
 	logMessage := "test log message"
 
-	logger.Info(ctx, logMessage)
+	logger.Info(logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -724,7 +707,6 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
-	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
 		c.OverridesByLoggerName = map[string]Config{
@@ -733,7 +715,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *te
 	})
 	logMessage := "test log message"
 
-	logger.Info(ctx, logMessage)
+	logger.Info(logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -747,7 +729,6 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *te
 func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducingLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
-	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
 	})
@@ -758,7 +739,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducin
 	})
 	logMessage := "test log message"
 
-	logger.Info(ctx, logMessage)
+	logger.Info(logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -772,7 +753,6 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducin
 func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
-	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
 	})
@@ -783,7 +763,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 	})
 	logMessage := "test log message"
 
-	logger.Info(ctx, logMessage)
+	logger.Info(logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -805,7 +785,6 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
-	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
 	})
@@ -816,7 +795,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 	})
 	logMessage := "test log message"
 
-	logger.Info(ctx, logMessage)
+	logger.Info(logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -838,7 +817,6 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
-	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
 	})
@@ -849,7 +827,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLeve
 	})
 	logMessage := "test log message"
 
-	logger.Info(ctx, logMessage)
+	logger.Info(logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)

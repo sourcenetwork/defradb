@@ -11,7 +11,6 @@
 package logging
 
 import (
-	"context"
 	"fmt"
 	stdlog "log"
 	"os"
@@ -44,28 +43,28 @@ func mustNewLogger(name string) *logger {
 	}
 }
 
-func (l *logger) Debug(ctx context.Context, message string, keyvals ...KV) {
+func (l *logger) Debug(message string, keyvals ...KV) {
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
 
 	l.logger.Debug(message, toZapFields(keyvals)...)
 }
 
-func (l *logger) Info(ctx context.Context, message string, keyvals ...KV) {
+func (l *logger) Info(message string, keyvals ...KV) {
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
 
 	l.logger.Info(message, toZapFields(keyvals)...)
 }
 
-func (l *logger) Error(ctx context.Context, message string, keyvals ...KV) {
+func (l *logger) Error(message string, keyvals ...KV) {
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
 
 	l.logger.Error(message, toZapFields(keyvals)...)
 }
 
-func (l *logger) ErrorE(ctx context.Context, message string, err error, keyvals ...KV) {
+func (l *logger) ErrorE(message string, err error, keyvals ...KV) {
 	kvs := keyvals
 	kvs = append(kvs, NewKV("Error", err.Error()))
 	kvs = withStackTrace(err, kvs)
@@ -76,14 +75,14 @@ func (l *logger) ErrorE(ctx context.Context, message string, err error, keyvals 
 	l.logger.Error(message, toZapFields(kvs)...)
 }
 
-func (l *logger) Fatal(ctx context.Context, message string, keyvals ...KV) {
+func (l *logger) Fatal(message string, keyvals ...KV) {
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
 
 	l.logger.Fatal(message, toZapFields(keyvals)...)
 }
 
-func (l *logger) FatalE(ctx context.Context, message string, err error, keyvals ...KV) {
+func (l *logger) FatalE(message string, err error, keyvals ...KV) {
 	kvs := keyvals
 	kvs = append(kvs, NewKV("Error", err.Error()))
 	kvs = withStackTrace(err, kvs)
@@ -94,8 +93,8 @@ func (l *logger) FatalE(ctx context.Context, message string, err error, keyvals 
 	l.logger.Fatal(message, toZapFields(kvs)...)
 }
 
-func (l *logger) FeedbackInfo(ctx context.Context, message string, keyvals ...KV) {
-	l.Info(ctx, message, keyvals...)
+func (l *logger) FeedbackInfo(message string, keyvals ...KV) {
+	l.Info(message, keyvals...)
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
 	if l.consoleLogger != nil {
@@ -103,8 +102,8 @@ func (l *logger) FeedbackInfo(ctx context.Context, message string, keyvals ...KV
 	}
 }
 
-func (l *logger) FeedbackError(ctx context.Context, message string, keyvals ...KV) {
-	l.Error(ctx, message, keyvals...)
+func (l *logger) FeedbackError(message string, keyvals ...KV) {
+	l.Error(message, keyvals...)
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
 	if l.consoleLogger != nil {
@@ -112,8 +111,8 @@ func (l *logger) FeedbackError(ctx context.Context, message string, keyvals ...K
 	}
 }
 
-func (l *logger) FeedbackErrorE(ctx context.Context, message string, err error, keyvals ...KV) {
-	l.ErrorE(ctx, message, err, keyvals...)
+func (l *logger) FeedbackErrorE(message string, err error, keyvals ...KV) {
+	l.ErrorE(message, err, keyvals...)
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
 	if l.consoleLogger != nil {
@@ -124,8 +123,8 @@ func (l *logger) FeedbackErrorE(ctx context.Context, message string, err error, 
 	}
 }
 
-func (l *logger) FeedbackFatal(ctx context.Context, message string, keyvals ...KV) {
-	l.Fatal(ctx, message, keyvals...)
+func (l *logger) FeedbackFatal(message string, keyvals ...KV) {
+	l.Fatal(message, keyvals...)
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
 	if l.consoleLogger != nil {
@@ -133,8 +132,8 @@ func (l *logger) FeedbackFatal(ctx context.Context, message string, keyvals ...K
 	}
 }
 
-func (l *logger) FeedbackFatalE(ctx context.Context, message string, err error, keyvals ...KV) {
-	l.FatalE(ctx, message, err, keyvals...)
+func (l *logger) FeedbackFatalE(message string, err error, keyvals ...KV) {
+	l.FatalE(message, err, keyvals...)
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
 	if l.consoleLogger != nil {

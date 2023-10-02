@@ -27,7 +27,7 @@ func TestSetReplicator(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer db.Close()
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	require.NoError(t, err)
 	// Extract the peer ID from the multiaddr.
@@ -44,7 +44,7 @@ func TestGetAllReplicatorsWith2Addition(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer db.Close()
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	require.NoError(t, err)
 
@@ -90,7 +90,7 @@ func TestGetAllReplicatorsWith2AdditionsOnSamePeer(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer db.Close()
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	require.NoError(t, err)
 
@@ -125,7 +125,7 @@ func TestDeleteSchemaForReplicator(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer db.Close()
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	require.NoError(t, err)
 
@@ -158,7 +158,7 @@ func TestDeleteAllSchemasForReplicator(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer db.Close()
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	require.NoError(t, err)
 
@@ -186,7 +186,7 @@ func TestDeleteReplicatorWith2Addition(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer db.Close()
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	require.NoError(t, err)
 

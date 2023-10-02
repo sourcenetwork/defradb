@@ -11,7 +11,6 @@
 package config
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 	"os"
@@ -45,7 +44,7 @@ func (cfg *Config) WriteConfigFile() error {
 	if err := os.WriteFile(path, buffer, defaultConfigFilePerm); err != nil {
 		return NewErrFailedToWriteFile(err, path)
 	}
-	log.FeedbackInfo(context.Background(), fmt.Sprintf("Created config file at %v", path))
+	log.FeedbackInfo(fmt.Sprintf("Created config file at %v", path))
 	return nil
 }
 
@@ -53,7 +52,7 @@ func (cfg *Config) DeleteConfigFile() error {
 	if err := os.Remove(cfg.ConfigFilePath()); err != nil {
 		return NewErrFailedToRemoveConfigFile(err)
 	}
-	log.FeedbackInfo(context.Background(), fmt.Sprintf("Deleted config file at %v", cfg.ConfigFilePath()))
+	log.FeedbackInfo(fmt.Sprintf("Deleted config file at %v", cfg.ConfigFilePath()))
 	return nil
 }
 
@@ -61,7 +60,7 @@ func (cfg *Config) CreateRootDirAndConfigFile() error {
 	if err := os.MkdirAll(cfg.Rootdir, defaultDirPerm); err != nil {
 		return err
 	}
-	log.FeedbackInfo(context.Background(), fmt.Sprintf("Created DefraDB root directory at %v", cfg.Rootdir))
+	log.FeedbackInfo(fmt.Sprintf("Created DefraDB root directory at %v", cfg.Rootdir))
 	if err := cfg.WriteConfigFile(); err != nil {
 		return err
 	}
@@ -77,7 +76,7 @@ func (cfg *Config) ConfigFileExists() bool {
 func DefaultRootDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		log.FatalE(context.Background(), "error determining user directory", err)
+		log.FatalE("error determining user directory", err)
 	}
 	return filepath.Join(home, ".defradb")
 }

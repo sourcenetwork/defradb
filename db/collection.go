@@ -203,7 +203,6 @@ func (db *db) createCollection(
 	}
 
 	log.Debug(
-		ctx,
 		"Created collection",
 		logging.NewKV("Name", col.Name()),
 		logging.NewKV("SchemaID", col.SchemaID()),
@@ -712,7 +711,7 @@ func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn) ([]clien
 	}
 	defer func() {
 		if err := q.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close collection query", err)
+			log.ErrorE("Failed to close collection query", err)
 		}
 	}()
 
@@ -765,7 +764,7 @@ func (c *collection) getAllDocKeysChan(
 	go func() {
 		defer func() {
 			if err := q.Close(); err != nil {
-				log.ErrorE(ctx, "Failed to close AllDocKeys query", err)
+				log.ErrorE("Failed to close AllDocKeys query", err)
 			}
 			close(resCh)
 			c.discardImplicitTxn(ctx, txn)

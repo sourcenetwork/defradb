@@ -53,7 +53,6 @@ Passed flags will be persisted in the stored configuration.`,
 						}
 					} else {
 						log.FeedbackError(
-							cmd.Context(),
 							fmt.Sprintf(
 								"Configuration file already exists at %v. Consider using --reinitialize",
 								cfg.ConfigFilePath(),

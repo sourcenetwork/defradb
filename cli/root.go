@@ -11,8 +11,6 @@
 package cli
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/config"
@@ -38,7 +36,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	)
 	err := cfg.BindFlag(config.RootdirKey, cmd.PersistentFlags().Lookup("rootdir"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind rootdir", err)
+		log.FeedbackFatalE("Could not bind rootdir", err)
 	}
 
 	cmd.PersistentFlags().String(
@@ -47,7 +45,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	)
 	err = cfg.BindFlag("log.level", cmd.PersistentFlags().Lookup("loglevel"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.loglevel", err)
+		log.FeedbackFatalE("Could not bind log.loglevel", err)
 	}
 
 	cmd.PersistentFlags().StringArray(
@@ -56,7 +54,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	)
 	err = cfg.BindFlag("log.logger", cmd.PersistentFlags().Lookup("logger"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.logger", err)
+		log.FeedbackFatalE("Could not bind log.logger", err)
 	}
 
 	cmd.PersistentFlags().String(
@@ -65,7 +63,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	)
 	err = cfg.BindFlag("log.output", cmd.PersistentFlags().Lookup("logoutput"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.output", err)
+		log.FeedbackFatalE("Could not bind log.output", err)
 	}
 
 	cmd.PersistentFlags().String(
@@ -74,7 +72,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	)
 	err = cfg.BindFlag("log.format", cmd.PersistentFlags().Lookup("logformat"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.format", err)
+		log.FeedbackFatalE("Could not bind log.format", err)
 	}
 
 	cmd.PersistentFlags().Bool(
@@ -83,7 +81,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	)
 	err = cfg.BindFlag("log.stacktrace", cmd.PersistentFlags().Lookup("logtrace"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.stacktrace", err)
+		log.FeedbackFatalE("Could not bind log.stacktrace", err)
 	}
 
 	cmd.PersistentFlags().Bool(
@@ -92,7 +90,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	)
 	err = cfg.BindFlag("log.nocolor", cmd.PersistentFlags().Lookup("lognocolor"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.nocolor", err)
+		log.FeedbackFatalE("Could not bind log.nocolor", err)
 	}
 
 	cmd.PersistentFlags().String(
@@ -101,7 +99,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	)
 	err = cfg.BindFlag("api.address", cmd.PersistentFlags().Lookup("url"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.address", err)
+		log.FeedbackFatalE("Could not bind api.address", err)
 	}
 
 	return cmd

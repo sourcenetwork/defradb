@@ -10,10 +10,6 @@
 
 package logging
 
-import (
-	"context"
-)
-
 var log = MustNewLogger("logging")
 
 // KV is a key-value pair used to pass structured data to loggers.
@@ -32,30 +28,30 @@ func NewKV(key string, value any) KV {
 
 type Logger interface {
 	// Debug logs a message at debug log level. Key-value pairs can be added.
-	Debug(ctx context.Context, message string, keyvals ...KV)
+	Debug(message string, keyvals ...KV)
 	// Info logs a message at info log level. Key-value pairs can be added.
-	Info(ctx context.Context, message string, keyvals ...KV)
+	Info(message string, keyvals ...KV)
 	// Error logs a message at error log level. Key-value pairs can be added.
-	Error(ctx context.Context, message string, keyvals ...KV)
+	Error(message string, keyvals ...KV)
 	// ErrorErr logs a message and an error at error log level. Key-value pairs can be added.
-	ErrorE(ctx context.Context, message string, err error, keyvals ...KV)
+	ErrorE(message string, err error, keyvals ...KV)
 	// Fatal logs a message at fatal log level. Key-value pairs can be added.
-	Fatal(ctx context.Context, message string, keyvals ...KV)
+	Fatal(message string, keyvals ...KV)
 	// FatalE logs a message and an error at fatal log level. Key-value pairs can be added.
-	FatalE(ctx context.Context, message string, err error, keyvals ...KV)
+	FatalE(message string, err error, keyvals ...KV)
 
 	// Feedback prefixed method ensure that messsages reach a user in case the logs are sent to a file.
 
 	// FeedbackInfo calls Info and sends the message to stderr if logs are sent to a file.
-	FeedbackInfo(ctx context.Context, message string, keyvals ...KV)
+	FeedbackInfo(message string, keyvals ...KV)
 	// FeedbackError calls Error and sends the message to stderr if logs are sent to a file.
-	FeedbackError(ctx context.Context, message string, keyvals ...KV)
+	FeedbackError(message string, keyvals ...KV)
 	// FeedbackErrorE calls ErrorE and sends the message to stderr if logs are sent to a file.
-	FeedbackErrorE(ctx context.Context, message string, err error, keyvals ...KV)
+	FeedbackErrorE(message string, err error, keyvals ...KV)
 	// FeedbackFatal calls Fatal and sends the message to stderr if logs are sent to a file.
-	FeedbackFatal(ctx context.Context, message string, keyvals ...KV)
+	FeedbackFatal(message string, keyvals ...KV)
 	// FeedbackFatalE calls FatalE and sends the message to stderr if logs are sent to a file.
-	FeedbackFatalE(ctx context.Context, message string, err error, keyvals ...KV)
+	FeedbackFatalE(message string, err error, keyvals ...KV)
 
 	// Flush flushes any buffered log entries.
 	Flush() error

@@ -81,7 +81,7 @@ func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
 	require.NoError(t, err)
-	db.Close(ctx)
+	db.Close()
 	_, err = NewNode(
 		context.Background(),
 		db,
