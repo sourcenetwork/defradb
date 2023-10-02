@@ -86,8 +86,7 @@ func NewCollectionIndex(
 		return nil, NewErrIndexDescHasNoFields(desc)
 	}
 	index := &collectionSimpleIndex{collection: collection, desc: desc}
-	schema := collection.Description().Schema
-	field, foundField := schema.GetField(desc.Fields[0].Name)
+	field, foundField := collection.Schema().GetField(desc.Fields[0].Name)
 	if !foundField {
 		return nil, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name)
 	}

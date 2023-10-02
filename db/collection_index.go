@@ -120,8 +120,8 @@ func (c *collection) collectIndexedFields() []client.FieldDescription {
 	fieldsMap := make(map[string]client.FieldDescription)
 	for _, index := range c.indexes {
 		for _, field := range index.Description().Fields {
-			for i := range c.desc.Schema.Fields {
-				colField := c.desc.Schema.Fields[i]
+			for i := range c.Schema().Fields {
+				colField := c.Schema().Fields[i]
 				if field.Name == colField.Name {
 					fieldsMap[field.Name] = colField
 					break
@@ -297,8 +297,8 @@ func (c *collection) indexExistingDocs(
 ) error {
 	fields := make([]client.FieldDescription, 0, 1)
 	for _, field := range index.Description().Fields {
-		for i := range c.desc.Schema.Fields {
-			colField := c.desc.Schema.Fields[i]
+		for i := range c.Schema().Fields {
+			colField := c.Schema().Fields[i]
 			if field.Name == colField.Name {
 				fields = append(fields, colField)
 				break
@@ -422,7 +422,7 @@ func (c *collection) checkExistingFields(
 	ctx context.Context,
 	fields []client.IndexedFieldDescription,
 ) error {
-	collectionFields := c.Description().Schema.Fields
+	collectionFields := c.Schema().Fields
 	for _, field := range fields {
 		found := false
 		for _, colField := range collectionFields {
