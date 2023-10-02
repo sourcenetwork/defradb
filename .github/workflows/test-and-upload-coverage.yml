@@ -8,9 +8,14 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: Run Tests And Upload Coverage Workflow
+name: Test And Upload Coverage Workflow
 
 on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
@@ -80,9 +85,9 @@ jobs:
     name: Upload test code coverage job
 
     runs-on: ubuntu-latest
-    
+
     needs: run-tests
-    
+
     steps:
       - name: Checkout code into the directory
         uses: actions/checkout@v3
