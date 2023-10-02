@@ -125,9 +125,10 @@ func (db *db) createCollection(
 		return nil, err
 	}
 	desc.ID = uint32(colID)
+	schema := desc.Schema
 
-	for i := range desc.Schema.Fields {
-		desc.Schema.Fields[i].ID = client.FieldID(i)
+	for i := range schema.Fields {
+		schema.Fields[i].ID = client.FieldID(i)
 	}
 
 	col, err := db.newCollection(desc)
@@ -137,7 +138,7 @@ func (db *db) createCollection(
 
 	// Local elements such as secondary indexes should be excluded
 	// from the (global) schemaId.
-	schemaBuf, err := json.Marshal(col.desc.Schema)
+	schemaBuf, err := json.Marshal(schema)
 	if err != nil {
 		return nil, err
 	}
@@ -153,8 +154,9 @@ func (db *db) createCollection(
 	// For new schemas the initial version id will match the schema id
 	schemaVersionID := schemaID
 
-	col.desc.Schema.VersionID = schemaVersionID
-	col.desc.Schema.SchemaID = schemaID
+	schema.VersionID = schemaVersionID
+	schema.SchemaID = schemaID
+	col.desc.Schema = schema
 
 	// buffer must include all the ids, as it is saved and loaded from the store later.
 	buf, err := json.Marshal(col.desc)
