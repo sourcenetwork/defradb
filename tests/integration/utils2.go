@@ -259,10 +259,10 @@ func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 
 	switch s.clientType {
 	case httpClientType:
-		cdb, err = http.NewWrapper(cdb)
+		cdb, err = http.NewWrapper(cdb, nil)
 
 	case cliClientType:
-		cdb = cli.NewWrapper(cdb)
+		cdb = cli.NewWrapper(cdb, nil)
 
 	case goClientType:
 		return
@@ -540,6 +540,16 @@ func closeNodes(
 		}
 		node.DB.Close(s.ctx)
 	}
+}
+
+// getNodePeer returns the p2p implementation for the given node.
+//
+// If node DB implements the client.P2P interface that implementation will be used.
+func getNodePeer(node *net.Node) client.P2P {
+	if val, ok := node.DB.(client.P2P); ok {
+		return val
+	}
+	return node.Peer
 }
 
 // getNodes gets the set of applicable nodes for the given nodeID.

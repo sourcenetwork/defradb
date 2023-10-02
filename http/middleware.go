@@ -23,6 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/net"
 )
 
 const TX_HEADER_NAME = "x-defradb-tx"
@@ -53,8 +54,10 @@ var (
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
 	colContextKey = contextKey("col")
-	// peerIdContextKey contains the peerId of the DefraDB node.
-	peerIdContextKey = contextKey("peerId")
+	// nodeContextKey is the context key for the *net.Node
+	//
+	// This will only be set if the node is connected to the p2p network.
+	nodeContextKey = contextKey("node")
 )
 
 // CorsMiddleware handles cross origin request
@@ -73,7 +76,7 @@ func CorsMiddleware(opts ServerOptions) func(http.Handler) http.Handler {
 }
 
 // ApiMiddleware sets the required context values for all API requests.
-func ApiMiddleware(db client.DB, txs *sync.Map, opts ServerOptions) func(http.Handler) http.Handler {
+func ApiMiddleware(db client.DB, node *net.Node, txs *sync.Map, opts ServerOptions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			if opts.TLS.HasValue() {
@@ -83,7 +86,11 @@ func ApiMiddleware(db client.DB, txs *sync.Map, opts ServerOptions) func(http.Ha
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, dbContextKey, db)
 			ctx = context.WithValue(ctx, txsContextKey, txs)
-			ctx = context.WithValue(ctx, peerIdContextKey, opts.PeerID)
+
+			if node != nil {
+				ctx = context.WithValue(ctx, nodeContextKey, node)
+			}
+
 			next.ServeHTTP(rw, req.WithContext(ctx))
 		})
 	}

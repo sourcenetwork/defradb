@@ -13,7 +13,6 @@ package cli
 import (
 	"context"
 	"fmt"
-	gonet "net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,12 +20,7 @@ import (
 	"syscall"
 
 	badger "github.com/dgraph-io/badger/v4"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
@@ -37,7 +31,6 @@ import (
 	httpapi "github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
-	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
@@ -111,15 +104,6 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	err = cfg.BindFlag("net.p2paddress", cmd.Flags().Lookup("p2paddr"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.p2paddress", err)
-	}
-
-	cmd.Flags().String(
-		"tcpaddr", cfg.Net.TCPAddress,
-		"Listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)",
-	)
-	err = cfg.BindFlag("net.tcpaddress", cmd.Flags().Lookup("tcpaddr"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind net.tcpaddress", err)
 	}
 
 	cmd.Flags().Bool(
@@ -268,55 +252,12 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 			db.Close(ctx)
 			return nil, errors.Wrap("failed to start P2P listeners", err)
 		}
-
-		MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
-		if err != nil {
-			return nil, errors.Wrap("failed to parse multiaddress", err)
-		}
-		addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
-		if err != nil {
-			return nil, errors.Wrap("failed to parse TCP address", err)
-		}
-
-		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
-		if err != nil {
-			return nil, errors.Wrap("failed to parse RPC timeout duration", err)
-		}
-
-		server := grpc.NewServer(
-			grpc.UnaryInterceptor(
-				grpc_middleware.ChainUnaryServer(
-					grpc_recovery.UnaryServerInterceptor(),
-				),
-			),
-			grpc.KeepaliveParams(
-				keepalive.ServerParameters{
-					MaxConnectionIdle: rpcTimeoutDuration,
-				},
-			),
-		)
-		tcplistener, err := gonet.Listen("tcp", addr)
-		if err != nil {
-			return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", addr), err)
-		}
-
-		go func() {
-			log.FeedbackInfo(ctx, "Started RPC server", logging.NewKV("Address", addr))
-			netpb.RegisterCollectionServer(server, n.Peer)
-			if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-				log.FeedbackFatalE(ctx, "Failed to start RPC server", err)
-			}
-		}()
 	}
 
 	sOpt := []func(*httpapi.Server){
 		httpapi.WithAddress(cfg.API.Address),
 		httpapi.WithRootDir(cfg.Rootdir),
 		httpapi.WithAllowedOrigins(cfg.API.AllowedOrigins...),
-	}
-
-	if n != nil {
-		sOpt = append(sOpt, httpapi.WithPeerID(n.PeerID().String()))
 	}
 
 	if cfg.API.TLS {
@@ -328,7 +269,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		)
 	}
 
-	s := httpapi.NewServer(db, sOpt...)
+	s := httpapi.NewServer(db, n, sOpt...)
 	if err := s.Listen(ctx); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
 	}

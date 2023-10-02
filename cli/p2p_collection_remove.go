@@ -22,8 +22,8 @@ func MakeP2PCollectionRemoveCommand() *cobra.Command {
 The removed collections will no longer be synchronized between nodes.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
-			return store.RemoveP2PCollection(cmd.Context(), args[0])
+			p2p := mustGetP2PContext(cmd)
+			return p2p.RemoveP2PCollection(cmd.Context(), args[0])
 		},
 	}
 	return cmd

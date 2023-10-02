@@ -22,8 +22,8 @@ func MakeP2PCollectionAddCommand() *cobra.Command {
 The collections are synchronized between nodes of a pubsub network.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
-			return store.AddP2PCollection(cmd.Context(), args[0])
+			p2p := mustGetP2PContext(cmd)
+			return p2p.AddP2PCollection(cmd.Context(), args[0])
 		},
 	}
 	return cmd

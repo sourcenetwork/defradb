@@ -77,7 +77,7 @@ type SubscribeToCollection struct {
 	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
 	//
 	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
-	CollectionIDs []int
+	CollectionID int
 
 	// Any error expected from the action. Optional.
 	//
@@ -95,7 +95,7 @@ type UnsubscribeToCollection struct {
 	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
 	//
 	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
-	CollectionIDs []int
+	CollectionID int
 
 	// Any error expected from the action. Optional.
 	//
@@ -171,7 +171,7 @@ func setupPeerWaitSync(
 			}
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
-			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionIDs...)
+			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionID)
 
 		case UnsubscribeToCollection:
 			if action.ExpectedError != "" {
@@ -182,12 +182,10 @@ func setupPeerWaitSync(
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
 			existingCollectionIndexes := nodeCollections[action.NodeID]
-			for _, collectionIndex := range action.CollectionIDs {
-				for i, existingCollectionIndex := range existingCollectionIndexes {
-					if collectionIndex == existingCollectionIndex {
-						// Remove the matching collection index from the set:
-						existingCollectionIndexes = append(existingCollectionIndexes[:i], existingCollectionIndexes[i+1:]...)
-					}
+			for i, existingCollectionIndex := range existingCollectionIndexes {
+				if action.CollectionID == existingCollectionIndex {
+					// Remove the matching collection index from the set:
+					existingCollectionIndexes = append(existingCollectionIndexes[:i], existingCollectionIndexes[i+1:]...)
 				}
 			}
 			nodeCollections[action.NodeID] = existingCollectionIndexes
@@ -296,7 +294,8 @@ func configureReplicator(
 	info, err := peer.AddrInfoFromString(targetAddress)
 	require.NoError(s.t, err)
 
-	err = sourceNode.Peer.SetReplicator(s.ctx, client.Replicator{
+	peer := getNodePeer(sourceNode)
+	err = peer.SetReplicator(s.ctx, client.Replicator{
 		Info: *info,
 	})
 	require.NoError(s.t, err)
@@ -386,24 +385,18 @@ func subscribeToCollection(
 	s *state,
 	action SubscribeToCollection,
 ) {
-	n := s.nodes[action.NodeID]
-
-	schemaIDs := []string{}
-	for _, collectionIndex := range action.CollectionIDs {
-		if collectionIndex == NonExistentCollectionID {
-			schemaIDs = append(schemaIDs, "NonExistentCollectionID")
-			continue
-		}
-
-		col := s.collections[action.NodeID][collectionIndex]
-		schemaIDs = append(schemaIDs, col.SchemaID())
+	var schemaID string
+	if action.CollectionID == NonExistentCollectionID {
+		schemaID = "NonExistentCollectionID"
+	} else {
+		col := s.collections[action.NodeID][action.CollectionID]
+		schemaID = col.SchemaID()
 	}
 
-	for _, schemaID := range schemaIDs {
-		err := n.Peer.AddP2PCollection(s.ctx, schemaID)
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-	}
+	peer := getNodePeer(s.nodes[action.NodeID])
+	err := peer.AddP2PCollection(s.ctx, schemaID)
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -418,24 +411,18 @@ func unsubscribeToCollection(
 	s *state,
 	action UnsubscribeToCollection,
 ) {
-	n := s.nodes[action.NodeID]
-
-	schemaIDs := []string{}
-	for _, collectionIndex := range action.CollectionIDs {
-		if collectionIndex == NonExistentCollectionID {
-			schemaIDs = append(schemaIDs, "NonExistentCollectionID")
-			continue
-		}
-
-		col := s.collections[action.NodeID][collectionIndex]
-		schemaIDs = append(schemaIDs, col.SchemaID())
+	var schemaID string
+	if action.CollectionID == NonExistentCollectionID {
+		schemaID = "NonExistentCollectionID"
+	} else {
+		col := s.collections[action.NodeID][action.CollectionID]
+		schemaID = col.SchemaID()
 	}
 
-	for _, schemaID := range schemaIDs {
-		err := n.Peer.RemoveP2PCollection(s.ctx, schemaID)
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-	}
+	peer := getNodePeer(s.nodes[action.NodeID])
+	err := peer.RemoveP2PCollection(s.ctx, schemaID)
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -451,14 +438,14 @@ func getAllP2PCollections(
 	s *state,
 	action GetAllP2PCollections,
 ) {
-	var expectedCollections []string
+	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
 		col := s.collections[action.NodeID][collectionIndex]
-		expectedCollections = append(expectedCollections, col.Name())
+		expectedCollections = append(expectedCollections, col.SchemaID())
 	}
 
-	n := s.nodes[action.NodeID]
-	cols, err := n.Peer.GetAllP2PCollections(s.ctx)
+	peer := getNodePeer(s.nodes[action.NodeID])
+	cols, err := peer.GetAllP2PCollections(s.ctx)
 	require.NoError(s.t, err)
 
 	assert.Equal(s.t, expectedCollections, cols)

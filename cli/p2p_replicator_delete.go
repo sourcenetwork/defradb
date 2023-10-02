@@ -24,13 +24,13 @@ func MakeP2PReplicatorDeleteCommand() *cobra.Command {
 		Long:  `Delete a replicator. It will stop synchronizing.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			p2p := mustGetP2PContext(cmd)
 
 			addr, err := peer.AddrInfoFromString(args[0])
 			if err != nil {
 				return err
 			}
-			return store.DeleteReplicator(cmd.Context(), client.Replicator{Info: *addr})
+			return p2p.DeleteReplicator(cmd.Context(), client.Replicator{Info: *addr})
 		},
 	}
 	return cmd

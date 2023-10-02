@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/net"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -34,12 +35,13 @@ type Handler struct {
 	txs    *sync.Map
 }
 
-func NewHandler(db client.DB, opts ServerOptions) *Handler {
+func NewHandler(db client.DB, node *net.Node, opts ServerOptions) *Handler {
 	txs := &sync.Map{}
 
 	tx_handler := &txHandler{}
 	store_handler := &storeHandler{}
 	collection_handler := &collectionHandler{}
+	p2p_handler := &p2pHandler{}
 	lens_handler := &lensHandler{}
 	ccip_handler := &ccipHandler{}
 
@@ -47,7 +49,7 @@ func NewHandler(db client.DB, opts ServerOptions) *Handler {
 	router.Use(middleware.RequestLogger(&logFormatter{}))
 	router.Use(middleware.Recoverer)
 	router.Use(CorsMiddleware(opts))
-	router.Use(ApiMiddleware(db, txs, opts))
+	router.Use(ApiMiddleware(db, node, txs, opts))
 
 	router.Route("/api/"+Version, func(api chi.Router) {
 		api.Use(TransactionMiddleware, StoreMiddleware)
@@ -99,16 +101,16 @@ func NewHandler(db client.DB, opts ServerOptions) *Handler {
 			ccip.Post("/", ccip_handler.ExecCCIP)
 		})
 		api.Route("/p2p", func(p2p chi.Router) {
-			p2p.Get("/info", store_handler.PeerInfo)
+			p2p.Get("/info", p2p_handler.PeerInfo)
 			p2p.Route("/replicators", func(p2p_replicators chi.Router) {
-				p2p_replicators.Get("/", store_handler.GetAllReplicators)
-				p2p_replicators.Post("/", store_handler.SetReplicator)
-				p2p_replicators.Delete("/", store_handler.DeleteReplicator)
+				p2p_replicators.Get("/", p2p_handler.GetAllReplicators)
+				p2p_replicators.Post("/", p2p_handler.SetReplicator)
+				p2p_replicators.Delete("/", p2p_handler.DeleteReplicator)
 			})
 			p2p.Route("/collections", func(p2p_collections chi.Router) {
-				p2p_collections.Get("/", store_handler.GetAllP2PCollections)
-				p2p_collections.Post("/{id}", store_handler.AddP2PCollection)
-				p2p_collections.Delete("/{id}", store_handler.RemoveP2PCollection)
+				p2p_collections.Get("/", p2p_handler.GetAllP2PCollections)
+				p2p_collections.Post("/{id}", p2p_handler.AddP2PCollection)
+				p2p_collections.Delete("/{id}", p2p_handler.RemoveP2PCollection)
 			})
 		})
 		api.Route("/debug", func(debug chi.Router) {

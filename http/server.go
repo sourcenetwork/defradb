@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
+	p2p "github.com/sourcenetwork/defradb/net"
 )
 
 const (
@@ -61,8 +62,6 @@ type Server struct {
 type ServerOptions struct {
 	// AllowedOrigins is the list of allowed origins for CORS.
 	AllowedOrigins []string
-	// PeerID is the p2p id of the server node.
-	PeerID string
 	// TLS enables https when the value is present.
 	TLS immutable.Option[TLSOptions]
 	// RootDirectory is the directory for the node config.
@@ -83,7 +82,7 @@ type TLSOptions struct {
 }
 
 // NewServer instantiates a new server with the given http.Handler.
-func NewServer(db client.DB, options ...func(*Server)) *Server {
+func NewServer(db client.DB, node *p2p.Node, options ...func(*Server)) *Server {
 	srv := &Server{
 		Server: http.Server{
 			ReadTimeout:  readTimeout,
@@ -96,7 +95,7 @@ func NewServer(db client.DB, options ...func(*Server)) *Server {
 		opt(srv)
 	}
 
-	srv.Handler = NewHandler(db, srv.options)
+	srv.Handler = NewHandler(db, node, srv.options)
 
 	return srv
 }
@@ -159,13 +158,6 @@ func WithCAEmail(email string) func(*Server) {
 		tlsOpt := s.options.TLS.Value()
 		tlsOpt.Email = email
 		s.options.TLS = immutable.Some(tlsOpt)
-	}
-}
-
-// WithPeerID returns an option to set the identifier of the server node.
-func WithPeerID(id string) func(*Server) {
-	return func(s *Server) {
-		s.options.PeerID = id
 	}
 }
 

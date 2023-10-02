@@ -50,6 +50,13 @@ func mustGetStoreContext(cmd *cobra.Command) client.Store {
 	return cmd.Context().Value(storeContextKey).(client.Store)
 }
 
+// mustGetP2PContext returns the p2p implementation for the current command context.
+//
+// If a p2p implementation is not set in the current context this function panics.
+func mustGetP2PContext(cmd *cobra.Command) client.P2P {
+	return cmd.Context().Value(storeContextKey).(client.P2P)
+}
+
 // tryGetCollectionContext returns the collection for the current command context
 // and a boolean indicating if the collection was set.
 func tryGetCollectionContext(cmd *cobra.Command) (client.Collection, bool) {

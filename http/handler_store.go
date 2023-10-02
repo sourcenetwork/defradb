@@ -22,82 +22,6 @@ import (
 
 type storeHandler struct{}
 
-func (s *storeHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
-	// store := req.Context().Value(storeContextKey).(client.Store)
-
-	// var rep client.Replicator
-	// if err := requestJSON(req, &rep); err != nil {
-	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-	// 	return
-	// }
-	// err := store.SetReplicator(req.Context(), rep)
-	// if err != nil {
-	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-	// 	return
-	// }
-	// rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
-	// store := req.Context().Value(storeContextKey).(client.Store)
-
-	// var rep client.Replicator
-	// if err := requestJSON(req, &rep); err != nil {
-	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-	// 	return
-	// }
-	// err := store.DeleteReplicator(req.Context(), rep)
-	// if err != nil {
-	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-	// 	return
-	// }
-	// rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
-	// store := req.Context().Value(storeContextKey).(client.Store)
-
-	// reps, err := store.GetAllReplicators(req.Context())
-	// if err != nil {
-	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-	// 	return
-	// }
-	// responseJSON(rw, http.StatusOK, reps)
-}
-
-func (s *storeHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	// store := req.Context().Value(storeContextKey).(client.Store)
-
-	// err := store.AddP2PCollection(req.Context(), chi.URLParam(req, "id"))
-	// if err != nil {
-	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-	// 	return
-	// }
-	// rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	// store := req.Context().Value(storeContextKey).(client.Store)
-
-	// err := store.RemoveP2PCollection(req.Context(), chi.URLParam(req, "id"))
-	// if err != nil {
-	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-	// 	return
-	// }
-	// rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
-	// store := req.Context().Value(storeContextKey).(client.Store)
-
-	// cols, err := store.GetAllP2PCollections(req.Context())
-	// if err != nil {
-	// 	responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-	// 	return
-	// }
-	// responseJSON(rw, http.StatusOK, cols)
-}
-
 func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
@@ -238,18 +162,6 @@ func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
-}
-
-type PeerInfoResponse struct {
-	PeerID string `json:"peerID"`
-}
-
-func (s *storeHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
-	var res PeerInfoResponse
-	if value, ok := req.Context().Value(peerIdContextKey).(string); ok {
-		res.PeerID = value
-	}
-	responseJSON(rw, http.StatusOK, &res)
 }
 
 type GraphQLRequest struct {

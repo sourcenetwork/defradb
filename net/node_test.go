@@ -219,20 +219,6 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 	n2.Bootstrap(addrs)
 }
 
-func mergeOptions(nodeOpts ...NodeOpt) (Options, error) {
-	var options Options
-	var nodeOpt NodeOpt
-	for _, opt := range append(nodeOpts, nodeOpt) {
-		if opt == nil {
-			continue
-		}
-		if err := opt(&options); err != nil {
-			return options, err
-		}
-	}
-	return options, nil
-}
-
 func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)

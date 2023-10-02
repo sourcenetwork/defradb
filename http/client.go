@@ -27,7 +27,10 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
-var _ client.DB = (*Client)(nil)
+var (
+	_ client.DB  = (*Client)(nil)
+	_ client.P2P = (*Client)(nil)
+)
 
 // Client implements the client.DB interface over HTTP.
 type Client struct {
@@ -85,86 +88,6 @@ func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore
 func (c *Client) WithTxn(tx datastore.Txn) client.Store {
 	client := c.http.withTxn(tx.ID())
 	return &Client{client}
-}
-
-func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
-
-	body, err := json.Marshal(rep)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
-
-	body, err := json.Marshal(rep)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var reps []client.Replicator
-	if err := c.http.requestJson(req, &reps); err != nil {
-		return nil, err
-	}
-	return reps, nil
-}
-
-func (c *Client) AddP2PCollection(ctx context.Context, collectionID string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections", collectionID)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections", collectionID)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var cols []string
-	if err := c.http.requestJson(req, &cols); err != nil {
-		return nil, err
-	}
-	return cols, nil
 }
 
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {

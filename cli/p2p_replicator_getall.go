@@ -21,9 +21,9 @@ func MakeP2PReplicatorGetAllCommand() *cobra.Command {
 		Long: `Get all the replicators active in the P2P data sync system.
 These are the replicators that are currently replicating data from one node to another.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			p2p := mustGetP2PContext(cmd)
 
-			reps, err := store.GetAllReplicators(cmd.Context())
+			reps, err := p2p.GetAllReplicators(cmd.Context())
 			if err != nil {
 				return err
 			}

@@ -20,9 +20,13 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/net"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var (
+	_ client.DB  = (*Wrapper)(nil)
+	_ client.P2P = (*Wrapper)(nil)
+)
 
 // Wrapper combines an HTTP client and server into a
 // single struct that implements the client.DB interface.
@@ -33,8 +37,8 @@ type Wrapper struct {
 	httpServer *httptest.Server
 }
 
-func NewWrapper(db client.DB) (*Wrapper, error) {
-	handler := http.NewHandler(db, http.ServerOptions{})
+func NewWrapper(db client.DB, node *net.Node) (*Wrapper, error) {
+	handler := http.NewHandler(db, node, http.ServerOptions{})
 	httpServer := httptest.NewServer(handler)
 
 	client, err := http.NewClient(httpServer.URL)
