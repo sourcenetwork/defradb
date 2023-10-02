@@ -18,7 +18,7 @@ import (
 
 func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field",
+		Description: "Filter on indexed relation field in 1-N relation",
 		Actions: []any{
 			createSchemaWithDocs(`
 				type User {
@@ -62,9 +62,9 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndexOnOneToOneRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field",
+		Description: "Filter on indexed secondary relation field in 1-1 relation",
 		Actions: []any{
 			createSchemaWithDocs(`
 				type User {
@@ -108,9 +108,9 @@ func TestQueryWithIndexOnOneToOneRelation_IfFilterOnIndexedRelation_ShouldFilter
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndexOnOneToOneSecondaryRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field",
+		Description: "Filter on indexed primary relation field in 1-1 relation",
 		Actions: []any{
 			createSchemaWithDocs(`
 				type User {
@@ -148,6 +148,72 @@ func TestQueryWithIndexOnOneToOneSecondaryRelation_IfFilterOnIndexedRelation_Sho
 					{"name": "Shahzad"},
 				},
 				NewExplainAsserter().WithDocFetches(14).WithFieldFetches(17).WithIndexFetches(3),
+			),
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Filter on indexed relation field in 1-1 and 1-N relations",
+		Actions: []any{
+			createSchemaWithDocs(`
+				type User {
+					name: String 
+					age: Int
+					address: Address
+					devices: [Device] 
+				} 
+
+				type Device {
+					model: String @index
+					owner: User
+				} 
+
+				type Address {
+					user: User
+					city: String @index
+				} 
+			`),
+			sendRequestAndExplain(`
+				User(filter: {
+					address: {city: {_eq: "Munich"}}
+				}) {
+					name
+					address {
+						city
+					}
+				}`,
+				[]map[string]any{
+					{
+						"name": "Islam",
+						"address": map[string]any{
+							"city": "Munich",
+						},
+					},
+				},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+			),
+			sendRequestAndExplain(`
+				User(filter: {
+					devices: {model: {_eq: "Walkman"}}
+				}) {
+					name
+					devices {
+						model
+					}
+				}`,
+				[]map[string]any{
+					{
+						"name": "Chris",
+						"devices": map[string]any{
+							"model": "Walkman",
+						},
+					},
+				},
+				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
 			),
 		},
 	}
