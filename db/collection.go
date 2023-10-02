@@ -72,33 +72,6 @@ type collection struct {
 
 // NewCollection returns a pointer to a newly instanciated DB Collection
 func (db *db) newCollection(desc client.CollectionDescription) (*collection, error) {
-	if desc.Name == "" {
-		return nil, client.NewErrUninitializeProperty("Collection", "Name")
-	}
-
-	if len(desc.Schema.Fields) == 0 {
-		return nil, client.NewErrUninitializeProperty("Collection", "Fields")
-	}
-
-	docKeyField := desc.Schema.Fields[0]
-	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != request.KeyFieldName {
-		return nil, ErrSchemaFirstFieldDocKey
-	}
-
-	for i, field := range desc.Schema.Fields {
-		if field.Name == "" {
-			return nil, client.NewErrUninitializeProperty("Collection.Schema", "Name")
-		}
-		if field.Kind == client.FieldKind_None {
-			return nil, client.NewErrUninitializeProperty("Collection.Schema", "FieldKind")
-		}
-		if (field.Kind != client.FieldKind_DocKey && !field.IsObject()) &&
-			field.Typ == client.NONE_CRDT {
-			return nil, client.NewErrUninitializeProperty("Collection.Schema", "CRDT type")
-		}
-		desc.Schema.Fields[i].ID = client.FieldID(i)
-	}
-
 	return &collection{
 		db: db,
 		desc: client.CollectionDescription{
@@ -151,6 +124,11 @@ func (db *db) createCollection(
 		return nil, err
 	}
 	desc.ID = uint32(colID)
+
+	for i := range desc.Schema.Fields {
+		desc.Schema.Fields[i].ID = client.FieldID(i)
+	}
+
 	col, err := db.newCollection(desc)
 	if err != nil {
 		return nil, err

@@ -111,7 +111,6 @@ var (
 	ErrDocumentDeleted                    = errors.New(errDocumentDeleted)
 	ErrUnknownCRDTArgument                = errors.New("invalid CRDT arguments")
 	ErrUnknownCRDT                        = errors.New("unknown crdt")
-	ErrSchemaFirstFieldDocKey             = errors.New("collection schema first field must be a DocKey")
 	ErrCollectionAlreadyExists            = errors.New("collection already exists")
 	ErrCollectionNameEmpty                = errors.New("collection name can't be empty")
 	ErrSchemaIDEmpty                      = errors.New("schema ID can't be empty")
