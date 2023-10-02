@@ -229,7 +229,7 @@ func (n *typeIndexJoin) Merge() bool { return true }
 // typeJoinOne is the plan node for a type index join
 // where the root type is the primary in a one-to-one relation request.
 type typeJoinOne struct {
-	twoWayFetchDirector
+	invertibleTypeJoin
 }
 
 func (p *Planner) makeTypeJoinOne(
@@ -276,8 +276,15 @@ func (p *Planner) makeTypeJoinOne(
 		)
 	}
 
+	dir := joinDirection{
+		firstNode:      source,
+		secondNode:     selectPlan,
+		secondaryField: subTypeField.Name + request.RelatedObjectID,
+		primaryField:   subTypeFieldDesc.Name + request.RelatedObjectID,
+	}
+
 	return &typeJoinOne{
-		twoWayFetchDirector: twoWayFetchDirector{
+		invertibleTypeJoin: invertibleTypeJoin{
 			docMapper:           docMapper{parent.documentMapping},
 			root:                source,
 			subType:             selectPlan,
@@ -287,7 +294,7 @@ func (p *Planner) makeTypeJoinOne(
 			isSecondary:         !isPrimary,
 			secondaryFieldIndex: secondaryFieldIndex,
 			secondaryFetchLimit: 1,
-			relatedFieldName:    subTypeFieldDesc.Name + request.RelatedObjectID,
+			dir:                 dir,
 		},
 	}, nil
 }
@@ -325,7 +332,7 @@ func fetchDocsWithFieldValue(plan planNode, fieldName string, val any, limit uin
 }
 
 type typeJoinMany struct {
-	twoWayFetchDirector
+	invertibleTypeJoin
 }
 
 func prepareScanNodeFilterForTypeJoin(
@@ -395,8 +402,15 @@ func (p *Planner) makeTypeJoinMany(
 		return nil, client.NewErrFieldNotExist(subTypeFieldDesc.RelationName)
 	}
 
+	dir := joinDirection{
+		firstNode:      source,
+		secondNode:     selectPlan,
+		secondaryField: rootField.Name + request.RelatedObjectID,
+		primaryField:   subTypeFieldDesc.Name + request.RelatedObjectID,
+	}
+
 	return &typeJoinMany{
-		twoWayFetchDirector: twoWayFetchDirector{
+		invertibleTypeJoin: invertibleTypeJoin{
 			docMapper:           docMapper{parent.documentMapping},
 			root:                source,
 			subType:             selectPlan,
@@ -405,6 +419,7 @@ func (p *Planner) makeTypeJoinMany(
 			isSecondary:         true,
 			subTypeName:         subType.Name,
 			secondaryFetchLimit: 0,
+			dir:                 dir,
 		},
 	}, nil
 }
@@ -445,7 +460,21 @@ func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
 	return true, nil
 }
 
-type twoWayFetchDirector struct {
+type joinDirection struct {
+	firstNode      planNode
+	secondNode     planNode
+	secondaryField string
+	primaryField   string
+	isInverted     bool
+}
+
+func (dir *joinDirection) invert() {
+	dir.isInverted = !dir.isInverted
+	dir.firstNode, dir.secondNode = dir.secondNode, dir.firstNode
+	dir.secondaryField, dir.primaryField = dir.primaryField, dir.secondaryField
+}
+
+type invertibleTypeJoin struct {
 	documentIterator
 	docMapper
 
@@ -459,142 +488,121 @@ type twoWayFetchDirector struct {
 	isSecondary         bool
 	secondaryFieldIndex immutable.Option[int]
 	secondaryFetchLimit uint
-	relatedFieldName    string
 
-	isInverted bool
+	dir joinDirection
 }
 
-func (n *twoWayFetchDirector) Init() error {
-	if err := n.subType.Init(); err != nil {
-		return err
-	}
-	return n.root.Init()
-}
-
-func (n *twoWayFetchDirector) Start() error {
-	if err := n.subType.Start(); err != nil {
-		return err
-	}
-	return n.root.Start()
-}
-
-func (d *twoWayFetchDirector) Close() error {
-	if err := d.root.Close(); err != nil {
-		return err
-	}
-
-	return d.subType.Close()
-}
-
-func (n *twoWayFetchDirector) Spans(spans core.Spans) {
-	n.root.Spans(spans)
-}
-
-func (n *twoWayFetchDirector) Source() planNode { return n.root }
-
-func (d *twoWayFetchDirector) invert() {
-	d.isInverted = !d.isInverted
-	d.isSecondary = !d.isSecondary
-}
-
-func (d *twoWayFetchDirector) Next() (bool, error) {
-	if d.isInverted {
-		return d.fetchInverted()
+func (join *invertibleTypeJoin) replaceRoot(node planNode) {
+	join.root = node
+	if join.dir.isInverted {
+		join.dir.secondNode = node
 	} else {
-		return d.fetchDefault()
+		join.dir.firstNode = node
 	}
 }
 
-func (d *twoWayFetchDirector) fetchDefault() (bool, error) {
-	hasNext, err := d.root.Next()
-	if err != nil || !hasNext {
-		return hasNext, err
+func (join *invertibleTypeJoin) Init() error {
+	if err := join.subType.Init(); err != nil {
+		return err
+	}
+	return join.root.Init()
+}
+
+func (join *invertibleTypeJoin) Start() error {
+	if err := join.subType.Start(); err != nil {
+		return err
+	}
+	return join.root.Start()
+}
+
+func (join *invertibleTypeJoin) Close() error {
+	if err := join.root.Close(); err != nil {
+		return err
 	}
 
-	d.currentValue = d.root.Value()
+	return join.subType.Close()
+}
 
-	if d.isSecondary {
-		fieldName := d.rootName + request.RelatedObjectID
-		subDocs, err := fetchDocsWithFieldValue(d.subType, fieldName, d.currentValue.GetKey(), d.secondaryFetchLimit)
+func (join *invertibleTypeJoin) Spans(spans core.Spans) {
+	join.root.Spans(spans)
+}
+
+func (join *invertibleTypeJoin) Source() planNode { return join.root }
+
+func (tj *invertibleTypeJoin) invert() {
+	tj.dir.invert()
+	tj.isSecondary = !tj.isSecondary
+}
+
+func (join *invertibleTypeJoin) processSecondResult(secondDocs []core.Doc) (any, any) {
+	var secondResult any
+	var secondIDResult any
+	if join.secondaryFetchLimit == 1 {
+		if len(secondDocs) != 0 {
+			secondResult = secondDocs[0]
+			secondIDResult = secondDocs[0].GetKey()
+		}
+	} else {
+		secondResult = secondDocs
+		secondDocKeys := make([]string, len(secondDocs))
+		for i, doc := range secondDocs {
+			secondDocKeys[i] = doc.GetKey()
+		}
+		secondIDResult = secondDocKeys
+	}
+	join.root.Value().Fields[join.subSelect.Index] = secondResult
+	if join.secondaryFieldIndex.HasValue() {
+		join.root.Value().Fields[join.secondaryFieldIndex.Value()] = secondIDResult
+	}
+	return secondResult, secondIDResult
+}
+
+func (join *invertibleTypeJoin) Next() (bool, error) {
+	hasFirstValue, err := join.dir.firstNode.Next()
+
+	if err != nil || !hasFirstValue {
+		return false, err
+	}
+
+	firstDoc := join.dir.firstNode.Value()
+
+	if join.isSecondary {
+		secondDocs, err := fetchDocsWithFieldValue(join.dir.secondNode, join.dir.secondaryField, firstDoc.GetKey(), join.secondaryFetchLimit)
 		if err != nil {
 			return false, err
 		}
-		if d.secondaryFetchLimit == 1 {
-			if len(subDocs) != 0 {
-				d.currentValue.Fields[d.subSelect.Index] = subDocs[0]
-				if d.secondaryFieldIndex.HasValue() {
-					d.currentValue.Fields[d.secondaryFieldIndex.Value()] = subDocs[0].GetKey()
-				}
-			}
+		if join.dir.secondNode == join.root {
+			join.root.Value().Fields[join.subSelect.Index] = join.subType.Value()
 		} else {
-			d.currentValue.Fields[d.subSelect.Index] = subDocs
+			secondResult, secondIDResult := join.processSecondResult(secondDocs)
+			join.dir.firstNode.Value().Fields[join.subSelect.Index] = secondResult
+			if join.secondaryFieldIndex.HasValue() {
+				join.dir.firstNode.Value().Fields[join.secondaryFieldIndex.Value()] = secondIDResult
+			}
 		}
-
 	} else {
-		hasRootDoc, err := fetchPrimaryDoc(d.subType, d.root, d.relatedFieldName)
+		hasDoc, err := fetchPrimaryDoc(join.dir.secondNode, join.dir.firstNode, join.dir.primaryField)
 		if err != nil {
 			return false, err
 		}
 
-		if hasRootDoc {
-			d.currentValue = d.root.Value()
-			d.currentValue.Fields[d.subSelect.Index] = d.subType.Value()
+		if hasDoc {
+			join.root.Value().Fields[join.subSelect.Index] = join.subType.Value()
 		}
 	}
+
+	join.currentValue = join.root.Value()
 
 	return true, nil
 }
 
-func (d *twoWayFetchDirector) fetchInverted() (bool, error) {
-	for {
-		hasValue, err := d.subType.Next()
-
-		if err != nil {
-			return false, err
-		}
-
-		if !hasValue {
-			return false, nil
-		}
-
-		subDoc := d.subType.Value()
-
-		var hasRootDoc bool
-		if d.isSecondary {
-			var docs []core.Doc
-			docs, err = fetchDocsWithFieldValue(d.root, d.relatedFieldName, subDoc.GetKey(), d.secondaryFetchLimit)
-			hasRootDoc = len(docs) > 0
-		} else {
-			hasRootDoc, err = fetchPrimaryDoc(d.root, d.subType, d.rootName+request.RelatedObjectID)
-		}
-
-		if err != nil {
-			return false, err
-		}
-
-		if !hasRootDoc {
-			continue
-		}
-
-		d.currentValue = d.root.Value()
-
-		d.currentValue.Fields[d.subSelect.Index] = subDoc
-
-		if d.isSecondary && d.secondaryFieldIndex.HasValue() {
-			d.currentValue.Fields[d.secondaryFieldIndex.Value()] = subDoc.GetKey()
-		}
-
-		return true, nil
-	}
-}
-
-func (n *twoWayFetchDirector) invertJoinDirectionWithIndex(fieldFilter *mapper.Filter, field client.FieldDescription) error {
-	subScan := getScanNode(n.subType)
-	subScan.tryAddField(n.rootName + request.RelatedObjectID)
+func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(fieldFilter *mapper.Filter, field client.FieldDescription) error {
+	subScan := getScanNode(join.subType)
+	subScan.tryAddField(join.rootName + request.RelatedObjectID)
 	subScan.filter = fieldFilter
 	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(field))
 
-	n.invert()
+	join.invert()
 
 	return nil
 }

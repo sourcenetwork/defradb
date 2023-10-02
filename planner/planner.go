@@ -301,9 +301,9 @@ func (p *Planner) expandMultiNode(multiNode MultiNode, parentPlan *selectTopNode
 func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
-		return p.expandTypeJoin(&node.twoWayFetchDirector, parentPlan)
+		return p.expandTypeJoin(&node.invertibleTypeJoin, parentPlan)
 	case *typeJoinMany:
-		return p.expandTypeJoin(&node.twoWayFetchDirector, parentPlan)
+		return p.expandTypeJoin(&node.invertibleTypeJoin, parentPlan)
 	}
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
 }
@@ -331,7 +331,7 @@ func findFilteredByRelationFields(
 	return filteredSubFields
 }
 
-func (p *Planner) expandTypeJoin(node *twoWayFetchDirector, parentPlan *selectTopNode) error {
+func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
 	if parentPlan.selectNode.filter == nil {
 		return p.expandPlan(node.subType, parentPlan)
 	}
@@ -462,9 +462,9 @@ func (p *Planner) walkAndReplacePlan(planNode, target, replace planNode) error {
 	case *selectNode:
 		node.source = replace
 	case *typeJoinOne:
-		node.root = replace
+		node.replaceRoot(replace)
 	case *typeJoinMany:
-		node.root = replace
+		node.replaceRoot(replace)
 	case *pipeNode:
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
