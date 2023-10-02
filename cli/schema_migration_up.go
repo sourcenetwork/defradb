@@ -12,6 +12,7 @@ package cli
 
 import (
 	"encoding/json"
+	"os"
 
 	"github.com/sourcenetwork/immutable/enumerable"
 	"github.com/spf13/cobra"
@@ -20,6 +21,7 @@ import (
 )
 
 func MakeSchemaMigrationUpCommand() *cobra.Command {
+	var file string
 	var schemaVersionID string
 	var cmd = &cobra.Command{
 		Use:   "up --version <version> <documents>",
@@ -30,12 +32,26 @@ Documents is a list of documents to apply the migration to.
 Example:
   defradb client schema migration down --version bae123 '[{"name": "Bob"}]'
 		`,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetStoreContext(cmd)
 
+			var srcData []byte
+			switch {
+			case file != "":
+				data, err := os.ReadFile(file)
+				if err != nil {
+					return err
+				}
+				srcData = data
+			case len(args) == 1:
+				srcData = []byte(args[0])
+			default:
+				return ErrNoDocOrFile
+			}
+
 			var src []map[string]any
-			if err := json.Unmarshal([]byte(args[0]), &src); err != nil {
+			if err := json.Unmarshal(srcData, &src); err != nil {
 				return err
 			}
 			lens := store.LensRegistry()
@@ -46,9 +62,17 @@ Example:
 			if err != nil {
 				return err
 			}
-			return writeJSON(cmd, out)
+			var value []map[string]any
+			err = enumerable.ForEach(out, func(item map[string]any) {
+				value = append(value, item)
+			})
+			if err != nil {
+				return err
+			}
+			return writeJSON(cmd, value)
 		},
 	}
+	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	cmd.Flags().StringVar(&schemaVersionID, "version", "", "Schema version id")
 	return cmd
 }
