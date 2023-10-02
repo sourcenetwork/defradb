@@ -102,6 +102,7 @@ func (db *db) createCollection(
 	ctx context.Context,
 	txn datastore.Txn,
 	desc client.CollectionDescription,
+	schema client.SchemaDescription,
 ) (client.Collection, error) {
 	// check if collection by this name exists
 	collectionKey := core.NewCollectionKey(desc.Name)
@@ -123,8 +124,8 @@ func (db *db) createCollection(
 	}
 	desc.ID = uint32(colID)
 
-	for i := range desc.Schema.Fields {
-		desc.Schema.Fields[i].ID = client.FieldID(i)
+	for i := range schema.Fields {
+		schema.Fields[i].ID = client.FieldID(i)
 	}
 
 	col, err := db.newCollection(desc)
@@ -134,7 +135,7 @@ func (db *db) createCollection(
 
 	// Local elements such as secondary indexes should be excluded
 	// from the (global) schemaId.
-	schemaBuf, err := json.Marshal(col.desc.Schema)
+	schemaBuf, err := json.Marshal(schema)
 	if err != nil {
 		return nil, err
 	}
@@ -149,9 +150,10 @@ func (db *db) createCollection(
 	// For new schemas the initial version id will match the schema id
 	schemaVersionID := schemaID
 
-	col.desc.Schema.VersionID = schemaVersionID
-	col.desc.Schema.SchemaID = schemaID
-	col.schema = col.desc.Schema
+	schema.VersionID = schemaVersionID
+	schema.SchemaID = schemaID
+	col.schema = schema
+	col.desc.Schema = schema
 
 	// buffer must include all the ids, as it is saved and loaded from the store later.
 	buf, err := json.Marshal(col.desc)
@@ -576,12 +578,17 @@ func (db *db) setDefaultSchemaVersion(
 		return err
 	}
 
-	cols, err := db.getCollectionDescriptions(ctx, txn)
+	cols, err := db.getAllCollections(ctx, txn)
 	if err != nil {
 		return err
 	}
 
-	return db.parser.SetSchema(ctx, txn, cols)
+	definitions := make([]client.CollectionDefinition, len(cols))
+	for i, col := range cols {
+		definitions[i] = col
+	}
+
+	return db.parser.SetSchema(ctx, txn, definitions)
 }
 
 func (db *db) setDefaultSchemaVersionExplicit(
