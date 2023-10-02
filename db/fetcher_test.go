@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 )
@@ -49,40 +48,6 @@ func newTestCollectionDescription() client.CollectionDescription {
 			},
 		},
 	}
-}
-
-func newTestFetcher(ctx context.Context, txn datastore.Txn) (*fetcher.DocumentFetcher, error) {
-	df := new(fetcher.DocumentFetcher)
-	desc := newTestCollectionDescription()
-	err := df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
-	if err != nil {
-		return nil, err
-	}
-	return df, nil
-}
-
-func TestFetcherInit(t *testing.T) {
-	_, err := newTestFetcher(context.Background(), nil)
-	assert.NoError(t, err)
-}
-
-func TestFetcherStart(t *testing.T) {
-	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	df, err := newTestFetcher(ctx, txn)
-	assert.NoError(t, err)
-
-	err = df.Start(ctx, core.Spans{})
-	assert.NoError(t, err)
 }
 
 func TestFetcherStartWithoutInit(t *testing.T) {
@@ -123,8 +88,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	// db.printDebugDB()
 
 	df := new(fetcher.DocumentFetcher)
-	desc := col.Description()
-	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
+	err = df.Init(ctx, txn, col, col.Schema().Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, core.Spans{})
@@ -168,8 +132,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	// db.printDebugDB()
 
 	df := new(fetcher.DocumentFetcher)
-	desc := col.Description()
-	err = df.Init(ctx, txn, &desc, desc.Schema.Fields, nil, nil, false, false)
+	err = df.Init(ctx, txn, col, col.Schema().Fields, nil, nil, false, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, core.Spans{})

@@ -92,7 +92,7 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
-	col *client.CollectionDescription
+	col client.Collection
 	// @todo index  *client.IndexDescription
 	mCRDTs map[uint32]crdt.MerkleCRDT
 }
@@ -101,7 +101,7 @@ type VersionedFetcher struct {
 func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
-	col *client.CollectionDescription,
+	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
@@ -357,7 +357,8 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return err
 		}
 
-		field, ok := vf.col.GetFieldByName(l.Name, &vf.col.Schema)
+		schema := vf.col.Schema()
+		field, ok := vf.col.Description().GetFieldByName(l.Name, &schema)
 		if !ok {
 			return client.NewErrFieldNotExist(l.Name)
 		}
@@ -380,7 +381,7 @@ func (vf *VersionedFetcher) processNode(
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {
-		key, err := base.MakePrimaryIndexKeyForCRDT(*vf.col, vf.col.Schema, ctype, vf.key, fieldName)
+		key, err := base.MakePrimaryIndexKeyForCRDT(vf.col.Description(), vf.col.Schema(), ctype, vf.key, fieldName)
 		if err != nil {
 			return err
 		}
