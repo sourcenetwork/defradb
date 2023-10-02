@@ -56,8 +56,6 @@ type collection struct {
 
 	colID uint32
 
-	schemaID string
-
 	desc   client.CollectionDescription
 	schema client.SchemaDescription
 
@@ -150,7 +148,6 @@ func (db *db) createCollection(
 		return nil, err
 	}
 	schemaID := cid.String()
-	col.schemaID = schemaID
 
 	// For new schemas the initial version id will match the schema id
 	schemaVersionID := schemaID
@@ -632,11 +629,10 @@ func (db *db) getCollectionByVersionID(
 	}
 
 	col := &collection{
-		db:       db,
-		desc:     desc,
-		schema:   desc.Schema,
-		colID:    desc.ID,
-		schemaID: desc.Schema.SchemaID,
+		db:     db,
+		desc:   desc,
+		schema: desc.Schema,
+		colID:  desc.ID,
 	}
 
 	err = col.loadIndexes(ctx, txn)
@@ -808,7 +804,7 @@ func (c *collection) ID() uint32 {
 }
 
 func (c *collection) SchemaID() string {
-	return c.schemaID
+	return c.Schema().SchemaID
 }
 
 // WithTxn returns a new instance of the collection, with a transaction
@@ -820,7 +816,6 @@ func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 		desc:           c.desc,
 		schema:         c.schema,
 		colID:          c.colID,
-		schemaID:       c.schemaID,
 		indexes:        c.indexes,
 		fetcherFactory: c.fetcherFactory,
 	}
@@ -1105,7 +1100,7 @@ func (c *collection) save(
 					events.Update{
 						DocKey:   doc.Key().String(),
 						Cid:      headNode.Cid(),
-						SchemaID: c.schemaID,
+						SchemaID: c.Schema().SchemaID,
 						Block:    headNode,
 						Priority: priority,
 					},
