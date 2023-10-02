@@ -15,15 +15,9 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-// sourceInfo stores info about the data source
-type sourceInfo struct {
-	collectionDescription client.CollectionDescription
-	// and more
-}
-
 type planSource struct {
-	info sourceInfo
-	plan planNode
+	collection client.Collection
+	plan       planNode
 }
 
 func (p *Planner) getSource(parsed *mapper.Select) (planSource, error) {
@@ -43,9 +37,7 @@ func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, erro
 	}
 
 	return planSource{
-		plan: scan,
-		info: sourceInfo{
-			collectionDescription: col.Description(),
-		},
+		plan:       scan,
+		collection: col,
 	}, nil
 }

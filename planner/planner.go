@@ -344,7 +344,7 @@ func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
 			childSelect,
 			pipe,
 			false,
-			&topNodeSelect.selectNode.sourceInfo,
+			topNodeSelect.selectNode.collection,
 		)
 		if err != nil {
 			return err
