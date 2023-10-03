@@ -112,7 +112,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		return p.newPlan(n.Selections[0])
 
 	case *request.Select:
-		m, err := mapper.ToSelect(p.ctx, p.txn, n)
+		m, err := mapper.ToSelect(p.ctx, p.db, n)
 		if err != nil {
 			return nil, err
 		}
@@ -127,14 +127,14 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		return p.Select(m)
 
 	case *request.CommitSelect:
-		m, err := mapper.ToCommitSelect(p.ctx, p.txn, n)
+		m, err := mapper.ToCommitSelect(p.ctx, p.db, n)
 		if err != nil {
 			return nil, err
 		}
 		return p.CommitSelect(m)
 
 	case *request.ObjectMutation:
-		m, err := mapper.ToMutation(p.ctx, p.txn, n)
+		m, err := mapper.ToMutation(p.ctx, p.db, n)
 		if err != nil {
 			return nil, err
 		}
