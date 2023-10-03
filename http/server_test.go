@@ -22,7 +22,7 @@ import (
 
 func TestNewServerAndRunWithoutListener(t *testing.T) {
 	ctx := context.Background()
-	s := NewServer(nil, nil, WithAddress(":0"))
+	s := NewServer(nil, WithAddress(":0"))
 	if ok := assert.NotNil(t, s); ok {
 		assert.Equal(t, ErrNoListener, s.Run(ctx))
 	}
@@ -30,7 +30,7 @@ func TestNewServerAndRunWithoutListener(t *testing.T) {
 
 func TestNewServerAndRunWithListenerAndInvalidPort(t *testing.T) {
 	ctx := context.Background()
-	s := NewServer(nil, nil, WithAddress(":303000"))
+	s := NewServer(nil, WithAddress(":303000"))
 	if ok := assert.NotNil(t, s); ok {
 		assert.Error(t, s.Listen(ctx))
 	}
@@ -40,7 +40,7 @@ func TestNewServerAndRunWithListenerAndValidPort(t *testing.T) {
 	ctx := context.Background()
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
-	s := NewServer(nil, nil, WithAddress(":0"))
+	s := NewServer(nil, WithAddress(":0"))
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -60,7 +60,7 @@ func TestNewServerAndRunWithListenerAndValidPort(t *testing.T) {
 func TestNewServerAndRunWithAutocertWithoutEmail(t *testing.T) {
 	ctx := context.Background()
 	dir := t.TempDir()
-	s := NewServer(nil, nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0))
+	s := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0))
 
 	err := s.Listen(ctx)
 	assert.ErrorIs(t, err, ErrNoEmail)
@@ -73,7 +73,7 @@ func TestNewServerAndRunWithAutocert(t *testing.T) {
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
 	dir := t.TempDir()
-	s := NewServer(nil, nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0), WithCAEmail("dev@defradb.net"))
+	s := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0), WithCAEmail("dev@defradb.net"))
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -95,7 +95,7 @@ func TestNewServerAndRunWithSelfSignedCertAndNoKeyFiles(t *testing.T) {
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
 	dir := t.TempDir()
-	s := NewServer(nil, nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	s := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -149,7 +149,7 @@ func TestNewServerAndRunWithSelfSignedCertAndInvalidPort(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := NewServer(nil, nil, WithAddress(":303000"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	s := NewServer(nil, WithAddress(":303000"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -177,7 +177,7 @@ func TestNewServerAndRunWithSelfSignedCert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := NewServer(nil, nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	s := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -195,45 +195,45 @@ func TestNewServerAndRunWithSelfSignedCert(t *testing.T) {
 }
 
 func TestNewServerWithoutOptions(t *testing.T) {
-	s := NewServer(nil, nil)
+	s := NewServer(nil)
 	assert.Equal(t, "localhost:9181", s.Addr)
 	assert.Equal(t, []string(nil), s.options.AllowedOrigins)
 }
 
 func TestNewServerWithAddress(t *testing.T) {
-	s := NewServer(nil, nil, WithAddress("localhost:9999"))
+	s := NewServer(nil, WithAddress("localhost:9999"))
 	assert.Equal(t, "localhost:9999", s.Addr)
 }
 
 func TestNewServerWithDomainAddress(t *testing.T) {
-	s := NewServer(nil, nil, WithAddress("example.com"))
+	s := NewServer(nil, WithAddress("example.com"))
 	assert.Equal(t, "example.com", s.options.Domain.Value())
 	assert.NotNil(t, s.options.TLS)
 }
 
 func TestNewServerWithAllowedOrigins(t *testing.T) {
-	s := NewServer(nil, nil, WithAllowedOrigins("https://source.network", "https://app.source.network"))
+	s := NewServer(nil, WithAllowedOrigins("https://source.network", "https://app.source.network"))
 	assert.Equal(t, []string{"https://source.network", "https://app.source.network"}, s.options.AllowedOrigins)
 }
 
 func TestNewServerWithCAEmail(t *testing.T) {
-	s := NewServer(nil, nil, WithCAEmail("me@example.com"))
+	s := NewServer(nil, WithCAEmail("me@example.com"))
 	assert.Equal(t, "me@example.com", s.options.TLS.Value().Email)
 }
 
 func TestNewServerWithRootDir(t *testing.T) {
 	dir := t.TempDir()
-	s := NewServer(nil, nil, WithRootDir(dir))
+	s := NewServer(nil, WithRootDir(dir))
 	assert.Equal(t, dir, s.options.RootDir)
 }
 
 func TestNewServerWithTLSPort(t *testing.T) {
-	s := NewServer(nil, nil, WithTLSPort(44343))
+	s := NewServer(nil, WithTLSPort(44343))
 	assert.Equal(t, ":44343", s.options.TLS.Value().Port)
 }
 
 func TestNewServerWithSelfSignedCert(t *testing.T) {
-	s := NewServer(nil, nil, WithSelfSignedCert("pub.key", "priv.key"))
+	s := NewServer(nil, WithSelfSignedCert("pub.key", "priv.key"))
 	assert.Equal(t, "pub.key", s.options.TLS.Value().PublicKey)
 	assert.Equal(t, "priv.key", s.options.TLS.Value().PrivateKey)
 	assert.NotNil(t, s.options.TLS)
