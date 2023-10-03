@@ -16,8 +16,39 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/libp2p/go-libp2p/core/peer"
+
 	"github.com/sourcenetwork/defradb/client"
 )
+
+func (c *Client) Bootstrap(ctx context.Context, peers []peer.AddrInfo) error {
+	methodURL := c.http.baseURL.JoinPath("p2p", "bootstrap")
+
+	body, err := json.Marshal(peers)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) PeerInfo() peer.AddrInfo {
+	methodURL := c.http.baseURL.JoinPath("p2p", "info")
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return peer.AddrInfo{}
+	}
+	var res peer.AddrInfo
+	if err := c.http.requestJson(req, &res); err != nil {
+		return peer.AddrInfo{}
+	}
+	return res
+}
 
 func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")

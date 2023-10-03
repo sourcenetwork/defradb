@@ -259,10 +259,10 @@ func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 
 	switch s.clientType {
 	case httpClientType:
-		cdb, err = http.NewWrapper(cdb, nil)
+		cdb, err = http.NewWrapper(cdb)
 
 	case cliClientType:
-		cdb = cli.NewWrapper(cdb, nil)
+		cdb = cli.NewWrapper(cdb)
 
 	case goClientType:
 		return
@@ -534,33 +534,20 @@ func closeNodes(
 	s *state,
 ) {
 	for _, node := range s.nodes {
-		if node.Peer != nil {
-			err := node.Close()
-			require.NoError(s.t, err)
-		}
-		node.DB.Close(s.ctx)
+		err := node.Close()
+		require.NoError(s.t, err)
 	}
-}
-
-// getNodePeer returns the p2p implementation for the given node.
-//
-// If node DB implements the client.P2P interface that implementation will be used.
-func getNodePeer(node *net.Node) client.P2P {
-	if val, ok := node.DB.(client.P2P); ok {
-		return val
-	}
-	return node.Peer
 }
 
 // getNodes gets the set of applicable nodes for the given nodeID.
 //
 // If nodeID has a value it will return that node only, otherwise all nodes will be returned.
-func getNodes(nodeID immutable.Option[int], nodes []*net.Node) []*net.Node {
+func getNodes(nodeID immutable.Option[int], nodes []client.P2P) []client.P2P {
 	if !nodeID.HasValue() {
 		return nodes
 	}
 
-	return []*net.Node{nodes[nodeID.Value()]}
+	return []client.P2P{nodes[nodeID.Value()]}
 }
 
 // getNodeCollections gets the set of applicable collections for the given nodeID.
@@ -795,7 +782,7 @@ func refreshCollections(
 
 	for nodeID, node := range s.nodes {
 		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
-		allCollections, err := node.DB.GetAllCollections(s.ctx)
+		allCollections, err := node.GetAllCollections(s.ctx)
 		require.Nil(s.t, err)
 
 		for i, collectionName := range s.collectionNames {
@@ -1040,7 +1027,7 @@ func updateSchema(
 	action SchemaUpdate,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		_, err := node.DB.AddSchema(s.ctx, action.Schema)
+		_, err := node.AddSchema(s.ctx, action.Schema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1063,7 +1050,7 @@ func patchSchema(
 			setAsDefaultVersion = true
 		}
 
-		err := node.DB.PatchSchema(s.ctx, action.Patch, setAsDefaultVersion)
+		err := node.PatchSchema(s.ctx, action.Patch, setAsDefaultVersion)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1079,7 +1066,7 @@ func setDefaultSchemaVersion(
 	action SetDefaultSchemaVersion,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		err := node.DB.SetDefaultSchemaVersion(s.ctx, action.SchemaVersionID)
+		err := node.SetDefaultSchemaVersion(s.ctx, action.SchemaVersionID)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1095,7 +1082,7 @@ func createDoc(
 	s *state,
 	action CreateDoc,
 ) {
-	var mutation func(*state, CreateDoc, *net.Node, []client.Collection) (*client.Document, error)
+	var mutation func(*state, CreateDoc, client.P2P, []client.Collection) (*client.Document, error)
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1136,7 +1123,7 @@ func createDoc(
 func createDocViaColSave(
 	s *state,
 	action CreateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
@@ -1151,7 +1138,7 @@ func createDocViaColSave(
 func createDocViaColCreate(
 	s *state,
 	action CreateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
@@ -1166,7 +1153,7 @@ func createDocViaColCreate(
 func createDocViaGQL(
 	s *state,
 	action CreateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) (*client.Document, error) {
 	collection := collections[action.CollectionID]
@@ -1184,7 +1171,7 @@ func createDocViaGQL(
 		escapedJson,
 	)
 
-	db := getStore(s, node.DB, immutable.None[int](), action.ExpectedError)
+	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
 
 	result := db.ExecRequest(s.ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1236,7 +1223,7 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	var mutation func(*state, UpdateDoc, *net.Node, []client.Collection) error
+	var mutation func(*state, UpdateDoc, client.P2P, []client.Collection) error
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1266,7 +1253,7 @@ func updateDoc(
 func updateDocViaColSave(
 	s *state,
 	action UpdateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) error {
 	doc := s.documents[action.CollectionID][action.DocID]
@@ -1282,7 +1269,7 @@ func updateDocViaColSave(
 func updateDocViaColUpdate(
 	s *state,
 	action UpdateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) error {
 	doc := s.documents[action.CollectionID][action.DocID]
@@ -1298,7 +1285,7 @@ func updateDocViaColUpdate(
 func updateDocViaGQL(
 	s *state,
 	action UpdateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) error {
 	doc := s.documents[action.CollectionID][action.DocID]
@@ -1318,7 +1305,7 @@ func updateDocViaGQL(
 		escapedJson,
 	)
 
-	db := getStore(s, node.DB, immutable.None[int](), action.ExpectedError)
+	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
 
 	result := db.ExecRequest(s.ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1418,7 +1405,7 @@ func backupExport(
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return node.DB.BasicExport(s.ctx, &action.Config) },
+			func() error { return node.BasicExport(s.ctx, &action.Config) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
@@ -1448,7 +1435,7 @@ func backupImport(
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return node.DB.BasicImport(s.ctx, action.Filepath) },
+			func() error { return node.BasicImport(s.ctx, action.Filepath) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
@@ -1463,7 +1450,7 @@ func backupImport(
 // about this in our tests so we just retry a few times until it works (or the
 // retry limit is breached - important incase this is a different error)
 func withRetry(
-	nodes []*net.Node,
+	nodes []client.P2P,
 	nodeID int,
 	action func() error,
 ) error {
@@ -1534,7 +1521,7 @@ func executeRequest(
 ) {
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
-		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
+		db := getStore(s, node, action.TransactionID, action.ExpectedError)
 		result := db.ExecRequest(s.ctx, action.Request)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
@@ -1566,7 +1553,7 @@ func executeSubscriptionRequest(
 	subscriptionAssert := make(chan func())
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return
 		}
@@ -1737,7 +1724,7 @@ func assertIntrospectionResults(
 	action IntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
@@ -1768,7 +1755,7 @@ func assertClientIntrospectionResults(
 	action ClientIntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true

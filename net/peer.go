@@ -48,8 +48,6 @@ var (
 	numWorkers = 5
 )
 
-var _ client.P2P = (*Peer)(nil)
-
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
 type Peer struct {

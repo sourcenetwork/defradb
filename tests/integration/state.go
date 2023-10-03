@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/net"
 )
 
 type state struct {
@@ -57,7 +56,7 @@ type state struct {
 	nodeConfigs []config.Config
 
 	// The nodes active in this test.
-	nodes []*net.Node
+	nodes []client.P2P
 
 	// The paths to any file-based databases active in this test.
 	dbPaths []string
@@ -101,7 +100,7 @@ func newState(
 		syncChans:                []chan struct{}{},
 		nodeAddresses:            []string{},
 		nodeConfigs:              []config.Config{},
-		nodes:                    []*net.Node{},
+		nodes:                    []client.P2P{},
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,

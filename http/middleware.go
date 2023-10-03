@@ -53,10 +53,6 @@ var (
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
 	colContextKey = contextKey("col")
-	// peerContextKey is the context key for the client.P2P implementation
-	//
-	// This will only be set if the db is connected to the p2p network.
-	peerContextKey = contextKey("peer")
 )
 
 // CorsMiddleware handles cross origin request
@@ -85,12 +81,6 @@ func ApiMiddleware(db client.DB, txs *sync.Map, opts ServerOptions) func(http.Ha
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, dbContextKey, db)
 			ctx = context.WithValue(ctx, txsContextKey, txs)
-
-			// if database is connected to p2p network set the context key
-			if peer, ok := db.(client.P2P); ok {
-				ctx = context.WithValue(ctx, peerContextKey, peer)
-			}
-
 			next.ServeHTTP(rw, req.WithContext(ctx))
 		})
 	}

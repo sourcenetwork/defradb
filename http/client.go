@@ -27,10 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
-var (
-	_ client.DB  = (*Client)(nil)
-	_ client.P2P = (*Client)(nil)
-)
+var _ client.DB = (*Client)(nil)
 
 // Client implements the client.DB interface over HTTP.
 type Client struct {
@@ -340,22 +337,8 @@ func (c *Client) PrintDump(ctx context.Context) error {
 	return err
 }
 
-func (c *Client) PeerInfo(ctx context.Context) (*PeerInfoResponse, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "info")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var res PeerInfoResponse
-	if err := c.http.requestJson(req, &res); err != nil {
-		return nil, err
-	}
-	return &res, nil
-}
-
-func (c *Client) Close(ctx context.Context) {
-	// do nothing
+func (c *Client) Close() error {
+	return nil
 }
 
 func (c *Client) Root() datastore.RootStore {

@@ -261,7 +261,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 						continue
 					}
 					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
-					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerID())
+					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerInfo().ID)
 					require.NoError(t, err)
 					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
@@ -348,7 +348,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		if err := n.Close(); err != nil {
 			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err.Error()))
 		}
-		n.DB.Close(ctx)
+		n.DB.Close()
 	}
 }
 

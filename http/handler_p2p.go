@@ -14,34 +14,23 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/multiformats/go-multiaddr"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/net"
 )
 
 type p2pHandler struct{}
 
-type PeerInfoResponse struct {
-	PeerID    string                `json:"peerID"`
-	Addresses []multiaddr.Multiaddr `json:"addresses"`
-}
-
 func (s *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
-	node, ok := req.Context().Value(peerContextKey).(*net.Node)
+	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
-	res := PeerInfoResponse{
-		PeerID:    node.PeerID().Pretty(),
-		Addresses: node.ListenAddrs(),
-	}
-	responseJSON(rw, http.StatusOK, &res)
+	responseJSON(rw, http.StatusOK, p2p.PeerInfo())
 }
 
 func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
-	peer, ok := req.Context().Value(peerContextKey).(client.P2P)
+	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -51,7 +40,7 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := peer.SetReplicator(req.Context(), rep)
+	err := p2p.SetReplicator(req.Context(), rep)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -60,7 +49,7 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
-	peer, ok := req.Context().Value(peerContextKey).(client.P2P)
+	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
@@ -70,7 +59,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := peer.DeleteReplicator(req.Context(), rep)
+	err := p2p.DeleteReplicator(req.Context(), rep)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -79,12 +68,12 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 }
 
 func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
-	peer, ok := req.Context().Value(peerContextKey).(client.P2P)
+	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
-	reps, err := peer.GetAllReplicators(req.Context())
+	reps, err := p2p.GetAllReplicators(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -93,12 +82,12 @@ func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 }
 
 func (s *p2pHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	peer, ok := req.Context().Value(peerContextKey).(client.P2P)
+	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
-	err := peer.AddP2PCollection(req.Context(), chi.URLParam(req, "id"))
+	err := p2p.AddP2PCollection(req.Context(), chi.URLParam(req, "id"))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -107,12 +96,12 @@ func (s *p2pHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request)
 }
 
 func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	peer, ok := req.Context().Value(peerContextKey).(client.P2P)
+	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
-	err := peer.RemoveP2PCollection(req.Context(), chi.URLParam(req, "id"))
+	err := p2p.RemoveP2PCollection(req.Context(), chi.URLParam(req, "id"))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -121,12 +110,12 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 }
 
 func (s *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
-	peer, ok := req.Context().Value(peerContextKey).(client.P2P)
+	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
-	cols, err := peer.GetAllP2PCollections(req.Context())
+	cols, err := p2p.GetAllP2PCollections(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

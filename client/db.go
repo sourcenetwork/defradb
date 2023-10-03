@@ -60,7 +60,7 @@ type DB interface {
 	// be created after calling this to resume operations on the prior data - this is however dependant on
 	// the behaviour of the rootstore provided on database instance creation, as this function will Close
 	// the provided rootstore.
-	Close(context.Context)
+	Close() error
 
 	// Events returns the database event queue.
 	//

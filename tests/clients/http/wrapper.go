@@ -15,6 +15,7 @@ import (
 	"net/http/httptest"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -23,22 +24,19 @@ import (
 	"github.com/sourcenetwork/defradb/net"
 )
 
-var (
-	_ client.DB  = (*Wrapper)(nil)
-	_ client.P2P = (*Wrapper)(nil)
-)
+var _ client.P2P = (*Wrapper)(nil)
 
 // Wrapper combines an HTTP client and server into a
 // single struct that implements the client.DB interface.
 type Wrapper struct {
-	db         client.DB
+	node       *net.Node
 	handler    *http.Handler
 	client     *http.Client
 	httpServer *httptest.Server
 }
 
-func NewWrapper(db client.DB, node *net.Node) (*Wrapper, error) {
-	handler := http.NewHandler(db, node, http.ServerOptions{})
+func NewWrapper(node *net.Node) (*Wrapper, error) {
+	handler := http.NewHandler(node, http.ServerOptions{})
 	httpServer := httptest.NewServer(handler)
 
 	client, err := http.NewClient(httpServer.URL)
@@ -47,11 +45,15 @@ func NewWrapper(db client.DB, node *net.Node) (*Wrapper, error) {
 	}
 
 	return &Wrapper{
-		db,
+		node,
 		handler,
 		client,
 		httpServer,
 	}, nil
+}
+
+func (w *Wrapper) PeerInfo() peer.AddrInfo {
+	return w.client.PeerInfo()
 }
 
 func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) error {
@@ -159,27 +161,39 @@ func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
 }
 
 func (w *Wrapper) Root() datastore.RootStore {
-	return w.db.Root()
+	return w.node.Root()
 }
 
 func (w *Wrapper) Blockstore() blockstore.Blockstore {
-	return w.db.Blockstore()
+	return w.node.Blockstore()
 }
 
-func (w *Wrapper) Close(ctx context.Context) {
+func (w *Wrapper) Close() error {
 	w.httpServer.CloseClientConnections()
 	w.httpServer.Close()
-	w.db.Close(ctx)
+	return w.node.Close()
 }
 
 func (w *Wrapper) Events() events.Events {
-	return w.db.Events()
+	return w.node.Events()
 }
 
 func (w *Wrapper) MaxTxnRetries() int {
-	return w.db.MaxTxnRetries()
+	return w.node.MaxTxnRetries()
 }
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
-	return w.db.PrintDump(ctx)
+	return w.node.PrintDump(ctx)
+}
+
+func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
+	w.node.Bootstrap(addrs)
+}
+
+func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
+	return w.node.WaitForPushLogByPeerEvent(id)
+}
+
+func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
+	return w.node.WaitForPushLogFromPeerEvent(id)
 }

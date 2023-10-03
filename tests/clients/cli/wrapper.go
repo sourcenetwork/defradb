@@ -30,31 +30,31 @@ import (
 	"github.com/sourcenetwork/defradb/net"
 )
 
-var (
-	_ client.DB  = (*Wrapper)(nil)
-	_ client.P2P = (*Wrapper)(nil)
-)
+var _ client.P2P = (*Wrapper)(nil)
 
 type Wrapper struct {
-	db         client.DB
 	store      client.Store
+	node       *net.Node
 	cmd        *cliWrapper
 	handler    *http.Handler
 	httpServer *httptest.Server
 }
 
-func NewWrapper(db client.DB, node *net.Node) *Wrapper {
-	handler := http.NewHandler(db, node, http.ServerOptions{})
+func NewWrapper(node *net.Node) *Wrapper {
+	handler := http.NewHandler(node, http.ServerOptions{})
 	httpServer := httptest.NewServer(handler)
 	cmd := newCliWrapper(httpServer.URL)
 
 	return &Wrapper{
-		db:         db,
-		store:      db,
+		node:       node,
 		cmd:        cmd,
 		httpServer: httpServer,
 		handler:    handler,
 	}
+}
+
+func (w *Wrapper) PeerInfo() peer.AddrInfo {
+	panic("not implemented")
 }
 
 func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) error {
@@ -390,34 +390,46 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 
 func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
 	return &Wrapper{
-		db:    w.db,
-		store: w.db.WithTxn(tx),
+		node:  w.node,
+		store: w.node.WithTxn(tx),
 		cmd:   w.cmd.withTxn(tx),
 	}
 }
 
 func (w *Wrapper) Root() datastore.RootStore {
-	return w.db.Root()
+	return w.node.Root()
 }
 
 func (w *Wrapper) Blockstore() blockstore.Blockstore {
-	return w.db.Blockstore()
+	return w.node.Blockstore()
 }
 
-func (w *Wrapper) Close(ctx context.Context) {
+func (w *Wrapper) Close() error {
 	w.httpServer.CloseClientConnections()
 	w.httpServer.Close()
-	w.db.Close(ctx)
+	return w.node.Close()
 }
 
 func (w *Wrapper) Events() events.Events {
-	return w.db.Events()
+	return w.node.Events()
 }
 
 func (w *Wrapper) MaxTxnRetries() int {
-	return w.db.MaxTxnRetries()
+	return w.node.MaxTxnRetries()
 }
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
-	return w.db.PrintDump(ctx)
+	return w.node.PrintDump(ctx)
+}
+
+func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
+	w.node.Bootstrap(addrs)
+}
+
+func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
+	return w.node.WaitForPushLogByPeerEvent(id)
+}
+
+func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
+	return w.node.WaitForPushLogFromPeerEvent(id)
 }

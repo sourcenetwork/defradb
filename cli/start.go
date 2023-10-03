@@ -178,7 +178,7 @@ func (di *defraInstance) close(ctx context.Context) {
 			)
 		}
 	}
-	di.db.Close(ctx)
+	di.db.Close()
 	if err := di.server.Close(); err != nil {
 		log.FeedbackInfo(
 			ctx,
@@ -230,7 +230,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 			net.WithConfig(cfg),
 		)
 		if err != nil {
-			db.Close(ctx)
+			db.Close()
 			return nil, errors.Wrap("failed to start P2P node", err)
 		}
 
@@ -249,7 +249,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 			if e := node.Close(); e != nil {
 				err = errors.Wrap(fmt.Sprintf("failed to close node: %v", e.Error()), err)
 			}
-			db.Close(ctx)
+			db.Close()
 			return nil, errors.Wrap("failed to start P2P listeners", err)
 		}
 	}
@@ -291,7 +291,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 					log.FeedbackErrorE(ctx, "Failed to close node", err)
 				}
 			}
-			db.Close(ctx)
+			db.Close()
 			os.Exit(1)
 		}
 	}()

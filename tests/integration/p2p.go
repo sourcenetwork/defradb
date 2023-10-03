@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -155,8 +154,8 @@ func setupPeerWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConnectPeers,
-	sourceNode *net.Node,
-	targetNode *net.Node,
+	sourceNode client.P2P,
+	targetNode client.P2P,
 ) {
 	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
@@ -243,11 +242,11 @@ func setupPeerWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
+				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerInfo().ID)
 				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
+				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerInfo().ID)
 				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
@@ -294,8 +293,7 @@ func configureReplicator(
 	info, err := peer.AddrInfoFromString(targetAddress)
 	require.NoError(s.t, err)
 
-	peer := getNodePeer(sourceNode)
-	err = peer.SetReplicator(s.ctx, client.Replicator{
+	err = sourceNode.SetReplicator(s.ctx, client.Replicator{
 		Info: *info,
 	})
 	require.NoError(s.t, err)
@@ -306,8 +304,8 @@ func setupReplicatorWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConfigureReplicator,
-	sourceNode *net.Node,
-	targetNode *net.Node,
+	sourceNode client.P2P,
+	targetNode client.P2P,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -362,11 +360,11 @@ func setupReplicatorWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
+				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerInfo().ID)
 				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
+				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerInfo().ID)
 				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
@@ -393,8 +391,8 @@ func subscribeToCollection(
 		schemaID = col.SchemaID()
 	}
 
-	peer := getNodePeer(s.nodes[action.NodeID])
-	err := peer.AddP2PCollection(s.ctx, schemaID)
+	n := s.nodes[action.NodeID]
+	err := n.AddP2PCollection(s.ctx, schemaID)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -419,8 +417,8 @@ func unsubscribeToCollection(
 		schemaID = col.SchemaID()
 	}
 
-	peer := getNodePeer(s.nodes[action.NodeID])
-	err := peer.RemoveP2PCollection(s.ctx, schemaID)
+	n := s.nodes[action.NodeID]
+	err := n.RemoveP2PCollection(s.ctx, schemaID)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -444,8 +442,8 @@ func getAllP2PCollections(
 		expectedCollections = append(expectedCollections, col.SchemaID())
 	}
 
-	peer := getNodePeer(s.nodes[action.NodeID])
-	cols, err := peer.GetAllP2PCollections(s.ctx)
+	n := s.nodes[action.NodeID]
+	cols, err := n.GetAllP2PCollections(s.ctx)
 	require.NoError(s.t, err)
 
 	assert.Equal(s.t, expectedCollections, cols)

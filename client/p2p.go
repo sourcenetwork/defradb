@@ -12,9 +12,21 @@ package client
 
 import (
 	"context"
+
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 type P2P interface {
+	DB
+
+	// TODO move these to test interface only
+	Bootstrap([]peer.AddrInfo)
+	WaitForPushLogByPeerEvent(peer.ID) error
+	WaitForPushLogFromPeerEvent(peer.ID) error
+
+	// PeerInfo returns the p2p host id and listening addresses.
+	PeerInfo() peer.AddrInfo
+
 	// SetReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
 	SetReplicator(ctx context.Context, rep Replicator) error

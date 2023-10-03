@@ -1190,9 +1190,10 @@ func TestDropIndex_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	desc := f.createUserCollectionIndexOnName()
 
-	f.db.Close(f.ctx)
+	err := f.db.Close()
+	require.NoError(t, err)
 
-	err := f.dropIndex(productsColName, desc.Name)
+	err = f.dropIndex(productsColName, desc.Name)
 	assert.Error(t, err)
 }
 
@@ -1327,9 +1328,10 @@ func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
 
-	f.db.Close(f.ctx)
+	err := f.db.Close()
+	require.NoError(t, err)
 
-	err := f.users.dropAllIndexes(f.ctx, f.txn)
+	err = f.users.dropAllIndexes(f.ctx, f.txn)
 	assert.Error(t, err)
 }
 
