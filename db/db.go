@@ -262,11 +262,17 @@ func (db *db) PrintDump(ctx context.Context) error {
 
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
-func (db *db) Close() error {
+func (db *db) Close() {
+	log.Info(context.Background(), "Closing DefraDB process...")
 	if db.events.Updates.HasValue() {
 		db.events.Updates.Value().Close()
 	}
-	return db.rootstore.Close()
+
+	err := db.rootstore.Close()
+	if err != nil {
+		log.ErrorE(context.Background(), "Failure closing running process", err)
+	}
+	log.Info(context.Background(), "Successfully closed running process")
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {

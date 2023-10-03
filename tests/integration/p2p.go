@@ -56,9 +56,12 @@ type ConfigureReplicator struct {
 	TargetNodeID int
 }
 
-// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
-// for a non-existent collection ID when used in actions that support this.
-const NonExistentCollectionID int = -1
+const (
+	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
+	// for a non-existent collection ID when used in actions that support this.
+	NonExistentCollectionID       int    = -1
+	NonExistentCollectionSchemaID string = "NonExistentCollectionID"
+)
 
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
 //
@@ -374,7 +377,7 @@ func subscribeToCollection(
 ) {
 	var schemaID string
 	if action.CollectionID == NonExistentCollectionID {
-		schemaID = "NonExistentCollectionID"
+		schemaID = NonExistentCollectionSchemaID
 	} else {
 		col := s.collections[action.NodeID][action.CollectionID]
 		schemaID = col.SchemaID()
@@ -400,7 +403,7 @@ func unsubscribeToCollection(
 ) {
 	var schemaID string
 	if action.CollectionID == NonExistentCollectionID {
-		schemaID = "NonExistentCollectionID"
+		schemaID = NonExistentCollectionSchemaID
 	} else {
 		col := s.collections[action.NodeID][action.CollectionID]
 		schemaID = col.SchemaID()

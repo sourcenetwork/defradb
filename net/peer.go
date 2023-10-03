@@ -193,7 +193,7 @@ func (p *Peer) Start() error {
 }
 
 // Close the peer node and all its internal workers/goroutines/loops.
-func (p *Peer) Close() error {
+func (p *Peer) Close() {
 	// close topics
 	if err := p.server.removeAllPubsubTopics(); err != nil {
 		log.ErrorE(p.ctx, "Error closing pubsub topics", err)
@@ -233,7 +233,6 @@ func (p *Peer) Close() error {
 	}
 
 	p.cancel()
-	return nil
 }
 
 // handleBroadcast loop manages the transition of messages

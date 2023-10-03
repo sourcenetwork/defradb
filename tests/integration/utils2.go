@@ -310,8 +310,7 @@ func closeNodes(
 	s *state,
 ) {
 	for _, node := range s.nodes {
-		err := node.Close()
-		require.NoError(s.t, err)
+		node.Close()
 	}
 }
 
@@ -498,10 +497,7 @@ func restartNodes(
 		require.NoError(s.t, err)
 
 		if err := n.Start(); err != nil {
-			closeErr := n.Close()
-			if closeErr != nil {
-				s.t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
-			}
+			n.Close()
 			require.NoError(s.t, err)
 		}
 
@@ -605,10 +601,7 @@ func configureNode(
 	require.NoError(s.t, err)
 
 	if err := n.Start(); err != nil {
-		closeErr := n.Close()
-		if closeErr != nil {
-			s.t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
-		}
+		n.Close()
 		require.NoError(s.t, err)
 	}
 

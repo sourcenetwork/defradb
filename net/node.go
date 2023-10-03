@@ -438,12 +438,12 @@ func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, er
 }
 
 // Close closes the node and all its services.
-func (n Node) Close() error {
+func (n Node) Close() {
 	if n.cancel != nil {
 		n.cancel()
 	}
 	if n.Peer != nil {
-		return n.Peer.Close()
+		n.Peer.Close()
 	}
-	return n.DB.Close()
+	n.DB.Close()
 }

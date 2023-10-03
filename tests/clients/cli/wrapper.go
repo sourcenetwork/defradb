@@ -404,10 +404,10 @@ func (w *Wrapper) Blockstore() blockstore.Blockstore {
 	return w.node.Blockstore()
 }
 
-func (w *Wrapper) Close() error {
+func (w *Wrapper) Close() {
 	w.httpServer.CloseClientConnections()
 	w.httpServer.Close()
-	return w.node.Close()
+	w.node.Close()
 }
 
 func (w *Wrapper) Events() events.Events {

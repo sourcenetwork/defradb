@@ -170,15 +170,10 @@ type defraInstance struct {
 
 func (di *defraInstance) close(ctx context.Context) {
 	if di.node != nil {
-		if err := di.node.Close(); err != nil {
-			log.FeedbackInfo(
-				ctx,
-				"The node could not be closed successfully",
-				logging.NewKV("Error", err.Error()),
-			)
-		}
+		di.node.Close()
+	} else {
+		di.db.Close()
 	}
-	di.db.Close()
 	if err := di.server.Close(); err != nil {
 		log.FeedbackInfo(
 			ctx,
@@ -246,10 +241,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		}
 
 		if err := node.Start(); err != nil {
-			if e := node.Close(); e != nil {
-				err = errors.Wrap(fmt.Sprintf("failed to close node: %v", e.Error()), err)
-			}
-			db.Close()
+			node.Close()
 			return nil, errors.Wrap("failed to start P2P listeners", err)
 		}
 	}
@@ -287,11 +279,10 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		if err := server.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if node != nil {
-				if err := node.Close(); err != nil {
-					log.FeedbackErrorE(ctx, "Failed to close node", err)
-				}
+				node.Close()
+			} else {
+				db.Close()
 			}
-			db.Close()
 			os.Exit(1)
 		}
 	}()

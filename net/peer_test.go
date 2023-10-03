@@ -205,8 +205,7 @@ func TestStartAndClose_NoError(t *testing.T) {
 	err := n.Start()
 	require.NoError(t, err)
 
-	err = db.Close()
-	require.NoError(t, err)
+	db.Close()
 }
 
 func TestStart_WithKnownPeer_NoError(t *testing.T) {
@@ -245,11 +244,8 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	err = n2.Start()
 	require.NoError(t, err)
 
-	err = db1.Close()
-	require.NoError(t, err)
-
-	err = db2.Close()
-	require.NoError(t, err)
+	db1.Close()
+	db2.Close()
 }
 
 func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
@@ -291,8 +287,7 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 		Pipe: b,
 	})
 
-	err = n1.Close()
-	require.NoError(t, err)
+	n1.Close()
 
 	// give time for n1 to close
 	time.Sleep(100 * time.Millisecond)

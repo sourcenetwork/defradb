@@ -115,10 +115,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 	}
 
 	if err := n.Start(); err != nil {
-		closeErr := n.Close()
-		if closeErr != nil {
-			return nil, nil, errors.Wrap(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
-		}
+		n.Close()
 		return nil, nil, errors.Wrap("unable to start P2P listeners", err)
 	}
 
@@ -348,9 +345,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 	// clean up
 	for _, n := range nodes {
-		if err := n.Close(); err != nil {
-			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err.Error()))
-		}
+		n.Close()
 	}
 }
 

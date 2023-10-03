@@ -337,8 +337,8 @@ func (c *Client) PrintDump(ctx context.Context) error {
 	return err
 }
 
-func (c *Client) Close() error {
-	return nil
+func (c *Client) Close() {
+	// do nothing
 }
 
 func (c *Client) Root() datastore.RootStore {

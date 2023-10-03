@@ -1189,11 +1189,9 @@ func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 func TestDropIndex_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	desc := f.createUserCollectionIndexOnName()
+	f.db.Close()
 
-	err := f.db.Close()
-	require.NoError(t, err)
-
-	err = f.dropIndex(productsColName, desc.Name)
+	err := f.dropIndex(productsColName, desc.Name)
 	assert.Error(t, err)
 }
 
@@ -1327,11 +1325,9 @@ func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	f.createUserCollectionIndexOnName()
+	f.db.Close()
 
-	err := f.db.Close()
-	require.NoError(t, err)
-
-	err = f.users.dropAllIndexes(f.ctx, f.txn)
+	err := f.users.dropAllIndexes(f.ctx, f.txn)
 	assert.Error(t, err)
 }
 

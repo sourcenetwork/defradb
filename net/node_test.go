@@ -69,9 +69,7 @@ func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 
 	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
 	require.NoError(t, err)
-
-	err = db.Close()
-	require.NoError(t, err)
+	db.Close()
 
 	_, err = NewNode(
 		context.Background(),
@@ -143,8 +141,7 @@ func TestNodeClose_NoError(t *testing.T) {
 		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
-	err = n.Close()
-	require.NoError(t, err)
+	n.Close()
 }
 
 func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
