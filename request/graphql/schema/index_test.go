@@ -276,9 +276,9 @@ func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 	cols, err := FromString(ctx, testCase.sdl)
 	assert.NoError(t, err, testCase.description)
 	assert.Equal(t, len(cols), 1, testCase.description)
-	assert.Equal(t, len(cols[0].Indexes), len(testCase.targetDescriptions), testCase.description)
+	assert.Equal(t, len(cols[0].Description().Indexes), len(testCase.targetDescriptions), testCase.description)
 
-	for i, d := range cols[0].Indexes {
+	for i, d := range cols[0].Description().Indexes {
 		assert.Equal(t, testCase.targetDescriptions[i], d, testCase.description)
 	}
 }

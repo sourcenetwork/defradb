@@ -102,6 +102,7 @@ func (db *db) createCollection(
 	ctx context.Context,
 	txn datastore.Txn,
 	desc client.CollectionDescription,
+	schema client.SchemaDescription,
 ) (client.Collection, error) {
 	// check if collection by this name exists
 	collectionKey := core.NewCollectionKey(desc.Name)
@@ -122,7 +123,6 @@ func (db *db) createCollection(
 		return nil, err
 	}
 	desc.ID = uint32(colID)
-	schema := desc.Schema
 
 	for i := range schema.Fields {
 		schema.Fields[i].ID = client.FieldID(i)
@@ -580,12 +580,17 @@ func (db *db) setDefaultSchemaVersion(
 		return err
 	}
 
-	cols, err := db.getCollectionDescriptions(ctx, txn)
+	cols, err := db.getAllCollections(ctx, txn)
 	if err != nil {
 		return err
 	}
 
-	return db.parser.SetSchema(ctx, txn, cols)
+	definitions := make([]client.CollectionDefinition, len(cols))
+	for i, col := range cols {
+		definitions[i] = col
+	}
+
+	return db.parser.SetSchema(ctx, txn, definitions)
 }
 
 func (db *db) setDefaultSchemaVersionExplicit(

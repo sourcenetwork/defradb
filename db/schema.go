@@ -39,24 +39,29 @@ func (db *db) addSchema(
 	txn datastore.Txn,
 	schemaString string,
 ) ([]client.CollectionDescription, error) {
-	existingDescriptions, err := db.getCollectionDescriptions(ctx, txn)
+	existingCollections, err := db.getAllCollections(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
 
-	newDescriptions, err := db.parser.ParseSDL(ctx, schemaString)
+	existingDefinitions := make([]client.CollectionDefinition, len(existingCollections))
+	for i := range existingCollections {
+		existingDefinitions[i] = existingCollections[i]
+	}
+
+	newDefinitions, err := db.parser.ParseSDL(ctx, schemaString)
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.parser.SetSchema(ctx, txn, append(existingDescriptions, newDescriptions...))
+	err = db.parser.SetSchema(ctx, txn, append(existingDefinitions, newDefinitions...))
 	if err != nil {
 		return nil, err
 	}
 
-	returnDescriptions := make([]client.CollectionDescription, len(newDescriptions))
-	for i, desc := range newDescriptions {
-		col, err := db.createCollection(ctx, txn, desc)
+	returnDescriptions := make([]client.CollectionDescription, len(newDefinitions))
+	for i, definition := range newDefinitions {
+		col, err := db.createCollection(ctx, txn, definition.Description(), definition.Schema())
 		if err != nil {
 			return nil, err
 		}
@@ -67,12 +72,17 @@ func (db *db) addSchema(
 }
 
 func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
-	descriptions, err := db.getCollectionDescriptions(ctx, txn)
+	collections, err := db.getAllCollections(ctx, txn)
 	if err != nil {
 		return err
 	}
 
-	return db.parser.SetSchema(ctx, txn, descriptions)
+	definitions := make([]client.CollectionDefinition, len(collections))
+	for i := range collections {
+		definitions[i] = collections[i]
+	}
+
+	return db.parser.SetSchema(ctx, txn, definitions)
 }
 
 func (db *db) getCollectionDescriptions(
@@ -138,21 +148,26 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		return err
 	}
 
-	newDescriptions := []client.CollectionDescription{}
+	newCollections := []client.CollectionDefinition{}
 	for _, desc := range newDescriptionsByName {
-		newDescriptions = append(newDescriptions, desc)
-	}
-
-	for i, desc := range newDescriptions {
-		col, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, desc, setAsDefaultVersion)
+		col, err := db.newCollection(desc)
 		if err != nil {
 			return err
 		}
 
-		newDescriptions[i] = col.Description()
+		newCollections = append(newCollections, col)
 	}
 
-	return db.parser.SetSchema(ctx, txn, newDescriptions)
+	for i, col := range newCollections {
+		col, err := db.updateCollection(ctx, txn, collectionsByName, newDescriptionsByName, col.Description(), setAsDefaultVersion)
+		if err != nil {
+			return err
+		}
+
+		newCollections[i] = col
+	}
+
+	return db.parser.SetSchema(ctx, txn, newCollections)
 }
 
 func (db *db) getCollectionsByName(
