@@ -54,7 +54,17 @@ func NewWrapper(node *net.Node) *Wrapper {
 }
 
 func (w *Wrapper) PeerInfo() peer.AddrInfo {
-	panic("not implemented")
+	args := []string{"client", "p2p", "info"}
+
+	data, err := w.cmd.execute(context.Background(), args)
+	if err != nil {
+		return peer.AddrInfo{}
+	}
+	var info peer.AddrInfo
+	if err := json.Unmarshal(data, &info); err != nil {
+		return peer.AddrInfo{}
+	}
+	return info
 }
 
 func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) error {
