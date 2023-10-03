@@ -21,21 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func (c *Client) Bootstrap(ctx context.Context, peers []peer.AddrInfo) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "bootstrap")
-
-	body, err := json.Marshal(peers)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
 func (c *Client) PeerInfo() peer.AddrInfo {
 	methodURL := c.http.baseURL.JoinPath("p2p", "info")
 

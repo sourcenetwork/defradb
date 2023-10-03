@@ -445,5 +445,5 @@ func (n Node) Close() error {
 	if n.Peer != nil {
 		return n.Peer.Close()
 	}
-	return nil
+	return n.DB.Close()
 }

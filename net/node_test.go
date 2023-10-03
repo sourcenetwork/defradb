@@ -13,6 +13,7 @@ package net
 import (
 	"bytes"
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -237,7 +239,13 @@ func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
+	found := false
+	for _, addr := range n.ListenAddrs() {
+		if strings.Contains(addr.String(), "/tcp/") {
+			found = true
+		}
+	}
+	assert.True(t, found)
 }
 
 func TestNodeConfig_NoError(t *testing.T) {

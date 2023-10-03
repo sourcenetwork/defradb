@@ -49,9 +49,6 @@ type state struct {
 	// These synchronisation channels allow async actions to track their completion.
 	syncChans []chan struct{}
 
-	// The addresses of any nodes configured.
-	nodeAddresses []string
-
 	// The configurations for any nodes
 	nodeConfigs []config.Config
 
@@ -98,7 +95,6 @@ func newState(
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
 		syncChans:                []chan struct{}{},
-		nodeAddresses:            []string{},
 		nodeConfigs:              []config.Config{},
 		nodes:                    []client.P2P{},
 		dbPaths:                  []string{},

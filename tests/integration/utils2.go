@@ -489,9 +489,6 @@ func restartNodes(
 		}
 
 		cfg := s.nodeConfigs[i]
-		// We need to make sure the node is configured with its old address, otherwise
-		// a new one may be selected and reconnnection to it will fail.
-		cfg.Net.P2PAddress = strings.Split(s.nodeAddresses[i], "/p2p/")[0]
 		var n *net.Node
 		n, err = net.NewNode(
 			s.ctx,
@@ -615,8 +612,6 @@ func configureNode(
 		require.NoError(s.t, err)
 	}
 
-	address := fmt.Sprintf("%s/p2p/%s", n.ListenAddrs()[0].String(), n.PeerID())
-	s.nodeAddresses = append(s.nodeAddresses, address)
 	s.nodeConfigs = append(s.nodeConfigs, cfg)
 
 	c, err := setupClient(s, n)

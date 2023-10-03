@@ -106,12 +106,12 @@ func (p *Peer) RemoveP2PCollection(ctx context.Context, collectionID string) err
 	// After removing the collection topics, we add back the collections' documents
 	// to the pubsub topics.
 	addedTopics := []string{}
-	for key := range keyChan {
-		err := p.server.addPubSubTopic(key.Key.String(), true)
+	for res := range keyChan {
+		err := p.server.addPubSubTopic(res.Key.String(), true)
 		if err != nil {
 			return p.rollbackAddPubSubTopics(err, addedTopics...)
 		}
-		addedTopics = append(addedTopics, key.Key.String())
+		addedTopics = append(addedTopics, res.Key.String())
 	}
 
 	if err = txn.Commit(p.ctx); err != nil {

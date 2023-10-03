@@ -11,13 +11,11 @@
 package tests
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
-	netutils "github.com/sourcenetwork/defradb/net/utils"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/assert"
@@ -133,13 +131,8 @@ func connectPeers(
 	time.Sleep(100 * time.Millisecond)
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
-	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
-	log.Info(s.ctx, "Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
-	addrs, err := netutils.ParsePeers([]string{targetAddress})
-	if err != nil {
-		s.t.Fatal(fmt.Sprintf("failed to parse bootstrap peers %v", targetAddress), err)
-	}
+	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
 	log.Info(s.ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 	sourceNode.Bootstrap(addrs)
 
@@ -288,13 +281,9 @@ func configureReplicator(
 	time.Sleep(100 * time.Millisecond)
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
-	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
-	info, err := peer.AddrInfoFromString(targetAddress)
-	require.NoError(s.t, err)
-
-	err = sourceNode.SetReplicator(s.ctx, client.Replicator{
-		Info: *info,
+	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
+		Info: targetNode.PeerInfo(),
 	})
 	require.NoError(s.t, err)
 	setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
