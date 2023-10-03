@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -48,6 +49,9 @@ type state struct {
 
 	// These synchronisation channels allow async actions to track their completion.
 	syncChans []chan struct{}
+
+	// The addresses of any nodes configured.
+	nodeAddresses []peer.AddrInfo
 
 	// The configurations for any nodes
 	nodeConfigs []config.Config
@@ -95,6 +99,7 @@ func newState(
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
 		syncChans:                []chan struct{}{},
+		nodeAddresses:            []peer.AddrInfo{},
 		nodeConfigs:              []config.Config{},
 		nodes:                    []client.P2P{},
 		dbPaths:                  []string{},
