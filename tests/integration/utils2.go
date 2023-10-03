@@ -490,11 +490,11 @@ func restartNodes(
 		cfg := s.nodeConfigs[i]
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
-		var addresses []string
 		for _, addr := range s.nodeAddresses[i].Addrs {
-			addresses = append(addresses, addr.String())
+			if strings.Contains(addr.String(), "/tcp/") {
+				cfg.Net.P2PAddress = addr.String()
+			}
 		}
-		cfg.Net.P2PAddress = strings.Join(addresses, ",")
 
 		var n *net.Node
 		n, err = net.NewNode(

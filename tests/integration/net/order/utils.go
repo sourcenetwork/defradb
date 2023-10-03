@@ -204,12 +204,11 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 					log.Info(ctx, "cannot set a peer that hasn't been started. Skipping to next peer")
 					continue
 				}
-				addr := nodes[p].PeerInfo()
-				// make sure to add all listening addresses
-				addrs, err := peer.AddrInfoToP2pAddrs(&addr)
+				info := nodes[p].PeerInfo()
+				addrs, err := peer.AddrInfoToP2pAddrs(&info)
 				require.NoError(t, err)
-				for _, val := range addrs {
-					peerAddresses = append(peerAddresses, val.String())
+				for _, addr := range addrs {
+					peerAddresses = append(peerAddresses, addr.String())
 				}
 			}
 			cfg.Net.Peers = strings.Join(peerAddresses, ",")
