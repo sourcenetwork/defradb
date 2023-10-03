@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 var (
@@ -32,10 +31,9 @@ var (
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select].
-func ToSelect(ctx context.Context, txn datastore.Txn, selectRequest *request.Select) (*Select, error) {
-	descriptionsRepo := NewDescriptionsRepo(ctx, txn)
+func ToSelect(ctx context.Context, store client.Store, selectRequest *request.Select) (*Select, error) {
 	// the top-level select will always have index=0, and no parent collection name
-	return toSelect(descriptionsRepo, 0, selectRequest, "")
+	return toSelect(ctx, store, 0, selectRequest, "")
 }
 
 // toSelect converts the given [parser.Select] into a [Select].
@@ -43,29 +41,30 @@ func ToSelect(ctx context.Context, txn datastore.Txn, selectRequest *request.Sel
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select].
 func toSelect(
-	descriptionsRepo *DescriptionsRepo,
+	ctx context.Context,
+	store client.Store,
 	thisIndex int,
 	selectRequest *request.Select,
 	parentCollectionName string,
 ) (*Select, error) {
-	collectionName, err := getCollectionName(descriptionsRepo, selectRequest, parentCollectionName)
+	collectionName, err := getCollectionName(ctx, store, selectRequest, parentCollectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	mapping, desc, err := getTopLevelInfo(descriptionsRepo, selectRequest, collectionName)
+	mapping, collection, err := getTopLevelInfo(ctx, store, selectRequest, collectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	fields, aggregates, err := getRequestables(selectRequest, mapping, desc, descriptionsRepo)
+	fields, aggregates, err := getRequestables(ctx, selectRequest, mapping, collection, store)
 	if err != nil {
 		return nil, err
 	}
 
 	// Needs to be done before resolving aggregates, else filter conversion may fail there
 	filterDependencies, err := resolveFilterDependencies(
-		descriptionsRepo, collectionName, selectRequest.Filter, mapping, fields)
+		ctx, store, collectionName, selectRequest.Filter, mapping, fields)
 	if err != nil {
 		return nil, err
 	}
@@ -73,28 +72,31 @@ func toSelect(
 
 	// Resolve order dependencies that may have been missed due to not being rendered.
 	err = resolveOrderDependencies(
-		descriptionsRepo, collectionName, selectRequest.OrderBy, mapping, &fields)
+		ctx, store, collectionName, selectRequest.OrderBy, mapping, &fields)
 	if err != nil {
 		return nil, err
 	}
 
 	aggregates = appendUnderlyingAggregates(aggregates, mapping)
 	fields, err = resolveAggregates(
+		ctx,
 		selectRequest,
 		aggregates,
 		fields,
 		mapping,
-		desc,
-		descriptionsRepo,
+		collection,
+		store,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	fields, err = resolveSecondaryRelationIDs(descriptionsRepo, desc, mapping, fields)
-	if err != nil {
-		return nil, err
+	if collection != nil {
+		fields, err = resolveSecondaryRelationIDs(ctx, store, collection, mapping, fields)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Resolve groupBy mappings i.e. alias remapping and handle missed inner group.
@@ -102,7 +104,10 @@ func toSelect(
 		groupByFields := selectRequest.GroupBy.Value().Fields
 		// Remap all alias field names to use their internal field name mappings.
 		for index, groupByField := range groupByFields {
-			fieldDesc, ok := desc.Schema.GetField(groupByField)
+			if collection == nil {
+				continue
+			}
+			fieldDesc, ok := collection.Schema().GetField(groupByField)
 			if ok && fieldDesc.IsObject() && !fieldDesc.IsObjectArray() {
 				groupByFields[index] = groupByField + request.RelatedObjectID
 			} else if ok && fieldDesc.IsObjectArray() {
@@ -135,7 +140,8 @@ func toSelect(
 // resolveOrderDependencies will map fields that were missed due to them not being requested.
 // Modifies the consumed existingFields and mapping accordingly.
 func resolveOrderDependencies(
-	descriptionsRepo *DescriptionsRepo,
+	ctx context.Context,
+	store client.Store,
 	descName string,
 	source immutable.Option[request.OrderBy],
 	mapping *core.DocumentMapping,
@@ -160,7 +166,7 @@ outer:
 				joinField := fields[0]
 
 				// ensure the child select is resolved for this order join
-				innerSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, currentExistingFields)
+				innerSelect, err := resolveChildOrder(ctx, store, descName, joinField, mapping, currentExistingFields)
 				if err != nil {
 					return err
 				}
@@ -178,7 +184,7 @@ outer:
 				joinField := fields[0]
 
 				// ensure the child select is resolved for this order join
-				innerSelect, err := resolveChildOrder(descriptionsRepo, descName, joinField, mapping, existingFields)
+				innerSelect, err := resolveChildOrder(ctx, store, descName, joinField, mapping, existingFields)
 				if err != nil {
 					return err
 				}
@@ -203,7 +209,8 @@ outer:
 // given a type join field, ensure its mapping exists
 // and add a coorsponding select field(s)
 func resolveChildOrder(
-	descriptionsRepo *DescriptionsRepo,
+	ctx context.Context,
+	store client.Store,
 	descName string,
 	orderChildField string,
 	mapping *core.DocumentMapping,
@@ -221,7 +228,7 @@ func resolveChildOrder(
 				Name: orderChildField,
 			},
 		}
-		innerSelect, err := toSelect(descriptionsRepo, index, &dummyJoinFieldSelect, descName)
+		innerSelect, err := toSelect(ctx, store, index, &dummyJoinFieldSelect, descName)
 		if err != nil {
 			return nil, err
 		}
@@ -250,12 +257,13 @@ func resolveChildOrder(
 // append the new target field as well as the aggregate.  The mapping will also be
 // updated with any new fields/aggregates.
 func resolveAggregates(
+	ctx context.Context,
 	selectRequest *request.Select,
 	aggregates []*aggregateRequest,
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
-	desc *client.CollectionDescription,
-	descriptionsRepo *DescriptionsRepo,
+	collection client.Collection,
+	store client.Store,
 ) ([]Requestable, error) {
 	fields := inputFields
 	dependenciesByParentId := map[int][]int{}
@@ -274,7 +282,12 @@ func resolveAggregates(
 			var hasHost bool
 			var convertedFilter *Filter
 			if childIsMapped {
-				fieldDesc, isField := desc.Schema.GetField(target.hostExternalName)
+				var fieldDesc client.FieldDescription
+				var isField bool
+				if collection != nil {
+					fieldDesc, isField = collection.Schema().GetField(target.hostExternalName)
+				}
+
 				if isField && !fieldDesc.IsObject() {
 					var order *OrderBy
 					if target.order.HasValue() && len(target.order.Value().Conditions) > 0 {
@@ -326,24 +339,29 @@ func resolveAggregates(
 					},
 				}
 
-				childCollectionName, err := getCollectionName(descriptionsRepo, hostSelectRequest, desc.Name)
+				var collectionName string
+				if collection != nil {
+					collectionName = collection.Name()
+				}
+
+				childCollectionName, err := getCollectionName(ctx, store, hostSelectRequest, collectionName)
 				if err != nil {
 					return nil, err
 				}
 				mapAggregateNestedTargets(target, hostSelectRequest, selectRequest.Root)
 
-				childMapping, childDesc, err := getTopLevelInfo(descriptionsRepo, hostSelectRequest, childCollectionName)
+				childMapping, childDesc, err := getTopLevelInfo(ctx, store, hostSelectRequest, childCollectionName)
 				if err != nil {
 					return nil, err
 				}
 
-				childFields, _, err := getRequestables(hostSelectRequest, childMapping, childDesc, descriptionsRepo)
+				childFields, _, err := getRequestables(ctx, hostSelectRequest, childMapping, childDesc, store)
 				if err != nil {
 					return nil, err
 				}
 
 				err = resolveOrderDependencies(
-					descriptionsRepo, childCollectionName, target.order, childMapping, &childFields)
+					ctx, store, childCollectionName, target.order, childMapping, &childFields)
 				if err != nil {
 					return nil, err
 				}
@@ -587,10 +605,11 @@ func appendIfNotExists(
 // and aggregateRequests from the given selectRequest.Fields slice. It also mutates the
 // consumed mapping data.
 func getRequestables(
+	ctx context.Context,
 	selectRequest *request.Select,
 	mapping *core.DocumentMapping,
-	desc *client.CollectionDescription,
-	descriptionsRepo *DescriptionsRepo,
+	collection client.Collection,
+	store client.Store,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
 	for _, field := range selectRequest.Fields {
 		switch f := field.(type) {
@@ -611,8 +630,12 @@ func getRequestables(
 			})
 		case *request.Select:
 			index := mapping.GetNextIndex()
+			var parentCollectionName string
+			if collection != nil {
+				parentCollectionName = collection.Name()
+			}
 
-			innerSelect, err := toSelect(descriptionsRepo, index, f, desc.Name)
+			innerSelect, err := toSelect(ctx, store, index, f, parentCollectionName)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -676,7 +699,8 @@ func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateReq
 // getCollectionName returns the name of the selectRequest collection.  This may be empty
 // if this is a commit request.
 func getCollectionName(
-	descriptionsRepo *DescriptionsRepo,
+	ctx context.Context,
+	store client.Store,
 	selectRequest *request.Select,
 	parentCollectionName string,
 ) (string, error) {
@@ -692,12 +716,12 @@ func getCollectionName(
 	}
 
 	if parentCollectionName != "" {
-		parentDescription, err := descriptionsRepo.getCollectionDesc(parentCollectionName)
+		parentCollection, err := store.GetCollectionByName(ctx, parentCollectionName)
 		if err != nil {
 			return "", err
 		}
 
-		hostFieldDesc, parentHasField := parentDescription.Schema.GetField(selectRequest.Name)
+		hostFieldDesc, parentHasField := parentCollection.Schema().GetField(selectRequest.Name)
 		if parentHasField && hostFieldDesc.RelationType != 0 {
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
@@ -710,28 +734,29 @@ func getCollectionName(
 
 // getTopLevelInfo returns the collection description and maps the fields directly on the object.
 func getTopLevelInfo(
-	descriptionsRepo *DescriptionsRepo,
+	ctx context.Context,
+	store client.Store,
 	selectRequest *request.Select,
 	collectionName string,
-) (*core.DocumentMapping, *client.CollectionDescription, error) {
+) (*core.DocumentMapping, client.Collection, error) {
 	mapping := core.NewDocumentMapping()
 
 	if _, isAggregate := request.Aggregates[selectRequest.Name]; isAggregate {
 		// If this is a (top-level) aggregate, then it will have no collection
 		// description, and no top-level fields, so we return an empty mapping only
-		return mapping, &client.CollectionDescription{}, nil
+		return mapping, nil, nil
 	}
 
 	if selectRequest.Root == request.ObjectSelection {
 		mapping.Add(core.DocKeyFieldIndex, request.KeyFieldName)
 
-		desc, err := descriptionsRepo.getCollectionDesc(collectionName)
+		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		// Map all fields from schema into the map as they are fetched automatically
-		for _, f := range desc.Schema.Fields {
+		for _, f := range collection.Schema().Fields {
 			if f.IsObject() {
 				// Objects are skipped, as they are not fetched by default and
 				// have to be requested via selects.
@@ -746,7 +771,7 @@ func getTopLevelInfo(
 
 		mapping.Add(mapping.GetNextIndex(), request.DeletedFieldName)
 
-		return mapping, &desc, nil
+		return mapping, collection, nil
 	}
 
 	if selectRequest.Name == request.LinksFieldName {
@@ -767,11 +792,12 @@ func getTopLevelInfo(
 		mapping.SetTypeName(request.CommitTypeName)
 	}
 
-	return mapping, &client.CollectionDescription{}, nil
+	return mapping, nil, nil
 }
 
 func resolveFilterDependencies(
-	descriptionsRepo *DescriptionsRepo,
+	ctx context.Context,
+	store client.Store,
 	parentCollectionName string,
 	source immutable.Option[request.Filter],
 	mapping *core.DocumentMapping,
@@ -782,7 +808,8 @@ func resolveFilterDependencies(
 	}
 
 	return resolveInnerFilterDependencies(
-		descriptionsRepo,
+		ctx,
+		store,
 		parentCollectionName,
 		source.Value().Conditions,
 		mapping,
@@ -792,7 +819,8 @@ func resolveFilterDependencies(
 }
 
 func resolveInnerFilterDependencies(
-	descriptionsRepo *DescriptionsRepo,
+	ctx context.Context,
+	store client.Store,
 	parentCollectionName string,
 	source map[string]any,
 	mapping *core.DocumentMapping,
@@ -806,7 +834,8 @@ func resolveInnerFilterDependencies(
 			compoundFilter := source[key].([]any)
 			for _, innerFilter := range compoundFilter {
 				innerFields, err := resolveInnerFilterDependencies(
-					descriptionsRepo,
+					ctx,
+					store,
 					parentCollectionName,
 					innerFilter.(map[string]any),
 					mapping,
@@ -824,7 +853,8 @@ func resolveInnerFilterDependencies(
 		} else if key == request.FilterOpNot {
 			notFilter := source[key].(map[string]any)
 			innerFields, err := resolveInnerFilterDependencies(
-				descriptionsRepo,
+				ctx,
+				store,
 				parentCollectionName,
 				notFilter,
 				mapping,
@@ -868,7 +898,7 @@ func resolveInnerFilterDependencies(
 			}
 		} else {
 			var err error
-			childSelect, err = constructEmptyJoin(descriptionsRepo, parentCollectionName, mapping, key)
+			childSelect, err = constructEmptyJoin(ctx, store, parentCollectionName, mapping, key)
 			if err != nil {
 				return nil, err
 			}
@@ -885,13 +915,14 @@ func resolveInnerFilterDependencies(
 		}
 
 		dummyParsed := &request.Select{Field: request.Field{Name: key}}
-		childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+		childCollectionName, err := getCollectionName(ctx, store, dummyParsed, parentCollectionName)
 		if err != nil {
 			return nil, err
 		}
 
 		childFields, err := resolveInnerFilterDependencies(
-			descriptionsRepo,
+			ctx,
+			store,
 			childCollectionName,
 			childFilter,
 			childSelect.DocumentMapping,
@@ -910,7 +941,8 @@ func resolveInnerFilterDependencies(
 
 // constructEmptyJoin constructs a valid empty join with no requested fields.
 func constructEmptyJoin(
-	descriptionsRepo *DescriptionsRepo,
+	ctx context.Context,
+	store client.Store,
 	parentCollectionName string,
 	parentMapping *core.DocumentMapping,
 	name string,
@@ -923,12 +955,12 @@ func constructEmptyJoin(
 		},
 	}
 
-	childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+	childCollectionName, err := getCollectionName(ctx, store, dummyParsed, parentCollectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+	childMapping, _, err := getTopLevelInfo(ctx, store, dummyParsed, childCollectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -955,8 +987,9 @@ func constructEmptyJoin(
 //
 // They copying itself is handled within [typeJoinOne].
 func resolveSecondaryRelationIDs(
-	descriptionsRepo *DescriptionsRepo,
-	desc *client.CollectionDescription,
+	ctx context.Context,
+	store client.Store,
+	collection client.Collection,
 	mapping *core.DocumentMapping,
 	requestables []Requestable,
 ) ([]Requestable, error) {
@@ -968,7 +1001,7 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		fieldDesc, descFound := desc.Schema.GetField(existingField.Name)
+		fieldDesc, descFound := collection.Schema().GetField(existingField.Name)
 		if !descFound {
 			continue
 		}
@@ -977,7 +1010,7 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		objectFieldDesc, descFound := desc.Schema.GetField(
+		objectFieldDesc, descFound := collection.Schema().GetField(
 			strings.TrimSuffix(existingField.Name, request.RelatedObjectID),
 		)
 		if !descFound {
@@ -995,7 +1028,7 @@ func resolveSecondaryRelationIDs(
 				continue
 			}
 
-			siblingFieldDesc, descFound := desc.Schema.GetField(siblingSelect.Field.Name)
+			siblingFieldDesc, descFound := collection.Schema().GetField(siblingSelect.Field.Name)
 			if !descFound {
 				continue
 			}
@@ -1017,8 +1050,9 @@ func resolveSecondaryRelationIDs(
 
 			// We only require the dockey of the related object, so an empty join is all we need.
 			join, err := constructEmptyJoin(
-				descriptionsRepo,
-				desc.Name,
+				ctx,
+				store,
+				collection.Name(),
 				mapping,
 				objectFieldName,
 			)
@@ -1039,10 +1073,10 @@ func resolveSecondaryRelationIDs(
 // yielded by the [Select] embedded in the [CommitSelect].
 func ToCommitSelect(
 	ctx context.Context,
-	txn datastore.Txn,
+	store client.Store,
 	selectRequest *request.CommitSelect,
 ) (*CommitSelect, error) {
-	underlyingSelect, err := ToSelect(ctx, txn, selectRequest.ToSelect())
+	underlyingSelect, err := ToSelect(ctx, store, selectRequest.ToSelect())
 	if err != nil {
 		return nil, err
 	}
@@ -1059,8 +1093,8 @@ func ToCommitSelect(
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
-func ToMutation(ctx context.Context, txn datastore.Txn, mutationRequest *request.ObjectMutation) (*Mutation, error) {
-	underlyingSelect, err := ToSelect(ctx, txn, mutationRequest.ToSelect())
+func ToMutation(ctx context.Context, store client.Store, mutationRequest *request.ObjectMutation) (*Mutation, error) {
+	underlyingSelect, err := ToSelect(ctx, store, mutationRequest.ToSelect())
 	if err != nil {
 		return nil, err
 	}
