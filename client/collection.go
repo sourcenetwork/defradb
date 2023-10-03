@@ -16,13 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-// Collection represents a defradb collection.
-//
-// A Collection is mostly analogous to a SQL table, however a collection is specific to its
-// host, and many collections may share the same schema.
-//
-// Many functions on this object will interact with the underlying datastores.
-type Collection interface {
+// CollectionDefinition contains the metadata defining what this Collection is.
+type CollectionDefinition interface {
 	// Description returns the CollectionDescription of this Collection.
 	Description() CollectionDescription
 	// Name returns the name of this collection.
@@ -33,6 +28,16 @@ type Collection interface {
 	ID() uint32
 	// SchemaID returns the ID of the Schema used to define this Collection.
 	SchemaID() string
+}
+
+// Collection represents a defradb collection.
+//
+// A Collection is mostly analogous to a SQL table, however a collection is specific to its
+// host, and many collections may share the same schema.
+//
+// Many functions on this object will interact with the underlying datastores.
+type Collection interface {
+	CollectionDefinition
 
 	// Create a new document.
 	//
