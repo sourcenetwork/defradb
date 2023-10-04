@@ -40,21 +40,19 @@ type IndexDescription struct {
 
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
 func (d CollectionDescription) CollectIndexedFields() []FieldDescription {
-	fieldsMap := make(map[string]FieldDescription)
+	fieldsMap := make(map[string]bool)
+	fields := make([]FieldDescription, 0, len(d.Indexes))
 	for _, index := range d.Indexes {
 		for _, field := range index.Fields {
 			for i := range d.Schema.Fields {
 				colField := d.Schema.Fields[i]
-				if field.Name == colField.Name {
-					fieldsMap[field.Name] = colField
+				if field.Name == colField.Name && !fieldsMap[field.Name] {
+					fieldsMap[field.Name] = true
+					fields = append(fields, colField)
 					break
 				}
 			}
 		}
-	}
-	fields := make([]FieldDescription, 0, len(fieldsMap))
-	for _, field := range fieldsMap {
-		fields = append(fields, field)
 	}
 	return fields
 }
