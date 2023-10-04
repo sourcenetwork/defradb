@@ -15,6 +15,9 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
+// Property represents a single field and is being filtered on.
+// It contains the index of the field in the core.DocumentMapping 
+// as well as index -> Property map of the fields in case the field is an object.
 type Property struct {
 	Index  int
 	Fields map[int]Property
@@ -38,9 +41,8 @@ func mergeProps(p1, p2 Property) Property {
 	return p1
 }
 
-// ExtractProperties runs through the filter and returns a new filter with only the
-// properties as keys.
-// Different properties of the same relation object will be returned as elements of an array.
+// ExtractProperties runs through the filter and returns a index -> Property map of the fields 
+// being filtered on. 
 func ExtractProperties(conditions map[connor.FilterKey]any) map[int]Property {
 	properties := map[int]Property{}
 	for k, v := range conditions {
