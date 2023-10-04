@@ -11,6 +11,8 @@
 package cli
 
 import (
+	"encoding/json"
+
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
 
@@ -18,20 +20,27 @@ import (
 )
 
 func MakeP2PReplicatorDeleteCommand() *cobra.Command {
+	var collections []string
 	var cmd = &cobra.Command{
-		Use:   "delete <peer>",
+		Use:   "delete [-c, --collection] <peer>",
 		Short: "Delete a replicator. It will stop synchronizing",
 		Long:  `Delete a replicator. It will stop synchronizing.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p2p := mustGetP2PContext(cmd)
 
-			addr, err := peer.AddrInfoFromString(args[0])
-			if err != nil {
+			var info peer.AddrInfo
+			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
 				return err
 			}
-			return p2p.DeleteReplicator(cmd.Context(), client.Replicator{Info: *addr})
+			rep := client.Replicator{
+				Info:    info,
+				Schemas: collections,
+			}
+			return p2p.DeleteReplicator(cmd.Context(), rep)
 		},
 	}
+	cmd.Flags().StringSliceVarP(&collections, "collection", "c",
+		[]string{}, "Collection(s) to stop replicating")
 	return cmd
 }

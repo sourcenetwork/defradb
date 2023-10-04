@@ -204,12 +204,11 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 					log.Info(ctx, "cannot set a peer that hasn't been started. Skipping to next peer")
 					continue
 				}
-				info := nodes[p].PeerInfo()
-				addrs, err := peer.AddrInfoToP2pAddrs(&info)
-				require.NoError(t, err)
-				for _, addr := range addrs {
-					peerAddresses = append(peerAddresses, addr.String())
-				}
+				peerInfo := nodes[p].PeerInfo()
+				peerAddresses = append(
+					peerAddresses,
+					fmt.Sprintf("%s/p2p/%s", peerInfo.Addrs[0], peerInfo.ID),
+				)
 			}
 			cfg.Net.Peers = strings.Join(peerAddresses, ",")
 		}
@@ -345,13 +344,13 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	// clean up
 	for _, n := range nodes {
 		n.Close()
+		n.DB.Close()
 	}
 }
 
-const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
-
 func randomNetworkingConfig() *config.Config {
 	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = randomMultiaddr
+	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/0"
+	cfg.Net.RelayEnabled = false
 	return cfg
 }

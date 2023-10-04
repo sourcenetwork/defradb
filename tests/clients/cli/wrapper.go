@@ -70,11 +70,11 @@ func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) erro
 	args := []string{"client", "p2p", "replicator", "set"}
 	args = append(args, "--collection", strings.Join(rep.Schemas, ","))
 
-	addrs, err := peer.AddrInfoToP2pAddrs(&rep.Info)
+	info, err := json.Marshal(rep.Info)
 	if err != nil {
 		return err
 	}
-	args = append(args, addrs[0].String())
+	args = append(args, string(info))
 
 	_, err = w.cmd.execute(ctx, args)
 	return err
@@ -82,12 +82,13 @@ func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) erro
 
 func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
+	args = append(args, "--collection", strings.Join(rep.Schemas, ","))
 
-	addrs, err := peer.AddrInfoToP2pAddrs(&rep.Info)
+	info, err := json.Marshal(rep.Info)
 	if err != nil {
 		return err
 	}
-	args = append(args, addrs[0].String())
+	args = append(args, string(info))
 
 	_, err = w.cmd.execute(ctx, args)
 	return err

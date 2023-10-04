@@ -11,6 +11,8 @@
 package cli
 
 import (
+	"encoding/json"
+
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
 
@@ -29,12 +31,12 @@ A replicator replicates one or all collection(s) from this node to another.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p2p := mustGetP2PContext(cmd)
 
-			addr, err := peer.AddrInfoFromString(args[0])
-			if err != nil {
+			var info peer.AddrInfo
+			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
 				return err
 			}
 			rep := client.Replicator{
-				Info:    *addr,
+				Info:    info,
 				Schemas: collections,
 			}
 			return p2p.SetReplicator(cmd.Context(), rep)
@@ -42,6 +44,6 @@ A replicator replicates one or all collection(s) from this node to another.
 	}
 
 	cmd.Flags().StringSliceVarP(&collections, "collection", "c",
-		[]string{}, "Define the collection for the replicator")
+		[]string{}, "Collection(s) to replicate")
 	return cmd
 }
