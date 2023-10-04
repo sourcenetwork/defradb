@@ -160,6 +160,9 @@ func executeTestCase(
 		case ConfigureReplicator:
 			configureReplicator(s, action)
 
+		case DeleteReplicator:
+			deleteReplicator(s, action)
+
 		case SubscribeToCollection:
 			subscribeToCollection(s, action)
 

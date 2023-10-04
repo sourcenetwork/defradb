@@ -57,6 +57,15 @@ type ConfigureReplicator struct {
 	TargetNodeID int
 }
 
+// DeleteReplicator deletes a directional replicator relationship between two nodes.
+type DeleteReplicator struct {
+	// SourceNodeID is the node ID (index) of the node from which the replicator should be deleted.
+	SourceNodeID int
+
+	// TargetNodeID is the node ID (index) of the node to which the replicator should be deleted.
+	TargetNodeID int
+}
+
 const (
 	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
 	// for a non-existent collection ID when used in actions that support this.
@@ -120,7 +129,10 @@ type GetAllP2PCollections struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct{}
+type WaitForSync struct {
+	// ExpectedTimeout is the duration to wait when expecting a timeout to occur.
+	ExpectedTimeout time.Duration
+}
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.
@@ -293,6 +305,19 @@ func configureReplicator(
 	setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
 }
 
+func deleteReplicator(
+	s *state,
+	cfg DeleteReplicator,
+) {
+	sourceNode := s.nodes[cfg.SourceNodeID]
+	targetNode := s.nodes[cfg.TargetNodeID]
+
+	err := sourceNode.DeleteReplicator(s.ctx, client.Replicator{
+		Info: targetNode.PeerInfo(),
+	})
+	require.NoError(s.t, err)
+}
+
 func setupReplicatorWaitSync(
 	s *state,
 	startIndex int,
@@ -450,14 +475,21 @@ func waitForSync(
 	s *state,
 	action WaitForSync,
 ) {
+	var timeout time.Duration
+	if action.ExpectedTimeout != 0 {
+		timeout = action.ExpectedTimeout
+	} else {
+		timeout = subscriptionTimeout * 10
+	}
+
 	for _, resultsChan := range s.syncChans {
 		select {
 		case <-resultsChan:
-			continue
+			assert.True(s.t, action.ExpectedTimeout == 0, "unexpected document has been synced", s.testCase.Description)
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
-		case <-time.After(subscriptionTimeout * 10):
-			assert.Fail(s.t, "timeout occurred while waiting for data stream", s.testCase.Description)
+		case <-time.After(timeout):
+			assert.True(s.t, action.ExpectedTimeout != 0, "timeout occurred while waiting for data stream", s.testCase.Description)
 		}
 	}
 }
