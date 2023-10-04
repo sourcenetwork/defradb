@@ -485,11 +485,21 @@ func waitForSync(
 	for _, resultsChan := range s.syncChans {
 		select {
 		case <-resultsChan:
-			assert.True(s.t, action.ExpectedTimeout == 0, "unexpected document has been synced", s.testCase.Description)
+			assert.True(
+				s.t,
+				action.ExpectedTimeout == 0,
+				"unexpected document has been synced",
+				s.testCase.Description,
+			)
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
 		case <-time.After(timeout):
-			assert.True(s.t, action.ExpectedTimeout != 0, "timeout occurred while waiting for data stream", s.testCase.Description)
+			assert.True(
+				s.t,
+				action.ExpectedTimeout != 0,
+				"timeout occurred while waiting for data stream",
+				s.testCase.Description,
+			)
 		}
 	}
 }

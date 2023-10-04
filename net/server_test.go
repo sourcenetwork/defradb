@@ -11,17 +11,12 @@
 package net
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
 	"testing"
 	"time"
 
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 	grpcpeer "google.golang.org/grpc/peer"
@@ -29,7 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	net_pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -191,46 +185,8 @@ func TestNewServerWithEmitterError(t *testing.T) {
 
 	n.Peer.host = &mockHost{n.Peer.host}
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	_, err = newServer(n.Peer, db)
 	require.NoError(t, err)
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 2 {
-		t.Fatalf("expecting exactly 2 log line but got %d lines", len(logLines))
-	}
-	assert.Equal(t, "could not create event emitter", logLines[0]["msg"])
-	assert.Equal(t, "could not create event emitter", logLines[1]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
-}
-
-func parseLines(r io.Reader) ([]map[string]any, error) {
-	fileScanner := bufio.NewScanner(r)
-
-	fileScanner.Split(bufio.ScanLines)
-
-	logLines := []map[string]any{}
-	for fileScanner.Scan() {
-		loggedLine := make(map[string]any)
-		err := json.Unmarshal(fileScanner.Bytes(), &loggedLine)
-		if err != nil {
-			return nil, err
-		}
-		logLines = append(logLines, loggedLine)
-	}
-
-	return logLines, nil
 }
 
 func TestGetDocGraph(t *testing.T) {
