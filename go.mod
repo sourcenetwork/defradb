@@ -13,7 +13,6 @@ require (
 	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/graphql-go/graphql v0.8.1
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ipfs/boxo v0.13.1
 	github.com/ipfs/go-block-format v0.2.0

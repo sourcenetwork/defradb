@@ -59,19 +59,6 @@ func TestNewNode_WithEnableRelay_NoError(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestNewNode_WithInvalidListenTCPAddrString_ParseError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
-	require.NoError(t, err)
-	_, err = NewNode(
-		context.Background(),
-		db,
-		WithListenTCPAddrString("/ip4/碎片整理"),
-	)
-	require.EqualError(t, err, "failed to parse multiaddr \"/ip4/碎片整理\": invalid value \"碎片整理\" for protocol ip4: failed to parse ip4 addr: 碎片整理")
-}
-
 func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
@@ -227,19 +214,9 @@ func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
 	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
 }
 
-func TestWithListenTCPAddrString_WithInvalidListenTCPAddrString_ParseError(t *testing.T) {
-	opt := WithListenTCPAddrString("/ip4/碎片整理")
-	options, err := mergeOptions(opt)
-	require.EqualError(t, err, "failed to parse multiaddr \"/ip4/碎片整理\": invalid value \"碎片整理\" for protocol ip4: failed to parse ip4 addr: 碎片整理")
-	require.Equal(t, Options{}, options)
-}
-
 func TestNodeConfig_NoError(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/9179"
-	cfg.Net.TCPAddress = "/ip4/0.0.0.0/tcp/9169"
-	cfg.Net.RPCTimeout = "100s"
-	cfg.Net.RPCMaxConnectionIdle = "111s"
 	cfg.Net.RelayEnabled = true
 	cfg.Net.PubSubEnabled = true
 
@@ -250,13 +227,10 @@ func TestNodeConfig_NoError(t *testing.T) {
 	// confirming it provides the same config as a manually constructed node.Options
 	p2pAddr, err := ma.NewMultiaddr(cfg.Net.P2PAddress)
 	require.NoError(t, err)
-	tcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
-	require.NoError(t, err)
 	connManager, err := NewConnManager(100, 400, time.Second*20)
 	require.NoError(t, err)
 	expectedOptions := Options{
 		ListenAddrs:  []ma.Multiaddr{p2pAddr},
-		TCPAddr:      tcpAddr,
 		EnablePubSub: true,
 		EnableRelay:  true,
 		ConnManager:  connManager,
@@ -265,7 +239,7 @@ func TestNodeConfig_NoError(t *testing.T) {
 	for k, v := range options.ListenAddrs {
 		require.Equal(t, expectedOptions.ListenAddrs[k], v)
 	}
-	require.Equal(t, expectedOptions.TCPAddr.String(), options.TCPAddr.String())
+
 	require.Equal(t, expectedOptions.EnablePubSub, options.EnablePubSub)
 	require.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
 }

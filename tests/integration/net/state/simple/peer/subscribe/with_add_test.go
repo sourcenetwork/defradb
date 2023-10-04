@@ -37,8 +37,8 @@ func TestP2PSubscribeAddSingle(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0},
+				NodeID:       1,
+				CollectionID: 0,
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -113,8 +113,12 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0, 2},
+				NodeID:       1,
+				CollectionID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:       1,
+				CollectionID: 2,
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -198,7 +202,7 @@ func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
 			},
 			testUtils.SubscribeToCollection{
 				NodeID:        1,
-				CollectionIDs: []int{testUtils.NonExistentCollectionID},
+				CollectionID:  testUtils.NonExistentCollectionID,
 				ExpectedError: "datastore: key not found",
 			},
 			testUtils.CreateDoc{
@@ -224,103 +228,6 @@ func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddValidAndErroneousCollectionID(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
-				ExpectedError: "datastore: key not found",
-			},
-			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.WaitForSync{},
-			testUtils.Request{
-				// Nothing should sync, although the collection 0 was valid, as it was included in the same
-				// `Add` call it should have been rolled back.
-				NodeID: immutable.Some(1),
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				Results: []map[string]any{},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0},
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{testUtils.NonExistentCollectionID},
-				ExpectedError: "datastore: key not found",
-			},
-			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.WaitForSync{},
-			testUtils.Request{
-				// The subscription for collection 0 should still be active
-				NodeID: immutable.Some(1),
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name": "John",
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestP2PSubscribeAddNone(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -336,10 +243,6 @@ func TestP2PSubscribeAddNone(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 0,
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),

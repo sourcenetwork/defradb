@@ -54,7 +54,7 @@ var evtWaitTimeout = 10 * time.Second
 // Node is a networked peer instance of DefraDB.
 type Node struct {
 	// embed the DB interface into the node
-	client.DB
+	DB client.DB
 
 	*Peer
 
@@ -160,7 +160,6 @@ func NewNode(
 		h,
 		ddht,
 		ps,
-		options.TCPAddr,
 		options.GRPCServerOptions,
 		options.GRPCDialOptions,
 	)
@@ -232,6 +231,14 @@ func (n *Node) ListenAddrs() []multiaddr.Multiaddr {
 // PeerID returns the node's peer ID.
 func (n *Node) PeerID() peer.ID {
 	return n.host.ID()
+}
+
+// PeerInfo returns the node's peer id and listening addresses.
+func (n *Node) PeerInfo() peer.AddrInfo {
+	return peer.AddrInfo{
+		ID:    n.host.ID(),
+		Addrs: n.host.Addrs(),
+	}
 }
 
 // subscribeToPeerConnectionEvents subscribes the node to the event bus for a peer connection change.

@@ -33,8 +33,8 @@ func TestP2PSubscribeAddGetSingle(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0},
+				NodeID:       1,
+				CollectionID: 0,
 			},
 			testUtils.GetAllP2PCollections{
 				NodeID:                1,
@@ -69,8 +69,12 @@ func TestP2PSubscribeAddGetMultiple(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0, 2},
+				NodeID:       1,
+				CollectionID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:       1,
+				CollectionID: 2,
 			},
 			testUtils.GetAllP2PCollections{
 				NodeID:                1,

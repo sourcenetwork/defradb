@@ -14,13 +14,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
-	pb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 
-	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -59,9 +58,12 @@ type ConfigureReplicator struct {
 	TargetNodeID int
 }
 
-// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
-// for a non-existent collection ID when used in actions that support this.
-const NonExistentCollectionID int = -1
+const (
+	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
+	// for a non-existent collection ID when used in actions that support this.
+	NonExistentCollectionID       int = -1
+	NonExistentCollectionSchemaID     = "NonExistentCollectionID"
+)
 
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
 //
@@ -74,10 +76,10 @@ type SubscribeToCollection struct {
 	// them to this node.
 	NodeID int
 
-	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
+	// CollectionID is the collection ID (indexes) of the collection to subscribe to.
 	//
 	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
-	CollectionIDs []int
+	CollectionID int
 
 	// Any error expected from the action. Optional.
 	//
@@ -92,10 +94,10 @@ type UnsubscribeToCollection struct {
 	// NodeID is the node ID (index) of the node in which to remove the subscription.
 	NodeID int
 
-	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
+	// CollectionID is the collection ID (indexes) of the collection to unsubscribe from.
 	//
 	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
-	CollectionIDs []int
+	CollectionID int
 
 	// Any error expected from the action. Optional.
 	//
@@ -171,7 +173,7 @@ func setupPeerWaitSync(
 			}
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
-			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionIDs...)
+			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionID)
 
 		case UnsubscribeToCollection:
 			if action.ExpectedError != "" {
@@ -182,12 +184,10 @@ func setupPeerWaitSync(
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
 			existingCollectionIndexes := nodeCollections[action.NodeID]
-			for _, collectionIndex := range action.CollectionIDs {
-				for i, existingCollectionIndex := range existingCollectionIndexes {
-					if collectionIndex == existingCollectionIndex {
-						// Remove the matching collection index from the set:
-						existingCollectionIndexes = append(existingCollectionIndexes[:i], existingCollectionIndexes[i+1:]...)
-					}
+			for i, existingCollectionIndex := range existingCollectionIndexes {
+				if action.CollectionID == existingCollectionIndex {
+					// Remove the matching collection index from the set:
+					existingCollectionIndexes = append(existingCollectionIndexes[:i], existingCollectionIndexes[i+1:]...)
 				}
 			}
 			nodeCollections[action.NodeID] = existingCollectionIndexes
@@ -291,17 +291,10 @@ func configureReplicator(
 	time.Sleep(100 * time.Millisecond)
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
-	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
-	addr, err := ma.NewMultiaddr(targetAddress)
-	require.NoError(s.t, err)
-
-	_, err = sourceNode.Peer.SetReplicator(
-		s.ctx,
-		&pb.SetReplicatorRequest{
-			Addr: addr.Bytes(),
-		},
-	)
+	err := sourceNode.Peer.SetReplicator(s.ctx, client.Replicator{
+		Info: targetNode.PeerInfo(),
+	})
 	require.NoError(s.t, err)
 	setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
 }
@@ -389,25 +382,16 @@ func subscribeToCollection(
 	s *state,
 	action SubscribeToCollection,
 ) {
-	n := s.nodes[action.NodeID]
-
-	schemaIDs := []string{}
-	for _, collectionIndex := range action.CollectionIDs {
-		if collectionIndex == NonExistentCollectionID {
-			schemaIDs = append(schemaIDs, "NonExistentCollectionID")
-			continue
-		}
-
-		col := s.collections[action.NodeID][collectionIndex]
-		schemaIDs = append(schemaIDs, col.SchemaID())
+	var schemaID string
+	if action.CollectionID == NonExistentCollectionID {
+		schemaID = NonExistentCollectionSchemaID
+	} else {
+		col := s.collections[action.NodeID][action.CollectionID]
+		schemaID = col.SchemaID()
 	}
 
-	_, err := n.Peer.AddP2PCollections(
-		s.ctx,
-		&pb.AddP2PCollectionsRequest{
-			Collections: schemaIDs,
-		},
-	)
+	n := s.nodes[action.NodeID]
+	err := n.AddP2PCollection(s.ctx, schemaID)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -424,25 +408,16 @@ func unsubscribeToCollection(
 	s *state,
 	action UnsubscribeToCollection,
 ) {
-	n := s.nodes[action.NodeID]
-
-	schemaIDs := []string{}
-	for _, collectionIndex := range action.CollectionIDs {
-		if collectionIndex == NonExistentCollectionID {
-			schemaIDs = append(schemaIDs, "NonExistentCollectionID")
-			continue
-		}
-
-		col := s.collections[action.NodeID][collectionIndex]
-		schemaIDs = append(schemaIDs, col.SchemaID())
+	var schemaID string
+	if action.CollectionID == NonExistentCollectionID {
+		schemaID = NonExistentCollectionSchemaID
+	} else {
+		col := s.collections[action.NodeID][action.CollectionID]
+		schemaID = col.SchemaID()
 	}
 
-	_, err := n.Peer.RemoveP2PCollections(
-		s.ctx,
-		&pb.RemoveP2PCollectionsRequest{
-			Collections: schemaIDs,
-		},
-	)
+	n := s.nodes[action.NodeID]
+	err := n.RemoveP2PCollection(s.ctx, schemaID)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -460,26 +435,17 @@ func getAllP2PCollections(
 	s *state,
 	action GetAllP2PCollections,
 ) {
-	expectedCollections := []*pb.GetAllP2PCollectionsReply_Collection{}
+	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
 		col := s.collections[action.NodeID][collectionIndex]
-		expectedCollections = append(
-			expectedCollections,
-			&pb.GetAllP2PCollectionsReply_Collection{
-				Id:   col.SchemaID(),
-				Name: col.Name(),
-			},
-		)
+		expectedCollections = append(expectedCollections, col.SchemaID())
 	}
 
 	n := s.nodes[action.NodeID]
-	cols, err := n.Peer.GetAllP2PCollections(
-		s.ctx,
-		&pb.GetAllP2PCollectionsRequest{},
-	)
+	cols, err := n.GetAllP2PCollections(s.ctx)
 	require.NoError(s.t, err)
 
-	assert.Equal(s.t, expectedCollections, cols.Collections)
+	assert.Equal(s.t, expectedCollections, cols)
 }
 
 // waitForSync waits for all given wait channels to receive an item signaling completion.
@@ -502,14 +468,10 @@ func waitForSync(
 	}
 }
 
-const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
-
 func RandomNetworkingConfig() ConfigureNode {
 	return func() config.Config {
 		cfg := config.DefaultConfig()
-		cfg.Net.P2PAddress = randomMultiaddr
-		cfg.Net.RPCAddress = "0.0.0.0:0"
-		cfg.Net.TCPAddress = randomMultiaddr
+		cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/0"
 		return *cfg
 	}
 }
