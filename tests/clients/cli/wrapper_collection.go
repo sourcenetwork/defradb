@@ -26,8 +26,9 @@ import (
 var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
-	cmd  *cliWrapper
-	desc client.CollectionDescription
+	cmd    *cliWrapper
+	desc   client.CollectionDescription
+	schema client.SchemaDescription
 }
 
 func (c *Collection) Description() client.CollectionDescription {
@@ -39,7 +40,7 @@ func (c *Collection) Name() string {
 }
 
 func (c *Collection) Schema() client.SchemaDescription {
-	return c.desc.Schema
+	return c.schema
 }
 
 func (c *Collection) ID() uint32 {
@@ -47,7 +48,7 @@ func (c *Collection) ID() uint32 {
 }
 
 func (c *Collection) SchemaID() string {
-	return c.desc.Schema.SchemaID
+	return c.schema.SchemaID
 }
 
 func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
@@ -56,7 +57,7 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 
 	// We must call this here, else the doc key on the given object will not match
 	// that of the document saved in the database
-	err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
+	err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields)
 	if err != nil {
 		return err
 	}
@@ -82,7 +83,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 	for i, doc := range docs {
 		// We must call this here, else the doc key on the given object will not match
 		// that of the document saved in the database
-		err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
+		err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields)
 		if err != nil {
 			return err
 		}
@@ -315,8 +316,9 @@ func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 
 func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
 	return &Collection{
-		cmd:  c.cmd.withTxn(tx),
-		desc: c.desc,
+		cmd:    c.cmd.withTxn(tx),
+		desc:   c.desc,
+		schema: c.schema,
 	}
 }
 

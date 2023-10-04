@@ -16,6 +16,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+type CollectionDefinition struct {
+	Description client.CollectionDescription `json:"description"`
+	Schema      client.SchemaDescription     `json:"schema"`
+}
+
 func MakeCollectionDescribeCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "describe",
@@ -39,16 +44,22 @@ Example: view collection by version id
 
 			col, ok := tryGetCollectionContext(cmd)
 			if ok {
-				return writeJSON(cmd, col.Description())
+				return writeJSON(cmd, CollectionDefinition{
+					Description: col.Description(),
+					Schema:      col.Schema(),
+				})
 			}
 			// if no collection specified list all collections
 			cols, err := store.GetAllCollections(cmd.Context())
 			if err != nil {
 				return err
 			}
-			colDesc := make([]client.CollectionDescription, len(cols))
+			colDesc := make([]CollectionDefinition, len(cols))
 			for i, col := range cols {
-				colDesc[i] = col.Description()
+				colDesc[i] = CollectionDefinition{
+					Description: col.Description(),
+					Schema:      col.Schema(),
+				}
 			}
 			return writeJSON(cmd, colDesc)
 		},

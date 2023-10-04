@@ -22,6 +22,11 @@ import (
 
 type storeHandler struct{}
 
+type CollectionDefinition struct {
+	Description client.CollectionDescription `json:"description"`
+	Schema      client.SchemaDescription     `json:"schema"`
+}
+
 func (s *storeHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
@@ -200,30 +205,30 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		responseJSON(rw, http.StatusOK, col.Description())
+		responseJSON(rw, http.StatusOK, CollectionDefinition{Description: col.Description(), Schema: col.Schema()})
 	case req.URL.Query().Has("schema_id"):
 		col, err := store.GetCollectionBySchemaID(req.Context(), req.URL.Query().Get("schema_id"))
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		responseJSON(rw, http.StatusOK, col.Description())
+		responseJSON(rw, http.StatusOK, CollectionDefinition{Description: col.Description(), Schema: col.Schema()})
 	case req.URL.Query().Has("version_id"):
 		col, err := store.GetCollectionByVersionID(req.Context(), req.URL.Query().Get("version_id"))
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		responseJSON(rw, http.StatusOK, col.Description())
+		responseJSON(rw, http.StatusOK, CollectionDefinition{Description: col.Description(), Schema: col.Schema()})
 	default:
 		cols, err := store.GetAllCollections(req.Context())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		colDesc := make([]client.CollectionDescription, len(cols))
+		colDesc := make([]CollectionDefinition, len(cols))
 		for i, col := range cols {
-			colDesc[i] = col.Description()
+			colDesc[i] = CollectionDefinition{Description: col.Description(), Schema: col.Schema()}
 		}
 		responseJSON(rw, http.StatusOK, colDesc)
 	}

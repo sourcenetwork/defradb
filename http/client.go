@@ -267,11 +267,11 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	if err != nil {
 		return nil, err
 	}
-	var description client.CollectionDescription
-	if err := c.http.requestJson(req, &description); err != nil {
+	var definition CollectionDefinition
+	if err := c.http.requestJson(req, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description, description.Schema}, nil
+	return &Collection{c.http, definition.Description, definition.Schema}, nil
 }
 
 func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
@@ -282,11 +282,11 @@ func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (
 	if err != nil {
 		return nil, err
 	}
-	var description client.CollectionDescription
-	if err := c.http.requestJson(req, &description); err != nil {
+	var definition CollectionDefinition
+	if err := c.http.requestJson(req, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description, description.Schema}, nil
+	return &Collection{c.http, definition.Description, definition.Schema}, nil
 }
 
 func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
@@ -297,11 +297,11 @@ func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string)
 	if err != nil {
 		return nil, err
 	}
-	var description client.CollectionDescription
-	if err := c.http.requestJson(req, &description); err != nil {
+	var definition CollectionDefinition
+	if err := c.http.requestJson(req, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description, description.Schema}, nil
+	return &Collection{c.http, definition.Description, definition.Schema}, nil
 }
 
 func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
@@ -311,13 +311,13 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 	if err != nil {
 		return nil, err
 	}
-	var descriptions []client.CollectionDescription
+	var descriptions []CollectionDefinition
 	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
 	collections := make([]client.Collection, len(descriptions))
 	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d, d.Schema}
+		collections[i] = &Collection{c.http, d.Description, d.Schema}
 	}
 	return collections, nil
 }
