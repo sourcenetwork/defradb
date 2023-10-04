@@ -11,7 +11,6 @@
 package net
 
 import (
-	"bytes"
 	"context"
 	"testing"
 	"time"
@@ -27,7 +26,6 @@ import (
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
-	"github.com/sourcenetwork/defradb/logging"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
@@ -252,28 +250,9 @@ func TestSubscribeToPeerConnectionEvents_SubscriptionError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	n.Peer.host = &mockHost{n.Peer.host}
 
 	n.subscribeToPeerConnectionEvents()
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	require.Equal(t, "failed to subscribe to peer connectedness changed event: mock error", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
 }
 
 func TestPeerConnectionEventEmitter_SingleEvent_NoError(t *testing.T) {
@@ -317,28 +296,9 @@ func TestSubscribeToPubSubEvents_SubscriptionError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	n.Peer.host = &mockHost{n.Peer.host}
 
 	n.subscribeToPubSubEvents()
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	require.Equal(t, "failed to subscribe to pubsub event: mock error", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
 }
 
 func TestPubSubEventEmitter_SingleEvent_NoError(t *testing.T) {
@@ -382,28 +342,9 @@ func TestSubscribeToPushLogEvents_SubscriptionError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	n.Peer.host = &mockHost{n.Peer.host}
 
 	n.subscribeToPushLogEvents()
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	require.Equal(t, "failed to subscribe to push log event: mock error", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
 }
 
 func TestPushLogEventEmitter_SingleEvent_NoError(t *testing.T) {

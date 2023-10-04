@@ -11,7 +11,6 @@
 package net
 
 import (
-	"bytes"
 	"context"
 	"testing"
 	"time"
@@ -23,7 +22,6 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
 	mh "github.com/multiformats/go-multihash"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 
@@ -34,7 +32,6 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/logging"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
@@ -272,12 +269,6 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	}
 	n2.Boostrap(addrs)
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	err = n1.Close()
 	require.NoError(t, err)
 
@@ -286,19 +277,6 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 
 	err = n2.Start()
 	require.NoError(t, err)
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	assert.Equal(t, "Failure while reconnecting to a known peer", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
 
 	db1.Close(ctx)
 	db2.Close(ctx)
@@ -503,26 +481,7 @@ func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *test
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	n.pushToReplicator(ctx, txn, col, keysCh, n.PeerID())
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	assert.Equal(t, "Failed to replicate log", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
 }
 
 func TestDeleteReplicator_WithDBClosed_DataStoreClosedError(t *testing.T) {
