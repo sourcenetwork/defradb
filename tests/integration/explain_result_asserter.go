@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -28,6 +28,8 @@ const (
 
 type dataMap = map[string]any
 
+// ExplainResultAsserter is a helper for asserting the result of an explain query.
+// It allows asserting on a selected set of properties.
 type ExplainResultAsserter struct {
 	iterations     immutable.Option[int]
 	docFetches     immutable.Option[int]
