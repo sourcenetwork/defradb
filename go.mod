@@ -10,7 +10,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.5.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-chi/cors v1.2.1
-	github.com/go-errors/errors v1.5.0
+	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/graphql-go/graphql v0.8.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
