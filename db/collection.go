@@ -75,9 +75,10 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 	return &collection{
 		db: db,
 		desc: client.CollectionDescription{
-			ID:     desc.ID,
-			Name:   desc.Name,
-			Schema: desc.Schema,
+			ID:      desc.ID,
+			Name:    desc.Name,
+			Schema:  desc.Schema,
+			Indexes: desc.Indexes,
 		},
 		colID: desc.ID,
 	}, nil
