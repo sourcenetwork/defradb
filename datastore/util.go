@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -19,6 +19,8 @@ import (
 	"github.com/ipfs/go-datastore/query"
 )
 
+// DeserializePrefix deserializes all elements with the given prefix from the given storage.
+// It returns the keys and their corresponding elements.
 func DeserializePrefix[T any](
 	ctx context.Context,
 	prefix string,
@@ -52,6 +54,7 @@ func DeserializePrefix[T any](
 	return keys, elements, nil
 }
 
+// FetchKeysForPrefix fetches all keys with the given prefix from the given storage.
 func FetchKeysForPrefix(
 	ctx context.Context,
 	prefix string,

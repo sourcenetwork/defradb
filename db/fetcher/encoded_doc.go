@@ -131,6 +131,8 @@ func Decode(encdoc EncodedDocument) (*client.Document, error) {
 	return doc, nil
 }
 
+// MergeProperties merges the properties of the given document into this document.
+// If values of the current document are overwritten.
 func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
 	otherEncDoc, ok := other.(*encodedDocument)
 	if !ok {
