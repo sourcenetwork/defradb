@@ -54,6 +54,7 @@ require (
 )
 
 require (
+	github.com/Jorropo/jsync v1.0.1 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -129,7 +130,7 @@ require (
 	github.com/libp2p/go-libp2p-connmgr v0.4.0 // indirect
 	github.com/libp2p/go-libp2p-core v0.20.0 // indirect
 	github.com/libp2p/go-libp2p-kbucket v0.6.0 // indirect
-	github.com/libp2p/go-libp2p-routing-helpers v0.7.0 // indirect
+	github.com/libp2p/go-libp2p-routing-helpers v0.7.2 // indirect
 	github.com/libp2p/go-msgio v0.3.0 // indirect
 	github.com/libp2p/go-nat v0.2.0 // indirect
 	github.com/libp2p/go-netroute v0.2.1 // indirect
