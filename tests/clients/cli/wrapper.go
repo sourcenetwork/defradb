@@ -204,7 +204,7 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, colDesc}, nil
+	return &Collection{w.cmd, colDesc, colDesc.Schema}, nil
 }
 
 func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
@@ -219,7 +219,7 @@ func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) 
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, colDesc}, nil
+	return &Collection{w.cmd, colDesc, colDesc.Schema}, nil
 }
 
 func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
@@ -234,7 +234,7 @@ func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, colDesc}, nil
+	return &Collection{w.cmd, colDesc, colDesc.Schema}, nil
 }
 
 func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
@@ -250,7 +250,7 @@ func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, e
 	}
 	cols := make([]client.Collection, len(colDesc))
 	for i, v := range colDesc {
-		cols[i] = &Collection{w.cmd, v}
+		cols[i] = &Collection{w.cmd, v, v.Schema}
 	}
 	return cols, err
 }
