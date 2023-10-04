@@ -120,8 +120,8 @@ func NewNode(
 			return ddht, err
 		}),
 	}
-	if options.EnableRelay {
-		libp2pOpts = append(libp2pOpts, libp2p.EnableRelay())
+	if !options.EnableRelay {
+		libp2pOpts = append(libp2pOpts, libp2p.DisableRelay())
 	}
 
 	h, err := libp2p.New(libp2pOpts...)

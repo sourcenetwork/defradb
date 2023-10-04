@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
 // AssertPanic asserts that the code inside the specified PanicTestFunc panics.
@@ -118,6 +119,7 @@ func executeTestCase(
 		logging.NewKV("inMemoryStore", inMemoryStore),
 		logging.NewKV("httpClient", httpClient),
 		logging.NewKV("goClient", goClient),
+		logging.NewKV("cliClient", cliClient),
 		logging.NewKV("mutationType", mutationType),
 		logging.NewKV("databaseDir", databaseDir),
 		logging.NewKV("changeDetector.Enabled", changeDetector.Enabled),
@@ -317,12 +319,12 @@ func closeNodes(
 // getNodes gets the set of applicable nodes for the given nodeID.
 //
 // If nodeID has a value it will return that node only, otherwise all nodes will be returned.
-func getNodes(nodeID immutable.Option[int], nodes []client.P2P) []client.P2P {
+func getNodes(nodeID immutable.Option[int], nodes []clients.Client) []clients.Client {
 	if !nodeID.HasValue() {
 		return nodes
 	}
 
-	return []client.P2P{nodes[nodeID.Value()]}
+	return []clients.Client{nodes[nodeID.Value()]}
 }
 
 // getNodeCollections gets the set of applicable collections for the given nodeID.
@@ -490,11 +492,7 @@ func restartNodes(
 		cfg := s.nodeConfigs[i]
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
-		for _, addr := range s.nodeAddresses[i].Addrs {
-			if strings.Contains(addr.String(), "/tcp/") {
-				cfg.Net.P2PAddress = addr.String()
-			}
-		}
+		cfg.Net.P2PAddress = s.nodeAddresses[i].Addrs[0].String()
 
 		var n *net.Node
 		n, err = net.NewNode(
@@ -599,15 +597,14 @@ func configureNode(
 	db, path, err := setupDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
-	var n *net.Node
-	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-	n, err = net.NewNode(
+	n, err := net.NewNode(
 		s.ctx,
 		db,
 		net.WithConfig(&cfg),
 	)
 	require.NoError(s.t, err)
 
+	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", n.PeerInfo()))
 	if err := n.Start(); err != nil {
 		n.Close()
 		require.NoError(s.t, err)
@@ -1229,7 +1226,7 @@ func backupImport(
 // about this in our tests so we just retry a few times until it works (or the
 // retry limit is breached - important incase this is a different error)
 func withRetry(
-	nodes []client.P2P,
+	nodes []clients.Client,
 	nodeID int,
 	action func() error,
 ) error {

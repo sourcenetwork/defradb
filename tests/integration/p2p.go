@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/tests/clients"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/assert"
@@ -150,8 +151,8 @@ func setupPeerWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConnectPeers,
-	sourceNode client.P2P,
-	targetNode client.P2P,
+	sourceNode clients.Client,
+	targetNode clients.Client,
 ) {
 	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
@@ -296,8 +297,8 @@ func setupReplicatorWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConfigureReplicator,
-	sourceNode client.P2P,
-	targetNode client.P2P,
+	sourceNode clients.Client,
+	targetNode clients.Client,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
@@ -461,12 +462,11 @@ func waitForSync(
 	}
 }
 
-const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
-
 func RandomNetworkingConfig() ConfigureNode {
 	return func() config.Config {
 		cfg := config.DefaultConfig()
-		cfg.Net.P2PAddress = randomMultiaddr
+		cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/0"
+		cfg.Net.RelayEnabled = false
 		return *cfg
 	}
 }

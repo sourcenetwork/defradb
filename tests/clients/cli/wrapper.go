@@ -33,7 +33,6 @@ import (
 var _ client.P2P = (*Wrapper)(nil)
 
 type Wrapper struct {
-	store      client.Store
 	node       *net.Node
 	cmd        *cliWrapper
 	handler    *http.Handler
@@ -400,9 +399,8 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 
 func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
 	return &Wrapper{
-		node:  w.node,
-		store: w.node.WithTxn(tx),
-		cmd:   w.cmd.withTxn(tx),
+		node: w.node,
+		cmd:  w.cmd.withTxn(tx),
 	}
 }
 

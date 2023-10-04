@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
 )
@@ -204,7 +205,7 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(s *state, node *net.Node) (impl client.P2P, err error) {
+func setupClient(s *state, node *net.Node) (impl clients.Client, err error) {
 	switch s.clientType {
 	case httpClientType:
 		impl, err = http.NewWrapper(node)
