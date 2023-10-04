@@ -36,7 +36,7 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 				[]map[string]any{
 					{"name": "Addo"},
 				},
-				NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6).WithIndexFetches(3),
+				testUtils.NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6).WithIndexFetches(3),
 			),
 		},
 	}
@@ -66,7 +66,7 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 				[]map[string]any{
 					{"name": "Islam"},
 				},
-				NewExplainAsserter().WithDocFetches(5).WithFieldFetches(15),
+				testUtils.NewExplainAsserter().WithDocFetches(5).WithFieldFetches(15),
 			),
 		},
 	}

@@ -43,7 +43,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 					{"name": "Shahzad"},
 					{"name": "Keenan"},
 				},
-				NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
+				testUtils.NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
 			),
 			sendRequestAndExplain(`
 				User(filter: {
@@ -54,7 +54,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				[]map[string]any{
 					{"name": "Addo"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
 			),
 		},
 	}
@@ -87,7 +87,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 				[]map[string]any{
 					{"name": "Islam"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
 			),
 			sendRequestAndExplain(`
 				User(filter: {
@@ -100,7 +100,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 					{"name": "Fred"},
 					{"name": "John"},
 				},
-				NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
+				testUtils.NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
 			),
 		},
 	}
@@ -134,7 +134,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_Shoul
 				[]map[string]any{
 					{"name": "Islam"},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
 			),
 			sendRequestAndExplain(`
 				User(filter: {
@@ -147,7 +147,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_Shoul
 					{"name": "Fred"},
 					{"name": "Shahzad"},
 				},
-				NewExplainAsserter().WithDocFetches(14).WithFieldFetches(17).WithIndexFetches(3),
+				testUtils.NewExplainAsserter().WithDocFetches(14).WithFieldFetches(17).WithIndexFetches(3),
 			),
 		},
 	}
@@ -194,7 +194,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 						},
 					},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
 			),
 			sendRequestAndExplain(`
 				User(filter: {
@@ -213,7 +213,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 						},
 					},
 				},
-				NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
 			),
 		},
 	}
