@@ -191,8 +191,8 @@ func NewNode(
 	return n, nil
 }
 
-// Boostrap connects to the given peers.
-func (n *Node) Boostrap(addrs []peer.AddrInfo) {
+// Bootstrap connects to the given peers.
+func (n *Node) Bootstrap(addrs []peer.AddrInfo) {
 	var connected uint64
 
 	var wg sync.WaitGroup

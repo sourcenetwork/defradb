@@ -190,7 +190,7 @@ func TestSendJobWorker_WithPeerAndNoChildren_NoError(t *testing.T) {
 
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	require.NoError(t, err)
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 
 	done := make(chan struct{})
 	go func() {
@@ -268,7 +268,7 @@ func TestSendJobWorker_WithPeerAndChildren_NoError(t *testing.T) {
 
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	require.NoError(t, err)
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 
 	done := make(chan struct{})
 	go func() {

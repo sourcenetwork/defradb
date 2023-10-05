@@ -127,7 +127,7 @@ func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
-	n1.Boostrap([]peer.AddrInfo{})
+	n1.Bootstrap([]peer.AddrInfo{})
 }
 
 func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
@@ -152,7 +152,7 @@ func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 }
 
 func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing.T) {
@@ -180,7 +180,7 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 		"/ip4/0.0.0.0/tcp/1236/p2p/" + "12D3KooWC8YY6Tx3uAeHsdBmoy7PJPwqXAHE4HkCZ5veankKWci4",
 	})
 	require.NoError(t, err)
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 }
 
 func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {

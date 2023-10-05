@@ -231,7 +231,7 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 
 	err = n2.Start()
 	require.NoError(t, err)
@@ -267,7 +267,7 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 
 	err = n1.Close()
 	require.NoError(t, err)
