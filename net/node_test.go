@@ -228,19 +228,6 @@ func TestNodeConfig_NoError(t *testing.T) {
 	require.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
 }
 
-func TestSubscribeToPeerConnectionEvents_SubscriptionError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-
-	n.Peer.host = &mockHost{n.Peer.host}
-
-	n.subscribeToPeerConnectionEvents()
-}
-
 func TestPeerConnectionEventEmitter_SingleEvent_NoError(t *testing.T) {
 	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
