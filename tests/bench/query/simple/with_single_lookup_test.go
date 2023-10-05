@@ -37,7 +37,7 @@ func Benchmark_Query_UserSimple_Query_WithSingleLookup_Sync_1(b *testing.B) {
 	err := runQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple"),
+		fixtures.ForSchema(ctx, "user_simple", nil),
 		1,
 		userSimpleWithSingleLookupQuery,
 		false,
@@ -52,7 +52,7 @@ func Benchmark_Query_UserSimple_Query_WithSingleLookup_Sync_10(b *testing.B) {
 	err := runQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple"),
+		fixtures.ForSchema(ctx, "user_simple", nil),
 		10,
 		userSimpleWithSingleLookupQuery,
 		false,
@@ -67,7 +67,7 @@ func Benchmark_Query_UserSimple_Query_WithSingleLookup_Sync_100(b *testing.B) {
 	err := runQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple"),
+		fixtures.ForSchema(ctx, "user_simple", nil),
 		100,
 		userSimpleWithSingleLookupQuery,
 		false,
@@ -82,7 +82,7 @@ func Benchmark_Query_UserSimple_Query_WithSingleLookup_Sync_1000(b *testing.B) {
 	err := runQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple"),
+		fixtures.ForSchema(ctx, "user_simple", nil),
 		1000,
 		userSimpleWithSingleLookupQuery,
 		false,

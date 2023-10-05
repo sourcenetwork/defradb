@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/bxcodec/faker"
 
@@ -28,18 +29,41 @@ var (
 	}
 )
 
+type Options struct {
+	directives map[string]map[string][]string
+}
+
+func NewOptions() *Options {
+	return &Options{
+		directives: make(map[string]map[string][]string),
+	}
+}
+
+func (o *Options) WithFieldDirective(typeName, field, directive string) *Options {
+	if o.directives == nil {
+		o.directives = make(map[string]map[string][]string)
+	}
+	if o.directives[typeName] == nil {
+		o.directives[typeName] = make(map[string][]string)
+	}
+	o.directives[typeName][field] = append(o.directives[typeName][field], directive)
+	return o
+}
+
 type Generator struct {
 	ctx context.Context
 
-	schema string
-	types  []any
+	schema  string
+	types   []any
+	options *Options
 }
 
-func ForSchema(ctx context.Context, schemaName string) Generator {
+func ForSchema(ctx context.Context, schemaName string, options *Options) Generator {
 	return Generator{
-		ctx:    ctx,
-		schema: schemaName,
-		types:  registeredFixtures[schemaName],
+		ctx:     ctx,
+		schema:  schemaName,
+		types:   registeredFixtures[schemaName],
+		options: options,
 	}
 }
 
@@ -85,7 +109,7 @@ func (g Generator) GenerateDocs() ([]string, error) {
 
 // extractGQLFromType extracts a GraphQL SDL definition as a string
 // from a given type struct
-func ExtractGQLFromType(t any) (string, error) {
+func (g Generator) ExtractGQLFromType(t any) (string, error) {
 	var buf bytes.Buffer
 
 	if reflect.TypeOf(t).Kind() != reflect.Struct {
@@ -104,7 +128,16 @@ func ExtractGQLFromType(t any) (string, error) {
 		fname := f.Name
 		ftype := f.Type.Name()
 		gqlType := gTypeToGQLType[ftype]
-		fmt.Fprintf(&buf, "\t%s: %s\n", fname, gqlType)
+
+		directive := ""
+		if g.options != nil {
+			if dirsMap, ok := g.options.directives[name]; ok {
+				if dirs, ok := dirsMap[fname]; ok {
+					directive = " " + strings.Join(dirs, " ")
+				}
+			}
+		}
+		fmt.Fprintf(&buf, "\t%s: %s%s\n", fname, gqlType, directive)
 	}
 	fmt.Fprint(&buf, "}")
 
