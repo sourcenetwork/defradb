@@ -192,6 +192,11 @@ func (w *Wrapper) LensRegistry() client.LensRegistry {
 	return &LensRegistry{w.cmd}
 }
 
+type collectionDefinition struct {
+	Description client.CollectionDescription
+	Schema      client.SchemaDescription
+}
+
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
 	args = append(args, "--name", name)
@@ -200,11 +205,11 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 	if err != nil {
 		return nil, err
 	}
-	var colDesc client.CollectionDescription
-	if err := json.Unmarshal(data, &colDesc); err != nil {
+	var definition collectionDefinition
+	if err := json.Unmarshal(data, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, colDesc, colDesc.Schema}, nil
+	return &Collection{w.cmd, definition.Description, definition.Schema}, nil
 }
 
 func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
@@ -215,11 +220,11 @@ func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) 
 	if err != nil {
 		return nil, err
 	}
-	var colDesc client.CollectionDescription
-	if err := json.Unmarshal(data, &colDesc); err != nil {
+	var definition collectionDefinition
+	if err := json.Unmarshal(data, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, colDesc, colDesc.Schema}, nil
+	return &Collection{w.cmd, definition.Description, definition.Schema}, nil
 }
 
 func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
@@ -230,11 +235,11 @@ func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string
 	if err != nil {
 		return nil, err
 	}
-	var colDesc client.CollectionDescription
-	if err := json.Unmarshal(data, &colDesc); err != nil {
+	var definition collectionDefinition
+	if err := json.Unmarshal(data, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, colDesc, colDesc.Schema}, nil
+	return &Collection{w.cmd, definition.Description, definition.Schema}, nil
 }
 
 func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
@@ -244,13 +249,13 @@ func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, e
 	if err != nil {
 		return nil, err
 	}
-	var colDesc []client.CollectionDescription
+	var colDesc []collectionDefinition
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
 	cols := make([]client.Collection, len(colDesc))
 	for i, v := range colDesc {
-		cols[i] = &Collection{w.cmd, v, v.Schema}
+		cols[i] = &Collection{w.cmd, v.Description, v.Schema}
 	}
 	return cols, err
 }
