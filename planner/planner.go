@@ -298,6 +298,7 @@ func (p *Planner) expandMultiNode(multiNode MultiNode, parentPlan *selectTopNode
 	return nil
 }
 
+// expandTypeIndexJoinPlan does a plan graph expansion and other optimizations on typeIndexJoin.
 func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
@@ -331,10 +332,7 @@ func findFilteredByRelationFields(
 	return filteredSubFields
 }
 
-func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
-	if parentPlan.selectNode.filter == nil {
-		return p.expandPlan(node.subType, parentPlan)
-	}
+func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
 	filteredSubFields := findFilteredByRelationFields(
 		parentPlan.selectNode.filter.Conditions,
 		node.documentMapping,
@@ -357,6 +355,20 @@ func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTop
 			}
 			break
 		}
+	}
+
+	return nil
+}
+
+// expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
+func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
+	if parentPlan.selectNode.filter == nil {
+		return p.expandPlan(node.subType, parentPlan)
+	}
+
+	err := p.tryOptimizeJoinDirection(node, parentPlan)
+	if err != nil {
+		return err
 	}
 
 	return p.expandPlan(node.subType, parentPlan)
