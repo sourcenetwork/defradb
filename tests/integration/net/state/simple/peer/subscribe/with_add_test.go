@@ -325,7 +325,7 @@ func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddNone(t *testing.T) {
+func TestP2PWithoutSubscribeAddNone(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
