@@ -139,7 +139,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	newCollections := []client.CollectionDefinition{}
 	newSchemaByName := map[string]client.SchemaDescription{}
 	for _, desc := range newDescriptionsByName {
-		col, err := db.newCollection(desc)
+		col, err := db.newCollection(desc, desc.Schema)
 		if err != nil {
 			return err
 		}
