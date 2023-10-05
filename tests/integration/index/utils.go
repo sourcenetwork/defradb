@@ -285,19 +285,6 @@ func (p *schemaParser) resolvePrimaryRelations() {
 	}
 }
 
-func sendRequestAndExplain(
-	reqBody string,
-	results []map[string]any,
-	asserter testUtils.ResultAsserter,
-) []testUtils.Request {
-	return []testUtils.Request{
-		{
-			Request: "query {" + reqBody + "}",
-			Results: results,
-		},
-		{
-			Request:  "query @explain(type: execute) {" + reqBody + "}",
-			Asserter: asserter,
-		},
-	}
+func makeExplainQuery(req string) string {
+	return "query @explain(type: execute) " + req[6:]
 }

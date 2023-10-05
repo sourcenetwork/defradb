@@ -17,6 +17,20 @@ import (
 )
 
 func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	req1 := `query {
+		User(filter: {
+			devices: {model: {_eq: "MacBook Pro"}}
+		}) {
+			name
+		}
+	}`
+	req2 := `query {
+		User(filter: {
+			devices: {model: {_eq: "iPhone 10"}}
+		}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-N relation",
 		Actions: []any{
@@ -32,30 +46,28 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 					owner: User
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {
-					devices: {model: {_eq: "MacBook Pro"}}
-				}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req1,
+				Results: []map[string]any{
 					{"name": "Islam"},
 					{"name": "Shahzad"},
 					{"name": "Keenan"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
-			),
-			sendRequestAndExplain(`
-				User(filter: {
-					devices: {model: {_eq: "iPhone 10"}}
-				}) {
-					name
-				}`,
-				[]map[string]any{
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: []map[string]any{
 					{"name": "Addo"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+			},
 		},
 	}
 
@@ -63,6 +75,20 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 }
 
 func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	req1 := `query {
+		User(filter: {
+			address: {city: {_eq: "Munich"}}
+		}) {
+			name
+		}
+	}`
+	req2 := `query {
+		User(filter: {
+			address: {city: {_eq: "Montreal"}}
+		}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Filter on indexed secondary relation field in 1-1 relation",
 		Actions: []any{
@@ -78,30 +104,28 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 					city: String @index
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {
-					address: {city: {_eq: "Munich"}}
-				}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req1,
+				Results: []map[string]any{
 					{"name": "Islam"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
-			),
-			sendRequestAndExplain(`
-				User(filter: {
-					address: {city: {_eq: "Montreal"}}
-				}) {
-					name
-				}`,
-				[]map[string]any{
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: []map[string]any{
 					{"name": "Shahzad"},
 					{"name": "Fred"},
 					{"name": "John"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(6).WithFieldFetches(9).WithIndexFetches(3),
+			},
 		},
 	}
 
@@ -109,6 +133,20 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 }
 
 func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	req1 := `query {
+		User(filter: {
+			address: {city: {_eq: "Munich"}}
+		}) {
+			name
+		}
+	}`
+	req2 := `query {
+		User(filter: {
+			address: {city: {_eq: "Montreal"}}
+		}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Filter on indexed primary relation field in 1-1 relation",
 		Actions: []any{
@@ -125,30 +163,28 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_Shoul
 					street: String 
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {
-					address: {city: {_eq: "Munich"}}
-				}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req1,
+				Results: []map[string]any{
 					{"name": "Islam"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
-			),
-			sendRequestAndExplain(`
-				User(filter: {
-					address: {city: {_eq: "Montreal"}}
-				}) {
-					name
-				}`,
-				[]map[string]any{
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: []map[string]any{
 					{"name": "John"},
 					{"name": "Fred"},
 					{"name": "Shahzad"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(14).WithFieldFetches(17).WithIndexFetches(3),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(14).WithFieldFetches(17).WithIndexFetches(3),
+			},
 		},
 	}
 
@@ -156,6 +192,26 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_Shoul
 }
 
 func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+	req1 := `query {
+		User(filter: {
+			address: {city: {_eq: "Munich"}}
+		}) {
+			name
+			address {
+				city
+			}
+		}
+	}`
+	req2 := `query {
+		User(filter: {
+			devices: {model: {_eq: "Walkman"}}
+		}) {
+			name
+			devices {
+				model
+			}
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-1 and 1-N relations",
 		Actions: []any{
@@ -177,16 +233,9 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 					city: String @index
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {
-					address: {city: {_eq: "Munich"}}
-				}) {
-					name
-					address {
-						city
-					}
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req1,
+				Results: []map[string]any{
 					{
 						"name": "Islam",
 						"address": map[string]any{
@@ -194,18 +243,14 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 						},
 					},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
-			),
-			sendRequestAndExplain(`
-				User(filter: {
-					devices: {model: {_eq: "Walkman"}}
-				}) {
-					name
-					devices {
-						model
-					}
-				}`,
-				[]map[string]any{
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: []map[string]any{
 					{
 						"name": "Chris",
 						"devices": map[string]any{
@@ -213,8 +258,11 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 						},
 					},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+			},
 		},
 	}
 

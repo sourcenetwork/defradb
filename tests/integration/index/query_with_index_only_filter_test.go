@@ -17,6 +17,12 @@ import (
 )
 
 func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) {
+	req := `query {
+		User(filter: {name: {_eq: "Islam"}}) {
+			name
+			age
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "If there are non-indexed fields in the query, they should be fetched",
 		Actions: []any{
@@ -26,17 +32,17 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 					age: Int
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {name: {_eq: "Islam"}}) {
-					name
-					age
-				}`,
-				[]map[string]any{{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{{
 					"name": "Islam",
 					"age":  uint64(32),
 				}},
-				testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(1),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(1),
+			},
 		},
 	}
 
@@ -44,6 +50,11 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 }
 
 func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {name: {_eq: "Islam"}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter",
 		Actions: []any{
@@ -52,15 +63,16 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 					name: String @index
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {name: {_eq: "Islam"}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Islam"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(1).WithIndexFetches(1),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(1).WithIndexFetches(1),
+			},
 		},
 	}
 
@@ -68,6 +80,11 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 }
 
 func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
+	req := `query {
+		User(filter: {name: {_eq: "Islam"}}) {
+			age
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "If there are several docs matching _eq filter, they should be fetched",
 		Actions: []any{
@@ -84,16 +101,17 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 					"age": 18
 				}`,
 			},
-			sendRequestAndExplain(`
-				User(filter: {name: {_eq: "Islam"}}) {
-					age
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"age": uint64(32)},
 					{"age": uint64(18)},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(2),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(2),
+			},
 		},
 	}
 
@@ -101,6 +119,11 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_gt: 48}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
@@ -110,15 +133,16 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {age: {_gt: 48}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Chris"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(8),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(8),
+			},
 		},
 	}
 
@@ -126,6 +150,11 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_ge: 48}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
@@ -135,16 +164,17 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {age: {_ge: 48}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Keenan"},
 					{"name": "Chris"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(8),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(8),
+			},
 		},
 	}
 
@@ -152,6 +182,11 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_lt: 28}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
@@ -161,15 +196,16 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {age: {_lt: 28}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Shahzad"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(8),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(8),
+			},
 		},
 	}
 
@@ -177,6 +213,11 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_le: 28}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
@@ -186,16 +227,17 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {age: {_le: 28}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Shahzad"},
 					{"name": "Fred"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(8),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(8),
+			},
 		},
 	}
 
@@ -203,6 +245,11 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {name: {_ne: "Islam"}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ne filter",
 		Actions: []any{
@@ -212,11 +259,9 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 					age: Int 
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {name: {_ne: "Islam"}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Addo"},
 					{"name": "Andy"},
 					{"name": "Fred"},
@@ -225,8 +270,11 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 					{"name": "Keenan"},
 					{"name": "Shahzad"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(7).WithFieldFetches(7).WithIndexFetches(8),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(7).WithFieldFetches(7).WithIndexFetches(8),
+			},
 		},
 	}
 
@@ -234,6 +282,11 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_in: [20, 33]}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
@@ -243,16 +296,17 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {age: {_in: [20, 33]}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Shahzad"},
 					{"name": "Andy"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(2),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(2),
+			},
 		},
 	}
 
@@ -260,6 +314,11 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 }
 
 func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
+	req := `query {
+		User(filter: {name: {_in: ["Islam"]}}) {
+			age
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "If there are several docs matching _in filter, they should be fetched",
 		Actions: []any{
@@ -276,16 +335,17 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 					"age": 18
 				}`,
 			},
-			sendRequestAndExplain(`
-				User(filter: {name: {_in: ["Islam"]}}) {
-					age
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"age": uint64(32)},
 					{"age": uint64(18)},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(2),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(2),
+			},
 		},
 	}
 
@@ -293,6 +353,11 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_nin: [20, 28, 33, 42, 55]}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nin filter",
 		Actions: []any{
@@ -302,17 +367,18 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 					age: Int @index
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {age: {_nin: [20, 28, 33, 42, 55]}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "John"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6).WithIndexFetches(8),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6).WithIndexFetches(8),
+			},
 		},
 	}
 
@@ -320,6 +386,21 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
+	req1 := `query {
+		User(filter: {name: {_like: "A%"}}) {
+			name
+		}
+	}`
+	req2 := `query {
+		User(filter: {name: {_like: "%d"}}) {
+			name
+		}
+	}`
+	req3 := `query {
+		User(filter: {name: {_like: "%e%"}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _like filter",
 		Actions: []any{
@@ -329,36 +410,39 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					age: Int 
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {name: {_like: "A%"}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req1,
+				Results: []map[string]any{
 					{"name": "Addo"},
 					{"name": "Andy"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
-			),
-			sendRequestAndExplain(`
-				User(filter: {name: {_like: "%d"}}) {
-					name
-				}`,
-				[]map[string]any{
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: []map[string]any{
 					{"name": "Fred"},
 					{"name": "Shahzad"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
-			),
-			sendRequestAndExplain(`
-				User(filter: {name: {_like: "%e%"}}) {
-					name
-				}`,
-				[]map[string]any{
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
+			},
+			testUtils.Request{
+				Request: req3,
+				Results: []map[string]any{
 					{"name": "Fred"},
 					{"name": "Keenan"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req3),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
+			},
 		},
 	}
 
@@ -366,6 +450,11 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {name: {_nlike: "%h%"}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nlike filter",
 		Actions: []any{
@@ -375,19 +464,20 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 					age: Int 
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {name: {_nlike: "%h%"}}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Addo"},
 					{"name": "Andy"},
 					{"name": "Fred"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(5).WithFieldFetches(5).WithIndexFetches(8),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(5).WithFieldFetches(5).WithIndexFetches(8),
+			},
 		},
 	}
 

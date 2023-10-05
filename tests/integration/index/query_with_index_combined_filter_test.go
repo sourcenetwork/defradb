@@ -17,6 +17,14 @@ import (
 )
 
 func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
+	req := `query {
+		User(filter: {
+			name: {_in: ["Fred", "Islam", "Addo"]}, 
+			age:  {_gt: 40}
+		}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of an indexed field",
 		Actions: []any{
@@ -26,18 +34,16 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 					age: Int
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {
-					name: {_in: ["Fred", "Islam", "Addo"]}, 
-					age:  {_gt: 40}
-				}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Addo"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6).WithIndexFetches(3),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6).WithIndexFetches(3),
+			},
 		},
 	}
 
@@ -45,6 +51,15 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 }
 
 func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testing.T) {
+	req := `query {
+		User(filter: {
+			name: {_like: "%a%"}, 
+			age:  {_gt: 30},
+			email: {_like: "%m@gmail.com"}
+		}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of 2 indexed fields",
 		Actions: []any{
@@ -55,19 +70,16 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 					email: String 
 				} 
 			`),
-			sendRequestAndExplain(`
-				User(filter: {
-					name: {_like: "%a%"}, 
-					age:  {_gt: 30},
-					email: {_like: "%m@gmail.com"}
-				}) {
-					name
-				}`,
-				[]map[string]any{
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
 					{"name": "Islam"},
 				},
-				testUtils.NewExplainAsserter().WithDocFetches(5).WithFieldFetches(15),
-			),
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(5).WithFieldFetches(15),
+			},
 		},
 	}
 
