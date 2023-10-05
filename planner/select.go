@@ -304,6 +304,8 @@ func findFilteredByIndexedField(scanNode *scanNode) immutable.Option[client.Fiel
 		for i := range indexedFields {
 			typeIndex := scanNode.documentMapping.FirstIndexOfName(indexedFields[i].Name)
 			if scanNode.filter.HasIndex(typeIndex) {
+				// we return the first found indexed field to keep it simple for now
+				// more sophisticated optimization logic can be added later
 				return immutable.Some(indexedFields[i])
 			}
 		}

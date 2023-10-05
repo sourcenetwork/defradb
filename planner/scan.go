@@ -146,17 +146,17 @@ func (scan *scanNode) initFetcher(
 	} else {
 		f = new(fetcher.DocumentFetcher)
 
-		var indexFilter *mapper.Filter
 		if indexedField.HasValue() {
 			typeIndex := scan.documentMapping.FirstIndexOfName(indexedField.Value().Name)
 			field := mapper.Field{Index: typeIndex, Name: indexedField.Value().Name}
+			var indexFilter *mapper.Filter
 			scan.filter, indexFilter = filter.SplitByField(scan.filter, field)
+			if indexFilter != nil {
+				fieldDesc, _ := scan.desc.Schema.GetField(indexedField.Value().Name)
+				f = fetcher.NewIndexFetcher(f, fieldDesc, indexFilter)
+			}
 		}
 
-		if indexFilter != nil {
-			fieldDesc, _ := scan.desc.Schema.GetField(indexedField.Value().Name)
-			f = fetcher.NewIndexFetcher(f, fieldDesc, indexFilter)
-		}
 		f = lens.NewFetcher(f, scan.p.db.LensRegistry())
 	}
 	scan.fetcher = f
