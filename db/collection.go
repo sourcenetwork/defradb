@@ -68,16 +68,16 @@ type collection struct {
 // CollectionOptions object.
 
 // NewCollection returns a pointer to a newly instanciated DB Collection
-func (db *db) newCollection(desc client.CollectionDescription) (*collection, error) {
+func (db *db) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) (*collection, error) {
 	return &collection{
 		db: db,
 		desc: client.CollectionDescription{
 			ID:      desc.ID,
 			Name:    desc.Name,
-			Schema:  desc.Schema,
+			Schema:  schema,
 			Indexes: desc.Indexes,
 		},
-		schema: desc.Schema,
+		schema: schema,
 	}, nil
 }
 
@@ -128,7 +128,7 @@ func (db *db) createCollection(
 		schema.Fields[i].ID = client.FieldID(i)
 	}
 
-	col, err := db.newCollection(desc)
+	col, err := db.newCollection(desc, schema)
 	if err != nil {
 		return nil, err
 	}
