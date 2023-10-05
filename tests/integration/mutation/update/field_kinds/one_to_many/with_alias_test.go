@@ -25,13 +25,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collectio
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",
-		// This restiction is temporary due to an inconsitent error message, see
-		// TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL
-		// and https://github.com/sourcenetwork/defradb/issues/1854 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -79,12 +72,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *te
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",
-		// This restiction is temporary due to an inconsitent error message, see
-		// TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collection
-		// and https://github.com/sourcenetwork/defradb/issues/1854 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -118,7 +105,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *te
 					}`,
 					bookKey,
 				),
-				ExpectedError: "The given field or alias to field does not exist. Name: published",
+				ExpectedError: "The given field does not exist. Name: published",
 			},
 		},
 	}
