@@ -33,7 +33,7 @@ var (
 
 func Benchmark_Query_UserSimple_Query_Sync_1(b *testing.B) {
 	ctx := context.Background()
-	err := runQueryBenchGet(
+	err := RunQueryBenchGet(
 		b,
 		ctx,
 		fixtures.ForSchema(ctx, "user_simple", nil),
@@ -48,7 +48,7 @@ func Benchmark_Query_UserSimple_Query_Sync_1(b *testing.B) {
 
 func Benchmark_Query_UserSimple_Query_Sync_10(b *testing.B) {
 	ctx := context.Background()
-	err := runQueryBenchGet(
+	err := RunQueryBenchGet(
 		b,
 		ctx,
 		fixtures.ForSchema(ctx, "user_simple", nil),
@@ -63,7 +63,7 @@ func Benchmark_Query_UserSimple_Query_Sync_10(b *testing.B) {
 
 func Benchmark_Query_UserSimple_Query_Sync_100(b *testing.B) {
 	ctx := context.Background()
-	err := runQueryBenchGet(
+	err := RunQueryBenchGet(
 		b,
 		ctx,
 		fixtures.ForSchema(ctx, "user_simple", nil),
@@ -78,7 +78,7 @@ func Benchmark_Query_UserSimple_Query_Sync_100(b *testing.B) {
 
 func Benchmark_Query_UserSimple_Query_Sync_1000(b *testing.B) {
 	ctx := context.Background()
-	err := runQueryBenchGet(
+	err := RunQueryBenchGet(
 		b,
 		ctx,
 		fixtures.ForSchema(ctx, "user_simple", nil),

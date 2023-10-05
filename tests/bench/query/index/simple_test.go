@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -15,12 +15,13 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
+	query "github.com/sourcenetwork/defradb/tests/bench/query/simple"
 )
 
 var (
 	userSimpleWithFilterQuery = `
 	query {
-		User(filter: {Age: {_gt: 10}}) {
+		User(filter: { Age: { _eq: 30 } }) {
 			_key
 			Name
 			Age
@@ -31,12 +32,16 @@ var (
 	`
 )
 
-func Benchmark_Query_UserSimple_Query_WithFilter_Sync_1(b *testing.B) {
+func getOptions() *fixtures.Options {
+	return fixtures.NewOptions().WithFieldDirective("User", "Age", "@index")
+}
+
+func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_1(b *testing.B) {
 	ctx := context.Background()
-	err := RunQueryBenchGet(
+	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", nil),
+		fixtures.ForSchema(ctx, "user_simple", getOptions()),
 		1,
 		userSimpleWithFilterQuery,
 		false,
@@ -46,12 +51,12 @@ func Benchmark_Query_UserSimple_Query_WithFilter_Sync_1(b *testing.B) {
 	}
 }
 
-func Benchmark_Query_UserSimple_Query_WithFilter_Sync_10(b *testing.B) {
+func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_10(b *testing.B) {
 	ctx := context.Background()
-	err := RunQueryBenchGet(
+	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", nil),
+		fixtures.ForSchema(ctx, "user_simple", getOptions()),
 		10,
 		userSimpleWithFilterQuery,
 		false,
@@ -61,13 +66,13 @@ func Benchmark_Query_UserSimple_Query_WithFilter_Sync_10(b *testing.B) {
 	}
 }
 
-func Benchmark_Query_UserSimple_Query_WithFilter_Sync_100(b *testing.B) {
+func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_1000(b *testing.B) {
 	ctx := context.Background()
-	err := RunQueryBenchGet(
+	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", nil),
-		100,
+		fixtures.ForSchema(ctx, "user_simple", getOptions()),
+		1000,
 		userSimpleWithFilterQuery,
 		false,
 	)
@@ -76,13 +81,13 @@ func Benchmark_Query_UserSimple_Query_WithFilter_Sync_100(b *testing.B) {
 	}
 }
 
-func Benchmark_Query_UserSimple_Query_WithFilter_Sync_1000(b *testing.B) {
+func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_10000(b *testing.B) {
 	ctx := context.Background()
-	err := RunQueryBenchGet(
+	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", nil),
-		1000,
+		fixtures.ForSchema(ctx, "user_simple", getOptions()),
+		10000,
 		userSimpleWithFilterQuery,
 		false,
 	)
