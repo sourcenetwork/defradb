@@ -1287,7 +1287,7 @@ func updateDocViaGQL(
 
 	request := fmt.Sprintf(
 		`mutation {
-			update_%s(id: "%s", data: %s) {
+			update_%s(docID: "%s", data: %s) {
 				_docID
 			}
 		}`,

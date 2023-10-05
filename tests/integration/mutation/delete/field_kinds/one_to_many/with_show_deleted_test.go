@@ -75,7 +75,7 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 			},
 			testUtils.Request{
 				Request: fmt.Sprintf(`mutation {
-						delete_Book(id: "%s") {
+					delete_Book(docID: "%s") {
 							_docID
 						}
 					}`, doc2.Key()),

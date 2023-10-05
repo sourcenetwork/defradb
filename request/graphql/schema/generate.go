@@ -999,10 +999,10 @@ func (g *Generator) genTypeMutationUpdateField(
 		Description: updateDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
-			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
-			"filter": schemaTypes.NewArgConfig(filter, updateFilterArgDescription),
-			"data":   schemaTypes.NewArgConfig(gql.String, updateDataArgDescription),
+			schemaTypes.DocID:  schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
+			schemaTypes.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
+			"filter":           schemaTypes.NewArgConfig(filter, updateFilterArgDescription),
+			"data":             schemaTypes.NewArgConfig(gql.String, updateDataArgDescription),
 		},
 	}
 	return field, nil
@@ -1017,9 +1017,9 @@ func (g *Generator) genTypeMutationDeleteField(
 		Description: deleteDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
-			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
-			"filter": schemaTypes.NewArgConfig(filter, deleteFilterArgDescription),
+			schemaTypes.DocID:  schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
+			schemaTypes.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
+			"filter":           schemaTypes.NewArgConfig(filter, deleteFilterArgDescription),
 		},
 	}
 	return field, nil

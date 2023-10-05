@@ -117,10 +117,10 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 			}
 
 			mut.Filter = filter
-		} else if prop == request.Id {
+		} else if prop == request.DocID {
 			raw := argument.Value.(*ast.StringValue)
 			mut.IDs = immutable.Some([]string{raw.Value})
-		} else if prop == request.Ids {
+		} else if prop == request.DocIDs {
 			raw := argument.Value.(*ast.ListValue)
 			ids := make([]string, len(raw.Values))
 			for i, val := range raw.Values {

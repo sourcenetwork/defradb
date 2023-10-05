@@ -25,10 +25,9 @@ const (
 	DocKeys     = "dockeys"
 	FieldName   = "field"
 	FieldIDName = "fieldId"
-	Id          = "id"
-	Ids         = "ids"
 	ShowDeleted = "showDeleted"
 
+	DocID  = "docID"
 	DocIDs = "docIDs"
 
 	FilterClause  = "filter"

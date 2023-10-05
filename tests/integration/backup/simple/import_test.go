@@ -78,7 +78,7 @@ func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 			},
 			testUtils.BackupImport{
 				ImportContent: `{"User":[{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
-				ExpectedError: "a document with the given dockey already exists",
+				ExpectedError: "a document with the given ID already exists",
 			},
 		},
 	}

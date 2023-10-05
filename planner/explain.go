@@ -56,7 +56,6 @@ const (
 	dataLabel           = "data"
 	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"
-	idsLabel            = "ids"
 	joinRootLabel       = "root"
 	joinSubTypeLabel    = "subType"
 	limitLabel          = "limit"

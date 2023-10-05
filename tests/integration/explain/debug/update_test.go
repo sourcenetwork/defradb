@@ -74,7 +74,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 
 				Request: `mutation @explain(type: debug) {
 					update_Author(
-						ids: [
+						docIDs: [
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],
@@ -97,7 +97,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 func TestDebugExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with update using id.",
+		Description: "Explain (debug) mutation request with update using document id.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -106,7 +106,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 
 				Request: `mutation @explain(type: debug) {
 					update_Author(
-						id: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+						docID: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 						data: "{\"age\": 59}"
 					) {
 						_docID
@@ -140,7 +140,7 @@ func TestDebugExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) {
 								_eq: true
 							}
 						},
-						ids: [
+						docIDs: [
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],

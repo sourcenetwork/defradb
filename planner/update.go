@@ -28,7 +28,8 @@ type updateNode struct {
 	collection client.Collection
 
 	filter *mapper.Filter
-	ids    []string
+
+	docIDs []string
 
 	patch string
 
@@ -115,7 +116,7 @@ func (n *updateNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the document id(s) that request wants to update.
-	simpleExplainMap[idsLabel] = n.ids
+	simpleExplainMap[request.DocIDs] = n.docIDs
 
 	// Add the filter attribute if it exists, otherwise have it nil.
 	if n.filter == nil {
@@ -157,7 +158,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	update := &updateNode{
 		p:          p,
 		filter:     parsed.Filter,
-		ids:        parsed.DocKeys.Value(),
+		docIDs:     parsed.DocKeys.Value(),
 		isUpdating: true,
 		patch:      parsed.Data,
 		docMapper:  docMapper{parsed.DocumentMapping},

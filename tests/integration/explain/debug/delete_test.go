@@ -80,7 +80,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *te
 func TestDebugExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using id.",
+		Description: "Explain (debug) mutation request with delete using document id.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -88,7 +88,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
-					delete_Author(id: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
+					delete_Author(docID: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
 						_docID
 					}
 				}`,
@@ -112,7 +112,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
-					delete_Author(ids: [
+					delete_Author(docIDs: [
 						"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 						"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
 					]) {
@@ -139,7 +139,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
-					delete_Author(ids: []) {
+					delete_Author(docIDs: []) {
 						_docID
 					}
 				}`,
@@ -164,7 +164,7 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) {
 
 				Request: `mutation @explain(type: debug) {
 					delete_Author(
-						ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "test"],
+						docIDs: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "test"],
 						filter: {
 							_and: [
 								{age: {_lt: 26}},

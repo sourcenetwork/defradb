@@ -46,7 +46,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					delete_User(id: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
+					delete_User(docID: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
 						_docID
 					}
 				}`,
@@ -90,7 +90,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 			testUtils.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					delete_User(id: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
+					delete_User(docID: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
 						_docID
 					}
 				}`,
