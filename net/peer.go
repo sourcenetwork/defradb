@@ -776,7 +776,7 @@ type EvtPubSub struct {
 }
 
 // rollbackAddPubSubTopics removes the given topics from the pubsub system.
-func (p *Peer) rollbackAddPubSubTopics(cause error, topics ...string) error {
+func (p *Peer) rollbackAddPubSubTopics(topics []string, cause error) error {
 	for _, topic := range topics {
 		if err := p.server.removePubSubTopic(topic); err != nil {
 			return errors.WithStack(err, errors.NewKV("Cause", cause))
@@ -786,7 +786,7 @@ func (p *Peer) rollbackAddPubSubTopics(cause error, topics ...string) error {
 }
 
 // rollbackRemovePubSubTopics adds back the given topics from the pubsub system.
-func (p *Peer) rollbackRemovePubSubTopics(cause error, topics ...string) error {
+func (p *Peer) rollbackRemovePubSubTopics(topics []string, cause error) error {
 	for _, topic := range topics {
 		if err := p.server.addPubSubTopic(topic, true); err != nil {
 			return errors.WithStack(err, errors.NewKV("Cause", cause))
@@ -801,9 +801,9 @@ func (p *Peer) rollbackRemovePubSubTopics(cause error, topics ...string) error {
 // changes to the server may still be applied.
 //
 // WARNING: Calling this on collections with a large number of documents may take a long time to process.
-func (p *Peer) AddP2PCollection(
+func (p *Peer) AddP2PCollections(
 	ctx context.Context,
-	collectionID string,
+	collectionIDs []string,
 ) error {
 	log.Debug(ctx, "Received AddP2PCollections request")
 
@@ -815,42 +815,52 @@ func (p *Peer) AddP2PCollection(
 	store := p.db.WithTxn(txn)
 
 	// first let's make sure the collections actually exists
-	col, err := store.GetCollectionBySchemaID(p.ctx, collectionID)
-	if err != nil {
-		return err
+	storeCollections := []client.Collection{}
+	for _, col := range collectionIDs {
+		storeCol, err := store.GetCollectionBySchemaID(p.ctx, col)
+		if err != nil {
+			return err
+		}
+		storeCollections = append(storeCollections, storeCol)
 	}
 
 	// Ensure we can add all the collections to the store on the transaction
 	// before adding to topics.
-	err = store.AddP2PCollection(p.ctx, col.SchemaID())
+	err = store.AddP2PCollections(p.ctx, collectionIDs)
 	if err != nil {
 		return err
 	}
 
 	// Add pubsub topics and remove them if we get an error.
-	err = p.server.addPubSubTopic(col.SchemaID(), true)
-	if err != nil {
-		return p.rollbackAddPubSubTopics(err, col.SchemaID())
+	addedTopics := []string{}
+	for _, col := range collectionIDs {
+		err = p.server.addPubSubTopic(col, true)
+		if err != nil {
+			return p.rollbackAddPubSubTopics(addedTopics, err)
+		}
+		addedTopics = append(addedTopics, col)
 	}
 
 	// After adding the collection topics, we remove the collections' documents
 	// from the pubsub topics to avoid receiving duplicate events.
 	removedTopics := []string{}
-	keyChan, err := col.GetAllDocKeys(p.ctx)
-	if err != nil {
-		return err
-	}
-	for key := range keyChan {
-		err := p.server.removePubSubTopic(key.Key.String())
+	for _, col := range storeCollections {
+		keyChan, err := col.GetAllDocKeys(p.ctx)
 		if err != nil {
-			return p.rollbackRemovePubSubTopics(err, removedTopics...)
+			return err
 		}
-		removedTopics = append(removedTopics, key.Key.String())
+		for key := range keyChan {
+			err := p.server.removePubSubTopic(key.Key.String())
+			if err != nil {
+				return p.rollbackRemovePubSubTopics(removedTopics, err)
+			}
+			removedTopics = append(removedTopics, key.Key.String())
+		}
 	}
 
 	if err = txn.Commit(p.ctx); err != nil {
-		err = p.rollbackRemovePubSubTopics(err, removedTopics...)
-		return p.rollbackAddPubSubTopics(err, col.SchemaID())
+		err = p.rollbackRemovePubSubTopics(removedTopics, err)
+		return p.rollbackAddPubSubTopics(addedTopics, err)
 	}
 
 	return nil
@@ -862,9 +872,9 @@ func (p *Peer) AddP2PCollection(
 // changes to the server may still be applied.
 //
 // WARNING: Calling this on collections with a large number of documents may take a long time to process.
-func (p *Peer) RemoveP2PCollection(
+func (p *Peer) RemoveP2PCollections(
 	ctx context.Context,
-	collectionID string,
+	collectionIDs []string,
 ) error {
 	log.Debug(ctx, "Received RemoveP2PCollections request")
 
@@ -876,42 +886,52 @@ func (p *Peer) RemoveP2PCollection(
 	store := p.db.WithTxn(txn)
 
 	// first let's make sure the collections actually exists
-	col, err := store.GetCollectionBySchemaID(p.ctx, collectionID)
-	if err != nil {
-		return err
+	storeCollections := []client.Collection{}
+	for _, col := range collectionIDs {
+		storeCol, err := store.GetCollectionBySchemaID(p.ctx, col)
+		if err != nil {
+			return err
+		}
+		storeCollections = append(storeCollections, storeCol)
 	}
 
 	// Ensure we can remove all the collections to the store on the transaction
 	// before adding to topics.
-	err = store.RemoveP2PCollection(p.ctx, col.SchemaID())
+	err = store.RemoveP2PCollections(p.ctx, collectionIDs)
 	if err != nil {
 		return err
 	}
 
 	// Remove pubsub topics and add them back if we get an error.
-	err = p.server.removePubSubTopic(col.SchemaID())
-	if err != nil {
-		return p.rollbackRemovePubSubTopics(err, col.SchemaID())
+	removedTopics := []string{}
+	for _, col := range collectionIDs {
+		err = p.server.removePubSubTopic(col)
+		if err != nil {
+			return p.rollbackRemovePubSubTopics(removedTopics, err)
+		}
+		removedTopics = append(removedTopics, col)
 	}
 
 	// After removing the collection topics, we add back the collections' documents
 	// to the pubsub topics.
 	addedTopics := []string{}
-	keyChan, err := col.GetAllDocKeys(p.ctx)
-	if err != nil {
-		return err
-	}
-	for key := range keyChan {
-		err := p.server.addPubSubTopic(key.Key.String(), true)
+	for _, col := range storeCollections {
+		keyChan, err := col.GetAllDocKeys(p.ctx)
 		if err != nil {
-			return p.rollbackAddPubSubTopics(err, addedTopics...)
+			return err
 		}
-		addedTopics = append(addedTopics, key.Key.String())
+		for key := range keyChan {
+			err := p.server.addPubSubTopic(key.Key.String(), true)
+			if err != nil {
+				return p.rollbackAddPubSubTopics(addedTopics, err)
+			}
+			addedTopics = append(addedTopics, key.Key.String())
+		}
 	}
 
 	if err = txn.Commit(p.ctx); err != nil {
-		err = p.rollbackAddPubSubTopics(err, addedTopics...)
-		return p.rollbackRemovePubSubTopics(err, col.SchemaID())
+		err = p.rollbackAddPubSubTopics(addedTopics, err)
+		return p.rollbackRemovePubSubTopics(removedTopics, err)
 	}
 
 	return nil

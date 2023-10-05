@@ -121,54 +121,68 @@ func (db *explicitTxnDB) GetCollectionByVersionID(
 	return db.getCollectionByVersionID(ctx, db.txn, schemaVersionID)
 }
 
-// AddP2PCollection adds the given collection ID that the P2P system
-// subscribes to to the the persisted list. It will error if the provided
-// collection ID is invalid.
-func (db *implicitTxnDB) AddP2PCollection(ctx context.Context, collectionID string) error {
+// AddP2PCollections adds the given collection IDs to the P2P system and
+// subscribes to their topics. It will error if any of the provided
+// collection IDs are invalid.
+func (db *implicitTxnDB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = db.addP2PCollection(ctx, txn, collectionID)
-	if err != nil {
-		return err
+	for _, collectionID := range collectionIDs {
+		err = db.addP2PCollection(ctx, txn, collectionID)
+		if err != nil {
+			return err
+		}
 	}
-
 	return txn.Commit(ctx)
 }
 
-// AddP2PCollection adds the given collection ID that the P2P system
-// subscribes to to the the persisted list. It will error if the provided
-// collection ID is invalid.
-func (db *explicitTxnDB) AddP2PCollection(ctx context.Context, collectionID string) error {
-	return db.addP2PCollection(ctx, db.txn, collectionID)
+// AddP2PCollections adds the given collection IDs to the P2P system and
+// subscribes to their topics. It will error if any of the provided
+// collection IDs are invalid.
+func (db *explicitTxnDB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+	for _, collectionID := range collectionIDs {
+		err := db.addP2PCollection(ctx, db.txn, collectionID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-// RemoveP2PCollection removes the given collection ID that the P2P system
-// subscribes to from the the persisted list. It will error if the provided
-// collection ID is invalid.
-func (db *implicitTxnDB) RemoveP2PCollection(ctx context.Context, collectionID string) error {
+// RemoveP2PCollections removes the given collection IDs from the P2P system and
+// unsubscribes from their topics. It will error if the provided
+// collection IDs are invalid.
+func (db *implicitTxnDB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = db.removeP2PCollection(ctx, txn, collectionID)
-	if err != nil {
-		return err
+	for _, collectionID := range collectionIDs {
+		err = db.removeP2PCollection(ctx, txn, collectionID)
+		if err != nil {
+			return err
+		}
 	}
-
 	return txn.Commit(ctx)
 }
 
-// RemoveP2PCollection removes the given collection ID that the P2P system
-// subscribes to from the the persisted list. It will error if the provided
-// collection ID is invalid.
-func (db *explicitTxnDB) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	return db.removeP2PCollection(ctx, db.txn, collectionID)
+// RemoveP2PCollections removes the given collection IDs from the P2P system and
+// unsubscribes from their topics. It will error if the provided
+// collection IDs are invalid.
+func (db *explicitTxnDB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+	for _, collectionID := range collectionIDs {
+		err := db.removeP2PCollection(ctx, db.txn, collectionID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // GetAllCollections gets all the currently defined collections.

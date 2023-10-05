@@ -73,7 +73,7 @@ func TestNewServerWithCollectionSubscribed(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	err = n.AddP2PCollection(ctx, col.SchemaID())
+	err = n.AddP2PCollections(ctx, []string{col.SchemaID()})
 	require.NoError(t, err)
 
 	_, err = newServer(n.Peer, db)

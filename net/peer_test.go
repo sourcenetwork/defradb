@@ -667,7 +667,7 @@ func TestAddP2PCollections_WithInvalidCollectionID_NotFoundError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 
-	err := n.Peer.AddP2PCollection(ctx, "invalid_collection")
+	err := n.Peer.AddP2PCollections(ctx, []string{"invalid_collection"})
 	require.Error(t, err, ds.ErrNotFound)
 }
 
@@ -684,7 +684,7 @@ func TestAddP2PCollections_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	err = n.Peer.AddP2PCollection(ctx, col.SchemaID())
+	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaID()})
 	require.NoError(t, err)
 }
 
@@ -692,7 +692,7 @@ func TestRemoveP2PCollectionsWithInvalidCollectionID(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 
-	err := n.Peer.RemoveP2PCollection(ctx, "invalid_collection")
+	err := n.Peer.RemoveP2PCollections(ctx, []string{"invalid_collection"})
 	require.Error(t, err, ds.ErrNotFound)
 }
 
@@ -709,7 +709,7 @@ func TestRemoveP2PCollections(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	err = n.Peer.RemoveP2PCollection(ctx, col.SchemaID())
+	err = n.Peer.RemoveP2PCollections(ctx, []string{col.SchemaID()})
 	require.NoError(t, err)
 }
 
@@ -735,7 +735,7 @@ func TestGetAllP2PCollections(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	err = n.Peer.AddP2PCollection(ctx, col.SchemaID())
+	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaID()})
 	require.NoError(t, err)
 
 	cols, err := n.Peer.GetAllP2PCollections(ctx)

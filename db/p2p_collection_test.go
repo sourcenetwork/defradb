@@ -63,7 +63,7 @@ func TestAddP2PCollection(t *testing.T) {
 
 	col := newTestCollection(t, ctx, db, "test")
 
-	err = db.AddP2PCollection(ctx, col.SchemaID())
+	err = db.AddP2PCollections(ctx, []string{col.SchemaID()})
 	require.NoError(t, err)
 }
 
@@ -74,20 +74,16 @@ func TestGetAllP2PCollection(t *testing.T) {
 	defer db.Close(ctx)
 
 	col1 := newTestCollection(t, ctx, db, "test1")
-	err = db.AddP2PCollection(ctx, col1.SchemaID())
-	require.NoError(t, err)
-
 	col2 := newTestCollection(t, ctx, db, "test2")
-	err = db.AddP2PCollection(ctx, col2.SchemaID())
-	require.NoError(t, err)
-
 	col3 := newTestCollection(t, ctx, db, "test3")
-	err = db.AddP2PCollection(ctx, col3.SchemaID())
+
+	collectionIDs := []string{col1.SchemaID(), col2.SchemaID(), col3.SchemaID()}
+	err = db.AddP2PCollections(ctx, collectionIDs)
 	require.NoError(t, err)
 
 	collections, err := db.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
-	require.ElementsMatch(t, collections, []string{col1.SchemaID(), col2.SchemaID(), col3.SchemaID()})
+	require.ElementsMatch(t, collections, collectionIDs)
 }
 
 func TestRemoveP2PCollection(t *testing.T) {
@@ -97,18 +93,15 @@ func TestRemoveP2PCollection(t *testing.T) {
 	defer db.Close(ctx)
 
 	col1 := newTestCollection(t, ctx, db, "test1")
-	err = db.AddP2PCollection(ctx, col1.SchemaID())
-	require.NoError(t, err)
-
 	col2 := newTestCollection(t, ctx, db, "test2")
-	err = db.AddP2PCollection(ctx, col2.SchemaID())
-	require.NoError(t, err)
-
 	col3 := newTestCollection(t, ctx, db, "test3")
-	err = db.AddP2PCollection(ctx, col3.SchemaID())
+
+	collectionIDs := []string{col1.SchemaID(), col2.SchemaID(), col3.SchemaID()}
+
+	err = db.AddP2PCollections(ctx, collectionIDs)
 	require.NoError(t, err)
 
-	err = db.RemoveP2PCollection(ctx, col2.SchemaID())
+	err = db.RemoveP2PCollections(ctx, []string{col2.SchemaID()})
 	require.NoError(t, err)
 
 	collections, err := db.GetAllP2PCollections(ctx)
