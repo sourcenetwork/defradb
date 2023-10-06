@@ -814,11 +814,6 @@ func configureNode(
 	}
 
 	cfg := action()
-	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
-	// And affects where libp2p(?) stores some values on the file system, even when using
-	// an in memory store.
-	cfg.Datastore.Badger.Path = s.t.TempDir()
-
 	db, path, err := GetDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
