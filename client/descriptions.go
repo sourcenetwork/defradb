@@ -28,6 +28,8 @@ type CollectionDescription struct {
 	ID uint32
 
 	// Schema contains the data type information that this Collection uses.
+	//
+	// This property is deprecated and should not be used.
 	Schema SchemaDescription
 
 	// Indexes contains the secondary indexes that this Collection has.
