@@ -32,7 +32,16 @@ Example: add multiple collections
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetStoreContext(cmd)
-			collectionIDs := strings.Split(args[0], ",")
+
+			var collectionIDs []string
+			for _, id := range strings.Split(args[0], ",") {
+				id = strings.TrimSpace(id)
+				if id == "" {
+					continue
+				}
+				collectionIDs = append(collectionIDs, id)
+			}
+
 			return store.AddP2PCollections(cmd.Context(), collectionIDs)
 		},
 	}
