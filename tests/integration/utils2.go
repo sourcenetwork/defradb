@@ -339,11 +339,8 @@ func executeTestCase(
 	log.Info(
 		ctx,
 		testCase.Description,
-		logging.NewKV("badgerFile", badgerFile),
-		logging.NewKV("badgerInMemory", badgerInMemory),
-		logging.NewKV("inMemoryStore", inMemoryStore),
-		logging.NewKV("httpClient", httpClient),
-		logging.NewKV("goClient", goClient),
+		logging.NewKV("database", dbt),
+		logging.NewKV("client", clientType),
 		logging.NewKV("mutationType", mutationType),
 		logging.NewKV("databaseDir", databaseDir),
 		logging.NewKV("changeDetector.Enabled", changeDetector.Enabled),
@@ -370,94 +367,7 @@ func executeTestCase(
 	refreshIndexes(s)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
-		switch action := testCase.Actions[i].(type) {
-		case ConfigureNode:
-			configureNode(s, action)
-
-		case Restart:
-			restartNodes(s, i)
-
-		case ConnectPeers:
-			connectPeers(s, action)
-
-		case ConfigureReplicator:
-			configureReplicator(s, action)
-
-		case SubscribeToCollection:
-			subscribeToCollection(s, action)
-
-		case UnsubscribeToCollection:
-			unsubscribeToCollection(s, action)
-
-		case GetAllP2PCollections:
-			getAllP2PCollections(s, action)
-
-		case SchemaUpdate:
-			updateSchema(s, action)
-
-		case SchemaPatch:
-			patchSchema(s, action)
-
-		case SetDefaultSchemaVersion:
-			setDefaultSchemaVersion(s, action)
-
-		case ConfigureMigration:
-			configureMigration(s, action)
-
-		case GetMigrations:
-			getMigrations(s, action)
-
-		case CreateDoc:
-			createDoc(s, action)
-
-		case DeleteDoc:
-			deleteDoc(s, action)
-
-		case UpdateDoc:
-			updateDoc(s, action)
-
-		case CreateIndex:
-			createIndex(s, action)
-
-		case DropIndex:
-			dropIndex(s, action)
-
-		case GetIndexes:
-			getIndexes(s, action)
-
-		case BackupExport:
-			backupExport(s, action)
-
-		case BackupImport:
-			backupImport(s, action)
-
-		case TransactionCommit:
-			commitTransaction(s, action)
-
-		case SubscriptionRequest:
-			executeSubscriptionRequest(s, action)
-
-		case Request:
-			executeRequest(s, action)
-
-		case ExplainRequest:
-			executeExplainRequest(s, action)
-
-		case IntrospectionRequest:
-			assertIntrospectionResults(s, action)
-
-		case ClientIntrospectionRequest:
-			assertClientIntrospectionResults(s, action)
-
-		case WaitForSync:
-			waitForSync(s, action)
-
-		case SetupComplete:
-			// no-op, just continue.
-
-		default:
-			t.Fatalf("Unknown action type %T", action)
-		}
+		performAction(t, s, i, testCase.Actions[i])
 	}
 
 	// Notify any active subscriptions that all requests have been sent.
@@ -474,6 +384,130 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
 		}
 	}
+}
+
+func performAction(
+	t *testing.T,
+	s *state,
+	actionIndex int,
+	act any,
+) {
+	switch action := act.(type) {
+	case ConfigureNode:
+		configureNode(s, action)
+
+	case Restart:
+		restartNodes(s, actionIndex)
+
+	case ConnectPeers:
+		connectPeers(s, action)
+
+	case ConfigureReplicator:
+		configureReplicator(s, action)
+
+	case SubscribeToCollection:
+		subscribeToCollection(s, action)
+
+	case UnsubscribeToCollection:
+		unsubscribeToCollection(s, action)
+
+	case GetAllP2PCollections:
+		getAllP2PCollections(s, action)
+
+	case SchemaUpdate:
+		updateSchema(s, action)
+
+	case SchemaPatch:
+		patchSchema(s, action)
+
+	case SetDefaultSchemaVersion:
+		setDefaultSchemaVersion(s, action)
+
+	case ConfigureMigration:
+		configureMigration(s, action)
+
+	case GetMigrations:
+		getMigrations(s, action)
+
+	case CreateDoc:
+		createDoc(s, action)
+
+	case DeleteDoc:
+		deleteDoc(s, action)
+
+	case UpdateDoc:
+		updateDoc(s, action)
+
+	case CreateIndex:
+		createIndex(s, action)
+
+	case DropIndex:
+		dropIndex(s, action)
+
+	case GetIndexes:
+		getIndexes(s, action)
+
+	case BackupExport:
+		backupExport(s, action)
+
+	case BackupImport:
+		backupImport(s, action)
+
+	case TransactionCommit:
+		commitTransaction(s, action)
+
+	case SubscriptionRequest:
+		executeSubscriptionRequest(s, action)
+
+	case Request:
+		executeRequest(s, action)
+
+	case ExplainRequest:
+		executeExplainRequest(s, action)
+
+	case IntrospectionRequest:
+		assertIntrospectionResults(s, action)
+
+	case ClientIntrospectionRequest:
+		assertClientIntrospectionResults(s, action)
+
+	case WaitForSync:
+		waitForSync(s, action)
+
+	case Benchmark:
+		benchmarkAction(t, s, actionIndex, action)
+
+	case SetupComplete:
+		// no-op, just continue.
+
+	default:
+		t.Fatalf("Unknown action type %T", action)
+	}
+}
+
+func benchmarkAction(
+	t *testing.T,
+	s *state,
+	actionIndex int,
+	bench Benchmark,
+) {
+	if s.dbt == defraIMType {
+		// Benchmarking makes no sense for test in-memory storage
+		return
+	}
+	s.isBench = true
+	if bench.Result == nil {
+		bench.Result = &BenchmarkResult{}
+	}
+	if bench.Result.ElapsedTime == nil {
+		bench.Result.ElapsedTime = make(map[DatabaseType]time.Duration)
+	}
+	startTime := time.Now()
+	for i := 0; i < bench.Reps; i++ {
+		performAction(t, s, actionIndex, bench.Action)
+	}
+	bench.Result.ElapsedTime[s.dbt] = time.Since(startTime)
+	s.isBench = false
 }
 
 // getCollectionNames gets an ordered, unique set of collection names across all nodes
@@ -1679,7 +1713,7 @@ func assertRequestResults(
 	nodeID int,
 	anyOfByField map[docFieldKey][]any,
 ) bool {
-	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) {
+	if s.isBench || AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) {
 		return true
 	}
 

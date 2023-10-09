@@ -83,6 +83,9 @@ type state struct {
 
 	// Indexes, by index, by collection index, by node index.
 	indexes [][][]client.IndexDescription
+	
+	// isBench indicates wether the test is currently being benchmarked.
+	isBench bool
 }
 
 // newState returns a new fresh state for the given testCase.

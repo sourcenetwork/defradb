@@ -12,6 +12,7 @@ package tests
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -268,6 +269,16 @@ type ResultAsserterFunc func(*testing.T, []map[string]any) (bool, string)
 
 func (f ResultAsserterFunc) Assert(t *testing.T, result []map[string]any) {
 	f(t, result)
+}
+
+type BenchmarkResult struct {
+	ElapsedTime map[DatabaseType]time.Duration
+}
+
+type Benchmark struct {
+	Action any
+	Reps   int
+	Result *BenchmarkResult
 }
 
 // Request represents a standard Defra (GQL) request.
