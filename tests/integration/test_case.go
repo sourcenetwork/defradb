@@ -276,9 +276,10 @@ type BenchmarkResult struct {
 }
 
 type Benchmark struct {
-	Action any
-	Reps   int
-	Result *BenchmarkResult
+	Action       any
+	Reps         int
+	FocusClients []ClientType
+	Result       *BenchmarkResult
 }
 
 // Request represents a standard Defra (GQL) request.

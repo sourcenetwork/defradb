@@ -62,15 +62,15 @@ const (
 type ClientType string
 
 const (
-	// goClientType enables running the test suite using
+	// GoClientType enables running the test suite using
 	// the go implementation of the client.DB interface.
-	goClientType ClientType = "go"
-	// httpClientType enables running the test suite using
+	GoClientType ClientType = "go"
+	// HTTPClientType enables running the test suite using
 	// the http implementation of the client.DB interface.
-	httpClientType ClientType = "http"
-	// cliClientType enables running the test suite using
+	HTTPClientType ClientType = "http"
+	// CLIClientType enables running the test suite using
 	// the cli implementation of the client.DB interface.
-	cliClientType ClientType = "cli"
+	CLIClientType ClientType = "cli"
 )
 
 // The MutationType that tests will run using.
@@ -259,13 +259,13 @@ func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 	}
 
 	switch s.clientType {
-	case httpClientType:
+	case HTTPClientType:
 		cdb, err = http.NewWrapper(cdb)
 
-	case cliClientType:
+	case CLIClientType:
 		cdb = cli.NewWrapper(cdb)
 
-	case goClientType:
+	case GoClientType:
 		return
 
 	default:
@@ -295,13 +295,13 @@ func ExecuteTestCase(
 
 	var clients []ClientType
 	if httpClient {
-		clients = append(clients, httpClientType)
+		clients = append(clients, HTTPClientType)
 	}
 	if goClient {
-		clients = append(clients, goClientType)
+		clients = append(clients, GoClientType)
 	}
 	if cliClient {
-		clients = append(clients, cliClientType)
+		clients = append(clients, CLIClientType)
 	}
 
 	var databases []DatabaseType
@@ -494,6 +494,18 @@ func benchmarkAction(
 	if s.dbt == defraIMType {
 		// Benchmarking makes no sense for test in-memory storage
 		return
+	}
+	if len(bench.FocusClients) > 0 {
+		isFound := false
+		for _, clientType := range bench.FocusClients {
+			if s.clientType == clientType {
+				isFound = true
+				break
+			}
+		}
+		if !isFound {
+			return
+		}
 	}
 	s.isBench = true
 	if bench.Result == nil {

@@ -62,9 +62,10 @@ func TestQueryPerformance_Simple(t *testing.T) {
 			`},
 			docs,
 			testUtils.Benchmark{
-				Reps:   benchReps,
-				Action: testUtils.Request{Request: req},
-				Result: &benchResRegular,
+				Reps:         benchReps,
+				Action:       testUtils.Request{Request: req},
+				FocusClients: []testUtils.ClientType{testUtils.GoClientType},
+				Result:       &benchResRegular,
 			},
 		},
 	}
@@ -97,7 +98,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 		indexedVal := benchResIndexed.ElapsedTime[dbt]
 		regularMs := regularVal.Microseconds()
 		indexedMs := indexedVal.Microseconds()
-		const factor = 2
+		const factor = 5
 		assert.Greater(t, regularMs/factor, indexedMs,
 			"Indexed query should be at least %d time as fast as regular (db: %s). Indexed: %d, regular: %d (μs)",
 			factor, dbt, indexedMs, regularMs)
