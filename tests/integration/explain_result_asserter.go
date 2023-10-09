@@ -11,6 +11,7 @@
 package tests
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -38,6 +39,20 @@ type ExplainResultAsserter struct {
 	filterMatches  immutable.Option[int]
 	sizeOfResults  immutable.Option[int]
 	planExecutions immutable.Option[uint64]
+}
+
+func readNumberProp(t *testing.T, val any, prop string) uint64 {
+	switch v := val.(type) {
+	case uint64:
+		return v
+	case json.Number:
+		n, err := v.Int64()
+		require.NoError(t, err, fmt.Sprintf("Expected %s property to be a uint64", prop))
+		return uint64(n)
+	default:
+		require.Fail(t, fmt.Sprintf("Unexpected type for %s property: %T", prop, val))
+	}
+	return 0
 }
 
 func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
@@ -78,9 +93,9 @@ func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
 	getScanNodesProp := func(prop string) uint64 {
 		val, hasProp := scanNode[prop]
 		require.True(t, hasProp, fmt.Sprintf("Expected %s property", prop))
-		actual := val.(uint64)
+		actual := readNumberProp(t, val, prop)
 		if subScanNode[prop] != nil {
-			actual += subScanNode[prop].(uint64)
+			actual += readNumberProp(t, subScanNode[prop], "subTypeScanNode."+prop)
 		}
 		return actual
 	}

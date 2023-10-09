@@ -1734,11 +1734,6 @@ func assertRequestResults(
 	// compare results
 	require.Equal(s.t, len(expectedResults), len(resultantData),
 		s.testCase.Description+" \n(number of results don't match)")
-	if len(expectedResults) == 0 {
-		// Need `require` here otherwise will panic in the for loop that ranges over
-		// resultantData and tries to access expectedResults[0].
-		require.Equal(s.t, expectedResults, resultantData)
-	}
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
