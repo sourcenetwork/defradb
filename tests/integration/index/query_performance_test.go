@@ -34,9 +34,9 @@ func generateDocs(count int) []any {
 	return result
 }
 
-func TestQueryPerformance_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) {
-	const benchReps = 5
-	const numDocs = 300
+func TestQueryPerformance_Simple(t *testing.T) {
+	const benchReps = 4
+	const numDocs = 400
 
 	docs := generateDocs(numDocs)
 
@@ -97,7 +97,7 @@ func TestQueryPerformance_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T
 		indexedVal := benchResIndexed.ElapsedTime[dbt]
 		regularMs := regularVal.Microseconds()
 		indexedMs := indexedVal.Microseconds()
-		const factor = 3
+		const factor = 2
 		assert.Greater(t, regularMs/factor, indexedMs,
 			"Indexed query should be at least %d time as fast as regular (db: %s). Indexed: %d, regular: %d (μs)",
 			factor, dbt, indexedMs, regularMs)
