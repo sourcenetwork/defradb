@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
 	"github.com/stretchr/testify/assert"
 )
 
