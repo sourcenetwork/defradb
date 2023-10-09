@@ -35,8 +35,8 @@ func generateDocs(count int) []any {
 }
 
 func TestQueryPerformance_Simple(t *testing.T) {
-	const benchReps = 4
-	const numDocs = 400
+	const benchReps = 3
+	const numDocs = 500
 
 	docs := generateDocs(numDocs)
 
