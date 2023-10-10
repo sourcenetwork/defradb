@@ -11,7 +11,6 @@
 package net
 
 import (
-	"bytes"
 	"context"
 	"testing"
 	"time"
@@ -22,9 +21,7 @@ import (
 	libp2p "github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
-	ma "github.com/multiformats/go-multiaddr"
 	mh "github.com/multiformats/go-multihash"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 
@@ -35,8 +32,6 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/logging"
-	pb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
@@ -126,8 +121,6 @@ func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 
 	cfg := config.DefaultConfig()
 	cfg.Net.P2PAddress = randomMultiaddr
-	cfg.Net.RPCAddress = "0.0.0.0:0"
-	cfg.Net.TCPAddress = randomMultiaddr
 
 	n, err := NewNode(
 		ctx,
@@ -148,7 +141,7 @@ func TestNewPeer_NoError(t *testing.T) {
 	h, err := libp2p.New()
 	require.NoError(t, err)
 
-	_, err = NewPeer(ctx, db, h, nil, nil, nil, nil, nil)
+	_, err = NewPeer(ctx, db, h, nil, nil, nil, nil)
 	require.NoError(t, err)
 }
 
@@ -158,7 +151,7 @@ func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 	h, err := libp2p.New()
 	require.NoError(t, err)
 
-	_, err = NewPeer(ctx, nil, h, nil, nil, nil, nil, nil)
+	_, err = NewPeer(ctx, nil, h, nil, nil, nil, nil)
 	require.ErrorIs(t, err, ErrNilDB)
 }
 
@@ -197,7 +190,7 @@ func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 	_, err = rpc.NewTopic(ctx, ps, h.ID(), doc.Key().String(), true)
 	require.NoError(t, err)
 
-	_, err = NewPeer(ctx, db, h, nil, ps, nil, nil, nil)
+	_, err = NewPeer(ctx, db, h, nil, ps, nil, nil)
 	require.ErrorContains(t, err, "topic already exists")
 }
 
@@ -238,7 +231,7 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 
 	err = n2.Start()
 	require.NoError(t, err)
@@ -274,13 +267,7 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
-
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
+	n2.Bootstrap(addrs)
 
 	err = n1.Close()
 	require.NoError(t, err)
@@ -290,19 +277,6 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 
 	err = n2.Start()
 	require.NoError(t, err)
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	assert.Equal(t, "Failure while reconnecting to a known peer", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
 
 	db1.Close(ctx)
 	db2.Close(ctx)
@@ -407,20 +381,17 @@ func TestSetReplicator_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
+	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
 	require.NoError(t, err)
 
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr:        addr.Bytes(),
-			Collections: []string{"User"},
-		},
-	)
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"User"},
+	})
 	require.NoError(t, err)
 }
 
-func TestSetReplicator_WithInvalidAddress_InvalidArgumentError(t *testing.T) {
+func TestSetReplicator_WithInvalidAddress_EmptyPeerIDError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
@@ -430,14 +401,11 @@ func TestSetReplicator_WithInvalidAddress_InvalidArgumentError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr:        []byte("/some/invalid/address"),
-			Collections: []string{"User"},
-		},
-	)
-	require.ErrorContains(t, err, "InvalidArgument")
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info:    peer.AddrInfo{},
+		Schemas: []string{"User"},
+	})
+	require.ErrorContains(t, err, "empty peer ID")
 }
 
 func TestSetReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
@@ -446,16 +414,13 @@ func TestSetReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 
 	db.Close(ctx)
 
-	addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
+	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
 	require.NoError(t, err)
 
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr:        addr.Bytes(),
-			Collections: []string{"User"},
-		},
-	)
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"User"},
+	})
 	require.ErrorContains(t, err, "datastore closed")
 }
 
@@ -463,16 +428,13 @@ func TestSetReplicator_WithUndefinedCollection_KeyNotFoundError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 
-	addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
+	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
 	require.NoError(t, err)
 
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr:        addr.Bytes(),
-			Collections: []string{"User"},
-		},
-	)
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"User"},
+	})
 	require.ErrorContains(t, err, "failed to get collection for replicator: datastore: key not found")
 }
 
@@ -486,15 +448,12 @@ func TestSetReplicator_ForAllCollections_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
+	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
 	require.NoError(t, err)
 
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr: addr.Bytes(),
-		},
-	)
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info: *info,
+	})
 	require.NoError(t, err)
 }
 
@@ -522,26 +481,7 @@ func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *test
 	txn, err := db.NewTxn(ctx, true)
 	require.NoError(t, err)
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	n.pushToReplicator(ctx, txn, col, keysCh, n.PeerID())
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	assert.Equal(t, "Failed to replicate log", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
 }
 
 func TestDeleteReplicator_WithDBClosed_DataStoreClosedError(t *testing.T) {
@@ -550,13 +490,10 @@ func TestDeleteReplicator_WithDBClosed_DataStoreClosedError(t *testing.T) {
 
 	db.Close(ctx)
 
-	_, err := n.Peer.DeleteReplicator(
-		ctx,
-		&pb.DeleteReplicatorRequest{
-			PeerID:      []byte(n.PeerID()),
-			Collections: []string{"User"},
-		},
-	)
+	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
+		Info:    n.PeerInfo(),
+		Schemas: []string{"User"},
+	})
 	require.ErrorContains(t, err, "datastore closed")
 }
 
@@ -564,13 +501,10 @@ func TestDeleteReplicator_WithTargetSelf_SelfTargetForReplicatorError(t *testing
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 
-	_, err := n.Peer.DeleteReplicator(
-		ctx,
-		&pb.DeleteReplicatorRequest{
-			PeerID:      []byte(n.PeerID()),
-			Collections: []string{"User"},
-		},
-	)
+	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
+		Info:    n.PeerInfo(),
+		Schemas: []string{"User"},
+	})
 	require.ErrorIs(t, err, ErrSelfTargetForReplicator)
 }
 
@@ -580,13 +514,10 @@ func TestDeleteReplicator_WithInvalidCollection_KeyNotFoundError(t *testing.T) {
 
 	_, n2 := newTestNode(ctx, t)
 
-	_, err := n.Peer.DeleteReplicator(
-		ctx,
-		&pb.DeleteReplicatorRequest{
-			PeerID:      []byte(n2.PeerID()),
-			Collections: []string{"User"},
-		},
-	)
+	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
+		Info:    n2.PeerInfo(),
+		Schemas: []string{"User"},
+	})
 	require.ErrorContains(t, err, "failed to get collection for replicator: datastore: key not found")
 }
 
@@ -602,23 +533,14 @@ func TestDeleteReplicator_WithCollectionAndPreviouslySetReplicator_NoError(t *te
 
 	_, n2 := newTestNode(ctx, t)
 
-	addr, err := ma.NewMultiaddr(n2.host.Addrs()[0].String() + "/p2p/" + n2.PeerID().String())
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info: n2.PeerInfo(),
+	})
 	require.NoError(t, err)
 
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr: addr.Bytes(),
-		},
-	)
-	require.NoError(t, err)
-
-	_, err = n.Peer.DeleteReplicator(
-		ctx,
-		&pb.DeleteReplicatorRequest{
-			PeerID: []byte(n2.PeerID()),
-		},
-	)
+	err = n.Peer.DeleteReplicator(ctx, client.Replicator{
+		Info: n2.PeerInfo(),
+	})
 	require.NoError(t, err)
 }
 
@@ -628,12 +550,9 @@ func TestDeleteReplicator_WithNoCollection_NoError(t *testing.T) {
 
 	_, n2 := newTestNode(ctx, t)
 
-	_, err := n.Peer.DeleteReplicator(
-		ctx,
-		&pb.DeleteReplicatorRequest{
-			PeerID: []byte(n2.PeerID()),
-		},
-	)
+	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
+		Info: n2.PeerInfo(),
+	})
 	require.NoError(t, err)
 }
 
@@ -649,13 +568,10 @@ func TestDeleteReplicator_WithNotSetReplicator_KeyNotFoundError(t *testing.T) {
 
 	_, n2 := newTestNode(ctx, t)
 
-	_, err = n.Peer.DeleteReplicator(
-		ctx,
-		&pb.DeleteReplicatorRequest{
-			PeerID:      []byte(n2.PeerID()),
-			Collections: []string{"User"},
-		},
-	)
+	err = n.Peer.DeleteReplicator(ctx, client.Replicator{
+		Info:    n2.PeerInfo(),
+		Schemas: []string{"User"},
+	})
 	require.ErrorContains(t, err, "datastore: key not found")
 }
 
@@ -671,30 +587,16 @@ func TestGetAllReplicator_WithReplicator_NoError(t *testing.T) {
 
 	_, n2 := newTestNode(ctx, t)
 
-	addr, err := ma.NewMultiaddr(n2.host.Addrs()[0].String() + "/p2p/" + n2.PeerID().String())
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info: n2.PeerInfo(),
+	})
 	require.NoError(t, err)
 
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr: addr.Bytes(),
-		},
-	)
+	reps, err := n.Peer.GetAllReplicators(ctx)
 	require.NoError(t, err)
 
-	reps, err := n.Peer.GetAllReplicators(
-		ctx,
-		&pb.GetAllReplicatorRequest{},
-	)
-	require.NoError(t, err)
-
-	info, err := peer.AddrInfoFromP2pAddr(addr)
-	require.NoError(t, err)
-
-	id, err := info.ID.MarshalBinary()
-	require.NoError(t, err)
-
-	require.Equal(t, id, reps.Replicators[0].Info.Id)
+	require.Len(t, reps, 1)
+	require.Equal(t, n2.PeerInfo().ID, reps[0].Info.ID)
 }
 
 func TestGetAllReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
@@ -703,10 +605,7 @@ func TestGetAllReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 
 	db.Close(ctx)
 
-	_, err := n.Peer.GetAllReplicators(
-		ctx,
-		&pb.GetAllReplicatorRequest{},
-	)
+	_, err := n.Peer.GetAllReplicators(ctx)
 	require.ErrorContains(t, err, "datastore closed")
 }
 
@@ -732,15 +631,9 @@ func TestLoadReplicator_WithReplicator_NoError(t *testing.T) {
 
 	_, n2 := newTestNode(ctx, t)
 
-	addr, err := ma.NewMultiaddr(n2.host.Addrs()[0].String() + "/p2p/" + n2.PeerID().String())
-	require.NoError(t, err)
-
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr: addr.Bytes(),
-		},
-	)
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info: n2.PeerInfo(),
+	})
 	require.NoError(t, err)
 
 	err = n.Peer.loadReplicators(ctx)
@@ -759,15 +652,9 @@ func TestLoadReplicator_WithReplicatorAndEmptyReplicatorMap_NoError(t *testing.T
 
 	_, n2 := newTestNode(ctx, t)
 
-	addr, err := ma.NewMultiaddr(n2.host.Addrs()[0].String() + "/p2p/" + n2.PeerID().String())
-	require.NoError(t, err)
-
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr: addr.Bytes(),
-		},
-	)
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info: n2.PeerInfo(),
+	})
 	require.NoError(t, err)
 
 	n.replicators = make(map[string]map[peer.ID]struct{})
@@ -780,12 +667,7 @@ func TestAddP2PCollections_WithInvalidCollectionID_NotFoundError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 
-	_, err := n.Peer.AddP2PCollections(
-		ctx,
-		&pb.AddP2PCollectionsRequest{
-			Collections: []string{"invalid_collection"},
-		},
-	)
+	err := n.Peer.AddP2PCollections(ctx, []string{"invalid_collection"})
 	require.Error(t, err, ds.ErrNotFound)
 }
 
@@ -802,12 +684,7 @@ func TestAddP2PCollections_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	_, err = n.Peer.AddP2PCollections(
-		ctx,
-		&pb.AddP2PCollectionsRequest{
-			Collections: []string{col.SchemaID()},
-		},
-	)
+	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaID()})
 	require.NoError(t, err)
 }
 
@@ -815,12 +692,7 @@ func TestRemoveP2PCollectionsWithInvalidCollectionID(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 
-	_, err := n.Peer.RemoveP2PCollections(
-		ctx,
-		&pb.RemoveP2PCollectionsRequest{
-			Collections: []string{"invalid_collection"},
-		},
-	)
+	err := n.Peer.RemoveP2PCollections(ctx, []string{"invalid_collection"})
 	require.Error(t, err, ds.ErrNotFound)
 }
 
@@ -837,12 +709,7 @@ func TestRemoveP2PCollections(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	_, err = n.Peer.RemoveP2PCollections(
-		ctx,
-		&pb.RemoveP2PCollectionsRequest{
-			Collections: []string{col.SchemaID()},
-		},
-	)
+	err = n.Peer.RemoveP2PCollections(ctx, []string{col.SchemaID()})
 	require.NoError(t, err)
 }
 
@@ -850,12 +717,9 @@ func TestGetAllP2PCollectionsWithNoCollections(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 
-	cols, err := n.Peer.GetAllP2PCollections(
-		ctx,
-		&pb.GetAllP2PCollectionsRequest{},
-	)
+	cols, err := n.Peer.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
-	require.Len(t, cols.Collections, 0)
+	require.Len(t, cols, 0)
 }
 
 func TestGetAllP2PCollections(t *testing.T) {
@@ -871,25 +735,12 @@ func TestGetAllP2PCollections(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	_, err = n.Peer.AddP2PCollections(
-		ctx,
-		&pb.AddP2PCollectionsRequest{
-			Collections: []string{col.SchemaID()},
-		},
-	)
+	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaID()})
 	require.NoError(t, err)
 
-	cols, err := n.Peer.GetAllP2PCollections(
-		ctx,
-		&pb.GetAllP2PCollectionsRequest{},
-	)
+	cols, err := n.Peer.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
-	require.Equal(t, &pb.GetAllP2PCollectionsReply{
-		Collections: []*pb.GetAllP2PCollectionsReply_Collection{{
-			Id:   col.SchemaID(),
-			Name: col.Name(),
-		}},
-	}, cols)
+	require.ElementsMatch(t, []string{col.SchemaID()}, cols)
 }
 
 func TestHandleDocCreateLog_NoError(t *testing.T) {
@@ -1121,15 +972,9 @@ func TestPushLogToReplicator_WithReplicator_FailedPushingLogError(t *testing.T) 
 
 	_, n2 := newTestNode(ctx, t)
 
-	addr, err := ma.NewMultiaddr(n2.host.Addrs()[0].String() + "/p2p/" + n2.PeerID().String())
-	require.NoError(t, err)
-
-	_, err = n.Peer.SetReplicator(
-		ctx,
-		&pb.SetReplicatorRequest{
-			Addr: addr.Bytes(),
-		},
-	)
+	err = n.Peer.SetReplicator(ctx, client.Replicator{
+		Info: n2.PeerInfo(),
+	})
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")

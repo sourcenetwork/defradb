@@ -37,20 +37,12 @@ net:
     p2pdisabled: {{ .Net.P2PDisabled }}
     # Listening address of the P2P network
     p2paddress: {{ .Net.P2PAddress }}
-    # Listening address of the RPC endpoint
-    rpcaddress: {{ .Net.RPCAddress }}
-    # gRPC server address
-    tcpaddress: {{ .Net.TCPAddress }}
-    # Time duration after which a RPC connection to a peer times out
-    rpctimeout: {{ .Net.RPCTimeout }}
     # Whether the node has pubsub enabled or not
     pubsub: {{ .Net.PubSubEnabled }}
     # Enable libp2p's Circuit relay transport protocol https://docs.libp2p.io/concepts/circuit-relay/
     relay: {{ .Net.RelayEnabled }}
     # List of peers to boostrap with, specified as multiaddresses (https://docs.libp2p.io/concepts/addressing/)
     peers: {{ .Net.Peers }}
-    # Amount of time after which an idle RPC connection would be closed
-    RPCMaxConnectionIdle: {{ .Net.RPCMaxConnectionIdle }}
 
 log:
     # Log level. Options are debug, info, error, fatal

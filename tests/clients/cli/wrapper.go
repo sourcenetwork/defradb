@@ -94,17 +94,17 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	return reps, nil
 }
 
-func (w *Wrapper) AddP2PCollection(ctx context.Context, collectionID string) error {
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
 	args := []string{"client", "p2p", "collection", "add"}
-	args = append(args, collectionID)
+	args = append(args, strings.Join(collectionIDs, ","))
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) RemoveP2PCollection(ctx context.Context, collectionID string) error {
+func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
 	args := []string{"client", "p2p", "collection", "remove"}
-	args = append(args, collectionID)
+	args = append(args, strings.Join(collectionIDs, ","))
 
 	_, err := w.cmd.execute(ctx, args)
 	return err

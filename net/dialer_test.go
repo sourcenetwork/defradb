@@ -39,7 +39,7 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 	_, err = n1.server.dial(n2.PeerID())
 	require.NoError(t, err)
 }
@@ -63,7 +63,7 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 	_, err = n1.server.dial(n2.PeerID())
 	require.NoError(t, err)
 
@@ -90,7 +90,7 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 	_, err = n1.server.dial(n2.PeerID())
 	require.NoError(t, err)
 
