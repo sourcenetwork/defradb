@@ -228,21 +228,6 @@ func TestNodeConfig_NoError(t *testing.T) {
 	require.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
 }
 
-func TestPeerConnectionEventEmitter_SingleEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-
-	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
-	require.NoError(t, err)
-
-	err = emitter.Emit(event.EvtPeerConnectednessChanged{})
-	require.NoError(t, err)
-}
-
 func TestPeerConnectionEventEmitter_MultiEvent_NoError(t *testing.T) {
 	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
@@ -272,21 +257,6 @@ func TestSubscribeToPubSubEvents_SubscriptionError(t *testing.T) {
 	n.Peer.host = &mockHost{n.Peer.host}
 
 	n.subscribeToPubSubEvents()
-}
-
-func TestPubSubEventEmitter_SingleEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtPubSub{})
-	require.NoError(t, err)
 }
 
 func TestPubSubEventEmitter_MultiEvent_NoError(t *testing.T) {
