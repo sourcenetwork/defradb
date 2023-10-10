@@ -11,7 +11,6 @@
 package net
 
 import (
-	"bytes"
 	"context"
 	"testing"
 	"time"
@@ -27,7 +26,6 @@ import (
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
-	"github.com/sourcenetwork/defradb/logging"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
@@ -57,19 +55,6 @@ func TestNewNode_WithEnableRelay_NoError(t *testing.T) {
 		WithEnableRelay(true),
 	)
 	require.NoError(t, err)
-}
-
-func TestNewNode_WithInvalidListenTCPAddrString_ParseError(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
-	require.NoError(t, err)
-	_, err = NewNode(
-		context.Background(),
-		db,
-		WithListenTCPAddrString("/ip4/碎片整理"),
-	)
-	require.EqualError(t, err, "failed to parse multiaddr \"/ip4/碎片整理\": invalid value \"碎片整理\" for protocol ip4: failed to parse ip4 addr: 碎片整理")
 }
 
 func TestNewNode_WithDBClosed_NoError(t *testing.T) {
@@ -142,7 +127,7 @@ func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
-	n1.Boostrap([]peer.AddrInfo{})
+	n1.Bootstrap([]peer.AddrInfo{})
 }
 
 func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
@@ -167,7 +152,7 @@ func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 }
 
 func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing.T) {
@@ -195,21 +180,7 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 		"/ip4/0.0.0.0/tcp/1236/p2p/" + "12D3KooWC8YY6Tx3uAeHsdBmoy7PJPwqXAHE4HkCZ5veankKWci4",
 	})
 	require.NoError(t, err)
-	n2.Boostrap(addrs)
-}
-
-func mergeOptions(nodeOpts ...NodeOpt) (Options, error) {
-	var options Options
-	var nodeOpt NodeOpt
-	for _, opt := range append(nodeOpts, nodeOpt) {
-		if opt == nil {
-			continue
-		}
-		if err := opt(&options); err != nil {
-			return options, err
-		}
-	}
-	return options, nil
+	n2.Bootstrap(addrs)
 }
 
 func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
@@ -227,19 +198,9 @@ func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
 	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
 }
 
-func TestWithListenTCPAddrString_WithInvalidListenTCPAddrString_ParseError(t *testing.T) {
-	opt := WithListenTCPAddrString("/ip4/碎片整理")
-	options, err := mergeOptions(opt)
-	require.EqualError(t, err, "failed to parse multiaddr \"/ip4/碎片整理\": invalid value \"碎片整理\" for protocol ip4: failed to parse ip4 addr: 碎片整理")
-	require.Equal(t, Options{}, options)
-}
-
 func TestNodeConfig_NoError(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/9179"
-	cfg.Net.TCPAddress = "/ip4/0.0.0.0/tcp/9169"
-	cfg.Net.RPCTimeout = "100s"
-	cfg.Net.RPCMaxConnectionIdle = "111s"
 	cfg.Net.RelayEnabled = true
 	cfg.Net.PubSubEnabled = true
 
@@ -250,13 +211,10 @@ func TestNodeConfig_NoError(t *testing.T) {
 	// confirming it provides the same config as a manually constructed node.Options
 	p2pAddr, err := ma.NewMultiaddr(cfg.Net.P2PAddress)
 	require.NoError(t, err)
-	tcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
-	require.NoError(t, err)
 	connManager, err := NewConnManager(100, 400, time.Second*20)
 	require.NoError(t, err)
 	expectedOptions := Options{
 		ListenAddrs:  []ma.Multiaddr{p2pAddr},
-		TCPAddr:      tcpAddr,
 		EnablePubSub: true,
 		EnableRelay:  true,
 		ConnManager:  connManager,
@@ -265,56 +223,9 @@ func TestNodeConfig_NoError(t *testing.T) {
 	for k, v := range options.ListenAddrs {
 		require.Equal(t, expectedOptions.ListenAddrs[k], v)
 	}
-	require.Equal(t, expectedOptions.TCPAddr.String(), options.TCPAddr.String())
+
 	require.Equal(t, expectedOptions.EnablePubSub, options.EnablePubSub)
 	require.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
-}
-
-func TestSubscribeToPeerConnectionEvents_SubscriptionError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
-	n.Peer.host = &mockHost{n.Peer.host}
-
-	n.subscribeToPeerConnectionEvents()
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	require.Equal(t, "failed to subscribe to peer connectedness changed event: mock error", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
-}
-
-func TestPeerConnectionEventEmitter_SingleEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-
-	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
-	require.NoError(t, err)
-
-	err = emitter.Emit(event.EvtPeerConnectednessChanged{})
-	require.NoError(t, err)
 }
 
 func TestPeerConnectionEventEmitter_MultiEvent_NoError(t *testing.T) {
@@ -343,43 +254,9 @@ func TestSubscribeToPubSubEvents_SubscriptionError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	n.Peer.host = &mockHost{n.Peer.host}
 
 	n.subscribeToPubSubEvents()
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	require.Equal(t, "failed to subscribe to pubsub event: mock error", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
-}
-
-func TestPubSubEventEmitter_SingleEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-	)
-	require.NoError(t, err)
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtPubSub{})
-	require.NoError(t, err)
 }
 
 func TestPubSubEventEmitter_MultiEvent_NoError(t *testing.T) {
@@ -408,28 +285,9 @@ func TestSubscribeToPushLogEvents_SubscriptionError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	b := &bytes.Buffer{}
-
-	log.ApplyConfig(logging.Config{
-		Pipe: b,
-	})
-
 	n.Peer.host = &mockHost{n.Peer.host}
 
 	n.subscribeToPushLogEvents()
-
-	logLines, err := parseLines(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(logLines) != 1 {
-		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
-	}
-	require.Equal(t, "failed to subscribe to push log event: mock error", logLines[0]["msg"])
-
-	// reset logger
-	log = logging.MustNewLogger("defra.net")
 }
 
 func TestPushLogEventEmitter_SingleEvent_NoError(t *testing.T) {

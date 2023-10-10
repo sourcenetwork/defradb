@@ -1460,7 +1460,7 @@ func withRetry(
 	nodeID int,
 	action func() error,
 ) error {
-	for i := 0; i < nodes[nodeID].MaxTxnRetries(); i++ {
+	for i := 0; i < nodes[nodeID].DB.MaxTxnRetries(); i++ {
 		err := action()
 		if err != nil && errors.Is(err, badgerds.ErrTxnConflict) {
 			time.Sleep(100 * time.Millisecond)

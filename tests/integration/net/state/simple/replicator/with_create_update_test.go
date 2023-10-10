@@ -141,16 +141,19 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
-				SourceNodeID: 0,
-				TargetNodeID: 1,
-			},
 			testUtils.CreateDoc{
 				// This document is created in all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
+			},
+			testUtils.ConfigureReplicator{
+				// Replication must happen after creating documents
+				// on both nodes, or a race condition can occur
+				// on the second node when creating the document
+				SourceNodeID: 0,
+				TargetNodeID: 1,
 			},
 			testUtils.CreateDoc{
 				// This document is created in the second node (target) only

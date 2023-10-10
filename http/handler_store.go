@@ -17,8 +17,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -70,7 +68,12 @@ func (s *storeHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Reque
 func (s *storeHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
-	err := store.AddP2PCollection(req.Context(), chi.URLParam(req, "id"))
+	var collectionIDs []string
+	if err := requestJSON(req, &collectionIDs); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	err := store.AddP2PCollections(req.Context(), collectionIDs)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -81,7 +84,12 @@ func (s *storeHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Reques
 func (s *storeHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
-	err := store.RemoveP2PCollection(req.Context(), chi.URLParam(req, "id"))
+	var collectionIDs []string
+	if err := requestJSON(req, &collectionIDs); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	err := store.RemoveP2PCollections(req.Context(), collectionIDs)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

@@ -107,8 +107,8 @@ func NewHandler(db client.DB, opts ServerOptions) *Handler {
 			})
 			p2p.Route("/collections", func(p2p_collections chi.Router) {
 				p2p_collections.Get("/", store_handler.GetAllP2PCollections)
-				p2p_collections.Post("/{id}", store_handler.AddP2PCollection)
-				p2p_collections.Delete("/{id}", store_handler.RemoveP2PCollection)
+				p2p_collections.Post("/", store_handler.AddP2PCollection)
+				p2p_collections.Delete("/", store_handler.RemoveP2PCollection)
 			})
 		})
 		api.Route("/debug", func(debug chi.Router) {

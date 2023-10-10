@@ -27,7 +27,6 @@ import (
 // Options is the node options.
 type Options struct {
 	ListenAddrs       []ma.Multiaddr
-	TCPAddr           ma.Multiaddr
 	PrivateKey        crypto.PrivKey
 	EnablePubSub      bool
 	EnableRelay       bool
@@ -66,10 +65,6 @@ func WithConfig(cfg *config.Config) NodeOpt {
 	return func(opt *Options) error {
 		var err error
 		err = WithListenP2PAddrStrings(cfg.Net.P2PAddress)(opt)
-		if err != nil {
-			return err
-		}
-		err = WithListenTCPAddrString(cfg.Net.TCPAddress)(opt)
 		if err != nil {
 			return err
 		}
@@ -117,18 +112,6 @@ func WithListenP2PAddrStrings(addrs ...string) NodeOpt {
 			}
 			opt.ListenAddrs = append(opt.ListenAddrs, a)
 		}
-		return nil
-	}
-}
-
-// ListenTCPAddrString sets the TCP address to listen on, as Multiaddr.
-func WithListenTCPAddrString(addr string) NodeOpt {
-	return func(opt *Options) error {
-		a, err := ma.NewMultiaddr(addr)
-		if err != nil {
-			return err
-		}
-		opt.TCPAddr = a
 		return nil
 	}
 }

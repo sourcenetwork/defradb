@@ -62,12 +62,12 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	return w.client.GetAllReplicators(ctx)
 }
 
-func (w *Wrapper) AddP2PCollection(ctx context.Context, collectionID string) error {
-	return w.client.AddP2PCollection(ctx, collectionID)
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+	return w.client.AddP2PCollections(ctx, collectionIDs)
 }
 
-func (w *Wrapper) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	return w.client.RemoveP2PCollection(ctx, collectionID)
+func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+	return w.client.RemoveP2PCollections(ctx, collectionIDs)
 }
 
 func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
