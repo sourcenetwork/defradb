@@ -133,7 +133,6 @@ func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 		ctx,
 		db,
 		WithConfig(cfg),
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -226,16 +225,12 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 		ctx,
 		db1,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db2,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -266,16 +261,12 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 		ctx,
 		db1,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db2,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -327,8 +318,6 @@ func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
 		ctx,
 		db,
 		WithPubSub(true),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -348,8 +337,6 @@ func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
 		ctx,
 		db,
 		WithPubSub(true),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 

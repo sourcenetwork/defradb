@@ -16,6 +16,7 @@ import (
 	"time"
 
 	cconnmgr "github.com/libp2p/go-libp2p/core/connmgr"
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
@@ -27,7 +28,7 @@ import (
 type Options struct {
 	ListenAddrs       []ma.Multiaddr
 	TCPAddr           ma.Multiaddr
-	DataPath          string
+	PrivateKey        crypto.PrivKey
 	EnablePubSub      bool
 	EnableRelay       bool
 	GRPCServerOptions []grpc.ServerOption
@@ -74,7 +75,6 @@ func WithConfig(cfg *config.Config) NodeOpt {
 		}
 		opt.EnableRelay = cfg.Net.RelayEnabled
 		opt.EnablePubSub = cfg.Net.PubSubEnabled
-		opt.DataPath = cfg.Datastore.Badger.Path
 		opt.ConnManager, err = NewConnManager(100, 400, time.Second*20)
 		if err != nil {
 			return err
@@ -83,10 +83,10 @@ func WithConfig(cfg *config.Config) NodeOpt {
 	}
 }
 
-// DataPath sets the data path.
-func WithDataPath(path string) NodeOpt {
+// WithPrivateKey sets the p2p host private key.
+func WithPrivateKey(priv crypto.PrivKey) NodeOpt {
 	return func(opt *Options) error {
-		opt.DataPath = path
+		opt.PrivateKey = priv
 		return nil
 	}
 }
