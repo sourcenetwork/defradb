@@ -30,7 +30,7 @@ func TestSchemaUpdatesAddFieldCRDTCompositeErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":3} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":3} }
 					]
 				`,
 				ExpectedError: "only default or LWW (last writer wins) CRDT types are supported. Name: foo, CRDTType: 3",

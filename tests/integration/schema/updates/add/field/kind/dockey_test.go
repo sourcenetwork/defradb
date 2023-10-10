@@ -30,7 +30,7 @@ func TestSchemaUpdatesAddFieldKindDocKey(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 1} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 1} }
 					]
 				`,
 			},
@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldKindDocKeyWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 1} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 1} }
 					]
 				`,
 			},
@@ -106,7 +106,7 @@ func TestSchemaUpdatesAddFieldKindDocKeySubstitutionWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": "ID"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "ID"} }
 					]
 				`,
 			},

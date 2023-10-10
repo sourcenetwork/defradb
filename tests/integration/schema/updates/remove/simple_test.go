@@ -34,32 +34,7 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 						{ "op": "remove", "path": "/Users/Name" }
 					]
 				`,
-				ExpectedError: "collection name can't be empty",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesRemoveCollectionIDErrors(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, remove collection id",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						email: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "remove", "path": "/Users/ID" }
-					]
-				`,
-				ExpectedError: "CollectionID does not match existing. Name: Users, ExistingID: 1, ProposedID: 0",
+				ExpectedError: "schema name can't be empty",
 			},
 		},
 	}
@@ -81,7 +56,7 @@ func TestSchemaUpdatesRemoveSchemaIDErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/SchemaID" }
+						{ "op": "remove", "path": "/Users/SchemaID" }
 					]
 				`,
 				ExpectedError: "SchemaID does not match existing",
@@ -107,7 +82,7 @@ func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 				// This should do nothing
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/VersionID" }
+						{ "op": "remove", "path": "/Users/VersionID" }
 					]
 				`,
 			},
@@ -140,7 +115,7 @@ func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/Name" }
+						{ "op": "remove", "path": "/Users/Name" }
 					]
 				`,
 				ExpectedError: "schema name can't be empty",

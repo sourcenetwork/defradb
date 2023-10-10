@@ -86,7 +86,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/-", "value": {"Foo": "Bar"} }
+						{ "op": "add", "path": "/Users/-", "value": {"Foo": "Bar"} }
 					]
 				`,
 				ExpectedError: `json: unknown field "-"`,
@@ -142,7 +142,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Foo/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Foo/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "add operation does not apply: doc is missing path",

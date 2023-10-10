@@ -201,7 +201,6 @@ func (db *db) createCollection(
 func (db *db) updateCollection(
 	ctx context.Context,
 	txn datastore.Txn,
-	existingDescriptionsByName map[string]client.CollectionDescription,
 	existingSchemaByName map[string]client.SchemaDescription,
 	proposedDescriptionsByName map[string]client.SchemaDescription,
 	def client.CollectionDefinition,
@@ -210,12 +209,7 @@ func (db *db) updateCollection(
 	schema := def.Schema
 	desc := def.Description
 
-	hasChanged, err := db.validateUpdateCollection(ctx, existingDescriptionsByName, desc)
-	if err != nil {
-		return nil, err
-	}
-
-	hasSchemaChanged, err := db.validateUpdateSchema(
+	hasChanged, err := db.validateUpdateSchema(
 		ctx,
 		txn,
 		existingSchemaByName,
@@ -226,7 +220,6 @@ func (db *db) updateCollection(
 		return nil, err
 	}
 
-	hasChanged = hasChanged || hasSchemaChanged
 	if !hasChanged {
 		return db.getCollectionByName(ctx, txn, desc.Name)
 	}
@@ -304,32 +297,6 @@ func (db *db) updateCollection(
 	return db.getCollectionByName(ctx, txn, desc.Name)
 }
 
-// validateUpdateCollection validates that the given collection description is a valid update.
-//
-// Will return true if the given description differs from the current persisted state of the
-// collection. Will return an error if it fails validation.
-func (db *db) validateUpdateCollection(
-	ctx context.Context,
-	existingDescriptionsByName map[string]client.CollectionDescription,
-	proposedDesc client.CollectionDescription,
-) (bool, error) {
-	if proposedDesc.Name == "" {
-		return false, ErrCollectionNameEmpty
-	}
-
-	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
-	if !collectionExists {
-		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
-	}
-
-	if proposedDesc.ID != existingDesc.ID {
-		return false, NewErrCollectionIDDoesntMatch(proposedDesc.Name, existingDesc.ID, proposedDesc.ID)
-	}
-
-	hasChangedIndexes, err := validateUpdateCollectionIndexes(existingDesc.Indexes, proposedDesc.Indexes)
-	return hasChangedIndexes, err
-}
-
 // validateUpdateSchema validates that the given schema description is a valid update.
 //
 // Will return true if the given description differs from the current persisted state of the
@@ -341,10 +308,6 @@ func (db *db) validateUpdateSchema(
 	proposedDescriptionsByName map[string]client.SchemaDescription,
 	proposedDesc client.SchemaDescription,
 ) (bool, error) {
-	if proposedDesc.Name == "" {
-		return false, ErrSchemaNameEmpty
-	}
-
 	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
 	if !collectionExists {
 		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
@@ -562,37 +525,6 @@ func validateUpdateSchemaFields(
 		}
 	}
 	return hasChanged, nil
-}
-
-func validateUpdateCollectionIndexes(
-	existingIndexes []client.IndexDescription,
-	proposedIndexes []client.IndexDescription,
-) (bool, error) {
-	existingNameToIndex := map[string]client.IndexDescription{}
-	for _, index := range existingIndexes {
-		existingNameToIndex[index.Name] = index
-	}
-	for _, proposedIndex := range proposedIndexes {
-		if existingIndex, exists := existingNameToIndex[proposedIndex.Name]; exists {
-			if len(existingIndex.Fields) != len(proposedIndex.Fields) {
-				return false, ErrCanNotChangeIndexWithPatch
-			}
-			for i := range existingIndex.Fields {
-				if existingIndex.Fields[i] != proposedIndex.Fields[i] {
-					return false, ErrCanNotChangeIndexWithPatch
-				}
-			}
-			delete(existingNameToIndex, proposedIndex.Name)
-		} else {
-			return false, NewErrCannotAddIndexWithPatch(proposedIndex.Name)
-		}
-	}
-	if len(existingNameToIndex) > 0 {
-		for _, index := range existingNameToIndex {
-			return false, NewErrCannotDropIndexWithPatch(index.Name)
-		}
-	}
-	return false, nil
 }
 
 func (db *db) setDefaultSchemaVersion(
