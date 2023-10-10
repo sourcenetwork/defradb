@@ -224,6 +224,51 @@ func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestP2PSubscribeAddValidAndErroneousCollectionID(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
+				ExpectedError: "datastore: key not found",
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// Nothing should sync, although the collection 0 was valid, as it was included in the same
+				// `Add` call it should have been rolled back.
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -291,6 +336,10 @@ func TestP2PSubscribeAddNone(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
