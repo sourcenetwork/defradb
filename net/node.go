@@ -19,8 +19,6 @@ package net
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -39,9 +37,13 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
-	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
+
 	"github.com/multiformats/go-multiaddr"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
+
+	// @TODO: https://github.com/sourcenetwork/defradb/issues/1902
+	//nolint:staticcheck
+	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
@@ -94,9 +96,13 @@ func NewNode(
 	}
 	fin.Add(peerstore)
 
-	hostKey, err := getHostKey(options.DataPath)
-	if err != nil {
-		return nil, fin.Cleanup(err)
+	if options.PrivateKey == nil {
+		// generate an ephemeral private key
+		key, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+		if err != nil {
+			return nil, fin.Cleanup(err)
+		}
+		options.PrivateKey = key
 	}
 
 	var ddht *dualdht.DHT
@@ -104,7 +110,7 @@ func NewNode(
 	libp2pOpts := []libp2p.Option{
 		libp2p.ConnectionManager(options.ConnManager),
 		libp2p.DefaultTransports,
-		libp2p.Identity(hostKey),
+		libp2p.Identity(options.PrivateKey),
 		libp2p.ListenAddrs(options.ListenAddrs...),
 		libp2p.Peerstore(peerstore),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
@@ -381,46 +387,6 @@ func (n *Node) WaitForPushLogFromPeerEvent(id peer.ID) error {
 			return nil
 		}
 	}
-}
-
-// replace with proper keystore
-func getHostKey(keypath string) (crypto.PrivKey, error) {
-	// If a local datastore is used, the key is written to a file
-	pth := filepath.Join(keypath, "key")
-	_, err := os.Stat(pth)
-	if os.IsNotExist(err) {
-		key, bytes, err := newHostKey()
-		if err != nil {
-			return nil, err
-		}
-		if err := os.MkdirAll(keypath, os.ModePerm); err != nil {
-			return nil, err
-		}
-		if err = os.WriteFile(pth, bytes, 0400); err != nil {
-			return nil, err
-		}
-		return key, nil
-	} else if err != nil {
-		return nil, err
-	} else {
-		bytes, err := os.ReadFile(pth)
-		if err != nil {
-			return nil, err
-		}
-		return crypto.UnmarshalPrivateKey(bytes)
-	}
-}
-
-func newHostKey() (crypto.PrivKey, []byte, error) {
-	priv, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
-	if err != nil {
-		return nil, nil, err
-	}
-	key, err := crypto.MarshalPrivateKey(priv)
-	if err != nil {
-		return nil, nil, err
-	}
-	return priv, key, nil
 }
 
 func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, error) {

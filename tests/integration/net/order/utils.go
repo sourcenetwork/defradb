@@ -16,7 +16,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -298,12 +297,8 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		for i, n := range nodes {
 			if reps, ok := test.NodeReplicators[i]; ok {
 				for _, r := range reps {
-					info := peer.AddrInfo{
-						ID:    nodes[r].PeerID(),
-						Addrs: nodes[r].ListenAddrs(),
-					}
 					err := n.Peer.SetReplicator(ctx, client.Replicator{
-						Info: info,
+						Info: nodes[r].PeerInfo(),
 					})
 					require.NoError(t, err)
 				}

@@ -87,7 +87,7 @@ type SubscribeToCollection struct {
 	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
 	//
 	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
-	CollectionID int
+	CollectionIDs []int
 
 	// Any error expected from the action. Optional.
 	//
@@ -105,7 +105,7 @@ type UnsubscribeToCollection struct {
 	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
 	//
 	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
-	CollectionID int
+	CollectionIDs []int
 
 	// Any error expected from the action. Optional.
 	//
@@ -179,7 +179,7 @@ func setupPeerWaitSync(
 			}
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
-			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionID)
+			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionIDs...)
 
 		case UnsubscribeToCollection:
 			if action.ExpectedError != "" {
@@ -190,10 +190,12 @@ func setupPeerWaitSync(
 			// This is order dependent, items should be added in the same action-loop that reads them
 			// as 'stuff' done before collection subscription should not be synced.
 			existingCollectionIndexes := nodeCollections[action.NodeID]
-			for i, existingCollectionIndex := range existingCollectionIndexes {
-				if action.CollectionID == existingCollectionIndex {
-					// Remove the matching collection index from the set:
-					existingCollectionIndexes = append(existingCollectionIndexes[:i], existingCollectionIndexes[i+1:]...)
+			for _, collectionIndex := range action.CollectionIDs {
+				for i, existingCollectionIndex := range existingCollectionIndexes {
+					if collectionIndex == existingCollectionIndex {
+						// Remove the matching collection index from the set:
+						existingCollectionIndexes = append(existingCollectionIndexes[:i], existingCollectionIndexes[i+1:]...)
+					}
 				}
 			}
 			nodeCollections[action.NodeID] = existingCollectionIndexes
@@ -401,16 +403,20 @@ func subscribeToCollection(
 	s *state,
 	action SubscribeToCollection,
 ) {
-	var schemaID string
-	if action.CollectionID == NonExistentCollectionID {
-		schemaID = NonExistentCollectionSchemaID
-	} else {
-		col := s.collections[action.NodeID][action.CollectionID]
-		schemaID = col.SchemaID()
+	n := s.nodes[action.NodeID]
+
+	schemaIDs := []string{}
+	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistentCollectionID {
+			schemaIDs = append(schemaIDs, NonExistentCollectionSchemaID)
+			continue
+		}
+
+		col := s.collections[action.NodeID][collectionIndex]
+		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
-	n := s.nodes[action.NodeID]
-	err := n.AddP2PCollection(s.ctx, schemaID)
+	err := n.AddP2PCollections(s.ctx, schemaIDs)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -427,16 +433,20 @@ func unsubscribeToCollection(
 	s *state,
 	action UnsubscribeToCollection,
 ) {
-	var schemaID string
-	if action.CollectionID == NonExistentCollectionID {
-		schemaID = NonExistentCollectionSchemaID
-	} else {
-		col := s.collections[action.NodeID][action.CollectionID]
-		schemaID = col.SchemaID()
+	n := s.nodes[action.NodeID]
+
+	schemaIDs := []string{}
+	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistentCollectionID {
+			schemaIDs = append(schemaIDs, NonExistentCollectionSchemaID)
+			continue
+		}
+
+		col := s.collections[action.NodeID][collectionIndex]
+		schemaIDs = append(schemaIDs, col.SchemaID())
 	}
 
-	n := s.nodes[action.NodeID]
-	err := n.RemoveP2PCollection(s.ctx, schemaID)
+	err := n.RemoveP2PCollections(s.ctx, schemaIDs)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 

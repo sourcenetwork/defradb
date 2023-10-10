@@ -562,7 +562,7 @@ type EvtPubSub struct {
 }
 
 // rollbackAddPubSubTopics removes the given topics from the pubsub system.
-func (p *Peer) rollbackAddPubSubTopics(cause error, topics ...string) error {
+func (p *Peer) rollbackAddPubSubTopics(topics []string, cause error) error {
 	for _, topic := range topics {
 		if err := p.server.removePubSubTopic(topic); err != nil {
 			return errors.WithStack(err, errors.NewKV("Cause", cause))
@@ -572,7 +572,7 @@ func (p *Peer) rollbackAddPubSubTopics(cause error, topics ...string) error {
 }
 
 // rollbackRemovePubSubTopics adds back the given topics from the pubsub system.
-func (p *Peer) rollbackRemovePubSubTopics(cause error, topics ...string) error {
+func (p *Peer) rollbackRemovePubSubTopics(topics []string, cause error) error {
 	for _, topic := range topics {
 		if err := p.server.addPubSubTopic(topic, true); err != nil {
 			return errors.WithStack(err, errors.NewKV("Cause", cause))

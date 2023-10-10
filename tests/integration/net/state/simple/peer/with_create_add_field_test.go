@@ -44,8 +44,8 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -117,8 +117,8 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -173,8 +173,8 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) 
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),

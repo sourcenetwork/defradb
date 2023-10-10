@@ -79,10 +79,14 @@ func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, er
 	return reps, nil
 }
 
-func (c *Client) AddP2PCollection(ctx context.Context, collectionID string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections", collectionID)
+func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	body, err := json.Marshal(collectionIDs)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
@@ -90,10 +94,14 @@ func (c *Client) AddP2PCollection(ctx context.Context, collectionID string) erro
 	return err
 }
 
-func (c *Client) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections", collectionID)
+func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	body, err := json.Marshal(collectionIDs)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}

@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -218,12 +219,22 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	// init the p2p node
 	var node *net.Node
 	if !cfg.Net.P2PDisabled {
-		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-		node, err = net.NewNode(
-			ctx,
-			db,
+		nodeOpts := []net.NodeOpt{
 			net.WithConfig(cfg),
-		)
+		}
+		if cfg.Datastore.Store == badgerDatastoreName {
+			// It would be ideal to not have the key path tied to the datastore.
+			// Running with memory store mode will always generate a random key.
+			// Adding support for an ephemeral mode and moving the key to the
+			// config would solve both of these issues.
+			key, err := loadOrGeneratePrivateKey(filepath.Join(cfg.Rootdir, "data", "key"))
+			if err != nil {
+				return nil, err
+			}
+			nodeOpts = append(nodeOpts, net.WithPrivateKey(key))
+		}
+		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+		node, err = net.NewNode(ctx, db, nodeOpts...)
 		if err != nil {
 			db.Close()
 			return nil, errors.Wrap("failed to start P2P node", err)

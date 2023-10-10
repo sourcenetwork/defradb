@@ -367,6 +367,10 @@ func defaultNetConfig() *NetConfig {
 }
 
 func (netcfg *NetConfig) validate() error {
+	_, err := ma.NewMultiaddr(netcfg.P2PAddress)
+	if err != nil {
+		return NewErrInvalidP2PAddress(err, netcfg.P2PAddress)
+	}
 	if len(netcfg.Peers) > 0 {
 		peers := strings.Split(netcfg.Peers, ",")
 		maddrs := make([]ma.Multiaddr, len(peers))

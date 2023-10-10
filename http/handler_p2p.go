@@ -13,8 +13,6 @@ package http
 import (
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -35,6 +33,7 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
+
 	var rep client.Replicator
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -54,6 +53,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
+
 	var rep client.Replicator
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -73,6 +73,7 @@ func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
+
 	reps, err := p2p.GetAllReplicators(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -87,7 +88,13 @@ func (s *p2pHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request)
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
-	err := p2p.AddP2PCollection(req.Context(), chi.URLParam(req, "id"))
+
+	var collectionIDs []string
+	if err := requestJSON(req, &collectionIDs); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	err := p2p.AddP2PCollections(req.Context(), collectionIDs)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -101,7 +108,13 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
-	err := p2p.RemoveP2PCollection(req.Context(), chi.URLParam(req, "id"))
+
+	var collectionIDs []string
+	if err := requestJSON(req, &collectionIDs); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	err := p2p.RemoveP2PCollections(req.Context(), collectionIDs)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -115,6 +128,7 @@ func (s *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Requ
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
 		return
 	}
+
 	cols, err := p2p.GetAllP2PCollections(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})

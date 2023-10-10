@@ -12,7 +12,6 @@ package net
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -20,7 +19,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -55,8 +53,6 @@ func TestNewNode_WithEnableRelay_NoError(t *testing.T) {
 		context.Background(),
 		db,
 		WithEnableRelay(true),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 }
@@ -72,8 +68,6 @@ func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 	_, err = NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.ErrorContains(t, err, "datastore closed")
 }
@@ -87,8 +81,6 @@ func TestNewNode_NoPubSub_NoError(t *testing.T) {
 		context.Background(),
 		db,
 		WithPubSub(false),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 	require.Nil(t, n.ps)
@@ -104,27 +96,11 @@ func TestNewNode_WithPubSub_NoError(t *testing.T) {
 		ctx,
 		db,
 		WithPubSub(true),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 
 	require.NoError(t, err)
 	// overly simple check of validity of pubsub, avoiding the process of creating a PubSub
 	require.NotNil(t, n.ps)
-}
-
-func TestNewNode_WithPubSub_FailsWithoutWithDataPath(t *testing.T) {
-	ctx := context.Background()
-	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
-	require.NoError(t, err)
-
-	_, err = NewNode(
-		ctx,
-		db,
-		WithPubSub(true),
-	)
-	require.EqualError(t, err, "1 error occurred:\n\t* mkdir : no such file or directory\n\n")
 }
 
 func TestNodeClose_NoError(t *testing.T) {
@@ -135,8 +111,6 @@ func TestNodeClose_NoError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 	n.Close()
@@ -152,8 +126,6 @@ func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 	n1.Bootstrap([]peer.AddrInfo{})
@@ -169,16 +141,12 @@ func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
@@ -198,16 +166,12 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 	addrs, err := netutils.ParsePeers([]string{
@@ -229,28 +193,17 @@ func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
 		context.Background(),
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
-	found := false
-	for _, addr := range n.ListenAddrs() {
-		if strings.Contains(addr.String(), "/tcp/") {
-			found = true
-		}
-	}
-	assert.True(t, found)
+	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
 }
 
 func TestNodeConfig_NoError(t *testing.T) {
-	tempDir := t.TempDir()
-
 	cfg := config.DefaultConfig()
 	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/9179"
 	cfg.Net.RelayEnabled = true
 	cfg.Net.PubSubEnabled = true
-	cfg.Datastore.Badger.Path = tempDir
 
 	configOpt := WithConfig(cfg)
 	options, err := NewMergedOptions(configOpt)
@@ -263,7 +216,6 @@ func TestNodeConfig_NoError(t *testing.T) {
 	require.NoError(t, err)
 	expectedOptions := Options{
 		ListenAddrs:  []ma.Multiaddr{p2pAddr},
-		DataPath:     tempDir,
 		EnablePubSub: true,
 		EnableRelay:  true,
 		ConnManager:  connManager,
@@ -272,41 +224,8 @@ func TestNodeConfig_NoError(t *testing.T) {
 	for k, v := range options.ListenAddrs {
 		require.Equal(t, expectedOptions.ListenAddrs[k], v)
 	}
-	require.Equal(t, expectedOptions.DataPath, options.DataPath)
 	require.Equal(t, expectedOptions.EnablePubSub, options.EnablePubSub)
 	require.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
-}
-
-func TestSubscribeToPeerConnectionEvents_SubscriptionError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
-	)
-	require.NoError(t, err)
-
-	n.Peer.host = &mockHost{n.Peer.host}
-
-	n.subscribeToPeerConnectionEvents()
-}
-
-func TestPeerConnectionEventEmitter_SingleEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
-	)
-	require.NoError(t, err)
-
-	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
-	require.NoError(t, err)
-
-	err = emitter.Emit(event.EvtPeerConnectednessChanged{})
-	require.NoError(t, err)
 }
 
 func TestPeerConnectionEventEmitter_MultiEvent_NoError(t *testing.T) {
@@ -314,8 +233,6 @@ func TestPeerConnectionEventEmitter_MultiEvent_NoError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -334,8 +251,6 @@ func TestSubscribeToPubSubEvents_SubscriptionError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -344,30 +259,11 @@ func TestSubscribeToPubSubEvents_SubscriptionError(t *testing.T) {
 	n.subscribeToPubSubEvents()
 }
 
-func TestPubSubEventEmitter_SingleEvent_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
-	n, err := NewNode(
-		context.Background(),
-		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
-	)
-	require.NoError(t, err)
-
-	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
-	require.NoError(t, err)
-
-	err = emitter.Emit(EvtPubSub{})
-	require.NoError(t, err)
-}
-
 func TestPubSubEventEmitter_MultiEvent_NoError(t *testing.T) {
 	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -386,8 +282,6 @@ func TestSubscribeToPushLogEvents_SubscriptionError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -401,8 +295,6 @@ func TestPushLogEventEmitter_SingleEvent_NoError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -418,8 +310,6 @@ func TestPushLogEventEmitter_MultiEvent_NoError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -438,8 +328,6 @@ func TestWaitForPeerConnectionEvent_WithSamePeer_NoError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -464,8 +352,6 @@ func TestWaitForPeerConnectionEvent_WithDifferentPeer_TimeoutError(t *testing.T)
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -484,8 +370,6 @@ func TestWaitForPeerConnectionEvent_WithDifferentPeerAndContextClosed_NoError(t 
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -506,8 +390,6 @@ func TestWaitForPubSubEvent_WithSamePeer_NoError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -532,8 +414,6 @@ func TestWaitForPubSubEvent_WithDifferentPeer_TimeoutError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -552,8 +432,6 @@ func TestWaitForPubSubEvent_WithDifferentPeerAndContextClosed_NoError(t *testing
 	n, err := NewNode(
 		context.Background(),
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -575,8 +453,6 @@ func TestWaitForPushLogByPeerEvent_WithSamePeer_NoError(t *testing.T) {
 	n, err := NewNode(
 		ctx,
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -602,8 +478,6 @@ func TestWaitForPushLogByPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T) 
 	n, err := NewNode(
 		ctx,
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -623,8 +497,6 @@ func TestWaitForPushLogByPeerEvent_WithDifferentPeerAndContextClosed_NoError(t *
 	n, err := NewNode(
 		ctx,
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -646,8 +518,6 @@ func TestWaitForPushLogFromPeerEvent_WithSamePeer_NoError(t *testing.T) {
 	n, err := NewNode(
 		ctx,
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -673,8 +543,6 @@ func TestWaitForPushLogFromPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T
 	n, err := NewNode(
 		ctx,
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 
@@ -694,8 +562,6 @@ func TestWaitForPushLogFromPeerEvent_WithDifferentPeerAndContextClosed_NoError(t
 	n, err := NewNode(
 		ctx,
 		db,
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	require.NoError(t, err)
 

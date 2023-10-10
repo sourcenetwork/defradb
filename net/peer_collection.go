@@ -15,12 +15,13 @@ import (
 
 	dsq "github.com/ipfs/go-datastore/query"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
 
 const marker = byte(0xff)
 
-func (p *Peer) AddP2PCollection(ctx context.Context, collectionID string) error {
+func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
 		return err
@@ -28,50 +29,61 @@ func (p *Peer) AddP2PCollection(ctx context.Context, collectionID string) error 
 	defer txn.Discard(p.ctx)
 
 	// first let's make sure the collections actually exists
-	collection, err := p.db.WithTxn(txn).GetCollectionBySchemaID(ctx, collectionID)
-	if err != nil {
-		return err
+	storeCollections := []client.Collection{}
+	for _, col := range collectionIDs {
+		storeCol, err := p.db.WithTxn(txn).GetCollectionBySchemaID(p.ctx, col)
+		if err != nil {
+			return err
+		}
+		storeCollections = append(storeCollections, storeCol)
 	}
 
 	// Ensure we can add all the collections to the store on the transaction
 	// before adding to topics.
-	key := core.NewP2PCollectionKey(collectionID)
-	err = txn.Systemstore().Put(ctx, key.ToDS(), []byte{marker})
-	if err != nil {
-		return err
+	for _, col := range storeCollections {
+		key := core.NewP2PCollectionKey(col.SchemaID())
+		err = txn.Systemstore().Put(ctx, key.ToDS(), []byte{marker})
+		if err != nil {
+			return err
+		}
 	}
 
 	// Add pubsub topics and remove them if we get an error.
-	err = p.server.addPubSubTopic(collectionID, true)
-	if err != nil {
-		return p.rollbackAddPubSubTopics(err, collectionID)
-	}
-
-	keyChan, err := collection.WithTxn(txn).GetAllDocKeys(p.ctx)
-	if err != nil {
-		return err
+	addedTopics := []string{}
+	for _, col := range collectionIDs {
+		err = p.server.addPubSubTopic(col, true)
+		if err != nil {
+			return p.rollbackAddPubSubTopics(addedTopics, err)
+		}
+		addedTopics = append(addedTopics, col)
 	}
 
 	// After adding the collection topics, we remove the collections' documents
 	// from the pubsub topics to avoid receiving duplicate events.
 	removedTopics := []string{}
-	for res := range keyChan {
-		err := p.server.removePubSubTopic(res.Key.String())
+	for _, col := range storeCollections {
+		keyChan, err := col.GetAllDocKeys(p.ctx)
 		if err != nil {
-			return p.rollbackRemovePubSubTopics(err, removedTopics...)
+			return err
 		}
-		removedTopics = append(removedTopics, res.Key.String())
+		for key := range keyChan {
+			err := p.server.removePubSubTopic(key.Key.String())
+			if err != nil {
+				return p.rollbackRemovePubSubTopics(removedTopics, err)
+			}
+			removedTopics = append(removedTopics, key.Key.String())
+		}
 	}
 
 	if err = txn.Commit(p.ctx); err != nil {
-		err = p.rollbackRemovePubSubTopics(err, removedTopics...)
-		return p.rollbackAddPubSubTopics(err, collectionID)
+		err = p.rollbackRemovePubSubTopics(removedTopics, err)
+		return p.rollbackAddPubSubTopics(addedTopics, err)
 	}
 
 	return nil
 }
 
-func (p *Peer) RemoveP2PCollection(ctx context.Context, collectionID string) error {
+func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
 	txn, err := p.db.NewTxn(p.ctx, false)
 	if err != nil {
 		return err
@@ -79,44 +91,55 @@ func (p *Peer) RemoveP2PCollection(ctx context.Context, collectionID string) err
 	defer txn.Discard(p.ctx)
 
 	// first let's make sure the collections actually exists
-	collection, err := p.db.WithTxn(txn).GetCollectionBySchemaID(ctx, collectionID)
-	if err != nil {
-		return err
+	storeCollections := []client.Collection{}
+	for _, col := range collectionIDs {
+		storeCol, err := p.db.WithTxn(txn).GetCollectionBySchemaID(p.ctx, col)
+		if err != nil {
+			return err
+		}
+		storeCollections = append(storeCollections, storeCol)
 	}
 
 	// Ensure we can remove all the collections to the store on the transaction
 	// before adding to topics.
-	key := core.NewP2PCollectionKey(collectionID)
-	err = txn.Systemstore().Delete(ctx, key.ToDS())
-	if err != nil {
-		return err
+	for _, col := range storeCollections {
+		key := core.NewP2PCollectionKey(col.SchemaID())
+		err = txn.Systemstore().Delete(ctx, key.ToDS())
+		if err != nil {
+			return err
+		}
 	}
 
 	// Remove pubsub topics and add them back if we get an error.
-	err = p.server.removePubSubTopic(collectionID)
-	if err != nil {
-		return p.rollbackRemovePubSubTopics(err, collectionID)
-	}
-
-	keyChan, err := collection.WithTxn(txn).GetAllDocKeys(p.ctx)
-	if err != nil {
-		return err
+	removedTopics := []string{}
+	for _, col := range collectionIDs {
+		err = p.server.removePubSubTopic(col)
+		if err != nil {
+			return p.rollbackRemovePubSubTopics(removedTopics, err)
+		}
+		removedTopics = append(removedTopics, col)
 	}
 
 	// After removing the collection topics, we add back the collections' documents
 	// to the pubsub topics.
 	addedTopics := []string{}
-	for res := range keyChan {
-		err := p.server.addPubSubTopic(res.Key.String(), true)
+	for _, col := range storeCollections {
+		keyChan, err := col.GetAllDocKeys(p.ctx)
 		if err != nil {
-			return p.rollbackAddPubSubTopics(err, addedTopics...)
+			return err
 		}
-		addedTopics = append(addedTopics, res.Key.String())
+		for key := range keyChan {
+			err := p.server.addPubSubTopic(key.Key.String(), true)
+			if err != nil {
+				return p.rollbackAddPubSubTopics(addedTopics, err)
+			}
+			addedTopics = append(addedTopics, key.Key.String())
+		}
 	}
 
 	if err = txn.Commit(p.ctx); err != nil {
-		err = p.rollbackAddPubSubTopics(err, addedTopics...)
-		return p.rollbackRemovePubSubTopics(err, collectionID)
+		err = p.rollbackAddPubSubTopics(addedTopics, err)
+		return p.rollbackRemovePubSubTopics(removedTopics, err)
 	}
 
 	return nil

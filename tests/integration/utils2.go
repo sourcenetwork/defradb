@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -492,6 +493,7 @@ func restartNodes(
 			continue
 		}
 
+		key := s.nodePrivateKeys[i]
 		cfg := s.nodeConfigs[i]
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
@@ -502,6 +504,7 @@ func restartNodes(
 			s.ctx,
 			db,
 			net.WithConfig(&cfg),
+			net.WithPrivateKey(key),
 		)
 		require.NoError(s.t, err)
 
@@ -592,18 +595,19 @@ func configureNode(
 	}
 
 	cfg := action()
-	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
-	// And affects where libp2p(?) stores some values on the file system, even when using
-	// an in memory store.
-	cfg.Datastore.Badger.Path = s.t.TempDir()
-
 	db, path, err := setupDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
-	n, err := net.NewNode(
+	privateKey, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+	require.NoError(s.t, err)
+
+	var n *net.Node
+	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+	n, err = net.NewNode(
 		s.ctx,
 		db,
 		net.WithConfig(&cfg),
+		net.WithPrivateKey(privateKey),
 	)
 	require.NoError(s.t, err)
 
@@ -615,6 +619,7 @@ func configureNode(
 
 	s.nodeAddresses = append(s.nodeAddresses, n.PeerInfo())
 	s.nodeConfigs = append(s.nodeConfigs, cfg)
+	s.nodePrivateKeys = append(s.nodePrivateKeys, privateKey)
 
 	c, err := setupClient(s, n)
 	require.NoError(s.t, err)

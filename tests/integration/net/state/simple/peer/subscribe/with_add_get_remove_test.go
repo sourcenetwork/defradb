@@ -33,12 +33,12 @@ func TestP2PSubscribeAddRemoveGetSingle(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.UnsubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.GetAllP2PCollections{
 				NodeID:                1,
@@ -70,17 +70,13 @@ func TestP2PSubscribeAddRemoveGetMultiple(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 1,
+				NodeID:        1,
+				CollectionIDs: []int{0, 1},
 			},
 			testUtils.UnsubscribeToCollection{
 				NodeID: 1,
 				// Unsubscribe from Users, but remain subscribed to Giraffes
-				CollectionID: 0,
+				CollectionIDs: []int{0},
 			},
 			testUtils.GetAllP2PCollections{
 				NodeID:                1,

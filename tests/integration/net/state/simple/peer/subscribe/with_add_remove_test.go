@@ -35,12 +35,12 @@ func TestP2PSubscribeAddAndRemoveSingle(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.UnsubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -95,17 +95,13 @@ func TestP2PSubscribeAddAndRemoveMultiple(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 1,
+				NodeID:        1,
+				CollectionIDs: []int{0, 1},
 			},
 			testUtils.UnsubscribeToCollection{
 				NodeID: 1,
 				// Unsubscribe from Users, but remain subscribed to Giraffes
-				CollectionID: 0,
+				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -168,12 +164,12 @@ func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.UnsubscribeToCollection{
 				NodeID:        1,
-				CollectionID:  testUtils.NonExistentCollectionID,
+				CollectionIDs: []int{testUtils.NonExistentCollectionID},
 				ExpectedError: "datastore: key not found",
 			},
 			testUtils.CreateDoc{
@@ -220,8 +216,8 @@ func TestP2PSubscribeAddSingleAndRemoveNone(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
