@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/libp2p/go-libp2p/core/crypto"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
 
@@ -65,12 +66,14 @@ func TestWithConfigWitTCPAddressError(t *testing.T) {
 	require.Contains(t, err.Error(), "failed to parse multiaddr")
 }
 
-func TestWithDataPath(t *testing.T) {
-	path := "test/path"
-	opt, err := NewMergedOptions(WithDataPath(path))
+func TestWithPrivateKey(t *testing.T) {
+	key, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+	require.NoError(t, err)
+
+	opt, err := NewMergedOptions(WithPrivateKey(key))
 	require.NoError(t, err)
 	require.NotNil(t, opt)
-	require.Equal(t, path, opt.DataPath)
+	require.Equal(t, key, opt.PrivateKey)
 }
 
 func TestWithPubSub(t *testing.T) {
