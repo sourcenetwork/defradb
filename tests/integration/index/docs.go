@@ -60,6 +60,38 @@ func getUserDocs() docsCollection {
 				},
 			},
 			{
+				"name":     "Bruno",
+				"age":      23,
+				"verified": true,
+				"email":    "bruno@gmail.com",
+				"devices": docsCollection{
+					colName: "Device",
+					docs:    []map[string]any{},
+				},
+				"address": map[string]any{
+					"postalCode": 10001,
+					"city":       "New York",
+					"country":    "USA",
+					"street":     "5th Ave",
+				},
+			},
+			{
+				"name":     "Roy",
+				"age":      44,
+				"verified": true,
+				"email":    "roy@gmail.com",
+				"devices": docsCollection{
+					colName: "Device",
+					docs:    []map[string]any{},
+				},
+				"address": map[string]any{
+					"postalCode": 90028,
+					"city":       "Los Angeles",
+					"country":    "USA",
+					"street":     "Hollywood Blvd",
+				},
+			},
+			{
 				"name":     "Fred",
 				"age":      28,
 				"verified": false,

@@ -78,7 +78,7 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(5).WithFieldFetches(15),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(6).WithFieldFetches(18),
 			},
 		},
 	}

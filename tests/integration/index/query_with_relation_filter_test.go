@@ -132,10 +132,10 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
+func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelation_ShouldFilter(t *testing.T) {
 	req1 := `query {
 		User(filter: {
-			address: {city: {_eq: "Munich"}}
+			address: {city: {_eq: "London"}}
 		}) {
 			name
 		}
@@ -148,7 +148,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_Shoul
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed primary relation field in 1-1 relation",
+		Description: "Filter on indexed field of primary relation in 1-1 relation",
 		Actions: []any{
 			createSchemaWithDocs(`
 				type User {
@@ -166,12 +166,12 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_Shoul
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
-					{"name": "Islam"},
+					{"name": "Andy"},
 				},
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(3).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(11).WithFieldFetches(12).WithIndexFetches(1),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -183,7 +183,47 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelation_Shoul
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(14).WithFieldFetches(17).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(15).WithFieldFetches(18).WithIndexFetches(3),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileIndexedForeignField_ShouldFilter(t *testing.T) {
+	req := `query {
+		User(filter: {
+			address: {city: {_eq: "London"}}
+		}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Filter on indexed field of primary relation while having indexed foreign field in 1-1 relation",
+		Actions: []any{
+			createSchemaWithDocs(`
+				type User {
+					name: String 
+					age: Int
+					address: Address @primary @index
+				} 
+
+				type Address {
+					user: User
+					city: String @index
+					street: String 
+				} 
+			`),
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"name": "Andy"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(11).WithFieldFetches(12).WithIndexFetches(1),
 			},
 		},
 	}

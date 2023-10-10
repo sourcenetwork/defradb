@@ -43,7 +43,7 @@ func canConvertIndexFieldValue[T any](val any) bool {
 
 func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
 	switch kind {
-	case client.FieldKind_STRING:
+	case client.FieldKind_STRING, client.FieldKind_FOREIGN_OBJECT:
 		return canConvertIndexFieldValue[string]
 	case client.FieldKind_INT:
 		return canConvertIndexFieldValue[int64]

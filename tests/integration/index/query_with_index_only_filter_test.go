@@ -141,7 +141,7 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(10),
 			},
 		},
 	}
@@ -173,7 +173,7 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(10),
 			},
 		},
 	}
@@ -183,7 +183,7 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_lt: 28}}) {
+		User(filter: {age: {_lt: 22}}) {
 			name
 		}
 	}`
@@ -204,7 +204,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(10),
 			},
 		},
 	}
@@ -214,7 +214,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_le: 28}}) {
+		User(filter: {age: {_le: 23}}) {
 			name
 		}
 	}`
@@ -231,12 +231,12 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 				Request: req,
 				Results: []map[string]any{
 					{"name": "Shahzad"},
-					{"name": "Fred"},
+					{"name": "Bruno"},
 				},
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(10),
 			},
 		},
 	}
@@ -262,10 +262,12 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
+					{"name": "Roy"},
 					{"name": "Addo"},
 					{"name": "Andy"},
 					{"name": "Fred"},
 					{"name": "John"},
+					{"name": "Bruno"},
 					{"name": "Chris"},
 					{"name": "Keenan"},
 					{"name": "Shahzad"},
@@ -273,7 +275,7 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(7).WithFieldFetches(7).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(9).WithFieldFetches(9).WithIndexFetches(10),
 			},
 		},
 	}
@@ -354,7 +356,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 
 func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_nin: [20, 28, 33, 42, 55]}}) {
+		User(filter: {age: {_nin: [20, 23, 28, 33, 42, 55]}}) {
 			name
 		}
 	}`
@@ -372,12 +374,13 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 				Results: []map[string]any{
 					{"name": "John"},
 					{"name": "Islam"},
+					{"name": "Roy"},
 					{"name": "Keenan"},
 				},
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(3).WithFieldFetches(6).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(4).WithFieldFetches(8).WithIndexFetches(10),
 			},
 		},
 	}
@@ -419,7 +422,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -430,7 +433,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req3,
@@ -441,7 +444,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req3),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(10),
 			},
 		},
 	}
@@ -467,16 +470,18 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
+					{"name": "Roy"},
 					{"name": "Addo"},
 					{"name": "Andy"},
 					{"name": "Fred"},
+					{"name": "Bruno"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
 				},
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(5).WithFieldFetches(5).WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(7).WithFieldFetches(7).WithIndexFetches(10),
 			},
 		},
 	}
