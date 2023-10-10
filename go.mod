@@ -3,7 +3,7 @@ module github.com/sourcenetwork/defradb
 go 1.20
 
 require (
-	github.com/bits-and-blooms/bitset v1.8.0
+	github.com/bits-and-blooms/bitset v1.9.0
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/dgraph-io/badger/v4 v4.1.0
 	github.com/evanphx/json-patch/v5 v5.7.0
@@ -43,13 +43,13 @@ require (
 	github.com/ugorji/go/codec v1.2.11
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.0.0
-	go.opentelemetry.io/otel/metric v1.18.0
-	go.opentelemetry.io/otel/sdk/metric v0.40.0
+	go.opentelemetry.io/otel/metric v1.19.0
+	go.opentelemetry.io/otel/sdk/metric v1.19.0
 	go.uber.org/zap v1.25.0
-	golang.org/x/crypto v0.13.0
+	golang.org/x/crypto v0.14.0
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
-	golang.org/x/net v0.15.0
-	google.golang.org/grpc v1.58.1
+	google.golang.org/grpc v1.58.2
+	golang.org/x/net v0.16.0
 	google.golang.org/protobuf v1.31.0
 )
 
@@ -182,15 +182,15 @@ require (
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/otel v1.18.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.17.0 // indirect
-	go.opentelemetry.io/otel/trace v1.18.0 // indirect
+	go.opentelemetry.io/otel v1.19.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.19.0 // indirect
+	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	go.uber.org/dig v1.17.0 // indirect
 	go.uber.org/fx v1.20.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.12.1-0.20230815132531-74c255bcf846 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
