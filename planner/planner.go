@@ -339,7 +339,7 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 	)
 	slct := node.subType.(*selectTopNode).selectNode
 	desc := slct.sourceInfo.collectionDescription
-	indexedFields := desc.CollectIndexedFields()
+	indexedFields := desc.CollectIndexedFields(&desc.Schema)
 	for _, indField := range indexedFields {
 		if ind, ok := filteredSubFields[indField.Name]; ok {
 			subInd := node.documentMapping.FirstIndexOfName(node.subTypeName)

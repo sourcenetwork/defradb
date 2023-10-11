@@ -120,10 +120,11 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
+	desc := c.Description()
 	oldDoc, err := c.get(
 		ctx,
 		txn,
-		c.getPrimaryKeyFromDocKey(doc.Key()), c.Description().CollectIndexedFields(),
+		c.getPrimaryKeyFromDocKey(doc.Key()), desc.CollectIndexedFields(&desc.Schema),
 		false,
 	)
 	if err != nil {

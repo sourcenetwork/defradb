@@ -300,7 +300,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 
 func findFilteredByIndexedField(scanNode *scanNode) immutable.Option[client.FieldDescription] {
 	if scanNode.filter != nil {
-		indexedFields := scanNode.desc.CollectIndexedFields()
+		indexedFields := scanNode.desc.CollectIndexedFields(&scanNode.desc.Schema)
 		for i := range indexedFields {
 			typeIndex := scanNode.documentMapping.FirstIndexOfName(indexedFields[i].Name)
 			if scanNode.filter.HasIndex(typeIndex) {
