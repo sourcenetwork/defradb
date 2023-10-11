@@ -333,6 +333,7 @@ func (m *indexLikeMatcher) doesMatch(currentVal string) bool {
 		return strings.HasSuffix(currentVal, m.value)
 	case m.hasSuffix:
 		return strings.HasPrefix(currentVal, m.value)
+	// there might be 2 ends only for LIKE with 1 % in the middle "ab%cd"
 	case len(m.startAndEnd) == 2:
 		return strings.HasPrefix(currentVal, m.startAndEnd[0]) &&
 			strings.HasSuffix(currentVal, m.startAndEnd[1])
