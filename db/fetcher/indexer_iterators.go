@@ -174,30 +174,53 @@ func (i *inIndexIterator) Close() error {
 	return nil
 }
 
-type filteredIndexIterator struct {
+type errorCheckingFilter struct {
+	matcher indexMatcher
+	err     error
+}
+
+func (f *errorCheckingFilter) Filter(e query.Entry) bool {
+	if f.err != nil {
+		return false
+	}
+	indexKey, err := core.NewIndexDataStoreKey(e.Key)
+	if err != nil {
+		f.err = err
+		return false
+	}
+	res, err := f.matcher.Match(indexKey)
+	if err != nil {
+		f.err = err
+		return false
+	}
+	return res
+}
+
+type execInfoIndexMatcherDecorator struct {
+	matcher  indexMatcher
+	execInfo *ExecInfo
+}
+
+func (d *execInfoIndexMatcherDecorator) Match(key core.IndexDataStoreKey) (bool, error) {
+	d.execInfo.IndexesFetched++
+	return d.matcher.Match(key)
+}
+
+type scanningIndexIterator struct {
 	queryResultIterator
 	indexKey core.IndexDataStoreKey
-	filter   query.Filter
+	matcher  indexMatcher
+	filter   errorCheckingFilter
 	execInfo *ExecInfo
 }
 
-type execInfoIndexIteratorDecorator struct {
-	filter   query.Filter
-	execInfo *ExecInfo
-}
+func (i *scanningIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	i.filter.matcher = &execInfoIndexMatcherDecorator{matcher: i.matcher, execInfo: i.execInfo}
 
-func (f *execInfoIndexIteratorDecorator) Filter(e query.Entry) bool {
-	f.execInfo.IndexesFetched++
-	return f.filter.Filter(e)
-}
-
-func (i *filteredIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	iter, err := store.Query(ctx, query.Query{
 		Prefix:   i.indexKey.ToString(),
 		KeysOnly: true,
-		Filters: []query.Filter{
-			&execInfoIndexIteratorDecorator{filter: i.filter, execInfo: i.execInfo},
-		},
+		Filters:  []query.Filter{&i.filter},
 	})
 	if err != nil {
 		return err
@@ -207,41 +230,39 @@ func (i *filteredIndexIterator) Init(ctx context.Context, store datastore.DSRead
 	return nil
 }
 
+func (i *scanningIndexIterator) Next() (core.IndexDataStoreKey, bool, error) {
+	key, hasValue, err := i.queryResultIterator.Next()
+	if i.filter.err != nil {
+		return core.IndexDataStoreKey{}, false, i.filter.err
+	}
+	return key, hasValue, err
+}
+
 // checks if the stored index value satisfies the condition
 type indexMatcher interface {
-	Match(core.IndexDataStoreKey, []byte) bool
-}
-
-type indexFilter struct {
-	value   []byte
-	matcher indexMatcher
-}
-
-func (f *indexFilter) Filter(e query.Entry) bool {
-	indexKey, err := core.NewIndexDataStoreKey(e.Key)
-	if err != nil {
-		return false
-	}
-	return f.matcher.Match(indexKey, f.value)
+	Match(core.IndexDataStoreKey) (bool, error)
 }
 
 // indexByteValuesMatcher is a filter that compares the index value with a given value.
 // It uses bytes.Compare to compare the values and evaluate the result with evalFunc.
 type indexByteValuesMatcher struct {
+	value []byte
 	// evalFunc receives a result of bytes.Compare
 	evalFunc func(int) bool
 }
 
-func (f *indexByteValuesMatcher) Match(key core.IndexDataStoreKey, value []byte) bool {
-	res := bytes.Compare(key.FieldValues[0], value)
-	return f.evalFunc(res)
+func (m *indexByteValuesMatcher) Match(key core.IndexDataStoreKey) (bool, error) {
+	res := bytes.Compare(key.FieldValues[0], m.value)
+	return m.evalFunc(res), nil
 }
 
 // matcher if _ne condition is met
-type neIndexMatcher struct{}
+type neIndexMatcher struct {
+	value []byte
+}
 
-func (m *neIndexMatcher) Match(key core.IndexDataStoreKey, value []byte) bool {
-	return !bytes.Equal(key.FieldValues[0], value)
+func (m *neIndexMatcher) Match(key core.IndexDataStoreKey) (bool, error) {
+	return !bytes.Equal(key.FieldValues[0], m.value), nil
 }
 
 // checks if the index value is or is not in the given array
@@ -250,19 +271,17 @@ type indexInArrayMatcher struct {
 	isIn   bool
 }
 
-func newNinIndexCmp(values [][]byte, isIn bool) *indexFilter {
+func newNinIndexCmp(values [][]byte, isIn bool) *indexInArrayMatcher {
 	valuesMap := make(map[string]bool)
 	for _, v := range values {
 		valuesMap[string(v)] = true
 	}
-	return &indexFilter{
-		matcher: &indexInArrayMatcher{values: valuesMap, isIn: isIn},
-	}
+	return &indexInArrayMatcher{values: valuesMap, isIn: isIn}
 }
 
-func (m *indexInArrayMatcher) Match(key core.IndexDataStoreKey, value []byte) bool {
+func (m *indexInArrayMatcher) Match(key core.IndexDataStoreKey) (bool, error) {
 	_, found := m.values[string(key.FieldValues[0])]
-	return found == m.isIn
+	return found == m.isIn, nil
 }
 
 // checks if the index value satisfies the LIKE condition
@@ -271,9 +290,10 @@ type indexLikeMatcher struct {
 	hasSuffix   bool
 	startAndEnd []string
 	isLike      bool
+	value       string
 }
 
-func newLikeIndexCmp(filterValue string, isLike bool) *indexFilter {
+func newLikeIndexCmp(filterValue string, isLike bool) *indexLikeMatcher {
 	matcher := &indexLikeMatcher{
 		isLike: isLike,
 	}
@@ -290,36 +310,34 @@ func newLikeIndexCmp(filterValue string, isLike bool) *indexFilter {
 			matcher.startAndEnd = strings.Split(filterValue, "%")
 		}
 	}
+	matcher.value = filterValue
 
-	return &indexFilter{
-		value:   []byte(filterValue),
-		matcher: matcher,
-	}
+	return matcher
 }
 
-func (m *indexLikeMatcher) Match(key core.IndexDataStoreKey, targetVal []byte) bool {
+func (m *indexLikeMatcher) Match(key core.IndexDataStoreKey) (bool, error) {
 	var currentVal string
 	err := cbor.Unmarshal(key.FieldValues[0], &currentVal)
 	if err != nil {
-		return false
+		return false, err
 	}
 
-	return m.doesMatch(currentVal, string(targetVal)) == m.isLike
+	return m.doesMatch(currentVal) == m.isLike, nil
 }
 
-func (cmp *indexLikeMatcher) doesMatch(currentVal, targetVal string) bool {
+func (m *indexLikeMatcher) doesMatch(currentVal string) bool {
 	switch {
-	case cmp.hasPrefix && cmp.hasSuffix:
-		return strings.Contains(currentVal, targetVal)
-	case cmp.hasPrefix:
-		return strings.HasSuffix(currentVal, targetVal)
-	case cmp.hasSuffix:
-		return strings.HasPrefix(currentVal, targetVal)
-	case len(cmp.startAndEnd) == 2:
-		return strings.HasPrefix(currentVal, cmp.startAndEnd[0]) &&
-			strings.HasSuffix(currentVal, cmp.startAndEnd[1])
+	case m.hasPrefix && m.hasSuffix:
+		return strings.Contains(currentVal, m.value)
+	case m.hasPrefix:
+		return strings.HasSuffix(currentVal, m.value)
+	case m.hasSuffix:
+		return strings.HasPrefix(currentVal, m.value)
+	case len(m.startAndEnd) == 2:
+		return strings.HasPrefix(currentVal, m.startAndEnd[0]) &&
+			strings.HasSuffix(currentVal, m.startAndEnd[1])
 	default:
-		return targetVal == currentVal
+		return m.value == currentVal
 	}
 }
 
@@ -356,55 +374,46 @@ func createIndexIterator(
 				execInfo:  execInfo,
 			}, nil
 		} else if op == opGt {
-			return &filteredIndexIterator{
+			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
-				filter: &indexFilter{
-					value: valueBytes,
-					matcher: &indexByteValuesMatcher{
-						evalFunc: func(res int) bool { return res > 0 },
-					},
+				matcher: &indexByteValuesMatcher{
+					value:    valueBytes,
+					evalFunc: func(res int) bool { return res > 0 },
 				},
 				execInfo: execInfo,
 			}, nil
 		} else if op == opGe {
-			return &filteredIndexIterator{
+			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
-				filter: &indexFilter{
-					value: valueBytes,
-					matcher: &indexByteValuesMatcher{
-						evalFunc: func(res int) bool { return res > 0 || res == 0 },
-					},
+				matcher: &indexByteValuesMatcher{
+					value:    valueBytes,
+					evalFunc: func(res int) bool { return res > 0 || res == 0 },
 				},
 				execInfo: execInfo,
 			}, nil
 		} else if op == opLt {
-			return &filteredIndexIterator{
+			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
-				filter: &indexFilter{
-					value: valueBytes,
-					matcher: &indexByteValuesMatcher{
-						evalFunc: func(res int) bool { return res < 0 },
-					},
+				matcher: &indexByteValuesMatcher{
+					value:    valueBytes,
+					evalFunc: func(res int) bool { return res < 0 },
 				},
 				execInfo: execInfo,
 			}, nil
 		} else if op == opLe {
-			return &filteredIndexIterator{
+			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
-				filter: &indexFilter{
-					value: valueBytes,
-					matcher: &indexByteValuesMatcher{
-						evalFunc: func(res int) bool { return res < 0 || res == 0 },
-					},
+				matcher: &indexByteValuesMatcher{
+					value:    valueBytes,
+					evalFunc: func(res int) bool { return res < 0 || res == 0 },
 				},
 				execInfo: execInfo,
 			}, nil
 		} else if op == opNe {
-			return &filteredIndexIterator{
+			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
-				filter: &indexFilter{
-					value:   valueBytes,
-					matcher: &neIndexMatcher{},
+				matcher: &neIndexMatcher{
+					value: valueBytes,
 				},
 				execInfo: execInfo,
 			}, nil
@@ -426,22 +435,22 @@ func createIndexIterator(
 		if op == opIn {
 			return newInIndexIterator(indexDataStoreKey, valArr, execInfo), nil
 		} else {
-			return &filteredIndexIterator{
+			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
-				filter:   newNinIndexCmp(valArr, false),
+				matcher:  newNinIndexCmp(valArr, false),
 				execInfo: execInfo,
 			}, nil
 		}
 	} else if op == opLike {
-		return &filteredIndexIterator{
+		return &scanningIndexIterator{
 			indexKey: indexDataStoreKey,
-			filter:   newLikeIndexCmp(filterVal.(string), true),
+			matcher:  newLikeIndexCmp(filterVal.(string), true),
 			execInfo: execInfo,
 		}, nil
 	} else if op == opNlike {
-		return &filteredIndexIterator{
+		return &scanningIndexIterator{
 			indexKey: indexDataStoreKey,
-			filter:   newLikeIndexCmp(filterVal.(string), false),
+			matcher:  newLikeIndexCmp(filterVal.(string), false),
 			execInfo: execInfo,
 		}, nil
 	}
