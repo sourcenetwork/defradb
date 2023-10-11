@@ -51,6 +51,9 @@ func NewHandler(db client.DB, opts ServerOptions) *Handler {
 
 	router.Route("/api/"+Version, func(api chi.Router) {
 		api.Use(TransactionMiddleware, StoreMiddleware)
+		api.Get("/openapi", func(rw http.ResponseWriter, req *http.Request) {
+			responseJSON(rw, http.StatusOK, OpenApiSpec)
+		})
 		api.Route("/tx", func(tx chi.Router) {
 			tx.Post("/", tx_handler.NewTxn)
 			tx.Post("/concurrent", tx_handler.NewConcurrentTxn)
