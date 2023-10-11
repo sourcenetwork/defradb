@@ -414,6 +414,11 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			name
 		}
 	}`
+	req6 := `query {
+		User(filter: {email: {_like: "a%com%m"}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _like filter",
 		Actions: []any{
@@ -476,6 +481,14 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request:  makeExplainQuery(req5),
 				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(10),
+			},
+			testUtils.Request{
+				Request: req6,
+				Results: []map[string]any{},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req6),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(0).WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
