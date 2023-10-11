@@ -390,17 +390,27 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 	req1 := `query {
-		User(filter: {name: {_like: "A%"}}) {
-			name
-		}
-	}`
+			User(filter: {email: {_like: "a%"}}) {
+				name
+			}
+		}`
 	req2 := `query {
-		User(filter: {name: {_like: "%d"}}) {
+			User(filter: {email: {_like: "%d@gmail.com"}}) {
+				name
+			}
+		}`
+	req3 := `query {
+			User(filter: {email: {_like: "%e%"}}) {
+				name
+			}
+		}`
+	req4 := `query {
+		User(filter: {email: {_like: "fred@gmail.com"}}) {
 			name
 		}
 	}`
-	req3 := `query {
-		User(filter: {name: {_like: "%e%"}}) {
+	req5 := `query {
+		User(filter: {email: {_like: "a%@gmail.com"}}) {
 			name
 		}
 	}`
@@ -409,8 +419,8 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 		Actions: []any{
 			createSchemaWithDocs(`
 				type User {
-					name: String @index
-					age: Int 
+					name: String 
+					email: String @index
 				} 
 			`),
 			testUtils.Request{
@@ -422,7 +432,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -433,7 +443,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req3,
@@ -444,7 +454,28 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req3),
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(10),
+			},
+			testUtils.Request{
+				Request: req4,
+				Results: []map[string]any{
+					{"name": "Fred"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req4),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(1).WithFieldFetches(2).WithIndexFetches(10),
+			},
+			testUtils.Request{
+				Request: req5,
+				Results: []map[string]any{
+					{"name": "Addo"},
+					{"name": "Andy"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req5),
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2).WithFieldFetches(4).WithIndexFetches(10),
 			},
 		},
 	}
