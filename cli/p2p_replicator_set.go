@@ -26,6 +26,9 @@ func MakeP2PReplicatorSetCommand() *cobra.Command {
 		Short: "Set a P2P replicator",
 		Long: `Add a new target replicator.
 A replicator replicates one or all collection(s) from this node to another.
+
+Example:
+  defradb client p2p replicator set -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
 `,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

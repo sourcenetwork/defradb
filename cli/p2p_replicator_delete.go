@@ -24,8 +24,12 @@ func MakeP2PReplicatorDeleteCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "delete [-c, --collection] <peer>",
 		Short: "Delete a replicator. It will stop synchronizing",
-		Long:  `Delete a replicator. It will stop synchronizing.`,
-		Args:  cobra.ExactArgs(1),
+		Long: `Delete a replicator. It will stop synchronizing.
+		
+Example:		
+  defradb client p2p replicator delete -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
+		`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p2p := mustGetP2PContext(cmd)
 
