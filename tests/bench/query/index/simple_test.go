@@ -32,8 +32,8 @@ var (
 	`
 )
 
-func getOptions() *fixtures.Options {
-	return fixtures.NewOptions().WithFieldDirective("User", "Age", "@index")
+func makeUserAgeIndexOption() fixtures.Option {
+	return fixtures.OptionFieldDirective("User", "Age", "@index")
 }
 
 func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_1(b *testing.B) {
@@ -41,7 +41,7 @@ func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_1(b *testing.B) {
 	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", getOptions()),
+		fixtures.ForSchema(ctx, "user_simple", makeUserAgeIndexOption()),
 		1,
 		userSimpleWithFilterQuery,
 		false,
@@ -56,7 +56,7 @@ func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_10(b *testing.B) {
 	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", getOptions()),
+		fixtures.ForSchema(ctx, "user_simple", makeUserAgeIndexOption()),
 		10,
 		userSimpleWithFilterQuery,
 		false,
@@ -71,7 +71,7 @@ func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_1000(b *testing.B) {
 	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", getOptions()),
+		fixtures.ForSchema(ctx, "user_simple", makeUserAgeIndexOption()),
 		1000,
 		userSimpleWithFilterQuery,
 		false,
@@ -86,7 +86,7 @@ func Benchmark_Index_UserSimple_QueryWithFilterOnIndex_Sync_10000(b *testing.B) 
 	err := query.RunQueryBenchGet(
 		b,
 		ctx,
-		fixtures.ForSchema(ctx, "user_simple", getOptions()),
+		fixtures.ForSchema(ctx, "user_simple", makeUserAgeIndexOption()),
 		10000,
 		userSimpleWithFilterQuery,
 		false,
