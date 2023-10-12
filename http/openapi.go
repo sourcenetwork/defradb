@@ -144,7 +144,6 @@ func init() {
 
 	backupExport := openapi3.NewOperation()
 	backupExport.OperationID = "backup_export"
-	backupExport.AddParameter(txnHeaderParam)
 	backupExport.AddResponse(200, successResponse)
 	backupExport.AddResponse(400, errorResponse)
 	backupExport.RequestBody = &openapi3.RequestBodyRef{
@@ -153,7 +152,6 @@ func init() {
 
 	backupImport := openapi3.NewOperation()
 	backupImport.OperationID = "backup_import"
-	backupImport.AddParameter(txnHeaderParam)
 	backupImport.AddResponse(200, successResponse)
 	backupImport.AddResponse(400, errorResponse)
 	backupImport.RequestBody = &openapi3.RequestBodyRef{
@@ -184,15 +182,14 @@ func init() {
 		WithDescription("Collection(s) with matching name, schema id, or version id.").
 		WithJSONSchema(collectionResponseSchema)
 
-	collectionList := openapi3.NewOperation()
-	collectionList.OperationID = "collection_list"
-	collectionList.Description = "List collection(s) by name, schema id, or version id."
-	collectionList.AddParameter(txnHeaderParam)
-	collectionList.AddParameter(collectionNameQueryParam)
-	collectionList.AddParameter(collectionSchemaIdQueryParam)
-	collectionList.AddParameter(collectionVersionIdQueryParam)
-	collectionList.AddResponse(200, collectionsResponse)
-	collectionList.AddResponse(400, errorResponse)
+	collectionDescribe := openapi3.NewOperation()
+	collectionDescribe.OperationID = "collection_describe"
+	collectionDescribe.Description = "Introspect collection(s) by name, schema id, or version id."
+	collectionDescribe.AddParameter(collectionNameQueryParam)
+	collectionDescribe.AddParameter(collectionSchemaIdQueryParam)
+	collectionDescribe.AddParameter(collectionVersionIdQueryParam)
+	collectionDescribe.AddResponse(200, collectionsResponse)
+	collectionDescribe.AddResponse(400, errorResponse)
 
 	collectionNamePathParam := openapi3.NewPathParameter("name").
 		WithDescription("Collection name").
@@ -216,7 +213,6 @@ func init() {
 	collectionCreate := openapi3.NewOperation()
 	collectionCreate.OperationID = "collection_create"
 	collectionCreate.Description = "Create document(s) in a collection"
-	collectionCreate.AddParameter(txnHeaderParam)
 	collectionCreate.AddParameter(collectionNamePathParam)
 	collectionCreate.RequestBody = &openapi3.RequestBodyRef{
 		Value: collectionCreateRequest,
@@ -237,7 +233,6 @@ func init() {
 	collectionUpdateWith := openapi3.NewOperation()
 	collectionUpdateWith.OperationID = "collection_update_with"
 	collectionUpdateWith.Description = "Update document(s) in a collection"
-	collectionUpdateWith.AddParameter(txnHeaderParam)
 	collectionUpdateWith.AddParameter(collectionNamePathParam)
 	collectionUpdateWith.RequestBody = &openapi3.RequestBodyRef{
 		Value: collectionUpdateWithRequest,
@@ -258,7 +253,6 @@ func init() {
 	collectionDeleteWith := openapi3.NewOperation()
 	collectionDeleteWith.OperationID = "collections_delete_with"
 	collectionDeleteWith.Description = "Delete document(s) from a collection"
-	collectionDeleteWith.AddParameter(txnHeaderParam)
 	collectionDeleteWith.AddParameter(collectionNamePathParam)
 	collectionDeleteWith.RequestBody = &openapi3.RequestBodyRef{
 		Value: collectionDeleteWithRequest,
@@ -276,7 +270,6 @@ func init() {
 
 	createIndex := openapi3.NewOperation()
 	createIndex.OperationID = "index_create"
-	createIndex.AddParameter(txnHeaderParam)
 	createIndex.AddParameter(collectionNamePathParam)
 	createIndex.RequestBody = &openapi3.RequestBodyRef{
 		Value: createIndexRequest,
@@ -293,7 +286,6 @@ func init() {
 
 	getIndexes := openapi3.NewOperation()
 	createIndex.OperationID = "index_list"
-	getIndexes.AddParameter(txnHeaderParam)
 	getIndexes.AddParameter(collectionNamePathParam)
 	getIndexes.AddResponse(200, getIndexesResponse)
 	getIndexes.AddResponse(400, errorResponse)
@@ -303,8 +295,7 @@ func init() {
 		WithSchema(openapi3.NewStringSchema())
 
 	dropIndex := openapi3.NewOperation()
-	dropIndex.OperationID = "drop_index"
-	dropIndex.AddParameter(txnHeaderParam)
+	dropIndex.OperationID = "index_drop"
 	dropIndex.AddParameter(collectionNamePathParam)
 	dropIndex.AddParameter(indexPathParam)
 	dropIndex.AddResponse(200, successResponse)
@@ -321,7 +312,6 @@ func init() {
 	collectionGet := openapi3.NewOperation()
 	collectionGet.Description = "Get a document by key"
 	collectionGet.OperationID = "collection_get"
-	collectionGet.AddParameter(txnHeaderParam)
 	collectionGet.AddParameter(collectionNamePathParam)
 	collectionGet.AddParameter(documentKeyPathParam)
 	collectionGet.AddResponse(200, collectionGetResponse)
@@ -330,7 +320,6 @@ func init() {
 	collectionUpdate := openapi3.NewOperation()
 	collectionUpdate.Description = "Update a document by key"
 	collectionUpdate.OperationID = "collection_update"
-	collectionUpdate.AddParameter(txnHeaderParam)
 	collectionUpdate.AddParameter(collectionNamePathParam)
 	collectionUpdate.AddParameter(documentKeyPathParam)
 	collectionUpdate.AddResponse(200, successResponse)
@@ -339,7 +328,6 @@ func init() {
 	collectionDelete := openapi3.NewOperation()
 	collectionDelete.Description = "Delete a document by key"
 	collectionDelete.OperationID = "collection_delete"
-	collectionDelete.AddParameter(txnHeaderParam)
 	collectionDelete.AddParameter(collectionNamePathParam)
 	collectionDelete.AddParameter(documentKeyPathParam)
 	collectionDelete.AddResponse(200, successResponse)
@@ -355,7 +343,6 @@ func init() {
 
 	lensConfig := openapi3.NewOperation()
 	lensConfig.OperationID = "lens_config"
-	lensConfig.AddParameter(txnHeaderParam)
 	lensConfig.AddResponse(200, lensConfigResponse)
 	lensConfig.AddResponse(400, errorResponse)
 
@@ -365,7 +352,6 @@ func init() {
 
 	setMigration := openapi3.NewOperation()
 	setMigration.OperationID = "lens_set_migration"
-	setMigration.AddParameter(txnHeaderParam)
 	setMigration.RequestBody = &openapi3.RequestBodyRef{
 		Value: setMigrationRequest,
 	}
@@ -374,7 +360,6 @@ func init() {
 
 	reloadLenses := openapi3.NewOperation()
 	reloadLenses.OperationID = "lens_reload"
-	reloadLenses.AddParameter(txnHeaderParam)
 	reloadLenses.AddResponse(200, successResponse)
 	reloadLenses.AddResponse(400, errorResponse)
 
@@ -384,7 +369,6 @@ func init() {
 
 	hasMigration := openapi3.NewOperation()
 	hasMigration.OperationID = "lens_has_migration"
-	hasMigration.AddParameter(txnHeaderParam)
 	hasMigration.AddParameter(versionPathParam)
 	hasMigration.AddResponse(200, successResponse)
 	hasMigration.AddResponse(400, errorResponse)
@@ -397,7 +381,6 @@ func init() {
 
 	migrateUp := openapi3.NewOperation()
 	migrateUp.OperationID = "lens_migrate_up"
-	migrateUp.AddParameter(txnHeaderParam)
 	migrateUp.RequestBody = &openapi3.RequestBodyRef{
 		Value: migrateRequest,
 	}
@@ -407,7 +390,6 @@ func init() {
 
 	migrateDown := openapi3.NewOperation()
 	migrateDown.OperationID = "lens_migrate_down"
-	migrateDown.AddParameter(txnHeaderParam)
 	migrateDown.RequestBody = &openapi3.RequestBodyRef{
 		Value: migrateRequest,
 	}
@@ -495,9 +477,6 @@ func init() {
 	removePeerCollections.AddResponse(200, successResponse)
 	removePeerCollections.AddResponse(400, errorResponse)
 
-	graphQLQueryParam := openapi3.NewQueryParameter("query").
-		WithSchema(openapi3.NewStringSchema())
-
 	graphQLRequestSchema := openapi3.NewSchemaRef("#/components/schemas/graphql_request", nil)
 	graphQLRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
@@ -507,15 +486,24 @@ func init() {
 		WithDescription("GraphQL response").
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLResponseSchema))
 
-	graphQL := openapi3.NewOperation()
-	graphQL.Description = "GraphQL endpoint"
-	graphQL.AddParameter(txnHeaderParam)
-	graphQL.AddParameter(graphQLQueryParam)
-	graphQL.RequestBody = &openapi3.RequestBodyRef{
+	graphQLPost := openapi3.NewOperation()
+	graphQLPost.Description = "GraphQL endpoint"
+	graphQLPost.OperationID = "graphql_post"
+	graphQLPost.RequestBody = &openapi3.RequestBodyRef{
 		Value: graphQLRequest,
 	}
-	graphQL.AddResponse(200, graphQLResponse)
-	graphQL.AddResponse(400, errorResponse)
+	graphQLPost.AddResponse(200, graphQLResponse)
+	graphQLPost.AddResponse(400, errorResponse)
+
+	graphQLQueryParam := openapi3.NewQueryParameter("query").
+		WithSchema(openapi3.NewStringSchema())
+
+	graphQLGet := openapi3.NewOperation()
+	graphQLGet.Description = "GraphQL endpoint"
+	graphQLGet.OperationID = "graphql_get"
+	graphQLGet.AddParameter(graphQLQueryParam)
+	graphQLGet.AddResponse(200, graphQLResponse)
+	graphQLGet.AddResponse(400, errorResponse)
 
 	debugDump := openapi3.NewOperation()
 	debugDump.Description = "Dump database"
@@ -531,7 +519,7 @@ func init() {
 	OpenApiSpec.AddOperation("/backup/export", http.MethodPost, backupExport)
 	OpenApiSpec.AddOperation("/backup/import", http.MethodPost, backupImport)
 
-	OpenApiSpec.AddOperation("/collections", http.MethodGet, collectionList)
+	OpenApiSpec.AddOperation("/collections", http.MethodGet, collectionDescribe)
 	OpenApiSpec.AddOperation("/collections/{name}", http.MethodPost, collectionCreate)
 	OpenApiSpec.AddOperation("/collections/{name}", http.MethodPatch, collectionUpdateWith)
 	OpenApiSpec.AddOperation("/collections/{name}", http.MethodDelete, collectionDeleteWith)
@@ -557,16 +545,26 @@ func init() {
 	OpenApiSpec.AddOperation("/p2p/collections", http.MethodPost, addPeerCollections)
 	OpenApiSpec.AddOperation("/p2p/collections", http.MethodDelete, removePeerCollections)
 
-	OpenApiSpec.AddOperation("/graphql", http.MethodGet, graphQL)
-	OpenApiSpec.AddOperation("/graphql", http.MethodPost, graphQL)
+	OpenApiSpec.AddOperation("/graphql", http.MethodGet, graphQLGet)
+	OpenApiSpec.AddOperation("/graphql", http.MethodPost, graphQLPost)
 
 	OpenApiSpec.AddOperation("/debug/dump", http.MethodGet, debugDump)
+
+	// add transaction id header to all routes
+	for _, path := range OpenApiSpec.Paths {
+		for _, op := range path.Operations() {
+			op.Parameters = append(op.Parameters, &openapi3.ParameterRef{
+				Ref: "#/components/parameters/txn",
+			})
+		}
+	}
 
 	// resolve references
 	loader := openapi3.NewLoader()
 	if err := loader.ResolveRefsIn(OpenApiSpec, nil); err != nil {
 		panic(err)
 	}
+
 	// ensure the specification is always valid
 	if err := OpenApiSpec.Validate(context.Background()); err != nil {
 		panic(err)
