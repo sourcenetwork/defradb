@@ -24,9 +24,9 @@ import (
 func DeserializePrefix[T any](
 	ctx context.Context,
 	prefix string,
-	storage ds.Read,
+	store ds.Read,
 ) ([]string, []T, error) {
-	q, err := storage.Query(ctx, query.Query{Prefix: prefix})
+	q, err := store.Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -58,9 +58,9 @@ func DeserializePrefix[T any](
 func FetchKeysForPrefix(
 	ctx context.Context,
 	prefix string,
-	storage ds.Read,
+	store ds.Read,
 ) ([]ds.Key, error) {
-	q, err := storage.Query(ctx, query.Query{Prefix: prefix})
+	q, err := store.Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
 		return nil, err
 	}
