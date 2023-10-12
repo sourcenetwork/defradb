@@ -538,7 +538,7 @@ func (db *db) setDefaultSchemaVersion(
 	}
 
 	desc := col.Description()
-	err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
+	err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, col.Schema().SchemaID, schemaVersionID)
 	if err != nil {
 		return err
 	}
