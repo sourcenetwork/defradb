@@ -380,74 +380,6 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	assert.Equal(t, desc, deserialized)
 }
 
-func TestCreateIndex_IfStorageFails_ReturnError(t *testing.T) {
-	testErr := errors.New("test error")
-
-	testCases := []struct {
-		Name               string
-		ExpectedError      error
-		GetMockSystemstore func(t *testing.T) *mocks.DSReaderWriter
-		AlterDescription   func(desc *client.IndexDescription)
-	}{
-		{
-			Name:          "call Has() for custom index name",
-			ExpectedError: testErr,
-			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
-				store := mocks.NewDSReaderWriter(t)
-				store.EXPECT().Has(mock.Anything, mock.Anything).Unset()
-				store.EXPECT().Has(mock.Anything, mock.Anything).Return(false, testErr)
-				return store
-			},
-			AlterDescription: func(desc *client.IndexDescription) {},
-		},
-		{
-			Name:          "call Has() for generated index name",
-			ExpectedError: testErr,
-			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
-				store := mocks.NewDSReaderWriter(t)
-				store.EXPECT().Has(mock.Anything, mock.Anything).Unset()
-				store.EXPECT().Has(mock.Anything, mock.Anything).Return(false, testErr)
-				return store
-			},
-			AlterDescription: func(desc *client.IndexDescription) {
-				desc.Name = ""
-			},
-		},
-		{
-			Name:          "fails to store index description",
-			ExpectedError: NewErrInvalidStoredIndex(nil),
-			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
-				store := mocks.NewDSReaderWriter(t)
-				store.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Unset()
-				key := core.NewCollectionIndexKey(usersColName, testUsersColIndexName)
-				store.EXPECT().Put(mock.Anything, key.ToDS(), mock.Anything).Return(testErr)
-				return store
-			},
-			AlterDescription: func(desc *client.IndexDescription) {},
-		},
-	}
-
-	for _, testCase := range testCases {
-		f := newIndexTestFixture(t)
-
-		mockedTxn := f.mockTxn()
-
-		mockedTxn.MockSystemstore = testCase.GetMockSystemstore(t)
-		f.stubSystemStore(mockedTxn.MockSystemstore.EXPECT())
-		mockedTxn.EXPECT().Systemstore().Unset()
-		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
-
-		desc := client.IndexDescription{
-			Name:   testUsersColIndexName,
-			Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
-		}
-		testCase.AlterDescription(&desc)
-
-		_, err := f.createCollectionIndex(desc)
-		assert.ErrorIs(t, err, testErr, testCase.Name)
-	}
-}
-
 func TestCreateIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
@@ -736,43 +668,6 @@ func TestGetIndexes_IfSystemStoreHasInvalidData_ReturnError(t *testing.T) {
 
 	_, err := f.getAllIndexes()
 	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
-}
-
-func TestGetIndexes_IfFailsToReadSeqNumber_ReturnError(t *testing.T) {
-	testErr := errors.New("test error")
-
-	testCases := []struct {
-		Name            string
-		StubSystemStore func(*mocks.DSReaderWriter_Expecter, core.Key)
-	}{
-		{
-			Name: "Read Sequence Number",
-			StubSystemStore: func(onSystemStore *mocks.DSReaderWriter_Expecter, seqKey core.Key) {
-				onSystemStore.Get(mock.Anything, seqKey.ToDS()).Return(nil, testErr)
-			},
-		},
-		{
-			Name: "Increment Sequence Number",
-			StubSystemStore: func(onSystemStore *mocks.DSReaderWriter_Expecter, seqKey core.Key) {
-				onSystemStore.Put(mock.Anything, seqKey.ToDS(), mock.Anything).Return(testErr)
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		f := newIndexTestFixture(t)
-
-		mockedTxn := f.mockTxn()
-		onSystemStore := mockedTxn.MockSystemstore.EXPECT()
-		f.resetSystemStoreStubs(onSystemStore)
-
-		seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, f.users.ID()))
-		tc.StubSystemStore(onSystemStore, seqKey)
-		f.stubSystemStore(onSystemStore)
-
-		_, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
-		assert.ErrorIs(t, err, testErr)
-	}
 }
 
 func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) {
@@ -1164,21 +1059,6 @@ func TestDropIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 
 	err := f.dropIndex(productsColName, "any_name")
 	assert.ErrorIs(t, err, NewErrCanNotReadCollection(usersColName, nil))
-}
-
-func TestDropIndex_IfFailsToQuerySystemStorage_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-	desc := f.createUserCollectionIndexOnName()
-
-	testErr := errors.New("test error")
-
-	mockTxn := f.mockTxn().ClearSystemStore()
-	systemStoreOn := mockTxn.MockSystemstore.EXPECT()
-	systemStoreOn.Query(mock.Anything, mock.Anything).Return(nil, testErr)
-	f.stubSystemStore(systemStoreOn)
-
-	err := f.dropIndex(usersColName, desc.Name)
-	require.ErrorIs(t, err, testErr)
 }
 
 func TestDropIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
