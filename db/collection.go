@@ -28,9 +28,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/descriptions"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
@@ -119,34 +119,15 @@ func (db *db) createCollection(
 	}
 	desc.ID = uint32(colID)
 
-	for i := range schema.Fields {
-		schema.Fields[i].ID = client.FieldID(i)
-	}
-
 	col, err := db.newCollection(desc, schema)
 	if err != nil {
 		return nil, err
 	}
 
-	// Local elements such as secondary indexes should be excluded
-	// from the (global) schemaId.
-	schemaBuf, err := json.Marshal(schema)
+	schema, err = descriptions.CreateSchemaVersion(ctx, txn, schema)
 	if err != nil {
 		return nil, err
 	}
-
-	// add a reference to this DB by desc hash
-	cid, err := ccid.NewSHA256CidV1(schemaBuf)
-	if err != nil {
-		return nil, err
-	}
-	schemaID := cid.String()
-
-	// For new schemas the initial version id will match the schema id
-	schemaVersionID := schemaID
-
-	schema.VersionID = schemaVersionID
-	schema.SchemaID = schemaID
 	desc.Schema = schema
 
 	// buffer must include all the ids, as it is saved and loaded from the store later.
@@ -155,7 +136,7 @@ func (db *db) createCollection(
 		return nil, err
 	}
 
-	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID)
+	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schema.VersionID)
 	// Whilst the schemaVersionKey is global, the data persisted at the key's location
 	// is local to the node (the global only elements are not useful beyond key generation).
 	err = txn.Systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
@@ -163,13 +144,13 @@ func (db *db) createCollection(
 		return nil, err
 	}
 
-	collectionSchemaKey := core.NewCollectionSchemaKey(schemaID)
-	err = txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
+	collectionSchemaKey := core.NewCollectionSchemaKey(schema.SchemaID)
+	err = txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schema.VersionID))
 	if err != nil {
 		return nil, err
 	}
 
-	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
+	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schema.VersionID))
 	if err != nil {
 		return nil, err
 	}
@@ -239,14 +220,6 @@ func (db *db) updateSchema(
 	}
 
 	for i, field := range schema.Fields {
-		if field.ID == client.FieldID(0) {
-			// This is not wonderful and will probably break when we add the ability
-			// to delete fields, however it is good enough for now and matches the
-			// create behaviour.
-			field.ID = client.FieldID(i)
-			schema.Fields[i] = field
-		}
-
 		if field.Typ == client.NONE_CRDT {
 			// If no CRDT Type has been provided, default to LWW_REGISTER.
 			field.Typ = client.LWW_REGISTER
@@ -254,18 +227,11 @@ func (db *db) updateSchema(
 		}
 	}
 
-	globalSchemaBuf, err := json.Marshal(schema)
+	schema, err = descriptions.CreateSchemaVersion(ctx, txn, schema)
 	if err != nil {
 		return nil, err
 	}
 
-	cid, err := ccid.NewSHA256CidV1(globalSchemaBuf)
-	if err != nil {
-		return nil, err
-	}
-	previousSchemaVersionID := schema.VersionID
-	schemaVersionID := cid.String()
-	schema.VersionID = schemaVersionID
 	desc.Schema = schema
 
 	buf, err := json.Marshal(desc)
@@ -273,7 +239,7 @@ func (db *db) updateSchema(
 		return nil, err
 	}
 
-	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID)
+	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schema.VersionID)
 	// Whilst the schemaVersionKey is global, the data persisted at the key's location
 	// is local to the node (the global only elements are not useful beyond key generation).
 	err = txn.Systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
@@ -281,14 +247,8 @@ func (db *db) updateSchema(
 		return nil, err
 	}
 
-	schemaVersionHistoryKey := core.NewSchemaHistoryKey(schema.SchemaID, previousSchemaVersionID)
-	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
-	}
-
 	if setAsDefaultVersion {
-		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, schema.SchemaID, schemaVersionID)
+		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, schema.SchemaID, schema.VersionID)
 		if err != nil {
 			return nil, err
 		}
