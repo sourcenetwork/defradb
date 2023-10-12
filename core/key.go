@@ -264,6 +264,11 @@ func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersi
 	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
 }
 
+func NewCollectionSchemaVersionKeyFromString(key string) CollectionSchemaVersionKey {
+	elements := strings.Split(key, "/")
+	return CollectionSchemaVersionKey{SchemaVersionId: elements[len(elements)-1]}
+}
+
 // NewCollectionIndexKey creates a new CollectionIndexKey from a collection name and index name.
 func NewCollectionIndexKey(colID, indexName string) CollectionIndexKey {
 	return CollectionIndexKey{CollectionName: colID, IndexName: indexName}

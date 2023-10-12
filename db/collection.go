@@ -35,7 +35,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/lens"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
@@ -119,16 +118,12 @@ func (db *db) createCollection(
 	}
 	desc.ID = uint32(colID)
 
-	col, err := db.newCollection(desc, schema)
-	if err != nil {
-		return nil, err
-	}
-
 	schema, err = descriptions.CreateSchemaVersion(ctx, txn, schema)
 	if err != nil {
 		return nil, err
 	}
 	desc.Schema = schema
+	desc.SchemaVersionID = schema.VersionID
 
 	// buffer must include all the ids, as it is saved and loaded from the store later.
 	buf, err := json.Marshal(desc)
@@ -155,12 +150,10 @@ func (db *db) createCollection(
 		return nil, err
 	}
 
-	log.Debug(
-		ctx,
-		"Created collection",
-		logging.NewKV("Name", col.Name()),
-		logging.NewKV("SchemaID", col.SchemaID()),
-	)
+	col, err := db.newCollection(desc, schema)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, index := range desc.Indexes {
 		if _, err := col.createIndex(ctx, txn, index); err != nil {
@@ -233,6 +226,7 @@ func (db *db) updateSchema(
 	}
 
 	desc.Schema = schema
+	desc.SchemaVersionID = schema.VersionID
 
 	buf, err := json.Marshal(desc)
 	if err != nil {
@@ -557,11 +551,16 @@ func (db *db) getCollectionByVersionID(
 		return nil, err
 	}
 
+	schema, err := descriptions.GetSchemaVersion(ctx, txn, desc.SchemaVersionID)
+	if err != nil {
+		return nil, err
+	}
+
 	col := &collection{
 		db: db,
 		def: client.CollectionDefinition{
 			Description: desc,
-			Schema:      desc.Schema,
+			Schema:      schema,
 		},
 	}
 

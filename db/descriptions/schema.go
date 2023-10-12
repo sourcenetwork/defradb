@@ -14,6 +14,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/ipfs/go-datastore/query"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/cid"
@@ -76,4 +78,93 @@ func CreateSchemaVersion(
 	}
 
 	return desc, nil
+}
+
+// GetSchemaVersion returns the schema description for the schema version of the
+// ID provided.
+//
+// Will return an error if it is not found.
+func GetSchemaVersion(
+	ctx context.Context,
+	txn datastore.Txn,
+	versionID string,
+) (client.SchemaDescription, error) {
+	key := core.NewSchemaVersionKey(versionID)
+
+	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+
+	var desc client.SchemaDescription
+	err = json.Unmarshal(buf, &desc)
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+
+	return desc, nil
+}
+
+// GetSchemas returns the schema of all the default schemas in the system.
+func GetSchemas(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.SchemaDescription, error) {
+	collectionSchemaVersionPrefix := core.NewCollectionSchemaVersionKey("")
+	collectionSchemaVersionQuery, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix:   collectionSchemaVersionPrefix.ToString(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, NewErrFailedToCreateSchemaQuery(err)
+	}
+	defer func() {
+		if err := collectionSchemaVersionQuery.Close(); err != nil {
+			log.Error(ctx, NewErrFailedToCloseSchemaQuery(err).Error())
+		}
+	}()
+
+	versionIDs := make([]string, 0)
+	for res := range collectionSchemaVersionQuery.Next() {
+		if res.Error != nil {
+			return nil, err
+		}
+
+		versionIDs = append(versionIDs, core.NewCollectionSchemaVersionKeyFromString(string(res.Key)).SchemaVersionId)
+	}
+
+	schemaVersionPrefix := core.NewSchemaVersionKey("")
+	schemaVersionQuery, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix: schemaVersionPrefix.ToString(),
+	})
+	if err != nil {
+		return nil, NewErrFailedToCreateSchemaQuery(err)
+	}
+	defer func() {
+		if err := schemaVersionQuery.Close(); err != nil {
+			log.Error(ctx, NewErrFailedToCloseSchemaQuery(err).Error())
+		}
+	}()
+
+	descriptions := make([]client.SchemaDescription, 0)
+	for res := range schemaVersionQuery.Next() {
+		if res.Error != nil {
+			return nil, err
+		}
+
+		var desc client.SchemaDescription
+		err = json.Unmarshal(res.Value, &desc)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, versionID := range versionIDs {
+			if desc.VersionID == versionID {
+				descriptions = append(descriptions, desc)
+				break
+			}
+		}
+	}
+
+	return descriptions, nil
 }

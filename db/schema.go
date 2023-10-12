@@ -23,6 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/descriptions"
 )
 
 const (
@@ -106,9 +107,14 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		return err
 	}
 
+	schemas, err := descriptions.GetSchemas(ctx, txn)
+	if err != nil {
+		return err
+	}
+
 	existingSchemaByName := map[string]client.SchemaDescription{}
-	for _, col := range collectionsByName {
-		existingSchemaByName[col.Schema.Name] = col.Schema
+	for _, schema := range schemas {
+		existingSchemaByName[schema.Name] = schema
 	}
 
 	// Here we swap out any string representations of enums for their integer values
