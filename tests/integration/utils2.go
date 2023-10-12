@@ -367,7 +367,7 @@ func executeTestCase(
 	refreshIndexes(s)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
-		performAction(t, s, i, testCase.Actions[i])
+		performAction(s, i, testCase.Actions[i])
 	}
 
 	// Notify any active subscriptions that all requests have been sent.
@@ -387,7 +387,6 @@ func executeTestCase(
 }
 
 func performAction(
-	t *testing.T,
 	s *state,
 	actionIndex int,
 	act any,
@@ -475,18 +474,17 @@ func performAction(
 		waitForSync(s, action)
 
 	case Benchmark:
-		benchmarkAction(t, s, actionIndex, action)
+		benchmarkAction(s, actionIndex, action)
 
 	case SetupComplete:
 		// no-op, just continue.
 
 	default:
-		t.Fatalf("Unknown action type %T", action)
+		s.t.Fatalf("Unknown action type %T", action)
 	}
 }
 
 func benchmarkAction(
-	t *testing.T,
 	s *state,
 	actionIndex int,
 	bench Benchmark,
@@ -516,7 +514,7 @@ func benchmarkAction(
 	}
 	startTime := time.Now()
 	for i := 0; i < bench.Reps; i++ {
-		performAction(t, s, actionIndex, bench.Action)
+		performAction(s, actionIndex, bench.Action)
 	}
 	bench.Result.ElapsedTime[s.dbt] = time.Since(startTime)
 	s.isBench = false
