@@ -280,7 +280,7 @@ In this example, we use `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, 
 For *nodeB*, we provide the following configuration:
 
 ```shell
-defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162 --peers /ip4/0.0.0.0/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
+defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --peers /ip4/0.0.0.0/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
 ```
 
 About the flags:
@@ -288,7 +288,6 @@ About the flags:
 - `--rootdir` specifies the root dir (config and data) to use
 - `--url` is the address to listen on for the client HTTP and GraphQL API
 - `--p2paddr` is the multiaddress for the P2P networking to listen on
-- `--tcpaddr` is the multiaddress for the gRPC server to listen on
 - `--peers` is a comma-separated list of peer multiaddresses
 
 This starts two nodes and connects them via pubsub networking.
