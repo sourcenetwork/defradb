@@ -110,13 +110,13 @@ func init() {
 		WithJSONSchemaRef(createTxSchema)
 
 	txnCreate := openapi3.NewOperation()
-	txnCreate.OperationID = "NewTxn"
+	txnCreate.OperationID = "new_transaction"
 	txnCreate.AddParameter(txnReadOnlyQueryParam)
 	txnCreate.AddResponse(200, txnCreateResponse)
 	txnCreate.AddResponse(400, errorResponse)
 
 	txnConcurrent := openapi3.NewOperation()
-	txnCreate.OperationID = "NewConcurrentTxn"
+	txnConcurrent.OperationID = "new_concurrent_transaction"
 	txnConcurrent.AddParameter(txnReadOnlyQueryParam)
 	txnConcurrent.AddResponse(200, txnCreateResponse)
 	txnConcurrent.AddResponse(400, errorResponse)
@@ -126,15 +126,13 @@ func init() {
 		WithSchema(openapi3.NewInt64Schema())
 
 	txnCommit := openapi3.NewOperation()
-	txnCommit.OperationID = "Commit"
-	txnCommit.Tags = []string{"transaction"}
+	txnCommit.OperationID = "transaction_commit"
 	txnCommit.AddParameter(txnIdPathParam)
 	txnCommit.AddResponse(200, successResponse)
 	txnCommit.AddResponse(400, errorResponse)
 
 	txnDiscard := openapi3.NewOperation()
-	txnDiscard.OperationID = "Discard"
-	txnCommit.Tags = []string{"transaction"}
+	txnDiscard.OperationID = "transaction_discard"
 	txnDiscard.AddParameter(txnIdPathParam)
 	txnDiscard.AddResponse(200, successResponse)
 	txnDiscard.AddResponse(400, errorResponse)
@@ -145,8 +143,7 @@ func init() {
 		WithJSONSchemaRef(backupConfigSchema)
 
 	backupExport := openapi3.NewOperation()
-	backupExport.OperationID = "Export"
-	backupExport.Tags = []string{"backup"}
+	backupExport.OperationID = "backup_export"
 	backupExport.AddParameter(txnHeaderParam)
 	backupExport.AddResponse(200, successResponse)
 	backupExport.AddResponse(400, errorResponse)
@@ -155,6 +152,7 @@ func init() {
 	}
 
 	backupImport := openapi3.NewOperation()
+	backupImport.OperationID = "backup_import"
 	backupImport.AddParameter(txnHeaderParam)
 	backupImport.AddResponse(200, successResponse)
 	backupImport.AddResponse(400, errorResponse)
@@ -186,14 +184,15 @@ func init() {
 		WithDescription("Collection(s) with matching name, schema id, or version id.").
 		WithJSONSchema(collectionResponseSchema)
 
-	collectionsList := openapi3.NewOperation()
-	collectionsList.Description = "Get collection(s) by name, schema id, or version id."
-	collectionsList.AddParameter(txnHeaderParam)
-	collectionsList.AddParameter(collectionNameQueryParam)
-	collectionsList.AddParameter(collectionSchemaIdQueryParam)
-	collectionsList.AddParameter(collectionVersionIdQueryParam)
-	collectionsList.AddResponse(200, collectionsResponse)
-	collectionsList.AddResponse(400, errorResponse)
+	collectionList := openapi3.NewOperation()
+	collectionList.OperationID = "collection_list"
+	collectionList.Description = "List collection(s) by name, schema id, or version id."
+	collectionList.AddParameter(txnHeaderParam)
+	collectionList.AddParameter(collectionNameQueryParam)
+	collectionList.AddParameter(collectionSchemaIdQueryParam)
+	collectionList.AddParameter(collectionVersionIdQueryParam)
+	collectionList.AddResponse(200, collectionsResponse)
+	collectionList.AddResponse(400, errorResponse)
 
 	collectionNamePathParam := openapi3.NewPathParameter("name").
 		WithDescription("Collection name").
@@ -215,6 +214,8 @@ func init() {
 		WithContent(openapi3.NewContentWithJSONSchema(collectionCreateSchema))
 
 	collectionCreate := openapi3.NewOperation()
+	collectionCreate.OperationID = "collection_create"
+	collectionCreate.Description = "Create document(s) in a collection"
 	collectionCreate.AddParameter(txnHeaderParam)
 	collectionCreate.AddParameter(collectionNamePathParam)
 	collectionCreate.RequestBody = &openapi3.RequestBodyRef{
@@ -234,6 +235,7 @@ func init() {
 		WithJSONSchemaRef(updateResultSchema)
 
 	collectionUpdateWith := openapi3.NewOperation()
+	collectionUpdateWith.OperationID = "collection_update_with"
 	collectionUpdateWith.Description = "Update document(s) in a collection"
 	collectionUpdateWith.AddParameter(txnHeaderParam)
 	collectionUpdateWith.AddParameter(collectionNamePathParam)
@@ -254,6 +256,7 @@ func init() {
 		WithJSONSchemaRef(deleteResultSchema)
 
 	collectionDeleteWith := openapi3.NewOperation()
+	collectionDeleteWith.OperationID = "collections_delete_with"
 	collectionDeleteWith.Description = "Delete document(s) from a collection"
 	collectionDeleteWith.AddParameter(txnHeaderParam)
 	collectionDeleteWith.AddParameter(collectionNamePathParam)
@@ -272,6 +275,7 @@ func init() {
 		WithJSONSchemaRef(indexSchema)
 
 	createIndex := openapi3.NewOperation()
+	createIndex.OperationID = "index_create"
 	createIndex.AddParameter(txnHeaderParam)
 	createIndex.AddParameter(collectionNamePathParam)
 	createIndex.RequestBody = &openapi3.RequestBodyRef{
@@ -288,6 +292,7 @@ func init() {
 		WithJSONSchema(indexArraySchema)
 
 	getIndexes := openapi3.NewOperation()
+	createIndex.OperationID = "index_list"
 	getIndexes.AddParameter(txnHeaderParam)
 	getIndexes.AddParameter(collectionNamePathParam)
 	getIndexes.AddResponse(200, getIndexesResponse)
@@ -298,6 +303,7 @@ func init() {
 		WithSchema(openapi3.NewStringSchema())
 
 	dropIndex := openapi3.NewOperation()
+	dropIndex.OperationID = "drop_index"
 	dropIndex.AddParameter(txnHeaderParam)
 	dropIndex.AddParameter(collectionNamePathParam)
 	dropIndex.AddParameter(indexPathParam)
@@ -313,6 +319,8 @@ func init() {
 		WithJSONSchemaRef(documentSchema)
 
 	collectionGet := openapi3.NewOperation()
+	collectionGet.Description = "Get a document by key"
+	collectionGet.OperationID = "collection_get"
 	collectionGet.AddParameter(txnHeaderParam)
 	collectionGet.AddParameter(collectionNamePathParam)
 	collectionGet.AddParameter(documentKeyPathParam)
@@ -320,6 +328,8 @@ func init() {
 	collectionGet.AddResponse(400, errorResponse)
 
 	collectionUpdate := openapi3.NewOperation()
+	collectionUpdate.Description = "Update a document by key"
+	collectionUpdate.OperationID = "collection_update"
 	collectionUpdate.AddParameter(txnHeaderParam)
 	collectionUpdate.AddParameter(collectionNamePathParam)
 	collectionUpdate.AddParameter(documentKeyPathParam)
@@ -327,6 +337,8 @@ func init() {
 	collectionUpdate.AddResponse(400, errorResponse)
 
 	collectionDelete := openapi3.NewOperation()
+	collectionDelete.Description = "Delete a document by key"
+	collectionDelete.OperationID = "collection_delete"
 	collectionDelete.AddParameter(txnHeaderParam)
 	collectionDelete.AddParameter(collectionNamePathParam)
 	collectionDelete.AddParameter(documentKeyPathParam)
@@ -342,6 +354,7 @@ func init() {
 		WithJSONSchema(lensConfigArraySchema)
 
 	lensConfig := openapi3.NewOperation()
+	lensConfig.OperationID = "lens_config"
 	lensConfig.AddParameter(txnHeaderParam)
 	lensConfig.AddResponse(200, lensConfigResponse)
 	lensConfig.AddResponse(400, errorResponse)
@@ -351,6 +364,7 @@ func init() {
 		WithJSONSchemaRef(lensConfigSchema)
 
 	setMigration := openapi3.NewOperation()
+	setMigration.OperationID = "lens_set_migration"
 	setMigration.AddParameter(txnHeaderParam)
 	setMigration.RequestBody = &openapi3.RequestBodyRef{
 		Value: setMigrationRequest,
@@ -359,6 +373,7 @@ func init() {
 	setMigration.AddResponse(400, errorResponse)
 
 	reloadLenses := openapi3.NewOperation()
+	reloadLenses.OperationID = "lens_reload"
 	reloadLenses.AddParameter(txnHeaderParam)
 	reloadLenses.AddResponse(200, successResponse)
 	reloadLenses.AddResponse(400, errorResponse)
@@ -368,6 +383,7 @@ func init() {
 		WithSchema(openapi3.NewStringSchema())
 
 	hasMigration := openapi3.NewOperation()
+	hasMigration.OperationID = "lens_has_migration"
 	hasMigration.AddParameter(txnHeaderParam)
 	hasMigration.AddParameter(versionPathParam)
 	hasMigration.AddResponse(200, successResponse)
@@ -380,6 +396,7 @@ func init() {
 		WithContent(openapi3.NewContentWithJSONSchema(migrateSchema))
 
 	migrateUp := openapi3.NewOperation()
+	migrateUp.OperationID = "lens_migrate_up"
 	migrateUp.AddParameter(txnHeaderParam)
 	migrateUp.RequestBody = &openapi3.RequestBodyRef{
 		Value: migrateRequest,
@@ -389,6 +406,7 @@ func init() {
 	migrateUp.AddResponse(400, errorResponse)
 
 	migrateDown := openapi3.NewOperation()
+	migrateDown.OperationID = "lens_migrate_down"
 	migrateDown.AddParameter(txnHeaderParam)
 	migrateDown.RequestBody = &openapi3.RequestBodyRef{
 		Value: migrateRequest,
@@ -403,6 +421,7 @@ func init() {
 		WithContent(openapi3.NewContentWithJSONSchemaRef(peerInfoSchema))
 
 	peerInfo := openapi3.NewOperation()
+	peerInfo.OperationID = "peer_info"
 	peerInfo.AddResponse(200, peerInfoResponse)
 	peerInfo.AddResponse(400, errorResponse)
 
@@ -414,6 +433,8 @@ func init() {
 		WithContent(openapi3.NewContentWithJSONSchema(getReplicatorsSchema))
 
 	getReplicators := openapi3.NewOperation()
+	getReplicators.Description = "List peer replicators"
+	getReplicators.OperationID = "peer_replicator_list"
 	getReplicators.AddResponse(200, getReplicatorsResponse)
 	getReplicators.AddResponse(400, errorResponse)
 
@@ -422,6 +443,8 @@ func init() {
 		WithContent(openapi3.NewContentWithJSONSchemaRef(replicatorSchema))
 
 	setReplicator := openapi3.NewOperation()
+	setReplicator.Description = "Add peer replicators"
+	setReplicator.OperationID = "peer_replicator_set"
 	setReplicator.RequestBody = &openapi3.RequestBodyRef{
 		Value: replicatorRequest,
 	}
@@ -429,6 +452,8 @@ func init() {
 	setReplicator.AddResponse(400, errorResponse)
 
 	deleteReplicator := openapi3.NewOperation()
+	deleteReplicator.Description = "Delete peer replicators"
+	deleteReplicator.OperationID = "peer_replicator_delete"
 	deleteReplicator.RequestBody = &openapi3.RequestBodyRef{
 		Value: replicatorRequest,
 	}
@@ -447,10 +472,14 @@ func init() {
 		WithContent(openapi3.NewContentWithJSONSchema(peerCollectionsSchema))
 
 	getPeerCollections := openapi3.NewOperation()
+	getPeerCollections.Description = "List peer collections"
+	getPeerCollections.OperationID = "peer_collection_list"
 	getPeerCollections.AddResponse(200, getPeerCollectionsResponse)
 	getPeerCollections.AddResponse(400, errorResponse)
 
 	addPeerCollections := openapi3.NewOperation()
+	addPeerCollections.Description = "Add peer collections"
+	addPeerCollections.OperationID = "peer_collection_add"
 	addPeerCollections.RequestBody = &openapi3.RequestBodyRef{
 		Value: peerCollectionRequest,
 	}
@@ -458,6 +487,8 @@ func init() {
 	addPeerCollections.AddResponse(400, errorResponse)
 
 	removePeerCollections := openapi3.NewOperation()
+	removePeerCollections.Description = "Remove peer collections"
+	removePeerCollections.OperationID = "peer_collection_remove"
 	removePeerCollections.RequestBody = &openapi3.RequestBodyRef{
 		Value: peerCollectionRequest,
 	}
@@ -477,6 +508,7 @@ func init() {
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLResponseSchema))
 
 	graphQL := openapi3.NewOperation()
+	graphQL.Description = "GraphQL endpoint"
 	graphQL.AddParameter(txnHeaderParam)
 	graphQL.AddParameter(graphQLQueryParam)
 	graphQL.RequestBody = &openapi3.RequestBodyRef{
@@ -486,6 +518,8 @@ func init() {
 	graphQL.AddResponse(400, errorResponse)
 
 	debugDump := openapi3.NewOperation()
+	debugDump.Description = "Dump database"
+	debugDump.OperationID = "debug_dump"
 	debugDump.AddResponse(200, successResponse)
 	debugDump.AddResponse(400, errorResponse)
 
@@ -497,7 +531,7 @@ func init() {
 	OpenApiSpec.AddOperation("/backup/export", http.MethodPost, backupExport)
 	OpenApiSpec.AddOperation("/backup/import", http.MethodPost, backupImport)
 
-	OpenApiSpec.AddOperation("/collections", http.MethodGet, collectionsList)
+	OpenApiSpec.AddOperation("/collections", http.MethodGet, collectionList)
 	OpenApiSpec.AddOperation("/collections/{name}", http.MethodPost, collectionCreate)
 	OpenApiSpec.AddOperation("/collections/{name}", http.MethodPatch, collectionUpdateWith)
 	OpenApiSpec.AddOperation("/collections/{name}", http.MethodDelete, collectionDeleteWith)
@@ -509,7 +543,7 @@ func init() {
 	OpenApiSpec.AddOperation("/collections/{name}/{key}", http.MethodDelete, collectionDelete)
 
 	OpenApiSpec.AddOperation("/lens", http.MethodGet, lensConfig)
-	OpenApiSpec.AddOperation("/lens", http.MethodPost, lensConfig)
+	OpenApiSpec.AddOperation("/lens", http.MethodPost, setMigration)
 	OpenApiSpec.AddOperation("/lens/reload", http.MethodPost, reloadLenses)
 	OpenApiSpec.AddOperation("/lens/{version}", http.MethodGet, hasMigration)
 	OpenApiSpec.AddOperation("/lens/{version}/up", http.MethodPost, migrateUp)
