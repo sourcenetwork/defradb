@@ -360,7 +360,8 @@ func createIndexIterator(
 		break
 	}
 
-	if op == opEq || op == opGt || op == opGe || op == opLt || op == opLe || op == opNe {
+	switch op {
+	case opEq, opGt, opGe, opLt, opLe, opNe:
 		writableValue := client.NewCBORValue(client.LWW_REGISTER, filterVal)
 
 		valueBytes, err := writableValue.Bytes()
@@ -368,13 +369,14 @@ func createIndexIterator(
 			return nil, err
 		}
 
-		if op == opEq {
+		switch op {
+		case opEq:
 			return &eqIndexIterator{
 				indexKey:  indexDataStoreKey,
 				filterVal: valueBytes,
 				execInfo:  execInfo,
 			}, nil
-		} else if op == opGt {
+		case opGt:
 			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
 				matcher: &indexByteValuesMatcher{
@@ -383,7 +385,7 @@ func createIndexIterator(
 				},
 				execInfo: execInfo,
 			}, nil
-		} else if op == opGe {
+		case opGe:
 			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
 				matcher: &indexByteValuesMatcher{
@@ -392,7 +394,7 @@ func createIndexIterator(
 				},
 				execInfo: execInfo,
 			}, nil
-		} else if op == opLt {
+		case opLt:
 			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
 				matcher: &indexByteValuesMatcher{
@@ -401,7 +403,7 @@ func createIndexIterator(
 				},
 				execInfo: execInfo,
 			}, nil
-		} else if op == opLe {
+		case opLe:
 			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
 				matcher: &indexByteValuesMatcher{
@@ -410,7 +412,7 @@ func createIndexIterator(
 				},
 				execInfo: execInfo,
 			}, nil
-		} else if op == opNe {
+		case opNe:
 			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
 				matcher: &neIndexMatcher{
@@ -419,7 +421,7 @@ func createIndexIterator(
 				execInfo: execInfo,
 			}, nil
 		}
-	} else if op == opIn || op == opNin {
+	case opIn, opNin:
 		inArr, ok := filterVal.([]any)
 		if !ok {
 			return nil, errors.New("invalid _in/_nin value")
@@ -442,13 +444,13 @@ func createIndexIterator(
 				execInfo: execInfo,
 			}, nil
 		}
-	} else if op == opLike {
+	case opLike:
 		return &scanningIndexIterator{
 			indexKey: indexDataStoreKey,
 			matcher:  newLikeIndexCmp(filterVal.(string), true),
 			execInfo: execInfo,
 		}, nil
-	} else if op == opNlike {
+	case opNlike:
 		return &scanningIndexIterator{
 			indexKey: indexDataStoreKey,
 			matcher:  newLikeIndexCmp(filterVal.(string), false),
