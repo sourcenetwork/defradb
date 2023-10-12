@@ -27,11 +27,6 @@ type CollectionDescription struct {
 	// It is immutable.
 	ID uint32
 
-	// Schema contains the data type information that this Collection uses.
-	//
-	// This property is deprecated and should not be used.
-	Schema SchemaDescription
-
 	// The ID of the schema version that this collection is at.
 	SchemaVersionID string
 
