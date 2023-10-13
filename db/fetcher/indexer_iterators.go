@@ -196,6 +196,8 @@ func (f *errorCheckingFilter) Filter(e query.Entry) bool {
 	return res
 }
 
+// execInfoIndexMatcherDecorator is a decorator for indexMatcher that counts the number 
+// of indexes fetched on every call to Match.
 type execInfoIndexMatcherDecorator struct {
 	matcher  indexMatcher
 	execInfo *ExecInfo
