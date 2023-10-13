@@ -15,15 +15,13 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func generateDocs(count int) []any {
+func generateDocsForCollection(colIndex, count int) []any {
 	result := make([]any, 0, count)
 	for i := 0; i < count; i++ {
 		result = append(result, testUtils.CreateDoc{
-			CollectionID: 0,
+			CollectionID: colIndex,
 			Doc: fmt.Sprintf(`{
 				"name": "name-%d",
 				"age":  %d,
@@ -35,72 +33,54 @@ func generateDocs(count int) []any {
 }
 
 func TestQueryPerformance_Simple(t *testing.T) {
-	const benchReps = 3
+	const benchReps = 10
 	const numDocs = 500
 
-	docs := generateDocs(numDocs)
-
-	const req = `query {
-		User(filter: {age: {_eq: 33}}) {
-			name
-			age
-			email
-			verify
-		}
-	}`
-
-	var benchResRegular testUtils.BenchmarkResult
 	test1 := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{Schema: `
 				type User {
-					name: String
-					age: Int
-					email: String
-					verify: Boolean
+					name:   String
+					age:    Int
+					email:  String
 				}
 			`},
-			docs,
+			testUtils.SchemaUpdate{
+				Schema: `
+				    type IndexedUsers {
+					    name:   String
+					    age:    Int @index
+					    email:  String
+				    }
+			    `,
+			},
+			generateDocsForCollection(0, numDocs),
+			generateDocsForCollection(1, numDocs),
 			testUtils.Benchmark{
-				Reps:         benchReps,
-				Action:       testUtils.Request{Request: req},
+				Reps: benchReps,
+				BaseCase: testUtils.Request{Request: `
+					query {
+						User(filter: {age: {_eq: 33}}) {
+							name
+							age
+							email
+						}
+					}`,
+				},
+				OptimizedCase: testUtils.Request{Request: `
+					query {
+						IndexedUser(filter: {age: {_eq: 33}}) {
+							name
+							age
+							email
+						}
+					}`,
+				},
 				FocusClients: []testUtils.ClientType{testUtils.GoClientType},
-				Result:       &benchResRegular,
+				Factor:       10,
 			},
 		},
 	}
 
 	testUtils.ExecuteTestCase(t, test1)
-
-	var benchResIndexed testUtils.BenchmarkResult
-	test2 := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{Schema: `
-				type User {
-					name: String 
-					age: Int @index
-					email: String
-					verify: Boolean
-				} 
-			`},
-			docs,
-			testUtils.Benchmark{
-				Reps:   benchReps,
-				Action: testUtils.Request{Request: req},
-				Result: &benchResIndexed,
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test2)
-
-	for dbt, regularVal := range benchResRegular.ElapsedTime {
-		indexedVal := benchResIndexed.ElapsedTime[dbt]
-		regularMs := regularVal.Microseconds()
-		indexedMs := indexedVal.Microseconds()
-		const factor = 5
-		assert.Greater(t, regularMs/factor, indexedMs,
-			"Indexed query should be at least %d time as fast as regular (db: %s). Indexed: %d, regular: %d (μs)",
-			factor, dbt, indexedMs, regularMs)
-	}
 }

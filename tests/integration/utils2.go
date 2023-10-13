@@ -505,19 +505,25 @@ func benchmarkAction(
 			return
 		}
 	}
+
+	runBench := func(benchCase any) time.Duration {
+		startTime := time.Now()
+		for i := 0; i < bench.Reps; i++ {
+			performAction(s, actionIndex, benchCase)
+		}
+		return time.Since(startTime)
+	}
+
 	s.isBench = true
-	if bench.Result == nil {
-		bench.Result = &BenchmarkResult{}
-	}
-	if bench.Result.ElapsedTime == nil {
-		bench.Result.ElapsedTime = make(map[DatabaseType]time.Duration)
-	}
-	startTime := time.Now()
-	for i := 0; i < bench.Reps; i++ {
-		performAction(s, actionIndex, bench.Action)
-	}
-	bench.Result.ElapsedTime[s.dbt] = time.Since(startTime)
-	s.isBench = false
+	defer func() { s.isBench = false }()
+
+	baseElapsedTime := runBench(bench.BaseCase)
+	optimizedElapsedTime := runBench(bench.OptimizedCase)
+
+	factoredBaseTime := int64(float64(baseElapsedTime) / bench.Factor)
+	assert.Greater(s.t, factoredBaseTime, optimizedElapsedTime,
+		"Optimized case should be faster at least by factor of %.2f than the base case. Base: %d, Optimized: %d (μs)",
+		bench.Factor, optimizedElapsedTime.Microseconds(), baseElapsedTime.Microseconds())
 }
 
 // getCollectionNames gets an ordered, unique set of collection names across all nodes

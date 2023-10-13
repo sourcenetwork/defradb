@@ -12,7 +12,6 @@ package tests
 
 import (
 	"testing"
-	"time"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -271,15 +270,20 @@ func (f ResultAsserterFunc) Assert(t *testing.T, result []map[string]any) {
 	f(t, result)
 }
 
-type BenchmarkResult struct {
-	ElapsedTime map[DatabaseType]time.Duration
-}
-
+// Benchmark is an action that will run another test action for benchmark test.
+// It will run benchmarks for a base case and optimized case and assert that
+// the optimized case performs better by at least the given factor.
 type Benchmark struct {
-	Action       any
-	Reps         int
+	// BaseCase is a test action which is the base case to benchmark.
+	BaseCase any
+	// OptimizedCase is a test action which is the optimized case to benchmark.
+	OptimizedCase any
+	// Reps is the number of times to run the benchmark.
+	Reps int
+	// FocusClients is the list of clients to run the benchmark on.
 	FocusClients []ClientType
-	Result       *BenchmarkResult
+	// Factor is the factor by which the optimized case should be better than the base case.
+	Factor float64
 }
 
 // Request represents a standard Defra (GQL) request.
