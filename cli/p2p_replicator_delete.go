@@ -23,8 +23,9 @@ func MakeP2PReplicatorDeleteCommand() *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
 		Use:   "delete [-c, --collection] <peer>",
-		Short: "Delete a replicator. It will stop synchronizing",
-		Long: `Delete a replicator. It will stop synchronizing.
+		Short: "Delete replicator(s) and stop synchronization",
+		Long: `Delete replicator(s) and stop synchronization.
+A replicator synchronizes one or all collection(s) from this node to another.
 		
 Example:		
   defradb client p2p replicator delete -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'

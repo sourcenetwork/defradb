@@ -19,7 +19,11 @@ func MakeP2PReplicatorGetAllCommand() *cobra.Command {
 		Use:   "getall",
 		Short: "Get all replicators",
 		Long: `Get all the replicators active in the P2P data sync system.
-These are the replicators that are currently replicating data from one node to another.`,
+A replicator synchronizes one or all collection(s) from this node to another.
+
+Example:
+  defradb client p2p replicator getall
+  		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p2p := mustGetP2PContext(cmd)
 

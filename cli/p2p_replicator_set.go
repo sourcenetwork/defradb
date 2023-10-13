@@ -23,9 +23,9 @@ func MakeP2PReplicatorSetCommand() *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
 		Use:   "set [-c, --collection] <peer>",
-		Short: "Set a P2P replicator",
-		Long: `Add a new target replicator.
-A replicator replicates one or all collection(s) from this node to another.
+		Short: "Add replicator(s) and start synchronization",
+		Long: `Add replicator(s) and start synchronization.
+A replicator synchronizes one or all collection(s) from this node to another.
 
 Example:
   defradb client p2p replicator set -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
