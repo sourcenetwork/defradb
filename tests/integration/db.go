@@ -13,6 +13,8 @@ package tests
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -23,6 +25,48 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
+
+type DatabaseType string
+
+const (
+	memoryBadgerEnvName   = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName     = "DEFRA_BADGER_FILE"
+	fileBadgerPathEnvName = "DEFRA_BADGER_FILE_PATH"
+	inMemoryEnvName       = "DEFRA_IN_MEMORY"
+)
+
+const (
+	badgerIMType   DatabaseType = "badger-in-memory"
+	defraIMType    DatabaseType = "defra-memory-datastore"
+	badgerFileType DatabaseType = "badger-file-system"
+)
+
+var (
+	badgerInMemory bool
+	badgerFile     bool
+	inMemoryStore  bool
+	databaseDir    string
+)
+
+func init() {
+	// We use environment variables instead of flags `go test ./...` throws for all packages
+	// that don't have the flag defined
+	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
+	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
+	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+
+	if changeDetector.Enabled {
+		// Change detector only uses badger file db type.
+		badgerFile = true
+		badgerInMemory = false
+		inMemoryStore = false
+	} else if !badgerInMemory && !badgerFile && !inMemoryStore {
+		// Default is to test all but filesystem db types.
+		badgerFile = false
+		badgerInMemory = true
+		inMemoryStore = true
+	}
+}
 
 func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
 	opts := badgerds.Options{

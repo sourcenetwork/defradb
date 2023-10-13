@@ -12,12 +12,53 @@ package tests
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
 )
+
+const (
+	clientGoEnvName   = "DEFRA_CLIENT_GO"
+	clientHttpEnvName = "DEFRA_CLIENT_HTTP"
+	clientCliEnvName  = "DEFRA_CLIENT_CLI"
+)
+
+type ClientType string
+
+const (
+	// goClientType enables running the test suite using
+	// the go implementation of the client.DB interface.
+	goClientType ClientType = "go"
+	// httpClientType enables running the test suite using
+	// the http implementation of the client.DB interface.
+	httpClientType ClientType = "http"
+	// cliClientType enables running the test suite using
+	// the cli implementation of the client.DB interface.
+	cliClientType ClientType = "cli"
+)
+
+var (
+	httpClient bool
+	goClient   bool
+	cliClient  bool
+)
+
+func init() {
+	// We use environment variables instead of flags `go test ./...` throws for all packages
+	// that don't have the flag defined
+	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
+	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
+	cliClient, _ = strconv.ParseBool(os.Getenv(clientCliEnvName))
+
+	if !goClient && !httpClient && !cliClient {
+		// Default is to test go client type.
+		goClient = true
+	}
+}
 
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to

@@ -16,7 +16,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -36,38 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
-const (
-	clientGoEnvName       = "DEFRA_CLIENT_GO"
-	clientHttpEnvName     = "DEFRA_CLIENT_HTTP"
-	clientCliEnvName      = "DEFRA_CLIENT_CLI"
-	memoryBadgerEnvName   = "DEFRA_BADGER_MEMORY"
-	fileBadgerEnvName     = "DEFRA_BADGER_FILE"
-	fileBadgerPathEnvName = "DEFRA_BADGER_FILE_PATH"
-	inMemoryEnvName       = "DEFRA_IN_MEMORY"
-	mutationTypeEnvName   = "DEFRA_MUTATION_TYPE"
-)
-
-type DatabaseType string
-
-const (
-	badgerIMType   DatabaseType = "badger-in-memory"
-	defraIMType    DatabaseType = "defra-memory-datastore"
-	badgerFileType DatabaseType = "badger-file-system"
-)
-
-type ClientType string
-
-const (
-	// goClientType enables running the test suite using
-	// the go implementation of the client.DB interface.
-	goClientType ClientType = "go"
-	// httpClientType enables running the test suite using
-	// the http implementation of the client.DB interface.
-	httpClientType ClientType = "http"
-	// cliClientType enables running the test suite using
-	// the cli implementation of the client.DB interface.
-	cliClientType ClientType = "cli"
-)
+const mutationTypeEnvName = "DEFRA_MUTATION_TYPE"
 
 // The MutationType that tests will run using.
 //
@@ -97,15 +65,8 @@ const (
 )
 
 var (
-	log            = logging.MustNewLogger("tests.integration")
-	badgerInMemory bool
-	badgerFile     bool
-	inMemoryStore  bool
-	httpClient     bool
-	goClient       bool
-	cliClient      bool
-	mutationType   MutationType
-	databaseDir    string
+	log          = logging.MustNewLogger("tests.integration")
+	mutationType MutationType
 )
 
 const (
@@ -118,14 +79,7 @@ const (
 
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
-	//  that don't have the flag defined
-	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
-	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
-	cliClient, _ = strconv.ParseBool(os.Getenv(clientCliEnvName))
-	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
-	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
-	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
-
+	// that don't have the flag defined
 	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
 		mutationType = MutationType(value)
 	} else {
@@ -133,23 +87,6 @@ func init() {
 		// faster. We assume this is desirable when not explicitly testing any particular
 		// mutation type.
 		mutationType = CollectionSaveMutationType
-	}
-
-	if !goClient && !httpClient && !cliClient {
-		// Default is to test go client type.
-		goClient = true
-	}
-
-	if changeDetector.Enabled {
-		// Change detector only uses badger file db type.
-		badgerFile = true
-		badgerInMemory = false
-		inMemoryStore = false
-	} else if !badgerInMemory && !badgerFile && !inMemoryStore {
-		// Default is to test all but filesystem db types.
-		badgerFile = false
-		badgerInMemory = true
-		inMemoryStore = true
 	}
 }
 
