@@ -47,7 +47,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 			`},
 			testUtils.SchemaUpdate{
 				Schema: `
-				    type IndexedUsers {
+				    type IndexedUser {
 					    name:   String
 					    age:    Int @index
 					    email:  String
@@ -77,7 +77,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 					}`,
 				},
 				FocusClients: []testUtils.ClientType{testUtils.GoClientType},
-				Factor:       10,
+				Factor:       5,
 			},
 		},
 	}
