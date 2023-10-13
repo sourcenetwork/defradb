@@ -499,6 +499,15 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionDelete.Responses["200"] = successResponse
 	collectionDelete.Responses["400"] = errorResponse
 
+	collectionKeys := openapi3.NewOperation()
+	collectionKeys.AddParameter(collectionNamePathParam)
+	collectionKeys.Description = "Get all document keys"
+	collectionKeys.OperationID = "collection_keys"
+	collectionKeys.Responses = make(openapi3.Responses)
+	collectionKeys.Responses["200"] = successResponse
+	collectionKeys.Responses["400"] = errorResponse
+
+	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocKeys)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWith)
 	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWith)
