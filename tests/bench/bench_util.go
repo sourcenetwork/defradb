@@ -85,7 +85,7 @@ func ConstructSchema(fixture fixtures.Generator) (string, error) {
 
 	// loop to get the schemas
 	for i := 0; i < numTypes; i++ {
-		gql, err := fixtures.ExtractGQLFromType(fixture.Types()[i])
+		gql, err := fixture.ExtractGQLFromType(fixture.Types()[i])
 		if err != nil {
 			return "", errors.Wrap("failed generating GQL", err)
 		}

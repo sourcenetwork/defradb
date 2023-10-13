@@ -11,12 +11,15 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/lens"
+	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
 )
@@ -90,7 +93,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 			n.tryAddField(requestable.GetName())
 		// select might have its own select fields and filters fields
 		case *mapper.Select:
-			n.tryAddField(requestable.Field.Name + "_id") // foreign key for type joins
+			n.tryAddField(requestable.Field.Name + request.RelatedObjectID) // foreign key for type joins
 			err := n.initFields(requestable.Fields)
 			if err != nil {
 				return err
@@ -131,6 +134,32 @@ func (n *scanNode) tryAddField(fieldName string) bool {
 	}
 	n.fields = append(n.fields, fd)
 	return true
+}
+
+func (scan *scanNode) initFetcher(
+	cid immutable.Option[string],
+	indexedField immutable.Option[client.FieldDescription],
+) {
+	var f fetcher.Fetcher
+	if cid.HasValue() {
+		f = new(fetcher.VersionedFetcher)
+	} else {
+		f = new(fetcher.DocumentFetcher)
+
+		if indexedField.HasValue() {
+			typeIndex := scan.documentMapping.FirstIndexOfName(indexedField.Value().Name)
+			field := mapper.Field{Index: typeIndex, Name: indexedField.Value().Name}
+			var indexFilter *mapper.Filter
+			scan.filter, indexFilter = filter.SplitByField(scan.filter, field)
+			if indexFilter != nil {
+				fieldDesc, _ := scan.desc.Schema.GetField(indexedField.Value().Name)
+				f = fetcher.NewIndexFetcher(f, fieldDesc, indexFilter)
+			}
+		}
+
+		f = lens.NewFetcher(f, scan.p.db.LensRegistry())
+	}
+	scan.fetcher = f
 }
 
 // Start starts the internal logic of the scanner
@@ -237,6 +266,7 @@ func (n *scanNode) executeExplain() map[string]any {
 		"iterations":   n.execInfo.iterations,
 		"docFetches":   n.execInfo.fetches.DocsFetched,
 		"fieldFetches": n.execInfo.fetches.FieldsFetched,
+		"indexFetches": n.execInfo.fetches.IndexesFetched,
 	}
 }
 
@@ -258,26 +288,17 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 // Merge implements mergeNode
 func (n *scanNode) Merge() bool { return true }
 
-func (p *Planner) Scan(parsed *mapper.Select) (*scanNode, error) {
-	var f fetcher.Fetcher
-	if parsed.Cid.HasValue() {
-		f = new(fetcher.VersionedFetcher)
-	} else {
-		f = new(fetcher.DocumentFetcher)
-		f = lens.NewFetcher(f, p.db.LensRegistry())
-	}
+func (p *Planner) Scan(
+	mapperSelect *mapper.Select,
+	colDesc client.CollectionDescription,
+) (*scanNode, error) {
 	scan := &scanNode{
 		p:         p,
-		fetcher:   f,
-		slct:      parsed,
-		docMapper: docMapper{parsed.DocumentMapping},
+		slct:      mapperSelect,
+		docMapper: docMapper{mapperSelect.DocumentMapping},
 	}
 
-	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
-	if err != nil {
-		return nil, err
-	}
-	err = scan.initCollection(colDesc)
+	err := scan.initCollection(colDesc)
 	if err != nil {
 		return nil, err
 	}
@@ -294,8 +315,6 @@ func (p *Planner) Scan(parsed *mapper.Select) (*scanNode, error) {
 // we call Next() on the underlying scanNode only
 // once every 2 Next() calls on the multiScan
 type multiScanNode struct {
-	docMapper
-
 	scanNode   *scanNode
 	numReaders int
 	numCalls   int
@@ -347,6 +366,10 @@ func (n *multiScanNode) Kind() string {
 
 func (n *multiScanNode) Close() error {
 	return n.scanNode.Close()
+}
+
+func (n *multiScanNode) DocumentMap() *core.DocumentMapping {
+	return n.scanNode.DocumentMap()
 }
 
 func (n *multiScanNode) addReader() {

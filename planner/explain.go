@@ -286,10 +286,10 @@ func buildSimpleExplainGraph(source planNode) (map[string]any, error) {
 //
 // Note: Can only be called once the entire plan has been executed.
 func collectExecuteExplainInfo(executedPlan planNode) (map[string]any, error) {
-	excuteExplainInfo := map[string]any{}
+	executeExplainInfo := map[string]any{}
 
 	if executedPlan == nil {
-		return excuteExplainInfo, nil
+		return executeExplainInfo, nil
 	}
 
 	switch executedNode := executedPlan.(type) {
@@ -303,16 +303,16 @@ func collectExecuteExplainInfo(executedPlan planNode) (map[string]any, error) {
 			multiChildExplainGraph = append(multiChildExplainGraph, childExplainGraph)
 		}
 		explainNodeLabelTitle := strcase.ToLowerCamel(executedNode.Kind())
-		excuteExplainInfo[explainNodeLabelTitle] = multiChildExplainGraph
+		executeExplainInfo[explainNodeLabelTitle] = multiChildExplainGraph
 
 	case explainablePlanNode:
-		excuteExplainBuilder, err := executedNode.Explain(request.ExecuteExplain)
+		executeExplainBuilder, err := executedNode.Explain(request.ExecuteExplain)
 		if err != nil {
 			return nil, err
 		}
 
-		if excuteExplainBuilder == nil {
-			excuteExplainBuilder = map[string]any{}
+		if executeExplainBuilder == nil {
+			executeExplainBuilder = map[string]any{}
 		}
 
 		if next := executedNode.Source(); next != nil && next.Kind() != topLevelNodeKind {
@@ -321,21 +321,21 @@ func collectExecuteExplainInfo(executedPlan planNode) (map[string]any, error) {
 				return nil, err
 			}
 			for key, value := range nextExplainGraph {
-				excuteExplainBuilder[key] = value
+				executeExplainBuilder[key] = value
 			}
 		}
 		explainNodeLabelTitle := strcase.ToLowerCamel(executedNode.Kind())
-		excuteExplainInfo[explainNodeLabelTitle] = excuteExplainBuilder
+		executeExplainInfo[explainNodeLabelTitle] = executeExplainBuilder
 
 	default:
 		var err error
-		excuteExplainInfo, err = collectExecuteExplainInfo(executedPlan.Source())
+		executeExplainInfo, err = collectExecuteExplainInfo(executedPlan.Source())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return excuteExplainInfo, nil
+	return executeExplainInfo, nil
 }
 
 // executeAndExplainRequest executes the plan graph gathering the information/datapoints

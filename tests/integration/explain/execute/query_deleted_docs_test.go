@@ -56,6 +56,7 @@ func TestExecuteExplainQueryDeletedDocs(t *testing.T) {
 										"iterations":   uint64(3),
 										"docFetches":   uint64(2),
 										"fieldFetches": uint64(4),
+										"indexFetches": uint64(0),
 									},
 								},
 							},

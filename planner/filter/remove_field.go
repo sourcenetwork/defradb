@@ -14,13 +14,17 @@ import (
 )
 
 // RemoveField removes the given field from the provided filter.
-func RemoveField(filter *mapper.Filter, field mapper.Field) {
-	if filter == nil {
+// Multiple fields can be passed to remove related objects with a certain field.
+func RemoveField(filter *mapper.Filter, fields ...mapper.Field) {
+	if filter == nil || len(fields) == 0 {
 		return
 	}
-	conditionKey := &mapper.PropertyIndex{
-		Index: field.Index,
+	var conditionKeys []*mapper.PropertyIndex
+	for _, field := range fields {
+		conditionKeys = append(conditionKeys, &mapper.PropertyIndex{
+			Index: field.Index,
+		})
 	}
 
-	traverseFilterByProperty(conditionKey, filter.Conditions, true)
+	traverseFilterByProperty(conditionKeys, filter.Conditions, true)
 }
