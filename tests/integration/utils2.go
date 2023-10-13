@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -34,6 +35,123 @@ import (
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
+
+const (
+	clientGoEnvName       = "DEFRA_CLIENT_GO"
+	clientHttpEnvName     = "DEFRA_CLIENT_HTTP"
+	clientCliEnvName      = "DEFRA_CLIENT_CLI"
+	memoryBadgerEnvName   = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName     = "DEFRA_BADGER_FILE"
+	fileBadgerPathEnvName = "DEFRA_BADGER_FILE_PATH"
+	inMemoryEnvName       = "DEFRA_IN_MEMORY"
+	mutationTypeEnvName   = "DEFRA_MUTATION_TYPE"
+)
+
+type DatabaseType string
+
+const (
+	badgerIMType   DatabaseType = "badger-in-memory"
+	defraIMType    DatabaseType = "defra-memory-datastore"
+	badgerFileType DatabaseType = "badger-file-system"
+)
+
+type ClientType string
+
+const (
+	// goClientType enables running the test suite using
+	// the go implementation of the client.DB interface.
+	goClientType ClientType = "go"
+	// httpClientType enables running the test suite using
+	// the http implementation of the client.DB interface.
+	httpClientType ClientType = "http"
+	// cliClientType enables running the test suite using
+	// the cli implementation of the client.DB interface.
+	cliClientType ClientType = "cli"
+)
+
+// The MutationType that tests will run using.
+//
+// For example if set to [CollectionSaveMutationType], all supporting
+// actions (such as [UpdateDoc]) will execute via [Collection.Save].
+//
+// Defaults to CollectionSaveMutationType.
+type MutationType string
+
+const (
+	// CollectionSaveMutationType will cause all supporting actions
+	// to run their mutations via [Collection.Save].
+	CollectionSaveMutationType MutationType = "collection-save"
+
+	// CollectionNamedMutationType will cause all supporting actions
+	// to run their mutations via their corresponding named [Collection]
+	// call.
+	//
+	// For example, CreateDoc will call [Collection.Create], and
+	// UpdateDoc will call [Collection.Update].
+	CollectionNamedMutationType MutationType = "collection-named"
+
+	// GQLRequestMutationType will cause all supporting actions to
+	// run their mutations using GQL requests, typically these will
+	// include a `id` parameter to target the specified document.
+	GQLRequestMutationType MutationType = "gql"
+)
+
+var (
+	log            = logging.MustNewLogger("tests.integration")
+	badgerInMemory bool
+	badgerFile     bool
+	inMemoryStore  bool
+	httpClient     bool
+	goClient       bool
+	cliClient      bool
+	mutationType   MutationType
+	databaseDir    string
+)
+
+const (
+	// subscriptionTimeout is the maximum time to wait for subscription results to be returned.
+	subscriptionTimeout = 1 * time.Second
+	// Instantiating lenses is expensive, and our tests do not benefit from a large number of them,
+	// so we explicitly set it to a low value.
+	lensPoolSize = 2
+)
+
+func init() {
+	// We use environment variables instead of flags `go test ./...` throws for all packages
+	//  that don't have the flag defined
+	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
+	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
+	cliClient, _ = strconv.ParseBool(os.Getenv(clientCliEnvName))
+	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
+	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
+	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+
+	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
+		mutationType = MutationType(value)
+	} else {
+		// Default to testing mutations via Collection.Save - it should be simpler and
+		// faster. We assume this is desirable when not explicitly testing any particular
+		// mutation type.
+		mutationType = CollectionSaveMutationType
+	}
+
+	if !goClient && !httpClient && !cliClient {
+		// Default is to test go client type.
+		goClient = true
+	}
+
+	if changeDetector.Enabled {
+		// Change detector only uses badger file db type.
+		badgerFile = true
+		badgerInMemory = false
+		inMemoryStore = false
+	} else if !badgerInMemory && !badgerFile && !inMemoryStore {
+		// Default is to test all but filesystem db types.
+		badgerFile = false
+		badgerInMemory = true
+		inMemoryStore = true
+	}
+}
 
 // AssertPanic asserts that the code inside the specified PanicTestFunc panics.
 //
