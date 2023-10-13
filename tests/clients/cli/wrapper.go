@@ -57,11 +57,11 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 
 	data, err := w.cmd.execute(context.Background(), args)
 	if err != nil {
-		return peer.AddrInfo{}
+		panic(fmt.Sprintf("failed to get peer info: %v", err))
 	}
 	var info peer.AddrInfo
 	if err := json.Unmarshal(data, &info); err != nil {
-		return peer.AddrInfo{}
+		panic(fmt.Sprintf("failed to get peer info: %v", err))
 	}
 	return info
 }
