@@ -43,7 +43,7 @@ func DeserializePrefix[T any](
 		err = json.Unmarshal(res.Value, &element)
 		if err != nil {
 			_ = q.Close()
-			return nil, nil, err
+			return nil, nil, NewErrInvalidStoredValue(err)
 		}
 		keys = append(keys, res.Key)
 		elements = append(elements, element)

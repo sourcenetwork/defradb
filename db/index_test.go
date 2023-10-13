@@ -703,7 +703,7 @@ func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = f.getAllIndexes()
-	assert.ErrorContains(t, err, "invalid character")
+	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
 func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
@@ -780,7 +780,7 @@ func TestGetIndexes_IfSystemStoreHasInvalidData_ReturnError(t *testing.T) {
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(q, nil)
 
 	_, err := f.getAllIndexes()
-	assert.ErrorContains(t, err, "invalid character")
+	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
 func TestGetIndexes_IfFailsToReadSeqNumber_ReturnError(t *testing.T) {
@@ -904,7 +904,7 @@ func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = f.getCollectionIndexes(usersColName)
-	assert.ErrorContains(t, err, "invalid character")
+	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
 func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
@@ -944,12 +944,12 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 
 	testCases := []struct {
 		Name               string
-		ExpectedErrorStr   string
+		ExpectedError      error
 		GetMockSystemstore func(t *testing.T) *mocks.DSReaderWriter
 	}{
 		{
-			Name:             "Query fails",
-			ExpectedErrorStr: testErr.Error(),
+			Name:          "Query fails",
+			ExpectedError: testErr,
 			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
 				store := mocks.NewDSReaderWriter(t)
 				store.EXPECT().Query(mock.Anything, mock.Anything).Unset()
@@ -958,8 +958,8 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 			},
 		},
 		{
-			Name:             "Query iterator fails",
-			ExpectedErrorStr: testErr.Error(),
+			Name:          "Query iterator fails",
+			ExpectedError: testErr,
 			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
 				store := mocks.NewDSReaderWriter(t)
 				store.EXPECT().Query(mock.Anything, mock.Anything).
@@ -968,8 +968,8 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 			},
 		},
 		{
-			Name:             "Query iterator returns invalid value",
-			ExpectedErrorStr: "invalid character",
+			Name:          "Query iterator returns invalid value",
+			ExpectedError: datastore.NewErrInvalidStoredValue(nil),
 			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
 				store := mocks.NewDSReaderWriter(t)
 				store.EXPECT().Query(mock.Anything, mock.Anything).
@@ -991,7 +991,7 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 		mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore).Maybe()
 
 		_, err := f.users.WithTxn(mockedTxn).GetIndexes(f.ctx)
-		require.ErrorContains(t, err, testCase.ExpectedErrorStr)
+		require.ErrorIs(t, err, testCase.ExpectedError)
 	}
 }
 
