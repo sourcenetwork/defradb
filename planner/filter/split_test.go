@@ -32,9 +32,27 @@ func TestSplitFilter(t *testing.T) {
 				"name": m("_eq", "John"),
 				"age":  m("_gt", 55),
 			},
-			inputField:      mapper.Field{Index: 1}, // age
+			inputField:      mapper.Field{Index: authorAgeInd},
 			expectedFilter1: m("name", m("_eq", "John")),
 			expectedFilter2: m("age", m("_gt", 55)),
+		},
+		{
+			name: "the only field",
+			inputFilter: map[string]any{
+				"age": m("_gt", 55),
+			},
+			inputField:      mapper.Field{Index: authorAgeInd},
+			expectedFilter1: nil,
+			expectedFilter2: m("age", m("_gt", 55)),
+		},
+		{
+			name: "no field to delete",
+			inputFilter: map[string]any{
+				"name": m("_eq", "John"),
+			},
+			inputField:      mapper.Field{Index: authorAgeInd},
+			expectedFilter1: m("name", m("_eq", "John")),
+			expectedFilter2: nil,
 		},
 	}
 
@@ -45,14 +63,18 @@ func TestSplitFilter(t *testing.T) {
 			actualFilter1, actualFilter2 := SplitByField(inputFilter, test.inputField)
 			expectedFilter1 := mapper.ToFilter(request.Filter{Conditions: test.expectedFilter1}, mapping)
 			expectedFilter2 := mapper.ToFilter(request.Filter{Conditions: test.expectedFilter2}, mapping)
-			AssertEqualFilterMap(t, expectedFilter1.Conditions, actualFilter1.Conditions)
-			AssertEqualFilterMap(t, expectedFilter2.Conditions, actualFilter2.Conditions)
+			if expectedFilter1 != nil || actualFilter1 != nil {
+				AssertEqualFilterMap(t, expectedFilter1.Conditions, actualFilter1.Conditions)
+			}
+			if expectedFilter2 != nil || actualFilter2 != nil {
+				AssertEqualFilterMap(t, expectedFilter2.Conditions, actualFilter2.Conditions)
+			}
 		})
 	}
 }
 
 func TestSplitNullFilter(t *testing.T) {
-	actualFilter1, actualFilter2 := SplitByField(nil, mapper.Field{Index: 1})
+	actualFilter1, actualFilter2 := SplitByField(nil, mapper.Field{Index: authorAgeInd})
 	assert.Nil(t, actualFilter1)
 	assert.Nil(t, actualFilter2)
 }

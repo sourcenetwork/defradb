@@ -32,13 +32,13 @@ type ClientType string
 const (
 	// goClientType enables running the test suite using
 	// the go implementation of the client.DB interface.
-	goClientType ClientType = "go"
+	GoClientType ClientType = "go"
 	// httpClientType enables running the test suite using
 	// the http implementation of the client.DB interface.
-	httpClientType ClientType = "http"
+	HTTPClientType ClientType = "http"
 	// cliClientType enables running the test suite using
 	// the cli implementation of the client.DB interface.
-	cliClientType ClientType = "cli"
+	CLIClientType ClientType = "cli"
 )
 
 var (
@@ -65,13 +65,13 @@ func init() {
 // select the client implementation to use.
 func setupClient(s *state, node *net.Node) (impl clients.Client, err error) {
 	switch s.clientType {
-	case httpClientType:
+	case HTTPClientType:
 		impl, err = http.NewWrapper(node)
 
-	case cliClientType:
+	case CLIClientType:
 		impl = cli.NewWrapper(node)
 
-	case goClientType:
+	case GoClientType:
 		impl = node
 
 	default:

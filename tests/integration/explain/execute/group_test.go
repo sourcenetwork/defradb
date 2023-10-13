@@ -59,6 +59,7 @@ func TestExecuteExplainRequestWithGroup(t *testing.T) {
 											"iterations":   uint64(4),
 											"docFetches":   uint64(2),
 											"fieldFetches": uint64(4),
+											"indexFetches": uint64(0),
 										},
 									},
 								},

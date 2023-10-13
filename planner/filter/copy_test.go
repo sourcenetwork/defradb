@@ -23,20 +23,20 @@ func TestCopyFilter(t *testing.T) {
 		return map[connor.FilterKey]any{
 			&mapper.Operator{Operation: "_or"}: []any{
 				map[connor.FilterKey]any{
-					&mapper.PropertyIndex{Index: 0}: map[connor.FilterKey]any{
+					&mapper.PropertyIndex{Index: authorNameInd}: map[connor.FilterKey]any{
 						&mapper.Operator{Operation: "_eq"}: "Some name",
 					},
 				},
 				map[connor.FilterKey]any{
 					&mapper.Operator{Operation: "_and"}: []any{
 						map[connor.FilterKey]any{
-							&mapper.PropertyIndex{Index: 1}: map[connor.FilterKey]any{
+							&mapper.PropertyIndex{Index: authorAgeInd}: map[connor.FilterKey]any{
 								&mapper.Operator{Operation: "_gt"}: 64,
 							},
 						},
 						map[connor.FilterKey]any{
-							&mapper.PropertyIndex{Index: 2}: map[connor.FilterKey]any{
-								&mapper.PropertyIndex{Index: 1}: map[connor.FilterKey]any{
+							&mapper.PropertyIndex{Index: authorPublishedInd}: map[connor.FilterKey]any{
+								&mapper.PropertyIndex{Index: bookRatingInd}: map[connor.FilterKey]any{
 									&mapper.Operator{Operation: "_gt"}: 4.8,
 								},
 							},
@@ -46,13 +46,13 @@ func TestCopyFilter(t *testing.T) {
 				map[connor.FilterKey]any{
 					&mapper.Operator{Operation: "_and"}: []any{
 						map[connor.FilterKey]any{
-							&mapper.PropertyIndex{Index: 1}: map[connor.FilterKey]any{
+							&mapper.PropertyIndex{Index: authorAgeInd}: map[connor.FilterKey]any{
 								&mapper.Operator{Operation: "_lt"}: 64,
 							},
 						},
 						map[connor.FilterKey]any{
-							&mapper.PropertyIndex{Index: 2}: map[connor.FilterKey]any{
-								&mapper.PropertyIndex{Index: 1}: map[connor.FilterKey]any{
+							&mapper.PropertyIndex{Index: authorPublishedInd}: map[connor.FilterKey]any{
+								&mapper.PropertyIndex{Index: bookRatingInd}: map[connor.FilterKey]any{
 									&mapper.Operator{Operation: "_lt"}: 4.8,
 								},
 							},

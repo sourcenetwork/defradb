@@ -27,7 +27,7 @@ var (
 // log = logging.MustNewLogger("bench")
 )
 
-func runQueryBenchGet(
+func RunQueryBenchGet(
 	b *testing.B,
 	ctx context.Context,
 	fixture fixtures.Generator,
