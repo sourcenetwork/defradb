@@ -49,7 +49,8 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler := NewHandler(cdb, ServerOptions{})
+	handler, err := NewHandler(cdb, ServerOptions{})
+	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
@@ -87,7 +88,8 @@ func TestCCIPGet_WithSubscription(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler := NewHandler(cdb, ServerOptions{})
+	handler, err := NewHandler(cdb, ServerOptions{})
+	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
@@ -104,7 +106,8 @@ func TestCCIPGet_WithInvalidData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler := NewHandler(cdb, ServerOptions{})
+	handler, err := NewHandler(cdb, ServerOptions{})
+	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
@@ -132,7 +135,8 @@ func TestCCIPPost_WithValidData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
-	handler := NewHandler(cdb, ServerOptions{})
+	handler, err := NewHandler(cdb, ServerOptions{})
+	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
@@ -163,7 +167,8 @@ func TestCCIPPost_WithInvalidGraphQLRequest(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
-	handler := NewHandler(cdb, ServerOptions{})
+	handler, err := NewHandler(cdb, ServerOptions{})
+	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
@@ -176,7 +181,8 @@ func TestCCIPPost_WithInvalidBody(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", nil)
 	rec := httptest.NewRecorder()
 
-	handler := NewHandler(cdb, ServerOptions{})
+	handler, err := NewHandler(cdb, ServerOptions{})
+	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()

@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -71,4 +72,51 @@ func (c *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 	}
 	resultHex := "0x" + hex.EncodeToString(resultJSON)
 	responseJSON(rw, http.StatusOK, CCIPResponse{Data: resultHex})
+}
+
+func (h *ccipHandler) bindRoutes(router *Router) {
+	errorResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/error",
+	}
+	ccipRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/ccip_request",
+	}
+	ccipResponseSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/ccip_response",
+	}
+
+	ccipRequest := openapi3.NewRequestBody().
+		WithContent(openapi3.NewContentWithJSONSchemaRef(ccipRequestSchema))
+
+	ccipResponse := openapi3.NewResponse().
+		WithDescription("GraphQL response").
+		WithContent(openapi3.NewContentWithJSONSchemaRef(ccipResponseSchema))
+
+	ccipPost := openapi3.NewOperation()
+	ccipPost.Description = "CCIP POST endpoint"
+	ccipPost.OperationID = "ccip_post"
+	ccipPost.RequestBody = &openapi3.RequestBodyRef{
+		Value: ccipRequest,
+	}
+	ccipPost.AddResponse(200, ccipResponse)
+	ccipPost.Responses["400"] = errorResponse
+
+	dataPathParam := openapi3.NewPathParameter("data").
+		WithDescription("Hex encoded request data").
+		WithSchema(openapi3.NewStringSchema())
+
+	senderPathParam := openapi3.NewPathParameter("sender").
+		WithDescription("Hex encoded sender address").
+		WithSchema(openapi3.NewStringSchema())
+
+	ccipGet := openapi3.NewOperation()
+	ccipGet.Description = "CCIP GET endpoint"
+	ccipGet.OperationID = "ccip_get"
+	ccipGet.AddParameter(dataPathParam)
+	ccipGet.AddParameter(senderPathParam)
+	ccipGet.AddResponse(200, ccipResponse)
+	ccipGet.Responses["400"] = errorResponse
+
+	router.AddRoute("/ccip/{sender}/{data}", http.MethodGet, ccipGet, h.ExecCCIP)
+	router.AddRoute("/ccip", http.MethodPost, ccipPost, h.ExecCCIP)
 }

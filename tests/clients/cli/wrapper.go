@@ -39,8 +39,11 @@ type Wrapper struct {
 	httpServer *httptest.Server
 }
 
-func NewWrapper(db client.DB) *Wrapper {
-	handler := http.NewHandler(db, http.ServerOptions{})
+func NewWrapper(db client.DB) (*Wrapper, error) {
+	handler, err := http.NewHandler(db, http.ServerOptions{})
+	if err != nil {
+		return nil, err
+	}
 	httpServer := httptest.NewServer(handler)
 	cmd := newCliWrapper(httpServer.URL)
 
@@ -50,7 +53,7 @@ func NewWrapper(db client.DB) *Wrapper {
 		cmd:        cmd,
 		httpServer: httpServer,
 		handler:    handler,
-	}
+	}, nil
 }
 
 func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) error {

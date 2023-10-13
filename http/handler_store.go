@@ -17,6 +17,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -367,4 +369,214 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 			flusher.Flush()
 		}
 	}
+}
+
+func (h *storeHandler) bindRoutes(router *Router) {
+	successResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/success",
+	}
+	errorResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/error",
+	}
+	collectionSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/collection",
+	}
+	graphQLRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/graphql_request",
+	}
+	graphQLResponseSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/graphql_response",
+	}
+	backupConfigSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/backup_config",
+	}
+	peerInfoSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/peer_info",
+	}
+	replicatorSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/replicator",
+	}
+
+	backupRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithJSONSchemaRef(backupConfigSchema)
+
+	backupExport := openapi3.NewOperation()
+	backupExport.OperationID = "backup_export"
+	backupExport.Responses = make(openapi3.Responses)
+	backupExport.Responses["200"] = successResponse
+	backupExport.Responses["400"] = errorResponse
+	backupExport.RequestBody = &openapi3.RequestBodyRef{
+		Value: backupRequest,
+	}
+
+	backupImport := openapi3.NewOperation()
+	backupImport.OperationID = "backup_import"
+	backupImport.Responses = make(openapi3.Responses)
+	backupImport.Responses["200"] = successResponse
+	backupImport.Responses["400"] = errorResponse
+	backupImport.RequestBody = &openapi3.RequestBodyRef{
+		Value: backupRequest,
+	}
+
+	collectionNameQueryParam := openapi3.NewQueryParameter("name").
+		WithDescription("Collection name").
+		WithSchema(openapi3.NewStringSchema())
+	collectionSchemaIdQueryParam := openapi3.NewQueryParameter("schema_id").
+		WithDescription("Collection schema id").
+		WithSchema(openapi3.NewStringSchema())
+	collectionVersionIdQueryParam := openapi3.NewQueryParameter("version_id").
+		WithDescription("Collection schema version id").
+		WithSchema(openapi3.NewStringSchema())
+
+	collectionsSchema := openapi3.NewArraySchema()
+	collectionsSchema.Items = collectionSchema
+
+	collectionResponseSchema := openapi3.NewOneOfSchema()
+	collectionResponseSchema.OneOf = openapi3.SchemaRefs{
+		collectionSchema,
+		openapi3.NewSchemaRef("", collectionsSchema),
+	}
+
+	collectionsResponse := openapi3.NewResponse().
+		WithDescription("Collection(s) with matching name, schema id, or version id.").
+		WithJSONSchema(collectionResponseSchema)
+
+	collectionDescribe := openapi3.NewOperation()
+	collectionDescribe.OperationID = "collection_describe"
+	collectionDescribe.Description = "Introspect collection(s) by name, schema id, or version id."
+	collectionDescribe.AddParameter(collectionNameQueryParam)
+	collectionDescribe.AddParameter(collectionSchemaIdQueryParam)
+	collectionDescribe.AddParameter(collectionVersionIdQueryParam)
+	collectionDescribe.AddResponse(200, collectionsResponse)
+	collectionDescribe.Responses["400"] = errorResponse
+
+	graphQLRequest := openapi3.NewRequestBody().
+		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
+
+	graphQLResponse := openapi3.NewResponse().
+		WithDescription("GraphQL response").
+		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLResponseSchema))
+
+	graphQLPost := openapi3.NewOperation()
+	graphQLPost.Description = "GraphQL POST endpoint"
+	graphQLPost.OperationID = "graphql_post"
+	graphQLPost.RequestBody = &openapi3.RequestBodyRef{
+		Value: graphQLRequest,
+	}
+	graphQLPost.AddResponse(200, graphQLResponse)
+	graphQLPost.Responses["400"] = errorResponse
+
+	graphQLQueryParam := openapi3.NewQueryParameter("query").
+		WithSchema(openapi3.NewStringSchema())
+
+	graphQLGet := openapi3.NewOperation()
+	graphQLGet.Description = "GraphQL GET endpoint"
+	graphQLGet.OperationID = "graphql_get"
+	graphQLGet.AddParameter(graphQLQueryParam)
+	graphQLGet.AddResponse(200, graphQLResponse)
+	graphQLGet.Responses["400"] = errorResponse
+
+	debugDump := openapi3.NewOperation()
+	debugDump.Description = "Dump database"
+	debugDump.OperationID = "debug_dump"
+	debugDump.Responses = make(openapi3.Responses)
+	debugDump.Responses["200"] = successResponse
+	debugDump.Responses["400"] = errorResponse
+
+	peerInfoResponse := openapi3.NewResponse().
+		WithDescription("Peer network info").
+		WithContent(openapi3.NewContentWithJSONSchemaRef(peerInfoSchema))
+
+	peerInfo := openapi3.NewOperation()
+	peerInfo.OperationID = "peer_info"
+	peerInfo.AddResponse(200, peerInfoResponse)
+	peerInfo.Responses["400"] = errorResponse
+
+	getReplicatorsSchema := openapi3.NewArraySchema()
+	getReplicatorsSchema.Items = replicatorSchema
+	getReplicatorsResponse := openapi3.NewResponse().
+		WithDescription("Replicators").
+		WithContent(openapi3.NewContentWithJSONSchema(getReplicatorsSchema))
+
+	getReplicators := openapi3.NewOperation()
+	getReplicators.Description = "List peer replicators"
+	getReplicators.OperationID = "peer_replicator_list"
+	getReplicators.AddResponse(200, getReplicatorsResponse)
+	getReplicators.Responses["400"] = errorResponse
+
+	replicatorRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(replicatorSchema))
+
+	setReplicator := openapi3.NewOperation()
+	setReplicator.Description = "Add peer replicators"
+	setReplicator.OperationID = "peer_replicator_set"
+	setReplicator.RequestBody = &openapi3.RequestBodyRef{
+		Value: replicatorRequest,
+	}
+	setReplicator.Responses = make(openapi3.Responses)
+	setReplicator.Responses["200"] = successResponse
+	setReplicator.Responses["400"] = errorResponse
+
+	deleteReplicator := openapi3.NewOperation()
+	deleteReplicator.Description = "Delete peer replicators"
+	deleteReplicator.OperationID = "peer_replicator_delete"
+	deleteReplicator.RequestBody = &openapi3.RequestBodyRef{
+		Value: replicatorRequest,
+	}
+	deleteReplicator.Responses = make(openapi3.Responses)
+	deleteReplicator.Responses["200"] = successResponse
+	deleteReplicator.Responses["400"] = errorResponse
+
+	peerCollectionsSchema := openapi3.NewArraySchema().
+		WithItems(openapi3.NewStringSchema())
+
+	peerCollectionRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchema(peerCollectionsSchema))
+
+	getPeerCollectionsResponse := openapi3.NewResponse().
+		WithDescription("Peer collections").
+		WithContent(openapi3.NewContentWithJSONSchema(peerCollectionsSchema))
+
+	getPeerCollections := openapi3.NewOperation()
+	getPeerCollections.Description = "List peer collections"
+	getPeerCollections.OperationID = "peer_collection_list"
+	getPeerCollections.AddResponse(200, getPeerCollectionsResponse)
+	getPeerCollections.Responses["400"] = errorResponse
+
+	addPeerCollections := openapi3.NewOperation()
+	addPeerCollections.Description = "Add peer collections"
+	addPeerCollections.OperationID = "peer_collection_add"
+	addPeerCollections.RequestBody = &openapi3.RequestBodyRef{
+		Value: peerCollectionRequest,
+	}
+	addPeerCollections.Responses = make(openapi3.Responses)
+	addPeerCollections.Responses["200"] = successResponse
+	addPeerCollections.Responses["400"] = errorResponse
+
+	removePeerCollections := openapi3.NewOperation()
+	removePeerCollections.Description = "Remove peer collections"
+	removePeerCollections.OperationID = "peer_collection_remove"
+	removePeerCollections.RequestBody = &openapi3.RequestBodyRef{
+		Value: peerCollectionRequest,
+	}
+	removePeerCollections.Responses = make(openapi3.Responses)
+	removePeerCollections.Responses["200"] = successResponse
+	removePeerCollections.Responses["400"] = errorResponse
+
+	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
+	router.AddRoute("/p2p/replicators", http.MethodGet, getReplicators, h.GetAllReplicators)
+	router.AddRoute("/p2p/replicators", http.MethodPost, setReplicator, h.SetReplicator)
+	router.AddRoute("/p2p/replicators", http.MethodDelete, deleteReplicator, h.DeleteReplicator)
+	router.AddRoute("/p2p/collections", http.MethodGet, getPeerCollections, h.GetAllP2PCollections)
+	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.AddP2PCollection)
+	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.RemoveP2PCollection)
+	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
+	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
+	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
+	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
+	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
+	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 }

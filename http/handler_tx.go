@@ -24,45 +24,6 @@ import (
 
 type txHandler struct{}
 
-func (h *txHandler) bindRoutes(router chi.Router) {
-	txnReadOnlyQueryParam := openapi3.NewQueryParameter("read_only").
-		WithDescription("Read only transaction").
-		WithSchema(openapi3.NewBoolSchema().WithDefault(false))
-
-	createTxSchema := openapi3.NewSchemaRef("#/components/schemas/create_tx", nil)
-	txnCreateResponse := openapi3.NewResponse().
-		WithDescription("Transaction info").
-		WithJSONSchemaRef(createTxSchema)
-
-	txnCreate := openapi3.NewOperation()
-	txnCreate.OperationID = "new_transaction"
-	txnCreate.AddParameter(txnReadOnlyQueryParam)
-	txnCreate.AddResponse(200, txnCreateResponse)
-	txnCreate.AddResponse(400, errorResponse)
-
-	txnConcurrent := openapi3.NewOperation()
-	txnConcurrent.OperationID = "new_concurrent_transaction"
-	txnConcurrent.AddParameter(txnReadOnlyQueryParam)
-	txnConcurrent.AddResponse(200, txnCreateResponse)
-	txnConcurrent.AddResponse(400, errorResponse)
-
-	txnIdPathParam := openapi3.NewPathParameter("id").
-		WithRequired(true).
-		WithSchema(openapi3.NewInt64Schema())
-
-	txnCommit := openapi3.NewOperation()
-	txnCommit.OperationID = "transaction_commit"
-	txnCommit.AddParameter(txnIdPathParam)
-	txnCommit.AddResponse(200, successResponse)
-	txnCommit.AddResponse(400, errorResponse)
-
-	txnDiscard := openapi3.NewOperation()
-	txnDiscard.OperationID = "transaction_discard"
-	txnDiscard.AddParameter(txnIdPathParam)
-	txnDiscard.AddResponse(200, successResponse)
-	txnDiscard.AddResponse(400, errorResponse)
-}
-
 type CreateTxResponse struct {
 	ID uint64 `json:"id"`
 }
@@ -132,4 +93,59 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	}
 	txVal.(datastore.Txn).Discard(req.Context())
 	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *txHandler) bindRoutes(router *Router) {
+	errorResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/error",
+	}
+	successResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/success",
+	}
+	createTxSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/create_tx",
+	}
+
+	txnReadOnlyQueryParam := openapi3.NewQueryParameter("read_only").
+		WithDescription("Read only transaction").
+		WithSchema(openapi3.NewBoolSchema().WithDefault(false))
+
+	txnCreateResponse := openapi3.NewResponse().
+		WithDescription("Transaction info").
+		WithJSONSchemaRef(createTxSchema)
+
+	txnCreate := openapi3.NewOperation()
+	txnCreate.OperationID = "new_transaction"
+	txnCreate.AddParameter(txnReadOnlyQueryParam)
+	txnCreate.AddResponse(200, txnCreateResponse)
+	txnCreate.Responses["400"] = errorResponse
+
+	txnConcurrent := openapi3.NewOperation()
+	txnConcurrent.OperationID = "new_concurrent_transaction"
+	txnConcurrent.AddParameter(txnReadOnlyQueryParam)
+	txnConcurrent.AddResponse(200, txnCreateResponse)
+	txnConcurrent.Responses["400"] = errorResponse
+
+	txnIdPathParam := openapi3.NewPathParameter("id").
+		WithRequired(true).
+		WithSchema(openapi3.NewInt64Schema())
+
+	txnCommit := openapi3.NewOperation()
+	txnCommit.OperationID = "transaction_commit"
+	txnCommit.AddParameter(txnIdPathParam)
+	txnCommit.Responses = make(openapi3.Responses)
+	txnCommit.Responses["200"] = successResponse
+	txnCommit.Responses["400"] = errorResponse
+
+	txnDiscard := openapi3.NewOperation()
+	txnDiscard.OperationID = "transaction_discard"
+	txnDiscard.AddParameter(txnIdPathParam)
+	txnDiscard.Responses = make(openapi3.Responses)
+	txnDiscard.Responses["200"] = successResponse
+	txnDiscard.Responses["400"] = errorResponse
+
+	router.AddRoute("/txn", http.MethodPost, txnCreate, h.NewTxn)
+	router.AddRoute("/txn/concurrent", http.MethodPost, txnConcurrent, h.NewConcurrentTxn)
+	router.AddRoute("/txn/{id}", http.MethodPost, txnCommit, h.Commit)
+	router.AddRoute("/txn/{id}", http.MethodDelete, txnDiscard, h.Discard)
 }

@@ -17,12 +17,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/acme/autocert"
 )
 
 func TestNewServerAndRunWithoutListener(t *testing.T) {
 	ctx := context.Background()
-	s := NewServer(nil, WithAddress(":0"))
+	s, err := NewServer(nil, WithAddress(":0"))
+	require.NoError(t, err)
 	if ok := assert.NotNil(t, s); ok {
 		assert.Equal(t, ErrNoListener, s.Run(ctx))
 	}
@@ -30,7 +32,8 @@ func TestNewServerAndRunWithoutListener(t *testing.T) {
 
 func TestNewServerAndRunWithListenerAndInvalidPort(t *testing.T) {
 	ctx := context.Background()
-	s := NewServer(nil, WithAddress(":303000"))
+	s, err := NewServer(nil, WithAddress(":303000"))
+	require.NoError(t, err)
 	if ok := assert.NotNil(t, s); ok {
 		assert.Error(t, s.Listen(ctx))
 	}
@@ -40,7 +43,8 @@ func TestNewServerAndRunWithListenerAndValidPort(t *testing.T) {
 	ctx := context.Background()
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
-	s := NewServer(nil, WithAddress(":0"))
+	s, err := NewServer(nil, WithAddress(":0"))
+	require.NoError(t, err)
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -60,9 +64,9 @@ func TestNewServerAndRunWithListenerAndValidPort(t *testing.T) {
 func TestNewServerAndRunWithAutocertWithoutEmail(t *testing.T) {
 	ctx := context.Background()
 	dir := t.TempDir()
-	s := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0))
-
-	err := s.Listen(ctx)
+	s, err := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0))
+	require.NoError(t, err)
+	err = s.Listen(ctx)
 	assert.ErrorIs(t, err, ErrNoEmail)
 
 	s.Shutdown(context.Background())
@@ -73,7 +77,8 @@ func TestNewServerAndRunWithAutocert(t *testing.T) {
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
 	dir := t.TempDir()
-	s := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0), WithCAEmail("dev@defradb.net"))
+	s, err := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0), WithCAEmail("dev@defradb.net"))
+	require.NoError(t, err)
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -95,7 +100,8 @@ func TestNewServerAndRunWithSelfSignedCertAndNoKeyFiles(t *testing.T) {
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
 	dir := t.TempDir()
-	s := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	s, err := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	require.NoError(t, err)
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -149,7 +155,8 @@ func TestNewServerAndRunWithSelfSignedCertAndInvalidPort(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := NewServer(nil, WithAddress(":303000"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	s, err := NewServer(nil, WithAddress(":303000"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	require.NoError(t, err)
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -177,7 +184,8 @@ func TestNewServerAndRunWithSelfSignedCert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	s, err := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	require.NoError(t, err)
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -195,50 +203,59 @@ func TestNewServerAndRunWithSelfSignedCert(t *testing.T) {
 }
 
 func TestNewServerWithoutOptions(t *testing.T) {
-	s := NewServer(nil)
+	s, err := NewServer(nil)
+	require.NoError(t, err)
 	assert.Equal(t, "localhost:9181", s.Addr)
 	assert.Equal(t, []string(nil), s.options.AllowedOrigins)
 }
 
 func TestNewServerWithAddress(t *testing.T) {
-	s := NewServer(nil, WithAddress("localhost:9999"))
+	s, err := NewServer(nil, WithAddress("localhost:9999"))
+	require.NoError(t, err)
 	assert.Equal(t, "localhost:9999", s.Addr)
 }
 
 func TestNewServerWithDomainAddress(t *testing.T) {
-	s := NewServer(nil, WithAddress("example.com"))
+	s, err := NewServer(nil, WithAddress("example.com"))
+	require.NoError(t, err)
 	assert.Equal(t, "example.com", s.options.Domain.Value())
 	assert.NotNil(t, s.options.TLS)
 }
 
 func TestNewServerWithAllowedOrigins(t *testing.T) {
-	s := NewServer(nil, WithAllowedOrigins("https://source.network", "https://app.source.network"))
+	s, err := NewServer(nil, WithAllowedOrigins("https://source.network", "https://app.source.network"))
+	require.NoError(t, err)
 	assert.Equal(t, []string{"https://source.network", "https://app.source.network"}, s.options.AllowedOrigins)
 }
 
 func TestNewServerWithCAEmail(t *testing.T) {
-	s := NewServer(nil, WithCAEmail("me@example.com"))
+	s, err := NewServer(nil, WithCAEmail("me@example.com"))
+	require.NoError(t, err)
 	assert.Equal(t, "me@example.com", s.options.TLS.Value().Email)
 }
 
 func TestNewServerWithPeerID(t *testing.T) {
-	s := NewServer(nil, WithPeerID("12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR"))
+	s, err := NewServer(nil, WithPeerID("12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR"))
+	require.NoError(t, err)
 	assert.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", s.options.PeerID)
 }
 
 func TestNewServerWithRootDir(t *testing.T) {
 	dir := t.TempDir()
-	s := NewServer(nil, WithRootDir(dir))
+	s, err := NewServer(nil, WithRootDir(dir))
+	require.NoError(t, err)
 	assert.Equal(t, dir, s.options.RootDir)
 }
 
 func TestNewServerWithTLSPort(t *testing.T) {
-	s := NewServer(nil, WithTLSPort(44343))
+	s, err := NewServer(nil, WithTLSPort(44343))
+	require.NoError(t, err)
 	assert.Equal(t, ":44343", s.options.TLS.Value().Port)
 }
 
 func TestNewServerWithSelfSignedCert(t *testing.T) {
-	s := NewServer(nil, WithSelfSignedCert("pub.key", "priv.key"))
+	s, err := NewServer(nil, WithSelfSignedCert("pub.key", "priv.key"))
+	require.NoError(t, err)
 	assert.Equal(t, "pub.key", s.options.TLS.Value().PublicKey)
 	assert.Equal(t, "priv.key", s.options.TLS.Value().PrivateKey)
 	assert.NotNil(t, s.options.TLS)

@@ -284,7 +284,10 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		)
 	}
 
-	s := httpapi.NewServer(db, sOpt...)
+	s, err := httpapi.NewServer(db, sOpt...)
+	if err != nil {
+		return nil, errors.Wrap("failed to create HTTP server", err)
+	}
 	if err := s.Listen(ctx); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
 	}

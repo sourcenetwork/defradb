@@ -263,7 +263,7 @@ func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 		cdb, err = http.NewWrapper(cdb)
 
 	case cliClientType:
-		cdb = cli.NewWrapper(cdb)
+		cdb, err = cli.NewWrapper(cdb)
 
 	case goClientType:
 		return

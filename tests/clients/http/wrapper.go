@@ -34,9 +34,12 @@ type Wrapper struct {
 }
 
 func NewWrapper(db client.DB) (*Wrapper, error) {
-	handler := http.NewHandler(db, http.ServerOptions{})
-	httpServer := httptest.NewServer(handler)
+	handler, err := http.NewHandler(db, http.ServerOptions{})
+	if err != nil {
+		return nil, err
+	}
 
+	httpServer := httptest.NewServer(handler)
 	client, err := http.NewClient(httpServer.URL)
 	if err != nil {
 		return nil, err
