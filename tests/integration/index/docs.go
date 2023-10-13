@@ -36,6 +36,7 @@ func getUserDocs() docsCollection {
 								"Chip":    "Intel i3",
 								"RAM":     8,
 								"Storage": 512,
+								"OS":      "iOS 12",
 							},
 						},
 						{
