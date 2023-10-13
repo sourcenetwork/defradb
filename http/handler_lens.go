@@ -203,13 +203,10 @@ func (h *lensHandler) bindRoutes(router *Router) {
 	migrateDown.Responses["200"] = successResponse
 	migrateDown.Responses["400"] = errorResponse
 
-	router.AddRouteGroup(func(group *Router) {
-		group.AddMiddleware(LensMiddleware)
-		group.AddRoute("/lens", http.MethodGet, lensConfig, h.Config)
-		group.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
-		group.AddRoute("/lens/reload", http.MethodPost, reloadLenses, h.ReloadLenses)
-		group.AddRoute("/lens/{version}", http.MethodGet, hasMigration, h.HasMigration)
-		group.AddRoute("/lens/{version}/up", http.MethodPost, migrateUp, h.MigrateUp)
-		group.AddRoute("/lens/{version}/down", http.MethodPost, migrateDown, h.MigrateDown)
-	})
+	router.AddRoute("/lens", http.MethodGet, lensConfig, h.Config)
+	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
+	router.AddRoute("/lens/reload", http.MethodPost, reloadLenses, h.ReloadLenses)
+	router.AddRoute("/lens/{version}", http.MethodGet, hasMigration, h.HasMigration)
+	router.AddRoute("/lens/{version}/up", http.MethodPost, migrateUp, h.MigrateUp)
+	router.AddRoute("/lens/{version}/down", http.MethodPost, migrateDown, h.MigrateDown)
 }

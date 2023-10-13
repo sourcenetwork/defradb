@@ -144,8 +144,8 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnDiscard.Responses["200"] = successResponse
 	txnDiscard.Responses["400"] = errorResponse
 
-	router.AddRoute("/txn", http.MethodPost, txnCreate, h.NewTxn)
-	router.AddRoute("/txn/concurrent", http.MethodPost, txnConcurrent, h.NewConcurrentTxn)
-	router.AddRoute("/txn/{id}", http.MethodPost, txnCommit, h.Commit)
-	router.AddRoute("/txn/{id}", http.MethodDelete, txnDiscard, h.Discard)
+	router.AddRoute("/tx", http.MethodPost, txnCreate, h.NewTxn)
+	router.AddRoute("/tx/concurrent", http.MethodPost, txnConcurrent, h.NewConcurrentTxn)
+	router.AddRoute("/tx/{id}", http.MethodPost, txnCommit, h.Commit)
+	router.AddRoute("/tx/{id}", http.MethodDelete, txnDiscard, h.Discard)
 }

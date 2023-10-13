@@ -499,16 +499,13 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionDelete.Responses["200"] = successResponse
 	collectionDelete.Responses["400"] = errorResponse
 
-	router.AddRouteGroup(func(group *Router) {
-		group.AddMiddleware(CollectionMiddleware)
-		group.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
-		group.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWith)
-		group.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWith)
-		group.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.CreateIndex)
-		group.AddRoute("/collections/{name}/indexes", http.MethodGet, getIndexes, h.GetIndexes)
-		group.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, dropIndex, h.DropIndex)
-		group.AddRoute("/collections/{name}/{key}", http.MethodGet, collectionGet, h.Get)
-		group.AddRoute("/collections/{name}/{key}", http.MethodPatch, collectionUpdate, h.Update)
-		group.AddRoute("/collections/{name}/{key}", http.MethodDelete, collectionDelete, h.Delete)
-	})
+	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
+	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWith)
+	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWith)
+	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.CreateIndex)
+	router.AddRoute("/collections/{name}/indexes", http.MethodGet, getIndexes, h.GetIndexes)
+	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, dropIndex, h.DropIndex)
+	router.AddRoute("/collections/{name}/{key}", http.MethodGet, collectionGet, h.Get)
+	router.AddRoute("/collections/{name}/{key}", http.MethodPatch, collectionUpdate, h.Update)
+	router.AddRoute("/collections/{name}/{key}", http.MethodDelete, collectionDelete, h.Delete)
 }

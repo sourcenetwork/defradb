@@ -396,6 +396,48 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	replicatorSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/replicator",
 	}
+	patchSchemaRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/patch_schema_request",
+	}
+
+	collectionArraySchema := openapi3.NewArraySchema()
+	collectionArraySchema.Items = collectionSchema
+
+	addSchemaResponse := openapi3.NewResponse().
+		WithDescription("Collection(s)").
+		WithJSONSchema(collectionArraySchema)
+
+	addSchemaRequest := openapi3.NewRequestBody().
+		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
+
+	addSchema := openapi3.NewOperation()
+	addSchema.RequestBody = &openapi3.RequestBodyRef{
+		Value: addSchemaRequest,
+	}
+	addSchema.AddResponse(200, addSchemaResponse)
+	addSchema.Responses["400"] = errorResponse
+
+	patchSchemaRequest := openapi3.NewRequestBody().
+		WithJSONSchemaRef(patchSchemaRequestSchema)
+
+	patchSchema := openapi3.NewOperation()
+	patchSchema.RequestBody = &openapi3.RequestBodyRef{
+		Value: patchSchemaRequest,
+	}
+	patchSchema.Responses = make(openapi3.Responses)
+	patchSchema.Responses["200"] = successResponse
+	patchSchema.Responses["400"] = errorResponse
+
+	setDefaultSchemaVersionRequest := openapi3.NewRequestBody().
+		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
+
+	setDefaultSchemaVersion := openapi3.NewOperation()
+	setDefaultSchemaVersion.RequestBody = &openapi3.RequestBodyRef{
+		Value: setDefaultSchemaVersionRequest,
+	}
+	setDefaultSchemaVersion.Responses = make(openapi3.Responses)
+	setDefaultSchemaVersion.Responses["200"] = successResponse
+	setDefaultSchemaVersion.Responses["400"] = errorResponse
 
 	backupRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -579,4 +621,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
+	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
+	router.AddRoute("/schema", http.MethodPatch, patchSchema, h.PatchSchema)
+	router.AddRoute("/schema/default", http.MethodPost, setDefaultSchemaVersion, h.SetDefaultSchemaVersion)
 }

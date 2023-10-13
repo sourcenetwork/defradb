@@ -60,9 +60,17 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 
 	tx_handler.bindRoutes(router)
 	store_handler.bindRoutes(router)
-	collection_handler.bindRoutes(router)
-	lens_handler.bindRoutes(router)
 	ccip_handler.bindRoutes(router)
+
+	router.AddRouteGroup(func(r *Router) {
+		r.AddMiddleware(CollectionMiddleware)
+		collection_handler.bindRoutes(r)
+	})
+
+	router.AddRouteGroup(func(r *Router) {
+		r.AddMiddleware(LensMiddleware)
+		lens_handler.bindRoutes(r)
+	})
 
 	if err := router.Validate(context.Background()); err != nil {
 		return nil, err
@@ -70,7 +78,7 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 
 	mux := chi.NewMux()
 	mux.Mount("/api/"+Version, router)
-	mux.Get("/openapi", func(rw http.ResponseWriter, req *http.Request) {
+	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())
 	})
 	mux.Handle("/*", playgroundHandler)
