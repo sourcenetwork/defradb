@@ -1730,7 +1730,7 @@ func assertRequestResults(
 	anyOfByField map[docFieldKey][]any,
 ) bool {
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
-	if s.isBench || AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) {
+	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) || s.isBench {
 		return true
 	}
 
