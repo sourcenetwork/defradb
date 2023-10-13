@@ -14,6 +14,10 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
+const (
+	errInvalidStoredValue string = "invalid stored value"
+)
+
 // Errors returnable from this package.
 //
 // This list is incomplete and undefined errors may also be returned.
@@ -26,3 +30,9 @@ var (
 	// ErrNotFound is an error returned when a block is not found.
 	ErrNotFound = errors.New("blockstore: block not found")
 )
+
+// NewErrInvalidStoredValue returns a new error indicating that the stored
+// value in the database is invalid.
+func NewErrInvalidStoredValue(inner error) error {
+	return errors.Wrap(errInvalidStoredValue, inner)
+}

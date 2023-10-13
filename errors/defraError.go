@@ -58,13 +58,12 @@ func (e *defraError) Error() string {
 }
 
 func (e *defraError) Is(other error) bool {
-	switch otherTyped := other.(type) {
-	case *defraError:
-		return e.message == otherTyped.message
-	default:
-		otherString := other.Error()
-		return e.message == otherString || e.Error() == otherString || errors.Is(e.inner, other)
+	var otherDefraError *defraError
+	if errors.As(other, &otherDefraError) {
+		return e.message == otherDefraError.message
 	}
+	otherString := other.Error()
+	return e.message == otherString || e.Error() == otherString || errors.Is(e.inner, other)
 }
 
 func (e *defraError) Unwrap() error {

@@ -703,7 +703,7 @@ func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = f.getAllIndexes()
-	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
 func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
@@ -728,14 +728,15 @@ func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 func TestGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
+	testErr := errors.New("test error")
+
 	mockedTxn := f.mockTxn()
 
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Unset()
-	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
-		Return(nil, errors.New("test error"))
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
 
 	_, err := f.getAllIndexes()
-	assert.ErrorIs(t, err, NewErrFailedToCreateCollectionQuery(nil))
+	assert.ErrorIs(t, err, testErr)
 }
 
 func TestGetIndexes_IfSystemStoreFails_ShouldCloseIterator(t *testing.T) {
@@ -779,7 +780,7 @@ func TestGetIndexes_IfSystemStoreHasInvalidData_ReturnError(t *testing.T) {
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(q, nil)
 
 	_, err := f.getAllIndexes()
-	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
 func TestGetIndexes_IfFailsToReadSeqNumber_ReturnError(t *testing.T) {
@@ -853,15 +854,16 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 func TestGetCollectionIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 
+	testErr := errors.New("test error")
+
 	mockedTxn := f.mockTxn()
 	mockedTxn.MockSystemstore = mocks.NewDSReaderWriter(t)
-	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).
-		Return(nil, errors.New("test error"))
+	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore)
 
 	_, err := f.getCollectionIndexes(usersColName)
-	assert.ErrorIs(t, err, NewErrFailedToCreateCollectionQuery(nil))
+	assert.ErrorIs(t, err, testErr)
 }
 
 func TestGetCollectionIndexes_IfSystemStoreFails_ShouldCloseIterator(t *testing.T) {
@@ -902,7 +904,7 @@ func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = f.getCollectionIndexes(usersColName)
-	assert.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
 func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
@@ -967,7 +969,7 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 		},
 		{
 			Name:          "Query iterator returns invalid value",
-			ExpectedError: NewErrInvalidStoredIndex(nil),
+			ExpectedError: datastore.NewErrInvalidStoredValue(nil),
 			GetMockSystemstore: func(t *testing.T) *mocks.DSReaderWriter {
 				store := mocks.NewDSReaderWriter(t)
 				store.EXPECT().Query(mock.Anything, mock.Anything).

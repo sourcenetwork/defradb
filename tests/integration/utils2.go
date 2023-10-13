@@ -62,15 +62,15 @@ const (
 type ClientType string
 
 const (
-	// goClientType enables running the test suite using
+	// GoClientType enables running the test suite using
 	// the go implementation of the client.DB interface.
-	goClientType ClientType = "go"
-	// httpClientType enables running the test suite using
+	GoClientType ClientType = "go"
+	// HTTPClientType enables running the test suite using
 	// the http implementation of the client.DB interface.
-	httpClientType ClientType = "http"
-	// cliClientType enables running the test suite using
+	HTTPClientType ClientType = "http"
+	// CLIClientType enables running the test suite using
 	// the cli implementation of the client.DB interface.
-	cliClientType ClientType = "cli"
+	CLIClientType ClientType = "cli"
 )
 
 // The MutationType that tests will run using.
@@ -259,13 +259,13 @@ func GetDatabase(s *state) (cdb client.DB, path string, err error) {
 	}
 
 	switch s.clientType {
-	case httpClientType:
+	case HTTPClientType:
 		cdb, err = http.NewWrapper(cdb)
 
-	case cliClientType:
+	case CLIClientType:
 		cdb = cli.NewWrapper(cdb)
 
-	case goClientType:
+	case GoClientType:
 		return
 
 	default:
@@ -288,19 +288,20 @@ func ExecuteTestCase(
 	t *testing.T,
 	testCase TestCase,
 ) {
+	flattenActions(&testCase)
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 
 	var clients []ClientType
 	if httpClient {
-		clients = append(clients, httpClientType)
+		clients = append(clients, HTTPClientType)
 	}
 	if goClient {
-		clients = append(clients, goClientType)
+		clients = append(clients, GoClientType)
 	}
 	if cliClient {
-		clients = append(clients, cliClientType)
+		clients = append(clients, CLIClientType)
 	}
 
 	var databases []DatabaseType
@@ -338,11 +339,8 @@ func executeTestCase(
 	log.Info(
 		ctx,
 		testCase.Description,
-		logging.NewKV("badgerFile", badgerFile),
-		logging.NewKV("badgerInMemory", badgerInMemory),
-		logging.NewKV("inMemoryStore", inMemoryStore),
-		logging.NewKV("httpClient", httpClient),
-		logging.NewKV("goClient", goClient),
+		logging.NewKV("database", dbt),
+		logging.NewKV("client", clientType),
 		logging.NewKV("mutationType", mutationType),
 		logging.NewKV("databaseDir", databaseDir),
 		logging.NewKV("changeDetector.Enabled", changeDetector.Enabled),
@@ -352,7 +350,6 @@ func executeTestCase(
 		logging.NewKV("changeDetector.Repository", changeDetector.Repository),
 	)
 
-	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
 
 	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
@@ -370,94 +367,7 @@ func executeTestCase(
 	refreshIndexes(s)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
-		switch action := testCase.Actions[i].(type) {
-		case ConfigureNode:
-			configureNode(s, action)
-
-		case Restart:
-			restartNodes(s, i)
-
-		case ConnectPeers:
-			connectPeers(s, action)
-
-		case ConfigureReplicator:
-			configureReplicator(s, action)
-
-		case SubscribeToCollection:
-			subscribeToCollection(s, action)
-
-		case UnsubscribeToCollection:
-			unsubscribeToCollection(s, action)
-
-		case GetAllP2PCollections:
-			getAllP2PCollections(s, action)
-
-		case SchemaUpdate:
-			updateSchema(s, action)
-
-		case SchemaPatch:
-			patchSchema(s, action)
-
-		case SetDefaultSchemaVersion:
-			setDefaultSchemaVersion(s, action)
-
-		case ConfigureMigration:
-			configureMigration(s, action)
-
-		case GetMigrations:
-			getMigrations(s, action)
-
-		case CreateDoc:
-			createDoc(s, action)
-
-		case DeleteDoc:
-			deleteDoc(s, action)
-
-		case UpdateDoc:
-			updateDoc(s, action)
-
-		case CreateIndex:
-			createIndex(s, action)
-
-		case DropIndex:
-			dropIndex(s, action)
-
-		case GetIndexes:
-			getIndexes(s, action)
-
-		case BackupExport:
-			backupExport(s, action)
-
-		case BackupImport:
-			backupImport(s, action)
-
-		case TransactionCommit:
-			commitTransaction(s, action)
-
-		case SubscriptionRequest:
-			executeSubscriptionRequest(s, action)
-
-		case Request:
-			executeRequest(s, action)
-
-		case ExplainRequest:
-			executeExplainRequest(s, action)
-
-		case IntrospectionRequest:
-			assertIntrospectionResults(s, action)
-
-		case ClientIntrospectionRequest:
-			assertClientIntrospectionResults(s, action)
-
-		case WaitForSync:
-			waitForSync(s, action)
-
-		case SetupComplete:
-			// no-op, just continue.
-
-		default:
-			t.Fatalf("Unknown action type %T", action)
-		}
+		performAction(s, i, testCase.Actions[i])
 	}
 
 	// Notify any active subscriptions that all requests have been sent.
@@ -474,6 +384,146 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
 		}
 	}
+}
+
+func performAction(
+	s *state,
+	actionIndex int,
+	act any,
+) {
+	switch action := act.(type) {
+	case ConfigureNode:
+		configureNode(s, action)
+
+	case Restart:
+		restartNodes(s, actionIndex)
+
+	case ConnectPeers:
+		connectPeers(s, action)
+
+	case ConfigureReplicator:
+		configureReplicator(s, action)
+
+	case SubscribeToCollection:
+		subscribeToCollection(s, action)
+
+	case UnsubscribeToCollection:
+		unsubscribeToCollection(s, action)
+
+	case GetAllP2PCollections:
+		getAllP2PCollections(s, action)
+
+	case SchemaUpdate:
+		updateSchema(s, action)
+
+	case SchemaPatch:
+		patchSchema(s, action)
+
+	case SetDefaultSchemaVersion:
+		setDefaultSchemaVersion(s, action)
+
+	case ConfigureMigration:
+		configureMigration(s, action)
+
+	case GetMigrations:
+		getMigrations(s, action)
+
+	case CreateDoc:
+		createDoc(s, action)
+
+	case DeleteDoc:
+		deleteDoc(s, action)
+
+	case UpdateDoc:
+		updateDoc(s, action)
+
+	case CreateIndex:
+		createIndex(s, action)
+
+	case DropIndex:
+		dropIndex(s, action)
+
+	case GetIndexes:
+		getIndexes(s, action)
+
+	case BackupExport:
+		backupExport(s, action)
+
+	case BackupImport:
+		backupImport(s, action)
+
+	case TransactionCommit:
+		commitTransaction(s, action)
+
+	case SubscriptionRequest:
+		executeSubscriptionRequest(s, action)
+
+	case Request:
+		executeRequest(s, action)
+
+	case ExplainRequest:
+		executeExplainRequest(s, action)
+
+	case IntrospectionRequest:
+		assertIntrospectionResults(s, action)
+
+	case ClientIntrospectionRequest:
+		assertClientIntrospectionResults(s, action)
+
+	case WaitForSync:
+		waitForSync(s, action)
+
+	case Benchmark:
+		benchmarkAction(s, actionIndex, action)
+
+	case SetupComplete:
+		// no-op, just continue.
+
+	default:
+		s.t.Fatalf("Unknown action type %T", action)
+	}
+}
+
+func benchmarkAction(
+	s *state,
+	actionIndex int,
+	bench Benchmark,
+) {
+	if s.dbt == defraIMType {
+		// Benchmarking makes no sense for test in-memory storage
+		return
+	}
+	if len(bench.FocusClients) > 0 {
+		isFound := false
+		for _, clientType := range bench.FocusClients {
+			if s.clientType == clientType {
+				isFound = true
+				break
+			}
+		}
+		if !isFound {
+			return
+		}
+	}
+
+	runBench := func(benchCase any) time.Duration {
+		startTime := time.Now()
+		for i := 0; i < bench.Reps; i++ {
+			performAction(s, actionIndex, benchCase)
+		}
+		return time.Since(startTime)
+	}
+
+	s.isBench = true
+	defer func() { s.isBench = false }()
+
+	baseElapsedTime := runBench(bench.BaseCase)
+	optimizedElapsedTime := runBench(bench.OptimizedCase)
+
+	factoredBaseTime := int64(float64(baseElapsedTime) / bench.Factor)
+	assert.Greater(s.t, factoredBaseTime, optimizedElapsedTime,
+		"Optimized case should be faster at least by factor of %.2f than the base case. Base: %d, Optimized: %d (μs)",
+		bench.Factor, optimizedElapsedTime.Microseconds(), baseElapsedTime.Microseconds())
 }
 
 // getCollectionNames gets an ordered, unique set of collection names across all nodes
@@ -1536,6 +1586,7 @@ func executeRequest(
 			&result.GQL,
 			action.Results,
 			action.ExpectedError,
+			action.Asserter,
 			nodeID,
 			anyOfByFieldKey,
 		)
@@ -1601,6 +1652,7 @@ func executeSubscriptionRequest(
 							finalResult,
 							action.Results,
 							action.ExpectedError,
+							nil,
 							// anyof is not yet supported by subscription requests
 							0,
 							map[docFieldKey][]any{},
@@ -1673,10 +1725,12 @@ func assertRequestResults(
 	result *client.GQLResult,
 	expectedResults []map[string]any,
 	expectedError string,
+	asserter ResultAsserter,
 	nodeID int,
 	anyOfByField map[docFieldKey][]any,
 ) bool {
-	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) {
+	// we skip assertion benchmark because you don't specify expected result for benchmark.
+	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) || s.isBench {
 		return true
 	}
 
@@ -1687,9 +1741,16 @@ func assertRequestResults(
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]any)
 
+	if asserter != nil {
+		asserter.Assert(s.t, resultantData)
+		return true
+	}
+
 	log.Info(s.ctx, "", logging.NewKV("RequestResults", result.Data))
 
-	require.Equal(s.t, len(expectedResults), len(resultantData), s.testCase.Description)
+	// compare results
+	require.Equal(s.t, len(expectedResults), len(resultantData),
+		s.testCase.Description+" \n(number of results don't match)")
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]

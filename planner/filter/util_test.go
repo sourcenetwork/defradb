@@ -130,11 +130,55 @@ func r(op string, vals ...any) map[string]any {
 	return m(op, vals)
 }
 
+const (
+	authorNameInd = iota
+	authorAgeInd
+	authorPublishedInd
+	authorVerifiedInd
+	authorNumFields
+)
+
+const (
+	bookRatingInd = iota
+	bookGenreInd
+	bookNameInd
+	bookStoresInd
+	bookNumFields
+)
+
+const (
+	storeAddressInd = iota
+	storeNameInd
+	storeNumFields
+)
+
 func getDocMapping() *core.DocumentMapping {
+	bookChildMappings := make([]*core.DocumentMapping, bookNumFields)
+	bookChildMappings[bookStoresInd] = &core.DocumentMapping{
+		IndexesByName: map[string][]int{
+			"address": {storeAddressInd},
+			"name":    {storeNameInd},
+		},
+	}
+
+	authorChildMappings := make([]*core.DocumentMapping, authorNumFields)
+	authorChildMappings[authorPublishedInd] = &core.DocumentMapping{
+		IndexesByName: map[string][]int{
+			"rating": {bookRatingInd},
+			"genre":  {bookGenreInd},
+			"name":   {bookNameInd},
+			"stores": {bookStoresInd},
+		},
+		ChildMappings: bookChildMappings,
+	}
+
 	return &core.DocumentMapping{
-		IndexesByName: map[string][]int{"name": {0}, "age": {1}, "published": {2}, "verified": {3}},
-		ChildMappings: []*core.DocumentMapping{nil, nil, {
-			IndexesByName: map[string][]int{"rating": {11}, "genre": {12}},
-		}},
+		IndexesByName: map[string][]int{
+			"name":      {authorNameInd},
+			"age":       {authorAgeInd},
+			"published": {authorPublishedInd},
+			"verified":  {authorVerifiedInd},
+		},
+		ChildMappings: authorChildMappings,
 	}
 }

@@ -48,6 +48,7 @@ func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 											"iterations":   uint64(1),
 											"docFetches":   uint64(1),
 											"fieldFetches": uint64(1),
+											"indexFetches": uint64(0),
 										},
 									},
 								},
