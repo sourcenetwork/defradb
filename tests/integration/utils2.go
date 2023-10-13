@@ -141,9 +141,8 @@ func init() {
 
 	if !goClient && !httpClient && !cliClient {
 		// Default is to test go client type.
-		// goClient = true
+		goClient = true
 	}
-	httpClient = true
 
 	if changeDetector.Enabled {
 		// Change detector only uses badger file db type.
