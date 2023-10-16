@@ -15,8 +15,6 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -121,7 +119,7 @@ func generateRandomDocs(count int, types map[string]typeDefinition, order []stri
 			newDoc := make(doc)
 			for _, prop := range typeDef.props {
 				if prop.isRelation {
-					if prop.isPrimary.Value() {
+					if prop.isPrimary {
 						relDocInd := incrementCounter(prop.typeStr, typeName, prop.name)
 						docKey := getDocKey(prop.typeStr, relDocInd)
 						newDoc[prop.name+request.RelatedObjectID] = docKey
@@ -185,7 +183,7 @@ func (this *createDocGenerator) generatePrimary(
 	for _, prop := range typeDef.props {
 		if prop.isRelation {
 			if _, hasProp := doc[prop.name]; hasProp {
-				if prop.isPrimary.Value() {
+				if prop.isPrimary {
 					subType := this.types[prop.typeStr]
 					subDoc := toRequestedDoc(doc[prop.name].(map[string]any), &subType)
 					jsonSubDoc := createDocJSON(subDoc, &subType)
@@ -214,7 +212,7 @@ func (this *createDocGenerator) GenerateDocs(doc map[string]any, typeName string
 	for _, prop := range typeDef.props {
 		if prop.isRelation {
 			if _, hasProp := doc[prop.name]; hasProp {
-				if !prop.isPrimary.Value() {
+				if !prop.isPrimary {
 					if docKey == "" {
 						clientDoc, err := client.NewDocFromJSON([]byte(docStr))
 						if err != nil {
@@ -241,7 +239,7 @@ func (this *createDocGenerator) generateSecondaryDocs(
 	relTypeDef := this.types[relProp.typeStr]
 	primaryPropName := ""
 	for _, relDocProp := range relTypeDef.props {
-		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary.Value() {
+		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary {
 			primaryPropName = relDocProp.name + request.RelatedObjectID
 			switch relVal := primaryDoc[relProp.name].(type) {
 			case DocsList:
@@ -265,7 +263,7 @@ type propDefinition struct {
 	typeStr    string
 	isArray    bool
 	isRelation bool
-	isPrimary  immutable.Option[bool]
+	isPrimary  bool
 }
 
 type typeDefinition struct {
@@ -291,7 +289,7 @@ func findDependencyOrder(parsedTypes map[string]typeDefinition) []string {
 	for typeName, typeDef := range parsedTypes {
 		for _, propDef := range typeDef.props {
 			if propDef.isRelation {
-				if propDef.isPrimary.Value() {
+				if propDef.isPrimary {
 					graph[propDef.typeStr] = appendUnique(graph[propDef.typeStr], typeName)
 				} else {
 					graph[typeName] = appendUnique(graph[typeName], propDef.typeStr)
@@ -335,11 +333,13 @@ type schemaParser struct {
 	firstRelationType string
 	currentTypeDef    typeDefinition
 	relationTypesMap  map[string]map[string]string
+	resolvedRelation  map[string]map[string]bool
 }
 
 func (p *schemaParser) Parse(schema string) map[string]typeDefinition {
 	p.types = make(map[string]typeDefinition)
 	p.relationTypesMap = make(map[string]map[string]string)
+	p.resolvedRelation = make(map[string]map[string]bool)
 	p.schemaLines = strings.Split(schema, "\n")
 	p.findTypes()
 
@@ -372,6 +372,7 @@ func (p *schemaParser) findTypes() {
 			typeNameEndPos := strings.Index(line[5:], " ")
 			typeName := strings.TrimSpace(line[5 : 5+typeNameEndPos])
 			p.types[typeName] = typeDefinition{name: typeName, index: typeIndex, props: make(map[string]propDefinition)}
+			p.resolvedRelation[typeName] = make(map[string]bool)
 			typeIndex++
 		}
 	}
@@ -391,9 +392,11 @@ func (p *schemaParser) defineProp(line string, pos int) {
 	if _, isRelation := p.types[prop.typeStr]; isRelation {
 		prop.isRelation = true
 		if prop.isArray {
-			prop.isPrimary = immutable.Some(false)
+			prop.isPrimary = false
+			p.resolvedRelation[p.currentTypeDef.name][prop.name] = true
 		} else if strings.Contains(line[pos+len(prop.typeStr)+2:], "@primary") {
-			prop.isPrimary = immutable.Some(true)
+			prop.isPrimary = true
+			p.resolvedRelation[p.currentTypeDef.name][prop.name] = true
 		}
 		relMap := p.relationTypesMap[prop.typeStr]
 		if relMap == nil {
@@ -416,18 +419,21 @@ func (p *schemaParser) resolvePrimaryRelations() {
 				if prop.typeStr == relPropType {
 					relatedTypeDef := p.types[relPropType]
 					relatedProp := relatedTypeDef.props[relPropName]
-					if !relatedProp.isPrimary.HasValue() {
-						relatedProp.isPrimary = immutable.Some(typeName == p.firstRelationType)
+					if !p.resolvedRelation[relPropType][relPropName] {
+						relatedProp.isPrimary = typeName == p.firstRelationType
+						p.resolvedRelation[relPropType][relPropName] = true
 						relatedTypeDef.props[relPropName] = relatedProp
 						p.types[relPropType] = relatedTypeDef
 						delete(p.relationTypesMap, relPropType)
 					}
-					if !prop.isPrimary.HasValue() {
+					if !p.resolvedRelation[typeName][prop.name] {
 						val := typeName != p.firstRelationType
-						if relatedProp.isPrimary.HasValue() {
-							val = !relatedProp.isPrimary.Value()
+						_, isResolved := p.resolvedRelation[relPropType][relPropName]
+						if isResolved {
+							val = !relatedProp.isPrimary
 						}
-						prop.isPrimary = immutable.Some(val)
+						prop.isPrimary = val
+						p.resolvedRelation[typeName][prop.name] = true
 						typeDef.props[prop.name] = prop
 					}
 				}
