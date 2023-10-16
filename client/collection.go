@@ -38,6 +38,7 @@ type Collection interface {
 	// SchemaID returns the ID of the Schema used to define this Collection.
 	SchemaID() string
 
+	// Definition contains the metadata defining what a Collection is.
 	Definition() CollectionDefinition
 	// Schema returns the SchemaDescription used to define this Collection.
 	Schema() SchemaDescription
