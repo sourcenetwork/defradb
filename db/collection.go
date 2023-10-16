@@ -187,7 +187,7 @@ func (db *db) createCollection(
 		}
 	}
 
-	return col, nil
+	return db.getCollectionByName(ctx, txn, desc.Name)
 }
 
 // updateCollection updates the persisted collection description matching the name of the given
