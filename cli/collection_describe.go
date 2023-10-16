@@ -39,16 +39,16 @@ Example: view collection by version id
 
 			col, ok := tryGetCollectionContext(cmd)
 			if ok {
-				return writeJSON(cmd, col.Description())
+				return writeJSON(cmd, col.Definition())
 			}
 			// if no collection specified list all collections
 			cols, err := store.GetAllCollections(cmd.Context())
 			if err != nil {
 				return err
 			}
-			colDesc := make([]client.CollectionDescription, len(cols))
+			colDesc := make([]client.CollectionDefinition, len(cols))
 			for i, col := range cols {
-				colDesc[i] = col.Description()
+				colDesc[i] = col.Definition()
 			}
 			return writeJSON(cmd, colDesc)
 		},

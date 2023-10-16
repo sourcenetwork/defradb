@@ -14,10 +14,6 @@ import (
 	"context"
 	"time"
 
-	ds "github.com/ipfs/go-datastore"
-
-	"github.com/ipfs/go-datastore/query"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -47,7 +43,7 @@ func canConvertIndexFieldValue[T any](val any) bool {
 
 func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
 	switch kind {
-	case client.FieldKind_STRING:
+	case client.FieldKind_STRING, client.FieldKind_FOREIGN_OBJECT:
 		return canConvertIndexFieldValue[string]
 	case client.FieldKind_INT:
 		return canConvertIndexFieldValue[int64]
@@ -86,10 +82,8 @@ func NewCollectionIndex(
 		return nil, NewErrIndexDescHasNoFields(desc)
 	}
 	index := &collectionSimpleIndex{collection: collection, desc: desc}
-	schema := collection.Description().Schema
-	fieldID := client.FieldID(schema.GetFieldKey(desc.Fields[0].Name))
-	field, foundField := collection.Description().GetFieldByID(fieldID)
-	if fieldID == client.FieldID(0) || !foundField {
+	field, foundField := collection.Schema().GetField(desc.Fields[0].Name)
+	if !foundField {
 		return nil, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name)
 	}
 	var e error
@@ -179,31 +173,6 @@ func (i *collectionSimpleIndex) Update(
 	return i.Save(ctx, txn, newDoc)
 }
 
-func fetchKeysForPrefix(
-	ctx context.Context,
-	prefix string,
-	storage ds.Read,
-) ([]ds.Key, error) {
-	q, err := storage.Query(ctx, query.Query{Prefix: prefix})
-	if err != nil {
-		return nil, err
-	}
-
-	keys := make([]ds.Key, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
-			_ = q.Close()
-			return nil, res.Error
-		}
-		keys = append(keys, ds.NewKey(res.Key))
-	}
-	if err = q.Close(); err != nil {
-		return nil, err
-	}
-
-	return keys, nil
-}
-
 // RemoveAll remove all artifacts of the index from the storage, i.e. all index
 // field values for all documents.
 func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
@@ -211,7 +180,7 @@ func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn
 	prefixKey.CollectionID = i.collection.ID()
 	prefixKey.IndexID = i.desc.ID
 
-	keys, err := fetchKeysForPrefix(ctx, prefixKey.ToString(), txn.Datastore())
+	keys, err := datastore.FetchKeysForPrefix(ctx, prefixKey.ToString(), txn.Datastore())
 	if err != nil {
 		return err
 	}

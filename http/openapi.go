@@ -13,6 +13,7 @@ package http
 import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -23,7 +24,7 @@ var openApiSchemas = map[string]any{
 	"create_tx":            &CreateTxResponse{},
 	"collection_update":    &CollectionUpdateRequest{},
 	"collection_delete":    &CollectionDeleteRequest{},
-	"peer_info":            &PeerInfoResponse{},
+	"peer_info":            &peer.AddrInfo{},
 	"graphql_request":      &GraphQLRequest{},
 	"graphql_response":     &GraphQLResponse{},
 	"backup_config":        &client.BackupConfig{},

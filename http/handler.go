@@ -41,6 +41,7 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 	tx_handler := &txHandler{}
 	store_handler := &storeHandler{}
 	collection_handler := &collectionHandler{}
+	p2p_handler := &p2pHandler{}
 	lens_handler := &lensHandler{}
 	ccip_handler := &ccipHandler{}
 
@@ -60,6 +61,7 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 
 	tx_handler.bindRoutes(router)
 	store_handler.bindRoutes(router)
+	p2p_handler.bindRoutes(router)
 	ccip_handler.bindRoutes(router)
 
 	router.AddRouteGroup(func(r *Router) {

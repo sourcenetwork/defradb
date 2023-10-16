@@ -114,10 +114,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 	}
 
 	if err := n.Start(); err != nil {
-		closeErr := n.Close()
-		if closeErr != nil {
-			return nil, nil, errors.Wrap(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
-		}
+		n.Close()
 		return nil, nil, errors.Wrap("unable to start P2P listeners", err)
 	}
 
@@ -206,9 +203,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 					log.Info(ctx, "cannot set a peer that hasn't been started. Skipping to next peer")
 					continue
 				}
+				peerInfo := nodes[p].PeerInfo()
 				peerAddresses = append(
 					peerAddresses,
-					fmt.Sprintf("%s/p2p/%s", test.NodeConfig[p].Net.P2PAddress, nodes[p].PeerID()),
+					fmt.Sprintf("%s/p2p/%s", peerInfo.Addrs[0], peerInfo.ID),
 				)
 			}
 			cfg.Net.Peers = strings.Join(peerAddresses, ",")
@@ -260,7 +258,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 						continue
 					}
 					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
-					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerID())
+					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerInfo().ID)
 					require.NoError(t, err)
 					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
@@ -340,15 +338,14 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 	// clean up
 	for _, n := range nodes {
-		if err := n.Close(); err != nil {
-			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err.Error()))
-		}
-		n.DB.Close(ctx)
+		n.Close()
+		n.DB.Close()
 	}
 }
 
 func randomNetworkingConfig() *config.Config {
 	cfg := config.DefaultConfig()
 	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/0"
+	cfg.Net.RelayEnabled = false
 	return cfg
 }

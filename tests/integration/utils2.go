@@ -16,12 +16,10 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v4"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -30,48 +28,14 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/datastore/memory"
-	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
-	"github.com/sourcenetwork/defradb/tests/clients/cli"
-	"github.com/sourcenetwork/defradb/tests/clients/http"
+	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
-const (
-	clientGoEnvName       = "DEFRA_CLIENT_GO"
-	clientHttpEnvName     = "DEFRA_CLIENT_HTTP"
-	clientCliEnvName      = "DEFRA_CLIENT_CLI"
-	memoryBadgerEnvName   = "DEFRA_BADGER_MEMORY"
-	fileBadgerEnvName     = "DEFRA_BADGER_FILE"
-	fileBadgerPathEnvName = "DEFRA_BADGER_FILE_PATH"
-	inMemoryEnvName       = "DEFRA_IN_MEMORY"
-	mutationTypeEnvName   = "DEFRA_MUTATION_TYPE"
-)
-
-type DatabaseType string
-
-const (
-	badgerIMType   DatabaseType = "badger-in-memory"
-	defraIMType    DatabaseType = "defra-memory-datastore"
-	badgerFileType DatabaseType = "badger-file-system"
-)
-
-type ClientType string
-
-const (
-	// goClientType enables running the test suite using
-	// the go implementation of the client.DB interface.
-	goClientType ClientType = "go"
-	// httpClientType enables running the test suite using
-	// the http implementation of the client.DB interface.
-	httpClientType ClientType = "http"
-	// cliClientType enables running the test suite using
-	// the cli implementation of the client.DB interface.
-	cliClientType ClientType = "cli"
-)
+const mutationTypeEnvName = "DEFRA_MUTATION_TYPE"
 
 // The MutationType that tests will run using.
 //
@@ -101,15 +65,8 @@ const (
 )
 
 var (
-	log            = logging.MustNewLogger("tests.integration")
-	badgerInMemory bool
-	badgerFile     bool
-	inMemoryStore  bool
-	httpClient     bool
-	goClient       bool
-	cliClient      bool
-	mutationType   MutationType
-	databaseDir    string
+	log          = logging.MustNewLogger("tests.integration")
+	mutationType MutationType
 )
 
 const (
@@ -122,14 +79,7 @@ const (
 
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
-	//  that don't have the flag defined
-	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
-	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
-	cliClient, _ = strconv.ParseBool(os.Getenv(clientCliEnvName))
-	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
-	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
-	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
-
+	// that don't have the flag defined
 	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
 		mutationType = MutationType(value)
 	} else {
@@ -137,23 +87,6 @@ func init() {
 		// faster. We assume this is desirable when not explicitly testing any particular
 		// mutation type.
 		mutationType = CollectionSaveMutationType
-	}
-
-	if !goClient && !httpClient && !cliClient {
-		// Default is to test go client type.
-		goClient = true
-	}
-
-	if changeDetector.Enabled {
-		// Change detector only uses badger file db type.
-		badgerFile = true
-		badgerInMemory = false
-		inMemoryStore = false
-	} else if !badgerInMemory && !badgerFile && !inMemoryStore {
-		// Default is to test all but filesystem db types.
-		badgerFile = false
-		badgerInMemory = true
-		inMemoryStore = true
 	}
 }
 
@@ -178,107 +111,6 @@ func AssertPanic(t *testing.T, f assert.PanicTestFunc) bool {
 	return assert.Panics(t, f, "expected a panic, but none found.")
 }
 
-func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
-	opts := badgerds.Options{
-		Options: badger.DefaultOptions("").WithInMemory(true),
-	}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	if err != nil {
-		return nil, err
-	}
-	db, err := db.NewDB(ctx, rootstore, dbopts...)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
-}
-
-func NewInMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
-	db, err := db.NewDB(ctx, memory.NewDatastore(ctx), dbopts...)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
-}
-
-func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (client.DB, string, error) {
-	var dbPath string
-	switch {
-	case databaseDir != "":
-		// restarting database
-		dbPath = databaseDir
-
-	case changeDetector.Enabled:
-		// change detector
-		dbPath = changeDetector.DatabaseDir(t)
-
-	default:
-		// default test case
-		dbPath = t.TempDir()
-	}
-
-	opts := &badgerds.Options{
-		Options: badger.DefaultOptions(dbPath),
-	}
-	rootstore, err := badgerds.NewDatastore(dbPath, opts)
-	if err != nil {
-		return nil, "", err
-	}
-	db, err := db.NewDB(ctx, rootstore, dbopts...)
-	if err != nil {
-		return nil, "", err
-	}
-	return db, dbPath, err
-}
-
-// GetDatabase returns the database implementation for the current
-// testing state. The database type and client type on the test state
-// are used to select the datastore and client implementation to use.
-func GetDatabase(s *state) (cdb client.DB, path string, err error) {
-	dbopts := []db.Option{
-		db.WithUpdateEvents(),
-		db.WithLensPoolSize(lensPoolSize),
-	}
-
-	switch s.dbt {
-	case badgerIMType:
-		cdb, err = NewBadgerMemoryDB(s.ctx, dbopts...)
-
-	case badgerFileType:
-		cdb, path, err = NewBadgerFileDB(s.ctx, s.t, dbopts...)
-
-	case defraIMType:
-		cdb, err = NewInMemoryDB(s.ctx, dbopts...)
-
-	default:
-		err = fmt.Errorf("invalid database type: %v", s.dbt)
-	}
-
-	if err != nil {
-		return nil, "", err
-	}
-
-	switch s.clientType {
-	case httpClientType:
-		cdb, err = http.NewWrapper(cdb)
-
-	case cliClientType:
-		cdb, err = cli.NewWrapper(cdb)
-
-	case goClientType:
-		return
-
-	default:
-		err = fmt.Errorf("invalid client type: %v", s.dbt)
-	}
-
-	if err != nil {
-		return nil, "", err
-	}
-
-	return
-}
-
 // ExecuteTestCase executes the given TestCase against the configured database
 // instances.
 //
@@ -288,19 +120,20 @@ func ExecuteTestCase(
 	t *testing.T,
 	testCase TestCase,
 ) {
+	flattenActions(&testCase)
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 
 	var clients []ClientType
 	if httpClient {
-		clients = append(clients, httpClientType)
+		clients = append(clients, HTTPClientType)
 	}
 	if goClient {
-		clients = append(clients, goClientType)
+		clients = append(clients, GoClientType)
 	}
 	if cliClient {
-		clients = append(clients, cliClientType)
+		clients = append(clients, CLIClientType)
 	}
 
 	var databases []DatabaseType
@@ -338,11 +171,8 @@ func executeTestCase(
 	log.Info(
 		ctx,
 		testCase.Description,
-		logging.NewKV("badgerFile", badgerFile),
-		logging.NewKV("badgerInMemory", badgerInMemory),
-		logging.NewKV("inMemoryStore", inMemoryStore),
-		logging.NewKV("httpClient", httpClient),
-		logging.NewKV("goClient", goClient),
+		logging.NewKV("database", dbt),
+		logging.NewKV("client", clientType),
 		logging.NewKV("mutationType", mutationType),
 		logging.NewKV("databaseDir", databaseDir),
 		logging.NewKV("changeDetector.Enabled", changeDetector.Enabled),
@@ -352,7 +182,6 @@ func executeTestCase(
 		logging.NewKV("changeDetector.Repository", changeDetector.Repository),
 	)
 
-	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
 
 	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
@@ -370,94 +199,7 @@ func executeTestCase(
 	refreshIndexes(s)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
-		switch action := testCase.Actions[i].(type) {
-		case ConfigureNode:
-			configureNode(s, action)
-
-		case Restart:
-			restartNodes(s, i)
-
-		case ConnectPeers:
-			connectPeers(s, action)
-
-		case ConfigureReplicator:
-			configureReplicator(s, action)
-
-		case SubscribeToCollection:
-			subscribeToCollection(s, action)
-
-		case UnsubscribeToCollection:
-			unsubscribeToCollection(s, action)
-
-		case GetAllP2PCollections:
-			getAllP2PCollections(s, action)
-
-		case SchemaUpdate:
-			updateSchema(s, action)
-
-		case SchemaPatch:
-			patchSchema(s, action)
-
-		case SetDefaultSchemaVersion:
-			setDefaultSchemaVersion(s, action)
-
-		case ConfigureMigration:
-			configureMigration(s, action)
-
-		case GetMigrations:
-			getMigrations(s, action)
-
-		case CreateDoc:
-			createDoc(s, action)
-
-		case DeleteDoc:
-			deleteDoc(s, action)
-
-		case UpdateDoc:
-			updateDoc(s, action)
-
-		case CreateIndex:
-			createIndex(s, action)
-
-		case DropIndex:
-			dropIndex(s, action)
-
-		case GetIndexes:
-			getIndexes(s, action)
-
-		case BackupExport:
-			backupExport(s, action)
-
-		case BackupImport:
-			backupImport(s, action)
-
-		case TransactionCommit:
-			commitTransaction(s, action)
-
-		case SubscriptionRequest:
-			executeSubscriptionRequest(s, action)
-
-		case Request:
-			executeRequest(s, action)
-
-		case ExplainRequest:
-			executeExplainRequest(s, action)
-
-		case IntrospectionRequest:
-			assertIntrospectionResults(s, action)
-
-		case ClientIntrospectionRequest:
-			assertClientIntrospectionResults(s, action)
-
-		case WaitForSync:
-			waitForSync(s, action)
-
-		case SetupComplete:
-			// no-op, just continue.
-
-		default:
-			t.Fatalf("Unknown action type %T", action)
-		}
+		performAction(s, i, testCase.Actions[i])
 	}
 
 	// Notify any active subscriptions that all requests have been sent.
@@ -474,6 +216,149 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
 		}
 	}
+}
+
+func performAction(
+	s *state,
+	actionIndex int,
+	act any,
+) {
+	switch action := act.(type) {
+	case ConfigureNode:
+		configureNode(s, action)
+
+	case Restart:
+		restartNodes(s, actionIndex)
+
+	case ConnectPeers:
+		connectPeers(s, action)
+
+	case ConfigureReplicator:
+		configureReplicator(s, action)
+
+	case DeleteReplicator:
+		deleteReplicator(s, action)
+
+	case SubscribeToCollection:
+		subscribeToCollection(s, action)
+
+	case UnsubscribeToCollection:
+		unsubscribeToCollection(s, action)
+
+	case GetAllP2PCollections:
+		getAllP2PCollections(s, action)
+
+	case SchemaUpdate:
+		updateSchema(s, action)
+
+	case SchemaPatch:
+		patchSchema(s, action)
+
+	case SetDefaultSchemaVersion:
+		setDefaultSchemaVersion(s, action)
+
+	case ConfigureMigration:
+		configureMigration(s, action)
+
+	case GetMigrations:
+		getMigrations(s, action)
+
+	case CreateDoc:
+		createDoc(s, action)
+
+	case DeleteDoc:
+		deleteDoc(s, action)
+
+	case UpdateDoc:
+		updateDoc(s, action)
+
+	case CreateIndex:
+		createIndex(s, action)
+
+	case DropIndex:
+		dropIndex(s, action)
+
+	case GetIndexes:
+		getIndexes(s, action)
+
+	case BackupExport:
+		backupExport(s, action)
+
+	case BackupImport:
+		backupImport(s, action)
+
+	case TransactionCommit:
+		commitTransaction(s, action)
+
+	case SubscriptionRequest:
+		executeSubscriptionRequest(s, action)
+
+	case Request:
+		executeRequest(s, action)
+
+	case ExplainRequest:
+		executeExplainRequest(s, action)
+
+	case IntrospectionRequest:
+		assertIntrospectionResults(s, action)
+
+	case ClientIntrospectionRequest:
+		assertClientIntrospectionResults(s, action)
+
+	case WaitForSync:
+		waitForSync(s, action)
+
+	case Benchmark:
+		benchmarkAction(s, actionIndex, action)
+
+	case SetupComplete:
+		// no-op, just continue.
+
+	default:
+		s.t.Fatalf("Unknown action type %T", action)
+	}
+}
+
+func benchmarkAction(
+	s *state,
+	actionIndex int,
+	bench Benchmark,
+) {
+	if s.dbt == defraIMType {
+		// Benchmarking makes no sense for test in-memory storage
+		return
+	}
+	if len(bench.FocusClients) > 0 {
+		isFound := false
+		for _, clientType := range bench.FocusClients {
+			if s.clientType == clientType {
+				isFound = true
+				break
+			}
+		}
+		if !isFound {
+			return
+		}
+	}
+
+	runBench := func(benchCase any) time.Duration {
+		startTime := time.Now()
+		for i := 0; i < bench.Reps; i++ {
+			performAction(s, actionIndex, benchCase)
+		}
+		return time.Since(startTime)
+	}
+
+	s.isBench = true
+	defer func() { s.isBench = false }()
+
+	baseElapsedTime := runBench(bench.BaseCase)
+	optimizedElapsedTime := runBench(bench.OptimizedCase)
+
+	factoredBaseTime := int64(float64(baseElapsedTime) / bench.Factor)
+	assert.Greater(s.t, factoredBaseTime, optimizedElapsedTime,
+		"Optimized case should be faster at least by factor of %.2f than the base case. Base: %d, Optimized: %d (μs)",
+		bench.Factor, optimizedElapsedTime.Microseconds(), baseElapsedTime.Microseconds())
 }
 
 // getCollectionNames gets an ordered, unique set of collection names across all nodes
@@ -535,23 +420,19 @@ func closeNodes(
 	s *state,
 ) {
 	for _, node := range s.nodes {
-		if node.Peer != nil {
-			err := node.Close()
-			require.NoError(s.t, err)
-		}
-		node.DB.Close(s.ctx)
+		node.Close()
 	}
 }
 
 // getNodes gets the set of applicable nodes for the given nodeID.
 //
 // If nodeID has a value it will return that node only, otherwise all nodes will be returned.
-func getNodes(nodeID immutable.Option[int], nodes []*net.Node) []*net.Node {
+func getNodes(nodeID immutable.Option[int], nodes []clients.Client) []clients.Client {
 	if !nodeID.HasValue() {
 		return nodes
 	}
 
-	return []*net.Node{nodes[nodeID.Value()]}
+	return []clients.Client{nodes[nodeID.Value()]}
 }
 
 // getNodeCollections gets the set of applicable collections for the given nodeID.
@@ -679,12 +560,13 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !hasExplicitNode {
-		db, path, err := GetDatabase(s)
+		db, path, err := setupDatabase(s)
 		require.Nil(s.t, err)
 
-		s.nodes = append(s.nodes, &net.Node{
-			DB: db,
-		})
+		c, err := setupClient(s, &net.Node{DB: db})
+		require.Nil(s.t, err)
+
+		s.nodes = append(s.nodes, c)
 		s.dbPaths = append(s.dbPaths, path)
 	}
 }
@@ -702,16 +584,16 @@ func restartNodes(
 	for i := len(s.nodes) - 1; i >= 0; i-- {
 		originalPath := databaseDir
 		databaseDir = s.dbPaths[i]
-		db, _, err := GetDatabase(s)
+		db, _, err := setupDatabase(s)
 		require.Nil(s.t, err)
 		databaseDir = originalPath
 
 		if len(s.nodeConfigs) == 0 {
 			// If there are no explicit node configuration actions the node will be
 			// basic (i.e. no P2P stuff) and can be yielded now.
-			s.nodes[i] = &net.Node{
-				DB: db,
-			}
+			c, err := setupClient(s, &net.Node{DB: db})
+			require.NoError(s.t, err)
+			s.nodes[i] = c
 			continue
 		}
 
@@ -719,7 +601,8 @@ func restartNodes(
 		cfg := s.nodeConfigs[i]
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
-		cfg.Net.P2PAddress = strings.Split(s.nodeAddresses[i], "/p2p/")[0]
+		cfg.Net.P2PAddress = s.nodeAddresses[i].Addrs[0].String()
+
 		var n *net.Node
 		n, err = net.NewNode(
 			s.ctx,
@@ -730,14 +613,13 @@ func restartNodes(
 		require.NoError(s.t, err)
 
 		if err := n.Start(); err != nil {
-			closeErr := n.Close()
-			if closeErr != nil {
-				s.t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
-			}
+			n.Close()
 			require.NoError(s.t, err)
 		}
 
-		s.nodes[i] = n
+		c, err := setupClient(s, n)
+		require.NoError(s.t, err)
+		s.nodes[i] = c
 	}
 
 	// The index of the action after the last wait action before the current restart action.
@@ -788,7 +670,7 @@ func refreshCollections(
 
 	for nodeID, node := range s.nodes {
 		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
-		allCollections, err := node.DB.GetAllCollections(s.ctx)
+		allCollections, err := node.GetAllCollections(s.ctx)
 		require.Nil(s.t, err)
 
 		for i, collectionName := range s.collectionNames {
@@ -817,7 +699,7 @@ func configureNode(
 	}
 
 	cfg := action()
-	db, path, err := GetDatabase(s) //disable change dector, or allow it?
+	db, path, err := setupDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	privateKey, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
@@ -833,20 +715,20 @@ func configureNode(
 	)
 	require.NoError(s.t, err)
 
+	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", n.PeerInfo()))
 	if err := n.Start(); err != nil {
-		closeErr := n.Close()
-		if closeErr != nil {
-			s.t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
-		}
+		n.Close()
 		require.NoError(s.t, err)
 	}
 
-	address := fmt.Sprintf("%s/p2p/%s", n.ListenAddrs()[0].String(), n.PeerID())
-	s.nodeAddresses = append(s.nodeAddresses, address)
+	s.nodeAddresses = append(s.nodeAddresses, n.PeerInfo())
 	s.nodeConfigs = append(s.nodeConfigs, cfg)
 	s.nodePrivateKeys = append(s.nodePrivateKeys, privateKey)
 
-	s.nodes = append(s.nodes, n)
+	c, err := setupClient(s, n)
+	require.NoError(s.t, err)
+
+	s.nodes = append(s.nodes, c)
 	s.dbPaths = append(s.dbPaths, path)
 }
 
@@ -1033,7 +915,7 @@ func updateSchema(
 	action SchemaUpdate,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		_, err := node.DB.AddSchema(s.ctx, action.Schema)
+		_, err := node.AddSchema(s.ctx, action.Schema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1056,7 +938,7 @@ func patchSchema(
 			setAsDefaultVersion = true
 		}
 
-		err := node.DB.PatchSchema(s.ctx, action.Patch, setAsDefaultVersion)
+		err := node.PatchSchema(s.ctx, action.Patch, setAsDefaultVersion)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1072,7 +954,7 @@ func setDefaultSchemaVersion(
 	action SetDefaultSchemaVersion,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		err := node.DB.SetDefaultSchemaVersion(s.ctx, action.SchemaVersionID)
+		err := node.SetDefaultSchemaVersion(s.ctx, action.SchemaVersionID)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1088,7 +970,7 @@ func createDoc(
 	s *state,
 	action CreateDoc,
 ) {
-	var mutation func(*state, CreateDoc, *net.Node, []client.Collection) (*client.Document, error)
+	var mutation func(*state, CreateDoc, client.P2P, []client.Collection) (*client.Document, error)
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1129,7 +1011,7 @@ func createDoc(
 func createDocViaColSave(
 	s *state,
 	action CreateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
@@ -1144,7 +1026,7 @@ func createDocViaColSave(
 func createDocViaColCreate(
 	s *state,
 	action CreateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
@@ -1159,7 +1041,7 @@ func createDocViaColCreate(
 func createDocViaGQL(
 	s *state,
 	action CreateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) (*client.Document, error) {
 	collection := collections[action.CollectionID]
@@ -1177,7 +1059,7 @@ func createDocViaGQL(
 		escapedJson,
 	)
 
-	db := getStore(s, node.DB, immutable.None[int](), action.ExpectedError)
+	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
 
 	result := db.ExecRequest(s.ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1229,7 +1111,7 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	var mutation func(*state, UpdateDoc, *net.Node, []client.Collection) error
+	var mutation func(*state, UpdateDoc, client.P2P, []client.Collection) error
 
 	switch mutationType {
 	case CollectionSaveMutationType:
@@ -1259,7 +1141,7 @@ func updateDoc(
 func updateDocViaColSave(
 	s *state,
 	action UpdateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) error {
 	doc := s.documents[action.CollectionID][action.DocID]
@@ -1275,7 +1157,7 @@ func updateDocViaColSave(
 func updateDocViaColUpdate(
 	s *state,
 	action UpdateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) error {
 	doc := s.documents[action.CollectionID][action.DocID]
@@ -1291,7 +1173,7 @@ func updateDocViaColUpdate(
 func updateDocViaGQL(
 	s *state,
 	action UpdateDoc,
-	node *net.Node,
+	node client.P2P,
 	collections []client.Collection,
 ) error {
 	doc := s.documents[action.CollectionID][action.DocID]
@@ -1311,7 +1193,7 @@ func updateDocViaGQL(
 		escapedJson,
 	)
 
-	db := getStore(s, node.DB, immutable.None[int](), action.ExpectedError)
+	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
 
 	result := db.ExecRequest(s.ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1411,7 +1293,7 @@ func backupExport(
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return node.DB.BasicExport(s.ctx, &action.Config) },
+			func() error { return node.BasicExport(s.ctx, &action.Config) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
@@ -1441,7 +1323,7 @@ func backupImport(
 		err := withRetry(
 			actionNodes,
 			nodeID,
-			func() error { return node.DB.BasicImport(s.ctx, action.Filepath) },
+			func() error { return node.BasicImport(s.ctx, action.Filepath) },
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
@@ -1456,11 +1338,11 @@ func backupImport(
 // about this in our tests so we just retry a few times until it works (or the
 // retry limit is breached - important incase this is a different error)
 func withRetry(
-	nodes []*net.Node,
+	nodes []clients.Client,
 	nodeID int,
 	action func() error,
 ) error {
-	for i := 0; i < nodes[nodeID].DB.MaxTxnRetries(); i++ {
+	for i := 0; i < nodes[nodeID].MaxTxnRetries(); i++ {
 		err := action()
 		if err != nil && errors.Is(err, badgerds.ErrTxnConflict) {
 			time.Sleep(100 * time.Millisecond)
@@ -1527,7 +1409,7 @@ func executeRequest(
 ) {
 	var expectedErrorRaised bool
 	for nodeID, node := range getNodes(action.NodeID, s.nodes) {
-		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
+		db := getStore(s, node, action.TransactionID, action.ExpectedError)
 		result := db.ExecRequest(s.ctx, action.Request)
 
 		anyOfByFieldKey := map[docFieldKey][]any{}
@@ -1536,6 +1418,7 @@ func executeRequest(
 			&result.GQL,
 			action.Results,
 			action.ExpectedError,
+			action.Asserter,
 			nodeID,
 			anyOfByFieldKey,
 		)
@@ -1559,7 +1442,7 @@ func executeSubscriptionRequest(
 	subscriptionAssert := make(chan func())
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return
 		}
@@ -1601,6 +1484,7 @@ func executeSubscriptionRequest(
 							finalResult,
 							action.Results,
 							action.ExpectedError,
+							nil,
 							// anyof is not yet supported by subscription requests
 							0,
 							map[docFieldKey][]any{},
@@ -1673,10 +1557,12 @@ func assertRequestResults(
 	result *client.GQLResult,
 	expectedResults []map[string]any,
 	expectedError string,
+	asserter ResultAsserter,
 	nodeID int,
 	anyOfByField map[docFieldKey][]any,
 ) bool {
-	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) {
+	// we skip assertion benchmark because you don't specify expected result for benchmark.
+	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) || s.isBench {
 		return true
 	}
 
@@ -1687,9 +1573,16 @@ func assertRequestResults(
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]any)
 
+	if asserter != nil {
+		asserter.Assert(s.t, resultantData)
+		return true
+	}
+
 	log.Info(s.ctx, "", logging.NewKV("RequestResults", result.Data))
 
-	require.Equal(s.t, len(expectedResults), len(resultantData), s.testCase.Description)
+	// compare results
+	require.Equal(s.t, len(expectedResults), len(resultantData),
+		s.testCase.Description+" \n(number of results don't match)")
 
 	for docIndex, result := range resultantData {
 		expectedResult := expectedResults[docIndex]
@@ -1730,7 +1623,7 @@ func assertIntrospectionResults(
 	action IntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true
@@ -1761,7 +1654,7 @@ func assertClientIntrospectionResults(
 	action ClientIntrospectionRequest,
 ) bool {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 
 		if AssertErrors(s.t, s.testCase.Description, result.GQL.Errors, action.ExpectedError) {
 			return true

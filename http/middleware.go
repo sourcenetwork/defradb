@@ -53,8 +53,6 @@ var (
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
 	colContextKey = contextKey("col")
-	// peerIdContextKey contains the peerId of the DefraDB node.
-	peerIdContextKey = contextKey("peerId")
 )
 
 // CorsMiddleware handles cross origin request
@@ -83,7 +81,6 @@ func ApiMiddleware(db client.DB, txs *sync.Map, opts ServerOptions) func(http.Ha
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, dbContextKey, db)
 			ctx = context.WithValue(ctx, txsContextKey, txs)
-			ctx = context.WithValue(ctx, peerIdContextKey, opts.PeerID)
 			next.ServeHTTP(rw, req.WithContext(ctx))
 		})
 	}

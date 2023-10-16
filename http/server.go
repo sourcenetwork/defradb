@@ -61,8 +61,6 @@ type Server struct {
 type ServerOptions struct {
 	// AllowedOrigins is the list of allowed origins for CORS.
 	AllowedOrigins []string
-	// PeerID is the p2p id of the server node.
-	PeerID string
 	// TLS enables https when the value is present.
 	TLS immutable.Option[TLSOptions]
 	// RootDirectory is the directory for the node config.
@@ -162,13 +160,6 @@ func WithCAEmail(email string) func(*Server) {
 		tlsOpt := s.options.TLS.Value()
 		tlsOpt.Email = email
 		s.options.TLS = immutable.Some(tlsOpt)
-	}
-}
-
-// WithPeerID returns an option to set the identifier of the server node.
-func WithPeerID(id string) func(*Server) {
-	return func(s *Server) {
-		s.options.PeerID = id
 	}
 }
 

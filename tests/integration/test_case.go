@@ -11,6 +11,8 @@
 package tests
 
 import (
+	"testing"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -254,6 +256,36 @@ type GetIndexes struct {
 	ExpectedError string
 }
 
+// ResultAsserter is an interface that can be implemented to provide custom result
+// assertions.
+type ResultAsserter interface {
+	// Assert will be called with the test and the result of the request.
+	Assert(t *testing.T, result []map[string]any)
+}
+
+// ResultAsserterFunc is a function that can be used to implement the ResultAsserter
+type ResultAsserterFunc func(*testing.T, []map[string]any) (bool, string)
+
+func (f ResultAsserterFunc) Assert(t *testing.T, result []map[string]any) {
+	f(t, result)
+}
+
+// Benchmark is an action that will run another test action for benchmark test.
+// It will run benchmarks for a base case and optimized case and assert that
+// the optimized case performs better by at least the given factor.
+type Benchmark struct {
+	// BaseCase is a test action which is the base case to benchmark.
+	BaseCase any
+	// OptimizedCase is a test action which is the optimized case to benchmark.
+	OptimizedCase any
+	// Reps is the number of times to run the benchmark.
+	Reps int
+	// FocusClients is the list of clients to run the benchmark on.
+	FocusClients []ClientType
+	// Factor is the factor by which the optimized case should be better than the base case.
+	Factor float64
+}
+
 // Request represents a standard Defra (GQL) request.
 type Request struct {
 	// NodeID may hold the ID (index) of a node to execute this request on.
@@ -270,6 +302,9 @@ type Request struct {
 
 	// The expected (data) results of the issued request.
 	Results []map[string]any
+
+	// Asserter is an optional custom result asserter.
+	Asserter ResultAsserter
 
 	// Any error expected from the action. Optional.
 	//

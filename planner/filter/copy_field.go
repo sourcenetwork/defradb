@@ -14,18 +14,22 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-// copyField copies the given field from the provided filter.
+// CopyField copies the given field from the provided filter.
+// Multiple fields can be passed to copy related objects with a certain field.
 // The result filter preserves the structure of the original filter.
-func copyField(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
-	if filter == nil {
+func CopyField(filter *mapper.Filter, fields ...mapper.Field) *mapper.Filter {
+	if filter == nil || len(fields) == 0 {
 		return nil
 	}
-	conditionKey := &mapper.PropertyIndex{
-		Index: field.Index,
+	var conditionKeys []*mapper.PropertyIndex
+	for _, field := range fields {
+		conditionKeys = append(conditionKeys, &mapper.PropertyIndex{
+			Index: field.Index,
+		})
 	}
 
 	resultFilter := &mapper.Filter{}
-	conditionMap := traverseFilterByProperty(conditionKey, filter.Conditions, false)
+	conditionMap := traverseFilterByProperty(conditionKeys, filter.Conditions, false)
 	if len(conditionMap) > 0 {
 		resultFilter.Conditions = conditionMap
 		return resultFilter
@@ -34,7 +38,7 @@ func copyField(filter *mapper.Filter, field mapper.Field) *mapper.Filter {
 }
 
 func traverseFilterByProperty(
-	key *mapper.PropertyIndex,
+	keys []*mapper.PropertyIndex,
 	conditions map[connor.FilterKey]any,
 	shouldDelete bool,
 ) map[connor.FilterKey]any {
@@ -43,11 +47,20 @@ func traverseFilterByProperty(
 		result = make(map[connor.FilterKey]any)
 	}
 	for targetKey, clause := range conditions {
-		if targetKey.Equal(key) {
-			if shouldDelete {
-				delete(result, targetKey)
+		if targetKey.Equal(keys[0]) {
+			if len(keys) > 1 {
+				related := traverseFilterByProperty(keys[1:], clause.(map[connor.FilterKey]any), shouldDelete)
+				if shouldDelete && len(related) == 0 {
+					delete(result, targetKey)
+				} else if len(related) > 0 && !shouldDelete {
+					result[keys[0]] = clause
+				}
 			} else {
-				result[key] = clause
+				if shouldDelete {
+					delete(result, targetKey)
+				} else {
+					result[keys[0]] = clause
+				}
 			}
 		} else if opKey, isOpKey := targetKey.(*mapper.Operator); isOpKey {
 			clauseArr, isArr := clause.([]any)
@@ -58,13 +71,15 @@ func traverseFilterByProperty(
 					if !ok {
 						continue
 					}
-					compoundCond := traverseFilterByProperty(key, elementMap, shouldDelete)
+					compoundCond := traverseFilterByProperty(keys, elementMap, shouldDelete)
 					if len(compoundCond) > 0 {
 						resultArr = append(resultArr, compoundCond)
 					}
 				}
 				if len(resultArr) > 0 {
 					result[opKey] = resultArr
+				} else if shouldDelete {
+					delete(result, opKey)
 				}
 			}
 		}

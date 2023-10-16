@@ -171,15 +171,10 @@ type defraInstance struct {
 
 func (di *defraInstance) close(ctx context.Context) {
 	if di.node != nil {
-		if err := di.node.Close(); err != nil {
-			log.FeedbackInfo(
-				ctx,
-				"The node could not be closed successfully",
-				logging.NewKV("Error", err.Error()),
-			)
-		}
+		di.node.Close()
+	} else {
+		di.db.Close()
 	}
-	di.db.Close(ctx)
 	if err := di.server.Close(); err != nil {
 		log.FeedbackInfo(
 			ctx,
@@ -222,7 +217,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	}
 
 	// init the p2p node
-	var n *net.Node
+	var node *net.Node
 	if !cfg.Net.P2PDisabled {
 		nodeOpts := []net.NodeOpt{
 			net.WithConfig(cfg),
@@ -239,9 +234,9 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 			nodeOpts = append(nodeOpts, net.WithPrivateKey(key))
 		}
 		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-		n, err = net.NewNode(ctx, db, nodeOpts...)
+		node, err = net.NewNode(ctx, db, nodeOpts...)
 		if err != nil {
-			db.Close(ctx)
+			db.Close()
 			return nil, errors.Wrap("failed to start P2P node", err)
 		}
 
@@ -253,14 +248,11 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 				return nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", cfg.Net.Peers), err)
 			}
 			log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
-			n.Bootstrap(addrs)
+			node.Bootstrap(addrs)
 		}
 
-		if err := n.Start(); err != nil {
-			if e := n.Close(); e != nil {
-				err = errors.Wrap(fmt.Sprintf("failed to close node: %v", e.Error()), err)
-			}
-			db.Close(ctx)
+		if err := node.Start(); err != nil {
+			node.Close()
 			return nil, errors.Wrap("failed to start P2P listeners", err)
 		}
 	}
@@ -269,10 +261,6 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		httpapi.WithAddress(cfg.API.Address),
 		httpapi.WithRootDir(cfg.Rootdir),
 		httpapi.WithAllowedOrigins(cfg.API.AllowedOrigins...),
-	}
-
-	if n != nil {
-		sOpt = append(sOpt, httpapi.WithPeerID(n.PeerID().String()))
 	}
 
 	if cfg.API.TLS {
@@ -284,35 +272,39 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		)
 	}
 
-	s, err := httpapi.NewServer(db, sOpt...)
-	if err != nil {
-		return nil, errors.Wrap("failed to create HTTP server", err)
+	var server *httpapi.Server
+	if node != nil {
+		server, err = httpapi.NewServer(node, sOpt...)
+	} else {
+		server, err = httpapi.NewServer(db, sOpt...)
 	}
-	if err := s.Listen(ctx); err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
+	if err != nil {
+		return nil, errors.Wrap("failed to create http server", err)
+	}
+	if err := server.Listen(ctx); err != nil {
+		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", server.Addr), err)
 	}
 	// save the address on the config in case the port number was set to random
-	cfg.API.Address = s.AssignedAddr()
+	cfg.API.Address = server.AssignedAddr()
 
 	// run the server in a separate goroutine
 	go func() {
 		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", cfg.API.AddressToURL()))
-		if err := s.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := server.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
-			if n != nil {
-				if err := n.Close(); err != nil {
-					log.FeedbackErrorE(ctx, "Failed to close node", err)
-				}
+			if node != nil {
+				node.Close()
+			} else {
+				db.Close()
 			}
-			db.Close(ctx)
 			os.Exit(1)
 		}
 	}()
 
 	return &defraInstance{
-		node:   n,
+		node:   node,
 		db:     db,
-		server: s,
+		server: server,
 	}, nil
 }
 

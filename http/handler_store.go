@@ -24,92 +24,6 @@ import (
 
 type storeHandler struct{}
 
-func (s *storeHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
-
-	var rep client.Replicator
-	if err := requestJSON(req, &rep); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	err := store.SetReplicator(req.Context(), rep)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
-
-	var rep client.Replicator
-	if err := requestJSON(req, &rep); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	err := store.DeleteReplicator(req.Context(), rep)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
-
-	reps, err := store.GetAllReplicators(req.Context())
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	responseJSON(rw, http.StatusOK, reps)
-}
-
-func (s *storeHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
-
-	var collectionIDs []string
-	if err := requestJSON(req, &collectionIDs); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	err := store.AddP2PCollections(req.Context(), collectionIDs)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
-
-	var collectionIDs []string
-	if err := requestJSON(req, &collectionIDs); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	err := store.RemoveP2PCollections(req.Context(), collectionIDs)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
-	store := req.Context().Value(storeContextKey).(client.Store)
-
-	cols, err := store.GetAllP2PCollections(req.Context())
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	responseJSON(rw, http.StatusOK, cols)
-}
-
 func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
@@ -202,30 +116,30 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		responseJSON(rw, http.StatusOK, col.Description())
+		responseJSON(rw, http.StatusOK, col.Definition())
 	case req.URL.Query().Has("schema_id"):
 		col, err := store.GetCollectionBySchemaID(req.Context(), req.URL.Query().Get("schema_id"))
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		responseJSON(rw, http.StatusOK, col.Description())
+		responseJSON(rw, http.StatusOK, col.Definition())
 	case req.URL.Query().Has("version_id"):
 		col, err := store.GetCollectionByVersionID(req.Context(), req.URL.Query().Get("version_id"))
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		responseJSON(rw, http.StatusOK, col.Description())
+		responseJSON(rw, http.StatusOK, col.Definition())
 	default:
 		cols, err := store.GetAllCollections(req.Context())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		colDesc := make([]client.CollectionDescription, len(cols))
+		colDesc := make([]client.CollectionDefinition, len(cols))
 		for i, col := range cols {
-			colDesc[i] = col.Description()
+			colDesc[i] = col.Definition()
 		}
 		responseJSON(rw, http.StatusOK, colDesc)
 	}
@@ -250,18 +164,6 @@ func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
-}
-
-type PeerInfoResponse struct {
-	PeerID string `json:"peerID"`
-}
-
-func (s *storeHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
-	var res PeerInfoResponse
-	if value, ok := req.Context().Value(peerIdContextKey).(string); ok {
-		res.PeerID = value
-	}
-	responseJSON(rw, http.StatusOK, &res)
 }
 
 type GraphQLRequest struct {
@@ -389,12 +291,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 	backupConfigSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/backup_config",
-	}
-	peerInfoSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/peer_info",
-	}
-	replicatorSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/replicator",
 	}
 	patchSchemaRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/patch_schema_request",
@@ -526,95 +422,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	debugDump.Responses["200"] = successResponse
 	debugDump.Responses["400"] = errorResponse
 
-	peerInfoResponse := openapi3.NewResponse().
-		WithDescription("Peer network info").
-		WithContent(openapi3.NewContentWithJSONSchemaRef(peerInfoSchema))
-
-	peerInfo := openapi3.NewOperation()
-	peerInfo.OperationID = "peer_info"
-	peerInfo.AddResponse(200, peerInfoResponse)
-	peerInfo.Responses["400"] = errorResponse
-
-	getReplicatorsSchema := openapi3.NewArraySchema()
-	getReplicatorsSchema.Items = replicatorSchema
-	getReplicatorsResponse := openapi3.NewResponse().
-		WithDescription("Replicators").
-		WithContent(openapi3.NewContentWithJSONSchema(getReplicatorsSchema))
-
-	getReplicators := openapi3.NewOperation()
-	getReplicators.Description = "List peer replicators"
-	getReplicators.OperationID = "peer_replicator_list"
-	getReplicators.AddResponse(200, getReplicatorsResponse)
-	getReplicators.Responses["400"] = errorResponse
-
-	replicatorRequest := openapi3.NewRequestBody().
-		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(replicatorSchema))
-
-	setReplicator := openapi3.NewOperation()
-	setReplicator.Description = "Add peer replicators"
-	setReplicator.OperationID = "peer_replicator_set"
-	setReplicator.RequestBody = &openapi3.RequestBodyRef{
-		Value: replicatorRequest,
-	}
-	setReplicator.Responses = make(openapi3.Responses)
-	setReplicator.Responses["200"] = successResponse
-	setReplicator.Responses["400"] = errorResponse
-
-	deleteReplicator := openapi3.NewOperation()
-	deleteReplicator.Description = "Delete peer replicators"
-	deleteReplicator.OperationID = "peer_replicator_delete"
-	deleteReplicator.RequestBody = &openapi3.RequestBodyRef{
-		Value: replicatorRequest,
-	}
-	deleteReplicator.Responses = make(openapi3.Responses)
-	deleteReplicator.Responses["200"] = successResponse
-	deleteReplicator.Responses["400"] = errorResponse
-
-	peerCollectionsSchema := openapi3.NewArraySchema().
-		WithItems(openapi3.NewStringSchema())
-
-	peerCollectionRequest := openapi3.NewRequestBody().
-		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchema(peerCollectionsSchema))
-
-	getPeerCollectionsResponse := openapi3.NewResponse().
-		WithDescription("Peer collections").
-		WithContent(openapi3.NewContentWithJSONSchema(peerCollectionsSchema))
-
-	getPeerCollections := openapi3.NewOperation()
-	getPeerCollections.Description = "List peer collections"
-	getPeerCollections.OperationID = "peer_collection_list"
-	getPeerCollections.AddResponse(200, getPeerCollectionsResponse)
-	getPeerCollections.Responses["400"] = errorResponse
-
-	addPeerCollections := openapi3.NewOperation()
-	addPeerCollections.Description = "Add peer collections"
-	addPeerCollections.OperationID = "peer_collection_add"
-	addPeerCollections.RequestBody = &openapi3.RequestBodyRef{
-		Value: peerCollectionRequest,
-	}
-	addPeerCollections.Responses = make(openapi3.Responses)
-	addPeerCollections.Responses["200"] = successResponse
-	addPeerCollections.Responses["400"] = errorResponse
-
-	removePeerCollections := openapi3.NewOperation()
-	removePeerCollections.Description = "Remove peer collections"
-	removePeerCollections.OperationID = "peer_collection_remove"
-	removePeerCollections.RequestBody = &openapi3.RequestBodyRef{
-		Value: peerCollectionRequest,
-	}
-	removePeerCollections.Responses = make(openapi3.Responses)
-	removePeerCollections.Responses["200"] = successResponse
-	removePeerCollections.Responses["400"] = errorResponse
-
-	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
-	router.AddRoute("/p2p/replicators", http.MethodGet, getReplicators, h.GetAllReplicators)
-	router.AddRoute("/p2p/replicators", http.MethodPost, setReplicator, h.SetReplicator)
-	router.AddRoute("/p2p/replicators", http.MethodDelete, deleteReplicator, h.DeleteReplicator)
-	router.AddRoute("/p2p/collections", http.MethodGet, getPeerCollections, h.GetAllP2PCollections)
-	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.AddP2PCollection)
-	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.RemoveP2PCollection)
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)

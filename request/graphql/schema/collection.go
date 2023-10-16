@@ -26,7 +26,7 @@ import (
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
 func FromString(ctx context.Context, schemaString string) (
-	[]client.CollectionDescription,
+	[]client.CollectionDefinition,
 	error,
 ) {
 	source := source.NewSource(&source.Source{
@@ -47,11 +47,11 @@ func FromString(ctx context.Context, schemaString string) (
 
 // fromAst parses a GQL AST into a set of collection descriptions.
 func fromAst(ctx context.Context, doc *ast.Document) (
-	[]client.CollectionDescription,
+	[]client.CollectionDefinition,
 	error,
 ) {
 	relationManager := NewRelationManager()
-	descriptions := []client.CollectionDescription{}
+	definitions := []client.CollectionDefinition{}
 
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
@@ -61,7 +61,7 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 				return nil, err
 			}
 
-			descriptions = append(descriptions, description)
+			definitions = append(definitions, description)
 
 		default:
 			// Do nothing, ignore it and continue
@@ -72,12 +72,12 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 	// The details on the relations between objects depend on both sides
 	// of the relationship.  The relation manager handles this, and must be applied
 	// after all the collections have been processed.
-	err := finalizeRelations(relationManager, descriptions)
+	err := finalizeRelations(relationManager, definitions)
 	if err != nil {
 		return nil, err
 	}
 
-	return descriptions, nil
+	return definitions, nil
 }
 
 // fromAstDefinition parses a AST object definition into a set of collection descriptions.
@@ -85,7 +85,7 @@ func fromAstDefinition(
 	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.ObjectDefinition,
-) (client.CollectionDescription, error) {
+) (client.CollectionDefinition, error) {
 	fieldDescriptions := []client.FieldDescription{
 		{
 			Name: request.KeyFieldName,
@@ -98,7 +98,7 @@ func fromAstDefinition(
 	for _, field := range def.Fields {
 		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def)
 		if err != nil {
-			return client.CollectionDescription{}, err
+			return client.CollectionDefinition{}, err
 		}
 
 		fieldDescriptions = append(fieldDescriptions, tmpFieldsDescriptions...)
@@ -107,7 +107,7 @@ func fromAstDefinition(
 			if directive.Name.Value == types.IndexDirectiveLabel {
 				index, err := fieldIndexFromAST(field, directive)
 				if err != nil {
-					return client.CollectionDescription{}, err
+					return client.CollectionDefinition{}, err
 				}
 				indexDescriptions = append(indexDescriptions, index)
 			}
@@ -129,19 +129,21 @@ func fromAstDefinition(
 		if directive.Name.Value == types.IndexDirectiveLabel {
 			index, err := indexFromAST(directive)
 			if err != nil {
-				return client.CollectionDescription{}, err
+				return client.CollectionDefinition{}, err
 			}
 			indexDescriptions = append(indexDescriptions, index)
 		}
 	}
 
-	return client.CollectionDescription{
-		Name: def.Name.Value,
+	return client.CollectionDefinition{
+		Description: client.CollectionDescription{
+			Name:    def.Name.Value,
+			Indexes: indexDescriptions,
+		},
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,
 			Fields: fieldDescriptions,
 		},
-		Indexes: indexDescriptions,
 	}, nil
 }
 
@@ -424,9 +426,9 @@ func getRelationshipName(
 	return genRelationName(hostName, targetName)
 }
 
-func finalizeRelations(relationManager *RelationManager, descriptions []client.CollectionDescription) error {
-	for _, description := range descriptions {
-		for i, field := range description.Schema.Fields {
+func finalizeRelations(relationManager *RelationManager, definitions []client.CollectionDefinition) error {
+	for _, definition := range definitions {
+		for i, field := range definition.Schema.Fields {
 			if field.RelationType == 0 || field.RelationType&client.Relation_Type_INTERNAL_ID != 0 {
 				continue
 			}
@@ -447,7 +449,7 @@ func finalizeRelations(relationManager *RelationManager, descriptions []client.C
 			}
 
 			field.RelationType = rel.Kind() | fieldRelationType
-			description.Schema.Fields[i] = field
+			definition.Schema.Fields[i] = field
 		}
 	}
 

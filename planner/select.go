@@ -14,6 +14,7 @@ import (
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -101,9 +102,7 @@ type selectNode struct {
 	// was created
 	origSource planNode
 
-	// cache information about the original data source
-	// collection name, meta-data, etc.
-	sourceInfo sourceInfo
+	collection client.Collection
 
 	// top level filter expression
 	// filter is split between select, scan, and typeIndexJoin.
@@ -244,16 +243,16 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 	}
 	n.source = sourcePlan.plan
 	n.origSource = sourcePlan.plan
-	n.sourceInfo = sourcePlan.info
+	n.collection = sourcePlan.collection
 
 	// split filter
 	// apply the root filter to the source
 	// and rootSubType filters to the selectNode
 	// @todo: simulate splitting for now
-	origScan, ok := n.source.(*scanNode)
-	if ok {
-		origScan.filter = n.filter
+	origScan, isScanNode := n.source.(*scanNode)
+	if isScanNode {
 		origScan.showDeleted = n.selectReq.ShowDeleted
+		origScan.filter = n.filter
 		n.filter = nil
 
 		// If we have both a DocKey and a CID, then we need to run
@@ -278,14 +277,39 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			spans := make([]core.Span, len(n.selectReq.DocKeys.Value()))
 			for i, docKey := range n.selectReq.DocKeys.Value() {
-				dockeyIndexKey := base.MakeDocKey(sourcePlan.info.collectionDescription, docKey)
+				dockeyIndexKey := base.MakeDocKey(sourcePlan.collection.Description(), docKey)
 				spans[i] = core.NewSpan(dockeyIndexKey, dockeyIndexKey.PrefixEnd())
 			}
 			origScan.Spans(core.NewSpans(spans...))
 		}
 	}
 
-	return n.initFields(n.selectReq)
+	aggregates, err := n.initFields(n.selectReq)
+	if err != nil {
+		return nil, err
+	}
+
+	if isScanNode {
+		origScan.initFetcher(n.selectReq.Cid, findFilteredByIndexedField(origScan))
+	}
+
+	return aggregates, nil
+}
+
+func findFilteredByIndexedField(scanNode *scanNode) immutable.Option[client.FieldDescription] {
+	if scanNode.filter != nil {
+		schema := scanNode.col.Schema()
+		indexedFields := scanNode.col.Description().CollectIndexedFields(&schema)
+		for i := range indexedFields {
+			typeIndex := scanNode.documentMapping.FirstIndexOfName(indexedFields[i].Name)
+			if scanNode.filter.HasIndex(typeIndex) {
+				// we return the first found indexed field to keep it simple for now
+				// more sophisticated optimization logic can be added later
+				return immutable.Some(indexedFields[i])
+			}
+		}
+	}
+	return immutable.None[client.FieldDescription]()
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
@@ -375,36 +399,11 @@ func (n *selectNode) addTypeIndexJoin(subSelect *mapper.Select) error {
 
 func (n *selectNode) Source() planNode { return n.source }
 
-// func appendSource() {}
-
-// func (n *selectNode) initRender(
-//     fields []*client.FieldDescription,
-//     aliases []string,
-//) error {
-// 	return n.planner.render(fields, aliases)
-// }
-
-// SubSelect is used for creating Select nodes used on sub selections,
-// not to be used on the top level selection node.
-// This allows us to disable rendering on all sub Select nodes
-// and only run it at the end on the top level select node.
-func (p *Planner) SubSelect(selectReq *mapper.Select) (planNode, error) {
-	plan, err := p.Select(selectReq)
-	if err != nil {
-		return nil, err
-	}
-
-	// if this is a sub select plan, we need to remove the render node
-	// as the final top level selectTopNode will handle all sub renders
-	top := plan.(*selectTopNode)
-	return top, nil
-}
-
 func (p *Planner) SelectFromSource(
 	selectReq *mapper.Select,
 	source planNode,
 	fromCollection bool,
-	providedSourceInfo *sourceInfo,
+	collection client.Collection,
 ) (planNode, error) {
 	s := &selectNode{
 		planner:    p,
@@ -419,17 +418,17 @@ func (p *Planner) SelectFromSource(
 	orderBy := selectReq.OrderBy
 	groupBy := selectReq.GroupBy
 
-	if providedSourceInfo != nil {
-		s.sourceInfo = *providedSourceInfo
+	if collection != nil {
+		s.collection = collection
 	}
 
 	if fromCollection {
-		desc, err := p.getCollectionDesc(selectReq.Name)
+		col, err := p.db.GetCollectionByName(p.ctx, selectReq.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		s.sourceInfo = sourceInfo{desc}
+		s.collection = col
 	}
 
 	aggregates, err := s.initFields(selectReq)

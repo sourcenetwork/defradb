@@ -77,12 +77,12 @@ func (p *Planner) isValueFloat(
 	}
 
 	if !source.ChildTarget.HasValue {
-		parentDescription, err := p.getCollectionDesc(parent.CollectionName)
+		parentCol, err := p.db.GetCollectionByName(p.ctx, parent.CollectionName)
 		if err != nil {
 			return false, err
 		}
 
-		fieldDescription, fieldDescriptionFound := parentDescription.Schema.GetField(source.Name)
+		fieldDescription, fieldDescriptionFound := parentCol.Description().Schema.GetField(source.Name)
 		if !fieldDescriptionFound {
 			return false, client.NewErrFieldNotExist(source.Name)
 		}
@@ -125,12 +125,12 @@ func (p *Planner) isValueFloat(
 		return false, nil
 	}
 
-	childCollectionDescription, err := p.getCollectionDesc(child.CollectionName)
+	childCol, err := p.db.GetCollectionByName(p.ctx, child.CollectionName)
 	if err != nil {
 		return false, err
 	}
 
-	fieldDescription, fieldDescriptionFound := childCollectionDescription.Schema.GetField(source.ChildTarget.Name)
+	fieldDescription, fieldDescriptionFound := childCol.Description().Schema.GetField(source.ChildTarget.Name)
 	if !fieldDescriptionFound {
 		return false, client.NewErrFieldNotExist(source.ChildTarget.Name)
 	}

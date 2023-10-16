@@ -51,10 +51,12 @@ import (
 
 var evtWaitTimeout = 10 * time.Second
 
+var _ client.P2P = (*Node)(nil)
+
 // Node is a networked peer instance of DefraDB.
 type Node struct {
 	// embed the DB interface into the node
-	DB client.DB
+	client.DB
 
 	*Peer
 
@@ -124,8 +126,8 @@ func NewNode(
 			return ddht, err
 		}),
 	}
-	if options.EnableRelay {
-		libp2pOpts = append(libp2pOpts, libp2p.EnableRelay())
+	if !options.EnableRelay {
+		libp2pOpts = append(libp2pOpts, libp2p.DisableRelay())
 	}
 
 	h, err := libp2p.New(libp2pOpts...)
@@ -223,21 +225,18 @@ func (n *Node) Bootstrap(addrs []peer.AddrInfo) {
 	}
 }
 
-// ListenAddrs returns the Multiaddr list of the hosts' listening addresses.
-func (n *Node) ListenAddrs() []multiaddr.Multiaddr {
-	return n.host.Addrs()
-}
-
-// PeerID returns the node's peer ID.
 func (n *Node) PeerID() peer.ID {
 	return n.host.ID()
 }
 
-// PeerInfo returns the node's peer id and listening addresses.
+func (n *Node) ListenAddrs() []multiaddr.Multiaddr {
+	return n.host.Network().ListenAddresses()
+}
+
 func (n *Node) PeerInfo() peer.AddrInfo {
 	return peer.AddrInfo{
 		ID:    n.host.ID(),
-		Addrs: n.host.Addrs(),
+		Addrs: n.host.Network().ListenAddresses(),
 	}
 }
 
@@ -405,7 +404,12 @@ func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, er
 }
 
 // Close closes the node and all its services.
-func (n Node) Close() error {
-	n.cancel()
-	return n.Peer.Close()
+func (n Node) Close() {
+	if n.cancel != nil {
+		n.cancel()
+	}
+	if n.Peer != nil {
+		n.Peer.Close()
+	}
+	n.DB.Close()
 }

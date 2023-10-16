@@ -15,8 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -112,7 +114,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		return p.newPlan(n.Selections[0])
 
 	case *request.Select:
-		m, err := mapper.ToSelect(p.ctx, p.txn, n)
+		m, err := mapper.ToSelect(p.ctx, p.db, n)
 		if err != nil {
 			return nil, err
 		}
@@ -127,14 +129,14 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		return p.Select(m)
 
 	case *request.CommitSelect:
-		m, err := mapper.ToCommitSelect(p.ctx, p.txn, n)
+		m, err := mapper.ToCommitSelect(p.ctx, p.db, n)
 		if err != nil {
 			return nil, err
 		}
 		return p.CommitSelect(m)
 
 	case *request.ObjectMutation:
-		m, err := mapper.ToMutation(p.ctx, p.txn, n)
+		m, err := mapper.ToMutation(p.ctx, p.db, n)
 		if err != nil {
 			return nil, err
 		}
@@ -296,14 +298,81 @@ func (p *Planner) expandMultiNode(multiNode MultiNode, parentPlan *selectTopNode
 	return nil
 }
 
+// expandTypeIndexJoinPlan does a plan graph expansion and other optimizations on typeIndexJoin.
 func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
-		return p.expandPlan(node.subType, parentPlan)
+		return p.expandTypeJoin(&node.invertibleTypeJoin, parentPlan)
 	case *typeJoinMany:
-		return p.expandPlan(node.subType, parentPlan)
+		return p.expandTypeJoin(&node.invertibleTypeJoin, parentPlan)
 	}
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
+}
+
+func findFilteredByRelationFields(
+	conditions map[connor.FilterKey]any,
+	mapping *core.DocumentMapping,
+) map[string]int {
+	filterProperties := filter.ExtractProperties(conditions)
+	filteredSubFields := make(map[string]int)
+	for _, prop := range filterProperties {
+		if childMapping := mapping.ChildMappings[prop.Index]; childMapping != nil {
+			if !prop.IsRelation() {
+				continue
+			}
+			for _, subProp := range prop.Fields {
+				for fieldName, indices := range childMapping.IndexesByName {
+					if indices[0] == subProp.Index {
+						filteredSubFields[fieldName] = subProp.Index
+					}
+				}
+			}
+		}
+	}
+	return filteredSubFields
+}
+
+func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
+	filteredSubFields := findFilteredByRelationFields(
+		parentPlan.selectNode.filter.Conditions,
+		node.documentMapping,
+	)
+	slct := node.subType.(*selectTopNode).selectNode
+	desc := slct.collection.Description()
+	schema := slct.collection.Schema()
+	indexedFields := desc.CollectIndexedFields(&schema)
+	for _, indField := range indexedFields {
+		if ind, ok := filteredSubFields[indField.Name]; ok {
+			subInd := node.documentMapping.FirstIndexOfName(node.subTypeName)
+			relatedField := mapper.Field{Name: node.subTypeName, Index: subInd}
+			fieldFilter := filter.UnwrapRelation(filter.CopyField(
+				parentPlan.selectNode.filter,
+				relatedField,
+				mapper.Field{Name: indField.Name, Index: ind},
+			), relatedField)
+			err := node.invertJoinDirectionWithIndex(fieldFilter, indField)
+			if err != nil {
+				return err
+			}
+			break
+		}
+	}
+
+	return nil
+}
+
+// expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
+func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
+	if parentPlan.selectNode.filter == nil {
+		return p.expandPlan(node.subType, parentPlan)
+	}
+
+	err := p.tryOptimizeJoinDirection(node, parentPlan)
+	if err != nil {
+		return err
+	}
+
+	return p.expandPlan(node.subType, parentPlan)
 }
 
 func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
@@ -344,7 +413,7 @@ func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
 			childSelect,
 			pipe,
 			false,
-			&topNodeSelect.selectNode.sourceInfo,
+			topNodeSelect.selectNode.collection,
 		)
 		if err != nil {
 			return err
@@ -406,9 +475,9 @@ func (p *Planner) walkAndReplacePlan(planNode, target, replace planNode) error {
 	case *selectNode:
 		node.source = replace
 	case *typeJoinOne:
-		node.root = replace
+		node.replaceRoot(replace)
 	case *typeJoinMany:
-		node.root = replace
+		node.replaceRoot(replace)
 	case *pipeNode:
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here

@@ -234,12 +234,6 @@ func TestNewServerWithCAEmail(t *testing.T) {
 	assert.Equal(t, "me@example.com", s.options.TLS.Value().Email)
 }
 
-func TestNewServerWithPeerID(t *testing.T) {
-	s, err := NewServer(nil, WithPeerID("12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR"))
-	require.NoError(t, err)
-	assert.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", s.options.PeerID)
-}
-
 func TestNewServerWithRootDir(t *testing.T) {
 	dir := t.TempDir()
 	s, err := NewServer(nil, WithRootDir(dir))

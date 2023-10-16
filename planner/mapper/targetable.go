@@ -91,6 +91,17 @@ func (f *Filter) ToMap(mapping *core.DocumentMapping) map[string]any {
 	return filterObjectToMap(mapping, f.Conditions)
 }
 
+// HasIndex returns true if the filter has a condition that targets the
+// a property with the given index.
+func (f *Filter) HasIndex(index int) bool {
+	for k := range f.Conditions {
+		if propIndex, isOk := k.(*PropertyIndex); isOk && propIndex.Index == index {
+			return true
+		}
+	}
+	return false
+}
+
 func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]any) map[string]any {
 	outmap := make(map[string]any)
 	if obj == nil {

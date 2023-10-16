@@ -27,44 +27,58 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/net"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.P2P = (*Wrapper)(nil)
 
 type Wrapper struct {
-	db         client.DB
-	store      client.Store
+	node       *net.Node
 	cmd        *cliWrapper
 	handler    *http.Handler
 	httpServer *httptest.Server
 }
 
-func NewWrapper(db client.DB) (*Wrapper, error) {
-	handler, err := http.NewHandler(db, http.ServerOptions{})
+func NewWrapper(node *net.Node) (*Wrapper, error) {
+	handler, err := http.NewHandler(node, http.ServerOptions{})
 	if err != nil {
 		return nil, err
 	}
+
 	httpServer := httptest.NewServer(handler)
 	cmd := newCliWrapper(httpServer.URL)
 
 	return &Wrapper{
-		db:         db,
-		store:      db,
+		node:       node,
 		cmd:        cmd,
 		httpServer: httpServer,
 		handler:    handler,
 	}, nil
 }
 
+func (w *Wrapper) PeerInfo() peer.AddrInfo {
+	args := []string{"client", "p2p", "info"}
+
+	data, err := w.cmd.execute(context.Background(), args)
+	if err != nil {
+		panic(fmt.Sprintf("failed to get peer info: %v", err))
+	}
+	var info peer.AddrInfo
+	if err := json.Unmarshal(data, &info); err != nil {
+		panic(fmt.Sprintf("failed to get peer info: %v", err))
+	}
+	return info
+}
+
 func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	args := []string{"client", "p2p", "replicator", "set"}
 	args = append(args, "--collection", strings.Join(rep.Schemas, ","))
 
-	addrs, err := peer.AddrInfoToP2pAddrs(&rep.Info)
+	info, err := json.Marshal(rep.Info)
 	if err != nil {
 		return err
 	}
-	args = append(args, addrs[0].String())
+	args = append(args, string(info))
 
 	_, err = w.cmd.execute(ctx, args)
 	return err
@@ -72,12 +86,13 @@ func (w *Wrapper) SetReplicator(ctx context.Context, rep client.Replicator) erro
 
 func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
+	args = append(args, "--collection", strings.Join(rep.Schemas, ","))
 
-	addrs, err := peer.AddrInfoToP2pAddrs(&rep.Info)
+	info, err := json.Marshal(rep.Info)
 	if err != nil {
 		return err
 	}
-	args = append(args, addrs[0].String())
+	args = append(args, string(info))
 
 	_, err = w.cmd.execute(ctx, args)
 	return err
@@ -203,11 +218,11 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 	if err != nil {
 		return nil, err
 	}
-	var colDesc client.CollectionDescription
-	if err := json.Unmarshal(data, &colDesc); err != nil {
+	var definition client.CollectionDefinition
+	if err := json.Unmarshal(data, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, colDesc}, nil
+	return &Collection{w.cmd, definition}, nil
 }
 
 func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
@@ -218,11 +233,11 @@ func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) 
 	if err != nil {
 		return nil, err
 	}
-	var colDesc client.CollectionDescription
-	if err := json.Unmarshal(data, &colDesc); err != nil {
+	var definition client.CollectionDefinition
+	if err := json.Unmarshal(data, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, colDesc}, nil
+	return &Collection{w.cmd, definition}, nil
 }
 
 func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
@@ -233,11 +248,11 @@ func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string
 	if err != nil {
 		return nil, err
 	}
-	var colDesc client.CollectionDescription
-	if err := json.Unmarshal(data, &colDesc); err != nil {
+	var definition client.CollectionDefinition
+	if err := json.Unmarshal(data, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, colDesc}, nil
+	return &Collection{w.cmd, definition}, nil
 }
 
 func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
@@ -247,7 +262,7 @@ func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, e
 	if err != nil {
 		return nil, err
 	}
-	var colDesc []client.CollectionDescription
+	var colDesc []client.CollectionDefinition
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
@@ -389,34 +404,45 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 
 func (w *Wrapper) WithTxn(tx datastore.Txn) client.Store {
 	return &Wrapper{
-		db:    w.db,
-		store: w.db.WithTxn(tx),
-		cmd:   w.cmd.withTxn(tx),
+		node: w.node,
+		cmd:  w.cmd.withTxn(tx),
 	}
 }
 
 func (w *Wrapper) Root() datastore.RootStore {
-	return w.db.Root()
+	return w.node.Root()
 }
 
 func (w *Wrapper) Blockstore() blockstore.Blockstore {
-	return w.db.Blockstore()
+	return w.node.Blockstore()
 }
 
-func (w *Wrapper) Close(ctx context.Context) {
+func (w *Wrapper) Close() {
 	w.httpServer.CloseClientConnections()
 	w.httpServer.Close()
-	w.db.Close(ctx)
+	w.node.Close()
 }
 
 func (w *Wrapper) Events() events.Events {
-	return w.db.Events()
+	return w.node.Events()
 }
 
 func (w *Wrapper) MaxTxnRetries() int {
-	return w.db.MaxTxnRetries()
+	return w.node.MaxTxnRetries()
 }
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
-	return w.db.PrintDump(ctx)
+	return w.node.PrintDump(ctx)
+}
+
+func (w *Wrapper) Bootstrap(addrs []peer.AddrInfo) {
+	w.node.Bootstrap(addrs)
+}
+
+func (w *Wrapper) WaitForPushLogByPeerEvent(id peer.ID) error {
+	return w.node.WaitForPushLogByPeerEvent(id)
+}
+
+func (w *Wrapper) WaitForPushLogFromPeerEvent(id peer.ID) error {
+	return w.node.WaitForPushLogFromPeerEvent(id)
 }

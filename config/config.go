@@ -375,10 +375,11 @@ func (netcfg *NetConfig) validate() error {
 		peers := strings.Split(netcfg.Peers, ",")
 		maddrs := make([]ma.Multiaddr, len(peers))
 		for i, addr := range peers {
-			maddrs[i], err = ma.NewMultiaddr(addr)
+			addr, err := ma.NewMultiaddr(addr)
 			if err != nil {
 				return NewErrInvalidBootstrapPeers(err, netcfg.Peers)
 			}
+			maddrs[i] = addr
 		}
 	}
 	return nil
