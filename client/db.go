@@ -60,7 +60,7 @@ type DB interface {
 	// be created after calling this to resume operations on the prior data - this is however dependant on
 	// the behaviour of the rootstore provided on database instance creation, as this function will Close
 	// the provided rootstore.
-	Close(context.Context)
+	Close()
 
 	// Events returns the database event queue.
 	//
@@ -82,9 +82,6 @@ type DB interface {
 
 // Store contains the core DefraDB read-write operations.
 type Store interface {
-	// P2P holds the P2P related methods that must be implemented by the database.
-	P2P
-
 	// Backup holds the backup related methods that must be implemented by the database.
 	Backup
 

@@ -11,15 +11,14 @@
 package tests
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/net"
-	netutils "github.com/sourcenetwork/defradb/net/utils"
+	"github.com/sourcenetwork/defradb/tests/clients"
 
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -58,11 +57,20 @@ type ConfigureReplicator struct {
 	TargetNodeID int
 }
 
+// DeleteReplicator deletes a directional replicator relationship between two nodes.
+type DeleteReplicator struct {
+	// SourceNodeID is the node ID (index) of the node from which the replicator should be deleted.
+	SourceNodeID int
+
+	// TargetNodeID is the node ID (index) of the node to which the replicator should be deleted.
+	TargetNodeID int
+}
+
 const (
 	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
 	// for a non-existent collection ID when used in actions that support this.
-	NonExistentCollectionID       int = -1
-	NonExistentCollectionSchemaID     = "NonExistentCollectionID"
+	NonExistentCollectionID       int    = -1
+	NonExistentCollectionSchemaID string = "NonExistentCollectionID"
 )
 
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
@@ -121,7 +129,10 @@ type GetAllP2PCollections struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct{}
+type WaitForSync struct {
+	// ExpectedTimeout is the duration to wait when expecting a timeout to occur.
+	ExpectedTimeout time.Duration
+}
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.
@@ -136,13 +147,8 @@ func connectPeers(
 	time.Sleep(100 * time.Millisecond)
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
-	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
-	log.Info(s.ctx, "Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
-	addrs, err := netutils.ParsePeers([]string{targetAddress})
-	if err != nil {
-		s.t.Fatal(fmt.Sprintf("failed to parse bootstrap peers %v", targetAddress), err)
-	}
+	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
 	log.Info(s.ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 	sourceNode.Bootstrap(addrs)
 
@@ -157,12 +163,16 @@ func setupPeerWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConnectPeers,
-	sourceNode *net.Node,
-	targetNode *net.Node,
+	sourceNode clients.Client,
+	targetNode clients.Client,
 ) {
-	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
+
+	sourcePeerInfo := sourceNode.PeerInfo()
+	targetPeerInfo := targetNode.PeerInfo()
+
+	nodeCollections := map[int][]int{}
 	waitIndex := 0
 	for i := startIndex; i < len(s.testCase.Actions); i++ {
 		switch action := s.testCase.Actions[i].(type) {
@@ -247,11 +257,11 @@ func setupPeerWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
+				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
+				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
@@ -294,22 +304,39 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.Peer.SetReplicator(s.ctx, client.Replicator{
+	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
 		Info: targetNode.PeerInfo(),
 	})
 	require.NoError(s.t, err)
 	setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
 }
 
+func deleteReplicator(
+	s *state,
+	cfg DeleteReplicator,
+) {
+	sourceNode := s.nodes[cfg.SourceNodeID]
+	targetNode := s.nodes[cfg.TargetNodeID]
+
+	err := sourceNode.DeleteReplicator(s.ctx, client.Replicator{
+		Info: targetNode.PeerInfo(),
+	})
+	require.NoError(s.t, err)
+}
+
 func setupReplicatorWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConfigureReplicator,
-	sourceNode *net.Node,
-	targetNode *net.Node,
+	sourceNode clients.Client,
+	targetNode clients.Client,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
+
+	sourcePeerInfo := sourceNode.PeerInfo()
+	targetPeerInfo := targetNode.PeerInfo()
+
 	docIDsSyncedToSource := map[int]struct{}{}
 	waitIndex := 0
 	currentDocID := 0
@@ -361,11 +388,11 @@ func setupReplicatorWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
+				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
+				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
@@ -466,14 +493,31 @@ func waitForSync(
 	s *state,
 	action WaitForSync,
 ) {
+	var timeout time.Duration
+	if action.ExpectedTimeout != 0 {
+		timeout = action.ExpectedTimeout
+	} else {
+		timeout = subscriptionTimeout * 10
+	}
+
 	for _, resultsChan := range s.syncChans {
 		select {
 		case <-resultsChan:
-			continue
+			assert.True(
+				s.t,
+				action.ExpectedTimeout == 0,
+				"unexpected document has been synced",
+				s.testCase.Description,
+			)
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
-		case <-time.After(subscriptionTimeout * 10):
-			assert.Fail(s.t, "timeout occurred while waiting for data stream", s.testCase.Description)
+		case <-time.After(timeout):
+			assert.True(
+				s.t,
+				action.ExpectedTimeout != 0,
+				"timeout occurred while waiting for data stream",
+				s.testCase.Description,
+			)
 		}
 	}
 }
@@ -482,6 +526,7 @@ func RandomNetworkingConfig() ConfigureNode {
 	return func() config.Config {
 		cfg := config.DefaultConfig()
 		cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/0"
+		cfg.Net.RelayEnabled = false
 		return *cfg
 	}
 }

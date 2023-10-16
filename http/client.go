@@ -87,94 +87,6 @@ func (c *Client) WithTxn(tx datastore.Txn) client.Store {
 	return &Client{client}
 }
 
-func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
-
-	body, err := json.Marshal(rep)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
-
-	body, err := json.Marshal(rep)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var reps []client.Replicator
-	if err := c.http.requestJson(req, &reps); err != nil {
-		return nil, err
-	}
-	return reps, nil
-}
-
-func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
-
-	body, err := json.Marshal(collectionIDs)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
-
-	body, err := json.Marshal(collectionIDs)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var cols []string
-	if err := c.http.requestJson(req, &cols); err != nil {
-		return nil, err
-	}
-	return cols, nil
-}
-
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	methodURL := c.http.baseURL.JoinPath("backup", "import")
 
@@ -425,21 +337,7 @@ func (c *Client) PrintDump(ctx context.Context) error {
 	return err
 }
 
-func (c *Client) PeerInfo(ctx context.Context) (*PeerInfoResponse, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "info")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var res PeerInfoResponse
-	if err := c.http.requestJson(req, &res); err != nil {
-		return nil, err
-	}
-	return &res, nil
-}
-
-func (c *Client) Close(ctx context.Context) {
+func (c *Client) Close() {
 	// do nothing
 }
 

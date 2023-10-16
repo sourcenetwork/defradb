@@ -12,9 +12,17 @@ package client
 
 import (
 	"context"
+
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+// P2P is a peer connected database implementation.
 type P2P interface {
+	DB
+
+	// PeerInfo returns the p2p host id and listening addresses.
+	PeerInfo() peer.AddrInfo
+
 	// SetReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
 	SetReplicator(ctx context.Context, rep Replicator) error

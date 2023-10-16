@@ -37,6 +37,7 @@ var (
 	ErrMigrationNotFound     = errors.New("migration not found")
 	ErrMissingRequest        = errors.New("missing request")
 	ErrInvalidTransactionId  = errors.New("invalid transaction id")
+	ErrP2PDisabled           = errors.New("p2p network is disabled")
 )
 
 type errorResponse struct {

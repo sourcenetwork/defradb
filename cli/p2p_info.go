@@ -23,12 +23,7 @@ func MakeP2PInfoCommand() *cobra.Command {
 		Long:  `Get peer info from a DefraDB node`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			db := cmd.Context().Value(dbContextKey).(*http.Client)
-
-			res, err := db.PeerInfo(cmd.Context())
-			if err != nil {
-				return err
-			}
-			return writeJSON(cmd, res)
+			return writeJSON(cmd, db.PeerInfo())
 		},
 	}
 	return cmd

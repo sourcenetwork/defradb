@@ -39,8 +39,7 @@ func TestSendJobWorker_ExitOnContextClose_NoError(t *testing.T) {
 		n.sendJobWorker()
 		close(done)
 	}()
-	err := n.Close()
-	require.NoError(t, err)
+	n.Close()
 	select {
 	case <-done:
 	case <-time.After(timeout):
@@ -83,8 +82,7 @@ func TestSendJobWorker_WithNewJobWithClosePriorToProcessing_NoError(t *testing.T
 		txn:        txn,
 	}
 
-	err = n.Close()
-	require.NoError(t, err)
+	n.Close()
 	select {
 	case <-done:
 	case <-time.After(timeout):
@@ -128,8 +126,7 @@ func TestSendJobWorker_WithNewJob_NoError(t *testing.T) {
 	}
 	// Give the jobworker time to process the job.
 	time.Sleep(100 * time.Microsecond)
-	err = n.Close()
-	require.NoError(t, err)
+	n.Close()
 	select {
 	case <-done:
 	case <-time.After(timeout):
@@ -174,8 +171,7 @@ func TestSendJobWorker_WithCloseJob_NoError(t *testing.T) {
 
 	n.closeJob <- dsKey.DocKey
 
-	err = n.Close()
-	require.NoError(t, err)
+	n.Close()
 	select {
 	case <-done:
 	case <-time.After(timeout):
@@ -250,10 +246,8 @@ func TestSendJobWorker_WithPeerAndNoChildren_NoError(t *testing.T) {
 	}
 	// Give the jobworker time to process the job.
 	time.Sleep(100 * time.Microsecond)
-	err = n1.Close()
-	require.NoError(t, err)
-	err = n2.Close()
-	require.NoError(t, err)
+	n1.Close()
+	n2.Close()
 	select {
 	case <-done:
 	case <-time.After(timeout):
@@ -347,10 +341,8 @@ func TestSendJobWorker_WithPeerAndChildren_NoError(t *testing.T) {
 	}
 	// Give the jobworker time to process the job.
 	time.Sleep(100 * time.Microsecond)
-	err = n1.Close()
-	require.NoError(t, err)
-	err = n2.Close()
-	require.NoError(t, err)
+	n1.Close()
+	n2.Close()
 	select {
 	case <-done:
 	case <-time.After(timeout):

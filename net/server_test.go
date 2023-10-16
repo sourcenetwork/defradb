@@ -37,7 +37,8 @@ func TestNewServerSimple(t *testing.T) {
 func TestNewServerWithDBClosed(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
-	db.Close(ctx)
+	db.Close()
+
 	_, err := newServer(n.Peer, db)
 	require.ErrorIs(t, err, memory.ErrClosed)
 }

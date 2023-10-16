@@ -13,6 +13,8 @@ package net
 import (
 	"fmt"
 
+	"github.com/libp2p/go-libp2p/core/peer"
+
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -21,6 +23,9 @@ const (
 	errFailedToGetDockey       = "failed to get DocKey from broadcast message"
 	errPublishingToDockeyTopic = "can't publish log %s for dockey %s"
 	errPublishingToSchemaTopic = "can't publish log %s for schema %s"
+	errReplicatorExists        = "replicator already exists for %s with peerID %s"
+	errReplicatorDocKey        = "failed to get dockey for replicator %s with peerID %s"
+	errReplicatorCollections   = "failed to get collections for replicator"
 )
 
 var (
@@ -46,4 +51,16 @@ func NewErrPublishingToDockeyTopic(inner error, cid, key string, kv ...errors.KV
 
 func NewErrPublishingToSchemaTopic(inner error, cid, key string, kv ...errors.KV) error {
 	return errors.Wrap(fmt.Sprintf(errPublishingToSchemaTopic, cid, key), inner, kv...)
+}
+
+func NewErrReplicatorExists(collection string, peerID peer.ID, kv ...errors.KV) error {
+	return errors.New(fmt.Sprintf(errReplicatorExists, collection, peerID), kv...)
+}
+
+func NewErrReplicatorDocKey(inner error, collection string, peerID peer.ID, kv ...errors.KV) error {
+	return errors.Wrap(fmt.Sprintf(errReplicatorDocKey, collection, peerID), inner, kv...)
+}
+
+func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
+	return errors.Wrap(errReplicatorCollections, inner, kv...)
 }
