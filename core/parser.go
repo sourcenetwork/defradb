@@ -51,8 +51,8 @@ type Parser interface {
 	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)
 
 	// ParseSDL parses an SDL string into a set of collection descriptions.
-	ParseSDL(ctx context.Context, schemaString string) ([]client.CollectionDescription, error)
+	ParseSDL(ctx context.Context, schemaString string) ([]client.CollectionDefinition, error)
 
 	// Adds the given schema to this parser's model.
-	SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDescription) error
+	SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDefinition) error
 }

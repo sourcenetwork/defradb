@@ -57,7 +57,7 @@ type Fetcher interface {
 	Init(
 		ctx context.Context,
 		txn datastore.Txn,
-		col *client.CollectionDescription,
+		col client.Collection,
 		fields []client.FieldDescription,
 		filter *mapper.Filter,
 		docmapper *core.DocumentMapping,
@@ -81,7 +81,7 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
-	col         *client.CollectionDescription
+	col         client.Collection
 	reverse     bool
 	deletedDocs bool
 
@@ -137,7 +137,7 @@ type DocumentFetcher struct {
 func (df *DocumentFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
-	col *client.CollectionDescription,
+	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
@@ -145,9 +145,6 @@ func (df *DocumentFetcher) Init(
 	showDeleted bool,
 ) error {
 	df.txn = txn
-	if col.Schema.IsEmpty() {
-		return client.NewErrUninitializeProperty("DocumentFetcher", "Schema")
-	}
 
 	err := df.init(col, fields, filter, docmapper, reverse)
 	if err != nil {
@@ -166,7 +163,7 @@ func (df *DocumentFetcher) Init(
 }
 
 func (df *DocumentFetcher) init(
-	col *client.CollectionDescription,
+	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
@@ -202,7 +199,7 @@ func (df *DocumentFetcher) init(
 	// get them all
 	var targetFields []client.FieldDescription
 	if len(fields) == 0 {
-		targetFields = df.col.Schema.Fields
+		targetFields = df.col.Schema().Fields
 	} else {
 		targetFields = fields
 	}
@@ -213,12 +210,12 @@ func (df *DocumentFetcher) init(
 
 	if df.filter != nil {
 		conditions := df.filter.ToMap(df.mapping)
-		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, df.col.Schema)
+		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, df.col.Schema())
 		if err != nil {
 			return err
 		}
 		df.filterFields = make(map[uint32]client.FieldDescription, len(parsedfilterFields))
-		df.filterSet = bitset.New(uint(len(col.Schema.Fields)))
+		df.filterSet = bitset.New(uint(len(col.Schema().Fields)))
 		for _, field := range parsedfilterFields {
 			df.filterFields[uint32(field.ID)] = field
 			df.filterSet.Set(uint(field.ID))
@@ -253,7 +250,7 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 	df.deletedDocs = withDeleted
 
 	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
-		start := base.MakeCollectionKey(*df.col)
+		start := base.MakeCollectionKey(df.col.Description())
 		if withDeleted {
 			start = start.WithDeletedFlag()
 		} else {

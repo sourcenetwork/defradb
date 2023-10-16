@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,31 +26,18 @@ func newTestCollection(
 	db *implicitTxnDB,
 	name string,
 ) client.Collection {
-	desc := client.CollectionDescription{
-		Name: name,
-		Schema: client.SchemaDescription{
-			Name: name,
-			Fields: []client.FieldDescription{
-				{
-					Name: "_key",
-					Kind: client.FieldKind_DocKey,
-				},
-				{
-					Name: "Name",
-					Kind: client.FieldKind_STRING,
-					Typ:  client.LWW_REGISTER,
-				},
-			},
-		},
-	}
-
-	txn, err := db.db.NewTxn(ctx, false)
+	_, err := db.AddSchema(
+		ctx,
+		fmt.Sprintf(
+			`type %s {
+				Name: String
+			}`,
+			name,
+		),
+	)
 	require.NoError(t, err)
 
-	col, err := db.db.createCollection(ctx, txn, desc)
-	require.NoError(t, err)
-
-	err = txn.Commit(ctx)
+	col, err := db.GetCollectionByName(ctx, name)
 	require.NoError(t, err)
 
 	return col

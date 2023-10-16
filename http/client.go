@@ -267,11 +267,11 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	if err != nil {
 		return nil, err
 	}
-	var description client.CollectionDescription
-	if err := c.http.requestJson(req, &description); err != nil {
+	var definition client.CollectionDefinition
+	if err := c.http.requestJson(req, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description}, nil
+	return &Collection{c.http, definition}, nil
 }
 
 func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
@@ -282,11 +282,11 @@ func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (
 	if err != nil {
 		return nil, err
 	}
-	var description client.CollectionDescription
-	if err := c.http.requestJson(req, &description); err != nil {
+	var definition client.CollectionDefinition
+	if err := c.http.requestJson(req, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description}, nil
+	return &Collection{c.http, definition}, nil
 }
 
 func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
@@ -297,11 +297,11 @@ func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string)
 	if err != nil {
 		return nil, err
 	}
-	var description client.CollectionDescription
-	if err := c.http.requestJson(req, &description); err != nil {
+	var definition client.CollectionDefinition
+	if err := c.http.requestJson(req, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description}, nil
+	return &Collection{c.http, definition}, nil
 }
 
 func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
@@ -311,7 +311,7 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 	if err != nil {
 		return nil, err
 	}
-	var descriptions []client.CollectionDescription
+	var descriptions []client.CollectionDefinition
 	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
