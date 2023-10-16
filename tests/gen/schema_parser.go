@@ -15,12 +15,11 @@ import (
 )
 
 type schemaParser struct {
-	types             map[string]typeDefinition
-	schemaLines       []string
-	firstRelationType string
-	currentTypeDef    typeDefinition
-	relationTypesMap  map[string]map[string]string
-	resolvedRelation  map[string]map[string]bool
+	types            map[string]typeDefinition
+	schemaLines      []string
+	currentTypeDef   typeDefinition
+	relationTypesMap map[string]map[string]string
+	resolvedRelation map[string]map[string]bool
 }
 
 func (p *schemaParser) Parse(schema string) map[string]typeDefinition {
@@ -95,6 +94,17 @@ func (p *schemaParser) defineProp(line string, pos int) {
 	p.currentTypeDef.props = append(p.currentTypeDef.props, prop)
 }
 
+func (p *schemaParser) resolvePrimaryField(typeDef, relatedTypeDef *typeDefinition, prop, relatedProp *propDefinition) {
+	val := typeDef.index < relatedTypeDef.index
+	_, isResolved := p.resolvedRelation[typeDef.name][prop.name]
+	if isResolved {
+		val = !prop.isPrimary
+	}
+	relatedProp.isPrimary = val
+	p.resolvedRelation[relatedTypeDef.name][relatedProp.name] = true
+	p.types[relatedTypeDef.name] = *relatedTypeDef
+}
+
 func (p *schemaParser) resolvePrimaryRelations() {
 	for typeName, relationProps := range p.relationTypesMap {
 		typeDef := p.types[typeName]
@@ -105,19 +115,11 @@ func (p *schemaParser) resolvePrimaryRelations() {
 					relatedTypeDef := p.types[relPropType]
 					relatedProp := relatedTypeDef.getProp(relPropName)
 					if !p.resolvedRelation[relPropType][relPropName] {
-						relatedProp.isPrimary = typeName == p.firstRelationType
-						p.resolvedRelation[relPropType][relPropName] = true
-						p.types[relPropType] = relatedTypeDef
+						p.resolvePrimaryField(&typeDef, &relatedTypeDef, prop, relatedProp)
 						delete(p.relationTypesMap, relPropType)
 					}
 					if !p.resolvedRelation[typeName][prop.name] {
-						val := typeName != p.firstRelationType
-						_, isResolved := p.resolvedRelation[relPropType][relPropName]
-						if isResolved {
-							val = !relatedProp.isPrimary
-						}
-						prop.isPrimary = val
-						p.resolvedRelation[typeName][prop.name] = true
+						p.resolvePrimaryField(&relatedTypeDef, &typeDef, relatedProp, prop)
 					}
 				}
 			}

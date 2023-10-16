@@ -30,9 +30,9 @@ type typeDefinition struct {
 }
 
 func (t *typeDefinition) getProp(name string) *propDefinition {
-	for _, prop := range t.props {
-		if prop.name == name {
-			return &prop
+	for i := range t.props {
+		if t.props[i].name == name {
+			return &t.props[i]
 		}
 	}
 	return nil
