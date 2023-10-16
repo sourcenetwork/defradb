@@ -303,13 +303,13 @@ func (c *collection) applyMergeToDoc(
 	})
 
 	for mfield, mval := range mergeMap {
-		fd, isValidField := c.desc.Schema.GetField(mfield)
+		fd, isValidField := c.Schema().GetField(mfield)
 		if !isValidField {
 			return client.NewErrFieldNotExist(mfield)
 		}
 
 		if fd.Kind == client.FieldKind_FOREIGN_OBJECT {
-			fd, isValidField = c.desc.Schema.GetField(mfield + request.RelatedObjectID)
+			fd, isValidField = c.Schema().GetField(mfield + request.RelatedObjectID)
 			if !isValidField {
 				return client.NewErrFieldNotExist(mfield)
 			}
@@ -335,7 +335,7 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (clie
 		return client.FieldDescription{}, false
 	}
 
-	relationFieldDescription, valid := c.Description().Schema.GetField(
+	relationFieldDescription, valid := c.Schema().GetField(
 		strings.TrimSuffix(fieldDesc.Name, request.RelatedObjectID),
 	)
 	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation()
@@ -365,17 +365,19 @@ func (c *collection) patchPrimaryDoc(
 		return err
 	}
 	primaryCol = primaryCol.WithTxn(txn)
+	primarySchema := primaryCol.Schema()
 
 	primaryField, ok := primaryCol.Description().GetFieldByRelation(
 		relationFieldDescription.RelationName,
 		secondaryCollectionName,
 		relationFieldDescription.Name,
+		&primarySchema,
 	)
 	if !ok {
 		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
 	}
 
-	primaryIDField, ok := primaryCol.Description().Schema.GetField(primaryField.Name + request.RelatedObjectID)
+	primaryIDField, ok := primaryCol.Schema().GetField(primaryField.Name + request.RelatedObjectID)
 	if !ok {
 		return client.NewErrFieldNotExist(primaryField.Name + request.RelatedObjectID)
 	}

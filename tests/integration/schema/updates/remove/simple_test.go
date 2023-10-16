@@ -143,7 +143,7 @@ func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
 						{ "op": "remove", "path": "/Users/Schema/Name" }
 					]
 				`,
-				ExpectedError: "modifying the schema name is not supported. ExistingName: Users, ProposedName: ",
+				ExpectedError: "schema name can't be empty",
 			},
 		},
 	}

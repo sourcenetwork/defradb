@@ -92,7 +92,7 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
-	col *client.CollectionDescription
+	col client.Collection
 	// @todo index  *client.IndexDescription
 	mCRDTs map[uint32]crdt.MerkleCRDT
 }
@@ -101,7 +101,7 @@ type VersionedFetcher struct {
 func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
-	col *client.CollectionDescription,
+	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
@@ -357,13 +357,14 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return err
 		}
 
-		fieldID := vf.col.Schema.GetFieldKey(l.Name)
-		if fieldID == uint32(0) {
+		schema := vf.col.Schema()
+		field, ok := vf.col.Description().GetFieldByName(l.Name, &schema)
+		if !ok {
 			return client.NewErrFieldNotExist(l.Name)
 		}
 		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
 		//        get CType from descriptions
-		if err := vf.processNode(fieldID, subNd, client.LWW_REGISTER, l.Name); err != nil {
+		if err := vf.processNode(uint32(field.ID), subNd, client.LWW_REGISTER, l.Name); err != nil {
 			return err
 		}
 	}
@@ -380,7 +381,7 @@ func (vf *VersionedFetcher) processNode(
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {
-		key, err := base.MakePrimaryIndexKeyForCRDT(*vf.col, ctype, vf.key, fieldName)
+		key, err := base.MakePrimaryIndexKeyForCRDT(vf.col.Description(), vf.col.Schema(), ctype, vf.key, fieldName)
 		if err != nil {
 			return err
 		}
