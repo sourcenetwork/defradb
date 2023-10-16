@@ -148,7 +148,6 @@ func (db *db) createCollection(
 	schema.VersionID = schemaVersionID
 	schema.SchemaID = schemaID
 	desc.Schema = schema
-	col.def = client.CollectionDefinition{Description: desc, Schema: schema}
 
 	// buffer must include all the ids, as it is saved and loaded from the store later.
 	buf, err := json.Marshal(desc)
