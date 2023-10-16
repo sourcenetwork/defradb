@@ -166,9 +166,13 @@ func setupPeerWaitSync(
 	sourceNode clients.Client,
 	targetNode clients.Client,
 ) {
-	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
+
+	sourcePeerInfo := sourceNode.PeerInfo()
+	targetPeerInfo := targetNode.PeerInfo()
+
+	nodeCollections := map[int][]int{}
 	waitIndex := 0
 	for i := startIndex; i < len(s.testCase.Actions); i++ {
 		switch action := s.testCase.Actions[i].(type) {
@@ -253,11 +257,11 @@ func setupPeerWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerInfo().ID)
+				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerInfo().ID)
+				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
@@ -329,6 +333,10 @@ func setupReplicatorWaitSync(
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
+
+	sourcePeerInfo := sourceNode.PeerInfo()
+	targetPeerInfo := targetNode.PeerInfo()
+
 	docIDsSyncedToSource := map[int]struct{}{}
 	waitIndex := 0
 	currentDocID := 0
@@ -380,11 +388,11 @@ func setupReplicatorWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerInfo().ID)
+				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerInfo().ID)
+				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
