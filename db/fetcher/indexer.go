@@ -24,7 +24,7 @@ import (
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
 type IndexFetcher struct {
 	docFetcher        Fetcher
-	col               *client.CollectionDescription
+	col               client.Collection
 	txn               datastore.Txn
 	indexFilter       *mapper.Filter
 	docFilter         *mapper.Filter
@@ -55,7 +55,7 @@ func NewIndexFetcher(
 func (f *IndexFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
-	col *client.CollectionDescription,
+	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
@@ -68,14 +68,14 @@ func (f *IndexFetcher) Init(
 	f.mapping = docMapper
 	f.txn = txn
 
-	for _, index := range col.Indexes {
+	for _, index := range col.Description().Indexes {
 		if index.Fields[0].Name == f.indexedField.Name {
 			f.indexDataStoreKey.IndexID = index.ID
 			break
 		}
 	}
 
-	f.indexDataStoreKey.CollectionID = f.col.ID
+	f.indexDataStoreKey.CollectionID = f.col.ID()
 
 	for i := range fields {
 		if fields[i].Name == f.indexedField.Name {
@@ -131,7 +131,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		f.execInfo.FieldsFetched++
 
 		if f.docFetcher != nil && len(f.docFields) > 0 {
-			targetKey := base.MakeDocKey(*f.col, string(f.doc.key))
+			targetKey := base.MakeDocKey(f.col.Description(), string(f.doc.key))
 			spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
 			err = f.docFetcher.Start(ctx, spans)
 			if err != nil {

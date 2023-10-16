@@ -104,13 +104,13 @@ func (p *parser) Parse(ast *ast.Document) (*request.Request, []error) {
 }
 
 func (p *parser) ParseSDL(ctx context.Context, schemaString string) (
-	[]client.CollectionDescription,
+	[]client.CollectionDefinition,
 	error,
 ) {
 	return schema.FromString(ctx, schemaString)
 }
 
-func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDescription) error {
+func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDefinition) error {
 	schemaManager, err := schema.NewSchemaManager()
 	if err != nil {
 		return err

@@ -47,7 +47,7 @@ func (m *SchemaManager) NewGenerator() *Generator {
 
 // Generate generates the query-op and mutation-op type definitions from
 // the given CollectionDescriptions.
-func (g *Generator) Generate(ctx context.Context, collections []client.CollectionDescription) ([]*gql.Object, error) {
+func (g *Generator) Generate(ctx context.Context, collections []client.CollectionDefinition) ([]*gql.Object, error) {
 	typeMapBeforeMutation := g.manager.schema.TypeMap()
 	typesBeforeMutation := make(map[string]any, len(typeMapBeforeMutation))
 
@@ -79,7 +79,7 @@ func (g *Generator) Generate(ctx context.Context, collections []client.Collectio
 
 // generate generates the query-op and mutation-op type definitions from
 // the given CollectionDescriptions.
-func (g *Generator) generate(ctx context.Context, collections []client.CollectionDescription) ([]*gql.Object, error) {
+func (g *Generator) generate(ctx context.Context, collections []client.CollectionDefinition) ([]*gql.Object, error) {
 	// build base types
 	defs, err := g.buildTypes(ctx, collections)
 	if err != nil {
@@ -354,7 +354,7 @@ func (g *Generator) createExpandedFieldList(
 // extract and return the correct gql.Object type(s)
 func (g *Generator) buildTypes(
 	ctx context.Context,
-	collections []client.CollectionDescription,
+	collections []client.CollectionDefinition,
 ) ([]*gql.Object, error) {
 	// @todo: Check for duplicate named defined types in the TypeMap
 	// get all the defined types from the AST
@@ -367,12 +367,12 @@ func (g *Generator) buildTypes(
 		fieldDescriptions := collection.Schema.Fields
 
 		// check if type exists
-		if _, ok := g.manager.schema.TypeMap()[collection.Name]; ok {
-			return nil, NewErrSchemaTypeAlreadyExist(collection.Name)
+		if _, ok := g.manager.schema.TypeMap()[collection.Description.Name]; ok {
+			return nil, NewErrSchemaTypeAlreadyExist(collection.Description.Name)
 		}
 
 		objconf := gql.ObjectConfig{
-			Name: collection.Name,
+			Name: collection.Description.Name,
 		}
 
 		// Wrap field definition in a thunk so we can
@@ -435,9 +435,9 @@ func (g *Generator) buildTypes(
 				Type:        gql.Boolean,
 			}
 
-			gqlType, ok := g.manager.schema.TypeMap()[collection.Name]
+			gqlType, ok := g.manager.schema.TypeMap()[collection.Description.Name]
 			if !ok {
-				return nil, NewErrObjectNotFoundDuringThunk(collection.Name)
+				return nil, NewErrObjectNotFoundDuringThunk(collection.Description.Name)
 			}
 
 			fields[request.GroupFieldName] = &gql.Field{

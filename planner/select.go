@@ -102,9 +102,7 @@ type selectNode struct {
 	// was created
 	origSource planNode
 
-	// cache information about the original data source
-	// collection name, meta-data, etc.
-	sourceInfo sourceInfo
+	collection client.Collection
 
 	// top level filter expression
 	// filter is split between select, scan, and typeIndexJoin.
@@ -245,7 +243,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 	}
 	n.source = sourcePlan.plan
 	n.origSource = sourcePlan.plan
-	n.sourceInfo = sourcePlan.info
+	n.collection = sourcePlan.collection
 
 	// split filter
 	// apply the root filter to the source
@@ -279,7 +277,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			spans := make([]core.Span, len(n.selectReq.DocKeys.Value()))
 			for i, docKey := range n.selectReq.DocKeys.Value() {
-				dockeyIndexKey := base.MakeDocKey(sourcePlan.info.collectionDescription, docKey)
+				dockeyIndexKey := base.MakeDocKey(sourcePlan.collection.Description(), docKey)
 				spans[i] = core.NewSpan(dockeyIndexKey, dockeyIndexKey.PrefixEnd())
 			}
 			origScan.Spans(core.NewSpans(spans...))
@@ -300,7 +298,8 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 
 func findFilteredByIndexedField(scanNode *scanNode) immutable.Option[client.FieldDescription] {
 	if scanNode.filter != nil {
-		indexedFields := scanNode.desc.CollectIndexedFields(&scanNode.desc.Schema)
+		schema := scanNode.col.Schema()
+		indexedFields := scanNode.col.Description().CollectIndexedFields(&schema)
 		for i := range indexedFields {
 			typeIndex := scanNode.documentMapping.FirstIndexOfName(indexedFields[i].Name)
 			if scanNode.filter.HasIndex(typeIndex) {
@@ -404,7 +403,7 @@ func (p *Planner) SelectFromSource(
 	selectReq *mapper.Select,
 	source planNode,
 	fromCollection bool,
-	providedSourceInfo *sourceInfo,
+	collection client.Collection,
 ) (planNode, error) {
 	s := &selectNode{
 		planner:    p,
@@ -419,8 +418,8 @@ func (p *Planner) SelectFromSource(
 	orderBy := selectReq.OrderBy
 	groupBy := selectReq.GroupBy
 
-	if providedSourceInfo != nil {
-		s.sourceInfo = *providedSourceInfo
+	if collection != nil {
+		s.collection = collection
 	}
 
 	if fromCollection {
@@ -429,7 +428,7 @@ func (p *Planner) SelectFromSource(
 			return nil, err
 		}
 
-		s.sourceInfo = sourceInfo{col.Description()}
+		s.collection = col
 	}
 
 	aggregates, err := s.initFields(selectReq)

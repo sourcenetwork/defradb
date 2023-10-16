@@ -81,8 +81,7 @@ func (p *Planner) makeTypeIndexJoin(
 	var joinPlan planNode
 	var err error
 
-	desc := parent.sourceInfo.collectionDescription
-	typeFieldDesc, ok := desc.Schema.GetField(subType.Name)
+	typeFieldDesc, ok := parent.collection.Schema().GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -245,7 +244,7 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.Schema.GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.collection.Schema().GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -258,11 +257,13 @@ func (p *Planner) makeTypeJoinOne(
 	if err != nil {
 		return nil, err
 	}
+	subTypeSchema := subTypeCol.Schema()
 
 	subTypeField, subTypeFieldNameFound := subTypeCol.Description().GetFieldByRelation(
 		subTypeFieldDesc.RelationName,
-		parent.sourceInfo.collectionDescription.Name,
+		parent.collection.Name(),
 		subTypeFieldDesc.Name,
+		&subTypeSchema,
 	)
 	if !subTypeFieldNameFound {
 		return nil, client.NewErrFieldNotExist(subTypeFieldDesc.RelationName)
@@ -382,7 +383,7 @@ func (p *Planner) makeTypeJoinMany(
 		return nil, err
 	}
 
-	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.Schema.GetField(subType.Name)
+	subTypeFieldDesc, ok := parent.collection.Schema().GetField(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -391,11 +392,13 @@ func (p *Planner) makeTypeJoinMany(
 	if err != nil {
 		return nil, err
 	}
+	subTypeSchema := subTypeCol.Schema()
 
 	rootField, rootNameFound := subTypeCol.Description().GetFieldByRelation(
 		subTypeFieldDesc.RelationName,
-		parent.sourceInfo.collectionDescription.Name,
+		parent.collection.Name(),
 		subTypeFieldDesc.Name,
+		&subTypeSchema,
 	)
 
 	if !rootNameFound {
@@ -441,7 +444,7 @@ func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
 	if scan == nil {
 		return false, nil
 	}
-	rootDocKey := base.MakeDocKey(scan.desc, docKeyStr)
+	rootDocKey := base.MakeDocKey(scan.col.Description(), docKeyStr)
 
 	spans := core.NewSpans(core.NewSpan(rootDocKey, rootDocKey.PrefixEnd()))
 
