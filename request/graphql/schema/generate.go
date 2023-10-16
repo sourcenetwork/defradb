@@ -364,15 +364,15 @@ func (g *Generator) buildTypes(
 		// Copy the loop variable before usage within the loop or it
 		// will be reassigned before the thunk is run
 		collection := c
-		fieldDescriptions := collection.Schema().Fields
+		fieldDescriptions := collection.Schema.Fields
 
 		// check if type exists
-		if _, ok := g.manager.schema.TypeMap()[collection.Name()]; ok {
-			return nil, NewErrSchemaTypeAlreadyExist(collection.Name())
+		if _, ok := g.manager.schema.TypeMap()[collection.Description.Name]; ok {
+			return nil, NewErrSchemaTypeAlreadyExist(collection.Description.Name)
 		}
 
 		objconf := gql.ObjectConfig{
-			Name: collection.Name(),
+			Name: collection.Description.Name,
 		}
 
 		// Wrap field definition in a thunk so we can
@@ -435,9 +435,9 @@ func (g *Generator) buildTypes(
 				Type:        gql.Boolean,
 			}
 
-			gqlType, ok := g.manager.schema.TypeMap()[collection.Name()]
+			gqlType, ok := g.manager.schema.TypeMap()[collection.Description.Name]
 			if !ok {
-				return nil, NewErrObjectNotFoundDuringThunk(collection.Name())
+				return nil, NewErrObjectNotFoundDuringThunk(collection.Description.Name)
 			}
 
 			fields[request.GroupFieldName] = &gql.Field{

@@ -26,34 +26,37 @@ import (
 var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
-	cmd    *cliWrapper
-	desc   client.CollectionDescription
-	schema client.SchemaDescription
+	cmd *cliWrapper
+	def client.CollectionDefinition
 }
 
 func (c *Collection) Description() client.CollectionDescription {
-	return c.desc
+	return c.def.Description
 }
 
 func (c *Collection) Name() string {
-	return c.desc.Name
+	return c.Description().Name
 }
 
 func (c *Collection) Schema() client.SchemaDescription {
-	return c.schema
+	return c.def.Schema
 }
 
 func (c *Collection) ID() uint32 {
-	return c.desc.ID
+	return c.Description().ID
 }
 
 func (c *Collection) SchemaID() string {
-	return c.schema.SchemaID
+	return c.Schema().SchemaID
+}
+
+func (c *Collection) Definition() client.CollectionDefinition {
+	return c.def
 }
 
 func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	args := []string{"client", "collection", "create"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 
 	// We must call this here, else the doc key on the given object will not match
 	// that of the document saved in the database
@@ -77,7 +80,7 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 
 func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
 	args := []string{"client", "collection", "create"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 
 	docMapList := make([]map[string]any, len(docs))
 	for i, doc := range docs {
@@ -111,7 +114,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 
 func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 	args = append(args, "--key", doc.Key().String())
 
 	document, err := doc.ToJSONPatch()
@@ -189,7 +192,7 @@ func (c *Collection) UpdateWithFilter(
 	updater string,
 ) (*client.UpdateResult, error) {
 	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 	args = append(args, "--updater", updater)
 
 	filterJSON, err := json.Marshal(filter)
@@ -207,7 +210,7 @@ func (c *Collection) UpdateWithKey(
 	updater string,
 ) (*client.UpdateResult, error) {
 	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 	args = append(args, "--key", key.String())
 	args = append(args, "--updater", updater)
 
@@ -220,7 +223,7 @@ func (c *Collection) UpdateWithKeys(
 	updater string,
 ) (*client.UpdateResult, error) {
 	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 	args = append(args, "--updater", updater)
 
 	keys := make([]string, len(docKeys))
@@ -262,7 +265,7 @@ func (c *Collection) deleteWith(
 
 func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
 	args := []string{"client", "collection", "delete"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -275,7 +278,7 @@ func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.
 
 func (c *Collection) DeleteWithKey(ctx context.Context, docKey client.DocKey) (*client.DeleteResult, error) {
 	args := []string{"client", "collection", "delete"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 	args = append(args, "--key", docKey.String())
 
 	return c.deleteWith(ctx, args)
@@ -283,7 +286,7 @@ func (c *Collection) DeleteWithKey(ctx context.Context, docKey client.DocKey) (*
 
 func (c *Collection) DeleteWithKeys(ctx context.Context, docKeys []client.DocKey) (*client.DeleteResult, error) {
 	args := []string{"client", "collection", "delete"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 
 	keys := make([]string, len(docKeys))
 	for i, v := range docKeys {
@@ -296,7 +299,7 @@ func (c *Collection) DeleteWithKeys(ctx context.Context, docKeys []client.DocKey
 
 func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
 	args := []string{"client", "collection", "get"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 	args = append(args, key.String())
 
 	if showDeleted {
@@ -316,15 +319,14 @@ func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 
 func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
 	return &Collection{
-		cmd:    c.cmd.withTxn(tx),
-		desc:   c.desc,
-		schema: c.schema,
+		cmd: c.cmd.withTxn(tx),
+		def: c.def,
 	}
 }
 
 func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
 	args := []string{"client", "collection", "keys"}
-	args = append(args, "--name", c.desc.Name)
+	args = append(args, "--name", c.Description().Name)
 
 	stdOut, _, err := c.cmd.executeStream(ctx, args)
 	if err != nil {
@@ -363,7 +365,7 @@ func (c *Collection) CreateIndex(
 	indexDesc client.IndexDescription,
 ) (index client.IndexDescription, err error) {
 	args := []string{"client", "index", "create"}
-	args = append(args, "--collection", c.desc.Name)
+	args = append(args, "--collection", c.Description().Name)
 	args = append(args, "--name", indexDesc.Name)
 
 	fields := make([]string, len(indexDesc.Fields))
@@ -384,7 +386,7 @@ func (c *Collection) CreateIndex(
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 	args := []string{"client", "index", "drop"}
-	args = append(args, "--collection", c.desc.Name)
+	args = append(args, "--collection", c.Description().Name)
 	args = append(args, "--name", indexName)
 
 	_, err := c.cmd.execute(ctx, args)
@@ -393,7 +395,7 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
-	args = append(args, "--collection", c.desc.Name)
+	args = append(args, "--collection", c.Description().Name)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {

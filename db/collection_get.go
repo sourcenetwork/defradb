@@ -53,7 +53,6 @@ func (c *collection) get(
 ) (*client.Document, error) {
 	// create a new document fetcher
 	df := c.newFetcher()
-	desc := &c.desc
 	// initialize it with the primary index
 	err := df.Init(ctx, txn, c, fields, nil, nil, false, showDeleted)
 	if err != nil {
@@ -62,7 +61,7 @@ func (c *collection) get(
 	}
 
 	// construct target key for DocKey
-	targetKey := base.MakeDocKey(*desc, key.DocKey)
+	targetKey := base.MakeDocKey(c.Description(), key.DocKey)
 	// run the doc fetcher
 	err = df.Start(ctx, core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd())))
 	if err != nil {

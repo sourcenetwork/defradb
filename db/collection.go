@@ -54,8 +54,7 @@ type collection struct {
 	// of the operation in question.
 	txn immutable.Option[datastore.Txn]
 
-	desc   client.CollectionDescription
-	schema client.SchemaDescription
+	def client.CollectionDefinition
 
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
@@ -70,14 +69,8 @@ type collection struct {
 // NewCollection returns a pointer to a newly instanciated DB Collection
 func (db *db) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) (*collection, error) {
 	return &collection{
-		db: db,
-		desc: client.CollectionDescription{
-			ID:      desc.ID,
-			Name:    desc.Name,
-			Schema:  schema,
-			Indexes: desc.Indexes,
-		},
-		schema: schema,
+		db:  db,
+		def: client.CollectionDefinition{Description: desc, Schema: schema},
 	}, nil
 }
 
@@ -101,9 +94,11 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 func (db *db) createCollection(
 	ctx context.Context,
 	txn datastore.Txn,
-	desc client.CollectionDescription,
-	schema client.SchemaDescription,
+	def client.CollectionDefinition,
 ) (client.Collection, error) {
+	schema := def.Schema
+	desc := def.Description
+
 	// check if collection by this name exists
 	collectionKey := core.NewCollectionKey(desc.Name)
 	exists, err := txn.Systemstore().Has(ctx, collectionKey.ToDS())
@@ -152,11 +147,11 @@ func (db *db) createCollection(
 
 	schema.VersionID = schemaVersionID
 	schema.SchemaID = schemaID
-	col.schema = schema
-	col.desc.Schema = schema
+	desc.Schema = schema
+	col.def = client.CollectionDefinition{Description: desc, Schema: schema}
 
 	// buffer must include all the ids, as it is saved and loaded from the store later.
-	buf, err := json.Marshal(col.desc)
+	buf, err := json.Marshal(desc)
 	if err != nil {
 		return nil, err
 	}
@@ -192,6 +187,7 @@ func (db *db) createCollection(
 			return nil, err
 		}
 	}
+
 	return col, nil
 }
 
@@ -209,10 +205,12 @@ func (db *db) updateCollection(
 	existingDescriptionsByName map[string]client.CollectionDescription,
 	existingSchemaByName map[string]client.SchemaDescription,
 	proposedDescriptionsByName map[string]client.SchemaDescription,
-	desc client.CollectionDescription,
-	schema client.SchemaDescription,
+	def client.CollectionDefinition,
 	setAsDefaultVersion bool,
 ) (client.Collection, error) {
+	schema := def.Schema
+	desc := def.Description
+
 	hasChanged, err := db.validateUpdateCollection(ctx, existingDescriptionsByName, desc)
 	if err != nil {
 		return nil, err
@@ -223,7 +221,7 @@ func (db *db) updateCollection(
 		txn,
 		existingSchemaByName,
 		proposedDescriptionsByName,
-		desc.Schema,
+		schema,
 	)
 	if err != nil {
 		return nil, err
@@ -621,7 +619,7 @@ func (db *db) setDefaultSchemaVersion(
 
 	definitions := make([]client.CollectionDefinition, len(cols))
 	for i, col := range cols {
-		definitions[i] = col
+		definitions[i] = col.Definition()
 	}
 
 	return db.parser.SetSchema(ctx, txn, definitions)
@@ -669,9 +667,11 @@ func (db *db) getCollectionByVersionID(
 	}
 
 	col := &collection{
-		db:     db,
-		desc:   desc,
-		schema: desc.Schema,
+		db: db,
+		def: client.CollectionDefinition{
+			Description: desc,
+			Schema:      desc.Schema,
+		},
 	}
 
 	err = col.loadIndexes(ctx, txn)
@@ -824,26 +824,30 @@ func (c *collection) getAllDocKeysChan(
 
 // Description returns the client.CollectionDescription.
 func (c *collection) Description() client.CollectionDescription {
-	return c.desc
+	return c.Definition().Description
 }
 
 // Name returns the collection name.
 func (c *collection) Name() string {
-	return c.desc.Name
+	return c.Description().Name
 }
 
 // Schema returns the Schema of the collection.
 func (c *collection) Schema() client.SchemaDescription {
-	return c.schema
+	return c.Definition().Schema
 }
 
 // ID returns the ID of the collection.
 func (c *collection) ID() uint32 {
-	return c.desc.ID
+	return c.Description().ID
 }
 
 func (c *collection) SchemaID() string {
 	return c.Schema().SchemaID
+}
+
+func (c *collection) Definition() client.CollectionDefinition {
+	return c.def
 }
 
 // WithTxn returns a new instance of the collection, with a transaction
@@ -852,8 +856,7 @@ func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 	return &collection{
 		db:             c.db,
 		txn:            immutable.Some(txn),
-		desc:           c.desc,
-		schema:         c.schema,
+		def:            c.def,
 		indexes:        c.indexes,
 		fetcherFactory: c.fetcherFactory,
 	}
@@ -911,7 +914,7 @@ func (c *collection) getKeysFromDoc(
 
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
 	// This has to be done before dockey verification happens in the next step.
-	if err := doc.RemapAliasFieldsAndDockey(c.schema.Fields); err != nil {
+	if err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields); err != nil {
 		return err
 	}
 
@@ -1067,7 +1070,7 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			fieldDescription, valid := c.schema.GetField(k)
+			fieldDescription, valid := c.Schema().GetField(k)
 			if !valid {
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
@@ -1169,7 +1172,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	objFieldDescription, ok := c.schema.GetField(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
+	objFieldDescription, ok := c.Schema().GetField(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	if !ok {
 		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	}
@@ -1469,7 +1472,7 @@ func (c *collection) tryGetFieldKey(key core.PrimaryDataStoreKey, fieldName stri
 // tryGetSchemaFieldID returns the FieldID of the given fieldName.
 // Will return false if the field is not found.
 func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
-	for _, field := range c.desc.Schema.Fields {
+	for _, field := range c.Schema().Fields {
 		if field.Name == fieldName {
 			if field.IsObject() || field.IsObjectArray() {
 				// We do not wish to match navigational properties, only

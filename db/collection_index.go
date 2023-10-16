@@ -218,7 +218,7 @@ func (c *collection) createIndex(
 	if err != nil {
 		return nil, err
 	}
-	c.desc.Indexes = append(c.desc.Indexes, colIndex.Description())
+	c.def.Description.Indexes = append(c.def.Description.Indexes, colIndex.Description())
 	c.indexes = append(c.indexes, colIndex)
 	err = c.indexExistingDocs(ctx, txn, colIndex)
 	if err != nil {
@@ -239,7 +239,7 @@ func (c *collection) iterateAllDocs(
 		_ = df.Close()
 		return err
 	}
-	start := base.MakeCollectionKey(c.desc)
+	start := base.MakeCollectionKey(c.Description())
 	spans := core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 
 	err = df.Start(ctx, spans)
@@ -334,9 +334,9 @@ func (c *collection) dropIndex(ctx context.Context, txn datastore.Txn, indexName
 		return NewErrIndexWithNameDoesNotExists(indexName)
 	}
 
-	for i := range c.desc.Indexes {
-		if c.desc.Indexes[i].Name == indexName {
-			c.desc.Indexes = append(c.desc.Indexes[:i], c.desc.Indexes[i+1:]...)
+	for i := range c.Description().Indexes {
+		if c.Description().Indexes[i].Name == indexName {
+			c.def.Description.Indexes = append(c.Description().Indexes[:i], c.Description().Indexes[i+1:]...)
 			break
 		}
 	}
@@ -380,7 +380,7 @@ func (c *collection) loadIndexes(ctx context.Context, txn datastore.Txn) error {
 		}
 		colIndexes = append(colIndexes, index)
 	}
-	c.desc.Indexes = indexDescriptions
+	c.def.Description.Indexes = indexDescriptions
 	c.indexes = colIndexes
 	return nil
 }
@@ -397,7 +397,7 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	if err != nil {
 		return nil, err
 	}
-	return c.desc.Indexes, nil
+	return c.Description().Indexes, nil
 }
 
 func (c *collection) checkExistingFields(

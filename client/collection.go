@@ -16,18 +16,12 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-// CollectionDefinition contains the metadata defining what this Collection is.
-type CollectionDefinition interface {
+// CollectionDefinition contains the metadata defining what a Collection is.
+type CollectionDefinition struct {
 	// Description returns the CollectionDescription of this Collection.
-	Description() CollectionDescription
-	// Name returns the name of this collection.
-	Name() string
+	Description CollectionDescription `json:"description"`
 	// Schema returns the SchemaDescription used to define this Collection.
-	Schema() SchemaDescription
-	// ID returns the ID of this Collection.
-	ID() uint32
-	// SchemaID returns the ID of the Schema used to define this Collection.
-	SchemaID() string
+	Schema SchemaDescription `json:"schema"`
 }
 
 // Collection represents a defradb collection.
@@ -37,7 +31,18 @@ type CollectionDefinition interface {
 //
 // Many functions on this object will interact with the underlying datastores.
 type Collection interface {
-	CollectionDefinition
+	// Name returns the name of this collection.
+	Name() string
+	// ID returns the ID of this Collection.
+	ID() uint32
+	// SchemaID returns the ID of the Schema used to define this Collection.
+	SchemaID() string
+
+	Definition() CollectionDefinition
+	// Schema returns the SchemaDescription used to define this Collection.
+	Schema() SchemaDescription
+	// Description returns the CollectionDescription of this Collection.
+	Description() CollectionDescription
 
 	// Create a new document.
 	//

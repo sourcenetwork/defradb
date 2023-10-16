@@ -46,7 +46,7 @@ func (db *db) addSchema(
 
 	existingDefinitions := make([]client.CollectionDefinition, len(existingCollections))
 	for i := range existingCollections {
-		existingDefinitions[i] = existingCollections[i]
+		existingDefinitions[i] = existingCollections[i].Definition()
 	}
 
 	newDefinitions, err := db.parser.ParseSDL(ctx, schemaString)
@@ -61,7 +61,7 @@ func (db *db) addSchema(
 
 	returnDescriptions := make([]client.CollectionDescription, len(newDefinitions))
 	for i, definition := range newDefinitions {
-		col, err := db.createCollection(ctx, txn, definition.Description(), definition.Schema())
+		col, err := db.createCollection(ctx, txn, definition)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
 
 	definitions := make([]client.CollectionDefinition, len(collections))
 	for i := range collections {
-		definitions[i] = collections[i]
+		definitions[i] = collections[i].Definition()
 	}
 
 	return db.parser.SetSchema(ctx, txn, definitions)
@@ -139,13 +139,10 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	newCollections := []client.CollectionDefinition{}
 	newSchemaByName := map[string]client.SchemaDescription{}
 	for _, desc := range newDescriptionsByName {
-		col, err := db.newCollection(desc, desc.Schema)
-		if err != nil {
-			return err
-		}
+		def := client.CollectionDefinition{Description: desc, Schema: desc.Schema}
 
-		newCollections = append(newCollections, col)
-		newSchemaByName[col.schema.Name] = col.schema
+		newCollections = append(newCollections, def)
+		newSchemaByName[def.Schema.Name] = def.Schema
 	}
 
 	for i, col := range newCollections {
@@ -155,15 +152,14 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 			collectionsByName,
 			existingSchemaByName,
 			newSchemaByName,
-			col.Description(),
-			col.Schema(),
+			col,
 			setAsDefaultVersion,
 		)
 		if err != nil {
 			return err
 		}
 
-		newCollections[i] = col
+		newCollections[i] = col.Definition()
 	}
 
 	return db.parser.SetSchema(ctx, txn, newCollections)
