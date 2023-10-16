@@ -103,6 +103,7 @@ func (p *schemaParser) resolvePrimaryField(typeDef, relatedTypeDef *typeDefiniti
 	relatedProp.isPrimary = val
 	p.resolvedRelation[relatedTypeDef.name][relatedProp.name] = true
 	p.types[relatedTypeDef.name] = *relatedTypeDef
+	delete(p.relationTypesMap, prop.typeStr)
 }
 
 func (p *schemaParser) resolvePrimaryRelations() {
@@ -116,7 +117,6 @@ func (p *schemaParser) resolvePrimaryRelations() {
 					relatedProp := relatedTypeDef.getProp(relPropName)
 					if !p.resolvedRelation[relPropType][relPropName] {
 						p.resolvePrimaryField(&typeDef, &relatedTypeDef, prop, relatedProp)
-						delete(p.relationTypesMap, relPropType)
 					}
 					if !p.resolvedRelation[typeName][prop.name] {
 						p.resolvePrimaryField(&relatedTypeDef, &typeDef, relatedProp, prop)
