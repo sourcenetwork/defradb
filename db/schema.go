@@ -195,10 +195,10 @@ func substituteSchemaPatch(
 	patch jsonpatch.Patch,
 	schemaByName map[string]client.SchemaDescription,
 ) (jsonpatch.Patch, error) {
-	fieldIndexesByCollection := make(map[string]map[string]int, len(schemaByName))
+	fieldIndexesBySchema := make(map[string]map[string]int, len(schemaByName))
 	for schemaName, schema := range schemaByName {
 		fieldIndexesByName := make(map[string]int, len(schema.Fields))
-		fieldIndexesByCollection[schemaName] = fieldIndexesByName
+		fieldIndexesBySchema[schemaName] = fieldIndexesByName
 		for i, field := range schema.Fields {
 			fieldIndexesByName[field.Name] = i
 		}
@@ -244,7 +244,7 @@ func substituteSchemaPatch(
 
 					desc := schemaByName[splitPath[schemaNamePathIndex]]
 					var index string
-					if fieldIndexesByName, ok := fieldIndexesByCollection[desc.Name]; ok {
+					if fieldIndexesByName, ok := fieldIndexesBySchema[desc.Name]; ok {
 						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
 							index = fmt.Sprint(i)
 						}
@@ -253,7 +253,7 @@ func substituteSchemaPatch(
 						index = "-"
 						// If this is a new field we need to track its location so that subsequent operations
 						// within the patch may access it by field name.
-						fieldIndexesByCollection[desc.Name][fieldIndexer] = len(fieldIndexesByCollection[desc.Name])
+						fieldIndexesBySchema[desc.Name][fieldIndexer] = len(fieldIndexesBySchema[desc.Name])
 					}
 
 					splitPath[fieldIndexPathIndex] = index
@@ -265,17 +265,17 @@ func substituteSchemaPatch(
 
 			if isField {
 				if kind, isString := field["Kind"].(string); isString {
-					substitute, collectionName, err := getSubstituteFieldKind(kind, schemaByName)
+					substitute, schemaName, err := getSubstituteFieldKind(kind, schemaByName)
 					if err != nil {
 						return nil, err
 					}
 
 					field["Kind"] = substitute
-					if collectionName != "" {
-						if field["Schema"] != nil && field["Schema"] != collectionName {
+					if schemaName != "" {
+						if field["Schema"] != nil && field["Schema"] != schemaName {
 							return nil, NewErrFieldKindDoesNotMatchFieldSchema(kind, field["Schema"].(string))
 						}
-						field["Schema"] = collectionName
+						field["Schema"] = schemaName
 					}
 
 					newPatchValue = immutable.Some[any](field)
