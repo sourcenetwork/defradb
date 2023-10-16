@@ -190,15 +190,15 @@ func (db *db) createCollection(
 	return db.getCollectionByName(ctx, txn, desc.Name)
 }
 
-// updateCollection updates the persisted collection description matching the name of the given
+// updateSchema updates the persisted schema description matching the name of the given
 // description, to the values in the given description.
 //
-// It will validate the given description using [ValidateUpdateCollectionTxn] before updating it.
+// It will validate the given description using [validateUpdateSchema] before updating it.
 //
-// The collection (including the schema version ID) will only be updated if any changes have actually
+// The schema (including the schema version ID) will only be updated if any changes have actually
 // been made, if the given description matches the current persisted description then no changes will be
 // applied.
-func (db *db) updateCollection(
+func (db *db) updateSchema(
 	ctx context.Context,
 	txn datastore.Txn,
 	existingSchemaByName map[string]client.SchemaDescription,
