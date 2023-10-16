@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package index
+package gen
 
 import (
 	"fmt"
@@ -22,31 +22,35 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+type DocsList struct {
+	ColName string
+	Docs    []map[string]any
+}
+
 // createSchemaWithDocs returns UpdateSchema action and CreateDoc actions
 // with the documents that match the schema.
 // The schema is parsed to get the list of properties, and the docs
 // are created with the same properties.
 // This allows us to have only one large list of docs with predefined
 // properties, and create schemas with different properties from it.
-func createSchemaWithDocs(schema string) []any {
-	userDocs := getUserDocs()
-	resultActions := make([]any, 0, len(userDocs.docs)+1)
+func CreateSchemaWithDocs(schema string, docsList DocsList) []any {
+	resultActions := make([]any, 0, len(docsList.Docs)+1)
 	resultActions = append(resultActions, testUtils.SchemaUpdate{Schema: schema})
 	parser := schemaParser{}
 	typeDefs := parser.Parse(schema)
 	generator := createDocGenerator{types: typeDefs}
-	order := findDependencyOrder(typeDefs)
+	/*order := findDependencyOrder(typeDefs)
 	randomDocsCols := generateRandomDocs(6, typeDefs, order)
 	for _, col := range randomDocsCols {
 		for _, doc := range col.docs {
 			actions := generator.GenerateDocs(doc, col.colName)
 			resultActions = append(resultActions, actions...)
 		}
-	}
-	/*for _, doc := range userDocs.docs {
-		actions := generator.GenerateDocs(doc, userDocs.colName)
-		resultActions = append(resultActions, actions...)
 	}*/
+	for _, doc := range docsList.Docs {
+		actions := generator.GenerateDocs(doc, docsList.ColName)
+		resultActions = append(resultActions, actions...)
+	}
 	return resultActions
 }
 
@@ -79,7 +83,7 @@ type docRec struct {
 	docKey string
 }
 
-func generateRandomDocs(count int, types map[string]typeDefinition, order []string) []docsCollection {
+func generateRandomDocs(count int, types map[string]typeDefinition, order []string) []DocsList {
 	counter := make(map[string]map[string]map[string]int)
 	cols := make(map[string][]docRec)
 	incrementCounter := func(primary, secondary, secondaryProp string) int {
@@ -109,9 +113,9 @@ func generateRandomDocs(count int, types map[string]typeDefinition, order []stri
 		return cols[typeName][ind].docKey
 	}
 
-	result := []docsCollection{}
+	result := []DocsList{}
 	for _, typeName := range order {
-		col := docsCollection{colName: typeName}
+		col := DocsList{ColName: typeName}
 		for i := 0; i < count; i++ {
 			typeDef := types[typeName]
 			newDoc := make(doc)
@@ -127,7 +131,7 @@ func generateRandomDocs(count int, types map[string]typeDefinition, order []stri
 				}
 			}
 			cols[typeName] = append(cols[typeName], docRec{doc: newDoc})
-			col.docs = append(col.docs, newDoc)
+			col.Docs = append(col.Docs, newDoc)
 		}
 		result = append(result, col)
 	}
@@ -240,8 +244,8 @@ func (this *createDocGenerator) generateSecondaryDocs(
 		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary.Value() {
 			primaryPropName = relDocProp.name + request.RelatedObjectID
 			switch relVal := primaryDoc[relProp.name].(type) {
-			case docsCollection:
-				for _, relDoc := range relVal.docs {
+			case DocsList:
+				for _, relDoc := range relVal.Docs {
 					relDoc[primaryPropName] = primaryDocKey
 					actions := this.GenerateDocs(relDoc, relTypeDef.name)
 					result = append(result, actions...)
@@ -431,8 +435,4 @@ func (p *schemaParser) resolvePrimaryRelations() {
 		}
 		p.types[typeName] = typeDef
 	}
-}
-
-func makeExplainQuery(req string) string {
-	return "query @explain(type: execute) " + req[6:]
 }

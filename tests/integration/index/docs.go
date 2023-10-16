@@ -10,23 +10,24 @@
 
 package index
 
-type docsCollection struct {
-	colName string
-	docs    []map[string]any
+import "github.com/sourcenetwork/defradb/tests/gen"
+
+func makeExplainQuery(req string) string {
+	return "query @explain(type: execute) " + req[6:]
 }
 
-func getUserDocs() docsCollection {
-	return docsCollection{
-		colName: "User",
-		docs: []map[string]any{
+func getUserDocs() gen.DocsList {
+	return gen.DocsList{
+		ColName: "User",
+		Docs: []map[string]any{
 			{
 				"name":     "Shahzad",
 				"age":      20,
 				"verified": false,
 				"email":    "shahzad@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs: []map[string]any{
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs: []map[string]any{
 						{
 							"model": "iPhone Xs",
 							"year":  2022,
@@ -65,9 +66,9 @@ func getUserDocs() docsCollection {
 				"age":      23,
 				"verified": true,
 				"email":    "bruno@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs:    []map[string]any{},
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs:    []map[string]any{},
 				},
 				"address": map[string]any{
 					"postalCode": 10001,
@@ -81,9 +82,9 @@ func getUserDocs() docsCollection {
 				"age":      44,
 				"verified": true,
 				"email":    "roy@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs:    []map[string]any{},
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs:    []map[string]any{},
 				},
 				"address": map[string]any{
 					"postalCode": 90028,
@@ -97,9 +98,9 @@ func getUserDocs() docsCollection {
 				"age":      28,
 				"verified": false,
 				"email":    "fred@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs: []map[string]any{
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs: []map[string]any{
 						{
 							"model": "Samsung Galaxy S20",
 							"year":  2022,
@@ -138,9 +139,9 @@ func getUserDocs() docsCollection {
 				"age":      30,
 				"verified": false,
 				"email":    "john@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs: []map[string]any{
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs: []map[string]any{
 						{
 							"model": "Google Pixel 5",
 							"year":  2022,
@@ -191,9 +192,9 @@ func getUserDocs() docsCollection {
 				"age":      32,
 				"verified": false,
 				"email":    "islam@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs: []map[string]any{
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs: []map[string]any{
 						{
 							"model": "iPhone 12s",
 							"year":  2018,
@@ -268,9 +269,9 @@ func getUserDocs() docsCollection {
 				"age":      33,
 				"verified": true,
 				"email":    "andy@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs: []map[string]any{
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs: []map[string]any{
 						{
 							"model": "Xiaomi Phone",
 							"year":  2022,
@@ -309,9 +310,9 @@ func getUserDocs() docsCollection {
 				"age":      42,
 				"verified": true,
 				"email":    "addo@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs: []map[string]any{
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs: []map[string]any{
 						{
 							"model": "iPhone 10",
 							"year":  2021,
@@ -374,9 +375,9 @@ func getUserDocs() docsCollection {
 				"age":      48,
 				"verified": true,
 				"email":    "keenan@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs: []map[string]any{
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs: []map[string]any{
 						{
 							"model": "iPhone 13",
 							"year":  2022,
@@ -427,9 +428,9 @@ func getUserDocs() docsCollection {
 				"age":      55,
 				"verified": true,
 				"email":    "chris@gmail.com",
-				"devices": docsCollection{
-					colName: "Device",
-					docs: []map[string]any{
+				"devices": gen.DocsList{
+					ColName: "Device",
+					Docs: []map[string]any{
 						{
 							"model": "Walkman",
 							"year":  2000,

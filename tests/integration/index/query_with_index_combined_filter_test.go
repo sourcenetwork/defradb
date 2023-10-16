@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/gen"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,12 +29,12 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of an indexed field",
 		Actions: []any{
-			createSchemaWithDocs(`
+			gen.CreateSchemaWithDocs(`
 				type User {
 					name: String @index
 					age: Int
 				} 
-			`),
+			`, getUserDocs()),
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
@@ -63,13 +64,13 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of 2 indexed fields",
 		Actions: []any{
-			createSchemaWithDocs(`
+			gen.CreateSchemaWithDocs(`
 				type User {
 					name: String @index
 					age: Int @index
 					email: String 
 				} 
-			`),
+			`, getUserDocs()),
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{

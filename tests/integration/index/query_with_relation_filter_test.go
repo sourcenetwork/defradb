@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/gen"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,18 +35,30 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-N relation",
 		Actions: []any{
-			createSchemaWithDocs(`
+			gen.CreateSchemaWithDocs(`
 				type User {
 					name: String 
 					age: Int
 					devices: [Device] 
+					address: Address 
+				} 
+
+				type Address {
+					user: User
+					city: String @index
 				} 
 
 				type Device {
 					model: String @index
 					owner: User
+					specs: Specs
 				} 
-			`),
+
+				type Specs {
+					OS: String 
+					device: Device @primary
+				} 
+			`, getUserDocs()),
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
@@ -92,7 +105,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 	test := testUtils.TestCase{
 		Description: "Filter on indexed secondary relation field in 1-1 relation",
 		Actions: []any{
-			createSchemaWithDocs(`
+			gen.CreateSchemaWithDocs(`
 				type User {
 					name: String 
 					age: Int
@@ -103,7 +116,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 					user: User
 					city: String @index
 				} 
-			`),
+			`, getUserDocs()),
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
@@ -150,7 +163,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 	test := testUtils.TestCase{
 		Description: "Filter on indexed field of primary relation in 1-1 relation",
 		Actions: []any{
-			createSchemaWithDocs(`
+			gen.CreateSchemaWithDocs(`
 				type User {
 					name: String 
 					age: Int
@@ -162,7 +175,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 					city: String @index
 					street: String 
 				} 
-			`),
+			`, getUserDocs()),
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
@@ -202,7 +215,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 	test := testUtils.TestCase{
 		Description: "Filter on indexed field of primary relation while having indexed foreign field in 1-1 relation",
 		Actions: []any{
-			createSchemaWithDocs(`
+			gen.CreateSchemaWithDocs(`
 				type User {
 					name: String 
 					age: Int
@@ -214,7 +227,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 					city: String @index
 					street: String 
 				} 
-			`),
+			`, getUserDocs()),
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
@@ -255,7 +268,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-1 and 1-N relations",
 		Actions: []any{
-			createSchemaWithDocs(`
+			gen.CreateSchemaWithDocs(`
 				type User {
 					name: String 
 					age: Int
@@ -272,7 +285,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 					user: User
 					city: String @index
 				} 
-			`),
+			`, getUserDocs()),
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
