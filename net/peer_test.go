@@ -201,7 +201,7 @@ func TestStartAndClose_NoError(t *testing.T) {
 	err := n.Start()
 	require.NoError(t, err)
 
-	db.Close(ctx)
+	db.Close()
 }
 
 func TestStart_WithKnownPeer_NoError(t *testing.T) {
@@ -236,8 +236,8 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	err = n2.Start()
 	require.NoError(t, err)
 
-	db1.Close(ctx)
-	db2.Close(ctx)
+	db1.Close()
+	db2.Close()
 }
 
 func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
@@ -268,9 +268,7 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 		t.Fatal(err)
 	}
 	n2.Bootstrap(addrs)
-
-	err = n1.Close()
-	require.NoError(t, err)
+	n1.Close()
 
 	// give time for n1 to close
 	time.Sleep(100 * time.Millisecond)
@@ -278,8 +276,8 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	err = n2.Start()
 	require.NoError(t, err)
 
-	db1.Close(ctx)
-	db2.Close(ctx)
+	db1.Close()
+	db2.Close()
 }
 
 func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
@@ -298,7 +296,7 @@ func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
 	err = n.Start()
 	require.ErrorIs(t, err, ErrNilUpdateChannel)
 
-	db.Close(ctx)
+	db.Close()
 }
 
 func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
@@ -319,7 +317,7 @@ func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
 	err = n.Start()
 	require.ErrorContains(t, err, "cannot subscribe to a closed channel")
 
-	db.Close(ctx)
+	db.Close()
 }
 
 func TestRegisterNewDocument_NoError(t *testing.T) {
@@ -412,7 +410,7 @@ func TestSetReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
-	db.Close(ctx)
+	db.Close()
 
 	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
 	require.NoError(t, err)
@@ -435,7 +433,7 @@ func TestSetReplicator_WithUndefinedCollection_KeyNotFoundError(t *testing.T) {
 		Info:    *info,
 		Schemas: []string{"User"},
 	})
-	require.ErrorContains(t, err, "failed to get collection for replicator: datastore: key not found")
+	require.ErrorContains(t, err, "failed to get collections for replicator: datastore: key not found")
 }
 
 func TestSetReplicator_ForAllCollections_NoError(t *testing.T) {
@@ -488,10 +486,15 @@ func TestDeleteReplicator_WithDBClosed_DataStoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
-	db.Close(ctx)
+	info := peer.AddrInfo{
+		ID:    n.PeerID(),
+		Addrs: n.ListenAddrs(),
+	}
+
+	db.Close()
 
 	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
-		Info:    n.PeerInfo(),
+		Info:    info,
 		Schemas: []string{"User"},
 	})
 	require.ErrorContains(t, err, "datastore closed")
@@ -518,7 +521,7 @@ func TestDeleteReplicator_WithInvalidCollection_KeyNotFoundError(t *testing.T) {
 		Info:    n2.PeerInfo(),
 		Schemas: []string{"User"},
 	})
-	require.ErrorContains(t, err, "failed to get collection for replicator: datastore: key not found")
+	require.ErrorContains(t, err, "failed to get collections for replicator: datastore: key not found")
 }
 
 func TestDeleteReplicator_WithCollectionAndPreviouslySetReplicator_NoError(t *testing.T) {
@@ -603,7 +606,7 @@ func TestGetAllReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
-	db.Close(ctx)
+	db.Close()
 
 	_, err := n.Peer.GetAllReplicators(ctx)
 	require.ErrorContains(t, err, "datastore closed")
@@ -613,7 +616,7 @@ func TestLoadReplicators_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
-	db.Close(ctx)
+	db.Close()
 
 	err := n.Peer.loadReplicators(ctx)
 	require.ErrorContains(t, err, "datastore closed")

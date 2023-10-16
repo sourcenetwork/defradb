@@ -31,7 +31,7 @@ Example: add multiple collections
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			p2p := mustGetP2PContext(cmd)
 
 			var collectionIDs []string
 			for _, id := range strings.Split(args[0], ",") {
@@ -42,7 +42,7 @@ Example: add multiple collections
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return store.AddP2PCollections(cmd.Context(), collectionIDs)
+			return p2p.AddP2PCollections(cmd.Context(), collectionIDs)
 		},
 	}
 	return cmd

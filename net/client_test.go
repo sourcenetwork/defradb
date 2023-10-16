@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	"github.com/libp2p/go-libp2p/core/peer"
-	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
@@ -76,12 +75,7 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	_, n2 := newTestNode(ctx, t)
 	n2.Start()
 
-	err := n1.host.Connect(ctx, peer.AddrInfo{
-		ID: n2.PeerID(),
-		Addrs: []ma.Multiaddr{
-			n2.host.Addrs()[0],
-		},
-	})
+	err := n1.host.Connect(ctx, n2.PeerInfo())
 	require.NoError(t, err)
 
 	_, err = n1.db.AddSchema(ctx, `type User {
@@ -116,6 +110,6 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 		SchemaID: col.SchemaID(),
 		Block:    &EmptyNode{},
 		Priority: 1,
-	}, n2.PeerID())
+	}, n2.PeerInfo().ID)
 	require.NoError(t, err)
 }

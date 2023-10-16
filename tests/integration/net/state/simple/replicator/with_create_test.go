@@ -12,6 +12,7 @@ package replicator
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -137,6 +138,55 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 			testUtils.Request{
 				// Assert that John has not been synced to the first (source) node
 				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.DeleteReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				// Create John on the first (source) node only
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.WaitForSync{
+				// No documents should be synced
+				ExpectedTimeout: 100 * time.Millisecond,
+			},
+			testUtils.Request{
+				// Assert that John has not been synced to the second (target) node
+				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
 						Age

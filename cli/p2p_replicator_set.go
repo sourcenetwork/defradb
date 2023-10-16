@@ -11,6 +11,8 @@
 package cli
 
 import (
+	"encoding/json"
+
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
 
@@ -21,27 +23,30 @@ func MakeP2PReplicatorSetCommand() *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
 		Use:   "set [-c, --collection] <peer>",
-		Short: "Set a P2P replicator",
-		Long: `Add a new target replicator.
-A replicator replicates one or all collection(s) from this node to another.
+		Short: "Add replicator(s) and start synchronization",
+		Long: `Add replicator(s) and start synchronization.
+A replicator synchronizes one or all collection(s) from this node to another.
+
+Example:
+  defradb client p2p replicator set -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
 `,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			p2p := mustGetP2PContext(cmd)
 
-			addr, err := peer.AddrInfoFromString(args[0])
-			if err != nil {
+			var info peer.AddrInfo
+			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
 				return err
 			}
 			rep := client.Replicator{
-				Info:    *addr,
+				Info:    info,
 				Schemas: collections,
 			}
-			return store.SetReplicator(cmd.Context(), rep)
+			return p2p.SetReplicator(cmd.Context(), rep)
 		},
 	}
 
 	cmd.Flags().StringSliceVarP(&collections, "collection", "c",
-		[]string{}, "Define the collection for the replicator")
+		[]string{}, "Collection(s) to replicate")
 	return cmd
 }

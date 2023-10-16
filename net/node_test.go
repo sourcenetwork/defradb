@@ -60,9 +60,11 @@ func TestNewNode_WithEnableRelay_NoError(t *testing.T) {
 func TestNewNode_WithDBClosed_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
+
 	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
 	require.NoError(t, err)
-	db.Close(ctx)
+	db.Close()
+
 	_, err = NewNode(
 		context.Background(),
 		db,
@@ -111,8 +113,7 @@ func TestNodeClose_NoError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
-	err = n.Close()
-	require.NoError(t, err)
+	n.Close()
 }
 
 func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
@@ -223,7 +224,6 @@ func TestNodeConfig_NoError(t *testing.T) {
 	for k, v := range options.ListenAddrs {
 		require.Equal(t, expectedOptions.ListenAddrs[k], v)
 	}
-
 	require.Equal(t, expectedOptions.EnablePubSub, options.EnablePubSub)
 	require.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
 }
@@ -448,9 +448,10 @@ func TestWaitForPubSubEvent_WithDifferentPeerAndContextClosed_NoError(t *testing
 }
 
 func TestWaitForPushLogByPeerEvent_WithSamePeer_NoError(t *testing.T) {
+	ctx := context.Background()
 	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
-		context.Background(),
+		ctx,
 		db,
 	)
 	require.NoError(t, err)
@@ -472,9 +473,10 @@ func TestWaitForPushLogByPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T) 
 	defer func() {
 		evtWaitTimeout = 10 * time.Second
 	}()
+	ctx := context.Background()
 	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
-		context.Background(),
+		ctx,
 		db,
 	)
 	require.NoError(t, err)
@@ -490,9 +492,10 @@ func TestWaitForPushLogByPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T) 
 }
 
 func TestWaitForPushLogByPeerEvent_WithDifferentPeerAndContextClosed_NoError(t *testing.T) {
+	ctx := context.Background()
 	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
-		context.Background(),
+		ctx,
 		db,
 	)
 	require.NoError(t, err)
@@ -510,9 +513,10 @@ func TestWaitForPushLogByPeerEvent_WithDifferentPeerAndContextClosed_NoError(t *
 }
 
 func TestWaitForPushLogFromPeerEvent_WithSamePeer_NoError(t *testing.T) {
+	ctx := context.Background()
 	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
-		context.Background(),
+		ctx,
 		db,
 	)
 	require.NoError(t, err)
@@ -534,9 +538,10 @@ func TestWaitForPushLogFromPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T
 	defer func() {
 		evtWaitTimeout = 10 * time.Second
 	}()
+	ctx := context.Background()
 	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
-		context.Background(),
+		ctx,
 		db,
 	)
 	require.NoError(t, err)
@@ -552,9 +557,10 @@ func TestWaitForPushLogFromPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T
 }
 
 func TestWaitForPushLogFromPeerEvent_WithDifferentPeerAndContextClosed_NoError(t *testing.T) {
+	ctx := context.Background()
 	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
-		context.Background(),
+		ctx,
 		db,
 	)
 	require.NoError(t, err)

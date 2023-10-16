@@ -59,7 +59,7 @@ func runMakePlanBench(
 	if err != nil {
 		return err
 	}
-	defer db.Close(ctx)
+	defer db.Close()
 
 	parser, err := buildParser(ctx, fixture)
 	if err != nil {

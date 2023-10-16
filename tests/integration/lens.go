@@ -57,7 +57,7 @@ func configureMigration(
 	action ConfigureMigration,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		db := getStore(s, node.DB, action.TransactionID, action.ExpectedError)
+		db := getStore(s, node, action.TransactionID, action.ExpectedError)
 
 		err := db.SetMigration(s.ctx, action.LensConfig)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -71,7 +71,7 @@ func getMigrations(
 	action GetMigrations,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		db := getStore(s, node.DB, action.TransactionID, "")
+		db := getStore(s, node, action.TransactionID, "")
 
 		configs, err := db.LensRegistry().Config(s.ctx)
 		require.NoError(s.t, err)
