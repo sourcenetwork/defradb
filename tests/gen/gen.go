@@ -20,11 +20,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-type DocsList struct {
-	ColName string
-	Docs    []map[string]any
-}
-
 // createSchemaWithDocs returns UpdateSchema action and CreateDoc actions
 // with the documents that match the schema.
 // The schema is parsed to get the list of properties, and the docs
@@ -258,20 +253,6 @@ func (this *createDocGenerator) generateSecondaryDocs(
 	return result
 }
 
-type propDefinition struct {
-	name       string
-	typeStr    string
-	isArray    bool
-	isRelation bool
-	isPrimary  bool
-}
-
-type typeDefinition struct {
-	name  string
-	index int
-	props map[string]propDefinition
-}
-
 func findDependencyOrder(parsedTypes map[string]typeDefinition) []string {
 	graph := make(map[string][]string)
 	visited := make(map[string]bool)
@@ -325,120 +306,4 @@ func findDependencyOrder(parsedTypes map[string]typeDefinition) []string {
 	}
 
 	return stack
-}
-
-type schemaParser struct {
-	types             map[string]typeDefinition
-	schemaLines       []string
-	firstRelationType string
-	currentTypeDef    typeDefinition
-	relationTypesMap  map[string]map[string]string
-	resolvedRelation  map[string]map[string]bool
-}
-
-func (p *schemaParser) Parse(schema string) map[string]typeDefinition {
-	p.types = make(map[string]typeDefinition)
-	p.relationTypesMap = make(map[string]map[string]string)
-	p.resolvedRelation = make(map[string]map[string]bool)
-	p.schemaLines = strings.Split(schema, "\n")
-	p.findTypes()
-
-	for _, line := range p.schemaLines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "type ") {
-			typeNameEndPos := strings.Index(line[5:], " ")
-			typeName := strings.TrimSpace(line[5 : 5+typeNameEndPos])
-			p.currentTypeDef = p.types[typeName]
-			continue
-		}
-		if strings.HasPrefix(line, "}") {
-			p.types[p.currentTypeDef.name] = p.currentTypeDef
-			continue
-		}
-		pos := strings.Index(line, ":")
-		if pos != -1 {
-			p.defineProp(line, pos)
-		}
-	}
-	p.resolvePrimaryRelations()
-	return p.types
-}
-
-func (p *schemaParser) findTypes() {
-	typeIndex := 0
-	for _, line := range p.schemaLines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "type ") {
-			typeNameEndPos := strings.Index(line[5:], " ")
-			typeName := strings.TrimSpace(line[5 : 5+typeNameEndPos])
-			p.types[typeName] = typeDefinition{name: typeName, index: typeIndex, props: make(map[string]propDefinition)}
-			p.resolvedRelation[typeName] = make(map[string]bool)
-			typeIndex++
-		}
-	}
-}
-
-func (p *schemaParser) defineProp(line string, pos int) {
-	prop := propDefinition{name: line[:pos]}
-	prop.typeStr = strings.TrimSpace(line[pos+1:])
-	typeEndPos := strings.Index(prop.typeStr, " ")
-	if typeEndPos != -1 {
-		prop.typeStr = prop.typeStr[:typeEndPos]
-	}
-	if prop.typeStr[0] == '[' {
-		prop.isArray = true
-		prop.typeStr = prop.typeStr[1 : len(prop.typeStr)-1]
-	}
-	if _, isRelation := p.types[prop.typeStr]; isRelation {
-		prop.isRelation = true
-		if prop.isArray {
-			prop.isPrimary = false
-			p.resolvedRelation[p.currentTypeDef.name][prop.name] = true
-		} else if strings.Contains(line[pos+len(prop.typeStr)+2:], "@primary") {
-			prop.isPrimary = true
-			p.resolvedRelation[p.currentTypeDef.name][prop.name] = true
-		}
-		relMap := p.relationTypesMap[prop.typeStr]
-		if relMap == nil {
-			relMap = make(map[string]string)
-		}
-		relMap[prop.name] = p.currentTypeDef.name
-		p.relationTypesMap[prop.typeStr] = relMap
-		if p.firstRelationType == "" {
-			p.firstRelationType = p.currentTypeDef.name
-		}
-	}
-	p.currentTypeDef.props[prop.name] = prop
-}
-
-func (p *schemaParser) resolvePrimaryRelations() {
-	for typeName, relationProps := range p.relationTypesMap {
-		typeDef := p.types[typeName]
-		for _, prop := range typeDef.props {
-			for relPropName, relPropType := range relationProps {
-				if prop.typeStr == relPropType {
-					relatedTypeDef := p.types[relPropType]
-					relatedProp := relatedTypeDef.props[relPropName]
-					if !p.resolvedRelation[relPropType][relPropName] {
-						relatedProp.isPrimary = typeName == p.firstRelationType
-						p.resolvedRelation[relPropType][relPropName] = true
-						relatedTypeDef.props[relPropName] = relatedProp
-						p.types[relPropType] = relatedTypeDef
-						delete(p.relationTypesMap, relPropType)
-					}
-					if !p.resolvedRelation[typeName][prop.name] {
-						val := typeName != p.firstRelationType
-						_, isResolved := p.resolvedRelation[relPropType][relPropName]
-						if isResolved {
-							val = !relatedProp.isPrimary
-						}
-						prop.isPrimary = val
-						p.resolvedRelation[typeName][prop.name] = true
-						typeDef.props[prop.name] = prop
-					}
-				}
-			}
-		}
-		p.types[typeName] = typeDef
-	}
 }
