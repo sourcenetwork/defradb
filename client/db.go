@@ -92,7 +92,7 @@ type Store interface {
 	// types previously defined.
 	AddSchema(context.Context, string) ([]CollectionDescription, error)
 
-	// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
+	// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
 	// present in the database. If true is provided, the new schema versions will be made default, otherwise
 	// [SetDefaultSchemaVersion] should be called to set them so.
 	//

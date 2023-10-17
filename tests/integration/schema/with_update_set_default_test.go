@@ -32,7 +32,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T)
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -59,7 +59,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -86,7 +86,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
@@ -123,7 +123,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 				SetAsDefaultVersion: immutable.Some(false),

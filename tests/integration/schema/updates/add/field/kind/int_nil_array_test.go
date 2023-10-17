@@ -32,7 +32,7 @@ func TestSchemaUpdatesAddFieldKindNillableIntArray(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 19} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 19} }
 					]
 				`,
 			},
@@ -64,7 +64,7 @@ func TestSchemaUpdatesAddFieldKindNillableIntArrayWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 19} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 19} }
 					]
 				`,
 			},
@@ -112,7 +112,7 @@ func TestSchemaUpdatesAddFieldKindNillableIntArraySubstitutionWithCreate(t *test
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": "[Int]"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "[Int]"} }
 					]
 				`,
 			},

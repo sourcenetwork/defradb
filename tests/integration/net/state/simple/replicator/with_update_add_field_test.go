@@ -44,7 +44,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }
 					]
 				`,
 			},
@@ -125,7 +125,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }
 					]
 				`,
 			},

@@ -31,7 +31,7 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" }
+						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" }
 					]
 				`,
 				ExpectedError: "duplicate field. Name: email",
@@ -67,9 +67,9 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 				// clone.
 				Patch: `
 					[
-						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/3" },
-						{ "op": "remove", "path": "/Users/Schema/Fields/3/ID" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/3/Name", "value": "fax" }
+						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/3" },
+						{ "op": "remove", "path": "/Users/Fields/3/ID" },
+						{ "op": "replace", "path": "/Users/Fields/3/Name", "value": "fax" }
 					]
 				`,
 			},
@@ -105,10 +105,10 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *
 				// re-typing the clone.
 				Patch: `
 					[
-						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" },
-						{ "op": "remove", "path": "/Users/Schema/Fields/2/ID" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "age" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/2/Kind", "value": "Int" }
+						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
+						{ "op": "remove", "path": "/Users/Fields/2/ID" },
+						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "age" },
+						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "Int" }
 					]
 				`,
 			},
@@ -156,10 +156,10 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndInvalidKindSubstitut
 				// re-typing the clone.
 				Patch: `
 					[
-						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" },
-						{ "op": "remove", "path": "/Users/Schema/Fields/2/ID" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "Age" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/2/Kind", "value": "NotAValidKind" }
+						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Fields/2" },
+						{ "op": "remove", "path": "/Users/Fields/2/ID" },
+						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "Age" },
+						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "NotAValidKind" }
 					]
 				`,
 				ExpectedError: "no type found for given name. Kind: NotAValidKind",
