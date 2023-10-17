@@ -51,9 +51,6 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 	}
 
 	router.AddMiddleware(
-		middleware.RequestLogger(&logFormatter{}),
-		middleware.Recoverer,
-		CorsMiddleware(opts),
 		ApiMiddleware(db, txs, opts),
 		TransactionMiddleware,
 		StoreMiddleware,
@@ -79,6 +76,11 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 	}
 
 	mux := chi.NewMux()
+	mux.Use(
+		middleware.RequestLogger(&logFormatter{}),
+		middleware.Recoverer,
+		CorsMiddleware(opts),
+	)
 	mux.Mount("/api/"+Version, router)
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())

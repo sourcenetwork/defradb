@@ -144,6 +144,8 @@ func (h *lensHandler) bindRoutes(router *Router) {
 
 	lensConfig := openapi3.NewOperation()
 	lensConfig.OperationID = "lens_config"
+	lensConfig.Description = "List lens migrations"
+	lensConfig.Tags = []string{"lens"}
 	lensConfig.AddResponse(200, lensConfigResponse)
 	lensConfig.Responses["400"] = errorResponse
 
@@ -153,6 +155,8 @@ func (h *lensHandler) bindRoutes(router *Router) {
 
 	setMigration := openapi3.NewOperation()
 	setMigration.OperationID = "lens_set_migration"
+	setMigration.Description = "Add a new lens migration"
+	setMigration.Tags = []string{"lens"}
 	setMigration.RequestBody = &openapi3.RequestBodyRef{
 		Value: setMigrationRequest,
 	}
@@ -162,6 +166,8 @@ func (h *lensHandler) bindRoutes(router *Router) {
 
 	reloadLenses := openapi3.NewOperation()
 	reloadLenses.OperationID = "lens_reload"
+	reloadLenses.Description = "Reload lens migrations"
+	reloadLenses.Tags = []string{"lens"}
 	reloadLenses.Responses = make(openapi3.Responses)
 	reloadLenses.Responses["200"] = successResponse
 	reloadLenses.Responses["400"] = errorResponse
@@ -172,6 +178,8 @@ func (h *lensHandler) bindRoutes(router *Router) {
 
 	hasMigration := openapi3.NewOperation()
 	hasMigration.OperationID = "lens_has_migration"
+	hasMigration.Description = "Check if a migration exists"
+	hasMigration.Tags = []string{"lens"}
 	hasMigration.AddParameter(versionPathParam)
 	hasMigration.Responses = make(openapi3.Responses)
 	hasMigration.Responses["200"] = successResponse
@@ -185,6 +193,8 @@ func (h *lensHandler) bindRoutes(router *Router) {
 
 	migrateUp := openapi3.NewOperation()
 	migrateUp.OperationID = "lens_migrate_up"
+	migrateUp.Description = "Migrate documents to a schema version"
+	migrateUp.Tags = []string{"lens"}
 	migrateUp.RequestBody = &openapi3.RequestBodyRef{
 		Value: migrateRequest,
 	}
@@ -195,6 +205,8 @@ func (h *lensHandler) bindRoutes(router *Router) {
 
 	migrateDown := openapi3.NewOperation()
 	migrateDown.OperationID = "lens_migrate_down"
+	migrateDown.Description = "Migrate documents from a schema version"
+	migrateDown.Tags = []string{"lens"}
 	migrateDown.RequestBody = &openapi3.RequestBodyRef{
 		Value: migrateRequest,
 	}

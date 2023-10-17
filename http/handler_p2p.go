@@ -159,6 +159,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 
 	peerInfo := openapi3.NewOperation()
 	peerInfo.OperationID = "peer_info"
+	peerInfo.Tags = []string{"p2p"}
 	peerInfo.AddResponse(200, peerInfoResponse)
 	peerInfo.Responses["400"] = errorResponse
 
@@ -171,6 +172,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	getReplicators := openapi3.NewOperation()
 	getReplicators.Description = "List peer replicators"
 	getReplicators.OperationID = "peer_replicator_list"
+	getReplicators.Tags = []string{"p2p"}
 	getReplicators.AddResponse(200, getReplicatorsResponse)
 	getReplicators.Responses["400"] = errorResponse
 
@@ -181,6 +183,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	setReplicator := openapi3.NewOperation()
 	setReplicator.Description = "Add peer replicators"
 	setReplicator.OperationID = "peer_replicator_set"
+	setReplicator.Tags = []string{"p2p"}
 	setReplicator.RequestBody = &openapi3.RequestBodyRef{
 		Value: replicatorRequest,
 	}
@@ -191,6 +194,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	deleteReplicator := openapi3.NewOperation()
 	deleteReplicator.Description = "Delete peer replicators"
 	deleteReplicator.OperationID = "peer_replicator_delete"
+	deleteReplicator.Tags = []string{"p2p"}
 	deleteReplicator.RequestBody = &openapi3.RequestBodyRef{
 		Value: replicatorRequest,
 	}
@@ -212,12 +216,14 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	getPeerCollections := openapi3.NewOperation()
 	getPeerCollections.Description = "List peer collections"
 	getPeerCollections.OperationID = "peer_collection_list"
+	getPeerCollections.Tags = []string{"p2p"}
 	getPeerCollections.AddResponse(200, getPeerCollectionsResponse)
 	getPeerCollections.Responses["400"] = errorResponse
 
 	addPeerCollections := openapi3.NewOperation()
 	addPeerCollections.Description = "Add peer collections"
 	addPeerCollections.OperationID = "peer_collection_add"
+	addPeerCollections.Tags = []string{"p2p"}
 	addPeerCollections.RequestBody = &openapi3.RequestBodyRef{
 		Value: peerCollectionRequest,
 	}
@@ -228,6 +234,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	removePeerCollections := openapi3.NewOperation()
 	removePeerCollections.Description = "Remove peer collections"
 	removePeerCollections.OperationID = "peer_collection_remove"
+	removePeerCollections.Tags = []string{"p2p"}
 	removePeerCollections.RequestBody = &openapi3.RequestBodyRef{
 		Value: peerCollectionRequest,
 	}

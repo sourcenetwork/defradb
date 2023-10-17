@@ -116,12 +116,16 @@ func (h *txHandler) bindRoutes(router *Router) {
 
 	txnCreate := openapi3.NewOperation()
 	txnCreate.OperationID = "new_transaction"
+	txnCreate.Description = "Create a new transaction"
+	txnCreate.Tags = []string{"transaction"}
 	txnCreate.AddParameter(txnReadOnlyQueryParam)
 	txnCreate.AddResponse(200, txnCreateResponse)
 	txnCreate.Responses["400"] = errorResponse
 
 	txnConcurrent := openapi3.NewOperation()
 	txnConcurrent.OperationID = "new_concurrent_transaction"
+	txnConcurrent.Description = "Create a new concurrent transaction"
+	txnConcurrent.Tags = []string{"transaction"}
 	txnConcurrent.AddParameter(txnReadOnlyQueryParam)
 	txnConcurrent.AddResponse(200, txnCreateResponse)
 	txnConcurrent.Responses["400"] = errorResponse
@@ -132,6 +136,8 @@ func (h *txHandler) bindRoutes(router *Router) {
 
 	txnCommit := openapi3.NewOperation()
 	txnCommit.OperationID = "transaction_commit"
+	txnCommit.Description = "Commit a transaction"
+	txnCommit.Tags = []string{"transaction"}
 	txnCommit.AddParameter(txnIdPathParam)
 	txnCommit.Responses = make(openapi3.Responses)
 	txnCommit.Responses["200"] = successResponse
@@ -139,6 +145,8 @@ func (h *txHandler) bindRoutes(router *Router) {
 
 	txnDiscard := openapi3.NewOperation()
 	txnDiscard.OperationID = "transaction_discard"
+	txnDiscard.Description = "Discard a transaction"
+	txnDiscard.Tags = []string{"transaction"}
 	txnDiscard.AddParameter(txnIdPathParam)
 	txnDiscard.Responses = make(openapi3.Responses)
 	txnDiscard.Responses["200"] = successResponse

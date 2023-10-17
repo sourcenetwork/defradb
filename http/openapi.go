@@ -96,13 +96,54 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			},
 		},
 		ExternalDocs: &openapi3.ExternalDocs{
-			Description: "Read more about DefraDB",
+			Description: "Learn more about DefraDB",
 			URL:         "https://docs.source.network",
 		},
 		Components: &openapi3.Components{
 			Schemas:    schemas,
 			Responses:  responses,
 			Parameters: parameters,
+		},
+		Tags: openapi3.Tags{
+			&openapi3.Tag{
+				Name:        "schema",
+				Description: "Add or update schema definitions",
+			},
+			&openapi3.Tag{
+				Name:        "collection",
+				Description: "Add, remove, or update documents",
+			},
+			&openapi3.Tag{
+				Name:        "index",
+				Description: "Add, update, or remove indexes",
+			},
+			&openapi3.Tag{
+				Name:        "lens",
+				Description: "Migrate documents to and from schema versions",
+			},
+			&openapi3.Tag{
+				Name:        "p2p",
+				Description: "Peer-to-peer network operations",
+			},
+			&openapi3.Tag{
+				Name:        "transaction",
+				Description: "Database transaction operations",
+			},
+			&openapi3.Tag{
+				Name:        "backup",
+				Description: "Database backup operations",
+			},
+			&openapi3.Tag{
+				Name:        "graphql",
+				Description: "GraphQL query endpoints",
+			},
+			&openapi3.Tag{
+				Name: "ccip",
+				ExternalDocs: &openapi3.ExternalDocs{
+					Description: "EIP-3668",
+					URL:         "https://eips.ethereum.org/EIPS/eip-3668",
+				},
+			},
 		},
 	}, nil
 }

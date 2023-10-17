@@ -380,6 +380,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionCreate := openapi3.NewOperation()
 	collectionCreate.OperationID = "collection_create"
 	collectionCreate.Description = "Create document(s) in a collection"
+	collectionCreate.Tags = []string{"collection"}
 	collectionCreate.AddParameter(collectionNamePathParam)
 	collectionCreate.RequestBody = &openapi3.RequestBodyRef{
 		Value: collectionCreateRequest,
@@ -399,6 +400,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionUpdateWith := openapi3.NewOperation()
 	collectionUpdateWith.OperationID = "collection_update_with"
 	collectionUpdateWith.Description = "Update document(s) in a collection"
+	collectionUpdateWith.Tags = []string{"collection"}
 	collectionUpdateWith.AddParameter(collectionNamePathParam)
 	collectionUpdateWith.RequestBody = &openapi3.RequestBodyRef{
 		Value: collectionUpdateWithRequest,
@@ -417,6 +419,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionDeleteWith := openapi3.NewOperation()
 	collectionDeleteWith.OperationID = "collections_delete_with"
 	collectionDeleteWith.Description = "Delete document(s) from a collection"
+	collectionDeleteWith.Tags = []string{"collection"}
 	collectionDeleteWith.AddParameter(collectionNamePathParam)
 	collectionDeleteWith.RequestBody = &openapi3.RequestBodyRef{
 		Value: collectionDeleteWithRequest,
@@ -433,6 +436,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	createIndex := openapi3.NewOperation()
 	createIndex.OperationID = "index_create"
+	createIndex.Description = "Create a secondary index"
+	createIndex.Tags = []string{"index"}
 	createIndex.AddParameter(collectionNamePathParam)
 	createIndex.RequestBody = &openapi3.RequestBodyRef{
 		Value: createIndexRequest,
@@ -449,6 +454,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	getIndexes := openapi3.NewOperation()
 	getIndexes.OperationID = "index_list"
+	getIndexes.Description = "List secondary indexes"
+	getIndexes.Tags = []string{"index"}
 	getIndexes.AddParameter(collectionNamePathParam)
 	getIndexes.AddResponse(200, getIndexesResponse)
 	getIndexes.Responses["400"] = errorResponse
@@ -459,6 +466,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	dropIndex := openapi3.NewOperation()
 	dropIndex.OperationID = "index_drop"
+	dropIndex.Description = "Delete a secondary index"
+	dropIndex.Tags = []string{"index"}
 	dropIndex.AddParameter(collectionNamePathParam)
 	dropIndex.AddParameter(indexPathParam)
 	dropIndex.Responses = make(openapi3.Responses)
@@ -476,6 +485,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionGet := openapi3.NewOperation()
 	collectionGet.Description = "Get a document by key"
 	collectionGet.OperationID = "collection_get"
+	collectionGet.Tags = []string{"collection"}
 	collectionGet.AddParameter(collectionNamePathParam)
 	collectionGet.AddParameter(documentKeyPathParam)
 	collectionGet.AddResponse(200, collectionGetResponse)
@@ -484,6 +494,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionUpdate := openapi3.NewOperation()
 	collectionUpdate.Description = "Update a document by key"
 	collectionUpdate.OperationID = "collection_update"
+	collectionUpdate.Tags = []string{"collection"}
 	collectionUpdate.AddParameter(collectionNamePathParam)
 	collectionUpdate.AddParameter(documentKeyPathParam)
 	collectionUpdate.Responses = make(openapi3.Responses)
@@ -493,6 +504,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionDelete := openapi3.NewOperation()
 	collectionDelete.Description = "Delete a document by key"
 	collectionDelete.OperationID = "collection_delete"
+	collectionDelete.Tags = []string{"collection"}
 	collectionDelete.AddParameter(collectionNamePathParam)
 	collectionDelete.AddParameter(documentKeyPathParam)
 	collectionDelete.Responses = make(openapi3.Responses)
@@ -503,6 +515,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionKeys.AddParameter(collectionNamePathParam)
 	collectionKeys.Description = "Get all document keys"
 	collectionKeys.OperationID = "collection_keys"
+	collectionKeys.Tags = []string{"collection"}
 	collectionKeys.Responses = make(openapi3.Responses)
 	collectionKeys.Responses["200"] = successResponse
 	collectionKeys.Responses["400"] = errorResponse
