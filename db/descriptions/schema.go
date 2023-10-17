@@ -105,7 +105,7 @@ func GetSchemaVersion(
 	return desc, nil
 }
 
-// GetSchemas returns the schema of all the default schemas in the system.
+// GetSchemas returns the schema of all the default schema versions in the system.
 func GetSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
