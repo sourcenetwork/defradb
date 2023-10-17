@@ -118,19 +118,21 @@ func GetSchemas(
 	if err != nil {
 		return nil, NewErrFailedToCreateSchemaQuery(err)
 	}
-	defer func() {
-		if err := collectionSchemaVersionQuery.Close(); err != nil {
-			log.Error(ctx, NewErrFailedToCloseSchemaQuery(err).Error())
-		}
-	}()
 
 	versionIDs := make([]string, 0)
 	for res := range collectionSchemaVersionQuery.Next() {
 		if res.Error != nil {
+			if err := collectionSchemaVersionQuery.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
 			return nil, err
 		}
 
 		versionIDs = append(versionIDs, core.NewCollectionSchemaVersionKeyFromString(string(res.Key)).SchemaVersionId)
+	}
+
+	if err := collectionSchemaVersionQuery.Close(); err != nil {
+		return nil, NewErrFailedToCloseSchemaQuery(err)
 	}
 
 	schemaVersionPrefix := core.NewSchemaVersionKey("")
@@ -140,21 +142,22 @@ func GetSchemas(
 	if err != nil {
 		return nil, NewErrFailedToCreateSchemaQuery(err)
 	}
-	defer func() {
-		if err := schemaVersionQuery.Close(); err != nil {
-			log.Error(ctx, NewErrFailedToCloseSchemaQuery(err).Error())
-		}
-	}()
 
 	descriptions := make([]client.SchemaDescription, 0)
 	for res := range schemaVersionQuery.Next() {
 		if res.Error != nil {
+			if err := schemaVersionQuery.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
 			return nil, err
 		}
 
 		var desc client.SchemaDescription
 		err = json.Unmarshal(res.Value, &desc)
 		if err != nil {
+			if err := schemaVersionQuery.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
 			return nil, err
 		}
 
@@ -164,6 +167,10 @@ func GetSchemas(
 				break
 			}
 		}
+	}
+
+	if err := schemaVersionQuery.Close(); err != nil {
+		return nil, NewErrFailedToCloseSchemaQuery(err)
 	}
 
 	return descriptions, nil
