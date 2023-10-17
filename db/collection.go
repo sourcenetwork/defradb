@@ -176,12 +176,9 @@ func (db *db) updateSchema(
 	txn datastore.Txn,
 	existingSchemaByName map[string]client.SchemaDescription,
 	proposedDescriptionsByName map[string]client.SchemaDescription,
-	def client.CollectionDefinition,
+	schema client.SchemaDescription,
 	setAsDefaultVersion bool,
 ) (client.Collection, error) {
-	schema := def.Schema
-	desc := def.Description
-
 	hasChanged, err := db.validateUpdateSchema(
 		ctx,
 		txn,
@@ -224,6 +221,11 @@ func (db *db) updateSchema(
 		return nil, err
 	}
 
+	col, err := db.getCollectionByName(ctx, txn, schema.Name)
+	if err != nil {
+		return nil, err
+	}
+	desc := col.Description()
 	desc.SchemaVersionID = schema.VersionID
 
 	buf, err := json.Marshal(desc)
@@ -260,6 +262,10 @@ func (db *db) validateUpdateSchema(
 	proposedDescriptionsByName map[string]client.SchemaDescription,
 	proposedDesc client.SchemaDescription,
 ) (bool, error) {
+	if proposedDesc.Name == "" {
+		return false, ErrSchemaNameEmpty
+	}
+
 	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
 	if !collectionExists {
 		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
