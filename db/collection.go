@@ -30,7 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/db/descriptions"
+	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
@@ -118,7 +118,7 @@ func (db *db) createCollection(
 	}
 	desc.ID = uint32(colID)
 
-	schema, err = descriptions.CreateSchemaVersion(ctx, txn, schema)
+	schema, err = description.CreateSchemaVersion(ctx, txn, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (db *db) updateSchema(
 		}
 	}
 
-	schema, err = descriptions.CreateSchemaVersion(ctx, txn, schema)
+	schema, err = description.CreateSchemaVersion(ctx, txn, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -555,7 +555,7 @@ func (db *db) getCollectionByVersionID(
 		return nil, err
 	}
 
-	schema, err := descriptions.GetSchemaVersion(ctx, txn, desc.SchemaVersionID)
+	schema, err := description.GetSchemaVersion(ctx, txn, desc.SchemaVersionID)
 	if err != nil {
 		return nil, err
 	}

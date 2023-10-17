@@ -23,7 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/descriptions"
+	"github.com/sourcenetwork/defradb/db/description"
 )
 
 const (
@@ -102,7 +102,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		return err
 	}
 
-	schemas, err := descriptions.GetSchemas(ctx, txn)
+	schemas, err := description.GetSchemas(ctx, txn)
 	if err != nil {
 		return err
 	}
