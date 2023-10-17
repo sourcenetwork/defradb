@@ -23,6 +23,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/description"
 )
 
 const (
@@ -101,14 +102,14 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		return err
 	}
 
-	collectionsByName, err := db.getCollectionsByName(ctx, txn)
+	schemas, err := description.GetSchemas(ctx, txn)
 	if err != nil {
 		return err
 	}
 
 	existingSchemaByName := map[string]client.SchemaDescription{}
-	for _, col := range collectionsByName {
-		existingSchemaByName[col.Schema.Name] = col.Schema
+	for _, schema := range schemas {
+		existingSchemaByName[schema.Name] = schema
 	}
 
 	// Here we swap out any string representations of enums for their integer values
@@ -137,53 +138,22 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 
 	newCollections := []client.CollectionDefinition{}
 	for _, schema := range newSchemaByName {
-		if schema.Name == "" {
-			return ErrSchemaNameEmpty
-		}
-
-		collectionDescription, ok := collectionsByName[schema.Name]
-		if !ok {
-			return NewErrAddCollectionWithPatch(schema.Name)
-		}
-
-		def := client.CollectionDefinition{Description: collectionDescription, Schema: schema}
-		newCollections = append(newCollections, def)
-	}
-
-	for i, col := range newCollections {
 		col, err := db.updateSchema(
 			ctx,
 			txn,
 			existingSchemaByName,
 			newSchemaByName,
-			col,
+			schema,
 			setAsDefaultVersion,
 		)
 		if err != nil {
 			return err
 		}
 
-		newCollections[i] = col.Definition()
+		newCollections = append(newCollections, col.Definition())
 	}
 
 	return db.parser.SetSchema(ctx, txn, newCollections)
-}
-
-func (db *db) getCollectionsByName(
-	ctx context.Context,
-	txn datastore.Txn,
-) (map[string]client.CollectionDescription, error) {
-	collections, err := db.getAllCollections(ctx, txn)
-	if err != nil {
-		return nil, err
-	}
-
-	collectionsByName := map[string]client.CollectionDescription{}
-	for _, collection := range collections {
-		collectionsByName[collection.Name()] = collection.Description()
-	}
-
-	return collectionsByName, nil
 }
 
 // substituteSchemaPatch handles any substitution of values that may be required before
