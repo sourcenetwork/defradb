@@ -47,6 +47,7 @@ const (
 	COLLECTION_SCHEMA_VERSION_HISTORY = "/collection/version/h"
 	COLLECTION_INDEX                  = "/collection/index"
 	SCHEMA_MIGRATION                  = "/schema/migration"
+	SCHEMA_VERSION                    = "/schema/version"
 	SEQ                               = "/seq"
 	PRIMARY_KEY                       = "/pk"
 	DATASTORE_DOC_VERSION_FIELD_ID    = "v"
@@ -131,6 +132,15 @@ type CollectionIndexKey struct {
 }
 
 var _ Key = (*CollectionIndexKey)(nil)
+
+// SchemaVersionKey points to the json serialized schema at the specified version.
+//
+// It's corresponding value is immutable.
+type SchemaVersionKey struct {
+	SchemaVersionID string
+}
+
+var _ Key = (*SchemaVersionKey)(nil)
 
 // SchemaHistoryKey holds the pathway through the schema version history for
 // any given schema.
@@ -257,6 +267,11 @@ func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersi
 	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
 }
 
+func NewCollectionSchemaVersionKeyFromString(key string) CollectionSchemaVersionKey {
+	elements := strings.Split(key, "/")
+	return CollectionSchemaVersionKey{SchemaVersionId: elements[len(elements)-1]}
+}
+
 // NewCollectionIndexKey creates a new CollectionIndexKey from a collection name and index name.
 func NewCollectionIndexKey(colID, indexName string) CollectionIndexKey {
 	return CollectionIndexKey{CollectionName: colID, IndexName: indexName}
@@ -305,6 +320,10 @@ func (k CollectionIndexKey) Bytes() []byte {
 // ToDS returns the datastore key
 func (k CollectionIndexKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
+}
+
+func NewSchemaVersionKey(schemaVersionID string) SchemaVersionKey {
+	return SchemaVersionKey{SchemaVersionID: schemaVersionID}
 }
 
 func NewSchemaHistoryKey(schemaId string, previousSchemaVersionID string) SchemaHistoryKey {
@@ -622,6 +641,24 @@ func (k CollectionSchemaVersionKey) Bytes() []byte {
 }
 
 func (k CollectionSchemaVersionKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k SchemaVersionKey) ToString() string {
+	result := SCHEMA_VERSION
+
+	if k.SchemaVersionID != "" {
+		result = result + "/" + k.SchemaVersionID
+	}
+
+	return result
+}
+
+func (k SchemaVersionKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k SchemaVersionKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
