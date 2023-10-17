@@ -40,23 +40,11 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 					name: String 
 					age: Int
 					devices: [Device] 
-					address: Address 
-				} 
-
-				type Address {
-					user: User
-					city: String @index
 				} 
 
 				type Device {
 					model: String @index
 					owner: User
-					specs: Specs
-				} 
-
-				type Specs {
-					OS: String 
-					device: Device @primary
 				} 
 			`, getUserDocs()),
 			testUtils.Request{

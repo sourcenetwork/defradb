@@ -15,6 +15,11 @@ type DocsList struct {
 	Docs    []map[string]any
 }
 
+type GeneratedDoc struct {
+	ColIndex int
+	JSON     string
+}
+
 type propDefinition struct {
 	name       string
 	typeStr    string

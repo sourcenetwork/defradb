@@ -27,24 +27,29 @@ import (
 // This allows us to have only one large list of docs with predefined
 // properties, and create schemas with different properties from it.
 func CreateSchemaWithDocs(schema string, docsList DocsList) []any {
-	resultActions := make([]any, 0, len(docsList.Docs)+1)
+	docs := GenerateDocs(schema, docsList)
+	resultActions := make([]any, 0, len(docs)+1)
 	resultActions = append(resultActions, testUtils.SchemaUpdate{Schema: schema})
+	for _, doc := range docs {
+		resultActions = append(resultActions, testUtils.CreateDoc{CollectionID: doc.ColIndex, Doc: doc.JSON})
+	}
+	return resultActions
+}
+
+func GenerateDocs(schema string, docsList DocsList) []GeneratedDoc {
+	resultActions := make([]testUtils.CreateDoc, 0, len(docsList.Docs))
 	parser := schemaParser{}
 	typeDefs := parser.Parse(schema)
 	generator := createDocGenerator{types: typeDefs}
-	/*order := findDependencyOrder(typeDefs)
-	randomDocsCols := generateRandomDocs(6, typeDefs, order)
-	for _, col := range randomDocsCols {
-		for _, doc := range col.docs {
-			actions := generator.GenerateDocs(doc, col.colName)
-			resultActions = append(resultActions, actions...)
-		}
-	}*/
 	for _, doc := range docsList.Docs {
 		actions := generator.GenerateDocs(doc, docsList.ColName)
 		resultActions = append(resultActions, actions...)
 	}
-	return resultActions
+	res := make([]GeneratedDoc, len(resultActions))
+	for i, action := range resultActions {
+		res[i] = GeneratedDoc{ColIndex: action.CollectionID, JSON: action.Doc}
+	}
+	return res
 }
 
 func getRandomString(n int) string {
@@ -172,8 +177,8 @@ func toRequestedDoc(doc map[string]any, typeDef *typeDefinition) map[string]any 
 func (this *createDocGenerator) generatePrimary(
 	doc map[string]any,
 	typeDef *typeDefinition,
-) (map[string]any, []any) {
-	result := []any{}
+) (map[string]any, []testUtils.CreateDoc) {
+	result := []testUtils.CreateDoc{}
 	requested := toRequestedDoc(doc, typeDef)
 	for _, prop := range typeDef.props {
 		if prop.isRelation {
@@ -195,7 +200,7 @@ func (this *createDocGenerator) generatePrimary(
 	return requested, result
 }
 
-func (this *createDocGenerator) GenerateDocs(doc map[string]any, typeName string) []any {
+func (this *createDocGenerator) GenerateDocs(doc map[string]any, typeName string) []testUtils.CreateDoc {
 	typeDef := this.types[typeName]
 
 	requested, result := this.generatePrimary(doc, &typeDef)
@@ -229,16 +234,16 @@ func (this *createDocGenerator) generateSecondaryDocs(
 	primaryTypeName string,
 	relProp *propDefinition,
 	primaryDocKey string,
-) []any {
-	result := []any{}
+) []testUtils.CreateDoc {
+	result := []testUtils.CreateDoc{}
 	relTypeDef := this.types[relProp.typeStr]
 	primaryPropName := ""
 	for _, relDocProp := range relTypeDef.props {
 		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary {
 			primaryPropName = relDocProp.name + request.RelatedObjectID
 			switch relVal := primaryDoc[relProp.name].(type) {
-			case DocsList:
-				for _, relDoc := range relVal.Docs {
+			case []map[string]any:
+				for _, relDoc := range relVal {
 					relDoc[primaryPropName] = primaryDocKey
 					actions := this.GenerateDocs(relDoc, relTypeDef.name)
 					result = append(result, actions...)
