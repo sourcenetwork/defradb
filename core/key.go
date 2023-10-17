@@ -133,6 +133,9 @@ type CollectionIndexKey struct {
 
 var _ Key = (*CollectionIndexKey)(nil)
 
+// SchemaVersionKey points to the json serialized schema at the specified version.
+//
+// It's corresponding value is immutable.
 type SchemaVersionKey struct {
 	SchemaVersionID string
 }
