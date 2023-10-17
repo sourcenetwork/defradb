@@ -43,7 +43,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
@@ -106,7 +106,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
@@ -188,7 +188,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 				SetAsDefaultVersion: immutable.Some(true),

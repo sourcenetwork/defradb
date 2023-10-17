@@ -40,7 +40,7 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
@@ -102,7 +102,7 @@ func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},

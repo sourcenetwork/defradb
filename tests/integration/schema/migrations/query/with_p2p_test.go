@@ -39,7 +39,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				NodeID: immutable.Some(1),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 			},
@@ -129,7 +129,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 			},
@@ -221,7 +221,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
@@ -230,7 +230,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 			},

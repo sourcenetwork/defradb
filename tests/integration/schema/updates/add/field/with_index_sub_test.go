@@ -30,7 +30,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/email", "value": {"Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/email", "value": {"Kind": 11} }
 					]
 				`,
 			},
@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDefinedInValu
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/email", "value": {"Name": "email","Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/email", "value": {"Name": "email","Kind": 11} }
 					]
 				`,
 			},
@@ -94,7 +94,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithDifferentNameDefinedI
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/email", "value": {"Name": "different field name","Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/email", "value": {"Name": "different field name","Kind": 11} }
 					]
 				`,
 				ExpectedError: "the index used does not match the given name",
@@ -118,8 +118,8 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameMultipleTimes(t *testing.
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/email", "value": {"Kind": 11} },
-						{ "op": "test", "path": "/Users/Schema/Fields/email/Kind", "value": 11 }
+						{ "op": "add", "path": "/Users/Fields/email", "value": {"Kind": 11} },
+						{ "op": "test", "path": "/Users/Fields/email/Kind", "value": 11 }
 					]
 				`,
 			},

@@ -36,7 +36,7 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -84,7 +84,7 @@ func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
