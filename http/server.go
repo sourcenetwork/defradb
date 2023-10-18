@@ -81,7 +81,7 @@ type TLSOptions struct {
 }
 
 // NewServer instantiates a new server with the given http.Handler.
-func NewServer(db client.DB, options ...func(*Server)) *Server {
+func NewServer(db client.DB, options ...func(*Server)) (*Server, error) {
 	srv := &Server{
 		Server: http.Server{
 			ReadTimeout:  readTimeout,
@@ -94,9 +94,12 @@ func NewServer(db client.DB, options ...func(*Server)) *Server {
 		opt(srv)
 	}
 
-	srv.Handler = NewHandler(db, srv.options)
-
-	return srv
+	handler, err := NewHandler(db, srv.options)
+	if err != nil {
+		return nil, err
+	}
+	srv.Handler = handler
+	return srv, nil
 }
 
 func newHTTPRedirServer(m *autocert.Manager) *Server {

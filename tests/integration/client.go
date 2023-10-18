@@ -69,7 +69,7 @@ func setupClient(s *state, node *net.Node) (impl clients.Client, err error) {
 		impl, err = http.NewWrapper(node)
 
 	case CLIClientType:
-		impl = cli.NewWrapper(node)
+		impl, err = cli.NewWrapper(node)
 
 	case GoClientType:
 		impl = node

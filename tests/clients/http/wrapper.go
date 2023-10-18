@@ -36,9 +36,12 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *net.Node) (*Wrapper, error) {
-	handler := http.NewHandler(node, http.ServerOptions{})
-	httpServer := httptest.NewServer(handler)
+	handler, err := http.NewHandler(node, http.ServerOptions{})
+	if err != nil {
+		return nil, err
+	}
 
+	httpServer := httptest.NewServer(handler)
 	client, err := http.NewClient(httpServer.URL)
 	if err != nil {
 		return nil, err
