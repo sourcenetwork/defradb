@@ -28,14 +28,13 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/lens"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
@@ -119,35 +118,11 @@ func (db *db) createCollection(
 	}
 	desc.ID = uint32(colID)
 
-	for i := range schema.Fields {
-		schema.Fields[i].ID = client.FieldID(i)
-	}
-
-	col, err := db.newCollection(desc, schema)
+	schema, err = description.CreateSchemaVersion(ctx, txn, schema)
 	if err != nil {
 		return nil, err
 	}
-
-	// Local elements such as secondary indexes should be excluded
-	// from the (global) schemaId.
-	schemaBuf, err := json.Marshal(schema)
-	if err != nil {
-		return nil, err
-	}
-
-	// add a reference to this DB by desc hash
-	cid, err := ccid.NewSHA256CidV1(schemaBuf)
-	if err != nil {
-		return nil, err
-	}
-	schemaID := cid.String()
-
-	// For new schemas the initial version id will match the schema id
-	schemaVersionID := schemaID
-
-	schema.VersionID = schemaVersionID
-	schema.SchemaID = schemaID
-	desc.Schema = schema
+	desc.SchemaVersionID = schema.VersionID
 
 	// buffer must include all the ids, as it is saved and loaded from the store later.
 	buf, err := json.Marshal(desc)
@@ -155,7 +130,7 @@ func (db *db) createCollection(
 		return nil, err
 	}
 
-	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID)
+	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schema.VersionID)
 	// Whilst the schemaVersionKey is global, the data persisted at the key's location
 	// is local to the node (the global only elements are not useful beyond key generation).
 	err = txn.Systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
@@ -163,23 +138,21 @@ func (db *db) createCollection(
 		return nil, err
 	}
 
-	collectionSchemaKey := core.NewCollectionSchemaKey(schemaID)
-	err = txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
+	collectionSchemaKey := core.NewCollectionSchemaKey(schema.SchemaID)
+	err = txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schema.VersionID))
 	if err != nil {
 		return nil, err
 	}
 
-	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
+	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schema.VersionID))
 	if err != nil {
 		return nil, err
 	}
 
-	log.Debug(
-		ctx,
-		"Created collection",
-		logging.NewKV("Name", col.Name()),
-		logging.NewKV("SchemaID", col.SchemaID()),
-	)
+	col, err := db.newCollection(desc, schema)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, index := range desc.Indexes {
 		if _, err := col.createIndex(ctx, txn, index); err != nil {
@@ -203,12 +176,9 @@ func (db *db) updateSchema(
 	txn datastore.Txn,
 	existingSchemaByName map[string]client.SchemaDescription,
 	proposedDescriptionsByName map[string]client.SchemaDescription,
-	def client.CollectionDefinition,
+	schema client.SchemaDescription,
 	setAsDefaultVersion bool,
 ) (client.Collection, error) {
-	schema := def.Schema
-	desc := def.Description
-
 	hasChanged, err := db.validateUpdateSchema(
 		ctx,
 		txn,
@@ -221,7 +191,7 @@ func (db *db) updateSchema(
 	}
 
 	if !hasChanged {
-		return db.getCollectionByName(ctx, txn, desc.Name)
+		return db.getCollectionByName(ctx, txn, schema.Name)
 	}
 
 	for _, field := range schema.Fields {
@@ -239,14 +209,6 @@ func (db *db) updateSchema(
 	}
 
 	for i, field := range schema.Fields {
-		if field.ID == client.FieldID(0) {
-			// This is not wonderful and will probably break when we add the ability
-			// to delete fields, however it is good enough for now and matches the
-			// create behaviour.
-			field.ID = client.FieldID(i)
-			schema.Fields[i] = field
-		}
-
 		if field.Typ == client.NONE_CRDT {
 			// If no CRDT Type has been provided, default to LWW_REGISTER.
 			field.Typ = client.LWW_REGISTER
@@ -254,26 +216,24 @@ func (db *db) updateSchema(
 		}
 	}
 
-	globalSchemaBuf, err := json.Marshal(schema)
+	schema, err = description.CreateSchemaVersion(ctx, txn, schema)
 	if err != nil {
 		return nil, err
 	}
 
-	cid, err := ccid.NewSHA256CidV1(globalSchemaBuf)
+	col, err := db.getCollectionByName(ctx, txn, schema.Name)
 	if err != nil {
 		return nil, err
 	}
-	previousSchemaVersionID := schema.VersionID
-	schemaVersionID := cid.String()
-	schema.VersionID = schemaVersionID
-	desc.Schema = schema
+	desc := col.Description()
+	desc.SchemaVersionID = schema.VersionID
 
 	buf, err := json.Marshal(desc)
 	if err != nil {
 		return nil, err
 	}
 
-	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID)
+	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schema.VersionID)
 	// Whilst the schemaVersionKey is global, the data persisted at the key's location
 	// is local to the node (the global only elements are not useful beyond key generation).
 	err = txn.Systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
@@ -281,14 +241,8 @@ func (db *db) updateSchema(
 		return nil, err
 	}
 
-	schemaVersionHistoryKey := core.NewSchemaHistoryKey(schema.SchemaID, previousSchemaVersionID)
-	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
-	}
-
 	if setAsDefaultVersion {
-		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, schema.SchemaID, schemaVersionID)
+		err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, schema.SchemaID, schema.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -308,6 +262,10 @@ func (db *db) validateUpdateSchema(
 	proposedDescriptionsByName map[string]client.SchemaDescription,
 	proposedDesc client.SchemaDescription,
 ) (bool, error) {
+	if proposedDesc.Name == "" {
+		return false, ErrSchemaNameEmpty
+	}
+
 	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
 	if !collectionExists {
 		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
@@ -538,7 +496,7 @@ func (db *db) setDefaultSchemaVersion(
 	}
 
 	desc := col.Description()
-	err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, desc.Schema.SchemaID, schemaVersionID)
+	err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, col.Schema().SchemaID, schemaVersionID)
 	if err != nil {
 		return err
 	}
@@ -597,11 +555,16 @@ func (db *db) getCollectionByVersionID(
 		return nil, err
 	}
 
+	schema, err := description.GetSchemaVersion(ctx, txn, desc.SchemaVersionID)
+	if err != nil {
+		return nil, err
+	}
+
 	col := &collection{
 		db: db,
 		def: client.CollectionDefinition{
 			Description: desc,
-			Schema:      desc.Schema,
+			Schema:      schema,
 		},
 	}
 
