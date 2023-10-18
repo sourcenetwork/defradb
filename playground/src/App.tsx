@@ -15,15 +15,16 @@ import { GraphiQLPlugin } from '@graphiql/react'
 import 'swagger-ui-react/swagger-ui.css'
 import 'graphiql/graphiql.css'
 
+const baseUrl = import.meta.env.DEV ? 'http://localhost:9181' : ''
 const SwaggerUI = React.lazy(() => import('swagger-ui-react'))
-const fetcher = createGraphiQLFetcher({ url: 'http://localhost:9181/api/v0/graphql' })
+const fetcher = createGraphiQLFetcher({ url: `${baseUrl}/api/v0/graphql` })
 
 const plugin: GraphiQLPlugin = {
   title: 'DefraDB API',
   icon: () => (<div>API</div>),
   content: () => (
     <React.Suspense>
-      <SwaggerUI url="http://localhost:9181/openapi.json" />
+      <SwaggerUI url={`${baseUrl}/openapi.json`} />
     </React.Suspense>
   ),
 }
