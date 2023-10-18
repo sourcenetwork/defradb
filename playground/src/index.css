@@ -18,86 +18,51 @@ html, body, #root {
   height: 100vh;
 }
 
-.graphiql-defradb-plugin {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.swagger-ui .opblock .opblock-summary {
+  overflow-x: hidden;
 }
 
-.graphiql-defradb-header {
-  margin-top: 0;
-  font-size: var(--font-size-h2);
-  font-weight: var(--font-weight-medium);
+.swagger-ui .opblock .opblock-summary-path {
+  color: hsla(var(--color-neutral), var(--alpha-secondary));
+  text-overflow: clip;
+  white-space: nowrap;
+  max-width: none;
 }
 
-.graphiql-defradb-subheader {
-  margin: 0;
-  font-size: var(--font-size-h3);
-  font-weight: var(--font-weight-medium);
+.swagger-ui .scheme-container {
+  background-color: hsl(var(--color-base));
+  box-shadow: none;
 }
 
-.graphiql-defradb-input-label {
-  margin: 0;
-  font-size: var(--font-size-h5);
-  font-weight: var(--font-weight-medium);
+.swagger-ui .opblock-tag {
+  border-bottom: 1px solid hsla(var(--color-neutral), var(--alpha-secondary));
 }
 
-.graphiql-defradb-error {
-  color: rgb(255, 93, 93);
-  border: 2px solid rgb(255, 93, 93);
-  border-radius: var(--border-radius-4);
-  padding: var(--px-8);
+.swagger-ui,
+.swagger-ui .opblock-tag,
+.swagger-ui .info .title,
+.swagger-ui .opblock-description-wrapper p,
+.swagger-ui .opblock .opblock-section-header h4,
+.swagger-ui .btn,
+.swagger-ui .opblock .opblock-section-header,
+.swagger-ui .tab li button.tablinks,
+.swagger-ui .model-title,
+.swagger-ui .model,
+.swagger-ui .response-col_status,
+.swagger-ui table thead tr td,
+.swagger-ui .response-col_links,
+.swagger-ui section.models h4,
+.swagger-ui .responses-inner h4,
+.swagger-ui .responses-inner h5,
+.swagger-ui .renderedMarkdown p {
+  color: hsla(var(--color-neutral), var(--alpha-secondary));
 }
 
-.graphiql-defradb-input {
-  height: 30px;
-  width: 100%;
-
-  font-size: var(--font-size-body);
-  color: var(--color-neutral);
-
-  background-color: var(--color-primary);
-  border: 2px solid hsla(var(--color-neutral), var(--alpha-background-light));
-  border-radius: var(--border-radius-4);
+.swagger-ui .opblock-tag small {
+  white-space: nowrap;
+  overflow-x: hidden;
 }
 
-.graphiql-defradb-textarea {
-  min-height: 300px;
-  width: 100%;
-  resize: vertical;
-
-  font-size: var(--font-size-body);
-  color: var(--color-neutral);
-
-  background-color: var(--color-primary);
-  border: 2px solid hsla(var(--color-neutral), var(--alpha-background-light));
-  border-radius: var(--border-radius-4);
-}
-
-.graphiql-defradb-load-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--px-8);
-}
-
-.graphiql-defradb-form {
-  border-radius: var(--border-radius-4);
-  border: 2px solid hsla(var(--color-neutral), var(--alpha-background-light));
-  padding: var(--px-16);
-
-  display: flex;
-  flex-direction: column;
-  gap: var(--px-8);
-}
-
-.graphiql-defradb-field-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.graphiql-defradb-field {
-  display: flex;
-  align-items: center;
-  gap: var(--px-8);
+.swagger-ui .opblock .opblock-section-header {
+  background-color: hsl(var(--color-base));
 }
