@@ -31,7 +31,7 @@ func TestSchemaUpdatesRemoveFieldErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/Fields/2" }
+						{ "op": "remove", "path": "/Users/Fields/2" }
 					]
 				`,
 				ExpectedError: "deleting an existing field is not supported. Name: name",
@@ -56,7 +56,7 @@ func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/Fields" }
+						{ "op": "remove", "path": "/Users/Fields" }
 					]
 				`,
 				ExpectedError: "deleting an existing field is not supported",
@@ -81,7 +81,7 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/Fields/2/Name" }
+						{ "op": "remove", "path": "/Users/Fields/2/Name" }
 					]
 				`,
 				ExpectedError: "mutating an existing field is not supported. ID: 2, ProposedName: ",
@@ -106,7 +106,7 @@ func TestSchemaUpdatesRemoveFieldIDErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/Fields/2/ID" }
+						{ "op": "remove", "path": "/Users/Fields/2/ID" }
 					]
 				`,
 				ExpectedError: "deleting an existing field is not supported. Name: name, ID: 2",
@@ -131,7 +131,7 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/Fields/2/Kind" }
+						{ "op": "remove", "path": "/Users/Fields/2/Kind" }
 					]
 				`,
 				ExpectedError: "mutating an existing field is not supported. ID: 2, ProposedName: ",
@@ -156,7 +156,7 @@ func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/Fields/2/Typ" }
+						{ "op": "remove", "path": "/Users/Fields/2/Typ" }
 					]
 				`,
 				ExpectedError: "mutating an existing field is not supported. ID: 2, ProposedName: ",
@@ -185,7 +185,7 @@ func TestSchemaUpdatesRemoveFieldSchemaErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Author/Schema/Fields/1/Schema" }
+						{ "op": "remove", "path": "/Author/Fields/1/Schema" }
 					]
 				`,
 				ExpectedError: "mutating an existing field is not supported. ID: 1, ProposedName: book",
@@ -214,7 +214,7 @@ func TestSchemaUpdatesRemoveFieldRelationNameErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Author/Schema/Fields/1/RelationName" }
+						{ "op": "remove", "path": "/Author/Fields/1/RelationName" }
 					]
 				`,
 				ExpectedError: "mutating an existing field is not supported. ID: 1, ProposedName: book",
@@ -243,7 +243,7 @@ func TestSchemaUpdatesRemoveFieldRelationTypeErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Author/Schema/Fields/1/RelationType" }
+						{ "op": "remove", "path": "/Author/Fields/1/RelationType" }
 					]
 				`,
 				ExpectedError: "mutating an existing field is not supported. ID: 1, ProposedName: book",

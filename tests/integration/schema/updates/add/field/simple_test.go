@@ -32,7 +32,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -64,7 +64,7 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_Errors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
@@ -129,8 +129,8 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "city", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "city", "Kind": 11} }
 					]
 				`,
 			},
@@ -163,14 +163,14 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "city", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "city", "Kind": 11} }
 					]
 				`,
 			},
@@ -203,7 +203,7 @@ func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Kind": 11} }
 					]
 				`,
 				ExpectedError: "Names must match /^[_a-zA-Z][_a-zA-Z0-9]*$/ but \"\" does not.",
@@ -228,8 +228,8 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 				// Email field is valid, City field has invalid kind
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "city", "Kind": 111} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "city", "Kind": 111} }
 					]
 				`,
 				ExpectedError: "no type found for given name. Type: 111",
@@ -272,7 +272,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "name", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "duplicate field. Name: name",
@@ -296,8 +296,8 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "duplicate field. Name: email",
@@ -321,7 +321,7 @@ func TestSchemaUpdatesAddFieldWithExplicitIDErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"ID": 2, "Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"ID": 2, "Name": "email", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "explicitly setting a field ID value is not supported. Field: email, ID: 2",

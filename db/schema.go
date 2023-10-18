@@ -23,13 +23,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/description"
 )
 
 const (
 	schemaNamePathIndex int = 0
-	schemaPathIndex     int = 1
-	fieldsPathIndex     int = 2
-	fieldIndexPathIndex int = 3
+	fieldsPathIndex     int = 1
+	fieldIndexPathIndex int = 2
 )
 
 // addSchema takes the provided schema in SDL format, and applies it to the database,
@@ -85,7 +85,7 @@ func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
 	return db.parser.SetSchema(ctx, txn, definitions)
 }
 
-// patchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
+// patchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
 // present in the database.
 //
 // It will also update the GQL types used by the query system. It will error and not apply any of the
@@ -102,23 +102,23 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		return err
 	}
 
-	collectionsByName, err := db.getCollectionsByName(ctx, txn)
+	schemas, err := description.GetSchemas(ctx, txn)
 	if err != nil {
 		return err
 	}
 
 	existingSchemaByName := map[string]client.SchemaDescription{}
-	for _, col := range collectionsByName {
-		existingSchemaByName[col.Schema.Name] = col.Schema
+	for _, schema := range schemas {
+		existingSchemaByName[schema.Name] = schema
 	}
 
 	// Here we swap out any string representations of enums for their integer values
-	patch, err = substituteSchemaPatch(patch, collectionsByName)
+	patch, err = substituteSchemaPatch(patch, existingSchemaByName)
 	if err != nil {
 		return err
 	}
 
-	existingDescriptionJson, err := json.Marshal(collectionsByName)
+	existingDescriptionJson, err := json.Marshal(existingSchemaByName)
 	if err != nil {
 		return err
 	}
@@ -128,58 +128,32 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		return err
 	}
 
-	var newDescriptionsByName map[string]client.CollectionDescription
+	var newSchemaByName map[string]client.SchemaDescription
 	decoder := json.NewDecoder(strings.NewReader(string(newDescriptionJson)))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&newDescriptionsByName)
+	err = decoder.Decode(&newSchemaByName)
 	if err != nil {
 		return err
 	}
 
 	newCollections := []client.CollectionDefinition{}
-	newSchemaByName := map[string]client.SchemaDescription{}
-	for _, desc := range newDescriptionsByName {
-		def := client.CollectionDefinition{Description: desc, Schema: desc.Schema}
-
-		newCollections = append(newCollections, def)
-		newSchemaByName[def.Schema.Name] = def.Schema
-	}
-
-	for i, col := range newCollections {
-		col, err := db.updateCollection(
+	for _, schema := range newSchemaByName {
+		col, err := db.updateSchema(
 			ctx,
 			txn,
-			collectionsByName,
 			existingSchemaByName,
 			newSchemaByName,
-			col,
+			schema,
 			setAsDefaultVersion,
 		)
 		if err != nil {
 			return err
 		}
 
-		newCollections[i] = col.Definition()
+		newCollections = append(newCollections, col.Definition())
 	}
 
 	return db.parser.SetSchema(ctx, txn, newCollections)
-}
-
-func (db *db) getCollectionsByName(
-	ctx context.Context,
-	txn datastore.Txn,
-) (map[string]client.CollectionDescription, error) {
-	collections, err := db.getAllCollections(ctx, txn)
-	if err != nil {
-		return nil, err
-	}
-
-	collectionsByName := map[string]client.CollectionDescription{}
-	for _, collection := range collections {
-		collectionsByName[collection.Name()] = collection.Description()
-	}
-
-	return collectionsByName, nil
 }
 
 // substituteSchemaPatch handles any substitution of values that may be required before
@@ -189,13 +163,13 @@ func (db *db) getCollectionsByName(
 // value.
 func substituteSchemaPatch(
 	patch jsonpatch.Patch,
-	collectionsByName map[string]client.CollectionDescription,
+	schemaByName map[string]client.SchemaDescription,
 ) (jsonpatch.Patch, error) {
-	fieldIndexesByCollection := make(map[string]map[string]int, len(collectionsByName))
-	for colName, col := range collectionsByName {
-		fieldIndexesByName := make(map[string]int, len(col.Schema.Fields))
-		fieldIndexesByCollection[colName] = fieldIndexesByName
-		for i, field := range col.Schema.Fields {
+	fieldIndexesBySchema := make(map[string]map[string]int, len(schemaByName))
+	for schemaName, schema := range schemaByName {
+		fieldIndexesByName := make(map[string]int, len(schema.Fields))
+		fieldIndexesBySchema[schemaName] = fieldIndexesByName
+		for i, field := range schema.Fields {
 			fieldIndexesByName[field.Name] = i
 		}
 	}
@@ -238,9 +212,9 @@ func substituteSchemaPatch(
 						newPatchValue = immutable.Some[any](field)
 					}
 
-					desc := collectionsByName[splitPath[schemaNamePathIndex]]
+					desc := schemaByName[splitPath[schemaNamePathIndex]]
 					var index string
-					if fieldIndexesByName, ok := fieldIndexesByCollection[desc.Name]; ok {
+					if fieldIndexesByName, ok := fieldIndexesBySchema[desc.Name]; ok {
 						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
 							index = fmt.Sprint(i)
 						}
@@ -249,7 +223,7 @@ func substituteSchemaPatch(
 						index = "-"
 						// If this is a new field we need to track its location so that subsequent operations
 						// within the patch may access it by field name.
-						fieldIndexesByCollection[desc.Name][fieldIndexer] = len(fieldIndexesByCollection[desc.Name])
+						fieldIndexesBySchema[desc.Name][fieldIndexer] = len(fieldIndexesBySchema[desc.Name])
 					}
 
 					splitPath[fieldIndexPathIndex] = index
@@ -261,17 +235,17 @@ func substituteSchemaPatch(
 
 			if isField {
 				if kind, isString := field["Kind"].(string); isString {
-					substitute, collectionName, err := getSubstituteFieldKind(kind, collectionsByName)
+					substitute, schemaName, err := getSubstituteFieldKind(kind, schemaByName)
 					if err != nil {
 						return nil, err
 					}
 
 					field["Kind"] = substitute
-					if collectionName != "" {
-						if field["Schema"] != nil && field["Schema"] != collectionName {
+					if schemaName != "" {
+						if field["Schema"] != nil && field["Schema"] != schemaName {
 							return nil, NewErrFieldKindDoesNotMatchFieldSchema(kind, field["Schema"].(string))
 						}
-						field["Schema"] = collectionName
+						field["Schema"] = schemaName
 					}
 
 					newPatchValue = immutable.Some[any](field)
@@ -284,7 +258,7 @@ func substituteSchemaPatch(
 				}
 
 				if kind, isString := kind.(string); isString {
-					substitute, _, err := getSubstituteFieldKind(kind, collectionsByName)
+					substitute, _, err := getSubstituteFieldKind(kind, schemaByName)
 					if err != nil {
 						return nil, err
 					}
@@ -314,7 +288,7 @@ func substituteSchemaPatch(
 // If the value represents a foreign relation the collection name will also be returned.
 func getSubstituteFieldKind(
 	kind string,
-	collectionsByName map[string]client.CollectionDescription,
+	schemaByName map[string]client.SchemaDescription,
 ) (client.FieldKind, string, error) {
 	substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
 	if substituteFound {
@@ -330,7 +304,7 @@ func getSubstituteFieldKind(
 			substitute = client.FieldKind_FOREIGN_OBJECT
 		}
 
-		if _, substituteFound := collectionsByName[collectionName]; substituteFound {
+		if _, substituteFound := schemaByName[collectionName]; substituteFound {
 			return substitute, collectionName, nil
 		}
 
@@ -341,20 +315,19 @@ func getSubstituteFieldKind(
 // isFieldOrInner returns true if the given path points to a FieldDescription or a property within it.
 func isFieldOrInner(path []string) bool {
 	//nolint:goconst
-	return len(path) >= 4 && path[fieldsPathIndex] == "Fields" && path[schemaPathIndex] == "Schema"
+	return len(path) >= 3 && path[fieldsPathIndex] == "Fields"
 }
 
 // isField returns true if the given path points to a FieldDescription.
 func isField(path []string) bool {
-	return len(path) == 4 && path[fieldsPathIndex] == "Fields" && path[schemaPathIndex] == "Schema"
+	return len(path) == 3 && path[fieldsPathIndex] == "Fields"
 }
 
 // isField returns true if the given path points to a FieldDescription.Kind property.
 func isFieldKind(path []string) bool {
-	return len(path) == 5 &&
+	return len(path) == 4 &&
 		path[fieldIndexPathIndex+1] == "Kind" &&
-		path[fieldsPathIndex] == "Fields" &&
-		path[schemaPathIndex] == "Schema"
+		path[fieldsPathIndex] == "Fields"
 }
 
 // containsLetter returns true if the string contains a single unicode character.
