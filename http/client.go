@@ -349,6 +349,10 @@ func (c *Client) Blockstore() blockstore.Blockstore {
 	panic("client side database")
 }
 
+func (c *Client) Peerstore() datastore.DSBatching {
+	panic("client side database")
+}
+
 func (c *Client) Events() events.Events {
 	panic("client side database")
 }

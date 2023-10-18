@@ -49,8 +49,7 @@ func NewConcurrentTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uin
 	}
 
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
-	root := AsDSReaderWriter(rootConcurentTxn)
-	multistore := MultiStoreFrom(root)
+	multistore := MultiStoreFrom(rootConcurentTxn)
 	return &txn{
 		rootConcurentTxn,
 		multistore,

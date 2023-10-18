@@ -66,7 +66,7 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, reado
 		if err != nil {
 			return nil, err
 		}
-		multistore := MultiStoreFrom(rootTxn)
+		multistore := MultiStoreFrom(ShimTxnStore{rootTxn})
 		return &txn{
 			rootTxn,
 			multistore,
@@ -82,8 +82,7 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, reado
 		return nil, err
 	}
 
-	root := AsDSReaderWriter(ShimTxnStore{rootTxn})
-	multistore := MultiStoreFrom(root)
+	multistore := MultiStoreFrom(ShimTxnStore{rootTxn})
 	return &txn{
 		rootTxn,
 		multistore,

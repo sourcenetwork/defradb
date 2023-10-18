@@ -113,8 +113,7 @@ func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 
 func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*implicitTxnDB, error) {
 	log.Debug(ctx, "Loading: internal datastores")
-	root := datastore.AsDSReaderWriter(rootstore)
-	multistore := datastore.MultiStoreFrom(root)
+	multistore := datastore.MultiStoreFrom(rootstore)
 	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
 	parser, err := graphql.NewParser()
@@ -181,6 +180,11 @@ func (db *db) Root() datastore.RootStore {
 // Blockstore returns the internal DAG store which contains IPLD blocks.
 func (db *db) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
+}
+
+// Peerstore returns the internal DAG store which contains IPLD blocks.
+func (db *db) Peerstore() datastore.DSBatching {
+	return db.multistore.Peerstore()
 }
 
 func (db *db) LensRegistry() client.LensRegistry {
