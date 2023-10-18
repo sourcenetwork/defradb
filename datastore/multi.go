@@ -12,21 +12,24 @@ package datastore
 
 import (
 	ds "github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/namespace"
 )
 
 var (
 	// Individual Store Keys
-	rootStoreKey   = ds.NewKey("/db")
-	systemStoreKey = rootStoreKey.ChildString("/system")
-	dataStoreKey   = rootStoreKey.ChildString("/data")
-	headStoreKey   = rootStoreKey.ChildString("/heads")
-	blockStoreKey  = rootStoreKey.ChildString("/blocks")
+	rootStoreKey   = ds.NewKey("db")
+	systemStoreKey = rootStoreKey.ChildString("system")
+	dataStoreKey   = rootStoreKey.ChildString("data")
+	headStoreKey   = rootStoreKey.ChildString("heads")
+	blockStoreKey  = rootStoreKey.ChildString("blocks")
+	peerStoreKey   = rootStoreKey.ChildString("ps")
 )
 
 type multistore struct {
 	root   DSReaderWriter
 	data   DSReaderWriter
 	head   DSReaderWriter
+	peer   DSBatching
 	system DSReaderWriter
 	// block DSReaderWriter
 	dag DAGStore
@@ -35,14 +38,16 @@ type multistore struct {
 var _ MultiStore = (*multistore)(nil)
 
 // MultiStoreFrom creates a MultiStore from a root datastore.
-func MultiStoreFrom(rootstore DSReaderWriter) MultiStore {
-	block := prefix(rootstore, blockStoreKey)
+func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
+	rootRW := AsDSReaderWriter(rootstore)
 	ms := &multistore{
-		root:   rootstore,
-		data:   prefix(rootstore, dataStoreKey),
-		head:   prefix(rootstore, headStoreKey),
-		system: prefix(rootstore, systemStoreKey),
-		dag:    NewDAGStore(block),
+		root: rootRW,
+		data: prefix(rootRW, dataStoreKey),
+		head: prefix(rootRW, headStoreKey),
+		// the `peers` prefix is assigned by the libp2p peerstore
+		peer:   namespace.Wrap(rootstore, peerStoreKey),
+		system: prefix(rootRW, systemStoreKey),
+		dag:    NewDAGStore(prefix(rootRW, blockStoreKey)),
 	}
 
 	return ms
@@ -56,6 +61,11 @@ func (ms multistore) Datastore() DSReaderWriter {
 // Headstore implements MultiStore.
 func (ms multistore) Headstore() DSReaderWriter {
 	return ms.head
+}
+
+// Peerstore implements MultiStore.
+func (ms multistore) Peerstore() DSBatching {
+	return ms.peer
 }
 
 // DAGstore implements MultiStore.

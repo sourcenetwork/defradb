@@ -171,6 +171,10 @@ func (w *Wrapper) Blockstore() blockstore.Blockstore {
 	return w.node.Blockstore()
 }
 
+func (w *Wrapper) Peerstore() datastore.DSBatching {
+	return w.node.Peerstore()
+}
+
 func (w *Wrapper) Close() {
 	w.httpServer.CloseClientConnections()
 	w.httpServer.Close()
