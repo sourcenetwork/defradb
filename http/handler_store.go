@@ -17,6 +17,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -269,4 +271,181 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 			flusher.Flush()
 		}
 	}
+}
+
+func (h *storeHandler) bindRoutes(router *Router) {
+	successResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/success",
+	}
+	errorResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/error",
+	}
+	collectionSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/collection",
+	}
+	graphQLRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/graphql_request",
+	}
+	graphQLResponseSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/graphql_response",
+	}
+	backupConfigSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/backup_config",
+	}
+	patchSchemaRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/patch_schema_request",
+	}
+
+	collectionArraySchema := openapi3.NewArraySchema()
+	collectionArraySchema.Items = collectionSchema
+
+	addSchemaResponse := openapi3.NewResponse().
+		WithDescription("Collection(s)").
+		WithJSONSchema(collectionArraySchema)
+
+	addSchemaRequest := openapi3.NewRequestBody().
+		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
+
+	addSchema := openapi3.NewOperation()
+	addSchema.OperationID = "add_schema"
+	addSchema.Description = "Add a new schema definition"
+	addSchema.Tags = []string{"schema"}
+	addSchema.RequestBody = &openapi3.RequestBodyRef{
+		Value: addSchemaRequest,
+	}
+	addSchema.AddResponse(200, addSchemaResponse)
+	addSchema.Responses["400"] = errorResponse
+
+	patchSchemaRequest := openapi3.NewRequestBody().
+		WithJSONSchemaRef(patchSchemaRequestSchema)
+
+	patchSchema := openapi3.NewOperation()
+	patchSchema.OperationID = "patch_schema"
+	patchSchema.Description = "Update a schema definition"
+	patchSchema.Tags = []string{"schema"}
+	patchSchema.RequestBody = &openapi3.RequestBodyRef{
+		Value: patchSchemaRequest,
+	}
+	patchSchema.Responses = make(openapi3.Responses)
+	patchSchema.Responses["200"] = successResponse
+	patchSchema.Responses["400"] = errorResponse
+
+	setDefaultSchemaVersionRequest := openapi3.NewRequestBody().
+		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
+
+	setDefaultSchemaVersion := openapi3.NewOperation()
+	setDefaultSchemaVersion.OperationID = "set_default_schema_version"
+	setDefaultSchemaVersion.Description = "Set the default schema version for a collection"
+	setDefaultSchemaVersion.Tags = []string{"schema"}
+	setDefaultSchemaVersion.RequestBody = &openapi3.RequestBodyRef{
+		Value: setDefaultSchemaVersionRequest,
+	}
+	setDefaultSchemaVersion.Responses = make(openapi3.Responses)
+	setDefaultSchemaVersion.Responses["200"] = successResponse
+	setDefaultSchemaVersion.Responses["400"] = errorResponse
+
+	backupRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithJSONSchemaRef(backupConfigSchema)
+
+	backupExport := openapi3.NewOperation()
+	backupExport.OperationID = "backup_export"
+	backupExport.Description = "Export a database backup to file"
+	backupExport.Tags = []string{"backup"}
+	backupExport.Responses = make(openapi3.Responses)
+	backupExport.Responses["200"] = successResponse
+	backupExport.Responses["400"] = errorResponse
+	backupExport.RequestBody = &openapi3.RequestBodyRef{
+		Value: backupRequest,
+	}
+
+	backupImport := openapi3.NewOperation()
+	backupImport.OperationID = "backup_import"
+	backupImport.Description = "Import a database backup from file"
+	backupImport.Tags = []string{"backup"}
+	backupImport.Responses = make(openapi3.Responses)
+	backupImport.Responses["200"] = successResponse
+	backupImport.Responses["400"] = errorResponse
+	backupImport.RequestBody = &openapi3.RequestBodyRef{
+		Value: backupRequest,
+	}
+
+	collectionNameQueryParam := openapi3.NewQueryParameter("name").
+		WithDescription("Collection name").
+		WithSchema(openapi3.NewStringSchema())
+	collectionSchemaIdQueryParam := openapi3.NewQueryParameter("schema_id").
+		WithDescription("Collection schema id").
+		WithSchema(openapi3.NewStringSchema())
+	collectionVersionIdQueryParam := openapi3.NewQueryParameter("version_id").
+		WithDescription("Collection schema version id").
+		WithSchema(openapi3.NewStringSchema())
+
+	collectionsSchema := openapi3.NewArraySchema()
+	collectionsSchema.Items = collectionSchema
+
+	collectionResponseSchema := openapi3.NewOneOfSchema()
+	collectionResponseSchema.OneOf = openapi3.SchemaRefs{
+		collectionSchema,
+		openapi3.NewSchemaRef("", collectionsSchema),
+	}
+
+	collectionsResponse := openapi3.NewResponse().
+		WithDescription("Collection(s) with matching name, schema id, or version id.").
+		WithJSONSchema(collectionResponseSchema)
+
+	collectionDescribe := openapi3.NewOperation()
+	collectionDescribe.OperationID = "collection_describe"
+	collectionDescribe.Description = "Introspect collection(s) by name, schema id, or version id."
+	collectionDescribe.Tags = []string{"collection"}
+	collectionDescribe.AddParameter(collectionNameQueryParam)
+	collectionDescribe.AddParameter(collectionSchemaIdQueryParam)
+	collectionDescribe.AddParameter(collectionVersionIdQueryParam)
+	collectionDescribe.AddResponse(200, collectionsResponse)
+	collectionDescribe.Responses["400"] = errorResponse
+
+	graphQLRequest := openapi3.NewRequestBody().
+		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
+
+	graphQLResponse := openapi3.NewResponse().
+		WithDescription("GraphQL response").
+		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLResponseSchema))
+
+	graphQLPost := openapi3.NewOperation()
+	graphQLPost.Description = "GraphQL POST endpoint"
+	graphQLPost.OperationID = "graphql_post"
+	graphQLPost.Tags = []string{"graphql"}
+	graphQLPost.RequestBody = &openapi3.RequestBodyRef{
+		Value: graphQLRequest,
+	}
+	graphQLPost.AddResponse(200, graphQLResponse)
+	graphQLPost.Responses["400"] = errorResponse
+
+	graphQLQueryParam := openapi3.NewQueryParameter("query").
+		WithSchema(openapi3.NewStringSchema())
+
+	graphQLGet := openapi3.NewOperation()
+	graphQLGet.Description = "GraphQL GET endpoint"
+	graphQLGet.OperationID = "graphql_get"
+	graphQLGet.Tags = []string{"graphql"}
+	graphQLGet.AddParameter(graphQLQueryParam)
+	graphQLGet.AddResponse(200, graphQLResponse)
+	graphQLGet.Responses["400"] = errorResponse
+
+	debugDump := openapi3.NewOperation()
+	debugDump.Description = "Dump database"
+	debugDump.OperationID = "debug_dump"
+	debugDump.Tags = []string{"debug"}
+	debugDump.Responses = make(openapi3.Responses)
+	debugDump.Responses["200"] = successResponse
+	debugDump.Responses["400"] = errorResponse
+
+	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
+	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
+	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
+	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
+	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
+	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
+	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
+	router.AddRoute("/schema", http.MethodPatch, patchSchema, h.PatchSchema)
+	router.AddRoute("/schema/default", http.MethodPost, setDefaultSchemaVersion, h.SetDefaultSchemaVersion)
 }

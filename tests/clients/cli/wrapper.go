@@ -39,8 +39,12 @@ type Wrapper struct {
 	httpServer *httptest.Server
 }
 
-func NewWrapper(node *net.Node) *Wrapper {
-	handler := http.NewHandler(node, http.ServerOptions{})
+func NewWrapper(node *net.Node) (*Wrapper, error) {
+	handler, err := http.NewHandler(node, http.ServerOptions{})
+	if err != nil {
+		return nil, err
+	}
+
 	httpServer := httptest.NewServer(handler)
 	cmd := newCliWrapper(httpServer.URL)
 
@@ -49,7 +53,7 @@ func NewWrapper(node *net.Node) *Wrapper {
 		cmd:        cmd,
 		httpServer: httpServer,
 		handler:    handler,
-	}
+	}, nil
 }
 
 func (w *Wrapper) PeerInfo() peer.AddrInfo {

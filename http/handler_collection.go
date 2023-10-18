@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -330,4 +331,203 @@ func (s *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *collectionHandler) bindRoutes(router *Router) {
+	errorResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/error",
+	}
+	successResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/success",
+	}
+	collectionUpdateSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/collection_update",
+	}
+	updateResultSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/update_result",
+	}
+	collectionDeleteSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/collection_delete",
+	}
+	deleteResultSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/delete_result",
+	}
+	documentSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/document",
+	}
+	indexSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/index",
+	}
+
+	collectionNamePathParam := openapi3.NewPathParameter("name").
+		WithDescription("Collection name").
+		WithRequired(true).
+		WithSchema(openapi3.NewStringSchema())
+
+	documentArraySchema := openapi3.NewArraySchema()
+	documentArraySchema.Items = documentSchema
+
+	collectionCreateSchema := openapi3.NewOneOfSchema()
+	collectionCreateSchema.OneOf = openapi3.SchemaRefs{
+		documentSchema,
+		openapi3.NewSchemaRef("", documentArraySchema),
+	}
+
+	collectionCreateRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchema(collectionCreateSchema))
+
+	collectionCreate := openapi3.NewOperation()
+	collectionCreate.OperationID = "collection_create"
+	collectionCreate.Description = "Create document(s) in a collection"
+	collectionCreate.Tags = []string{"collection"}
+	collectionCreate.AddParameter(collectionNamePathParam)
+	collectionCreate.RequestBody = &openapi3.RequestBodyRef{
+		Value: collectionCreateRequest,
+	}
+	collectionCreate.Responses = make(openapi3.Responses)
+	collectionCreate.Responses["200"] = successResponse
+	collectionCreate.Responses["400"] = errorResponse
+
+	collectionUpdateWithRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(collectionUpdateSchema))
+
+	collectionUpdateWithResponse := openapi3.NewResponse().
+		WithDescription("Update results").
+		WithJSONSchemaRef(updateResultSchema)
+
+	collectionUpdateWith := openapi3.NewOperation()
+	collectionUpdateWith.OperationID = "collection_update_with"
+	collectionUpdateWith.Description = "Update document(s) in a collection"
+	collectionUpdateWith.Tags = []string{"collection"}
+	collectionUpdateWith.AddParameter(collectionNamePathParam)
+	collectionUpdateWith.RequestBody = &openapi3.RequestBodyRef{
+		Value: collectionUpdateWithRequest,
+	}
+	collectionUpdateWith.AddResponse(200, collectionUpdateWithResponse)
+	collectionUpdateWith.Responses["400"] = errorResponse
+
+	collectionDeleteWithRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(collectionDeleteSchema))
+
+	collectionDeleteWithResponse := openapi3.NewResponse().
+		WithDescription("Delete results").
+		WithJSONSchemaRef(deleteResultSchema)
+
+	collectionDeleteWith := openapi3.NewOperation()
+	collectionDeleteWith.OperationID = "collections_delete_with"
+	collectionDeleteWith.Description = "Delete document(s) from a collection"
+	collectionDeleteWith.Tags = []string{"collection"}
+	collectionDeleteWith.AddParameter(collectionNamePathParam)
+	collectionDeleteWith.RequestBody = &openapi3.RequestBodyRef{
+		Value: collectionDeleteWithRequest,
+	}
+	collectionDeleteWith.AddResponse(200, collectionDeleteWithResponse)
+	collectionDeleteWith.Responses["400"] = errorResponse
+
+	createIndexRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(indexSchema))
+	createIndexResponse := openapi3.NewResponse().
+		WithDescription("Index description").
+		WithJSONSchemaRef(indexSchema)
+
+	createIndex := openapi3.NewOperation()
+	createIndex.OperationID = "index_create"
+	createIndex.Description = "Create a secondary index"
+	createIndex.Tags = []string{"index"}
+	createIndex.AddParameter(collectionNamePathParam)
+	createIndex.RequestBody = &openapi3.RequestBodyRef{
+		Value: createIndexRequest,
+	}
+	createIndex.AddResponse(200, createIndexResponse)
+	createIndex.Responses["400"] = errorResponse
+
+	indexArraySchema := openapi3.NewArraySchema()
+	indexArraySchema.Items = indexSchema
+
+	getIndexesResponse := openapi3.NewResponse().
+		WithDescription("List of indexes").
+		WithJSONSchema(indexArraySchema)
+
+	getIndexes := openapi3.NewOperation()
+	getIndexes.OperationID = "index_list"
+	getIndexes.Description = "List secondary indexes"
+	getIndexes.Tags = []string{"index"}
+	getIndexes.AddParameter(collectionNamePathParam)
+	getIndexes.AddResponse(200, getIndexesResponse)
+	getIndexes.Responses["400"] = errorResponse
+
+	indexPathParam := openapi3.NewPathParameter("index").
+		WithRequired(true).
+		WithSchema(openapi3.NewStringSchema())
+
+	dropIndex := openapi3.NewOperation()
+	dropIndex.OperationID = "index_drop"
+	dropIndex.Description = "Delete a secondary index"
+	dropIndex.Tags = []string{"index"}
+	dropIndex.AddParameter(collectionNamePathParam)
+	dropIndex.AddParameter(indexPathParam)
+	dropIndex.Responses = make(openapi3.Responses)
+	dropIndex.Responses["200"] = successResponse
+	dropIndex.Responses["400"] = errorResponse
+
+	documentKeyPathParam := openapi3.NewPathParameter("key").
+		WithRequired(true).
+		WithSchema(openapi3.NewStringSchema())
+
+	collectionGetResponse := openapi3.NewResponse().
+		WithDescription("Document value").
+		WithJSONSchemaRef(documentSchema)
+
+	collectionGet := openapi3.NewOperation()
+	collectionGet.Description = "Get a document by key"
+	collectionGet.OperationID = "collection_get"
+	collectionGet.Tags = []string{"collection"}
+	collectionGet.AddParameter(collectionNamePathParam)
+	collectionGet.AddParameter(documentKeyPathParam)
+	collectionGet.AddResponse(200, collectionGetResponse)
+	collectionGet.Responses["400"] = errorResponse
+
+	collectionUpdate := openapi3.NewOperation()
+	collectionUpdate.Description = "Update a document by key"
+	collectionUpdate.OperationID = "collection_update"
+	collectionUpdate.Tags = []string{"collection"}
+	collectionUpdate.AddParameter(collectionNamePathParam)
+	collectionUpdate.AddParameter(documentKeyPathParam)
+	collectionUpdate.Responses = make(openapi3.Responses)
+	collectionUpdate.Responses["200"] = successResponse
+	collectionUpdate.Responses["400"] = errorResponse
+
+	collectionDelete := openapi3.NewOperation()
+	collectionDelete.Description = "Delete a document by key"
+	collectionDelete.OperationID = "collection_delete"
+	collectionDelete.Tags = []string{"collection"}
+	collectionDelete.AddParameter(collectionNamePathParam)
+	collectionDelete.AddParameter(documentKeyPathParam)
+	collectionDelete.Responses = make(openapi3.Responses)
+	collectionDelete.Responses["200"] = successResponse
+	collectionDelete.Responses["400"] = errorResponse
+
+	collectionKeys := openapi3.NewOperation()
+	collectionKeys.AddParameter(collectionNamePathParam)
+	collectionKeys.Description = "Get all document keys"
+	collectionKeys.OperationID = "collection_keys"
+	collectionKeys.Tags = []string{"collection"}
+	collectionKeys.Responses = make(openapi3.Responses)
+	collectionKeys.Responses["200"] = successResponse
+	collectionKeys.Responses["400"] = errorResponse
+
+	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocKeys)
+	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
+	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWith)
+	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWith)
+	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.CreateIndex)
+	router.AddRoute("/collections/{name}/indexes", http.MethodGet, getIndexes, h.GetIndexes)
+	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, dropIndex, h.DropIndex)
+	router.AddRoute("/collections/{name}/{key}", http.MethodGet, collectionGet, h.Get)
+	router.AddRoute("/collections/{name}/{key}", http.MethodPatch, collectionUpdate, h.Update)
+	router.AddRoute("/collections/{name}/{key}", http.MethodDelete, collectionDelete, h.Delete)
 }
