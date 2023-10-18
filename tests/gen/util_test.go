@@ -36,13 +36,17 @@ func areMapsEquivalent(m1, m2 map[string]any) bool {
 	return true
 }
 
-func assertDoc(expected map[string]any, actual GeneratedDoc) string {
+func jsonToMap(jsonStr string) map[string]any {
 	actualDocMap := make(map[string]any)
-	err := json.Unmarshal([]byte(actual.JSON), &actualDocMap)
+	err := json.Unmarshal([]byte(jsonStr), &actualDocMap)
 	if err != nil {
-		return err.Error()
+		panic("can not unmarshal doc " + err.Error())
 	}
-	if !areMapsEquivalent(expected, actualDocMap) {
+	return actualDocMap
+}
+
+func assertDoc(expected map[string]any, actual GeneratedDoc) string {
+	if !areMapsEquivalent(expected, jsonToMap(actual.JSON)) {
 		return "docs are not equal"
 	}
 	return ""
