@@ -22,6 +22,7 @@ var (
 	dataStoreKey   = rootStoreKey.ChildString("data")
 	headStoreKey   = rootStoreKey.ChildString("heads")
 	blockStoreKey  = rootStoreKey.ChildString("blocks")
+	peerStoreKey   = rootStoreKey.ChildString("ps")
 )
 
 type multistore struct {
@@ -44,7 +45,7 @@ func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
 		data: prefix(rootRW, dataStoreKey),
 		head: prefix(rootRW, headStoreKey),
 		// the `peers` prefix is assigned by the libp2p peerstore
-		peer:   namespace.Wrap(rootstore, rootStoreKey),
+		peer:   namespace.Wrap(rootstore, peerStoreKey),
 		system: prefix(rootRW, systemStoreKey),
 		dag:    NewDAGStore(prefix(rootRW, blockStoreKey)),
 	}
