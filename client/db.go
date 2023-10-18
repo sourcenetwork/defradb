@@ -51,6 +51,11 @@ type DB interface {
 	// It sits within the rootstore returned by [Root].
 	Blockstore() blockstore.Blockstore
 
+	// Peerstore returns the peerstore where known host information is stored.
+	//
+	// It sits within the rootstore returned by [Root].
+	Peerstore() datastore.DSBatching
+
 	// Close closes the database instance and releases any resources held.
 	//
 	// The behaviour of other functions in this package after this function has been called is undefined

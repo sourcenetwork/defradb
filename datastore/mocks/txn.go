@@ -366,6 +366,49 @@ func (_c *Txn_OnSuccess_Call) RunAndReturn(run func(func())) *Txn_OnSuccess_Call
 	return _c
 }
 
+// Peerstore provides a mock function with given fields:
+func (_m *Txn) Peerstore() datastore.DSBatching {
+	ret := _m.Called()
+
+	var r0 datastore.DSBatching
+	if rf, ok := ret.Get(0).(func() datastore.DSBatching); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(datastore.DSBatching)
+		}
+	}
+
+	return r0
+}
+
+// Txn_Peerstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Peerstore'
+type Txn_Peerstore_Call struct {
+	*mock.Call
+}
+
+// Peerstore is a helper method to define mock.On call
+func (_e *Txn_Expecter) Peerstore() *Txn_Peerstore_Call {
+	return &Txn_Peerstore_Call{Call: _e.mock.On("Peerstore")}
+}
+
+func (_c *Txn_Peerstore_Call) Run(run func()) *Txn_Peerstore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Txn_Peerstore_Call) Return(_a0 datastore.DSBatching) *Txn_Peerstore_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSBatching) *Txn_Peerstore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Rootstore provides a mock function with given fields:
 func (_m *Txn) Rootstore() datastore.DSReaderWriter {
 	ret := _m.Called()

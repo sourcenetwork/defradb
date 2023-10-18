@@ -61,6 +61,10 @@ func (w *TxWrapper) Headstore() datastore.DSReaderWriter {
 	return w.server.Headstore()
 }
 
+func (w *TxWrapper) Peerstore() datastore.DSBatching {
+	return w.server.Peerstore()
+}
+
 func (w *TxWrapper) DAGstore() datastore.DAGStore {
 	return w.server.DAGstore()
 }

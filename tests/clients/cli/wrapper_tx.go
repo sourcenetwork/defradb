@@ -67,6 +67,10 @@ func (w *Transaction) Headstore() datastore.DSReaderWriter {
 	return w.tx.Headstore()
 }
 
+func (w *Transaction) Peerstore() datastore.DSBatching {
+	return w.tx.Peerstore()
+}
+
 func (w *Transaction) DAGstore() datastore.DAGStore {
 	return w.tx.DAGstore()
 }

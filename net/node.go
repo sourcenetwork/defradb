@@ -25,7 +25,6 @@ import (
 
 	"github.com/ipfs/boxo/ipns"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/namespace"
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
@@ -86,11 +85,7 @@ func NewNode(
 
 	fin := finalizer.NewFinalizer()
 
-	// create our peerstore from the underlying defra rootstore
-	// prefixed with "p2p"
-	rootstore := db.Root()
-	pstore := namespace.Wrap(rootstore, ds.NewKey("/db"))
-	peerstore, err := pstoreds.NewPeerstore(ctx, pstore, pstoreds.DefaultOpts())
+	peerstore, err := pstoreds.NewPeerstore(ctx, db.Peerstore(), pstoreds.DefaultOpts())
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
@@ -121,7 +116,7 @@ func NewNode(
 			// if dsb, isBatching := rootstore.(ds.Batching); isBatching {
 			// 	store = dsb
 			// }
-			store := rootstore // Delete this line once we remove batchable datastore support.
+			store := db.Root() // Delete this line once we remove batchable datastore support.
 			ddht, err = newDHT(ctx, h, store)
 			return ddht, err
 		}),
