@@ -556,13 +556,7 @@ func (db *db) getCollectionByVersionID(
 		return nil, err
 	}
 
-	col := &collection{
-		db: db,
-		def: client.CollectionDefinition{
-			Description: desc,
-			Schema:      schema,
-		},
-	}
+	col := db.newCollection(desc, schema)
 
 	err = col.loadIndexes(ctx, txn)
 	if err != nil {
