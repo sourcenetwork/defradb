@@ -61,7 +61,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},
@@ -118,7 +118,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},

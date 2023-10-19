@@ -23,6 +23,7 @@ const (
 	errUninitializeProperty string = "invalid state, required property is uninitialized"
 	errMaxTxnRetries        string = "reached maximum transaction reties"
 	errRelationOneSided     string = "relation must be defined on both schemas"
+	errCollectionNotFound   string = "collection not found"
 )
 
 // Errors returnable from this package.
@@ -45,6 +46,7 @@ var (
 	ErrInvalidDocKeyVersion = errors.New("invalid DocKey version")
 	ErrMaxTxnRetries        = errors.New(errMaxTxnRetries)
 	ErrRelationOneSided     = errors.New(errRelationOneSided)
+	ErrCollectionNotFound   = errors.New(errCollectionNotFound)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -105,5 +107,19 @@ func NewErrRelationOneSided(fieldName string, typeName string) error {
 		errRelationOneSided,
 		errors.NewKV("Field", fieldName),
 		errors.NewKV("Type", typeName),
+	)
+}
+
+func NewErrCollectionNotFoundForSchemaVersion(schemaVersionID string) error {
+	return errors.New(
+		errCollectionNotFound,
+		errors.NewKV("SchemaVersionID", schemaVersionID),
+	)
+}
+
+func NewErrCollectionNotFoundForSchema(schemaID string) error {
+	return errors.New(
+		errCollectionNotFound,
+		errors.NewKV("SchemaID", schemaID),
 	)
 }

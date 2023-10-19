@@ -60,7 +60,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},
@@ -112,7 +112,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},
@@ -170,7 +170,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": testUtils.AnyOf{uint64(45), uint64(60)},
+						"Age": testUtils.AnyOf{int64(45), int64(60)},
 					},
 				},
 			},
@@ -223,7 +223,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},
@@ -236,7 +236,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},
@@ -250,7 +250,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -305,7 +305,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -319,7 +319,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -332,7 +332,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},
@@ -412,7 +412,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": testUtils.AnyOf{uint64(47), uint64(62)},
+						"Age": testUtils.AnyOf{int64(47), int64(62)},
 					},
 				},
 			},
@@ -475,10 +475,10 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},
@@ -591,10 +591,10 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": testUtils.AnyOf{uint64(47), uint64(62)},
+						"Age": testUtils.AnyOf{int64(47), int64(62)},
 					},
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},

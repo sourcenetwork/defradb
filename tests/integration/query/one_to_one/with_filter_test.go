@@ -58,7 +58,7 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 						"rating": 4.9,
 						"author": map[string]any{
 							"name": "John Grisham",
-							"age":  uint64(65),
+							"age":  int64(65),
 						},
 					},
 				},
@@ -111,7 +111,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 						"rating": 4.9,
 						"author": map[string]any{
 							"name": "John Grisham",
-							"age":  uint64(65),
+							"age":  int64(65),
 						},
 					},
 				},
@@ -164,7 +164,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 						"rating": 4.9,
 						"author": map[string]any{
 							"name": "John Grisham",
-							"age":  uint64(65),
+							"age":  int64(65),
 						},
 					},
 				},
@@ -235,7 +235,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 						"rating": 4.9,
 						"author": map[string]any{
 							"name": "John Grisham",
-							"age":  uint64(65),
+							"age":  int64(65),
 						},
 					},
 				},

@@ -109,7 +109,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
-						"age":  uint64(27),
+						"age":  int64(27),
 					},
 				},
 			},
@@ -174,7 +174,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
-						"age":  uint64(28),
+						"age":  int64(28),
 					},
 				},
 			},
@@ -215,7 +215,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
-						"age":  uint64(28),
+						"age":  int64(28),
 					},
 				},
 			},
@@ -232,7 +232,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
-						"age":  uint64(27),
+						"age":  int64(27),
 					},
 				},
 			},
@@ -274,7 +274,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
-						"age":  uint64(28),
+						"age":  int64(28),
 					},
 				},
 			},
@@ -291,7 +291,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
-						"age":  uint64(29),
+						"age":  int64(29),
 					},
 				},
 			},
@@ -315,7 +315,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
-						"age":  uint64(28),
+						"age":  int64(28),
 					},
 				},
 			},

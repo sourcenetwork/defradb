@@ -66,6 +66,7 @@ const (
 	errCanNotDropIndexWithPatch           string = "dropping indexes via patch is not supported"
 	errCanNotChangeIndexWithPatch         string = "changing indexes via patch is not supported"
 	errIndexWithNameDoesNotExists         string = "index with name doesn't exists"
+	errCorruptedIndex                     string = "corrupted index. Please delete and recreate the index"
 	errInvalidFieldValue                  string = "invalid field value"
 	errUnsupportedIndexFieldType          string = "unsupported index field type"
 	errIndexDescriptionHasNoFields        string = "index description has no fields"
@@ -147,6 +148,7 @@ var (
 	ErrIndexFieldMissingName              = errors.New(errIndexFieldMissingName)
 	ErrIndexFieldMissingDirection         = errors.New(errIndexFieldMissingDirection)
 	ErrIndexSingleFieldWrongDirection     = errors.New(errIndexSingleFieldWrongDirection)
+	ErrCorruptedIndex                     = errors.New(errCorruptedIndex)
 	ErrCanNotChangeIndexWithPatch         = errors.New(errCanNotChangeIndexWithPatch)
 	ErrFieldOrAliasToFieldNotExist        = errors.New(errFieldOrAliasToFieldNotExist)
 	ErrCreateFile                         = errors.New(errCreateFile)
@@ -474,6 +476,15 @@ func NewErrIndexWithNameAlreadyExists(indexName string) error {
 func NewErrIndexWithNameDoesNotExists(indexName string) error {
 	return errors.New(
 		errIndexWithNameDoesNotExists,
+		errors.NewKV("Name", indexName),
+	)
+}
+
+// NewErrCorruptedIndex returns a new error indicating that an index with the
+// given name has been corrupted.
+func NewErrCorruptedIndex(indexName string) error {
+	return errors.New(
+		errCorruptedIndex,
 		errors.NewKV("Name", indexName),
 	)
 }

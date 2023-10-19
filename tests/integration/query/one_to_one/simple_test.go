@@ -54,7 +54,7 @@ func TestQueryOneToOne(t *testing.T) {
 					"rating": 4.9,
 					"author": map[string]any{
 						"name": "John Grisham",
-						"age":  uint64(65),
+						"age":  int64(65),
 					},
 				},
 			},
@@ -92,7 +92,7 @@ func TestQueryOneToOne(t *testing.T) {
 			Results: []map[string]any{
 				{
 					"name": "John Grisham",
-					"age":  uint64(65),
+					"age":  int64(65),
 					"published": map[string]any{
 						"name":   "Painted House",
 						"rating": 4.9,

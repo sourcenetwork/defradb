@@ -69,7 +69,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 		Results: []map[string]any{
 			{
 				"name": "John Grisham",
-				"age":  uint64(65),
+				"age":  int64(65),
 				"published": []map[string]any{
 					{
 						"name":   "A Time for Mercy",
@@ -138,7 +138,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChi
 		Results: []map[string]any{
 			{
 				"name": "John Grisham",
-				"age":  uint64(65),
+				"age":  int64(65),
 				"published": []map[string]any{
 					{
 						"name":   "Painted House",
@@ -152,7 +152,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChi
 			},
 			{
 				"name": "Cornelia Funke",
-				"age":  uint64(62),
+				"age":  int64(62),
 				"published": []map[string]any{
 					{
 						"name":   "Theif Lord",

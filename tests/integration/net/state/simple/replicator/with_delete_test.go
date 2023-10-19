@@ -62,7 +62,7 @@ func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfig(t *testing
 					{
 						"_deleted": true,
 						"Name":     "John",
-						"Age":      uint64(21),
+						"Age":      int64(21),
 					},
 				},
 			},
@@ -116,7 +116,7 @@ func TestP2POneToOneReplicatorDeletesDocCreatedBeforeReplicatorConfigWithNodesIn
 					{
 						"_deleted": true,
 						"Name":     "John",
-						"Age":      uint64(21),
+						"Age":      int64(21),
 					},
 				},
 			},

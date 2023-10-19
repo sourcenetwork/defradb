@@ -59,7 +59,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(60),
+						"Age": int64(60),
 					},
 				},
 			},

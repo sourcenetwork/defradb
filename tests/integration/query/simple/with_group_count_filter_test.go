@@ -43,11 +43,11 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter
 		},
 		Results: []map[string]any{
 			{
-				"Age":    uint64(32),
+				"Age":    int64(32),
 				"_count": 2,
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_count": 0,
 			},
 		},
@@ -86,7 +86,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 		},
 		Results: []map[string]any{
 			{
-				"Age":    uint64(32),
+				"Age":    int64(32),
 				"_count": 2,
 				"_group": []map[string]any{
 					{
@@ -98,7 +98,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 				},
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_count": 0,
 				"_group": []map[string]any{
 					{
@@ -142,7 +142,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 		},
 		Results: []map[string]any{
 			{
-				"Age":    uint64(32),
+				"Age":    int64(32),
 				"_count": 1,
 				"_group": []map[string]any{
 					{
@@ -151,7 +151,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 				},
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_count": 0,
 				"_group": []map[string]any{},
 			},
@@ -191,7 +191,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 		},
 		Results: []map[string]any{
 			{
-				"Age":    uint64(32),
+				"Age":    int64(32),
 				"_count": 2,
 				"_group": []map[string]any{
 					{
@@ -200,7 +200,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 				},
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_count": 0,
 				"_group": []map[string]any{},
 			},
@@ -238,12 +238,12 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountsWithDiffe
 		},
 		Results: []map[string]any{
 			{
-				"Age": uint64(32),
+				"Age": int64(32),
 				"C1":  2,
 				"C2":  0,
 			},
 			{
-				"Age": uint64(19),
+				"Age": int64(19),
 				"C1":  0,
 				"C2":  1,
 			},

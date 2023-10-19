@@ -31,12 +31,12 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-						"age":  uint64(27),
+						"age":  int64(27),
 						"name": "John",
 					},
 					{
 						"_key": "bae-18def051-7f0f-5dc9-8a69-2a5e423f6b55",
-						"age":  uint64(31),
+						"age":  int64(31),
 						"name": "Addo",
 					},
 				},
@@ -86,7 +86,7 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-						"age":  uint64(27),
+						"age":  int64(27),
 						"name": "John",
 					},
 				},
@@ -156,7 +156,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-						"age":  uint64(27),
+						"age":  int64(27),
 						"name": "John",
 					},
 				},
@@ -225,7 +225,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-						"age":    uint64(27),
+						"age":    int64(27),
 						"name":   "John",
 						"points": float64(45),
 					},
@@ -283,13 +283,13 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-						"age":    uint64(27),
+						"age":    int64(27),
 						"name":   "John",
 						"points": float64(55),
 					},
 					{
 						"_key":   "bae-cf723876-5c6a-5dcf-a877-ab288eb30d57",
-						"age":    uint64(31),
+						"age":    int64(31),
 						"name":   "Addo",
 						"points": float64(55),
 					},

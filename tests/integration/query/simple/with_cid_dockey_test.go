@@ -130,7 +130,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 			},
 		},
 	}
@@ -171,7 +171,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"Age":  uint64(23),
+				"Age":  int64(23),
 			},
 		},
 	}
@@ -212,7 +212,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"Age":  uint64(22),
+				"Age":  int64(22),
 			},
 		},
 	}
@@ -256,7 +256,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKeyAndSchemaVersion(t *testing.T)
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
 						"schemaVersionId": "bafkreigrd4xdnprbzdh5bx3igtx2tayfbwp2f27pw3j3xjcbys7jekxfsm",

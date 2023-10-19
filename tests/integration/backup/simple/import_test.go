@@ -33,7 +33,7 @@ func TestBackupImport_Simple_NoError(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John",
-						"age":  uint64(30),
+						"age":  int64(30),
 					},
 				},
 			},
@@ -103,7 +103,7 @@ func TestBackupImport_WithNoKeys_NoError(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John",
-						"age":  uint64(30),
+						"age":  int64(30),
 					},
 				},
 			},
@@ -134,15 +134,15 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "Smith",
-						"age":  uint64(31),
+						"age":  int64(31),
 					},
 					{
 						"name": "Bob",
-						"age":  uint64(32),
+						"age":  int64(32),
 					},
 					{
 						"name": "John",
-						"age":  uint64(30),
+						"age":  int64(30),
 					},
 				},
 			},

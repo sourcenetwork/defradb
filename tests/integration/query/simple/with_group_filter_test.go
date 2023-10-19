@@ -56,7 +56,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 				"Name": "John",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(32),
+						"Age": int64(32),
 					},
 				},
 			},
@@ -64,7 +64,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 				"Name": "Carlo",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(55),
+						"Age": int64(55),
 					},
 				},
 			},
@@ -110,7 +110,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 				"Name": "John",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(32),
+						"Age": int64(32),
 					},
 				},
 			},
@@ -118,7 +118,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 				"Name": "Carlo",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(55),
+						"Age": int64(55),
 					},
 				},
 			},
@@ -292,7 +292,7 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 				"G1":   []map[string]any{},
 				"G2": []map[string]any{
 					{
-						"Age": uint64(19),
+						"Age": int64(19),
 					},
 				},
 			},
@@ -300,12 +300,12 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 				"Name": "John",
 				"G1": []map[string]any{
 					{
-						"Age": uint64(32),
+						"Age": int64(32),
 					},
 				},
 				"G2": []map[string]any{
 					{
-						"Age": uint64(25),
+						"Age": int64(25),
 					},
 				},
 			},
@@ -313,7 +313,7 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 				"Name": "Carlo",
 				"G1": []map[string]any{
 					{
-						"Age": uint64(55),
+						"Age": int64(55),
 					},
 				},
 				"G2": []map[string]any{},

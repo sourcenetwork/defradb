@@ -260,10 +260,16 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		defer txn.Discard(ctx)
 		store := s.db.WithTxn(txn)
 
-		col, err := store.GetCollectionBySchemaID(ctx, schemaID)
+		// Currently a schema is the best way we have to link a push log request to a collection,
+		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
+		cols, err := store.GetCollectionsBySchemaID(ctx, schemaID)
 		if err != nil {
 			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
 		}
+		if len(cols) == 0 {
+			return nil, client.NewErrCollectionNotFoundForSchema(schemaID)
+		}
+		col := cols[0]
 
 		// Create a new DAG service with the current transaction
 		var getter format.NodeGetter = s.peer.newDAGSyncerTxn(txn)

@@ -64,7 +64,7 @@ func TestP2PPeerReplicatorWithDeleteShowDeleted(t *testing.T) {
 					{
 						"_deleted": true,
 						"Name":     "John",
-						"Age":      uint64(21),
+						"Age":      int64(21),
 					},
 				},
 			},

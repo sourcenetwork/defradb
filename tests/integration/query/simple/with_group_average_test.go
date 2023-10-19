@@ -441,7 +441,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 						"_avg":     float64(2.22),
 						"_group": []map[string]any{
 							{
-								"Age":  uint64(34),
+								"Age":  int64(34),
 								"_avg": float64(2.22),
 							},
 						},
@@ -451,11 +451,11 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 						"_avg":     float64(1.715),
 						"_group": []map[string]any{
 							{
-								"Age":  uint64(32),
+								"Age":  int64(32),
 								"_avg": float64(1.61),
 							},
 							{
-								"Age":  uint64(25),
+								"Age":  int64(25),
 								"_avg": float64(1.82),
 							},
 						},
@@ -471,7 +471,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 						"_avg":     float64(2.04),
 						"_group": []map[string]any{
 							{
-								"Age":  uint64(19),
+								"Age":  int64(19),
 								"_avg": float64(2.04),
 							},
 						},
@@ -487,7 +487,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 						"_avg":     float64(1.74),
 						"_group": []map[string]any{
 							{
-								"Age":  uint64(55),
+								"Age":  int64(55),
 								"_avg": float64(1.74),
 							},
 						},

@@ -56,12 +56,12 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
-					"Age": uint64(45),
+					"Age": int64(45),
 				},
 			},
 			1: {
 				0: {
-					"Age": uint64(60),
+					"Age": int64(60),
 				},
 			},
 		},
@@ -119,12 +119,12 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
-					"Age": uint64(47),
+					"Age": int64(47),
 				},
 			},
 			1: {
 				0: {
-					"Age": uint64(62),
+					"Age": int64(62),
 				},
 			},
 		},
@@ -157,7 +157,7 @@ func TestP2FullPReplicator(t *testing.T) {
 		ReplicatorResult: map[int]map[string]map[string]any{
 			1: {
 				doc.Key().String(): {
-					"Age": uint64(21),
+					"Age": int64(21),
 				},
 			},
 		},

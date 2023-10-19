@@ -83,7 +83,7 @@ func TestSchemaUpdatesAddFieldKindIntWithCreate(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John",
-						"foo":  uint64(3),
+						"foo":  int64(3),
 					},
 				},
 			},
@@ -127,7 +127,7 @@ func TestSchemaUpdatesAddFieldKindIntSubstitutionWithCreate(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John",
-						"foo":  uint64(3),
+						"foo":  int64(3),
 					},
 				},
 			},
