@@ -90,7 +90,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 			},
 			Results: []map[string]any{
 				{
-					"age": uint64(327),
+					"age": int64(327),
 					"_group": []map[string]any{
 						{
 							"name":      "Simon Pelloutier",
@@ -112,7 +112,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 					},
 				},
 				{
-					"age": uint64(65),
+					"age": int64(65),
 					"_group": []map[string]any{
 						{
 							"name": "John Grisham",
@@ -208,7 +208,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 			},
 			Results: []map[string]any{
 				{
-					"age": uint64(327),
+					"age": int64(327),
 					"_group": []map[string]any{
 						{
 							"name": "Voltaire",
@@ -226,7 +226,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 					},
 				},
 				{
-					"age": uint64(65),
+					"age": int64(65),
 					"_group": []map[string]any{
 						{
 							"name": "John Grisham",
@@ -330,7 +330,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 			},
 			Results: []map[string]any{
 				{
-					"age": uint64(327),
+					"age": int64(327),
 					"_group": []map[string]any{
 						{
 							"name":      "Simon Pelloutier",

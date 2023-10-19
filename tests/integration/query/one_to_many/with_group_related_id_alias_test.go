@@ -99,7 +99,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 						"name":   "Candide",
 						"rating": 4.95,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Voltaire",
 						},
 					},
@@ -107,7 +107,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 						"name":   "Zadig",
 						"rating": 4.91,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Voltaire",
 						},
 					},
@@ -120,7 +120,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 						"name":   "The Client",
 						"rating": 4.5,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -128,7 +128,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 						"name":   "Painted House",
 						"rating": 4.9,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -136,7 +136,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 						"name":   "A Time for Mercy",
 						"rating": 4.5,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -149,7 +149,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2.0,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Simon Pelloutier",
 						},
 					},
@@ -251,7 +251,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 						"name":   "Candide",
 						"rating": 4.95,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Voltaire",
 						},
 					},
@@ -259,7 +259,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 						"name":   "Zadig",
 						"rating": 4.91,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Voltaire",
 						},
 					},
@@ -275,7 +275,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 						"name":   "The Client",
 						"rating": 4.5,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -283,7 +283,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 						"name":   "Painted House",
 						"rating": 4.9,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -291,7 +291,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 						"name":   "A Time for Mercy",
 						"rating": 4.5,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -307,7 +307,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2.0,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Simon Pelloutier",
 						},
 					},
@@ -402,7 +402,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "Candide",
 						"rating": 4.95,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Voltaire",
 						},
 					},
@@ -410,7 +410,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "Zadig",
 						"rating": 4.91,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Voltaire",
 						},
 					},
@@ -423,7 +423,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "The Client",
 						"rating": 4.5,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -431,7 +431,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "Painted House",
 						"rating": 4.9,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -439,7 +439,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "A Time for Mercy",
 						"rating": 4.5,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -452,7 +452,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2.0,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Simon Pelloutier",
 						},
 					},
@@ -555,7 +555,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "Candide",
 						"rating": 4.95,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Voltaire",
 						},
 					},
@@ -563,7 +563,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "Zadig",
 						"rating": 4.91,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Voltaire",
 						},
 					},
@@ -580,7 +580,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "The Client",
 						"rating": 4.5,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -588,7 +588,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "Painted House",
 						"rating": 4.9,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -596,7 +596,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "A Time for Mercy",
 						"rating": 4.5,
 						"author": map[string]any{
-							"age":  uint64(65),
+							"age":  int64(65),
 							"name": "John Grisham",
 						},
 					},
@@ -613,7 +613,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2.0,
 						"author": map[string]any{
-							"age":  uint64(327),
+							"age":  int64(327),
 							"name": "Simon Pelloutier",
 						},
 					},

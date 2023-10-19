@@ -80,7 +80,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
-						"age":  uint64(65),
+						"age":  int64(65),
 						"published": []map[string]any{
 							{
 								"name":   "Painted House",
@@ -232,7 +232,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
-						"age":  uint64(65),
+						"age":  int64(65),
 						"published": []map[string]any{
 							{
 								"name":   "Painted House",
@@ -316,7 +316,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
-						"age":  uint64(65),
+						"age":  int64(65),
 						"p1": []map[string]any{
 							{
 								"name":   "Painted House",
@@ -332,7 +332,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 					},
 					{
 						"name": "Cornelia Funke",
-						"age":  uint64(62),
+						"age":  int64(62),
 						"p1": []map[string]any{
 							{
 								"name":   "Theif Lord",

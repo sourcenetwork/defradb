@@ -90,7 +90,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 				"_avg": float64(0),
 				"_group": []map[string]any{
 					{
-						"Age": uint64(19),
+						"Age": int64(19),
 					},
 				},
 			},
@@ -99,10 +99,10 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 				"_avg": float64(33),
 				"_group": []map[string]any{
 					{
-						"Age": uint64(32),
+						"Age": int64(32),
 					},
 					{
-						"Age": uint64(34),
+						"Age": int64(34),
 					},
 				},
 			},
@@ -149,10 +149,10 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 				"_avg": float64(33),
 				"_group": []map[string]any{
 					{
-						"Age": uint64(32),
+						"Age": int64(32),
 					},
 					{
-						"Age": uint64(34),
+						"Age": int64(34),
 					},
 				},
 			},
@@ -161,7 +161,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 				"_avg": float64(0),
 				"_group": []map[string]any{
 					{
-						"Age": uint64(19),
+						"Age": int64(19),
 					},
 				},
 			},
@@ -210,7 +210,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				"_avg": float64(34),
 				"_group": []map[string]any{
 					{
-						"Age": uint64(34),
+						"Age": int64(34),
 					},
 				},
 			},
@@ -257,7 +257,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				"_avg": float64(34),
 				"_group": []map[string]any{
 					{
-						"Age": uint64(34),
+						"Age": int64(34),
 					},
 				},
 			},
@@ -306,7 +306,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				"_avg": float64(0),
 				"_group": []map[string]any{
 					{
-						"Age": uint64(19),
+						"Age": int64(19),
 					},
 				},
 			},
@@ -315,7 +315,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				"_avg": float64(34),
 				"_group": []map[string]any{
 					{
-						"Age": uint64(32),
+						"Age": int64(32),
 					},
 				},
 			},
