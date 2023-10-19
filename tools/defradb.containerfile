@@ -9,6 +9,7 @@ WORKDIR /repo/
 COPY go.mod go.sum Makefile ./
 RUN make deps:modules
 COPY . .
+ENV BUILD_TAGS=playground
 RUN make build
 
 # Stage: RUN
