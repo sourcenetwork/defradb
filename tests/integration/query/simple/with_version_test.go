@@ -108,7 +108,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
 		Request: `query {
 					Users {
 						Name
-						_key
+						_docID
 						_version {
 							dockey
 						}
@@ -124,8 +124,8 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"_key": dockey,
+				"Name":   "John",
+				"_docID": dockey,
 				"_version": []map[string]any{
 					{
 						"dockey": dockey,

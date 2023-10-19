@@ -18,7 +18,7 @@ import (
 
 func TestMutationDeletion_WithIDsAndSelectAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete multiple documents that exist, when given multiple keys with alias.",
+		Description: "Delete multiple documents that exist, when given multiple IDs with alias.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -49,15 +49,15 @@ func TestMutationDeletion_WithIDsAndSelectAlias(t *testing.T) {
 			testUtils.Request{
 				Request: `mutation {
 					delete_User(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
-						AliasKey: _key
+						AliasID: _docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"AliasKey": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+						"AliasID": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
 					},
 					{
-						"AliasKey": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+						"AliasID": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
 					},
 				},
 			},

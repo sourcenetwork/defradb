@@ -170,7 +170,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 		Request: `query {
 			Book(groupBy: [author]) {
 				author {
-					_key
+					_docID
 					name
 				}
 				_group {
@@ -243,8 +243,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 		Results: []map[string]any{
 			{
 				"author": map[string]any{
-					"name": "Voltaire",
-					"_key": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
+					"name":   "Voltaire",
+					"_docID": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
 				},
 				"_group": []map[string]any{
 					{
@@ -267,8 +267,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 			},
 			{
 				"author": map[string]any{
-					"name": "John Grisham",
-					"_key": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+					"name":   "John Grisham",
+					"_docID": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 				},
 				"_group": []map[string]any{
 					{
@@ -299,8 +299,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 			},
 			{
 				"author": map[string]any{
-					"name": "Simon Pelloutier",
-					"_key": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
+					"name":   "Simon Pelloutier",
+					"_docID": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
 				},
 				"_group": []map[string]any{
 					{
@@ -473,7 +473,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 			Book(groupBy: [author]) {
 				author_id
 				author {
-					_key
+					_docID
 					name
 				}
 				_group {
@@ -547,8 +547,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 			{
 				"author_id": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
 				"author": map[string]any{
-					"name": "Voltaire",
-					"_key": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
+					"name":   "Voltaire",
+					"_docID": "bae-7accaba8-ea9d-54b1-92f4-4a7ac5de88b3",
 				},
 				"_group": []map[string]any{
 					{
@@ -572,8 +572,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 			{
 				"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 				"author": map[string]any{
-					"name": "John Grisham",
-					"_key": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+					"name":   "John Grisham",
+					"_docID": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 				},
 				"_group": []map[string]any{
 					{
@@ -605,8 +605,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 			{
 				"author_id": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
 				"author": map[string]any{
-					"name": "Simon Pelloutier",
-					"_key": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
+					"name":   "Simon Pelloutier",
+					"_docID": "bae-09d33399-197a-5b98-b135-4398f2b6de4c",
 				},
 				"_group": []map[string]any{
 					{

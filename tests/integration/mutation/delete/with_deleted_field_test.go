@@ -18,7 +18,7 @@ import (
 
 // This test documents a bug, see:
 // https://github.com/sourcenetwork/defradb/issues/1846
-func TestMutationDeletion_WithoDeletedField(t *testing.T) {
+func TestMutationDeletion_WithDeletedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -38,14 +38,14 @@ func TestMutationDeletion_WithoDeletedField(t *testing.T) {
 				Request: `mutation {
 						delete_User(id: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad") {
 							_deleted
-							_key
+							_docID
 						}
 					}`,
 				Results: []map[string]any{
 					{
 						// This should be true, as it has been deleted.
 						"_deleted": false,
-						"_key":     "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
+						"_docID":   "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
 					},
 				},
 			},

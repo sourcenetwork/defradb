@@ -83,7 +83,7 @@ func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 			testUtils.Request{
 				Request: `mutation {
 					update_Users(id: "bae-does-not-exist", data: "{\"points\": 59}") {
-						_key
+						_docID
 						name
 						points
 					}

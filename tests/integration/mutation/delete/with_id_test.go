@@ -30,7 +30,7 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 			testUtils.Request{
 				Request: `mutation {
 					delete_User(ids: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"]) {
-						_key
+						_docID
 					}
 				}`,
 				Results: []map[string]any{},
@@ -60,7 +60,7 @@ func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *te
 			testUtils.Request{
 				Request: `mutation {
 					delete_User(ids: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"]) {
-						_key
+						_docID
 					}
 				}`,
 				Results: []map[string]any{},

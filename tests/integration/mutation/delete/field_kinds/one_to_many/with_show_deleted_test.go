@@ -45,7 +45,7 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 	// require.NoError(t, err)
 
 	test := testUtils.TestCase{
-		Description: "One to many delete document using single key show deleted.",
+		Description: "One to many delete document using single document id, show deleted.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -76,12 +76,12 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 			testUtils.Request{
 				Request: fmt.Sprintf(`mutation {
 						delete_Book(id: "%s") {
-							_key
+							_docID
 						}
 					}`, doc2.Key()),
 				Results: []map[string]any{
 					{
-						"_key": doc2.Key().String(),
+						"_docID": doc2.Key().String(),
 					},
 				},
 			},
