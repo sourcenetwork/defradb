@@ -548,20 +548,20 @@ func (_c *DB_GetCollectionBySchemaID_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
-// GetCollectionByVersionID provides a mock function with given fields: _a0, _a1
-func (_m *DB) GetCollectionByVersionID(_a0 context.Context, _a1 string) (client.Collection, error) {
+// GetCollectionsByVersionID provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetCollectionsByVersionID(_a0 context.Context, _a1 string) ([]client.Collection, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 client.Collection
+	var r0 []client.Collection
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (client.Collection, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.Collection, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) client.Collection); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []client.Collection); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(client.Collection)
+			r0 = ret.Get(0).([]client.Collection)
 		}
 	}
 
@@ -574,31 +574,31 @@ func (_m *DB) GetCollectionByVersionID(_a0 context.Context, _a1 string) (client.
 	return r0, r1
 }
 
-// DB_GetCollectionByVersionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCollectionByVersionID'
-type DB_GetCollectionByVersionID_Call struct {
+// DB_GetCollectionsByVersionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCollectionsByVersionID'
+type DB_GetCollectionsByVersionID_Call struct {
 	*mock.Call
 }
 
-// GetCollectionByVersionID is a helper method to define mock.On call
+// GetCollectionsByVersionID is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 string
-func (_e *DB_Expecter) GetCollectionByVersionID(_a0 interface{}, _a1 interface{}) *DB_GetCollectionByVersionID_Call {
-	return &DB_GetCollectionByVersionID_Call{Call: _e.mock.On("GetCollectionByVersionID", _a0, _a1)}
+func (_e *DB_Expecter) GetCollectionsByVersionID(_a0 interface{}, _a1 interface{}) *DB_GetCollectionsByVersionID_Call {
+	return &DB_GetCollectionsByVersionID_Call{Call: _e.mock.On("GetCollectionsByVersionID", _a0, _a1)}
 }
 
-func (_c *DB_GetCollectionByVersionID_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetCollectionByVersionID_Call {
+func (_c *DB_GetCollectionsByVersionID_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetCollectionsByVersionID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *DB_GetCollectionByVersionID_Call) Return(_a0 client.Collection, _a1 error) *DB_GetCollectionByVersionID_Call {
+func (_c *DB_GetCollectionsByVersionID_Call) Return(_a0 []client.Collection, _a1 error) *DB_GetCollectionsByVersionID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_GetCollectionByVersionID_Call) RunAndReturn(run func(context.Context, string) (client.Collection, error)) *DB_GetCollectionByVersionID_Call {
+func (_c *DB_GetCollectionsByVersionID_Call) RunAndReturn(run func(context.Context, string) ([]client.Collection, error)) *DB_GetCollectionsByVersionID_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -45,7 +45,26 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 			var col client.Collection
 			switch {
 			case versionID != "":
-				col, err = store.GetCollectionByVersionID(cmd.Context(), versionID)
+				var cols []client.Collection
+				cols, err = store.GetCollectionsByVersionID(cmd.Context(), versionID)
+				if err != nil {
+					return err
+				}
+				if name != "" {
+					versionCols := cols
+					cols = nil
+					for _, c := range versionCols {
+						if c.Name() == name {
+							cols = append(cols, c)
+							break
+						}
+					}
+				}
+				if len(cols) != 1 {
+					// If more than one collection matches the given criteria we cannot set the context collection
+					return nil
+				}
+				col = cols[0]
 
 			case schemaID != "":
 				col, err = store.GetCollectionBySchemaID(cmd.Context(), schemaID)
