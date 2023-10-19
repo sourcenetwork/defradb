@@ -40,7 +40,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "User",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -89,7 +89,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "User",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -120,7 +120,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -169,7 +169,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Book",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -209,7 +209,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -267,7 +267,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "User",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -298,7 +298,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -347,7 +347,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Book",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -387,7 +387,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -445,7 +445,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Book",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -485,7 +485,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -543,7 +543,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Book",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
@@ -583,7 +583,7 @@ func TestSingleSimpleType(t *testing.T) {
 						Name: "Author",
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
+								Name: "_docID",
 								Kind: client.FieldKind_DocKey,
 								Typ:  client.NONE_CRDT,
 							},
