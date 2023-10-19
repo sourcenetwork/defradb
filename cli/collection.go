@@ -63,6 +63,15 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 				return err
 			}
 
+			if schemaID != "" && versionID != "" && len(cols) > 0 {
+				if cols[0].SchemaID() != schemaID {
+					// If the a versionID has been provided that does not pair up with the given schemaID
+					// we should error and let the user know they have provided impossible params.
+					// We only need to check the first item - they will all be the same.
+					return NewErrSchemaVersionNotOfSchema(schemaID, versionID)
+				}
+			}
+
 			if name != "" {
 				// Multiple params may have been specified, and in some cases both are needed.
 				// For example if a schema version and a collection name have been provided,
