@@ -186,7 +186,7 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	return &Collection{c.http, definition}, nil
 }
 
-func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
+func (c *Client) GetCollectionsBySchemaID(ctx context.Context, schemaId string) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
 	methodURL.RawQuery = url.Values{"schema_id": []string{schemaId}}.Encode()
 
@@ -194,11 +194,15 @@ func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (
 	if err != nil {
 		return nil, err
 	}
-	var definition client.CollectionDefinition
-	if err := c.http.requestJson(req, &definition); err != nil {
+	var descriptions []client.CollectionDefinition
+	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, definition}, nil
+	collections := make([]client.Collection, len(descriptions))
+	for i, d := range descriptions {
+		collections[i] = &Collection{c.http, d}
+	}
+	return collections, nil
 }
 
 func (c *Client) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {

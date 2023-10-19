@@ -43,34 +43,17 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 			store := mustGetStoreContext(cmd)
 
 			var col client.Collection
+			var cols []client.Collection
 			switch {
 			case versionID != "":
-				var cols []client.Collection
 				cols, err = store.GetCollectionsByVersionID(cmd.Context(), versionID)
-				if err != nil {
-					return err
-				}
-				if name != "" {
-					versionCols := cols
-					cols = nil
-					for _, c := range versionCols {
-						if c.Name() == name {
-							cols = append(cols, c)
-							break
-						}
-					}
-				}
-				if len(cols) != 1 {
-					// If more than one collection matches the given criteria we cannot set the context collection
-					return nil
-				}
-				col = cols[0]
 
 			case schemaID != "":
-				col, err = store.GetCollectionBySchemaID(cmd.Context(), schemaID)
+				cols, err = store.GetCollectionsBySchemaID(cmd.Context(), schemaID)
 
 			case name != "":
 				col, err = store.GetCollectionByName(cmd.Context(), name)
+				cols = []client.Collection{col}
 
 			default:
 				return nil
@@ -79,6 +62,24 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			if name != "" {
+				fetchedCols := cols
+				cols = nil
+				for _, c := range fetchedCols {
+					if c.Name() == name {
+						cols = append(cols, c)
+						break
+					}
+				}
+			}
+
+			if len(cols) != 1 {
+				// If more than one collection matches the given criteria we cannot set the context collection
+				return nil
+			}
+			col = cols[0]
+
 			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
 				col = col.WithTxn(tx)
 			}

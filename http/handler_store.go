@@ -118,12 +118,16 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		}
 		responseJSON(rw, http.StatusOK, col.Definition())
 	case req.URL.Query().Has("schema_id"):
-		col, err := store.GetCollectionBySchemaID(req.Context(), req.URL.Query().Get("schema_id"))
+		cols, err := store.GetCollectionsBySchemaID(req.Context(), req.URL.Query().Get("schema_id"))
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		responseJSON(rw, http.StatusOK, col.Definition())
+		colDesc := make([]client.CollectionDefinition, len(cols))
+		for i, col := range cols {
+			colDesc[i] = col.Definition()
+		}
+		responseJSON(rw, http.StatusOK, colDesc)
 	case req.URL.Query().Has("version_id"):
 		cols, err := store.GetCollectionsByVersionID(req.Context(), req.URL.Query().Get("version_id"))
 		if err != nil {

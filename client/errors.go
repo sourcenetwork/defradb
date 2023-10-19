@@ -116,3 +116,10 @@ func NewErrCollectionNotFoundForSchemaVersion(schemaVersionID string) error {
 		errors.NewKV("SchemaVersionID", schemaVersionID),
 	)
 }
+
+func NewErrCollectionNotFoundForSchema(schemaID string) error {
+	return errors.New(
+		errCollectionNotFound,
+		errors.NewKV("SchemaID", schemaID),
+	)
+}

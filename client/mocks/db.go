@@ -493,20 +493,20 @@ func (_c *DB_GetCollectionByName_Call) RunAndReturn(run func(context.Context, st
 	return _c
 }
 
-// GetCollectionBySchemaID provides a mock function with given fields: _a0, _a1
-func (_m *DB) GetCollectionBySchemaID(_a0 context.Context, _a1 string) (client.Collection, error) {
+// GetCollectionsBySchemaID provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetCollectionsBySchemaID(_a0 context.Context, _a1 string) ([]client.Collection, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 client.Collection
+	var r0 []client.Collection
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (client.Collection, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.Collection, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) client.Collection); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []client.Collection); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(client.Collection)
+			r0 = ret.Get(0).([]client.Collection)
 		}
 	}
 
@@ -519,31 +519,31 @@ func (_m *DB) GetCollectionBySchemaID(_a0 context.Context, _a1 string) (client.C
 	return r0, r1
 }
 
-// DB_GetCollectionBySchemaID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCollectionBySchemaID'
-type DB_GetCollectionBySchemaID_Call struct {
+// DB_GetCollectionsBySchemaID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCollectionsBySchemaID'
+type DB_GetCollectionsBySchemaID_Call struct {
 	*mock.Call
 }
 
-// GetCollectionBySchemaID is a helper method to define mock.On call
+// GetCollectionsBySchemaID is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 string
-func (_e *DB_Expecter) GetCollectionBySchemaID(_a0 interface{}, _a1 interface{}) *DB_GetCollectionBySchemaID_Call {
-	return &DB_GetCollectionBySchemaID_Call{Call: _e.mock.On("GetCollectionBySchemaID", _a0, _a1)}
+func (_e *DB_Expecter) GetCollectionsBySchemaID(_a0 interface{}, _a1 interface{}) *DB_GetCollectionsBySchemaID_Call {
+	return &DB_GetCollectionsBySchemaID_Call{Call: _e.mock.On("GetCollectionsBySchemaID", _a0, _a1)}
 }
 
-func (_c *DB_GetCollectionBySchemaID_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetCollectionBySchemaID_Call {
+func (_c *DB_GetCollectionsBySchemaID_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetCollectionsBySchemaID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *DB_GetCollectionBySchemaID_Call) Return(_a0 client.Collection, _a1 error) *DB_GetCollectionBySchemaID_Call {
+func (_c *DB_GetCollectionsBySchemaID_Call) Return(_a0 []client.Collection, _a1 error) *DB_GetCollectionsBySchemaID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_GetCollectionBySchemaID_Call) RunAndReturn(run func(context.Context, string) (client.Collection, error)) *DB_GetCollectionBySchemaID_Call {
+func (_c *DB_GetCollectionsBySchemaID_Call) RunAndReturn(run func(context.Context, string) ([]client.Collection, error)) *DB_GetCollectionsBySchemaID_Call {
 	_c.Call.Return(run)
 	return _c
 }

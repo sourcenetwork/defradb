@@ -115,8 +115,8 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 	return w.client.GetCollectionByName(ctx, name)
 }
 
-func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
-	return w.client.GetCollectionBySchemaID(ctx, schemaId)
+func (w *Wrapper) GetCollectionsBySchemaID(ctx context.Context, schemaId string) ([]client.Collection, error) {
+	return w.client.GetCollectionsBySchemaID(ctx, schemaId)
 }
 
 func (w *Wrapper) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {
