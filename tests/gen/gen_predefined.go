@@ -21,10 +21,10 @@ import (
 
 // createSchemaWithDocs returns UpdateSchema action and CreateDoc actions
 // with the documents that match the schema.
-// The schema is parsed to get the list of properties, and the docs
-// are created with the same properties.
+// The schema is parsed to get the list of fields, and the docs
+// are created with the same fields.
 // This allows us to have only one large list of docs with predefined
-// properties, and create schemas with different properties from it.
+// fields, and create schemas with different fields from it.
 func CreateSchemaWithDocs(schema string, docsList DocsList) []any {
 	docs := GenerateDocs(schema, docsList)
 	resultActions := make([]any, 0, len(docs)+1)
@@ -53,9 +53,9 @@ type docGenerator struct {
 
 func createDocJSON(doc map[string]any, typeDef *typeDefinition) string {
 	sb := strings.Builder{}
-	for propName := range doc {
+	for fieldName := range doc {
 		format := `"%s": %v`
-		if _, isStr := doc[propName].(string); isStr {
+		if _, isStr := doc[fieldName].(string); isStr {
 			format = `"%s": "%v"`
 		}
 		if sb.Len() == 0 {
@@ -63,7 +63,7 @@ func createDocJSON(doc map[string]any, typeDef *typeDefinition) string {
 		} else {
 			sb.WriteString(",\n")
 		}
-		sb.WriteString(fmt.Sprintf(format, propName, doc[propName]))
+		sb.WriteString(fmt.Sprintf(format, fieldName, doc[fieldName]))
 	}
 	sb.WriteString("\n}")
 	return sb.String()
@@ -71,11 +71,11 @@ func createDocJSON(doc map[string]any, typeDef *typeDefinition) string {
 
 func toRequestedDoc(doc map[string]any, typeDef *typeDefinition) map[string]any {
 	result := make(map[string]any)
-	for _, prop := range typeDef.props {
-		if prop.isRelation {
+	for _, field := range typeDef.fields {
+		if field.isRelation {
 			continue
 		}
-		result[prop.name] = doc[prop.name]
+		result[field.name] = doc[field.name]
 	}
 	for name, val := range doc {
 		if strings.HasSuffix(name, request.RelatedObjectID) {
@@ -91,18 +91,18 @@ func (this *docGenerator) generatePrimary(
 ) (map[string]any, []GeneratedDoc) {
 	result := []GeneratedDoc{}
 	requested := toRequestedDoc(doc, typeDef)
-	for _, prop := range typeDef.props {
-		if prop.isRelation {
-			if _, hasProp := doc[prop.name]; hasProp {
-				if prop.isPrimary {
-					subType := this.types[prop.typeStr]
-					subDoc := toRequestedDoc(doc[prop.name].(map[string]any), &subType)
+	for _, field := range typeDef.fields {
+		if field.isRelation {
+			if _, hasProp := doc[field.name]; hasProp {
+				if field.isPrimary {
+					subType := this.types[field.typeStr]
+					subDoc := toRequestedDoc(doc[field.name].(map[string]any), &subType)
 					jsonSubDoc := createDocJSON(subDoc, &subType)
 					clientSubDoc, err := client.NewDocFromJSON([]byte(jsonSubDoc))
 					if err != nil {
 						panic("Failed to create doc from JSON: " + err.Error())
 					}
-					requested[prop.name+request.RelatedObjectID] = clientSubDoc.Key().String()
+					requested[field.name+request.RelatedObjectID] = clientSubDoc.Key().String()
 					result = append(result, GeneratedDoc{ColIndex: subType.index, JSON: jsonSubDoc})
 				}
 			}
@@ -120,10 +120,10 @@ func (this *docGenerator) GenerateDocs(doc map[string]any, typeName string) []Ge
 	result = append(result, GeneratedDoc{ColIndex: typeDef.index, JSON: docStr})
 
 	var docKey string
-	for _, prop := range typeDef.props {
-		if prop.isRelation {
-			if _, hasProp := doc[prop.name]; hasProp {
-				if !prop.isPrimary {
+	for _, field := range typeDef.fields {
+		if field.isRelation {
+			if _, hasProp := doc[field.name]; hasProp {
+				if !field.isPrimary {
 					if docKey == "" {
 						clientDoc, err := client.NewDocFromJSON([]byte(docStr))
 						if err != nil {
@@ -131,7 +131,7 @@ func (this *docGenerator) GenerateDocs(doc map[string]any, typeName string) []Ge
 						}
 						docKey = clientDoc.Key().String()
 					}
-					docs := this.generateSecondaryDocs(doc, typeName, &prop, docKey)
+					docs := this.generateSecondaryDocs(doc, typeName, &field, docKey)
 					result = append(result, docs...)
 				}
 			}
@@ -143,13 +143,13 @@ func (this *docGenerator) GenerateDocs(doc map[string]any, typeName string) []Ge
 func (this *docGenerator) generateSecondaryDocs(
 	primaryDoc map[string]any,
 	primaryTypeName string,
-	relProp *propDefinition,
+	relProp *fieldDefinition,
 	primaryDocKey string,
 ) []GeneratedDoc {
 	result := []GeneratedDoc{}
 	relTypeDef := this.types[relProp.typeStr]
 	primaryPropName := ""
-	for _, relDocProp := range relTypeDef.props {
+	for _, relDocProp := range relTypeDef.fields {
 		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary {
 			primaryPropName = relDocProp.name + request.RelatedObjectID
 			switch relVal := primaryDoc[relProp.name].(type) {

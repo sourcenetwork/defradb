@@ -33,7 +33,7 @@ func TestSchemaParser_Parse(t *testing.T) {
 				"User": {
 					name:  "User",
 					index: 0,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "name", typeStr: "String"},
 						{name: "age", typeStr: "Int"},
 					},
@@ -55,7 +55,7 @@ func TestSchemaParser_Parse(t *testing.T) {
 				"User": {
 					name:  "User",
 					index: 0,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "name", typeStr: "String"},
 						{name: "devices", typeStr: "Device", isArray: true, isRelation: true},
 					},
@@ -63,7 +63,7 @@ func TestSchemaParser_Parse(t *testing.T) {
 				"Device": {
 					name:  "Device",
 					index: 1,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "model", typeStr: "String"},
 						{name: "owner", typeStr: "User", isRelation: true, isPrimary: true},
 					},
@@ -85,7 +85,7 @@ func TestSchemaParser_Parse(t *testing.T) {
 				"User": {
 					name:  "User",
 					index: 0,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "name", typeStr: "String"},
 						{name: "device", typeStr: "Device", isRelation: true, isPrimary: true},
 					},
@@ -93,7 +93,7 @@ func TestSchemaParser_Parse(t *testing.T) {
 				"Device": {
 					name:  "Device",
 					index: 1,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "model", typeStr: "String"},
 						{name: "owner", typeStr: "User", isRelation: true},
 					},
@@ -123,28 +123,28 @@ func TestSchemaParser_Parse(t *testing.T) {
 				"T1": {
 					name:  "T1",
 					index: 0,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "secondary", typeStr: "T2", isRelation: true},
 					},
 				},
 				"T2": {
 					name:  "T2",
 					index: 1,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "primary", typeStr: "T1", isRelation: true, isPrimary: true},
 					},
 				},
 				"T3": {
 					name:  "T3",
 					index: 2,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "secondary", typeStr: "T4", isRelation: true},
 					},
 				},
 				"T4": {
 					name:  "T4",
 					index: 3,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "primary", typeStr: "T3", isRelation: true, isPrimary: true},
 						{name: "secondary", typeStr: "T5", isRelation: true},
 					},
@@ -152,7 +152,7 @@ func TestSchemaParser_Parse(t *testing.T) {
 				"T5": {
 					name:  "T5",
 					index: 4,
-					props: []propDefinition{
+					fields: []fieldDefinition{
 						{name: "primary", typeStr: "T4", isRelation: true, isPrimary: true},
 					},
 				},

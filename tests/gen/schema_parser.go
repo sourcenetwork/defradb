@@ -129,7 +129,7 @@ func (p *schemaParser) findTypes() {
 }
 
 func (p *schemaParser) defineProp(line string, pos int) {
-	prop := propDefinition{name: line[:pos]}
+	prop := fieldDefinition{name: line[:pos]}
 	prop.typeStr = strings.TrimSpace(line[pos+1:])
 	typeEndPos := strings.Index(prop.typeStr, " ")
 	if typeEndPos != -1 {
@@ -155,10 +155,10 @@ func (p *schemaParser) defineProp(line string, pos int) {
 		relMap[prop.name] = p.currentTypeDef.name
 		p.relationTypesMap[prop.typeStr] = relMap
 	}
-	p.currentTypeDef.props = append(p.currentTypeDef.props, prop)
+	p.currentTypeDef.fields = append(p.currentTypeDef.fields, prop)
 }
 
-func (p *schemaParser) resolvePrimaryField(typeDef, relatedTypeDef *typeDefinition, prop, relatedProp *propDefinition) {
+func (p *schemaParser) resolvePrimaryField(typeDef, relatedTypeDef *typeDefinition, prop, relatedProp *fieldDefinition) {
 	val := typeDef.index < relatedTypeDef.index
 	_, isResolved := p.resolvedRelation[typeDef.name][prop.name]
 	if isResolved {
@@ -173,12 +173,12 @@ func (p *schemaParser) resolvePrimaryField(typeDef, relatedTypeDef *typeDefiniti
 func (p *schemaParser) resolvePrimaryRelations() {
 	for typeName, relationProps := range p.relationTypesMap {
 		typeDef := p.types[typeName]
-		for i := range typeDef.props {
-			prop := &typeDef.props[i]
+		for i := range typeDef.fields {
+			prop := &typeDef.fields[i]
 			for relPropName, relPropType := range relationProps {
 				if prop.typeStr == relPropType {
 					relatedTypeDef := p.types[relPropType]
-					relatedProp := relatedTypeDef.getProp(relPropName)
+					relatedProp := relatedTypeDef.getField(relPropName)
 					if !p.resolvedRelation[relPropType][relPropName] {
 						p.resolvePrimaryField(&typeDef, &relatedTypeDef, prop, relatedProp)
 					}
