@@ -828,19 +828,14 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 	f.commitTxn()
 
 	validKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
-	invalidKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).
-		Values([]byte("invalid")).Build()
-
 	err := f.txn.Datastore().Delete(f.ctx, validKey.ToDS())
-	require.NoError(f.t, err)
-	err = f.txn.Datastore().Put(f.ctx, invalidKey.ToDS(), []byte{})
 	require.NoError(f.t, err)
 	f.commitTxn()
 
 	err = doc.Set(usersAgeFieldName, 23)
 	require.NoError(t, err)
 	err = f.users.Update(f.ctx, doc)
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrCorruptedIndex)
 }
 
 func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
