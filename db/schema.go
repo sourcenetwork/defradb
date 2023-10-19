@@ -137,7 +137,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	}
 
 	for _, schema := range newSchemaByName {
-		_, err := db.updateSchema(
+		err := db.updateSchema(
 			ctx,
 			txn,
 			existingSchemaByName,

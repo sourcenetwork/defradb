@@ -48,8 +48,6 @@ const (
 	testUsersColIndexName   = "user_name"
 	testUsersColIndexAge    = "user_age"
 	testUsersColIndexWeight = "user_weight"
-
-	userColVersionID = "bafkreiefzlx2xsfaxixs24hcqwwqpa3nuqbutkapasymk3d5v4fxa4rlhy"
 )
 
 type indexTestFixture struct {

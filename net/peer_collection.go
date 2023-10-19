@@ -35,6 +35,9 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 		if err != nil {
 			return err
 		}
+		if len(storeCol) == 0 {
+			return client.NewErrCollectionNotFoundForSchema(col)
+		}
 		storeCollections = append(storeCollections, storeCol...)
 	}
 
@@ -96,6 +99,9 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 		storeCol, err := p.db.WithTxn(txn).GetCollectionsBySchemaID(p.ctx, col)
 		if err != nil {
 			return err
+		}
+		if len(storeCol) == 0 {
+			return client.NewErrCollectionNotFoundForSchema(col)
 		}
 		storeCollections = append(storeCollections, storeCol...)
 	}
