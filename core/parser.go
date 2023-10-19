@@ -54,5 +54,7 @@ type Parser interface {
 	ParseSDL(ctx context.Context, schemaString string) ([]client.CollectionDefinition, error)
 
 	// Adds the given schema to this parser's model.
+	//
+	// All collections should be provided, not just new/updated ones.
 	SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDefinition) error
 }
