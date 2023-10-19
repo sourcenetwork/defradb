@@ -29,7 +29,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 					ctx,
 					`mutation {
 						create_Users(data: "{\"name\": \"John\"}") {
-							_key
+							_docID
 						}
 					}`,
 				)
@@ -44,7 +44,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 					ctx,
 					`mutation {
 						create_Users(data: "{\"name\": \"Shahzad\"}") {
-							_key
+							_docID
 						}
 					}`,
 				)

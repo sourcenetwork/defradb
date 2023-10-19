@@ -474,10 +474,10 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 			testUtils.WaitForSync{},
 			testUtils.Request{
 				// The document should have been synced, and should contain the same values
-				// including dockey and schema version id.
+				// including document id and schema version id.
 				Request: `query {
 					Users {
-						_key
+						_docID
 						age
 						name
 						_version {
@@ -487,9 +487,9 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
-						"age":  int64(21),
-						"name": "John",
+						"_docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"age":    int64(21),
+						"name":   "John",
 						"_version": []map[string]any{
 							{
 								"schemaVersionId": "bafkreiggbvwwiqmzid4qnklwwdyu7mwhbbjy3ejss3x7uw7zxw6ivmmj6u",
@@ -537,11 +537,11 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				// Assert that the dockey and schema version id are the same across all nodes,
+				// Assert that the document id and schema version id are the same across all nodes,
 				// even though the schema field order is different.
 				Request: `query {
 					Users {
-						_key
+						_docID
 						_version {
 							schemaVersionId
 						}
@@ -549,7 +549,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"_docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 						"_version": []map[string]any{
 							{
 								"schemaVersionId": "bafkreiggbvwwiqmzid4qnklwwdyu7mwhbbjy3ejss3x7uw7zxw6ivmmj6u",
