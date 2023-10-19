@@ -41,10 +41,9 @@ var _ MultiStore = (*multistore)(nil)
 func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
 	rootRW := AsDSReaderWriter(rootstore)
 	ms := &multistore{
-		root: rootRW,
-		data: prefix(rootRW, dataStoreKey),
-		head: prefix(rootRW, headStoreKey),
-		// the `peers` prefix is assigned by the libp2p peerstore
+		root:   rootRW,
+		data:   prefix(rootRW, dataStoreKey),
+		head:   prefix(rootRW, headStoreKey),
 		peer:   namespace.Wrap(rootstore, peerStoreKey),
 		system: prefix(rootRW, systemStoreKey),
 		dag:    NewDAGStore(prefix(rootRW, blockStoreKey)),
