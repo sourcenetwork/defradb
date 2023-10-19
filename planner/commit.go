@@ -366,9 +366,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 		return core.Doc{}, nil, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
 	}
 
-	// WARNING: This will become incorrect once we allow multiple collections to share the same schema
-	// todo: link to tickets.
-	// We should instead fetch the collection be global collection ID:
+	// WARNING: This will become incorrect once we allow multiple collections to share the same schema,
+	// we should by then instead fetch the collection be global collection ID:
 	// https://github.com/sourcenetwork/defradb/issues/1085
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
 		request.CollectionIDFieldName, int64(cols[0].ID()))
