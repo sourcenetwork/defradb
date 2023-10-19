@@ -76,8 +76,8 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 				// Multiple params may have been specified, and in some cases both are needed.
 				// For example if a schema version and a collection name have been provided,
 				// we need to ensure tha a collection at the requested version is returned.
-				// Likewise we need to ensure that if a name and schema id are provided, but
-				// there are none matching both, that nothing is returned.
+				// Likewise we need to ensure that if a collection name and schema id are provided,
+				// but there are none matching both, that nothing is returned.
 				fetchedCols := cols
 				cols = nil
 				for _, c := range fetchedCols {
