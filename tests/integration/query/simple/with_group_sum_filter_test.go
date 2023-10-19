@@ -43,11 +43,11 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t
 		},
 		Results: []map[string]any{
 			{
-				"Age":  uint64(32),
+				"Age":  int64(32),
 				"_sum": int64(64),
 			},
 			{
-				"Age":  uint64(19),
+				"Age":  int64(19),
 				"_sum": int64(0),
 			},
 		},
@@ -86,7 +86,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 		},
 		Results: []map[string]any{
 			{
-				"Age":  uint64(32),
+				"Age":  int64(32),
 				"_sum": int64(64),
 				"_group": []map[string]any{
 					{
@@ -98,7 +98,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 				},
 			},
 			{
-				"Age":  uint64(19),
+				"Age":  int64(19),
 				"_sum": int64(0),
 				"_group": []map[string]any{
 					{
@@ -142,7 +142,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 		},
 		Results: []map[string]any{
 			{
-				"Age":  uint64(32),
+				"Age":  int64(32),
 				"_sum": int64(32),
 				"_group": []map[string]any{
 					{
@@ -151,7 +151,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 				},
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_sum":   int64(0),
 				"_group": []map[string]any{},
 			},
@@ -191,7 +191,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 		},
 		Results: []map[string]any{
 			{
-				"Age":  uint64(32),
+				"Age":  int64(32),
 				"_sum": int64(64),
 				"_group": []map[string]any{
 					{
@@ -200,7 +200,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 				},
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_sum":   int64(0),
 				"_group": []map[string]any{},
 			},
@@ -238,12 +238,12 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDiffere
 		},
 		Results: []map[string]any{
 			{
-				"Age": uint64(32),
+				"Age": int64(32),
 				"S1":  int64(64),
 				"S2":  int64(0),
 			},
 			{
-				"Age": uint64(19),
+				"Age": int64(19),
 				"S1":  int64(0),
 				"S2":  int64(19),
 			},

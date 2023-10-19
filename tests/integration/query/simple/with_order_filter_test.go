@@ -48,11 +48,11 @@ func TestQuerySimpleWithNumericGreaterThanFilterAndNumericOrderDescending(t *tes
 		Results: []map[string]any{
 			{
 				"Name": "Carlo",
-				"Age":  uint64(55),
+				"Age":  int64(55),
 			},
 			{
 				"Name": "Bob",
-				"Age":  uint64(32),
+				"Age":  int64(32),
 			},
 		},
 	}

@@ -159,7 +159,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 				"name": "Painted House",
 				"author": map[string]any{
 					"name": "John Grisham",
-					"age":  uint64(22),
+					"age":  int64(22),
 				},
 			},
 		},

@@ -53,7 +53,7 @@ func TestP2POneToOneReplicatorWithRestart(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},

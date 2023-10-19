@@ -37,7 +37,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Results: []map[string]any{
 				{
 					"Name": "John",
-					"Age":  uint64(21),
+					"Age":  int64(21),
 				},
 			},
 		},
@@ -82,7 +82,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Results: []map[string]any{
 				{
 					"Name": "John",
-					"Age":  uint64(21),
+					"Age":  int64(21),
 				},
 			},
 		},
@@ -113,11 +113,11 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Results: []map[string]any{
 				{
 					"Name": "Jim",
-					"Age":  uint64(27),
+					"Age":  int64(27),
 				},
 				{
 					"Name": "John",
-					"Age":  uint64(21),
+					"Age":  int64(21),
 				},
 			},
 		},

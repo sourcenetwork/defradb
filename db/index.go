@@ -166,6 +166,13 @@ func (i *collectionSimpleIndex) Update(
 	if err != nil {
 		return err
 	}
+	exists, err := txn.Datastore().Has(ctx, key.ToDS())
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return NewErrCorruptedIndex(i.desc.Name)
+	}
 	err = txn.Datastore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return err

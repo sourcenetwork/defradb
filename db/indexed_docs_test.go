@@ -828,19 +828,14 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 	f.commitTxn()
 
 	validKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
-	invalidKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).
-		Values([]byte("invalid")).Build()
-
 	err := f.txn.Datastore().Delete(f.ctx, validKey.ToDS())
-	require.NoError(f.t, err)
-	err = f.txn.Datastore().Put(f.ctx, invalidKey.ToDS(), []byte{})
 	require.NoError(f.t, err)
 	f.commitTxn()
 
 	err = doc.Set(usersAgeFieldName, 23)
 	require.NoError(t, err)
 	err = f.users.Update(f.ctx, doc)
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrCorruptedIndex)
 }
 
 func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
@@ -888,6 +883,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			Name: "Delete old value",
 			StubDataStore: func(ds *mocks.DSReaderWriter_Expecter) {
 				ds.Delete(mock.Anything, mock.Anything).Return(testErr)
+				ds.Has(mock.Anything, mock.Anything).Maybe().Return(true, nil)
 				ds.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
 			},
 		},
@@ -896,6 +892,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			StubDataStore: func(ds *mocks.DSReaderWriter_Expecter) {
 				ds.Delete(mock.Anything, mock.Anything).Maybe().Return(nil)
 				ds.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
+				ds.Has(mock.Anything, mock.Anything).Maybe().Return(true, nil)
 				ds.Put(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(testErr)
 			},
 		},
