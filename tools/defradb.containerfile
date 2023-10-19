@@ -2,6 +2,13 @@
 
 # An image to run defradb.
 
+# Stage: PLAYGROUND
+FROM docker.io/node:20 AS PLAYGROUND_BUILD
+WORKDIR /repo/
+COPY playground/ ./
+RUN npm install
+RUN npm run build
+
 # Stage: BUILD
 # Several steps are involved to enable caching and because of the behavior of COPY regarding directories.
 FROM docker.io/golang:1.20 AS BUILD
@@ -9,6 +16,7 @@ WORKDIR /repo/
 COPY go.mod go.sum Makefile ./
 RUN make deps:modules
 COPY . .
+COPY --from=PLAYGROUND_BUILD /repo/dist /repo/playground/dist/
 ENV BUILD_TAGS=playground
 RUN make build
 
