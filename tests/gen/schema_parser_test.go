@@ -162,7 +162,103 @@ func TestSchemaParser_Parse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &schemaParser{}
-			got := p.Parse(tt.schema)
+			got, _ := p.Parse(tt.schema)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestSchemaParser_ParseGenConfig(t *testing.T) {
+	tests := []struct {
+		name   string
+		schema string
+		want   map[string]map[string]genConfig
+	}{
+		{
+			name: "string values",
+			schema: `
+				type User {
+					name: String # pattern: "some pattern"
+				}`,
+			want: map[string]map[string]genConfig{
+				"User": {
+					"name": {
+						props: map[string]any{
+							"pattern": "some pattern",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "bool values",
+			schema: `
+				type User {
+					verified: Boolean # default: true
+				}`,
+			want: map[string]map[string]genConfig{
+				"User": {
+					"verified": {
+						props: map[string]any{
+							"default": true,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "int values",
+			schema: `
+				type User {
+					age: Int # min: 4, max: 10
+				}`,
+			want: map[string]map[string]genConfig{
+				"User": {
+					"age": {
+						props: map[string]any{
+							"min": 4,
+							"max": 10,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "float values",
+			schema: `
+				type User {
+					rating: Float # min: 1.1, max: 5.5
+				}`,
+			want: map[string]map[string]genConfig{
+				"User": {
+					"rating": {
+						props: map[string]any{
+							"min": 1.1,
+							"max": 5.5,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "labels",
+			schema: `
+				type User {
+					name: String # unique, indexed
+				}`,
+			want: map[string]map[string]genConfig{
+				"User": {
+					"name": {
+						labels: []string{"unique", "indexed"},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &schemaParser{}
+			_, got := p.Parse(tt.schema)
 			assert.Equal(t, tt.want, got)
 		})
 	}

@@ -11,6 +11,8 @@
 package gen
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -22,12 +24,16 @@ type schemaParser struct {
 	resolvedRelation map[string]map[string]bool
 }
 
-func (p *schemaParser) Parse(schema string) map[string]typeDefinition {
+func (p *schemaParser) Parse(schema string) (map[string]typeDefinition, map[string]map[string]genConfig) {
 	p.types = make(map[string]typeDefinition)
 	p.relationTypesMap = make(map[string]map[string]string)
 	p.resolvedRelation = make(map[string]map[string]bool)
 	p.schemaLines = strings.Split(schema, "\n")
 	p.findTypes()
+
+	genConfigs := make(map[string]map[string]genConfig)
+
+	var currentConfig map[string]genConfig
 
 	for _, line := range p.schemaLines {
 		line = strings.TrimSpace(line)
@@ -35,19 +41,77 @@ func (p *schemaParser) Parse(schema string) map[string]typeDefinition {
 			typeNameEndPos := strings.Index(line[5:], " ")
 			typeName := strings.TrimSpace(line[5 : 5+typeNameEndPos])
 			p.currentTypeDef = p.types[typeName]
+			currentConfig = make(map[string]genConfig)
 			continue
 		}
 		if strings.HasPrefix(line, "}") {
 			p.types[p.currentTypeDef.name] = p.currentTypeDef
+			if len(currentConfig) > 0 {
+				genConfigs[p.currentTypeDef.name] = currentConfig
+			}
 			continue
 		}
 		pos := strings.Index(line, ":")
 		if pos != -1 {
 			p.defineProp(line, pos)
 		}
+		configPos := strings.Index(line, "#")
+		if configPos != -1 {
+			currentConfig[line[:pos]] = p.parseGenConfig(line[configPos+1:])
+		}
 	}
 	p.resolvePrimaryRelations()
-	return p.types
+	return p.types, genConfigs
+}
+
+func (p *schemaParser) parseGenConfig(configStr string) genConfig {
+	configStr = strings.TrimSpace(configStr)
+	if configStr == "" {
+		return genConfig{}
+	}
+
+	config := genConfig{props: make(map[string]any)}
+	configParts := strings.Split(configStr, ",")
+	for _, part := range configParts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		propParts := strings.Split(part, ":")
+		if len(propParts) == 1 {
+			config.labels = append(config.labels, strings.TrimSpace(propParts[0]))
+		} else {
+			config.props[strings.TrimSpace(propParts[0])] = p.parseGenConfigValue(
+				strings.TrimSpace(propParts[1]))
+		}
+	}
+	if len(config.props) == 0 {
+		config.props = nil
+	}
+
+	return config
+}
+
+func (p *schemaParser) parseGenConfigValue(valueStr string) any {
+	valueStr = strings.TrimSpace(valueStr)
+	if valueStr == "true" {
+		return true
+	}
+	if valueStr == "false" {
+		return false
+	}
+	if valueStr[0] == '"' {
+		return valueStr[1 : len(valueStr)-1]
+	}
+	if strings.Contains(valueStr, ".") {
+		if val, err := strconv.ParseFloat(valueStr, 64); err == nil {
+			return val
+		}
+	}
+	if val, err := strconv.ParseInt(valueStr, 10, 32); err == nil {
+		return int(val)
+	}
+	panic(fmt.Sprintf("Failed to parse gen config value %s", valueStr))
 }
 
 func (p *schemaParser) findTypes() {

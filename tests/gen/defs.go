@@ -34,6 +34,11 @@ type typeDefinition struct {
 	props []propDefinition
 }
 
+type genConfig struct {
+	labels []string
+	props  map[string]any
+}
+
 func (t *typeDefinition) getProp(name string) *propDefinition {
 	for i := range t.props {
 		if t.props[i].name == name {
