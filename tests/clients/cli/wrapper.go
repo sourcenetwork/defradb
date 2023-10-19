@@ -225,7 +225,7 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 	return &Collection{w.cmd, definition}, nil
 }
 
-func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
+func (w *Wrapper) GetCollectionsBySchemaID(ctx context.Context, schemaId string) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
 	args = append(args, "--schema", schemaId)
 
@@ -233,14 +233,18 @@ func (w *Wrapper) GetCollectionBySchemaID(ctx context.Context, schemaId string) 
 	if err != nil {
 		return nil, err
 	}
-	var definition client.CollectionDefinition
-	if err := json.Unmarshal(data, &definition); err != nil {
+	var colDesc []client.CollectionDefinition
+	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, definition}, nil
+	cols := make([]client.Collection, len(colDesc))
+	for i, v := range colDesc {
+		cols[i] = &Collection{w.cmd, v}
+	}
+	return cols, err
 }
 
-func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
+func (w *Wrapper) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
 	args = append(args, "--version", versionId)
 
@@ -248,11 +252,15 @@ func (w *Wrapper) GetCollectionByVersionID(ctx context.Context, versionId string
 	if err != nil {
 		return nil, err
 	}
-	var definition client.CollectionDefinition
-	if err := json.Unmarshal(data, &definition); err != nil {
+	var colDesc []client.CollectionDefinition
+	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
-	return &Collection{w.cmd, definition}, nil
+	cols := make([]client.Collection, len(colDesc))
+	for i, v := range colDesc {
+		cols[i] = &Collection{w.cmd, v}
+	}
+	return cols, err
 }
 
 func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {

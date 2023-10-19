@@ -14,17 +14,29 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-const errInvalidLensConfig = "invalid lens configuration"
+const (
+	errInvalidLensConfig        string = "invalid lens configuration"
+	errSchemaVersionNotOfSchema string = "the given schema version is from a different schema"
+)
 
 var (
-	ErrNoDocOrFile         = errors.New("document or file must be defined")
-	ErrInvalidDocument     = errors.New("invalid document")
-	ErrNoDocKeyOrFilter    = errors.New("document key or filter must be defined")
-	ErrInvalidExportFormat = errors.New("invalid export format")
-	ErrNoLensConfig        = errors.New("lens config cannot be empty")
-	ErrInvalidLensConfig   = errors.New("invalid lens configuration")
+	ErrNoDocOrFile              = errors.New("document or file must be defined")
+	ErrInvalidDocument          = errors.New("invalid document")
+	ErrNoDocKeyOrFilter         = errors.New("document key or filter must be defined")
+	ErrInvalidExportFormat      = errors.New("invalid export format")
+	ErrNoLensConfig             = errors.New("lens config cannot be empty")
+	ErrInvalidLensConfig        = errors.New("invalid lens configuration")
+	ErrSchemaVersionNotOfSchema = errors.New(errSchemaVersionNotOfSchema)
 )
 
 func NewErrInvalidLensConfig(inner error) error {
 	return errors.Wrap(errInvalidLensConfig, inner)
+}
+
+func NewErrSchemaVersionNotOfSchema(schemaID string, schemaVersionID string) error {
+	return errors.New(
+		errSchemaVersionNotOfSchema,
+		errors.NewKV("SchemaID", schemaID),
+		errors.NewKV("SchemaVersionID", schemaVersionID),
+	)
 }
