@@ -43,7 +43,7 @@ func TestQuerySimpleWithDateTimeEqualsFilterBlock(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name":      "John",
-				"Age":       uint64(21),
+				"Age":       int64(21),
 				"CreatedAt": "2017-07-23T03:46:56.647Z",
 			},
 		},
@@ -83,7 +83,7 @@ func TestQuerySimpleWithDateTimeEqualsNilFilterBlock(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name":      "Fred",
-				"Age":       uint64(44),
+				"Age":       int64(44),
 				"CreatedAt": nil,
 			},
 		},

@@ -39,7 +39,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 						"rating": 3.2,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of Sooley",
-							"yearOpened": uint64(1999),
+							"yearOpened": int64(1999),
 						},
 					},
 					{
@@ -47,7 +47,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 						"rating": 4.0,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of The Rooster Bar",
-							"yearOpened": uint64(2022),
+							"yearOpened": int64(2022),
 						},
 					},
 					{
@@ -60,7 +60,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 						"rating": 4.5,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of A Time for Mercy",
-							"yearOpened": uint64(2013),
+							"yearOpened": int64(2013),
 						},
 					},
 					{
@@ -68,7 +68,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 						"rating": 4.8,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of Theif Lord",
-							"yearOpened": uint64(2020),
+							"yearOpened": int64(2020),
 						},
 					},
 					{
@@ -76,7 +76,7 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 						"rating": 4.9,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of Painted House",
-							"yearOpened": uint64(1995),
+							"yearOpened": int64(1995),
 						},
 					},
 				},
@@ -110,7 +110,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 						"rating": 4.0,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of The Rooster Bar",
-							"yearOpened": uint64(2022),
+							"yearOpened": int64(2022),
 						},
 					},
 					{
@@ -118,7 +118,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 						"rating": 4.8,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of Theif Lord",
-							"yearOpened": uint64(2020),
+							"yearOpened": int64(2020),
 						},
 					},
 					{
@@ -126,7 +126,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 						"rating": 4.5,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of A Time for Mercy",
-							"yearOpened": uint64(2013),
+							"yearOpened": int64(2013),
 						},
 					},
 					{
@@ -134,7 +134,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 						"rating": 3.2,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of Sooley",
-							"yearOpened": uint64(1999),
+							"yearOpened": int64(1999),
 						},
 					},
 					{
@@ -142,7 +142,7 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 						"rating": 4.9,
 						"publisher": map[string]any{
 							"name":       "Only Publisher of Painted House",
-							"yearOpened": uint64(1995),
+							"yearOpened": int64(1995),
 						},
 					},
 					{

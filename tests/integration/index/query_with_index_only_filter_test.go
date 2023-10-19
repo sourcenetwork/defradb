@@ -36,7 +36,7 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 				Request: req,
 				Results: []map[string]any{{
 					"name": "Islam",
-					"age":  uint64(32),
+					"age":  int64(32),
 				}},
 			},
 			testUtils.Request{
@@ -104,8 +104,8 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"age": uint64(32)},
-					{"age": uint64(18)},
+					{"age": int64(32)},
+					{"age": int64(18)},
 				},
 			},
 			testUtils.Request{
@@ -340,8 +340,8 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"age": uint64(32)},
-					{"age": uint64(18)},
+					{"age": int64(32)},
+					{"age": int64(18)},
 				},
 			},
 			testUtils.Request{

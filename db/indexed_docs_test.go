@@ -883,6 +883,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			Name: "Delete old value",
 			StubDataStore: func(ds *mocks.DSReaderWriter_Expecter) {
 				ds.Delete(mock.Anything, mock.Anything).Return(testErr)
+				ds.Has(mock.Anything, mock.Anything).Maybe().Return(true, nil)
 				ds.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
 			},
 		},
@@ -891,6 +892,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			StubDataStore: func(ds *mocks.DSReaderWriter_Expecter) {
 				ds.Delete(mock.Anything, mock.Anything).Maybe().Return(nil)
 				ds.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
+				ds.Has(mock.Anything, mock.Anything).Maybe().Return(true, nil)
 				ds.Put(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(testErr)
 			},
 		},

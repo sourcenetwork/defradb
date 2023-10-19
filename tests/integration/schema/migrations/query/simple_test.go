@@ -761,7 +761,7 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 				Results: []map[string]any{
 					{
 						"name": "Fred",
-						"age":  uint64(40),
+						"age":  int64(40),
 					},
 				},
 			},
@@ -823,7 +823,7 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequeste
 				Results: []map[string]any{
 					{
 						"name":       "John",
-						"yearsLived": uint64(40),
+						"yearsLived": int64(40),
 					},
 				},
 			},
@@ -898,8 +898,8 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 				Results: []map[string]any{
 					{
 						"name":       "John",
-						"age":        uint64(40),
-						"yearsLived": uint64(40),
+						"age":        int64(40),
+						"yearsLived": int64(40),
 					},
 				},
 			},

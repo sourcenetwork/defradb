@@ -43,7 +43,7 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
 						"cid": "bafybeigyyj2jvd4265aalvq6wctzz7jz36rluxrevlnx2hewvowlq672na",
@@ -168,7 +168,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
 						"cid": "bafybeigyyj2jvd4265aalvq6wctzz7jz36rluxrevlnx2hewvowlq672na",

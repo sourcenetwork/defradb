@@ -88,10 +88,10 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"age": uint64(2),
+						"age": int64(2),
 					},
 					{
-						"age": uint64(1),
+						"age": int64(1),
 					},
 				},
 			},

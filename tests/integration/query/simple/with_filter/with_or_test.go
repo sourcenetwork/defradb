@@ -48,11 +48,11 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "Alice",
-				"Age":  uint64(19),
+				"Age":  int64(19),
 			},
 			{
 				"Name": "Carlo",
-				"Age":  uint64(55),
+				"Age":  int64(55),
 			},
 		},
 	}

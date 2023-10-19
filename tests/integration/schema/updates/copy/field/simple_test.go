@@ -130,7 +130,7 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *
 					{
 						"name": "John",
 						// It is important to test this with data, to ensure the type has been substituted correctly
-						"age": uint64(3),
+						"age": int64(3),
 					},
 				},
 			},

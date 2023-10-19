@@ -441,7 +441,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 						"_sum":     float64(2.22),
 						"_group": []map[string]any{
 							{
-								"Age":  uint64(34),
+								"Age":  int64(34),
 								"_sum": float64(2.22),
 							},
 						},
@@ -451,11 +451,11 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 						"_sum":     float64(3.43),
 						"_group": []map[string]any{
 							{
-								"Age":  uint64(32),
+								"Age":  int64(32),
 								"_sum": float64(1.61),
 							},
 							{
-								"Age":  uint64(25),
+								"Age":  int64(25),
 								"_sum": float64(1.82),
 							},
 						},
@@ -471,7 +471,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 						"_sum":     float64(2.04),
 						"_group": []map[string]any{
 							{
-								"Age":  uint64(19),
+								"Age":  int64(19),
 								"_sum": float64(2.04),
 							},
 						},
@@ -487,7 +487,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 						"_sum":     float64(1.74),
 						"_group": []map[string]any{
 							{
-								"Age":  uint64(55),
+								"Age":  int64(55),
 								"_sum": float64(1.74),
 							},
 						},

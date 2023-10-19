@@ -54,7 +54,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -99,7 +99,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -239,7 +239,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -286,7 +286,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -299,7 +299,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -361,10 +361,10 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 					{
-						"Age": uint64(22),
+						"Age": int64(22),
 					},
 				},
 			},
@@ -421,10 +421,10 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 					{
-						"Age": uint64(22),
+						"Age": int64(22),
 					},
 				},
 			},
@@ -488,7 +488,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"_key": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
-						"age":  uint64(21),
+						"age":  int64(21),
 						"name": "John",
 						"_version": []map[string]any{
 							{
