@@ -2,7 +2,7 @@
 
 # An image to run defradb.
 
-# Stage: PLAYGROUND
+# Stage: PLAYGROUND_BUILD
 FROM docker.io/node:20 AS PLAYGROUND_BUILD
 WORKDIR /repo/
 COPY playground/ ./
