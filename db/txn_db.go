@@ -111,14 +111,30 @@ func (db *implicitTxnDB) GetCollectionByVersionID(
 	}
 	defer txn.Discard(ctx)
 
-	return db.getCollectionByVersionID(ctx, txn, schemaVersionID)
+	cols, err := db.getCollectionsByVersionID(ctx, txn, schemaVersionID)
+	if err != nil {
+		return nil, err
+	}
+	if len(cols) == 0 {
+		return nil, NewErrFailedToGetCollection(schemaVersionID, err)
+	}
+
+	return cols[0], nil
 }
 
 // GetCollectionByVersionID returns an existing collection using the schema version hash ID.
 func (db *explicitTxnDB) GetCollectionByVersionID(
 	ctx context.Context, schemaVersionID string,
 ) (client.Collection, error) {
-	return db.getCollectionByVersionID(ctx, db.txn, schemaVersionID)
+	cols, err := db.getCollectionsByVersionID(ctx, db.txn, schemaVersionID)
+	if err != nil {
+		return nil, err
+	}
+	if len(cols) == 0 {
+		return nil, NewErrFailedToGetCollection(schemaVersionID, err)
+	}
+
+	return cols[0], nil
 }
 
 // GetAllCollections gets all the currently defined collections.

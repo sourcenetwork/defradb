@@ -486,10 +486,14 @@ func (db *db) setDefaultSchemaVersion(
 	txn datastore.Txn,
 	schemaVersionID string,
 ) error {
-	col, err := db.getCollectionByVersionID(ctx, txn, schemaVersionID)
+	// This call makes no sense at the moment, but needs to be done due to the bad way we currently store
+	// collections.
+	// https://github.com/sourcenetwork/defradb/issues/1964
+	collections, err := db.getCollectionsByVersionID(ctx, txn, schemaVersionID)
 	if err != nil {
 		return err
 	}
+	col := collections[0]
 
 	desc := col.Description()
 	err = db.setDefaultSchemaVersionExplicit(ctx, txn, desc.Name, col.Schema().SchemaID, schemaVersionID)
@@ -527,14 +531,14 @@ func (db *db) setDefaultSchemaVersionExplicit(
 	return txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
 }
 
-// getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.
+// getCollectionsByVersionId returns the [*collection]s at the given [schemaVersionId] version.
 //
-// Will return an error if the given key is empty, or not found.
-func (db *db) getCollectionByVersionID(
+// Will return an error if the given key is empty, or if none are found.
+func (db *db) getCollectionsByVersionID(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaVersionId string,
-) (*collection, error) {
+) ([]*collection, error) {
 	if schemaVersionId == "" {
 		return nil, ErrSchemaVersionIDEmpty
 	}
@@ -563,7 +567,7 @@ func (db *db) getCollectionByVersionID(
 		return nil, err
 	}
 
-	return col, nil
+	return []*collection{col}, nil
 }
 
 // getCollectionByName returns an existing collection within the database.
@@ -579,7 +583,18 @@ func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name s
 	}
 
 	schemaVersionId := string(buf)
-	return db.getCollectionByVersionID(ctx, txn, schemaVersionId)
+	// This call makes no sense at the moment, but needs to be done due to the bad way we currently store
+	// collections.
+	// https://github.com/sourcenetwork/defradb/issues/1964
+	cols, err := db.getCollectionsByVersionID(ctx, txn, schemaVersionId)
+	if err != nil {
+		return nil, err
+	}
+	if len(cols) == 0 {
+		return nil, NewErrFailedToGetCollection(schemaVersionId, err)
+	}
+
+	return cols[0], nil
 }
 
 // getCollectionBySchemaID returns an existing collection using the schema hash ID.
@@ -599,7 +614,15 @@ func (db *db) getCollectionBySchemaID(
 	}
 
 	schemaVersionId := string(buf)
-	return db.getCollectionByVersionID(ctx, txn, schemaVersionId)
+	cols, err := db.getCollectionsByVersionID(ctx, txn, schemaVersionId)
+	if err != nil {
+		return nil, err
+	}
+	if len(cols) == 0 {
+		return nil, NewErrFailedToGetCollection(schemaVersionId, err)
+	}
+
+	return cols[0], nil
 }
 
 // getAllCollections gets all the currently defined collections.
@@ -625,11 +648,18 @@ func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn) ([]clien
 		}
 
 		schemaVersionId := string(res.Value)
-		col, err := db.getCollectionByVersionID(ctx, txn, schemaVersionId)
+		// This call makes no sense at the moment, but needs to be done due to the bad way we currently store
+		// collections.
+		// https://github.com/sourcenetwork/defradb/issues/1964
+		collections, err := db.getCollectionsByVersionID(ctx, txn, schemaVersionId)
 		if err != nil {
 			return nil, NewErrFailedToGetCollection(schemaVersionId, err)
 		}
-		cols = append(cols, col)
+		if len(collections) == 0 {
+			return nil, NewErrFailedToGetCollection(schemaVersionId, err)
+		}
+
+		cols = append(cols, collections[0])
 	}
 
 	return cols, nil
