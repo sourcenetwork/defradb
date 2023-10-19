@@ -66,11 +66,11 @@ type collection struct {
 // CollectionOptions object.
 
 // NewCollection returns a pointer to a newly instanciated DB Collection
-func (db *db) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) (*collection, error) {
+func (db *db) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
 	return &collection{
 		db:  db,
 		def: client.CollectionDefinition{Description: desc, Schema: schema},
-	}, nil
+	}
 }
 
 // newFetcher returns a new fetcher instance for this collection.
@@ -149,11 +149,7 @@ func (db *db) createCollection(
 		return nil, err
 	}
 
-	col, err := db.newCollection(desc, schema)
-	if err != nil {
-		return nil, err
-	}
-
+	col := db.newCollection(desc, schema)
 	for _, index := range desc.Indexes {
 		if _, err := col.createIndex(ctx, txn, index); err != nil {
 			return nil, err
