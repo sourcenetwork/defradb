@@ -597,12 +597,12 @@ func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name s
 	return cols[0], nil
 }
 
-// getCollectionBySchemaID returns an existing collection using the schema hash ID.
-func (db *db) getCollectionBySchemaID(
+// getCollectionsBySchemaID returns all existing collections using the schema hash ID.
+func (db *db) getCollectionsBySchemaID(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaID string,
-) (client.Collection, error) {
+) ([]client.Collection, error) {
 	if schemaID == "" {
 		return nil, ErrSchemaIDEmpty
 	}
@@ -618,11 +618,13 @@ func (db *db) getCollectionBySchemaID(
 	if err != nil {
 		return nil, err
 	}
-	if len(cols) == 0 {
-		return nil, NewErrFailedToGetCollection(schemaVersionId, err)
+
+	collections := make([]client.Collection, len(cols))
+	for i, col := range cols {
+		collections[i] = col
 	}
 
-	return cols[0], nil
+	return collections, nil
 }
 
 // getAllCollections gets all the currently defined collections.
