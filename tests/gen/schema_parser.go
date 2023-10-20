@@ -158,7 +158,11 @@ func (p *schemaParser) defineProp(line string, pos int) {
 	p.currentTypeDef.fields = append(p.currentTypeDef.fields, prop)
 }
 
-func (p *schemaParser) resolvePrimaryField(typeDef, relatedTypeDef *typeDefinition, prop, relatedProp *fieldDefinition) {
+func (p *schemaParser) resolvePrimaryField(
+	typeDef, relatedTypeDef *typeDefinition,
+	prop,
+	relatedProp *fieldDefinition,
+) {
 	val := typeDef.index < relatedTypeDef.index
 	_, isResolved := p.resolvedRelation[typeDef.name][prop.name]
 	if isResolved {
