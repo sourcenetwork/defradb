@@ -60,7 +60,11 @@ func getRandomString(n int) string {
 func (g *randomDocGenerator) generateRandomValue(typeStr string, config genConfig) any {
 	switch typeStr {
 	case "String":
-		return getRandomString(10)
+		strLen := 10
+		if prop, ok := config.props["len"]; ok {
+			strLen = prop.(int)
+		}
+		return getRandomString(strLen)
 	case "Int":
 		minInt := 0
 		intRange := 10000
@@ -74,7 +78,15 @@ func (g *randomDocGenerator) generateRandomValue(typeStr string, config genConfi
 	case "Boolean":
 		return rand.Float32() < 0.5
 	case "Float":
-		return rand.Float64()
+		minFloat := 0.0
+		floatRange := 1.0
+		if prop, ok := config.props["min"]; ok {
+			minFloat = prop.(float64)
+		}
+		if prop, ok := config.props["max"]; ok {
+			floatRange = prop.(float64) - minFloat
+		}
+		return minFloat + rand.Float64()*floatRange
 	}
 	panic("Can not generate random value for unknown type: " + typeStr)
 }
