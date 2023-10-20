@@ -42,18 +42,18 @@ const (
 )
 
 const (
-	COLLECTION                        = "/collection/value"
-	COLLECTION_NAME                   = "/collection/name"
-	COLLECTION_SCHEMA_VERSION         = "/collection/version/v"
-	COLLECTION_SCHEMA_VERSION_HISTORY = "/collection/version/h"
-	COLLECTION_INDEX                  = "/collection/index"
-	SCHEMA_MIGRATION                  = "/schema/migration"
-	SCHEMA_VERSION                    = "/schema/version"
-	SEQ                               = "/seq"
-	PRIMARY_KEY                       = "/pk"
-	DATASTORE_DOC_VERSION_FIELD_ID    = "v"
-	REPLICATOR                        = "/replicator/id"
-	P2P_COLLECTION                    = "/p2p/collection"
+	COLLECTION                     = "/collection/value"
+	COLLECTION_NAME                = "/collection/name"
+	COLLECTION_SCHEMA_VERSION      = "/collection/version"
+	COLLECTION_INDEX               = "/collection/index"
+	SCHEMA_MIGRATION               = "/schema/migration"
+	SCHEMA_VERSION                 = "/schema/version/v"
+	SCHEMA_VERSION_HISTORY         = "/schema/version/h"
+	SEQ                            = "/seq"
+	PRIMARY_KEY                    = "/pk"
+	DATASTORE_DOC_VERSION_FIELD_ID = "v"
+	REPLICATOR                     = "/replicator/id"
+	P2P_COLLECTION                 = "/p2p/collection"
 )
 
 // Key is an interface that represents a key in the database.
@@ -356,7 +356,7 @@ func NewSchemaVersionMigrationKey(schemaVersionID string) SchemaVersionMigration
 }
 
 func NewSchemaHistoryKeyFromString(keyString string) (SchemaHistoryKey, error) {
-	keyString = strings.TrimPrefix(keyString, COLLECTION_SCHEMA_VERSION_HISTORY+"/")
+	keyString = strings.TrimPrefix(keyString, SCHEMA_VERSION_HISTORY+"/")
 	elements := strings.Split(keyString, "/")
 	if len(elements) != 2 {
 		return SchemaHistoryKey{}, ErrInvalidKey
@@ -673,7 +673,7 @@ func (k SchemaVersionKey) ToDS() ds.Key {
 }
 
 func (k SchemaHistoryKey) ToString() string {
-	result := COLLECTION_SCHEMA_VERSION_HISTORY
+	result := SCHEMA_VERSION_HISTORY
 
 	if k.SchemaID != "" {
 		result = result + "/" + k.SchemaID
