@@ -41,7 +41,8 @@ func (g *randomDocGenerator) GenerateDocs(count int) []GeneratedDoc {
 		typeDef := g.types[docsList.ColName]
 		for _, doc := range docsList.Docs {
 			g.resultDocs = append(g.resultDocs, GeneratedDoc{
-				JSON: createDocJSON(doc, &typeDef),
+				ColIndex: typeDef.index,
+				JSON:     createDocJSON(doc, &typeDef),
 			})
 		}
 	}
@@ -97,18 +98,18 @@ type docRec struct {
 	docKey string
 }
 
-func (g *randomDocGenerator) incrementCounter(primary, secondary, secondaryProp string) int {
-	if g.counter[primary] == nil {
-		g.counter[primary] = make(map[string]map[string]int)
+func (g *randomDocGenerator) incrementCounter(secondaryType, secondaryProp, primaryType string) int {
+	if g.counter[primaryType] == nil {
+		g.counter[primaryType] = make(map[string]map[string]int)
 	}
-	if g.counter[primary][secondary] == nil {
-		g.counter[primary][secondary] = make(map[string]int)
+	if g.counter[primaryType][secondaryType] == nil {
+		g.counter[primaryType][secondaryType] = make(map[string]int)
 	}
-	prev := g.counter[primary][secondary][secondaryProp]
-	if prev >= len(g.cols[primary]) {
-		panic(fmt.Sprintf("Not enough docs for type %s", primary))
+	prev := g.counter[primaryType][secondaryType][secondaryProp]
+	if prev >= len(g.cols[primaryType]) {
+		panic(fmt.Sprintf("Not enough docs for type %s", primaryType))
 	}
-	g.counter[primary][secondary][secondaryProp]++
+	g.counter[primaryType][secondaryType][secondaryProp]++
 	return prev
 }
 
@@ -136,7 +137,7 @@ func (g *randomDocGenerator) generateRandomDocs(count int, order []string) []Doc
 			for _, field := range typeDef.fields {
 				if field.isRelation {
 					if field.isPrimary {
-						relDocInd := g.incrementCounter(field.typeStr, typeName, field.name)
+						relDocInd := g.incrementCounter(typeName, field.name, field.typeStr)
 						docKey := g.getDocKey(field.typeStr, relDocInd)
 						newDoc[field.name+request.RelatedObjectID] = docKey
 					}

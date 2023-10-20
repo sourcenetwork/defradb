@@ -91,8 +91,8 @@ func TestGeneratePredefinedDocs_OneToOne(t *testing.T) {
 	errorMsg := assertDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
-		{"model": "iPhone", "owner_id": getDocKey(map[string]any{"name": "John"})},
-		{"model": "MacBook", "owner_id": getDocKey(map[string]any{"name": "Fred"})},
+		{"model": "iPhone", "owner_id": getDocKeyFromDocMap(map[string]any{"name": "John"})},
+		{"model": "MacBook", "owner_id": getDocKeyFromDocMap(map[string]any{"name": "Fred"})},
 	}, docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
@@ -129,8 +129,8 @@ func TestGeneratePredefinedDocs_OneToOnePrimary(t *testing.T) {
 	})
 
 	errorMsg := assertDocs([]map[string]any{
-		{"name": "John", "device_id": getDocKey(map[string]any{"model": "iPhone"})},
-		{"name": "Fred", "device_id": getDocKey(map[string]any{"model": "MacBook"})},
+		{"name": "John", "device_id": getDocKeyFromDocMap(map[string]any{"model": "iPhone"})},
+		{"name": "Fred", "device_id": getDocKeyFromDocMap(map[string]any{"model": "MacBook"})},
 		{"model": "iPhone"},
 		{"model": "MacBook"},
 	}, docs)
@@ -170,8 +170,8 @@ func TestGeneratePredefinedDocs_OneToMany(t *testing.T) {
 		},
 	})
 
-	johnDocKey := getDocKey(map[string]any{"name": "John"})
-	fredDocKey := getDocKey(map[string]any{"name": "Fred"})
+	johnDocKey := getDocKeyFromDocMap(map[string]any{"name": "John"})
+	fredDocKey := getDocKeyFromDocMap(map[string]any{"name": "Fred"})
 	errorMsg := assertDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
@@ -224,13 +224,13 @@ func TestGeneratePredefinedDocs_OneToManyToOne(t *testing.T) {
 		},
 	})
 
-	johnDocKey := getDocKey(map[string]any{"name": "John"})
+	johnDocKey := getDocKeyFromDocMap(map[string]any{"name": "John"})
 	errorMsg := assertDocs([]map[string]any{
 		{"name": "John"},
 		{"model": "iPhone", "owner_id": johnDocKey},
 		{"model": "MacBook", "owner_id": johnDocKey},
-		{"CPU": "A13", "device_id": getDocKey(map[string]any{"model": "iPhone", "owner_id": johnDocKey})},
-		{"CPU": "M2", "device_id": getDocKey(map[string]any{"model": "MacBook", "owner_id": johnDocKey})},
+		{"CPU": "A13", "device_id": getDocKeyFromDocMap(map[string]any{"model": "iPhone", "owner_id": johnDocKey})},
+		{"CPU": "M2", "device_id": getDocKeyFromDocMap(map[string]any{"model": "MacBook", "owner_id": johnDocKey})},
 	}, docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
