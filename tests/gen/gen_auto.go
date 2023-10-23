@@ -11,7 +11,6 @@
 package gen
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -106,9 +105,7 @@ func (g *randomDocGenerator) incrementCounter(secondaryType, secondaryProp, prim
 		g.counter[primaryType][secondaryType] = make(map[string]int)
 	}
 	prev := g.counter[primaryType][secondaryType][secondaryProp]
-	if prev >= len(g.cols[primaryType]) {
-		panic(fmt.Sprintf("Not enough docs for type %s", primaryType))
-	}
+	prev = prev % len(g.cols[primaryType])
 	g.counter[primaryType][secondaryType][secondaryProp]++
 	return prev
 }
@@ -125,21 +122,32 @@ func (g *randomDocGenerator) getDocKey(typeName string, ind int) string {
 	return g.cols[typeName][ind].docKey
 }
 
+func (g *randomDocGenerator) getPrimaryDocKeyForField(typeName string, field fieldDefinition) string {
+	relDocInd := g.incrementCounter(typeName, field.name, field.typeStr)
+	return g.getDocKey(field.typeStr, relDocInd)
+}
+
 func (g *randomDocGenerator) generateRandomDocs(count int, order []string) []DocsList {
 	g.counter = make(map[typeNameStr]map[fieldNameStr]map[string]int)
 	g.cols = make(map[typeNameStr][]docRec)
 	result := []DocsList{}
+	docDemands := map[typeNameStr]int{order[0]: count}
 	for _, typeName := range order {
 		col := DocsList{ColName: typeName}
-		for i := 0; i < count; i++ {
+		docDemand := docDemands[typeName]
+		for i := 0; i < docDemand; i++ {
 			typeDef := g.types[typeName]
 			newDoc := make(doc)
 			for _, field := range typeDef.fields {
 				if field.isRelation {
 					if field.isPrimary {
-						relDocInd := g.incrementCounter(typeName, field.name, field.typeStr)
-						docKey := g.getDocKey(field.typeStr, relDocInd)
-						newDoc[field.name+request.RelatedObjectID] = docKey
+						newDoc[field.name+request.RelatedObjectID] = g.getPrimaryDocKeyForField(typeName, field)
+					} else {
+						inc := 1
+						if field.isArray {
+							inc = 2
+						}
+						docDemands[field.typeStr] += inc
 					}
 				} else {
 					var fieldConfig genConfig
