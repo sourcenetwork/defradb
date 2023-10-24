@@ -135,8 +135,8 @@ func GetCollectionsBySchemaVersionID(
 		colIDs = append(colIDs, colSchemaVersionKey.CollectionID)
 	}
 
-	cols := make([]client.CollectionDescription, 0)
-	for _, colID := range colIDs {
+	cols := make([]client.CollectionDescription, len(colIDs))
+	for i, colID := range colIDs {
 		key := core.NewCollectionKey(colID)
 		buf, err := txn.Systemstore().Get(ctx, key.ToDS())
 		if err != nil {
@@ -149,7 +149,7 @@ func GetCollectionsBySchemaVersionID(
 			return nil, err
 		}
 
-		cols = append(cols, col)
+		cols[i] = col
 	}
 
 	return cols, nil
