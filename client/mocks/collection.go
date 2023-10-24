@@ -945,8 +945,8 @@ func (_c *Collection_Schema_Call) RunAndReturn(run func() client.SchemaDescripti
 	return _c
 }
 
-// SchemaID provides a mock function with given fields:
-func (_m *Collection) SchemaID() string {
+// SchemaRoot provides a mock function with given fields:
+func (_m *Collection) SchemaRoot() string {
 	ret := _m.Called()
 
 	var r0 string
@@ -959,29 +959,29 @@ func (_m *Collection) SchemaID() string {
 	return r0
 }
 
-// Collection_SchemaID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SchemaID'
-type Collection_SchemaID_Call struct {
+// Collection_SchemaRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SchemaRoot'
+type Collection_SchemaRoot_Call struct {
 	*mock.Call
 }
 
-// SchemaID is a helper method to define mock.On call
-func (_e *Collection_Expecter) SchemaID() *Collection_SchemaID_Call {
-	return &Collection_SchemaID_Call{Call: _e.mock.On("SchemaID")}
+// SchemaRoot is a helper method to define mock.On call
+func (_e *Collection_Expecter) SchemaRoot() *Collection_SchemaRoot_Call {
+	return &Collection_SchemaRoot_Call{Call: _e.mock.On("SchemaRoot")}
 }
 
-func (_c *Collection_SchemaID_Call) Run(run func()) *Collection_SchemaID_Call {
+func (_c *Collection_SchemaRoot_Call) Run(run func()) *Collection_SchemaRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *Collection_SchemaID_Call) Return(_a0 string) *Collection_SchemaID_Call {
+func (_c *Collection_SchemaRoot_Call) Return(_a0 string) *Collection_SchemaRoot_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Collection_SchemaID_Call) RunAndReturn(run func() string) *Collection_SchemaID_Call {
+func (_c *Collection_SchemaRoot_Call) RunAndReturn(run func() string) *Collection_SchemaRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }

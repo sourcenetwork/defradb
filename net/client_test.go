@@ -39,11 +39,11 @@ func TestPushlogWithDialFailure(t *testing.T) {
 	)
 
 	err = n.server.pushLog(ctx, events.Update{
-		DocKey:   doc.Key().String(),
-		Cid:      cid,
-		SchemaID: "test",
-		Block:    &EmptyNode{},
-		Priority: 1,
+		DocKey:     doc.Key().String(),
+		Cid:        cid,
+		SchemaRoot: "test",
+		Block:      &EmptyNode{},
+		Priority:   1,
 	}, peer.ID("some-peer-id"))
 	require.Contains(t, err.Error(), "no transport security set")
 }
@@ -59,11 +59,11 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = n.server.pushLog(ctx, events.Update{
-		DocKey:   doc.Key().String(),
-		Cid:      cid,
-		SchemaID: "test",
-		Block:    &EmptyNode{},
-		Priority: 1,
+		DocKey:     doc.Key().String(),
+		Cid:        cid,
+		SchemaRoot: "test",
+		Block:      &EmptyNode{},
+		Priority:   1,
 	}, peer.ID("some-peer-id"))
 	require.Contains(t, err.Error(), "failed to parse peer ID")
 }
@@ -105,11 +105,11 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = n1.server.pushLog(ctx, events.Update{
-		DocKey:   doc.Key().String(),
-		Cid:      cid,
-		SchemaID: col.SchemaID(),
-		Block:    &EmptyNode{},
-		Priority: 1,
+		DocKey:     doc.Key().String(),
+		Cid:        cid,
+		SchemaRoot: col.SchemaRoot(),
+		Block:      &EmptyNode{},
+		Priority:   1,
 	}, n2.PeerInfo().ID)
 	require.NoError(t, err)
 }

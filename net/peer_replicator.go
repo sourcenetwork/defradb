@@ -66,17 +66,17 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 
 	var added []client.Collection
 	for _, col := range collections {
-		reps, exists := p.replicators[col.SchemaID()]
+		reps, exists := p.replicators[col.SchemaRoot()]
 		if !exists {
-			p.replicators[col.SchemaID()] = make(map[peer.ID]struct{})
+			p.replicators[col.SchemaRoot()] = make(map[peer.ID]struct{})
 		}
 		if _, exists := reps[rep.Info.ID]; !exists {
 			// keep track of newly added collections so we don't
 			// push logs to a replicator peer multiple times.
-			p.replicators[col.SchemaID()][rep.Info.ID] = struct{}{}
+			p.replicators[col.SchemaRoot()][rep.Info.ID] = struct{}{}
 			added = append(added, col)
 		}
-		rep.Schemas = append(rep.Schemas, col.SchemaID())
+		rep.Schemas = append(rep.Schemas, col.SchemaRoot())
 	}
 
 	// persist replicator to the datastore
@@ -148,7 +148,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 
 	schemaMap := make(map[string]struct{})
 	for _, col := range collections {
-		schemaMap[col.SchemaID()] = struct{}{}
+		schemaMap[col.SchemaRoot()] = struct{}{}
 	}
 
 	// update replicators and add remaining schemas to rep

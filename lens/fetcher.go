@@ -81,7 +81,7 @@ func (f *lensedFetcher) Init(
 		return err
 	}
 
-	history, err := getTargetedSchemaHistory(ctx, txn, cfg, f.col.Schema().SchemaID, f.col.Schema().VersionID)
+	history, err := getTargetedSchemaHistory(ctx, txn, cfg, f.col.Schema().Root, f.col.Schema().VersionID)
 	if err != nil {
 		return err
 	}

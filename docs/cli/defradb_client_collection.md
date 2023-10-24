@@ -20,7 +20,7 @@ Example: view collection by version id
 		
 
 ```
-defradb client collection [--name <name> --schema <schemaID> --version <versionID>] [flags]
+defradb client collection [--name <name> --schema <schemaRoot> --version <versionID>] [flags]
 ```
 
 ### Options

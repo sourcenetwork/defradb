@@ -225,9 +225,9 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 	return &Collection{w.cmd, definition}, nil
 }
 
-func (w *Wrapper) GetCollectionsBySchemaID(ctx context.Context, schemaId string) ([]client.Collection, error) {
+func (w *Wrapper) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot string) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
-	args = append(args, "--schema", schemaId)
+	args = append(args, "--schema", schemaRoot)
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

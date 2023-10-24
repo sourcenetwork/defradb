@@ -78,10 +78,10 @@ func (col CollectionDescription) GetFieldByRelation(
 
 // SchemaDescription describes a Schema and its associated metadata.
 type SchemaDescription struct {
-	// SchemaID is the version agnostic identifier for this schema.
+	// Root is the version agnostic identifier for this schema.
 	//
 	// It remains constant throughout the lifetime of this schema.
-	SchemaID string
+	Root string
 
 	// VersionID is the version-specific identifier for this schema.
 	//

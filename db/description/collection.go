@@ -155,16 +155,16 @@ func GetCollectionsBySchemaVersionID(
 	return cols, nil
 }
 
-// GetCollectionsBySchemaID returns all collections that use the given
-// schemaID.
+// GetCollectionsBySchemaRoot returns all collections that use the given
+// schema root.
 //
 // If no collections are found an empty set will be returned.
-func GetCollectionsBySchemaID(
+func GetCollectionsBySchemaRoot(
 	ctx context.Context,
 	txn datastore.Txn,
-	schemaID string,
+	schemaRoot string,
 ) ([]client.CollectionDescription, error) {
-	schemaVersionIDs, err := GetSchemaVersionIDs(ctx, txn, schemaID)
+	schemaVersionIDs, err := GetSchemaVersionIDs(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}

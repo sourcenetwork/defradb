@@ -41,9 +41,9 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveSchemaIDErrors(t *testing.T) {
+func TestSchemaUpdatesRemoveSchemaRootErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove schema ID",
+		Description: "Test schema update, remove schema root",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -56,10 +56,10 @@ func TestSchemaUpdatesRemoveSchemaIDErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/SchemaID" }
+						{ "op": "remove", "path": "/Users/Root" }
 					]
 				`,
-				ExpectedError: "SchemaID does not match existing",
+				ExpectedError: "SchemaRoot does not match existing",
 			},
 		},
 	}

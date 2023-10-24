@@ -74,7 +74,7 @@ func TestNewServerWithCollectionSubscribed(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	err = n.AddP2PCollections(ctx, []string{col.SchemaID()})
+	err = n.AddP2PCollections(ctx, []string{col.SchemaRoot()})
 	require.NoError(t, err)
 
 	_, err = newServer(n.Peer, db)
@@ -95,7 +95,7 @@ type mockCollection struct {
 	client.Collection
 }
 
-func (mCol *mockCollection) SchemaID() string {
+func (mCol *mockCollection) SchemaRoot() string {
 	return "mockColID"
 }
 func (mCol *mockCollection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
@@ -272,10 +272,10 @@ func TestPushLog(t *testing.T) {
 
 	_, err = n.server.PushLog(ctx, &net_pb.PushLogRequest{
 		Body: &net_pb.PushLogRequest_Body{
-			DocKey:   []byte(doc.Key().String()),
-			Cid:      cid.Bytes(),
-			SchemaID: []byte(col.SchemaID()),
-			Creator:  n.PeerID().String(),
+			DocKey:     []byte(doc.Key().String()),
+			Cid:        cid.Bytes(),
+			SchemaRoot: []byte(col.SchemaRoot()),
+			Creator:    n.PeerID().String(),
 			Log: &net_pb.Document_Log{
 				Block: block.RawData(),
 			},
