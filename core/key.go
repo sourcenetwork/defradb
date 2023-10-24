@@ -11,6 +11,7 @@
 package core
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -41,18 +42,18 @@ const (
 )
 
 const (
-	COLLECTION                        = "/collection/names"
-	COLLECTION_SCHEMA                 = "/collection/schema"
-	COLLECTION_SCHEMA_VERSION         = "/collection/version/v"
-	COLLECTION_SCHEMA_VERSION_HISTORY = "/collection/version/h"
-	COLLECTION_INDEX                  = "/collection/index"
-	SCHEMA_MIGRATION                  = "/schema/migration"
-	SCHEMA_VERSION                    = "/schema/version"
-	SEQ                               = "/seq"
-	PRIMARY_KEY                       = "/pk"
-	DATASTORE_DOC_VERSION_FIELD_ID    = "v"
-	REPLICATOR                        = "/replicator/id"
-	P2P_COLLECTION                    = "/p2p/collection"
+	COLLECTION                     = "/collection/id"
+	COLLECTION_NAME                = "/collection/name"
+	COLLECTION_SCHEMA_VERSION      = "/collection/version"
+	COLLECTION_INDEX               = "/collection/index"
+	SCHEMA_MIGRATION               = "/schema/migration"
+	SCHEMA_VERSION                 = "/schema/version/v"
+	SCHEMA_VERSION_HISTORY         = "/schema/version/h"
+	SEQ                            = "/seq"
+	PRIMARY_KEY                    = "/pk"
+	DATASTORE_DOC_VERSION_FIELD_ID = "v"
+	REPLICATOR                     = "/replicator/id"
+	P2P_COLLECTION                 = "/p2p/collection"
 )
 
 // Key is an interface that represents a key in the database.
@@ -99,26 +100,32 @@ type HeadStoreKey struct {
 
 var _ Key = (*HeadStoreKey)(nil)
 
-// CollectionKey points to the current/'head' SchemaVersionId for
-// the collection of the given name.
+// CollectionKey points to the json serialized description of the
+// the collection of the given ID.
 type CollectionKey struct {
-	CollectionName string
+	CollectionID uint32
 }
 
 var _ Key = (*CollectionKey)(nil)
 
-// CollectionSchemaKey points to the current/'head' SchemaVersionId for
-// the collection of the given schema id.
-type CollectionSchemaKey struct {
-	SchemaId string
+// CollectionNameKey points to the ID of the collection of the given
+// name.
+type CollectionNameKey struct {
+	Name string
 }
 
-var _ Key = (*CollectionSchemaKey)(nil)
+var _ Key = (*CollectionNameKey)(nil)
 
-// CollectionSchemaVersionKey points to schema of a collection at a given
-// version.
+// CollectionSchemaVersionKey points to nil, but the keys/prefix can be used
+// to get collections that are using, or have used a given schema version.
+//
+// If a collection is updated to a different schema version, the old entry(s)
+// of this key will be preserved.
+//
+// This key should be removed in https://github.com/sourcenetwork/defradb/issues/1085
 type CollectionSchemaVersionKey struct {
 	SchemaVersionId string
+	CollectionID    uint32
 }
 
 var _ Key = (*CollectionSchemaVersionKey)(nil)
@@ -255,21 +262,32 @@ func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 
 // Returns a formatted collection key for the system data store.
 // It assumes the name of the collection is non-empty.
-func NewCollectionKey(name string) CollectionKey {
-	return CollectionKey{CollectionName: name}
+func NewCollectionKey(id uint32) CollectionKey {
+	return CollectionKey{CollectionID: id}
 }
 
-func NewCollectionSchemaKey(schemaId string) CollectionSchemaKey {
-	return CollectionSchemaKey{SchemaId: schemaId}
+func NewCollectionNameKey(name string) CollectionNameKey {
+	return CollectionNameKey{Name: name}
 }
 
-func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersionKey {
-	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
+func NewCollectionSchemaVersionKey(schemaVersionId string, collectionID uint32) CollectionSchemaVersionKey {
+	return CollectionSchemaVersionKey{
+		SchemaVersionId: schemaVersionId,
+		CollectionID:    collectionID,
+	}
 }
 
-func NewCollectionSchemaVersionKeyFromString(key string) CollectionSchemaVersionKey {
+func NewCollectionSchemaVersionKeyFromString(key string) (CollectionSchemaVersionKey, error) {
 	elements := strings.Split(key, "/")
-	return CollectionSchemaVersionKey{SchemaVersionId: elements[len(elements)-1]}
+	colID, err := strconv.Atoi(elements[len(elements)-1])
+	if err != nil {
+		return CollectionSchemaVersionKey{}, err
+	}
+
+	return CollectionSchemaVersionKey{
+		SchemaVersionId: elements[len(elements)-2],
+		CollectionID:    uint32(colID),
+	}, nil
 }
 
 // NewCollectionIndexKey creates a new CollectionIndexKey from a collection name and index name.
@@ -338,7 +356,7 @@ func NewSchemaVersionMigrationKey(schemaVersionID string) SchemaVersionMigration
 }
 
 func NewSchemaHistoryKeyFromString(keyString string) (SchemaHistoryKey, error) {
-	keyString = strings.TrimPrefix(keyString, COLLECTION_SCHEMA_VERSION_HISTORY+"/")
+	keyString = strings.TrimPrefix(keyString, SCHEMA_VERSION_HISTORY+"/")
 	elements := strings.Split(keyString, "/")
 	if len(elements) != 2 {
 		return SchemaHistoryKey{}, ErrInvalidKey
@@ -591,13 +609,7 @@ func (k PrimaryDataStoreKey) ToString() string {
 }
 
 func (k CollectionKey) ToString() string {
-	result := COLLECTION
-
-	if k.CollectionName != "" {
-		result = result + "/" + k.CollectionName
-	}
-
-	return result
+	return fmt.Sprintf("%s/%s", COLLECTION, strconv.Itoa(int(k.CollectionID)))
 }
 
 func (k CollectionKey) Bytes() []byte {
@@ -608,21 +620,15 @@ func (k CollectionKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-func (k CollectionSchemaKey) ToString() string {
-	result := COLLECTION_SCHEMA
-
-	if k.SchemaId != "" {
-		result = result + "/" + k.SchemaId
-	}
-
-	return result
+func (k CollectionNameKey) ToString() string {
+	return fmt.Sprintf("%s/%s", COLLECTION_NAME, k.Name)
 }
 
-func (k CollectionSchemaKey) Bytes() []byte {
+func (k CollectionNameKey) Bytes() []byte {
 	return []byte(k.ToString())
 }
 
-func (k CollectionSchemaKey) ToDS() ds.Key {
+func (k CollectionNameKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
@@ -631,6 +637,10 @@ func (k CollectionSchemaVersionKey) ToString() string {
 
 	if k.SchemaVersionId != "" {
 		result = result + "/" + k.SchemaVersionId
+	}
+
+	if k.CollectionID != 0 {
+		result = fmt.Sprintf("%s/%s", result, strconv.Itoa(int(k.CollectionID)))
 	}
 
 	return result
@@ -663,7 +673,7 @@ func (k SchemaVersionKey) ToDS() ds.Key {
 }
 
 func (k SchemaHistoryKey) ToString() string {
-	result := COLLECTION_SCHEMA_VERSION_HISTORY
+	result := SCHEMA_VERSION_HISTORY
 
 	if k.SchemaID != "" {
 		result = result + "/" + k.SchemaID

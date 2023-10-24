@@ -230,17 +230,6 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(f.t), nil)
 
-	colKey := core.NewCollectionKey(usersColName)
-	systemStoreOn.Get(mock.Anything, colKey.ToDS()).Maybe().Return([]byte(userColVersionID), nil)
-
-	colVersionIDKey := core.NewCollectionSchemaVersionKey(userColVersionID)
-	usersCol, err := f.db.GetCollectionByName(f.ctx, usersColName)
-	require.NoError(f.t, err)
-	colDesc := usersCol.Description()
-	colDescBytes, err := json.Marshal(colDesc)
-	require.NoError(f.t, err)
-	systemStoreOn.Get(mock.Anything, colVersionIDKey.ToDS()).Maybe().Return(colDescBytes, nil)
-
 	colIndexOnNameKey := core.NewCollectionIndexKey(usersColName, testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
 
