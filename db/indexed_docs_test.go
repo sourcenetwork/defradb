@@ -783,7 +783,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
 				f.EXPECT().FetchNext(mock.Anything).Unset()
-				// By default the the stubbed fetcher returns an empty, invalid document
+				// By default the stubbed fetcher returns an empty, invalid document
 				// here we need to make sure it reaches the Close call by overriding that default.
 				f.EXPECT().FetchNext(mock.Anything).Maybe().Return(nil, fetcher.ExecInfo{}, nil)
 				f.EXPECT().Close().Unset()
