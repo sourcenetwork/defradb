@@ -72,7 +72,7 @@ var (
 // Future optimizations:
 // - Incremental checkpoint/snapshotting
 // - Reverse traversal (starting from the current state, and working backwards)
-// - Create a efficient memory store for in-order traversal (BTree, etc)
+// - Create an efficient memory store for in-order traversal (BTree, etc)
 //
 // Note: Should we transition this state traversal into the CRDT objects themselves, and not
 // within a new fetcher?
@@ -240,7 +240,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 		}
 	}
 
-	// we now have all the the required state stored
+	// we now have all the required state stored
 	// in our transient local Version_Index, we now need to
 	// transfer it to the Primary_Index.
 
@@ -258,7 +258,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// check if cid block exists in the global store, handle err
 
-	// @todo: Find an effecient way to determine if a CID is a member of a
+	// @todo: Find an efficient way to determine if a CID is a member of a
 	// DocKey State graph
 	// @body: We could possibly append the DocKey to the CID either as a
 	// child key, or an instance on the CID key.
@@ -324,7 +324,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 }
 
 // merge in the state of the IPLD Block identified by CID c into the VersionedFetcher state.
-// Requires the CID to already exists in the DAGStore.
+// Requires the CID to already exist in the DAGStore.
 // This function only works for merging Composite MerkleCRDT objects.
 //
 // First it checks for the existence of the block,

@@ -171,7 +171,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 		if firstCol {
 			firstCol = false
 		} else {
-			// add collection seperator
+			// add collection separator
 			err = writeString(f, ",", ",\n", config.Pretty)
 			if err != nil {
 				return err
@@ -199,7 +199,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			if firstDoc {
 				firstDoc = false
 			} else {
-				// add document seperator
+				// add document separator
 				err = writeString(f, ",", ",\n", config.Pretty)
 				if err != nil {
 					return err
@@ -212,7 +212,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 
 			isSelfReference := false
 			refFieldName := ""
-			// replace any foreing key if it needs to be changed
+			// replace any foreign key if it needs to be changed
 			for _, field := range col.Schema().Fields {
 				switch field.Kind {
 				case client.FieldKind_FOREIGN_OBJECT:
