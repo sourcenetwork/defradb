@@ -21,6 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
+// SaveCollection saves the given collection to the system store overwriting any
+// pre-existing values.
 func SaveCollection(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -59,6 +61,9 @@ func SaveCollection(
 	return desc, nil
 }
 
+// GetCollectionByName returns the collection with the given name.
+//
+// If no collection of that name is found, it will return an error.
 func GetCollectionByName(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -91,6 +96,10 @@ func GetCollectionByName(
 	return col, nil
 }
 
+// GetCollectionsBySchemaVersionID returns all collections that use the given
+// schemaVersionID.
+//
+// If no collections are found an empty set will be returned.
 func GetCollectionsBySchemaVersionID(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -146,6 +155,10 @@ func GetCollectionsBySchemaVersionID(
 	return cols, nil
 }
 
+// GetCollectionsBySchemaID returns all collections that use the given
+// schemaID.
+//
+// If no collections are found an empty set will be returned.
 func GetCollectionsBySchemaID(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -169,6 +182,7 @@ func GetCollectionsBySchemaID(
 	return cols, nil
 }
 
+// GetCollections returns all collections in the system.
 func GetCollections(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -204,6 +218,8 @@ func GetCollections(
 	return cols, nil
 }
 
+// HasCollectionByName returns true if there is a collection of the given name,
+// else returns false.
 func HasCollectionByName(
 	ctx context.Context,
 	txn datastore.Txn,
