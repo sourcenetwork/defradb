@@ -51,7 +51,7 @@ type docGenerator struct {
 	types map[string]typeDefinition
 }
 
-func createDocJSON(doc map[string]any, typeDef *typeDefinition) string {
+func createDocJSON(doc map[string]any) string {
 	sb := strings.Builder{}
 	for fieldName := range doc {
 		format := `"%s": %v`
@@ -97,7 +97,7 @@ func (this *docGenerator) generatePrimary(
 				if field.isPrimary {
 					subType := this.types[field.typeStr]
 					subDoc := toRequestedDoc(doc[field.name].(map[string]any), &subType)
-					jsonSubDoc := createDocJSON(subDoc, &subType)
+					jsonSubDoc := createDocJSON(subDoc)
 					clientSubDoc, err := client.NewDocFromJSON([]byte(jsonSubDoc))
 					if err != nil {
 						panic("Failed to create doc from JSON: " + err.Error())
@@ -115,7 +115,7 @@ func (this *docGenerator) GenerateDocs(doc map[string]any, typeName string) []Ge
 	typeDef := this.types[typeName]
 
 	requested, result := this.generatePrimary(doc, &typeDef)
-	docStr := createDocJSON(requested, &typeDef)
+	docStr := createDocJSON(requested)
 
 	result = append(result, GeneratedDoc{ColIndex: typeDef.index, JSON: docStr})
 
