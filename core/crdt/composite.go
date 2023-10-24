@@ -119,12 +119,12 @@ func NewCompositeDAG(
 	}
 }
 
-// GetSchemaID returns the schema ID of the composite DAG CRDT.
+// ID returns the schema ID of the composite DAG CRDT.
 func (c CompositeDAG) ID() string {
 	return c.key.ToString()
 }
 
-// GetSchemaID returns the schema ID of the composite DAG CRDT.
+// Value returns the schema ID of the composite DAG CRDT.
 func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 	return nil, nil
 }
