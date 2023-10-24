@@ -42,7 +42,7 @@ const (
 )
 
 const (
-	COLLECTION                     = "/collection/value"
+	COLLECTION                     = "/collection/id"
 	COLLECTION_NAME                = "/collection/name"
 	COLLECTION_SCHEMA_VERSION      = "/collection/version"
 	COLLECTION_INDEX               = "/collection/index"
