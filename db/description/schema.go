@@ -110,29 +110,14 @@ func GetSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {
-	collectionSchemaVersionPrefix := core.NewCollectionSchemaVersionKey("")
-	collectionSchemaVersionQuery, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix:   collectionSchemaVersionPrefix.ToString(),
-		KeysOnly: true,
-	})
+	cols, err := GetCollections(ctx, txn)
 	if err != nil {
-		return nil, NewErrFailedToCreateSchemaQuery(err)
+		return nil, err
 	}
 
 	versionIDs := make([]string, 0)
-	for res := range collectionSchemaVersionQuery.Next() {
-		if res.Error != nil {
-			if err := collectionSchemaVersionQuery.Close(); err != nil {
-				return nil, NewErrFailedToCloseSchemaQuery(err)
-			}
-			return nil, err
-		}
-
-		versionIDs = append(versionIDs, core.NewCollectionSchemaVersionKeyFromString(string(res.Key)).SchemaVersionId)
-	}
-
-	if err := collectionSchemaVersionQuery.Close(); err != nil {
-		return nil, NewErrFailedToCloseSchemaQuery(err)
+	for _, col := range cols {
+		versionIDs = append(versionIDs, col.SchemaVersionID)
 	}
 
 	schemaVersionPrefix := core.NewSchemaVersionKey("")
@@ -174,4 +159,44 @@ func GetSchemas(
 	}
 
 	return descriptions, nil
+}
+
+func GetSchemaVersionIDs(
+	ctx context.Context,
+	txn datastore.Txn,
+	schemaID string,
+) ([]string, error) {
+	// Add the schemaID as the first version here.
+	// It is not present in the history prefix.
+	schemaVersions := []string{schemaID}
+
+	prefix := core.NewSchemaHistoryKey(schemaID, "")
+	q, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix:   prefix.ToString(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, NewErrFailedToCreateSchemaQuery(err)
+	}
+
+	for res := range q.Next() {
+		if res.Error != nil {
+			if err := q.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
+			return nil, err
+		}
+
+		key, err := core.NewSchemaHistoryKeyFromString(res.Key)
+		if err != nil {
+			if err := q.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
+			return nil, err
+		}
+
+		schemaVersions = append(schemaVersions, key.PreviousSchemaVersionID)
+	}
+
+	return schemaVersions, nil
 }

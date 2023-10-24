@@ -48,8 +48,6 @@ const (
 	testUsersColIndexName   = "user_name"
 	testUsersColIndexAge    = "user_age"
 	testUsersColIndexWeight = "user_weight"
-
-	userColVersionID = "bafkreiefzlx2xsfaxixs24hcqwwqpa3nuqbutkapasymk3d5v4fxa4rlhy"
 )
 
 type indexTestFixture struct {
@@ -470,27 +468,6 @@ func TestCreateIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 		f.users.Description().Indexes)
 }
 
-func TestCreateIndex_NewCollectionDescription_ShouldIncludeIndexDescription(t *testing.T) {
-	f := newIndexTestFixture(t)
-
-	_, err := f.createCollectionIndex(getUsersIndexDescOnName())
-	require.NoError(t, err)
-
-	desc := getUsersIndexDescOnAge()
-	desc.Name = ""
-	_, err = f.createCollectionIndex(desc)
-	require.NoError(t, err)
-
-	cols, err := f.db.getAllCollections(f.ctx, f.txn)
-	require.NoError(t, err)
-
-	require.Equal(t, 1, len(cols))
-	col := cols[0]
-	require.Equal(t, 2, len(col.Description().Indexes))
-	require.NotEmpty(t, col.Description().Indexes[0].Name)
-	require.NotEmpty(t, col.Description().Indexes[1].Name)
-}
-
 func TestCreateIndex_IfAttemptToIndexOnUnsupportedType_ReturnError(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 
@@ -519,36 +496,6 @@ func TestCreateIndex_IfAttemptToIndexOnUnsupportedType_ReturnError(t *testing.T)
 	_, err = f.createCollectionIndexFor(collection.Name(), indexDesc)
 	require.ErrorIs(f.t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
 	f.commitTxn()
-}
-
-func TestCreateIndex_IfFailedToReadIndexUponRetrievingCollectionDesc_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-
-	testErr := errors.New("test error")
-
-	mockedTxn := f.mockTxn().ClearSystemStore()
-	onSystemStore := mockedTxn.MockSystemstore.EXPECT()
-
-	colIndexKey := core.NewCollectionIndexKey(f.users.Description().Name, "")
-	matchPrefixFunc := func(q query.Query) bool {
-		res := q.Prefix == colIndexKey.ToDS().String()
-		return res
-	}
-
-	onSystemStore.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).Return(nil, testErr)
-
-	descData, err := json.Marshal(f.users.Description())
-	require.NoError(t, err)
-
-	onSystemStore.Query(mock.Anything, mock.Anything).
-		Return(mocks.NewQueryResultsWithValues(t, []byte("schemaID")), nil)
-	onSystemStore.Get(mock.Anything, mock.Anything).Unset()
-	onSystemStore.Get(mock.Anything, mock.Anything).Return(descData, nil)
-
-	f.stubSystemStore(onSystemStore)
-
-	_, err = f.db.getAllCollections(f.ctx, f.txn)
-	require.ErrorIs(t, err, testErr)
 }
 
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {

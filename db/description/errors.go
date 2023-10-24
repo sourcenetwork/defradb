@@ -13,8 +13,10 @@ package description
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errFailedToCreateSchemaQuery string = "failed to create schema prefix query"
-	errFailedToCloseSchemaQuery  string = "failed to close schema prefix query"
+	errFailedToCreateSchemaQuery     string = "failed to create schema prefix query"
+	errFailedToCloseSchemaQuery      string = "failed to close schema prefix query"
+	errFailedToCreateCollectionQuery string = "failed to create collection prefix query"
+	errFailedToCloseCollectionQuery  string = "failed to close collection prefix query"
 )
 
 // NewErrFailedToCreateSchemaQuery returns a new error indicating that the query
@@ -27,4 +29,16 @@ func NewErrFailedToCreateSchemaQuery(inner error) error {
 // to create a schema failed to close.
 func NewErrFailedToCloseSchemaQuery(inner error) error {
 	return errors.Wrap(errFailedToCloseSchemaQuery, inner)
+}
+
+// NewErrFailedToCreateCollectionQuery returns a new error indicating that the query
+// to create a collection failed.
+func NewErrFailedToCreateCollectionQuery(inner error) error {
+	return errors.Wrap(errFailedToCreateCollectionQuery, inner)
+}
+
+// NewErrFailedToCreateCollectionQuery returns a new error indicating that the query
+// to create a collection failed to close.
+func NewErrFailedToCloseCollectionQuery(inner error) error {
+	return errors.Wrap(errFailedToCloseCollectionQuery, inner)
 }

@@ -136,9 +136,8 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		return err
 	}
 
-	newCollections := []client.CollectionDefinition{}
 	for _, schema := range newSchemaByName {
-		col, err := db.updateSchema(
+		err := db.updateSchema(
 			ctx,
 			txn,
 			existingSchemaByName,
@@ -149,11 +148,19 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		if err != nil {
 			return err
 		}
-
-		newCollections = append(newCollections, col.Definition())
 	}
 
-	return db.parser.SetSchema(ctx, txn, newCollections)
+	newCollections, err := db.getAllCollections(ctx, txn)
+	if err != nil {
+		return err
+	}
+
+	definitions := make([]client.CollectionDefinition, len(newCollections))
+	for i, col := range newCollections {
+		definitions[i] = col.Definition()
+	}
+
+	return db.parser.SetSchema(ctx, txn, definitions)
 }
 
 // substituteSchemaPatch handles any substitution of values that may be required before
