@@ -95,7 +95,7 @@ Find more examples of schema type definitions in the [examples/schema/](examples
 
 ## Create a document
 
-Submit a `mutation` request to create an docuement of the `User` type:
+Submit a `mutation` request to create a document of the `User` type:
 
 ```shell
 defradb client query '
@@ -252,7 +252,7 @@ defradb client p2p info
 
 There are two types of peer-to-peer relationships supported: **pubsub** peering and **replicator** peering.
 
-Pubsub peering *passively* synchronizes data between nodes by broadcasting *Document Commit* updates to the topic of the commit's document key. Nodes need to be listening on the pubsub channel to receive updates. This is for when two nodes *already* have share a document and want to keep them in sync.
+Pubsub peering *passively* synchronizes data between nodes by broadcasting *Document Commit* updates to the topic of the commit's document key. Nodes need to be listening on the pubsub channel to receive updates. This is for when two nodes *already* have shared a document and want to keep them in sync.
 
 Replicator peering *actively* pushes changes from a specific collection *to* a target peer.
 
