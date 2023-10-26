@@ -51,7 +51,11 @@ Example: view schema by version id
 				schemas = []client.SchemaDescription{schema}
 
 			case root != "":
-				panic("todo")
+				s, err := store.GetSchemaByRoot(cmd.Context(), root)
+				if err != nil {
+					return err
+				}
+				schemas = s
 
 			case name != "":
 				panic("todo")

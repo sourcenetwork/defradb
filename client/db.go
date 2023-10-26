@@ -167,6 +167,9 @@ type Store interface {
 	// Will return an error if it is not found.
 	GetSchemaByVersionID(context.Context, string) (SchemaDescription, error)
 
+	// GetSchemaByRoot returns the all schema versions for the given root.
+	GetSchemaByRoot(context.Context, string) ([]SchemaDescription, error)
+
 	// GetAllSchema returns all schema versions that currently exist within
 	// this [Store].
 	GetAllSchema(context.Context) ([]SchemaDescription, error)

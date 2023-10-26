@@ -105,6 +105,27 @@ func GetSchemaVersion(
 	return desc, nil
 }
 
+// GetSchemaByRoot returns all the schema with the given root.
+func GetSchemaByRoot(
+	ctx context.Context,
+	txn datastore.Txn,
+	root string,
+) ([]client.SchemaDescription, error) {
+	allSchemas, err := GetAllSchemas(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	rootSchema := []client.SchemaDescription{}
+	for _, schema := range allSchemas {
+		if schema.Root == root {
+			rootSchema = append(rootSchema, schema)
+		}
+	}
+
+	return rootSchema, nil
+}
+
 // GetSchemas returns the schema of all the default schema versions in the system.
 func GetSchemas(
 	ctx context.Context,

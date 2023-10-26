@@ -964,6 +964,8 @@ func getSchema(
 			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
 			err = e
 			results = []client.SchemaDescription{result}
+		case action.Root.HasValue():
+			results, err = node.GetSchemaByRoot(s.ctx, action.Root.Value())
 		default:
 			results, err = node.GetAllSchema(s.ctx)
 		}

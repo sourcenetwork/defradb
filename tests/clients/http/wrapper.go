@@ -131,6 +131,10 @@ func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (c
 	return w.client.GetSchemaByVersionID(ctx, versionID)
 }
 
+func (w *Wrapper) GetSchemaByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+	return w.client.GetSchemaByRoot(ctx, root)
+}
+
 func (w *Wrapper) GetAllSchema(ctx context.Context) ([]client.SchemaDescription, error) {
 	return w.client.GetAllSchema(ctx)
 }

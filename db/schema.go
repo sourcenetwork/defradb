@@ -297,6 +297,14 @@ func (db *db) getSchemaByVersionID(
 	return description.GetSchemaVersion(ctx, txn, versionID)
 }
 
+func (db *db) getSchemaByRoot(
+	ctx context.Context,
+	txn datastore.Txn,
+	root string,
+) ([]client.SchemaDescription, error) {
+	return description.GetSchemaByRoot(ctx, txn, root)
+}
+
 func (db *db) getAllSchema(
 	ctx context.Context,
 	txn datastore.Txn,

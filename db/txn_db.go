@@ -197,6 +197,22 @@ func (db *explicitTxnDB) GetSchemaByVersionID(ctx context.Context, versionID str
 	return db.getSchemaByVersionID(ctx, db.txn, versionID)
 }
 
+// GetSchemaByRoot returns the all schema versions for the given root.
+func (db *implicitTxnDB) GetSchemaByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getSchemaByRoot(ctx, txn, root)
+}
+
+// GetSchemaByRoot returns the all schema versions for the given root.
+func (db *explicitTxnDB) GetSchemaByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+	return db.getSchemaByRoot(ctx, db.txn, root)
+}
+
 // GetAllSchema returns all schema versions that currently exist within
 // this [Store].
 func (db *implicitTxnDB) GetAllSchema(ctx context.Context) ([]client.SchemaDescription, error) {

@@ -103,6 +103,11 @@ type GetSchema struct {
 	// This option will be prioritized over all other options.
 	VersionID immutable.Option[string]
 
+	// The Root of the schema versions to fetch.
+	//
+	// This option will be prioritized over Name.
+	Root immutable.Option[string]
+
 	ExpectedResults []client.SchemaDescription
 
 	ExpectedError string
