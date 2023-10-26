@@ -242,6 +242,21 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 	return collections, nil
 }
 
+func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	methodURL := c.http.baseURL.JoinPath("schema")
+	methodURL.RawQuery = url.Values{"version_id": []string{versionID}}.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+	var schema client.SchemaDescription
+	if err := c.http.requestJson(req, &schema); err != nil {
+		return client.SchemaDescription{}, err
+	}
+	return schema, nil
+}
+
 func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("indexes")
 

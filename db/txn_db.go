@@ -175,6 +175,28 @@ func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collec
 	return db.getAllCollections(ctx, db.txn)
 }
 
+// GetSchemaByVersionID returns the schema description for the schema version of the
+// ID provided.
+//
+// Will return an error if it is not found.
+func (db *implicitTxnDB) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getSchemaByVersionID(ctx, txn, versionID)
+}
+
+// GetSchemaByVersionID returns the schema description for the schema version of the
+// ID provided.
+//
+// Will return an error if it is not found.
+func (db *explicitTxnDB) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	return db.getSchemaByVersionID(ctx, db.txn, versionID)
+}
+
 // GetAllIndexes gets all the indexes in the database.
 func (db *implicitTxnDB) GetAllIndexes(
 	ctx context.Context,

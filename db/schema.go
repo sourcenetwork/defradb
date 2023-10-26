@@ -289,6 +289,14 @@ func substituteSchemaPatch(
 	return patch, nil
 }
 
+func (db *db) getSchemaByVersionID(
+	ctx context.Context,
+	txn datastore.Txn,
+	versionID string,
+) (client.SchemaDescription, error) {
+	return description.GetSchemaVersion(ctx, txn, versionID)
+}
+
 // getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
 // Field Kind value. It will return the value if one is found, else returns an [ErrFieldKindNotFound].
 //
