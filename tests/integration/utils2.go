@@ -966,6 +966,8 @@ func getSchema(
 			results = []client.SchemaDescription{result}
 		case action.Root.HasValue():
 			results, err = node.GetSchemaByRoot(s.ctx, action.Root.Value())
+		case action.Name.HasValue():
+			results, err = node.GetSchemaByName(s.ctx, action.Name.Value())
 		default:
 			results, err = node.GetAllSchema(s.ctx)
 		}

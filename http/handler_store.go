@@ -158,7 +158,12 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 
 	switch {
 	case req.URL.Query().Has("name"):
-		panic("todo")
+		schema, err := store.GetSchemaByName(req.Context(), req.URL.Query().Get("name"))
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		responseJSON(rw, http.StatusOK, schema)
 	case req.URL.Query().Has("root"):
 		schema, err := store.GetSchemaByRoot(req.Context(), req.URL.Query().Get("root"))
 		if err != nil {

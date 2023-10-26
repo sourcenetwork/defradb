@@ -161,6 +161,9 @@ type Store interface {
 	// this [Store].
 	GetAllCollections(context.Context) ([]Collection, error)
 
+	// GetSchemaByName returns the all schema versions with the given name.
+	GetSchemaByName(context.Context, string) ([]SchemaDescription, error)
+
 	// GetSchemaByVersionID returns the schema description for the schema version of the
 	// ID provided.
 	//

@@ -105,6 +105,27 @@ func GetSchemaVersion(
 	return desc, nil
 }
 
+// GetSchemaByName returns all the schema with the given name.
+func GetSchemaByName(
+	ctx context.Context,
+	txn datastore.Txn,
+	name string,
+) ([]client.SchemaDescription, error) {
+	allSchemas, err := GetAllSchemas(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	nameSchema := []client.SchemaDescription{}
+	for _, schema := range allSchemas {
+		if schema.Name == name {
+			nameSchema = append(nameSchema, schema)
+		}
+	}
+
+	return nameSchema, nil
+}
+
 // GetSchemaByRoot returns all the schema with the given root.
 func GetSchemaByRoot(
 	ctx context.Context,

@@ -127,6 +127,10 @@ func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, e
 	return w.client.GetAllCollections(ctx)
 }
 
+func (w *Wrapper) GetSchemaByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+	return w.client.GetSchemaByName(ctx, name)
+}
+
 func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
 	return w.client.GetSchemaByVersionID(ctx, versionID)
 }

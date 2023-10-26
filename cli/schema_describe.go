@@ -58,7 +58,11 @@ Example: view schema by version id
 				schemas = s
 
 			case name != "":
-				panic("todo")
+				s, err := store.GetSchemaByName(cmd.Context(), name)
+				if err != nil {
+					return err
+				}
+				schemas = s
 
 			default:
 				s, err := store.GetAllSchema(cmd.Context())

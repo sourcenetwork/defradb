@@ -175,6 +175,22 @@ func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collec
 	return db.getAllCollections(ctx, db.txn)
 }
 
+// GetSchemaByName returns the all schema versions with the given name.
+func (db *implicitTxnDB) GetSchemaByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getSchemaByName(ctx, txn, name)
+}
+
+// GetSchemaByName returns the all schema versions with the given name.
+func (db *explicitTxnDB) GetSchemaByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+	return db.getSchemaByName(ctx, db.txn, name)
+}
+
 // GetSchemaByVersionID returns the schema description for the schema version of the
 // ID provided.
 //

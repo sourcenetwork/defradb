@@ -289,6 +289,14 @@ func substituteSchemaPatch(
 	return patch, nil
 }
 
+func (db *db) getSchemaByName(
+	ctx context.Context,
+	txn datastore.Txn,
+	name string,
+) ([]client.SchemaDescription, error) {
+	return description.GetSchemaByName(ctx, txn, name)
+}
+
 func (db *db) getSchemaByVersionID(
 	ctx context.Context,
 	txn datastore.Txn,

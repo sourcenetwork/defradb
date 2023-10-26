@@ -57,6 +57,19 @@ func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.GetSchema{
+				Name:            immutable.Some("does not exist"),
+				ExpectedResults: []client.SchemaDescription{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 	usersSchemaVersion1ID := "bafkreickgf3nbjaairxkkqawmrv7fafaafyccl4qygqeveagisdn42eohu"
 	usersSchemaVersion2ID := "bafkreicseqwxooxo2wf2bgzdalwtm2rtsj7x4mgsir4rp4htmpnwnffwre"
@@ -158,6 +171,70 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 			},
 			testUtils.GetSchema{
 				Root: immutable.Some(usersSchemaVersion1ID),
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name:      "Users",
+						Root:      usersSchemaVersion1ID,
+						VersionID: usersSchemaVersion1ID,
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+							},
+						},
+					},
+					{
+						Name:      "Users",
+						Root:      usersSchemaVersion1ID,
+						VersionID: usersSchemaVersion2ID,
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "name",
+								ID:   1,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
+	usersSchemaVersion1ID := "bafkreickgf3nbjaairxkkqawmrv7fafaafyccl4qygqeveagisdn42eohu"
+	usersSchemaVersion2ID := "bafkreicseqwxooxo2wf2bgzdalwtm2rtsj7x4mgsir4rp4htmpnwnffwre"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {}
+				`,
+			},
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Books {}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+					]
+				`,
+				SetAsDefaultVersion: immutable.Some(false),
+			},
+			testUtils.GetSchema{
+				Name: immutable.Some("Users"),
 				ExpectedResults: []client.SchemaDescription{
 					{
 						Name:      "Users",
