@@ -186,9 +186,9 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	return &Collection{c.http, definition}, nil
 }
 
-func (c *Client) GetCollectionsBySchemaID(ctx context.Context, schemaId string) ([]client.Collection, error) {
+func (c *Client) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot string) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"schema_id": []string{schemaId}}.Encode()
+	methodURL.RawQuery = url.Values{"schema_root": []string{schemaRoot}}.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {

@@ -31,7 +31,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.WithTxn(txn).GetCollectionsBySchemaID(p.ctx, col)
+		storeCol, err := p.db.WithTxn(txn).GetCollectionsBySchemaRoot(p.ctx, col)
 		if err != nil {
 			return err
 		}
@@ -44,7 +44,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// Ensure we can add all the collections to the store on the transaction
 	// before adding to topics.
 	for _, col := range storeCollections {
-		key := core.NewP2PCollectionKey(col.SchemaID())
+		key := core.NewP2PCollectionKey(col.SchemaRoot())
 		err = txn.Systemstore().Put(ctx, key.ToDS(), []byte{marker})
 		if err != nil {
 			return err
@@ -96,7 +96,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.WithTxn(txn).GetCollectionsBySchemaID(p.ctx, col)
+		storeCol, err := p.db.WithTxn(txn).GetCollectionsBySchemaRoot(p.ctx, col)
 		if err != nil {
 			return err
 		}
@@ -109,7 +109,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 	// Ensure we can remove all the collections to the store on the transaction
 	// before adding to topics.
 	for _, col := range storeCollections {
-		key := core.NewP2PCollectionKey(col.SchemaID())
+		key := core.NewP2PCollectionKey(col.SchemaRoot())
 		err = txn.Systemstore().Delete(ctx, key.ToDS())
 		if err != nil {
 			return err

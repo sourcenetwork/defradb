@@ -25,7 +25,7 @@ const (
 	errRemovingP2PCollection              string = "cannot remove collection ID"
 	errAddCollectionWithPatch             string = "unknown collection, adding collections via patch is not supported"
 	errCollectionIDDoesntMatch            string = "CollectionID does not match existing"
-	errSchemaIDDoesntMatch                string = "SchemaID does not match existing"
+	errSchemaRootDoesntMatch              string = "SchemaRoot does not match existing"
 	errCannotModifySchemaName             string = "modifying the schema name is not supported"
 	errCannotSetVersionID                 string = "setting the VersionID is not supported. It is updated automatically"
 	errCannotSetFieldID                   string = "explicitly setting a field ID value is not supported"
@@ -115,14 +115,14 @@ var (
 	ErrCollectionAlreadyExists            = errors.New("collection already exists")
 	ErrCollectionNameEmpty                = errors.New("collection name can't be empty")
 	ErrSchemaNameEmpty                    = errors.New("schema name can't be empty")
-	ErrSchemaIDEmpty                      = errors.New("schema ID can't be empty")
+	ErrSchemaRootEmpty                    = errors.New("schema root can't be empty")
 	ErrSchemaVersionIDEmpty               = errors.New("schema version ID can't be empty")
 	ErrKeyEmpty                           = errors.New("key cannot be empty")
 	ErrAddingP2PCollection                = errors.New(errAddingP2PCollection)
 	ErrRemovingP2PCollection              = errors.New(errRemovingP2PCollection)
 	ErrAddCollectionWithPatch             = errors.New(errAddCollectionWithPatch)
 	ErrCollectionIDDoesntMatch            = errors.New(errCollectionIDDoesntMatch)
-	ErrSchemaIDDoesntMatch                = errors.New(errSchemaIDDoesntMatch)
+	ErrSchemaRootDoesntMatch              = errors.New(errSchemaRootDoesntMatch)
 	ErrCannotModifySchemaName             = errors.New(errCannotModifySchemaName)
 	ErrCannotSetVersionID                 = errors.New(errCannotSetVersionID)
 	ErrCannotSetFieldID                   = errors.New(errCannotSetFieldID)
@@ -279,12 +279,12 @@ func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID uint32) e
 	)
 }
 
-func NewErrSchemaIDDoesntMatch(name, existingID, proposedID string) error {
+func NewErrSchemaRootDoesntMatch(name, existingRoot, proposedRoot string) error {
 	return errors.New(
-		errSchemaIDDoesntMatch,
+		errSchemaRootDoesntMatch,
 		errors.NewKV("Name", name),
-		errors.NewKV("ExistingID", existingID),
-		errors.NewKV("ProposedID", proposedID),
+		errors.NewKV("ExistingRoot", existingRoot),
+		errors.NewKV("ProposedRoot", proposedRoot),
 	)
 }
 

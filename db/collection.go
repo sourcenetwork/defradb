@@ -239,11 +239,11 @@ func (db *db) validateUpdateSchema(
 		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
 	}
 
-	if proposedDesc.SchemaID != existingDesc.SchemaID {
-		return false, NewErrSchemaIDDoesntMatch(
+	if proposedDesc.Root != existingDesc.Root {
+		return false, NewErrSchemaRootDoesntMatch(
 			proposedDesc.Name,
-			existingDesc.SchemaID,
-			proposedDesc.SchemaID,
+			existingDesc.Root,
+			proposedDesc.Root,
 		)
 	}
 
@@ -467,7 +467,7 @@ func (db *db) setDefaultSchemaVersion(
 		return err
 	}
 
-	colDescs, err := description.GetCollectionsBySchemaID(ctx, txn, schema.SchemaID)
+	colDescs, err := description.GetCollectionsBySchemaRoot(ctx, txn, schema.Root)
 	if err != nil {
 		return err
 	}
@@ -570,17 +570,17 @@ func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name s
 	return collection, nil
 }
 
-// getCollectionsBySchemaID returns all existing collections using the schema hash ID.
-func (db *db) getCollectionsBySchemaID(
+// getCollectionsBySchemaRoot returns all existing collections using the schema root.
+func (db *db) getCollectionsBySchemaRoot(
 	ctx context.Context,
 	txn datastore.Txn,
-	schemaID string,
+	schemaRoot string,
 ) ([]client.Collection, error) {
-	if schemaID == "" {
-		return nil, ErrSchemaIDEmpty
+	if schemaRoot == "" {
+		return nil, ErrSchemaRootEmpty
 	}
 
-	cols, err := description.GetCollectionsBySchemaID(ctx, txn, schemaID)
+	cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -721,8 +721,8 @@ func (c *collection) ID() uint32 {
 	return c.Description().ID
 }
 
-func (c *collection) SchemaID() string {
-	return c.Schema().SchemaID
+func (c *collection) SchemaRoot() string {
+	return c.Schema().Root
 }
 
 func (c *collection) Definition() client.CollectionDefinition {
@@ -1018,11 +1018,11 @@ func (c *collection) save(
 			func() {
 				c.db.events.Updates.Value().Publish(
 					events.Update{
-						DocKey:   doc.Key().String(),
-						Cid:      headNode.Cid(),
-						SchemaID: c.Schema().SchemaID,
-						Block:    headNode,
-						Priority: priority,
+						DocKey:     doc.Key().String(),
+						Cid:        headNode.Cid(),
+						SchemaRoot: c.Schema().Root,
+						Block:      headNode,
+						Priority:   priority,
 					},
 				)
 			},

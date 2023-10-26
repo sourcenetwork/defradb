@@ -35,8 +35,8 @@ type Collection interface {
 	Name() string
 	// ID returns the ID of this Collection.
 	ID() uint32
-	// SchemaID returns the ID of the Schema used to define this Collection.
-	SchemaID() string
+	// SchemaRoot returns the Root of the Schema used to define this Collection.
+	SchemaRoot() string
 
 	// Definition contains the metadata defining what a Collection is.
 	Definition() CollectionDefinition

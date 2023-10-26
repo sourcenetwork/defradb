@@ -350,10 +350,10 @@ func (m *PushLogRequest_Body) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.SchemaID) > 0 {
-		i -= len(m.SchemaID)
-		copy(dAtA[i:], m.SchemaID)
-		i = encodeVarint(dAtA, i, uint64(len(m.SchemaID)))
+	if len(m.SchemaRoot) > 0 {
+		i -= len(m.SchemaRoot)
+		copy(dAtA[i:], m.SchemaRoot)
+		i = encodeVarint(dAtA, i, uint64(len(m.SchemaRoot)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -633,7 +633,7 @@ func (m *PushLogRequest_Body) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.SchemaID)
+	l = len(m.SchemaRoot)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -1308,7 +1308,7 @@ func (m *PushLogRequest_Body) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SchemaID", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SchemaRoot", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -1335,9 +1335,9 @@ func (m *PushLogRequest_Body) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.SchemaID = append(m.SchemaID[:0], dAtA[iNdEx:postIndex]...)
-			if m.SchemaID == nil {
-				m.SchemaID = []byte{}
+			m.SchemaRoot = append(m.SchemaRoot[:0], dAtA[iNdEx:postIndex]...)
+			if m.SchemaRoot == nil {
+				m.SchemaRoot = []byte{}
 			}
 			iNdEx = postIndex
 		case 4:

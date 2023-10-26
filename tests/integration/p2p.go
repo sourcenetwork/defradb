@@ -69,8 +69,8 @@ type DeleteReplicator struct {
 const (
 	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
 	// for a non-existent collection ID when used in actions that support this.
-	NonExistentCollectionID       int    = -1
-	NonExistentCollectionSchemaID string = "NonExistentCollectionID"
+	NonExistentCollectionID         int    = -1
+	NonExistentCollectionSchemaRoot string = "NonExistentCollectionID"
 )
 
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
@@ -413,18 +413,18 @@ func subscribeToCollection(
 ) {
 	n := s.nodes[action.NodeID]
 
-	schemaIDs := []string{}
+	schemaRoots := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			schemaIDs = append(schemaIDs, NonExistentCollectionSchemaID)
+			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
 			continue
 		}
 
 		col := s.collections[action.NodeID][collectionIndex]
-		schemaIDs = append(schemaIDs, col.SchemaID())
+		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.AddP2PCollections(s.ctx, schemaIDs)
+	err := n.AddP2PCollections(s.ctx, schemaRoots)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -443,18 +443,18 @@ func unsubscribeToCollection(
 ) {
 	n := s.nodes[action.NodeID]
 
-	schemaIDs := []string{}
+	schemaRoots := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			schemaIDs = append(schemaIDs, NonExistentCollectionSchemaID)
+			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
 			continue
 		}
 
 		col := s.collections[action.NodeID][collectionIndex]
-		schemaIDs = append(schemaIDs, col.SchemaID())
+		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.RemoveP2PCollections(s.ctx, schemaIDs)
+	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -475,7 +475,7 @@ func getAllP2PCollections(
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
 		col := s.collections[action.NodeID][collectionIndex]
-		expectedCollections = append(expectedCollections, col.SchemaID())
+		expectedCollections = append(expectedCollections, col.SchemaRoot())
 	}
 
 	n := s.nodes[action.NodeID]

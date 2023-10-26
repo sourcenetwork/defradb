@@ -279,11 +279,11 @@ func (c *collection) applyDelete(
 			func() {
 				c.db.events.Updates.Value().Publish(
 					events.Update{
-						DocKey:   key.DocKey,
-						Cid:      headNode.Cid(),
-						SchemaID: c.Schema().SchemaID,
-						Block:    headNode,
-						Priority: priority,
+						DocKey:     key.DocKey,
+						Cid:        headNode.Cid(),
+						SchemaRoot: c.Schema().Root,
+						Block:      headNode,
+						Priority:   priority,
 					},
 				)
 			},

@@ -24,7 +24,7 @@ import (
 
 // CreateSchemaVersion creates and saves to the store a new schema version.
 //
-// If the SchemaID is empty it will be set to the new version ID.
+// If the Root is empty it will be set to the new version ID.
 func CreateSchemaVersion(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -48,12 +48,12 @@ func CreateSchemaVersion(
 	}
 	versionID := scid.String()
 	previousSchemaVersionID := desc.VersionID
-	isNew := desc.SchemaID == ""
+	isNew := desc.Root == ""
 
 	desc.VersionID = versionID
 	if isNew {
-		// If this is a new schema, the schema ID will match the version ID
-		desc.SchemaID = versionID
+		// If this is a new schema, the Root will match the version ID
+		desc.Root = versionID
 	}
 
 	// Rebuild the json buffer to include the newly set ID properties
@@ -70,7 +70,7 @@ func CreateSchemaVersion(
 
 	if !isNew {
 		// We don't need to add a history key if this is the first version
-		schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.SchemaID, previousSchemaVersionID)
+		schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Root, previousSchemaVersionID)
 		err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(desc.VersionID))
 		if err != nil {
 			return client.SchemaDescription{}, err
@@ -164,13 +164,13 @@ func GetSchemas(
 func GetSchemaVersionIDs(
 	ctx context.Context,
 	txn datastore.Txn,
-	schemaID string,
+	schemaRoot string,
 ) ([]string, error) {
-	// Add the schemaID as the first version here.
+	// Add the schema root as the first version here.
 	// It is not present in the history prefix.
-	schemaVersions := []string{schemaID}
+	schemaVersions := []string{schemaRoot}
 
-	prefix := core.NewSchemaHistoryKey(schemaID, "")
+	prefix := core.NewSchemaHistoryKey(schemaRoot, "")
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,

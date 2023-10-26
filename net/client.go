@@ -38,13 +38,13 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 		"Preparing pushLog request",
 		logging.NewKV("DocKey", evt.DocKey),
 		logging.NewKV("CID", evt.Cid),
-		logging.NewKV("SchemaId", evt.SchemaID))
+		logging.NewKV("SchemaRoot", evt.SchemaRoot))
 
 	body := &pb.PushLogRequest_Body{
-		DocKey:   []byte(evt.DocKey),
-		Cid:      evt.Cid.Bytes(),
-		SchemaID: []byte(evt.SchemaID),
-		Creator:  s.peer.host.ID().String(),
+		DocKey:     []byte(evt.DocKey),
+		Cid:        evt.Cid.Bytes(),
+		SchemaRoot: []byte(evt.SchemaRoot),
+		Creator:    s.peer.host.ID().String(),
 		Log: &pb.Document_Log{
 			Block: evt.Block.RawData(),
 		},
