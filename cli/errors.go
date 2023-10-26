@@ -33,10 +33,10 @@ func NewErrInvalidLensConfig(inner error) error {
 	return errors.Wrap(errInvalidLensConfig, inner)
 }
 
-func NewErrSchemaVersionNotOfSchema(schemaID string, schemaVersionID string) error {
+func NewErrSchemaVersionNotOfSchema(schemaRoot string, schemaVersionID string) error {
 	return errors.New(
 		errSchemaVersionNotOfSchema,
-		errors.NewKV("SchemaID", schemaID),
+		errors.NewKV("SchemaRoot", schemaRoot),
 		errors.NewKV("SchemaVersionID", schemaVersionID),
 	)
 }

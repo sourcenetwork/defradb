@@ -46,8 +46,8 @@ func (c *Collection) ID() uint32 {
 	return c.Description().ID
 }
 
-func (c *Collection) SchemaID() string {
-	return c.Schema().SchemaID
+func (c *Collection) SchemaRoot() string {
+	return c.Schema().Root
 }
 
 func (c *Collection) Definition() client.CollectionDefinition {

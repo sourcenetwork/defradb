@@ -29,12 +29,6 @@ type CompositeDelta interface {
 	Links() []DAGLink
 }
 
-type NetDelta interface {
-	Delta
-	GetSchemaID() string
-	// DocKey() client.DocKey
-}
-
 // DAGLink represents a link to another object in a DAG.
 type DAGLink struct {
 	Name string

@@ -37,8 +37,8 @@ message PushLogRequest {
         bytes docKey = 1;
         // cid is the CID of the composite of the document.
         bytes cid = 2;
-        // schemaID is the SchemaID of the collection that the document resides in.
-        bytes schemaID = 3;
+        // schemaRoot is the SchemaRoot of the collection that the document resides in.
+        bytes schemaRoot = 3;
         // creator is the PeerID of the peer that created the log.
         string creator = 4;
         // log hold the block that represent version of the document.

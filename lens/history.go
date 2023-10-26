@@ -70,10 +70,10 @@ func getTargetedSchemaHistory(
 	ctx context.Context,
 	txn datastore.Txn,
 	lensConfigs []client.LensConfig,
-	schemaID string,
+	schemaRoot string,
 	targetSchemaVersionID string,
 ) (map[schemaVersionID]*targetedSchemaHistoryLink, error) {
-	history, err := getSchemaHistory(ctx, txn, lensConfigs, schemaID)
+	history, err := getSchemaHistory(ctx, txn, lensConfigs, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func getSchemaHistory(
 	ctx context.Context,
 	txn datastore.Txn,
 	lensConfigs []client.LensConfig,
-	schemaID string,
+	schemaRoot string,
 ) (map[schemaVersionID]*schemaHistoryLink, error) {
 	pairings := map[string]*schemaHistoryPairing{}
 
@@ -200,7 +200,7 @@ func getSchemaHistory(
 		}
 	}
 
-	prefix := core.NewSchemaHistoryKey(schemaID, "")
+	prefix := core.NewSchemaHistoryKey(schemaRoot, "")
 	q, err := txn.Systemstore().Query(ctx, query.Query{
 		Prefix: prefix.ToString(),
 	})

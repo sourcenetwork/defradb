@@ -269,7 +269,7 @@ func (p *Peer) RegisterNewDocument(
 	dockey client.DocKey,
 	c cid.Cid,
 	nd ipld.Node,
-	schemaID string,
+	schemaRoot string,
 ) error {
 	log.Debug(
 		p.ctx,
@@ -278,7 +278,7 @@ func (p *Peer) RegisterNewDocument(
 	)
 
 	// register topic
-	if err := p.server.addPubSubTopic(dockey.String(), !p.server.hasPubSubTopic(schemaID)); err != nil {
+	if err := p.server.addPubSubTopic(dockey.String(), !p.server.hasPubSubTopic(schemaRoot)); err != nil {
 		log.ErrorE(
 			p.ctx,
 			"Failed to create new pubsub topic",
@@ -290,10 +290,10 @@ func (p *Peer) RegisterNewDocument(
 
 	// publish log
 	body := &pb.PushLogRequest_Body{
-		DocKey:   []byte(dockey.String()),
-		Cid:      c.Bytes(),
-		SchemaID: []byte(schemaID),
-		Creator:  p.host.ID().String(),
+		DocKey:     []byte(dockey.String()),
+		Cid:        c.Bytes(),
+		SchemaRoot: []byte(schemaRoot),
+		Creator:    p.host.ID().String(),
 		Log: &pb.Document_Log{
 			Block: nd.RawData(),
 		},
@@ -302,7 +302,7 @@ func (p *Peer) RegisterNewDocument(
 		Body: body,
 	}
 
-	return p.server.publishLog(p.ctx, schemaID, req)
+	return p.server.publishLog(p.ctx, schemaRoot, req)
 }
 
 func (p *Peer) pushToReplicator(
@@ -352,11 +352,11 @@ func (p *Peer) pushToReplicator(
 			}
 
 			evt := events.Update{
-				DocKey:   key.Key.String(),
-				Cid:      c,
-				SchemaID: collection.SchemaID(),
-				Block:    nd,
-				Priority: priority,
+				DocKey:     key.Key.String(),
+				Cid:        c,
+				SchemaRoot: collection.SchemaRoot(),
+				Block:      nd,
+				Priority:   priority,
 			}
 			if err := p.server.pushLog(ctx, evt, pid); err != nil {
 				log.ErrorE(
@@ -427,7 +427,7 @@ func (p *Peer) handleDocCreateLog(evt events.Update) error {
 
 	// We need to register the document before pushing to the replicators if we want to
 	// ensure that we have subscribed to the topic.
-	err = p.RegisterNewDocument(p.ctx, dockey, evt.Cid, evt.Block, evt.SchemaID)
+	err = p.RegisterNewDocument(p.ctx, dockey, evt.Cid, evt.Block, evt.SchemaRoot)
 	if err != nil {
 		return err
 	}
@@ -447,13 +447,13 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 		"Preparing pubsub pushLog request from broadcast",
 		logging.NewKV("DocKey", dockey),
 		logging.NewKV("CID", evt.Cid),
-		logging.NewKV("SchemaId", evt.SchemaID))
+		logging.NewKV("SchemaRoot", evt.SchemaRoot))
 
 	body := &pb.PushLogRequest_Body{
-		DocKey:   []byte(dockey.String()),
-		Cid:      evt.Cid.Bytes(),
-		SchemaID: []byte(evt.SchemaID),
-		Creator:  p.host.ID().String(),
+		DocKey:     []byte(dockey.String()),
+		Cid:        evt.Cid.Bytes(),
+		SchemaRoot: []byte(evt.SchemaRoot),
+		Creator:    p.host.ID().String(),
 		Log: &pb.Document_Log{
 			Block: evt.Block.RawData(),
 		},
@@ -469,8 +469,8 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 		return NewErrPublishingToDockeyTopic(err, evt.Cid.String(), evt.DocKey)
 	}
 
-	if err := p.server.publishLog(p.ctx, evt.SchemaID, req); err != nil {
-		return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaID)
+	if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {
+		return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaRoot)
 	}
 
 	return nil
@@ -482,12 +482,12 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 	for _, peer := range p.ps.ListPeers(lg.DocKey) {
 		peers[peer.String()] = struct{}{}
 	}
-	for _, peer := range p.ps.ListPeers(lg.SchemaID) {
+	for _, peer := range p.ps.ListPeers(lg.SchemaRoot) {
 		peers[peer.String()] = struct{}{}
 	}
 
 	p.mu.Lock()
-	reps, exists := p.replicators[lg.SchemaID]
+	reps, exists := p.replicators[lg.SchemaRoot]
 	p.mu.Unlock()
 
 	if exists {

@@ -104,7 +104,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		i := 0
 		for _, col := range cols {
 			// If we subscribed to the collection, we skip subscribing to the collection's dockeys.
-			if _, ok := colMap[col.SchemaID()]; ok {
+			if _, ok := colMap[col.SchemaRoot()]; ok {
 				continue
 			}
 			keyChan, err := col.GetAllDocKeys(p.ctx)
@@ -246,7 +246,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return &pb.PushLogReply{}, nil
 	}
 
-	schemaID := string(req.Body.SchemaID)
+	schemaRoot := string(req.Body.SchemaRoot)
 	docKey := core.DataStoreKeyFromDocKey(dockey)
 
 	var txnErr error
@@ -262,12 +262,12 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 		// Currently a schema is the best way we have to link a push log request to a collection,
 		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
-		cols, err := store.GetCollectionsBySchemaID(ctx, schemaID)
+		cols, err := store.GetCollectionsBySchemaRoot(ctx, schemaRoot)
 		if err != nil {
-			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
+			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaRoot %s", schemaRoot), err)
 		}
 		if len(cols) == 0 {
-			return nil, client.NewErrCollectionNotFoundForSchema(schemaID)
+			return nil, client.NewErrCollectionNotFoundForSchema(schemaRoot)
 		}
 		col := cols[0]
 
@@ -322,7 +322,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 		// Once processed, subscribe to the dockey topic on the pubsub network unless we already
 		// suscribe to the collection.
-		if !s.hasPubSubTopic(col.SchemaID()) {
+		if !s.hasPubSubTopic(col.SchemaRoot()) {
 			err = s.addPubSubTopic(docKey.DocKey, true)
 			if err != nil {
 				return nil, err

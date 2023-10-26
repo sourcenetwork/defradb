@@ -33,7 +33,7 @@ func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users", "path": "/Book" },
-						{ "op": "remove", "path": "/Book/SchemaID" },
+						{ "op": "remove", "path": "/Book/Root" },
 						{ "op": "remove", "path": "/Book/VersionID" },
 						{ "op": "remove", "path": "/Book/Fields/1/ID" },
 						{ "op": "replace", "path": "/Book/Name", "value": "Book" }

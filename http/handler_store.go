@@ -117,8 +117,8 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 			return
 		}
 		responseJSON(rw, http.StatusOK, col.Definition())
-	case req.URL.Query().Has("schema_id"):
-		cols, err := store.GetCollectionsBySchemaID(req.Context(), req.URL.Query().Get("schema_id"))
+	case req.URL.Query().Has("schema_root"):
+		cols, err := store.GetCollectionsBySchemaRoot(req.Context(), req.URL.Query().Get("schema_root"))
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -381,8 +381,8 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionNameQueryParam := openapi3.NewQueryParameter("name").
 		WithDescription("Collection name").
 		WithSchema(openapi3.NewStringSchema())
-	collectionSchemaIdQueryParam := openapi3.NewQueryParameter("schema_id").
-		WithDescription("Collection schema id").
+	collectionSchemaRootQueryParam := openapi3.NewQueryParameter("schema_root").
+		WithDescription("Collection schema root").
 		WithSchema(openapi3.NewStringSchema())
 	collectionVersionIdQueryParam := openapi3.NewQueryParameter("version_id").
 		WithDescription("Collection schema version id").
@@ -406,7 +406,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionDescribe.Description = "Introspect collection(s) by name, schema id, or version id."
 	collectionDescribe.Tags = []string{"collection"}
 	collectionDescribe.AddParameter(collectionNameQueryParam)
-	collectionDescribe.AddParameter(collectionSchemaIdQueryParam)
+	collectionDescribe.AddParameter(collectionSchemaRootQueryParam)
 	collectionDescribe.AddParameter(collectionVersionIdQueryParam)
 	collectionDescribe.AddResponse(200, collectionsResponse)
 	collectionDescribe.Responses["400"] = errorResponse

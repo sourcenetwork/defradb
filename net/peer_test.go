@@ -339,7 +339,7 @@ func TestRegisterNewDocument_NoError(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.RegisterNewDocument(ctx, doc.Key(), cid, &EmptyNode{}, col.SchemaID())
+	err = n.RegisterNewDocument(ctx, doc.Key(), cid, &EmptyNode{}, col.SchemaRoot())
 	require.NoError(t, err)
 }
 
@@ -365,7 +365,7 @@ func TestRegisterNewDocument_RPCTopicAlreadyRegisteredError(t *testing.T) {
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.RegisterNewDocument(ctx, doc.Key(), cid, &EmptyNode{}, col.SchemaID())
+	err = n.RegisterNewDocument(ctx, doc.Key(), cid, &EmptyNode{}, col.SchemaRoot())
 	require.Equal(t, err.Error(), "creating topic: joining topic: topic already exists")
 }
 
@@ -687,7 +687,7 @@ func TestAddP2PCollections_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaID()})
+	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaRoot()})
 	require.NoError(t, err)
 }
 
@@ -712,7 +712,7 @@ func TestRemoveP2PCollections(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	err = n.Peer.RemoveP2PCollections(ctx, []string{col.SchemaID()})
+	err = n.Peer.RemoveP2PCollections(ctx, []string{col.SchemaRoot()})
 	require.NoError(t, err)
 }
 
@@ -738,12 +738,12 @@ func TestGetAllP2PCollections(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaID()})
+	err = n.Peer.AddP2PCollections(ctx, []string{col.SchemaRoot()})
 	require.NoError(t, err)
 
 	cols, err := n.Peer.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
-	require.ElementsMatch(t, []string{col.SchemaID()}, cols)
+	require.ElementsMatch(t, []string{col.SchemaRoot()}, cols)
 }
 
 func TestHandleDocCreateLog_NoError(t *testing.T) {
@@ -778,11 +778,11 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = n.handleDocCreateLog(events.Update{
-		DocKey:   doc.Key().String(),
-		Cid:      docCid,
-		SchemaID: col.SchemaID(),
-		Block:    node,
-		Priority: 0,
+		DocKey:     doc.Key().String(),
+		Cid:        docCid,
+		SchemaRoot: col.SchemaRoot(),
+		Block:      node,
+		Priority:   0,
 	})
 	require.NoError(t, err)
 }
@@ -820,8 +820,8 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = n.handleDocCreateLog(events.Update{
-		DocKey:   doc.Key().String(),
-		SchemaID: col.SchemaID(),
+		DocKey:     doc.Key().String(),
+		SchemaRoot: col.SchemaRoot(),
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }
@@ -858,11 +858,11 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = n.handleDocUpdateLog(events.Update{
-		DocKey:   doc.Key().String(),
-		Cid:      docCid,
-		SchemaID: col.SchemaID(),
-		Block:    node,
-		Priority: 0,
+		DocKey:     doc.Key().String(),
+		Cid:        docCid,
+		SchemaRoot: col.SchemaRoot(),
+		Block:      node,
+		Priority:   0,
 	})
 	require.NoError(t, err)
 }
@@ -912,10 +912,10 @@ func TestHandleDocUpdateLog_WithExistingDockeyTopic_TopicExistsError(t *testing.
 	require.NoError(t, err)
 
 	err = n.handleDocUpdateLog(events.Update{
-		DocKey:   doc.Key().String(),
-		Cid:      docCid,
-		SchemaID: col.SchemaID(),
-		Block:    node,
+		DocKey:     doc.Key().String(),
+		Cid:        docCid,
+		SchemaRoot: col.SchemaRoot(),
+		Block:      node,
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }
@@ -951,14 +951,14 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	node, err := makeNode(delta, []cid.Cid{docCid})
 	require.NoError(t, err)
 
-	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), col.SchemaID(), true)
+	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), col.SchemaRoot(), true)
 	require.NoError(t, err)
 
 	err = n.handleDocUpdateLog(events.Update{
-		DocKey:   doc.Key().String(),
-		Cid:      docCid,
-		SchemaID: col.SchemaID(),
-		Block:    node,
+		DocKey:     doc.Key().String(),
+		Cid:        docCid,
+		SchemaRoot: col.SchemaRoot(),
+		Block:      node,
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }
@@ -1002,10 +1002,10 @@ func TestPushLogToReplicator_WithReplicator_FailedPushingLogError(t *testing.T) 
 	require.NoError(t, err)
 
 	n.pushLogToReplicators(ctx, events.Update{
-		DocKey:   doc.Key().String(),
-		Cid:      docCid,
-		SchemaID: col.SchemaID(),
-		Block:    node,
+		DocKey:     doc.Key().String(),
+		Cid:        docCid,
+		SchemaRoot: col.SchemaRoot(),
+		Block:      node,
 	})
 }
 

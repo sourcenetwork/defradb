@@ -23,10 +23,10 @@ import (
 func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 	var txID uint64
 	var name string
-	var schemaID string
+	var schemaRoot string
 	var versionID string
 	var cmd = &cobra.Command{
-		Use:   "collection [--name <name> --schema <schemaID> --version <versionID>]",
+		Use:   "collection [--name <name> --schema <schemaRoot> --version <versionID>]",
 		Short: "Interact with a collection.",
 		Long:  `Create, read, update, and delete documents within a collection.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -48,8 +48,8 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 			case versionID != "":
 				cols, err = store.GetCollectionsByVersionID(cmd.Context(), versionID)
 
-			case schemaID != "":
-				cols, err = store.GetCollectionsBySchemaID(cmd.Context(), schemaID)
+			case schemaRoot != "":
+				cols, err = store.GetCollectionsBySchemaRoot(cmd.Context(), schemaRoot)
 
 			case name != "":
 				col, err = store.GetCollectionByName(cmd.Context(), name)
@@ -63,12 +63,12 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 				return err
 			}
 
-			if schemaID != "" && versionID != "" && len(cols) > 0 {
-				if cols[0].SchemaID() != schemaID {
-					// If the a versionID has been provided that does not pair up with the given schemaID
+			if schemaRoot != "" && versionID != "" && len(cols) > 0 {
+				if cols[0].SchemaRoot() != schemaRoot {
+					// If the a versionID has been provided that does not pair up with the given schema root
 					// we should error and let the user know they have provided impossible params.
 					// We only need to check the first item - they will all be the same.
-					return NewErrSchemaVersionNotOfSchema(schemaID, versionID)
+					return NewErrSchemaVersionNotOfSchema(schemaRoot, versionID)
 				}
 			}
 
@@ -105,7 +105,7 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 	}
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
 	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")
-	cmd.PersistentFlags().StringVar(&schemaID, "schema", "", "Collection schema ID")
+	cmd.PersistentFlags().StringVar(&schemaRoot, "schema", "", "Collection schema Root")
 	cmd.PersistentFlags().StringVar(&versionID, "version", "", "Collection version ID")
 	return cmd
 }
