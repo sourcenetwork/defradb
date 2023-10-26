@@ -297,6 +297,13 @@ func (db *db) getSchemaByVersionID(
 	return description.GetSchemaVersion(ctx, txn, versionID)
 }
 
+func (db *db) getAllSchema(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.SchemaDescription, error) {
+	return description.GetAllSchemas(ctx, txn)
+}
+
 // getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
 // Field Kind value. It will return the value if one is found, else returns an [ErrFieldKindNotFound].
 //

@@ -964,6 +964,8 @@ func getSchema(
 			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
 			err = e
 			results = []client.SchemaDescription{result}
+		default:
+			results, err = node.GetAllSchema(s.ctx)
 		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)

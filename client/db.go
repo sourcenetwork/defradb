@@ -167,6 +167,10 @@ type Store interface {
 	// Will return an error if it is not found.
 	GetSchemaByVersionID(context.Context, string) (SchemaDescription, error)
 
+	// GetAllSchema returns all schema versions that currently exist within
+	// this [Store].
+	GetAllSchema(context.Context) ([]SchemaDescription, error)
+
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
 

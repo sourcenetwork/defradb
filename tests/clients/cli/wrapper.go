@@ -296,6 +296,20 @@ func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (c
 	return schema, err
 }
 
+func (w *Wrapper) GetAllSchema(ctx context.Context) ([]client.SchemaDescription, error) {
+	args := []string{"client", "schema", "describe"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var schema []client.SchemaDescription
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return nil, err
+	}
+	return schema, err
+}
+
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 

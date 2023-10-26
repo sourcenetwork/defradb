@@ -169,7 +169,12 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 		}
 		responseJSON(rw, http.StatusOK, schema)
 	default:
-		panic("todo")
+		schema, err := store.GetAllSchema(req.Context())
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		responseJSON(rw, http.StatusOK, schema)
 	}
 }
 

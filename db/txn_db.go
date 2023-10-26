@@ -197,6 +197,24 @@ func (db *explicitTxnDB) GetSchemaByVersionID(ctx context.Context, versionID str
 	return db.getSchemaByVersionID(ctx, db.txn, versionID)
 }
 
+// GetAllSchema returns all schema versions that currently exist within
+// this [Store].
+func (db *implicitTxnDB) GetAllSchema(ctx context.Context) ([]client.SchemaDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getAllSchema(ctx, txn)
+}
+
+// GetAllSchema returns all schema versions that currently exist within
+// this [Store].
+func (db *explicitTxnDB) GetAllSchema(ctx context.Context) ([]client.SchemaDescription, error) {
+	return db.getAllSchema(ctx, db.txn)
+}
+
 // GetAllIndexes gets all the indexes in the database.
 func (db *implicitTxnDB) GetAllIndexes(
 	ctx context.Context,

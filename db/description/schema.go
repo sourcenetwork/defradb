@@ -161,6 +161,47 @@ func GetSchemas(
 	return descriptions, nil
 }
 
+// GetSchemas returns all schema versions in the system.
+func GetAllSchemas(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.SchemaDescription, error) {
+	prefix := core.NewSchemaVersionKey("")
+	q, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix: prefix.ToString(),
+	})
+	if err != nil {
+		return nil, NewErrFailedToCreateSchemaQuery(err)
+	}
+
+	schema := make([]client.SchemaDescription, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			if err := q.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
+			return nil, err
+		}
+
+		var desc client.SchemaDescription
+		err = json.Unmarshal(res.Value, &desc)
+		if err != nil {
+			if err := q.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
+			return nil, err
+		}
+
+		schema = append(schema, desc)
+	}
+
+	if err := q.Close(); err != nil {
+		return nil, NewErrFailedToCloseSchemaQuery(err)
+	}
+
+	return schema, nil
+}
+
 func GetSchemaVersionIDs(
 	ctx context.Context,
 	txn datastore.Txn,
