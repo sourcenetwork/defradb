@@ -12,33 +12,55 @@ package gen
 
 import (
 	"math"
-	"math/rand"
 )
 
-func (g *randomDocGenerator) calculateDocsDemand(order []tStr, primaryGraph, secondaryGraph map[string][]string) {
+type docsGenInitializer struct {
+	types                        map[tStr]typeDefinition
+	config                       configsMap
+	primaryGraph, secondaryGraph map[string][]string
+	TypesOrder                   []string
+	DocsDemand                   map[tStr]int
+	UsageCounter                 map[tStr]map[tStr]map[fStr]relationUsage
+}
+
+func newDocsDemandCalculator(types map[tStr]typeDefinition, config configsMap) *docsGenInitializer {
+	return &docsGenInitializer{
+		types:        types,
+		config:       config,
+		DocsDemand:   make(map[tStr]int),
+		UsageCounter: make(map[tStr]map[tStr]map[fStr]relationUsage),
+	}
+}
+
+func (g *docsGenInitializer) Init(colName string, count int) {
+	g.primaryGraph, g.secondaryGraph = getRelationGraphs(g.types)
+	g.TypesOrder = getTopologicalOrder(g.primaryGraph, g.types)
+
 	getFirstTypeWithDemand := func() (string, int) {
-		for _, typeName := range order {
-			if demand, ok := g.docsDemand[typeName]; ok {
+		for _, typeName := range g.TypesOrder {
+			if demand, ok := g.DocsDemand[typeName]; ok {
 				return typeName, demand
 			}
 		}
 		panic("No types with demand")
 	}
 
+	g.DocsDemand[colName] = count
+
 	typeName, demand := getFirstTypeWithDemand()
-	demand = g.getPrimaryDemand(typeName, demand, primaryGraph)
-	g.docsDemand[typeName] = demand
+	demand = g.getPrimaryDemand(typeName, demand, g.primaryGraph)
+	g.DocsDemand[typeName] = demand
 	typeName, _ = getFirstTypeWithDemand()
-	g.calculateDemandForSecondaryTypes(typeName, primaryGraph)
-	for _, typeName := range order {
-		if _, ok := g.docsDemand[typeName]; !ok {
-			g.docsDemand[typeName] = defaultNumDocs
-			g.calculateDemandForSecondaryTypes(typeName, primaryGraph)
+	g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
+	for _, typeName := range g.TypesOrder {
+		if _, ok := g.DocsDemand[typeName]; !ok {
+			g.DocsDemand[typeName] = defaultNumDocs
+			g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
 		}
 	}
 }
 
-func (g *randomDocGenerator) getDemandForPrimaryType(
+func (g *docsGenInitializer) getDemandForPrimaryType(
 	primaryType, secondaryType string,
 	currentDemand int,
 	primaryGraph map[string][]string,
@@ -48,7 +70,7 @@ func (g *randomDocGenerator) getDemandForPrimaryType(
 		if field.isRelation && field.typeStr == secondaryType {
 			min, max := 1, 1
 			if field.isArray {
-				min, max = getMinMaxOrDefault(g.getFieldConfig(primaryType, field.name),
+				min, max = getMinMaxOrDefault(g.config.ForField(primaryType, field.name),
 					defaultNumChildrenPerDoc, defaultNumChildrenPerDoc)
 				average := float64(min) + float64(max-min)/2
 				currentDemand = int(math.Ceil(float64(currentDemand) / average))
@@ -56,19 +78,19 @@ func (g *randomDocGenerator) getDemandForPrimaryType(
 					currentDemand = 1
 				}
 				currentDemand = g.getPrimaryDemand(primaryType, currentDemand, primaryGraph)
-				tmp := g.docsDemand[primaryType]
+				tmp := g.DocsDemand[primaryType]
 				if tmp > currentDemand {
 					currentDemand = tmp
 				}
 			}
-			g.docsDemand[primaryType] = currentDemand
+			g.DocsDemand[primaryType] = currentDemand
 			g.initRelationUsages(field.typeStr, primaryType, min, max)
 		}
 	}
 	return currentDemand
 }
 
-func (g *randomDocGenerator) getPrimaryDemand(
+func (g *docsGenInitializer) getPrimaryDemand(
 	secondaryType string,
 	currentDemand int,
 	primaryGraph map[string][]string,
@@ -78,40 +100,55 @@ func (g *randomDocGenerator) getPrimaryDemand(
 	}
 	return currentDemand
 }
-func getRandomString(n int) string {
-	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-	return string(b)
-}
 
-func (g *randomDocGenerator) calculateDemandForSecondaryTypes(typeName string, primaryGraph map[string][]string) {
+func (g *docsGenInitializer) calculateDemandForSecondaryTypes(typeName string, primaryGraph map[string][]string) {
 	typeDef := g.types[typeName]
 	for _, field := range typeDef.fields {
 		if field.isRelation && !field.isPrimary {
-			primaryDocDemand := g.docsDemand[typeName]
+			primaryDocDemand := g.DocsDemand[typeName]
 			secondaryDocDemand := primaryDocDemand
 			min, max := 1, 1
 
 			if field.isArray {
-				min, max = getMinMaxOrDefault(g.getFieldConfig(typeName, field.name), 2, 2)
+				min, max = getMinMaxOrDefault(g.config.ForField(typeName, field.name), 2, 2)
 				average := float64(min) + float64(max-min)/2
 				secondaryDocDemand = int(float64(primaryDocDemand) * average)
 			}
 
-			g.docsDemand[field.typeStr] = secondaryDocDemand
+			g.DocsDemand[field.typeStr] = secondaryDocDemand
 			g.initRelationUsages(field.typeStr, typeName, min, max)
 			g.calculateDemandForSecondaryTypes(field.typeStr, primaryGraph)
 
 			for _, primaryTypeName := range primaryGraph[field.typeStr] {
-				if _, ok := g.docsDemand[primaryTypeName]; !ok {
-					g.docsDemand[primaryTypeName] = g.getDemandForPrimaryType(primaryTypeName, field.typeStr,
+				if _, ok := g.DocsDemand[primaryTypeName]; !ok {
+					g.DocsDemand[primaryTypeName] = g.getDemandForPrimaryType(primaryTypeName, field.typeStr,
 						secondaryDocDemand, primaryGraph)
 				}
 			}
 		}
+	}
+}
+
+func (g *docsGenInitializer) initRelationUsages(secondaryType, primaryType string, min, max int) {
+	secondaryTypeDef := g.types[secondaryType]
+	for _, secondaryTypeField := range secondaryTypeDef.fields {
+		if secondaryTypeField.typeStr == primaryType {
+			g.addRelationUsage(secondaryType, secondaryTypeField, min, max)
+		}
+	}
+}
+
+func (g *docsGenInitializer) addRelationUsage(secondaryType string, field fieldDefinition, min, max int) {
+	primaryType := field.typeStr
+	if _, ok := g.UsageCounter[primaryType]; !ok {
+		g.UsageCounter[primaryType] = make(map[tStr]map[fStr]relationUsage)
+	}
+	if _, ok := g.UsageCounter[primaryType][secondaryType]; !ok {
+		g.UsageCounter[primaryType][secondaryType] = make(map[fStr]relationUsage)
+	}
+	if _, ok := g.UsageCounter[primaryType][secondaryType][field.name]; !ok {
+		g.UsageCounter[primaryType][secondaryType][field.name] = newRelationUsage(
+			min, max, g.DocsDemand[primaryType])
 	}
 }
 
