@@ -23,19 +23,19 @@ func MakeSchemaDescribeCommand() *cobra.Command {
 
 	var cmd = &cobra.Command{
 		Use:   "describe",
-		Short: "View schema description.",
+		Short: "View schema descriptions.",
 		Long: `Introspect schema types.
 
-Example: view all schema
+Example: view all schemas
   defradb client schema describe
 		
-Example: view schema by name
+Example: view schemas by name
   defradb client schema describe --name User
 		
-Example: view schema by root
+Example: view schemas by root
   defradb client schema describe --root bae123
 		
-Example: view schema by version id
+Example: view a single schema by version id
   defradb client schema describe --version bae123
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -51,21 +51,21 @@ Example: view schema by version id
 				return writeJSON(cmd, schema)
 
 			case root != "":
-				s, err := store.GetSchemaByRoot(cmd.Context(), root)
+				s, err := store.GetSchemasByRoot(cmd.Context(), root)
 				if err != nil {
 					return err
 				}
 				schemas = s
 
 			case name != "":
-				s, err := store.GetSchemaByName(cmd.Context(), name)
+				s, err := store.GetSchemasByName(cmd.Context(), name)
 				if err != nil {
 					return err
 				}
 				schemas = s
 
 			default:
-				s, err := store.GetAllSchema(cmd.Context())
+				s, err := store.GetAllSchemas(cmd.Context())
 				if err != nil {
 					return err
 				}

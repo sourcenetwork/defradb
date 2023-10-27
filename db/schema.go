@@ -289,12 +289,12 @@ func substituteSchemaPatch(
 	return patch, nil
 }
 
-func (db *db) getSchemaByName(
+func (db *db) getSchemasByName(
 	ctx context.Context,
 	txn datastore.Txn,
 	name string,
 ) ([]client.SchemaDescription, error) {
-	return description.GetSchemaByName(ctx, txn, name)
+	return description.GetSchemasByName(ctx, txn, name)
 }
 
 func (db *db) getSchemaByVersionID(
@@ -305,15 +305,15 @@ func (db *db) getSchemaByVersionID(
 	return description.GetSchemaVersion(ctx, txn, versionID)
 }
 
-func (db *db) getSchemaByRoot(
+func (db *db) getSchemasByRoot(
 	ctx context.Context,
 	txn datastore.Txn,
 	root string,
 ) ([]client.SchemaDescription, error) {
-	return description.GetSchemaByRoot(ctx, txn, root)
+	return description.GetSchemasByRoot(ctx, txn, root)
 }
 
-func (db *db) getAllSchema(
+func (db *db) getAllSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {

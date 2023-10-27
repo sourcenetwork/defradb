@@ -242,7 +242,7 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 	return collections, nil
 }
 
-func (c *Client) GetSchemaByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+func (c *Client) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
 	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
 
@@ -272,7 +272,7 @@ func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (cl
 	return schema, nil
 }
 
-func (c *Client) GetSchemaByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+func (c *Client) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
 	methodURL.RawQuery = url.Values{"root": []string{root}}.Encode()
 
@@ -287,7 +287,7 @@ func (c *Client) GetSchemaByRoot(ctx context.Context, root string) ([]client.Sch
 	return schema, nil
 }
 
-func (c *Client) GetAllSchema(ctx context.Context) ([]client.SchemaDescription, error) {
+func (c *Client) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

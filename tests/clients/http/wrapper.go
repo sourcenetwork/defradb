@@ -127,20 +127,20 @@ func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, e
 	return w.client.GetAllCollections(ctx)
 }
 
-func (w *Wrapper) GetSchemaByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	return w.client.GetSchemaByName(ctx, name)
+func (w *Wrapper) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+	return w.client.GetSchemasByName(ctx, name)
 }
 
 func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
 	return w.client.GetSchemaByVersionID(ctx, versionID)
 }
 
-func (w *Wrapper) GetSchemaByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
-	return w.client.GetSchemaByRoot(ctx, root)
+func (w *Wrapper) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+	return w.client.GetSchemasByRoot(ctx, root)
 }
 
-func (w *Wrapper) GetAllSchema(ctx context.Context) ([]client.SchemaDescription, error) {
-	return w.client.GetAllSchema(ctx)
+func (w *Wrapper) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
+	return w.client.GetAllSchemas(ctx)
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {

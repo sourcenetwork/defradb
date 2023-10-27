@@ -281,7 +281,7 @@ func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, e
 	return cols, err
 }
 
-func (w *Wrapper) GetSchemaByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+func (w *Wrapper) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
 	args := []string{"client", "schema", "describe"}
 	args = append(args, "--name", name)
 
@@ -311,7 +311,7 @@ func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (c
 	return schema, err
 }
 
-func (w *Wrapper) GetSchemaByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+func (w *Wrapper) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
 	args := []string{"client", "schema", "describe"}
 	args = append(args, "--root", root)
 
@@ -326,7 +326,7 @@ func (w *Wrapper) GetSchemaByRoot(ctx context.Context, root string) ([]client.Sc
 	return schema, err
 }
 
-func (w *Wrapper) GetAllSchema(ctx context.Context) ([]client.SchemaDescription, error) {
+func (w *Wrapper) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
 	args := []string{"client", "schema", "describe"}
 
 	data, err := w.cmd.execute(ctx, args)

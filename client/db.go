@@ -161,8 +161,8 @@ type Store interface {
 	// this [Store].
 	GetAllCollections(context.Context) ([]Collection, error)
 
-	// GetSchemaByName returns the all schema versions with the given name.
-	GetSchemaByName(context.Context, string) ([]SchemaDescription, error)
+	// GetSchemasByName returns the all schema versions with the given name.
+	GetSchemasByName(context.Context, string) ([]SchemaDescription, error)
 
 	// GetSchemaByVersionID returns the schema description for the schema version of the
 	// ID provided.
@@ -170,12 +170,12 @@ type Store interface {
 	// Will return an error if it is not found.
 	GetSchemaByVersionID(context.Context, string) (SchemaDescription, error)
 
-	// GetSchemaByRoot returns the all schema versions for the given root.
-	GetSchemaByRoot(context.Context, string) ([]SchemaDescription, error)
+	// GetSchemasByRoot returns the all schema versions for the given root.
+	GetSchemasByRoot(context.Context, string) ([]SchemaDescription, error)
 
-	// GetAllSchema returns all schema versions that currently exist within
+	// GetAllSchemas returns all schema versions that currently exist within
 	// this [Store].
-	GetAllSchema(context.Context) ([]SchemaDescription, error)
+	GetAllSchemas(context.Context) ([]SchemaDescription, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)

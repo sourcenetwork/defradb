@@ -965,11 +965,11 @@ func getSchema(
 			err = e
 			results = []client.SchemaDescription{result}
 		case action.Root.HasValue():
-			results, err = node.GetSchemaByRoot(s.ctx, action.Root.Value())
+			results, err = node.GetSchemasByRoot(s.ctx, action.Root.Value())
 		case action.Name.HasValue():
-			results, err = node.GetSchemaByName(s.ctx, action.Name.Value())
+			results, err = node.GetSchemasByName(s.ctx, action.Name.Value())
 		default:
-			results, err = node.GetAllSchema(s.ctx)
+			results, err = node.GetAllSchemas(s.ctx)
 		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)

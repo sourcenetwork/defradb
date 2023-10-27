@@ -105,8 +105,8 @@ func GetSchemaVersion(
 	return desc, nil
 }
 
-// GetSchemaByName returns all the schema with the given name.
-func GetSchemaByName(
+// GetSchemasByName returns all the schema with the given name.
+func GetSchemasByName(
 	ctx context.Context,
 	txn datastore.Txn,
 	name string,
@@ -116,18 +116,18 @@ func GetSchemaByName(
 		return nil, err
 	}
 
-	nameSchema := []client.SchemaDescription{}
+	nameSchemas := []client.SchemaDescription{}
 	for _, schema := range allSchemas {
 		if schema.Name == name {
-			nameSchema = append(nameSchema, schema)
+			nameSchemas = append(nameSchemas, schema)
 		}
 	}
 
-	return nameSchema, nil
+	return nameSchemas, nil
 }
 
-// GetSchemaByRoot returns all the schema with the given root.
-func GetSchemaByRoot(
+// GetSchemasByRoot returns all the schema with the given root.
+func GetSchemasByRoot(
 	ctx context.Context,
 	txn datastore.Txn,
 	root string,
@@ -137,14 +137,14 @@ func GetSchemaByRoot(
 		return nil, err
 	}
 
-	rootSchema := []client.SchemaDescription{}
+	rootSchemas := []client.SchemaDescription{}
 	for _, schema := range allSchemas {
 		if schema.Root == root {
-			rootSchema = append(rootSchema, schema)
+			rootSchemas = append(rootSchemas, schema)
 		}
 	}
 
-	return rootSchema, nil
+	return rootSchemas, nil
 }
 
 // GetSchemas returns the schema of all the default schema versions in the system.
@@ -216,7 +216,7 @@ func GetAllSchemas(
 		return nil, NewErrFailedToCreateSchemaQuery(err)
 	}
 
-	schema := make([]client.SchemaDescription, 0)
+	schemas := make([]client.SchemaDescription, 0)
 	for res := range q.Next() {
 		if res.Error != nil {
 			if err := q.Close(); err != nil {
@@ -234,14 +234,14 @@ func GetAllSchemas(
 			return nil, err
 		}
 
-		schema = append(schema, desc)
+		schemas = append(schemas, desc)
 	}
 
 	if err := q.Close(); err != nil {
 		return nil, NewErrFailedToCloseSchemaQuery(err)
 	}
 
-	return schema, nil
+	return schemas, nil
 }
 
 func GetSchemaVersionIDs(
