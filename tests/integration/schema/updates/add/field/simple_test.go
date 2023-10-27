@@ -15,10 +15,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
+	schemaVersion1ID := "bafkreih27vuxrj4j2tmxnibfm77wswa36xji74hwhq7deipj5rvh3qyabq"
+	schemaVersion2ID := "bafkreid5bpw7sipm63l5gxxjrs34yrq2ur5xrzyseez5rnj3pvnvkaya6m"
+
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field",
 		Actions: []any{
@@ -44,6 +48,35 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 					}
 				}`,
 				Results: []map[string]any{},
+			},
+			testUtils.GetSchema{
+				VersionID: immutable.Some(schemaVersion2ID),
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name:      "Users",
+						VersionID: schemaVersion2ID,
+						Root:      schemaVersion1ID,
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "name",
+								ID:   1,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "email",
+								ID:   2,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -77,6 +110,64 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_Errors(t *testing.T) {
 					}
 				}`,
 				ExpectedError: `Cannot query field "email" on type "Users".`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testing.T) {
+	schemaVersion1ID := "bafkreih27vuxrj4j2tmxnibfm77wswa36xji74hwhq7deipj5rvh3qyabq"
+	schemaVersion2ID := "bafkreid5bpw7sipm63l5gxxjrs34yrq2ur5xrzyseez5rnj3pvnvkaya6m"
+
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+					]
+				`,
+				SetAsDefaultVersion: immutable.Some(false),
+			},
+			testUtils.GetSchema{
+				VersionID: immutable.Some(schemaVersion2ID),
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name: "Users",
+						// Even though schema version 2 is not active, it should still be possible to
+						// fetch it.
+						VersionID: schemaVersion2ID,
+						Root:      schemaVersion1ID,
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "name",
+								ID:   1,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "email",
+								ID:   2,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+				},
 			},
 		},
 	}

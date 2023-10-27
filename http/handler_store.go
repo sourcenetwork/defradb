@@ -153,6 +153,41 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 	}
 }
 
+func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
+
+	switch {
+	case req.URL.Query().Has("version_id"):
+		schema, err := store.GetSchemaByVersionID(req.Context(), req.URL.Query().Get("version_id"))
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		responseJSON(rw, http.StatusOK, schema)
+	case req.URL.Query().Has("root"):
+		schema, err := store.GetSchemasByRoot(req.Context(), req.URL.Query().Get("root"))
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		responseJSON(rw, http.StatusOK, schema)
+	case req.URL.Query().Has("name"):
+		schema, err := store.GetSchemasByName(req.Context(), req.URL.Query().Get("name"))
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		responseJSON(rw, http.StatusOK, schema)
+	default:
+		schema, err := store.GetAllSchemas(req.Context())
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		responseJSON(rw, http.StatusOK, schema)
+	}
+}
+
 func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
@@ -291,6 +326,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/collection",
 	}
+	schemaSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/schema",
+	}
 	graphQLRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/graphql_request",
 	}
@@ -411,6 +449,39 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionDescribe.AddResponse(200, collectionsResponse)
 	collectionDescribe.Responses["400"] = errorResponse
 
+	schemaNameQueryParam := openapi3.NewQueryParameter("name").
+		WithDescription("Schema name").
+		WithSchema(openapi3.NewStringSchema())
+	schemaSchemaRootQueryParam := openapi3.NewQueryParameter("root").
+		WithDescription("Schema root").
+		WithSchema(openapi3.NewStringSchema())
+	schemaVersionIDQueryParam := openapi3.NewQueryParameter("version_id").
+		WithDescription("Schema version id").
+		WithSchema(openapi3.NewStringSchema())
+
+	schemasSchema := openapi3.NewArraySchema()
+	schemasSchema.Items = schemaSchema
+
+	schemaResponseSchema := openapi3.NewOneOfSchema()
+	schemaResponseSchema.OneOf = openapi3.SchemaRefs{
+		schemaSchema,
+		openapi3.NewSchemaRef("", schemasSchema),
+	}
+
+	schemaResponse := openapi3.NewResponse().
+		WithDescription("Schema(s) with matching name, schema id, or version id.").
+		WithJSONSchema(schemaResponseSchema)
+
+	schemaDescribe := openapi3.NewOperation()
+	schemaDescribe.OperationID = "schema_describe"
+	schemaDescribe.Description = "Introspect schema(s) by name, schema root, or version id."
+	schemaDescribe.Tags = []string{"schema"}
+	schemaDescribe.AddParameter(schemaNameQueryParam)
+	schemaDescribe.AddParameter(schemaSchemaRootQueryParam)
+	schemaDescribe.AddParameter(schemaVersionIDQueryParam)
+	schemaDescribe.AddResponse(200, schemaResponse)
+	schemaDescribe.Responses["400"] = errorResponse
+
 	graphQLRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
 
@@ -455,5 +526,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
 	router.AddRoute("/schema", http.MethodPatch, patchSchema, h.PatchSchema)
+	router.AddRoute("/schema", http.MethodGet, schemaDescribe, h.GetSchema)
 	router.AddRoute("/schema/default", http.MethodPost, setDefaultSchemaVersion, h.SetDefaultSchemaVersion)
 }

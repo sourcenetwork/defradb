@@ -289,6 +289,37 @@ func substituteSchemaPatch(
 	return patch, nil
 }
 
+func (db *db) getSchemasByName(
+	ctx context.Context,
+	txn datastore.Txn,
+	name string,
+) ([]client.SchemaDescription, error) {
+	return description.GetSchemasByName(ctx, txn, name)
+}
+
+func (db *db) getSchemaByVersionID(
+	ctx context.Context,
+	txn datastore.Txn,
+	versionID string,
+) (client.SchemaDescription, error) {
+	return description.GetSchemaVersion(ctx, txn, versionID)
+}
+
+func (db *db) getSchemasByRoot(
+	ctx context.Context,
+	txn datastore.Txn,
+	root string,
+) ([]client.SchemaDescription, error) {
+	return description.GetSchemasByRoot(ctx, txn, root)
+}
+
+func (db *db) getAllSchemas(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.SchemaDescription, error) {
+	return description.GetAllSchemas(ctx, txn)
+}
+
 // getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string
 // Field Kind value. It will return the value if one is found, else returns an [ErrFieldKindNotFound].
 //

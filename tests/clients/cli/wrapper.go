@@ -281,6 +281,65 @@ func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, e
 	return cols, err
 }
 
+func (w *Wrapper) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+	args := []string{"client", "schema", "describe"}
+	args = append(args, "--name", name)
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var schema []client.SchemaDescription
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return nil, err
+	}
+	return schema, err
+}
+
+func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	args := []string{"client", "schema", "describe"}
+	args = append(args, "--version", versionID)
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+	var schema client.SchemaDescription
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return client.SchemaDescription{}, err
+	}
+	return schema, err
+}
+
+func (w *Wrapper) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+	args := []string{"client", "schema", "describe"}
+	args = append(args, "--root", root)
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var schema []client.SchemaDescription
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return nil, err
+	}
+	return schema, err
+}
+
+func (w *Wrapper) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
+	args := []string{"client", "schema", "describe"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var schema []client.SchemaDescription
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return nil, err
+	}
+	return schema, err
+}
+
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 

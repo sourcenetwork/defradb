@@ -59,6 +59,7 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 		MakeSchemaAddCommand(),
 		MakeSchemaPatchCommand(),
 		MakeSchemaSetDefaultCommand(),
+		MakeSchemaDescribeCommand(),
 		schema_migrate,
 	)
 

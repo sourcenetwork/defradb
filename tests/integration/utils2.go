@@ -254,6 +254,9 @@ func performAction(
 	case SchemaPatch:
 		patchSchema(s, action)
 
+	case GetSchema:
+		getSchema(s, action)
+
 	case SetDefaultSchemaVersion:
 		setDefaultSchemaVersion(s, action)
 
@@ -947,6 +950,35 @@ func patchSchema(
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
 	refreshIndexes(s)
+}
+
+func getSchema(
+	s *state,
+	action GetSchema,
+) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		var results []client.SchemaDescription
+		var err error
+		switch {
+		case action.VersionID.HasValue():
+			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
+			err = e
+			results = []client.SchemaDescription{result}
+		case action.Root.HasValue():
+			results, err = node.GetSchemasByRoot(s.ctx, action.Root.Value())
+		case action.Name.HasValue():
+			results, err = node.GetSchemasByName(s.ctx, action.Name.Value())
+		default:
+			results, err = node.GetAllSchemas(s.ctx)
+		}
+
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if !expectedErrorRaised {
+			require.Equal(s.t, action.ExpectedResults, results)
+		}
+	}
 }
 
 func setDefaultSchemaVersion(

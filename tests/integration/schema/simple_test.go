@@ -13,10 +13,15 @@ package schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
+	schemaVersionID := "bafkreickgf3nbjaairxkkqawmrv7fafaafyccl4qygqeveagisdn42eohu"
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -35,6 +40,22 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
+					},
+				},
+			},
+			testUtils.GetSchema{
+				VersionID: immutable.Some(schemaVersionID),
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name:      "Users",
+						VersionID: schemaVersionID,
+						Root:      schemaVersionID,
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+							},
+						},
 					},
 				},
 			},
