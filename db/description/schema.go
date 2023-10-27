@@ -105,6 +105,48 @@ func GetSchemaVersion(
 	return desc, nil
 }
 
+// GetSchemasByName returns all the schema with the given name.
+func GetSchemasByName(
+	ctx context.Context,
+	txn datastore.Txn,
+	name string,
+) ([]client.SchemaDescription, error) {
+	allSchemas, err := GetAllSchemas(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	nameSchemas := []client.SchemaDescription{}
+	for _, schema := range allSchemas {
+		if schema.Name == name {
+			nameSchemas = append(nameSchemas, schema)
+		}
+	}
+
+	return nameSchemas, nil
+}
+
+// GetSchemasByRoot returns all the schema with the given root.
+func GetSchemasByRoot(
+	ctx context.Context,
+	txn datastore.Txn,
+	root string,
+) ([]client.SchemaDescription, error) {
+	allSchemas, err := GetAllSchemas(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	rootSchemas := []client.SchemaDescription{}
+	for _, schema := range allSchemas {
+		if schema.Root == root {
+			rootSchemas = append(rootSchemas, schema)
+		}
+	}
+
+	return rootSchemas, nil
+}
+
 // GetSchemas returns the schema of all the default schema versions in the system.
 func GetSchemas(
 	ctx context.Context,
@@ -159,6 +201,47 @@ func GetSchemas(
 	}
 
 	return descriptions, nil
+}
+
+// GetSchemas returns all schema versions in the system.
+func GetAllSchemas(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.SchemaDescription, error) {
+	prefix := core.NewSchemaVersionKey("")
+	q, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix: prefix.ToString(),
+	})
+	if err != nil {
+		return nil, NewErrFailedToCreateSchemaQuery(err)
+	}
+
+	schemas := make([]client.SchemaDescription, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			if err := q.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
+			return nil, err
+		}
+
+		var desc client.SchemaDescription
+		err = json.Unmarshal(res.Value, &desc)
+		if err != nil {
+			if err := q.Close(); err != nil {
+				return nil, NewErrFailedToCloseSchemaQuery(err)
+			}
+			return nil, err
+		}
+
+		schemas = append(schemas, desc)
+	}
+
+	if err := q.Close(); err != nil {
+		return nil, NewErrFailedToCloseSchemaQuery(err)
+	}
+
+	return schemas, nil
 }
 
 func GetSchemaVersionIDs(

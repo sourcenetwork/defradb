@@ -91,6 +91,31 @@ type SchemaPatch struct {
 	ExpectedError       string
 }
 
+// GetSchema is an action that fetches schema using the provided options.
+type GetSchema struct {
+	// NodeID may hold the ID (index) of a node to apply this patch to.
+	//
+	// If a value is not provided the patch will be applied to all nodes.
+	NodeID immutable.Option[int]
+
+	// The VersionID of the schema version to fetch.
+	//
+	// This option will be prioritized over all other options.
+	VersionID immutable.Option[string]
+
+	// The Root of the schema versions to fetch.
+	//
+	// This option will be prioritized over Name.
+	Root immutable.Option[string]
+
+	// The Name of the schema versions to fetch.
+	Name immutable.Option[string]
+
+	ExpectedResults []client.SchemaDescription
+
+	ExpectedError string
+}
+
 // SetDefaultSchemaVersion is an action that will set the default schema version to the
 // given value.
 type SetDefaultSchemaVersion struct {

@@ -175,6 +175,78 @@ func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collec
 	return db.getAllCollections(ctx, db.txn)
 }
 
+// GetSchemasByName returns the all schema versions with the given name.
+func (db *implicitTxnDB) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getSchemasByName(ctx, txn, name)
+}
+
+// GetSchemasByName returns the all schema versions with the given name.
+func (db *explicitTxnDB) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+	return db.getSchemasByName(ctx, db.txn, name)
+}
+
+// GetSchemaByVersionID returns the schema description for the schema version of the
+// ID provided.
+//
+// Will return an error if it is not found.
+func (db *implicitTxnDB) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getSchemaByVersionID(ctx, txn, versionID)
+}
+
+// GetSchemaByVersionID returns the schema description for the schema version of the
+// ID provided.
+//
+// Will return an error if it is not found.
+func (db *explicitTxnDB) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	return db.getSchemaByVersionID(ctx, db.txn, versionID)
+}
+
+// GetSchemasByRoot returns the all schema versions for the given root.
+func (db *implicitTxnDB) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getSchemasByRoot(ctx, txn, root)
+}
+
+// GetSchemasByRoot returns the all schema versions for the given root.
+func (db *explicitTxnDB) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+	return db.getSchemasByRoot(ctx, db.txn, root)
+}
+
+// GetAllSchemas returns all schema versions that currently exist within
+// this [Store].
+func (db *implicitTxnDB) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.getAllSchemas(ctx, txn)
+}
+
+// GetAllSchemas returns all schema versions that currently exist within
+// this [Store].
+func (db *explicitTxnDB) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
+	return db.getAllSchemas(ctx, db.txn)
+}
+
 // GetAllIndexes gets all the indexes in the database.
 func (db *implicitTxnDB) GetAllIndexes(
 	ctx context.Context,
