@@ -173,7 +173,7 @@ func TestSchemaParser_ParseGenConfig(t *testing.T) {
 	tests := []struct {
 		name   string
 		schema string
-		want   map[string]map[string]genConfig
+		want   configsMap
 	}{
 		{
 			name: "string values",
@@ -181,7 +181,7 @@ func TestSchemaParser_ParseGenConfig(t *testing.T) {
 				type User {
 					name: String # pattern: "some pattern"
 				}`,
-			want: map[string]map[string]genConfig{
+			want: configsMap{
 				"User": {
 					"name": {
 						props: map[string]any{
@@ -197,7 +197,7 @@ func TestSchemaParser_ParseGenConfig(t *testing.T) {
 				type User {
 					verified: Boolean # default: true
 				}`,
-			want: map[string]map[string]genConfig{
+			want: configsMap{
 				"User": {
 					"verified": {
 						props: map[string]any{
@@ -213,7 +213,7 @@ func TestSchemaParser_ParseGenConfig(t *testing.T) {
 				type User {
 					age: Int # min: 4, max: 10
 				}`,
-			want: map[string]map[string]genConfig{
+			want: configsMap{
 				"User": {
 					"age": {
 						props: map[string]any{
@@ -230,7 +230,7 @@ func TestSchemaParser_ParseGenConfig(t *testing.T) {
 				type User {
 					rating: Float # min: 1.1, max: 5.5
 				}`,
-			want: map[string]map[string]genConfig{
+			want: configsMap{
 				"User": {
 					"rating": {
 						props: map[string]any{
@@ -247,7 +247,7 @@ func TestSchemaParser_ParseGenConfig(t *testing.T) {
 				type User {
 					name: String # unique, indexed
 				}`,
-			want: map[string]map[string]genConfig{
+			want: configsMap{
 				"User": {
 					"name": {
 						labels: []string{"unique", "indexed"},

@@ -23,7 +23,7 @@ type docsGenInitializer struct {
 	UsageCounter                 map[tStr]map[tStr]map[fStr]relationUsage
 }
 
-func newDocsDemandCalculator(types map[tStr]typeDefinition, config configsMap) *docsGenInitializer {
+func newDocGenInitializer(types map[tStr]typeDefinition, config configsMap) *docsGenInitializer {
 	return &docsGenInitializer{
 		types:        types,
 		config:       config,
@@ -32,7 +32,7 @@ func newDocsDemandCalculator(types map[tStr]typeDefinition, config configsMap) *
 	}
 }
 
-func (g *docsGenInitializer) Init(colName string, count int) {
+func (g *docsGenInitializer) Init(colName string, count int) error {
 	g.primaryGraph, g.secondaryGraph = getRelationGraphs(g.types)
 	g.TypesOrder = getTopologicalOrder(g.primaryGraph, g.types)
 
@@ -47,61 +47,82 @@ func (g *docsGenInitializer) Init(colName string, count int) {
 
 	g.DocsDemand[colName] = count
 
-	typeName, demand := getFirstTypeWithDemand()
-	demand = g.getPrimaryDemand(typeName, demand, g.primaryGraph)
-	g.DocsDemand[typeName] = demand
-	typeName, _ = getFirstTypeWithDemand()
-	g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
+	demand, err := g.getPrimaryDemand(colName, count, g.primaryGraph)
+	if err != nil {
+		return err
+	}
+	g.DocsDemand[colName] = demand
+
+	typeName, _ := getFirstTypeWithDemand()
+	err = g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
+	if err != nil {
+		return err
+	}
+
 	for _, typeName := range g.TypesOrder {
 		if _, ok := g.DocsDemand[typeName]; !ok {
 			g.DocsDemand[typeName] = defaultNumDocs
-			g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
+			err = g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (g *docsGenInitializer) getDemandForPrimaryType(
 	primaryType, secondaryType string,
-	currentDemand int,
+	secondaryDemand int,
 	primaryGraph map[string][]string,
-) int {
+) (int, error) {
 	primaryTypeDef := g.types[primaryType]
 	for _, field := range primaryTypeDef.fields {
 		if field.isRelation && field.typeStr == secondaryType {
 			min, max := 1, 1
+			primaryDemand := secondaryDemand
 			if field.isArray {
 				min, max = getMinMaxOrDefault(g.config.ForField(primaryType, field.name),
 					defaultNumChildrenPerDoc, defaultNumChildrenPerDoc)
-				average := float64(min) + float64(max-min)/2
-				currentDemand = int(math.Ceil(float64(currentDemand) / average))
-				if currentDemand == 0 {
-					currentDemand = 1
+				minRatio := float64(secondaryDemand) / float64(min)
+				maxRatio := float64(secondaryDemand) / float64(max)
+				primaryDemand = int(math.Ceil((minRatio + maxRatio) / 2))
+				if maxRatio < 1 {
+					return 0, NewErrInvalidConfiguration()
 				}
-				currentDemand = g.getPrimaryDemand(primaryType, currentDemand, primaryGraph)
+				var err error
+				primaryDemand, err = g.getPrimaryDemand(primaryType, primaryDemand, primaryGraph)
+				if err != nil {
+					return 0, err
+				}
 				tmp := g.DocsDemand[primaryType]
-				if tmp > currentDemand {
-					currentDemand = tmp
+				if tmp > primaryDemand {
+					primaryDemand = tmp
 				}
 			}
-			g.DocsDemand[primaryType] = currentDemand
+			g.DocsDemand[primaryType] = primaryDemand
 			g.initRelationUsages(field.typeStr, primaryType, min, max)
 		}
 	}
-	return currentDemand
+	return secondaryDemand, nil
 }
 
 func (g *docsGenInitializer) getPrimaryDemand(
 	secondaryType string,
-	currentDemand int,
+	secondaryDemand int,
 	primaryGraph map[string][]string,
-) int {
+) (int, error) {
 	for _, primaryTypeName := range primaryGraph[secondaryType] {
-		currentDemand = g.getDemandForPrimaryType(primaryTypeName, secondaryType, currentDemand, primaryGraph)
+		var err error
+		secondaryDemand, err = g.getDemandForPrimaryType(primaryTypeName, secondaryType, secondaryDemand, primaryGraph)
+		if err != nil {
+			return 0, err
+		}
 	}
-	return currentDemand
+	return secondaryDemand, nil
 }
 
-func (g *docsGenInitializer) calculateDemandForSecondaryTypes(typeName string, primaryGraph map[string][]string) {
+func (g *docsGenInitializer) calculateDemandForSecondaryTypes(typeName string, primaryGraph map[string][]string) error {
 	typeDef := g.types[typeName]
 	for _, field := range typeDef.fields {
 		if field.isRelation && !field.isPrimary {
@@ -117,16 +138,23 @@ func (g *docsGenInitializer) calculateDemandForSecondaryTypes(typeName string, p
 
 			g.DocsDemand[field.typeStr] = secondaryDocDemand
 			g.initRelationUsages(field.typeStr, typeName, min, max)
-			g.calculateDemandForSecondaryTypes(field.typeStr, primaryGraph)
+			err := g.calculateDemandForSecondaryTypes(field.typeStr, primaryGraph)
+			if err != nil {
+				return err
+			}
 
 			for _, primaryTypeName := range primaryGraph[field.typeStr] {
 				if _, ok := g.DocsDemand[primaryTypeName]; !ok {
-					g.DocsDemand[primaryTypeName] = g.getDemandForPrimaryType(primaryTypeName, field.typeStr,
-						secondaryDocDemand, primaryGraph)
+					primaryDemand, err := g.getDemandForPrimaryType(primaryTypeName, field.typeStr, secondaryDocDemand, primaryGraph)
+					if err != nil {
+						return err
+					}
+					g.DocsDemand[primaryTypeName] = primaryDemand
 				}
 			}
 		}
 	}
+	return nil
 }
 
 func (g *docsGenInitializer) initRelationUsages(secondaryType, primaryType string, min, max int) {
