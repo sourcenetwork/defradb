@@ -48,7 +48,7 @@ Example: view schema by version id
 				if err != nil {
 					return err
 				}
-				schemas = []client.SchemaDescription{schema}
+				return writeJSON(cmd, schema)
 
 			case root != "":
 				s, err := store.GetSchemaByRoot(cmd.Context(), root)
@@ -70,10 +70,6 @@ Example: view schema by version id
 					return err
 				}
 				schemas = s
-			}
-
-			if len(schemas) == 1 {
-				return writeJSON(cmd, schemas[0])
 			}
 
 			return writeJSON(cmd, schemas)
