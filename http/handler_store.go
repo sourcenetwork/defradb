@@ -157,8 +157,8 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
 	switch {
-	case req.URL.Query().Has("name"):
-		schema, err := store.GetSchemasByName(req.Context(), req.URL.Query().Get("name"))
+	case req.URL.Query().Has("version_id"):
+		schema, err := store.GetSchemaByVersionID(req.Context(), req.URL.Query().Get("version_id"))
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -171,8 +171,8 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		responseJSON(rw, http.StatusOK, schema)
-	case req.URL.Query().Has("version_id"):
-		schema, err := store.GetSchemaByVersionID(req.Context(), req.URL.Query().Get("version_id"))
+	case req.URL.Query().Has("name"):
+		schema, err := store.GetSchemasByName(req.Context(), req.URL.Query().Get("name"))
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
