@@ -162,7 +162,8 @@ func TestSchemaParser_Parse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &schemaParser{}
-			got, _ := p.Parse(tt.schema)
+			got, _, err := p.Parse(tt.schema)
+			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -258,8 +259,52 @@ func TestSchemaParser_ParseGenConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &schemaParser{}
-			_, got := p.Parse(tt.schema)
+			_, got, err := p.Parse(tt.schema)
+			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestSchemaParser_IfCanNotParse_ReturnError(t *testing.T) {
+	tests := []struct {
+		name   string
+		schema string
+	}{
+		{
+			name: "missing value",
+			schema: `
+				type User {
+					name: String # pattern:
+				}`,
+		},
+		{
+			name: "missing prop name",
+			schema: `
+				type User {
+					name: String # : 3
+				}`,
+		},
+		{
+			name: "no coma between props",
+			schema: `
+				type User {
+					verified: Boolean # label1 label2
+				}`,
+		},
+		{
+			name: "invalid value",
+			schema: `
+				type User {
+					age: Int # min: 4 5
+				}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &schemaParser{}
+			_, _, err := p.Parse(tt.schema)
+			assert.ErrorIs(t, err, NewErrFailedToParse(""))
 		})
 	}
 }

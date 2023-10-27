@@ -11,7 +11,6 @@
 package gen
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -24,7 +23,7 @@ type schemaParser struct {
 	resolvedRelation map[string]map[string]bool
 }
 
-func (p *schemaParser) Parse(schema string) (map[string]typeDefinition, map[string]map[string]genConfig) {
+func (p *schemaParser) Parse(schema string) (map[string]typeDefinition, configsMap, error) {
 	p.types = make(map[string]typeDefinition)
 	p.relationTypesMap = make(map[string]map[string]string)
 	p.resolvedRelation = make(map[string]map[string]bool)
@@ -57,17 +56,21 @@ func (p *schemaParser) Parse(schema string) (map[string]typeDefinition, map[stri
 		}
 		configPos := strings.Index(line, "#")
 		if configPos != -1 {
-			currentConfig[line[:pos]] = p.parseGenConfig(line[configPos+1:])
+			var err error
+			currentConfig[line[:pos]], err = p.parseGenConfig(line[configPos+1:])
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 	p.resolvePrimaryRelations()
-	return p.types, genConfigs
+	return p.types, genConfigs, nil
 }
 
-func (p *schemaParser) parseGenConfig(configStr string) genConfig {
+func (p *schemaParser) parseGenConfig(configStr string) (genConfig, error) {
 	configStr = strings.TrimSpace(configStr)
 	if configStr == "" {
-		return genConfig{}
+		return genConfig{}, nil
 	}
 
 	config := genConfig{props: make(map[string]any)}
@@ -79,39 +82,53 @@ func (p *schemaParser) parseGenConfig(configStr string) genConfig {
 		}
 		propParts := strings.Split(part, ":")
 		if len(propParts) == 1 {
+			if strings.Contains(part, " ") {
+				return genConfig{}, NewErrFailedToParse("Config label should not contain spaces: " + configStr)
+			}
 			config.labels = append(config.labels, strings.TrimSpace(propParts[0]))
 		} else {
-			config.props[strings.TrimSpace(propParts[0])] = p.parseGenConfigValue(
-				strings.TrimSpace(propParts[1]))
+			propName := strings.TrimSpace(propParts[0])
+			if propName == "" {
+				return genConfig{}, NewErrFailedToParse("Config property is missing a name: " + configStr)
+			}
+			propVal := strings.TrimSpace(propParts[1])
+			if propVal == "" {
+				return genConfig{}, NewErrFailedToParse("Config property is missing a value: " + configStr)
+			}
+			val, err := p.parseGenConfigValue(propVal)
+			if err != nil {
+				return genConfig{}, err
+			}
+			config.props[propName] = val
 		}
 	}
 	if len(config.props) == 0 {
 		config.props = nil
 	}
 
-	return config
+	return config, nil
 }
 
-func (p *schemaParser) parseGenConfigValue(valueStr string) any {
+func (p *schemaParser) parseGenConfigValue(valueStr string) (any, error) {
 	valueStr = strings.TrimSpace(valueStr)
 	if valueStr == "true" {
-		return true
+		return true, nil
 	}
 	if valueStr == "false" {
-		return false
+		return false, nil
 	}
 	if valueStr[0] == '"' {
-		return valueStr[1 : len(valueStr)-1]
+		return valueStr[1 : len(valueStr)-1], nil
 	}
 	if strings.Contains(valueStr, ".") {
 		if val, err := strconv.ParseFloat(valueStr, 64); err == nil {
-			return val
+			return val, nil
 		}
 	}
 	if val, err := strconv.ParseInt(valueStr, 10, 32); err == nil {
-		return int(val)
+		return int(val), nil
 	}
-	panic(fmt.Sprintf("Failed to parse gen config value %s", valueStr))
+	return nil, NewErrFailedToParse("Failed to parse config value " + valueStr)
 }
 
 func (p *schemaParser) findTypes() {

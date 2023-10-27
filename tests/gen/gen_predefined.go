@@ -38,7 +38,7 @@ func CreateSchemaWithDocs(schema string, docsList DocsList) []any {
 func GenerateDocs(schema string, docsList DocsList) []GeneratedDoc {
 	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
 	parser := schemaParser{}
-	typeDefs, _ := parser.Parse(schema)
+	typeDefs, _, _ := parser.Parse(schema)
 	generator := docGenerator{types: typeDefs}
 	for _, doc := range docsList.Docs {
 		docs := generator.GenerateDocs(doc, docsList.ColName)
