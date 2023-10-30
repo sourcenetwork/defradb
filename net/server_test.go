@@ -248,8 +248,10 @@ func TestDocQueue(t *testing.T) {
 func TestPushLog(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	err := n.Start()
+	require.NoError(t, err)
 
-	_, err := db.AddSchema(ctx, `type User {
+	_, err = db.AddSchema(ctx, `type User {
 		name: String
 		age: Int
 	}`)

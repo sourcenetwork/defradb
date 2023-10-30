@@ -13,6 +13,7 @@
 package net
 
 import (
+	"container/list"
 	"context"
 	"fmt"
 	"sync"
@@ -29,57 +30,96 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
+type blockProcessor struct {
+	*Peer
+	// List of composite blocks to eventually merge
+	composites *list.List
+}
+
+func newBlockProcessor(p *Peer) *blockProcessor {
+	return &blockProcessor{
+		Peer:       p,
+		composites: list.New(),
+	}
+}
+
 // processNode is a general utility for processing various kinds
 // of CRDT blocks
-func (p *Peer) processLog(
+func (bp *blockProcessor) processRemoteBlock(
+	ctx context.Context,
+	session *sync.WaitGroup,
+	txn datastore.Txn,
+	dsKey core.DataStoreKey,
+	nd ipld.Node,
+	getter ipld.NodeGetter,
+	isComposite bool,
+) error {
+	log.Debug(ctx, "Running processLog")
+
+	if err := txn.DAGstore().Put(ctx, nd); err != nil {
+		return err
+	}
+
+	if isComposite {
+		bp.composites.PushFront(nd)
+	}
+
+	bp.handleChildBlocks(ctx, session, txn, dsKey, nd, getter, isComposite)
+
+	return nil
+}
+
+func (p *Peer) processBlock(
 	ctx context.Context,
 	txn datastore.Txn,
 	col client.Collection,
 	dsKey core.DataStoreKey,
-	field string,
 	nd ipld.Node,
-	getter ipld.NodeGetter,
-	removeChildren bool,
-) ([]cid.Cid, error) {
-	log.Debug(ctx, "Running processLog")
-
+	field string,
+) error {
 	crdt, err := initCRDTForType(ctx, txn, col, dsKey, field)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
 	delta, err := crdt.DeltaDecode(nd)
 	if err != nil {
-		return nil, errors.Wrap("failed to decode delta object", err)
+		return errors.Wrap("failed to decode delta object", err)
 	}
 
-	log.Debug(
-		ctx,
-		"Processing PushLog request",
-		logging.NewKV("Datastore key", dsKey),
-		logging.NewKV("CID", nd.Cid()),
-	)
-
-	if err := txn.DAGstore().Put(ctx, nd); err != nil {
-		return nil, err
-	}
-
-	ng := p.createNodeGetter(crdt, getter)
-	cids, err := crdt.Clock().ProcessNode(ctx, ng, delta, nd)
+	err = crdt.Clock().ProcessNode(ctx, delta, nd)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if removeChildren {
-		// mark this obj as done
-		p.queuedChildren.Remove(nd.Cid())
+	for _, link := range nd.Links() {
+		if link.Name == core.HEAD {
+			continue
+		}
+
+		block, err := txn.DAGstore().Get(ctx, link.Cid)
+		if err != nil {
+			return err
+		}
+		nd, err := dag.DecodeProtobufBlock(block)
+		if err != nil {
+			return err
+		}
+
+		if err := p.processBlock(ctx, txn, col, dsKey, nd, link.Name); err != nil {
+			log.ErrorE(
+				ctx,
+				"Failed to process block",
+				err,
+				logging.NewKV("DocKey", dsKey.DocKey),
+				logging.NewKV("CID", nd.Cid()),
+			)
+		}
 	}
 
-	return cids, nil
+	return nil
 }
 
 func initCRDTForType(
@@ -129,88 +169,56 @@ func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
 	return ipld.Decode(blk, dag.DecodeProtobufBlock)
 }
 
-func (p *Peer) createNodeGetter(
-	crdt crdt.MerkleCRDT,
-	getter ipld.NodeGetter,
-) *clock.CrdtNodeGetter {
-	return &clock.CrdtNodeGetter{
-		NodeGetter:     getter,
-		DeltaExtractor: crdt.DeltaDecode,
-	}
-}
-
-func (p *Peer) handleChildBlocks(
+func (bp *blockProcessor) handleChildBlocks(
+	ctx context.Context,
 	session *sync.WaitGroup,
 	txn datastore.Txn,
-	col client.Collection,
 	dsKey core.DataStoreKey,
-	field string,
 	nd ipld.Node,
-	children []cid.Cid,
 	getter ipld.NodeGetter,
+	isComposite bool,
 ) {
-	if len(children) == 0 {
+	if len(nd.Links()) == 0 {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(p.ctx, DAGSyncTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DAGSyncTimeout)
 	defer cancel()
 
-	for _, c := range children {
-		if !p.queuedChildren.Visit(c) { // reserve for processing
+	for _, link := range nd.Links() {
+		if !bp.queuedChildren.Visit(link.Cid) { // reserve for processing
 			continue
 		}
 
-		var fieldName string
-		// loop over our children to get the corresponding field names from the DAG
-		for _, l := range nd.Links() {
-			if c == l.Cid {
-				if l.Name != core.HEAD {
-					fieldName = l.Name
-				}
-			}
-		}
-
-		// heads of subfields are still subfields, not composites
-		if fieldName == "" && field != "" {
-			fieldName = field
-		}
-
-		// get object
-		cNode, err := getter.Get(ctx, c)
+		exist, err := txn.DAGstore().Has(ctx, link.Cid)
 		if err != nil {
-			log.ErrorE(ctx, "Failed to get node", err, logging.NewKV("CID", c))
+			log.Error(
+				ctx,
+				"Failed to check for existing block",
+				logging.NewKV("CID", link.Cid),
+				logging.NewKV("ERROR", err),
+			)
+		}
+		if exist {
+			log.Debug(ctx, "Already have block locally, skipping.", logging.NewKV("CID", link.Cid))
 			continue
 		}
-
-		log.Debug(
-			ctx,
-			"Submitting new job to DAG queue",
-			logging.NewKV("Collection", col.Name()),
-			logging.NewKV("Datastore key", dsKey),
-			logging.NewKV("Field", fieldName),
-			logging.NewKV("CID", cNode.Cid()))
 
 		session.Add(1)
 		job := &dagJob{
-			collection: col,
-			dsKey:      dsKey,
-			fieldName:  fieldName,
-			session:    session,
-			nodeGetter: getter,
-			node:       cNode,
-			txn:        txn,
+			dsKey:       dsKey,
+			session:     session,
+			nodeGetter:  getter,
+			cid:         link.Cid,
+			txn:         txn,
+			isComposite: isComposite && link.Name == core.HEAD,
+			bp:          bp,
 		}
 
 		select {
-		case p.sendJobs <- job:
-		case <-p.ctx.Done():
+		case bp.sendJobs <- job:
+		case <-bp.ctx.Done():
 			return // jump out
 		}
 	}
-
-	// Clear up any children we failed to get from queued children
-	// for _, child := range children {
-	// 	p.queuedChildren.Remove(child)
-	// }
 }

@@ -247,7 +247,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 
 	schemaRoot := string(req.Body.SchemaRoot)
-	docKey := core.DataStoreKeyFromDocKey(dockey)
+	dsKey := core.DataStoreKeyFromDocKey(dockey)
 
 	var txnErr error
 	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
@@ -284,33 +284,37 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, errors.Wrap("failed to decode block to ipld.Node", err)
 		}
 
-		cids, err := s.peer.processLog(ctx, txn, col, docKey, "", nd, getter, false)
+		var session sync.WaitGroup
+		bp := newBlockProcessor(s.peer)
+		err = bp.processRemoteBlock(ctx, &session, txn, dsKey, nd, getter, true)
 		if err != nil {
 			log.ErrorE(
 				ctx,
-				"Failed to process PushLog node",
+				"Failed to process remote block",
 				err,
-				logging.NewKV("DocKey", docKey),
+				logging.NewKV("DocKey", dsKey.DocKey),
 				logging.NewKV("CID", cid),
 			)
 		}
+		session.Wait()
+		for e := bp.composites.Front(); e != nil; e = e.Next() {
+			nd := e.Value.(format.Node)
+			err := s.peer.processBlock(ctx, txn, col, dsKey, nd, "")
+			if err != nil {
+				log.ErrorE(
+					ctx,
+					"Failed to process block",
+					err,
+					logging.NewKV("DocKey", dsKey.DocKey),
+					logging.NewKV("CID", nd.Cid()),
+				)
+			}
+		}
 
-		// handleChildren
-		if len(cids) > 0 { // we have child nodes to get
-			log.Debug(
-				ctx,
-				"Handling children for log",
-				logging.NewKV("NChildren", len(cids)),
-				logging.NewKV("CID", cid),
-			)
-			var session sync.WaitGroup
-			s.peer.handleChildBlocks(&session, txn, col, docKey, "", nd, cids, getter)
-			session.Wait()
-			// dagWorkers specific to the dockey will have been spawned within handleChildBlocks.
-			// Once we are done with the dag syncing process, we can get rid of those workers.
-			s.peer.closeJob <- docKey.DocKey
-		} else {
-			log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
+		// dagWorkers specific to the dockey will have been spawned within handleChildBlocks.
+		// Once we are done with the dag syncing process, we can get rid of those workers.
+		if s.peer.closeJob != nil {
+			s.peer.closeJob <- dsKey.DocKey
 		}
 
 		if txnErr = txn.Commit(ctx); txnErr != nil {
@@ -323,7 +327,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		// Once processed, subscribe to the dockey topic on the pubsub network unless we already
 		// suscribe to the collection.
 		if !s.hasPubSubTopic(col.SchemaRoot()) {
-			err = s.addPubSubTopic(docKey.DocKey, true)
+			err = s.addPubSubTopic(dsKey.DocKey, true)
 			if err != nil {
 				return nil, err
 			}
