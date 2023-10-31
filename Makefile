@@ -272,7 +272,8 @@ test\:coverage-func:
 test\:coverage-html:
 	@$(MAKE) test:coverage path=$(path)
 	go tool cover -html=$(COVERAGE_FILE)
-	rm -rf ./coverage
+	@$(MAKE) clean:coverage
+	
 
 .PHONY: test\:changes
 test\:changes:

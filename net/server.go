@@ -285,8 +285,8 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 
 		var session sync.WaitGroup
-		bp := newBlockProcessor(s.peer)
-		err = bp.processRemoteBlock(ctx, &session, txn, dsKey, nd, getter, true)
+		bp := newBlockProcessor(s.peer, txn, col, dsKey, getter)
+		err = bp.processRemoteBlock(ctx, &session, nd, true)
 		if err != nil {
 			log.ErrorE(
 				ctx,
@@ -297,19 +297,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			)
 		}
 		session.Wait()
-		for e := bp.composites.Front(); e != nil; e = e.Next() {
-			nd := e.Value.(format.Node)
-			err := s.peer.processBlock(ctx, txn, col, dsKey, nd, "")
-			if err != nil {
-				log.ErrorE(
-					ctx,
-					"Failed to process block",
-					err,
-					logging.NewKV("DocKey", dsKey.DocKey),
-					logging.NewKV("CID", nd.Cid()),
-				)
-			}
-		}
+		bp.mergeBlocks(ctx)
 
 		// dagWorkers specific to the dockey will have been spawned within handleChildBlocks.
 		// Once we are done with the dag syncing process, we can get rid of those workers.

@@ -35,52 +35,51 @@ import (
 
 type blockProcessor struct {
 	*Peer
+	txn    datastore.Txn
+	col    client.Collection
+	dsKey  core.DataStoreKey
+	getter ipld.NodeGetter
 	// List of composite blocks to eventually merge
 	composites *list.List
 }
 
-func newBlockProcessor(p *Peer) *blockProcessor {
-	return &blockProcessor{
-		Peer:       p,
-		composites: list.New(),
-	}
-}
-
-// processNode is a general utility for processing various kinds
-// of CRDT blocks
-func (bp *blockProcessor) processRemoteBlock(
-	ctx context.Context,
-	session *sync.WaitGroup,
-	txn datastore.Txn,
-	dsKey core.DataStoreKey,
-	nd ipld.Node,
-	getter ipld.NodeGetter,
-	isComposite bool,
-) error {
-	log.Debug(ctx, "Running processLog")
-
-	if err := txn.DAGstore().Put(ctx, nd); err != nil {
-		return err
-	}
-
-	if isComposite {
-		bp.composites.PushFront(nd)
-	}
-
-	bp.handleChildBlocks(ctx, session, txn, dsKey, nd, getter, isComposite)
-
-	return nil
-}
-
-func (p *Peer) processBlock(
-	ctx context.Context,
+func newBlockProcessor(
+	p *Peer,
 	txn datastore.Txn,
 	col client.Collection,
 	dsKey core.DataStoreKey,
-	nd ipld.Node,
-	field string,
-) error {
-	crdt, err := initCRDTForType(ctx, txn, col, dsKey, field)
+	getter ipld.NodeGetter,
+) *blockProcessor {
+	return &blockProcessor{
+		Peer:       p,
+		composites: list.New(),
+		txn:        txn,
+		col:        col,
+		dsKey:      dsKey,
+		getter:     getter,
+	}
+}
+
+// mergeBlock runs trough the list of composite blocks and sends them for processing.
+func (bp *blockProcessor) mergeBlocks(ctx context.Context) {
+	for e := bp.composites.Front(); e != nil; e = e.Next() {
+		nd := e.Value.(ipld.Node)
+		err := bp.processBlock(ctx, nd, "")
+		if err != nil {
+			log.ErrorE(
+				ctx,
+				"Failed to process block",
+				err,
+				logging.NewKV("DocKey", bp.dsKey.DocKey),
+				logging.NewKV("CID", nd.Cid()),
+			)
+		}
+	}
+}
+
+// processBlock merges the block and its children to the datastore and sets the head accordingly.
+func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field string) error {
+	crdt, err := initCRDTForType(ctx, bp.txn, bp.col, bp.dsKey, field)
 	if err != nil {
 		return err
 	}
@@ -99,7 +98,7 @@ func (p *Peer) processBlock(
 			continue
 		}
 
-		block, err := txn.DAGstore().Get(ctx, link.Cid)
+		block, err := bp.txn.DAGstore().Get(ctx, link.Cid)
 		if err != nil {
 			return err
 		}
@@ -108,12 +107,12 @@ func (p *Peer) processBlock(
 			return err
 		}
 
-		if err := p.processBlock(ctx, txn, col, dsKey, nd, link.Name); err != nil {
+		if err := bp.processBlock(ctx, nd, link.Name); err != nil {
 			log.ErrorE(
 				ctx,
 				"Failed to process block",
 				err,
-				logging.NewKV("DocKey", dsKey.DocKey),
+				logging.NewKV("DocKey", bp.dsKey.DocKey),
 				logging.NewKV("CID", nd.Cid()),
 			)
 		}
@@ -169,13 +168,32 @@ func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
 	return ipld.Decode(blk, dag.DecodeProtobufBlock)
 }
 
+// processRemoteBlock stores the block in the DAG store and initiates a sync of the block's children.
+func (bp *blockProcessor) processRemoteBlock(
+	ctx context.Context,
+	session *sync.WaitGroup,
+	nd ipld.Node,
+	isComposite bool,
+) error {
+	log.Debug(ctx, "Running processLog")
+
+	if err := bp.txn.DAGstore().Put(ctx, nd); err != nil {
+		return err
+	}
+
+	if isComposite {
+		bp.composites.PushFront(nd)
+	}
+
+	bp.handleChildBlocks(ctx, session, nd, isComposite)
+
+	return nil
+}
+
 func (bp *blockProcessor) handleChildBlocks(
 	ctx context.Context,
 	session *sync.WaitGroup,
-	txn datastore.Txn,
-	dsKey core.DataStoreKey,
 	nd ipld.Node,
-	getter ipld.NodeGetter,
 	isComposite bool,
 ) {
 	if len(nd.Links()) == 0 {
@@ -190,7 +208,7 @@ func (bp *blockProcessor) handleChildBlocks(
 			continue
 		}
 
-		exist, err := txn.DAGstore().Has(ctx, link.Cid)
+		exist, err := bp.txn.DAGstore().Has(ctx, link.Cid)
 		if err != nil {
 			log.Error(
 				ctx,
@@ -206,11 +224,8 @@ func (bp *blockProcessor) handleChildBlocks(
 
 		session.Add(1)
 		job := &dagJob{
-			dsKey:       dsKey,
 			session:     session,
-			nodeGetter:  getter,
 			cid:         link.Cid,
-			txn:         txn,
 			isComposite: isComposite && link.Name == core.HEAD,
 			bp:          bp,
 		}

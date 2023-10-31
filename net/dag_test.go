@@ -72,8 +72,10 @@ func TestSendJobWorker_WithNewJob_NoError(t *testing.T) {
 
 	n.sendJobs <- &dagJob{
 		session: &wg,
-		dsKey:   dsKey,
-		txn:     txn,
+		bp: &blockProcessor{
+			dsKey: dsKey,
+			txn:   txn,
+		},
 	}
 	// Give the jobworker time to process the job.
 	time.Sleep(100 * time.Microsecond)
@@ -111,8 +113,10 @@ func TestSendJobWorker_WithCloseJob_NoError(t *testing.T) {
 
 	n.sendJobs <- &dagJob{
 		session: &wg,
-		dsKey:   dsKey,
-		txn:     txn,
+		bp: &blockProcessor{
+			dsKey: dsKey,
+			txn:   txn,
+		},
 	}
 
 	n.closeJob <- dsKey.DocKey
@@ -183,11 +187,8 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 	}
 
 	n2.sendJobs <- &dagJob{
-		bp:          newBlockProcessor(n2.Peer),
+		bp:          newBlockProcessor(n2.Peer, txn2, col, dsKey, getter),
 		session:     &wg,
-		nodeGetter:  getter,
-		dsKey:       dsKey,
-		txn:         txn2,
 		cid:         heads[0],
 		isComposite: true,
 	}
