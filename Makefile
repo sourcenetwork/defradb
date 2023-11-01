@@ -256,7 +256,11 @@ test\:coverage:
 	@$(MAKE) deps:lens
 	@$(MAKE) clean:coverage
 	mkdir $(COVERAGE_DIRECTORY)
+ifeq ($(path),)
 	gotestsum --format testname -- ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
+else
+	gotestsum --format testname -- $(path) $(TEST_FLAGS) $(COVERAGE_FLAGS)
+endif
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
 .PHONY: test\:coverage-func
@@ -266,8 +270,10 @@ test\:coverage-func:
 
 .PHONY: test\:coverage-html
 test\:coverage-html:
-	@$(MAKE) test:coverage
+	@$(MAKE) test:coverage path=$(path)
 	go tool cover -html=$(COVERAGE_FILE)
+	@$(MAKE) clean:coverage
+	
 
 .PHONY: test\:changes
 test\:changes:

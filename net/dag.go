@@ -20,9 +20,6 @@ import (
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -50,17 +47,10 @@ type SessionDAGSyncer interface {
 }
 
 type dagJob struct {
-	session    *sync.WaitGroup // A waitgroup to wait for all related jobs to conclude
-	nodeGetter ipld.NodeGetter // a node getter to use
-	node       ipld.Node       // the current ipld Node
-
-	collection client.Collection // collection our document belongs to
-	dsKey      core.DataStoreKey // datastore key of our document
-	fieldName  string            // field of the subgraph our node belongs to
-
-	// Transaction common to a pushlog event. It is used to pass it along to processLog
-	// and handleChildBlocks within the dagWorker.
-	txn datastore.Txn
+	session     *sync.WaitGroup // A waitgroup to wait for all related jobs to conclude
+	bp          *blockProcessor // the block processor to use
+	cid         cid.Cid         // the cid of the block to fetch from the P2P network
+	isComposite bool            // whether this is a composite block
 
 	// OLD FIELDS
 	// root       cid.Cid         // the root of the branch we are walking down
@@ -87,13 +77,13 @@ func (p *Peer) sendJobWorker() {
 			return
 
 		case newJob := <-p.sendJobs:
-			jobs, ok := docWorkerQueue[newJob.dsKey.DocKey]
+			jobs, ok := docWorkerQueue[newJob.bp.dsKey.DocKey]
 			if !ok {
 				jobs = make(chan *dagJob, numWorkers)
 				for i := 0; i < numWorkers; i++ {
 					go p.dagWorker(jobs)
 				}
-				docWorkerQueue[newJob.dsKey.DocKey] = jobs
+				docWorkerQueue[newJob.bp.dsKey.DocKey] = jobs
 			}
 			jobs <- newJob
 
@@ -113,8 +103,8 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 		log.Debug(
 			p.ctx,
 			"Starting new job from DAG queue",
-			logging.NewKV("Datastore Key", job.dsKey),
-			logging.NewKV("CID", job.node.Cid()),
+			logging.NewKV("Datastore Key", job.bp.dsKey),
+			logging.NewKV("CID", job.cid),
 		)
 
 		select {
@@ -125,44 +115,25 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 		default:
 		}
 
-		children, err := p.processLog(
-			p.ctx,
-			job.txn,
-			job.collection,
-			job.dsKey,
-			job.fieldName,
-			job.node,
-			job.nodeGetter,
-			true,
-		)
-		if err != nil {
-			log.ErrorE(
-				p.ctx,
-				"Error processing log",
-				err,
-				logging.NewKV("Datastore key", job.dsKey),
-				logging.NewKV("CID", job.node.Cid()),
-			)
-			job.session.Done()
-			continue
-		}
-
-		if len(children) == 0 {
-			job.session.Done()
-			continue
-		}
-
 		go func(j *dagJob) {
-			p.handleChildBlocks(
-				j.session,
-				j.txn,
-				j.collection,
-				j.dsKey,
-				j.fieldName,
-				j.node,
-				children,
-				j.nodeGetter,
-			)
+			if j.bp.getter != nil && j.cid.Defined() {
+				cNode, err := j.bp.getter.Get(p.ctx, j.cid)
+				if err != nil {
+					log.ErrorE(p.ctx, "Failed to get node", err, logging.NewKV("CID", j.cid))
+					j.session.Done()
+					return
+				}
+				err = j.bp.processRemoteBlock(
+					p.ctx,
+					j.session,
+					cNode,
+					j.isComposite,
+				)
+				if err != nil {
+					log.ErrorE(p.ctx, "Failed to process remote block", err, logging.NewKV("CID", j.cid))
+				}
+			}
+			p.queuedChildren.Remove(j.cid)
 			j.session.Done()
 		}(job)
 	}
