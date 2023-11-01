@@ -196,20 +196,6 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 }
 
 func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKey) error {
-	val, err := c.store.Get(ctx, key.ToDS())
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
-		return err
-	}
-	if !errors.Is(err, ds.ErrNotFound) {
-		err = c.store.Put(ctx, c.key.WithDeletedFlag().ToDS(), val)
-		if err != nil {
-			return err
-		}
-		err = c.store.Delete(ctx, key.ToDS())
-		if err != nil {
-			return err
-		}
-	}
 	q := query.Query{
 		Prefix: key.ToString(),
 	}

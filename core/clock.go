@@ -13,7 +13,6 @@ package core
 import (
 	"context"
 
-	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
@@ -24,5 +23,5 @@ type MerkleClock interface {
 		ctx context.Context,
 		delta Delta,
 	) (ipld.Node, error) // possibly change to AddDeltaNode?
-	ProcessNode(context.Context, NodeGetter, Delta, ipld.Node) ([]cid.Cid, error)
+	ProcessNode(context.Context, Delta, ipld.Node) error
 }
