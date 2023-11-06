@@ -161,6 +161,19 @@ func validateConfig(types map[tStr]typeDefinition, configsMap configsMap) error 
 			} else if _, hasMax := fieldConfig.props["max"]; hasMax {
 				return NewErrInvalidConfiguration("max value is set, but min value is not set")
 			}
+			lenConf, hasLen := fieldConfig.props["len"]
+			if hasLen {
+				if fieldDef.typeStr != "String" {
+					return NewErrInvalidConfiguration("len val is used on  not String")					
+				}
+				len, ok := lenConf.(int)
+				if !ok {
+					return NewErrInvalidConfiguration("len value is not integer")
+				}
+				if len < 1 {
+					return NewErrInvalidConfiguration("len value is less than 1")
+				}
+			}
 		}
 	}
 	return nil
