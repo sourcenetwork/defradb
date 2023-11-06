@@ -116,8 +116,12 @@ func (g *randomDocGenerator) GenerateDocs(colName string, count int) ([]Generate
 	g.resultDocs = make([]GeneratedDoc, 0, count)
 	g.cols = make(map[tStr][]docRec)
 
+	err := validateConfig(g.config)
+	if err != nil {
+		return nil, err
+	}
 	configurator := newDocGenConfigurator(g.types, g.config)
-	err := configurator.Configure(colName, count)
+	err = configurator.Configure(colName, count)
 	if err != nil {
 		return nil, err
 	}
@@ -135,6 +139,31 @@ func (g *randomDocGenerator) GenerateDocs(colName string, count int) ([]Generate
 		}
 	}
 	return g.resultDocs, nil
+}
+
+func validateConfig(configsMap configsMap) error {
+	for _, typeConfigs := range configsMap {
+		for _, fieldConfig := range typeConfigs {
+			minProp, hasMin := fieldConfig.props["min"]
+			if hasMin {
+				min := minProp.(int)
+				if min < 0 {
+					return NewErrInvalidConfiguration("min value is less than 0")
+				}
+				if maxProp, hasMax := fieldConfig.props["max"]; hasMax {
+					max := maxProp.(int)
+					if min > max {
+						return NewErrInvalidConfiguration("min value is greater than max value")
+					}
+				} else {
+					return NewErrInvalidConfiguration("min value is set, but max value is not set")
+				}
+			} else if _, hasMax := fieldConfig.props["max"]; hasMax {
+				return NewErrInvalidConfiguration("max value is set, but min value is not set")
+			}
+		}
+	}
+	return nil
 }
 
 func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType tStr, field fieldDefinition) string {

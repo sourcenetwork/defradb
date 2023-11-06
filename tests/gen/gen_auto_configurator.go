@@ -88,7 +88,7 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 				maxRatio := float64(secondaryDemand) / float64(max)
 				primaryDemand = int(math.Ceil((minRatio + maxRatio) / 2))
 				if maxRatio < 1 {
-					return 0, NewErrInvalidConfiguration()
+					return 0, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
 				}
 				var err error
 				primaryDemand, err = g.getPrimaryDemand(primaryType, primaryDemand, primaryGraph)

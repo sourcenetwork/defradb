@@ -17,8 +17,8 @@ const (
 	errFailedToParse        string = "failed to parse schema"
 )
 
-func NewErrInvalidConfiguration() error {
-	return errors.New(errInvalidConfiguration)
+func NewErrInvalidConfiguration(reason string) error {
+	return errors.New(errInvalidConfiguration, errors.NewKV("Reason", reason))
 }
 
 func NewErrFailedToParse(reason string) error {
