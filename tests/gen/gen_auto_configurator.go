@@ -122,7 +122,10 @@ func (g *docsGenConfigurator) getPrimaryDemand(
 	return secondaryDemand, nil
 }
 
-func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(typeName string, primaryGraph map[string][]string) error {
+func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
+	typeName string,
+	primaryGraph map[string][]string,
+) error {
 	typeDef := g.types[typeName]
 	for _, field := range typeDef.fields {
 		if field.isRelation && !field.isPrimary {

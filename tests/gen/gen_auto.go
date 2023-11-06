@@ -116,7 +116,7 @@ func (g *randomDocGenerator) GenerateDocs(colName string, count int) ([]Generate
 	g.resultDocs = make([]GeneratedDoc, 0, count)
 	g.cols = make(map[tStr][]docRec)
 
-	err := validateConfig(g.config)
+	err := validateConfig(g.types, g.config)
 	if err != nil {
 		return nil, err
 	}
@@ -141,17 +141,26 @@ func (g *randomDocGenerator) GenerateDocs(colName string, count int) ([]Generate
 	return g.resultDocs, nil
 }
 
-func validateConfig(configsMap configsMap) error {
-	for _, typeConfigs := range configsMap {
-		for _, fieldConfig := range typeConfigs {
+func validateConfig(types map[tStr]typeDefinition, configsMap configsMap) error {
+	for typeName, typeConfigs := range configsMap {
+		typeDef := types[typeName]
+		for fieldName, fieldConfig := range typeConfigs {
+			fieldDef := typeDef.getField(fieldName)
+			fieldDef = fieldDef
 			minProp, hasMin := fieldConfig.props["min"]
 			if hasMin {
-				min := minProp.(int)
+				min, ok := minProp.(int)
+				if !ok {
+					return NewErrInvalidConfiguration("min value for array is not int")
+				}
 				if min < 0 {
 					return NewErrInvalidConfiguration("min value is less than 0")
 				}
 				if maxProp, hasMax := fieldConfig.props["max"]; hasMax {
-					max := maxProp.(int)
+					max, ok := maxProp.(int)
+					if !ok {
+						return NewErrInvalidConfiguration("max value for array is not int")
+					}
 					if min > max {
 						return NewErrInvalidConfiguration("min value is greater than max value")
 					}

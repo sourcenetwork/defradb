@@ -12,6 +12,8 @@ package gen
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGeneratePredefinedDocs_Simple(t *testing.T) {
@@ -28,7 +30,8 @@ func TestGeneratePredefinedDocs_Simple(t *testing.T) {
 			{"name": "Fred", "age": 25},
 		},
 	}
-	docs := GenerateDocs(schema, docsList)
+	docs, err := GenerateDocs(schema, docsList)
+	assert.NoError(t, err)
 
 	errorMsg := assertDocs(docsList.Docs, docs)
 	if errorMsg != "" {
@@ -42,13 +45,14 @@ func TestGeneratePredefinedDocs_StripExcessiveFields(t *testing.T) {
 			name: String
 		}`
 
-	docs := GenerateDocs(schema, DocsList{
+	docs, err := GenerateDocs(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{"name": "John", "age": 30},
 			{"name": "Fred", "age": 25},
 		},
 	})
+	assert.NoError(t, err)
 
 	errorMsg := assertDocs([]map[string]any{
 		{"name": "John"},
@@ -70,7 +74,7 @@ func TestGeneratePredefinedDocs_OneToOne(t *testing.T) {
 			owner: User
 		}`
 
-	docs := GenerateDocs(schema, DocsList{
+	docs, err := GenerateDocs(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -87,6 +91,7 @@ func TestGeneratePredefinedDocs_OneToOne(t *testing.T) {
 			},
 		},
 	})
+	assert.NoError(t, err)
 
 	errorMsg := assertDocs([]map[string]any{
 		{"name": "John"},
@@ -110,7 +115,7 @@ func TestGeneratePredefinedDocs_OneToOnePrimary(t *testing.T) {
 			owner: User
 		}`
 
-	docs := GenerateDocs(schema, DocsList{
+	docs, err := GenerateDocs(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -127,6 +132,7 @@ func TestGeneratePredefinedDocs_OneToOnePrimary(t *testing.T) {
 			},
 		},
 	})
+	assert.NoError(t, err)
 
 	errorMsg := assertDocs([]map[string]any{
 		{"name": "John", "device_id": getDocKeyFromDocMap(map[string]any{"model": "iPhone"})},
@@ -150,7 +156,7 @@ func TestGeneratePredefinedDocs_OneToMany(t *testing.T) {
 			owner: User
 		}`
 
-	docs := GenerateDocs(schema, DocsList{
+	docs, err := GenerateDocs(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -169,6 +175,7 @@ func TestGeneratePredefinedDocs_OneToMany(t *testing.T) {
 			},
 		},
 	})
+	assert.NoError(t, err)
 
 	johnDocKey := getDocKeyFromDocMap(map[string]any{"name": "John"})
 	fredDocKey := getDocKeyFromDocMap(map[string]any{"name": "Fred"})
@@ -201,7 +208,7 @@ func TestGeneratePredefinedDocs_OneToManyToOne(t *testing.T) {
 			device: Device
 		}`
 
-	docs := GenerateDocs(schema, DocsList{
+	docs, err := GenerateDocs(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -223,6 +230,7 @@ func TestGeneratePredefinedDocs_OneToManyToOne(t *testing.T) {
 			},
 		},
 	})
+	assert.NoError(t, err)
 
 	johnDocKey := getDocKeyFromDocMap(map[string]any{"name": "John"})
 	errorMsg := assertDocs([]map[string]any{
