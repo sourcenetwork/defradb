@@ -12,6 +12,7 @@ package gen
 
 import (
 	"math/rand"
+	"reflect"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -146,31 +147,45 @@ func validateConfig(types map[tStr]typeDefinition, configsMap configsMap) error 
 		typeDef := types[typeName]
 		for fieldName, fieldConfig := range typeConfigs {
 			fieldDef := typeDef.getField(fieldName)
-			fieldDef = fieldDef
-			minProp, hasMin := fieldConfig.props["min"]
+			_, hasMin := fieldConfig.props["min"]
 			if hasMin {
-				min, ok := minProp.(int)
-				if !ok {
-					return NewErrInvalidConfiguration("min value for array is not int")
-				}
-				if min < 0 {
-					return NewErrInvalidConfiguration("min value is less than 0")
-				}
-				if maxProp, hasMax := fieldConfig.props["max"]; hasMax {
-					max, ok := maxProp.(int)
-					if !ok {
-						return NewErrInvalidConfiguration("max value for array is not int")
-					}
-					if min > max {
-						return NewErrInvalidConfiguration("min value is greater than max value")
-					}
+				var err error
+				if fieldDef.isArray || fieldDef.typeStr == "Int" {
+					err = validateMinConfig[int](&fieldConfig, fieldDef.isArray)
 				} else {
-					return NewErrInvalidConfiguration("min value is set, but max value is not set")
+					err = validateMinConfig[float64](&fieldConfig, false)
+				}
+				if err != nil {
+					return err
 				}
 			} else if _, hasMax := fieldConfig.props["max"]; hasMax {
 				return NewErrInvalidConfiguration("max value is set, but min value is not set")
 			}
 		}
+	}
+	return nil
+}
+
+func validateMinConfig[T int | float64](fieldConf *genConfig, onlyPositive bool) error {
+	min, ok := fieldConf.props["min"].(T)
+	if !ok {
+		var t T
+		return NewErrInvalidConfiguration("min value on array is not " + reflect.TypeOf(t).Name())
+	}
+	if min < 0 && onlyPositive {
+		return NewErrInvalidConfiguration("min value on array is less than 0")
+	}
+	if maxProp, hasMax := fieldConf.props["max"]; hasMax {
+		max, ok := maxProp.(T)
+		if !ok && onlyPositive {
+			var t T
+			return NewErrInvalidConfiguration("max value for array is not " + reflect.TypeOf(t).Name())
+		}
+		if min > max {
+			return NewErrInvalidConfiguration("min value on array is greater than max value")
+		}
+	} else {
+		return NewErrInvalidConfiguration("min value is set, but max value is not set")
 	}
 	return nil
 }
