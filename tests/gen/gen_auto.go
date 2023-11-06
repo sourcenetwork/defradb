@@ -116,15 +116,15 @@ func (g *randomDocGenerator) GenerateDocs(colName string, count int) ([]Generate
 	g.resultDocs = make([]GeneratedDoc, 0, count)
 	g.cols = make(map[tStr][]docRec)
 
-	initializer := newDocGenInitializer(g.types, g.config)
-	err := initializer.Init(colName, count)
+	configurator := newDocGenConfigurator(g.types, g.config)
+	err := configurator.Configure(colName, count)
 	if err != nil {
 		return nil, err
 	}
-	g.docsDemand = initializer.DocsDemand
-	g.usageCounter = initializer.UsageCounter
+	g.docsDemand = configurator.DocsDemand
+	g.usageCounter = configurator.UsageCounter
 
-	docsLists := g.generateRandomDocs(initializer.TypesOrder)
+	docsLists := g.generateRandomDocs(configurator.TypesOrder)
 	for _, docsList := range docsLists {
 		typeDef := g.types[docsList.ColName]
 		for _, doc := range docsList.Docs {
