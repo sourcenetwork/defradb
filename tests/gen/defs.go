@@ -37,9 +37,12 @@ type typeDefinition struct {
 	fields []fieldDefinition
 }
 
+type GenerateFieldFunc func(i int, next func() any) any
+
 type genConfig struct {
-	labels []string
-	props  map[string]any
+	labels         []string
+	props          map[string]any
+	fieldGenerator GenerateFieldFunc
 }
 
 func (t *typeDefinition) getField(name fStr) *fieldDefinition {

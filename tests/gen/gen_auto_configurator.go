@@ -40,6 +40,12 @@ func WithTypeDemand(typeName string, demand int) Option {
 	}
 }
 
+func WithFieldGenerator(typeName, fieldName string, genFunc GenerateFieldFunc) Option {
+	return func(g *docsGenConfigurator) {
+		g.config.AddForField(typeName, fieldName, genConfig{fieldGenerator: genFunc})
+	}
+}
+
 func (g *docsGenConfigurator) Configure(options ...Option) error {
 	g.primaryGraph, g.secondaryGraph = getRelationGraphs(g.types)
 	g.TypesOrder = getTopologicalOrder(g.primaryGraph, g.types)
