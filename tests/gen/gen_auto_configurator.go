@@ -50,40 +50,30 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 	g.primaryGraph, g.secondaryGraph = getRelationGraphs(g.types)
 	g.TypesOrder = getTopologicalOrder(g.primaryGraph, g.types)
 
-	getFirstTypeWithDemand := func() (string, int) {
-		for _, typeName := range g.TypesOrder {
-			if demand, ok := g.DocsDemand[typeName]; ok {
-				return typeName, demand
-			}
-		}
-		panic("No types with demand")
-	}
-
 	for _, option := range options {
 		option(g)
 	}
 
-	colName := g.TypesOrder[0]
-	demand := defaultNumDocs
-	if len(g.DocsDemand) != 0 {
-		for typeName, typeDemand := range g.DocsDemand {
-			colName = typeName
-			demand = typeDemand
-			break
+	if len(g.DocsDemand) == 0 {
+		g.DocsDemand[g.TypesOrder[0]] = defaultNumDocs
+	}
+
+	initialTypes := make(map[string]int)
+	for typeName, typeDemand := range g.DocsDemand {
+		initialTypes[typeName] = typeDemand
+	}
+
+	for typeName, typeDemand := range initialTypes {
+		var err error
+		typeDemand, err = g.getPrimaryDemand(typeName, typeDemand, g.primaryGraph)
+		if err != nil {
+			return err
 		}
-	}
-
-	var err error
-	demand, err = g.getPrimaryDemand(colName, demand, g.primaryGraph)
-	if err != nil {
-		return err
-	}
-	g.DocsDemand[colName] = demand
-
-	typeName, _ := getFirstTypeWithDemand()
-	err = g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
-	if err != nil {
-		return err
+		g.DocsDemand[typeName] = typeDemand
+		err = g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, typeName := range g.TypesOrder {

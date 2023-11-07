@@ -128,7 +128,6 @@ type randomDocGenerator struct {
 }
 
 func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, error) {
-	//g.resultDocs = make([]GeneratedDoc, 0, count)
 	g.cols = make(map[tStr][]docRec)
 
 	configurator := newDocGenConfigurator(g.types, g.config)
@@ -136,9 +135,11 @@ func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, er
 	if err != nil {
 		return nil, err
 	}
+
 	g.docsDemand = configurator.DocsDemand
 	g.usageCounter = configurator.UsageCounter
 
+	g.resultDocs = make([]GeneratedDoc, 0, g.getTotalDemand())
 	docsLists := g.generateRandomDocs(configurator.TypesOrder)
 	for _, docsList := range docsLists {
 		typeDef := g.types[docsList.ColName]
@@ -150,6 +151,14 @@ func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, er
 		}
 	}
 	return g.resultDocs, nil
+}
+
+func (g *randomDocGenerator) getTotalDemand() int {
+	totalDemand := 0
+	for _, demand := range g.docsDemand {
+		totalDemand += demand
+	}
+	return totalDemand
 }
 
 func validateConfig(types map[tStr]typeDefinition, configsMap configsMap) error {
