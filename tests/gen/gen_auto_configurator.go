@@ -45,7 +45,10 @@ func (g *docsGenConfigurator) Configure(colName string, count int) error {
 		panic("No types with demand")
 	}
 
-	g.DocsDemand[colName] = count
+	if colName == "" {
+		colName = g.TypesOrder[0]
+		count = defaultNumDocs
+	}
 
 	demand, err := g.getPrimaryDemand(colName, count, g.primaryGraph)
 	if err != nil {
