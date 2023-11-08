@@ -40,6 +40,23 @@ func WithTypeDemand(typeName string, demand int) Option {
 	}
 }
 
+func WithFieldMinMax(typeName, fieldName string, min, max int) Option {
+	return func(g *docsGenConfigurator) {
+		conf := g.config.ForField(typeName, fieldName)
+		conf.props["min"] = min
+		conf.props["max"] = max
+		g.config.AddForField(typeName, fieldName, conf)
+	}
+}
+
+func WithFieldLen(typeName, fieldName string, length int) Option {
+	return func(g *docsGenConfigurator) {
+		conf := g.config.ForField(typeName, fieldName)
+		conf.props["len"] = length
+		g.config.AddForField(typeName, fieldName, conf)
+	}
+}
+
 func WithFieldGenerator(typeName, fieldName string, genFunc GenerateFieldFunc) Option {
 	return func(g *docsGenConfigurator) {
 		g.config.AddForField(typeName, fieldName, genConfig{fieldGenerator: genFunc})
