@@ -47,12 +47,17 @@ func WithFieldGenerator(typeName, fieldName string, genFunc GenerateFieldFunc) O
 }
 
 func (g *docsGenConfigurator) Configure(options ...Option) error {
-	g.primaryGraph, g.secondaryGraph = getRelationGraphs(g.types)
-	g.TypesOrder = getTopologicalOrder(g.primaryGraph, g.types)
-
 	for _, option := range options {
 		option(g)
 	}
+
+	err := validateConfig(g.types, g.config)
+	if err != nil {
+		return err
+	}
+
+	g.primaryGraph, g.secondaryGraph = getRelationGraphs(g.types)
+	g.TypesOrder = getTopologicalOrder(g.primaryGraph, g.types)
 
 	if len(g.DocsDemand) == 0 {
 		g.DocsDemand[g.TypesOrder[0]] = defaultNumDocs
