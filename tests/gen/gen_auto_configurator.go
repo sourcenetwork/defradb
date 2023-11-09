@@ -30,9 +30,9 @@ type docsGenConfigurator struct {
 	types                        map[string]typeDefinition
 	config                       configsMap
 	primaryGraph, secondaryGraph map[string][]string
-	TypesOrder                   []string
-	DocsDemand                   map[string]typeDemand
-	UsageCounter                 typeUsageCounters
+	typesOrder                   []string
+	docsDemand                   map[string]typeDemand
+	usageCounter                 typeUsageCounters
 }
 
 type typeUsageCounters struct {
@@ -127,8 +127,8 @@ func newDocGenConfigurator(types map[string]typeDefinition, config configsMap) *
 	return &docsGenConfigurator{
 		types:        types,
 		config:       config,
-		DocsDemand:   make(map[string]typeDemand),
-		UsageCounter: typeUsageCounters{m: make(map[string]map[string]map[string]*relationUsage)},
+		docsDemand:   make(map[string]typeDemand),
+		usageCounter: typeUsageCounters{m: make(map[string]map[string]map[string]*relationUsage)},
 	}
 }
 
@@ -143,14 +143,14 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 	}
 
 	g.primaryGraph, g.secondaryGraph = getRelationGraphs(g.types)
-	g.TypesOrder = getTopologicalOrder(g.primaryGraph, g.types)
+	g.typesOrder = getTopologicalOrder(g.primaryGraph, g.types)
 
-	if len(g.DocsDemand) == 0 {
-		g.DocsDemand[g.TypesOrder[0]] = typeDemand{min: defaultNumDocs, max: defaultNumDocs}
+	if len(g.docsDemand) == 0 {
+		g.docsDemand[g.typesOrder[0]] = typeDemand{min: defaultNumDocs, max: defaultNumDocs}
 	}
 
 	initialTypes := make(map[string]typeDemand)
-	for typeName, typeDemand := range g.DocsDemand {
+	for typeName, typeDemand := range g.docsDemand {
 		initialTypes[typeName] = typeDemand
 	}
 
@@ -160,16 +160,16 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 		if err != nil {
 			return err
 		}
-		g.DocsDemand[typeName] = typeDemand
+		g.docsDemand[typeName] = typeDemand
 		err = g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
 		if err != nil {
 			return err
 		}
 	}
 
-	for _, typeName := range g.TypesOrder {
-		if _, ok := g.DocsDemand[typeName]; !ok {
-			g.DocsDemand[typeName] = typeDemand{min: defaultNumDocs, max: defaultNumDocs}
+	for _, typeName := range g.typesOrder {
+		if _, ok := g.docsDemand[typeName]; !ok {
+			g.docsDemand[typeName] = typeDemand{min: defaultNumDocs, max: defaultNumDocs}
 			err := g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
 			if err != nil {
 				return err
@@ -182,19 +182,19 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 
 func (g *docsGenConfigurator) allocateUsageCounterIndexes() {
 	max := 0
-	for _, demand := range g.DocsDemand {
+	for _, demand := range g.docsDemand {
 		if demand.max > max && demand.max != math.MaxInt {
 			max = demand.max
 		}
 	}
-	for typeName, demand := range g.DocsDemand {
+	for typeName, demand := range g.docsDemand {
 		if demand.max == math.MaxInt {
 			demand.max = max
 			demand.min = max
-			g.DocsDemand[typeName] = demand
+			g.docsDemand[typeName] = demand
 		}
 	}
-	g.UsageCounter.allocateIndexes(max)
+	g.usageCounter.allocateIndexes(max)
 }
 
 func (g *docsGenConfigurator) getDemandForPrimaryType(
@@ -219,7 +219,7 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 				if err != nil {
 					return typeDemand{}, err
 				}
-				if tmp, ok := g.DocsDemand[primaryType]; ok {
+				if tmp, ok := g.docsDemand[primaryType]; ok {
 					if primaryDemand.min < tmp.min {
 						primaryDemand.min = tmp.min
 					}
@@ -231,7 +231,7 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 					return typeDemand{}, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
 				}
 			}
-			g.DocsDemand[primaryType] = primaryDemand
+			g.docsDemand[primaryType] = primaryDemand
 			g.initRelationUsages(field.typeStr, primaryType, min, max)
 		}
 	}
@@ -260,7 +260,7 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 	typeDef := g.types[typeName]
 	for _, field := range typeDef.fields {
 		if field.isRelation && !field.isPrimary {
-			primaryDocDemand := g.DocsDemand[typeName]
+			primaryDocDemand := g.docsDemand[typeName]
 			secondaryDocDemand := primaryDocDemand
 			min, max := 1, 1
 
@@ -270,7 +270,7 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 				secondaryDocDemand.min = primaryDocDemand.max * min
 			}
 
-			g.DocsDemand[field.typeStr] = secondaryDocDemand
+			g.docsDemand[field.typeStr] = secondaryDocDemand
 			g.initRelationUsages(field.typeStr, typeName, min, max)
 			err := g.calculateDemandForSecondaryTypes(field.typeStr, primaryGraph)
 			if err != nil {
@@ -278,12 +278,12 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 			}
 
 			for _, primaryTypeName := range primaryGraph[field.typeStr] {
-				if _, ok := g.DocsDemand[primaryTypeName]; !ok {
+				if _, ok := g.docsDemand[primaryTypeName]; !ok {
 					primaryDemand, err := g.getDemandForPrimaryType(primaryTypeName, field.typeStr, secondaryDocDemand, primaryGraph)
 					if err != nil {
 						return err
 					}
-					g.DocsDemand[primaryTypeName] = primaryDemand
+					g.docsDemand[primaryTypeName] = primaryDemand
 				}
 			}
 		}
@@ -295,7 +295,7 @@ func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType stri
 	secondaryTypeDef := g.types[secondaryType]
 	for _, secondaryTypeField := range secondaryTypeDef.fields {
 		if secondaryTypeField.typeStr == primaryType {
-			g.UsageCounter.addRelationUsage(secondaryType, secondaryTypeField, min, max, g.DocsDemand[primaryType].getAverage())
+			g.usageCounter.addRelationUsage(secondaryType, secondaryTypeField, min, max, g.docsDemand[primaryType].getAverage())
 		}
 	}
 }
