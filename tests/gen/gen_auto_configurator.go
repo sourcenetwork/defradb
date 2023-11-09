@@ -10,16 +10,22 @@
 
 package gen
 
-import (
-	"math"
-)
+import "math"
+
+type typeDemand struct {
+	min, max int
+}
+
+func (d typeDemand) getAverage() int {
+	return (d.min + d.max) / 2
+}
 
 type docsGenConfigurator struct {
 	types                        map[tStr]typeDefinition
 	config                       configsMap
 	primaryGraph, secondaryGraph map[string][]string
 	TypesOrder                   []string
-	DocsDemand                   map[tStr]int
+	DocsDemand                   map[tStr]typeDemand
 	UsageCounter                 map[tStr]map[tStr]map[fStr]relationUsage
 }
 
@@ -27,7 +33,7 @@ func newDocGenConfigurator(types map[tStr]typeDefinition, config configsMap) *do
 	return &docsGenConfigurator{
 		types:        types,
 		config:       config,
-		DocsDemand:   make(map[tStr]int),
+		DocsDemand:   make(map[tStr]typeDemand),
 		UsageCounter: make(map[tStr]map[tStr]map[fStr]relationUsage),
 	}
 }
@@ -36,7 +42,7 @@ type Option func(*docsGenConfigurator)
 
 func WithTypeDemand(typeName string, demand int) Option {
 	return func(g *docsGenConfigurator) {
-		g.DocsDemand[typeName] = demand
+		g.DocsDemand[typeName] = typeDemand{min: demand, max: demand}
 	}
 }
 
@@ -77,10 +83,10 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 	g.TypesOrder = getTopologicalOrder(g.primaryGraph, g.types)
 
 	if len(g.DocsDemand) == 0 {
-		g.DocsDemand[g.TypesOrder[0]] = defaultNumDocs
+		g.DocsDemand[g.TypesOrder[0]] = typeDemand{min: defaultNumDocs, max: defaultNumDocs}
 	}
 
-	initialTypes := make(map[string]int)
+	initialTypes := make(map[string]typeDemand)
 	for typeName, typeDemand := range g.DocsDemand {
 		initialTypes[typeName] = typeDemand
 	}
@@ -100,7 +106,7 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 
 	for _, typeName := range g.TypesOrder {
 		if _, ok := g.DocsDemand[typeName]; !ok {
-			g.DocsDemand[typeName] = defaultNumDocs
+			g.DocsDemand[typeName] = typeDemand{min: defaultNumDocs, max: defaultNumDocs}
 			err := g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
 			if err != nil {
 				return err
@@ -112,31 +118,36 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 
 func (g *docsGenConfigurator) getDemandForPrimaryType(
 	primaryType, secondaryType string,
-	secondaryDemand int,
+	secondaryDemand typeDemand,
 	primaryGraph map[string][]string,
-) (int, error) {
+) (typeDemand, error) {
 	primaryTypeDef := g.types[primaryType]
 	for _, field := range primaryTypeDef.fields {
 		if field.isRelation && field.typeStr == secondaryType {
-			min, max := 1, 1
 			primaryDemand := secondaryDemand
+			min, max := 1, 1
 			if field.isArray {
-				min, max = getMinMaxOrDefault(g.config.ForField(primaryType, field.name),
-					defaultNumChildrenPerDoc, defaultNumChildrenPerDoc)
-				minRatio := float64(secondaryDemand) / float64(min)
-				maxRatio := float64(secondaryDemand) / float64(max)
-				primaryDemand = int(math.Ceil((minRatio + maxRatio) / 2))
-				if maxRatio < 1 {
-					return 0, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
+				fieldConf := g.config.ForField(primaryType, field.name)
+				min, max = getMinMaxOrDefault(fieldConf, 0, secondaryDemand.max)
+				minRatio := float64(secondaryDemand.min) / float64(max)
+				maxRatio := float64(secondaryDemand.max) / float64(min)
+				if maxRatio < 1 || minRatio < 1 {
+					return typeDemand{}, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
 				}
+				primaryDemand.min = int(math.Ceil(minRatio))
+				primaryDemand.max = int(math.Floor(maxRatio))
 				var err error
 				primaryDemand, err = g.getPrimaryDemand(primaryType, primaryDemand, primaryGraph)
 				if err != nil {
-					return 0, err
+					return typeDemand{}, err
 				}
-				tmp := g.DocsDemand[primaryType]
-				if tmp > primaryDemand {
-					primaryDemand = tmp
+				if tmp, ok := g.DocsDemand[primaryType]; ok {
+					if primaryDemand.min < tmp.min {
+						primaryDemand.min = tmp.min
+					}
+					if primaryDemand.max > tmp.max {
+						primaryDemand.max = tmp.max
+					}
 				}
 			}
 			g.DocsDemand[primaryType] = primaryDemand
@@ -148,14 +159,14 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 
 func (g *docsGenConfigurator) getPrimaryDemand(
 	secondaryType string,
-	secondaryDemand int,
+	secondaryDemand typeDemand,
 	primaryGraph map[string][]string,
-) (int, error) {
+) (typeDemand, error) {
 	for _, primaryTypeName := range primaryGraph[secondaryType] {
 		var err error
 		secondaryDemand, err = g.getDemandForPrimaryType(primaryTypeName, secondaryType, secondaryDemand, primaryGraph)
 		if err != nil {
-			return 0, err
+			return typeDemand{}, err
 		}
 	}
 	return secondaryDemand, nil
@@ -174,8 +185,8 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 
 			if field.isArray {
 				min, max = getMinMaxOrDefault(g.config.ForField(typeName, field.name), 2, 2)
-				average := float64(min) + float64(max-min)/2
-				secondaryDocDemand = int(float64(primaryDocDemand) * average)
+				secondaryDocDemand.max = primaryDocDemand.min * max
+				secondaryDocDemand.min = primaryDocDemand.max * min
 			}
 
 			g.DocsDemand[field.typeStr] = secondaryDocDemand
@@ -218,7 +229,7 @@ func (g *docsGenConfigurator) addRelationUsage(secondaryType string, field field
 	}
 	if _, ok := g.UsageCounter[primaryType][secondaryType][field.name]; !ok {
 		g.UsageCounter[primaryType][secondaryType][field.name] = newRelationUsage(
-			min, max, g.DocsDemand[primaryType])
+			min, max, g.DocsDemand[primaryType].getAverage())
 	}
 }
 

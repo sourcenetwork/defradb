@@ -120,7 +120,7 @@ type randomDocGenerator struct {
 	resultDocs   []GeneratedDoc
 	usageCounter map[tStr]map[tStr]map[fStr]relationUsage
 	cols         map[tStr][]docRec
-	docsDemand   map[tStr]int
+	docsDemand   map[tStr]typeDemand
 }
 
 func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, error) {
@@ -152,7 +152,7 @@ func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, er
 func (g *randomDocGenerator) getTotalDemand() int {
 	totalDemand := 0
 	for _, demand := range g.docsDemand {
-		totalDemand += demand
+		totalDemand += demand.max
 	}
 	return totalDemand
 }
@@ -244,7 +244,8 @@ func (g *randomDocGenerator) generateRandomDocs(order []tStr) []DocsList {
 		typeDef := g.types[typeName]
 
 		currentTypeDemand := g.docsDemand[typeName]
-		for i := 0; i < currentTypeDemand; i++ {
+		averageDemand := currentTypeDemand.getAverage()
+		for i := 0; i < averageDemand; i++ {
 			newDoc := make(doc)
 			for _, field := range typeDef.fields {
 				if field.isRelation {
