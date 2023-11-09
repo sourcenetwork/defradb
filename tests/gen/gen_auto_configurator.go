@@ -10,7 +10,10 @@
 
 package gen
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 type typeDemand struct {
 	min, max int
@@ -64,43 +67,62 @@ func (c typeUsageCounters) allocateIndexes() {
 	}
 }
 
+type relationUsage struct {
+	index          int
+	minAmount      int
+	maxAmount      int
+	docKeysCounter []struct {
+		ind   int
+		count int
+	}
+	numDocs int
+}
+
+func newRelationUsage(minAmount, maxAmount, numDocs int) *relationUsage {
+	return &relationUsage{
+		minAmount: minAmount,
+		maxAmount: maxAmount,
+		numDocs:   numDocs,
+	}
+}
+
+func (u *relationUsage) useNextDocKey() int {
+	docKeyCounterInd := 0
+	if u.index >= u.minAmount*u.numDocs {
+		docKeyCounterInd = rand.Intn(len(u.docKeysCounter))
+	} else {
+		docKeyCounterInd = u.index % len(u.docKeysCounter)
+	}
+	currentInd := u.docKeysCounter[docKeyCounterInd].ind
+	counter := &u.docKeysCounter[docKeyCounterInd]
+	counter.count++
+	if counter.count >= u.maxAmount {
+		lastCounterInd := len(u.docKeysCounter) - 1
+		*counter = u.docKeysCounter[lastCounterInd]
+		u.docKeysCounter = u.docKeysCounter[:lastCounterInd]
+	}
+	u.index++
+
+	return currentInd
+}
+
+func (u *relationUsage) allocateIndexes() {
+	docKeysCounter := make([]struct {
+		ind   int
+		count int
+	}, u.numDocs)
+	for i := range docKeysCounter {
+		docKeysCounter[i].ind = i
+	}
+	u.docKeysCounter = docKeysCounter
+}
+
 func newDocGenConfigurator(types map[string]typeDefinition, config configsMap) *docsGenConfigurator {
 	return &docsGenConfigurator{
 		types:        types,
 		config:       config,
 		DocsDemand:   make(map[string]typeDemand),
 		UsageCounter: typeUsageCounters{m: make(map[string]map[string]map[string]*relationUsage)},
-	}
-}
-
-type Option func(*docsGenConfigurator)
-
-func WithTypeDemand(typeName string, demand int) Option {
-	return func(g *docsGenConfigurator) {
-		g.DocsDemand[typeName] = typeDemand{min: demand, max: demand}
-	}
-}
-
-func WithFieldMinMax(typeName, fieldName string, min, max int) Option {
-	return func(g *docsGenConfigurator) {
-		conf := g.config.ForField(typeName, fieldName)
-		conf.props["min"] = min
-		conf.props["max"] = max
-		g.config.AddForField(typeName, fieldName, conf)
-	}
-}
-
-func WithFieldLen(typeName, fieldName string, length int) Option {
-	return func(g *docsGenConfigurator) {
-		conf := g.config.ForField(typeName, fieldName)
-		conf.props["len"] = length
-		g.config.AddForField(typeName, fieldName, conf)
-	}
-}
-
-func WithFieldGenerator(typeName, fieldName string, genFunc GenerateFieldFunc) Option {
-	return func(g *docsGenConfigurator) {
-		g.config.AddForField(typeName, fieldName, genConfig{fieldGenerator: genFunc})
 	}
 }
 
