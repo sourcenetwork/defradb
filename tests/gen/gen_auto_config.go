@@ -43,7 +43,7 @@ func validateConfig(types map[string]typeDefinition, configsMap configsMap) erro
 			_, hasMin := fieldConfig.props["min"]
 			if hasMin {
 				var err error
-				if fieldDef.isArray || fieldDef.typeStr == "Int" {
+				if fieldDef.isArray || fieldDef.typeStr == intType {
 					err = validateMinConfig[int](&fieldConfig, fieldDef.isArray)
 				} else {
 					err = validateMinConfig[float64](&fieldConfig, false)
@@ -56,7 +56,7 @@ func validateConfig(types map[string]typeDefinition, configsMap configsMap) erro
 			}
 			lenConf, hasLen := fieldConfig.props["len"]
 			if hasLen {
-				if fieldDef.typeStr != "String" {
+				if fieldDef.typeStr != stringType {
 					return NewErrInvalidConfiguration("len val is used on  not String")
 				}
 				len, ok := lenConf.(int)

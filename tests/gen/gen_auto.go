@@ -155,18 +155,18 @@ func (g *randomDocGenerator) generateRandomValue(typeName, fieldType string, fie
 
 func (g *randomDocGenerator) getValueGenerator(typeStr string, fieldConfig genConfig) func() any {
 	switch typeStr {
-	case "String":
+	case stringType:
 		strLen := defaultStrLen
 		if prop, ok := fieldConfig.props["len"]; ok {
 			strLen = prop.(int)
 		}
 		return func() any { return getRandomString(&g.random, strLen) }
-	case "Int":
+	case intType:
 		min, max := getMinMaxOrDefault(fieldConfig, defaultIntMin, defaultIntMax)
 		return func() any { return min + g.random.Intn(max-min+1) }
-	case "Boolean":
+	case boolType:
 		return func() any { return g.random.Float32() < 0.5 }
-	case "Float":
+	case floatType:
 		min, max := getMinMaxOrDefault(fieldConfig, 0.0, 1.0)
 		return func() any { return min + g.random.Float64()*(max-min) }
 	}

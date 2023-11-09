@@ -10,6 +10,13 @@
 
 package gen
 
+const (
+	stringType = "String"
+	intType    = "Int"
+	boolType   = "Boolean"
+	floatType  = "Float"
+)
+
 type DocsList struct {
 	ColName string
 	Docs    []map[string]any
