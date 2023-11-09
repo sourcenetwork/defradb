@@ -10,6 +10,8 @@
 
 package gen
 
+import "math/rand"
+
 type Option func(*docsGenConfigurator)
 
 func WithTypeDemand(typeName string, demand int) Option {
@@ -44,5 +46,11 @@ func WithFieldLen(typeName, fieldName string, length int) Option {
 func WithFieldGenerator(typeName, fieldName string, genFunc GenerateFieldFunc) Option {
 	return func(g *docsGenConfigurator) {
 		g.config.AddForField(typeName, fieldName, genConfig{fieldGenerator: genFunc})
+	}
+}
+
+func WithRandomSeed(seed int64) Option {
+	return func(g *docsGenConfigurator) {
+		g.random = rand.New(rand.NewSource(seed))
 	}
 }

@@ -52,6 +52,7 @@ type randomDocGenerator struct {
 	usageCounter typeUsageCounters
 	cols         map[string][]docRec
 	docsDemand   map[string]typeDemand
+	random       rand.Rand
 }
 
 func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, error) {
@@ -62,6 +63,8 @@ func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, er
 	if err != nil {
 		return nil, err
 	}
+
+	g.random = *configurator.random
 
 	g.docsDemand = configurator.docsDemand
 	g.usageCounter = configurator.usageCounter
@@ -133,11 +136,11 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) []DocsList {
 	return result
 }
 
-func getRandomString(n int) string {
+func getRandomString(random *rand.Rand, n int) string {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+		b[i] = letterBytes[random.Intn(len(letterBytes))]
 	}
 	return string(b)
 }
@@ -157,15 +160,15 @@ func (g *randomDocGenerator) getValueGenerator(typeStr string, fieldConfig genCo
 		if prop, ok := fieldConfig.props["len"]; ok {
 			strLen = prop.(int)
 		}
-		return func() any { return getRandomString(strLen) }
+		return func() any { return getRandomString(&g.random, strLen) }
 	case "Int":
 		min, max := getMinMaxOrDefault(fieldConfig, defaultIntMin, defaultIntMax)
-		return func() any { return min + rand.Intn(max-min+1) }
+		return func() any { return min + g.random.Intn(max-min+1) }
 	case "Boolean":
-		return func() any { return rand.Float32() < 0.5 }
+		return func() any { return g.random.Float32() < 0.5 }
 	case "Float":
 		min, max := getMinMaxOrDefault(fieldConfig, 0.0, 1.0)
-		return func() any { return min + rand.Float64()*(max-min) }
+		return func() any { return min + g.random.Float64()*(max-min) }
 	}
 	panic("Can not generate random value for unknown type: " + typeStr)
 }

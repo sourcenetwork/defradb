@@ -13,6 +13,7 @@ package gen
 import (
 	"math"
 	"math/rand"
+	"time"
 )
 
 type typeDemand struct {
@@ -33,13 +34,22 @@ type docsGenConfigurator struct {
 	typesOrder                   []string
 	docsDemand                   map[string]typeDemand
 	usageCounter                 typeUsageCounters
+	random                       *rand.Rand
 }
 
 type typeUsageCounters struct {
-	m map[string]map[string]map[string]*relationUsage
+	m      map[string]map[string]map[string]*relationUsage
+	random *rand.Rand
 }
 
-func (c typeUsageCounters) addRelationUsage(secondaryType string, field fieldDefinition, min, max, numDocs int) {
+func newTypeUsageCounter(random *rand.Rand) typeUsageCounters {
+	return typeUsageCounters{
+		m:      make(map[string]map[string]map[string]*relationUsage),
+		random: random,
+	}
+}
+
+func (c *typeUsageCounters) addRelationUsage(secondaryType string, field fieldDefinition, min, max, numDocs int) {
 	primaryType := field.typeStr
 	if _, ok := c.m[primaryType]; !ok {
 		c.m[primaryType] = make(map[string]map[string]*relationUsage)
@@ -48,11 +58,11 @@ func (c typeUsageCounters) addRelationUsage(secondaryType string, field fieldDef
 		c.m[primaryType][secondaryType] = make(map[string]*relationUsage)
 	}
 	if _, ok := c.m[primaryType][secondaryType][field.name]; !ok {
-		c.m[primaryType][secondaryType][field.name] = newRelationUsage(min, max, numDocs)
+		c.m[primaryType][secondaryType][field.name] = newRelationUsage(min, max, numDocs, c.random)
 	}
 }
 
-func (c typeUsageCounters) getNextTypeIndForField(secondaryType string, field fieldDefinition) int {
+func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field fieldDefinition) int {
 	primaryType := field.typeStr
 	current := c.m[primaryType][secondaryType][field.name]
 
@@ -60,7 +70,7 @@ func (c typeUsageCounters) getNextTypeIndForField(secondaryType string, field fi
 	return ind
 }
 
-func (c typeUsageCounters) allocateIndexes(currentMax int) {
+func (c *typeUsageCounters) allocateIndexes(currentMax int) {
 	for _, secondaryTypes := range c.m {
 		for _, fields := range secondaryTypes {
 			for _, field := range fields {
@@ -82,20 +92,22 @@ type relationUsage struct {
 		count int
 	}
 	numDocs int
+	random  *rand.Rand
 }
 
-func newRelationUsage(minAmount, maxAmount, numDocs int) *relationUsage {
+func newRelationUsage(minAmount, maxAmount, numDocs int, random *rand.Rand) *relationUsage {
 	return &relationUsage{
 		minAmount: minAmount,
 		maxAmount: maxAmount,
 		numDocs:   numDocs,
+		random:    random,
 	}
 }
 
 func (u *relationUsage) useNextDocKey() int {
 	docKeyCounterInd := 0
 	if u.index >= u.minAmount*u.numDocs {
-		docKeyCounterInd = rand.Intn(len(u.docKeysCounter))
+		docKeyCounterInd = u.random.Intn(len(u.docKeysCounter))
 	} else {
 		docKeyCounterInd = u.index % len(u.docKeysCounter)
 	}
@@ -125,10 +137,9 @@ func (u *relationUsage) allocateIndexes() {
 
 func newDocGenConfigurator(types map[string]typeDefinition, config configsMap) *docsGenConfigurator {
 	return &docsGenConfigurator{
-		types:        types,
-		config:       config,
-		docsDemand:   make(map[string]typeDemand),
-		usageCounter: typeUsageCounters{m: make(map[string]map[string]map[string]*relationUsage)},
+		types:      types,
+		config:     config,
+		docsDemand: make(map[string]typeDemand),
 	}
 }
 
@@ -141,6 +152,12 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 	if err != nil {
 		return err
 	}
+
+	if g.random == nil {
+		g.random = rand.New(rand.NewSource(time.Now().UnixNano()))
+	}
+
+	g.usageCounter = newTypeUsageCounter(g.random)
 
 	g.primaryGraph, g.secondaryGraph = getRelationGraphs(g.types)
 	g.typesOrder = getTopologicalOrder(g.primaryGraph, g.types)
