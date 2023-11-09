@@ -131,9 +131,6 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 				min, max = getMinMaxOrDefault(fieldConf, 0, secondaryDemand.max)
 				minRatio := float64(secondaryDemand.min) / float64(max)
 				maxRatio := float64(secondaryDemand.max) / float64(min)
-				if maxRatio < 1 || minRatio < 1 {
-					return typeDemand{}, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
-				}
 				primaryDemand.min = int(math.Ceil(minRatio))
 				primaryDemand.max = int(math.Floor(maxRatio))
 				var err error
@@ -148,6 +145,9 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 					if primaryDemand.max > tmp.max {
 						primaryDemand.max = tmp.max
 					}
+				}
+				if primaryDemand.min > primaryDemand.max {
+					return typeDemand{}, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
 				}
 			}
 			g.DocsDemand[primaryType] = primaryDemand
