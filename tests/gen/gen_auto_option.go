@@ -18,7 +18,13 @@ func WithTypeDemand(typeName string, demand int) Option {
 	}
 }
 
-func WithFieldMinMax(typeName, fieldName string, min, max int) Option {
+func WithTypeDemandRange(typeName string, min, max int) Option {
+	return func(g *docsGenConfigurator) {
+		g.DocsDemand[typeName] = typeDemand{min: min, max: min}
+	}
+}
+
+func WithFieldRange[T int | float64](typeName, fieldName string, min, max T) Option {
 	return func(g *docsGenConfigurator) {
 		conf := g.config.ForField(typeName, fieldName)
 		conf.props["min"] = min
