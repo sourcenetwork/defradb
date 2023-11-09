@@ -78,19 +78,11 @@ type relationUsage struct {
 	numDocs int
 }
 
-func newRelationUsage(minAmount, maxAmount, numDocs int) relationUsage {
-	docKeysCounter := make([]struct {
-		ind   int
-		count int
-	}, numDocs)
-	for i := range docKeysCounter {
-		docKeysCounter[i].ind = i
-	}
-	return relationUsage{
-		minAmount:      minAmount,
-		maxAmount:      maxAmount,
-		numDocs:        numDocs,
-		docKeysCounter: docKeysCounter,
+func newRelationUsage(minAmount, maxAmount, numDocs int) *relationUsage {
+	return &relationUsage{
+		minAmount: minAmount,
+		maxAmount: maxAmount,
+		numDocs:   numDocs,
 	}
 }
 
@@ -114,11 +106,22 @@ func (u *relationUsage) useNextDocKey() int {
 	return currentInd
 }
 
+func (u *relationUsage) allocateIndexes() {
+	docKeysCounter := make([]struct {
+		ind   int
+		count int
+	}, u.numDocs)
+	for i := range docKeysCounter {
+		docKeysCounter[i].ind = i
+	}
+	u.docKeysCounter = docKeysCounter
+}
+
 type randomDocGenerator struct {
 	types        map[string]typeDefinition
 	config       configsMap
 	resultDocs   []GeneratedDoc
-	usageCounter map[string]map[string]map[string]relationUsage
+	usageCounter typeUsageCounters
 	cols         map[string][]docRec
 	docsDemand   map[string]typeDemand
 }
@@ -219,13 +222,8 @@ func validateMinConfig[T int | float64](fieldConf *genConfig, onlyPositive bool)
 }
 
 func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType string, field fieldDefinition) string {
-	primaryType := field.typeStr
-	current := g.usageCounter[primaryType][secondaryType][field.name]
-
-	ind := current.useNextDocKey()
-
-	docKey := g.cols[primaryType][ind].docKey
-	g.usageCounter[primaryType][secondaryType][field.name] = current
+	ind := g.usageCounter.getNextTypeIndForField(secondaryType, field)
+	docKey := g.cols[field.typeStr][ind].docKey
 	return docKey
 }
 

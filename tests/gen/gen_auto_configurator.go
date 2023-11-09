@@ -26,7 +26,42 @@ type docsGenConfigurator struct {
 	primaryGraph, secondaryGraph map[string][]string
 	TypesOrder                   []string
 	DocsDemand                   map[string]typeDemand
-	UsageCounter                 map[string]map[string]map[string]relationUsage
+	UsageCounter                 typeUsageCounters
+}
+
+type typeUsageCounters struct {
+	m map[string]map[string]map[string]*relationUsage
+}
+
+func (c typeUsageCounters) addRelationUsage(secondaryType string, field fieldDefinition, min, max, numDocs int) {
+	primaryType := field.typeStr
+	if _, ok := c.m[primaryType]; !ok {
+		c.m[primaryType] = make(map[string]map[string]*relationUsage)
+	}
+	if _, ok := c.m[primaryType][secondaryType]; !ok {
+		c.m[primaryType][secondaryType] = make(map[string]*relationUsage)
+	}
+	if _, ok := c.m[primaryType][secondaryType][field.name]; !ok {
+		c.m[primaryType][secondaryType][field.name] = newRelationUsage(min, max, numDocs)
+	}
+}
+
+func (c typeUsageCounters) getNextTypeIndForField(secondaryType string, field fieldDefinition) int {
+	primaryType := field.typeStr
+	current := c.m[primaryType][secondaryType][field.name]
+
+	ind := current.useNextDocKey()
+	return ind
+}
+
+func (c typeUsageCounters) allocateIndexes() {
+	for _, secondaryTypes := range c.m {
+		for _, fields := range secondaryTypes {
+			for _, field := range fields {
+				field.allocateIndexes()
+			}
+		}
+	}
 }
 
 func newDocGenConfigurator(types map[string]typeDefinition, config configsMap) *docsGenConfigurator {
@@ -34,7 +69,7 @@ func newDocGenConfigurator(types map[string]typeDefinition, config configsMap) *
 		types:        types,
 		config:       config,
 		DocsDemand:   make(map[string]typeDemand),
-		UsageCounter: make(map[string]map[string]map[string]relationUsage),
+		UsageCounter: typeUsageCounters{m: make(map[string]map[string]map[string]*relationUsage)},
 	}
 }
 
@@ -113,6 +148,7 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 			}
 		}
 	}
+	g.UsageCounter.allocateIndexes()
 	return nil
 }
 
@@ -214,22 +250,8 @@ func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType stri
 	secondaryTypeDef := g.types[secondaryType]
 	for _, secondaryTypeField := range secondaryTypeDef.fields {
 		if secondaryTypeField.typeStr == primaryType {
-			g.addRelationUsage(secondaryType, secondaryTypeField, min, max)
+			g.UsageCounter.addRelationUsage(secondaryType, secondaryTypeField, min, max, g.DocsDemand[primaryType].getAverage())
 		}
-	}
-}
-
-func (g *docsGenConfigurator) addRelationUsage(secondaryType string, field fieldDefinition, min, max int) {
-	primaryType := field.typeStr
-	if _, ok := g.UsageCounter[primaryType]; !ok {
-		g.UsageCounter[primaryType] = make(map[string]map[string]relationUsage)
-	}
-	if _, ok := g.UsageCounter[primaryType][secondaryType]; !ok {
-		g.UsageCounter[primaryType][secondaryType] = make(map[string]relationUsage)
-	}
-	if _, ok := g.UsageCounter[primaryType][secondaryType][field.name]; !ok {
-		g.UsageCounter[primaryType][secondaryType][field.name] = newRelationUsage(
-			min, max, g.DocsDemand[primaryType].getAverage())
 	}
 }
 
