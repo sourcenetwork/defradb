@@ -20,6 +20,9 @@ type typeDemand struct {
 }
 
 func (d typeDemand) getAverage() int {
+	if d.max == math.MaxInt {
+		return d.max
+	}
 	return (d.min + d.max) / 2
 }
 
@@ -57,10 +60,13 @@ func (c typeUsageCounters) getNextTypeIndForField(secondaryType string, field fi
 	return ind
 }
 
-func (c typeUsageCounters) allocateIndexes() {
+func (c typeUsageCounters) allocateIndexes(currentMax int) {
 	for _, secondaryTypes := range c.m {
 		for _, fields := range secondaryTypes {
 			for _, field := range fields {
+				if field.numDocs == math.MaxInt {
+					field.numDocs = currentMax
+				}
 				field.allocateIndexes()
 			}
 		}
@@ -170,8 +176,25 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 			}
 		}
 	}
-	g.UsageCounter.allocateIndexes()
+	g.allocateUsageCounterIndexes()
 	return nil
+}
+
+func (g *docsGenConfigurator) allocateUsageCounterIndexes() {
+	max := 0
+	for _, demand := range g.DocsDemand {
+		if demand.max > max && demand.max != math.MaxInt {
+			max = demand.max
+		}
+	}
+	for typeName, demand := range g.DocsDemand {
+		if demand.max == math.MaxInt {
+			demand.max = max
+			demand.min = max
+			g.DocsDemand[typeName] = demand
+		}
+	}
+	g.UsageCounter.allocateIndexes(max)
 }
 
 func (g *docsGenConfigurator) getDemandForPrimaryType(
