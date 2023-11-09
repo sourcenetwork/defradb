@@ -20,19 +20,16 @@ type GeneratedDoc struct {
 	JSON     string
 }
 
-type tStr = string
-type fStr = string
-
 type fieldDefinition struct {
-	name       fStr
-	typeStr    tStr
+	name       string
+	typeStr    string
 	isArray    bool
 	isRelation bool
 	isPrimary  bool
 }
 
 type typeDefinition struct {
-	name   tStr
+	name   string
 	index  int
 	fields []fieldDefinition
 }
@@ -45,7 +42,7 @@ type genConfig struct {
 	fieldGenerator GenerateFieldFunc
 }
 
-func (t *typeDefinition) getField(name fStr) *fieldDefinition {
+func (t *typeDefinition) getField(name string) *fieldDefinition {
 	for i := range t.fields {
 		if t.fields[i].name == name {
 			return &t.fields[i]

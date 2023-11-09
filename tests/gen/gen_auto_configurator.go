@@ -21,20 +21,20 @@ func (d typeDemand) getAverage() int {
 }
 
 type docsGenConfigurator struct {
-	types                        map[tStr]typeDefinition
+	types                        map[string]typeDefinition
 	config                       configsMap
 	primaryGraph, secondaryGraph map[string][]string
 	TypesOrder                   []string
-	DocsDemand                   map[tStr]typeDemand
-	UsageCounter                 map[tStr]map[tStr]map[fStr]relationUsage
+	DocsDemand                   map[string]typeDemand
+	UsageCounter                 map[string]map[string]map[string]relationUsage
 }
 
-func newDocGenConfigurator(types map[tStr]typeDefinition, config configsMap) *docsGenConfigurator {
+func newDocGenConfigurator(types map[string]typeDefinition, config configsMap) *docsGenConfigurator {
 	return &docsGenConfigurator{
 		types:        types,
 		config:       config,
-		DocsDemand:   make(map[tStr]typeDemand),
-		UsageCounter: make(map[tStr]map[tStr]map[fStr]relationUsage),
+		DocsDemand:   make(map[string]typeDemand),
+		UsageCounter: make(map[string]map[string]map[string]relationUsage),
 	}
 }
 
@@ -222,10 +222,10 @@ func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType stri
 func (g *docsGenConfigurator) addRelationUsage(secondaryType string, field fieldDefinition, min, max int) {
 	primaryType := field.typeStr
 	if _, ok := g.UsageCounter[primaryType]; !ok {
-		g.UsageCounter[primaryType] = make(map[tStr]map[fStr]relationUsage)
+		g.UsageCounter[primaryType] = make(map[string]map[string]relationUsage)
 	}
 	if _, ok := g.UsageCounter[primaryType][secondaryType]; !ok {
-		g.UsageCounter[primaryType][secondaryType] = make(map[fStr]relationUsage)
+		g.UsageCounter[primaryType][secondaryType] = make(map[string]relationUsage)
 	}
 	if _, ok := g.UsageCounter[primaryType][secondaryType][field.name]; !ok {
 		g.UsageCounter[primaryType][secondaryType][field.name] = newRelationUsage(

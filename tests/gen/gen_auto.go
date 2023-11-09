@@ -36,7 +36,7 @@ type (
 	}
 )
 
-type configsMap map[tStr]map[fStr]genConfig
+type configsMap map[string]map[string]genConfig
 
 func (m configsMap) ForField(typeStr, fieldName string) genConfig {
 	var fieldConfig genConfig
@@ -50,7 +50,7 @@ func (m configsMap) ForField(typeStr, fieldName string) genConfig {
 func (m configsMap) AddForField(typeStr, fieldName string, conf genConfig) {
 	typeConfig, ok := m[typeStr]
 	if !ok {
-		typeConfig = make(map[fStr]genConfig)
+		typeConfig = make(map[string]genConfig)
 		m[typeStr] = typeConfig
 	}
 	typeConfig[fieldName] = conf
@@ -115,16 +115,16 @@ func (u *relationUsage) useNextDocKey() int {
 }
 
 type randomDocGenerator struct {
-	types        map[tStr]typeDefinition
+	types        map[string]typeDefinition
 	config       configsMap
 	resultDocs   []GeneratedDoc
-	usageCounter map[tStr]map[tStr]map[fStr]relationUsage
-	cols         map[tStr][]docRec
-	docsDemand   map[tStr]typeDemand
+	usageCounter map[string]map[string]map[string]relationUsage
+	cols         map[string][]docRec
+	docsDemand   map[string]typeDemand
 }
 
 func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, error) {
-	g.cols = make(map[tStr][]docRec)
+	g.cols = make(map[string][]docRec)
 
 	configurator := newDocGenConfigurator(g.types, g.config)
 	err := configurator.Configure(options...)
@@ -157,7 +157,7 @@ func (g *randomDocGenerator) getTotalDemand() int {
 	return totalDemand
 }
 
-func validateConfig(types map[tStr]typeDefinition, configsMap configsMap) error {
+func validateConfig(types map[string]typeDefinition, configsMap configsMap) error {
 	for typeName, typeConfigs := range configsMap {
 		typeDef := types[typeName]
 		for fieldName, fieldConfig := range typeConfigs {
@@ -218,7 +218,7 @@ func validateMinConfig[T int | float64](fieldConf *genConfig, onlyPositive bool)
 	return nil
 }
 
-func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType tStr, field fieldDefinition) string {
+func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType string, field fieldDefinition) string {
 	primaryType := field.typeStr
 	current := g.usageCounter[primaryType][secondaryType][field.name]
 
@@ -237,7 +237,7 @@ func (g *randomDocGenerator) getDocKey(typeDef *typeDefinition, doc map[string]a
 	return clientDoc.Key().String()
 }
 
-func (g *randomDocGenerator) generateRandomDocs(order []tStr) []DocsList {
+func (g *randomDocGenerator) generateRandomDocs(order []string) []DocsList {
 	result := []DocsList{}
 	for _, typeName := range order {
 		col := DocsList{ColName: typeName}
