@@ -45,6 +45,11 @@ jobs:
             database-type: badger-memory
             mutation-type: collection-save
             detect-changes: false
+          - os: windows-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            detect-changes: false
 
     runs-on: ${{ matrix.os }}
 
