@@ -50,33 +50,75 @@ func validateConfig(types map[string]typeDefinition, configsMap configsMap) erro
 		typeDef := types[typeName]
 		for fieldName, fieldConfig := range typeConfigs {
 			fieldDef := typeDef.getField(fieldName)
-			_, hasMin := fieldConfig.props["min"]
-			if hasMin {
-				var err error
-				if fieldDef.isArray || fieldDef.typeStr == intType {
-					err = validateMinConfig[int](&fieldConfig, fieldDef.isArray)
-				} else {
-					err = validateMinConfig[float64](&fieldConfig, false)
-				}
-				if err != nil {
-					return err
-				}
-			} else if _, hasMax := fieldConfig.props["max"]; hasMax {
-				return NewErrInvalidConfiguration("max value is set, but min value is not set")
+			err := checkAndValidateMinMax(fieldDef, &fieldConfig)
+			if err != nil {
+				return err
 			}
-			lenConf, hasLen := fieldConfig.props["len"]
-			if hasLen {
-				if fieldDef.typeStr != stringType {
-					return NewErrInvalidConfiguration("len val is used on  not String")
-				}
-				len, ok := lenConf.(int)
-				if !ok {
-					return NewErrInvalidConfiguration("len value is not integer")
-				}
-				if len < 1 {
-					return NewErrInvalidConfiguration("len value is less than 1")
-				}
+
+			err = checkAndValidateLen(fieldDef, &fieldConfig)
+			if err != nil {
+				return err
 			}
+
+			err = checkAndValidateRatio(fieldDef, &fieldConfig)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func checkAndValidateMinMax(field *fieldDefinition, conf *genConfig) error {
+	_, hasMin := conf.props["min"]
+	if hasMin {
+		var err error
+		if field.isArray || field.typeStr == intType {
+			err = validateMinConfig[int](conf, field.isArray)
+		} else {
+			err = validateMinConfig[float64](conf, false)
+		}
+		if err != nil {
+			return err
+		}
+	} else if _, hasMax := conf.props["max"]; hasMax {
+		return NewErrInvalidConfiguration("max value is set, but min value is not set")
+	}
+	return nil
+}
+
+func checkAndValidateLen(field *fieldDefinition, conf *genConfig) error {
+	lenConf, hasLen := conf.props["len"]
+	if hasLen {
+		if field.typeStr != stringType {
+			return NewErrInvalidConfiguration("len is used on not String")
+		}
+		len, ok := lenConf.(int)
+		if !ok {
+			return NewErrInvalidConfiguration("len value is not integer")
+		}
+		if len < 1 {
+			return NewErrInvalidConfiguration("len value is less than 1")
+		}
+	}
+	return nil
+}
+
+func checkAndValidateRatio(field *fieldDefinition, conf *genConfig) error {
+	ratioConf, hasRatio := conf.props["ratio"]
+	if hasRatio {
+		if field.typeStr != boolType {
+			return NewErrInvalidConfiguration("ratio is used on not Boolean")
+		}
+		len, ok := ratioConf.(float64)
+		if !ok {
+			return NewErrInvalidConfiguration("ratio value is not float")
+		}
+		if len < 0 {
+			return NewErrInvalidConfiguration("ratio value is negative")
+		}
+		if len > 1 {
+			return NewErrInvalidConfiguration("ratio value greater than 1.0")
 		}
 	}
 	return nil

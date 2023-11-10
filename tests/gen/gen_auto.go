@@ -163,7 +163,11 @@ func (g *randomDocGenerator) getValueGenerator(typeStr string, fieldConfig genCo
 		min, max := getMinMaxOrDefault(fieldConfig, defaultIntMin, defaultIntMax)
 		return func() any { return min + g.random.Intn(max-min+1) }
 	case boolType:
-		return func() any { return g.random.Float32() < 0.5 }
+		ratio := 0.5
+		if prop, ok := fieldConfig.props["ratio"]; ok {
+			ratio = prop.(float64)
+		}
+		return func() any { return g.random.Float64() < ratio }
 	case floatType:
 		min, max := getMinMaxOrDefault(fieldConfig, 0.0, 1.0)
 		return func() any { return min + g.random.Float64()*(max-min) }
