@@ -14,8 +14,17 @@ import (
 	"reflect"
 )
 
+// genConfig is a configuration for a generation of a field.
+type genConfig struct {
+	labels         []string
+	props          map[string]any
+	fieldGenerator GenerateFieldFunc
+}
+
+// configsMap is a map of type name to a map of field name to a generation configuration.
 type configsMap map[string]map[string]genConfig
 
+// ForField returns the generation configuration for a specific field of a type.
 func (m configsMap) ForField(typeStr, fieldName string) genConfig {
 	var fieldConfig genConfig
 	typeConfig := m[typeStr]
@@ -25,6 +34,7 @@ func (m configsMap) ForField(typeStr, fieldName string) genConfig {
 	return fieldConfig
 }
 
+// AddForField adds a generation configuration for a specific field of a type.
 func (m configsMap) AddForField(typeStr, fieldName string, conf genConfig) {
 	typeConfig, ok := m[typeStr]
 	if !ok {

@@ -27,16 +27,26 @@ func (d typeDemand) getAverage() int {
 	return (d.min + d.max) / 2
 }
 
+// docsGenConfigurator is responsible for handling the provided configuration and
+// configuring the document generator. This includes things like setting up the
+// demand for each type, setting up the relation usage counters, and setting up
+// the random seed.
 type docsGenConfigurator struct {
-	types                        map[string]typeDefinition
-	config                       configsMap
-	primaryGraph, secondaryGraph map[string][]string
-	typesOrder                   []string
-	docsDemand                   map[string]typeDemand
-	usageCounter                 typeUsageCounters
-	random                       *rand.Rand
+	types        map[string]typeDefinition
+	config       configsMap
+	primaryGraph map[string][]string
+	typesOrder   []string
+	docsDemand   map[string]typeDemand
+	usageCounter typeUsageCounters
+	random       *rand.Rand
 }
 
+// typeUsageCounters is a map of primary type to secondary type to field name to
+// relation usage. This is used to keep track of the usage of each relation.
+// Each foreign field has a tracker that keeps track of which and how many of primary
+// documents have been used for that foreign field. This is used to ensure that the
+// number of documents generated for each primary type is within the range of the
+// demand for that type and to guarantee a uniform distribution of the documents.
 type typeUsageCounters struct {
 	m      map[string]map[string]map[string]*relationUsage
 	random *rand.Rand
@@ -49,6 +59,7 @@ func newTypeUsageCounter(random *rand.Rand) typeUsageCounters {
 	}
 }
 
+// addRelationUsage adds a relation usage tracker for a foreign field.
 func (c *typeUsageCounters) addRelationUsage(secondaryType string, field fieldDefinition, min, max, numDocs int) {
 	primaryType := field.typeStr
 	if _, ok := c.m[primaryType]; !ok {
@@ -62,20 +73,20 @@ func (c *typeUsageCounters) addRelationUsage(secondaryType string, field fieldDe
 	}
 }
 
+// getNextTypeIndForField returns the next index to be used for a foreign field.
 func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field fieldDefinition) int {
-	primaryType := field.typeStr
-	current := c.m[primaryType][secondaryType][field.name]
-
-	ind := current.useNextDocKey()
-	return ind
+	current := c.m[field.typeStr][secondaryType][field.name]
+	return current.useNextDocKey()
 }
 
-func (c *typeUsageCounters) allocateIndexes(currentMax int) {
+// allocateIndexes allocates the indexes for each relation usage tracker.
+// It is called when all the demand for each type has been calculated.
+func (c *typeUsageCounters) allocateIndexes(currentMaxDemand int) {
 	for _, secondaryTypes := range c.m {
 		for _, fields := range secondaryTypes {
 			for _, field := range fields {
-				if field.numDocs == math.MaxInt {
-					field.numDocs = currentMax
+				if field.numAvailableDocs == math.MaxInt {
+					field.numAvailableDocs = currentMaxDemand
 				}
 				field.allocateIndexes()
 			}
@@ -84,42 +95,58 @@ func (c *typeUsageCounters) allocateIndexes(currentMax int) {
 }
 
 type relationUsage struct {
-	index          int
-	minAmount      int
-	maxAmount      int
+	// counter is the number of primary documents that have been used for the relation.
+	counter int
+	// minAmount is the minimum number of primary documents that should be used for the relation.
+	minAmount int
+	// maxAmount is the maximum number of primary documents that should be used for the relation.
+	maxAmount int
+	// docKeysCounter is a slice of structs that keep track of the number of times
+	// each primary document has been used for the relation.
 	docKeysCounter []struct {
-		ind   int
+		// ind is the index of the primary document.
+		ind int
+		// count is the number of times the primary document has been used for the relation.
 		count int
 	}
-	numDocs int
-	random  *rand.Rand
+	// numAvailableDocs is the number of documents of the primary type that are available
+	// for the relation.
+	numAvailableDocs int
+	random           *rand.Rand
 }
 
 func newRelationUsage(minAmount, maxAmount, numDocs int, random *rand.Rand) *relationUsage {
 	return &relationUsage{
-		minAmount: minAmount,
-		maxAmount: maxAmount,
-		numDocs:   numDocs,
-		random:    random,
+		minAmount:        minAmount,
+		maxAmount:        maxAmount,
+		numAvailableDocs: numDocs,
+		random:           random,
 	}
 }
 
+// useNextDocKey determines the next primary document to be used for the relation, tracks
+// it and returns its index.
 func (u *relationUsage) useNextDocKey() int {
 	docKeyCounterInd := 0
-	if u.index >= u.minAmount*u.numDocs {
+	// if a primary document has a minimum number of secondary documents that should be
+	// generated for it, then it should be used until that minimum is reached.
+	// After that, we can pick a random primary document to use.
+	if u.counter >= u.minAmount*u.numAvailableDocs {
 		docKeyCounterInd = u.random.Intn(len(u.docKeysCounter))
 	} else {
-		docKeyCounterInd = u.index % len(u.docKeysCounter)
+		docKeyCounterInd = u.counter % len(u.docKeysCounter)
 	}
 	currentInd := u.docKeysCounter[docKeyCounterInd].ind
-	counter := &u.docKeysCounter[docKeyCounterInd]
-	counter.count++
-	if counter.count >= u.maxAmount {
+	docCounter := &u.docKeysCounter[docKeyCounterInd]
+	docCounter.count++
+	// if the primary document reached max number of secondary documents, we can remove it
+	// from the slice of primary documents that are available for the relation.
+	if docCounter.count >= u.maxAmount {
 		lastCounterInd := len(u.docKeysCounter) - 1
-		*counter = u.docKeysCounter[lastCounterInd]
+		*docCounter = u.docKeysCounter[lastCounterInd]
 		u.docKeysCounter = u.docKeysCounter[:lastCounterInd]
 	}
-	u.index++
+	u.counter++
 
 	return currentInd
 }
@@ -128,7 +155,7 @@ func (u *relationUsage) allocateIndexes() {
 	docKeysCounter := make([]struct {
 		ind   int
 		count int
-	}, u.numDocs)
+	}, u.numAvailableDocs)
 	for i := range docKeysCounter {
 		docKeysCounter[i].ind = i
 	}
@@ -159,7 +186,7 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 
 	g.usageCounter = newTypeUsageCounter(g.random)
 
-	g.primaryGraph, g.secondaryGraph = getRelationGraphs(g.types)
+	g.primaryGraph = getRelationGraph(g.types)
 	g.typesOrder = getTopologicalOrder(g.primaryGraph, g.types)
 
 	if len(g.docsDemand) == 0 {
@@ -171,19 +198,33 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 		initialTypes[typeName] = typeDemand
 	}
 
+	err = g.calculateDocsDemand(initialTypes)
+	if err != nil {
+		return err
+	}
+
+	g.allocateUsageCounterIndexes()
+	return nil
+}
+
+func (g *docsGenConfigurator) calculateDocsDemand(initialTypes map[string]typeDemand) error {
 	for typeName, typeDemand := range initialTypes {
 		var err error
+		// from the current type we go up the graph and calculate the demand for primary types
 		typeDemand, err = g.getPrimaryDemand(typeName, typeDemand, g.primaryGraph)
 		if err != nil {
 			return err
 		}
 		g.docsDemand[typeName] = typeDemand
+
 		err = g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
 		if err != nil {
 			return err
 		}
 	}
 
+	// for other types that are not in the same graph as the initial types, we start with primary
+	// types, give them default demand value and calculate the demand for secondary types.
 	for _, typeName := range g.typesOrder {
 		if _, ok := g.docsDemand[typeName]; !ok {
 			g.docsDemand[typeName] = typeDemand{min: defaultNumDocs, max: defaultNumDocs}
@@ -193,10 +234,10 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 			}
 		}
 	}
-	g.allocateUsageCounterIndexes()
 	return nil
 }
 
+// allocateUsageCounterIndexes allocates the indexes for each relation usage tracker.
 func (g *docsGenConfigurator) allocateUsageCounterIndexes() {
 	max := 0
 	for _, demand := range g.docsDemand {
@@ -231,19 +272,22 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 				maxRatio := float64(secondaryDemand.max) / float64(min)
 				primaryDemand.min = int(math.Ceil(minRatio))
 				primaryDemand.max = int(math.Floor(maxRatio))
+
 				var err error
 				primaryDemand, err = g.getPrimaryDemand(primaryType, primaryDemand, primaryGraph)
 				if err != nil {
 					return typeDemand{}, err
 				}
-				if tmp, ok := g.docsDemand[primaryType]; ok {
-					if primaryDemand.min < tmp.min {
-						primaryDemand.min = tmp.min
+
+				if currentDemand, ok := g.docsDemand[primaryType]; ok {
+					if primaryDemand.min < currentDemand.min {
+						primaryDemand.min = currentDemand.min
 					}
-					if primaryDemand.max > tmp.max {
-						primaryDemand.max = tmp.max
+					if primaryDemand.max > currentDemand.max {
+						primaryDemand.max = currentDemand.max
 					}
 				}
+
 				if primaryDemand.min > primaryDemand.max {
 					return typeDemand{}, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
 				}
@@ -282,13 +326,15 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 			min, max := 1, 1
 
 			if field.isArray {
-				min, max = getMinMaxOrDefault(g.config.ForField(typeName, field.name), 2, 2)
+				fieldConf := g.config.ForField(typeName, field.name)
+				min, max = getMinMaxOrDefault(fieldConf, defaultNumChildrenPerDoc, defaultNumChildrenPerDoc)
 				secondaryDocDemand.max = primaryDocDemand.min * max
 				secondaryDocDemand.min = primaryDocDemand.max * min
 			}
 
 			g.docsDemand[field.typeStr] = secondaryDocDemand
 			g.initRelationUsages(field.typeStr, typeName, min, max)
+
 			err := g.calculateDemandForSecondaryTypes(field.typeStr, primaryGraph)
 			if err != nil {
 				return err
@@ -317,8 +363,7 @@ func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType stri
 	}
 }
 
-func getRelationGraphs(types map[string]typeDefinition) (map[string][]string, map[string][]string) {
-	secondaryGraph := make(map[string][]string)
+func getRelationGraph(types map[string]typeDefinition) map[string][]string {
 	primaryGraph := make(map[string][]string)
 
 	appendUnique := func(slice []string, val string) []string {
@@ -334,17 +379,15 @@ func getRelationGraphs(types map[string]typeDefinition) (map[string][]string, ma
 		for _, field := range typeDef.fields {
 			if field.isRelation {
 				if field.isPrimary {
-					secondaryGraph[field.typeStr] = appendUnique(secondaryGraph[field.typeStr], typeName)
 					primaryGraph[typeName] = appendUnique(primaryGraph[typeName], field.typeStr)
 				} else {
-					secondaryGraph[typeName] = appendUnique(secondaryGraph[typeName], field.typeStr)
 					primaryGraph[field.typeStr] = appendUnique(primaryGraph[field.typeStr], typeName)
 				}
 			}
 		}
 	}
 
-	return primaryGraph, secondaryGraph
+	return primaryGraph
 }
 
 func getTopologicalOrder(graph map[string][]string, types map[string]typeDefinition) []string {
