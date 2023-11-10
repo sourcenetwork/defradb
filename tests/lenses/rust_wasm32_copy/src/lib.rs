@@ -84,8 +84,9 @@ fn try_transform(ptr: *mut u8) -> Result<Option<Vec<u8>>, Box<dyn Error>> {
         .ok_or(ModuleError::PropertyNotFoundError{requested: params.src.clone()})?
         .clone();
 
-    input.insert(params.dst, value);
+    let mut result = input.clone();
+    result.insert(params.dst, value);
 
-    let result_json = serde_json::to_vec(&input)?;
+    let result_json = serde_json::to_vec(&result)?;
     Ok(Some(result_json))
 }
