@@ -17,7 +17,8 @@ import (
 )
 
 type typeDemand struct {
-	min, max int
+	min, max    int
+	usedDefined bool
 }
 
 func (d typeDemand) getAverage() int {
@@ -263,7 +264,7 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 	primaryTypeDef := g.types[primaryType]
 	for _, field := range primaryTypeDef.fields {
 		if field.isRelation && field.typeStr == secondaryType {
-			primaryDemand := secondaryDemand
+			primaryDemand := typeDemand{min: secondaryDemand.min, max: secondaryDemand.max}
 			min, max := 1, 1
 			if field.isArray {
 				fieldConf := g.config.ForField(primaryType, field.name)
@@ -278,19 +279,18 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 				if err != nil {
 					return typeDemand{}, err
 				}
-
-				if currentDemand, ok := g.docsDemand[primaryType]; ok {
-					if primaryDemand.min < currentDemand.min {
-						primaryDemand.min = currentDemand.min
-					}
-					if primaryDemand.max > currentDemand.max {
-						primaryDemand.max = currentDemand.max
-					}
+			}
+			if currentDemand, ok := g.docsDemand[primaryType]; ok {
+				if primaryDemand.min < currentDemand.min {
+					primaryDemand.min = currentDemand.min
 				}
-
-				if primaryDemand.min > primaryDemand.max {
-					return typeDemand{}, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
+				if primaryDemand.max > currentDemand.max {
+					primaryDemand.max = currentDemand.max
 				}
+			}
+
+			if primaryDemand.min > primaryDemand.max {
+				return typeDemand{}, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
 			}
 			g.docsDemand[primaryType] = primaryDemand
 			g.initRelationUsages(field.typeStr, primaryType, min, max)
@@ -322,17 +322,22 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 	for _, field := range typeDef.fields {
 		if field.isRelation && !field.isPrimary {
 			primaryDocDemand := g.docsDemand[typeName]
-			secondaryDocDemand := primaryDocDemand
+			newSecDemand := typeDemand{min: primaryDocDemand.min, max: primaryDocDemand.max}
 			min, max := 1, 1
 
 			if field.isArray {
 				fieldConf := g.config.ForField(typeName, field.name)
 				min, max = getMinMaxOrDefault(fieldConf, defaultNumChildrenPerDoc, defaultNumChildrenPerDoc)
-				secondaryDocDemand.max = primaryDocDemand.min * max
-				secondaryDocDemand.min = primaryDocDemand.max * min
+				newSecDemand.max = primaryDocDemand.min * max
+				newSecDemand.min = primaryDocDemand.max * min
 			}
 
-			g.docsDemand[field.typeStr] = secondaryDocDemand
+			curSecDemand := g.docsDemand[field.typeStr]
+			if curSecDemand.usedDefined &&
+				(curSecDemand.min < newSecDemand.min || curSecDemand.max > newSecDemand.max) {
+				return NewErrInvalidConfiguration("can not supply demand for type " + field.typeStr)
+			}
+			g.docsDemand[field.typeStr] = newSecDemand
 			g.initRelationUsages(field.typeStr, typeName, min, max)
 
 			err := g.calculateDemandForSecondaryTypes(field.typeStr, primaryGraph)
@@ -342,7 +347,7 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 
 			for _, primaryTypeName := range primaryGraph[field.typeStr] {
 				if _, ok := g.docsDemand[primaryTypeName]; !ok {
-					primaryDemand, err := g.getDemandForPrimaryType(primaryTypeName, field.typeStr, secondaryDocDemand, primaryGraph)
+					primaryDemand, err := g.getDemandForPrimaryType(primaryTypeName, field.typeStr, newSecDemand, primaryGraph)
 					if err != nil {
 						return err
 					}

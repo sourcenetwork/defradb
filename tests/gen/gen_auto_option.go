@@ -18,14 +18,14 @@ type Option func(*docsGenConfigurator)
 // WithTypeDemand configures the demand for a type.
 func WithTypeDemand(typeName string, demand int) Option {
 	return func(g *docsGenConfigurator) {
-		g.docsDemand[typeName] = typeDemand{min: demand, max: demand}
+		g.docsDemand[typeName] = typeDemand{min: demand, max: demand, usedDefined: true}
 	}
 }
 
 // WithTypeDemandRange configures the demand range for a type.
 func WithTypeDemandRange(typeName string, min, max int) Option {
 	return func(g *docsGenConfigurator) {
-		g.docsDemand[typeName] = typeDemand{min: min, max: min}
+		g.docsDemand[typeName] = typeDemand{min: min, max: min, usedDefined: true}
 	}
 }
 
