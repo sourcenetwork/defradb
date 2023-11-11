@@ -497,7 +497,7 @@ type addr struct{ id libpeer.ID }
 func (a addr) Network() string { return "libp2p" }
 
 // String returns the peer ID of this address in string form (B58-encoded).
-func (a addr) String() string { return a.id.Pretty() }
+func (a addr) String() string { return a.id.String() }
 
 // peerIDFromContext returns peer ID from the GRPC context
 func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
