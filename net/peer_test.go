@@ -112,7 +112,7 @@ func createCID(doc *client.Document) (cid.Cid, error) {
 	return c, nil
 }
 
-const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
+const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	store := memory.NewDatastore(ctx)
