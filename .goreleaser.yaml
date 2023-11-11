@@ -1,0 +1,108 @@
+version: 1
+
+dist: ./build
+
+before:
+  hooks:
+    - go mod tidy
+    - make deps:playground
+
+after:
+  hooks:
+    - cmd: docker pull {{ .Env.GITHUB_REPOSITORY }}:latest
+    - cmd: docker run --rm {{ .Env.GITHUB_REPOSITORY }}:latest
+
+builds:
+  - id: "defradb"
+    main: ./cmd/defradb
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+  - id: "defradb+pg"
+    main: ./cmd/defradb
+    flags:
+      - -tags=playground
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+
+archives:
+  - id: defradb+pg
+    builds: 
+      - defradb+pg
+    format: binary
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: '{{ .Binary }}+pg_{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
+  - id: defradb
+    builds: 
+      - defradb
+    format: binary
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
+
+
+release:
+  header: |
+    DefraDB v0.8 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+    To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.7.x databases. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.source.network/.
+  name_template: "v{{.Version}} Release"
+
+changelog:
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^feat:.*'
+      order: 0
+    - title: Fix
+      regexp: '^fix:.*'
+      order: 1
+    - title: Tooling
+      regexp: '^tools:.*'
+      order: 2
+    - title: Documentation
+      regexp: '^docs:.*'
+      order: 3
+    - title: Refactoring
+      regexp: '^refactor:.*'
+      order: 4
+    - title: Testing
+      regexp: '^test:.*'
+      order: 5
+
+source:
+  enabled: true
+
+milestones:
+  - close: true
+    fail_on_error: true
+    name_template: "DefraDB v0.8"
+
+dockers:
+- ids: 
+    - "defradb+pg"
+  image_templates:
+  - "{{ .Env.GITHUB_REPOSITORY }}:latest"
+  - "{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
+  - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
+  build_flag_templates:
+  - "--pull"
+  - "--label=org.opencontainers.image.description=DefraDB is a Peer-to-Peer Edge Database."
+  - "--label=org.opencontainers.image.created={{.Date}}"
+  - "--label=org.opencontainers.image.name={{.ProjectName}}"
+  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+  - "--label=org.opencontainers.image.version={{.Version}}"
+  - "--label=org.opencontainers.image.source={{.GitURL}}"
+  - "--platform=linux/amd64"
+  dockerfile: ./tools/goreleaser.containerfile
+
