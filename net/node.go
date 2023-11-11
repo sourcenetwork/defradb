@@ -38,7 +38,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/routing"
 
 	"github.com/multiformats/go-multiaddr"
-	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
+	"github.com/sourcenetwork/go-libp2p-pubsub-rpc/finalizer"
 
 	// @TODO: https://github.com/sourcenetwork/defradb/issues/1902
 	//nolint:staticcheck

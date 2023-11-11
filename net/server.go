@@ -21,7 +21,7 @@ import (
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
-	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
+	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
