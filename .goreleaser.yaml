@@ -23,7 +23,7 @@ builds:
       - amd64
       - arm64
 
-  - id: "defradb+pg"
+  - id: "defradb_pg"
     main: ./cmd/defradb
     flags:
       - -tags=playground
@@ -35,11 +35,10 @@ builds:
       - amd64
       - arm64
 
-
 archives:
-  - id: defradb+pg
+  - id: defradb_pg
     builds: 
-      - defradb+pg
+      - defradb_pg
     format: binary
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: '{{ .Binary }}+pg_{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
@@ -50,13 +49,12 @@ archives:
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
 
-
 release:
   header: |
     DefraDB v0.8 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
     To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.7.x databases. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.source.network/.
-  name_template: "v{{.Version}} Release"
+  name_template: "v{{ .Version }} Release"
 
 changelog:
   sort: asc
@@ -90,19 +88,20 @@ milestones:
 
 dockers:
 - ids: 
-    - "defradb+pg"
+    - "defradb_pg"
   image_templates:
   - "{{ .Env.GITHUB_REPOSITORY }}:latest"
   - "{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
   - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
+  use: buildx
   build_flag_templates:
   - "--pull"
   - "--label=org.opencontainers.image.description=DefraDB is a Peer-to-Peer Edge Database."
-  - "--label=org.opencontainers.image.created={{.Date}}"
-  - "--label=org.opencontainers.image.name={{.ProjectName}}"
-  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-  - "--label=org.opencontainers.image.version={{.Version}}"
-  - "--label=org.opencontainers.image.source={{.GitURL}}"
+  - "--label=org.opencontainers.image.created={{ .Date }}"
+  - "--label=org.opencontainers.image.name={{ .ProjectName }}"
+  - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+  - "--label=org.opencontainers.image.version={{ .Version }}"
+  - "--label=org.opencontainers.image.source={{ .GitURL }}"
   - "--platform=linux/amd64"
   dockerfile: ./tools/goreleaser.containerfile
 
