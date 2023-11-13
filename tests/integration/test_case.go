@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
 // TestCase contains the details of the test case to execute.
@@ -336,6 +337,24 @@ type Request struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+}
+
+type GenerateDocsForSchema struct {
+	// NodeID may hold the ID (index) of a node to execute this request on.
+	//
+	// If a value is not provided the request will be executed against all nodes,
+	// in which case the expected results must all match across all nodes.
+	NodeID immutable.Option[int]
+
+	// The schema to create.
+	Schema string
+
+	// Options to be passed to the doc generator.
+	AutoGenOptions []gen.Option
+
+	// The predefined docs structure to be passed to the doc generator.
+	// If not set, the generator will create random docs.
+	PredefinedDocs immutable.Option[gen.DocsList]
 }
 
 // TransactionCommit represents a commit request for a transaction of the given id.

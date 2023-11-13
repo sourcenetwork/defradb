@@ -16,28 +16,14 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// createSchemaWithDocs returns UpdateSchema action and CreateDoc actions
-// with the documents that match the schema.
+// GenerateDocs generates documents for a schema from a predefined list of docs that might
+// include nested docs.
 // The schema is parsed to get the list of fields, and the docs
-// are created with the same fields.
+// are created with the fields parsed from the schema.
 // This allows us to have only one large list of docs with predefined
 // fields, and create schemas with different fields from it.
-func CreateSchemaWithDocs(schema string, docsList DocsList) []any {
-	docs, err := GenerateDocs(schema, docsList)
-	if err != nil {
-		panic(err)
-	}
-	resultActions := make([]any, 0, len(docs)+1)
-	resultActions = append(resultActions, testUtils.SchemaUpdate{Schema: schema})
-	for _, doc := range docs {
-		resultActions = append(resultActions, testUtils.CreateDoc{CollectionID: doc.ColIndex, Doc: doc.JSON})
-	}
-	return resultActions
-}
-
 func GenerateDocs(schema string, docsList DocsList) ([]GeneratedDoc, error) {
 	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
 	parser := schemaParser{}
