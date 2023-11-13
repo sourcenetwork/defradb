@@ -26,10 +26,14 @@ type configsMap map[string]map[string]genConfig
 
 // ForField returns the generation configuration for a specific field of a type.
 func (m configsMap) ForField(typeStr, fieldName string) genConfig {
-	var fieldConfig genConfig
-	typeConfig := m[typeStr]
-	if typeConfig != nil {
-		fieldConfig = typeConfig[fieldName]
+	typeConfig, ok := m[typeStr]
+	if !ok {
+		typeConfig = make(map[string]genConfig)
+		m[typeStr] = typeConfig
+	}
+	fieldConfig, ok := typeConfig[fieldName]
+	if !ok {
+		fieldConfig.props = make(map[string]any)
 	}
 	return fieldConfig
 }
@@ -48,8 +52,15 @@ func (m configsMap) AddForField(typeStr, fieldName string, conf genConfig) {
 func validateConfig(types map[string]typeDefinition, configsMap configsMap) error {
 	for typeName, typeConfigs := range configsMap {
 		typeDef := types[typeName]
+		if typeDef.name == "" {
+			return NewErrInvalidConfiguration("type " + typeName + " is not defined in the schema")
+		}
 		for fieldName, fieldConfig := range typeConfigs {
 			fieldDef := typeDef.getField(fieldName)
+			if fieldDef == nil {
+				return NewErrInvalidConfiguration("field " + fieldName +
+					" is not defined in the schema for type " + typeName)
+			}
 			err := checkAndValidateMinMax(fieldDef, &fieldConfig)
 			if err != nil {
 				return err

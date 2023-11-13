@@ -176,6 +176,12 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 		option(g)
 	}
 
+	for typeName := range g.docsDemand {
+		if _, ok := g.types[typeName]; !ok {
+			return NewErrInvalidConfiguration("type " + typeName + " is not defined in the schema")
+		}
+	}
+
 	err := validateConfig(g.types, g.config)
 	if err != nil {
 		return err

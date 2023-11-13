@@ -11,51 +11,43 @@
 package index
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/gen"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
-
-func generateDocsForCollection(colIndex, count int) []any {
-	result := make([]any, 0, count)
-	for i := 0; i < count; i++ {
-		result = append(result, testUtils.CreateDoc{
-			CollectionID: colIndex,
-			Doc: fmt.Sprintf(`{
-				"name": "name-%d",
-				"age":  %d,
-				"email":  "email%d@gmail.com"
-			}`, i, i%100, i),
-		})
-	}
-	return result
-}
 
 func TestQueryPerformance_Simple(t *testing.T) {
 	const benchReps = 10
 	const numDocs = 500
 
+	getOptions := func(col string) []gen.Option {
+		return []gen.Option{
+			gen.WithTypeDemand(col, numDocs),
+			gen.WithFieldRange(col, "age", 0, 99),
+		}
+	}
+
 	test1 := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{Schema: `
-				type User {
-					name:   String
-					age:    Int
-					email:  String
-				}
-			`},
-			testUtils.SchemaUpdate{
+			testUtils.GenerateDocsForSchema{
 				Schema: `
-				    type IndexedUser {
-					    name:   String
-					    age:    Int @index
-					    email:  String
-				    }
-			    `,
+					type User {
+						name:   String
+						age:    Int 
+						email:  String
+					}`,
+				AutoGenOptions: getOptions("User"),
 			},
-			generateDocsForCollection(0, numDocs),
-			generateDocsForCollection(1, numDocs),
+			testUtils.GenerateDocsForSchema{
+				Schema: `
+					type IndexedUser {
+						name:   String
+						age:    Int @index
+						email:  String
+					}`,
+				AutoGenOptions: getOptions("IndexedUser"),
+			},
 			testUtils.Benchmark{
 				Reps: benchReps,
 				BaseCase: testUtils.Request{Request: `
