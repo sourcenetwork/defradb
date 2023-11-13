@@ -15,10 +15,10 @@ import (
 	"testing"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v4"
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
+	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"

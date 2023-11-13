@@ -11,7 +11,7 @@
 package types
 
 import (
-	gql "github.com/graphql-go/graphql"
+	gql "github.com/sourcenetwork/graphql-go"
 )
 
 // BooleanOperatorBlock filter block for boolean types.

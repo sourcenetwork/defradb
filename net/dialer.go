@@ -48,7 +48,7 @@ func (s *server) dial(peerID libpeer.ID) (pb.ServiceClient, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), DialTimeout)
 	defer cancel()
-	conn, err := grpc.DialContext(ctx, peerID.Pretty(), s.opts...)
+	conn, err := grpc.DialContext(ctx, peerID.String(), s.opts...)
 	if err != nil {
 		return nil, err
 	}

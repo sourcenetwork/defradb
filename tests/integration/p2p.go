@@ -525,7 +525,7 @@ func waitForSync(
 func RandomNetworkingConfig() ConfigureNode {
 	return func() config.Config {
 		cfg := config.DefaultConfig()
-		cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/0"
+		cfg.Net.P2PAddress = "/ip4/127.0.0.1/tcp/0"
 		cfg.Net.RelayEnabled = false
 		return *cfg
 	}

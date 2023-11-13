@@ -14,7 +14,7 @@ import (
 	"context"
 	"testing"
 
-	badger "github.com/dgraph-io/badger/v4"
+	badger "github.com/sourcenetwork/badger/v4"
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
