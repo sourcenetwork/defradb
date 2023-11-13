@@ -339,6 +339,8 @@ type Request struct {
 	ExpectedError string
 }
 
+// GenerateDocsForSchema is an action that will trigger generation of documents for the given schema.
+
 type GenerateDocsForSchema struct {
 	// NodeID may hold the ID (index) of a node to execute this request on.
 	//
@@ -348,6 +350,9 @@ type GenerateDocsForSchema struct {
 
 	// The schema to create.
 	Schema string
+	
+	// If true, the schema will be created before generating docs.
+	CreateSchema bool
 
 	// Options to be passed to the doc generator.
 	AutoGenOptions []gen.Option

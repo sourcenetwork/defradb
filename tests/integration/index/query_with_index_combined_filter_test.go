@@ -36,6 +36,7 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 						name: String @index
 						age: Int
 					}`,
+				CreateSchema:   true,
 				PredefinedDocs: immutable.Some(getUserDocs()),
 			},
 			testUtils.Request{
@@ -74,6 +75,7 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 						age: Int @index
 						email: String 
 					}`,
+				CreateSchema:   true,
 				PredefinedDocs: immutable.Some(getUserDocs()),
 			},
 			testUtils.Request{

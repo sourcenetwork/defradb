@@ -66,8 +66,11 @@ func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, er
 	g.docsDemand = configurator.docsDemand
 	g.usageCounter = configurator.usageCounter
 
-	g.resultDocs = make([]GeneratedDoc, 0, g.getTotalDemand())
-	docsLists := g.generateRandomDocs(configurator.typesOrder)
+	g.resultDocs = make([]GeneratedDoc, 0, g.getMaxTotalDemand())
+	docsLists, err := g.generateRandomDocs(configurator.typesOrder)
+	if err != nil {
+		return nil, err
+	}
 	for _, docsList := range docsLists {
 		typeDef := g.types[docsList.ColName]
 		for _, doc := range docsList.Docs {
@@ -80,7 +83,7 @@ func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, er
 	return g.resultDocs, nil
 }
 
-func (g *randomDocGenerator) getTotalDemand() int {
+func (g *randomDocGenerator) getMaxTotalDemand() int {
 	totalDemand := 0
 	for _, demand := range g.docsDemand {
 		totalDemand += demand.max
@@ -95,15 +98,15 @@ func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType string, field fi
 	return docKey
 }
 
-func (g *randomDocGenerator) getDocKey(typeDef *typeDefinition, doc map[string]any) string {
+func (g *randomDocGenerator) getDocKey(typeDef *typeDefinition, doc map[string]any) (string, error) {
 	clientDoc, err := client.NewDocFromJSON([]byte(createDocJSON(typeDef, doc)))
 	if err != nil {
-		panic("failed to create doc from JSON: " + err.Error())
+		return "", err
 	}
-	return clientDoc.Key().String()
+	return clientDoc.Key().String(), nil
 }
 
-func (g *randomDocGenerator) generateRandomDocs(order []string) []DocsList {
+func (g *randomDocGenerator) generateRandomDocs(order []string) ([]DocsList, error) {
 	result := []DocsList{}
 	for _, typeName := range order {
 		col := DocsList{ColName: typeName}
@@ -126,12 +129,16 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) []DocsList {
 					)
 				}
 			}
-			g.cols[typeName] = append(g.cols[typeName], docRec{doc: newDoc, docKey: g.getDocKey(&typeDef, newDoc)})
+			docKey, err := g.getDocKey(&typeDef, newDoc)
+			if err != nil {
+				return nil, err
+			}
+			g.cols[typeName] = append(g.cols[typeName], docRec{doc: newDoc, docKey: docKey})
 			col.Docs = append(col.Docs, newDoc)
 		}
 		result = append(result, col)
 	}
-	return result
+	return result, nil
 }
 
 func getRandomString(random *rand.Rand, n int) string {

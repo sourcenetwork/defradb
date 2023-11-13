@@ -37,6 +37,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 						age:    Int 
 						email:  String
 					}`,
+				CreateSchema:   true,
 				AutoGenOptions: getOptions("User"),
 			},
 			testUtils.GenerateDocsForSchema{
@@ -46,6 +47,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 						age:    Int @index
 						email:  String
 					}`,
+				CreateSchema:   true,
 				AutoGenOptions: getOptions("IndexedUser"),
 			},
 			testUtils.Benchmark{

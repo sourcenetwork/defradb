@@ -48,6 +48,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 						model: String @index
 						owner: User
 					}`,
+				CreateSchema:   true,
 				PredefinedDocs: immutable.Some(getUserDocs()),
 			},
 			testUtils.Request{
@@ -108,6 +109,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 						model: String @index
 						owner: User
 					}`,
+				CreateSchema:   true,
 				PredefinedDocs: immutable.Some(getUserDocs()),
 			},
 			testUtils.Request{
@@ -168,6 +170,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 						user: User
 						city: String @index
 					}`,
+				CreateSchema:   true,
 				PredefinedDocs: immutable.Some(getUserDocs()),
 			},
 			testUtils.Request{
@@ -229,6 +232,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 						city: String @index
 						street: String 
 					}`,
+				CreateSchema:   true,
 				PredefinedDocs: immutable.Some(getUserDocs()),
 			},
 			testUtils.Request{
@@ -283,6 +287,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 						city: String @index
 						street: String 
 					}`,
+				CreateSchema:   true,
 				PredefinedDocs: immutable.Some(getUserDocs()),
 			},
 			testUtils.Request{
@@ -343,6 +348,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 						user: User
 						city: String @index
 					}`,
+				CreateSchema:   true,
 				PredefinedDocs: immutable.Some(getUserDocs()),
 			},
 			testUtils.Request{

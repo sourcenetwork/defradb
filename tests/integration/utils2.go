@@ -327,7 +327,9 @@ func performAction(
 }
 
 func generateDocsForSchema(s *state, action GenerateDocsForSchema) {
-	updateSchema(s, SchemaUpdate{Schema: action.Schema, NodeID: action.NodeID})
+	if action.CreateSchema {
+		updateSchema(s, SchemaUpdate{Schema: action.Schema, NodeID: action.NodeID})
+	}
 
 	var docs []gen.GeneratedDoc
 	var err error
