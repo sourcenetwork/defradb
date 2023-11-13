@@ -27,19 +27,26 @@ jobs:
   run-tests:
     name: Run tests matrix job
 
-    runs-on: ubuntu-latest
-
     strategy:
       matrix:
+        os: [ubuntu-latest]
         client-type: [go, http, cli]
         database-type: [badger-file, badger-memory]
         mutation-type: [gql, collection-named, collection-save]
         detect-changes: [false]
         include:
-          - client-type: go
+          - os: ubuntu-latest
+            client-type: go
             database-type: badger-memory
             mutation-type: collection-save
             detect-changes: true
+          - os: macos-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            detect-changes: false
+
+    runs-on: ${{ matrix.os }}
 
     env:
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
