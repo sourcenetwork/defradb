@@ -178,7 +178,7 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 
 	for typeName := range g.docsDemand {
 		if _, ok := g.types[typeName]; !ok {
-			return NewErrInvalidConfiguration("type " + typeName + " is not defined in the schema")
+			return newNotDefinedTypeErr(typeName)
 		}
 	}
 
@@ -296,7 +296,7 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 			}
 
 			if primaryDemand.min > primaryDemand.max {
-				return typeDemand{}, NewErrInvalidConfiguration("can not supply demand for type " + primaryType)
+				return typeDemand{}, NewErrCanNotSupplyTypeDemand(primaryType)
 			}
 			g.docsDemand[primaryType] = primaryDemand
 			g.initRelationUsages(field.typeStr, primaryType, min, max)
@@ -341,7 +341,7 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 			curSecDemand := g.docsDemand[field.typeStr]
 			if curSecDemand.usedDefined &&
 				(curSecDemand.min < newSecDemand.min || curSecDemand.max > newSecDemand.max) {
-				return NewErrInvalidConfiguration("can not supply demand for type " + field.typeStr)
+				return NewErrCanNotSupplyTypeDemand(field.typeStr)
 			}
 			g.docsDemand[field.typeStr] = newSecDemand
 			g.initRelationUsages(field.typeStr, typeName, min, max)

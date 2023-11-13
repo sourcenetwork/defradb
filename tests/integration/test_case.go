@@ -13,10 +13,11 @@ package tests
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/tests/gen"
-	"github.com/sourcenetwork/immutable"
 )
 
 // TestCase contains the details of the test case to execute.

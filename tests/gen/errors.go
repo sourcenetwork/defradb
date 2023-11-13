@@ -34,3 +34,7 @@ func NewErrFailedToParse(reason string) error {
 func NewErrFailedToGenerateDoc(inner error) error {
 	return errors.Wrap(errFailedToGenerateDoc, inner)
 }
+
+func newNotDefinedTypeErr(typeName string) error {
+	return NewErrInvalidConfiguration("type " + typeName + " is not defined in the schema")
+}

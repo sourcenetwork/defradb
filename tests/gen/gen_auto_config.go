@@ -53,7 +53,7 @@ func validateConfig(types map[string]typeDefinition, configsMap configsMap) erro
 	for typeName, typeConfigs := range configsMap {
 		typeDef := types[typeName]
 		if typeDef.name == "" {
-			return NewErrInvalidConfiguration("type " + typeName + " is not defined in the schema")
+			return newNotDefinedTypeErr(typeName)
 		}
 		for fieldName, fieldConfig := range typeConfigs {
 			fieldDef := typeDef.getField(fieldName)
