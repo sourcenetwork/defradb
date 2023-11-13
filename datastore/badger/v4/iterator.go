@@ -17,10 +17,10 @@ import (
 	"context"
 	"sync"
 
-	badger "github.com/dgraph-io/badger/v4"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
 	goprocess "github.com/jbenet/goprocess"
+	badger "github.com/sourcenetwork/badger/v4"
 
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )

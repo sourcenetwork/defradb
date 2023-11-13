@@ -19,9 +19,9 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
 
-	"github.com/graphql-go/graphql/language/ast"
-	gqlp "github.com/graphql-go/graphql/language/parser"
-	"github.com/graphql-go/graphql/language/source"
+	"github.com/sourcenetwork/graphql-go/language/ast"
+	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
+	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
 // FromString parses a GQL SDL string into a set of collection descriptions.

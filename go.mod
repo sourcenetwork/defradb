@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/bits-and-blooms/bitset v1.11.0
 	github.com/bxcodec/faker v2.0.1+incompatible
-	github.com/dgraph-io/badger/v4 v4.1.0
 	github.com/evanphx/json-patch/v5 v5.7.0
 	github.com/fxamacker/cbor/v2 v2.5.0
 	github.com/getkin/kin-openapi v0.120.0
@@ -13,7 +12,6 @@ require (
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.0.0
-	github.com/graphql-go/graphql v0.8.1
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ipfs/boxo v0.15.0
 	github.com/ipfs/go-block-format v0.2.0
@@ -33,7 +31,9 @@ require (
 	github.com/multiformats/go-multiaddr v0.12.0
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/multiformats/go-multihash v0.2.3
+	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.13
+	github.com/sourcenetwork/graphql-go v0.7.10-0.20231113214537-a9560c1898dd
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
@@ -82,7 +82,6 @@ require (
 	github.com/golang/glog v1.1.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/flatbuffers v2.0.6+incompatible // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/pprof v0.0.0-20231023181126-ff6d637d2a7b // indirect
@@ -191,10 +190,4 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
-)
-
-// SourceNetwork fork og graphql-go
-replace (
-	github.com/dgraph-io/badger/v4 => github.com/sourcenetwork/badger/v4 v4.0.0-20230801145501-d3a57bd4c2ec
-	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20230511091704-fe7085512c23
 )

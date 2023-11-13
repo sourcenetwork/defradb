@@ -11,7 +11,7 @@
 package schema
 
 import (
-	gql "github.com/graphql-go/graphql"
+	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client"
 )

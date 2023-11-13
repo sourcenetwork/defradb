@@ -13,7 +13,7 @@ package core
 import (
 	"context"
 
-	"github.com/graphql-go/graphql/language/ast"
+	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"

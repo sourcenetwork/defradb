@@ -13,10 +13,10 @@ package graphql
 import (
 	"context"
 
-	gql "github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/ast"
-	gqlp "github.com/graphql-go/graphql/language/parser"
-	"github.com/graphql-go/graphql/language/source"
+	gql "github.com/sourcenetwork/graphql-go"
+	"github.com/sourcenetwork/graphql-go/language/ast"
+	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
+	"github.com/sourcenetwork/graphql-go/language/source"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"

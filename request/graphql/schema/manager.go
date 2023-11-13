@@ -11,7 +11,7 @@
 package schema
 
 import (
-	gql "github.com/graphql-go/graphql"
+	gql "github.com/sourcenetwork/graphql-go"
 
 	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
 )
@@ -53,7 +53,7 @@ func (s *SchemaManager) Schema() *gql.Schema {
 func (s *SchemaManager) ResolveTypes() error {
 	// basically, this function just refreshes the
 	// schema.TypeMap, and runs the internal
-	// typeMapReducer (https://github.com/graphql-go/graphql/blob/v0.7.9/schema.go#L275)
+	// typeMapReducer (https://github.com/sourcenetwork/graphql-go/blob/v0.7.9/schema.go#L275)
 	// which ensures all the necessary types are defined in the
 	// typeMap, and if there are any outstanding Thunks/closures
 	// resolve them.

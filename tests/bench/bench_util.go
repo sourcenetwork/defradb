@@ -18,8 +18,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/dgraph-io/badger/v4"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/badger/v4"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
