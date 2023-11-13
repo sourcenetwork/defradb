@@ -13,11 +13,10 @@ package tests
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/tests/gen"
+	"github.com/sourcenetwork/immutable"
 )
 
 // TestCase contains the details of the test case to execute.
@@ -350,7 +349,7 @@ type GenerateDocsForSchema struct {
 
 	// The schema to create.
 	Schema string
-	
+
 	// If true, the schema will be created before generating docs.
 	CreateSchema bool
 
