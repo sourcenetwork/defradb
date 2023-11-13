@@ -13,8 +13,8 @@ package parser
 import (
 	"strconv"
 
-	gql "github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/ast"
+	gql "github.com/sourcenetwork/graphql-go"
+	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"

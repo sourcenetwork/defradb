@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"testing"
 
-	badger "github.com/dgraph-io/badger/v4"
+	badger "github.com/sourcenetwork/badger/v4"
 
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"

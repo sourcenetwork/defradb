@@ -14,9 +14,9 @@ import (
 	"context"
 	"testing"
 
-	badger "github.com/dgraph-io/badger/v4"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/stretchr/testify/require"
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"

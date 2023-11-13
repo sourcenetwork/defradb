@@ -22,8 +22,8 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
 	mh "github.com/multiformats/go-multihash"
+	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/stretchr/testify/require"
-	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
@@ -112,7 +112,7 @@ func createCID(doc *client.Document) (cid.Cid, error) {
 	return c, nil
 }
 
-const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
+const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	store := memory.NewDatastore(ctx)

@@ -20,7 +20,7 @@ import (
 	"strings"
 	"syscall"
 
-	badger "github.com/dgraph-io/badger/v4"
+	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
