@@ -12,7 +12,8 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // Errors returnable from this package.
