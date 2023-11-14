@@ -48,7 +48,7 @@ func TestBackupImport_WithInvalidFilePath_ReturnError(t *testing.T) {
 		Actions: []any{
 			testUtils.BackupImport{
 				Filepath:      t.TempDir() + "/some/test.json",
-				ExpectedError: "no such file or directory",
+				ExpectedError: "failed to open file",
 			},
 		},
 	}
