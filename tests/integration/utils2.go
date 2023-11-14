@@ -540,7 +540,7 @@ func getActionRange(testCase TestCase) (int, int) {
 
 ActionLoop:
 	for i := range testCase.Actions {
-		switch testCase.Actions[i].(type) {
+		switch action := testCase.Actions[i].(type) {
 		case SetupComplete:
 			setupCompleteIndex = i
 			// We don't care about anything else if this has been explicitly provided
@@ -548,6 +548,11 @@ ActionLoop:
 
 		case SchemaUpdate, CreateDoc, UpdateDoc, Restart:
 			continue
+
+		case GenerateDocsForSchema:
+			if action.CreateSchema {
+				continue
+			}
 
 		default:
 			firstNonSetupIndex = i
