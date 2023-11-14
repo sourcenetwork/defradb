@@ -54,6 +54,10 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    defaults:
+      run:
+        shell: bash
+
     env:
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
       DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
