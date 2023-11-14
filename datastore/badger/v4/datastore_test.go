@@ -8,6 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+// The badger GC seems to struggle a bit on windows, and this file rapidly spins up and discards
+// databases resulting in out of memory and vlog cleanup issues, so we exclude this file from windows
+// builds and and rely on the integration tests.
+// todo - link to github issues
+
+//go:build !windows
+
 package badger
 
 import (
