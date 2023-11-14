@@ -272,7 +272,7 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 			s.options.TLS.Value().PublicKey,
 		)
 		if err != nil {
-			return errors.WithStack(err)
+			return NewErrFailedToLoadKeys(err, s.options.TLS.Value().PublicKey, s.options.TLS.Value().PrivateKey)
 		}
 
 		cfg.Certificates = []tls.Certificate{cert}
