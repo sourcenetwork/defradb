@@ -32,6 +32,9 @@ endif
 TEST_FLAGS=-race -shuffle=on -timeout 5m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
+ifeq ($(OS),Windows_NT)     # is Windows_NT on XP, 2000, 7, Vista, 10...
+    COVERAGE_DIRECTORY=$(PWD)\coverage
+endif
 COVERAGE_FILE=coverage.txt
 COVERAGE_FLAGS=-covermode=atomic -coverpkg=./... -args -test.gocoverdir=$(COVERAGE_DIRECTORY)
 

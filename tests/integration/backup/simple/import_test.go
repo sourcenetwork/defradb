@@ -11,6 +11,7 @@
 package backup
 
 import (
+	"path/filepath"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -47,7 +48,7 @@ func TestBackupImport_WithInvalidFilePath_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.BackupImport{
-				Filepath:      t.TempDir() + "/some/test.json",
+				Filepath:      filepath.Join(t.TempDir(), "some", "test.json"),
 				ExpectedError: "failed to open file",
 			},
 		},

@@ -11,6 +11,7 @@
 package backup
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -58,7 +59,7 @@ func TestBackupExport_WithInvalidFilePath_ReturnError(t *testing.T) {
 			},
 			testUtils.BackupExport{
 				Config: client.BackupConfig{
-					Filepath: t.TempDir() + "/some/test.json",
+					Filepath: filepath.Join(t.TempDir(), "some", "test.json"),
 				},
 				ExpectedError: "failed to create file",
 			},

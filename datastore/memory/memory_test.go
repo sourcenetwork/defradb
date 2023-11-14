@@ -475,7 +475,7 @@ func TestClearOldFlightTransactions(t *testing.T) {
 	s.inFlightTxn.Set(dsTxn{
 		dsVersion:  s.getVersion(),
 		txnVersion: s.getVersion() + 1,
-		expiresAt:  time.Now(),
+		expiresAt:  time.Now().Add(-1 * time.Minute),
 	})
 
 	require.Equal(t, 1, s.inFlightTxn.Len())

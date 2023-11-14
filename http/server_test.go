@@ -14,6 +14,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -100,7 +101,11 @@ func TestNewServerAndRunWithSelfSignedCertAndNoKeyFiles(t *testing.T) {
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
 	dir := t.TempDir()
-	s, err := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	s, err := NewServer(
+		nil,
+		WithAddress("localhost:0"),
+		WithSelfSignedCert(filepath.Join(dir, "server.crt"), filepath.Join(dir, "server.key")),
+	)
 	require.NoError(t, err)
 	go func() {
 		close(serverRunning)
