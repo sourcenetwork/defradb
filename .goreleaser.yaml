@@ -22,8 +22,8 @@ builds:
     goarch:
       - amd64
       - arm64
-
-  - id: "defradb_pg"
+  # A build with the playground included. 
+  - id: "defradb_playground"
     main: ./cmd/defradb
     flags:
       - -tags=playground
@@ -36,12 +36,12 @@ builds:
       - arm64
 
 archives:
-  - id: defradb_pg
+  - id: defradb_playground
     builds: 
-      - defradb_pg
+      - defradb_playground
     format: binary
     # this name template makes the OS and Arch compatible with the results of `uname`.
-    name_template: '{{ .Binary }}+pg_{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
+    name_template: '{{ .Binary }}_playground_{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
   - id: defradb
     builds: 
       - defradb
@@ -50,14 +50,16 @@ archives:
     name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
 
 release:
+  target_commitish: '{{ .Commit }}'
   header: |
-    DefraDB v0.8 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+    DefraDB v{{ .Major }}.{{ .Minor }} is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-    To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.7.x databases. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.source.network/.
+    To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v{{ .Major }}.{{ .Minor }}.x databases. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.source.network/.
   name_template: "v{{ .Version }} Release"
 
 changelog:
   sort: asc
+  abbrev: -1
   groups:
     - title: Features
       regexp: '^feat:.*'
@@ -83,12 +85,12 @@ source:
 
 milestones:
   - close: true
-    fail_on_error: true
-    name_template: "DefraDB v0.8"
+    fail_on_error: false
+    name_template: "DefraDB v{{ .Major }}.{{ .Minor }}"
 
 dockers:
 - ids: 
-    - "defradb_pg"
+    - "defradb_playground"
   image_templates:
   - "{{ .Env.GITHUB_REPOSITORY }}:latest"
   - "{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
