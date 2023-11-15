@@ -1,27 +1,19 @@
-## defradb client p2p collection remove
+## defradb client p2p info
 
-Remove P2P collections
+Get peer info from a DefraDB node
 
 ### Synopsis
 
-Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.
-
-Example: remove single collection
-  defradb client p2p collection remove bae123
-
-Example: remove multiple collections
-  defradb client p2p collection remove bae123,bae456
-		
+Get peer info from a DefraDB node
 
 ```
-defradb client p2p collection remove [collectionIDs] [flags]
+defradb client p2p info [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -h, --help   help for info
 ```
 
 ### Options inherited from parent commands
@@ -40,5 +32,5 @@ defradb client p2p collection remove [collectionIDs] [flags]
 
 ### SEE ALSO
 
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
+* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
 

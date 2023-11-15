@@ -1,35 +1,19 @@
 ## defradb client collection
 
-View detailed collection info.
+Interact with a collection.
 
 ### Synopsis
 
-View detailed collection info.
-		
-Example: view all collections
-  defradb client collection
-
-Example: view collection by name
-  defradb client collection --name User
-
-Example: view collection by schema id
-  defradb client collection --schema bae123
-
-Example: view collection by version id
-  defradb client collection --version bae123
-		
-
-```
-defradb client collection [--name <name> --schema <schemaRoot> --version <versionID>] [flags]
-```
+Create, read, update, and delete documents within a collection.
 
 ### Options
 
 ```
   -h, --help             help for collection
-      --name string      Get collection by name
-      --schema string    Get collection by schema ID
-      --version string   Get collection by version ID
+      --name string      Collection name
+      --schema string    Collection schema Root
+      --tx uint          Transaction ID
+      --version string   Collection version ID
 ```
 
 ### Options inherited from parent commands
@@ -42,11 +26,16 @@ defradb client collection [--name <name> --schema <schemaRoot> --version <versio
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
-      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client collection create](defradb_client_collection_create.md)	 - Create a new document.
+* [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete documents by key or filter.
+* [defradb client collection describe](defradb_client_collection_describe.md)	 - View collection description.
+* [defradb client collection get](defradb_client_collection_get.md)	 - View document fields.
+* [defradb client collection keys](defradb_client_collection_keys.md)	 - List all document keys.
+* [defradb client collection update](defradb_client_collection_update.md)	 - Update documents by key or filter.
 

@@ -1,27 +1,24 @@
-## defradb client p2p collection remove
+## defradb client collection get
 
-Remove P2P collections
+View document fields.
 
 ### Synopsis
 
-Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.
+View document fields.
 
-Example: remove single collection
-  defradb client p2p collection remove bae123
-
-Example: remove multiple collections
-  defradb client p2p collection remove bae123,bae456
+Example:
+  defradb client collection get --name User bae-123
 		
 
 ```
-defradb client p2p collection remove [collectionIDs] [flags]
+defradb client collection get <docKey> [--show-deleted] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -h, --help           help for get
+      --show-deleted   Show deleted documents
 ```
 
 ### Options inherited from parent commands
@@ -33,12 +30,15 @@ defradb client p2p collection remove [collectionIDs] [flags]
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
+      --name string          Collection name
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --schema string        Collection schema Root
       --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
+      --version string       Collection version ID
 ```
 
 ### SEE ALSO
 
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
+* [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
 

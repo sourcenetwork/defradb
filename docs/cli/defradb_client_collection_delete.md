@@ -1,27 +1,28 @@
-## defradb client p2p collection remove
+## defradb client collection delete
 
-Remove P2P collections
+Delete documents by key or filter.
 
 ### Synopsis
 
-Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.
+Delete documents by key or filter and lists the number of documents deleted.
+		
+Example: delete by key(s)
+  defradb client collection delete --name User --key bae-123,bae-456
 
-Example: remove single collection
-  defradb client p2p collection remove bae123
-
-Example: remove multiple collections
-  defradb client p2p collection remove bae123,bae456
+Example: delete by filter
+  defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
 		
 
 ```
-defradb client p2p collection remove [collectionIDs] [flags]
+defradb client collection delete [--filter <filter> --key <key>] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+      --filter string   Document filter
+  -h, --help            help for delete
+      --key strings     Document key
 ```
 
 ### Options inherited from parent commands
@@ -33,12 +34,15 @@ defradb client p2p collection remove [collectionIDs] [flags]
       --lognocolor           Disable colored log output
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
+      --name string          Collection name
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --schema string        Collection schema Root
       --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
+      --version string       Collection version ID
 ```
 
 ### SEE ALSO
 
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
+* [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
 
