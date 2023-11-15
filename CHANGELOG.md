@@ -1,3 +1,77 @@
+<a name="v0.8.0"></a>
+## [v0.8.0](https://github.com/sourcenetwork/defradb/compare/v0.7.0...v0.8.0)
+
+> 2023-11-14
+
+DefraDB v0.8 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.7.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
+
+### Features
+
+* Add means to fetch schema ([#2006](https://github.com/sourcenetwork/defradb/issues/2006))
+* Rename Schema.SchemaID to Schema.Root ([#2005](https://github.com/sourcenetwork/defradb/issues/2005))
+* Enable playground in Docker build ([#1986](https://github.com/sourcenetwork/defradb/issues/1986))
+* Change GetCollectionBySchemaFoo funcs to return many ([#1984](https://github.com/sourcenetwork/defradb/issues/1984))
+* Add Swagger UI to playground ([#1979](https://github.com/sourcenetwork/defradb/issues/1979))
+* Add OpenAPI route ([#1960](https://github.com/sourcenetwork/defradb/issues/1960))
+* Remove CollectionDescription.Schema ([#1965](https://github.com/sourcenetwork/defradb/issues/1965))
+* Remove collection from patch schema ([#1957](https://github.com/sourcenetwork/defradb/issues/1957))
+* Make queries utilise secondary indexes ([#1925](https://github.com/sourcenetwork/defradb/issues/1925))
+* Allow setting of default schema version ([#1888](https://github.com/sourcenetwork/defradb/issues/1888))
+* Add CCIP Support ([#1896](https://github.com/sourcenetwork/defradb/issues/1896))
+
+### Fixes
+
+* Fix test module relying on closed memory leak ([#2037](https://github.com/sourcenetwork/defradb/issues/2037))
+* Make return type for FieldKind_INT an int64 ([#1982](https://github.com/sourcenetwork/defradb/issues/1982))
+* Node private key requires data directory ([#1938](https://github.com/sourcenetwork/defradb/issues/1938))
+* Remove collection name from schema ID generation ([#1920](https://github.com/sourcenetwork/defradb/issues/1920))
+* Infinite loop when updating one-one relation ([#1915](https://github.com/sourcenetwork/defradb/issues/1915))
+
+### Refactoring
+
+* CRDT merge direction ([#2016](https://github.com/sourcenetwork/defradb/issues/2016))
+* Reorganise collection description storage ([#1988](https://github.com/sourcenetwork/defradb/issues/1988))
+* Add peerstore to multistore ([#1980](https://github.com/sourcenetwork/defradb/issues/1980))
+* P2P client interface ([#1924](https://github.com/sourcenetwork/defradb/issues/1924))
+* Deprecate CollectionDescription.Schema ([#1939](https://github.com/sourcenetwork/defradb/issues/1939))
+* Remove net GRPC API ([#1927](https://github.com/sourcenetwork/defradb/issues/1927))
+* CLI client interface ([#1839](https://github.com/sourcenetwork/defradb/issues/1839))
+
+### Continuous integration
+
+* Add goreleaser workflow ([#2040](https://github.com/sourcenetwork/defradb/issues/2040))
+* Add mac test runner ([#2035](https://github.com/sourcenetwork/defradb/issues/2035))
+* Parallelize change detector ([#1871](https://github.com/sourcenetwork/defradb/issues/1871))
+
+### Chore
+
+* Update dependencies ([#2044](https://github.com/sourcenetwork/defradb/issues/2044))
+
+### Bot
+
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 6.10.0 to 6.11.0 in /playground ([#2053](https://github.com/sourcenetwork/defradb/issues/2053))
+* Update dependencies (bulk dependabot PRs) 13-11-2023 ([#2052](https://github.com/sourcenetwork/defradb/issues/2052))
+* Bump axios from 1.5.1 to 1.6.1 in /playground ([#2041](https://github.com/sourcenetwork/defradb/issues/2041))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 6.9.1 to 6.10.0 in /playground ([#2042](https://github.com/sourcenetwork/defradb/issues/2042))
+* Bump [@vitejs](https://github.com/vitejs)/plugin-react-swc from 3.4.0 to 3.4.1 in /playground ([#2022](https://github.com/sourcenetwork/defradb/issues/2022))
+* Update dependencies (bulk dependabot PRs) 08-11-2023 ([#2038](https://github.com/sourcenetwork/defradb/issues/2038))
+* Update dependencies (bulk dependabot PRs) 30-10-2023 ([#2015](https://github.com/sourcenetwork/defradb/issues/2015))
+* Bump eslint-plugin and parser from 6.8.0 to 6.9.0 in /playground ([#2000](https://github.com/sourcenetwork/defradb/issues/2000))
+* Update dependencies (bulk dependabot PRs) 16-10-2023 ([#1998](https://github.com/sourcenetwork/defradb/issues/1998))
+* Update dependencies (bulk dependabot PRs) 16-10-2023 ([#1976](https://github.com/sourcenetwork/defradb/issues/1976))
+* Bump golang.org/x/net from 0.16.0 to 0.17.0 ([#1961](https://github.com/sourcenetwork/defradb/issues/1961))
+* Bump [@types](https://github.com/types)/react-dom from 18.2.11 to 18.2.12 in /playground ([#1952](https://github.com/sourcenetwork/defradb/issues/1952))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 6.7.4 to 6.7.5 in /playground ([#1953](https://github.com/sourcenetwork/defradb/issues/1953))
+* Bump combined dependencies 09-10-2023 ([#1951](https://github.com/sourcenetwork/defradb/issues/1951))
+* Bump [@types](https://github.com/types)/react from 18.2.24 to 18.2.25 in /playground ([#1932](https://github.com/sourcenetwork/defradb/issues/1932))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 6.7.3 to 6.7.4 in /playground ([#1933](https://github.com/sourcenetwork/defradb/issues/1933))
+* Bump [@vitejs](https://github.com/vitejs)/plugin-react-swc from 3.3.2 to 3.4.0 in /playground ([#1904](https://github.com/sourcenetwork/defradb/issues/1904))
+* Bump combined dependencies 19-09-2023 ([#1931](https://github.com/sourcenetwork/defradb/issues/1931))
+* Bump graphql from 16.8.0 to 16.8.1 in /playground ([#1901](https://github.com/sourcenetwork/defradb/issues/1901))
+* Update combined dependabot PRs 19-09-2023 ([#1898](https://github.com/sourcenetwork/defradb/issues/1898))
+
 <a name="v0.7.0"></a>
 ## [v0.7.0](https://github.com/sourcenetwork/defradb/compare/v0.6.0...v0.7.0)
 
@@ -7,7 +81,7 @@ DefraDB v0.7 is a major pre-production release. Until the stable version 1.0 is 
 
 This release has focused on robustness, testing, and schema management. Some highlight new features include notable expansions to the expressiveness of schema migrations.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.5.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.6.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
 
 ### Features
 

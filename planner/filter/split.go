@@ -27,8 +27,12 @@ func SplitByField(filter *mapper.Filter, field mapper.Field) (*mapper.Filter, *m
 		return nil, nil
 	}
 
-	splitF := copyField(filter, field)
+	splitF := CopyField(filter, field)
 	RemoveField(filter, field)
+
+	if len(filter.Conditions) == 0 {
+		filter = nil
+	}
 
 	return filter, splitF
 }

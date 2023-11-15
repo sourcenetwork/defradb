@@ -40,6 +40,11 @@ type MultiStore interface {
 	// under the /head namespace
 	Headstore() DSReaderWriter
 
+	// Peerstore is a wrapped root DSReaderWriter
+	// as a ds.Batching, embedded into a DSBatching
+	// under the /peers namespace
+	Peerstore() DSBatching
+
 	// DAGstore is a wrapped root DSReaderWriter
 	// as a Blockstore, embedded into a DAGStore
 	// under the /blocks namespace
@@ -66,4 +71,9 @@ type DSReaderWriter interface {
 // DAGStore proxies the ipld.DAGService under the /core namespace for future-proofing
 type DAGStore interface {
 	blockstore.Blockstore
+}
+
+// DSBatching wraps the Batching interface from go-datastore
+type DSBatching interface {
+	ds.Batching
 }

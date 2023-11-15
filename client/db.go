@@ -51,6 +51,11 @@ type DB interface {
 	// It sits within the rootstore returned by [Root].
 	Blockstore() blockstore.Blockstore
 
+	// Peerstore returns the peerstore where known host information is stored.
+	//
+	// It sits within the rootstore returned by [Root].
+	Peerstore() datastore.DSBatching
+
 	// Close closes the database instance and releases any resources held.
 	//
 	// The behaviour of other functions in this package after this function has been called is undefined
@@ -60,7 +65,7 @@ type DB interface {
 	// be created after calling this to resume operations on the prior data - this is however dependant on
 	// the behaviour of the rootstore provided on database instance creation, as this function will Close
 	// the provided rootstore.
-	Close(context.Context)
+	Close()
 
 	// Events returns the database event queue.
 	//
@@ -82,9 +87,6 @@ type DB interface {
 
 // Store contains the core DefraDB read-write operations.
 type Store interface {
-	// P2P holds the P2P related methods that must be implemented by the database.
-	P2P
-
 	// Backup holds the backup related methods that must be implemented by the database.
 	Backup
 
@@ -95,8 +97,9 @@ type Store interface {
 	// types previously defined.
 	AddSchema(context.Context, string) ([]CollectionDescription, error)
 
-	// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
-	// present in the database.
+	// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
+	// present in the database. If true is provided, the new schema versions will be made default, otherwise
+	// [SetDefaultSchemaVersion] should be called to set them so.
 	//
 	// It will also update the GQL types used by the query system. It will error and not apply any of the
 	// requested, valid updates should the net result of the patch result in an invalid state.  The
@@ -109,7 +112,16 @@ type Store interface {
 	//
 	// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
 	// [FieldKindStringToEnumMapping].
-	PatchSchema(context.Context, string) error
+	PatchSchema(context.Context, string, bool) error
+
+	// SetDefaultSchemaVersion sets the default schema version to the ID provided.  It will be applied to all
+	// collections using the schema.
+	//
+	// This will affect all operations interacting with the schema where a schema version is not explicitly
+	// provided.  This includes GQL queries and Collection operations.
+	//
+	// It will return an error if the provided schema version ID does not exist.
+	SetDefaultSchemaVersion(context.Context, string) error
 
 	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivilent to
 	// calling `LensRegistry().SetMigration(ctx, cfg)`.
@@ -135,19 +147,35 @@ type Store interface {
 	// If no matching collection is found an error will be returned.
 	GetCollectionByName(context.Context, CollectionName) (Collection, error)
 
-	// GetCollectionBySchemaID attempts to retrieve a collection matching the given schema ID.
+	// GetCollectionsBySchemaRoot attempts to retrieve all collections using the given schema ID.
 	//
-	// If no matching collection is found an error will be returned.
-	GetCollectionBySchemaID(context.Context, string) (Collection, error)
+	// If no matching collection is found an empty set will be returned.
+	GetCollectionsBySchemaRoot(context.Context, string) ([]Collection, error)
 
-	// GetCollectionBySchemaID attempts to retrieve a collection matching the given schema version ID.
+	// GetCollectionsByVersionID attempts to retrieve all collections using the given schema version ID.
 	//
-	// If no matching collection is found an error will be returned.
-	GetCollectionByVersionID(context.Context, string) (Collection, error)
+	// If no matching collections are found an empty set will be returned.
+	GetCollectionsByVersionID(context.Context, string) ([]Collection, error)
 
 	// GetAllCollections returns all the collections and their descriptions that currently exist within
 	// this [Store].
 	GetAllCollections(context.Context) ([]Collection, error)
+
+	// GetSchemasByName returns the all schema versions with the given name.
+	GetSchemasByName(context.Context, string) ([]SchemaDescription, error)
+
+	// GetSchemaByVersionID returns the schema description for the schema version of the
+	// ID provided.
+	//
+	// Will return an error if it is not found.
+	GetSchemaByVersionID(context.Context, string) (SchemaDescription, error)
+
+	// GetSchemasByRoot returns the all schema versions for the given root.
+	GetSchemasByRoot(context.Context, string) ([]SchemaDescription, error)
+
+	// GetAllSchemas returns all schema versions that currently exist within
+	// this [Store].
+	GetAllSchemas(context.Context) ([]SchemaDescription, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)

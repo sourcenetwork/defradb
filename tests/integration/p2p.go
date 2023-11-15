@@ -11,16 +11,14 @@
 package tests
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/net"
-	pb "github.com/sourcenetwork/defradb/net/pb"
-	netutils "github.com/sourcenetwork/defradb/net/utils"
+	"github.com/sourcenetwork/defradb/tests/clients"
 
-	ma "github.com/multiformats/go-multiaddr"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -59,9 +57,21 @@ type ConfigureReplicator struct {
 	TargetNodeID int
 }
 
-// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
-// for a non-existent collection ID when used in actions that support this.
-const NonExistentCollectionID int = -1
+// DeleteReplicator deletes a directional replicator relationship between two nodes.
+type DeleteReplicator struct {
+	// SourceNodeID is the node ID (index) of the node from which the replicator should be deleted.
+	SourceNodeID int
+
+	// TargetNodeID is the node ID (index) of the node to which the replicator should be deleted.
+	TargetNodeID int
+}
+
+const (
+	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
+	// for a non-existent collection ID when used in actions that support this.
+	NonExistentCollectionID         int    = -1
+	NonExistentCollectionSchemaRoot string = "NonExistentCollectionID"
+)
 
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
 //
@@ -119,7 +129,10 @@ type GetAllP2PCollections struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct{}
+type WaitForSync struct {
+	// ExpectedTimeout is the duration to wait when expecting a timeout to occur.
+	ExpectedTimeout time.Duration
+}
 
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.
@@ -134,15 +147,10 @@ func connectPeers(
 	time.Sleep(100 * time.Millisecond)
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
-	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
-	log.Info(s.ctx, "Parsing bootstrap peers", logging.NewKV("Peers", targetAddress))
-	addrs, err := netutils.ParsePeers([]string{targetAddress})
-	if err != nil {
-		s.t.Fatal(fmt.Sprintf("failed to parse bootstrap peers %v", targetAddress), err)
-	}
+	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
 	log.Info(s.ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
-	sourceNode.Boostrap(addrs)
+	sourceNode.Bootstrap(addrs)
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
@@ -155,12 +163,16 @@ func setupPeerWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConnectPeers,
-	sourceNode *net.Node,
-	targetNode *net.Node,
+	sourceNode clients.Client,
+	targetNode clients.Client,
 ) {
-	nodeCollections := map[int][]int{}
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
+
+	sourcePeerInfo := sourceNode.PeerInfo()
+	targetPeerInfo := targetNode.PeerInfo()
+
+	nodeCollections := map[int][]int{}
 	waitIndex := 0
 	for i := startIndex; i < len(s.testCase.Actions); i++ {
 		switch action := s.testCase.Actions[i].(type) {
@@ -245,11 +257,11 @@ func setupPeerWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
+				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
+				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
@@ -291,30 +303,40 @@ func configureReplicator(
 	time.Sleep(100 * time.Millisecond)
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
-	targetAddress := s.nodeAddresses[cfg.TargetNodeID]
 
-	addr, err := ma.NewMultiaddr(targetAddress)
-	require.NoError(s.t, err)
-
-	_, err = sourceNode.Peer.SetReplicator(
-		s.ctx,
-		&pb.SetReplicatorRequest{
-			Addr: addr.Bytes(),
-		},
-	)
+	err := sourceNode.SetReplicator(s.ctx, client.Replicator{
+		Info: targetNode.PeerInfo(),
+	})
 	require.NoError(s.t, err)
 	setupReplicatorWaitSync(s, 0, cfg, sourceNode, targetNode)
+}
+
+func deleteReplicator(
+	s *state,
+	cfg DeleteReplicator,
+) {
+	sourceNode := s.nodes[cfg.SourceNodeID]
+	targetNode := s.nodes[cfg.TargetNodeID]
+
+	err := sourceNode.DeleteReplicator(s.ctx, client.Replicator{
+		Info: targetNode.PeerInfo(),
+	})
+	require.NoError(s.t, err)
 }
 
 func setupReplicatorWaitSync(
 	s *state,
 	startIndex int,
 	cfg ConfigureReplicator,
-	sourceNode *net.Node,
-	targetNode *net.Node,
+	sourceNode clients.Client,
+	targetNode clients.Client,
 ) {
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
+
+	sourcePeerInfo := sourceNode.PeerInfo()
+	targetPeerInfo := targetNode.PeerInfo()
+
 	docIDsSyncedToSource := map[int]struct{}{}
 	waitIndex := 0
 	currentDocID := 0
@@ -366,11 +388,11 @@ func setupReplicatorWaitSync(
 		ready <- struct{}{}
 		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
 			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
-				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
+				err := sourceNode.WaitForPushLogByPeerEvent(targetPeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
-				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
+				err := targetNode.WaitForPushLogByPeerEvent(sourcePeerInfo.ID)
 				require.NoError(s.t, err)
 			}
 			nodeSynced <- struct{}{}
@@ -391,23 +413,18 @@ func subscribeToCollection(
 ) {
 	n := s.nodes[action.NodeID]
 
-	schemaIDs := []string{}
+	schemaRoots := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			schemaIDs = append(schemaIDs, "NonExistentCollectionID")
+			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
 			continue
 		}
 
 		col := s.collections[action.NodeID][collectionIndex]
-		schemaIDs = append(schemaIDs, col.SchemaID())
+		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	_, err := n.Peer.AddP2PCollections(
-		s.ctx,
-		&pb.AddP2PCollectionsRequest{
-			Collections: schemaIDs,
-		},
-	)
+	err := n.AddP2PCollections(s.ctx, schemaRoots)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -426,23 +443,18 @@ func unsubscribeToCollection(
 ) {
 	n := s.nodes[action.NodeID]
 
-	schemaIDs := []string{}
+	schemaRoots := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			schemaIDs = append(schemaIDs, "NonExistentCollectionID")
+			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
 			continue
 		}
 
 		col := s.collections[action.NodeID][collectionIndex]
-		schemaIDs = append(schemaIDs, col.SchemaID())
+		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	_, err := n.Peer.RemoveP2PCollections(
-		s.ctx,
-		&pb.RemoveP2PCollectionsRequest{
-			Collections: schemaIDs,
-		},
-	)
+	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
@@ -460,26 +472,17 @@ func getAllP2PCollections(
 	s *state,
 	action GetAllP2PCollections,
 ) {
-	expectedCollections := []*pb.GetAllP2PCollectionsReply_Collection{}
+	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
 		col := s.collections[action.NodeID][collectionIndex]
-		expectedCollections = append(
-			expectedCollections,
-			&pb.GetAllP2PCollectionsReply_Collection{
-				Id:   col.SchemaID(),
-				Name: col.Name(),
-			},
-		)
+		expectedCollections = append(expectedCollections, col.SchemaRoot())
 	}
 
 	n := s.nodes[action.NodeID]
-	cols, err := n.Peer.GetAllP2PCollections(
-		s.ctx,
-		&pb.GetAllP2PCollectionsRequest{},
-	)
+	cols, err := n.GetAllP2PCollections(s.ctx)
 	require.NoError(s.t, err)
 
-	assert.Equal(s.t, expectedCollections, cols.Collections)
+	assert.Equal(s.t, expectedCollections, cols)
 }
 
 // waitForSync waits for all given wait channels to receive an item signaling completion.
@@ -490,26 +493,40 @@ func waitForSync(
 	s *state,
 	action WaitForSync,
 ) {
+	var timeout time.Duration
+	if action.ExpectedTimeout != 0 {
+		timeout = action.ExpectedTimeout
+	} else {
+		timeout = subscriptionTimeout * 10
+	}
+
 	for _, resultsChan := range s.syncChans {
 		select {
 		case <-resultsChan:
-			continue
+			assert.True(
+				s.t,
+				action.ExpectedTimeout == 0,
+				"unexpected document has been synced",
+				s.testCase.Description,
+			)
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
-		case <-time.After(subscriptionTimeout * 10):
-			assert.Fail(s.t, "timeout occurred while waiting for data stream", s.testCase.Description)
+		case <-time.After(timeout):
+			assert.True(
+				s.t,
+				action.ExpectedTimeout != 0,
+				"timeout occurred while waiting for data stream",
+				s.testCase.Description,
+			)
 		}
 	}
 }
 
-const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
-
 func RandomNetworkingConfig() ConfigureNode {
 	return func() config.Config {
 		cfg := config.DefaultConfig()
-		cfg.Net.P2PAddress = randomMultiaddr
-		cfg.Net.RPCAddress = "0.0.0.0:0"
-		cfg.Net.TCPAddress = randomMultiaddr
+		cfg.Net.P2PAddress = "/ip4/127.0.0.1/tcp/0"
+		cfg.Net.RelayEnabled = false
 		return *cfg
 	}
 }

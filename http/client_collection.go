@@ -32,35 +32,39 @@ var _ client.Collection = (*Collection)(nil)
 // Collection implements the client.Collection interface over HTTP.
 type Collection struct {
 	http *httpClient
-	desc client.CollectionDescription
+	def  client.CollectionDefinition
 }
 
 func (c *Collection) Description() client.CollectionDescription {
-	return c.desc
+	return c.def.Description
 }
 
 func (c *Collection) Name() string {
-	return c.desc.Name
+	return c.Description().Name
 }
 
 func (c *Collection) Schema() client.SchemaDescription {
-	return c.desc.Schema
+	return c.def.Schema
 }
 
 func (c *Collection) ID() uint32 {
-	return c.desc.ID
+	return c.Description().ID
 }
 
-func (c *Collection) SchemaID() string {
-	return c.desc.Schema.SchemaID
+func (c *Collection) SchemaRoot() string {
+	return c.Schema().Root
+}
+
+func (c *Collection) Definition() client.CollectionDefinition {
+	return c.def
 }
 
 func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	// We must call this here, else the doc key on the given object will not match
 	// that of the document saved in the database
-	err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
+	err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields)
 	if err != nil {
 		return err
 	}
@@ -82,18 +86,18 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 }
 
 func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	var docMapList []json.RawMessage
 	for _, doc := range docs {
 		// We must call this here, else the doc key on the given object will not match
 		// that of the document saved in the database
-		err := doc.RemapAliasFieldsAndDockey(c.Description().Schema.Fields)
+		err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields)
 		if err != nil {
 			return err
 		}
 
-		docMap, err := documentJSON(doc)
+		docMap, err := doc.ToJSONPatch()
 		if err != nil {
 			return err
 		}
@@ -118,9 +122,9 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 }
 
 func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, doc.Key().String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, doc.Key().String())
 
-	body, err := documentJSON(doc)
+	body, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
 	}
@@ -148,7 +152,7 @@ func (c *Collection) Save(ctx context.Context, doc *client.Document) error {
 }
 
 func (c *Collection) Delete(ctx context.Context, docKey client.DocKey) (bool, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, docKey.String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, docKey.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
@@ -186,7 +190,7 @@ func (c *Collection) updateWith(
 	ctx context.Context,
 	request CollectionUpdateRequest,
 ) (*client.UpdateResult, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	body, err := json.Marshal(request)
 	if err != nil {
@@ -257,7 +261,7 @@ func (c *Collection) deleteWith(
 	ctx context.Context,
 	request CollectionDeleteRequest,
 ) (*client.DeleteResult, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	body, err := json.Marshal(request)
 	if err != nil {
@@ -302,7 +306,7 @@ func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 		query.Add("show_deleted", "true")
 	}
 
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, key.String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, key.String())
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -313,18 +317,23 @@ func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 	if err := c.http.requestJson(req, &docMap); err != nil {
 		return nil, err
 	}
-	return client.NewDocFromMap(docMap)
+	doc, err := client.NewDocFromMap(docMap)
+	if err != nil {
+		return nil, err
+	}
+	doc.Clean()
+	return doc, nil
 }
 
 func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
 	return &Collection{
 		http: c.http.withTxn(tx.ID()),
-		desc: c.desc,
+		def:  c.def,
 	}
 }
 
 func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -376,7 +385,7 @@ func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, "indexes")
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, "indexes")
 
 	body, err := json.Marshal(&indexDesc)
 	if err != nil {
@@ -394,7 +403,7 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, "indexes", indexName)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, "indexes", indexName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
@@ -405,7 +414,7 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.desc.Name, "indexes")
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -415,5 +424,5 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	if err := c.http.requestJson(req, &indexes); err != nil {
 		return nil, err
 	}
-	return c.desc.Indexes, nil
+	return c.Description().Indexes, nil
 }

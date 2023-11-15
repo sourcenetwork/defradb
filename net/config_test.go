@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/libp2p/go-libp2p/core/crypto"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
 
@@ -54,23 +55,14 @@ func TestWithConfigWithP2PAddressError(t *testing.T) {
 	require.Contains(t, err.Error(), "failed to parse multiaddr")
 }
 
-func TestWithConfigWitTCPAddressError(t *testing.T) {
-	cfg := config.Config{
-		Net: &config.NetConfig{
-			P2PAddress: "/ip4/0.0.0.0/tcp/9999",
-			TCPAddress: "/willerror/0.0.0.0/tcp/9999",
-		},
-	}
-	err := WithConfig(&cfg)(&Options{})
-	require.Contains(t, err.Error(), "failed to parse multiaddr")
-}
+func TestWithPrivateKey(t *testing.T) {
+	key, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+	require.NoError(t, err)
 
-func TestWithDataPath(t *testing.T) {
-	path := "test/path"
-	opt, err := NewMergedOptions(WithDataPath(path))
+	opt, err := NewMergedOptions(WithPrivateKey(key))
 	require.NoError(t, err)
 	require.NotNil(t, opt)
-	require.Equal(t, path, opt.DataPath)
+	require.Equal(t, key, opt.PrivateKey)
 }
 
 func TestWithPubSub(t *testing.T) {
@@ -99,20 +91,6 @@ func TestWithListenP2PAddrStrings(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, opt)
 	require.Equal(t, addr, opt.ListenAddrs[0].String())
-}
-
-func TestWithListenTCPAddrStringWithError(t *testing.T) {
-	addr := "/willerror/0.0.0.0/tcp/9999"
-	_, err := NewMergedOptions(WithListenTCPAddrString(addr))
-	require.Contains(t, err.Error(), "failed to parse multiaddr")
-}
-
-func TestWithListenTCPAddrString(t *testing.T) {
-	addr := "/ip4/0.0.0.0/tcp/9999"
-	opt, err := NewMergedOptions(WithListenTCPAddrString(addr))
-	require.NoError(t, err)
-	require.NotNil(t, opt)
-	require.Equal(t, addr, opt.TCPAddr.String())
 }
 
 func TestWithListenAddrs(t *testing.T) {

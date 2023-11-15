@@ -102,7 +102,7 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 					{
 						"_deleted": false,
 						"name":     "John",
-						"age":      uint64(30),
+						"age":      int64(30),
 						"published": []map[string]any{
 							{
 								"_deleted": true,

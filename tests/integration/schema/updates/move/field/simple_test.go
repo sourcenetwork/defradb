@@ -31,7 +31,7 @@ func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "move", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/-" }
+						{ "op": "move", "from": "/Users/Fields/1", "path": "/Users/Fields/-" }
 					]
 				`,
 				ExpectedError: "moving fields is not currently supported. Name: name, ProposedIndex: 1, ExistingIndex: 2",

@@ -76,7 +76,7 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 					},
 					{
 						"name":      "Painted House",
-						"author_id": uint64(123456),
+						"author_id": int64(123456),
 						"author":    nil,
 					},
 				},

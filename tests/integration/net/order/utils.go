@@ -16,7 +16,6 @@ import (
 	"strings"
 	"testing"
 
-	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +25,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
-	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -112,14 +110,11 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 			return nil, nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", cfg.Net.Peers), err)
 		}
 		log.Info(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
-		n.Boostrap(addrs)
+		n.Bootstrap(addrs)
 	}
 
 	if err := n.Start(); err != nil {
-		closeErr := n.Close()
-		if closeErr != nil {
-			return nil, nil, errors.Wrap(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
-		}
+		n.Close()
 		return nil, nil, errors.Wrap("unable to start P2P listeners", err)
 	}
 
@@ -208,9 +203,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 					log.Info(ctx, "cannot set a peer that hasn't been started. Skipping to next peer")
 					continue
 				}
+				peerInfo := nodes[p].PeerInfo()
 				peerAddresses = append(
 					peerAddresses,
-					fmt.Sprintf("%s/p2p/%s", test.NodeConfig[p].Net.P2PAddress, nodes[p].PeerID()),
+					fmt.Sprintf("%s/p2p/%s", peerInfo.Addrs[0], peerInfo.ID),
 				)
 			}
 			cfg.Net.Peers = strings.Join(peerAddresses, ",")
@@ -262,7 +258,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 						continue
 					}
 					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
-					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerID())
+					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerInfo().ID)
 					require.NoError(t, err)
 					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
@@ -301,16 +297,9 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		for i, n := range nodes {
 			if reps, ok := test.NodeReplicators[i]; ok {
 				for _, r := range reps {
-					addr, err := ma.NewMultiaddr(
-						fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
-					)
-					require.NoError(t, err)
-					_, err = n.Peer.SetReplicator(
-						ctx,
-						&netpb.SetReplicatorRequest{
-							Addr: addr.Bytes(),
-						},
-					)
+					err := n.Peer.SetReplicator(ctx, client.Replicator{
+						Info: nodes[r].PeerInfo(),
+					})
 					require.NoError(t, err)
 				}
 			}
@@ -349,19 +338,14 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 	// clean up
 	for _, n := range nodes {
-		if err := n.Close(); err != nil {
-			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err.Error()))
-		}
-		n.DB.Close(ctx)
+		n.Close()
+		n.DB.Close()
 	}
 }
 
-const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
-
 func randomNetworkingConfig() *config.Config {
 	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = randomMultiaddr
-	cfg.Net.RPCAddress = "0.0.0.0:0"
-	cfg.Net.TCPAddress = randomMultiaddr
+	cfg.Net.P2PAddress = "/ip4/127.0.0.1/tcp/0"
+	cfg.Net.RelayEnabled = false
 	return cfg
 }

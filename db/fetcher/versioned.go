@@ -72,7 +72,7 @@ var (
 // Future optimizations:
 // - Incremental checkpoint/snapshotting
 // - Reverse traversal (starting from the current state, and working backwards)
-// - Create a efficient memory store for in-order traversal (BTree, etc)
+// - Create an efficient memory store for in-order traversal (BTree, etc)
 //
 // Note: Should we transition this state traversal into the CRDT objects themselves, and not
 // within a new fetcher?
@@ -92,7 +92,7 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
-	col *client.CollectionDescription
+	col client.Collection
 	// @todo index  *client.IndexDescription
 	mCRDTs map[uint32]crdt.MerkleCRDT
 }
@@ -101,7 +101,7 @@ type VersionedFetcher struct {
 func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
-	col *client.CollectionDescription,
+	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
@@ -240,7 +240,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 		}
 	}
 
-	// we now have all the the required state stored
+	// we now have all the required state stored
 	// in our transient local Version_Index, we now need to
 	// transfer it to the Primary_Index.
 
@@ -258,7 +258,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// check if cid block exists in the global store, handle err
 
-	// @todo: Find an effecient way to determine if a CID is a member of a
+	// @todo: Find an efficient way to determine if a CID is a member of a
 	// DocKey State graph
 	// @body: We could possibly append the DocKey to the CID either as a
 	// child key, or an instance on the CID key.
@@ -324,7 +324,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 }
 
 // merge in the state of the IPLD Block identified by CID c into the VersionedFetcher state.
-// Requires the CID to already exists in the DAGStore.
+// Requires the CID to already exist in the DAGStore.
 // This function only works for merging Composite MerkleCRDT objects.
 //
 // First it checks for the existence of the block,
@@ -357,13 +357,14 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return err
 		}
 
-		fieldID := vf.col.Schema.GetFieldKey(l.Name)
-		if fieldID == uint32(0) {
+		schema := vf.col.Schema()
+		field, ok := vf.col.Description().GetFieldByName(l.Name, &schema)
+		if !ok {
 			return client.NewErrFieldNotExist(l.Name)
 		}
 		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
 		//        get CType from descriptions
-		if err := vf.processNode(fieldID, subNd, client.LWW_REGISTER, l.Name); err != nil {
+		if err := vf.processNode(uint32(field.ID), subNd, client.LWW_REGISTER, l.Name); err != nil {
 			return err
 		}
 	}
@@ -380,7 +381,7 @@ func (vf *VersionedFetcher) processNode(
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {
-		key, err := base.MakePrimaryIndexKeyForCRDT(*vf.col, ctype, vf.key, fieldName)
+		key, err := base.MakePrimaryIndexKeyForCRDT(vf.col.Description(), vf.col.Schema(), ctype, vf.key, fieldName)
 		if err != nil {
 			return err
 		}
@@ -404,7 +405,7 @@ func (vf *VersionedFetcher) processNode(
 		return err
 	}
 
-	_, err = mcrdt.Clock().ProcessNode(vf.ctx, nil, delta, nd)
+	err = mcrdt.Clock().ProcessNode(vf.ctx, delta, nd)
 	return err
 }
 

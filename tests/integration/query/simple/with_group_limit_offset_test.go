@@ -45,7 +45,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimitAndOffset(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Age": uint64(32),
+				"Age": int64(32),
 				"_group": []map[string]any{
 					{
 						"Name": "John",
@@ -53,7 +53,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimitAndOffset(t *testing.T) {
 				},
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_group": []map[string]any{},
 			},
 		},
@@ -91,7 +91,7 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndOffsetAndWithGroupLimitAndOffse
 		},
 		Results: []map[string]any{
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_group": []map[string]any{},
 			},
 		},

@@ -4,6 +4,7 @@ cmd/defradb/defradb
 cmd/genclidocs/genclidocs
 cmd/genmanpages/genmanpages
 coverage.txt
+coverage
 tests/bench/*.log
 tests/bench/*.svg
 

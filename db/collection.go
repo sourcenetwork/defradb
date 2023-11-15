@@ -13,7 +13,6 @@ package db
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -28,14 +27,13 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/lens"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
@@ -54,11 +52,7 @@ type collection struct {
 	// of the operation in question.
 	txn immutable.Option[datastore.Txn]
 
-	colID uint32
-
-	schemaID string
-
-	desc client.CollectionDescription
+	def client.CollectionDefinition
 
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
@@ -71,43 +65,11 @@ type collection struct {
 // CollectionOptions object.
 
 // NewCollection returns a pointer to a newly instanciated DB Collection
-func (db *db) newCollection(desc client.CollectionDescription) (*collection, error) {
-	if desc.Name == "" {
-		return nil, client.NewErrUninitializeProperty("Collection", "Name")
-	}
-
-	if len(desc.Schema.Fields) == 0 {
-		return nil, client.NewErrUninitializeProperty("Collection", "Fields")
-	}
-
-	docKeyField := desc.Schema.Fields[0]
-	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != request.KeyFieldName {
-		return nil, ErrSchemaFirstFieldDocKey
-	}
-
-	for i, field := range desc.Schema.Fields {
-		if field.Name == "" {
-			return nil, client.NewErrUninitializeProperty("Collection.Schema", "Name")
-		}
-		if field.Kind == client.FieldKind_None {
-			return nil, client.NewErrUninitializeProperty("Collection.Schema", "FieldKind")
-		}
-		if (field.Kind != client.FieldKind_DocKey && !field.IsObject()) &&
-			field.Typ == client.NONE_CRDT {
-			return nil, client.NewErrUninitializeProperty("Collection.Schema", "CRDT type")
-		}
-		desc.Schema.Fields[i].ID = client.FieldID(i)
-	}
-
+func (db *db) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
 	return &collection{
-		db: db,
-		desc: client.CollectionDescription{
-			ID:     desc.ID,
-			Name:   desc.Name,
-			Schema: desc.Schema,
-		},
-		colID: desc.ID,
-	}, nil
+		db:  db,
+		def: client.CollectionDefinition{Description: desc, Schema: schema},
+	}
 }
 
 // newFetcher returns a new fetcher instance for this collection.
@@ -130,11 +92,12 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 func (db *db) createCollection(
 	ctx context.Context,
 	txn datastore.Txn,
-	desc client.CollectionDescription,
+	def client.CollectionDefinition,
 ) (client.Collection, error) {
-	// check if collection by this name exists
-	collectionKey := core.NewCollectionKey(desc.Name)
-	exists, err := txn.Systemstore().Has(ctx, collectionKey.ToDS())
+	schema := def.Schema
+	desc := def.Description
+
+	exists, err := description.HasCollectionByName(ctx, txn, desc.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -151,104 +114,64 @@ func (db *db) createCollection(
 		return nil, err
 	}
 	desc.ID = uint32(colID)
-	col, err := db.newCollection(desc)
+
+	schema, err = description.CreateSchemaVersion(ctx, txn, schema)
+	if err != nil {
+		return nil, err
+	}
+	desc.SchemaVersionID = schema.VersionID
+
+	desc, err = description.SaveCollection(ctx, txn, desc)
 	if err != nil {
 		return nil, err
 	}
 
-	// Local elements such as secondary indexes should be excluded
-	// from the (global) schemaId.
-	globalSchemaBuf, err := json.Marshal(struct {
-		Name   string
-		Schema client.SchemaDescription
-	}{col.desc.Name, col.desc.Schema})
-	if err != nil {
-		return nil, err
-	}
-
-	// add a reference to this DB by desc hash
-	cid, err := ccid.NewSHA256CidV1(globalSchemaBuf)
-	if err != nil {
-		return nil, err
-	}
-	schemaID := cid.String()
-	col.schemaID = schemaID
-
-	// For new schemas the initial version id will match the schema id
-	schemaVersionID := schemaID
-
-	col.desc.Schema.VersionID = schemaVersionID
-	col.desc.Schema.SchemaID = schemaID
-
-	// buffer must include all the ids, as it is saved and loaded from the store later.
-	buf, err := json.Marshal(col.desc)
-	if err != nil {
-		return nil, err
-	}
-
-	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID)
-	// Whilst the schemaVersionKey is global, the data persisted at the key's location
-	// is local to the node (the global only elements are not useful beyond key generation).
-	err = txn.Systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
-	if err != nil {
-		return nil, err
-	}
-
-	collectionSchemaKey := core.NewCollectionSchemaKey(schemaID)
-	err = txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
-	}
-
-	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debug(
-		ctx,
-		"Created collection",
-		logging.NewKV("Name", col.Name()),
-		logging.NewKV("SchemaID", col.SchemaID()),
-	)
-
+	col := db.newCollection(desc, schema)
 	for _, index := range desc.Indexes {
 		if _, err := col.createIndex(ctx, txn, index); err != nil {
 			return nil, err
 		}
 	}
-	return col, nil
+
+	return db.getCollectionByName(ctx, txn, desc.Name)
 }
 
-// updateCollection updates the persisted collection description matching the name of the given
+// updateSchema updates the persisted schema description matching the name of the given
 // description, to the values in the given description.
 //
-// It will validate the given description using [ValidateUpdateCollectionTxn] before updating it.
+// It will validate the given description using [validateUpdateSchema] before updating it.
 //
-// The collection (including the schema version ID) will only be updated if any changes have actually
+// The schema (including the schema version ID) will only be updated if any changes have actually
 // been made, if the given description matches the current persisted description then no changes will be
 // applied.
-func (db *db) updateCollection(
+func (db *db) updateSchema(
 	ctx context.Context,
 	txn datastore.Txn,
-	existingDescriptionsByName map[string]client.CollectionDescription,
-	proposedDescriptionsByName map[string]client.CollectionDescription,
-	desc client.CollectionDescription,
-) (client.Collection, error) {
-	hasChanged, err := db.validateUpdateCollection(ctx, txn, existingDescriptionsByName, proposedDescriptionsByName, desc)
+	existingSchemaByName map[string]client.SchemaDescription,
+	proposedDescriptionsByName map[string]client.SchemaDescription,
+	schema client.SchemaDescription,
+	setAsDefaultVersion bool,
+) error {
+	hasChanged, err := db.validateUpdateSchema(
+		ctx,
+		txn,
+		existingSchemaByName,
+		proposedDescriptionsByName,
+		schema,
+	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if !hasChanged {
-		return db.getCollectionByName(ctx, txn, desc.Name)
+		return nil
 	}
 
-	for _, field := range desc.Schema.Fields {
+	for _, field := range schema.Fields {
 		if field.RelationType.IsSet(client.Relation_Type_ONE) {
 			idFieldName := field.Name + "_id"
-			if _, ok := desc.Schema.GetField(idFieldName); !ok {
-				desc.Schema.Fields = append(desc.Schema.Fields, client.FieldDescription{
+			if _, ok := schema.GetField(idFieldName); !ok {
+				schema.Fields = append(schema.Fields, client.FieldDescription{
 					Name:         idFieldName,
 					Kind:         client.FieldKind_DocKey,
 					RelationType: client.Relation_Type_INTERNAL_ID,
@@ -258,82 +181,57 @@ func (db *db) updateCollection(
 		}
 	}
 
-	for i, field := range desc.Schema.Fields {
-		if field.ID == client.FieldID(0) {
-			// This is not wonderful and will probably break when we add the ability
-			// to delete fields, however it is good enough for now and matches the
-			// create behaviour.
-			field.ID = client.FieldID(i)
-			desc.Schema.Fields[i] = field
-		}
-
+	for i, field := range schema.Fields {
 		if field.Typ == client.NONE_CRDT {
 			// If no CRDT Type has been provided, default to LWW_REGISTER.
 			field.Typ = client.LWW_REGISTER
-			desc.Schema.Fields[i] = field
+			schema.Fields[i] = field
 		}
 	}
 
-	globalSchemaBuf, err := json.Marshal(desc.Schema)
+	previousVersionID := schema.VersionID
+	schema, err = description.CreateSchemaVersion(ctx, txn, schema)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	cid, err := ccid.NewSHA256CidV1(globalSchemaBuf)
-	if err != nil {
-		return nil, err
-	}
-	previousSchemaVersionID := desc.Schema.VersionID
-	schemaVersionID := cid.String()
-	desc.Schema.VersionID = schemaVersionID
+	if setAsDefaultVersion {
+		cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, previousVersionID)
+		if err != nil {
+			return err
+		}
 
-	buf, err := json.Marshal(desc)
-	if err != nil {
-		return nil, err
-	}
+		for _, col := range cols {
+			col.SchemaVersionID = schema.VersionID
 
-	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID)
-	// Whilst the schemaVersionKey is global, the data persisted at the key's location
-	// is local to the node (the global only elements are not useful beyond key generation).
-	err = txn.Systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
-	if err != nil {
-		return nil, err
-	}
+			col, err = description.SaveCollection(ctx, txn, col)
+			if err != nil {
+				return err
+			}
 
-	collectionSchemaKey := core.NewCollectionSchemaKey(desc.Schema.SchemaID)
-	err = txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
+			err = db.setDefaultSchemaVersionExplicit(ctx, txn, col.Name, schema.VersionID)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	collectionKey := core.NewCollectionKey(desc.Name)
-	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
-	}
-
-	schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Schema.SchemaID, previousSchemaVersionID)
-	err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(schemaVersionID))
-	if err != nil {
-		return nil, err
-	}
-
-	return db.getCollectionByName(ctx, txn, desc.Name)
+	return nil
 }
 
-// validateUpdateCollection validates that the given collection description is a valid update.
+// validateUpdateSchema validates that the given schema description is a valid update.
 //
 // Will return true if the given description differs from the current persisted state of the
-// collection. Will return an error if it fails validation.
-func (db *db) validateUpdateCollection(
+// schema. Will return an error if it fails validation.
+func (db *db) validateUpdateSchema(
 	ctx context.Context,
 	txn datastore.Txn,
-	existingDescriptionsByName map[string]client.CollectionDescription,
-	proposedDescriptionsByName map[string]client.CollectionDescription,
-	proposedDesc client.CollectionDescription,
+	existingDescriptionsByName map[string]client.SchemaDescription,
+	proposedDescriptionsByName map[string]client.SchemaDescription,
+	proposedDesc client.SchemaDescription,
 ) (bool, error) {
 	if proposedDesc.Name == "" {
-		return false, ErrCollectionNameEmpty
+		return false, ErrSchemaNameEmpty
 	}
 
 	existingDesc, collectionExists := existingDescriptionsByName[proposedDesc.Name]
@@ -341,54 +239,49 @@ func (db *db) validateUpdateCollection(
 		return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
 	}
 
-	if proposedDesc.ID != existingDesc.ID {
-		return false, NewErrCollectionIDDoesntMatch(proposedDesc.Name, existingDesc.ID, proposedDesc.ID)
-	}
-
-	if proposedDesc.Schema.SchemaID != existingDesc.Schema.SchemaID {
-		return false, NewErrSchemaIDDoesntMatch(
+	if proposedDesc.Root != existingDesc.Root {
+		return false, NewErrSchemaRootDoesntMatch(
 			proposedDesc.Name,
-			existingDesc.Schema.SchemaID,
-			proposedDesc.Schema.SchemaID,
+			existingDesc.Root,
+			proposedDesc.Root,
 		)
 	}
 
-	if proposedDesc.Schema.Name != existingDesc.Schema.Name {
+	if proposedDesc.Name != existingDesc.Name {
 		// There is actually little reason to not support this atm besides controlling the surface area
 		// of the new feature.  Changing this should not break anything, but it should be tested first.
-		return false, NewErrCannotModifySchemaName(existingDesc.Schema.Name, proposedDesc.Schema.Name)
+		return false, NewErrCannotModifySchemaName(existingDesc.Name, proposedDesc.Name)
 	}
 
-	if proposedDesc.Schema.VersionID != "" && proposedDesc.Schema.VersionID != existingDesc.Schema.VersionID {
+	if proposedDesc.VersionID != "" && proposedDesc.VersionID != existingDesc.VersionID {
 		// If users specify this it will be overwritten, an error is prefered to quietly ignoring it.
 		return false, ErrCannotSetVersionID
 	}
 
-	hasChangedFields, err := validateUpdateCollectionFields(proposedDescriptionsByName, existingDesc, proposedDesc)
+	hasChangedFields, err := validateUpdateSchemaFields(proposedDescriptionsByName, existingDesc, proposedDesc)
 	if err != nil {
 		return hasChangedFields, err
 	}
 
-	hasChangedIndexes, err := validateUpdateCollectionIndexes(existingDesc.Indexes, proposedDesc.Indexes)
-	return hasChangedFields || hasChangedIndexes, err
+	return hasChangedFields, err
 }
 
-func validateUpdateCollectionFields(
-	descriptionsByName map[string]client.CollectionDescription,
-	existingDesc client.CollectionDescription,
-	proposedDesc client.CollectionDescription,
+func validateUpdateSchemaFields(
+	descriptionsByName map[string]client.SchemaDescription,
+	existingDesc client.SchemaDescription,
+	proposedDesc client.SchemaDescription,
 ) (bool, error) {
 	hasChanged := false
 	existingFieldsByID := map[client.FieldID]client.FieldDescription{}
 	existingFieldIndexesByName := map[string]int{}
-	for i, field := range existingDesc.Schema.Fields {
+	for i, field := range existingDesc.Fields {
 		existingFieldIndexesByName[field.Name] = i
 		existingFieldsByID[field.ID] = field
 	}
 
 	newFieldNames := map[string]struct{}{}
 	newFieldIds := map[client.FieldID]struct{}{}
-	for proposedIndex, proposedField := range proposedDesc.Schema.Fields {
+	for proposedIndex, proposedField := range proposedDesc.Fields {
 		var existingField client.FieldDescription
 		var fieldAlreadyExists bool
 		if proposedField.ID != client.FieldID(0) ||
@@ -456,7 +349,7 @@ func validateUpdateCollectionFields(
 
 			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
 				idFieldName := proposedField.Name + request.RelatedObjectID
-				idField, idFieldFound := proposedDesc.Schema.GetField(idFieldName)
+				idField, idFieldFound := proposedDesc.GetField(idFieldName)
 				if idFieldFound {
 					if idField.Kind != client.FieldKind_DocKey {
 						return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocKey, idField.Kind)
@@ -478,7 +371,7 @@ func validateUpdateCollectionFields(
 
 			var relatedFieldFound bool
 			var relatedField client.FieldDescription
-			for _, field := range relatedDesc.Schema.Fields {
+			for _, field := range relatedDesc.Fields {
 				if field.RelationName == proposedField.RelationName &&
 					!field.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) &&
 					!(relatedDesc.Name == proposedDesc.Name && field.Name == proposedField.Name) {
@@ -552,7 +445,7 @@ func validateUpdateCollectionFields(
 		newFieldIds[proposedField.ID] = struct{}{}
 	}
 
-	for _, field := range existingDesc.Schema.Fields {
+	for _, field := range existingDesc.Fields {
 		if _, stillExists := newFieldIds[field.ID]; !stillExists {
 			return false, NewErrCannotDeleteField(field.Name, field.ID)
 		}
@@ -560,74 +453,96 @@ func validateUpdateCollectionFields(
 	return hasChanged, nil
 }
 
-func validateUpdateCollectionIndexes(
-	existingIndexes []client.IndexDescription,
-	proposedIndexes []client.IndexDescription,
-) (bool, error) {
-	existingNameToIndex := map[string]client.IndexDescription{}
-	for _, index := range existingIndexes {
-		existingNameToIndex[index.Name] = index
+func (db *db) setDefaultSchemaVersion(
+	ctx context.Context,
+	txn datastore.Txn,
+	schemaVersionID string,
+) error {
+	if schemaVersionID == "" {
+		return ErrSchemaVersionIDEmpty
 	}
-	for _, proposedIndex := range proposedIndexes {
-		if existingIndex, exists := existingNameToIndex[proposedIndex.Name]; exists {
-			if len(existingIndex.Fields) != len(proposedIndex.Fields) {
-				return false, ErrCanNotChangeIndexWithPatch
-			}
-			for i := range existingIndex.Fields {
-				if existingIndex.Fields[i] != proposedIndex.Fields[i] {
-					return false, ErrCanNotChangeIndexWithPatch
-				}
-			}
-			delete(existingNameToIndex, proposedIndex.Name)
-		} else {
-			return false, NewErrCannotAddIndexWithPatch(proposedIndex.Name)
+
+	schema, err := description.GetSchemaVersion(ctx, txn, schemaVersionID)
+	if err != nil {
+		return err
+	}
+
+	colDescs, err := description.GetCollectionsBySchemaRoot(ctx, txn, schema.Root)
+	if err != nil {
+		return err
+	}
+
+	for _, col := range colDescs {
+		col.SchemaVersionID = schemaVersionID
+		col, err = description.SaveCollection(ctx, txn, col)
+		if err != nil {
+			return err
 		}
 	}
-	if len(existingNameToIndex) > 0 {
-		for _, index := range existingNameToIndex {
-			return false, NewErrCannotDropIndexWithPatch(index.Name)
-		}
+
+	cols, err := db.getAllCollections(ctx, txn)
+	if err != nil {
+		return err
 	}
-	return false, nil
+
+	definitions := make([]client.CollectionDefinition, len(cols))
+	for i, col := range cols {
+		definitions[i] = col.Definition()
+	}
+
+	return db.parser.SetSchema(ctx, txn, definitions)
 }
 
-// getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.
+func (db *db) setDefaultSchemaVersionExplicit(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionName string,
+	schemaVersionID string,
+) error {
+	if schemaVersionID == "" {
+		return ErrSchemaVersionIDEmpty
+	}
+
+	col, err := description.GetCollectionByName(ctx, txn, collectionName)
+	if err != nil {
+		return err
+	}
+
+	col.SchemaVersionID = schemaVersionID
+
+	_, err = description.SaveCollection(ctx, txn, col)
+	return err
+}
+
+// getCollectionsByVersionId returns the [*collection]s at the given [schemaVersionId] version.
 //
-// Will return an error if the given key is empty, or not found.
-func (db *db) getCollectionByVersionID(
+// Will return an error if the given key is empty, or if none are found.
+func (db *db) getCollectionsByVersionID(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaVersionId string,
-) (*collection, error) {
-	if schemaVersionId == "" {
-		return nil, ErrSchemaVersionIDEmpty
-	}
-
-	key := core.NewCollectionSchemaVersionKey(schemaVersionId)
-	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+) ([]*collection, error) {
+	cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schemaVersionId)
 	if err != nil {
 		return nil, err
 	}
 
-	var desc client.CollectionDescription
-	err = json.Unmarshal(buf, &desc)
-	if err != nil {
-		return nil, err
+	collections := make([]*collection, len(cols))
+	for i, col := range cols {
+		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
+		if err != nil {
+			return nil, err
+		}
+
+		collections[i] = db.newCollection(col, schema)
+
+		err = collections[i].loadIndexes(ctx, txn)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	col := &collection{
-		db:       db,
-		desc:     desc,
-		colID:    desc.ID,
-		schemaID: desc.Schema.SchemaID,
-	}
-
-	err = col.loadIndexes(ctx, txn)
-	if err != nil {
-		return nil, err
-	}
-
-	return col, nil
+	return collections, nil
 }
 
 // getCollectionByName returns an existing collection within the database.
@@ -636,67 +551,83 @@ func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name s
 		return nil, ErrCollectionNameEmpty
 	}
 
-	key := core.NewCollectionKey(name)
-	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+	col, err := description.GetCollectionByName(ctx, txn, name)
 	if err != nil {
 		return nil, err
 	}
 
-	schemaVersionId := string(buf)
-	return db.getCollectionByVersionID(ctx, txn, schemaVersionId)
+	schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
+	if err != nil {
+		return nil, err
+	}
+
+	collection := db.newCollection(col, schema)
+	err = collection.loadIndexes(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	return collection, nil
 }
 
-// getCollectionBySchemaID returns an existing collection using the schema hash ID.
-func (db *db) getCollectionBySchemaID(
+// getCollectionsBySchemaRoot returns all existing collections using the schema root.
+func (db *db) getCollectionsBySchemaRoot(
 	ctx context.Context,
 	txn datastore.Txn,
-	schemaID string,
-) (client.Collection, error) {
-	if schemaID == "" {
-		return nil, ErrSchemaIDEmpty
+	schemaRoot string,
+) ([]client.Collection, error) {
+	if schemaRoot == "" {
+		return nil, ErrSchemaRootEmpty
 	}
 
-	key := core.NewCollectionSchemaKey(schemaID)
-	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+	cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	schemaVersionId := string(buf)
-	return db.getCollectionByVersionID(ctx, txn, schemaVersionId)
+	collections := make([]client.Collection, len(cols))
+	for i, col := range cols {
+		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
+		if err != nil {
+			return nil, err
+		}
+
+		collection := db.newCollection(col, schema)
+		collections[i] = collection
+
+		err = collection.loadIndexes(ctx, txn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return collections, nil
 }
 
 // getAllCollections gets all the currently defined collections.
 func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn) ([]client.Collection, error) {
-	// create collection system prefix query
-	prefix := core.NewCollectionKey("")
-	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: prefix.ToString(),
-	})
+	cols, err := description.GetCollections(ctx, txn)
 	if err != nil {
-		return nil, NewErrFailedToCreateCollectionQuery(err)
+		return nil, err
 	}
-	defer func() {
-		if err := q.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close collection query", err)
-		}
-	}()
 
-	cols := make([]client.Collection, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
+	collections := make([]client.Collection, len(cols))
+	for i, col := range cols {
+		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
+		if err != nil {
 			return nil, err
 		}
 
-		schemaVersionId := string(res.Value)
-		col, err := db.getCollectionByVersionID(ctx, txn, schemaVersionId)
+		collection := db.newCollection(col, schema)
+		collections[i] = collection
+
+		err = collection.loadIndexes(ctx, txn)
 		if err != nil {
-			return nil, NewErrFailedToGetCollection(schemaVersionId, err)
+			return nil, err
 		}
-		cols = append(cols, col)
 	}
 
-	return cols, nil
+	return collections, nil
 }
 
 // GetAllDocKeys returns all the document keys that exist in the collection.
@@ -717,7 +648,7 @@ func (c *collection) getAllDocKeysChan(
 	txn datastore.Txn,
 ) (<-chan client.DocKeysResult, error) {
 	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
-		CollectionId: fmt.Sprint(c.colID),
+		CollectionId: fmt.Sprint(c.ID()),
 	}
 	q, err := txn.Datastore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
@@ -772,26 +703,30 @@ func (c *collection) getAllDocKeysChan(
 
 // Description returns the client.CollectionDescription.
 func (c *collection) Description() client.CollectionDescription {
-	return c.desc
+	return c.Definition().Description
 }
 
 // Name returns the collection name.
 func (c *collection) Name() string {
-	return c.desc.Name
+	return c.Description().Name
 }
 
 // Schema returns the Schema of the collection.
 func (c *collection) Schema() client.SchemaDescription {
-	return c.desc.Schema
+	return c.Definition().Schema
 }
 
 // ID returns the ID of the collection.
 func (c *collection) ID() uint32 {
-	return c.colID
+	return c.Description().ID
 }
 
-func (c *collection) SchemaID() string {
-	return c.schemaID
+func (c *collection) SchemaRoot() string {
+	return c.Schema().Root
+}
+
+func (c *collection) Definition() client.CollectionDefinition {
+	return c.def
 }
 
 // WithTxn returns a new instance of the collection, with a transaction
@@ -800,9 +735,7 @@ func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 	return &collection{
 		db:             c.db,
 		txn:            immutable.Some(txn),
-		desc:           c.desc,
-		colID:          c.colID,
-		schemaID:       c.schemaID,
+		def:            c.def,
 		indexes:        c.indexes,
 		fetcherFactory: c.fetcherFactory,
 	}
@@ -860,7 +793,7 @@ func (c *collection) getKeysFromDoc(
 
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
 	// This has to be done before dockey verification happens in the next step.
-	if err := doc.RemapAliasFieldsAndDockey(c.desc.Schema.Fields); err != nil {
+	if err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields); err != nil {
 		return err
 	}
 
@@ -1016,7 +949,7 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			fieldDescription, valid := c.desc.Schema.GetField(k)
+			fieldDescription, valid := c.Schema().GetField(k)
 			if !valid {
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
@@ -1025,7 +958,7 @@ func (c *collection) save(
 			if isSecondaryRelationID {
 				primaryId := val.Value().(string)
 
-				err = c.patchPrimaryDoc(ctx, txn, relationFieldDescription, primaryKey.DocKey, primaryId)
+				err = c.patchPrimaryDoc(ctx, txn, c.Name(), relationFieldDescription, primaryKey.DocKey, primaryId)
 				if err != nil {
 					return cid.Undef, err
 				}
@@ -1085,11 +1018,11 @@ func (c *collection) save(
 			func() {
 				c.db.events.Updates.Value().Publish(
 					events.Update{
-						DocKey:   doc.Key().String(),
-						Cid:      headNode.Cid(),
-						SchemaID: c.schemaID,
-						Block:    headNode,
-						Priority: priority,
+						DocKey:     doc.Key().String(),
+						Cid:        headNode.Cid(),
+						SchemaRoot: c.Schema().Root,
+						Block:      headNode,
+						Priority:   priority,
 					},
 				)
 			},
@@ -1118,7 +1051,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	objFieldDescription, ok := c.desc.Schema.GetField(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
+	objFieldDescription, ok := c.Schema().GetField(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	if !ok {
 		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	}
@@ -1286,10 +1219,17 @@ func (c *collection) saveValueToMerkleCRDT(
 		if err != nil {
 			return nil, 0, err
 		}
-		field, _ := c.Description().GetFieldByID(client.FieldID(fieldID))
+
+		schema := c.Schema()
+
+		field, ok := c.Description().GetFieldByID(client.FieldID(fieldID), &schema)
+		if !ok {
+			return nil, 0, client.NewErrFieldIndexNotExist(fieldID)
+		}
+
 		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
-			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
+			core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
 			c.db.events.Updates,
 			ctype,
 			key,
@@ -1300,7 +1240,6 @@ func (c *collection) saveValueToMerkleCRDT(
 		}
 
 		var bytes []byte
-		var ok bool
 		// parse args
 		if len(args) != 1 {
 			return nil, 0, ErrUnknownCRDTArgument
@@ -1315,7 +1254,7 @@ func (c *collection) saveValueToMerkleCRDT(
 		key = key.WithFieldId(core.COMPOSITE_NAMESPACE)
 		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
-			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
+			core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
 			c.db.events.Updates,
 			ctype,
 			key,
@@ -1383,14 +1322,14 @@ func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) e
 
 func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryDataStoreKey {
 	return core.PrimaryDataStoreKey{
-		CollectionId: fmt.Sprint(c.colID),
+		CollectionId: fmt.Sprint(c.ID()),
 		DocKey:       docKey.String(),
 	}
 }
 
 func (c *collection) getDSKeyFromDockey(docKey client.DocKey) core.DataStoreKey {
 	return core.DataStoreKey{
-		CollectionID: fmt.Sprint(c.colID),
+		CollectionID: fmt.Sprint(c.ID()),
 		DocKey:       docKey.String(),
 		InstanceType: core.ValueKey,
 	}
@@ -1412,7 +1351,7 @@ func (c *collection) tryGetFieldKey(key core.PrimaryDataStoreKey, fieldName stri
 // tryGetSchemaFieldID returns the FieldID of the given fieldName.
 // Will return false if the field is not found.
 func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
-	for _, field := range c.desc.Schema.Fields {
+	for _, field := range c.Schema().Fields {
 		if field.Name == fieldName {
 			if field.IsObject() || field.IsObjectArray() {
 				// We do not wish to match navigational properties, only

@@ -8,28 +8,29 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+import React from 'react'
 import { GraphiQL } from 'graphiql'
 import { createGraphiQLFetcher } from '@graphiql/toolkit'
 import { GraphiQLPlugin } from '@graphiql/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Plugin } from './components/Plugin'
+import 'swagger-ui-react/swagger-ui.css'
 import 'graphiql/graphiql.css'
 
-const client = new QueryClient()
-const fetcher = createGraphiQLFetcher({ url: 'http://localhost:9181/api/v0/graphql' })
+const baseUrl = import.meta.env.DEV ? 'http://localhost:9181' : ''
+const SwaggerUI = React.lazy(() => import('swagger-ui-react'))
+const fetcher = createGraphiQLFetcher({ url: `${baseUrl}/api/v0/graphql` })
 
 const plugin: GraphiQLPlugin = {
-  title: 'DefraDB',
-  icon: () => (<div>DB</div>),
-  content: () => (<Plugin />),
+  title: 'DefraDB API',
+  icon: () => (<div>API</div>),
+  content: () => (
+    <React.Suspense>
+      <SwaggerUI url={`${baseUrl}/openapi.json`} />
+    </React.Suspense>
+  ),
 }
 
 function App() {
-  return (
-    <QueryClientProvider client={client}>
-      <GraphiQL fetcher={fetcher} plugins={[plugin]} />
-    </QueryClientProvider>
-  )
+  return (<GraphiQL fetcher={fetcher} plugins={[plugin]} />)
 }
 
 export default App

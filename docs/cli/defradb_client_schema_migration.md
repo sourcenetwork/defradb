@@ -22,12 +22,16 @@ Make set or look for existing schema migrations on a DefraDB node.
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
 
 * [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
+* [defradb client schema migration down](defradb_client_schema_migration_down.md)	 - Reverses the migration from the specified schema version.
 * [defradb client schema migration get](defradb_client_schema_migration_get.md)	 - Gets the schema migrations within DefraDB
+* [defradb client schema migration reload](defradb_client_schema_migration_reload.md)	 - Reload the schema migrations within DefraDB
 * [defradb client schema migration set](defradb_client_schema_migration_set.md)	 - Set a schema migration within DefraDB
+* [defradb client schema migration up](defradb_client_schema_migration_up.md)	 - Applies the migration to the specified schema version.
 

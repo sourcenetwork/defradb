@@ -30,9 +30,12 @@ func TestSingleSimpleType(t *testing.T) {
 				verified: Boolean
 			}
 			`,
-			targetDescs: []client.CollectionDescription{
+			targetDescs: []client.CollectionDefinition{
 				{
-					Name: "User",
+					Description: client.CollectionDescription{
+						Name:    "User",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "User",
 						Fields: []client.FieldDescription{
@@ -58,7 +61,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -77,9 +79,12 @@ func TestSingleSimpleType(t *testing.T) {
 				rating: Float
 			}
 			`,
-			targetDescs: []client.CollectionDescription{
+			targetDescs: []client.CollectionDefinition{
 				{
-					Name: "User",
+					Description: client.CollectionDescription{
+						Name:    "User",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "User",
 						Fields: []client.FieldDescription{
@@ -105,10 +110,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "Author",
+					Description: client.CollectionDescription{
+						Name:    "Author",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
 						Fields: []client.FieldDescription{
@@ -134,7 +141,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -153,9 +159,12 @@ func TestSingleSimpleType(t *testing.T) {
 				published: Book
 			}
 			`,
-			targetDescs: []client.CollectionDescription{
+			targetDescs: []client.CollectionDefinition{
 				{
-					Name: "Book",
+					Description: client.CollectionDescription{
+						Name:    "Book",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
 						Fields: []client.FieldDescription{
@@ -190,10 +199,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "Author",
+					Description: client.CollectionDescription{
+						Name:    "Author",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
 						Fields: []client.FieldDescription{
@@ -228,7 +239,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -247,9 +257,12 @@ func TestSingleSimpleType(t *testing.T) {
 				rating: Float
 			}
 			`,
-			targetDescs: []client.CollectionDescription{
+			targetDescs: []client.CollectionDefinition{
 				{
-					Name: "User",
+					Description: client.CollectionDescription{
+						Name:    "User",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "User",
 						Fields: []client.FieldDescription{
@@ -275,10 +288,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "Author",
+					Description: client.CollectionDescription{
+						Name:    "Author",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
 						Fields: []client.FieldDescription{
@@ -304,7 +319,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -323,9 +337,12 @@ func TestSingleSimpleType(t *testing.T) {
 				published: Book @relation(name:"book_authors")
 			}
 			`,
-			targetDescs: []client.CollectionDescription{
+			targetDescs: []client.CollectionDefinition{
 				{
-					Name: "Book",
+					Description: client.CollectionDescription{
+						Name:    "Book",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
 						Fields: []client.FieldDescription{
@@ -360,10 +377,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "Author",
+					Description: client.CollectionDescription{
+						Name:    "Author",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
 						Fields: []client.FieldDescription{
@@ -398,7 +417,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -417,9 +435,12 @@ func TestSingleSimpleType(t *testing.T) {
 				published: Book
 			}
 			`,
-			targetDescs: []client.CollectionDescription{
+			targetDescs: []client.CollectionDefinition{
 				{
-					Name: "Book",
+					Description: client.CollectionDescription{
+						Name:    "Book",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
 						Fields: []client.FieldDescription{
@@ -454,10 +475,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "Author",
+					Description: client.CollectionDescription{
+						Name:    "Author",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
 						Fields: []client.FieldDescription{
@@ -492,7 +515,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -511,9 +533,12 @@ func TestSingleSimpleType(t *testing.T) {
 				published: [Book]
 			}
 			`,
-			targetDescs: []client.CollectionDescription{
+			targetDescs: []client.CollectionDefinition{
 				{
-					Name: "Book",
+					Description: client.CollectionDescription{
+						Name:    "Book",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
 						Fields: []client.FieldDescription{
@@ -548,10 +573,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 				{
-					Name: "Author",
+					Description: client.CollectionDescription{
+						Name:    "Author",
+						Indexes: []client.IndexDescription{},
+					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
 						Fields: []client.FieldDescription{
@@ -580,7 +607,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: []client.IndexDescription{},
 				},
 			},
 		},
@@ -599,12 +625,12 @@ func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
 	assert.Equal(t, len(descs), len(testcase.targetDescs), testcase.description)
 
 	for i, d := range descs {
-		assert.Equal(t, testcase.targetDescs[i], d, testcase.description)
+		assert.Equal(t, testcase.targetDescs[i].Description, d.Description, testcase.description)
 	}
 }
 
 type descriptionTestCase struct {
 	description string
 	sdl         string
-	targetDescs []client.CollectionDescription
+	targetDescs []client.CollectionDefinition
 }

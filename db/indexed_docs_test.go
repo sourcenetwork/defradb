@@ -230,19 +230,6 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(f.t), nil)
 
-	colKey := core.NewCollectionKey(usersColName)
-	systemStoreOn.Get(mock.Anything, colKey.ToDS()).Maybe().Return([]byte(userColVersionID), nil)
-
-	colVersionIDKey := core.NewCollectionSchemaVersionKey(userColVersionID)
-	colDesc := getUsersCollectionDesc()
-	colDesc.ID = 1
-	for i := range colDesc.Schema.Fields {
-		colDesc.Schema.Fields[i].ID = client.FieldID(i)
-	}
-	colDescBytes, err := json.Marshal(colDesc)
-	require.NoError(f.t, err)
-	systemStoreOn.Get(mock.Anything, colVersionIDKey.ToDS()).Maybe().Return(colDescBytes, nil)
-
 	colIndexOnNameKey := core.NewCollectionIndexKey(usersColName, testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
 
@@ -325,7 +312,7 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 		Return(mocks.NewQueryResultsWithValues(t, []byte("invalid")), nil)
 
 	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
-	require.ErrorIs(t, err, NewErrInvalidStoredIndex(nil))
+	assert.ErrorIs(t, err, datastore.NewErrInvalidStoredValue(nil))
 }
 
 func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
@@ -361,8 +348,8 @@ func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 
 func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.createCollection(getUsersCollectionDesc())
-	products := f.createCollection(getProductsCollectionDesc())
+	users := f.getUsersCollectionDesc()
+	products := f.getProductsCollectionDesc()
 
 	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
@@ -437,24 +424,23 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 	}
 
 	for i, tc := range testCase {
-		desc := client.CollectionDescription{
-			Name: "testTypeCol" + strconv.Itoa(i),
-			Schema: client.SchemaDescription{
-				Fields: []client.FieldDescription{
-					{
-						Name: "_key",
-						Kind: client.FieldKind_DocKey,
-					},
-					{
-						Name: "field",
-						Kind: tc.FieldKind,
-						Typ:  client.LWW_REGISTER,
-					},
-				},
-			},
-		}
+		_, err := f.db.AddSchema(
+			f.ctx,
+			fmt.Sprintf(
+				`type %s {
+					field: %s
+				}`,
+				"testTypeCol"+strconv.Itoa(i),
+				tc.FieldKind.String(),
+			),
+		)
+		require.NoError(f.t, err)
 
-		collection := f.createCollection(desc)
+		collection, err := f.db.GetCollectionByName(f.ctx, "testTypeCol"+strconv.Itoa(i))
+		require.NoError(f.t, err)
+
+		f.txn, err = f.db.NewTxn(f.ctx, false)
+		require.NoError(f.t, err)
 
 		indexDesc := client.IndexDescription{
 			Fields: []client.IndexedFieldDescription{
@@ -462,7 +448,7 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 			},
 		}
 
-		_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
+		_, err = f.createCollectionIndexFor(collection.Name(), indexDesc)
 		require.NoError(f.t, err)
 		f.commitTxn()
 
@@ -596,7 +582,7 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 		doc := f.newUserDoc("John", 21)
 		f.saveDocToCollection(doc, f.users)
 
-		f.users.fetcherFactory = tc.PrepareFetcher
+		f.users.(*collection).fetcherFactory = tc.PrepareFetcher
 		key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
 		_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
@@ -614,7 +600,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	f.saveDocToCollection(doc, f.users)
 
 	fieldKeyString := core.DataStoreKey{
-		CollectionID: f.users.desc.IDString(),
+		CollectionID: f.users.Description().IDString(),
 	}.WithDocKey(doc.Key().String()).
 		WithFieldId("1").
 		WithValueFlag().
@@ -623,7 +609,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	invalidKeyString := fieldKeyString + "/doesn't matter/"
 
 	// Insert an invalid key within the document prefix, this will generate an error within the fetcher.
-	f.users.db.multistore.Datastore().Put(f.ctx, ipfsDatastore.NewKey(invalidKeyString), []byte("doesn't matter"))
+	f.db.multistore.Datastore().Put(f.ctx, ipfsDatastore.NewKey(invalidKeyString), []byte("doesn't matter"))
 
 	_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 	require.ErrorIs(f.t, err, core.ErrInvalidKey)
@@ -631,7 +617,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 
 func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.createCollection(getUsersCollectionDesc())
+	users := f.getUsersCollectionDesc()
 	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
 	_, err = f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnAge())
@@ -643,7 +629,7 @@ func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f.saveDocToCollection(f.newUserDoc("John", 21), users)
 	f.saveDocToCollection(f.newUserDoc("Islam", 23), users)
 
-	products := f.createCollection(getProductsCollectionDesc())
+	products := f.getProductsCollectionDesc()
 	_, err = f.createCollectionIndexFor(products.Name(), getProductsIndexDescOnCategory())
 	require.NoError(f.t, err)
 	f.commitTxn()
@@ -662,86 +648,6 @@ func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	assert.Len(t, f.getPrefixFromDataStore(userAgeKey.ToString()), 0)
 	assert.Len(t, f.getPrefixFromDataStore(userWeightKey.ToString()), 2)
 	assert.Len(t, f.getPrefixFromDataStore(prodCatKey.ToString()), 1)
-}
-
-func TestNonUniqueDrop_IfDataStorageFails_ReturnError(t *testing.T) {
-	testErr := errors.New("test error")
-
-	testCases := []struct {
-		description          string
-		prepareSystemStorage func(*mocks.DSReaderWriter_Expecter)
-	}{
-		{
-			description: "Fails to query data storage",
-			prepareSystemStorage: func(mockedDS *mocks.DSReaderWriter_Expecter) {
-				mockedDS.Query(mock.Anything, mock.Anything).Unset()
-				mockedDS.Query(mock.Anything, mock.Anything).Return(nil, testErr)
-			},
-		},
-		{
-			description: "Fails to iterate data storage",
-			prepareSystemStorage: func(mockedDS *mocks.DSReaderWriter_Expecter) {
-				mockedDS.Query(mock.Anything, mock.Anything).Unset()
-				q := mocks.NewQueryResultsWithResults(t, query.Result{Error: testErr})
-				mockedDS.Query(mock.Anything, mock.Anything).Return(q, nil)
-				q.EXPECT().Close().Unset()
-				q.EXPECT().Close().Return(nil)
-			},
-		},
-		{
-			description: "Fails to delete from data storage",
-			prepareSystemStorage: func(mockedDS *mocks.DSReaderWriter_Expecter) {
-				q := mocks.NewQueryResultsWithResults(t, query.Result{Entry: query.Entry{Key: ""}})
-				q.EXPECT().Close().Unset()
-				q.EXPECT().Close().Return(nil)
-				mockedDS.Query(mock.Anything, mock.Anything).Return(q, nil)
-				mockedDS.Delete(mock.Anything, mock.Anything).Unset()
-				mockedDS.Delete(mock.Anything, mock.Anything).Return(testErr)
-			},
-		},
-		{
-			description: "Fails to close data storage query iterator",
-			prepareSystemStorage: func(mockedDS *mocks.DSReaderWriter_Expecter) {
-				q := mocks.NewQueryResultsWithResults(t, query.Result{Entry: query.Entry{Key: ""}})
-				q.EXPECT().Close().Unset()
-				q.EXPECT().Close().Return(testErr)
-				mockedDS.Query(mock.Anything, mock.Anything).Return(q, nil)
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		f := newIndexTestFixture(t)
-		f.createUserCollectionIndexOnName()
-
-		mockedTxn := f.mockTxn()
-		mockedTxn.MockDatastore = mocks.NewDSReaderWriter(t)
-		tc.prepareSystemStorage(mockedTxn.MockDatastore.EXPECT())
-		mockedTxn.EXPECT().Datastore().Unset()
-		mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore)
-
-		err := f.dropIndex(usersColName, testUsersColIndexName)
-		require.ErrorIs(t, err, testErr, tc.description)
-	}
-}
-
-func TestNonUniqueDrop_ShouldCloseQueryIterator(t *testing.T) {
-	f := newIndexTestFixture(t)
-	f.createUserCollectionIndexOnName()
-
-	mockedTxn := f.mockTxn()
-
-	mockedTxn.MockDatastore = mocks.NewDSReaderWriter(f.t)
-	mockedTxn.EXPECT().Datastore().Unset()
-	mockedTxn.EXPECT().Datastore().Return(mockedTxn.MockDatastore).Maybe()
-	queryResults := mocks.NewQueryResultsWithValues(f.t)
-	queryResults.EXPECT().Close().Unset()
-	queryResults.EXPECT().Close().Return(nil)
-	mockedTxn.MockDatastore.EXPECT().Query(mock.Anything, mock.Anything).
-		Return(queryResults, nil)
-
-	err := f.dropIndex(usersColName, testUsersColIndexName)
-	assert.NoError(t, err)
 }
 
 func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
@@ -866,7 +772,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 			PrepareFetcher: func() fetcher.Fetcher {
 				f := fetcherMocks.NewStubbedFetcher(t)
 				f.EXPECT().FetchNext(mock.Anything).Unset()
-				// By default the the stubbed fetcher returns an empty, invalid document
+				// By default the stubbed fetcher returns an empty, invalid document
 				// here we need to make sure it reaches the Close call by overriding that default.
 				f.EXPECT().FetchNext(mock.Anything).Maybe().Return(nil, fetcher.ExecInfo{}, nil)
 				f.EXPECT().Close().Unset()
@@ -885,7 +791,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 		doc := f.newUserDoc("John", 21)
 		f.saveDocToCollection(doc, f.users)
 
-		f.users.fetcherFactory = tc.PrepareFetcher
+		f.users.(*collection).fetcherFactory = tc.PrepareFetcher
 		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
 		err := doc.Set(usersNameFieldName, "Islam")
@@ -911,19 +817,14 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 	f.commitTxn()
 
 	validKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
-	invalidKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).
-		Values([]byte("invalid")).Build()
-
 	err := f.txn.Datastore().Delete(f.ctx, validKey.ToDS())
-	require.NoError(f.t, err)
-	err = f.txn.Datastore().Put(f.ctx, invalidKey.ToDS(), []byte{})
 	require.NoError(f.t, err)
 	f.commitTxn()
 
 	err = doc.Set(usersAgeFieldName, 23)
 	require.NoError(t, err)
 	err = f.users.Update(f.ctx, doc)
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrCorruptedIndex)
 }
 
 func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
@@ -931,14 +832,14 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 	f.createUserCollectionIndexOnName()
 	f.createUserCollectionIndexOnAge()
 
-	f.users.fetcherFactory = func() fetcher.Fetcher {
+	f.users.(*collection).fetcherFactory = func() fetcher.Fetcher {
 		f := fetcherMocks.NewStubbedFetcher(t)
 		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Unset()
 		f.EXPECT().Init(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			RunAndReturn(func(
 				ctx context.Context,
 				txn datastore.Txn,
-				col *client.CollectionDescription,
+				col client.Collection,
 				fields []client.FieldDescription,
 				filter *mapper.Filter,
 				mapping *core.DocumentMapping,
@@ -971,6 +872,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			Name: "Delete old value",
 			StubDataStore: func(ds *mocks.DSReaderWriter_Expecter) {
 				ds.Delete(mock.Anything, mock.Anything).Return(testErr)
+				ds.Has(mock.Anything, mock.Anything).Maybe().Return(true, nil)
 				ds.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
 			},
 		},
@@ -979,6 +881,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			StubDataStore: func(ds *mocks.DSReaderWriter_Expecter) {
 				ds.Delete(mock.Anything, mock.Anything).Maybe().Return(nil)
 				ds.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
+				ds.Has(mock.Anything, mock.Anything).Maybe().Return(true, nil)
 				ds.Put(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(testErr)
 			},
 		},
@@ -999,7 +902,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 			schemaVersionID: f.users.Schema().VersionID,
 		}
 
-		f.users.fetcherFactory = func() fetcher.Fetcher {
+		f.users.(*collection).fetcherFactory = func() fetcher.Fetcher {
 			df := fetcherMocks.NewStubbedFetcher(t)
 			df.EXPECT().FetchNext(mock.Anything).Unset()
 			df.EXPECT().FetchNext(mock.Anything).Return(&encodedDoc, fetcher.ExecInfo{}, nil)

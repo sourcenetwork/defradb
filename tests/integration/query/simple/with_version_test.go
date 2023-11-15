@@ -43,17 +43,17 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeicloiyf5zl5k54cjuhfg6rpsj7rnhxswvnuizpagd2kwq4px6aqn4",
+						"cid": "bafybeieybepwqpy5h2d4sywksgvdqpjd44ciu223vrm7knumychpmucawy",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeieqi3u6kdbsb76qrfziiiabs52ztptecry34lo46cwfbqmf3u4kwi",
+								"cid":  "bafybeibphw52n3t5nn2xn32sfdsf4hbll3iddsc6or2ebnnrmpz2cbovyy",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeidoaqrpud2z2d4jnjqqmo3kn5rakr7yh2d2cdmjkvk5fcisy54jam",
+								"cid":  "bafybeifgqmrklbyw3x35zzzao3d7baownrv3z4v7vzfbmk2r5omv5icgu4",
 								"name": "Name",
 							},
 						},
@@ -90,7 +90,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 				"Name": "John",
 				"_version": []map[string]any{
 					{
-						"schemaVersionId": "bafkreicl3pjcorfcaexxmqcrilkhx7xl37o6b34nxgtiauygtl7hrqbhoq",
+						"schemaVersionId": "bafkreicqyapc7zxw5tt2ymybau5m54lhmm5ahrl22oaktnhidul757a4ba",
 					},
 				},
 			},
@@ -168,17 +168,17 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeicloiyf5zl5k54cjuhfg6rpsj7rnhxswvnuizpagd2kwq4px6aqn4",
+						"cid": "bafybeieybepwqpy5h2d4sywksgvdqpjd44ciu223vrm7knumychpmucawy",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafybeieqi3u6kdbsb76qrfziiiabs52ztptecry34lo46cwfbqmf3u4kwi",
+								"cid":  "bafybeibphw52n3t5nn2xn32sfdsf4hbll3iddsc6or2ebnnrmpz2cbovyy",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeidoaqrpud2z2d4jnjqqmo3kn5rakr7yh2d2cdmjkvk5fcisy54jam",
+								"cid":  "bafybeifgqmrklbyw3x35zzzao3d7baownrv3z4v7vzfbmk2r5omv5icgu4",
 								"name": "Name",
 							},
 						},

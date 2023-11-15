@@ -19,15 +19,12 @@ package net
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/ipfs/boxo/ipns"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/namespace"
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
@@ -39,15 +36,21 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
-	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
+
 	"github.com/multiformats/go-multiaddr"
-	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
+	"github.com/sourcenetwork/go-libp2p-pubsub-rpc/finalizer"
+
+	// @TODO: https://github.com/sourcenetwork/defradb/issues/1902
+	//nolint:staticcheck
+	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
 var evtWaitTimeout = 10 * time.Second
+
+var _ client.P2P = (*Node)(nil)
 
 // Node is a networked peer instance of DefraDB.
 type Node struct {
@@ -82,19 +85,19 @@ func NewNode(
 
 	fin := finalizer.NewFinalizer()
 
-	// create our peerstore from the underlying defra rootstore
-	// prefixed with "p2p"
-	rootstore := db.Root()
-	pstore := namespace.Wrap(rootstore, ds.NewKey("/db"))
-	peerstore, err := pstoreds.NewPeerstore(ctx, pstore, pstoreds.DefaultOpts())
+	peerstore, err := pstoreds.NewPeerstore(ctx, db.Peerstore(), pstoreds.DefaultOpts())
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
 	fin.Add(peerstore)
 
-	hostKey, err := getHostKey(options.DataPath)
-	if err != nil {
-		return nil, fin.Cleanup(err)
+	if options.PrivateKey == nil {
+		// generate an ephemeral private key
+		key, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
+		if err != nil {
+			return nil, fin.Cleanup(err)
+		}
+		options.PrivateKey = key
 	}
 
 	var ddht *dualdht.DHT
@@ -102,7 +105,7 @@ func NewNode(
 	libp2pOpts := []libp2p.Option{
 		libp2p.ConnectionManager(options.ConnManager),
 		libp2p.DefaultTransports,
-		libp2p.Identity(hostKey),
+		libp2p.Identity(options.PrivateKey),
 		libp2p.ListenAddrs(options.ListenAddrs...),
 		libp2p.Peerstore(peerstore),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
@@ -113,13 +116,13 @@ func NewNode(
 			// if dsb, isBatching := rootstore.(ds.Batching); isBatching {
 			// 	store = dsb
 			// }
-			store := rootstore // Delete this line once we remove batchable datastore support.
+			store := db.Root() // Delete this line once we remove batchable datastore support.
 			ddht, err = newDHT(ctx, h, store)
 			return ddht, err
 		}),
 	}
-	if options.EnableRelay {
-		libp2pOpts = append(libp2pOpts, libp2p.EnableRelay())
+	if !options.EnableRelay {
+		libp2pOpts = append(libp2pOpts, libp2p.DisableRelay())
 	}
 
 	h, err := libp2p.New(libp2pOpts...)
@@ -154,7 +157,6 @@ func NewNode(
 		h,
 		ddht,
 		ps,
-		options.TCPAddr,
 		options.GRPCServerOptions,
 		options.GRPCDialOptions,
 	)
@@ -186,8 +188,8 @@ func NewNode(
 	return n, nil
 }
 
-// Boostrap connects to the given peers.
-func (n *Node) Boostrap(addrs []peer.AddrInfo) {
+// Bootstrap connects to the given peers.
+func (n *Node) Bootstrap(addrs []peer.AddrInfo) {
 	var connected uint64
 
 	var wg sync.WaitGroup
@@ -218,14 +220,19 @@ func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 	}
 }
 
-// ListenAddrs returns the Multiaddr list of the hosts' listening addresses.
-func (n *Node) ListenAddrs() []multiaddr.Multiaddr {
-	return n.host.Addrs()
-}
-
-// PeerID returns the node's peer ID.
 func (n *Node) PeerID() peer.ID {
 	return n.host.ID()
+}
+
+func (n *Node) ListenAddrs() []multiaddr.Multiaddr {
+	return n.host.Network().ListenAddresses()
+}
+
+func (n *Node) PeerInfo() peer.AddrInfo {
+	return peer.AddrInfo{
+		ID:    n.host.ID(),
+		Addrs: n.host.Network().ListenAddresses(),
+	}
 }
 
 // subscribeToPeerConnectionEvents subscribes the node to the event bus for a peer connection change.
@@ -377,46 +384,6 @@ func (n *Node) WaitForPushLogFromPeerEvent(id peer.ID) error {
 	}
 }
 
-// replace with proper keystore
-func getHostKey(keypath string) (crypto.PrivKey, error) {
-	// If a local datastore is used, the key is written to a file
-	pth := filepath.Join(keypath, "key")
-	_, err := os.Stat(pth)
-	if os.IsNotExist(err) {
-		key, bytes, err := newHostKey()
-		if err != nil {
-			return nil, err
-		}
-		if err := os.MkdirAll(keypath, os.ModePerm); err != nil {
-			return nil, err
-		}
-		if err = os.WriteFile(pth, bytes, 0400); err != nil {
-			return nil, err
-		}
-		return key, nil
-	} else if err != nil {
-		return nil, err
-	} else {
-		bytes, err := os.ReadFile(pth)
-		if err != nil {
-			return nil, err
-		}
-		return crypto.UnmarshalPrivateKey(bytes)
-	}
-}
-
-func newHostKey() (crypto.PrivKey, []byte, error) {
-	priv, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
-	if err != nil {
-		return nil, nil, err
-	}
-	key, err := crypto.MarshalPrivateKey(priv)
-	if err != nil {
-		return nil, nil, err
-	}
-	return priv, key, nil
-}
-
 func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, error) {
 	dhtOpts := []dualdht.Option{
 		dualdht.DHTOption(dht.NamespacedValidator("pk", record.PublicKeyValidator{})),
@@ -432,7 +399,12 @@ func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, er
 }
 
 // Close closes the node and all its services.
-func (n Node) Close() error {
-	n.cancel()
-	return n.Peer.Close()
+func (n Node) Close() {
+	if n.cancel != nil {
+		n.cancel()
+	}
+	if n.Peer != nil {
+		n.Peer.Close()
+	}
+	n.DB.Close()
 }

@@ -92,11 +92,11 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 		},
 		Results: []map[string]any{
 			{
-				"Age":    uint64(32),
+				"Age":    int64(32),
 				"_count": 2,
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_count": 1,
 			},
 		},
@@ -150,7 +150,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 		},
 		Results: []map[string]any{
 			{
-				"Age":    uint64(32),
+				"Age":    int64(32),
 				"_count": 2,
 				"_group": []map[string]any{
 					{
@@ -162,7 +162,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 				},
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"_count": 1,
 				"_group": []map[string]any{
 					{
@@ -234,11 +234,11 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 		},
 		Results: []map[string]any{
 			{
-				"Age":   uint64(32),
+				"Age":   int64(32),
 				"Count": 2,
 			},
 			{
-				"Age":   uint64(19),
+				"Age":   int64(19),
 				"Count": 1,
 			},
 		},
@@ -277,12 +277,12 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChi
 		},
 		Results: []map[string]any{
 			{
-				"Age":    uint64(32),
+				"Age":    int64(32),
 				"Count1": 2,
 				"Count2": 2,
 			},
 			{
-				"Age":    uint64(19),
+				"Age":    int64(19),
 				"Count1": 1,
 				"Count2": 1,
 			},

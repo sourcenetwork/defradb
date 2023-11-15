@@ -131,6 +131,24 @@ func Decode(encdoc EncodedDocument) (*client.Document, error) {
 	return doc, nil
 }
 
+// MergeProperties merges the properties of the given document into this document.
+// Existing fields of the current document are overwritten.
+func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
+	otherEncDoc, ok := other.(*encodedDocument)
+	if !ok {
+		return
+	}
+	for field, prop := range otherEncDoc.properties {
+		encdoc.properties[field] = prop
+	}
+	if other.Key() != nil {
+		encdoc.key = other.Key()
+	}
+	if other.SchemaVersionID() != "" {
+		encdoc.schemaVersionID = other.SchemaVersionID()
+	}
+}
+
 // DecodeToDoc returns a decoded document as a
 // map of field/value pairs
 func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter bool) (core.Doc, error) {

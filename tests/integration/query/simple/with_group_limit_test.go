@@ -45,7 +45,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Age": uint64(32),
+				"Age": int64(32),
 				"_group": []map[string]any{
 					{
 						"Name": "Bob",
@@ -53,7 +53,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 				},
 			},
 			{
-				"Age": uint64(19),
+				"Age": int64(19),
 				"_group": []map[string]any{
 					{
 						"Name": "Alice",
@@ -98,7 +98,7 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 		},
 		Results: []map[string]any{
 			{
-				"Age": uint64(32),
+				"Age": int64(32),
 				"G1": []map[string]any{
 					{
 						"Name": "Bob",
@@ -114,7 +114,7 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 				},
 			},
 			{
-				"Age": uint64(19),
+				"Age": int64(19),
 				"G1": []map[string]any{
 					{
 						"Name": "Alice",
@@ -161,7 +161,7 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 		},
 		Results: []map[string]any{
 			{
-				"Age": uint64(32),
+				"Age": int64(32),
 				"_group": []map[string]any{
 					{
 						"Name": "Bob",
@@ -210,7 +210,7 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 		},
 		Results: []map[string]any{
 			{
-				"Age": uint64(32),
+				"Age": int64(32),
 				"_group": []map[string]any{
 					{
 						"Name": "Bob",
@@ -218,7 +218,7 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 				},
 			},
 			{
-				"Age": uint64(42),
+				"Age": int64(42),
 				"_group": []map[string]any{
 					{
 						"Name": "Alice",

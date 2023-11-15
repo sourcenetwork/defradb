@@ -38,7 +38,7 @@ func TestQuerySimple(t *testing.T) {
 			{
 				"_key": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 			},
 		},
 	}
@@ -66,7 +66,7 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"username": "John",
-				"age":      uint64(21),
+				"age":      int64(21),
 			},
 		},
 	}
@@ -98,11 +98,11 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "Bob",
-				"Age":  uint64(27),
+				"Age":  int64(27),
 			},
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 			},
 		},
 	}

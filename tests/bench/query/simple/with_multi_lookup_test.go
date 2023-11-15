@@ -34,7 +34,7 @@ var (
 
 func Benchmark_Query_UserSimple_Query_WithMultiLookup_Sync_10(b *testing.B) {
 	ctx := context.Background()
-	err := runQueryBenchGet(
+	err := RunQueryBenchGet(
 		b,
 		ctx,
 		fixtures.ForSchema(ctx, "user_simple"),
@@ -49,7 +49,7 @@ func Benchmark_Query_UserSimple_Query_WithMultiLookup_Sync_10(b *testing.B) {
 
 func Benchmark_Query_UserSimple_Query_WithMultiLookup_Sync_100(b *testing.B) {
 	ctx := context.Background()
-	err := runQueryBenchGet(
+	err := RunQueryBenchGet(
 		b,
 		ctx,
 		fixtures.ForSchema(ctx, "user_simple"),
@@ -64,7 +64,7 @@ func Benchmark_Query_UserSimple_Query_WithMultiLookup_Sync_100(b *testing.B) {
 
 func Benchmark_Query_UserSimple_Query_WithMultiLookup_Sync_1000(b *testing.B) {
 	ctx := context.Background()
-	err := runQueryBenchGet(
+	err := RunQueryBenchGet(
 		b,
 		ctx,
 		fixtures.ForSchema(ctx, "user_simple"),

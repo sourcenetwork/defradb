@@ -51,7 +51,6 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/mitchellh/mapstructure"
 	ma "github.com/multiformats/go-multiaddr"
@@ -350,77 +349,40 @@ func (apicfg *APIConfig) AddressToURL() string {
 
 // NetConfig configures aspects of network and peer-to-peer.
 type NetConfig struct {
-	P2PAddress           string
-	P2PDisabled          bool
-	Peers                string
-	PubSubEnabled        bool `mapstructure:"pubsub"`
-	RelayEnabled         bool `mapstructure:"relay"`
-	RPCAddress           string
-	RPCMaxConnectionIdle string
-	RPCTimeout           string
-	TCPAddress           string
+	P2PAddress    string
+	P2PDisabled   bool
+	Peers         string
+	PubSubEnabled bool `mapstructure:"pubsub"`
+	RelayEnabled  bool `mapstructure:"relay"`
 }
 
 func defaultNetConfig() *NetConfig {
 	return &NetConfig{
-		P2PAddress:           "/ip4/0.0.0.0/tcp/9171",
-		P2PDisabled:          false,
-		Peers:                "",
-		PubSubEnabled:        true,
-		RelayEnabled:         false,
-		RPCAddress:           "0.0.0.0:9161",
-		RPCMaxConnectionIdle: "5m",
-		RPCTimeout:           "10s",
-		TCPAddress:           "/ip4/0.0.0.0/tcp/9161",
+		P2PAddress:    "/ip4/0.0.0.0/tcp/9171",
+		P2PDisabled:   false,
+		Peers:         "",
+		PubSubEnabled: true,
+		RelayEnabled:  false,
 	}
 }
 
 func (netcfg *NetConfig) validate() error {
-	_, err := time.ParseDuration(netcfg.RPCTimeout)
-	if err != nil {
-		return NewErrInvalidRPCTimeout(err, netcfg.RPCTimeout)
-	}
-	_, err = time.ParseDuration(netcfg.RPCMaxConnectionIdle)
-	if err != nil {
-		return NewErrInvalidRPCMaxConnectionIdle(err, netcfg.RPCMaxConnectionIdle)
-	}
-	_, err = ma.NewMultiaddr(netcfg.P2PAddress)
+	_, err := ma.NewMultiaddr(netcfg.P2PAddress)
 	if err != nil {
 		return NewErrInvalidP2PAddress(err, netcfg.P2PAddress)
-	}
-	_, err = net.ResolveTCPAddr("tcp", netcfg.RPCAddress)
-	if err != nil {
-		return NewErrInvalidRPCAddress(err, netcfg.RPCAddress)
 	}
 	if len(netcfg.Peers) > 0 {
 		peers := strings.Split(netcfg.Peers, ",")
 		maddrs := make([]ma.Multiaddr, len(peers))
 		for i, addr := range peers {
-			maddrs[i], err = ma.NewMultiaddr(addr)
+			addr, err := ma.NewMultiaddr(addr)
 			if err != nil {
 				return NewErrInvalidBootstrapPeers(err, netcfg.Peers)
 			}
+			maddrs[i] = addr
 		}
 	}
 	return nil
-}
-
-// RPCTimeoutDuration gives the RPC timeout as a time.Duration.
-func (netcfg *NetConfig) RPCTimeoutDuration() (time.Duration, error) {
-	d, err := time.ParseDuration(netcfg.RPCTimeout)
-	if err != nil {
-		return d, NewErrInvalidRPCTimeout(err, netcfg.RPCTimeout)
-	}
-	return d, nil
-}
-
-// RPCMaxConnectionIdleDuration gives the RPC MaxConnectionIdle as a time.Duration.
-func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
-	d, err := time.ParseDuration(netcfg.RPCMaxConnectionIdle)
-	if err != nil {
-		return d, NewErrInvalidRPCMaxConnectionIdle(err, netcfg.RPCMaxConnectionIdle)
-	}
-	return d, nil
 }
 
 // LogConfig configures output and logger.

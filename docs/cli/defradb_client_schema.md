@@ -22,6 +22,7 @@ Make changes, updates, or look for existing schema types.
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
@@ -29,7 +30,8 @@ Make changes, updates, or look for existing schema types.
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client schema add](defradb_client_schema_add.md)	 - Add new schema
-* [defradb client schema list](defradb_client_schema_list.md)	 - List schema types with their respective fields
+* [defradb client schema describe](defradb_client_schema_describe.md)	 - View schema descriptions.
 * [defradb client schema migration](defradb_client_schema_migration.md)	 - Interact with the schema migration system of a running DefraDB instance
 * [defradb client schema patch](defradb_client_schema_patch.md)	 - Patch an existing schema type
+* [defradb client schema set-default](defradb_client_schema_set-default.md)	 - Set the default schema version
 

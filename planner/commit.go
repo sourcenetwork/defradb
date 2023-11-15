@@ -328,12 +328,17 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 		fieldName = nil
 
 	default:
-		c, err := n.planner.db.GetCollectionByVersionID(n.planner.ctx, schemaVersionId)
+		cols, err := n.planner.db.GetCollectionsByVersionID(n.planner.ctx, schemaVersionId)
 		if err != nil {
 			return core.Doc{}, nil, err
 		}
+		if len(cols) == 0 {
+			return core.Doc{}, nil, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
+		}
 
-		field, ok := c.Description().Schema.GetField(fieldName.(string))
+		// Because we only care about the schema, we can safely take the first - the schema is the same
+		// for all in the set.
+		field, ok := cols[0].Schema().GetField(fieldName.(string))
 		if !ok {
 			return core.Doc{}, nil, client.NewErrFieldNotExist(fieldName.(string))
 		}
@@ -353,13 +358,19 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
 		request.DockeyFieldName, string(dockey))
 
-	collection, err := n.planner.db.GetCollectionByVersionID(n.planner.ctx, schemaVersionId)
+	cols, err := n.planner.db.GetCollectionsByVersionID(n.planner.ctx, schemaVersionId)
 	if err != nil {
 		return core.Doc{}, nil, err
 	}
+	if len(cols) == 0 {
+		return core.Doc{}, nil, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
+	}
 
+	// WARNING: This will become incorrect once we allow multiple collections to share the same schema,
+	// we should by then instead fetch the collection be global collection ID:
+	// https://github.com/sourcenetwork/defradb/issues/1085
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-		request.CollectionIDFieldName, int64(collection.ID()))
+		request.CollectionIDFieldName, int64(cols[0].ID()))
 
 	heads := make([]*ipld.Link, 0)
 

@@ -113,8 +113,7 @@ func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 
 func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*implicitTxnDB, error) {
 	log.Debug(ctx, "Loading: internal datastores")
-	root := datastore.AsDSReaderWriter(rootstore)
-	multistore := datastore.MultiStoreFrom(root)
+	multistore := datastore.MultiStoreFrom(rootstore)
 	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
 	parser, err := graphql.NewParser()
@@ -183,8 +182,9 @@ func (db *db) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
 }
 
-func (db *db) systemstore() datastore.DSReaderWriter {
-	return db.multistore.Systemstore()
+// Peerstore returns the internal DAG store which contains IPLD blocks.
+func (db *db) Peerstore() datastore.DSBatching {
+	return db.multistore.Peerstore()
 }
 
 func (db *db) LensRegistry() client.LensRegistry {
@@ -266,17 +266,17 @@ func (db *db) PrintDump(ctx context.Context) error {
 
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
-func (db *db) Close(ctx context.Context) {
-	log.Info(ctx, "Closing DefraDB process...")
+func (db *db) Close() {
+	log.Info(context.Background(), "Closing DefraDB process...")
 	if db.events.Updates.HasValue() {
 		db.events.Updates.Value().Close()
 	}
 
 	err := db.rootstore.Close()
 	if err != nil {
-		log.ErrorE(ctx, "Failure closing running process", err)
+		log.ErrorE(context.Background(), "Failure closing running process", err)
 	}
-	log.Info(ctx, "Successfully closed running process")
+	log.Info(context.Background(), "Successfully closed running process")
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {

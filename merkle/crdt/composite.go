@@ -27,7 +27,7 @@ var (
 	compFactoryFn = MerkleCRDTFactory(
 		func(
 			mstore datastore.MultiStore,
-			schemaID core.CollectionSchemaVersionKey,
+			schemaRoot core.CollectionSchemaVersionKey,
 			uCh events.UpdateChannel,
 			fieldName string,
 		) MerkleCRDTInitFn {
@@ -36,7 +36,7 @@ var (
 					mstore.Datastore(),
 					mstore.Headstore(),
 					mstore.DAGstore(),
-					schemaID,
+					schemaRoot,
 					uCh,
 					core.DataStoreKey{},
 					key,

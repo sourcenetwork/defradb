@@ -27,7 +27,7 @@ var (
 // log = logging.MustNewLogger("bench")
 )
 
-func runQueryBenchGet(
+func RunQueryBenchGet(
 	b *testing.B,
 	ctx context.Context,
 	fixture fixtures.Generator,
@@ -39,7 +39,7 @@ func runQueryBenchGet(
 	if err != nil {
 		return err
 	}
-	defer db.Close(ctx)
+	defer db.Close()
 
 	dockeys, err := benchutils.BackfillBenchmarkDB(
 		b,

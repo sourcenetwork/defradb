@@ -113,7 +113,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 						"book": []map[string]any{
 							{
 								"publisher": map[string]any{
-									"yearOpened": uint64(2022),
+									"yearOpened": int64(2022),
 								},
 							},
 						},
@@ -242,25 +242,25 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 							{
 								"name": "Sooley",
 								"publisher": map[string]any{
-									"yearOpened": uint64(1999),
+									"yearOpened": int64(1999),
 								},
 							},
 							{
 								"name": "Theif Lord",
 								"publisher": map[string]any{
-									"yearOpened": uint64(2020),
+									"yearOpened": int64(2020),
 								},
 							},
 							{
 								"name": "Painted House",
 								"publisher": map[string]any{
-									"yearOpened": uint64(1995),
+									"yearOpened": int64(1995),
 								},
 							},
 							{
 								"name": "A Time for Mercy",
 								"publisher": map[string]any{
-									"yearOpened": uint64(2013),
+									"yearOpened": int64(2013),
 								},
 							},
 						},
@@ -271,7 +271,7 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 							{
 								"name": "The Rooster Bar",
 								"publisher": map[string]any{
-									"yearOpened": uint64(2022),
+									"yearOpened": int64(2022),
 								},
 							},
 						},

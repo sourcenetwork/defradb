@@ -160,7 +160,7 @@ func TestUpdateWithKeys(t *testing.T) {
 							return err
 						}
 
-						assert.Equal(t, uint64(40), name)
+						assert.Equal(t, int64(40), name)
 
 						d2, err := c.Get(ctx, doc2.Key(), false)
 						if err != nil {
@@ -172,7 +172,7 @@ func TestUpdateWithKeys(t *testing.T) {
 							return err
 						}
 
-						assert.Equal(t, uint64(40), name2)
+						assert.Equal(t, int64(40), name2)
 
 						return nil
 					},

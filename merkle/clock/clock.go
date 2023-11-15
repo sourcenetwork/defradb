@@ -103,10 +103,8 @@ func (mc *MerkleClock) AddDAGNode(
 	}
 
 	// apply the new node and merge the delta with state
-	// @todo Remove NodeGetter as a parameter, and move it to a MerkleClock field
-	_, err = mc.ProcessNode(
+	err = mc.ProcessNode(
 		ctx,
-		&CrdtNodeGetter{DeltaExtractor: mc.crdt.DeltaDecode},
 		delta,
 		nd,
 	)
@@ -117,17 +115,16 @@ func (mc *MerkleClock) AddDAGNode(
 // ProcessNode processes an already merged delta into a CRDT by adding it to the state.
 func (mc *MerkleClock) ProcessNode(
 	ctx context.Context,
-	ng core.NodeGetter,
 	delta core.Delta,
 	node ipld.Node,
-) ([]cid.Cid, error) {
+) error {
 	nodeCid := node.Cid()
 	priority := delta.GetPriority()
 
 	log.Debug(ctx, "Running ProcessNode", logging.NewKV("CID", nodeCid))
 	err := mc.crdt.Merge(ctx, delta)
 	if err != nil {
-		return nil, NewErrMergingDelta(nodeCid, err)
+		return NewErrMergingDelta(nodeCid, err)
 	}
 
 	links := node.Links()
@@ -145,18 +142,16 @@ func (mc *MerkleClock) ProcessNode(
 		log.Debug(ctx, "No heads found")
 		err := mc.headset.Write(ctx, nodeCid, priority)
 		if err != nil {
-			return nil, NewErrAddingHead(nodeCid, err)
+			return NewErrAddingHead(nodeCid, err)
 		}
 	}
-
-	children := []cid.Cid{}
 
 	for _, l := range links {
 		linkCid := l.Cid
 		log.Debug(ctx, "Scanning for replacement heads", logging.NewKV("Child", linkCid))
 		isHead, err := mc.headset.IsHead(ctx, linkCid)
 		if err != nil {
-			return nil, NewErrCheckingHead(linkCid, err)
+			return NewErrCheckingHead(linkCid, err)
 		}
 
 		if isHead {
@@ -165,7 +160,7 @@ func (mc *MerkleClock) ProcessNode(
 			// of current branch
 			err = mc.headset.Replace(ctx, linkCid, nodeCid, priority)
 			if err != nil {
-				return nil, NewErrReplacingHead(linkCid, nodeCid, err)
+				return NewErrReplacingHead(linkCid, nodeCid, err)
 			}
 
 			continue
@@ -173,7 +168,7 @@ func (mc *MerkleClock) ProcessNode(
 
 		known, err := mc.dagstore.Has(ctx, linkCid)
 		if err != nil {
-			return nil, NewErrCouldNotFindBlock(linkCid, err)
+			return NewErrCouldNotFindBlock(linkCid, err)
 		}
 		if known {
 			// we reached a non-head node in the known tree.
@@ -192,11 +187,9 @@ func (mc *MerkleClock) ProcessNode(
 			}
 			continue
 		}
-
-		children = append(children, linkCid)
 	}
 
-	return children, nil
+	return nil
 }
 
 // Heads returns the current heads of the MerkleClock.

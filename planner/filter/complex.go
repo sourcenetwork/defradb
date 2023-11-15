@@ -17,7 +17,7 @@ import (
 
 // IsComplex returns true if the provided filter is complex.
 // A filter is considered complex if it contains a relation
-// object withing an _or operator not necessarily being
+// object withing an _or or _not operator not necessarily being
 // its direct  child.
 func IsComplex(filter *mapper.Filter) bool {
 	if filter == nil {

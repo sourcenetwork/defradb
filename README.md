@@ -1,4 +1,4 @@
-![Tests Workflow](https://github.com/sourcenetwork/defradb/actions/workflows/run-tests.yml/badge.svg)
+![Tests Workflow](https://github.com/sourcenetwork/defradb/actions/workflows/test-and-upload-coverage.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sourcenetwork/defradb)](https://goreportcard.com/report/github.com/sourcenetwork/defradb)
 [![codecov](https://codecov.io/gh/sourcenetwork/defradb/branch/develop/graph/badge.svg?token=RHAORX13PA)](https://codecov.io/gh/sourcenetwork/defradb)
 [![Discord](https://img.shields.io/discord/427944769851752448.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://discord.source.network/)
@@ -95,7 +95,7 @@ Find more examples of schema type definitions in the [examples/schema/](examples
 
 ## Create a document
 
-Submit a `mutation` request to create an docuement of the `User` type:
+Submit a `mutation` request to create a document of the `User` type:
 
 ```shell
 defradb client query '
@@ -244,13 +244,20 @@ When starting a node for the first time, a key pair is generated and stored in i
 
 Each node has a unique `PeerID` generated from its public key. This ID allows other nodes to connect to it.
 
+To view your node's peer info:
+
+```shell
+defradb client p2p info
+```
+
 There are two types of peer-to-peer relationships supported: **pubsub** peering and **replicator** peering.
 
-Pubsub peering *passively* synchronizes data between nodes by broadcasting *Document Commit* updates to the topic of the commit's document key. Nodes need to be listening on the pubsub channel to receive updates. This is for when two nodes *already* have share a document and want to keep them in sync.
+Pubsub peering *passively* synchronizes data between nodes by broadcasting *Document Commit* updates to the topic of the commit's document key. Nodes need to be listening on the pubsub channel to receive updates. This is for when two nodes *already* have shared a document and want to keep them in sync.
 
 Replicator peering *actively* pushes changes from a specific collection *to* a target peer.
 
-### Pubsub example
+<details>
+<summary>Pubsub example</summary>
 
 Pubsub peers can be specified on the command line using the `--peers` flag, which accepts a comma-separated list of peer [multiaddresses](https://docs.libp2p.io/concepts/addressing/). For example, a node at IP `192.168.1.12` listening on 9000 with PeerID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
 
@@ -258,16 +265,22 @@ Let's go through an example of two nodes (*nodeA* and *nodeB*) connecting with e
 
 Start *nodeA* with a default configuration:
 
-```
+```shell
 defradb start
 ```
 
-Obtain the PeerID from its console output. In this example, we use `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally it will be different.
+Obtain the node's peer info:
+
+```shell
+defradb client p2p info
+```
+
+In this example, we use `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally it will be different.
 
 For *nodeB*, we provide the following configuration:
 
-```
-defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162 --peers /ip4/0.0.0.0/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
+```shell
+defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --peers /ip4/0.0.0.0/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
 ```
 
 About the flags:
@@ -275,26 +288,29 @@ About the flags:
 - `--rootdir` specifies the root dir (config and data) to use
 - `--url` is the address to listen on for the client HTTP and GraphQL API
 - `--p2paddr` is the multiaddress for the P2P networking to listen on
-- `--tcpaddr` is the multiaddress for the gRPC server to listen on
 - `--peers` is a comma-separated list of peer multiaddresses
 
 This starts two nodes and connects them via pubsub networking.
+</details>
 
-### Collection subscription example
+<details>
+<summary>Subscription example</summary>
 
-It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `collectionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
+It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `collectionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the following command:
 
 ```shell
-defradb client rpc p2pcollection add --url localhost:9182 bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske
+defradb client p2p collection add --url localhost:9182 bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske
 ```
 
 Multiple collection IDs can be added at once.
 
 ```shell
-defradb client rpc p2pcollection add --url localhost:9182 <collection1ID> <collection2ID> <collection3ID>
+defradb client p2p collection add --url localhost:9182 <collection1ID>,<collection2ID>,<collection3ID>
 ```
+</details>
 
-### Replicator example
+<details>
+<summary>Replicator example</summary>
 
 Replicator peering is targeted: it allows a node to actively send updates to another node. Let's go through an example of *nodeA* actively replicating to *nodeB*:
 
@@ -334,14 +350,20 @@ defradb client schema add --url localhost:9182 '
 '
 ```
 
-Set *nodeA* to actively replicate the "Article" collection to *nodeB*:
+Then copy the peer info from *nodeB*:
 
 ```shell
-defradb client rpc replicator set -c "Article" /ip4/0.0.0.0/tcp/9172/p2p/<peerID_of_nodeB>
+defradb client p2p info --url localhost:9182
 ```
 
-As we add or update documents in the "Article" collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
+Set *nodeA* to actively replicate the Article collection to *nodeB*:
 
+```shell
+defradb client p2p replicator set -c Article <nodeB_peer_info_json>
+```
+
+As we add or update documents in the Article collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
+</details>
 
 ## Securing the HTTP API with TLS
 
