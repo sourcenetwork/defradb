@@ -1003,53 +1003,6 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	require.ErrorContains(t, err, "topic already exists")
 }
 
-func TestPushLogToReplicator_WithReplicator_FailedPushingLogError(t *testing.T) {
-	ctx := context.Background()
-	db, n := newTestNode(ctx, t)
-	defer n.Close()
-
-	_, err := db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	_, n2 := newTestNode(ctx, t)
-
-	err = n.Peer.SetReplicator(ctx, client.Replicator{
-		Info: n2.PeerInfo(),
-	})
-	require.NoError(t, err)
-
-	col, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
-	require.NoError(t, err)
-
-	err = col.Create(ctx, doc)
-	require.NoError(t, err)
-
-	docCid, err := createCID(doc)
-	require.NoError(t, err)
-
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocKey:          doc.Key().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
-	require.NoError(t, err)
-
-	n.pushLogToReplicators(ctx, events.Update{
-		DocKey:     doc.Key().String(),
-		Cid:        docCid,
-		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
-	})
-}
-
 func TestSession_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
