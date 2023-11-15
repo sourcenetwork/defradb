@@ -10,13 +10,6 @@
 
 package gen
 
-const (
-	stringType = "String"
-	intType    = "Int"
-	boolType   = "Boolean"
-	floatType  = "Float"
-)
-
 // DocsList is a list of document structures that might nest other documents to be replicated
 // by a document generator.
 //
@@ -42,27 +35,4 @@ type DocsList struct {
 type GeneratedDoc struct {
 	ColID uint32
 	JSON  string
-}
-
-type fieldDefinition struct {
-	name       string
-	typeStr    string
-	isArray    bool
-	isRelation bool
-	isPrimary  bool
-}
-
-type typeDefinition struct {
-	name   string
-	index  int
-	fields []fieldDefinition
-}
-
-func (t *typeDefinition) getField(name string) *fieldDefinition {
-	for i := range t.fields {
-		if t.fields[i].name == name {
-			return &t.fields[i]
-		}
-	}
-	return nil
 }

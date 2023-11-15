@@ -16,159 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSchemaParser_Parse(t *testing.T) {
-	tests := []struct {
-		name   string
-		schema string
-		want   map[string]typeDefinition
-	}{
-		{
-			name: "basic types",
-			schema: `
-				type User {
-					name: String
-					age: Int
-				}`,
-			want: map[string]typeDefinition{
-				"User": {
-					name:  "User",
-					index: 0,
-					fields: []fieldDefinition{
-						{name: "name", typeStr: "String"},
-						{name: "age", typeStr: "Int"},
-					},
-				},
-			},
-		},
-		{
-			name: "array and relations",
-			schema: `
-				type User {
-					name: String
-					devices: [Device]
-				}
-				type Device {
-					model: String
-					owner: User
-				}`,
-			want: map[string]typeDefinition{
-				"User": {
-					name:  "User",
-					index: 0,
-					fields: []fieldDefinition{
-						{name: "name", typeStr: "String"},
-						{name: "devices", typeStr: "Device", isArray: true, isRelation: true},
-					},
-				},
-				"Device": {
-					name:  "Device",
-					index: 1,
-					fields: []fieldDefinition{
-						{name: "model", typeStr: "String"},
-						{name: "owner", typeStr: "User", isRelation: true, isPrimary: true},
-					},
-				},
-			},
-		},
-		{
-			name: "primary annotation",
-			schema: `
-				type User {
-					name: String
-					device: Device @primary
-				}
-				type Device {
-					model: String
-					owner: User
-				}`,
-			want: map[string]typeDefinition{
-				"User": {
-					name:  "User",
-					index: 0,
-					fields: []fieldDefinition{
-						{name: "name", typeStr: "String"},
-						{name: "device", typeStr: "Device", isRelation: true, isPrimary: true},
-					},
-				},
-				"Device": {
-					name:  "Device",
-					index: 1,
-					fields: []fieldDefinition{
-						{name: "model", typeStr: "String"},
-						{name: "owner", typeStr: "User", isRelation: true},
-					},
-				},
-			},
-		},
-		{
-			name: "make first encountered type primary",
-			schema: `
-				type T1 {
-					secondary: T2 
-				}
-				type T2 {
-					primary: T1
-				}
-				type T3 {
-					secondary: T4 
-				}
-				type T4 {
-					primary: T3
-                    secondary: T5
-				}
-				type T5 {
-					primary: T4
-				}`,
-			want: map[string]typeDefinition{
-				"T1": {
-					name:  "T1",
-					index: 0,
-					fields: []fieldDefinition{
-						{name: "secondary", typeStr: "T2", isRelation: true},
-					},
-				},
-				"T2": {
-					name:  "T2",
-					index: 1,
-					fields: []fieldDefinition{
-						{name: "primary", typeStr: "T1", isRelation: true, isPrimary: true},
-					},
-				},
-				"T3": {
-					name:  "T3",
-					index: 2,
-					fields: []fieldDefinition{
-						{name: "secondary", typeStr: "T4", isRelation: true},
-					},
-				},
-				"T4": {
-					name:  "T4",
-					index: 3,
-					fields: []fieldDefinition{
-						{name: "primary", typeStr: "T3", isRelation: true, isPrimary: true},
-						{name: "secondary", typeStr: "T5", isRelation: true},
-					},
-				},
-				"T5": {
-					name:  "T5",
-					index: 4,
-					fields: []fieldDefinition{
-						{name: "primary", typeStr: "T4", isRelation: true, isPrimary: true},
-					},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := &schemaParser{}
-			got, _, err := p.Parse(tt.schema)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
 func TestSchemaParser_ParseGenConfig(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -258,8 +105,7 @@ func TestSchemaParser_ParseGenConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &schemaParser{}
-			_, got, err := p.Parse(tt.schema)
+			got, err := parseConfig(tt.schema)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
@@ -302,8 +148,7 @@ func TestSchemaParser_IfCanNotParse_ReturnError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &schemaParser{}
-			_, _, err := p.Parse(tt.schema)
+			_, err := parseConfig(tt.schema)
 			assert.ErrorIs(t, err, NewErrFailedToParse(""))
 		})
 	}

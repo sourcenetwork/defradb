@@ -26,7 +26,7 @@ import (
 // fields, and create schemas with different fields from it.
 func GenerateDocs(schema string, docsList DocsList) ([]GeneratedDoc, error) {
 	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
-	typeDefs, err := parse(schema)
+	typeDefs, err := parseSchema(schema)
 	if err != nil {
 		return nil, err
 	}
