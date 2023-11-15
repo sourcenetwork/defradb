@@ -30,7 +30,7 @@ func TestGeneratePredefinedDocs_Simple(t *testing.T) {
 			{"name": "Fred", "age": 25},
 		},
 	}
-	docs, err := GenerateDocs(schema, docsList)
+	docs, err := GeneratePredefinedFromSchema(schema, docsList)
 	assert.NoError(t, err)
 
 	errorMsg := assertDocs(docsList.Docs, docs)
@@ -45,7 +45,7 @@ func TestGeneratePredefinedDocs_StripExcessiveFields(t *testing.T) {
 			name: String
 		}`
 
-	docs, err := GenerateDocs(schema, DocsList{
+	docs, err := GeneratePredefinedFromSchema(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{"name": "John", "age": 30},
@@ -74,7 +74,7 @@ func TestGeneratePredefinedDocs_OneToOne(t *testing.T) {
 			owner: User
 		}`
 
-	docs, err := GenerateDocs(schema, DocsList{
+	docs, err := GeneratePredefinedFromSchema(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -115,7 +115,7 @@ func TestGeneratePredefinedDocs_OneToOnePrimary(t *testing.T) {
 			owner: User
 		}`
 
-	docs, err := GenerateDocs(schema, DocsList{
+	docs, err := GeneratePredefinedFromSchema(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -156,7 +156,7 @@ func TestGeneratePredefinedDocs_OneToMany(t *testing.T) {
 			owner: User
 		}`
 
-	docs, err := GenerateDocs(schema, DocsList{
+	docs, err := GeneratePredefinedFromSchema(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -208,7 +208,7 @@ func TestGeneratePredefinedDocs_OneToManyToOne(t *testing.T) {
 			device: Device @primary
 		}`
 
-	docs, err := GenerateDocs(schema, DocsList{
+	docs, err := GeneratePredefinedFromSchema(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
