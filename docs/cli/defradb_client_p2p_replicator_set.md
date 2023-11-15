@@ -1,11 +1,14 @@
 ## defradb client p2p replicator set
 
-Set a P2P replicator
+Add replicator(s) and start synchronization
 
 ### Synopsis
 
-Add a new target replicator.
-A replicator replicates one or all collection(s) from this node to another.
+Add replicator(s) and start synchronization.
+A replicator synchronizes one or all collection(s) from this node to another.
+
+Example:
+  defradb client p2p replicator set -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
 
 
 ```
@@ -15,7 +18,7 @@ defradb client p2p replicator set [-c, --collection] <peer> [flags]
 ### Options
 
 ```
-  -c, --collection strings   Define the collection for the replicator
+  -c, --collection strings   Collection(s) to replicate
   -h, --help                 help for set
 ```
 

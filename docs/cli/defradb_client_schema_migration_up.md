@@ -1,18 +1,30 @@
 ## defradb client schema migration up
 
-Runs a migration on the specified schema version.
+Applies the migration to the specified schema version.
 
 ### Synopsis
 
-Runs a migration on the specified schema version.
+Applies the migration to the specified schema version.
+Documents is a list of documents to apply the migration to.		
+
+Example: migrate from string
+  defradb client schema migration up --version bae123 '[{"name": "Bob"}]'
+
+Example: migrate from file
+  defradb client schema migration up --version bae123 -f documents.json
+
+Example: migrate from stdin
+  cat documents.json | defradb client schema migration up --version bae123 -
+		
 
 ```
-defradb client schema migration up --version <version> <src> [flags]
+defradb client schema migration up --version <version> <documents> [flags]
 ```
 
 ### Options
 
 ```
+  -f, --file string      File containing document(s)
   -h, --help             help for up
       --version string   Schema version id
 ```

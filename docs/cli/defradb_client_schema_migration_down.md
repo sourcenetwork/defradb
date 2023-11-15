@@ -1,18 +1,30 @@
 ## defradb client schema migration down
 
-Reverse a migration on the specified schema version.
+Reverses the migration from the specified schema version.
 
 ### Synopsis
 
-Reverse a migration on the specified schema version.
+Reverses the migration from the specified schema version.
+Documents is a list of documents to reverse the migration from.
+
+Example: migrate from string
+  defradb client schema migration down --version bae123 '[{"name": "Bob"}]'
+
+Example: migrate from file
+  defradb client schema migration down --version bae123 -f documents.json
+
+Example: migrate from stdin
+  cat documents.json | defradb client schema migration down --version bae123 -
+		
 
 ```
-defradb client schema migration down --version <version> <src> [flags]
+defradb client schema migration down --version <version> <documents> [flags]
 ```
 
 ### Options
 
 ```
+  -f, --file string      File containing document(s)
   -h, --help             help for down
       --version string   Schema version id
 ```

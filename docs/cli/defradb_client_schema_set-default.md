@@ -1,27 +1,19 @@
-## defradb client p2p collection remove
+## defradb client schema set-default
 
-Remove P2P collections
+Set the default schema version
 
 ### Synopsis
 
-Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.
-
-Example: remove single collection
-  defradb client p2p collection remove bae123
-
-Example: remove multiple collections
-  defradb client p2p collection remove bae123,bae456
-		
+Set the default schema version
 
 ```
-defradb client p2p collection remove [collectionIDs] [flags]
+defradb client schema set-default [versionID] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -h, --help   help for set-default
 ```
 
 ### Options inherited from parent commands
@@ -40,5 +32,5 @@ defradb client p2p collection remove [collectionIDs] [flags]
 
 ### SEE ALSO
 
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
+* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
 

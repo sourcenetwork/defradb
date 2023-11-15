@@ -28,6 +28,7 @@ defradb client schema patch [schema] [flags]
 ```
   -f, --file string   File to load a patch from
   -h, --help          help for patch
+      --set-default   Set default schema version
 ```
 
 ### Options inherited from parent commands

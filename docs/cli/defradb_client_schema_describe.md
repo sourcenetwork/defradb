@@ -1,27 +1,35 @@
-## defradb client p2p collection remove
+## defradb client schema describe
 
-Remove P2P collections
+View schema descriptions.
 
 ### Synopsis
 
-Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.
+Introspect schema types.
 
-Example: remove single collection
-  defradb client p2p collection remove bae123
-
-Example: remove multiple collections
-  defradb client p2p collection remove bae123,bae456
+Example: view all schemas
+  defradb client schema describe
+		
+Example: view schemas by name
+  defradb client schema describe --name User
+		
+Example: view schemas by root
+  defradb client schema describe --root bae123
+		
+Example: view a single schema by version id
+  defradb client schema describe --version bae123
 		
 
 ```
-defradb client p2p collection remove [collectionIDs] [flags]
+defradb client schema describe [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -h, --help             help for describe
+      --name string      Schema name
+      --root string      Schema root
+      --version string   Schema Version ID
 ```
 
 ### Options inherited from parent commands
@@ -40,5 +48,5 @@ defradb client p2p collection remove [collectionIDs] [flags]
 
 ### SEE ALSO
 
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
+* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
 
