@@ -31,9 +31,9 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" },
-						{ "op": "remove", "path": "/Users/Schema/Fields/2/ID" },
-						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "fax" }
+						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
+						{ "op": "remove", "path": "/Users/Fields/2/ID" },
+						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "fax" }
 					]
 				`,
 			},

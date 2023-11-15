@@ -25,7 +25,7 @@ const (
 	errRemovingP2PCollection              string = "cannot remove collection ID"
 	errAddCollectionWithPatch             string = "unknown collection, adding collections via patch is not supported"
 	errCollectionIDDoesntMatch            string = "CollectionID does not match existing"
-	errSchemaIDDoesntMatch                string = "SchemaID does not match existing"
+	errSchemaRootDoesntMatch              string = "SchemaRoot does not match existing"
 	errCannotModifySchemaName             string = "modifying the schema name is not supported"
 	errCannotSetVersionID                 string = "setting the VersionID is not supported. It is updated automatically"
 	errCannotSetFieldID                   string = "explicitly setting a field ID value is not supported"
@@ -66,6 +66,7 @@ const (
 	errCanNotDropIndexWithPatch           string = "dropping indexes via patch is not supported"
 	errCanNotChangeIndexWithPatch         string = "changing indexes via patch is not supported"
 	errIndexWithNameDoesNotExists         string = "index with name doesn't exists"
+	errCorruptedIndex                     string = "corrupted index. Please delete and recreate the index"
 	errInvalidFieldValue                  string = "invalid field value"
 	errUnsupportedIndexFieldType          string = "unsupported index field type"
 	errIndexDescriptionHasNoFields        string = "index description has no fields"
@@ -111,17 +112,17 @@ var (
 	ErrDocumentDeleted                    = errors.New(errDocumentDeleted)
 	ErrUnknownCRDTArgument                = errors.New("invalid CRDT arguments")
 	ErrUnknownCRDT                        = errors.New("unknown crdt")
-	ErrSchemaFirstFieldDocKey             = errors.New("collection schema first field must be a DocKey")
 	ErrCollectionAlreadyExists            = errors.New("collection already exists")
 	ErrCollectionNameEmpty                = errors.New("collection name can't be empty")
-	ErrSchemaIDEmpty                      = errors.New("schema ID can't be empty")
+	ErrSchemaNameEmpty                    = errors.New("schema name can't be empty")
+	ErrSchemaRootEmpty                    = errors.New("schema root can't be empty")
 	ErrSchemaVersionIDEmpty               = errors.New("schema version ID can't be empty")
 	ErrKeyEmpty                           = errors.New("key cannot be empty")
 	ErrAddingP2PCollection                = errors.New(errAddingP2PCollection)
 	ErrRemovingP2PCollection              = errors.New(errRemovingP2PCollection)
 	ErrAddCollectionWithPatch             = errors.New(errAddCollectionWithPatch)
 	ErrCollectionIDDoesntMatch            = errors.New(errCollectionIDDoesntMatch)
-	ErrSchemaIDDoesntMatch                = errors.New(errSchemaIDDoesntMatch)
+	ErrSchemaRootDoesntMatch              = errors.New(errSchemaRootDoesntMatch)
 	ErrCannotModifySchemaName             = errors.New(errCannotModifySchemaName)
 	ErrCannotSetVersionID                 = errors.New(errCannotSetVersionID)
 	ErrCannotSetFieldID                   = errors.New(errCannotSetFieldID)
@@ -147,6 +148,7 @@ var (
 	ErrIndexFieldMissingName              = errors.New(errIndexFieldMissingName)
 	ErrIndexFieldMissingDirection         = errors.New(errIndexFieldMissingDirection)
 	ErrIndexSingleFieldWrongDirection     = errors.New(errIndexSingleFieldWrongDirection)
+	ErrCorruptedIndex                     = errors.New(errCorruptedIndex)
 	ErrCanNotChangeIndexWithPatch         = errors.New(errCanNotChangeIndexWithPatch)
 	ErrFieldOrAliasToFieldNotExist        = errors.New(errFieldOrAliasToFieldNotExist)
 	ErrCreateFile                         = errors.New(errCreateFile)
@@ -277,12 +279,12 @@ func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID uint32) e
 	)
 }
 
-func NewErrSchemaIDDoesntMatch(name, existingID, proposedID string) error {
+func NewErrSchemaRootDoesntMatch(name, existingRoot, proposedRoot string) error {
 	return errors.New(
-		errSchemaIDDoesntMatch,
+		errSchemaRootDoesntMatch,
 		errors.NewKV("Name", name),
-		errors.NewKV("ExistingID", existingID),
-		errors.NewKV("ProposedID", proposedID),
+		errors.NewKV("ExistingRoot", existingRoot),
+		errors.NewKV("ProposedRoot", proposedRoot),
 	)
 }
 
@@ -474,6 +476,15 @@ func NewErrIndexWithNameAlreadyExists(indexName string) error {
 func NewErrIndexWithNameDoesNotExists(indexName string) error {
 	return errors.New(
 		errIndexWithNameDoesNotExists,
+		errors.NewKV("Name", indexName),
+	)
+}
+
+// NewErrCorruptedIndex returns a new error indicating that an index with the
+// given name has been corrupted.
+func NewErrCorruptedIndex(indexName string) error {
+	return errors.New(
+		errCorruptedIndex,
 		errors.NewKV("Name", indexName),
 	)
 }

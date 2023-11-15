@@ -43,15 +43,15 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 				Results: []map[string]any{
 					{
 						"name": "Smith",
-						"age":  uint64(31),
+						"age":  int64(31),
 					},
 					{
 						"name": "Bob",
-						"age":  uint64(32),
+						"age":  int64(32),
 					},
 					{
 						"name": "John",
-						"age":  uint64(30),
+						"age":  int64(30),
 					},
 				},
 			},
@@ -117,11 +117,11 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 				Results: []map[string]any{
 					{
 						"name": "Bob",
-						"age":  uint64(31),
+						"age":  int64(31),
 					},
 					{
 						"name": "John",
-						"age":  uint64(31),
+						"age":  int64(31),
 					},
 				},
 			},

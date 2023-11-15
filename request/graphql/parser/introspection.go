@@ -11,8 +11,8 @@
 package parser
 
 import (
-	gql "github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/ast"
+	gql "github.com/sourcenetwork/graphql-go"
+	"github.com/sourcenetwork/graphql-go/language/ast"
 )
 
 // IsIntrospectionQuery parses a root ast.Document and determines if it is an

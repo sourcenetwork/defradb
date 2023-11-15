@@ -30,8 +30,8 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "test", "path": "/Users/Schema/Name", "value": "Users" },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "test", "path": "/Users/Name", "value": "Users" },
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
@@ -63,8 +63,8 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "test", "path": "/Users/Schema/Name", "value": "Author" },
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"name": "Email", "Kind": 11} }
+						{ "op": "test", "path": "/Users/Name", "value": "Author" },
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"name": "Email", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "test failed",

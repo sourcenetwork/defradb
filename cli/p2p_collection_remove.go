@@ -11,51 +11,38 @@
 package cli
 
 import (
-	"context"
+	"strings"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
-	netclient "github.com/sourcenetwork/defradb/net/api/client"
 )
 
-func MakeP2PCollectionRemoveCommand(cfg *config.Config) *cobra.Command {
+func MakeP2PCollectionRemoveCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "remove [collectionID]",
+		Use:   "remove [collectionIDs]",
 		Short: "Remove P2P collections",
 		Long: `Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
-				return errors.New("must specify at least one collectionID")
-			}
-			return nil
-		},
+The removed collections will no longer be synchronized between nodes.
+
+Example: remove single collection
+  defradb client p2p collection remove bae123
+
+Example: remove multiple collections
+  defradb client p2p collection remove bae123,bae456
+		`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cred := insecure.NewCredentials()
-			client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
-			if err != nil {
-				return ErrFailedToCreateRPCClient
+			p2p := mustGetP2PContext(cmd)
+
+			var collectionIDs []string
+			for _, id := range strings.Split(args[0], ",") {
+				id = strings.TrimSpace(id)
+				if id == "" {
+					continue
+				}
+				collectionIDs = append(collectionIDs, id)
 			}
 
-			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
-			if err != nil {
-				return errors.Wrap("failed to parse RPC timeout duration", err)
-			}
-
-			ctx, cancel := context.WithTimeout(cmd.Context(), rpcTimeoutDuration)
-			defer cancel()
-
-			err = client.RemoveP2PCollections(ctx, args...)
-			if err != nil {
-				return errors.Wrap("failed to remove P2P collections, request failed", err)
-			}
-			log.FeedbackInfo(ctx, "Successfully removed P2P collections", logging.NewKV("Collections", args))
-			return nil
+			return p2p.RemoveP2PCollections(cmd.Context(), collectionIDs)
 		},
 	}
 	return cmd

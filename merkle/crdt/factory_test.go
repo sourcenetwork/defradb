@@ -25,8 +25,7 @@ import (
 
 func newStores() datastore.MultiStore {
 	root := ds.NewMapDatastore()
-	rw := datastore.AsDSReaderWriter(root)
-	return datastore.MultiStoreFrom(rw)
+	return datastore.MultiStoreFrom(root)
 }
 
 func TestNewBlankFactory(t *testing.T) {

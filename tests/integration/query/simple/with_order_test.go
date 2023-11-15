@@ -43,15 +43,15 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "Bob",
-				"Age":  uint64(32),
+				"Age":  int64(32),
 			},
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 			},
 			{
 				"Name": "Carlo",
-				"Age":  uint64(55),
+				"Age":  int64(55),
 			},
 		},
 	}
@@ -91,19 +91,19 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "Alice",
-				"Age":  uint64(19),
+				"Age":  int64(19),
 			},
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 			},
 			{
 				"Name": "Bob",
-				"Age":  uint64(32),
+				"Age":  int64(32),
 			},
 			{
 				"Name": "Carlo",
-				"Age":  uint64(55),
+				"Age":  int64(55),
 			},
 		},
 	}
@@ -147,19 +147,19 @@ func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "Alice",
-				"Age":  uint64(19),
+				"Age":  int64(19),
 			},
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 			},
 			{
 				"Name": "Bob",
-				"Age":  uint64(32),
+				"Age":  int64(32),
 			},
 			{
 				"Name": "Carlo",
-				"Age":  uint64(55),
+				"Age":  int64(55),
 			},
 		},
 	}
@@ -199,19 +199,19 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "Carlo",
-				"Age":  uint64(55),
+				"Age":  int64(55),
 			},
 			{
 				"Name": "Bob",
-				"Age":  uint64(32),
+				"Age":  int64(32),
 			},
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 			},
 			{
 				"Name": "Alice",
-				"Age":  uint64(19),
+				"Age":  int64(19),
 			},
 		},
 	}
@@ -255,19 +255,19 @@ func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "Carlo",
-				"Age":  uint64(55),
+				"Age":  int64(55),
 			},
 			{
 				"Name": "Bob",
-				"Age":  uint64(32),
+				"Age":  int64(32),
 			},
 			{
 				"Name": "John",
-				"Age":  uint64(21),
+				"Age":  int64(21),
 			},
 			{
 				"Name": "Alice",
-				"Age":  uint64(19),
+				"Age":  int64(19),
 			},
 		},
 	}
@@ -312,22 +312,22 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 		Results: []map[string]any{
 			{
 				"Name":     "Carlo",
-				"Age":      uint64(55),
+				"Age":      int64(55),
 				"Verified": true,
 			},
 			{
 				"Name":     "Bob",
-				"Age":      uint64(21),
+				"Age":      int64(21),
 				"Verified": false,
 			},
 			{
 				"Name":     "John",
-				"Age":      uint64(21),
+				"Age":      int64(21),
 				"Verified": true,
 			},
 			{
 				"Name":     "Alice",
-				"Age":      uint64(19),
+				"Age":      int64(19),
 				"Verified": false,
 			},
 		},

@@ -12,6 +12,7 @@ package replicator
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -53,7 +54,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -98,7 +99,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -137,6 +138,55 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 			testUtils.Request{
 				// Assert that John has not been synced to the first (source) node
 				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.DeleteReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				// Create John on the first (source) node only
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.WaitForSync{
+				// No documents should be synced
+				ExpectedTimeout: 100 * time.Millisecond,
+			},
+			testUtils.Request{
+				// Assert that John has not been synced to the second (target) node
+				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
 						Age
@@ -189,7 +239,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -236,7 +286,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -249,7 +299,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 				},
 			},
@@ -311,10 +361,10 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 					{
-						"Age": uint64(22),
+						"Age": int64(22),
 					},
 				},
 			},
@@ -371,10 +421,10 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"Age": uint64(21),
+						"Age": int64(21),
 					},
 					{
-						"Age": uint64(22),
+						"Age": int64(22),
 					},
 				},
 			},
@@ -438,11 +488,11 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"_key": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
-						"age":  uint64(21),
+						"age":  int64(21),
 						"name": "John",
 						"_version": []map[string]any{
 							{
-								"schemaVersionId": "bafkreidovoxkxttybaew2qraoelormm63ilutzms7wlwmcr3xru44hfnta",
+								"schemaVersionId": "bafkreiggbvwwiqmzid4qnklwwdyu7mwhbbjy3ejss3x7uw7zxw6ivmmj6u",
 							},
 						},
 					},
@@ -502,7 +552,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 						"_key": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 						"_version": []map[string]any{
 							{
-								"schemaVersionId": "bafkreidovoxkxttybaew2qraoelormm63ilutzms7wlwmcr3xru44hfnta",
+								"schemaVersionId": "bafkreiggbvwwiqmzid4qnklwwdyu7mwhbbjy3ejss3x7uw7zxw6ivmmj6u",
 							},
 						},
 					},

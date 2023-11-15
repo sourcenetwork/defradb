@@ -137,6 +137,14 @@ func (factory Factory) Headstore() datastore.DSReaderWriter {
 	return factory.multistore.Headstore()
 }
 
+// Peerstore implements datastore.MultiStore and returns the current Peerstore.
+func (factory Factory) Peerstore() datastore.DSBatching {
+	if factory.multistore == nil {
+		return nil
+	}
+	return factory.multistore.Peerstore()
+}
+
 // Head implements datastore.MultiStore and returns the current Headstore.
 func (factory Factory) Systemstore() datastore.DSReaderWriter {
 	if factory.multistore == nil {

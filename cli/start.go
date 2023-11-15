@@ -13,33 +13,29 @@ package cli
 import (
 	"context"
 	"fmt"
-	gonet "net"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
-	badger "github.com/dgraph-io/badger/v4"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	ma "github.com/multiformats/go-multiaddr"
+	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	ds "github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	httpapi "github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
-	netpb "github.com/sourcenetwork/defradb/net/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
+
+const badgerDatastoreName = "badger"
 
 func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
@@ -48,27 +44,11 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 		Long:  "Start a DefraDB node.",
 		// Load the root config if it exists, otherwise create it.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
+			if err := loadConfig(cfg); err != nil {
 				return err
 			}
-			if cfg.ConfigFileExists() {
-				if err := cfg.LoadWithRootdir(true); err != nil {
-					return config.NewErrLoadingConfig(err)
-				}
-				log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
-			} else {
-				if err := cfg.LoadWithRootdir(false); err != nil {
-					return config.NewErrLoadingConfig(err)
-				}
-				if config.FolderExists(cfg.Rootdir) {
-					if err := cfg.WriteConfigFile(); err != nil {
-						return err
-					}
-				} else {
-					if err := cfg.CreateRootDirAndConfigFile(); err != nil {
-						return err
-					}
-				}
+			if !cfg.ConfigFileExists() {
+				return createConfig(cfg)
 			}
 			return nil
 		},
@@ -125,15 +105,6 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 	err = cfg.BindFlag("net.p2paddress", cmd.Flags().Lookup("p2paddr"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.p2paddress", err)
-	}
-
-	cmd.Flags().String(
-		"tcpaddr", cfg.Net.TCPAddress,
-		"Listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)",
-	)
-	err = cfg.BindFlag("net.tcpaddress", cmd.Flags().Lookup("tcpaddr"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind net.tcpaddress", err)
 	}
 
 	cmd.Flags().Bool(
@@ -200,15 +171,10 @@ type defraInstance struct {
 
 func (di *defraInstance) close(ctx context.Context) {
 	if di.node != nil {
-		if err := di.node.Close(); err != nil {
-			log.FeedbackInfo(
-				ctx,
-				"The node could not be closed successfully",
-				logging.NewKV("Error", err.Error()),
-			)
-		}
+		di.node.Close()
+	} else {
+		di.db.Close()
 	}
-	di.db.Close(ctx)
 	if err := di.server.Close(); err != nil {
 		log.FeedbackInfo(
 			ctx,
@@ -251,16 +217,26 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	}
 
 	// init the p2p node
-	var n *net.Node
+	var node *net.Node
 	if !cfg.Net.P2PDisabled {
-		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-		n, err = net.NewNode(
-			ctx,
-			db,
+		nodeOpts := []net.NodeOpt{
 			net.WithConfig(cfg),
-		)
+		}
+		if cfg.Datastore.Store == badgerDatastoreName {
+			// It would be ideal to not have the key path tied to the datastore.
+			// Running with memory store mode will always generate a random key.
+			// Adding support for an ephemeral mode and moving the key to the
+			// config would solve both of these issues.
+			key, err := loadOrGeneratePrivateKey(filepath.Join(cfg.Rootdir, "data", "key"))
+			if err != nil {
+				return nil, err
+			}
+			nodeOpts = append(nodeOpts, net.WithPrivateKey(key))
+		}
+		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+		node, err = net.NewNode(ctx, db, nodeOpts...)
 		if err != nil {
-			db.Close(ctx)
+			db.Close()
 			return nil, errors.Wrap("failed to start P2P node", err)
 		}
 
@@ -272,65 +248,19 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 				return nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", cfg.Net.Peers), err)
 			}
 			log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
-			n.Boostrap(addrs)
+			node.Bootstrap(addrs)
 		}
 
-		if err := n.Start(); err != nil {
-			if e := n.Close(); e != nil {
-				err = errors.Wrap(fmt.Sprintf("failed to close node: %v", e.Error()), err)
-			}
-			db.Close(ctx)
+		if err := node.Start(); err != nil {
+			node.Close()
 			return nil, errors.Wrap("failed to start P2P listeners", err)
 		}
-
-		MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
-		if err != nil {
-			return nil, errors.Wrap("failed to parse multiaddress", err)
-		}
-		addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
-		if err != nil {
-			return nil, errors.Wrap("failed to parse TCP address", err)
-		}
-
-		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
-		if err != nil {
-			return nil, errors.Wrap("failed to parse RPC timeout duration", err)
-		}
-
-		server := grpc.NewServer(
-			grpc.UnaryInterceptor(
-				grpc_middleware.ChainUnaryServer(
-					grpc_recovery.UnaryServerInterceptor(),
-				),
-			),
-			grpc.KeepaliveParams(
-				keepalive.ServerParameters{
-					MaxConnectionIdle: rpcTimeoutDuration,
-				},
-			),
-		)
-		tcplistener, err := gonet.Listen("tcp", addr)
-		if err != nil {
-			return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", addr), err)
-		}
-
-		go func() {
-			log.FeedbackInfo(ctx, "Started RPC server", logging.NewKV("Address", addr))
-			netpb.RegisterCollectionServer(server, n.Peer)
-			if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-				log.FeedbackFatalE(ctx, "Failed to start RPC server", err)
-			}
-		}()
 	}
 
 	sOpt := []func(*httpapi.Server){
 		httpapi.WithAddress(cfg.API.Address),
 		httpapi.WithRootDir(cfg.Rootdir),
 		httpapi.WithAllowedOrigins(cfg.API.AllowedOrigins...),
-	}
-
-	if n != nil {
-		sOpt = append(sOpt, httpapi.WithPeerID(n.PeerID().String()))
 	}
 
 	if cfg.API.TLS {
@@ -342,41 +272,39 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		)
 	}
 
-	s := httpapi.NewServer(db, sOpt...)
-	if err := s.Listen(ctx); err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
+	var server *httpapi.Server
+	if node != nil {
+		server, err = httpapi.NewServer(node, sOpt...)
+	} else {
+		server, err = httpapi.NewServer(db, sOpt...)
+	}
+	if err != nil {
+		return nil, errors.Wrap("failed to create http server", err)
+	}
+	if err := server.Listen(ctx); err != nil {
+		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", server.Addr), err)
 	}
 	// save the address on the config in case the port number was set to random
-	cfg.API.Address = s.AssignedAddr()
+	cfg.API.Address = server.AssignedAddr()
 
 	// run the server in a separate goroutine
 	go func() {
-		log.FeedbackInfo(
-			ctx,
-			fmt.Sprintf(
-				"Providing HTTP API at %s%s. Use the GraphQL request endpoint at %s%s/graphql ",
-				cfg.API.AddressToURL(),
-				httpapi.RootPath,
-				cfg.API.AddressToURL(),
-				httpapi.RootPath,
-			),
-		)
-		if err := s.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", cfg.API.AddressToURL()))
+		if err := server.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
-			if n != nil {
-				if err := n.Close(); err != nil {
-					log.FeedbackErrorE(ctx, "Failed to close node", err)
-				}
+			if node != nil {
+				node.Close()
+			} else {
+				db.Close()
 			}
-			db.Close(ctx)
 			os.Exit(1)
 		}
 	}()
 
 	return &defraInstance{
-		node:   n,
+		node:   node,
 		db:     db,
-		server: s,
+		server: server,
 	}, nil
 }
 

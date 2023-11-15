@@ -29,6 +29,7 @@ defradb client backup import <input_path> [flags]
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default: $HOME/.defradb)
+      --tx uint              Transaction ID
       --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 

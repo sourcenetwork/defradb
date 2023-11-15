@@ -27,23 +27,19 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	assert.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	assert.NoError(t, err)
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 	_, err = n1.server.dial(n2.PeerID())
 	require.NoError(t, err)
 }
@@ -55,23 +51,19 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	assert.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	assert.NoError(t, err)
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 	_, err = n1.server.dial(n2.PeerID())
 	require.NoError(t, err)
 
@@ -86,23 +78,19 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	assert.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
-		// WithDataPath() is a required option with the current implementation of key management
-		WithDataPath(t.TempDir()),
 	)
 	assert.NoError(t, err)
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	if err != nil {
 		t.Fatal(err)
 	}
-	n2.Boostrap(addrs)
+	n2.Bootstrap(addrs)
 	_, err = n1.server.dial(n2.PeerID())
 	require.NoError(t, err)
 

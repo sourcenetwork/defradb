@@ -34,12 +34,9 @@ func TestSchemaUpdatesReplaceCollectionErrors(t *testing.T) {
 						{
 							"op": "replace", "path": "/Users", "value": {
 								"Name": "Book",
-								"Schema": {
-									"Name": "Book",
-									"Fields": [
-										{"Name": "name", "Kind": 11}
-									]
-								} 
+								"Fields": [
+									{"Name": "name", "Kind": 11}
+								]
 							}
 						}
 					]

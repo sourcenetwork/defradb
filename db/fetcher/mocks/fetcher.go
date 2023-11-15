@@ -133,142 +133,12 @@ func (_c *Fetcher_FetchNext_Call) RunAndReturn(run func(context.Context) (fetche
 	return _c
 }
 
-// FetchNextDecoded provides a mock function with given fields: ctx
-func (_m *Fetcher) FetchNextDecoded(ctx context.Context) (*client.Document, fetcher.ExecInfo, error) {
-	ret := _m.Called(ctx)
-
-	var r0 *client.Document
-	var r1 fetcher.ExecInfo
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*client.Document, fetcher.ExecInfo, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) *client.Document); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*client.Document)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) fetcher.ExecInfo); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Get(1).(fetcher.ExecInfo)
-	}
-
-	if rf, ok := ret.Get(2).(func(context.Context) error); ok {
-		r2 = rf(ctx)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-// Fetcher_FetchNextDecoded_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FetchNextDecoded'
-type Fetcher_FetchNextDecoded_Call struct {
-	*mock.Call
-}
-
-// FetchNextDecoded is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Fetcher_Expecter) FetchNextDecoded(ctx interface{}) *Fetcher_FetchNextDecoded_Call {
-	return &Fetcher_FetchNextDecoded_Call{Call: _e.mock.On("FetchNextDecoded", ctx)}
-}
-
-func (_c *Fetcher_FetchNextDecoded_Call) Run(run func(ctx context.Context)) *Fetcher_FetchNextDecoded_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *Fetcher_FetchNextDecoded_Call) Return(_a0 *client.Document, _a1 fetcher.ExecInfo, _a2 error) *Fetcher_FetchNextDecoded_Call {
-	_c.Call.Return(_a0, _a1, _a2)
-	return _c
-}
-
-func (_c *Fetcher_FetchNextDecoded_Call) RunAndReturn(run func(context.Context) (*client.Document, fetcher.ExecInfo, error)) *Fetcher_FetchNextDecoded_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// FetchNextDoc provides a mock function with given fields: ctx, mapping
-func (_m *Fetcher) FetchNextDoc(ctx context.Context, mapping *core.DocumentMapping) ([]byte, core.Doc, fetcher.ExecInfo, error) {
-	ret := _m.Called(ctx, mapping)
-
-	var r0 []byte
-	var r1 core.Doc
-	var r2 fetcher.ExecInfo
-	var r3 error
-	if rf, ok := ret.Get(0).(func(context.Context, *core.DocumentMapping) ([]byte, core.Doc, fetcher.ExecInfo, error)); ok {
-		return rf(ctx, mapping)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *core.DocumentMapping) []byte); ok {
-		r0 = rf(ctx, mapping)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *core.DocumentMapping) core.Doc); ok {
-		r1 = rf(ctx, mapping)
-	} else {
-		r1 = ret.Get(1).(core.Doc)
-	}
-
-	if rf, ok := ret.Get(2).(func(context.Context, *core.DocumentMapping) fetcher.ExecInfo); ok {
-		r2 = rf(ctx, mapping)
-	} else {
-		r2 = ret.Get(2).(fetcher.ExecInfo)
-	}
-
-	if rf, ok := ret.Get(3).(func(context.Context, *core.DocumentMapping) error); ok {
-		r3 = rf(ctx, mapping)
-	} else {
-		r3 = ret.Error(3)
-	}
-
-	return r0, r1, r2, r3
-}
-
-// Fetcher_FetchNextDoc_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FetchNextDoc'
-type Fetcher_FetchNextDoc_Call struct {
-	*mock.Call
-}
-
-// FetchNextDoc is a helper method to define mock.On call
-//   - ctx context.Context
-//   - mapping *core.DocumentMapping
-func (_e *Fetcher_Expecter) FetchNextDoc(ctx interface{}, mapping interface{}) *Fetcher_FetchNextDoc_Call {
-	return &Fetcher_FetchNextDoc_Call{Call: _e.mock.On("FetchNextDoc", ctx, mapping)}
-}
-
-func (_c *Fetcher_FetchNextDoc_Call) Run(run func(ctx context.Context, mapping *core.DocumentMapping)) *Fetcher_FetchNextDoc_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*core.DocumentMapping))
-	})
-	return _c
-}
-
-func (_c *Fetcher_FetchNextDoc_Call) Return(_a0 []byte, _a1 core.Doc, _a2 fetcher.ExecInfo, _a3 error) *Fetcher_FetchNextDoc_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3)
-	return _c
-}
-
-func (_c *Fetcher_FetchNextDoc_Call) RunAndReturn(run func(context.Context, *core.DocumentMapping) ([]byte, core.Doc, fetcher.ExecInfo, error)) *Fetcher_FetchNextDoc_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Init provides a mock function with given fields: ctx, txn, col, fields, filter, docmapper, reverse, showDeleted
-func (_m *Fetcher) Init(ctx context.Context, txn datastore.Txn, col *client.CollectionDescription, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error {
+func (_m *Fetcher) Init(ctx context.Context, txn datastore.Txn, col client.Collection, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error {
 	ret := _m.Called(ctx, txn, col, fields, filter, docmapper, reverse, showDeleted)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, datastore.Txn, *client.CollectionDescription, []client.FieldDescription, *mapper.Filter, *core.DocumentMapping, bool, bool) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, datastore.Txn, client.Collection, []client.FieldDescription, *mapper.Filter, *core.DocumentMapping, bool, bool) error); ok {
 		r0 = rf(ctx, txn, col, fields, filter, docmapper, reverse, showDeleted)
 	} else {
 		r0 = ret.Error(0)
@@ -285,7 +155,7 @@ type Fetcher_Init_Call struct {
 // Init is a helper method to define mock.On call
 //   - ctx context.Context
 //   - txn datastore.Txn
-//   - col *client.CollectionDescription
+//   - col client.Collection
 //   - fields []client.FieldDescription
 //   - filter *mapper.Filter
 //   - docmapper *core.DocumentMapping
@@ -295,9 +165,9 @@ func (_e *Fetcher_Expecter) Init(ctx interface{}, txn interface{}, col interface
 	return &Fetcher_Init_Call{Call: _e.mock.On("Init", ctx, txn, col, fields, filter, docmapper, reverse, showDeleted)}
 }
 
-func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, txn datastore.Txn, col *client.CollectionDescription, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool)) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, txn datastore.Txn, col client.Collection, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool)) *Fetcher_Init_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(datastore.Txn), args[2].(*client.CollectionDescription), args[3].([]client.FieldDescription), args[4].(*mapper.Filter), args[5].(*core.DocumentMapping), args[6].(bool), args[7].(bool))
+		run(args[0].(context.Context), args[1].(datastore.Txn), args[2].(client.Collection), args[3].([]client.FieldDescription), args[4].(*mapper.Filter), args[5].(*core.DocumentMapping), args[6].(bool), args[7].(bool))
 	})
 	return _c
 }
@@ -307,7 +177,7 @@ func (_c *Fetcher_Init_Call) Return(_a0 error) *Fetcher_Init_Call {
 	return _c
 }
 
-func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, datastore.Txn, *client.CollectionDescription, []client.FieldDescription, *mapper.Filter, *core.DocumentMapping, bool, bool) error) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, datastore.Txn, client.Collection, []client.FieldDescription, *mapper.Filter, *core.DocumentMapping, bool, bool) error) *Fetcher_Init_Call {
 	_c.Call.Return(run)
 	return _c
 }

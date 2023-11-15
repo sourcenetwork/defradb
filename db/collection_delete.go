@@ -207,7 +207,7 @@ func (c *collection) deleteWithFilter(
 
 		// Convert from string to client.DocKey.
 		key := core.PrimaryDataStoreKey{
-			CollectionId: fmt.Sprint(c.colID),
+			CollectionId: fmt.Sprint(c.ID()),
 			DocKey:       docKey,
 		}
 
@@ -279,11 +279,11 @@ func (c *collection) applyDelete(
 			func() {
 				c.db.events.Updates.Value().Publish(
 					events.Update{
-						DocKey:   key.DocKey,
-						Cid:      headNode.Cid(),
-						SchemaID: c.schemaID,
-						Block:    headNode,
-						Priority: priority,
+						DocKey:     key.DocKey,
+						Cid:        headNode.Cid(),
+						SchemaRoot: c.Schema().Root,
+						Block:      headNode,
+						Priority:   priority,
 					},
 				)
 			},

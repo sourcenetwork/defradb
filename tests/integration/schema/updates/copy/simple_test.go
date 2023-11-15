@@ -33,12 +33,10 @@ func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users", "path": "/Book" },
-						{ "op": "remove", "path": "/Book/ID" },
-						{ "op": "remove", "path": "/Book/Schema/SchemaID" },
-						{ "op": "remove", "path": "/Book/Schema/VersionID" },
-						{ "op": "remove", "path": "/Book/Schema/Fields/1/ID" },
-						{ "op": "replace", "path": "/Book/Name", "value": "Book" },
-						{ "op": "replace", "path": "/Book/Schema/Name", "value": "Book" }
+						{ "op": "remove", "path": "/Book/Root" },
+						{ "op": "remove", "path": "/Book/VersionID" },
+						{ "op": "remove", "path": "/Book/Fields/1/ID" },
+						{ "op": "replace", "path": "/Book/Name", "value": "Book" }
 					]
 				`,
 				ExpectedError: "unknown collection, adding collections via patch is not supported. Name: Book",

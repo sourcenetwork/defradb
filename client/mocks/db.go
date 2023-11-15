@@ -28,49 +28,6 @@ func (_m *DB) EXPECT() *DB_Expecter {
 	return &DB_Expecter{mock: &_m.Mock}
 }
 
-// AddP2PCollection provides a mock function with given fields: ctx, collectionID
-func (_m *DB) AddP2PCollection(ctx context.Context, collectionID string) error {
-	ret := _m.Called(ctx, collectionID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, collectionID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DB_AddP2PCollection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddP2PCollection'
-type DB_AddP2PCollection_Call struct {
-	*mock.Call
-}
-
-// AddP2PCollection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - collectionID string
-func (_e *DB_Expecter) AddP2PCollection(ctx interface{}, collectionID interface{}) *DB_AddP2PCollection_Call {
-	return &DB_AddP2PCollection_Call{Call: _e.mock.On("AddP2PCollection", ctx, collectionID)}
-}
-
-func (_c *DB_AddP2PCollection_Call) Run(run func(ctx context.Context, collectionID string)) *DB_AddP2PCollection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *DB_AddP2PCollection_Call) Return(_a0 error) *DB_AddP2PCollection_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *DB_AddP2PCollection_Call) RunAndReturn(run func(context.Context, string) error) *DB_AddP2PCollection_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // AddSchema provides a mock function with given fields: _a0, _a1
 func (_m *DB) AddSchema(_a0 context.Context, _a1 string) ([]client.CollectionDescription, error) {
 	ret := _m.Called(_a0, _a1)
@@ -255,9 +212,9 @@ func (_c *DB_Blockstore_Call) RunAndReturn(run func() blockstore.Blockstore) *DB
 	return _c
 }
 
-// Close provides a mock function with given fields: _a0
-func (_m *DB) Close(_a0 context.Context) {
-	_m.Called(_a0)
+// Close provides a mock function with given fields:
+func (_m *DB) Close() {
+	_m.Called()
 }
 
 // DB_Close_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Close'
@@ -266,14 +223,13 @@ type DB_Close_Call struct {
 }
 
 // Close is a helper method to define mock.On call
-//   - _a0 context.Context
-func (_e *DB_Expecter) Close(_a0 interface{}) *DB_Close_Call {
-	return &DB_Close_Call{Call: _e.mock.On("Close", _a0)}
+func (_e *DB_Expecter) Close() *DB_Close_Call {
+	return &DB_Close_Call{Call: _e.mock.On("Close")}
 }
 
-func (_c *DB_Close_Call) Run(run func(_a0 context.Context)) *DB_Close_Call {
+func (_c *DB_Close_Call) Run(run func()) *DB_Close_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		run()
 	})
 	return _c
 }
@@ -283,50 +239,7 @@ func (_c *DB_Close_Call) Return() *DB_Close_Call {
 	return _c
 }
 
-func (_c *DB_Close_Call) RunAndReturn(run func(context.Context)) *DB_Close_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DeleteReplicator provides a mock function with given fields: ctx, rep
-func (_m *DB) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
-	ret := _m.Called(ctx, rep)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.Replicator) error); ok {
-		r0 = rf(ctx, rep)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DB_DeleteReplicator_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteReplicator'
-type DB_DeleteReplicator_Call struct {
-	*mock.Call
-}
-
-// DeleteReplicator is a helper method to define mock.On call
-//   - ctx context.Context
-//   - rep client.Replicator
-func (_e *DB_Expecter) DeleteReplicator(ctx interface{}, rep interface{}) *DB_DeleteReplicator_Call {
-	return &DB_DeleteReplicator_Call{Call: _e.mock.On("DeleteReplicator", ctx, rep)}
-}
-
-func (_c *DB_DeleteReplicator_Call) Run(run func(ctx context.Context, rep client.Replicator)) *DB_DeleteReplicator_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.Replicator))
-	})
-	return _c
-}
-
-func (_c *DB_DeleteReplicator_Call) Return(_a0 error) *DB_DeleteReplicator_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *DB_DeleteReplicator_Call) RunAndReturn(run func(context.Context, client.Replicator) error) *DB_DeleteReplicator_Call {
+func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -525,25 +438,25 @@ func (_c *DB_GetAllIndexes_Call) RunAndReturn(run func(context.Context) (map[str
 	return _c
 }
 
-// GetAllP2PCollections provides a mock function with given fields: ctx
-func (_m *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	ret := _m.Called(ctx)
+// GetAllSchemas provides a mock function with given fields: _a0
+func (_m *DB) GetAllSchemas(_a0 context.Context) ([]client.SchemaDescription, error) {
+	ret := _m.Called(_a0)
 
-	var r0 []string
+	var r0 []client.SchemaDescription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context) ([]client.SchemaDescription, error)); ok {
+		return rf(_a0)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []string); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context) []client.SchemaDescription); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
+			r0 = ret.Get(0).([]client.SchemaDescription)
 		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -551,84 +464,30 @@ func (_m *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return r0, r1
 }
 
-// DB_GetAllP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllP2PCollections'
-type DB_GetAllP2PCollections_Call struct {
+// DB_GetAllSchema_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllSchemas'
+type DB_GetAllSchema_Call struct {
 	*mock.Call
 }
 
-// GetAllP2PCollections is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *DB_Expecter) GetAllP2PCollections(ctx interface{}) *DB_GetAllP2PCollections_Call {
-	return &DB_GetAllP2PCollections_Call{Call: _e.mock.On("GetAllP2PCollections", ctx)}
+// GetAllSchemas is a helper method to define mock.On call
+//   - _a0 context.Context
+func (_e *DB_Expecter) GetAllSchemas(_a0 interface{}) *DB_GetAllSchema_Call {
+	return &DB_GetAllSchema_Call{Call: _e.mock.On("GetAllSchemas", _a0)}
 }
 
-func (_c *DB_GetAllP2PCollections_Call) Run(run func(ctx context.Context)) *DB_GetAllP2PCollections_Call {
+func (_c *DB_GetAllSchema_Call) Run(run func(_a0 context.Context)) *DB_GetAllSchema_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *DB_GetAllP2PCollections_Call) Return(_a0 []string, _a1 error) *DB_GetAllP2PCollections_Call {
+func (_c *DB_GetAllSchema_Call) Return(_a0 []client.SchemaDescription, _a1 error) *DB_GetAllSchema_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_GetAllP2PCollections_Call) RunAndReturn(run func(context.Context) ([]string, error)) *DB_GetAllP2PCollections_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllReplicators provides a mock function with given fields: ctx
-func (_m *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	ret := _m.Called(ctx)
-
-	var r0 []client.Replicator
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]client.Replicator, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) []client.Replicator); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.Replicator)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DB_GetAllReplicators_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllReplicators'
-type DB_GetAllReplicators_Call struct {
-	*mock.Call
-}
-
-// GetAllReplicators is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *DB_Expecter) GetAllReplicators(ctx interface{}) *DB_GetAllReplicators_Call {
-	return &DB_GetAllReplicators_Call{Call: _e.mock.On("GetAllReplicators", ctx)}
-}
-
-func (_c *DB_GetAllReplicators_Call) Run(run func(ctx context.Context)) *DB_GetAllReplicators_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *DB_GetAllReplicators_Call) Return(_a0 []client.Replicator, _a1 error) *DB_GetAllReplicators_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *DB_GetAllReplicators_Call) RunAndReturn(run func(context.Context) ([]client.Replicator, error)) *DB_GetAllReplicators_Call {
+func (_c *DB_GetAllSchema_Call) RunAndReturn(run func(context.Context) ([]client.SchemaDescription, error)) *DB_GetAllSchema_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -688,20 +547,20 @@ func (_c *DB_GetCollectionByName_Call) RunAndReturn(run func(context.Context, st
 	return _c
 }
 
-// GetCollectionBySchemaID provides a mock function with given fields: _a0, _a1
-func (_m *DB) GetCollectionBySchemaID(_a0 context.Context, _a1 string) (client.Collection, error) {
+// GetCollectionsBySchemaRoot provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetCollectionsBySchemaRoot(_a0 context.Context, _a1 string) ([]client.Collection, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 client.Collection
+	var r0 []client.Collection
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (client.Collection, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.Collection, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) client.Collection); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []client.Collection); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(client.Collection)
+			r0 = ret.Get(0).([]client.Collection)
 		}
 	}
 
@@ -714,49 +573,49 @@ func (_m *DB) GetCollectionBySchemaID(_a0 context.Context, _a1 string) (client.C
 	return r0, r1
 }
 
-// DB_GetCollectionBySchemaID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCollectionBySchemaID'
-type DB_GetCollectionBySchemaID_Call struct {
+// DB_GetCollectionsBySchemaRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCollectionsBySchemaRoot'
+type DB_GetCollectionsBySchemaRoot_Call struct {
 	*mock.Call
 }
 
-// GetCollectionBySchemaID is a helper method to define mock.On call
+// GetCollectionsBySchemaRoot is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 string
-func (_e *DB_Expecter) GetCollectionBySchemaID(_a0 interface{}, _a1 interface{}) *DB_GetCollectionBySchemaID_Call {
-	return &DB_GetCollectionBySchemaID_Call{Call: _e.mock.On("GetCollectionBySchemaID", _a0, _a1)}
+func (_e *DB_Expecter) GetCollectionsBySchemaRoot(_a0 interface{}, _a1 interface{}) *DB_GetCollectionsBySchemaRoot_Call {
+	return &DB_GetCollectionsBySchemaRoot_Call{Call: _e.mock.On("GetCollectionsBySchemaRoot", _a0, _a1)}
 }
 
-func (_c *DB_GetCollectionBySchemaID_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetCollectionBySchemaID_Call {
+func (_c *DB_GetCollectionsBySchemaRoot_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetCollectionsBySchemaRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *DB_GetCollectionBySchemaID_Call) Return(_a0 client.Collection, _a1 error) *DB_GetCollectionBySchemaID_Call {
+func (_c *DB_GetCollectionsBySchemaRoot_Call) Return(_a0 []client.Collection, _a1 error) *DB_GetCollectionsBySchemaRoot_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_GetCollectionBySchemaID_Call) RunAndReturn(run func(context.Context, string) (client.Collection, error)) *DB_GetCollectionBySchemaID_Call {
+func (_c *DB_GetCollectionsBySchemaRoot_Call) RunAndReturn(run func(context.Context, string) ([]client.Collection, error)) *DB_GetCollectionsBySchemaRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetCollectionByVersionID provides a mock function with given fields: _a0, _a1
-func (_m *DB) GetCollectionByVersionID(_a0 context.Context, _a1 string) (client.Collection, error) {
+// GetCollectionsByVersionID provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetCollectionsByVersionID(_a0 context.Context, _a1 string) ([]client.Collection, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 client.Collection
+	var r0 []client.Collection
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (client.Collection, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.Collection, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) client.Collection); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []client.Collection); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(client.Collection)
+			r0 = ret.Get(0).([]client.Collection)
 		}
 	}
 
@@ -769,31 +628,194 @@ func (_m *DB) GetCollectionByVersionID(_a0 context.Context, _a1 string) (client.
 	return r0, r1
 }
 
-// DB_GetCollectionByVersionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCollectionByVersionID'
-type DB_GetCollectionByVersionID_Call struct {
+// DB_GetCollectionsByVersionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCollectionsByVersionID'
+type DB_GetCollectionsByVersionID_Call struct {
 	*mock.Call
 }
 
-// GetCollectionByVersionID is a helper method to define mock.On call
+// GetCollectionsByVersionID is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 string
-func (_e *DB_Expecter) GetCollectionByVersionID(_a0 interface{}, _a1 interface{}) *DB_GetCollectionByVersionID_Call {
-	return &DB_GetCollectionByVersionID_Call{Call: _e.mock.On("GetCollectionByVersionID", _a0, _a1)}
+func (_e *DB_Expecter) GetCollectionsByVersionID(_a0 interface{}, _a1 interface{}) *DB_GetCollectionsByVersionID_Call {
+	return &DB_GetCollectionsByVersionID_Call{Call: _e.mock.On("GetCollectionsByVersionID", _a0, _a1)}
 }
 
-func (_c *DB_GetCollectionByVersionID_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetCollectionByVersionID_Call {
+func (_c *DB_GetCollectionsByVersionID_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetCollectionsByVersionID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *DB_GetCollectionByVersionID_Call) Return(_a0 client.Collection, _a1 error) *DB_GetCollectionByVersionID_Call {
+func (_c *DB_GetCollectionsByVersionID_Call) Return(_a0 []client.Collection, _a1 error) *DB_GetCollectionsByVersionID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_GetCollectionByVersionID_Call) RunAndReturn(run func(context.Context, string) (client.Collection, error)) *DB_GetCollectionByVersionID_Call {
+func (_c *DB_GetCollectionsByVersionID_Call) RunAndReturn(run func(context.Context, string) ([]client.Collection, error)) *DB_GetCollectionsByVersionID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSchemasByName provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetSchemasByName(_a0 context.Context, _a1 string) ([]client.SchemaDescription, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 []client.SchemaDescription
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.SchemaDescription, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []client.SchemaDescription); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.SchemaDescription)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_GetSchemaByName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSchemasByName'
+type DB_GetSchemaByName_Call struct {
+	*mock.Call
+}
+
+// GetSchemasByName is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 string
+func (_e *DB_Expecter) GetSchemasByName(_a0 interface{}, _a1 interface{}) *DB_GetSchemaByName_Call {
+	return &DB_GetSchemaByName_Call{Call: _e.mock.On("GetSchemasByName", _a0, _a1)}
+}
+
+func (_c *DB_GetSchemaByName_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetSchemaByName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_GetSchemaByName_Call) Return(_a0 []client.SchemaDescription, _a1 error) *DB_GetSchemaByName_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetSchemaByName_Call) RunAndReturn(run func(context.Context, string) ([]client.SchemaDescription, error)) *DB_GetSchemaByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSchemasByRoot provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetSchemasByRoot(_a0 context.Context, _a1 string) ([]client.SchemaDescription, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 []client.SchemaDescription
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.SchemaDescription, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []client.SchemaDescription); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.SchemaDescription)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_GetSchemaByRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSchemasByRoot'
+type DB_GetSchemaByRoot_Call struct {
+	*mock.Call
+}
+
+// GetSchemasByRoot is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 string
+func (_e *DB_Expecter) GetSchemasByRoot(_a0 interface{}, _a1 interface{}) *DB_GetSchemaByRoot_Call {
+	return &DB_GetSchemaByRoot_Call{Call: _e.mock.On("GetSchemasByRoot", _a0, _a1)}
+}
+
+func (_c *DB_GetSchemaByRoot_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetSchemaByRoot_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_GetSchemaByRoot_Call) Return(_a0 []client.SchemaDescription, _a1 error) *DB_GetSchemaByRoot_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetSchemaByRoot_Call) RunAndReturn(run func(context.Context, string) ([]client.SchemaDescription, error)) *DB_GetSchemaByRoot_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSchemaByVersionID provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetSchemaByVersionID(_a0 context.Context, _a1 string) (client.SchemaDescription, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 client.SchemaDescription
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (client.SchemaDescription, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) client.SchemaDescription); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(client.SchemaDescription)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_GetSchemaByVersionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSchemaByVersionID'
+type DB_GetSchemaByVersionID_Call struct {
+	*mock.Call
+}
+
+// GetSchemaByVersionID is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 string
+func (_e *DB_Expecter) GetSchemaByVersionID(_a0 interface{}, _a1 interface{}) *DB_GetSchemaByVersionID_Call {
+	return &DB_GetSchemaByVersionID_Call{Call: _e.mock.On("GetSchemaByVersionID", _a0, _a1)}
+}
+
+func (_c *DB_GetSchemaByVersionID_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetSchemaByVersionID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_GetSchemaByVersionID_Call) Return(_a0 client.SchemaDescription, _a1 error) *DB_GetSchemaByVersionID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetSchemaByVersionID_Call) RunAndReturn(run func(context.Context, string) (client.SchemaDescription, error)) *DB_GetSchemaByVersionID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -992,13 +1014,13 @@ func (_c *DB_NewTxn_Call) RunAndReturn(run func(context.Context, bool) (datastor
 	return _c
 }
 
-// PatchSchema provides a mock function with given fields: _a0, _a1
-func (_m *DB) PatchSchema(_a0 context.Context, _a1 string) error {
-	ret := _m.Called(_a0, _a1)
+// PatchSchema provides a mock function with given fields: _a0, _a1, _a2
+func (_m *DB) PatchSchema(_a0 context.Context, _a1 string, _a2 bool) error {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1014,13 +1036,14 @@ type DB_PatchSchema_Call struct {
 // PatchSchema is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 string
-func (_e *DB_Expecter) PatchSchema(_a0 interface{}, _a1 interface{}) *DB_PatchSchema_Call {
-	return &DB_PatchSchema_Call{Call: _e.mock.On("PatchSchema", _a0, _a1)}
+//   - _a2 bool
+func (_e *DB_Expecter) PatchSchema(_a0 interface{}, _a1 interface{}, _a2 interface{}) *DB_PatchSchema_Call {
+	return &DB_PatchSchema_Call{Call: _e.mock.On("PatchSchema", _a0, _a1, _a2)}
 }
 
-func (_c *DB_PatchSchema_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_PatchSchema_Call {
+func (_c *DB_PatchSchema_Call) Run(run func(_a0 context.Context, _a1 string, _a2 bool)) *DB_PatchSchema_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(bool))
 	})
 	return _c
 }
@@ -1030,7 +1053,50 @@ func (_c *DB_PatchSchema_Call) Return(_a0 error) *DB_PatchSchema_Call {
 	return _c
 }
 
-func (_c *DB_PatchSchema_Call) RunAndReturn(run func(context.Context, string) error) *DB_PatchSchema_Call {
+func (_c *DB_PatchSchema_Call) RunAndReturn(run func(context.Context, string, bool) error) *DB_PatchSchema_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Peerstore provides a mock function with given fields:
+func (_m *DB) Peerstore() datastore.DSBatching {
+	ret := _m.Called()
+
+	var r0 datastore.DSBatching
+	if rf, ok := ret.Get(0).(func() datastore.DSBatching); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(datastore.DSBatching)
+		}
+	}
+
+	return r0
+}
+
+// DB_Peerstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Peerstore'
+type DB_Peerstore_Call struct {
+	*mock.Call
+}
+
+// Peerstore is a helper method to define mock.On call
+func (_e *DB_Expecter) Peerstore() *DB_Peerstore_Call {
+	return &DB_Peerstore_Call{Call: _e.mock.On("Peerstore")}
+}
+
+func (_c *DB_Peerstore_Call) Run(run func()) *DB_Peerstore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *DB_Peerstore_Call) Return(_a0 datastore.DSBatching) *DB_Peerstore_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_Peerstore_Call) RunAndReturn(run func() datastore.DSBatching) *DB_Peerstore_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1073,49 +1139,6 @@ func (_c *DB_PrintDump_Call) Return(_a0 error) *DB_PrintDump_Call {
 }
 
 func (_c *DB_PrintDump_Call) RunAndReturn(run func(context.Context) error) *DB_PrintDump_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RemoveP2PCollection provides a mock function with given fields: ctx, collectionID
-func (_m *DB) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	ret := _m.Called(ctx, collectionID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, collectionID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DB_RemoveP2PCollection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveP2PCollection'
-type DB_RemoveP2PCollection_Call struct {
-	*mock.Call
-}
-
-// RemoveP2PCollection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - collectionID string
-func (_e *DB_Expecter) RemoveP2PCollection(ctx interface{}, collectionID interface{}) *DB_RemoveP2PCollection_Call {
-	return &DB_RemoveP2PCollection_Call{Call: _e.mock.On("RemoveP2PCollection", ctx, collectionID)}
-}
-
-func (_c *DB_RemoveP2PCollection_Call) Run(run func(ctx context.Context, collectionID string)) *DB_RemoveP2PCollection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *DB_RemoveP2PCollection_Call) Return(_a0 error) *DB_RemoveP2PCollection_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *DB_RemoveP2PCollection_Call) RunAndReturn(run func(context.Context, string) error) *DB_RemoveP2PCollection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1163,6 +1186,49 @@ func (_c *DB_Root_Call) RunAndReturn(run func() datastore.RootStore) *DB_Root_Ca
 	return _c
 }
 
+// SetDefaultSchemaVersion provides a mock function with given fields: _a0, _a1
+func (_m *DB) SetDefaultSchemaVersion(_a0 context.Context, _a1 string) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_SetDefaultSchemaVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetDefaultSchemaVersion'
+type DB_SetDefaultSchemaVersion_Call struct {
+	*mock.Call
+}
+
+// SetDefaultSchemaVersion is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 string
+func (_e *DB_Expecter) SetDefaultSchemaVersion(_a0 interface{}, _a1 interface{}) *DB_SetDefaultSchemaVersion_Call {
+	return &DB_SetDefaultSchemaVersion_Call{Call: _e.mock.On("SetDefaultSchemaVersion", _a0, _a1)}
+}
+
+func (_c *DB_SetDefaultSchemaVersion_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_SetDefaultSchemaVersion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_SetDefaultSchemaVersion_Call) Return(_a0 error) *DB_SetDefaultSchemaVersion_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_SetDefaultSchemaVersion_Call) RunAndReturn(run func(context.Context, string) error) *DB_SetDefaultSchemaVersion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetMigration provides a mock function with given fields: _a0, _a1
 func (_m *DB) SetMigration(_a0 context.Context, _a1 client.LensConfig) error {
 	ret := _m.Called(_a0, _a1)
@@ -1202,49 +1268,6 @@ func (_c *DB_SetMigration_Call) Return(_a0 error) *DB_SetMigration_Call {
 }
 
 func (_c *DB_SetMigration_Call) RunAndReturn(run func(context.Context, client.LensConfig) error) *DB_SetMigration_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SetReplicator provides a mock function with given fields: ctx, rep
-func (_m *DB) SetReplicator(ctx context.Context, rep client.Replicator) error {
-	ret := _m.Called(ctx, rep)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.Replicator) error); ok {
-		r0 = rf(ctx, rep)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DB_SetReplicator_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetReplicator'
-type DB_SetReplicator_Call struct {
-	*mock.Call
-}
-
-// SetReplicator is a helper method to define mock.On call
-//   - ctx context.Context
-//   - rep client.Replicator
-func (_e *DB_Expecter) SetReplicator(ctx interface{}, rep interface{}) *DB_SetReplicator_Call {
-	return &DB_SetReplicator_Call{Call: _e.mock.On("SetReplicator", ctx, rep)}
-}
-
-func (_c *DB_SetReplicator_Call) Run(run func(ctx context.Context, rep client.Replicator)) *DB_SetReplicator_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.Replicator))
-	})
-	return _c
-}
-
-func (_c *DB_SetReplicator_Call) Return(_a0 error) *DB_SetReplicator_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *DB_SetReplicator_Call) RunAndReturn(run func(context.Context, client.Replicator) error) *DB_SetReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }

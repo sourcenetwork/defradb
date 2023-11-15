@@ -28,7 +28,7 @@ type AnyOf []any
 // The comparison is relaxed when using client types other than goClientType.
 func assertResultsAnyOf(t *testing.T, client ClientType, expected AnyOf, actual any, msgAndArgs ...any) {
 	switch client {
-	case httpClientType:
+	case HTTPClientType, CLIClientType:
 		if !areResultsAnyOf(expected, actual) {
 			assert.Contains(t, expected, actual, msgAndArgs...)
 		}
@@ -42,7 +42,7 @@ func assertResultsAnyOf(t *testing.T, client ClientType, expected AnyOf, actual 
 // The comparison is relaxed when using client types other than goClientType.
 func assertResultsEqual(t *testing.T, client ClientType, expected any, actual any, msgAndArgs ...any) {
 	switch client {
-	case httpClientType:
+	case HTTPClientType, CLIClientType:
 		if !areResultsEqual(expected, actual) {
 			assert.EqualValues(t, expected, actual, msgAndArgs...)
 		}

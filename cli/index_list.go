@@ -11,31 +11,12 @@
 package cli
 
 import (
-	"encoding/json"
-	"io"
-	"net/http"
-	"net/url"
-	"os"
-
 	"github.com/spf13/cobra"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
-type indexListResponse struct {
-	Data struct {
-		Collections map[string][]client.IndexDescription `json:"collections"`
-		Indexes     []client.IndexDescription            `json:"indexes"`
-	} `json:"data"`
-	Errors []struct {
-		Message string `json:"message"`
-	} `json:"errors"`
-}
-
-func MakeIndexListCommand(cfg *config.Config) *cobra.Command {
+func MakeIndexListCommand() *cobra.Command {
 	var collectionArg string
 	var cmd = &cobra.Command{
 		Use:   "list [-c --collection <collection>]",
@@ -48,60 +29,30 @@ Otherwise, all indexes in the database will be shown.
 Example: show all index for 'Users' collection:
   defradb client index list --collection Users`,
 		ValidArgs: []string{"collection"},
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.IndexPath)
-			if err != nil {
-				return NewErrFailedToJoinEndpoint(err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			store := mustGetStoreContext(cmd)
 
-			if collectionArg != "" {
-				values := url.Values{
-					"collection": {collectionArg},
-				}
-				endpoint.RawQuery = values.Encode()
-			}
-
-			res, err := http.Get(endpoint.String())
-			if err != nil {
-				return NewErrFailedToSendRequest(err)
-			}
-
-			defer func() {
-				if e := res.Body.Close(); e != nil {
-					err = NewErrFailedToCloseResponseBody(e, err)
-				}
-			}()
-
-			response, err := io.ReadAll(res.Body)
-			if err != nil {
-				return NewErrFailedToReadResponseBody(err)
-			}
-
-			stdout, err := os.Stdout.Stat()
-			if err != nil {
-				return err
-			}
-
-			if isFileInfoPipe(stdout) {
-				cmd.Println(string(response))
-			} else {
-				r := indexListResponse{}
-				err = json.Unmarshal(response, &r)
+			switch {
+			case collectionArg != "":
+				col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 				if err != nil {
-					return NewErrFailedToUnmarshalResponse(err)
+					return err
 				}
-				if len(r.Errors) > 0 {
-					log.FeedbackError(cmd.Context(), "Failed to list index",
-						logging.NewKV("Errors", r.Errors))
-				} else if collectionArg != "" {
-					log.FeedbackInfo(cmd.Context(), "Fetched indexes for collection "+collectionArg,
-						logging.NewKV("Indexes", r.Data.Indexes))
-				} else {
-					log.FeedbackInfo(cmd.Context(), "Fetched all indexes",
-						logging.NewKV("Collections", r.Data.Collections))
+				if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
+					col = col.WithTxn(tx)
 				}
+				indexes, err := col.GetIndexes(cmd.Context())
+				if err != nil {
+					return err
+				}
+				return writeJSON(cmd, indexes)
+			default:
+				indexes, err := store.GetAllIndexes(cmd.Context())
+				if err != nil {
+					return err
+				}
+				return writeJSON(cmd, indexes)
 			}
-			return nil
 		},
 	}
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")

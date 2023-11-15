@@ -164,6 +164,47 @@ func (_c *Collection_CreateMany_Call) RunAndReturn(run func(context.Context, []*
 	return _c
 }
 
+// Definition provides a mock function with given fields:
+func (_m *Collection) Definition() client.CollectionDefinition {
+	ret := _m.Called()
+
+	var r0 client.CollectionDefinition
+	if rf, ok := ret.Get(0).(func() client.CollectionDefinition); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(client.CollectionDefinition)
+	}
+
+	return r0
+}
+
+// Collection_Definition_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Definition'
+type Collection_Definition_Call struct {
+	*mock.Call
+}
+
+// Definition is a helper method to define mock.On call
+func (_e *Collection_Expecter) Definition() *Collection_Definition_Call {
+	return &Collection_Definition_Call{Call: _e.mock.On("Definition")}
+}
+
+func (_c *Collection_Definition_Call) Run(run func()) *Collection_Definition_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Collection_Definition_Call) Return(_a0 client.CollectionDefinition) *Collection_Definition_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Collection_Definition_Call) RunAndReturn(run func() client.CollectionDefinition) *Collection_Definition_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Delete provides a mock function with given fields: _a0, _a1
 func (_m *Collection) Delete(_a0 context.Context, _a1 client.DocKey) (bool, error) {
 	ret := _m.Called(_a0, _a1)
@@ -904,8 +945,8 @@ func (_c *Collection_Schema_Call) RunAndReturn(run func() client.SchemaDescripti
 	return _c
 }
 
-// SchemaID provides a mock function with given fields:
-func (_m *Collection) SchemaID() string {
+// SchemaRoot provides a mock function with given fields:
+func (_m *Collection) SchemaRoot() string {
 	ret := _m.Called()
 
 	var r0 string
@@ -918,29 +959,29 @@ func (_m *Collection) SchemaID() string {
 	return r0
 }
 
-// Collection_SchemaID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SchemaID'
-type Collection_SchemaID_Call struct {
+// Collection_SchemaRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SchemaRoot'
+type Collection_SchemaRoot_Call struct {
 	*mock.Call
 }
 
-// SchemaID is a helper method to define mock.On call
-func (_e *Collection_Expecter) SchemaID() *Collection_SchemaID_Call {
-	return &Collection_SchemaID_Call{Call: _e.mock.On("SchemaID")}
+// SchemaRoot is a helper method to define mock.On call
+func (_e *Collection_Expecter) SchemaRoot() *Collection_SchemaRoot_Call {
+	return &Collection_SchemaRoot_Call{Call: _e.mock.On("SchemaRoot")}
 }
 
-func (_c *Collection_SchemaID_Call) Run(run func()) *Collection_SchemaID_Call {
+func (_c *Collection_SchemaRoot_Call) Run(run func()) *Collection_SchemaRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *Collection_SchemaID_Call) Return(_a0 string) *Collection_SchemaID_Call {
+func (_c *Collection_SchemaRoot_Call) Return(_a0 string) *Collection_SchemaRoot_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Collection_SchemaID_Call) RunAndReturn(run func() string) *Collection_SchemaID_Call {
+func (_c *Collection_SchemaRoot_Call) RunAndReturn(run func() string) *Collection_SchemaRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }

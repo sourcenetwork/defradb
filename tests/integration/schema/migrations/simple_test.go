@@ -22,7 +22,7 @@ import (
 
 // Migrations need to be able to be registered for unknown schema ids, so they
 // may migrate to/from them if recieved by the P2P system.
-func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaIDs(t *testing.T) {
+func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema migration, unknown schema ids",
 		Actions: []any{
@@ -91,8 +91,8 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq",
-					DestinationSchemaVersionID: "bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
+					SourceSchemaVersionID:      "bafkreih27vuxrj4j2tmxnibfm77wswa36xji74hwhq7deipj5rvh3qyabq",
+					DestinationSchemaVersionID: "bafkreiaa3njstjciqclhh4dzv2xaw32tfxxbrbembdvwqfmuuqai3ghu7a",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -124,8 +124,8 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 						},
 					},
 					{
-						SourceSchemaVersionID:      "bafkreihn4qameldz3j7rfundmd4ldhxnaircuulk6h2vcwnpcgxl4oqffq",
-						DestinationSchemaVersionID: "bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
+						SourceSchemaVersionID:      "bafkreih27vuxrj4j2tmxnibfm77wswa36xji74hwhq7deipj5rvh3qyabq",
+						DestinationSchemaVersionID: "bafkreiaa3njstjciqclhh4dzv2xaw32tfxxbrbembdvwqfmuuqai3ghu7a",
 						Lens: model.Lens{
 							Lenses: []model.LensModule{
 								{

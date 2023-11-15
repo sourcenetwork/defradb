@@ -34,16 +34,16 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 						{ "op": "remove", "path": "/Users/Name" }
 					]
 				`,
-				ExpectedError: "collection name can't be empty",
+				ExpectedError: "schema name can't be empty",
 			},
 		},
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveCollectionIDErrors(t *testing.T) {
+func TestSchemaUpdatesRemoveSchemaRootErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove collection id",
+		Description: "Test schema update, remove schema root",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -56,35 +56,10 @@ func TestSchemaUpdatesRemoveCollectionIDErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/ID" }
+						{ "op": "remove", "path": "/Users/Root" }
 					]
 				`,
-				ExpectedError: "CollectionID does not match existing. Name: Users, ExistingID: 1, ProposedID: 0",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesRemoveSchemaIDErrors(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, remove schema ID",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						email: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "remove", "path": "/Users/Schema/SchemaID" }
-					]
-				`,
-				ExpectedError: "SchemaID does not match existing",
+				ExpectedError: "SchemaRoot does not match existing",
 			},
 		},
 	}
@@ -107,7 +82,7 @@ func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 				// This should do nothing
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/VersionID" }
+						{ "op": "remove", "path": "/Users/VersionID" }
 					]
 				`,
 			},
@@ -140,10 +115,10 @@ func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/Users/Schema/Name" }
+						{ "op": "remove", "path": "/Users/Name" }
 					]
 				`,
-				ExpectedError: "modifying the schema name is not supported. ExistingName: Users, ProposedName: ",
+				ExpectedError: "schema name can't be empty",
 			},
 		},
 	}

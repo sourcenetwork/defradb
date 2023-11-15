@@ -30,7 +30,7 @@ func TestSchemaUpdatesAddFieldCRDTLWW(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":1} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":1} }
 					]
 				`,
 			},

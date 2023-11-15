@@ -35,11 +35,10 @@ type Client struct {
 }
 
 func NewClient(rawURL string) (*Client, error) {
-	baseURL, err := url.Parse(rawURL)
+	httpClient, err := newHttpClient(rawURL)
 	if err != nil {
 		return nil, err
 	}
-	httpClient := newHttpClient(baseURL.JoinPath("/api/v0"))
 	return &Client{httpClient}, nil
 }
 
@@ -88,86 +87,6 @@ func (c *Client) WithTxn(tx datastore.Txn) client.Store {
 	return &Client{client}
 }
 
-func (c *Client) SetReplicator(ctx context.Context, rep client.Replicator) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
-
-	body, err := json.Marshal(rep)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
-
-	body, err := json.Marshal(rep)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var reps []client.Replicator
-	if err := c.http.requestJson(req, &reps); err != nil {
-		return nil, err
-	}
-	return reps, nil
-}
-
-func (c *Client) AddP2PCollection(ctx context.Context, collectionID string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections", collectionID)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections", collectionID)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
-}
-
-func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var cols []string
-	if err := c.http.requestJson(req, &cols); err != nil {
-		return nil, err
-	}
-	return cols, nil
-}
-
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	methodURL := c.http.baseURL.JoinPath("backup", "import")
 
@@ -212,10 +131,31 @@ func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.Collect
 	return cols, nil
 }
 
-func (c *Client) PatchSchema(ctx context.Context, patch string) error {
+type patchSchemaRequest struct {
+	Patch               string
+	SetAsDefaultVersion bool
+}
+
+func (c *Client) PatchSchema(ctx context.Context, patch string, setAsDefaultVersion bool) error {
 	methodURL := c.http.baseURL.JoinPath("schema")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), strings.NewReader(patch))
+	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion})
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	methodURL := c.http.baseURL.JoinPath("schema", "default")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
 	if err != nil {
 		return err
 	}
@@ -239,29 +179,33 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	if err != nil {
 		return nil, err
 	}
-	var description client.CollectionDescription
-	if err := c.http.requestJson(req, &description); err != nil {
+	var definition client.CollectionDefinition
+	if err := c.http.requestJson(req, &definition); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description}, nil
+	return &Collection{c.http, definition}, nil
 }
 
-func (c *Client) GetCollectionBySchemaID(ctx context.Context, schemaId string) (client.Collection, error) {
+func (c *Client) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot string) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"schema_id": []string{schemaId}}.Encode()
+	methodURL.RawQuery = url.Values{"schema_root": []string{schemaRoot}}.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	var description client.CollectionDescription
-	if err := c.http.requestJson(req, &description); err != nil {
+	var descriptions []client.CollectionDefinition
+	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description}, nil
+	collections := make([]client.Collection, len(descriptions))
+	for i, d := range descriptions {
+		collections[i] = &Collection{c.http, d}
+	}
+	return collections, nil
 }
 
-func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string) (client.Collection, error) {
+func (c *Client) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
 	methodURL.RawQuery = url.Values{"version_id": []string{versionId}}.Encode()
 
@@ -269,11 +213,15 @@ func (c *Client) GetCollectionByVersionID(ctx context.Context, versionId string)
 	if err != nil {
 		return nil, err
 	}
-	var description client.CollectionDescription
-	if err := c.http.requestJson(req, &description); err != nil {
+	var descriptions []client.CollectionDefinition
+	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
-	return &Collection{c.http, description}, nil
+	collections := make([]client.Collection, len(descriptions))
+	for i, d := range descriptions {
+		collections[i] = &Collection{c.http, d}
+	}
+	return collections, nil
 }
 
 func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
@@ -283,7 +231,7 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 	if err != nil {
 		return nil, err
 	}
-	var descriptions []client.CollectionDescription
+	var descriptions []client.CollectionDefinition
 	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
@@ -292,6 +240,65 @@ func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, er
 		collections[i] = &Collection{c.http, d}
 	}
 	return collections, nil
+}
+
+func (c *Client) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
+	methodURL := c.http.baseURL.JoinPath("schema")
+	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var schema []client.SchemaDescription
+	if err := c.http.requestJson(req, &schema); err != nil {
+		return nil, err
+	}
+	return schema, nil
+}
+
+func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	methodURL := c.http.baseURL.JoinPath("schema")
+	methodURL.RawQuery = url.Values{"version_id": []string{versionID}}.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+	var schema client.SchemaDescription
+	if err := c.http.requestJson(req, &schema); err != nil {
+		return client.SchemaDescription{}, err
+	}
+	return schema, nil
+}
+
+func (c *Client) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+	methodURL := c.http.baseURL.JoinPath("schema")
+	methodURL.RawQuery = url.Values{"root": []string{root}}.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var schema []client.SchemaDescription
+	if err := c.http.requestJson(req, &schema); err != nil {
+		return nil, err
+	}
+	return schema, nil
+}
+
+func (c *Client) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
+	methodURL := c.http.baseURL.JoinPath("schema")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var schema []client.SchemaDescription
+	if err := c.http.requestJson(req, &schema); err != nil {
+		return nil, err
+	}
+	return schema, nil
 }
 
 func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
@@ -397,7 +404,7 @@ func (c *Client) PrintDump(ctx context.Context) error {
 	return err
 }
 
-func (c *Client) Close(ctx context.Context) {
+func (c *Client) Close() {
 	// do nothing
 }
 
@@ -406,6 +413,10 @@ func (c *Client) Root() datastore.RootStore {
 }
 
 func (c *Client) Blockstore() blockstore.Blockstore {
+	panic("client side database")
+}
+
+func (c *Client) Peerstore() datastore.DSBatching {
 	panic("client side database")
 }
 

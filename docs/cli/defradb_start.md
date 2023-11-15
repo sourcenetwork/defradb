@@ -23,7 +23,6 @@ defradb start [flags]
       --privkeypath string            Path to the private key for tls (default "certs/server.crt")
       --pubkeypath string             Path to the public key for tls (default "certs/server.key")
       --store string                  Specify the datastore to use (supported: badger, memory) (default "badger")
-      --tcpaddr string                Listener address for the tcp gRPC server (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9161")
       --tls                           Enable serving the API over https
       --valuelogfilesize ByteSize     Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1GiB)
 ```

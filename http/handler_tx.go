@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -92,4 +93,67 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	}
 	txVal.(datastore.Txn).Discard(req.Context())
 	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *txHandler) bindRoutes(router *Router) {
+	errorResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/error",
+	}
+	successResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/success",
+	}
+	createTxSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/create_tx",
+	}
+
+	txnReadOnlyQueryParam := openapi3.NewQueryParameter("read_only").
+		WithDescription("Read only transaction").
+		WithSchema(openapi3.NewBoolSchema().WithDefault(false))
+
+	txnCreateResponse := openapi3.NewResponse().
+		WithDescription("Transaction info").
+		WithJSONSchemaRef(createTxSchema)
+
+	txnCreate := openapi3.NewOperation()
+	txnCreate.OperationID = "new_transaction"
+	txnCreate.Description = "Create a new transaction"
+	txnCreate.Tags = []string{"transaction"}
+	txnCreate.AddParameter(txnReadOnlyQueryParam)
+	txnCreate.AddResponse(200, txnCreateResponse)
+	txnCreate.Responses["400"] = errorResponse
+
+	txnConcurrent := openapi3.NewOperation()
+	txnConcurrent.OperationID = "new_concurrent_transaction"
+	txnConcurrent.Description = "Create a new concurrent transaction"
+	txnConcurrent.Tags = []string{"transaction"}
+	txnConcurrent.AddParameter(txnReadOnlyQueryParam)
+	txnConcurrent.AddResponse(200, txnCreateResponse)
+	txnConcurrent.Responses["400"] = errorResponse
+
+	txnIdPathParam := openapi3.NewPathParameter("id").
+		WithRequired(true).
+		WithSchema(openapi3.NewInt64Schema())
+
+	txnCommit := openapi3.NewOperation()
+	txnCommit.OperationID = "transaction_commit"
+	txnCommit.Description = "Commit a transaction"
+	txnCommit.Tags = []string{"transaction"}
+	txnCommit.AddParameter(txnIdPathParam)
+	txnCommit.Responses = make(openapi3.Responses)
+	txnCommit.Responses["200"] = successResponse
+	txnCommit.Responses["400"] = errorResponse
+
+	txnDiscard := openapi3.NewOperation()
+	txnDiscard.OperationID = "transaction_discard"
+	txnDiscard.Description = "Discard a transaction"
+	txnDiscard.Tags = []string{"transaction"}
+	txnDiscard.AddParameter(txnIdPathParam)
+	txnDiscard.Responses = make(openapi3.Responses)
+	txnDiscard.Responses["200"] = successResponse
+	txnDiscard.Responses["400"] = errorResponse
+
+	router.AddRoute("/tx", http.MethodPost, txnCreate, h.NewTxn)
+	router.AddRoute("/tx/concurrent", http.MethodPost, txnConcurrent, h.NewConcurrentTxn)
+	router.AddRoute("/tx/{id}", http.MethodPost, txnCommit, h.Commit)
+	router.AddRoute("/tx/{id}", http.MethodDelete, txnDiscard, h.Discard)
 }

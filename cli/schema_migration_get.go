@@ -11,21 +11,10 @@
 package cli
 
 import (
-	"encoding/json"
-	"io"
-	"net/http"
-	"os"
-
 	"github.com/spf13/cobra"
-
-	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
-func MakeSchemaMigrationGetCommand(cfg *config.Config) *cobra.Command {
+func MakeSchemaMigrationGetCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "get",
 		Short: "Gets the schema migrations within DefraDB",
@@ -35,63 +24,14 @@ Example:
   defradb client schema migration get'
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			if err := cobra.NoArgs(cmd, args); err != nil {
-				return NewErrTooManyArgs(0, len(args))
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			store := mustGetStoreContext(cmd)
 
-			endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaMigrationPath)
+			cfgs, err := store.LensRegistry().Config(cmd.Context())
 			if err != nil {
-				return errors.Wrap("join paths failed", err)
+				return err
 			}
-
-			res, err := http.Get(endpoint.String())
-			if err != nil {
-				return errors.Wrap("failed to get schema migrations", err)
-			}
-
-			defer func() {
-				if e := res.Body.Close(); e != nil {
-					err = NewErrFailedToCloseResponseBody(e, err)
-				}
-			}()
-
-			response, err := io.ReadAll(res.Body)
-			if err != nil {
-				return errors.Wrap("failed to read response body", err)
-			}
-
-			stdout, err := os.Stdout.Stat()
-			if err != nil {
-				return errors.Wrap("failed to stat stdout", err)
-			}
-			if isFileInfoPipe(stdout) {
-				cmd.Println(string(response))
-			} else {
-				type migrationGetResponse struct {
-					Data struct {
-						Configuration []client.LensConfig `json:"configuration"`
-					} `json:"data"`
-					Errors []struct {
-						Message string `json:"message"`
-					} `json:"errors"`
-				}
-				r := migrationGetResponse{}
-				err = json.Unmarshal(response, &r)
-				log.FeedbackInfo(cmd.Context(), string(response))
-				if err != nil {
-					return NewErrFailedToUnmarshalResponse(err)
-				}
-				if len(r.Errors) > 0 {
-					log.FeedbackError(cmd.Context(), "Failed to get schema migrations",
-						logging.NewKV("Errors", r.Errors))
-				} else {
-					log.FeedbackInfo(cmd.Context(), "Successfully got schema migrations",
-						logging.NewKV("Configuration", r.Data.Configuration))
-				}
-			}
-
-			return nil
+			return writeJSON(cmd, cfgs)
 		},
 	}
 	return cmd

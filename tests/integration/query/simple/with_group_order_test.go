@@ -52,7 +52,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 				"Name": "Alice",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(19),
+						"Age": int64(19),
 					},
 				},
 			},
@@ -60,10 +60,10 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 				"Name": "John",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(25),
+						"Age": int64(25),
 					},
 					{
-						"Age": uint64(32),
+						"Age": int64(32),
 					},
 				},
 			},
@@ -71,7 +71,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 				"Name": "Carlo",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(55),
+						"Age": int64(55),
 					},
 				},
 			},
@@ -117,7 +117,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 				"Name": "Alice",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(19),
+						"Age": int64(19),
 					},
 				},
 			},
@@ -125,7 +125,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 				"Name": "Carlo",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(55),
+						"Age": int64(55),
 					},
 				},
 			},
@@ -133,10 +133,10 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 				"Name": "John",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(32),
+						"Age": int64(32),
 					},
 					{
-						"Age": uint64(25),
+						"Age": int64(25),
 					},
 				},
 			},
@@ -182,10 +182,10 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 				"Name": "John",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(25),
+						"Age": int64(25),
 					},
 					{
-						"Age": uint64(32),
+						"Age": int64(32),
 					},
 				},
 			},
@@ -193,7 +193,7 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 				"Name": "Carlo",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(55),
+						"Age": int64(55),
 					},
 				},
 			},
@@ -201,7 +201,7 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 				"Name": "Alice",
 				"_group": []map[string]any{
 					{
-						"Age": uint64(19),
+						"Age": int64(19),
 					},
 				},
 			},
@@ -262,10 +262,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 						"Verified": true,
 						"_group": []map[string]any{
 							{
-								"Age": uint64(32),
+								"Age": int64(32),
 							},
 							{
-								"Age": uint64(25),
+								"Age": int64(25),
 							},
 						},
 					},
@@ -273,7 +273,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 						"Verified": false,
 						"_group": []map[string]any{
 							{
-								"Age": uint64(34),
+								"Age": int64(34),
 							},
 						},
 					},
@@ -286,7 +286,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 						"Verified": true,
 						"_group": []map[string]any{
 							{
-								"Age": uint64(55),
+								"Age": int64(55),
 							},
 						},
 					},
@@ -299,7 +299,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 						"Verified": false,
 						"_group": []map[string]any{
 							{
-								"Age": uint64(19),
+								"Age": int64(19),
 							},
 						},
 					},
@@ -364,10 +364,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 						"Verified": false,
 						"_group": []map[string]any{
 							{
-								"Age": uint64(34),
+								"Age": int64(34),
 							},
 							{
-								"Age": uint64(25),
+								"Age": int64(25),
 							},
 						},
 					},
@@ -375,7 +375,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 						"Verified": true,
 						"_group": []map[string]any{
 							{
-								"Age": uint64(32),
+								"Age": int64(32),
 							},
 						},
 					},
@@ -388,7 +388,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 						"Verified": false,
 						"_group": []map[string]any{
 							{
-								"Age": uint64(19),
+								"Age": int64(19),
 							},
 						},
 					},
@@ -401,7 +401,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 						"Verified": true,
 						"_group": []map[string]any{
 							{
-								"Age": uint64(55),
+								"Age": int64(55),
 							},
 						},
 					},

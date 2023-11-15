@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/bxcodec/faker"
 
@@ -28,19 +29,41 @@ var (
 	}
 )
 
+type Option func(*Generator)
+
+func OptionFieldDirective(typeName, field, directive string) Option {
+	return func(g *Generator) {
+		if g.directives == nil {
+			g.directives = make(map[string]map[string][]string)
+		}
+		if g.directives[typeName] == nil {
+			g.directives[typeName] = make(map[string][]string)
+		}
+		g.directives[typeName][field] = append(g.directives[typeName][field], directive)
+	}
+}
+
 type Generator struct {
 	ctx context.Context
 
 	schema string
 	types  []any
+	// map of type name to field name to list of directives
+	directives map[string]map[string][]string
 }
 
-func ForSchema(ctx context.Context, schemaName string) Generator {
-	return Generator{
+func ForSchema(ctx context.Context, schemaName string, options ...Option) Generator {
+	g := Generator{
 		ctx:    ctx,
 		schema: schemaName,
 		types:  registeredFixtures[schemaName],
 	}
+
+	for _, o := range options {
+		o(&g)
+	}
+
+	return g
 }
 
 // Types returns the defined types for this fixture set
@@ -85,7 +108,7 @@ func (g Generator) GenerateDocs() ([]string, error) {
 
 // extractGQLFromType extracts a GraphQL SDL definition as a string
 // from a given type struct
-func ExtractGQLFromType(t any) (string, error) {
+func (g Generator) ExtractGQLFromType(t any) (string, error) {
 	var buf bytes.Buffer
 
 	if reflect.TypeOf(t).Kind() != reflect.Struct {
@@ -104,7 +127,17 @@ func ExtractGQLFromType(t any) (string, error) {
 		fname := f.Name
 		ftype := f.Type.Name()
 		gqlType := gTypeToGQLType[ftype]
-		fmt.Fprintf(&buf, "\t%s: %s\n", fname, gqlType)
+
+		directives := ""
+		if g.directives != nil {
+			if dirsMap, ok := g.directives[name]; ok {
+				if dirs, ok := dirsMap[fname]; ok {
+					directives = " " + strings.Join(dirs, " ")
+				}
+			}
+		}
+		// write field's name, type and directives
+		fmt.Fprintf(&buf, "\t%s: %s%s\n", fname, gqlType, directives)
 	}
 	fmt.Fprint(&buf, "}")
 

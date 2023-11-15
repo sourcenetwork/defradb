@@ -53,7 +53,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"Name": "John",
-						"Age":  uint64(21),
+						"Age":  int64(21),
 					},
 				},
 			},

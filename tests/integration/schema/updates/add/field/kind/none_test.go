@@ -30,7 +30,7 @@ func TestSchemaUpdatesAddFieldKindNone(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "foo", "Kind": 0} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 0} }
 					]
 				`,
 				ExpectedError: "no type found for given name. Type: 0",

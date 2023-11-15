@@ -14,10 +14,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/peer"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
 type state struct {
@@ -50,14 +53,17 @@ type state struct {
 	// These synchronisation channels allow async actions to track their completion.
 	syncChans []chan struct{}
 
+	// The private keys for any nodes.
+	nodePrivateKeys []crypto.PrivKey
+
 	// The addresses of any nodes configured.
-	nodeAddresses []string
+	nodeAddresses []peer.AddrInfo
 
 	// The configurations for any nodes
 	nodeConfigs []config.Config
 
 	// The nodes active in this test.
-	nodes []*net.Node
+	nodes []clients.Client
 
 	// The paths to any file-based databases active in this test.
 	dbPaths []string
@@ -78,6 +84,9 @@ type state struct {
 
 	// Indexes, by index, by collection index, by node index.
 	indexes [][][]client.IndexDescription
+
+	// isBench indicates wether the test is currently being benchmarked.
+	isBench bool
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -99,9 +108,10 @@ func newState(
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
 		syncChans:                []chan struct{}{},
-		nodeAddresses:            []string{},
+		nodePrivateKeys:          []crypto.PrivKey{},
+		nodeAddresses:            []peer.AddrInfo{},
 		nodeConfigs:              []config.Config{},
-		nodes:                    []*net.Node{},
+		nodes:                    []clients.Client{},
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,

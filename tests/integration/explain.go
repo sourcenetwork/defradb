@@ -125,7 +125,7 @@ func executeExplainRequest(
 	}
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		result := node.DB.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.ctx, action.Request)
 		assertExplainRequestResults(s, &result.GQL, action)
 	}
 }

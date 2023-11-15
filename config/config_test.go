@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -26,8 +25,6 @@ var envVarsDifferent = map[string]string{
 	"DEFRA_API_ADDRESS":           "localhost:9999",
 	"DEFRA_NET_P2PDISABLED":       "true",
 	"DEFRA_NET_P2PADDRESS":        "/ip4/0.0.0.0/tcp/9876",
-	"DEFRA_NET_RPCADDRESS":        "localhost:7777",
-	"DEFRA_NET_RPCTIMEOUT":        "90s",
 	"DEFRA_NET_PUBSUB":            "false",
 	"DEFRA_NET_RELAY":             "false",
 	"DEFRA_LOG_LEVEL":             "error",
@@ -41,8 +38,6 @@ var envVarsInvalid = map[string]string{
 	"DEFRA_API_ADDRESS":           "^=+()&**()*(&))",
 	"DEFRA_NET_P2PDISABLED":       "^=+()&**()*(&))",
 	"DEFRA_NET_P2PADDRESS":        "^=+()&**()*(&))",
-	"DEFRA_NET_RPCADDRESS":        "^=+()&**()*(&))",
-	"DEFRA_NET_RPCTIMEOUT":        "^=+()&**()*(&))",
 	"DEFRA_NET_PUBSUB":            "^=+()&**()*(&))",
 	"DEFRA_NET_RELAY":             "^=+()&**()*(&))",
 	"DEFRA_LOG_LEVEL":             "^=+()&**()*(&))",
@@ -178,8 +173,6 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, "memory", cfg.Datastore.Store)
 	assert.Equal(t, true, cfg.Net.P2PDisabled)
 	assert.Equal(t, "/ip4/0.0.0.0/tcp/9876", cfg.Net.P2PAddress)
-	assert.Equal(t, "localhost:7777", cfg.Net.RPCAddress)
-	assert.Equal(t, "90s", cfg.Net.RPCTimeout)
 	assert.Equal(t, false, cfg.Net.PubSubEnabled)
 	assert.Equal(t, false, cfg.Net.RelayEnabled)
 	assert.Equal(t, "error", cfg.Log.Level)
@@ -388,51 +381,6 @@ func TestValidationInvalidNetConfigPeers(t *testing.T) {
 	cfg.Net.Peers = "&(*^(*&^(*&^(*&^))), mmmmh,123123"
 	err := cfg.validate()
 	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
-}
-
-func TestValidationInvalidRPCMaxConnectionIdle(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCMaxConnectionIdle = "123123"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
-}
-
-func TestValidationInvalidRPCTimeout(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCTimeout = "123123"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
-}
-
-func TestValidationRPCTimeoutDuration(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCTimeout = "1s"
-	err := cfg.validate()
-	assert.NoError(t, err)
-}
-
-func TestValidationInvalidRPCTimeoutDuration(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCTimeout = "123123"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrInvalidRPCTimeout)
-}
-
-func TestValidationRPCMaxConnectionIdleDuration(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCMaxConnectionIdle = "1s"
-	err := cfg.validate()
-	assert.NoError(t, err)
-	duration, err := cfg.Net.RPCMaxConnectionIdleDuration()
-	assert.NoError(t, err)
-	assert.Equal(t, duration, 1*time.Second)
-}
-
-func TestValidationInvalidMaxConnectionIdleDuration(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCMaxConnectionIdle = "*ˆ&%*&%"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrInvalidRPCMaxConnectionIdle)
 }
 
 func TestValidationInvalidLoggingConfig(t *testing.T) {

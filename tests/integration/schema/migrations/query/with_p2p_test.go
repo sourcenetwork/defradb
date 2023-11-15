@@ -39,15 +39,15 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				NodeID: immutable.Some(1),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 			},
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreifmgqtwpvepenteuvj27u4ewix6nb7ypvyz6j555wsk5u2n7hrldm",
-					DestinationSchemaVersionID: "bafkreigfqdqnj5dunwgcsf2a6ht6q6m2yv3ys6byw5ifsmi5lfcpeh5t7e",
+					SourceSchemaVersionID:      "bafkreiguj3z5egyieou3li6aeyhabgtpk4mtl6nr7jjmyoihc6dmdg6vbu",
+					DestinationSchemaVersionID: "bafkreidj4ipbeqhqn7at7du4vhzk3aw4xswbwccwqhbcab6avlgdeu6w2a",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -129,15 +129,15 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 			},
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreifmgqtwpvepenteuvj27u4ewix6nb7ypvyz6j555wsk5u2n7hrldm",
-					DestinationSchemaVersionID: "bafkreigfqdqnj5dunwgcsf2a6ht6q6m2yv3ys6byw5ifsmi5lfcpeh5t7e",
+					SourceSchemaVersionID:      "bafkreiguj3z5egyieou3li6aeyhabgtpk4mtl6nr7jjmyoihc6dmdg6vbu",
+					DestinationSchemaVersionID: "bafkreidj4ipbeqhqn7at7du4vhzk3aw4xswbwccwqhbcab6avlgdeu6w2a",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -221,7 +221,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
@@ -230,7 +230,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
 					]
 				`,
 			},
@@ -238,8 +238,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				// Register a migration from version 2 to version 3 on both nodes.
 				// There is no migration from version 1 to 2, thus node 1 has no knowledge of schema version 2.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia56p6i6o3l4jijayiqd5eiijsypjjokbldaxnmqgeav6fe576hcy",
-					DestinationSchemaVersionID: "bafkreiadb2rps7a2zykywfxwfpgkvet5vmzaig4nvzl5sgfqquzr3qrvsq",
+					SourceSchemaVersionID:      "bafkreiaa3njstjciqclhh4dzv2xaw32tfxxbrbembdvwqfmuuqai3ghu7a",
+					DestinationSchemaVersionID: "bafkreigrpkox3omi3c3sp5zoupcjg2b32mysztjozaqsceafsdtkadzufe",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

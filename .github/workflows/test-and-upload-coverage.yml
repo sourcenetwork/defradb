@@ -1,0 +1,115 @@
+# Copyright 2022 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Test And Upload Coverage Workflow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
+
+jobs:
+  run-tests:
+    name: Run tests matrix job
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        client-type: [go, http, cli]
+        database-type: [badger-file, badger-memory]
+        mutation-type: [gql, collection-named, collection-save]
+        detect-changes: [false]
+        include:
+          - os: ubuntu-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            detect-changes: true
+          - os: macos-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            detect-changes: false
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
+      DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
+      DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
+      DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'badger-memory' }}
+      DEFRA_BADGER_FILE: ${{ matrix.database-type == 'badger-file' }}
+      DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+          check-latest: true
+
+      - name: Build dependencies
+        run: |
+          make deps:modules
+          make deps:test
+
+      - name: Run integration tests
+        if: ${{ !matrix.detect-changes }}
+        run: make test:coverage
+
+      - name: Run change detector tests
+        if: ${{ matrix.detect-changes }}
+        run: make test:changes
+
+      - name: Upload coverage artifact
+        if: ${{ !matrix.detect-changes }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
+          path: coverage.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  upload-coverage:
+    name: Upload test code coverage job
+
+    runs-on: ubuntu-latest
+
+    needs: run-tests
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v3
+        with:
+          path: coverage_reports
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: defradb-codecov
+          flags: all-tests
+          os: 'linux'
+          fail_ci_if_error: true
+          verbose: true

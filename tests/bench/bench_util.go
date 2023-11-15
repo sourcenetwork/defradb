@@ -18,8 +18,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/dgraph-io/badger/v4"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/badger/v4"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -85,7 +85,7 @@ func ConstructSchema(fixture fixtures.Generator) (string, error) {
 
 	// loop to get the schemas
 	for i := 0; i < numTypes; i++ {
-		gql, err := fixtures.ExtractGQLFromType(fixture.Types()[i])
+		gql, err := fixture.ExtractGQLFromType(fixture.Types()[i])
 		if err != nil {
 			return "", errors.Wrap("failed generating GQL", err)
 		}

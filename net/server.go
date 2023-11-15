@@ -21,7 +21,7 @@ import (
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
-	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
+	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
@@ -104,7 +104,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		i := 0
 		for _, col := range cols {
 			// If we subscribed to the collection, we skip subscribing to the collection's dockeys.
-			if _, ok := colMap[col.SchemaID()]; ok {
+			if _, ok := colMap[col.SchemaRoot()]; ok {
 				continue
 			}
 			keyChan, err := col.GetAllDocKeys(p.ctx)
@@ -246,8 +246,8 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return &pb.PushLogReply{}, nil
 	}
 
-	schemaID := string(req.Body.SchemaID)
-	docKey := core.DataStoreKeyFromDocKey(dockey)
+	schemaRoot := string(req.Body.SchemaRoot)
+	dsKey := core.DataStoreKeyFromDocKey(dockey)
 
 	var txnErr error
 	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
@@ -260,10 +260,16 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		defer txn.Discard(ctx)
 		store := s.db.WithTxn(txn)
 
-		col, err := store.GetCollectionBySchemaID(ctx, schemaID)
+		// Currently a schema is the best way we have to link a push log request to a collection,
+		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
+		cols, err := store.GetCollectionsBySchemaRoot(ctx, schemaRoot)
 		if err != nil {
-			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
+			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaRoot %s", schemaRoot), err)
 		}
+		if len(cols) == 0 {
+			return nil, client.NewErrCollectionNotFoundForSchema(schemaRoot)
+		}
+		col := cols[0]
 
 		// Create a new DAG service with the current transaction
 		var getter format.NodeGetter = s.peer.newDAGSyncerTxn(txn)
@@ -278,33 +284,25 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, errors.Wrap("failed to decode block to ipld.Node", err)
 		}
 
-		cids, err := s.peer.processLog(ctx, txn, col, docKey, "", nd, getter, false)
+		var session sync.WaitGroup
+		bp := newBlockProcessor(s.peer, txn, col, dsKey, getter)
+		err = bp.processRemoteBlock(ctx, &session, nd, true)
 		if err != nil {
 			log.ErrorE(
 				ctx,
-				"Failed to process PushLog node",
+				"Failed to process remote block",
 				err,
-				logging.NewKV("DocKey", docKey),
+				logging.NewKV("DocKey", dsKey.DocKey),
 				logging.NewKV("CID", cid),
 			)
 		}
+		session.Wait()
+		bp.mergeBlocks(ctx)
 
-		// handleChildren
-		if len(cids) > 0 { // we have child nodes to get
-			log.Debug(
-				ctx,
-				"Handling children for log",
-				logging.NewKV("NChildren", len(cids)),
-				logging.NewKV("CID", cid),
-			)
-			var session sync.WaitGroup
-			s.peer.handleChildBlocks(&session, txn, col, docKey, "", nd, cids, getter)
-			session.Wait()
-			// dagWorkers specific to the dockey will have been spawned within handleChildBlocks.
-			// Once we are done with the dag syncing process, we can get rid of those workers.
-			s.peer.closeJob <- docKey.DocKey
-		} else {
-			log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
+		// dagWorkers specific to the dockey will have been spawned within handleChildBlocks.
+		// Once we are done with the dag syncing process, we can get rid of those workers.
+		if s.peer.closeJob != nil {
+			s.peer.closeJob <- dsKey.DocKey
 		}
 
 		if txnErr = txn.Commit(ctx); txnErr != nil {
@@ -316,8 +314,8 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 		// Once processed, subscribe to the dockey topic on the pubsub network unless we already
 		// suscribe to the collection.
-		if !s.hasPubSubTopic(col.SchemaID()) {
-			err = s.addPubSubTopic(docKey.DocKey, true)
+		if !s.hasPubSubTopic(col.SchemaRoot()) {
+			err = s.addPubSubTopic(dsKey.DocKey, true)
 			if err != nil {
 				return nil, err
 			}
@@ -499,7 +497,7 @@ type addr struct{ id libpeer.ID }
 func (a addr) Network() string { return "libp2p" }
 
 // String returns the peer ID of this address in string form (B58-encoded).
-func (a addr) String() string { return a.id.Pretty() }
+func (a addr) String() string { return a.id.String() }
 
 // peerIDFromContext returns peer ID from the GRPC context
 func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
