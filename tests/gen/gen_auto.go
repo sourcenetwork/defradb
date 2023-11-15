@@ -154,7 +154,11 @@ func getRandomString(random *rand.Rand, n int) string {
 	return string(b)
 }
 
-func (g *randomDocGenerator) generateRandomValue(typeName string, fieldKind client.FieldKind, fieldConfig genConfig) any {
+func (g *randomDocGenerator) generateRandomValue(
+	typeName string,
+	fieldKind client.FieldKind,
+	fieldConfig genConfig,
+) any {
 	genVal := g.getValueGenerator(fieldKind, fieldConfig)
 	if fieldConfig.fieldGenerator != nil {
 		return fieldConfig.fieldGenerator(len(g.cols[typeName]), genVal)

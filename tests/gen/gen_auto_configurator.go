@@ -63,7 +63,11 @@ func newTypeUsageCounter(random *rand.Rand) typeUsageCounters {
 }
 
 // addRelationUsage adds a relation usage tracker for a foreign field.
-func (c *typeUsageCounters) addRelationUsage(secondaryType string, field client.FieldDescription, min, max, numDocs int) {
+func (c *typeUsageCounters) addRelationUsage(
+	secondaryType string,
+	field client.FieldDescription,
+	min, max, numDocs int,
+) {
 	primaryType := field.Schema
 	if _, ok := c.m[primaryType]; !ok {
 		c.m[primaryType] = make(map[string]map[string]*relationUsage)
