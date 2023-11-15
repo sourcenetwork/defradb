@@ -12,6 +12,8 @@ package gen
 
 import (
 	"reflect"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // genConfig is a configuration for a generation of a field.
@@ -49,29 +51,29 @@ func (m configsMap) AddForField(typeStr, fieldName string, conf genConfig) {
 	m[typeStr] = typeConfig
 }
 
-func validateConfig(types map[string]typeDefinition, configsMap configsMap) error {
+func validateConfig(types map[string]client.CollectionDefinition, configsMap configsMap) error {
 	for typeName, typeConfigs := range configsMap {
 		typeDef := types[typeName]
-		if typeDef.name == "" {
+		if typeDef.Description.Name == "" {
 			return newNotDefinedTypeErr(typeName)
 		}
 		for fieldName, fieldConfig := range typeConfigs {
-			fieldDef := typeDef.getField(fieldName)
-			if fieldDef == nil {
+			fieldDef, hasField := typeDef.Description.GetFieldByName(fieldName, &typeDef.Schema)
+			if !hasField {
 				return NewErrInvalidConfiguration("field " + fieldName +
 					" is not defined in the schema for type " + typeName)
 			}
-			err := checkAndValidateMinMax(fieldDef, &fieldConfig)
+			err := checkAndValidateMinMax(&fieldDef, &fieldConfig)
 			if err != nil {
 				return err
 			}
 
-			err = checkAndValidateLen(fieldDef, &fieldConfig)
+			err = checkAndValidateLen(&fieldDef, &fieldConfig)
 			if err != nil {
 				return err
 			}
 
-			err = checkAndValidateRatio(fieldDef, &fieldConfig)
+			err = checkAndValidateRatio(&fieldDef, &fieldConfig)
 			if err != nil {
 				return err
 			}
@@ -80,12 +82,12 @@ func validateConfig(types map[string]typeDefinition, configsMap configsMap) erro
 	return nil
 }
 
-func checkAndValidateMinMax(field *fieldDefinition, conf *genConfig) error {
+func checkAndValidateMinMax(field *client.FieldDescription, conf *genConfig) error {
 	_, hasMin := conf.props["min"]
 	if hasMin {
 		var err error
-		if field.isArray || field.typeStr == intType {
-			err = validateMinConfig[int](conf, field.isArray)
+		if field.IsArray() || field.Kind == client.FieldKind_INT {
+			err = validateMinConfig[int](conf, field.IsArray())
 		} else {
 			err = validateMinConfig[float64](conf, false)
 		}
@@ -98,10 +100,10 @@ func checkAndValidateMinMax(field *fieldDefinition, conf *genConfig) error {
 	return nil
 }
 
-func checkAndValidateLen(field *fieldDefinition, conf *genConfig) error {
+func checkAndValidateLen(field *client.FieldDescription, conf *genConfig) error {
 	lenConf, hasLen := conf.props["len"]
 	if hasLen {
-		if field.typeStr != stringType {
+		if field.Kind != client.FieldKind_STRING {
 			return NewErrInvalidConfiguration("len is used on not String")
 		}
 		len, ok := lenConf.(int)
@@ -115,10 +117,10 @@ func checkAndValidateLen(field *fieldDefinition, conf *genConfig) error {
 	return nil
 }
 
-func checkAndValidateRatio(field *fieldDefinition, conf *genConfig) error {
+func checkAndValidateRatio(field *client.FieldDescription, conf *genConfig) error {
 	ratioConf, hasRatio := conf.props["ratio"]
 	if hasRatio {
-		if field.typeStr != boolType {
+		if field.Kind != client.FieldKind_BOOL {
 			return NewErrInvalidConfiguration("ratio is used on not Boolean")
 		}
 		len, ok := ratioConf.(float64)

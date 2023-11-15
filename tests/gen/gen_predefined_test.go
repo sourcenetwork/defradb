@@ -205,7 +205,7 @@ func TestGeneratePredefinedDocs_OneToManyToOne(t *testing.T) {
 		}
 		type Specs {
 			CPU: String
-			device: Device
+			device: Device @primary
 		}`
 
 	docs, err := GenerateDocs(schema, DocsList{

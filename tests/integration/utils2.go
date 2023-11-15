@@ -343,7 +343,7 @@ func generateDocsForSchema(s *state, action GenerateDocsForSchema) {
 	}
 
 	for _, doc := range docs {
-		createDoc(s, CreateDoc{CollectionID: doc.ColIndex, Doc: doc.JSON, NodeID: action.NodeID})
+		createDoc(s, CreateDoc{CollectionID: int(doc.ColID), Doc: doc.JSON, NodeID: action.NodeID})
 	}
 }
 

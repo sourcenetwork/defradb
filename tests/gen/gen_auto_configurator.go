@@ -14,6 +14,8 @@ import (
 	"math"
 	"math/rand"
 	"time"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 type typeDemand struct {
@@ -33,7 +35,7 @@ func (d typeDemand) getAverage() int {
 // demand for each type, setting up the relation usage counters, and setting up
 // the random seed.
 type docsGenConfigurator struct {
-	types        map[string]typeDefinition
+	types        map[string]client.CollectionDefinition
 	config       configsMap
 	primaryGraph map[string][]string
 	typesOrder   []string
@@ -61,22 +63,22 @@ func newTypeUsageCounter(random *rand.Rand) typeUsageCounters {
 }
 
 // addRelationUsage adds a relation usage tracker for a foreign field.
-func (c *typeUsageCounters) addRelationUsage(secondaryType string, field fieldDefinition, min, max, numDocs int) {
-	primaryType := field.typeStr
+func (c *typeUsageCounters) addRelationUsage(secondaryType string, field client.FieldDescription, min, max, numDocs int) {
+	primaryType := field.Schema
 	if _, ok := c.m[primaryType]; !ok {
 		c.m[primaryType] = make(map[string]map[string]*relationUsage)
 	}
 	if _, ok := c.m[primaryType][secondaryType]; !ok {
 		c.m[primaryType][secondaryType] = make(map[string]*relationUsage)
 	}
-	if _, ok := c.m[primaryType][secondaryType][field.name]; !ok {
-		c.m[primaryType][secondaryType][field.name] = newRelationUsage(min, max, numDocs, c.random)
+	if _, ok := c.m[primaryType][secondaryType][field.Name]; !ok {
+		c.m[primaryType][secondaryType][field.Name] = newRelationUsage(min, max, numDocs, c.random)
 	}
 }
 
 // getNextTypeIndForField returns the next index to be used for a foreign field.
-func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field fieldDefinition) int {
-	current := c.m[field.typeStr][secondaryType][field.name]
+func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field client.FieldDescription) int {
+	current := c.m[field.Schema][secondaryType][field.Name]
 	return current.useNextDocKey()
 }
 
@@ -163,7 +165,7 @@ func (u *relationUsage) allocateIndexes() {
 	u.docKeysCounter = docKeysCounter
 }
 
-func newDocGenConfigurator(types map[string]typeDefinition, config configsMap) *docsGenConfigurator {
+func newDocGenConfigurator(types map[string]client.CollectionDefinition, config configsMap) *docsGenConfigurator {
 	return &docsGenConfigurator{
 		types:      types,
 		config:     config,
@@ -268,12 +270,12 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 	primaryGraph map[string][]string,
 ) (typeDemand, error) {
 	primaryTypeDef := g.types[primaryType]
-	for _, field := range primaryTypeDef.fields {
-		if field.isRelation && field.typeStr == secondaryType {
+	for _, field := range primaryTypeDef.Schema.Fields {
+		if field.IsObject() && field.Schema == secondaryType {
 			primaryDemand := typeDemand{min: secondaryDemand.min, max: secondaryDemand.max}
 			min, max := 1, 1
-			if field.isArray {
-				fieldConf := g.config.ForField(primaryType, field.name)
+			if field.IsArray() {
+				fieldConf := g.config.ForField(primaryType, field.Name)
 				min, max = getMinMaxOrDefault(fieldConf, 0, secondaryDemand.max)
 				minRatio := float64(secondaryDemand.min) / float64(max)
 				maxRatio := float64(secondaryDemand.max) / float64(min)
@@ -299,7 +301,7 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 				return typeDemand{}, NewErrCanNotSupplyTypeDemand(primaryType)
 			}
 			g.docsDemand[primaryType] = primaryDemand
-			g.initRelationUsages(field.typeStr, primaryType, min, max)
+			g.initRelationUsages(field.Schema, primaryType, min, max)
 		}
 	}
 	return secondaryDemand, nil
@@ -325,35 +327,35 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 	primaryGraph map[string][]string,
 ) error {
 	typeDef := g.types[typeName]
-	for _, field := range typeDef.fields {
-		if field.isRelation && !field.isPrimary {
+	for _, field := range typeDef.Schema.Fields {
+		if field.IsObject() && !field.IsPrimaryRelation() {
 			primaryDocDemand := g.docsDemand[typeName]
 			newSecDemand := typeDemand{min: primaryDocDemand.min, max: primaryDocDemand.max}
 			min, max := 1, 1
 
-			if field.isArray {
-				fieldConf := g.config.ForField(typeName, field.name)
+			if field.IsArray() {
+				fieldConf := g.config.ForField(typeName, field.Name)
 				min, max = getMinMaxOrDefault(fieldConf, defaultNumChildrenPerDoc, defaultNumChildrenPerDoc)
 				newSecDemand.max = primaryDocDemand.min * max
 				newSecDemand.min = primaryDocDemand.max * min
 			}
 
-			curSecDemand := g.docsDemand[field.typeStr]
+			curSecDemand := g.docsDemand[field.Schema]
 			if curSecDemand.usedDefined &&
 				(curSecDemand.min < newSecDemand.min || curSecDemand.max > newSecDemand.max) {
-				return NewErrCanNotSupplyTypeDemand(field.typeStr)
+				return NewErrCanNotSupplyTypeDemand(field.Schema)
 			}
-			g.docsDemand[field.typeStr] = newSecDemand
-			g.initRelationUsages(field.typeStr, typeName, min, max)
+			g.docsDemand[field.Schema] = newSecDemand
+			g.initRelationUsages(field.Schema, typeName, min, max)
 
-			err := g.calculateDemandForSecondaryTypes(field.typeStr, primaryGraph)
+			err := g.calculateDemandForSecondaryTypes(field.Schema, primaryGraph)
 			if err != nil {
 				return err
 			}
 
-			for _, primaryTypeName := range primaryGraph[field.typeStr] {
+			for _, primaryTypeName := range primaryGraph[field.Schema] {
 				if _, ok := g.docsDemand[primaryTypeName]; !ok {
-					primaryDemand, err := g.getDemandForPrimaryType(primaryTypeName, field.typeStr, newSecDemand, primaryGraph)
+					primaryDemand, err := g.getDemandForPrimaryType(primaryTypeName, field.Schema, newSecDemand, primaryGraph)
 					if err != nil {
 						return err
 					}
@@ -367,14 +369,14 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 
 func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType string, min, max int) {
 	secondaryTypeDef := g.types[secondaryType]
-	for _, secondaryTypeField := range secondaryTypeDef.fields {
-		if secondaryTypeField.typeStr == primaryType {
+	for _, secondaryTypeField := range secondaryTypeDef.Schema.Fields {
+		if secondaryTypeField.Schema == primaryType {
 			g.usageCounter.addRelationUsage(secondaryType, secondaryTypeField, min, max, g.docsDemand[primaryType].getAverage())
 		}
 	}
 }
 
-func getRelationGraph(types map[string]typeDefinition) map[string][]string {
+func getRelationGraph(types map[string]client.CollectionDefinition) map[string][]string {
 	primaryGraph := make(map[string][]string)
 
 	appendUnique := func(slice []string, val string) []string {
@@ -387,12 +389,12 @@ func getRelationGraph(types map[string]typeDefinition) map[string][]string {
 	}
 
 	for typeName, typeDef := range types {
-		for _, field := range typeDef.fields {
-			if field.isRelation {
-				if field.isPrimary {
-					primaryGraph[typeName] = appendUnique(primaryGraph[typeName], field.typeStr)
+		for _, field := range typeDef.Schema.Fields {
+			if field.IsRelation() {
+				if field.IsPrimaryRelation() {
+					primaryGraph[typeName] = appendUnique(primaryGraph[typeName], field.Schema)
 				} else {
-					primaryGraph[field.typeStr] = appendUnique(primaryGraph[field.typeStr], typeName)
+					primaryGraph[field.Schema] = appendUnique(primaryGraph[field.Schema], field.Schema)
 				}
 			}
 		}
@@ -401,7 +403,7 @@ func getRelationGraph(types map[string]typeDefinition) map[string][]string {
 	return primaryGraph
 }
 
-func getTopologicalOrder(graph map[string][]string, types map[string]typeDefinition) []string {
+func getTopologicalOrder(graph map[string][]string, types map[string]client.CollectionDefinition) []string {
 	visited := make(map[string]bool)
 	stack := []string{}
 

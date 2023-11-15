@@ -26,8 +26,10 @@ import (
 // fields, and create schemas with different fields from it.
 func GenerateDocs(schema string, docsList DocsList) ([]GeneratedDoc, error) {
 	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
-	parser := schemaParser{}
-	typeDefs, _, _ := parser.Parse(schema)
+	typeDefs, err := parse(schema)
+	if err != nil {
+		return nil, err
+	}
 	generator := docGenerator{types: typeDefs}
 	for _, doc := range docsList.Docs {
 		docs, err := generator.GenerateDocs(doc, docsList.ColName)
@@ -40,14 +42,14 @@ func GenerateDocs(schema string, docsList DocsList) ([]GeneratedDoc, error) {
 }
 
 type docGenerator struct {
-	types map[string]typeDefinition
+	types map[string]client.CollectionDefinition
 }
 
-func createDocJSON(typeDef *typeDefinition, doc map[string]any) string {
+func createDocJSON(typeDef *client.CollectionDefinition, doc map[string]any) string {
 	sb := strings.Builder{}
-	for _, field := range typeDef.fields {
-		fieldName := field.name
-		if field.isRelation && field.isPrimary {
+	for _, field := range typeDef.Schema.Fields {
+		fieldName := field.Name
+		if field.IsPrimaryRelation() {
 			fieldName += request.RelatedObjectID
 		}
 		if _, hasProp := doc[fieldName]; !hasProp {
@@ -68,13 +70,13 @@ func createDocJSON(typeDef *typeDefinition, doc map[string]any) string {
 	return sb.String()
 }
 
-func toRequestedDoc(doc map[string]any, typeDef *typeDefinition) map[string]any {
+func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) map[string]any {
 	result := make(map[string]any)
-	for _, field := range typeDef.fields {
-		if field.isRelation {
+	for _, field := range typeDef.Schema.Fields {
+		if field.IsRelation() || field.Name == request.KeyFieldName {
 			continue
 		}
-		result[field.name] = doc[field.name]
+		result[field.Name] = doc[field.Name]
 	}
 	for name, val := range doc {
 		if strings.HasSuffix(name, request.RelatedObjectID) {
@@ -86,23 +88,23 @@ func toRequestedDoc(doc map[string]any, typeDef *typeDefinition) map[string]any 
 
 func (this *docGenerator) generatePrimary(
 	doc map[string]any,
-	typeDef *typeDefinition,
+	typeDef *client.CollectionDefinition,
 ) (map[string]any, []GeneratedDoc, error) {
 	result := []GeneratedDoc{}
 	requested := toRequestedDoc(doc, typeDef)
-	for _, field := range typeDef.fields {
-		if field.isRelation {
-			if _, hasProp := doc[field.name]; hasProp {
-				if field.isPrimary {
-					subType := this.types[field.typeStr]
-					subDoc := toRequestedDoc(doc[field.name].(map[string]any), &subType)
+	for _, field := range typeDef.Schema.Fields {
+		if field.IsRelation() {
+			if _, hasProp := doc[field.Name]; hasProp {
+				if field.IsPrimaryRelation() {
+					subType := this.types[field.Schema]
+					subDoc := toRequestedDoc(doc[field.Name].(map[string]any), &subType)
 					jsonSubDoc := createDocJSON(&subType, subDoc)
 					clientSubDoc, err := client.NewDocFromJSON([]byte(jsonSubDoc))
 					if err != nil {
 						return nil, nil, NewErrFailedToGenerateDoc(err)
 					}
-					requested[field.name+request.RelatedObjectID] = clientSubDoc.Key().String()
-					result = append(result, GeneratedDoc{ColIndex: subType.index, JSON: jsonSubDoc})
+					requested[field.Name+request.RelatedObjectID] = clientSubDoc.Key().String()
+					result = append(result, GeneratedDoc{ColID: subType.Description.ID, JSON: jsonSubDoc})
 				}
 			}
 		}
@@ -119,13 +121,13 @@ func (this *docGenerator) GenerateDocs(doc map[string]any, typeName string) ([]G
 	}
 	docStr := createDocJSON(&typeDef, requested)
 
-	result = append(result, GeneratedDoc{ColIndex: typeDef.index, JSON: docStr})
+	result = append(result, GeneratedDoc{ColID: typeDef.Description.ID, JSON: docStr})
 
 	var docKey string
-	for _, field := range typeDef.fields {
-		if field.isRelation {
-			if _, hasProp := doc[field.name]; hasProp {
-				if !field.isPrimary {
+	for _, field := range typeDef.Schema.Fields {
+		if field.IsRelation() {
+			if _, hasProp := doc[field.Name]; hasProp {
+				if !field.IsPrimaryRelation() {
 					if docKey == "" {
 						clientDoc, err := client.NewDocFromJSON([]byte(docStr))
 						if err != nil {
@@ -148,20 +150,20 @@ func (this *docGenerator) GenerateDocs(doc map[string]any, typeName string) ([]G
 func (this *docGenerator) generateSecondaryDocs(
 	primaryDoc map[string]any,
 	primaryTypeName string,
-	relProp *fieldDefinition,
+	relProp *client.FieldDescription,
 	primaryDocKey string,
 ) ([]GeneratedDoc, error) {
 	result := []GeneratedDoc{}
-	relTypeDef := this.types[relProp.typeStr]
+	relTypeDef := this.types[relProp.Schema]
 	primaryPropName := ""
-	for _, relDocProp := range relTypeDef.fields {
-		if relDocProp.typeStr == primaryTypeName && relDocProp.isPrimary {
-			primaryPropName = relDocProp.name + request.RelatedObjectID
-			switch relVal := primaryDoc[relProp.name].(type) {
+	for _, relDocProp := range relTypeDef.Schema.Fields {
+		if relDocProp.Schema == primaryTypeName && relDocProp.IsPrimaryRelation() {
+			primaryPropName = relDocProp.Name + request.RelatedObjectID
+			switch relVal := primaryDoc[relProp.Name].(type) {
 			case []map[string]any:
 				for _, relDoc := range relVal {
 					relDoc[primaryPropName] = primaryDocKey
-					actions, err := this.GenerateDocs(relDoc, relTypeDef.name)
+					actions, err := this.GenerateDocs(relDoc, relTypeDef.Description.Name)
 					if err != nil {
 						return nil, err
 					}
@@ -169,7 +171,7 @@ func (this *docGenerator) generateSecondaryDocs(
 				}
 			case map[string]any:
 				relVal[primaryPropName] = primaryDocKey
-				actions, err := this.GenerateDocs(relVal, relTypeDef.name)
+				actions, err := this.GenerateDocs(relVal, relTypeDef.Description.Name)
 				if err != nil {
 					return nil, err
 				}
