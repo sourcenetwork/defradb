@@ -25,6 +25,7 @@ import (
 func TestPushlogWithDialFailure(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`))
 	require.NoError(t, err)
@@ -51,6 +52,7 @@ func TestPushlogWithDialFailure(t *testing.T) {
 func TestPushlogWithInvalidPeerID(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`))
 	require.NoError(t, err)
@@ -71,8 +73,10 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n1 := newTestNode(ctx, t)
+	defer n1.Close()
 	n1.Start()
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 	n2.Start()
 
 	err := n1.host.Connect(ctx, n2.PeerInfo())

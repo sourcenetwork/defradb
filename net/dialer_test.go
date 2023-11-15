@@ -21,20 +21,23 @@ import (
 )
 
 func TestDial_WithConnectedPeer_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
+	db1 := FixtureNewMemoryDBWithBroadcaster(t)
+	db2 := FixtureNewMemoryDBWithBroadcaster(t)
 	ctx := context.Background()
 	n1, err := NewNode(
 		ctx,
-		db,
+		db1,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
+	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
-		db,
+		db2,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
+	defer n2.Close()
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	if err != nil {
 		t.Fatal(err)
@@ -45,20 +48,23 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 }
 
 func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
+	db1 := FixtureNewMemoryDBWithBroadcaster(t)
+	db2 := FixtureNewMemoryDBWithBroadcaster(t)
 	ctx := context.Background()
 	n1, err := NewNode(
 		ctx,
-		db,
+		db1,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
+	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
-		db,
+		db2,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
+	defer n2.Close()
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	if err != nil {
 		t.Fatal(err)
@@ -72,20 +78,23 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 }
 
 func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_ClosingConnectionError(t *testing.T) {
-	db := FixtureNewMemoryDBWithBroadcaster(t)
+	db1 := FixtureNewMemoryDBWithBroadcaster(t)
+	db2 := FixtureNewMemoryDBWithBroadcaster(t)
 	ctx := context.Background()
 	n1, err := NewNode(
 		ctx,
-		db,
+		db1,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
+	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
-		db,
+		db2,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
+	defer n2.Close()
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	if err != nil {
 		t.Fatal(err)

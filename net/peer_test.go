@@ -197,6 +197,7 @@ func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 func TestStartAndClose_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.Start()
 	require.NoError(t, err)
@@ -323,6 +324,7 @@ func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
 func TestRegisterNewDocument_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -346,6 +348,7 @@ func TestRegisterNewDocument_NoError(t *testing.T) {
 func TestRegisterNewDocument_RPCTopicAlreadyRegisteredError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -372,6 +375,7 @@ func TestRegisterNewDocument_RPCTopicAlreadyRegisteredError(t *testing.T) {
 func TestSetReplicator_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -392,6 +396,7 @@ func TestSetReplicator_NoError(t *testing.T) {
 func TestSetReplicator_WithInvalidAddress_EmptyPeerIDError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -409,6 +414,7 @@ func TestSetReplicator_WithInvalidAddress_EmptyPeerIDError(t *testing.T) {
 func TestSetReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	db.Close()
 
@@ -425,6 +431,7 @@ func TestSetReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 func TestSetReplicator_WithUndefinedCollection_KeyNotFoundError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
 	require.NoError(t, err)
@@ -439,6 +446,7 @@ func TestSetReplicator_WithUndefinedCollection_KeyNotFoundError(t *testing.T) {
 func TestSetReplicator_ForAllCollections_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -458,6 +466,7 @@ func TestSetReplicator_ForAllCollections_NoError(t *testing.T) {
 func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
 		age: Int
@@ -485,6 +494,7 @@ func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *test
 func TestDeleteReplicator_WithDBClosed_DataStoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	info := peer.AddrInfo{
 		ID:    n.PeerID(),
@@ -503,6 +513,7 @@ func TestDeleteReplicator_WithDBClosed_DataStoreClosedError(t *testing.T) {
 func TestDeleteReplicator_WithTargetSelf_SelfTargetForReplicatorError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
 		Info:    n.PeerInfo(),
@@ -514,8 +525,10 @@ func TestDeleteReplicator_WithTargetSelf_SelfTargetForReplicatorError(t *testing
 func TestDeleteReplicator_WithInvalidCollection_KeyNotFoundError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
 		Info:    n2.PeerInfo(),
@@ -527,6 +540,7 @@ func TestDeleteReplicator_WithInvalidCollection_KeyNotFoundError(t *testing.T) {
 func TestDeleteReplicator_WithCollectionAndPreviouslySetReplicator_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -535,6 +549,7 @@ func TestDeleteReplicator_WithCollectionAndPreviouslySetReplicator_NoError(t *te
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.SetReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -550,8 +565,10 @@ func TestDeleteReplicator_WithCollectionAndPreviouslySetReplicator_NoError(t *te
 func TestDeleteReplicator_WithNoCollection_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -562,6 +579,7 @@ func TestDeleteReplicator_WithNoCollection_NoError(t *testing.T) {
 func TestDeleteReplicator_WithNotSetReplicator_KeyNotFoundError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -570,6 +588,7 @@ func TestDeleteReplicator_WithNotSetReplicator_KeyNotFoundError(t *testing.T) {
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.DeleteReplicator(ctx, client.Replicator{
 		Info:    n2.PeerInfo(),
@@ -581,6 +600,7 @@ func TestDeleteReplicator_WithNotSetReplicator_KeyNotFoundError(t *testing.T) {
 func TestGetAllReplicator_WithReplicator_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -589,6 +609,7 @@ func TestGetAllReplicator_WithReplicator_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.SetReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -605,6 +626,7 @@ func TestGetAllReplicator_WithReplicator_NoError(t *testing.T) {
 func TestGetAllReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	db.Close()
 
@@ -615,6 +637,7 @@ func TestGetAllReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 func TestLoadReplicators_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	db.Close()
 
@@ -625,6 +648,7 @@ func TestLoadReplicators_WithDBClosed_DatastoreClosedError(t *testing.T) {
 func TestLoadReplicator_WithReplicator_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -633,6 +657,7 @@ func TestLoadReplicator_WithReplicator_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.SetReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -646,6 +671,7 @@ func TestLoadReplicator_WithReplicator_NoError(t *testing.T) {
 func TestLoadReplicator_WithReplicatorAndEmptyReplicatorMap_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -654,6 +680,7 @@ func TestLoadReplicator_WithReplicatorAndEmptyReplicatorMap_NoError(t *testing.T
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.SetReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -669,6 +696,7 @@ func TestLoadReplicator_WithReplicatorAndEmptyReplicatorMap_NoError(t *testing.T
 func TestAddP2PCollections_WithInvalidCollectionID_NotFoundError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.Peer.AddP2PCollections(ctx, []string{"invalid_collection"})
 	require.Error(t, err, ds.ErrNotFound)
@@ -677,6 +705,7 @@ func TestAddP2PCollections_WithInvalidCollectionID_NotFoundError(t *testing.T) {
 func TestAddP2PCollections_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -694,6 +723,7 @@ func TestAddP2PCollections_NoError(t *testing.T) {
 func TestRemoveP2PCollectionsWithInvalidCollectionID(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.Peer.RemoveP2PCollections(ctx, []string{"invalid_collection"})
 	require.Error(t, err, ds.ErrNotFound)
@@ -702,6 +732,7 @@ func TestRemoveP2PCollectionsWithInvalidCollectionID(t *testing.T) {
 func TestRemoveP2PCollections(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -719,6 +750,7 @@ func TestRemoveP2PCollections(t *testing.T) {
 func TestGetAllP2PCollectionsWithNoCollections(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	cols, err := n.Peer.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
@@ -728,6 +760,7 @@ func TestGetAllP2PCollectionsWithNoCollections(t *testing.T) {
 func TestGetAllP2PCollections(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -749,6 +782,7 @@ func TestGetAllP2PCollections(t *testing.T) {
 func TestHandleDocCreateLog_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -790,6 +824,7 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 func TestHandleDocCreateLog_WithInvalidDockey_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.handleDocCreateLog(events.Update{
 		DocKey: "some-invalid-key",
@@ -800,6 +835,7 @@ func TestHandleDocCreateLog_WithInvalidDockey_NoError(t *testing.T) {
 func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -829,6 +865,7 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -870,6 +907,7 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 func TestHandleDoUpdateLog_WithInvalidDockey_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.handleDocUpdateLog(events.Update{
 		DocKey: "some-invalid-key",
@@ -880,6 +918,7 @@ func TestHandleDoUpdateLog_WithInvalidDockey_NoError(t *testing.T) {
 func TestHandleDocUpdateLog_WithExistingDockeyTopic_TopicExistsError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -923,6 +962,7 @@ func TestHandleDocUpdateLog_WithExistingDockeyTopic_TopicExistsError(t *testing.
 func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -966,6 +1006,7 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 func TestPushLogToReplicator_WithReplicator_FailedPushingLogError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -1012,6 +1053,7 @@ func TestPushLogToReplicator_WithReplicator_FailedPushingLogError(t *testing.T) 
 func TestSession_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 	ng := n.Session(ctx)
 	require.Implements(t, (*ipld.NodeGetter)(nil), ng)
 }
