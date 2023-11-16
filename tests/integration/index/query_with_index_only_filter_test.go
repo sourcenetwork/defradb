@@ -28,7 +28,7 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "If there are non-indexed fields in the query, they should be fetched",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -63,7 +63,7 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -96,7 +96,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there are several docs matching _eq filter, they should be fetched",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -138,7 +138,7 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -172,7 +172,7 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -207,7 +207,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -241,7 +241,7 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -276,7 +276,7 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ne filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -318,7 +318,7 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -353,7 +353,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there are several docs matching _in filter, they should be fetched",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -395,7 +395,7 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nin filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -457,7 +457,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _like filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -543,7 +543,7 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nlike filter",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String @index

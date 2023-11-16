@@ -36,7 +36,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-N relation",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -97,7 +97,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-N relation",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -158,7 +158,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 	test := testUtils.TestCase{
 		Description: "Filter on indexed secondary relation field in 1-1 relation",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -219,7 +219,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 	test := testUtils.TestCase{
 		Description: "Filter on indexed field of primary relation in 1-1 relation",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -274,7 +274,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 	test := testUtils.TestCase{
 		Description: "Filter on indexed field of primary relation while having indexed foreign field in 1-1 relation",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -330,7 +330,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-1 and 1-N relations",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String 

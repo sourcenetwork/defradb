@@ -339,16 +339,14 @@ type Request struct {
 	ExpectedError string
 }
 
-// GenerateDocsForSchema is an action that will trigger generation of documents for the given schema.
-
-type GenerateDocsForSchema struct {
-	// NodeID may hold the ID (index) of a node to execute this request on.
+// GenerateDocsFromSchema is an action that will trigger generation of documents for the given schema.
+type GenerateDocsFromSchema struct {
+	// NodeID may hold the ID (index) of a node to execute the generation on.
 	//
-	// If a value is not provided the request will be executed against all nodes,
-	// in which case the expected results must all match across all nodes.
+	// If a value is not provided the docs generation will be executed against all nodes,
 	NodeID immutable.Option[int]
 
-	// The schema to create.
+	// The schema to generate from.
 	Schema string
 
 	// If true, the schema will be created before generating docs.
@@ -360,6 +358,20 @@ type GenerateDocsForSchema struct {
 	// The predefined docs structure to be passed to the doc generator.
 	// If not set, the generator will create random docs.
 	PredefinedDocs immutable.Option[gen.DocsList]
+}
+
+// GenerateDocs is an action that will trigger generation of documents.
+type GenerateDocs struct {
+	// NodeID may hold the ID (index) of a node to execute the generation on.
+	//
+	// If a value is not provided the docs generation will be executed against all nodes,
+	NodeID immutable.Option[int]
+
+	// The collection definitions to generate documents for.
+	Definitions []client.CollectionDefinition
+
+	// Options to be passed to the doc generator.
+	AutoGenOptions []gen.Option
 }
 
 // TransactionCommit represents a commit request for a transaction of the given id.

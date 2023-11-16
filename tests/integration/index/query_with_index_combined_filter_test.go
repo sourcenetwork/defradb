@@ -30,7 +30,7 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of an indexed field",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -68,7 +68,7 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of 2 indexed fields",
 		Actions: []any{
-			testUtils.GenerateDocsForSchema{
+			testUtils.GenerateDocsFromSchema{
 				Schema: `
 					type User {
 						name: String @index

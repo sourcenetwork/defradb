@@ -315,8 +315,11 @@ func performAction(
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
 
-	case GenerateDocsForSchema:
-		generateDocsForSchema(s, action)
+	case GenerateDocsFromSchema:
+		generateDocsFromSchema(s, action)
+
+	case GenerateDocs:
+		generateDocs(s, action)
 
 	case SetupComplete:
 		// no-op, just continue.
@@ -326,7 +329,7 @@ func performAction(
 	}
 }
 
-func generateDocsForSchema(s *state, action GenerateDocsForSchema) {
+func generateDocsFromSchema(s *state, action GenerateDocsFromSchema) {
 	if action.CreateSchema {
 		updateSchema(s, SchemaUpdate{Schema: action.Schema, NodeID: action.NodeID})
 	}
@@ -338,6 +341,17 @@ func generateDocsForSchema(s *state, action GenerateDocsForSchema) {
 	} else {
 		docs, err = gen.AutoGenerateFromSchema(action.Schema, action.AutoGenOptions...)
 	}
+	if err != nil {
+		s.t.Fatalf("Failed to generate docs %s", err)
+	}
+
+	for _, doc := range docs {
+		createDoc(s, CreateDoc{CollectionID: int(doc.ColID), Doc: doc.JSON, NodeID: action.NodeID})
+	}
+}
+
+func generateDocs(s *state, action GenerateDocs) {
+	docs, err := gen.AutoGenerate(action.Definitions, action.AutoGenOptions...)
 	if err != nil {
 		s.t.Fatalf("Failed to generate docs %s", err)
 	}
@@ -412,7 +426,7 @@ func getCollectionNames(testCase TestCase) []string {
 			}
 
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
-		case GenerateDocsForSchema:
+		case GenerateDocsFromSchema:
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 		}
 	}
@@ -549,7 +563,7 @@ ActionLoop:
 		case SchemaUpdate, CreateDoc, UpdateDoc, Restart:
 			continue
 
-		case GenerateDocsForSchema:
+		case GenerateDocsFromSchema:
 			if action.CreateSchema {
 				continue
 			}
