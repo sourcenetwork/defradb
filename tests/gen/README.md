@@ -1,14 +1,17 @@
 # Automatic Documents Generation 
 
-`AutoGenerateFromSchema` is a highly versatile function designed for dynamic document generation, perfect for testing and simulation purposes. 
-It creates documents based on a specified schema, allowing for extensive customization of data generation. 
+`AutoGenerate` and `AutoGenerateFromSchema` are a highly versatile function designed for dynamic document generation, perfect for testing and simulation purposes. 
+
+`AutoGenerateFromSchema` creates documents based on a specified schema, allowing for extensive customization of data generation. 
 
 The function generates documents adhering to a defined schema and it's configuration.
 It interprets the types and relationships within the schema to create realistic, interconnected data structures.
 
+`AutoGenerate` creates documents based on the provider collections' definitions (`[]client.CollectionDefinition`)
+
 ### Demand Calculation:
 
-The function calculates the 'demand' or the number of documents to generate based on the configuration provided.
+The functions calculate the 'demand' or the number of documents to generate based on the configuration provided.
 For related types within the schema, it intelligently adjusts the number of generated documents to maintain consistency in relationships (one-to-one, one-to-many, etc.).
 
 In the absence of explicit demands, it deduces demands from the maximum required by related types or uses a default value if no relation-based demands are present.
@@ -18,10 +21,9 @@ For example, a document expects at least 10 secondary documents, but the demand 
 
 ## Configuration
 
-There are two ways to configure the function:
-1. Directly within the schema using annotations
-2. Via options passed to the function
+Both functions `AutoGenerate` and `AutoGenerateFromSchema` can be configured using options.
 
+Additionally, `AutoGenerateFromSchema` can be configured directly within the schema using annotations.
 Options take precedence over in-schema configurations.
 
 ### In-schema Configuration:
