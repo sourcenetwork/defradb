@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGeneratePredefinedDocs_Simple(t *testing.T) {
+func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
 	schema := `
 		type User {
 			name: String
@@ -39,7 +39,7 @@ func TestGeneratePredefinedDocs_Simple(t *testing.T) {
 	}
 }
 
-func TestGeneratePredefinedDocs_StripExcessiveFields(t *testing.T) {
+func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
 	schema := `
 		type User {
 			name: String
@@ -63,7 +63,7 @@ func TestGeneratePredefinedDocs_StripExcessiveFields(t *testing.T) {
 	}
 }
 
-func TestGeneratePredefinedDocs_OneToOne(t *testing.T) {
+func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 	schema := `
 		type User {
 			name: String
@@ -104,7 +104,7 @@ func TestGeneratePredefinedDocs_OneToOne(t *testing.T) {
 	}
 }
 
-func TestGeneratePredefinedDocs_OneToOnePrimary(t *testing.T) {
+func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 	schema := `
 		type User {
 			name: String
@@ -145,7 +145,7 @@ func TestGeneratePredefinedDocs_OneToOnePrimary(t *testing.T) {
 	}
 }
 
-func TestGeneratePredefinedDocs_OneToMany(t *testing.T) {
+func TestGeneratePredefinedFromSchema_OneToMany(t *testing.T) {
 	schema := `
 		type User {
 			name: String
@@ -192,7 +192,7 @@ func TestGeneratePredefinedDocs_OneToMany(t *testing.T) {
 	}
 }
 
-func TestGeneratePredefinedDocs_OneToManyToOne(t *testing.T) {
+func TestGeneratePredefinedFromSchema_OneToManyToOne(t *testing.T) {
 	schema := `
 		type User {
 			name: String

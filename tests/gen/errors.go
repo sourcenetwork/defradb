@@ -13,10 +13,11 @@ package gen
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errInvalidConfiguration   string = "invalid configuration"
-	errCanNotSupplyTypeDemand string = "can not supply demand for type "
-	errFailedToParse          string = "failed to parse schema"
-	errFailedToGenerateDoc    string = "failed to generate doc"
+	errInvalidConfiguration    string = "invalid configuration"
+	errCanNotSupplyTypeDemand  string = "can not supply demand for type "
+	errFailedToParse           string = "failed to parse schema"
+	errFailedToGenerateDoc     string = "failed to generate doc"
+	errIncompleteColDefinition string = "incomplete collection definition"
 )
 
 func NewErrInvalidConfiguration(reason string) error {
@@ -33,6 +34,10 @@ func NewErrFailedToParse(reason string) error {
 
 func NewErrFailedToGenerateDoc(inner error) error {
 	return errors.Wrap(errFailedToGenerateDoc, inner)
+}
+
+func NewErrIncompleteColDefinition(reason string) error {
+	return errors.New(errIncompleteColDefinition, errors.NewKV("Reason", reason))
 }
 
 func newNotDefinedTypeErr(typeName string) error {

@@ -31,7 +31,7 @@ type docRec struct {
 	docKey string
 }
 
-// AutoGenerateFromSchema generates random documents for a schema.
+// AutoGenerateFromSchema generates random documents from a schema.
 func AutoGenerateFromSchema(schema string, options ...Option) ([]GeneratedDoc, error) {
 	genConfigs, err := parseConfig(schema)
 	if err != nil {
@@ -45,8 +45,21 @@ func AutoGenerateFromSchema(schema string, options ...Option) ([]GeneratedDoc, e
 	return generator.GenerateDocs(options...)
 }
 
+// AutoGenerate generates random documents from collection definitions.
+func AutoGenerate(definitions []client.CollectionDefinition, options ...Option) ([]GeneratedDoc, error) {
+	err := validateDefinitions(definitions)
+	if err != nil {
+		return nil, err
+	}
+	typeDefs := make(map[string]client.CollectionDefinition)
+	for _, def := range definitions {
+		typeDefs[def.Description.Name] = def
+	}
+	generator := randomDocGenerator{types: typeDefs}
+	return generator.GenerateDocs(options...)
+}
+
 type randomDocGenerator struct {
-	//types        map[string]typeDefinition
 	types        map[string]client.CollectionDefinition
 	config       configsMap
 	resultDocs   []GeneratedDoc
@@ -58,6 +71,9 @@ type randomDocGenerator struct {
 
 func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, error) {
 	g.cols = make(map[string][]docRec)
+	if g.config == nil {
+		g.config = make(configsMap)
+	}
 
 	configurator := newDocGenConfigurator(g.types, g.config)
 	err := configurator.Configure(options...)
@@ -188,4 +204,43 @@ func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, field
 		return func() any { return min + g.random.Float64()*(max-min) }
 	}
 	panic("Can not generate random value for unknown type: " + fieldKind.String())
+}
+
+func validateDefinitions(definitions []client.CollectionDefinition) error {
+	colIDs := make(map[uint32]struct{})
+	colNames := make(map[string]struct{})
+	fieldRefs := []string{}
+	for _, def := range definitions {
+		if def.Description.Name == "" {
+			return NewErrIncompleteColDefinition("description name is empty")
+		}
+		if def.Schema.Name == "" {
+			return NewErrIncompleteColDefinition("schema name is empty")
+		}
+		if def.Description.Name != def.Schema.Name {
+			return NewErrIncompleteColDefinition("description name and schema name do not match")
+		}
+		for _, field := range def.Schema.Fields {
+			if field.Name == "" {
+				return NewErrIncompleteColDefinition("field name is empty")
+			}
+			if field.IsObject() {
+				if field.Schema == "" {
+					return NewErrIncompleteColDefinition("field schema is empty")
+				}
+				fieldRefs = append(fieldRefs, field.Schema)
+			}
+		}
+		colNames[def.Description.Name] = struct{}{}
+		colIDs[def.Description.ID] = struct{}{}
+	}
+	for _, ref := range fieldRefs {
+		if _, ok := colNames[ref]; !ok {
+			return NewErrIncompleteColDefinition("field schema references unknown collection")
+		}
+	}
+	if len(colIDs) != len(definitions) {
+		return NewErrIncompleteColDefinition("duplicate collection IDs")
+	}
+	return nil
 }
