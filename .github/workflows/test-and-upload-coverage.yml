@@ -49,6 +49,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
+      CGO_ENABLED: 1
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
       DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
       DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
