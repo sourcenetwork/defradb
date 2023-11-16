@@ -112,7 +112,7 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 }
 
 // getNextPrimaryDocKey returns the key of the next primary document to be used as a relation.
-func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType string, field client.FieldDescription) string {
+func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType string, field *client.FieldDescription) string {
 	ind := g.usageCounter.getNextTypeIndForField(secondaryType, field)
 	docKey := g.cols[field.Schema][ind].docKey
 	return docKey
@@ -142,7 +142,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) ([]DocsList, err
 				}
 				if field.IsRelation() {
 					if field.IsPrimaryRelation() {
-						newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocKey(typeName, field)
+						newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocKey(typeName, &field)
 					}
 				} else {
 					fieldConf := g.config.ForField(typeName, field.Name)

@@ -81,24 +81,9 @@ func (c *typeUsageCounters) addRelationUsage(
 }
 
 // getNextTypeIndForField returns the next index to be used for a foreign field.
-func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field client.FieldDescription) int {
+func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *client.FieldDescription) int {
 	current := c.m[field.Schema][secondaryType][field.Name]
 	return current.useNextDocKey()
-}
-
-// allocateIndexes allocates the indexes for each relation usage tracker.
-// It is called when all the demand for each type has been calculated.
-func (c *typeUsageCounters) allocateIndexes(currentMaxDemand int) {
-	for _, secondaryTypes := range c.m {
-		for _, fields := range secondaryTypes {
-			for _, field := range fields {
-				if field.numAvailableDocs == math.MaxInt {
-					field.numAvailableDocs = currentMaxDemand
-				}
-				field.allocateIndexes()
-			}
-		}
-	}
 }
 
 type relationUsage struct {
@@ -158,6 +143,7 @@ func (u *relationUsage) useNextDocKey() int {
 	return currentInd
 }
 
+// allocateIndexes allocates the indexes for the relation usage tracker.
 func (u *relationUsage) allocateIndexes() {
 	docKeysCounter := make([]struct {
 		ind   int
@@ -221,14 +207,14 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 }
 
 func (g *docsGenConfigurator) calculateDocsDemand(initialTypes map[string]typeDemand) error {
-	for typeName, typeDemand := range initialTypes {
+	for typeName, demand := range initialTypes {
 		var err error
 		// from the current type we go up the graph and calculate the demand for primary types
-		typeDemand, err = g.getPrimaryDemand(typeName, typeDemand, g.primaryGraph)
+		demand, err = g.getPrimaryDemand(typeName, demand, g.primaryGraph)
 		if err != nil {
 			return err
 		}
-		g.docsDemand[typeName] = typeDemand
+		g.docsDemand[typeName] = demand
 
 		err = g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
 		if err != nil {
@@ -264,8 +250,18 @@ func (g *docsGenConfigurator) allocateUsageCounterIndexes() {
 			demand.min = max
 			g.docsDemand[typeName] = demand
 		}
+		for _, usage := range g.usageCounter.m[typeName] {
+			for _, field := range usage {
+				if field.numAvailableDocs == math.MaxInt {
+					field.numAvailableDocs = max
+				}
+				if field.numAvailableDocs > demand.max {
+					field.numAvailableDocs = demand.max
+				}
+				field.allocateIndexes()
+			}
+		}
 	}
-	g.usageCounter.allocateIndexes(max)
 }
 
 func (g *docsGenConfigurator) getDemandForPrimaryType(
@@ -398,11 +394,11 @@ func getRelationGraph(types map[string]client.CollectionDefinition) map[string][
 
 	for typeName, typeDef := range types {
 		for _, field := range typeDef.Schema.Fields {
-			if field.IsRelation() {
+			if field.IsObject() {
 				if field.IsPrimaryRelation() {
 					primaryGraph[typeName] = appendUnique(primaryGraph[typeName], field.Schema)
 				} else {
-					primaryGraph[field.Schema] = appendUnique(primaryGraph[field.Schema], field.Schema)
+					primaryGraph[field.Schema] = appendUnique(primaryGraph[field.Schema], typeName)
 				}
 			}
 		}
