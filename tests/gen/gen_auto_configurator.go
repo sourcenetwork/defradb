@@ -282,9 +282,13 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 				fieldConf := g.config.ForField(primaryType, field.Name)
 				min, max = getMinMaxOrDefault(fieldConf, 0, secondaryDemand.max)
 				minRatio := float64(secondaryDemand.min) / float64(max)
-				maxRatio := float64(secondaryDemand.max) / float64(min)
 				primaryDemand.min = int(math.Ceil(minRatio))
-				primaryDemand.max = int(math.Floor(maxRatio))
+				if min == 0 {
+					primaryDemand.max = math.MaxInt
+				} else {
+					maxRatio := float64(secondaryDemand.max) / float64(min)
+					primaryDemand.max = int(math.Floor(maxRatio))
+				}
 
 				var err error
 				primaryDemand, err = g.getPrimaryDemand(primaryType, primaryDemand, primaryGraph)
