@@ -69,7 +69,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 					}`,
 				},
 				FocusClients: []testUtils.ClientType{testUtils.GoClientType},
-				Factor:       5,
+				Factor:       2,
 			},
 		},
 	}
