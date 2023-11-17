@@ -18,12 +18,17 @@ import (
 )
 
 const (
-	defaultNumDocs           = 10
-	defaultNumChildrenPerDoc = 2
+	// DefaultNumDocs is the default number of documents to generate for a collection.
+	DefaultNumDocs = 10
+	// DefaultNumChildrenPerDoc is the default number of children to generate for a document.
+	DefaultNumChildrenPerDoc = 2
 
-	defaultStrLen = 10
-	defaultIntMin = 0
-	defaultIntMax = 10000
+	// DefaultStrLen is the default length of a string to generate.
+	DefaultStrLen = 10
+	// DefaultIntMin is the default minimum value of an integer to generate.
+	DefaultIntMin = 0
+	// DefaultIntMax is the default maximum value of an integer to generate.
+	DefaultIntMax = 10000
 )
 
 type docRec struct {
@@ -185,13 +190,13 @@ func (g *randomDocGenerator) generateRandomValue(
 func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, fieldConfig genConfig) func() any {
 	switch fieldKind {
 	case client.FieldKind_STRING:
-		strLen := defaultStrLen
+		strLen := DefaultStrLen
 		if prop, ok := fieldConfig.props["len"]; ok {
 			strLen = prop.(int)
 		}
 		return func() any { return getRandomString(&g.random, strLen) }
 	case client.FieldKind_INT:
-		min, max := getMinMaxOrDefault(fieldConfig, defaultIntMin, defaultIntMax)
+		min, max := getMinMaxOrDefault(fieldConfig, DefaultIntMin, DefaultIntMax)
 		return func() any { return min + g.random.Intn(max-min+1) }
 	case client.FieldKind_BOOL:
 		ratio := 0.5

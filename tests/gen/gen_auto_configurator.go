@@ -189,7 +189,7 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 	g.typesOrder = getTopologicalOrder(g.primaryGraph, g.types)
 
 	if len(g.docsDemand) == 0 {
-		g.docsDemand[g.typesOrder[0]] = typeDemand{min: defaultNumDocs, max: defaultNumDocs}
+		g.docsDemand[g.typesOrder[0]] = typeDemand{min: DefaultNumDocs, max: DefaultNumDocs}
 	}
 
 	initialTypes := make(map[string]typeDemand)
@@ -226,7 +226,7 @@ func (g *docsGenConfigurator) calculateDocsDemand(initialTypes map[string]typeDe
 	// types, give them default demand value and calculate the demand for secondary types.
 	for _, typeName := range g.typesOrder {
 		if _, ok := g.docsDemand[typeName]; !ok {
-			g.docsDemand[typeName] = typeDemand{min: defaultNumDocs, max: defaultNumDocs}
+			g.docsDemand[typeName] = typeDemand{min: DefaultNumDocs, max: DefaultNumDocs}
 			err := g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
 			if err != nil {
 				return err
@@ -339,7 +339,7 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 
 			if field.IsArray() {
 				fieldConf := g.config.ForField(typeName, field.Name)
-				min, max = getMinMaxOrDefault(fieldConf, defaultNumChildrenPerDoc, defaultNumChildrenPerDoc)
+				min, max = getMinMaxOrDefault(fieldConf, DefaultNumChildrenPerDoc, DefaultNumChildrenPerDoc)
 				newSecDemand.max = primaryDocDemand.min * max
 				newSecDemand.min = primaryDocDemand.max * min
 			}
