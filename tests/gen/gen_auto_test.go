@@ -239,7 +239,7 @@ func TestAutoGenerateFromSchema_Simple(t *testing.T) {
 			rating: Float
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 	assert.Len(t, docs, numUsers)
 
@@ -257,7 +257,7 @@ func TestAutoGenerateFromSchema_ConfigIntRange(t *testing.T) {
 			money: Int # min: -1000, max: 10000
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 	assert.Len(t, docs, numUsers)
 
@@ -273,7 +273,7 @@ func TestAutoGenerateFromSchema_ConfigFloatRange(t *testing.T) {
 			product: Float # min: -1.0, max: 1.0
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 	assert.Len(t, docs, numUsers)
 
@@ -289,7 +289,7 @@ func TestAutoGenerateFromSchema_ConfigStringLen(t *testing.T) {
 			email: String # len: 12
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 	assert.Len(t, docs, numUsers)
 
@@ -305,7 +305,7 @@ func TestAutoGenerateFromSchema_ConfigBoolRatio(t *testing.T) {
 			verified: Boolean # ratio: 0.2
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 	assert.Len(t, docs, numUsers)
 
@@ -318,7 +318,7 @@ func TestAutoGenerateFromSchema_IfNoTypeDemandIsGiven_ShouldUseDefault(t *testin
 			name: String 
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema)
+	docs, err := AutoGenerateFromSDL(schema)
 	assert.NoError(t, err)
 
 	const defaultDemand = 10
@@ -338,7 +338,7 @@ func TestAutoGenerateFromSchema_RelationOneToOne(t *testing.T) {
 			model: String
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
 	assert.Len(t, filterByCollection(docs, 0), numUsers)
@@ -360,7 +360,7 @@ func TestAutoGenerateFromSchema_RelationOneToMany(t *testing.T) {
 			model: String
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
 	assert.Len(t, filterByCollection(docs, 0), numUsers)
@@ -386,7 +386,7 @@ func TestAutoGenerateFromSchema_RelationOneToManyWithConfiguredNumberOfElements(
 			model: String
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
 	assert.Len(t, filterByCollection(docs, 0), numUsers)
@@ -418,7 +418,7 @@ func TestAutoGenerateFromSchema_RelationOneToManyToOneWithConfiguredNumberOfElem
 			OS: String
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
 	assert.Len(t, filterByCollection(docs, 0), numUsers)
@@ -453,7 +453,7 @@ func TestAutoGenerateFromSchema_RelationOneToManyToOnePrimaryWithConfiguredNumbe
 			OS: String
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("User", numUsers))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
 	assert.Len(t, filterByCollection(docs, 0), numUsers)
@@ -495,7 +495,7 @@ func TestAutoGenerateFromSchema_RelationOneToManyToManyWithNumDocsForSecondaryTy
 			serialNumber: String
 		}`
 
-	docs, err := AutoGenerateFromSchema(schema, WithTypeDemand("Device", numDevices))
+	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("Device", numDevices))
 	assert.NoError(t, err)
 
 	assert.Len(t, filterByCollection(docs, 0), numDevices/devicesPerUser)
@@ -533,7 +533,7 @@ func TestAutoGenerateFromSchema_DemandsForDifferentRelationTrees(t *testing.T) {
 			serialNumber: String
 		}`
 
-	docs, err := AutoGenerateFromSchema(
+	docs, err := AutoGenerateFromSDL(
 		schema,
 		WithTypeDemand("User", numUsers),
 		WithTypeDemand("Device", numDevices),
@@ -567,7 +567,7 @@ func TestAutoGenerateFromSchema_IfTypeDemandedForSameTreeAddsUp_ShouldGenerate(t
 			user: User
 		}`
 
-	docs, err := AutoGenerateFromSchema(
+	docs, err := AutoGenerateFromSDL(
 		schema,
 		WithTypeDemand("Order", 10),
 		WithTypeDemand("Device", 30),
@@ -597,7 +597,7 @@ func TestAutoGenerateFromSchema_IfNoDemandForPrimaryType_ShouldDeduceFromMaxSeco
 			user: User
 		}`
 
-	docs, err := AutoGenerateFromSchema(
+	docs, err := AutoGenerateFromSDL(
 		schema,
 		WithTypeDemand("Order", 10),
 		WithTypeDemand("Device", 30),
@@ -726,7 +726,7 @@ func TestAutoGenerateFromSchema_ConfigThatCanNotBySupplied(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := AutoGenerateFromSchema(tc.schema, tc.options...)
+			_, err := AutoGenerateFromSDL(tc.schema, tc.options...)
 
 			assert.ErrorContains(t, err, errCanNotSupplyTypeDemand)
 		})
@@ -932,7 +932,7 @@ func TestAutoGenerateFromSchema_InvalidConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := AutoGenerateFromSchema(tc.schema, WithTypeDemand("User", 4))
+			_, err := AutoGenerateFromSDL(tc.schema, WithTypeDemand("User", 4))
 
 			assert.ErrorContains(t, err, errInvalidConfiguration)
 		})
@@ -953,7 +953,7 @@ func TestAutoGenerateFromSchema_CustomFieldValueGenerator(t *testing.T) {
 	indexes := make([]int, 0, numUsers)
 	intVals := make(map[int]bool)
 
-	docs, err := AutoGenerateFromSchema(schema,
+	docs, err := AutoGenerateFromSDL(schema,
 		WithTypeDemand("User", numUsers),
 		WithFieldGenerator("User", "age", func(i int, next func() any) any {
 			indexes = append(indexes, i)
@@ -994,7 +994,7 @@ func TestAutoGenerateFromSchema_IfOptionOverlapsSchemaConfig_ItShouldOverwrite(t
 			owner: User
 		}`
 
-	docs, err := AutoGenerateFromSchema(
+	docs, err := AutoGenerateFromSDL(
 		schema,
 		WithTypeDemand("User", numUsers),
 		WithFieldRange("User", "devices", 3, 3),
@@ -1040,13 +1040,13 @@ func TestAutoGenerateFromSchema_WithRandomSeed_ShouldBeDeterministic(t *testing.
 	demandOpt := WithTypeDemand("User", 5)
 	seed := time.Now().UnixNano()
 
-	docs1, err := AutoGenerateFromSchema(schema, demandOpt, WithRandomSeed(seed))
+	docs1, err := AutoGenerateFromSDL(schema, demandOpt, WithRandomSeed(seed))
 	assert.NoError(t, err)
 
-	docs2, err := AutoGenerateFromSchema(schema, demandOpt, WithRandomSeed(seed))
+	docs2, err := AutoGenerateFromSDL(schema, demandOpt, WithRandomSeed(seed))
 	assert.NoError(t, err)
 
-	docs3, err := AutoGenerateFromSchema(schema, demandOpt, WithRandomSeed(time.Now().UnixNano()))
+	docs3, err := AutoGenerateFromSDL(schema, demandOpt, WithRandomSeed(time.Now().UnixNano()))
 	assert.NoError(t, err)
 
 	assert.Equal(t, docs1, docs2)
@@ -1098,7 +1098,7 @@ func TestAutoGenerateFromSchema_InvalidOption(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := AutoGenerateFromSchema(schema, tc.options...)
+			_, err := AutoGenerateFromSDL(schema, tc.options...)
 
 			assert.ErrorContains(t, err, errInvalidConfiguration)
 		})

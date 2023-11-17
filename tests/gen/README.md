@@ -1,8 +1,8 @@
 # Automatic Documents Generation 
 
-`AutoGenerate` and `AutoGenerateFromSchema` are a highly versatile function designed for dynamic document generation, perfect for testing and simulation purposes. 
+`AutoGenerate` and `AutoGenerateFromSDL` are a highly versatile function designed for dynamic document generation, perfect for testing and simulation purposes. 
 
-`AutoGenerateFromSchema` creates documents based on a specified schema, allowing for extensive customization of data generation. 
+`AutoGenerateFromSDL` creates documents based on a specified schema, allowing for extensive customization of data generation. 
 
 The function generates documents adhering to a defined schema and it's configuration.
 It interprets the types and relationships within the schema to create realistic, interconnected data structures.
@@ -21,9 +21,9 @@ For example, a document expects at least 10 secondary documents, but the demand 
 
 ## Configuration
 
-Both functions `AutoGenerate` and `AutoGenerateFromSchema` can be configured using options.
+Both functions `AutoGenerate` and `AutoGenerateFromSDL` can be configured using options.
 
-Additionally, `AutoGenerateFromSchema` can be configured directly within the schema using annotations.
+Additionally, `AutoGenerateFromSDL` can be configured directly within the schema using annotations.
 Options take precedence over in-schema configurations.
 
 ### In-schema Configuration:
@@ -55,7 +55,7 @@ type User {
   verified: Boolean
   rating: Float # min: 0.0, max: 5.0
 }`
-docs, _ := AutoGenerateFromSchema(schema, WithTypeDemand("User", 100))
+docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 100))
 ```
 
 ### Custom Field Range:
@@ -63,7 +63,7 @@ docs, _ := AutoGenerateFromSchema(schema, WithTypeDemand("User", 100))
 Overrides the age range specified in the schema.
 
 ```go
-docs, _ := AutoGenerateFromSchema(schema, WithTypeDemand("User", 50), WithFieldRange("User", "age", 25, 30))
+docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 50), WithFieldRange("User", "age", 25, 30))
 ```
 
 ### One-to-Many Relationship:
@@ -80,7 +80,7 @@ type Device {
   model: String
   owner: User
 }`
-docs, _ := AutoGenerateFromSchema(schema, WithTypeDemand("User", 10))
+docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 10))
 ```
 
 ### Custom Value Generation:
@@ -91,16 +91,16 @@ Custom generation for age field.
 nameWithPrefix := func(i int, next func() any) any {
   return "user_" + next().(string)
 }
-docs, _ := AutoGenerateFromSchema(schema, WithTypeDemand("User", 10), WithFieldGenerator("User", "name", nameWithPrefix))
+docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 10), WithFieldGenerator("User", "name", nameWithPrefix))
 ```
 
 ## Conclusion
 
-`AutoGenerateFromSchema` is a powerful tool for generating structured, relational data on the fly. Its flexibility in configuration and intelligent demand calculation makes it ideal for testing complex data models and scenarios.
+`AutoGenerateFromSDL` is a powerful tool for generating structured, relational data on the fly. Its flexibility in configuration and intelligent demand calculation makes it ideal for testing complex data models and scenarios.
 
 # Generation of Predefined Documents
 
-`GeneratePredefinedFromSchema` can be used to generate predefined documents.
+`GeneratePredefinedFromSDL` can be used to generate predefined documents.
 
 It accepts the predefined list of documents `DocList` that in turn might include nested documents.
 

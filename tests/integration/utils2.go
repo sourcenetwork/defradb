@@ -315,7 +315,7 @@ func performAction(
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
 
-	case GenerateDocsFromSchema:
+	case GenerateDocsFromSDL:
 		generateDocsFromSchema(s, action)
 
 	case GenerateDocs:
@@ -329,7 +329,7 @@ func performAction(
 	}
 }
 
-func generateDocsFromSchema(s *state, action GenerateDocsFromSchema) {
+func generateDocsFromSchema(s *state, action GenerateDocsFromSDL) {
 	if action.CreateSchema {
 		updateSchema(s, SchemaUpdate{Schema: action.Schema, NodeID: action.NodeID})
 	}
@@ -337,9 +337,9 @@ func generateDocsFromSchema(s *state, action GenerateDocsFromSchema) {
 	var docs []gen.GeneratedDoc
 	var err error
 	if action.PredefinedDocs.HasValue() {
-		docs, err = gen.GeneratePredefinedFromSchema(action.Schema, action.PredefinedDocs.Value())
+		docs, err = gen.GeneratePredefinedFromSDL(action.Schema, action.PredefinedDocs.Value())
 	} else {
-		docs, err = gen.AutoGenerateFromSchema(action.Schema, action.AutoGenOptions...)
+		docs, err = gen.AutoGenerateFromSDL(action.Schema, action.AutoGenOptions...)
 	}
 	if err != nil {
 		s.t.Fatalf("Failed to generate docs %s", err)
@@ -426,7 +426,7 @@ func getCollectionNames(testCase TestCase) []string {
 			}
 
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
-		case GenerateDocsFromSchema:
+		case GenerateDocsFromSDL:
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 		}
 	}
@@ -563,7 +563,7 @@ ActionLoop:
 		case SchemaUpdate, CreateDoc, UpdateDoc, Restart:
 			continue
 
-		case GenerateDocsFromSchema:
+		case GenerateDocsFromSDL:
 			if action.CreateSchema {
 				continue
 			}

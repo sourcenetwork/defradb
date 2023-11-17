@@ -30,7 +30,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 
 	test1 := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GenerateDocsFromSchema{
+			testUtils.GenerateDocsFromSDL{
 				Schema: `
 					type User {
 						name:   String
@@ -40,7 +40,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 				CreateSchema:   true,
 				AutoGenOptions: getOptions("User"),
 			},
-			testUtils.GenerateDocsFromSchema{
+			testUtils.GenerateDocsFromSDL{
 				Schema: `
 					type IndexedUser {
 						name:   String

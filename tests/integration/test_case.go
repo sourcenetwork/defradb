@@ -339,8 +339,8 @@ type Request struct {
 	ExpectedError string
 }
 
-// GenerateDocsFromSchema is an action that will trigger generation of documents for the given schema.
-type GenerateDocsFromSchema struct {
+// GenerateDocsFromSDL is an action that will trigger generation of documents for the given schema.
+type GenerateDocsFromSDL struct {
 	// NodeID may hold the ID (index) of a node to execute the generation on.
 	//
 	// If a value is not provided the docs generation will be executed against all nodes,

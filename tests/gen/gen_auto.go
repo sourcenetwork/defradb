@@ -31,13 +31,13 @@ type docRec struct {
 	docKey string
 }
 
-// AutoGenerateFromSchema generates random documents from a schema.
-func AutoGenerateFromSchema(schema string, options ...Option) ([]GeneratedDoc, error) {
-	genConfigs, err := parseConfig(schema)
+// AutoGenerateFromSDL generates random documents from a schema.
+func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, error) {
+	genConfigs, err := parseConfig(gqlSDL)
 	if err != nil {
 		return nil, err
 	}
-	typeDefs, err := parseSchema(schema)
+	typeDefs, err := parseSchema(gqlSDL)
 	if err != nil {
 		return nil, err
 	}

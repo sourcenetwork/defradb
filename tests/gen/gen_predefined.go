@@ -18,15 +18,15 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
-// GeneratePredefinedFromSchema generates documents for a schema from a predefined list
+// GeneratePredefinedFromSDL generates documents for a schema from a predefined list
 // of docs that might include nested docs.
 // The schema is parsed to get the list of fields, and the docs
 // are created with the fields parsed from the schema.
 // This allows us to have only one large list of docs with predefined
 // fields, and create schemas with different fields from it.
-func GeneratePredefinedFromSchema(schema string, docsList DocsList) ([]GeneratedDoc, error) {
+func GeneratePredefinedFromSDL(gqlSDL string, docsList DocsList) ([]GeneratedDoc, error) {
 	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
-	typeDefs, err := parseSchema(schema)
+	typeDefs, err := parseSchema(gqlSDL)
 	if err != nil {
 		return nil, err
 	}
