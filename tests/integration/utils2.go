@@ -318,9 +318,6 @@ func performAction(
 	case GenerateDocsFromSDL:
 		generateDocsFromSchema(s, action)
 
-	case GenerateDocs:
-		generateDocs(s, action)
-
 	case SetupComplete:
 		// no-op, just continue.
 
@@ -345,19 +342,12 @@ func generateDocsFromSchema(s *state, action GenerateDocsFromSDL) {
 		s.t.Fatalf("Failed to generate docs %s", err)
 	}
 
-	for _, doc := range docs {
-		createDoc(s, CreateDoc{CollectionID: int(doc.ColID), Doc: doc.JSON, NodeID: action.NodeID})
+	nameToInd := make(map[string]int)
+	for i, name := range s.collectionNames {
+		nameToInd[name] = i
 	}
-}
-
-func generateDocs(s *state, action GenerateDocs) {
-	docs, err := gen.AutoGenerate(action.Definitions, action.AutoGenOptions...)
-	if err != nil {
-		s.t.Fatalf("Failed to generate docs %s", err)
-	}
-
 	for _, doc := range docs {
-		createDoc(s, CreateDoc{CollectionID: int(doc.ColID), Doc: doc.JSON, NodeID: action.NodeID})
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.ColName], Doc: doc.JSON, NodeID: action.NodeID})
 	}
 }
 

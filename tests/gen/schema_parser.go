@@ -29,8 +29,7 @@ func parseSchema(schema string) (map[string]client.CollectionDefinition, error) 
 		return nil, err
 	}
 	result := make(map[string]client.CollectionDefinition)
-	for i, col := range cols {
-		col.Description.ID = uint32(i)
+	for _, col := range cols {
 		result[col.Description.Name] = col
 	}
 	return result, nil

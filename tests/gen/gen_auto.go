@@ -95,8 +95,8 @@ func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, er
 		typeDef := g.types[docsList.ColName]
 		for _, doc := range docsList.Docs {
 			g.resultDocs = append(g.resultDocs, GeneratedDoc{
-				ColID: typeDef.Description.ID,
-				JSON:  createDocJSON(&typeDef, doc),
+				ColName: typeDef.Description.Name,
+				JSON:    createDocJSON(&typeDef, doc),
 			})
 		}
 	}

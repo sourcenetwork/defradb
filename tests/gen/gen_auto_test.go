@@ -63,10 +63,10 @@ func getDocKeysFromJSONDocs(jsonDocs []string) []string {
 	return result
 }
 
-func filterByCollection(docs []GeneratedDoc, i uint32) []string {
+func filterByCollection(docs []GeneratedDoc, name string) []string {
 	var result []string
 	for _, doc := range docs {
-		if doc.ColID == i {
+		if doc.ColName == name {
 			result = append(result, doc.JSON)
 		}
 	}
@@ -88,7 +88,7 @@ func removeDuplicateStr(strSlice []string) []string {
 func assertDocKeysMatch(
 	t *testing.T,
 	docs []GeneratedDoc,
-	primaryCol, secondaryCol uint32,
+	primaryCol, secondaryCol string,
 	foreignField string,
 	allowDuplicates bool,
 ) {
@@ -197,7 +197,7 @@ func assertUniformlyDistributedFloatFieldRange(t *testing.T, docs []GeneratedDoc
 func assertUniformRelationDistribution(
 	t *testing.T,
 	docs []GeneratedDoc,
-	primaryColInd, secondaryColInd uint32,
+	primaryColInd, secondaryColInd string,
 	foreignField string,
 	min, max int,
 ) {
@@ -322,7 +322,7 @@ func TestAutoGenerateFromSchema_IfNoTypeDemandIsGiven_ShouldUseDefault(t *testin
 	assert.NoError(t, err)
 
 	const defaultDemand = 10
-	assert.Len(t, filterByCollection(docs, 0), defaultDemand)
+	assert.Len(t, filterByCollection(docs, "User"), defaultDemand)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToOne(t *testing.T) {
@@ -341,10 +341,10 @@ func TestAutoGenerateFromSchema_RelationOneToOne(t *testing.T) {
 	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
-	assert.Len(t, filterByCollection(docs, 0), numUsers)
-	assert.Len(t, filterByCollection(docs, 1), numUsers)
+	assert.Len(t, filterByCollection(docs, "User"), numUsers)
+	assert.Len(t, filterByCollection(docs, "Device"), numUsers)
 
-	assertDocKeysMatch(t, docs, 0, 1, "owner_id", false)
+	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", false)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToMany(t *testing.T) {
@@ -363,10 +363,10 @@ func TestAutoGenerateFromSchema_RelationOneToMany(t *testing.T) {
 	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
-	assert.Len(t, filterByCollection(docs, 0), numUsers)
-	assert.Len(t, filterByCollection(docs, 1), numUsers*2)
+	assert.Len(t, filterByCollection(docs, "User"), numUsers)
+	assert.Len(t, filterByCollection(docs, "Device"), numUsers*2)
 
-	assertDocKeysMatch(t, docs, 0, 1, "owner_id", true)
+	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToManyWithConfiguredNumberOfElements(t *testing.T) {
@@ -389,11 +389,11 @@ func TestAutoGenerateFromSchema_RelationOneToManyWithConfiguredNumberOfElements(
 	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
-	assert.Len(t, filterByCollection(docs, 0), numUsers)
+	assert.Len(t, filterByCollection(docs, "User"), numUsers)
 
-	assertUniformRelationDistribution(t, docs, 0, 1, "owner_id", minDevicesPerUser, maxDevicesPerUser)
+	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", minDevicesPerUser, maxDevicesPerUser)
 
-	assertDocKeysMatch(t, docs, 0, 1, "owner_id", true)
+	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToManyToOneWithConfiguredNumberOfElements(t *testing.T) {
@@ -421,14 +421,14 @@ func TestAutoGenerateFromSchema_RelationOneToManyToOneWithConfiguredNumberOfElem
 	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
-	assert.Len(t, filterByCollection(docs, 0), numUsers)
-	assert.Len(t, filterByCollection(docs, 1), numUsers*devicesPerUser)
-	assert.Len(t, filterByCollection(docs, 2), numUsers*devicesPerUser)
+	assert.Len(t, filterByCollection(docs, "User"), numUsers)
+	assert.Len(t, filterByCollection(docs, "Device"), numUsers*devicesPerUser)
+	assert.Len(t, filterByCollection(docs, "Specs"), numUsers*devicesPerUser)
 
-	assertUniformRelationDistribution(t, docs, 0, 1, "owner_id", devicesPerUser, devicesPerUser)
+	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", devicesPerUser, devicesPerUser)
 
-	assertDocKeysMatch(t, docs, 0, 1, "owner_id", true)
-	assertDocKeysMatch(t, docs, 1, 2, "device_id", false)
+	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocKeysMatch(t, docs, "Device", "Specs", "device_id", false)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToManyToOnePrimaryWithConfiguredNumberOfElements(t *testing.T) {
@@ -456,14 +456,14 @@ func TestAutoGenerateFromSchema_RelationOneToManyToOnePrimaryWithConfiguredNumbe
 	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("User", numUsers))
 	assert.NoError(t, err)
 
-	assert.Len(t, filterByCollection(docs, 0), numUsers)
-	assert.Len(t, filterByCollection(docs, 1), numUsers*devicesPerUser)
-	assert.Len(t, filterByCollection(docs, 2), numUsers*devicesPerUser)
+	assert.Len(t, filterByCollection(docs, "User"), numUsers)
+	assert.Len(t, filterByCollection(docs, "Device"), numUsers*devicesPerUser)
+	assert.Len(t, filterByCollection(docs, "Specs"), numUsers*devicesPerUser)
 
-	assertUniformRelationDistribution(t, docs, 0, 1, "owner_id", devicesPerUser, devicesPerUser)
+	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", devicesPerUser, devicesPerUser)
 
-	assertDocKeysMatch(t, docs, 0, 1, "owner_id", true)
-	assertDocKeysMatch(t, docs, 2, 1, "specs_id", false)
+	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocKeysMatch(t, docs, "Specs", "Device", "specs_id", false)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToManyToManyWithNumDocsForSecondaryType(t *testing.T) {
@@ -498,18 +498,18 @@ func TestAutoGenerateFromSchema_RelationOneToManyToManyWithNumDocsForSecondaryTy
 	docs, err := AutoGenerateFromSDL(schema, WithTypeDemand("Device", numDevices))
 	assert.NoError(t, err)
 
-	assert.Len(t, filterByCollection(docs, 0), numDevices/devicesPerUser)
-	assert.Len(t, filterByCollection(docs, 1), numDevices)
-	assert.Len(t, filterByCollection(docs, 2), numDevices)
-	assert.Len(t, filterByCollection(docs, 3), numDevices*componentsPerDevice)
+	assert.Len(t, filterByCollection(docs, "User"), numDevices/devicesPerUser)
+	assert.Len(t, filterByCollection(docs, "Device"), numDevices)
+	assert.Len(t, filterByCollection(docs, "Specs"), numDevices)
+	assert.Len(t, filterByCollection(docs, "Component"), numDevices*componentsPerDevice)
 
-	assertUniformRelationDistribution(t, docs, 0, 1, "owner_id", devicesPerUser, devicesPerUser)
-	assertUniformRelationDistribution(t, docs, 1, 2, "device_id", 1, 1)
-	assertUniformRelationDistribution(t, docs, 1, 3, "device_id", componentsPerDevice, componentsPerDevice)
+	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", devicesPerUser, devicesPerUser)
+	assertUniformRelationDistribution(t, docs, "Device", "Specs", "device_id", 1, 1)
+	assertUniformRelationDistribution(t, docs, "Device", "Component", "device_id", componentsPerDevice, componentsPerDevice)
 
-	assertDocKeysMatch(t, docs, 0, 1, "owner_id", true)
-	assertDocKeysMatch(t, docs, 1, 2, "device_id", false)
-	assertDocKeysMatch(t, docs, 1, 3, "device_id", true)
+	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocKeysMatch(t, docs, "Device", "Specs", "device_id", false)
+	assertDocKeysMatch(t, docs, "Device", "Component", "device_id", true)
 }
 
 func TestAutoGenerateFromSchema_DemandsForDifferentRelationTrees(t *testing.T) {
@@ -540,13 +540,13 @@ func TestAutoGenerateFromSchema_DemandsForDifferentRelationTrees(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	assert.Len(t, filterByCollection(docs, 0), numUsers)
-	assert.Len(t, filterByCollection(docs, 1), numDevices)
-	assert.Len(t, filterByCollection(docs, 2), numDevices*componentsPerDevice)
+	assert.Len(t, filterByCollection(docs, "User"), numUsers)
+	assert.Len(t, filterByCollection(docs, "Device"), numDevices)
+	assert.Len(t, filterByCollection(docs, "Component"), numDevices*componentsPerDevice)
 
-	assertUniformRelationDistribution(t, docs, 1, 2, "device_id", componentsPerDevice, componentsPerDevice)
+	assertUniformRelationDistribution(t, docs, "Device", "Component", "device_id", componentsPerDevice, componentsPerDevice)
 
-	assertDocKeysMatch(t, docs, 1, 2, "device_id", true)
+	assertDocKeysMatch(t, docs, "Device", "Component", "device_id", true)
 }
 
 func TestAutoGenerateFromSchema_IfTypeDemandedForSameTreeAddsUp_ShouldGenerate(t *testing.T) {
@@ -574,9 +574,9 @@ func TestAutoGenerateFromSchema_IfTypeDemandedForSameTreeAddsUp_ShouldGenerate(t
 	)
 	assert.NoError(t, err)
 
-	assert.Len(t, filterByCollection(docs, 0), 1)
-	assert.Len(t, filterByCollection(docs, 1), 30)
-	assert.Len(t, filterByCollection(docs, 2), 10)
+	assert.Len(t, filterByCollection(docs, "User"), 1)
+	assert.Len(t, filterByCollection(docs, "Device"), 30)
+	assert.Len(t, filterByCollection(docs, "Order"), 10)
 }
 
 func TestAutoGenerateFromSchema_IfNoDemandForPrimaryType_ShouldDeduceFromMaxSecondaryDemand(t *testing.T) {
@@ -605,9 +605,9 @@ func TestAutoGenerateFromSchema_IfNoDemandForPrimaryType_ShouldDeduceFromMaxSeco
 	assert.NoError(t, err)
 
 	// users len should be equal to max of secondary type demand
-	assert.Len(t, filterByCollection(docs, 0), 30)
-	assert.Len(t, filterByCollection(docs, 1), 30)
-	assert.Len(t, filterByCollection(docs, 2), 10)
+	assert.Len(t, filterByCollection(docs, "User"), 30)
+	assert.Len(t, filterByCollection(docs, "Device"), 30)
+	assert.Len(t, filterByCollection(docs, "Order"), 10)
 }
 
 func TestAutoGenerateFromSchema_ConfigThatCanNotBySupplied(t *testing.T) {
@@ -1004,9 +1004,9 @@ func TestAutoGenerateFromSchema_IfOptionOverlapsSchemaConfig_ItShouldOverwrite(t
 	)
 	assert.NoError(t, err)
 
-	userJSONs := filterByCollection(docs, 0)
+	userJSONs := filterByCollection(docs, "User")
 	assert.Len(t, userJSONs, numUsers)
-	assert.Len(t, filterByCollection(docs, 1), numUsers*3)
+	assert.Len(t, filterByCollection(docs, "Device"), numUsers*3)
 
 	for _, userJSON := range userJSONs {
 		userMap := jsonToMap(userJSON)
@@ -1283,9 +1283,9 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	userJSONs := filterByCollection(docs, 0)
+	userJSONs := filterByCollection(docs, "User")
 	assert.Len(t, userJSONs, numUsers)
-	assert.Len(t, filterByCollection(docs, 1), numUsers*3)
+	assert.Len(t, filterByCollection(docs, "Device"), numUsers*3)
 
 	for _, userJSON := range userJSONs {
 		userMap := jsonToMap(userJSON)

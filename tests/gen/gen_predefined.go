@@ -104,7 +104,7 @@ func (this *docGenerator) generatePrimary(
 						return nil, nil, NewErrFailedToGenerateDoc(err)
 					}
 					requested[field.Name+request.RelatedObjectID] = clientSubDoc.Key().String()
-					result = append(result, GeneratedDoc{ColID: subType.Description.ID, JSON: jsonSubDoc})
+					result = append(result, GeneratedDoc{ColName: subType.Description.Name, JSON: jsonSubDoc})
 				}
 			}
 		}
@@ -121,7 +121,7 @@ func (this *docGenerator) GenerateDocs(doc map[string]any, typeName string) ([]G
 	}
 	docStr := createDocJSON(&typeDef, requested)
 
-	result = append(result, GeneratedDoc{ColID: typeDef.Description.ID, JSON: docStr})
+	result = append(result, GeneratedDoc{ColName: typeDef.Description.Name, JSON: docStr})
 
 	var docKey string
 	for _, field := range typeDef.Schema.Fields {
