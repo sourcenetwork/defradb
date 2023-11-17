@@ -58,7 +58,7 @@ func getBooleanField(t *testing.T, doc map[string]any, fieldName string) bool {
 func getDocKeysFromJSONDocs(jsonDocs []string) []string {
 	var result []string
 	for _, doc := range jsonDocs {
-		result = append(result, getDocKeyFromDocJSON(doc))
+		result = append(result, mustGetDocKeyFromDocJSON([]byte(doc)))
 	}
 	return result
 }

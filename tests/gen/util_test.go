@@ -72,18 +72,18 @@ outer:
 	return ""
 }
 
-func getDocKeyFromDocJSON(docJSON string) string {
-	doc, err := client.NewDocFromJSON([]byte(docJSON))
+func mustGetDocKeyFromDocJSON(docJSON []byte) string {
+	doc, err := client.NewDocFromJSON(docJSON)
 	if err != nil {
 		panic("can not create doc from JSON " + err.Error())
 	}
 	return doc.Key().String()
 }
 
-func getDocKeyFromDocMap(docMap map[string]any) string {
+func mustGetDocKeyFromDocMap(docMap map[string]any) string {
 	docJSON, err := json.Marshal(docMap)
 	if err != nil {
 		panic("can not marshal doc " + err.Error())
 	}
-	return getDocKeyFromDocJSON(string(docJSON))
+	return mustGetDocKeyFromDocJSON(docJSON)
 }
