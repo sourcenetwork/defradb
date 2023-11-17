@@ -41,6 +41,25 @@ func GeneratePredefinedFromSDL(gqlSDL string, docsList DocsList) ([]GeneratedDoc
 	return resultDocs, nil
 }
 
+// GeneratePredefined generates documents from a predefined list
+// of docs that might include nested docs.
+func GeneratePredefined(defs []client.CollectionDefinition, docsList DocsList) ([]GeneratedDoc, error) {
+	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
+	typeDefs := make(map[string]client.CollectionDefinition)
+	for _, col := range defs {
+		typeDefs[col.Description.Name] = col
+	}
+	generator := docGenerator{types: typeDefs}
+	for _, doc := range docsList.Docs {
+		docs, err := generator.GenerateDocs(doc, docsList.ColName)
+		if err != nil {
+			return nil, err
+		}
+		resultDocs = append(resultDocs, docs...)
+	}
+	return resultDocs, nil
+}
+
 type docGenerator struct {
 	types map[string]client.CollectionDefinition
 }

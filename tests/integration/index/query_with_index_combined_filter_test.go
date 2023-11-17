@@ -14,8 +14,6 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
@@ -30,14 +28,15 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of an indexed field",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String @index
 						age: Int
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -68,15 +67,16 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of 2 indexed fields",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String @index
 						age: Int @index
 						email: String 
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,

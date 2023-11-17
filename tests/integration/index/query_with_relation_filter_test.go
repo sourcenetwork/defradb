@@ -14,8 +14,6 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilter2(t *testing.T) {
@@ -36,7 +34,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-N relation",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
@@ -48,8 +46,9 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 						model: String @index
 						owner: User
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req1,
@@ -97,7 +96,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-N relation",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
@@ -109,8 +108,9 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 						model: String @index
 						owner: User
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req1,
@@ -158,7 +158,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 	test := testUtils.TestCase{
 		Description: "Filter on indexed secondary relation field in 1-1 relation",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
@@ -170,8 +170,9 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 						user: User
 						city: String @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req1,
@@ -219,7 +220,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 	test := testUtils.TestCase{
 		Description: "Filter on indexed field of primary relation in 1-1 relation",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
@@ -232,8 +233,9 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 						city: String @index
 						street: String 
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req1,
@@ -274,7 +276,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 	test := testUtils.TestCase{
 		Description: "Filter on indexed field of primary relation while having indexed foreign field in 1-1 relation",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
@@ -287,8 +289,9 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 						city: String @index
 						street: String 
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -330,7 +333,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 	test := testUtils.TestCase{
 		Description: "Filter on indexed relation field in 1-1 and 1-N relations",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
@@ -348,8 +351,9 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 						user: User
 						city: String @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req1,

@@ -19,36 +19,34 @@ import (
 
 func TestQueryPerformance_Simple(t *testing.T) {
 	const benchReps = 10
-	const numDocs = 500
 
 	getOptions := func(col string) []gen.Option {
 		return []gen.Option{
-			gen.WithTypeDemand(col, numDocs),
+			gen.WithTypeDemand(col, 500),
 			gen.WithFieldRange(col, "age", 0, 99),
 		}
 	}
 
 	test1 := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name:   String
 						age:    Int 
 						email:  String
 					}`,
-				CreateSchema:   true,
-				AutoGenOptions: getOptions("User"),
 			},
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type IndexedUser {
 						name:   String
 						age:    Int @index
 						email:  String
 					}`,
-				CreateSchema:   true,
-				AutoGenOptions: getOptions("IndexedUser"),
+			},
+			testUtils.GenerateDocs{
+				Options: append(getOptions("User"), getOptions("IndexedUser")...),
 			},
 			testUtils.Benchmark{
 				Reps: benchReps,

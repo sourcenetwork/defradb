@@ -14,8 +14,6 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) {
@@ -28,14 +26,15 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "If there are non-indexed fields in the query, they should be fetched",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String @index
 						age: Int
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -63,13 +62,14 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -96,14 +96,15 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there are several docs matching _eq filter, they should be fetched",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String @index
 						age: Int
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -138,14 +139,15 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
 						age: Int @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -172,14 +174,15 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
 						age: Int @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -207,14 +210,15 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
 						age: Int @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -241,14 +245,15 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
 						age: Int @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -276,14 +281,15 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ne filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String @index
 						age: Int 
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -318,14 +324,15 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
 						age: Int @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -353,14 +360,15 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there are several docs matching _in filter, they should be fetched",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String @index
 						age: Int
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -395,14 +403,15 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nin filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
 						age: Int @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,
@@ -457,14 +466,15 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _like filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String 
 						email: String @index
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req1,
@@ -543,14 +553,15 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nlike filter",
 		Actions: []any{
-			testUtils.GenerateDocsFromSDL{
+			testUtils.SchemaUpdate{
 				Schema: `
 					type User {
 						name: String @index
 						age: Int 
 					}`,
-				CreateSchema:   true,
-				PredefinedDocs: immutable.Some(getUserDocs()),
+			},
+			testUtils.GeneratePredefinedDocs{
+				Docs: getUserDocs(),
 			},
 			testUtils.Request{
 				Request: req,

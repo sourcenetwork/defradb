@@ -339,27 +339,6 @@ type Request struct {
 	ExpectedError string
 }
 
-// GenerateDocsFromSDL is an action that will trigger generation of documents for the given schema.
-type GenerateDocsFromSDL struct {
-	// NodeID may hold the ID (index) of a node to execute the generation on.
-	//
-	// If a value is not provided the docs generation will be executed against all nodes,
-	NodeID immutable.Option[int]
-
-	// The schema to generate from.
-	Schema string
-
-	// If true, the schema will be created before generating docs.
-	CreateSchema bool
-
-	// Options to be passed to the doc generator.
-	AutoGenOptions []gen.Option
-
-	// The predefined docs structure to be passed to the doc generator.
-	// If not set, the generator will create random docs.
-	PredefinedDocs immutable.Option[gen.DocsList]
-}
-
 // GenerateDocs is an action that will trigger generation of documents.
 type GenerateDocs struct {
 	// NodeID may hold the ID (index) of a node to execute the generation on.
@@ -367,11 +346,23 @@ type GenerateDocs struct {
 	// If a value is not provided the docs generation will be executed against all nodes,
 	NodeID immutable.Option[int]
 
-	// The collection definitions to generate documents for.
-	Definitions []client.CollectionDefinition
+	// Options to be passed to the auto doc generator.
+	Options []gen.Option
 
-	// Options to be passed to the doc generator.
-	AutoGenOptions []gen.Option
+	// The list of collection names to generate docs for.
+	// If not provided, docs will be generated for all collections.
+	ForCollections []string
+}
+
+// GeneratePredefinedDocs is an action that will trigger generation of documents.
+type GeneratePredefinedDocs struct {
+	// NodeID may hold the ID (index) of a node to execute the generation on.
+	//
+	// If a value is not provided the docs generation will be executed against all nodes,
+	NodeID immutable.Option[int]
+
+	// The list of documents to replicate by the generator.
+	Docs gen.DocsList
 }
 
 // TransactionCommit represents a commit request for a transaction of the given id.

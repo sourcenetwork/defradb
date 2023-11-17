@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bxcodec/faker/support/slice"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -315,8 +316,11 @@ func performAction(
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
 
-	case GenerateDocsFromSDL:
-		generateDocsFromSchema(s, action)
+	case GenerateDocs:
+		generateDocs(s, action)
+
+	case GeneratePredefinedDocs:
+		generatePredefinedDocs(s, action)
 
 	case SetupComplete:
 		// no-op, just continue.
@@ -326,18 +330,35 @@ func performAction(
 	}
 }
 
-func generateDocsFromSchema(s *state, action GenerateDocsFromSDL) {
-	if action.CreateSchema {
-		updateSchema(s, SchemaUpdate{Schema: action.Schema, NodeID: action.NodeID})
+func generateDocs(s *state, action GenerateDocs) {
+	collections := getNodeCollections(action.NodeID, s.collections)
+	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
+	for _, col := range collections[0] {
+		if len(action.ForCollections) == 0 || slice.Contains(action.ForCollections, col.Name()) {
+			defs = append(defs, col.Definition())
+		}
+	}
+	docs, err := gen.AutoGenerate(defs, action.Options...)
+	if err != nil {
+		s.t.Fatalf("Failed to generate docs %s", err)
 	}
 
-	var docs []gen.GeneratedDoc
-	var err error
-	if action.PredefinedDocs.HasValue() {
-		docs, err = gen.GeneratePredefinedFromSDL(action.Schema, action.PredefinedDocs.Value())
-	} else {
-		docs, err = gen.AutoGenerateFromSDL(action.Schema, action.AutoGenOptions...)
+	nameToInd := make(map[string]int)
+	for i, name := range s.collectionNames {
+		nameToInd[name] = i
 	}
+	for _, doc := range docs {
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.ColName], Doc: doc.JSON, NodeID: action.NodeID})
+	}
+}
+
+func generatePredefinedDocs(s *state, action GeneratePredefinedDocs) {
+	collections := getNodeCollections(action.NodeID, s.collections)
+	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
+	for _, col := range collections[0] {
+		defs = append(defs, col.Definition())
+	}
+	docs, err := gen.GeneratePredefined(defs, action.Docs)
 	if err != nil {
 		s.t.Fatalf("Failed to generate docs %s", err)
 	}
@@ -415,8 +436,6 @@ func getCollectionNames(testCase TestCase) []string {
 				continue
 			}
 
-			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
-		case GenerateDocsFromSDL:
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 		}
 	}
@@ -544,7 +563,7 @@ func getActionRange(testCase TestCase) (int, int) {
 
 ActionLoop:
 	for i := range testCase.Actions {
-		switch action := testCase.Actions[i].(type) {
+		switch testCase.Actions[i].(type) {
 		case SetupComplete:
 			setupCompleteIndex = i
 			// We don't care about anything else if this has been explicitly provided
@@ -552,11 +571,6 @@ ActionLoop:
 
 		case SchemaUpdate, CreateDoc, UpdateDoc, Restart:
 			continue
-
-		case GenerateDocsFromSDL:
-			if action.CreateSchema {
-				continue
-			}
 
 		default:
 			firstNonSetupIndex = i

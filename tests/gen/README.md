@@ -100,9 +100,9 @@ docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 10), WithFieldGene
 
 # Generation of Predefined Documents
 
-`GeneratePredefinedFromSDL` can be used to generate predefined documents.
+`GeneratePredefined` and `GeneratePredefinedFromSDL` can be used to generate predefined documents.
 
-It accepts the predefined list of documents `DocList` that in turn might include nested documents.
+They accepts the predefined list of documents `DocList` that in turn might include nested documents.
 
 The fields in `DocList` might be a superset of the fields in the schema. 
 In that case, only the fields in the schema will be considered.

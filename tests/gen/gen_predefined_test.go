@@ -14,6 +14,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
@@ -149,7 +151,7 @@ func TestGeneratePredefinedFromSchema_OneToMany(t *testing.T) {
 	schema := `
 		type User {
 			name: String
-			device: [Device]
+			devices: [Device]
 		}
 		type Device {
 			model: String
@@ -161,14 +163,14 @@ func TestGeneratePredefinedFromSchema_OneToMany(t *testing.T) {
 		Docs: []map[string]any{
 			{
 				"name": "John",
-				"device": []map[string]any{
+				"devices": []map[string]any{
 					{"model": "iPhone"},
 					{"model": "PlayStation"},
 				},
 			},
 			{
 				"name": "Fred",
-				"device": []map[string]any{
+				"devices": []map[string]any{
 					{"model": "Surface"},
 					{"model": "Pixel"},
 				},
@@ -196,7 +198,7 @@ func TestGeneratePredefinedFromSchema_OneToManyToOne(t *testing.T) {
 	schema := `
 		type User {
 			name: String
-			device: [Device]
+			devices: [Device]
 		}
 		type Device {
 			model: String
@@ -213,7 +215,7 @@ func TestGeneratePredefinedFromSchema_OneToManyToOne(t *testing.T) {
 		Docs: []map[string]any{
 			{
 				"name": "John",
-				"device": []map[string]any{
+				"devices": []map[string]any{
 					{
 						"model": "iPhone",
 						"specs": map[string]any{
@@ -239,6 +241,89 @@ func TestGeneratePredefinedFromSchema_OneToManyToOne(t *testing.T) {
 		{"model": "MacBook", "owner_id": johnDocKey},
 		{"CPU": "A13", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "iPhone", "owner_id": johnDocKey})},
 		{"CPU": "M2", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "MacBook", "owner_id": johnDocKey})},
+	}, docs)
+	if errorMsg != "" {
+		t.Error(errorMsg)
+	}
+}
+
+func TestGeneratePredefined_OneToMany(t *testing.T) {
+	defs := []client.CollectionDefinition{
+		{
+			Description: client.CollectionDescription{
+				Name: "User",
+				ID:   0,
+			},
+			Schema: client.SchemaDescription{
+				Name: "User",
+				Fields: []client.FieldDescription{
+					{
+						Name: "name",
+						Kind: client.FieldKind_STRING,
+					},
+					{
+						Name:         "devices",
+						Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
+						Schema:       "Device",
+						RelationType: client.Relation_Type_MANY | client.Relation_Type_ONEMANY,
+					},
+				},
+			},
+		},
+		{
+			Description: client.CollectionDescription{
+				Name: "Device",
+				ID:   1,
+			},
+			Schema: client.SchemaDescription{
+				Name: "Device",
+				Fields: []client.FieldDescription{
+					{
+						Name: "model",
+						Kind: client.FieldKind_STRING,
+					},
+					{
+						Name:   "owner",
+						Kind:   client.FieldKind_FOREIGN_OBJECT,
+						Schema: "User",
+						RelationType: client.Relation_Type_ONE |
+							client.Relation_Type_ONEMANY |
+							client.Relation_Type_Primary,
+					},
+				},
+			},
+		},
+	}
+	docs, err := GeneratePredefined(defs, DocsList{
+		ColName: "User",
+		Docs: []map[string]any{
+			{
+				"name": "John",
+				"devices": []map[string]any{
+					{"model": "iPhone"},
+					{"model": "PlayStation"},
+				},
+			},
+			{
+				"name": "Fred",
+				"devices": []map[string]any{
+					{"model": "Surface"},
+					{"model": "Pixel"},
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+
+	johnDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "John"})
+	fredDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "Fred"})
+	errorMsg := assertDocs([]map[string]any{
+		{"name": "John"},
+		{"name": "Fred"},
+		{"model": "iPhone", "owner_id": johnDocKey},
+		{"model": "PlayStation", "owner_id": johnDocKey},
+		{"model": "Surface", "owner_id": fredDocKey},
+		{"model": "Pixel", "owner_id": fredDocKey},
 	}, docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
