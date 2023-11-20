@@ -249,6 +249,7 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 
 func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
@@ -263,6 +264,7 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 
 func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
@@ -281,6 +283,7 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 
 func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	data, err := json.Marshal(struct {
@@ -302,6 +305,7 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 
 func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
@@ -317,6 +321,7 @@ func TestNonUnique_IfSystemStorageHasInvalidIndexDescription_Error(t *testing.T)
 
 func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
@@ -334,6 +339,7 @@ func TestNonUnique_IfSystemStorageFailsToReadIndexDesc_Error(t *testing.T) {
 
 func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnAge()
 
 	doc := f.newUserDoc("John", 21)
@@ -379,6 +385,7 @@ func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t
 
 func TestNonUnique_IfMultipleIndexes_StoreIndexWithIndexID(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 	f.createUserCollectionIndexOnAge()
 
@@ -482,6 +489,7 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 
 func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	docJSON, err := json.Marshal(struct {
@@ -504,6 +512,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 func TestNonUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	doc1 := f.newUserDoc("John", 21)
 	f.saveDocToCollection(doc1, f.users)
@@ -578,6 +587,7 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 
 	for _, tc := range cases {
 		f := newIndexTestFixture(t)
+		defer f.db.Close()
 
 		doc := f.newUserDoc("John", 21)
 		f.saveDocToCollection(doc, f.users)
@@ -595,6 +605,7 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 
 func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	doc := f.newUserDoc("John", 21)
 	f.saveDocToCollection(doc, f.users)
@@ -652,6 +663,7 @@ func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 
 func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	cases := []struct {
@@ -698,6 +710,7 @@ func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 
 func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21)
@@ -786,6 +799,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 		t.Log(tc.Name)
 
 		f := newIndexTestFixture(t)
+		defer f.db.Close()
 		f.createUserCollectionIndexOnName()
 
 		doc := f.newUserDoc("John", 21)
@@ -810,6 +824,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 
 func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnAge()
 
 	doc := f.newUserDoc("John", 21)
@@ -829,6 +844,7 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 
 func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 	f.createUserCollectionIndexOnAge()
 
@@ -891,6 +907,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		t.Log(tc.Name)
 
 		f := newIndexTestFixture(t)
+		defer f.db.Close()
 		f.createUserCollectionIndexOnName()
 
 		doc := f.newUserDoc("John", 21)
@@ -922,6 +939,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 
 func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	docJSON, err := json.Marshal(struct {

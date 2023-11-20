@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"text/template"
 
@@ -61,6 +62,10 @@ func TestWritesConfigFileErroneousPath(t *testing.T) {
 }
 
 func TestReadConfigFileForLogger(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skipf("Test is not supported on windows as it leaks resources, see https://github.com/sourcenetwork/defradb/issues/2057")
+	}
+
 	cfg := DefaultConfig()
 	tmpdir := t.TempDir()
 	cfg.Rootdir = tmpdir
