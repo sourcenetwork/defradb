@@ -28,6 +28,7 @@ jobs:
     name: Run tests matrix job
 
     strategy:
+      fail-fast: true
       matrix:
         os: [ubuntu-latest]
         client-type: [go, http, cli]
@@ -45,8 +46,18 @@ jobs:
             database-type: badger-memory
             mutation-type: collection-save
             detect-changes: false
+          - os: windows-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            detect-changes: false
 
     runs-on: ${{ matrix.os }}
+
+    # We run all runners via the bash shell to provide us with a consistent set of env variables and commands
+    defaults:
+      run:
+        shell: bash
 
     env:
       CGO_ENABLED: 1

@@ -12,7 +12,12 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
+
+	"github.com/sourcenetwork/defradb/errors"
+)
+
+const (
+	errFailedToLoadKeys string = "failed to load given keys"
 )
 
 // Errors returnable from this package.
@@ -55,4 +60,13 @@ func (e *errorResponse) UnmarshalJSON(data []byte) error {
 	}
 	e.Error = parseError(out["error"])
 	return nil
+}
+
+func NewErrFailedToLoadKeys(inner error, publicKeyPath, privateKeyPath string) error {
+	return errors.Wrap(
+		errFailedToLoadKeys,
+		inner,
+		errors.NewKV("PublicKeyPath", publicKeyPath),
+		errors.NewKV("PrivateKeyPath", privateKeyPath),
+	)
 }

@@ -60,7 +60,7 @@ func TestBackupExport_WithInvalidFilePath_ReturnError(t *testing.T) {
 				Config: client.BackupConfig{
 					Filepath: t.TempDir() + "/some/test.json",
 				},
-				ExpectedError: "no such file or directory",
+				ExpectedError: "failed to create file",
 			},
 		},
 	}
