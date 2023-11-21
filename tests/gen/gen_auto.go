@@ -31,11 +31,6 @@ const (
 	DefaultIntMax = 10000
 )
 
-type docRec struct {
-	doc    map[string]any
-	docKey string
-}
-
 // AutoGenerateFromSDL generates random documents from a schema.
 func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, error) {
 	genConfigs, err := parseConfig(gqlSDL)
@@ -46,8 +41,8 @@ func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, erro
 	if err != nil {
 		return nil, err
 	}
-	generator := randomDocGenerator{types: typeDefs, config: genConfigs}
-	return generator.GenerateDocs(options...)
+	generator := newRandomDocGenerator(typeDefs, genConfigs)
+	return generator.generateDocs(options...)
 }
 
 // AutoGenerate generates random documents from collection definitions.
@@ -60,25 +55,30 @@ func AutoGenerate(definitions []client.CollectionDefinition, options ...Option) 
 	for _, def := range definitions {
 		typeDefs[def.Description.Name] = def
 	}
-	generator := randomDocGenerator{types: typeDefs}
-	return generator.GenerateDocs(options...)
+	generator := newRandomDocGenerator(typeDefs, nil)
+	return generator.generateDocs(options...)
+}
+
+func newRandomDocGenerator(types map[string]client.CollectionDefinition, config configsMap) *randomDocGenerator {
+	if config == nil {
+		config = make(configsMap)
+	}
+	return &randomDocGenerator{types: types, config: config}
 }
 
 type randomDocGenerator struct {
-	types        map[string]client.CollectionDefinition
-	config       configsMap
-	resultDocs   []GeneratedDoc
-	usageCounter typeUsageCounters
-	cols         map[string][]docRec
-	docsDemand   map[string]typeDemand
-	random       rand.Rand
+	types  map[string]client.CollectionDefinition
+	config configsMap
+
+	resultDocs       []GeneratedDoc
+	usageCounter     typeUsageCounters
+	generatedDocKeys map[string][]string
+	docsDemand       map[string]typeDemand
+	random           rand.Rand
 }
 
-func (g *randomDocGenerator) GenerateDocs(options ...Option) ([]GeneratedDoc, error) {
-	g.cols = make(map[string][]docRec)
-	if g.config == nil {
-		g.config = make(configsMap)
-	}
+func (g *randomDocGenerator) generateDocs(options ...Option) ([]GeneratedDoc, error) {
+	g.generatedDocKeys = make(map[string][]string)
 
 	configurator := newDocGenConfigurator(g.types, g.config)
 	err := configurator.Configure(options...)
@@ -119,7 +119,7 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 // getNextPrimaryDocKey returns the key of the next primary document to be used as a relation.
 func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType string, field *client.FieldDescription) string {
 	ind := g.usageCounter.getNextTypeIndForField(secondaryType, field)
-	docKey := g.cols[field.Schema][ind].docKey
+	docKey := g.generatedDocKeys[field.Schema][ind]
 	return docKey
 }
 
@@ -158,7 +158,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) ([]DocsList, err
 			if err != nil {
 				return nil, err
 			}
-			g.cols[typeName] = append(g.cols[typeName], docRec{doc: newDoc, docKey: docKey})
+			g.generatedDocKeys[typeName] = append(g.generatedDocKeys[typeName], docKey)
 			col.Docs = append(col.Docs, newDoc)
 		}
 		result = append(result, col)
@@ -182,7 +182,7 @@ func (g *randomDocGenerator) generateRandomValue(
 ) any {
 	genVal := g.getValueGenerator(fieldKind, fieldConfig)
 	if fieldConfig.fieldGenerator != nil {
-		return fieldConfig.fieldGenerator(len(g.cols[typeName]), genVal)
+		return fieldConfig.fieldGenerator(len(g.generatedDocKeys[typeName]), genVal)
 	}
 	return genVal()
 }
