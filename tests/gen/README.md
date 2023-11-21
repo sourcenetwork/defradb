@@ -2,17 +2,17 @@
 
 `AutoGenerate` and `AutoGenerateFromSDL` are a highly versatile function designed for dynamic document generation, perfect for testing and simulation purposes. 
 
-`AutoGenerateFromSDL` creates documents based on a specified schema, allowing for extensive customization of data generation. 
+`AutoGenerateFromSDL` creates documents based on a specified GQL SDL, which may contain multiple schema/collection definitions, allowing for extensive customization of data generation. 
 
-The function generates documents adhering to a defined schema and it's configuration.
-It interprets the types and relationships within the schema to create realistic, interconnected data structures.
+The function generates documents adhering to a defined collection and it's configuration.
+It interprets the types and relationships within the collection to create realistic, interconnected data structures.
 
 `AutoGenerate` creates documents based on the provider collections' definitions (`[]client.CollectionDefinition`)
 
 ### Demand Calculation:
 
 The functions calculate the 'demand' or the number of documents to generate based on the configuration provided.
-For related types within the schema, it intelligently adjusts the number of generated documents to maintain consistency in relationships (one-to-one, one-to-many, etc.).
+For related types within the collection set, it intelligently adjusts the number of generated documents to maintain consistency in relationships (one-to-one, one-to-many, etc.).
 
 In the absence of explicit demands, it deduces demands from the maximum required by related types or uses a default value if no relation-based demands are present.
 
@@ -28,7 +28,7 @@ Options take precedence over in-schema configurations.
 
 ### In-schema Configuration:
 
-Field values can be configured directly within the schema using annotations after "#" (e.g., `# min: 1, max: 120` for an integer field).
+Field values can be configured directly within the SDL doc using annotations after "#" (e.g., `# min: 1, max: 120` for an integer field).
 
 At the moment, the following value configurations are supported:
 - `min` and `max` for integer, float and relation fields. For relation fields, the values define the minimum and maximum number of related documents.
@@ -48,22 +48,22 @@ Default value ranges are used when not explicitly set in the schema or via optio
 ### Basic Document Generation:
 
 ```go
-schema := `
+sdl := `
 type User {
   name: String # len: 10
   age: Int # min: 18, max: 50
   verified: Boolean
   rating: Float # min: 0.0, max: 5.0
 }`
-docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 100))
+docs, _ := AutoGenerateFromSDL(sdl, WithTypeDemand("User", 100))
 ```
 
 ### Custom Field Range:
 
-Overrides the age range specified in the schema.
+Overrides the age range specified in the SDL doc.
 
 ```go
-docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 50), WithFieldRange("User", "age", 25, 30))
+docs, _ := AutoGenerateFromSDL(sdl, WithTypeDemand("User", 50), WithFieldRange("User", "age", 25, 30))
 ```
 
 ### One-to-Many Relationship:
@@ -71,7 +71,7 @@ docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 50), WithFieldRang
 Generates User documents each related to multiple Device documents.
 
 ```go
-schema := `
+sdl := `
 type User { 
   name: String 
   devices: [Device] # min: 1, max: 3
@@ -80,7 +80,7 @@ type Device {
   model: String
   owner: User
 }`
-docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 10))
+docs, _ := AutoGenerateFromSDL(sdl, WithTypeDemand("User", 10))
 ```
 
 ### Custom Value Generation:
@@ -91,7 +91,7 @@ Custom generation for age field.
 nameWithPrefix := func(i int, next func() any) any {
   return "user_" + next().(string)
 }
-docs, _ := AutoGenerateFromSDL(schema, WithTypeDemand("User", 10), WithFieldGenerator("User", "name", nameWithPrefix))
+docs, _ := AutoGenerateFromSDL(sdl, WithTypeDemand("User", 10), WithFieldGenerator("User", "name", nameWithPrefix))
 ```
 
 ## Conclusion
