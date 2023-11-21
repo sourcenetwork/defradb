@@ -155,8 +155,8 @@ func (u *relationUsage) allocateIndexes() {
 	u.docKeysCounter = docKeysCounter
 }
 
-func newDocGenConfigurator(types map[string]client.CollectionDefinition, config configsMap) *docsGenConfigurator {
-	return &docsGenConfigurator{
+func newDocGenConfigurator(types map[string]client.CollectionDefinition, config configsMap) docsGenConfigurator {
+	return docsGenConfigurator{
 		types:      types,
 		config:     config,
 		docsDemand: make(map[string]typeDemand),

@@ -63,54 +63,48 @@ func newRandomDocGenerator(types map[string]client.CollectionDefinition, config 
 	if config == nil {
 		config = make(configsMap)
 	}
-	return &randomDocGenerator{types: types, config: config}
+	configurator := newDocGenConfigurator(types, config)
+	return &randomDocGenerator{
+		configurator:     configurator,
+		generatedDocKeys: make(map[string][]string),
+	}
 }
 
 type randomDocGenerator struct {
-	types  map[string]client.CollectionDefinition
-	config configsMap
+	configurator docsGenConfigurator
 
-	resultDocs       []GeneratedDoc
-	usageCounter     typeUsageCounters
 	generatedDocKeys map[string][]string
-	docsDemand       map[string]typeDemand
 	random           rand.Rand
 }
 
 func (g *randomDocGenerator) generateDocs(options ...Option) ([]GeneratedDoc, error) {
-	g.generatedDocKeys = make(map[string][]string)
-
-	configurator := newDocGenConfigurator(g.types, g.config)
-	err := configurator.Configure(options...)
+	err := g.configurator.Configure(options...)
 	if err != nil {
 		return nil, err
 	}
 
-	g.random = *configurator.random
+	g.random = *g.configurator.random
 
-	g.docsDemand = configurator.docsDemand
-	g.usageCounter = configurator.usageCounter
-
-	g.resultDocs = make([]GeneratedDoc, 0, g.getMaxTotalDemand())
-	docsLists, err := g.generateRandomDocs(configurator.typesOrder)
+	resultDocs := make([]GeneratedDoc, 0, g.getMaxTotalDemand())
+	docsLists, err := g.generateRandomDocs(g.configurator.typesOrder)
 	if err != nil {
 		return nil, err
 	}
 	for _, docsList := range docsLists {
-		typeDef := g.types[docsList.ColName]
+		typeDef := g.configurator.types[docsList.ColName]
 		for _, doc := range docsList.Docs {
-			g.resultDocs = append(g.resultDocs, GeneratedDoc{
+			resultDocs = append(resultDocs, GeneratedDoc{
 				ColName: typeDef.Description.Name,
 				JSON:    createDocJSON(&typeDef, doc),
 			})
 		}
 	}
-	return g.resultDocs, nil
+	return resultDocs, nil
 }
 
 func (g *randomDocGenerator) getMaxTotalDemand() int {
 	totalDemand := 0
-	for _, demand := range g.docsDemand {
+	for _, demand := range g.configurator.docsDemand {
 		totalDemand += demand.max
 	}
 	return totalDemand
@@ -118,7 +112,7 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 
 // getNextPrimaryDocKey returns the key of the next primary document to be used as a relation.
 func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType string, field *client.FieldDescription) string {
-	ind := g.usageCounter.getNextTypeIndForField(secondaryType, field)
+	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
 	docKey := g.generatedDocKeys[field.Schema][ind]
 	return docKey
 }
@@ -135,9 +129,9 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) ([]DocsList, err
 	result := []DocsList{}
 	for _, typeName := range order {
 		col := DocsList{ColName: typeName}
-		typeDef := g.types[typeName]
+		typeDef := g.configurator.types[typeName]
 
-		currentTypeDemand := g.docsDemand[typeName]
+		currentTypeDemand := g.configurator.docsDemand[typeName]
 		averageDemand := currentTypeDemand.getAverage()
 		for i := 0; i < averageDemand; i++ {
 			newDoc := make(map[string]any)
@@ -150,7 +144,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) ([]DocsList, err
 						newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocKey(typeName, &field)
 					}
 				} else {
-					fieldConf := g.config.ForField(typeName, field.Name)
+					fieldConf := g.configurator.config.ForField(typeName, field.Name)
 					newDoc[field.Name] = g.generateRandomValue(typeName, field.Kind, fieldConf)
 				}
 			}
