@@ -17,12 +17,12 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
-// GeneratePredefinedFromSDL generates documents for a schema from a predefined list
+// GeneratePredefinedFromSDL generates documents for GraphQL SDL from a predefined list
 // of docs that might include nested docs.
-// The schema is parsed to get the list of fields, and the docs
-// are created with the fields parsed from the schema.
+// The SDL is parsed to get the list of fields, and the docs
+// are created with the fields parsed from the SDL.
 // This allows us to have only one large list of docs with predefined
-// fields, and create schemas with different fields from it.
+// fields, and create SDLs with different fields from it.
 func GeneratePredefinedFromSDL(gqlSDL string, docsList DocsList) ([]GeneratedDoc, error) {
 	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
 	typeDefs, err := parseSchema(gqlSDL)
@@ -63,7 +63,7 @@ type docGenerator struct {
 	types map[string]client.CollectionDefinition
 }
 
-// toRequestedDoc removes the fields that are not in the schema of the collection.
+// toRequestedDoc removes the fields that are not in the SDL of the collection.
 func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) map[string]any {
 	result := make(map[string]any)
 	for _, field := range typeDef.Schema.Fields {

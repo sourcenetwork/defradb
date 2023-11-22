@@ -31,7 +31,7 @@ const (
 	DefaultIntMax = 10000
 )
 
-// AutoGenerateFromSDL generates random documents from a schema.
+// AutoGenerateFromSDL generates random documents from a GraphQL SDL.
 func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, error) {
 	genConfigs, err := parseConfig(gqlSDL)
 	if err != nil {
