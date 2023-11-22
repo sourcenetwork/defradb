@@ -31,7 +31,7 @@ func GeneratePredefinedFromSDL(gqlSDL string, docsList DocsList) ([]GeneratedDoc
 	}
 	generator := docGenerator{types: typeDefs}
 	for _, doc := range docsList.Docs {
-		docs, err := generator.generateDocs(doc, docsList.ColName)
+		docs, err := generator.generateRelatedDocs(doc, docsList.ColName)
 		if err != nil {
 			return nil, err
 		}
@@ -50,7 +50,7 @@ func GeneratePredefined(defs []client.CollectionDefinition, docsList DocsList) (
 	}
 	generator := docGenerator{types: typeDefs}
 	for _, doc := range docsList.Docs {
-		docs, err := generator.generateDocs(doc, docsList.ColName)
+		docs, err := generator.generateRelatedDocs(doc, docsList.ColName)
 		if err != nil {
 			return nil, err
 		}
@@ -80,18 +80,19 @@ func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) ma
 	return result
 }
 
+// generatePrimary generates primary docs for the given secondary doc.
 func (this *docGenerator) generatePrimary(
-	doc map[string]any,
+	docMap map[string]any,
 	typeDef *client.CollectionDefinition,
 ) (map[string]any, []GeneratedDoc, error) {
 	result := []GeneratedDoc{}
-	requested := toRequestedDoc(doc, typeDef)
+	requested := toRequestedDoc(docMap, typeDef)
 	for _, field := range typeDef.Schema.Fields {
 		if field.IsRelation() {
-			if _, hasProp := doc[field.Name]; hasProp {
+			if _, hasProp := docMap[field.Name]; hasProp {
 				if field.IsPrimaryRelation() {
 					subType := this.types[field.Schema]
-					subDocMap := toRequestedDoc(doc[field.Name].(map[string]any), &subType)
+					subDocMap := toRequestedDoc(docMap[field.Name].(map[string]any), &subType)
 					subDoc, err := client.NewDocFromMap(subDocMap)
 					if err != nil {
 						return nil, nil, NewErrFailedToGenerateDoc(err)
@@ -105,7 +106,8 @@ func (this *docGenerator) generatePrimary(
 	return requested, result, nil
 }
 
-func (this *docGenerator) generateDocs(docMap map[string]any, typeName string) ([]GeneratedDoc, error) {
+// generateRelatedDocs generates related docs (primary and secondary) for the given doc.
+func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName string) ([]GeneratedDoc, error) {
 	typeDef := this.types[typeName]
 
 	requested, result, err := this.generatePrimary(docMap, &typeDef)
@@ -139,6 +141,7 @@ func (this *docGenerator) generateDocs(docMap map[string]any, typeName string) (
 	return result, nil
 }
 
+// generateSecondaryDocs generates secondary docs for the given primary doc.
 func (this *docGenerator) generateSecondaryDocs(
 	primaryDoc map[string]any,
 	primaryTypeName string,
@@ -155,7 +158,7 @@ func (this *docGenerator) generateSecondaryDocs(
 			case []map[string]any:
 				for _, relDoc := range relVal {
 					relDoc[primaryPropName] = primaryDocKey
-					actions, err := this.generateDocs(relDoc, relTypeDef.Description.Name)
+					actions, err := this.generateRelatedDocs(relDoc, relTypeDef.Description.Name)
 					if err != nil {
 						return nil, err
 					}
@@ -163,7 +166,7 @@ func (this *docGenerator) generateSecondaryDocs(
 				}
 			case map[string]any:
 				relVal[primaryPropName] = primaryDocKey
-				actions, err := this.generateDocs(relVal, relTypeDef.Description.Name)
+				actions, err := this.generateRelatedDocs(relVal, relTypeDef.Description.Name)
 				if err != nil {
 					return nil, err
 				}
