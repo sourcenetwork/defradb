@@ -20,54 +20,59 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func getField(t *testing.T, doc map[string]any, fieldName string) any {
-	field, ok := doc[fieldName]
-	assert.True(t, ok, "field %s not found", fieldName)
-	return field
+func getField(t *testing.T, doc *client.Document, fieldName string) any {
+	fVal, err := doc.GetValue(fieldName)
+	if err != nil {
+		assert.Fail(t, "field %s not found", fieldName)
+	}
+	return fVal.Value()
 }
 
-func getStringField(t *testing.T, doc map[string]any, fieldName string) string {
+func getStringField(t *testing.T, doc *client.Document, fieldName string) string {
 	val, ok := getField(t, doc, fieldName).(string)
 	assert.True(t, ok, "field %s is not of type string", fieldName)
 	return val
 }
 
-func getIntField(t *testing.T, doc map[string]any, fieldName string) int {
-	switch val := getField(t, doc, fieldName).(type) {
+func getIntField(t *testing.T, doc *client.Document, fieldName string) int {
+	fVal := getField(t, doc, fieldName)
+	switch val := fVal.(type) {
 	case int:
 		return val
 	case float64:
+		return int(val)
+	case int64:
 		return int(val)
 	}
 	assert.Fail(t, "field %s is not of type int or float64", fieldName)
 	return 0
 }
 
-func getFloatField(t *testing.T, doc map[string]any, fieldName string) float64 {
+func getFloatField(t *testing.T, doc *client.Document, fieldName string) float64 {
 	val, ok := getField(t, doc, fieldName).(float64)
 	assert.True(t, ok, "field %s is not of type float64", fieldName)
 	return val
 }
 
-func getBooleanField(t *testing.T, doc map[string]any, fieldName string) bool {
+func getBooleanField(t *testing.T, doc *client.Document, fieldName string) bool {
 	val, ok := getField(t, doc, fieldName).(bool)
 	assert.True(t, ok, "field %s is not of type bool", fieldName)
 	return val
 }
 
-func getDocKeysFromJSONDocs(jsonDocs []string) []string {
+func getDocKeysFromDocs(docs []*client.Document) []string {
 	var result []string
-	for _, doc := range jsonDocs {
-		result = append(result, mustGetDocKeyFromDocJSON([]byte(doc)))
+	for _, doc := range docs {
+		result = append(result, doc.Key().String())
 	}
 	return result
 }
 
-func filterByCollection(docs []GeneratedDoc, name string) []string {
-	var result []string
+func filterByCollection(docs []GeneratedDoc, name string) []*client.Document {
+	var result []*client.Document
 	for _, doc := range docs {
-		if doc.ColName == name {
-			result = append(result, doc.JSON)
+		if doc.Col.Description.Name == name {
+			result = append(result, doc.Doc)
 		}
 	}
 	return result
@@ -95,10 +100,10 @@ func assertDocKeysMatch(
 	primaryDocs := filterByCollection(docs, primaryCol)
 	secondaryDocs := filterByCollection(docs, secondaryCol)
 
-	docKeys := getDocKeysFromJSONDocs(primaryDocs)
+	docKeys := getDocKeysFromDocs(primaryDocs)
 	foreignValues := make([]string, 0, len(secondaryDocs))
 	for _, secDoc := range secondaryDocs {
-		foreignValues = append(foreignValues, getStringField(t, jsonToMap(secDoc), foreignField))
+		foreignValues = append(foreignValues, getStringField(t, secDoc, foreignField))
 	}
 
 	if allowDuplicates {
@@ -114,7 +119,7 @@ func assertUniformlyDistributedIntFieldRange(t *testing.T, docs []GeneratedDoc, 
 	foundMin := math.MaxInt
 	foundMax := math.MinInt
 	for _, doc := range docs {
-		val := getIntField(t, jsonToMap(doc.JSON), fieldName)
+		val := getIntField(t, doc.Doc, fieldName)
 		vals[val] = true
 		if val < foundMin {
 			foundMin = val
@@ -140,7 +145,7 @@ func assertUniformlyDistributedStringField(t *testing.T, docs []GeneratedDoc, fi
 	vals := make(map[string]bool, len(docs))
 	var wrongStr string
 	for _, doc := range docs {
-		val := getStringField(t, jsonToMap(doc.JSON), fieldName)
+		val := getStringField(t, doc.Doc, fieldName)
 		vals[val] = true
 		if len(val) != strLen {
 			wrongStr = val
@@ -158,9 +163,7 @@ func assertUniformlyDistributedBoolField(t *testing.T, docs []GeneratedDoc, fiel
 	trueCounter := 0
 
 	for _, doc := range docs {
-		docMap := jsonToMap(doc.JSON)
-
-		if getBooleanField(t, docMap, fieldName) {
+		if getBooleanField(t, doc.Doc, fieldName) {
 			trueCounter++
 		}
 	}
@@ -178,7 +181,7 @@ func assertUniformlyDistributedFloatFieldRange(t *testing.T, docs []GeneratedDoc
 	foundMin := math.Inf(1)
 	foundMax := math.Inf(-1)
 	for _, doc := range docs {
-		val := getFloatField(t, jsonToMap(doc.JSON), fieldName)
+		val := getFloatField(t, doc.Doc, fieldName)
 		vals[val] = true
 		if val < foundMin {
 			foundMin = val
@@ -208,7 +211,7 @@ func assertUniformRelationDistribution(
 
 	secondaryPerPrimary := make(map[string]int)
 	for _, d := range secondaryCol {
-		docKey := getStringField(t, jsonToMap(d), foreignField)
+		docKey := getStringField(t, d, foreignField)
 		secondaryPerPrimary[docKey]++
 	}
 	minDocsPerPrimary := math.MaxInt
@@ -972,7 +975,8 @@ func TestAutoGenerateFromSchema_CustomFieldValueGenerator(t *testing.T) {
 	assert.GreaterOrEqual(t, len(intVals), numUsers-1)
 
 	for _, doc := range docs {
-		actualAgeVal := getIntField(t, jsonToMap(doc.JSON), "age")
+		actualAgeVal := getIntField(t, doc.Doc, "age")
+		//actualAgeVal := getIntField(t, jsonToMap(doc.JSON), "age")
 		assert.Equal(t, ageVal, actualAgeVal)
 	}
 }
@@ -1004,22 +1008,20 @@ func TestAutoGenerateFromSchema_IfOptionOverlapsSchemaConfig_ItShouldOverwrite(t
 	)
 	assert.NoError(t, err)
 
-	userJSONs := filterByCollection(docs, "User")
-	assert.Len(t, userJSONs, numUsers)
+	userDocs := filterByCollection(docs, "User")
+	assert.Len(t, userDocs, numUsers)
 	assert.Len(t, filterByCollection(docs, "Device"), numUsers*3)
 
-	for _, userJSON := range userJSONs {
-		userMap := jsonToMap(userJSON)
-
-		actualAgeVal := getIntField(t, userMap, "age")
+	for _, userDoc := range userDocs {
+		actualAgeVal := getIntField(t, userDoc, "age")
 		assert.GreaterOrEqual(t, actualAgeVal, 30)
 		assert.LessOrEqual(t, actualAgeVal, 40)
 
-		actualRatingVal := getFloatField(t, userMap, "rating")
+		actualRatingVal := getFloatField(t, userDoc, "rating")
 		assert.GreaterOrEqual(t, actualRatingVal, 1.0)
 		assert.LessOrEqual(t, actualRatingVal, 2.0)
 
-		actualNameVal := getStringField(t, userMap, "name")
+		actualNameVal := getStringField(t, userDoc, "name")
 		assert.Len(t, actualNameVal, 6)
 	}
 }
@@ -1283,22 +1285,20 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	userJSONs := filterByCollection(docs, "User")
-	assert.Len(t, userJSONs, numUsers)
+	userDocs := filterByCollection(docs, "User")
+	assert.Len(t, userDocs, numUsers)
 	assert.Len(t, filterByCollection(docs, "Device"), numUsers*3)
 
-	for _, userJSON := range userJSONs {
-		userMap := jsonToMap(userJSON)
-
-		actualAgeVal := getIntField(t, userMap, "age")
+	for _, userDoc := range userDocs {
+		actualAgeVal := getIntField(t, userDoc, "age")
 		assert.GreaterOrEqual(t, actualAgeVal, 30)
 		assert.LessOrEqual(t, actualAgeVal, 40)
 
-		actualRatingVal := getFloatField(t, userMap, "rating")
+		actualRatingVal := getFloatField(t, userDoc, "rating")
 		assert.GreaterOrEqual(t, actualRatingVal, 1.0)
 		assert.LessOrEqual(t, actualRatingVal, 2.0)
 
-		actualNameVal := getStringField(t, userMap, "name")
+		actualNameVal := getStringField(t, userDoc, "name")
 		assert.Len(t, actualNameVal, 6)
 	}
 }

@@ -330,6 +330,20 @@ func performAction(
 	}
 }
 
+func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Option[int]) {
+	nameToInd := make(map[string]int)
+	for i, name := range s.collectionNames {
+		nameToInd[name] = i
+	}
+	for _, doc := range docs {
+		docJSON, err := doc.Doc.String()
+		if err != nil {
+			s.t.Fatalf("Failed to generate docs %s", err)
+		}
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name], Doc: docJSON, NodeID: nodeID})
+	}
+}
+
 func generateDocs(s *state, action GenerateDocs) {
 	collections := getNodeCollections(action.NodeID, s.collections)
 	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
@@ -342,14 +356,7 @@ func generateDocs(s *state, action GenerateDocs) {
 	if err != nil {
 		s.t.Fatalf("Failed to generate docs %s", err)
 	}
-
-	nameToInd := make(map[string]int)
-	for i, name := range s.collectionNames {
-		nameToInd[name] = i
-	}
-	for _, doc := range docs {
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.ColName], Doc: doc.JSON, NodeID: action.NodeID})
-	}
+	createGenerateDocs(s, docs, action.NodeID)
 }
 
 func generatePredefinedDocs(s *state, action GeneratePredefinedDocs) {
@@ -362,14 +369,7 @@ func generatePredefinedDocs(s *state, action GeneratePredefinedDocs) {
 	if err != nil {
 		s.t.Fatalf("Failed to generate docs %s", err)
 	}
-
-	nameToInd := make(map[string]int)
-	for i, name := range s.collectionNames {
-		nameToInd[name] = i
-	}
-	for _, doc := range docs {
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.ColName], Doc: doc.JSON, NodeID: action.NodeID})
-	}
+	createGenerateDocs(s, docs, action.NodeID)
 }
 
 func benchmarkAction(

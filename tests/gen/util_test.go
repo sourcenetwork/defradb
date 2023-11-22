@@ -46,7 +46,11 @@ func jsonToMap(jsonStr string) map[string]any {
 }
 
 func assertDoc(expected map[string]any, actual GeneratedDoc) string {
-	if !areMapsEquivalent(expected, jsonToMap(actual.JSON)) {
+	actualMap, err := actual.Doc.ToMap()
+	if err != nil {
+		return "can not convert doc to map: " + err.Error()
+	}
+	if !areMapsEquivalent(expected, actualMap) {
 		return "docs are not equal"
 	}
 	return ""
