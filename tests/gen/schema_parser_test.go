@@ -153,3 +153,145 @@ func TestSchemaParser_IfCanNotParse_ReturnError(t *testing.T) {
 		})
 	}
 }
+
+func TestSchemaParser_ParseUnformattedSchema(t *testing.T) {
+	tests := []struct {
+		name        string
+		schema      string
+		expectEmpty bool
+	}{
+		{
+			name: "flat schema",
+			schema: `
+				type User { name: String }`,
+			expectEmpty: true,
+		},
+		{
+			name: "closing bracket on a line with property",
+			schema: `
+				type User { 
+					name: String # len: 4
+					rating: Float }`,
+		},
+		{
+			name: "space after property name",
+			schema: `
+				type User { 
+					name    : String # len: 4
+					rating   : Float 
+				}`,
+		},
+		{
+			name: "prop config on the same line with type",
+			schema: `
+				type User { name: String # len: 4
+				}`,
+		},
+		{
+			name: "opening bracket on a new line",
+			schema: `
+				type User 
+				{ name: String # len: 4
+				}`,
+		},
+		{
+			name: "2 props on the same line",
+			schema: `
+				type User { 
+					age: Int name: String # len: 4
+				}`,
+		},
+		{
+			name: "new type after closing bracket",
+			schema: `
+				type Device { 
+					model: String
+				} type User { 
+					age: Int name: String # len: 4
+				}`,
+		},
+		{
+			name: "new type after closing bracket",
+			schema: `
+				type Device { 
+					model: String
+				} type User { 
+					age: Int name: String # len: 4
+				}`,
+		},
+		{
+			name: "type name on a new line",
+			schema: `
+				type
+				User { 
+					age: Int name: String # len: 4
+				}`,
+		},
+	}
+	lenConf := configsMap{
+		"User": {
+			"name": {
+				props: map[string]any{
+					"len": 4,
+				},
+			},
+		},
+	}
+	emptyConf := configsMap{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseConfig(tt.schema)
+			assert.NoError(t, err)
+			expected := emptyConf
+			if !tt.expectEmpty {
+				expected = lenConf
+			}
+			assert.Equal(t, expected, got)
+		})
+	}
+}
+
+func TestSchemaParser_IgnoreNonPropertyComments(t *testing.T) {
+	tests := []struct {
+		name   string
+		schema string
+		want   configsMap
+	}{
+		{
+			name: "closing bracket on a line with property",
+			schema: `
+				################
+				# some comment
+				"""
+				another comment
+				"""
+				type User { 
+					"prop comment"
+					name: String # len: 4
+					# : # another comment : #
+					email: String # len: 10 
+				}`,
+			want: configsMap{
+				"User": {
+					"name": {
+						props: map[string]any{
+							"len": 4,
+						},
+					},
+					"email": {
+						props: map[string]any{
+							"len": 10,
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseConfig(tt.schema)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

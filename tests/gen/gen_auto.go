@@ -37,7 +37,7 @@ func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, erro
 	if err != nil {
 		return nil, err
 	}
-	typeDefs, err := parseSchema(gqlSDL)
+	typeDefs, err := parseSDL(gqlSDL)
 	if err != nil {
 		return nil, err
 	}

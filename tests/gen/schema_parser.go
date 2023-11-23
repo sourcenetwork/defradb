@@ -14,17 +14,18 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/request/graphql"
 )
 
-func parseSchema(schema string) (map[string]client.CollectionDefinition, error) {
+func parseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
 	parser, err := graphql.NewParser()
 	if err != nil {
 		return nil, err
 	}
-	cols, err := parser.ParseSDL(context.Background(), schema)
+	cols, err := parser.ParseSDL(context.Background(), gqlSDL)
 	if err != nil {
 		return nil, err
 	}
@@ -35,38 +36,98 @@ func parseSchema(schema string) (map[string]client.CollectionDefinition, error) 
 	return result, nil
 }
 
-func parseConfig(schema string) (configsMap, error) {
-	genConfigs := make(map[string]map[string]genConfig)
+func parseConfig(gqlSDL string) (configsMap, error) {
+	parser := configParser{}
+	err := parser.parse(gqlSDL)
+	if err != nil {
+		return nil, err
+	}
+	return parser.genConfigs, nil
+}
 
-	var currentConfig map[string]genConfig
-	var currentType string
+const typePrefix = "type"
 
-	schemaLines := strings.Split(schema, "\n")
+type configParser struct {
+	genConfigs     map[string]map[string]genConfig
+	currentConfig  map[string]genConfig
+	currentType    string
+	expectTypeName bool
+}
+
+func (p *configParser) tryParseTypeName(line string) {
+	const typePrefixLen = len(typePrefix)
+	if strings.HasPrefix(line, typePrefix) && (len(line) == typePrefixLen ||
+		unicode.IsSpace(rune(line[typePrefixLen]))) {
+		p.expectTypeName = true
+		line = strings.TrimSpace(line[typePrefixLen:])
+	}
+
+	if !p.expectTypeName || line == "" {
+		return
+	}
+
+	typeNameEndPos := strings.Index(line, " ")
+	if typeNameEndPos == -1 {
+		typeNameEndPos = len(line)
+	}
+	p.currentType = strings.TrimSpace(line[:typeNameEndPos])
+	p.currentConfig = make(map[string]genConfig)
+	p.expectTypeName = false
+}
+
+func (p *configParser) tryParseConfig(line string) (bool, error) {
+	configPos := strings.Index(line, "#")
+	if configPos != -1 {
+		var err error
+		pos := strings.LastIndex(line[:configPos], ":")
+		if pos == -1 {
+			return true, nil
+		}
+		fields := strings.Fields(line[:pos])
+		propName := fields[len(fields)-1]
+		p.currentConfig[propName], err = parseGenConfig(line[configPos+1:])
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
+func (p *configParser) parseLine(line string) error {
+	line = strings.TrimSpace(line)
+	if p.currentType == "" {
+		p.tryParseTypeName(line)
+	}
+	skipLine, err := p.tryParseConfig(line)
+	if err != nil {
+		return err
+	}
+	if skipLine {
+		return nil
+	}
+	closeTypePos := strings.Index(line, "}")
+	if closeTypePos != -1 {
+		if len(p.currentConfig) > 0 {
+			p.genConfigs[p.currentType] = p.currentConfig
+		}
+		p.currentType = ""
+		return p.parseLine(line[closeTypePos+1:])
+	}
+	return nil
+}
+
+func (p *configParser) parse(gqlSDL string) error {
+	p.genConfigs = make(map[string]map[string]genConfig)
+
+	schemaLines := strings.Split(gqlSDL, "\n")
 	for _, line := range schemaLines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "type ") {
-			typeNameEndPos := strings.Index(line[5:], " ")
-			currentType = strings.TrimSpace(line[5 : 5+typeNameEndPos])
-			currentConfig = make(map[string]genConfig)
-			continue
-		}
-		if strings.HasPrefix(line, "}") {
-			if len(currentConfig) > 0 {
-				genConfigs[currentType] = currentConfig
-			}
-			continue
-		}
-		pos := strings.Index(line, ":")
-		configPos := strings.Index(line, "#")
-		if configPos != -1 {
-			var err error
-			currentConfig[line[:pos]], err = parseGenConfig(line[configPos+1:])
-			if err != nil {
-				return nil, err
-			}
+		err := p.parseLine(line)
+		if err != nil {
+			return err
 		}
 	}
-	return genConfigs, nil
+	return nil
 }
 
 func parseGenConfig(configStr string) (genConfig, error) {

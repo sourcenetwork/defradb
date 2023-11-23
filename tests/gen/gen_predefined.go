@@ -25,7 +25,7 @@ import (
 // fields, and create SDLs with different fields from it.
 func GeneratePredefinedFromSDL(gqlSDL string, docsList DocsList) ([]GeneratedDoc, error) {
 	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
-	typeDefs, err := parseSchema(gqlSDL)
+	typeDefs, err := parseSDL(gqlSDL)
 	if err != nil {
 		return nil, err
 	}
