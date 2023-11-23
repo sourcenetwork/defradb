@@ -71,6 +71,8 @@ func newRandomDocGenerator(types map[string]client.CollectionDefinition, config 
 }
 
 type genDoc struct {
+	// the dockey of the document. Its cached value from doc.Key().String() just to avoid
+	// calculating it multiple times.
 	docKey string
 	doc    *client.Document
 }

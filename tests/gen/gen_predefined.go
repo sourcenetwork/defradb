@@ -42,6 +42,26 @@ func GeneratePredefinedFromSDL(gqlSDL string, docsList DocsList) ([]GeneratedDoc
 
 // GeneratePredefined generates documents from a predefined list
 // of docs that might include nested docs.
+//
+// For example it can be used to generate docs from this list:
+//
+//		gen.DocsList{
+//			ColName: "User",
+//			Docs: []map[string]any{
+//				{
+//					"name":     "Shahzad",
+//					"age":      20,
+//					"devices": []map[string]any{
+//						{
+//							"model": "iPhone Xs",
+//						},
+//					},
+//				},
+//			},
+//	 ...
+//
+// It will generator documents for `User` collection replicating the given structure, i.e.
+// creating devices as related secondary documents.
 func GeneratePredefined(defs []client.CollectionDefinition, docsList DocsList) ([]GeneratedDoc, error) {
 	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
 	typeDefs := make(map[string]client.CollectionDefinition)
@@ -63,7 +83,7 @@ type docGenerator struct {
 	types map[string]client.CollectionDefinition
 }
 
-// toRequestedDoc removes the fields that are not in the SDL of the collection.
+// toRequestedDoc removes the fields that are not in the schema of the collection.
 func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) map[string]any {
 	result := make(map[string]any)
 	for _, field := range typeDef.Schema.Fields {
@@ -80,7 +100,8 @@ func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) ma
 	return result
 }
 
-// generatePrimary generates primary docs for the given secondary doc.
+// generatePrimary generates primary docs for the given secondary doc and adds foreign keys
+// to the secondary doc to reference the primary docs.
 func (this *docGenerator) generatePrimary(
 	docMap map[string]any,
 	typeDef *client.CollectionDefinition,
@@ -106,7 +127,8 @@ func (this *docGenerator) generatePrimary(
 	return requested, result, nil
 }
 
-// generateRelatedDocs generates related docs (primary and secondary) for the given doc.
+// generateRelatedDocs generates related docs (primary and secondary) for the given doc and
+// adds foreign keys to the given doc to reference the primary docs.
 func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName string) ([]GeneratedDoc, error) {
 	typeDef := this.types[typeName]
 
