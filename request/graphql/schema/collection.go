@@ -63,6 +63,20 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 
 			definitions = append(definitions, description)
 
+		case *ast.InterfaceDefinition:
+			description, err := schemaFromAstDefinition(ctx, relationManager, defType)
+			if err != nil {
+				return nil, err
+			}
+
+			definitions = append(
+				definitions,
+				client.CollectionDefinition{
+					// `Collection` is left as default, as interfaces are schema-only declarations
+					Schema: description,
+				},
+			)
+
 		default:
 			// Do nothing, ignore it and continue
 			continue
@@ -144,6 +158,33 @@ func collectionFromAstDefinition(
 			Name:   def.Name.Value,
 			Fields: fieldDescriptions,
 		},
+	}, nil
+}
+
+func schemaFromAstDefinition(
+	ctx context.Context,
+	relationManager *RelationManager,
+	def *ast.InterfaceDefinition,
+) (client.SchemaDescription, error) {
+	fieldDescriptions := []client.FieldDescription{}
+
+	for _, field := range def.Fields {
+		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def.Name.Value)
+		if err != nil {
+			return client.SchemaDescription{}, err
+		}
+
+		fieldDescriptions = append(fieldDescriptions, tmpFieldsDescriptions...)
+	}
+
+	// sort the fields lexicographically
+	sort.Slice(fieldDescriptions, func(i, j int) bool {
+		return fieldDescriptions[i].Name < fieldDescriptions[j].Name
+	})
+
+	return client.SchemaDescription{
+		Name:   def.Name.Value,
+		Fields: fieldDescriptions,
 	}, nil
 }
 
@@ -442,6 +483,13 @@ func getRelationshipName(
 }
 
 func finalizeRelations(relationManager *RelationManager, definitions []client.CollectionDefinition) error {
+	embeddedObjNames := map[string]any{}
+	for _, def := range definitions {
+		if def.Description.Name == "" {
+			embeddedObjNames[def.Schema.Name] = struct{}{}
+		}
+	}
+
 	for _, definition := range definitions {
 		for i, field := range definition.Schema.Fields {
 			if field.RelationType == 0 || field.RelationType&client.Relation_Type_INTERNAL_ID != 0 {
@@ -459,7 +507,8 @@ func finalizeRelations(relationManager *RelationManager, definitions []client.Co
 			}
 
 			// if not finalized then we are missing one side of the relationship
-			if !rel.finalized {
+			// unless this is an embedded object, which only have single-sided relations
+			if _, ok := embeddedObjNames[field.Schema]; !ok && !rel.finalized {
 				return client.NewErrRelationOneSided(field.Name, field.Schema)
 			}
 

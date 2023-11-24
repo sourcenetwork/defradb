@@ -373,7 +373,8 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 				// commit query link fields are always added and need no special treatment here
 				// WARNING: It is important to check collection name is nil and the parent select name
 				// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
-			} else {
+			} else if n.collection.Description().BaseQuery == nil {
+				// Views only contain embedded objects and don't require a traditional join here
 				err := n.addTypeIndexJoin(f)
 				if err != nil {
 					return nil, err

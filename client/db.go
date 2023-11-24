@@ -123,6 +123,34 @@ type Store interface {
 	// It will return an error if the provided schema version ID does not exist.
 	SetDefaultSchemaVersion(context.Context, string) error
 
+	// AddView creates a new Defra View.
+	//
+	// It takes a GQL query string, for example:
+	//
+	// Author {
+	//	 name
+	//	 books {
+	//	   name
+	//	 }
+	// }
+	//
+	//
+	// A GQL SDL that matches its output type must also be provided.  There can only be one `type` declaration,
+	// any nested objects must be declared as embedded/schema only types using the `interface` keyword.
+	// Relations must only be specified on the parent side of the relationship.  For example:
+	//
+	// type AuthorView {
+	//   name: String
+	//   books: [BookView]
+	// }
+	// interface BookView {
+	//   name: String
+	// }
+	//
+	// It will return the collection definitions of the types defined in the SDL if successful, otherwise an error
+	// will be returned.  This function does not execute the given query.
+	AddView(ctx context.Context, gqlQuery string, sdl string) ([]CollectionDefinition, error)
+
 	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivalent to
 	// calling `LensRegistry().SetMigration(ctx, cfg)`.
 	//

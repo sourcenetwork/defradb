@@ -98,8 +98,24 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		if err != nil {
 			return nil, err
 		}
-		queryType.AddFieldConfig(f.Name, f)
 		generatedQueryFields = append(generatedQueryFields, f)
+
+		var isEmbedded bool
+		for _, definition := range collections {
+			if t.Name() == definition.Schema.Name && definition.Description.Name == "" {
+				isEmbedded = true
+				break
+			}
+		}
+
+		// If the object is embedded, it may not be queried directly, so we must not add it
+		// to the `query` object.  We do however need the query-input objects to be generated
+		// (further up in this block), as they are still required for stuff like grouping.
+		if isEmbedded {
+			continue
+		}
+
+		queryType.AddFieldConfig(f.Name, f)
 	}
 
 	// resolve types
@@ -167,6 +183,34 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 	// now let's generate the mutation types.
 	mutationType := g.manager.schema.MutationType()
 	for _, t := range g.typeDefs {
+		// Note: Whilst the `isReadOnly` code is fairly unpleasent, it will hopefully not live for too much longer
+		// as we plan to transition to DQL.
+		var isReadOnly bool
+		var collectionFound bool
+		for _, definition := range collections {
+			if t.Name() == definition.Description.Name {
+				isReadOnly = definition.Description.BaseQuery != nil
+				collectionFound = true
+				break
+			}
+		}
+		if !collectionFound {
+			// If we did not find a collection with this name, check for matching schemas (embedded objects)
+			for _, definition := range collections {
+				if t.Name() == definition.Schema.Name {
+					// All embedded objects are readonly
+					isReadOnly = true
+					collectionFound = true
+					break
+				}
+			}
+		}
+
+		if isReadOnly {
+			// We do not currently allow mutation via views, so don't add them to the mutation object
+			continue
+		}
+
 		fs, err := g.GenerateMutationInputForGQLType(t)
 		if err != nil {
 			return nil, err
@@ -365,14 +409,23 @@ func (g *Generator) buildTypes(
 		// will be reassigned before the thunk is run
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
+		isEmbeddedObject := collection.Description.Name == ""
+
+		var objectName string
+		if isEmbeddedObject {
+			// If this is an embedded object, take the type name from the Schema
+			objectName = collection.Schema.Name
+		} else {
+			objectName = collection.Description.Name
+		}
 
 		// check if type exists
-		if _, ok := g.manager.schema.TypeMap()[collection.Description.Name]; ok {
-			return nil, NewErrSchemaTypeAlreadyExist(collection.Description.Name)
+		if _, ok := g.manager.schema.TypeMap()[objectName]; ok {
+			return nil, NewErrSchemaTypeAlreadyExist(objectName)
 		}
 
 		objconf := gql.ObjectConfig{
-			Name: collection.Description.Name,
+			Name: objectName,
 		}
 
 		// Wrap field definition in a thunk so we can
@@ -381,10 +434,12 @@ func (g *Generator) buildTypes(
 		fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
 			fields := gql.Fields{}
 
-			// automatically add the _key: ID field to the type
-			fields[request.KeyFieldName] = &gql.Field{
-				Description: keyFieldDescription,
-				Type:        gql.ID,
+			if !isEmbeddedObject {
+				// automatically add the _key: ID field to the type
+				fields[request.KeyFieldName] = &gql.Field{
+					Description: keyFieldDescription,
+					Type:        gql.ID,
+				}
 			}
 
 			for _, field := range fieldDescriptions {
@@ -423,26 +478,28 @@ func (g *Generator) buildTypes(
 				}
 			}
 
-			// add _version field
-			fields[request.VersionFieldName] = &gql.Field{
-				Description: versionFieldDescription,
-				Type:        gql.NewList(schemaTypes.CommitObject),
-			}
-
-			// add _deleted field
-			fields[request.DeletedFieldName] = &gql.Field{
-				Description: deletedFieldDescription,
-				Type:        gql.Boolean,
-			}
-
-			gqlType, ok := g.manager.schema.TypeMap()[collection.Description.Name]
+			gqlType, ok := g.manager.schema.TypeMap()[objectName]
 			if !ok {
-				return nil, NewErrObjectNotFoundDuringThunk(collection.Description.Name)
+				return nil, NewErrObjectNotFoundDuringThunk(objectName)
 			}
 
 			fields[request.GroupFieldName] = &gql.Field{
 				Description: groupFieldDescription,
 				Type:        gql.NewList(gqlType),
+			}
+
+			if !isEmbeddedObject {
+				// add _version field
+				fields[request.VersionFieldName] = &gql.Field{
+					Description: versionFieldDescription,
+					Type:        gql.NewList(schemaTypes.CommitObject),
+				}
+
+				// add _deleted field
+				fields[request.DeletedFieldName] = &gql.Field{
+					Description: deletedFieldDescription,
+					Type:        gql.Boolean,
+				}
 			}
 
 			return fields, nil

@@ -23,6 +23,12 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
+const (
+	// topLevelCollectionName is a dummy collection name to indicate that this item is at the outer most
+	// level of the query, typically an aggregate over an entire collection.
+	topLevelCollectionName string = "_topLevel"
+)
+
 var (
 	FilterEqOp = &Operator{Operation: "_eq"}
 )
@@ -334,7 +340,7 @@ func resolveAggregates(
 					},
 				}
 
-				if collectionName == "_topLevel" {
+				if collectionName == topLevelCollectionName {
 					collectionName = ""
 				}
 
@@ -695,8 +701,7 @@ func getCollectionName(
 	parentCollectionName string,
 ) (string, error) {
 	if _, isAggregate := request.Aggregates[selectRequest.Name]; isAggregate {
-		// This string is not used or referenced, its value is only there to aid debugging
-		return "_topLevel", nil
+		return topLevelCollectionName, nil
 	}
 
 	if selectRequest.Name == request.GroupFieldName {
@@ -738,15 +743,28 @@ func getTopLevelInfo(
 	}
 
 	if selectRequest.Root == request.ObjectSelection {
-		mapping.Add(core.DocKeyFieldIndex, request.KeyFieldName)
-
+		var schema client.SchemaDescription
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
-			return nil, client.SchemaDescription{}, err
+			// If the collection is not found, check to see if a schema of that name exists,
+			// if so, this must be an embedded object
+			schemas, err := store.GetSchemasByName(ctx, collectionName)
+			if err != nil {
+				return nil, client.SchemaDescription{}, err
+			}
+			if len(schemas) == 0 {
+				return nil, client.SchemaDescription{}, NewErrTypeNotFound(collectionName)
+			}
+			// `schemas` will contain all versions of that name, as views cannot be updated atm this should
+			// be fine for now
+			schema = schemas[0]
+		} else {
+			mapping.Add(core.DocKeyFieldIndex, request.KeyFieldName)
+			schema = collection.Schema()
 		}
 
 		// Map all fields from schema into the map as they are fetched automatically
-		for _, f := range collection.Schema().Fields {
+		for _, f := range schema.Fields {
 			if f.IsObject() {
 				// Objects are skipped, as they are not fetched by default and
 				// have to be requested via selects.
@@ -761,7 +779,7 @@ func getTopLevelInfo(
 
 		mapping.Add(mapping.GetNextIndex(), request.DeletedFieldName)
 
-		return mapping, collection.Schema(), nil
+		return mapping, schema, nil
 	}
 
 	if selectRequest.Name == request.LinksFieldName {
