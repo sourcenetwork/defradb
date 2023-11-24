@@ -35,7 +35,7 @@ func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
 	docs, err := GeneratePredefinedFromSDL(schema, docsList)
 	assert.NoError(t, err)
 
-	errorMsg := assertDocs(docsList.Docs, docs)
+	errorMsg := assertDocs(mustAddKeysToDocs(docsList.Docs), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}
@@ -56,10 +56,10 @@ func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	errorMsg := assertDocs([]map[string]any{
+	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
-	}, docs)
+	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}
@@ -95,12 +95,12 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	errorMsg := assertDocs([]map[string]any{
+	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
 		{"model": "iPhone", "owner_id": mustGetDocKeyFromDocMap(map[string]any{"name": "John"})},
 		{"model": "MacBook", "owner_id": mustGetDocKeyFromDocMap(map[string]any{"name": "Fred"})},
-	}, docs)
+	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}
@@ -136,12 +136,12 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	errorMsg := assertDocs([]map[string]any{
+	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
 		{"name": "John", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "iPhone"})},
 		{"name": "Fred", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "MacBook"})},
 		{"model": "iPhone"},
 		{"model": "MacBook"},
-	}, docs)
+	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}
@@ -181,14 +181,14 @@ func TestGeneratePredefinedFromSchema_OneToMany(t *testing.T) {
 
 	johnDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "John"})
 	fredDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "Fred"})
-	errorMsg := assertDocs([]map[string]any{
+	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
 		{"model": "iPhone", "owner_id": johnDocKey},
 		{"model": "PlayStation", "owner_id": johnDocKey},
 		{"model": "Surface", "owner_id": fredDocKey},
 		{"model": "Pixel", "owner_id": fredDocKey},
-	}, docs)
+	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}
@@ -235,13 +235,13 @@ func TestGeneratePredefinedFromSchema_OneToManyToOne(t *testing.T) {
 	assert.NoError(t, err)
 
 	johnDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "John"})
-	errorMsg := assertDocs([]map[string]any{
+	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
 		{"name": "John"},
 		{"model": "iPhone", "owner_id": johnDocKey},
 		{"model": "MacBook", "owner_id": johnDocKey},
 		{"CPU": "A13", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "iPhone", "owner_id": johnDocKey})},
 		{"CPU": "M2", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "MacBook", "owner_id": johnDocKey})},
-	}, docs)
+	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}
@@ -317,14 +317,14 @@ func TestGeneratePredefined_OneToMany(t *testing.T) {
 
 	johnDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "John"})
 	fredDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "Fred"})
-	errorMsg := assertDocs([]map[string]any{
+	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
 		{"model": "iPhone", "owner_id": johnDocKey},
 		{"model": "PlayStation", "owner_id": johnDocKey},
 		{"model": "Surface", "owner_id": fredDocKey},
 		{"model": "Pixel", "owner_id": fredDocKey},
-	}, docs)
+	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}

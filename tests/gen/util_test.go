@@ -11,10 +11,10 @@
 package gen
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 func areValuesEquivalent(a, b any) bool {
@@ -67,18 +67,17 @@ outer:
 	return ""
 }
 
-func mustGetDocKeyFromDocJSON(docJSON []byte) string {
-	doc, err := client.NewDocFromJSON(docJSON)
+func mustGetDocKeyFromDocMap(docMap map[string]any) string {
+	doc, err := client.NewDocFromMap(docMap)
 	if err != nil {
-		panic("can not create doc from JSON " + err.Error())
+		panic("can not get doc from map" + err.Error())
 	}
 	return doc.Key().String()
 }
 
-func mustGetDocKeyFromDocMap(docMap map[string]any) string {
-	docJSON, err := json.Marshal(docMap)
-	if err != nil {
-		panic("can not marshal doc " + err.Error())
+func mustAddKeysToDocs(docs []map[string]any) []map[string]any {
+	for i := range docs {
+		docs[i][request.KeyFieldName] = mustGetDocKeyFromDocMap(docs[i])
 	}
-	return mustGetDocKeyFromDocJSON(docJSON)
+	return docs
 }
