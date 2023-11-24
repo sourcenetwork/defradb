@@ -84,6 +84,10 @@ type docGenerator struct {
 }
 
 // toRequestedDoc removes the fields that are not in the schema of the collection.
+//
+// This is typically called on user/test provided seed documents to remove any non-existent
+// fields before generating documents from them.
+// It doesn't not modify the original doc.
 func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) map[string]any {
 	result := make(map[string]any)
 	for _, field := range typeDef.Schema.Fields {

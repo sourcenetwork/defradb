@@ -292,7 +292,8 @@ func (f FieldDescription) IsRelation() bool {
 	return f.RelationType > 0
 }
 
-// IsArray returns true if this field is an array type.
+// IsArray returns true if this field is an array type which includes inline arrays as well
+// as relation arrays.
 func (f FieldDescription) IsArray() bool {
 	return f.Kind == FieldKind_BOOL_ARRAY ||
 		f.Kind == FieldKind_INT_ARRAY ||
