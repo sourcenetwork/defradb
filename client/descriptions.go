@@ -162,7 +162,7 @@ const (
 	FieldKind_FLOAT        FieldKind = 6
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
 	_                      FieldKind = 8 // safe to repurpose (was never used)
-	_                      FieldKind = 9 // safe to repurpose (previoulsy old field)
+	_                      FieldKind = 9 // safe to repurpose (previously old field)
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
@@ -186,9 +186,9 @@ const (
 // their enum values.
 //
 // It is currently used to by [db.PatchSchema] to allow string representations of
-// [FieldKind] to be provided instead of their raw int values.  This useage may expand
+// [FieldKind] to be provided instead of their raw int values.  This usage may expand
 // in the future.  They currently roughly correspond to the GQL field types, but this
-// equality is not guarenteed.
+// equality is not guaranteed.
 var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"ID":         FieldKind_DocKey,
 	"Boolean":    FieldKind_BOOL,
@@ -238,7 +238,7 @@ type FieldDescription struct {
 	// ID contains the internal ID of this field.
 	//
 	// Whilst this ID will typically match the field's index within the Schema's Fields
-	// slice, there is no guarentee that they will be the same.
+	// slice, there is no guarantee that they will be the same.
 	//
 	// It is immutable.
 	ID FieldID
@@ -285,6 +285,25 @@ func (f FieldDescription) IsObjectArray() bool {
 // IsPrimaryRelation returns true if this field is a relation, and is the primary side.
 func (f FieldDescription) IsPrimaryRelation() bool {
 	return f.RelationType > 0 && f.RelationType&Relation_Type_Primary != 0
+}
+
+// IsRelation returns true if this field is a relation.
+func (f FieldDescription) IsRelation() bool {
+	return f.RelationType > 0
+}
+
+// IsArray returns true if this field is an array type which includes inline arrays as well
+// as relation arrays.
+func (f FieldDescription) IsArray() bool {
+	return f.Kind == FieldKind_BOOL_ARRAY ||
+		f.Kind == FieldKind_INT_ARRAY ||
+		f.Kind == FieldKind_FLOAT_ARRAY ||
+		f.Kind == FieldKind_STRING_ARRAY ||
+		f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_BOOL_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_INT_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_FLOAT_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_STRING_ARRAY
 }
 
 // IsSet returns true if the target relation type is set.
