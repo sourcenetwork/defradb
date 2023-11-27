@@ -3,6 +3,13 @@ use std::sync::RwLock;
 use std::error::Error;
 use std::{fmt, error};
 use serde::Deserialize;
+use lens_sdk::StreamOption;
+use lens_sdk::option::StreamOption::{Some, None, EndOfStream};
+
+#[link(wasm_import_module = "lens")]
+extern "C" {
+    fn next() -> *mut u8;
+}
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 enum ModuleError {
@@ -25,7 +32,7 @@ pub struct Parameters {
     pub value: serde_json::Value,
 }
 
-static PARAMETERS: RwLock<Option<Parameters>> = RwLock::new(None);
+static PARAMETERS: RwLock<StreamOption<Parameters>> = RwLock::new(None);
 
 #[no_mangle]
 pub extern fn alloc(size: usize) -> *mut u8 {
@@ -50,22 +57,25 @@ fn try_set_param(ptr: *mut u8) -> Result<(), Box<dyn Error>> {
 }
 
 #[no_mangle]
-pub extern fn transform(ptr: *mut u8) -> *mut u8 {
-    match try_transform(ptr) {
+pub extern fn transform() -> *mut u8 {
+    match try_transform() {
         Ok(o) => match o {
             Some(result_json) => lens_sdk::to_mem(lens_sdk::JSON_TYPE_ID, &result_json),
             None => lens_sdk::nil_ptr(),
+            EndOfStream => lens_sdk::to_mem(lens_sdk::EOS_TYPE_ID, &[]),
         },
         Err(e) => lens_sdk::to_mem(lens_sdk::ERROR_TYPE_ID, &e.to_string().as_bytes())
     }
 }
 
-fn try_transform(ptr: *mut u8) -> Result<Option<Vec<u8>>, Box<dyn Error>> {
+fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
+    let ptr = unsafe { next() };
     let mut input = match lens_sdk::try_from_mem::<HashMap<String, serde_json::Value>>(ptr)? {
         Some(v) => v,
         // Implementations of `transform` are free to handle nil however they like. In this
         // implementation we chose to return nil given a nil input.
         None => return Ok(None),
+        EndOfStream => return Ok(EndOfStream)
     };
 
     let params = PARAMETERS.read()?
@@ -76,26 +86,30 @@ fn try_transform(ptr: *mut u8) -> Result<Option<Vec<u8>>, Box<dyn Error>> {
     input.insert(params.dst, params.value);
 
     let result_json = serde_json::to_vec(&input.clone())?;
+    lens_sdk::free_transport_buffer(ptr)?;
     Ok(Some(result_json))
 }
 
 #[no_mangle]
-pub extern fn inverse(ptr: *mut u8) -> *mut u8 {
-    match try_inverse(ptr) {
+pub extern fn inverse() -> *mut u8 {
+    match try_inverse() {
         Ok(o) => match o {
             Some(result_json) => lens_sdk::to_mem(lens_sdk::JSON_TYPE_ID, &result_json),
             None => lens_sdk::nil_ptr(),
+            EndOfStream => lens_sdk::to_mem(lens_sdk::EOS_TYPE_ID, &[]),
         },
         Err(e) => lens_sdk::to_mem(lens_sdk::ERROR_TYPE_ID, &e.to_string().as_bytes())
     }
 }
 
-fn try_inverse(ptr: *mut u8) -> Result<Option<Vec<u8>>, Box<dyn Error>> {
+fn try_inverse() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
+    let ptr = unsafe { next() };
     let mut input = match lens_sdk::try_from_mem::<HashMap<String, serde_json::Value>>(ptr)? {
         Some(v) => v,
         // Implementations of `transform` are free to handle nil however they like. In this
         // implementation we chose to return nil given a nil input.
         None => return Ok(None),
+        EndOfStream => return Ok(EndOfStream)
     };
 
     let params = PARAMETERS.read()?
@@ -106,5 +120,6 @@ fn try_inverse(ptr: *mut u8) -> Result<Option<Vec<u8>>, Box<dyn Error>> {
     input.remove(&params.dst);
 
     let result_json = serde_json::to_vec(&input.clone())?;
+    lens_sdk::free_transport_buffer(ptr)?;
     Ok(Some(result_json))
 }
