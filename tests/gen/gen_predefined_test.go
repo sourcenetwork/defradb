@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
@@ -142,6 +143,182 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 		{"model": "iPhone"},
 		{"model": "MacBook"},
 	}), docs)
+	if errorMsg != "" {
+		t.Error(errorMsg)
+	}
+}
+
+func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
+	schema := `
+		type User {
+			name: String
+			device: Device @primary
+		}
+		type Device {
+			model: String
+			owner: User
+			specs: Specs @primary
+		}
+		type Specs {
+			OS: String
+			device: Device
+		}`
+
+	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+		ColName: "User",
+		Docs: []map[string]any{
+			{
+				"name": "John",
+				"device": map[string]any{
+					"model": "iPhone",
+					"specs": map[string]any{
+						"OS": "iOS",
+					},
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+
+	specsDoc := mustAddKeyToDoc(map[string]any{"OS": "iOS"})
+	deviceDoc := mustAddKeyToDoc(map[string]any{"model": "iPhone", "specs_id": specsDoc[request.KeyFieldName]})
+	userDoc := mustAddKeyToDoc(map[string]any{"name": "John", "device_id": deviceDoc[request.KeyFieldName]})
+
+	errorMsg := assertDocs([]map[string]any{userDoc, deviceDoc, specsDoc}, docs)
+	if errorMsg != "" {
+		t.Error(errorMsg)
+	}
+}
+
+func TestGeneratePredefinedFromSchema_TwoPrimaryToOneMiddle(t *testing.T) {
+	schema := `
+		type User {
+			name: String
+			device: Device 
+		}
+		type Device {
+			model: String
+			owner: User @primary
+			specs: Specs @primary
+		}
+		type Specs {
+			OS: String
+			device: Device
+		}`
+
+	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+		ColName: "User",
+		Docs: []map[string]any{
+			{
+				"name": "John",
+				"device": map[string]any{
+					"model": "iPhone",
+					"specs": map[string]any{
+						"OS": "iOS",
+					},
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+
+	specsDoc := mustAddKeyToDoc(map[string]any{"OS": "iOS"})
+	userDoc := mustAddKeyToDoc(map[string]any{"name": "John"})
+	deviceDoc := mustAddKeyToDoc(map[string]any{
+		"model":    "iPhone",
+		"specs_id": specsDoc[request.KeyFieldName],
+		"owner_id": userDoc[request.KeyFieldName],
+	})
+
+	errorMsg := assertDocs([]map[string]any{userDoc, deviceDoc, specsDoc}, docs)
+	if errorMsg != "" {
+		t.Error(errorMsg)
+	}
+}
+
+func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
+	schema := `
+		type User {
+			name: String
+			device: Device @primary
+		}
+		type Device {
+			model: String
+			owner: User
+			specs: Specs
+		}
+		type Specs {
+			OS: String
+			device: Device @primary
+		}`
+
+	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+		ColName: "User",
+		Docs: []map[string]any{
+			{
+				"name": "John",
+				"device": map[string]any{
+					"model": "iPhone",
+					"specs": map[string]any{
+						"OS": "iOS",
+					},
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+
+	deviceDoc := mustAddKeyToDoc(map[string]any{"model": "iPhone"})
+	specsDoc := mustAddKeyToDoc(map[string]any{"OS": "iOS", "device_id": deviceDoc[request.KeyFieldName]})
+	userDoc := mustAddKeyToDoc(map[string]any{"name": "John", "device_id": deviceDoc[request.KeyFieldName]})
+
+	errorMsg := assertDocs([]map[string]any{userDoc, deviceDoc, specsDoc}, docs)
+	if errorMsg != "" {
+		t.Error(errorMsg)
+	}
+}
+
+func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
+	schema := `
+		type User {
+			name: String
+			device: Device @primary
+			address: Address @primary
+		}
+		type Device {
+			model: String
+			owner: User
+		}
+		type Address {
+			street: String
+			user: User 
+		}`
+
+	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+		ColName: "User",
+		Docs: []map[string]any{
+			{
+				"name": "John",
+				"device": map[string]any{
+					"model": "iPhone",
+				},
+				"address": map[string]any{
+					"street": "Backer",
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+
+	deviceDoc := mustAddKeyToDoc(map[string]any{"model": "iPhone"})
+	addressDoc := mustAddKeyToDoc(map[string]any{"street": "Backer"})
+	userDoc := mustAddKeyToDoc(map[string]any{
+		"name":       "John",
+		"device_id":  deviceDoc[request.KeyFieldName],
+		"address_id": addressDoc[request.KeyFieldName],
+	})
+
+	errorMsg := assertDocs([]map[string]any{userDoc, deviceDoc, addressDoc}, docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}

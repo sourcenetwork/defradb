@@ -75,9 +75,14 @@ func mustGetDocKeyFromDocMap(docMap map[string]any) string {
 	return doc.Key().String()
 }
 
+func mustAddKeyToDoc(doc map[string]any) map[string]any {
+	doc[request.KeyFieldName] = mustGetDocKeyFromDocMap(doc)
+	return doc
+}
+
 func mustAddKeysToDocs(docs []map[string]any) []map[string]any {
 	for i := range docs {
-		docs[i][request.KeyFieldName] = mustGetDocKeyFromDocMap(docs[i])
+		mustAddKeyToDoc(docs[i])
 	}
 	return docs
 }
