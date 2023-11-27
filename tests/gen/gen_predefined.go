@@ -149,6 +149,8 @@ func (this *docGenerator) generatePrimary(
 func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName string) ([]GeneratedDoc, error) {
 	typeDef := this.types[typeName]
 
+	// create first primary docs and link them to the given doc so that we can define
+	// dockey for the complete document.
 	requested, result, err := this.generatePrimary(docMap, &typeDef)
 	if err != nil {
 		return nil, err

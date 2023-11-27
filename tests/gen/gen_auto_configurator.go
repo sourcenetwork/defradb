@@ -273,16 +273,20 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 	for _, field := range primaryTypeDef.Schema.Fields {
 		if field.IsObject() && field.Schema == secondaryType {
 			primaryDemand := typeDemand{min: secondaryDemand.min, max: secondaryDemand.max}
-			min, max := 1, 1
+			minPerDoc, maxPerDoc := 1, 1
 			if field.IsArray() {
 				fieldConf := g.config.ForField(primaryType, field.Name)
-				min, max = getMinMaxOrDefault(fieldConf, 0, secondaryDemand.max)
-				minRatio := float64(secondaryDemand.min) / float64(max)
+				minPerDoc, maxPerDoc = getMinMaxOrDefault(fieldConf, 0, secondaryDemand.max)
+				// if we request min 100 of secondary docs and there can be max 5 per primary doc,
+				// then we need to generate at least 20 primary docs.
+				minRatio := float64(secondaryDemand.min) / float64(maxPerDoc)
 				primaryDemand.min = int(math.Ceil(minRatio))
-				if min == 0 {
+				if minPerDoc == 0 {
 					primaryDemand.max = math.MaxInt
 				} else {
-					maxRatio := float64(secondaryDemand.max) / float64(min)
+					// if we request max 200 of secondary docs and there can be min 10 per primary doc,
+					// then we need to generate at most 2000 primary docs.
+					maxRatio := float64(secondaryDemand.max) / float64(minPerDoc)
 					primaryDemand.max = int(math.Floor(maxRatio))
 				}
 
@@ -305,7 +309,7 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 				return typeDemand{}, NewErrCanNotSupplyTypeDemand(primaryType)
 			}
 			g.docsDemand[primaryType] = primaryDemand
-			g.initRelationUsages(field.Schema, primaryType, min, max)
+			g.initRelationUsages(field.Schema, primaryType, minPerDoc, maxPerDoc)
 		}
 	}
 	return secondaryDemand, nil

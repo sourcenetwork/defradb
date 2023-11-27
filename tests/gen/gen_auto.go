@@ -129,10 +129,10 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 		typeDef := g.configurator.types[typeName]
 
 		currentTypeDemand := g.configurator.docsDemand[typeName]
-		averageDemand := currentTypeDemand.getAverage()
-		// we need to decide how many documents to generate for this type
+		// we need to decide how many documents to generate in total for this type
 		// and if it's a range (say, 10-30) we take average (20).
-		for i := 0; i < averageDemand; i++ {
+		totalDemand := currentTypeDemand.getAverage()
+		for i := 0; i < totalDemand; i++ {
 			newDoc := make(map[string]any)
 			for _, field := range typeDef.Schema.Fields {
 				if field.Name == request.KeyFieldName {
