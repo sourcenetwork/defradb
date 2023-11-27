@@ -10,14 +10,14 @@
 
 package index
 
-import "github.com/sourcenetwork/defradb/tests/gen"
+import "github.com/sourcenetwork/defradb/tests/predefined"
 
 func makeExplainQuery(req string) string {
 	return "query @explain(type: execute) " + req[6:]
 }
 
-func getUserDocs() gen.DocsList {
-	return gen.DocsList{
+func getUserDocs() predefined.DocsList {
+	return predefined.DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{

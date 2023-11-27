@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package gen
+package predefined
 
 import (
 	"testing"
@@ -33,7 +33,7 @@ func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
 			{"name": "Fred", "age": 25},
 		},
 	}
-	docs, err := GeneratePredefinedFromSDL(schema, docsList)
+	docs, err := CreateFromSDL(schema, docsList)
 	assert.NoError(t, err)
 
 	errorMsg := assertDocs(mustAddKeysToDocs(docsList.Docs), docs)
@@ -48,7 +48,7 @@ func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
 			name: String
 		}`
 
-	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{"name": "John", "age": 30},
@@ -77,7 +77,7 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 			owner: User
 		}`
 
-	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -118,7 +118,7 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 			owner: User
 		}`
 
-	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -164,7 +164,7 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 			device: Device
 		}`
 
-	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -206,7 +206,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneMiddle(t *testing.T) {
 			device: Device
 		}`
 
-	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -252,7 +252,7 @@ func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
 			device: Device @primary
 		}`
 
-	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -294,7 +294,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 			user: User 
 		}`
 
-	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -335,7 +335,7 @@ func TestGeneratePredefinedFromSchema_OneToMany(t *testing.T) {
 			owner: User
 		}`
 
-	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -387,7 +387,7 @@ func TestGeneratePredefinedFromSchema_OneToManyToOne(t *testing.T) {
 			device: Device @primary
 		}`
 
-	docs, err := GeneratePredefinedFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -471,7 +471,7 @@ func TestGeneratePredefined_OneToMany(t *testing.T) {
 			},
 		},
 	}
-	docs, err := GeneratePredefined(defs, DocsList{
+	docs, err := Create(defs, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{

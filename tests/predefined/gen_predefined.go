@@ -8,23 +8,42 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package gen
+package predefined
 
 import (
+	"context"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/request/graphql"
+	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
-// GeneratePredefinedFromSDL generates documents for GraphQL SDL from a predefined list
+func parseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
+	parser, err := graphql.NewParser()
+	if err != nil {
+		return nil, err
+	}
+	cols, err := parser.ParseSDL(context.Background(), gqlSDL)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]client.CollectionDefinition)
+	for _, col := range cols {
+		result[col.Description.Name] = col
+	}
+	return result, nil
+}
+
+// CreateFromSDL generates documents for GraphQL SDL from a predefined list
 // of docs that might include nested docs.
 // The SDL is parsed to get the list of fields, and the docs
 // are created with the fields parsed from the SDL.
 // This allows us to have only one large list of docs with predefined
 // fields, and create SDLs with different fields from it.
-func GeneratePredefinedFromSDL(gqlSDL string, docsList DocsList) ([]GeneratedDoc, error) {
-	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
+func CreateFromSDL(gqlSDL string, docsList DocsList) ([]gen.GeneratedDoc, error) {
+	resultDocs := make([]gen.GeneratedDoc, 0, len(docsList.Docs))
 	typeDefs, err := parseSDL(gqlSDL)
 	if err != nil {
 		return nil, err
@@ -40,7 +59,7 @@ func GeneratePredefinedFromSDL(gqlSDL string, docsList DocsList) ([]GeneratedDoc
 	return resultDocs, nil
 }
 
-// GeneratePredefined generates documents from a predefined list
+// Create generates documents from a predefined list
 // of docs that might include nested docs.
 //
 // For example it can be used to generate docs from this list:
@@ -62,8 +81,8 @@ func GeneratePredefinedFromSDL(gqlSDL string, docsList DocsList) ([]GeneratedDoc
 //
 // It will generator documents for `User` collection replicating the given structure, i.e.
 // creating devices as related secondary documents.
-func GeneratePredefined(defs []client.CollectionDefinition, docsList DocsList) ([]GeneratedDoc, error) {
-	resultDocs := make([]GeneratedDoc, 0, len(docsList.Docs))
+func Create(defs []client.CollectionDefinition, docsList DocsList) ([]gen.GeneratedDoc, error) {
+	resultDocs := make([]gen.GeneratedDoc, 0, len(docsList.Docs))
 	typeDefs := make(map[string]client.CollectionDefinition)
 	for _, col := range defs {
 		typeDefs[col.Description.Name] = col
@@ -109,8 +128,8 @@ func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) ma
 func (this *docGenerator) generatePrimary(
 	secDocMap map[string]any,
 	secType *client.CollectionDefinition,
-) (map[string]any, []GeneratedDoc, error) {
-	result := []GeneratedDoc{}
+) (map[string]any, []gen.GeneratedDoc, error) {
+	result := []gen.GeneratedDoc{}
 	requestedSecondary := toRequestedDoc(secDocMap, secType)
 	for _, secDocField := range secType.Schema.Fields {
 		if secDocField.IsRelation() {
@@ -128,7 +147,7 @@ func (this *docGenerator) generatePrimary(
 					}
 					docKey := primDoc.Key().String()
 					requestedSecondary[secDocField.Name+request.RelatedObjectID] = docKey
-					subResult = append(subResult, GeneratedDoc{Col: &primType, Doc: primDoc})
+					subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc})
 					result = append(result, subResult...)
 
 					secondaryDocs, err := this.generateSecondaryDocs(
@@ -146,7 +165,7 @@ func (this *docGenerator) generatePrimary(
 
 // generateRelatedDocs generates related docs (primary and secondary) for the given doc and
 // adds foreign keys to the given doc to reference the primary docs.
-func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName string) ([]GeneratedDoc, error) {
+func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName string) ([]gen.GeneratedDoc, error) {
 	typeDef := this.types[typeName]
 
 	// create first primary docs and link them to the given doc so that we can define
@@ -160,7 +179,7 @@ func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName st
 		return nil, NewErrFailedToGenerateDoc(err)
 	}
 
-	result = append(result, GeneratedDoc{Col: &typeDef, Doc: doc})
+	result = append(result, gen.GeneratedDoc{Col: &typeDef, Doc: doc})
 
 	secondaryDocs, err := this.generateSecondaryDocs(docMap, doc.Key().String(), &typeDef, "")
 	if err != nil {
@@ -175,8 +194,8 @@ func (this *docGenerator) generateSecondaryDocs(
 	docKey string,
 	primaryType *client.CollectionDefinition,
 	parentTypeName string,
-) ([]GeneratedDoc, error) {
-	result := []GeneratedDoc{}
+) ([]gen.GeneratedDoc, error) {
+	result := []gen.GeneratedDoc{}
 	for _, field := range primaryType.Schema.Fields {
 		if field.IsRelation() {
 			if _, hasProp := primaryDocMap[field.Name]; hasProp {
@@ -201,8 +220,8 @@ func (this *docGenerator) generateSecondaryDocsForField(
 	primaryTypeName string,
 	relField *client.FieldDescription,
 	primaryDocKey string,
-) ([]GeneratedDoc, error) {
-	result := []GeneratedDoc{}
+) ([]gen.GeneratedDoc, error) {
+	result := []gen.GeneratedDoc{}
 	relTypeDef := this.types[relField.Schema]
 	primaryPropName := ""
 	for _, relDocField := range relTypeDef.Schema.Fields {

@@ -47,7 +47,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 						owner: User
 					}`,
 			},
-			testUtils.GeneratePredefinedDocs{
+			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{
@@ -109,7 +109,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 						owner: User
 					}`,
 			},
-			testUtils.GeneratePredefinedDocs{
+			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{
@@ -171,7 +171,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 						city: String @index
 					}`,
 			},
-			testUtils.GeneratePredefinedDocs{
+			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{
@@ -234,7 +234,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 						street: String 
 					}`,
 			},
-			testUtils.GeneratePredefinedDocs{
+			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{
@@ -290,7 +290,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 						street: String 
 					}`,
 			},
-			testUtils.GeneratePredefinedDocs{
+			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{
@@ -352,7 +352,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 						city: String @index
 					}`,
 			},
-			testUtils.GeneratePredefinedDocs{
+			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{

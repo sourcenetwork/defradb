@@ -8,13 +8,14 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package gen
+package predefined
 
 import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
 func areValuesEquivalent(a, b any) bool {
@@ -36,7 +37,7 @@ func areMapsEquivalent(m1, m2 map[string]any) bool {
 	return true
 }
 
-func assertDoc(expected map[string]any, actual GeneratedDoc) string {
+func assertDoc(expected map[string]any, actual gen.GeneratedDoc) string {
 	actualMap, err := actual.Doc.ToMap()
 	if err != nil {
 		return "can not convert doc to map: " + err.Error()
@@ -48,7 +49,7 @@ func assertDoc(expected map[string]any, actual GeneratedDoc) string {
 }
 
 // assertDocs asserts that the expected docs are equal to the actual docs ignoring order
-func assertDocs(expected []map[string]any, actual []GeneratedDoc) string {
+func assertDocs(expected []map[string]any, actual []gen.GeneratedDoc) string {
 	if len(expected) != len(actual) {
 		return fmt.Sprintf("expected len %d, got %d", len(expected), len(actual))
 	}

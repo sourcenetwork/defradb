@@ -35,7 +35,7 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 						age: Int
 					}`,
 			},
-			testUtils.GeneratePredefinedDocs{
+			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{
@@ -75,7 +75,7 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 						email: String 
 					}`,
 			},
-			testUtils.GeneratePredefinedDocs{
+			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
 			testUtils.Request{

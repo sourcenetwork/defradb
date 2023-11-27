@@ -125,7 +125,6 @@ func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType string, field *c
 
 func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 	for _, typeName := range order {
-		col := DocsList{ColName: typeName}
 		typeDef := g.configurator.types[typeName]
 
 		currentTypeDemand := g.configurator.docsDemand[typeName]
@@ -153,7 +152,6 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 			}
 			g.generatedDocs[typeName] = append(g.generatedDocs[typeName],
 				genDoc{docKey: doc.Key().String(), doc: doc})
-			col.Docs = append(col.Docs, newDoc)
 		}
 	}
 	return nil

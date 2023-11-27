@@ -35,6 +35,7 @@ import (
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
+	"github.com/sourcenetwork/defradb/tests/predefined"
 )
 
 const mutationTypeEnvName = "DEFRA_MUTATION_TYPE"
@@ -319,7 +320,7 @@ func performAction(
 	case GenerateDocs:
 		generateDocs(s, action)
 
-	case GeneratePredefinedDocs:
+	case CreatePredefinedDocs:
 		generatePredefinedDocs(s, action)
 
 	case SetupComplete:
@@ -359,13 +360,13 @@ func generateDocs(s *state, action GenerateDocs) {
 	createGenerateDocs(s, docs, action.NodeID)
 }
 
-func generatePredefinedDocs(s *state, action GeneratePredefinedDocs) {
+func generatePredefinedDocs(s *state, action CreatePredefinedDocs) {
 	collections := getNodeCollections(action.NodeID, s.collections)
 	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
 	for _, col := range collections[0] {
 		defs = append(defs, col.Definition())
 	}
-	docs, err := gen.GeneratePredefined(defs, action.Docs)
+	docs, err := predefined.Create(defs, action.Docs)
 	if err != nil {
 		s.t.Fatalf("Failed to generate docs %s", err)
 	}
