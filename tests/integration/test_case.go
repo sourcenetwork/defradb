@@ -17,6 +17,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/tests/gen"
+	"github.com/sourcenetwork/defradb/tests/predefined"
 )
 
 // TestCase contains the details of the test case to execute.
@@ -336,6 +338,32 @@ type Request struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+}
+
+// GenerateDocs is an action that will trigger generation of documents.
+type GenerateDocs struct {
+	// NodeID may hold the ID (index) of a node to execute the generation on.
+	//
+	// If a value is not provided the docs generation will be executed against all nodes,
+	NodeID immutable.Option[int]
+
+	// Options to be passed to the auto doc generator.
+	Options []gen.Option
+
+	// The list of collection names to generate docs for.
+	// If not provided, docs will be generated for all collections.
+	ForCollections []string
+}
+
+// CreatePredefinedDocs is an action that will trigger creation of predefined documents.
+type CreatePredefinedDocs struct {
+	// NodeID may hold the ID (index) of a node to execute the generation on.
+	//
+	// If a value is not provided the docs generation will be executed against all nodes,
+	NodeID immutable.Option[int]
+
+	// The list of documents to replicate.
+	Docs predefined.DocsList
 }
 
 // TransactionCommit represents a commit request for a transaction of the given id.

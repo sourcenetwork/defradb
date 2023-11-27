@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bxcodec/faker/support/slice"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -33,6 +34,8 @@ import (
 	"github.com/sourcenetwork/defradb/net"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
+	"github.com/sourcenetwork/defradb/tests/gen"
+	"github.com/sourcenetwork/defradb/tests/predefined"
 )
 
 const mutationTypeEnvName = "DEFRA_MUTATION_TYPE"
@@ -314,12 +317,60 @@ func performAction(
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
 
+	case GenerateDocs:
+		generateDocs(s, action)
+
+	case CreatePredefinedDocs:
+		generatePredefinedDocs(s, action)
+
 	case SetupComplete:
 		// no-op, just continue.
 
 	default:
 		s.t.Fatalf("Unknown action type %T", action)
 	}
+}
+
+func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Option[int]) {
+	nameToInd := make(map[string]int)
+	for i, name := range s.collectionNames {
+		nameToInd[name] = i
+	}
+	for _, doc := range docs {
+		docJSON, err := doc.Doc.String()
+		if err != nil {
+			s.t.Fatalf("Failed to generate docs %s", err)
+		}
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name], Doc: docJSON, NodeID: nodeID})
+	}
+}
+
+func generateDocs(s *state, action GenerateDocs) {
+	collections := getNodeCollections(action.NodeID, s.collections)
+	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
+	for _, col := range collections[0] {
+		if len(action.ForCollections) == 0 || slice.Contains(action.ForCollections, col.Name()) {
+			defs = append(defs, col.Definition())
+		}
+	}
+	docs, err := gen.AutoGenerate(defs, action.Options...)
+	if err != nil {
+		s.t.Fatalf("Failed to generate docs %s", err)
+	}
+	createGenerateDocs(s, docs, action.NodeID)
+}
+
+func generatePredefinedDocs(s *state, action CreatePredefinedDocs) {
+	collections := getNodeCollections(action.NodeID, s.collections)
+	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
+	for _, col := range collections[0] {
+		defs = append(defs, col.Definition())
+	}
+	docs, err := predefined.Create(defs, action.Docs)
+	if err != nil {
+		s.t.Fatalf("Failed to generate docs %s", err)
+	}
+	createGenerateDocs(s, docs, action.NodeID)
 }
 
 func benchmarkAction(
@@ -386,27 +437,7 @@ func getCollectionNames(testCase TestCase) []string {
 				continue
 			}
 
-			// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
-			splitByType := strings.Split(action.Schema, "type ")
-			// Skip the first, as that preceeds `type ` if `type ` is present,
-			// else there are no types.
-			for i := 1; i < len(splitByType); i++ {
-				wipSplit := strings.TrimLeft(splitByType[i], " ")
-				indexOfLastChar := strings.IndexAny(wipSplit, " {")
-				if indexOfLastChar <= 0 {
-					// This should never happen
-					continue
-				}
-
-				collectionName := wipSplit[:indexOfLastChar]
-				if _, ok := collectionIndexByName[collectionName]; ok {
-					// Collection name has already been added, possibly via another node
-					continue
-				}
-
-				collectionIndexByName[collectionName] = nextIndex
-				nextIndex++
-			}
+			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 		}
 	}
 
@@ -416,6 +447,31 @@ func getCollectionNames(testCase TestCase) []string {
 	}
 
 	return collectionNames
+}
+
+func getCollectionNamesFromSchema(result map[string]int, schema string, nextIndex int) int {
+	// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
+	splitByType := strings.Split(schema, "type ")
+	// Skip the first, as that preceeds `type ` if `type ` is present,
+	// else there are no types.
+	for i := 1; i < len(splitByType); i++ {
+		wipSplit := strings.TrimLeft(splitByType[i], " ")
+		indexOfLastChar := strings.IndexAny(wipSplit, " {")
+		if indexOfLastChar <= 0 {
+			// This should never happen
+			continue
+		}
+
+		collectionName := wipSplit[:indexOfLastChar]
+		if _, ok := result[collectionName]; ok {
+			// Collection name has already been added, possibly via another node
+			continue
+		}
+
+		result[collectionName] = nextIndex
+		nextIndex++
+	}
+	return nextIndex
 }
 
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
