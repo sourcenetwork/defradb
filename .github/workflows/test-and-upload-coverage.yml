@@ -95,10 +95,10 @@ jobs:
         if: ${{ !matrix.detect-changes }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
+          name: ${{ matrix.os }}_${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
           path: coverage.txt
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
 
   upload-coverage:
     name: Upload test code coverage job
