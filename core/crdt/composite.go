@@ -92,39 +92,19 @@ func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 
 // CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	store datastore.DSReaderWriter
-	key   core.DataStoreKey
-	// schemaVersionKey is the schema version datastore key at the time of commit.
-	//
-	// It can be used to identify the collection datastructure state at time of commit.
-	schemaVersionKey core.CollectionSchemaVersionKey
-
-	fieldName string
+	baseCRDT
 }
-
-var _ core.ReplicatedData = CompositeDAG{}
 
 func NewCompositeDAG(
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
-	namespace core.Key,
 	key core.DataStoreKey,
 	fieldName string,
 ) CompositeDAG {
-	return CompositeDAG{
-		store:            store,
-		key:              key,
-		schemaVersionKey: schemaVersionKey,
-		fieldName:        fieldName,
-	}
+	return CompositeDAG{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
 }
 
-// ID returns the schema ID of the composite DAG CRDT.
-func (c CompositeDAG) ID() string {
-	return c.key.ToString()
-}
-
-// Value returns the schema ID of the composite DAG CRDT.
+// Value is a no-op for a CompositeDAG.
 func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 	return nil, nil
 }
@@ -226,7 +206,7 @@ func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKe
 }
 
 // DeltaDecode is a typed helper to extract.
-// a LWWRegDelta from a ipld.Node
+// a CompositeDAGDelta from a ipld.Node
 // for now let's do cbor (quick to implement)
 func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &CompositeDAGDelta{}

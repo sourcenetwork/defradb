@@ -11,15 +11,16 @@
 /*
 Package crdt provides CRDT implementations leveraging MerkleClock.
 */
-package crdt
+package merklecrdt
 
 import (
 	"context"
 
 	ipld "github.com/ipfs/go-ipld-format"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -35,18 +36,13 @@ type MerkleCRDT interface {
 	Clock() core.MerkleClock
 }
 
-var (
-	// defaultMerkleCRDTs                     = make(map[Type]MerkleCRDTFactory)
-	_ core.ReplicatedData = (*baseMerkleCRDT)(nil)
-)
+var _ core.ReplicatedData = (*baseMerkleCRDT)(nil)
 
 // baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state
 // retrieval functions. It handles creating and publishing the CRDT DAG with the help of the MerkleClock.
 type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
-
-	updateChannel events.UpdateChannel
 }
 
 func (base *baseMerkleCRDT) Clock() core.MerkleClock {
@@ -65,19 +61,28 @@ func (base *baseMerkleCRDT) Value(ctx context.Context) ([]byte, error) {
 	return base.crdt.Value(ctx)
 }
 
-func (base *baseMerkleCRDT) ID() string {
-	return base.crdt.ID()
-}
-
-// Publishes the delta to state.
-func (base *baseMerkleCRDT) Publish(
-	ctx context.Context,
-	delta core.Delta,
-) (ipld.Node, error) {
-	log.Debug(ctx, "Processing CRDT state", logging.NewKV("DocKey", base.crdt.ID()))
-	nd, err := base.clock.AddDAGNode(ctx, delta)
-	if err != nil {
-		return nil, err
+func InstanceWithStore(
+	txn datastore.Txn,
+	schemaVersionKey core.CollectionSchemaVersionKey,
+	ctype client.CType,
+	key core.DataStoreKey,
+	fieldName string,
+) (MerkleCRDT, error) {
+	switch ctype {
+	case client.LWW_REGISTER:
+		return NewMerkleLWWRegister(
+			txn,
+			schemaVersionKey,
+			key,
+			fieldName,
+		), nil
+	case client.COMPOSITE:
+		return NewMerkleCompositeDAG(
+			txn,
+			schemaVersionKey,
+			key,
+			fieldName,
+		), nil
 	}
-	return nd, nil
+	return nil, client.ErrUnknownCRDT
 }

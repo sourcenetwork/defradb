@@ -31,7 +31,6 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/lens"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/request/graphql"
 )
 
@@ -55,8 +54,6 @@ type db struct {
 
 	rootstore  datastore.RootStore
 	multistore datastore.MultiStore
-
-	crdtFactory *crdt.Factory
 
 	events events.Events
 
@@ -114,7 +111,6 @@ func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*implicitTxnDB, error) {
 	log.Debug(ctx, "Loading: internal datastores")
 	multistore := datastore.MultiStoreFrom(rootstore)
-	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
 	parser, err := graphql.NewParser()
 	if err != nil {
@@ -124,8 +120,6 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 	db := &db{
 		rootstore:  rootstore,
 		multistore: multistore,
-
-		crdtFactory: &crdtFactory,
 
 		parser:  parser,
 		options: options,

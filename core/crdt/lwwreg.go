@@ -79,13 +79,6 @@ func (delta *LWWRegDelta) Value() any {
 // of an arbitrary data type that ensures convergence.
 type LWWRegister struct {
 	baseCRDT
-
-	// schemaVersionKey is the schema version datastore key at the time of commit.
-	//
-	// It can be used to identify the collection datastructure state at time of commit.
-	schemaVersionKey core.CollectionSchemaVersionKey
-
-	fieldName string
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID.
@@ -95,15 +88,7 @@ func NewLWWRegister(
 	key core.DataStoreKey,
 	fieldName string,
 ) LWWRegister {
-	return LWWRegister{
-		baseCRDT:         newBaseCRDT(store, key),
-		schemaVersionKey: schemaVersionKey,
-		fieldName:        fieldName,
-		// id:    id,
-		// data:  data,
-		// ts:    ts,
-		// clock: clock,
-	}
+	return LWWRegister{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
 }
 
 // Value gets the current register value
@@ -120,7 +105,6 @@ func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 // Set generates a new delta with the supplied value
 // RETURN DELTA
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
-	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
 		Data:            value,
 		DocKey:          []byte(reg.key.DocKey),
@@ -128,18 +112,6 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}
 }
-
-func (reg LWWRegister) ID() string {
-	return reg.key.ToString()
-}
-
-// RETURN DELTA
-// func (reg LWWRegister) setWithClock(value []byte, clock Clock) LWWRegDelta {
-// 	// return NewLWWRegister(reg.id, value, clock.Apply(), clock)
-// 	return LWWRegDelta{
-// 		data: value,
-// 	}
-// }
 
 // Merge implements ReplicatedData interface
 // Merge two LWWRegisty based on the order of the timestamp (ts),

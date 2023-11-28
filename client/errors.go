@@ -47,6 +47,7 @@ var (
 	ErrMaxTxnRetries        = errors.New(errMaxTxnRetries)
 	ErrRelationOneSided     = errors.New(errRelationOneSided)
 	ErrCollectionNotFound   = errors.New(errCollectionNotFound)
+	ErrUnknownCRDT          = errors.New("unknown crdt")
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

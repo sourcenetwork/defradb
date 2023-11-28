@@ -25,8 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
+	merklecrdt "github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -94,7 +93,7 @@ type VersionedFetcher struct {
 
 	col client.Collection
 	// @todo index  *client.IndexDescription
-	mCRDTs map[uint32]crdt.MerkleCRDT
+	mCRDTs map[uint32]merklecrdt.MerkleCRDT
 }
 
 // Init initializes the VersionedFetcher.
@@ -110,7 +109,7 @@ func (vf *VersionedFetcher) Init(
 ) error {
 	vf.col = col
 	vf.queuedCids = list.New()
-	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)
+	vf.mCRDTs = make(map[uint32]merklecrdt.MerkleCRDT)
 	vf.txn = txn
 
 	// create store
@@ -385,10 +384,9 @@ func (vf *VersionedFetcher) processNode(
 		if err != nil {
 			return err
 		}
-		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(
+		mcrdt, err = merklecrdt.InstanceWithStore(
 			vf.store,
 			core.CollectionSchemaVersionKey{},
-			events.EmptyUpdateChannel,
 			ctype,
 			key,
 			fieldName,
