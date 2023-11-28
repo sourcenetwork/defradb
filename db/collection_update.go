@@ -470,6 +470,9 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 
 	case client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
 		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
+
+	case client.FieldKind_BYTES:
+		return getString(val)
 	}
 
 	return nil, client.NewErrUnhandledType("FieldKind", field.Kind)
