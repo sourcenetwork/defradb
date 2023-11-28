@@ -331,6 +331,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 		typeFloat    string = "Float"
 		typeDateTime string = "DateTime"
 		typeString   string = "String"
+		typeBytes    string = "Bytes"
 	)
 
 	switch astTypeVal := t.(type) {
@@ -379,6 +380,8 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 			return client.FieldKind_DATETIME, nil
 		case typeString:
 			return client.FieldKind_STRING, nil
+		case typeBytes:
+			return client.FieldKind_BYTES, nil
 		default:
 			return client.FieldKind_FOREIGN_OBJECT, nil
 		}

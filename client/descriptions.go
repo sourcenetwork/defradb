@@ -166,7 +166,7 @@ const (
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
-	_                      FieldKind = 13 // safe to repurpose (was never used)
+	FieldKind_BYTES        FieldKind = 13
 	_                      FieldKind = 14 // safe to repurpose (was never used)
 	_                      FieldKind = 15 // safe to repurpose (was never used)
 
@@ -204,6 +204,7 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"String":     FieldKind_STRING,
 	"[String]":   FieldKind_NILLABLE_STRING_ARRAY,
 	"[String!]":  FieldKind_STRING_ARRAY,
+	"Bytes":      FieldKind_BYTES,
 }
 
 // RelationType describes the type of relation between two types.

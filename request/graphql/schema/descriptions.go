@@ -14,6 +14,7 @@ import (
 	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client"
+	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
 )
 
 var (
@@ -23,14 +24,15 @@ var (
 
 	//nolint:unused
 	gqlTypeToFieldKindReference = map[gql.Type]client.FieldKind{
-		gql.ID:        client.FieldKind_DocKey,
-		gql.Boolean:   client.FieldKind_BOOL,
-		gql.Int:       client.FieldKind_INT,
-		gql.Float:     client.FieldKind_FLOAT,
-		gql.DateTime:  client.FieldKind_DATETIME,
-		gql.String:    client.FieldKind_STRING,
-		&gql.Object{}: client.FieldKind_FOREIGN_OBJECT,
-		&gql.List{}:   client.FieldKind_FOREIGN_OBJECT_ARRAY,
+		gql.ID:                      client.FieldKind_DocKey,
+		gql.Boolean:                 client.FieldKind_BOOL,
+		gql.Int:                     client.FieldKind_INT,
+		gql.Float:                   client.FieldKind_FLOAT,
+		gql.DateTime:                client.FieldKind_DATETIME,
+		gql.String:                  client.FieldKind_STRING,
+		&gql.Object{}:               client.FieldKind_FOREIGN_OBJECT,
+		&gql.List{}:                 client.FieldKind_FOREIGN_OBJECT_ARRAY,
+		schemaTypes.BytesScalarType: client.FieldKind_BYTES,
 		// More custom ones to come
 		// - JSON
 		// - ByteArray
@@ -52,6 +54,7 @@ var (
 		client.FieldKind_STRING:                gql.String,
 		client.FieldKind_STRING_ARRAY:          gql.NewList(gql.NewNonNull(gql.String)),
 		client.FieldKind_NILLABLE_STRING_ARRAY: gql.NewList(gql.String),
+		client.FieldKind_BYTES:                 schemaTypes.BytesScalarType,
 	}
 
 	// This map is fine to use
@@ -70,6 +73,7 @@ var (
 		client.FieldKind_STRING:                client.LWW_REGISTER,
 		client.FieldKind_STRING_ARRAY:          client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_STRING_ARRAY: client.LWW_REGISTER,
+		client.FieldKind_BYTES:                 client.LWW_REGISTER,
 		client.FieldKind_FOREIGN_OBJECT:        client.NONE_CRDT,
 		client.FieldKind_FOREIGN_OBJECT_ARRAY:  client.NONE_CRDT,
 	}
