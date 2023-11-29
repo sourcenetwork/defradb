@@ -24,6 +24,8 @@ var BytesScalarType = graphql.NewScalar(graphql.ScalarConfig{
 		switch value := value.(type) {
 		case []byte:
 			return hex.EncodeToString(value)
+		case *[]byte:
+			return hex.EncodeToString(*value)
 		default:
 			return nil
 		}
