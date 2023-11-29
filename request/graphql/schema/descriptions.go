@@ -24,18 +24,18 @@ var (
 
 	//nolint:unused
 	gqlTypeToFieldKindReference = map[gql.Type]client.FieldKind{
-		gql.ID:                      client.FieldKind_DocKey,
-		gql.Boolean:                 client.FieldKind_BOOL,
-		gql.Int:                     client.FieldKind_INT,
-		gql.Float:                   client.FieldKind_FLOAT,
-		gql.DateTime:                client.FieldKind_DATETIME,
-		gql.String:                  client.FieldKind_STRING,
-		&gql.Object{}:               client.FieldKind_FOREIGN_OBJECT,
-		&gql.List{}:                 client.FieldKind_FOREIGN_OBJECT_ARRAY,
+		gql.ID:        client.FieldKind_DocKey,
+		gql.Boolean:   client.FieldKind_BOOL,
+		gql.Int:       client.FieldKind_INT,
+		gql.Float:     client.FieldKind_FLOAT,
+		gql.DateTime:  client.FieldKind_DATETIME,
+		gql.String:    client.FieldKind_STRING,
+		&gql.Object{}: client.FieldKind_FOREIGN_OBJECT,
+		&gql.List{}:   client.FieldKind_FOREIGN_OBJECT_ARRAY,
+		// Custom scalars
 		schemaTypes.BytesScalarType: client.FieldKind_BYTES,
 		// More custom ones to come
 		// - JSON
-		// - ByteArray
 		// - Counters
 	}
 
