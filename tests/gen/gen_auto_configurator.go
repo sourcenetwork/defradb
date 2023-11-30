@@ -66,7 +66,7 @@ func newTypeUsageCounter(random *rand.Rand) typeUsageCounters {
 func (c *typeUsageCounters) addRelationUsage(
 	secondaryType string,
 	field client.FieldDescription,
-	min, max, numDocs int,
+	minPerDoc, maxPerDoc, numDocs int,
 ) {
 	primaryType := field.Schema
 	if _, ok := c.m[primaryType]; !ok {
@@ -76,7 +76,7 @@ func (c *typeUsageCounters) addRelationUsage(
 		c.m[primaryType][secondaryType] = make(map[string]*relationUsage)
 	}
 	if _, ok := c.m[primaryType][secondaryType][field.Name]; !ok {
-		c.m[primaryType][secondaryType][field.Name] = newRelationUsage(min, max, numDocs, c.random)
+		c.m[primaryType][secondaryType][field.Name] = newRelationUsage(minPerDoc, maxPerDoc, numDocs, c.random)
 	}
 }
 
@@ -89,10 +89,10 @@ func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *
 type relationUsage struct {
 	// counter is the number of primary documents that have been used for the relation.
 	counter int
-	// minAmount is the minimum number of primary documents that should be used for the relation.
-	minAmount int
-	// maxAmount is the maximum number of primary documents that should be used for the relation.
-	maxAmount int
+	// minSecDocPerPrim is the minimum number of primary documents that should be used for the relation.
+	minSecDocPerPrim int
+	// maxSecDocPerPrim is the maximum number of primary documents that should be used for the relation.
+	maxSecDocPerPrim int
 	// docKeysCounter is a slice of structs that keep track of the number of times
 	// each primary document has been used for the relation.
 	docKeysCounter []struct {
@@ -101,18 +101,18 @@ type relationUsage struct {
 		// count is the number of times the primary document has been used for the relation.
 		count int
 	}
-	// numAvailableDocs is the number of documents of the primary type that are available
+	// numAvailablePrimaryDocs is the number of documents of the primary type that are available
 	// for the relation.
-	numAvailableDocs int
-	random           *rand.Rand
+	numAvailablePrimaryDocs int
+	random                  *rand.Rand
 }
 
-func newRelationUsage(minAmount, maxAmount, numDocs int, random *rand.Rand) *relationUsage {
+func newRelationUsage(minSecDocPerPrim, maxSecDocPerPrim, numDocs int, random *rand.Rand) *relationUsage {
 	return &relationUsage{
-		minAmount:        minAmount,
-		maxAmount:        maxAmount,
-		numAvailableDocs: numDocs,
-		random:           random,
+		minSecDocPerPrim:        minSecDocPerPrim,
+		maxSecDocPerPrim:        maxSecDocPerPrim,
+		numAvailablePrimaryDocs: numDocs,
+		random:                  random,
 	}
 }
 
@@ -123,7 +123,7 @@ func (u *relationUsage) useNextDocKey() int {
 	// if a primary document has a minimum number of secondary documents that should be
 	// generated for it, then it should be used until that minimum is reached.
 	// After that, we can pick a random primary document to use.
-	if u.counter >= u.minAmount*u.numAvailableDocs {
+	if u.counter >= u.minSecDocPerPrim*u.numAvailablePrimaryDocs {
 		docKeyCounterInd = u.random.Intn(len(u.docKeysCounter))
 	} else {
 		docKeyCounterInd = u.counter % len(u.docKeysCounter)
@@ -133,7 +133,7 @@ func (u *relationUsage) useNextDocKey() int {
 	docCounter.count++
 	// if the primary document reached max number of secondary documents, we can remove it
 	// from the slice of primary documents that are available for the relation.
-	if docCounter.count >= u.maxAmount {
+	if docCounter.count >= u.maxSecDocPerPrim {
 		lastCounterInd := len(u.docKeysCounter) - 1
 		*docCounter = u.docKeysCounter[lastCounterInd]
 		u.docKeysCounter = u.docKeysCounter[:lastCounterInd]
@@ -148,7 +148,7 @@ func (u *relationUsage) allocateIndexes() {
 	docKeysCounter := make([]struct {
 		ind   int
 		count int
-	}, u.numAvailableDocs)
+	}, u.numAvailablePrimaryDocs)
 	for i := range docKeysCounter {
 		docKeysCounter[i].ind = i
 	}
@@ -207,18 +207,20 @@ func (g *docsGenConfigurator) Configure(options ...Option) error {
 }
 
 func (g *docsGenConfigurator) calculateDocsDemand(initialTypes map[string]typeDemand) error {
-	for typeName, demand := range initialTypes {
-		var err error
-		// from the current type we go up the graph and calculate the demand for primary types
-		demand, err = g.getPrimaryDemand(typeName, demand, g.primaryGraph)
-		if err != nil {
-			return err
-		}
-		g.docsDemand[typeName] = demand
+	for _, typeName := range g.typesOrder {
+		if demand, ok := initialTypes[typeName]; ok {
+			var err error
+			// from the current type we go up the graph and calculate the demand for primary types
+			demand, err = g.getPrimaryDemand(typeName, demand, g.primaryGraph)
+			if err != nil {
+				return err
+			}
+			g.docsDemand[typeName] = demand
 
-		err = g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
-		if err != nil {
-			return err
+			err = g.calculateDemandForSecondaryTypes(typeName, g.primaryGraph)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -252,11 +254,11 @@ func (g *docsGenConfigurator) allocateUsageCounterIndexes() {
 		}
 		for _, usage := range g.usageCounter.m[typeName] {
 			for _, field := range usage {
-				if field.numAvailableDocs == math.MaxInt {
-					field.numAvailableDocs = max
+				if field.numAvailablePrimaryDocs == math.MaxInt {
+					field.numAvailablePrimaryDocs = max
 				}
-				if field.numAvailableDocs > demand.max {
-					field.numAvailableDocs = demand.max
+				if field.numAvailablePrimaryDocs > demand.max {
+					field.numAvailablePrimaryDocs = demand.max
 				}
 				field.allocateIndexes()
 			}
@@ -274,6 +276,7 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 		if field.IsObject() && field.Schema == secondaryType {
 			primaryDemand := typeDemand{min: secondaryDemand.min, max: secondaryDemand.max}
 			minPerDoc, maxPerDoc := 1, 1
+
 			if field.IsArray() {
 				fieldConf := g.config.ForField(primaryType, field.Name)
 				minPerDoc, maxPerDoc = getMinMaxOrDefault(fieldConf, 0, secondaryDemand.max)
@@ -339,22 +342,38 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 		if field.IsObject() && !field.IsPrimaryRelation() {
 			primaryDocDemand := g.docsDemand[typeName]
 			newSecDemand := typeDemand{min: primaryDocDemand.min, max: primaryDocDemand.max}
-			min, max := 1, 1
+			minPerDoc, maxPerDoc := 1, 1
+
+			curSecDemand, hasSecDemand := g.docsDemand[field.Schema]
 
 			if field.IsArray() {
 				fieldConf := g.config.ForField(typeName, field.Name)
-				min, max = getMinMaxOrDefault(fieldConf, DefaultNumChildrenPerDoc, DefaultNumChildrenPerDoc)
-				newSecDemand.max = primaryDocDemand.min * max
-				newSecDemand.min = primaryDocDemand.max * min
+				if prop, ok := fieldConf.props["min"]; ok {
+					minPerDoc = prop.(int)
+					maxPerDoc = fieldConf.props["max"].(int)
+					newSecDemand.min = primaryDocDemand.max * minPerDoc
+					newSecDemand.max = primaryDocDemand.min * maxPerDoc
+				} else if hasSecDemand {
+					minPerDoc = curSecDemand.min / primaryDocDemand.max
+					maxPerDoc = curSecDemand.max / primaryDocDemand.min
+					newSecDemand.min = curSecDemand.min
+					newSecDemand.max = curSecDemand.max
+				} else {
+					minPerDoc = DefaultNumChildrenPerDoc
+					maxPerDoc = DefaultNumChildrenPerDoc
+					newSecDemand.min = primaryDocDemand.max * minPerDoc
+					newSecDemand.max = primaryDocDemand.min * maxPerDoc
+				}
 			}
 
-			curSecDemand := g.docsDemand[field.Schema]
-			if curSecDemand.usedDefined &&
-				(curSecDemand.min < newSecDemand.min || curSecDemand.max > newSecDemand.max) {
-				return NewErrCanNotSupplyTypeDemand(field.Schema)
+			if hasSecDemand {
+				if curSecDemand.min < newSecDemand.min || curSecDemand.max > newSecDemand.max {
+					return NewErrCanNotSupplyTypeDemand(field.Schema)
+				}
+			} else {
+				g.docsDemand[field.Schema] = newSecDemand
 			}
-			g.docsDemand[field.Schema] = newSecDemand
-			g.initRelationUsages(field.Schema, typeName, min, max)
+			g.initRelationUsages(field.Schema, typeName, minPerDoc, maxPerDoc)
 
 			err := g.calculateDemandForSecondaryTypes(field.Schema, primaryGraph)
 			if err != nil {
@@ -375,11 +394,12 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 	return nil
 }
 
-func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType string, min, max int) {
+func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType string, minPerDoc, maxPerDoc int) {
 	secondaryTypeDef := g.types[secondaryType]
 	for _, secondaryTypeField := range secondaryTypeDef.Schema.Fields {
 		if secondaryTypeField.Schema == primaryType {
-			g.usageCounter.addRelationUsage(secondaryType, secondaryTypeField, min, max, g.docsDemand[primaryType].getAverage())
+			g.usageCounter.addRelationUsage(secondaryType, secondaryTypeField, minPerDoc,
+				maxPerDoc, g.docsDemand[primaryType].getAverage())
 		}
 	}
 }
