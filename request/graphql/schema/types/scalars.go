@@ -17,9 +17,9 @@ import (
 	"github.com/sourcenetwork/graphql-go/language/ast"
 )
 
-var BytesScalarType = graphql.NewScalar(graphql.ScalarConfig{
-	Name:        "Bytes",
-	Description: "The `Bytes` scalar type represents an array of bytes.",
+var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
+	Name:        "Blob",
+	Description: "The `Blob` scalar type represents a binary large object.",
 	Serialize: func(value any) any {
 		switch value := value.(type) {
 		case []byte:

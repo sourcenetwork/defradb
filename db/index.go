@@ -51,6 +51,8 @@ func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
 		return canConvertIndexFieldValue[float64]
 	case client.FieldKind_BOOL:
 		return canConvertIndexFieldValue[bool]
+	case client.FieldKind_BLOB:
+		return canConvertIndexFieldValue[string]
 	case client.FieldKind_DATETIME:
 		return func(val any) bool {
 			timeStrVal, ok := val.(string)

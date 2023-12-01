@@ -272,13 +272,13 @@ func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaSimpleCreatesSchemaGivenTypeWithBytesField(t *testing.T) {
+func TestSchemaSimpleCreatesSchemaGivenTypeWithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						data: Bytes
+						data: Blob
 					}
 				`,
 			},
@@ -305,7 +305,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithBytesField(t *testing.T) {
 								"name": "data",
 								"type": map[string]any{
 									"kind": "SCALAR",
-									"name": "Bytes",
+									"name": "Blob",
 								},
 							},
 						).Tidy(),

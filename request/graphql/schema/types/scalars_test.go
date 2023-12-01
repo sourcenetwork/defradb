@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBytesScalarTypeSerialize(t *testing.T) {
+func TestBlobScalarTypeSerialize(t *testing.T) {
 	input := []byte{0, 255}
 	output := "00ff"
 
@@ -32,12 +32,12 @@ func TestBytesScalarTypeSerialize(t *testing.T) {
 		{false, nil},
 	}
 	for _, c := range cases {
-		result := BytesScalarType.Serialize(c.input)
+		result := BlobScalarType.Serialize(c.input)
 		assert.Equal(t, c.expect, result)
 	}
 }
 
-func TestBytesScalarTypeParseValue(t *testing.T) {
+func TestBlobScalarTypeParseValue(t *testing.T) {
 	input := "00ff"
 	output := []byte{0, 255}
 	invalid := "invalid"
@@ -55,12 +55,12 @@ func TestBytesScalarTypeParseValue(t *testing.T) {
 		{false, nil},
 	}
 	for _, c := range cases {
-		result := BytesScalarType.ParseValue(c.input)
+		result := BlobScalarType.ParseValue(c.input)
 		assert.Equal(t, c.expect, result)
 	}
 }
 
-func TestBytesScalarTypeParseLiteral(t *testing.T) {
+func TestBlobScalarTypeParseLiteral(t *testing.T) {
 	cases := []struct {
 		input  ast.Value
 		expect any
@@ -76,7 +76,7 @@ func TestBytesScalarTypeParseLiteral(t *testing.T) {
 		{&ast.ObjectValue{}, nil},
 	}
 	for _, c := range cases {
-		result := BytesScalarType.ParseLiteral(c.input)
+		result := BlobScalarType.ParseLiteral(c.input)
 		assert.Equal(t, c.expect, result)
 	}
 }

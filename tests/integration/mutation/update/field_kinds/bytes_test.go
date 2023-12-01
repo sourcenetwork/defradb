@@ -16,15 +16,15 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationUpdate_WithBytesField(t *testing.T) {
+func TestMutationUpdate_WithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update of bytes field",
+		Description: "Simple update of blob field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
 						name: String
-						data: Bytes
+						data: Blob
 					}
 				`,
 			},
