@@ -40,7 +40,8 @@ func TestBlobScalarTypeSerialize(t *testing.T) {
 func TestBlobScalarTypeParseValue(t *testing.T) {
 	input := "00ff"
 	output := []byte{0, 255}
-	invalid := "invalid"
+	// invalid string containing non-hex characters
+	invalid := "!@#$%^&*"
 
 	cases := []struct {
 		input  any
@@ -66,7 +67,7 @@ func TestBlobScalarTypeParseLiteral(t *testing.T) {
 		expect any
 	}{
 		{&ast.StringValue{Value: "00ff"}, []byte{0, 255}},
-		{&ast.StringValue{Value: "invalid"}, nil},
+		{&ast.StringValue{Value: "!@#$%^&*"}, nil},
 		{&ast.IntValue{}, nil},
 		{&ast.BooleanValue{}, nil},
 		{&ast.NullValue{}, nil},

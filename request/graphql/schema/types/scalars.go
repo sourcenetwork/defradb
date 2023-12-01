@@ -27,6 +27,7 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 		case *[]byte:
 			return hex.EncodeToString(*value)
 		default:
+			// return nil if the value cannot be serialized
 			return nil
 		}
 	},
@@ -41,6 +42,10 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 		case *string:
 			data, err := hex.DecodeString(*value)
 			if err != nil {
+				// the error cannot be handled due to
+				// the design of graphql-go scalars
+				//
+				// return nil if the value cannot be parsed
 				return nil
 			}
 			return data
@@ -53,10 +58,15 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 		case *ast.StringValue:
 			data, err := hex.DecodeString(valueAST.Value)
 			if err != nil {
+				// the error cannot be handled due to
+				// the design of graphql-go scalars
+				//
+				// return nil if the value cannot be parsed
 				return nil
 			}
 			return data
 		default:
+			// return nil if the value cannot be parsed
 			return nil
 		}
 	},
