@@ -20,6 +20,7 @@ import (
 var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 	Name:        "Blob",
 	Description: "The `Blob` scalar type represents a binary large object.",
+	// Serialize converts the value to the serialized hex representation
 	Serialize: func(value any) any {
 		switch value := value.(type) {
 		case []byte:
@@ -31,6 +32,7 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 			return nil
 		}
 	},
+	// ParseValue converts the serialized value to the []byte representation
 	ParseValue: func(value any) any {
 		switch value := value.(type) {
 		case string:
@@ -53,6 +55,7 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 			return nil
 		}
 	},
+	// ParseLiteral converts the ast value to the []byte representation
 	ParseLiteral: func(valueAST ast.Value) any {
 		switch valueAST := valueAST.(type) {
 		case *ast.StringValue:
