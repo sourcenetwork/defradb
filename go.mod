@@ -40,7 +40,7 @@ require (
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/btree v1.7.0
-	github.com/ugorji/go/codec v1.2.11
+	github.com/ugorji/go/codec v1.2.12
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.0.0
 	go.opentelemetry.io/otel/metric v1.21.0
