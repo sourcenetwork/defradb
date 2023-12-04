@@ -12,62 +12,51 @@ package types
 
 import (
 	"encoding/hex"
+	"regexp"
 
 	"github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 )
 
+// blobPattern is a regex for validating blob hex strings
+var blobPattern = regexp.MustCompile("[0-9a-fA-F]+")
+
+// coerceBlob converts the given value into a valid hex string.
+// If the value cannot be converted nil is returned.
+func coerceBlob(value any) any {
+	switch value := value.(type) {
+	case []byte:
+		return hex.EncodeToString(value)
+
+	case *[]byte:
+		return coerceBlob(*value)
+
+	case string:
+		if !blobPattern.MatchString(value) {
+			return nil
+		}
+		return value
+
+	case *string:
+		return coerceBlob(*value)
+
+	default:
+		return nil
+	}
+}
+
 var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 	Name:        "Blob",
 	Description: "The `Blob` scalar type represents a binary large object.",
 	// Serialize converts the value to the serialized hex representation
-	Serialize: func(value any) any {
-		switch value := value.(type) {
-		case []byte:
-			return hex.EncodeToString(value)
-		case *[]byte:
-			return hex.EncodeToString(*value)
-		default:
-			// return nil if the value cannot be serialized
-			return nil
-		}
-	},
+	Serialize: coerceBlob,
 	// ParseValue converts the serialized value to the []byte representation
-	ParseValue: func(value any) any {
-		switch value := value.(type) {
-		case string:
-			data, err := hex.DecodeString(value)
-			if err != nil {
-				return nil
-			}
-			return data
-		case *string:
-			data, err := hex.DecodeString(*value)
-			if err != nil {
-				// the error cannot be handled due to
-				// the design of graphql-go scalars
-				//
-				// return nil if the value cannot be parsed
-				return nil
-			}
-			return data
-		default:
-			return nil
-		}
-	},
+	ParseValue: coerceBlob,
 	// ParseLiteral converts the ast value to the []byte representation
 	ParseLiteral: func(valueAST ast.Value) any {
 		switch valueAST := valueAST.(type) {
 		case *ast.StringValue:
-			data, err := hex.DecodeString(valueAST.Value)
-			if err != nil {
-				// the error cannot be handled due to
-				// the design of graphql-go scalars
-				//
-				// return nil if the value cannot be parsed
-				return nil
-			}
-			return data
+			return coerceBlob(valueAST.Value)
 		default:
 			// return nil if the value cannot be parsed
 			return nil
