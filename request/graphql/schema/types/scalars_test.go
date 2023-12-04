@@ -71,7 +71,8 @@ func TestBlobScalarTypeParseLiteral(t *testing.T) {
 		expect any
 	}{
 		{&ast.StringValue{Value: "00ff"}, "00ff"},
-		{&ast.StringValue{Value: "!@#$%^&*"}, nil},
+		{&ast.StringValue{Value: "00!@#$%^&*"}, nil},
+		{&ast.StringValue{Value: "!@#$%^&*00"}, nil},
 		{&ast.IntValue{}, nil},
 		{&ast.BooleanValue{}, nil},
 		{&ast.NullValue{}, nil},

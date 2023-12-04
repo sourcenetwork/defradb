@@ -19,7 +19,7 @@ import (
 )
 
 // blobPattern is a regex for validating blob hex strings
-var blobPattern = regexp.MustCompile("[0-9a-fA-F]+")
+var blobPattern = regexp.MustCompile("^[0-9a-fA-F]+$")
 
 // coerceBlob converts the given value into a valid hex string.
 // If the value cannot be converted nil is returned.
