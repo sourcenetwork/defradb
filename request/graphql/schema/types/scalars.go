@@ -48,11 +48,11 @@ func coerceBlob(value any) any {
 var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 	Name:        "Blob",
 	Description: "The `Blob` scalar type represents a binary large object.",
-	// Serialize converts the value to the serialized hex representation
+	// Serialize converts the value to a hex string
 	Serialize: coerceBlob,
-	// ParseValue converts the serialized value to the []byte representation
+	// ParseValue converts the value to a hex string
 	ParseValue: coerceBlob,
-	// ParseLiteral converts the ast value to the []byte representation
+	// ParseLiteral converts the ast value a hex string
 	ParseLiteral: func(valueAST ast.Value) any {
 		switch valueAST := valueAST.(type) {
 		case *ast.StringValue:
