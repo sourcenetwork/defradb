@@ -21,7 +21,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 	updatedSchemaVersionId := "bafkreid5bpw7sipm63l5gxxjrs34yrq2ur5xrzyseez5rnj3pvnvkaya6m"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with update after schema update, verison join",
+		Description: "Test schema update, add field with update after schema update, version join",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

@@ -138,7 +138,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockExactString(t *testing.T
 
 func TestQuerySimpleWithNotLikeStringContainsFilterBlockContainsStringMuplitpleResults(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with basic not like-string filter with contains string mulitple results",
+		Description: "Simple query with basic not like-string filter with contains string multiple results",
 		Request: `query {
 					Users(filter: {Name: {_nlike: "%Targaryen%"}}) {
 						Name
