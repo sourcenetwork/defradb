@@ -89,10 +89,10 @@ func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *
 type relationUsage struct {
 	// counter is the number of primary documents that have been used for the relation.
 	counter int
-	// minSecDocPerPrim is the minimum number of primary documents that should be used for the relation.
-	minSecDocPerPrim int
-	// maxSecDocPerPrim is the maximum number of primary documents that should be used for the relation.
-	maxSecDocPerPrim int
+	// minSecDocsPerPrimary is the minimum number of primary documents that should be used for the relation.
+	minSecDocsPerPrimary int
+	// maxSecDocsPerPrimary is the maximum number of primary documents that should be used for the relation.
+	maxSecDocsPerPrimary int
 	// docKeysCounter is a slice of structs that keep track of the number of times
 	// each primary document has been used for the relation.
 	docKeysCounter []struct {
@@ -109,8 +109,8 @@ type relationUsage struct {
 
 func newRelationUsage(minSecDocPerPrim, maxSecDocPerPrim, numDocs int, random *rand.Rand) *relationUsage {
 	return &relationUsage{
-		minSecDocPerPrim:        minSecDocPerPrim,
-		maxSecDocPerPrim:        maxSecDocPerPrim,
+		minSecDocsPerPrimary:    minSecDocPerPrim,
+		maxSecDocsPerPrimary:    maxSecDocPerPrim,
 		numAvailablePrimaryDocs: numDocs,
 		random:                  random,
 	}
@@ -123,7 +123,7 @@ func (u *relationUsage) useNextDocKey() int {
 	// if a primary document has a minimum number of secondary documents that should be
 	// generated for it, then it should be used until that minimum is reached.
 	// After that, we can pick a random primary document to use.
-	if u.counter >= u.minSecDocPerPrim*u.numAvailablePrimaryDocs {
+	if u.counter >= u.minSecDocsPerPrimary*u.numAvailablePrimaryDocs {
 		docKeyCounterInd = u.random.Intn(len(u.docKeysCounter))
 	} else {
 		docKeyCounterInd = u.counter % len(u.docKeysCounter)
@@ -133,7 +133,7 @@ func (u *relationUsage) useNextDocKey() int {
 	docCounter.count++
 	// if the primary document reached max number of secondary documents, we can remove it
 	// from the slice of primary documents that are available for the relation.
-	if docCounter.count >= u.maxSecDocPerPrim {
+	if docCounter.count >= u.maxSecDocsPerPrimary {
 		lastCounterInd := len(u.docKeysCounter) - 1
 		*docCounter = u.docKeysCounter[lastCounterInd]
 		u.docKeysCounter = u.docKeysCounter[:lastCounterInd]
