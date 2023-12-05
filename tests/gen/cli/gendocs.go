@@ -13,6 +13,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"strconv"
 	"strings"
 
@@ -34,7 +35,7 @@ func MakeGenDocCommand(cfg *config.Config) *cobra.Command {
 		Short: "Automatically generates documents for existing collections.",
 		Long: `Automatically generates documents for existing collections.		
 
-Example: generates 100 User documents and 500 Device documents:
+Example: The following command generates 100 User documents and 500 Device documents:
   defradb gendocs --demand '{"User": 100, "Device": 500 }'`,
 		ValidArgs: []string{"demand"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -68,7 +69,8 @@ Example: generates 100 User documents and 500 Device documents:
 			}
 
 			out := cmd.OutOrStdout()
-			_, err = out.Write([]byte("Generated " + strconv.Itoa(len(docs)) + " documents\n"))
+			_, err = out.Write([]byte("Generated " + strconv.Itoa(len(docs)) +
+				" documents. Adding to collections...\n"))
 			if err != nil {
 				return err
 			}
@@ -79,35 +81,20 @@ Example: generates 100 User documents and 500 Device documents:
 					thisBatch = len(docs)
 				}
 
-				colDocsMap := make(map[string][]*client.Document)
-				for _, doc := range docs[:thisBatch] {
-					colDocsMap[doc.Col.Description.Name] = append(colDocsMap[doc.Col.Description.Name], doc.Doc)
+				colDocsMap := groupDocsByCollection(docs[:thisBatch])
+
+				err = saveBatchToCollections(context.Background(), collections, colDocsMap)
+				if err != nil {
+					return err
 				}
 
-				for colName, colDocs := range colDocsMap {
-					for i := range collections {
-						if collections[i].Description().Name == colName {
-							err = collections[i].CreateMany(context.Background(), colDocs)
-							if err != nil {
-								return err
-							}
-							break
-						}
-					}
+				err = reportSavedBatch(out, thisBatch, colDocsMap)
+				if err != nil {
+					return err
 				}
 
 				docs = docs[thisBatch:]
 
-				reports := make([]string, 0, len(colDocsMap))
-				for colName, colDocs := range colDocsMap {
-					reports = append(reports, strconv.Itoa(len(colDocs))+" "+colName)
-				}
-
-				r := strings.Join(reports, ", ")
-				_, err = out.Write([]byte("Added " + strconv.Itoa(thisBatch) + " documents: " + r + "\n"))
-				if err != nil {
-					return err
-				}
 			}
 
 			return nil
@@ -116,6 +103,44 @@ Example: generates 100 User documents and 500 Device documents:
 	cmd.Flags().StringVarP(&demandJSON, "demand", "d", "", "Documents' demand in JSON format")
 
 	return cmd
+}
+
+func reportSavedBatch(out io.Writer, thisBatch int, colDocsMap map[string][]*client.Document) error {
+	reports := make([]string, 0, len(colDocsMap))
+	for colName, colDocs := range colDocsMap {
+		reports = append(reports, strconv.Itoa(len(colDocs))+" "+colName)
+	}
+
+	r := strings.Join(reports, ", ")
+	_, err := out.Write([]byte("Added " + strconv.Itoa(thisBatch) + " documents: " + r + "\n"))
+	return err
+}
+
+func saveBatchToCollections(
+	ctx context.Context,
+	collections []client.Collection,
+	colDocsMap map[string][]*client.Document,
+) error {
+	for colName, colDocs := range colDocsMap {
+		for _, col := range collections {
+			if col.Description().Name == colName {
+				err := col.CreateMany(context.Background(), colDocs)
+				if err != nil {
+					return err
+				}
+				break
+			}
+		}
+	}
+	return nil
+}
+
+func groupDocsByCollection(docs []gen.GeneratedDoc) map[string][]*client.Document {
+	result := make(map[string][]*client.Document)
+	for _, doc := range docs {
+		result[doc.Col.Description.Name] = append(result[doc.Col.Description.Name], doc.Doc)
+	}
+	return result
 }
 
 func colsToDefs(cols []client.Collection) []client.CollectionDefinition {
