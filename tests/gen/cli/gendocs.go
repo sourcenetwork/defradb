@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
@@ -41,16 +42,13 @@ Example: generates 100 User documents and 500 Device documents:
 			if err := loadConfig(cfg); err != nil {
 				return err
 			}
-			if err := setTransactionContext(cmd, cfg, 0); err != nil {
+			store, err := http.NewClient(cfg.API.Address)
+			if err != nil {
 				return err
 			}
-			if err := setStoreContext(cmd, cfg); err != nil {
-				return err
-			}
-			store := mustGetStoreContext(cmd)
 
 			demandMap := make(map[string]int)
-			err := json.Unmarshal([]byte(demandJSON), &demandMap)
+			err = json.Unmarshal([]byte(demandJSON), &demandMap)
 			if err != nil {
 				return err
 			}
@@ -126,4 +124,11 @@ func colsToDefs(cols []client.Collection) []client.CollectionDefinition {
 		colDefs = append(colDefs, col.Definition())
 	}
 	return colDefs
+}
+
+func loadConfig(cfg *config.Config) error {
+	if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
+		return err
+	}
+	return cfg.LoadWithRootdir(cfg.ConfigFileExists())
 }

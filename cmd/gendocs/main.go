@@ -18,12 +18,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/config"
+	genCLI "github.com/sourcenetwork/defradb/tests/gen/cli"
 )
 
 func main() {
 	conf := config.DefaultConfig()
 	rootCmd := cli.NewDefraCommand(conf)
-	gendocsCmd := cli.MakeGenDocCommand(conf)
+	gendocsCmd := genCLI.MakeGenDocCommand(conf)
 	rootCmd.AddCommand(gendocsCmd)
 	if err := rootCmd.Execute(); err != nil {
 		// this error is okay to discard because cobra
