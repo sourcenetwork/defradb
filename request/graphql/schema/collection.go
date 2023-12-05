@@ -56,7 +56,7 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
-			description, err := fromAstDefinition(ctx, relationManager, defType)
+			description, err := collectionFromAstDefinition(ctx, relationManager, defType)
 			if err != nil {
 				return nil, err
 			}
@@ -80,8 +80,8 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 	return definitions, nil
 }
 
-// fromAstDefinition parses a AST object definition into a set of collection descriptions.
-func fromAstDefinition(
+// collectionFromAstDefinition parses a AST object definition into a set of collection descriptions.
+func collectionFromAstDefinition(
 	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.ObjectDefinition,
