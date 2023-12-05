@@ -36,7 +36,7 @@ func MakeGenDocCommand(cfg *config.Config) *cobra.Command {
 		Long: `Automatically generates documents for existing collections.		
 
 Example: The following command generates 100 User documents and 500 Device documents:
-  defradb gendocs --demand '{"User": 100, "Device": 500 }'`,
+  gendocs --demand '{"User": 100, "Device": 500 }'`,
 		ValidArgs: []string{"demand"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// cobra does not chain pre run calls so we have to run them again here
