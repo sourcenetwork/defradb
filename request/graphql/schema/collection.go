@@ -96,7 +96,7 @@ func collectionFromAstDefinition(
 
 	indexDescriptions := []client.IndexDescription{}
 	for _, field := range def.Fields {
-		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def)
+		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def.Name.Value)
 		if err != nil {
 			return client.CollectionDefinition{}, err
 		}
@@ -271,7 +271,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 
 func fieldsFromAST(field *ast.FieldDefinition,
 	relationManager *RelationManager,
-	def *ast.ObjectDefinition,
+	hostObjectName string,
 ) ([]client.FieldDescription, error) {
 	kind, err := astTypeToKind(field.Type)
 	if err != nil {
@@ -304,7 +304,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 			relationType = client.Relation_Type_MANY
 		}
 
-		relationName, err = getRelationshipName(field, def.Name.Value, schema)
+		relationName, err = getRelationshipName(field, hostObjectName, schema)
 		if err != nil {
 			return nil, err
 		}
