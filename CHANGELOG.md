@@ -5,7 +5,7 @@
 
 DefraDB v0.8 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.7.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.7.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
 
 ### Features
 
@@ -81,7 +81,7 @@ DefraDB v0.7 is a major pre-production release. Until the stable version 1.0 is 
 
 This release has focused on robustness, testing, and schema management. Some highlight new features include notable expansions to the expressiveness of schema migrations.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.6.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.6.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
 
 ### Features
 
@@ -154,7 +154,7 @@ DefraDB v0.6 is a major pre-production release. Until the stable version 1.0 is 
 
 There are several new and powerful features, important bug fixes, and notable refactors in this release. Some highlight features include: The initial release of our LensVM based schema migration engine powered by WebAssembly ([#1650](https://github.com/sourcenetwork/defradb/issues/1650)), newly embedded DefraDB Playround which includes a bundled GraphQL client and schema manager, and last but not least a relation field (<type>_id) alias to improve the developer experience ([#1609](https://github.com/sourcenetwork/defradb/issues/1609)).
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.5.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.5.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
 
 ### Features
 
@@ -329,7 +329,7 @@ There many new features in this release, but most importantly, this is the first
 
 To get a full outline of the changes, we invite you to review the official changelog below. Some highlights are the first iteration of our schema update system, allowing developers to add new fields to schemas using our JSON Patch based DDL, a new DAG based delete system which will persist "soft-delete" ops into the CRDT Merkle DAG, and a early prototype for our collection level peer-to-peer synchronization.
 
-This release does include a Breaking Change to existing v0.4.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
+This release does include a Breaking Change to existing v0.4.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
 
 ### Features
 
@@ -469,7 +469,7 @@ DefraDB v0.4 is a major pre-production release. Until the stable version 1.0 is 
 
 There are various new features in this release - some of which are breaking - and we invite you to review the official changelog below. Some highlights are persistence of replicators, DateTime scalars, TLS support, and GQL subscriptions.
 
-This release does include a Breaking Change to existing v0.3.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
+This release does include a Breaking Change to existing v0.3.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
 
 ### Features
 
@@ -642,7 +642,7 @@ DefraDB v0.3 is a major pre-production release. Until the stable version 1.0 is 
 
 There are *several* new features in this release, and we invite you to review the official changelog below. Some highlights are various new features for Grouping & Aggregation for the query system, like top-level aggregation and group filtering. Moreover, a brand new Query Explain system was added to introspect the execution plans created by DefraDB. Lastly we introduced a revamped CLI configuration system.
 
-This release does include a Breaking Change to existing v0.2.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.source.network/.
+This release does include a Breaking Change to existing v0.2.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
 
 ### Features
 
@@ -877,7 +877,7 @@ This release is jam-packed with new features and a small number of breaking chan
 
 Much more than just that has been added to ensure we're building reliable software expected of any database, such as expanded test & benchmark suites, automated bug detection, performance gains, and more.
 
-This release does include a Breaking Change to existing v0.1 databases regarding the internal data model, which affects the "Content Identifiers" we use to generate DocKeys and VersionIDs. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.source.network.
+This release does include a Breaking Change to existing v0.1 databases regarding the internal data model, which affects the "Content Identifiers" we use to generate DocKeys and VersionIDs. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.gg/w7jYQVJ.
 
 ### Features
 

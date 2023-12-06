@@ -45,18 +45,18 @@ type LensConfig struct {
 type LensRegistry interface {
 	// WithTxn returns a new LensRegistry scoped to the given transaction.
 	//
-	// WARNING: Currently this does not provide snapshot isolation, if other transactions are commited
+	// WARNING: Currently this does not provide snapshot isolation, if other transactions are committed
 	// after this has been created, the results of those commits will be visible within this scope.
 	WithTxn(datastore.Txn) LensRegistry
 
-	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivilent to
+	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivalent to
 	// calling `Store.SetMigration(ctx, cfg)`.
 	//
 	// There may only be one migration per schema version id.  If another migration was registered it will be
 	// overwritten by this migration.
 	//
 	// Neither of the schema version IDs specified in the configuration need to exist at the time of calling.
-	// This is to allow the migration of documents of schema versions unknown to the local node recieved by the
+	// This is to allow the migration of documents of schema versions unknown to the local node received by the
 	// P2P system.
 	//
 	// Migrations will only run if there is a complete path from the document schema version to the latest local
