@@ -51,7 +51,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 			demandMap := make(map[string]int)
 			err = json.Unmarshal([]byte(demandJSON), &demandMap)
 			if err != nil {
-				return err
+				return NewErrInvalidDemandValue(err)
 			}
 
 			collections, err := store.GetAllCollections(cmd.Context())
@@ -94,7 +94,6 @@ Example: The following command generates 100 User documents and 500 Device docum
 				}
 
 				docs = docs[thisBatch:]
-
 			}
 
 			return nil
