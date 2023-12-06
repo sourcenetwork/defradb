@@ -28,6 +28,12 @@ var (
 	log = logging.MustNewLogger("merklecrdt")
 )
 
+type Stores interface {
+	Datastore() datastore.DSReaderWriter
+	DAGstore() datastore.DAGStore
+	Headstore() datastore.DSReaderWriter
+}
+
 // MerkleCRDT is the implementation of a Merkle Clock along with a
 // CRDT payload. It implements the ReplicatedData interface
 // so it can be merged with any given semantics.
@@ -62,7 +68,7 @@ func (base *baseMerkleCRDT) Value(ctx context.Context) ([]byte, error) {
 }
 
 func InstanceWithStore(
-	txn datastore.Txn,
+	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	ctype client.CType,
 	key core.DataStoreKey,
@@ -71,18 +77,18 @@ func InstanceWithStore(
 	switch ctype {
 	case client.LWW_REGISTER:
 		return NewMerkleLWWRegister(
-			txn,
+			store,
 			schemaVersionKey,
 			key,
 			fieldName,
 		), nil
 	case client.COMPOSITE:
 		return NewMerkleCompositeDAG(
-			txn,
+			store,
 			schemaVersionKey,
 			key,
 			fieldName,
 		), nil
 	}
-	return nil, client.ErrUnknownCRDT
+	return nil, client.NewErrUnknownCRDT(ctype)
 }

@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
@@ -32,19 +31,19 @@ type MerkleCompositeDAG struct {
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
 func NewMerkleCompositeDAG(
-	txn datastore.Txn,
+	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
 	fieldName string,
 ) *MerkleCompositeDAG {
 	compositeDag := corecrdt.NewCompositeDAG(
-		txn.Datastore(),
+		store.Datastore(),
 		schemaVersionKey,
 		key,
 		fieldName,
 	)
 
-	clock := clock.NewMerkleClock(txn.Headstore(), txn.DAGstore(), key.ToHeadStoreKey(), compositeDag)
+	clock := clock.NewMerkleClock(store.Headstore(), store.DAGstore(), key.ToHeadStoreKey(), compositeDag)
 	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag}
 
 	return &MerkleCompositeDAG{
