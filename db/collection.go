@@ -1223,6 +1223,7 @@ func (c *collection) saveFieldToMerkleCRDT(
 		return merkleCRDT.Set(ctx, bytes)
 	default:
 		return nil, 0, client.ErrUnknownCRDT
+		return nil, 0, client.NewErrUnknownCRDT(val.Type())
 	}
 }
 
