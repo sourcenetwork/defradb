@@ -18,8 +18,8 @@ import (
 	"github.com/sourcenetwork/graphql-go/language/ast"
 )
 
-// blobPattern is a regex for validating blob hex strings
-var blobPattern = regexp.MustCompile("^[0-9a-fA-F]+$")
+// BlobPattern is a regex for validating blob hex strings
+var BlobPattern = regexp.MustCompile("^[0-9a-fA-F]+$")
 
 // coerceBlob converts the given value into a valid hex string.
 // If the value cannot be converted nil is returned.
@@ -32,7 +32,7 @@ func coerceBlob(value any) any {
 		return coerceBlob(*value)
 
 	case string:
-		if !blobPattern.MatchString(value) {
+		if !BlobPattern.MatchString(value) {
 			return nil
 		}
 		return value

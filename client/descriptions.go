@@ -146,6 +146,8 @@ func (f FieldKind) String() string {
 		return "[String]"
 	case FieldKind_STRING_ARRAY:
 		return "[String!]"
+	case FieldKind_BLOB:
+		return "Blob"
 	default:
 		return fmt.Sprint(uint8(f))
 	}
