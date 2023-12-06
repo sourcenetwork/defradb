@@ -25,7 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
-const gendocBatchSize = 1000
+const defaultBatchSize = 1000
 
 func MakeGenDocCommand(cfg *config.Config) *cobra.Command {
 	var demandJSON string
@@ -75,25 +75,26 @@ Example: The following command generates 100 User documents and 500 Device docum
 				return err
 			}
 
-			for len(docs) > 0 {
-				thisBatch := gendocBatchSize
-				if len(docs) < gendocBatchSize {
-					thisBatch = len(docs)
+			batchOffset := 0
+			for batchOffset < len(docs) {
+				batchLen := defaultBatchSize
+				if batchOffset+batchLen > len(docs) {
+					batchLen = len(docs) - batchOffset
 				}
 
-				colDocsMap := groupDocsByCollection(docs[:thisBatch])
+				colDocsMap := groupDocsByCollection(docs[batchOffset : batchOffset+batchLen])
 
 				err = saveBatchToCollections(context.Background(), collections, colDocsMap)
 				if err != nil {
 					return err
 				}
 
-				err = reportSavedBatch(out, thisBatch, colDocsMap)
+				err = reportSavedBatch(out, batchLen, colDocsMap)
 				if err != nil {
 					return err
 				}
 
-				docs = docs[thisBatch:]
+				batchOffset += batchLen
 			}
 
 			return nil
