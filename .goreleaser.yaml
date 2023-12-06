@@ -54,7 +54,7 @@ release:
   header: |
     DefraDB v{{ .Major }}.{{ .Minor }} is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-    To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v{{ .Major }}.{{ .Minor }}.x databases. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.source.network/.
+    To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v{{ .Major }}.{{ .Minor }}.x databases. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.gg/w7jYQVJ/.
   name_template: "v{{ .Version }} Release"
 
 changelog:
