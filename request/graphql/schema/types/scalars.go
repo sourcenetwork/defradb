@@ -52,7 +52,7 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 	Serialize: coerceBlob,
 	// ParseValue converts the value to a hex string
 	ParseValue: coerceBlob,
-	// ParseLiteral converts the ast value a hex string
+	// ParseLiteral converts the ast value to a hex string
 	ParseLiteral: func(valueAST ast.Value) any {
 		switch valueAST := valueAST.(type) {
 		case *ast.StringValue:
