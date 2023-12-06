@@ -26,12 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-var (
-	// ensure types implements core interfaces
-	_ core.ReplicatedData = (*LWWRegister)(nil)
-	_ core.Delta          = (*LWWRegDelta)(nil)
-)
-
 // LWWRegDelta is a single delta operation for an LWWRegister
 // @todo: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
@@ -41,6 +35,8 @@ type LWWRegDelta struct {
 	DocKey          []byte
 	FieldName       string
 }
+
+var _ core.Delta = (*LWWRegDelta)(nil)
 
 // GetPriority gets the current priority for this delta.
 func (delta *LWWRegDelta) GetPriority() uint64 {
@@ -80,6 +76,8 @@ func (delta *LWWRegDelta) Value() any {
 type LWWRegister struct {
 	baseCRDT
 }
+
+var _ core.ReplicatedData = (*LWWRegister)(nil)
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID.
 func NewLWWRegister(

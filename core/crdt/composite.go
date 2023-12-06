@@ -29,11 +29,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-var (
-	_ core.ReplicatedData = (*CompositeDAG)(nil)
-	_ core.CompositeDelta = (*CompositeDAGDelta)(nil)
-)
-
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
 type CompositeDAGDelta struct {
 	// SchemaVersionID is the schema version datastore key at the time of commit.
@@ -50,6 +45,8 @@ type CompositeDAGDelta struct {
 
 	FieldName string
 }
+
+var _ core.CompositeDelta = (*CompositeDAGDelta)(nil)
 
 // GetPriority gets the current priority for this delta.
 func (delta *CompositeDAGDelta) GetPriority() uint64 {
@@ -94,6 +91,8 @@ func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 type CompositeDAG struct {
 	baseCRDT
 }
+
+var _ core.ReplicatedData = (*CompositeDAG)(nil)
 
 func NewCompositeDAG(
 	store datastore.DSReaderWriter,
