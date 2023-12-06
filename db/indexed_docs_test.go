@@ -421,7 +421,8 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 		{Name: "invalid bool", FieldKind: client.FieldKind_BOOL, FieldVal: "invalid", ShouldFail: true},
 		{Name: "invalid datetime", FieldKind: client.FieldKind_DATETIME, FieldVal: nowStr[1:], ShouldFail: true},
 		{Name: "invalid datetime type", FieldKind: client.FieldKind_DATETIME, FieldVal: 1, ShouldFail: true},
-		{Name: "invalid blob type", FieldKind: client.FieldKind_BLOB, FieldVal: "invalid", ShouldFail: true},
+		{Name: "invalid blob", FieldKind: client.FieldKind_BLOB, FieldVal: "invalid", ShouldFail: true},
+		{Name: "invalid blob type", FieldKind: client.FieldKind_BLOB, FieldVal: 1, ShouldFail: true},
 
 		{Name: "valid int", FieldKind: client.FieldKind_INT, FieldVal: 12},
 		{Name: "valid float", FieldKind: client.FieldKind_FLOAT, FieldVal: 36.654},
