@@ -31,7 +31,7 @@ type baseCRDT struct {
 
 	// schemaVersionKey is the schema version datastore key at the time of commit.
 	//
-	// It can be used to identify the collection datastructure state at time of commit.
+	// It can be used to identify the collection datastructure state at the time of commit.
 	schemaVersionKey core.CollectionSchemaVersionKey
 
 	fieldName string
