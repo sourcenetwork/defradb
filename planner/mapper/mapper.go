@@ -52,12 +52,12 @@ func toSelect(
 		return nil, err
 	}
 
-	mapping, collection, err := getTopLevelInfo(ctx, store, selectRequest, collectionName)
+	mapping, schema, err := getTopLevelInfo(ctx, store, selectRequest, collectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	fields, aggregates, err := getRequestables(ctx, selectRequest, mapping, collection, store)
+	fields, aggregates, err := getRequestables(ctx, selectRequest, mapping, collectionName, store)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,8 @@ func toSelect(
 		aggregates,
 		fields,
 		mapping,
-		collection,
+		collectionName,
+		schema,
 		store,
 	)
 
@@ -92,8 +93,8 @@ func toSelect(
 		return nil, err
 	}
 
-	if collection != nil {
-		fields, err = resolveSecondaryRelationIDs(ctx, store, collection, mapping, fields)
+	if len(schema.Fields) != 0 {
+		fields, err = resolveSecondaryRelationIDs(ctx, store, collectionName, schema, mapping, fields)
 		if err != nil {
 			return nil, err
 		}
@@ -104,10 +105,7 @@ func toSelect(
 		groupByFields := selectRequest.GroupBy.Value().Fields
 		// Remap all alias field names to use their internal field name mappings.
 		for index, groupByField := range groupByFields {
-			if collection == nil {
-				continue
-			}
-			fieldDesc, ok := collection.Schema().GetField(groupByField)
+			fieldDesc, ok := schema.GetField(groupByField)
 			if ok && fieldDesc.IsObject() && !fieldDesc.IsObjectArray() {
 				groupByFields[index] = groupByField + request.RelatedObjectID
 			} else if ok && fieldDesc.IsObjectArray() {
@@ -262,7 +260,8 @@ func resolveAggregates(
 	aggregates []*aggregateRequest,
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
-	collection client.Collection,
+	collectionName string,
+	schema client.SchemaDescription,
 	store client.Store,
 ) ([]Requestable, error) {
 	fields := inputFields
@@ -282,11 +281,7 @@ func resolveAggregates(
 			var hasHost bool
 			var convertedFilter *Filter
 			if childIsMapped {
-				var fieldDesc client.FieldDescription
-				var isField bool
-				if collection != nil {
-					fieldDesc, isField = collection.Schema().GetField(target.hostExternalName)
-				}
+				fieldDesc, isField := schema.GetField(target.hostExternalName)
 
 				if isField && !fieldDesc.IsObject() {
 					var order *OrderBy
@@ -339,9 +334,8 @@ func resolveAggregates(
 					},
 				}
 
-				var collectionName string
-				if collection != nil {
-					collectionName = collection.Name()
+				if collectionName == "_topLevel" {
+					collectionName = ""
 				}
 
 				childCollectionName, err := getCollectionName(ctx, store, hostSelectRequest, collectionName)
@@ -350,12 +344,12 @@ func resolveAggregates(
 				}
 				mapAggregateNestedTargets(target, hostSelectRequest, selectRequest.Root)
 
-				childMapping, childDesc, err := getTopLevelInfo(ctx, store, hostSelectRequest, childCollectionName)
+				childMapping, _, err := getTopLevelInfo(ctx, store, hostSelectRequest, childCollectionName)
 				if err != nil {
 					return nil, err
 				}
 
-				childFields, _, err := getRequestables(ctx, hostSelectRequest, childMapping, childDesc, store)
+				childFields, _, err := getRequestables(ctx, hostSelectRequest, childMapping, childCollectionName, store)
 				if err != nil {
 					return nil, err
 				}
@@ -608,7 +602,7 @@ func getRequestables(
 	ctx context.Context,
 	selectRequest *request.Select,
 	mapping *core.DocumentMapping,
-	collection client.Collection,
+	collectionName string,
 	store client.Store,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
 	for _, field := range selectRequest.Fields {
@@ -630,12 +624,8 @@ func getRequestables(
 			})
 		case *request.Select:
 			index := mapping.GetNextIndex()
-			var parentCollectionName string
-			if collection != nil {
-				parentCollectionName = collection.Name()
-			}
 
-			innerSelect, err := toSelect(ctx, store, index, f, parentCollectionName)
+			innerSelect, err := toSelect(ctx, store, index, f, collectionName)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -738,13 +728,13 @@ func getTopLevelInfo(
 	store client.Store,
 	selectRequest *request.Select,
 	collectionName string,
-) (*core.DocumentMapping, client.Collection, error) {
+) (*core.DocumentMapping, client.SchemaDescription, error) {
 	mapping := core.NewDocumentMapping()
 
 	if _, isAggregate := request.Aggregates[selectRequest.Name]; isAggregate {
 		// If this is a (top-level) aggregate, then it will have no collection
 		// description, and no top-level fields, so we return an empty mapping only
-		return mapping, nil, nil
+		return mapping, client.SchemaDescription{}, nil
 	}
 
 	if selectRequest.Root == request.ObjectSelection {
@@ -752,7 +742,7 @@ func getTopLevelInfo(
 
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
-			return nil, nil, err
+			return nil, client.SchemaDescription{}, err
 		}
 
 		// Map all fields from schema into the map as they are fetched automatically
@@ -771,7 +761,7 @@ func getTopLevelInfo(
 
 		mapping.Add(mapping.GetNextIndex(), request.DeletedFieldName)
 
-		return mapping, collection, nil
+		return mapping, collection.Schema(), nil
 	}
 
 	if selectRequest.Name == request.LinksFieldName {
@@ -792,7 +782,7 @@ func getTopLevelInfo(
 		mapping.SetTypeName(request.CommitTypeName)
 	}
 
-	return mapping, nil, nil
+	return mapping, client.SchemaDescription{}, nil
 }
 
 func resolveFilterDependencies(
@@ -989,7 +979,8 @@ func constructEmptyJoin(
 func resolveSecondaryRelationIDs(
 	ctx context.Context,
 	store client.Store,
-	collection client.Collection,
+	collectionName string,
+	schema client.SchemaDescription,
 	mapping *core.DocumentMapping,
 	requestables []Requestable,
 ) ([]Requestable, error) {
@@ -1001,7 +992,7 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		fieldDesc, descFound := collection.Schema().GetField(existingField.Name)
+		fieldDesc, descFound := schema.GetField(existingField.Name)
 		if !descFound {
 			continue
 		}
@@ -1010,39 +1001,14 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		objectFieldDesc, descFound := collection.Schema().GetField(
-			strings.TrimSuffix(existingField.Name, request.RelatedObjectID),
-		)
-		if !descFound {
-			continue
-		}
-
-		if objectFieldDesc.RelationName == "" {
-			continue
-		}
+		objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
 
 		var siblingFound bool
 		for _, siblingRequestable := range requestables {
-			siblingSelect, isSelect := siblingRequestable.(*Select)
-			if !isSelect {
-				continue
+			if siblingRequestable.GetName() == objectFieldName {
+				siblingFound = true
+				break
 			}
-
-			siblingFieldDesc, descFound := collection.Schema().GetField(siblingSelect.Field.Name)
-			if !descFound {
-				continue
-			}
-
-			if siblingFieldDesc.RelationName != objectFieldDesc.RelationName {
-				continue
-			}
-
-			if siblingFieldDesc.Kind != client.FieldKind_FOREIGN_OBJECT {
-				continue
-			}
-
-			siblingFound = true
-			break
 		}
 
 		if !siblingFound {
@@ -1052,7 +1018,7 @@ func resolveSecondaryRelationIDs(
 			join, err := constructEmptyJoin(
 				ctx,
 				store,
-				collection.Name(),
+				collectionName,
 				mapping,
 				objectFieldName,
 			)
