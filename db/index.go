@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
 )
 
 // CollectionIndex is an interface for collection indexes
@@ -51,6 +52,14 @@ func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
 		return canConvertIndexFieldValue[float64]
 	case client.FieldKind_BOOL:
 		return canConvertIndexFieldValue[bool]
+	case client.FieldKind_BLOB:
+		return func(val any) bool {
+			blobStrVal, ok := val.(string)
+			if !ok {
+				return false
+			}
+			return types.BlobPattern.MatchString(blobStrVal)
+		}
 	case client.FieldKind_DATETIME:
 		return func(val any) bool {
 			timeStrVal, ok := val.(string)

@@ -271,3 +271,49 @@ func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaSimpleCreatesSchemaGivenTypeWithBlobField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						data: Blob
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users",
+						"fields": DefaultFields.Append(
+							Field{
+								"name": "data",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Blob",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
