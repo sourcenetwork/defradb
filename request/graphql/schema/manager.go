@@ -141,6 +141,9 @@ func defaultTypes() []gql.Type {
 		gql.Int,
 		gql.String,
 
+		// Custom Scalar types
+		schemaTypes.BlobScalarType,
+
 		// Base Query types
 
 		// Sort/Order enum
