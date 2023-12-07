@@ -146,6 +146,8 @@ func (f FieldKind) String() string {
 		return "[String]"
 	case FieldKind_STRING_ARRAY:
 		return "[String!]"
+	case FieldKind_BLOB:
+		return "Blob"
 	default:
 		return fmt.Sprint(uint8(f))
 	}
@@ -166,7 +168,7 @@ const (
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
-	_                      FieldKind = 13 // safe to repurpose (was never used)
+	FieldKind_BLOB         FieldKind = 13
 	_                      FieldKind = 14 // safe to repurpose (was never used)
 	_                      FieldKind = 15 // safe to repurpose (was never used)
 
@@ -204,6 +206,7 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"String":     FieldKind_STRING,
 	"[String]":   FieldKind_NILLABLE_STRING_ARRAY,
 	"[String!]":  FieldKind_STRING_ARRAY,
+	"Blob":       FieldKind_BLOB,
 }
 
 // RelationType describes the type of relation between two types.
