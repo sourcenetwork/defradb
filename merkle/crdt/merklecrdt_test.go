@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package crdt
+package merklecrdt
 
 import (
 	"context"
@@ -45,7 +45,7 @@ func TestMerkleCRDTPublish(t *testing.T) {
 		Data: []byte("test"),
 	}
 
-	nd, err := bCRDT.Publish(ctx, delta)
+	nd, err := bCRDT.clock.AddDAGNode(ctx, delta)
 	if err != nil {
 		t.Error("Failed to publish delta to MerkleCRDT:", err)
 		return

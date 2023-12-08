@@ -111,7 +111,6 @@ var (
 	ErrDocumentAlreadyExists              = errors.New(errDocumentAlreadyExists)
 	ErrDocumentDeleted                    = errors.New(errDocumentDeleted)
 	ErrUnknownCRDTArgument                = errors.New("invalid CRDT arguments")
-	ErrUnknownCRDT                        = errors.New("unknown crdt")
 	ErrCollectionAlreadyExists            = errors.New("collection already exists")
 	ErrCollectionNameEmpty                = errors.New("collection name can't be empty")
 	ErrSchemaNameEmpty                    = errors.New("schema name can't be empty")
