@@ -61,7 +61,7 @@ func getBooleanField(t *testing.T, doc *client.Document, fieldName string) bool 
 }
 
 func getDocKeysFromDocs(docs []*client.Document) []string {
-	var result []string
+	result := make([]string, 0, len(docs))
 	for _, doc := range docs {
 		result = append(result, doc.Key().String())
 	}
@@ -613,6 +613,95 @@ func TestAutoGenerateFromSchema_IfNoDemandForPrimaryType_ShouldDeduceFromMaxSeco
 	assert.Len(t, filterByCollection(docs, "Order"), 10)
 }
 
+func TestAutoGenerateFromSchema_IfDemand2TypesWithOptions_ShouldAdjust(t *testing.T) {
+	const (
+		numUsers   = 100
+		numDevices = 300
+	)
+	schema := `
+		type User { 
+			name: String 
+			devices: [Device]
+		}
+		
+		type Device {
+			owner: User
+			model: String
+		}`
+
+	docs, err := AutoGenerateFromSDL(schema,
+		WithTypeDemand("User", numUsers),
+		WithTypeDemand("Device", numDevices),
+	)
+	assert.NoError(t, err)
+
+	assert.Len(t, filterByCollection(docs, "User"), numUsers)
+	assert.Len(t, filterByCollection(docs, "Device"), numDevices)
+
+	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+}
+
+func TestAutoGenerateFromSchema_IfDemand2TypesWithOptionsAndFieldDemand_ShouldAdjust(t *testing.T) {
+	const (
+		numUsers   = 100
+		numDevices = 300
+	)
+	schema := `
+		type User { 
+			name: String 
+			devices: [Device] # min: 1, max: 5
+		}
+		
+		type Device {
+			owner: User
+			model: String
+		}`
+
+	docs, err := AutoGenerateFromSDL(schema,
+		WithTypeDemand("User", numUsers),
+		WithTypeDemand("Device", numDevices),
+	)
+	assert.NoError(t, err)
+
+	assert.Len(t, filterByCollection(docs, "User"), numUsers)
+	assert.Len(t, filterByCollection(docs, "Device"), numDevices)
+
+	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", 1, 5)
+
+	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+}
+
+func TestAutoGenerateFromSchema_IfDemand2TypesWithRangeOptions_ShouldAdjust(t *testing.T) {
+	const (
+		numUsers      = 100
+		minNumDevices = 100
+		maxNumDevices = 500
+	)
+	schema := `
+		type User { 
+			name: String 
+			devices: [Device]
+		}
+		
+		type Device {
+			owner: User
+			model: String
+		}`
+
+	docs, err := AutoGenerateFromSDL(schema,
+		WithTypeDemand("User", numUsers),
+		WithTypeDemandRange("Device", minNumDevices, maxNumDevices),
+	)
+	assert.NoError(t, err)
+
+	assert.Len(t, filterByCollection(docs, "User"), numUsers)
+	assert.Len(t, filterByCollection(docs, "Device"), (maxNumDevices+minNumDevices)/2)
+
+	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", 1, 5)
+
+	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+}
+
 func TestAutoGenerateFromSchema_ConfigThatCanNotBySupplied(t *testing.T) {
 	testCases := []struct {
 		name    string
@@ -976,7 +1065,6 @@ func TestAutoGenerateFromSchema_CustomFieldValueGenerator(t *testing.T) {
 
 	for _, doc := range docs {
 		actualAgeVal := getIntField(t, doc.Doc, "age")
-		//actualAgeVal := getIntField(t, jsonToMap(doc.JSON), "age")
 		assert.Equal(t, ageVal, actualAgeVal)
 	}
 }
