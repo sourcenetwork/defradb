@@ -59,7 +59,7 @@ import (
 type Document struct {
 	id     DocID
 	fields map[string]Field
-	values map[Field]Value
+	values map[Field]*FieldValue
 	head   cid.Cid
 	mu     sync.RWMutex
 	// marks if document has unsaved changes
@@ -71,7 +71,7 @@ type Document struct {
 func newEmptyDoc(sd SchemaDescription) *Document {
 	return &Document{
 		fields:            make(map[string]Field),
-		values:            make(map[Field]Value),
+		values:            make(map[Field]*FieldValue),
 		schemaDescription: sd,
 	}
 }
@@ -421,7 +421,7 @@ func (doc *Document) Get(field string) (any, error) {
 }
 
 // GetValue given a field as a string, return the Value type.
-func (doc *Document) GetValue(field string) (Value, error) {
+func (doc *Document) GetValue(field string) (*FieldValue, error) {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 	path, subPaths, hasSubPaths := parseFieldPath(field)
@@ -445,7 +445,7 @@ func (doc *Document) GetValue(field string) (Value, error) {
 }
 
 // GetValueWithField gets the Value type from a given Field type
-func (doc *Document) GetValueWithField(f Field) (Value, error) {
+func (doc *Document) GetValueWithField(f Field) (*FieldValue, error) {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 	v, exists := doc.values[f]
@@ -521,7 +521,7 @@ func (doc *Document) Delete(fields ...string) error {
 	return nil
 }
 
-func (doc *Document) set(t CType, field string, value Value) error {
+func (doc *Document) set(t CType, field string, value *FieldValue) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 	var f Field
@@ -537,7 +537,7 @@ func (doc *Document) set(t CType, field string, value Value) error {
 }
 
 func (doc *Document) setCBOR(t CType, field string, val any) error {
-	value := newCBORValue(t, val)
+	value := NewFieldValue(t, val)
 	return doc.set(t, field, value)
 }
 
@@ -562,7 +562,7 @@ func (doc *Document) Fields() map[string]Field {
 }
 
 // Values gets the document values as a map.
-func (doc *Document) Values() map[Field]Value {
+func (doc *Document) Values() map[Field]*FieldValue {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 	return doc.values

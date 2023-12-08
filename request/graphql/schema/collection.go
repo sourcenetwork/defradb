@@ -363,10 +363,15 @@ func fieldsFromAST(field *ast.FieldDefinition,
 		}
 	}
 
+	cType, err := setCRDTType(field, kind)
+	if err != nil {
+		return nil, err
+	}
+
 	fieldDescription := client.FieldDescription{
 		Name:         field.Name.Value,
 		Kind:         kind,
-		Typ:          defaultCRDTForFieldKind[kind],
+		Typ:          cType,
 		Schema:       schema,
 		RelationName: relationName,
 		RelationType: relationType,
@@ -374,6 +379,29 @@ func fieldsFromAST(field *ast.FieldDefinition,
 
 	fieldDescriptions = append(fieldDescriptions, fieldDescription)
 	return fieldDescriptions, nil
+}
+
+func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CType, error) {
+	if directive, exists := findDirective(field, "crdt"); exists {
+		for _, arg := range directive.Arguments {
+			switch arg.Name.Value {
+			case "type":
+				cType := arg.Value.GetValue().(string)
+				switch cType {
+				case client.PN_COUNTER_REGISTER.String():
+					if !client.PN_COUNTER_REGISTER.IsCompatibleWith(kind) {
+						return 0, client.NewErrCRDTKindMismatch(cType, kind.String())
+					}
+					return client.PN_COUNTER_REGISTER, nil
+				case client.LWW_REGISTER.String():
+					return client.LWW_REGISTER, nil
+				default:
+					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cType)
+				}
+			}
+		}
+	}
+	return defaultCRDTForFieldKind[kind], nil
 }
 
 func astTypeToKind(t ast.Type) (client.FieldKind, error) {

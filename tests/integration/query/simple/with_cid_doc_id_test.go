@@ -269,3 +269,54 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounter_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with second last cid and dockey with pncounter",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Int @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 5
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 20
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+						cid: "bafybeig2hd5p7gmkcpzf45udup63h2mgmaq5kouhdqpfkguyrfnnswexle",
+						dockey: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
+					) {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": int64(15),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

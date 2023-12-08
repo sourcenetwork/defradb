@@ -42,7 +42,6 @@ const (
 	errDuplicateField                     string = "duplicate field"
 	errCannotMutateField                  string = "mutating an existing field is not supported"
 	errCannotMoveField                    string = "moving fields is not currently supported"
-	errInvalidCRDTType                    string = "only default or LWW (last writer wins) CRDT types are supported"
 	errCannotDeleteField                  string = "deleting an existing field is not supported"
 	errFieldKindNotFound                  string = "no type found for given name"
 	errFieldKindDoesNotMatchFieldSchema   string = "field Kind does not match field Schema"
@@ -371,14 +370,6 @@ func NewErrCannotMoveField(name string, proposedIndex, existingIndex int) error 
 		errors.NewKV("Name", name),
 		errors.NewKV("ProposedIndex", proposedIndex),
 		errors.NewKV("ExistingIndex", existingIndex),
-	)
-}
-
-func NewErrInvalidCRDTType(name string, crdtType client.CType) error {
-	return errors.New(
-		errInvalidCRDTType,
-		errors.NewKV("Name", name),
-		errors.NewKV("CRDTType", crdtType),
 	)
 }
 

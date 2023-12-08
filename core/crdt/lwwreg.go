@@ -29,11 +29,14 @@ import (
 // LWWRegDelta is a single delta operation for an LWWRegister
 // @todo: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
+	DocKey    []byte
+	FieldName string
+	Priority  uint64
+	// SchemaVersionID is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at the time of commit.
 	SchemaVersionID string
-	Priority        uint64
 	Data            []byte
-	DocID           []byte
-	FieldName       string
 }
 
 var _ core.Delta = (*LWWRegDelta)(nil)
@@ -54,21 +57,11 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
-	err := enc.Encode(struct {
-		SchemaVersionID string
-		Priority        uint64
-		Data            []byte
-		DocID           []byte
-		FieldName       string
-	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocID, delta.FieldName})
+	err := enc.Encode(delta)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
-}
-
-func (delta *LWWRegDelta) Value() any {
-	return delta.Data
 }
 
 // LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
@@ -105,7 +98,6 @@ func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	return &LWWRegDelta{
 		Data:            value,
-		DocID:           []byte(reg.key.DocID),
 		FieldName:       reg.fieldName,
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}

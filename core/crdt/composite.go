@@ -31,19 +31,17 @@ import (
 
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
 type CompositeDAGDelta struct {
+	DocID     []byte
+	FieldName string
+	Priority  uint64
 	// SchemaVersionID is the schema version datastore key at the time of commit.
 	//
-	// It can be used to identify the collection datastructure state at time of commit.
+	// It can be used to identify the collection datastructure state at the time of commit.
 	SchemaVersionID string
-	Priority        uint64
-	Data            []byte
-	DocID           []byte
-	SubDAGs         []core.DAGLink
 	// Status represents the status of the document. By default it is `Active`.
 	// Alternatively, if can be set to `Deleted`.
-	Status client.DocumentStatus
-
-	FieldName string
+	Status  client.DocumentStatus
+	SubDAGs []core.DAGLink `json:"-"` // should not be marshalled
 }
 
 var _ core.CompositeDelta = (*CompositeDAGDelta)(nil)
@@ -63,23 +61,11 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
-	err := enc.Encode(struct {
-		SchemaVersionID string
-		Priority        uint64
-		Data            []byte
-		DocID           []byte
-		Status          uint8
-		FieldName       string
-	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocID, delta.Status.UInt8(), delta.FieldName})
+	err := enc.Encode(delta)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
-}
-
-// Value returns the value of this delta.
-func (delta *CompositeDAGDelta) Value() any {
-	return delta.Data
 }
 
 // Links returns the links for this delta.
@@ -109,17 +95,16 @@ func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 }
 
 // Set applies a delta to the composite DAG CRDT. TBD
-func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta {
+func (c CompositeDAG) Set(links []core.DAGLink) *CompositeDAGDelta {
 	// make sure the links are sorted lexicographically by CID
 	sort.Slice(links, func(i, j int) bool {
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 	return &CompositeDAGDelta{
-		Data:            patch,
 		DocID:           []byte(c.key.DocID),
-		SubDAGs:         links,
-		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
 		FieldName:       c.fieldName,
+		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
+		SubDAGs:         links,
 	}
 }
 

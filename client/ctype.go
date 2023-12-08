@@ -22,4 +22,46 @@ const (
 	LWW_REGISTER
 	OBJECT
 	COMPOSITE
+	PN_COUNTER_REGISTER
 )
+
+// IsSupportedFieldCType returns true if the type is supported as a document field type.
+func (t CType) IsSupportedFieldCType() bool {
+	switch t {
+	case NONE_CRDT, LWW_REGISTER, PN_COUNTER_REGISTER:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsCompatibleWith returns true if the CRDT is compatible with the field kind
+func (t CType) IsCompatibleWith(kind FieldKind) bool {
+	switch t {
+	case PN_COUNTER_REGISTER:
+		if kind == FieldKind_INT {
+			return true
+		}
+		return false
+	default:
+		return true
+	}
+}
+
+// String returns the string representation of the CRDT.
+func (t CType) String() string {
+	switch t {
+	case NONE_CRDT:
+		return "none"
+	case LWW_REGISTER:
+		return "lww"
+	case OBJECT:
+		return "object"
+	case COMPOSITE:
+		return "composite"
+	case PN_COUNTER_REGISTER:
+		return "pncounter"
+	default:
+		return "unknown"
+	}
+}

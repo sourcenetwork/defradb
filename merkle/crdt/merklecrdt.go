@@ -42,14 +42,14 @@ type MerkleCRDT interface {
 	Clock() core.MerkleClock
 }
 
-var _ core.ReplicatedData = (*baseMerkleCRDT)(nil)
-
 // baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state
 // retrieval functions. It handles creating and publishing the CRDT DAG with the help of the MerkleClock.
 type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
 }
+
+var _ core.ReplicatedData = (*baseMerkleCRDT)(nil)
 
 func (base *baseMerkleCRDT) Clock() core.MerkleClock {
 	return base.clock
@@ -77,6 +77,13 @@ func InstanceWithStore(
 	switch ctype {
 	case client.LWW_REGISTER:
 		return NewMerkleLWWRegister(
+			store,
+			schemaVersionKey,
+			key,
+			fieldName,
+		), nil
+	case client.PN_COUNTER_REGISTER:
+		return NewMerklePNCounterRegister(
 			store,
 			schemaVersionKey,
 			key,

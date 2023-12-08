@@ -361,9 +361,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		if !ok {
 			return client.NewErrFieldNotExist(l.Name)
 		}
-		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
-		//        get CType from descriptions
-		if err := vf.processNode(uint32(field.ID), subNd, client.LWW_REGISTER, l.Name); err != nil {
+		if err := vf.processNode(uint32(field.ID), subNd, field.Typ, l.Name); err != nil {
 			return err
 		}
 	}
