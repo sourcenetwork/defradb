@@ -29,11 +29,11 @@ func newSeededDS() datastore.DSReaderWriter {
 }
 
 func exampleBaseCRDT() baseCRDT {
-	return newBaseCRDT(newSeededDS(), core.DataStoreKey{})
+	return newBaseCRDT(newSeededDS(), core.DataStoreKey{}, core.CollectionSchemaVersionKey{}, "")
 }
 
 func TestBaseCRDTNew(t *testing.T) {
-	base := newBaseCRDT(newDS(), core.DataStoreKey{})
+	base := newBaseCRDT(newDS(), core.DataStoreKey{}, core.CollectionSchemaVersionKey{}, "")
 	if base.store == nil {
 		t.Error("newBaseCRDT needs to init store")
 	}

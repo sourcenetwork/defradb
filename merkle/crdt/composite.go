@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package crdt
+package merklecrdt
 
 import (
 	"context"
@@ -18,41 +18,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
-
-var (
-	compFactoryFn = MerkleCRDTFactory(
-		func(
-			mstore datastore.MultiStore,
-			schemaRoot core.CollectionSchemaVersionKey,
-			uCh events.UpdateChannel,
-			fieldName string,
-		) MerkleCRDTInitFn {
-			return func(key core.DataStoreKey) MerkleCRDT {
-				return NewMerkleCompositeDAG(
-					mstore.Datastore(),
-					mstore.Headstore(),
-					mstore.DAGstore(),
-					schemaRoot,
-					uCh,
-					core.DataStoreKey{},
-					key,
-					fieldName,
-				)
-			}
-		},
-	)
-)
-
-func init() {
-	err := DefaultFactory.Register(client.COMPOSITE, &compFactoryFn)
-	if err != nil {
-		panic(err)
-	}
-}
 
 // MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type MerkleCompositeDAG struct {
@@ -64,25 +31,20 @@ type MerkleCompositeDAG struct {
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
 func NewMerkleCompositeDAG(
-	datastore datastore.DSReaderWriter,
-	headstore datastore.DSReaderWriter,
-	dagstore datastore.DAGStore,
+	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,
-	uCh events.UpdateChannel,
-	ns,
 	key core.DataStoreKey,
 	fieldName string,
 ) *MerkleCompositeDAG {
 	compositeDag := corecrdt.NewCompositeDAG(
-		datastore,
+		store.Datastore(),
 		schemaVersionKey,
-		ns,
-		key, /* stuff like namespace and ID */
+		key,
 		fieldName,
 	)
 
-	clock := clock.NewMerkleClock(headstore, dagstore, key.ToHeadStoreKey(), compositeDag)
-	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag, updateChannel: uCh}
+	clock := clock.NewMerkleClock(store.Headstore(), store.DAGstore(), key.ToHeadStoreKey(), compositeDag)
+	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag}
 
 	return &MerkleCompositeDAG{
 		baseMerkleCRDT: base,
@@ -100,7 +62,7 @@ func (m *MerkleCompositeDAG) Delete(
 	log.Debug(ctx, "Applying delta-mutator 'Delete' on CompositeDAG")
 	delta := m.reg.Set([]byte{}, links)
 	delta.Status = client.Deleted
-	nd, err := m.Publish(ctx, delta)
+	nd, err := m.clock.AddDAGNode(ctx, delta)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -118,21 +80,10 @@ func (m *MerkleCompositeDAG) Set(
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
-	nd, err := m.Publish(ctx, delta)
+	nd, err := m.clock.AddDAGNode(ctx, delta)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	return nd, delta.GetPriority(), nil
-}
-
-// Value is a no-op for a CompositeDAG.
-func (m *MerkleCompositeDAG) Value(ctx context.Context) ([]byte, error) {
-	return m.reg.Value(ctx)
-}
-
-// Merge writes the provided delta to state using a supplied merge semantic.
-// @todo
-func (m *MerkleCompositeDAG) Merge(ctx context.Context, other core.Delta) error {
-	return m.reg.Merge(ctx, other)
 }

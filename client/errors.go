@@ -24,6 +24,7 @@ const (
 	errMaxTxnRetries        string = "reached maximum transaction reties"
 	errRelationOneSided     string = "relation must be defined on both schemas"
 	errCollectionNotFound   string = "collection not found"
+	errUnknownCRDT          string = "unknown crdt"
 )
 
 // Errors returnable from this package.
@@ -47,6 +48,7 @@ var (
 	ErrMaxTxnRetries        = errors.New(errMaxTxnRetries)
 	ErrRelationOneSided     = errors.New(errRelationOneSided)
 	ErrCollectionNotFound   = errors.New(errCollectionNotFound)
+	ErrUnknownCRDT          = errors.New(errUnknownCRDT)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -121,5 +123,12 @@ func NewErrCollectionNotFoundForSchema(schemaRoot string) error {
 	return errors.New(
 		errCollectionNotFound,
 		errors.NewKV("SchemaRoot", schemaRoot),
+	)
+}
+
+func NewErrUnknownCRDT(cType CType) error {
+	return errors.New(
+		errUnknownCRDT,
+		errors.NewKV("Type", cType),
 	)
 }

@@ -28,13 +28,26 @@ import (
 type baseCRDT struct {
 	store datastore.DSReaderWriter
 	key   core.DataStoreKey
+
+	// schemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at the time of commit.
+	schemaVersionKey core.CollectionSchemaVersionKey
+
+	fieldName string
 }
 
-// @TODO paramaterize ns/suffix
-func newBaseCRDT(store datastore.DSReaderWriter, key core.DataStoreKey) baseCRDT {
+func newBaseCRDT(
+	store datastore.DSReaderWriter,
+	key core.DataStoreKey,
+	schemaVersionKey core.CollectionSchemaVersionKey,
+	fieldName string,
+) baseCRDT {
 	return baseCRDT{
-		store: store,
-		key:   key,
+		store:            store,
+		key:              key,
+		schemaVersionKey: schemaVersionKey,
+		fieldName:        fieldName,
 	}
 }
 

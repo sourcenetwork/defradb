@@ -34,7 +34,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/lens"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
+	merklecrdt "github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -973,7 +973,7 @@ func (c *collection) save(
 				return cid.Undef, err
 			}
 
-			node, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
+			node, _, err := c.saveFieldToMerkleCRDT(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
 			}
@@ -1000,11 +1000,10 @@ func (c *collection) save(
 		return cid.Undef, nil
 	}
 
-	headNode, priority, err := c.saveValueToMerkleCRDT(
+	headNode, priority, err := c.saveCompositeToMerkleCRDT(
 		ctx,
 		txn,
 		primaryKey.ToDataStoreKey(),
-		client.COMPOSITE,
 		buf,
 		links,
 		client.Active,
@@ -1179,7 +1178,7 @@ func (c *collection) exists(
 	return true, false, nil
 }
 
-func (c *collection) saveDocValue(
+func (c *collection) saveFieldToMerkleCRDT(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.DataStoreKey,
@@ -1201,20 +1200,7 @@ func (c *collection) saveDocValue(
 				return nil, 0, err
 			}
 		}
-		return c.saveValueToMerkleCRDT(ctx, txn, key, client.LWW_REGISTER, bytes)
-	default:
-		return nil, 0, ErrUnknownCRDT
-	}
-}
 
-func (c *collection) saveValueToMerkleCRDT(
-	ctx context.Context,
-	txn datastore.Txn,
-	key core.DataStoreKey,
-	ctype client.CType,
-	args ...any) (ipld.Node, uint64, error) {
-	switch ctype {
-	case client.LWW_REGISTER:
 		fieldID, err := strconv.Atoi(key.FieldId)
 		if err != nil {
 			return nil, 0, err
@@ -1227,68 +1213,40 @@ func (c *collection) saveValueToMerkleCRDT(
 			return nil, 0, client.NewErrFieldIndexNotExist(fieldID)
 		}
 
-		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
+		merkleCRDT := merklecrdt.NewMerkleLWWRegister(
 			txn,
 			core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
-			c.db.events.Updates,
-			ctype,
 			key,
 			field.Name,
 		)
-		if err != nil {
-			return nil, 0, err
-		}
 
-		var bytes []byte
-		// parse args
-		if len(args) != 1 {
-			return nil, 0, ErrUnknownCRDTArgument
-		}
-		bytes, ok = args[0].([]byte)
-		if !ok {
-			return nil, 0, ErrUnknownCRDTArgument
-		}
-		lwwreg := merkleCRDT.(*crdt.MerkleLWWRegister)
-		return lwwreg.Set(ctx, bytes)
-	case client.COMPOSITE:
-		key = key.WithFieldId(core.COMPOSITE_NAMESPACE)
-		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
-			txn,
-			core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
-			c.db.events.Updates,
-			ctype,
-			key,
-			"",
-		)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		// parse args
-		if len(args) < 2 {
-			return nil, 0, ErrUnknownCRDTArgument
-		}
-		bytes, ok := args[0].([]byte)
-		if !ok {
-			return nil, 0, ErrUnknownCRDTArgument
-		}
-		links, ok := args[1].([]core.DAGLink)
-		if !ok {
-			return nil, 0, ErrUnknownCRDTArgument
-		}
-		comp := merkleCRDT.(*crdt.MerkleCompositeDAG)
-		if len(args) > 2 {
-			status, ok := args[2].(client.DocumentStatus)
-			if !ok {
-				return nil, 0, ErrUnknownCRDTArgument
-			}
-			if status.IsDeleted() {
-				return comp.Delete(ctx, links)
-			}
-		}
-		return comp.Set(ctx, bytes, links)
+		return merkleCRDT.Set(ctx, bytes)
+	default:
+		return nil, 0, client.NewErrUnknownCRDT(val.Type())
 	}
-	return nil, 0, ErrUnknownCRDT
+}
+
+func (c *collection) saveCompositeToMerkleCRDT(
+	ctx context.Context,
+	txn datastore.Txn,
+	key core.DataStoreKey,
+	buf []byte,
+	links []core.DAGLink,
+	status client.DocumentStatus,
+) (ipld.Node, uint64, error) {
+	key = key.WithFieldId(core.COMPOSITE_NAMESPACE)
+	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
+		txn,
+		core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+		key,
+		"",
+	)
+
+	if status.IsDeleted() {
+		return merkleCRDT.Delete(ctx, links)
+	}
+
+	return merkleCRDT.Set(ctx, buf, links)
 }
 
 // getTxn gets or creates a new transaction from the underlying db.

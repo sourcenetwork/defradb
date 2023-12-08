@@ -261,11 +261,10 @@ func (c *collection) applyDelete(
 		}
 	}
 
-	headNode, priority, err := c.saveValueToMerkleCRDT(
+	headNode, priority, err := c.saveCompositeToMerkleCRDT(
 		ctx,
 		txn,
 		dsKey,
-		client.COMPOSITE,
 		[]byte{},
 		dagLinks,
 		client.Deleted,
