@@ -12,6 +12,7 @@ package types
 
 import (
 	"encoding/hex"
+	"math/big"
 	"regexp"
 
 	"github.com/sourcenetwork/graphql-go"
@@ -63,3 +64,106 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 		}
 	},
 })
+
+var BigIntPattern = regexp.MustCompile("^[0-9]+$")
+
+var BigIntScalarType = graphql.NewScalar(graphql.ScalarConfig{
+	Name:        "BigInt",
+	Description: "The `BigInt` scalar type represents an arbitrary precision integer.",
+	// Serialize converts the value to a string
+	Serialize: coerceBigInt,
+	// ParseValue converts the value to a string
+	ParseValue: coerceBigInt,
+	// ParseLiteral converts the ast value to a string
+	ParseLiteral: func(valueAST ast.Value) any {
+		switch valueAST := valueAST.(type) {
+		case *ast.IntValue:
+			return coerceBigInt(valueAST.Value)
+		case *ast.FloatValue:
+			return coerceBigInt(valueAST.Value)
+		case *ast.StringValue:
+			return coerceBigInt(valueAST.Value)
+		default:
+			// return nil if the value cannot be parsed
+			return nil
+		}
+	},
+})
+
+// coerceBigInt converts the given value into a valid BigInt.
+// If the value cannot be converted nil is returned.
+func coerceBigInt(value any) any {
+	switch value := value.(type) {
+	case float32:
+		return big.NewInt(int64(value)).String()
+
+	case *float32:
+		return coerceBigInt(*value)
+
+	case float64:
+		return big.NewInt(int64(value)).String()
+
+	case *float64:
+		return coerceBigInt(*value)
+
+	case int:
+		return big.NewInt(int64(value)).String()
+
+	case *int:
+		return coerceBigInt(*value)
+
+	case int16:
+		return big.NewInt(int64(value)).String()
+
+	case *int16:
+		return coerceBigInt(*value)
+
+	case int32:
+		return big.NewInt(int64(value)).String()
+
+	case *int32:
+		return coerceBigInt(*value)
+
+	case int64:
+		return big.NewInt(int64(value)).String()
+
+	case *int64:
+		return coerceBigInt(*value)
+
+	case uint:
+		return big.NewInt(int64(value)).String()
+
+	case *uint:
+		return coerceBigInt(*value)
+
+	case uint16:
+		return big.NewInt(int64(value)).String()
+
+	case *uint16:
+		return coerceBigInt(*value)
+
+	case uint32:
+		return big.NewInt(int64(value)).String()
+
+	case *uint32:
+		return coerceBigInt(*value)
+
+	case uint64:
+		return big.NewInt(int64(value)).String()
+
+	case *uint64:
+		return coerceBigInt(*value)
+
+	case string:
+		if !BigIntPattern.MatchString(value) {
+			return nil
+		}
+		return value
+
+	case *string:
+		return coerceBlob(*value)
+
+	default:
+		return nil
+	}
+}
