@@ -173,7 +173,10 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 		fieldBytesVal, err = writeableVal.Bytes()
 		require.NoError(b.f.t, err)
 
-		key.FieldValues = [][]byte{fieldBytesVal, []byte(b.doc.Key().String())}
+		key.FieldValues = [][]byte{fieldBytesVal}
+		if !b.isUnique {
+			key.FieldValues = append(key.FieldValues, []byte(b.doc.Key().String()))
+		}
 	} else if len(b.values) > 0 {
 		key.FieldValues = b.values
 	}
@@ -623,9 +626,10 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	invalidKeyString := fieldKeyString + "/doesn't matter/"
 
 	// Insert an invalid key within the document prefix, this will generate an error within the fetcher.
-	f.db.multistore.Datastore().Put(f.ctx, ipfsDatastore.NewKey(invalidKeyString), []byte("doesn't matter"))
+	err := f.db.multistore.Datastore().Put(f.ctx, ipfsDatastore.NewKey(invalidKeyString), []byte("doesn't matter"))
+	require.NoError(f.t, err)
 
-	_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
+	_, err = f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 	require.ErrorIs(f.t, err, core.ErrInvalidKey)
 }
 
@@ -1003,4 +1007,90 @@ func (encdoc *shimEncodedDocument) Reset() {
 	encdoc.schemaVersionID = ""
 	encdoc.status = 0
 	encdoc.properties = map[client.FieldDescription]any{}
+}
+
+func TestUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	doc1 := f.newUserDoc("John", 21)
+	f.saveDocToCollection(doc1, f.users)
+	doc2 := f.newUserDoc("Islam", 18)
+	f.saveDocToCollection(doc2, f.users)
+
+	f.createUserCollectionUniqueIndexOnName()
+
+	key1 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc1).Build()
+	key2 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc2).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS())
+	require.NoError(t, err, key1.ToString())
+	assert.Equal(t, data, []byte(doc1.Key().String()))
+	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS())
+	require.NoError(t, err)
+	assert.Equal(t, data, []byte(doc2.Key().String()))
+}
+
+func TestUniqueCreate_IfFailsToIndex_ShouldNotLeaveArtifacts(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	doc1 := f.newUserDoc("John", 21)
+	f.saveDocToCollection(doc1, f.users)
+	doc2 := f.newUserDoc("John", 18)
+	f.saveDocToCollection(doc2, f.users)
+
+	indexDesc := makeUnique(getUsersIndexDescOnName())
+	_, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
+	require.Error(t, err)
+
+	// We assume here that the newly created index (that failed to index) got an ID of 1.
+	key := core.IndexDataStoreKey{CollectionID: f.users.ID(), IndexID: 1}
+
+	assert.Len(t, f.getPrefixFromDataStore(key.ToString()), 0)
+}
+
+func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+	f.createUserCollectionUniqueIndexOnName()
+
+	docJSON, err := json.Marshal(struct {
+		Age int `json:"age"`
+	}{Age: 44})
+	require.NoError(f.t, err)
+
+	doc, err := client.NewDocFromJSON(docJSON)
+	require.NoError(f.t, err)
+
+	f.saveDocToCollection(doc, f.users)
+
+	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc).
+		Values([]byte(nil)).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	require.NoError(t, err)
+	assert.Equal(t, data, []byte(doc.Key().String()))
+}
+
+func TestUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
+	f := newIndexTestFixtureBare(t)
+	users := f.addUsersCollection()
+	_, err := f.createCollectionIndexFor(users.Name(), makeUnique(getUsersIndexDescOnName()))
+	require.NoError(f.t, err)
+	_, err = f.createCollectionIndexFor(users.Name(), makeUnique(getUsersIndexDescOnAge()))
+	require.NoError(f.t, err)
+	f.commitTxn()
+
+	f.saveDocToCollection(f.newUserDoc("John", 21), users)
+	f.saveDocToCollection(f.newUserDoc("Islam", 23), users)
+
+	userNameKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Build()
+	userAgeKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Build()
+
+	err = f.dropIndex(usersColName, testUsersColIndexAge)
+	require.NoError(f.t, err)
+
+	assert.Len(t, f.getPrefixFromDataStore(userNameKey.ToString()), 2)
+	assert.Len(t, f.getPrefixFromDataStore(userAgeKey.ToString()), 0)
 }

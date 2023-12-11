@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -222,7 +223,8 @@ func (c *collection) createIndex(
 	c.indexes = append(c.indexes, colIndex)
 	err = c.indexExistingDocs(ctx, txn, colIndex)
 	if err != nil {
-		return nil, err
+		removeErr := colIndex.RemoveAll(ctx, txn)
+		return nil, errors.Join(err, removeErr)
 	}
 	return colIndex, nil
 }
