@@ -26,6 +26,7 @@ const (
 
 	IndexDirectiveLabel          = "index"
 	IndexDirectivePropName       = "name"
+	IndexDirectivePropUnique     = "unique"
 	IndexDirectivePropFields     = "fields"
 	IndexDirectivePropDirections = "directions"
 )
