@@ -65,6 +65,7 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 	},
 })
 
+// BigIntPattern is a regex for validating big int strings
 var BigIntPattern = regexp.MustCompile("^[0-9]+$")
 
 var BigIntScalarType = graphql.NewScalar(graphql.ScalarConfig{
@@ -161,7 +162,111 @@ func coerceBigInt(value any) any {
 		return value
 
 	case *string:
-		return coerceBlob(*value)
+		return coerceBigInt(*value)
+
+	default:
+		return nil
+	}
+}
+
+// BigFloatPattern is a regex for validating big float strings
+var BigFloatPattern = regexp.MustCompile("^[0-9]+(.[0-9]+)?$")
+
+var BigFloatScalarType = graphql.NewScalar(graphql.ScalarConfig{
+	Name:        "BigFloat",
+	Description: "The `BigFloat` scalar type represents an arbitrary precision float.",
+	// Serialize converts the value to a string
+	Serialize: coerceBigFloat,
+	// ParseValue converts the value to a string
+	ParseValue: coerceBigFloat,
+	// ParseLiteral converts the ast value to a string
+	ParseLiteral: func(valueAST ast.Value) any {
+		switch valueAST := valueAST.(type) {
+		case *ast.IntValue:
+			return coerceBigFloat(valueAST.Value)
+		case *ast.FloatValue:
+			return coerceBigFloat(valueAST.Value)
+		case *ast.StringValue:
+			return coerceBigFloat(valueAST.Value)
+		default:
+			// return nil if the value cannot be parsed
+			return nil
+		}
+	},
+})
+
+// coerceBigFloat converts the given value into a valid BigFloat.
+// If the value cannot be converted nil is returned.
+func coerceBigFloat(value any) any {
+	switch value := value.(type) {
+	case float32:
+		return big.NewFloat(float64(value)).String()
+
+	case *float32:
+		return coerceBigFloat(*value)
+
+	case float64:
+		return big.NewFloat(float64(value)).String()
+
+	case *float64:
+		return coerceBigFloat(*value)
+
+	case int:
+		return big.NewFloat(float64(value)).String()
+
+	case *int:
+		return coerceBigFloat(*value)
+
+	case int16:
+		return big.NewFloat(float64(value)).String()
+
+	case *int16:
+		return coerceBigFloat(*value)
+
+	case int32:
+		return big.NewFloat(float64(value)).String()
+
+	case *int32:
+		return coerceBigFloat(*value)
+
+	case int64:
+		return big.NewFloat(float64(value)).String()
+
+	case *int64:
+		return coerceBigFloat(*value)
+
+	case uint:
+		return big.NewFloat(float64(value)).String()
+
+	case *uint:
+		return coerceBigFloat(*value)
+
+	case uint16:
+		return big.NewFloat(float64(value)).String()
+
+	case *uint16:
+		return coerceBigFloat(*value)
+
+	case uint32:
+		return big.NewFloat(float64(value)).String()
+
+	case *uint32:
+		return coerceBigFloat(*value)
+
+	case uint64:
+		return big.NewFloat(float64(value)).String()
+
+	case *uint64:
+		return coerceBigFloat(*value)
+
+	case string:
+		if !BigFloatPattern.MatchString(value) {
+			return nil
+		}
+		return value
+
+	case *string:
+		return coerceBigFloat(*value)
 
 	default:
 		return nil
