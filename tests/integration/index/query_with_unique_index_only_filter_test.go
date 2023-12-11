@@ -16,7 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-
 func TestQueryWithUniqueIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {name: {_eq: "Islam"}}) {
