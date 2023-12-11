@@ -16,30 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKind9(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind deprecated (9)",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 9} }
-					]
-				`,
-				ExpectedError: "no type found for given name. Type: 9",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesAddFieldKind14(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind deprecated (14)",

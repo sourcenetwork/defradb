@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindBigInt(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindBigFloat(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind big int (8)",
+		Description: "Test schema update, add field with kind big float (9)",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -30,7 +30,7 @@ func TestSchemaUpdatesAddFieldKindBigInt(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 8} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 9} }
 					]
 				`,
 			},
@@ -48,9 +48,9 @@ func TestSchemaUpdatesAddFieldKindBigInt(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBigIntWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindBigFloatWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind big int (8) with create",
+		Description: "Test schema update, add field with kind big float (9) with create",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldKindBigIntWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 8} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 9} }
 					]
 				`,
 			},
@@ -70,7 +70,7 @@ func TestSchemaUpdatesAddFieldKindBigIntWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "123456"
+					"foo": "123456.123456"
 				}`,
 			},
 			testUtils.Request{
@@ -83,7 +83,7 @@ func TestSchemaUpdatesAddFieldKindBigIntWithCreate(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John",
-						"foo":  "123456",
+						"foo":  "123456.123456",
 					},
 				},
 			},
@@ -92,9 +92,9 @@ func TestSchemaUpdatesAddFieldKindBigIntWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindBigIntSubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindBigFloatSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind big int substitution with create",
+		Description: "Test schema update, add field with kind big float substitution with create",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -106,7 +106,7 @@ func TestSchemaUpdatesAddFieldKindBigIntSubstitutionWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "BigInt"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "BigFloat"} }
 					]
 				`,
 			},
@@ -114,7 +114,7 @@ func TestSchemaUpdatesAddFieldKindBigIntSubstitutionWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "123456"
+					"foo": "123456.123456"
 				}`,
 			},
 			testUtils.Request{
@@ -127,7 +127,7 @@ func TestSchemaUpdatesAddFieldKindBigIntSubstitutionWithCreate(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John",
-						"foo":  "123456",
+						"foo":  "123456.123456",
 					},
 				},
 			},
