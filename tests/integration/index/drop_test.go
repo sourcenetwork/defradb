@@ -23,8 +23,8 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Age: Int
+						name: String
+						age: Int
 					}
 				`,
 			},
@@ -33,8 +33,8 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 				// bae-52b9170d-b77a-5887-b877-cbdbb99b009f
 				Doc: `
 					{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.DropIndex{
@@ -46,14 +46,14 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 				Request: `
 					query  {
 						Users {
-							Name
-							Age
+							name
+							age
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Age":  int64(21),
+						"name": "John",
+						"age":  int64(21),
 					},
 				},
 			},
