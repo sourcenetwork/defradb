@@ -45,45 +45,52 @@ const (
 // For example, iteration over condition _eq and _gt will have completely different logic.
 type indexIterator interface {
 	Init(context.Context, datastore.DSReaderWriter) error
-	Next() (core.IndexDataStoreKey, bool, error)
+	Next() indexIterResult
 	Close() error
+}
+
+type indexIterResult struct {
+	key      core.IndexDataStoreKey
+	foundKey bool
+	value    []byte
+	err      error
 }
 
 type queryResultIterator struct {
 	resultIter query.Results
 }
 
-func (i queryResultIterator) Next() (core.IndexDataStoreKey, bool, error) {
+func (i *queryResultIterator) Next() indexIterResult {
 	res, hasVal := i.resultIter.NextSync()
 	if res.Error != nil {
-		return core.IndexDataStoreKey{}, false, res.Error
+		return indexIterResult{err: res.Error}
 	}
 	if !hasVal {
-		return core.IndexDataStoreKey{}, false, nil
+		return indexIterResult{}
 	}
 	key, err := core.NewIndexDataStoreKey(res.Key)
 	if err != nil {
-		return core.IndexDataStoreKey{}, false, err
+		return indexIterResult{err: err}
 	}
-	return key, true, nil
+	return indexIterResult{key: key, value: res.Value, foundKey: true}
 }
 
-func (i queryResultIterator) Close() error {
+func (i *queryResultIterator) Close() error {
 	return i.resultIter.Close()
 }
 
-type eqIndexIterator struct {
+type eqPrefixIndexIterator struct {
+	filterValueHolder
+	indexKey core.IndexDataStoreKey
+	execInfo *ExecInfo
+
 	queryResultIterator
-	indexKey  core.IndexDataStoreKey
-	filterVal []byte
-	execInfo  *ExecInfo
 }
 
-func (i *eqIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	i.indexKey.FieldValues = [][]byte{i.filterVal}
+func (i *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	i.indexKey.FieldValues = [][]byte{i.value}
 	resultIter, err := store.Query(ctx, query.Query{
-		Prefix:   i.indexKey.ToString(),
-		KeysOnly: true,
+		Prefix: i.indexKey.ToString(),
 	})
 	if err != nil {
 		return err
@@ -92,16 +99,62 @@ func (i *eqIndexIterator) Init(ctx context.Context, store datastore.DSReaderWrit
 	return nil
 }
 
-func (i *eqIndexIterator) Next() (core.IndexDataStoreKey, bool, error) {
-	key, hasValue, err := i.queryResultIterator.Next()
-	if hasValue {
+func (i *eqPrefixIndexIterator) Next() indexIterResult {
+	res := i.queryResultIterator.Next()
+	if res.foundKey {
 		i.execInfo.IndexesFetched++
 	}
-	return key, hasValue, err
+	return res
+}
+
+type filterValueIndexIterator interface {
+	indexIterator
+	SetFilterValue([]byte)
+}
+
+type filterValueHolder struct {
+	value []byte
+}
+
+func (h *filterValueHolder) SetFilterValue(value []byte) {
+	h.value = value
+}
+
+type eqSingleIndexIterator struct {
+	filterValueHolder
+	indexKey core.IndexDataStoreKey
+	execInfo *ExecInfo
+
+	ctx   context.Context
+	store datastore.DSReaderWriter
+}
+
+func (i *eqSingleIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	i.ctx = ctx
+	i.store = store
+	return nil
+}
+
+func (i *eqSingleIndexIterator) Next() indexIterResult {
+	if i.store == nil {
+		return indexIterResult{}
+	}
+	i.indexKey.FieldValues = [][]byte{i.value}
+	val, err := i.store.Get(i.ctx, i.indexKey.ToDS())
+	if err != nil {
+		return indexIterResult{err: err}
+	}
+	i.store = nil
+	i.execInfo.IndexesFetched++
+	return indexIterResult{key: i.indexKey, value: val, foundKey: true}
+}
+
+func (i *eqSingleIndexIterator) Close() error {
+	return nil
 }
 
 type inIndexIterator struct {
-	eqIndexIterator
+	filterValueIndexIterator
 	filterValues [][]byte
 	nextValIndex int
 	ctx          context.Context
@@ -110,22 +163,18 @@ type inIndexIterator struct {
 }
 
 func newInIndexIterator(
-	indexKey core.IndexDataStoreKey,
+	indexIter filterValueIndexIterator,
 	filterValues [][]byte,
-	execInfo *ExecInfo,
 ) *inIndexIterator {
 	return &inIndexIterator{
-		eqIndexIterator: eqIndexIterator{
-			indexKey: indexKey,
-			execInfo: execInfo,
-		},
-		filterValues: filterValues,
+		filterValueIndexIterator: indexIter,
+		filterValues:             filterValues,
 	}
 }
 
 func (i *inIndexIterator) nextIterator() (bool, error) {
 	if i.nextValIndex > 0 {
-		err := i.eqIndexIterator.Close()
+		err := i.filterValueIndexIterator.Close()
 		if err != nil {
 			return false, err
 		}
@@ -135,8 +184,8 @@ func (i *inIndexIterator) nextIterator() (bool, error) {
 		return false, nil
 	}
 
-	i.filterVal = i.filterValues[i.nextValIndex]
-	err := i.eqIndexIterator.Init(i.ctx, i.store)
+	i.SetFilterValue(i.filterValues[i.nextValIndex])
+	err := i.filterValueIndexIterator.Init(i.ctx, i.store)
 	if err != nil {
 		return false, err
 	}
@@ -152,22 +201,23 @@ func (i *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWrit
 	return err
 }
 
-func (i *inIndexIterator) Next() (core.IndexDataStoreKey, bool, error) {
+func (i *inIndexIterator) Next() indexIterResult {
 	for i.hasIterator {
-		key, hasValue, err := i.eqIndexIterator.Next()
-		if err != nil {
-			return core.IndexDataStoreKey{}, false, err
+		res := i.filterValueIndexIterator.Next()
+		if res.err != nil {
+			return res
 		}
-		if !hasValue {
+		if !res.foundKey {
+			var err error
 			i.hasIterator, err = i.nextIterator()
 			if err != nil {
-				return core.IndexDataStoreKey{}, false, err
+				return indexIterResult{err: err}
 			}
 			continue
 		}
-		return key, true, nil
+		return res
 	}
-	return core.IndexDataStoreKey{}, false, nil
+	return indexIterResult{}
 }
 
 func (i *inIndexIterator) Close() error {
@@ -220,9 +270,8 @@ func (i *scanningIndexIterator) Init(ctx context.Context, store datastore.DSRead
 	i.filter.matcher = &execInfoIndexMatcherDecorator{matcher: i.matcher, execInfo: i.execInfo}
 
 	iter, err := store.Query(ctx, query.Query{
-		Prefix:   i.indexKey.ToString(),
-		KeysOnly: true,
-		Filters:  []query.Filter{&i.filter},
+		Prefix:  i.indexKey.ToString(),
+		Filters: []query.Filter{&i.filter},
 	})
 	if err != nil {
 		return err
@@ -232,12 +281,12 @@ func (i *scanningIndexIterator) Init(ctx context.Context, store datastore.DSRead
 	return nil
 }
 
-func (i *scanningIndexIterator) Next() (core.IndexDataStoreKey, bool, error) {
-	key, hasValue, err := i.queryResultIterator.Next()
+func (i *scanningIndexIterator) Next() indexIterResult {
+	res := i.queryResultIterator.Next()
 	if i.filter.err != nil {
-		return core.IndexDataStoreKey{}, false, i.filter.err
+		return indexIterResult{err: i.filter.err}
 	}
-	return key, hasValue, err
+	return res
 }
 
 // checks if the stored index value satisfies the condition
@@ -348,6 +397,7 @@ func createIndexIterator(
 	indexDataStoreKey core.IndexDataStoreKey,
 	indexFilterConditions *mapper.Filter,
 	execInfo *ExecInfo,
+	isUnique bool,
 ) (indexIterator, error) {
 	var op string
 	var filterVal any
@@ -373,11 +423,23 @@ func createIndexIterator(
 
 		switch op {
 		case opEq:
-			return &eqIndexIterator{
-				indexKey:  indexDataStoreKey,
-				filterVal: valueBytes,
-				execInfo:  execInfo,
-			}, nil
+			if isUnique {
+				return &eqSingleIndexIterator{
+					indexKey: indexDataStoreKey,
+					filterValueHolder: filterValueHolder{
+						value: valueBytes,
+					},
+					execInfo: execInfo,
+				}, nil
+			} else {
+				return &eqPrefixIndexIterator{
+					indexKey: indexDataStoreKey,
+					filterValueHolder: filterValueHolder{
+						value: valueBytes,
+					},
+					execInfo: execInfo,
+				}, nil
+			}
 		case opGt:
 			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,
@@ -438,7 +500,19 @@ func createIndexIterator(
 			valArr = append(valArr, valueBytes)
 		}
 		if op == opIn {
-			return newInIndexIterator(indexDataStoreKey, valArr, execInfo), nil
+			var iter filterValueIndexIterator
+			if isUnique {
+				iter = &eqSingleIndexIterator{
+					indexKey: indexDataStoreKey,
+					execInfo: execInfo,
+				}
+			} else {
+				iter = &eqPrefixIndexIterator{
+					indexKey: indexDataStoreKey,
+					execInfo: execInfo,
+				}
+			}
+			return newInIndexIterator(iter, valArr), nil
 		} else {
 			return &scanningIndexIterator{
 				indexKey: indexDataStoreKey,

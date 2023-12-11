@@ -354,7 +354,7 @@ func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 
 func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.getUsersCollectionDesc()
+	users := f.addUsersCollection()
 	products := f.getProductsCollectionDesc()
 
 	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
@@ -631,7 +631,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 
 func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.getUsersCollectionDesc()
+	users := f.addUsersCollection()
 	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
 	_, err = f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnAge())

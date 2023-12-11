@@ -58,7 +58,7 @@ type indexTestFixture struct {
 	t     *testing.T
 }
 
-func (f *indexTestFixture) getUsersCollectionDesc() client.Collection {
+func (f *indexTestFixture) addUsersCollection() client.Collection {
 	_, err := f.db.AddSchema(
 		f.ctx,
 		fmt.Sprintf(
@@ -129,7 +129,7 @@ func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
 
 func newIndexTestFixture(t *testing.T) *indexTestFixture {
 	f := newIndexTestFixtureBare(t)
-	f.users = f.getUsersCollectionDesc()
+	f.users = f.addUsersCollection()
 	return f
 }
 
@@ -278,6 +278,7 @@ func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
 	assert.Equal(t, desc.Fields, resultDesc.Fields)
+	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
 func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
@@ -414,7 +415,7 @@ func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 
 func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCollection(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.getUsersCollectionDesc()
+	users := f.addUsersCollection()
 	products := f.getProductsCollectionDesc()
 
 	makeIndex := func(fieldName string) client.IndexDescription {
@@ -856,7 +857,7 @@ func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
 
 func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	f.getUsersCollectionDesc()
+	f.addUsersCollection()
 
 	const unsupportedKind = client.FieldKind_BOOL_ARRAY
 	_, err := f.db.AddSchema(

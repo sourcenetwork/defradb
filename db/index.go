@@ -90,44 +90,32 @@ func NewCollectionIndex(
 	if len(desc.Fields) == 0 {
 		return nil, NewErrIndexDescHasNoFields(desc)
 	}
-	index := &collectionSimpleIndex{collection: collection, desc: desc}
 	field, foundField := collection.Schema().GetField(desc.Fields[0].Name)
 	if !foundField {
 		return nil, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name)
 	}
-	var e error
-	index.fieldDesc = field
-	index.validateFieldFunc, e = getFieldValidateFunc(field.Kind)
-	return index, e
+	base := collectionBaseIndex{collection: collection, desc: desc}
+	base.fieldDesc = field
+	var err error
+	base.validateFieldFunc, err = getFieldValidateFunc(field.Kind)
+	if err != nil {
+		return nil, err
+	}
+	if desc.Unique {
+		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
+	} else {
+		return &collectionSimpleIndex{collectionBaseIndex: base}, nil
+	}
 }
 
-// collectionSimpleIndex is an non-unique index that indexes documents by a single field.
-// Single-field indexes store values only in ascending order.
-type collectionSimpleIndex struct {
+type collectionBaseIndex struct {
 	collection        client.Collection
 	desc              client.IndexDescription
 	validateFieldFunc func(any) bool
 	fieldDesc         client.FieldDescription
 }
 
-var _ CollectionIndex = (*collectionSimpleIndex)(nil)
-
-func (i *collectionSimpleIndex) getDocumentsIndexKey(
-	doc *client.Document,
-) (core.IndexDataStoreKey, error) {
-	fieldValue, err := i.getDocFieldValue(doc)
-	if err != nil {
-		return core.IndexDataStoreKey{}, err
-	}
-
-	indexDataStoreKey := core.IndexDataStoreKey{}
-	indexDataStoreKey.CollectionID = i.collection.ID()
-	indexDataStoreKey.IndexID = i.desc.ID
-	indexDataStoreKey.FieldValues = [][]byte{fieldValue, []byte(doc.Key().String())}
-	return indexDataStoreKey, nil
-}
-
-func (i *collectionSimpleIndex) getDocFieldValue(doc *client.Document) ([]byte, error) {
+func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([]byte, error) {
 	// collectionSimpleIndex only supports single field indexes, that's why we
 	// can safely access the first field
 	indexedFieldName := i.desc.Fields[0].Name
@@ -146,35 +134,26 @@ func (i *collectionSimpleIndex) getDocFieldValue(doc *client.Document) ([]byte, 
 	return writeableVal.Bytes()
 }
 
-// Save indexes a document by storing the indexed field value.
-func (i *collectionSimpleIndex) Save(
-	ctx context.Context,
-	txn datastore.Txn,
+func (i *collectionBaseIndex) getDocumentsIndexKey(
 	doc *client.Document,
-) error {
-	key, err := i.getDocumentsIndexKey(doc)
+) (core.IndexDataStoreKey, error) {
+	fieldValue, err := i.getDocFieldValue(doc)
 	if err != nil {
-		return err
+		return core.IndexDataStoreKey{}, err
 	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
-	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
-	}
-	return nil
+
+	indexDataStoreKey := core.IndexDataStoreKey{}
+	indexDataStoreKey.CollectionID = i.collection.ID()
+	indexDataStoreKey.IndexID = i.desc.ID
+	indexDataStoreKey.FieldValues = [][]byte{fieldValue}
+	return indexDataStoreKey, nil
 }
 
-// Update updates indexed field values of an existing document.
-// It removes the old document from the index and adds the new one.
-func (i *collectionSimpleIndex) Update(
+func (i *collectionBaseIndex) deleteIndexKey(
 	ctx context.Context,
 	txn datastore.Txn,
-	oldDoc *client.Document,
-	newDoc *client.Document,
+	key core.IndexDataStoreKey,
 ) error {
-	key, err := i.getDocumentsIndexKey(oldDoc)
-	if err != nil {
-		return err
-	}
 	exists, err := txn.Datastore().Has(ctx, key.ToDS())
 	if err != nil {
 		return err
@@ -182,16 +161,12 @@ func (i *collectionSimpleIndex) Update(
 	if !exists {
 		return NewErrCorruptedIndex(i.desc.Name)
 	}
-	err = txn.Datastore().Delete(ctx, key.ToDS())
-	if err != nil {
-		return err
-	}
-	return i.Save(ctx, txn, newDoc)
+	return txn.Datastore().Delete(ctx, key.ToDS())
 }
 
 // RemoveAll remove all artifacts of the index from the storage, i.e. all index
 // field values for all documents.
-func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
+func (i *collectionBaseIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
 	prefixKey := core.IndexDataStoreKey{}
 	prefixKey.CollectionID = i.collection.ID()
 	prefixKey.IndexID = i.desc.ID
@@ -212,11 +187,148 @@ func (i *collectionSimpleIndex) RemoveAll(ctx context.Context, txn datastore.Txn
 }
 
 // Name returns the name of the index
-func (i *collectionSimpleIndex) Name() string {
+func (i *collectionBaseIndex) Name() string {
 	return i.desc.Name
 }
 
 // Description returns the description of the index
-func (i *collectionSimpleIndex) Description() client.IndexDescription {
+func (i *collectionBaseIndex) Description() client.IndexDescription {
 	return i.desc
+}
+
+// collectionSimpleIndex is an non-unique index that indexes documents by a single field.
+// Single-field indexes store values only in ascending order.
+type collectionSimpleIndex struct {
+	collectionBaseIndex
+}
+
+var _ CollectionIndex = (*collectionSimpleIndex)(nil)
+
+func (i *collectionSimpleIndex) getDocumentsIndexKey(
+	doc *client.Document,
+) (core.IndexDataStoreKey, error) {
+	key, err := i.collectionBaseIndex.getDocumentsIndexKey(doc)
+	if err != nil {
+		return core.IndexDataStoreKey{}, err
+	}
+
+	key.FieldValues = append(key.FieldValues, []byte(doc.Key().String()))
+	return key, nil
+}
+
+// Save indexes a document by storing the indexed field value.
+func (i *collectionSimpleIndex) Save(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	key, err := i.getDocumentsIndexKey(doc)
+	if err != nil {
+		return err
+	}
+	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+	if err != nil {
+		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
+	}
+	return nil
+}
+
+func (i *collectionSimpleIndex) Update(
+	ctx context.Context,
+	txn datastore.Txn,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	err := i.deleteDocIndex(ctx, txn, oldDoc)
+	if err != nil {
+		return err
+	}
+	return i.Save(ctx, txn, newDoc)
+}
+
+func (i *collectionSimpleIndex) deleteDocIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	key, err := i.getDocumentsIndexKey(doc)
+	if err != nil {
+		return err
+	}
+	return i.deleteIndexKey(ctx, txn, key)
+}
+
+type collectionUniqueIndex struct {
+	collectionBaseIndex
+}
+
+var _ CollectionIndex = (*collectionUniqueIndex)(nil)
+
+func (i *collectionUniqueIndex) Save(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	key, err := i.getDocumentsIndexKey(doc)
+	if err != nil {
+		return err
+	}
+	exists, err := txn.Datastore().Has(ctx, key.ToDS())
+	if err != nil {
+		return err
+	}
+	if exists {
+		return i.newUniqueIndexError(doc)
+	}
+	err = txn.Datastore().Put(ctx, key.ToDS(), []byte(doc.Key().String()))
+	if err != nil {
+		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
+	}
+	return nil
+}
+
+func (i *collectionUniqueIndex) newUniqueIndexError(
+	doc *client.Document,
+) error {
+	fieldVal, err := doc.GetValue(i.fieldDesc.Name)
+	if err != nil {
+		return err
+	}
+	return NewErrCanNotIndexNonUniqueField(doc.Key().String(), i.fieldDesc.Name, fieldVal.Value())
+}
+
+func (i *collectionUniqueIndex) Update(
+	ctx context.Context,
+	txn datastore.Txn,
+	oldDoc *client.Document,
+	newDoc *client.Document,
+) error {
+	newKey, err := i.getDocumentsIndexKey(newDoc)
+	if err != nil {
+		return err
+	}
+	exists, err := txn.Datastore().Has(ctx, newKey.ToDS())
+	if err != nil {
+		return err
+	}
+	if exists {
+		return i.newUniqueIndexError(newDoc)
+	}
+	err = i.deleteDocIndex(ctx, txn, oldDoc)
+	if err != nil {
+		return err
+	}
+	return i.Save(ctx, txn, newDoc)
+}
+
+func (i *collectionUniqueIndex) deleteDocIndex(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) error {
+	key, err := i.getDocumentsIndexKey(doc)
+	if err != nil {
+		return err
+	}
+	return i.deleteIndexKey(ctx, txn, key)
 }
