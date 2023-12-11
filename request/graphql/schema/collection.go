@@ -332,6 +332,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 		typeDateTime string = "DateTime"
 		typeString   string = "String"
 		typeBlob     string = "Blob"
+		typeBigInt   string = "BigInt"
 	)
 
 	switch astTypeVal := t.(type) {
@@ -382,6 +383,8 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 			return client.FieldKind_STRING, nil
 		case typeBlob:
 			return client.FieldKind_BLOB, nil
+		case typeBigInt:
+			return client.FieldKind_BIG_INT, nil
 		default:
 			return client.FieldKind_FOREIGN_OBJECT, nil
 		}

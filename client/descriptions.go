@@ -148,6 +148,8 @@ func (f FieldKind) String() string {
 		return "[String!]"
 	case FieldKind_BLOB:
 		return "Blob"
+	case FieldKind_BIG_INT:
+		return "BigInt"
 	default:
 		return fmt.Sprint(uint8(f))
 	}
@@ -163,7 +165,7 @@ const (
 	FieldKind_INT_ARRAY    FieldKind = 5
 	FieldKind_FLOAT        FieldKind = 6
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
-	_                      FieldKind = 8 // safe to repurpose (was never used)
+	FieldKind_BIG_INT      FieldKind = 8
 	_                      FieldKind = 9 // safe to repurpose (previously old field)
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
