@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -63,7 +63,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		return nil, errors.Wrap("failed to create database", err)
 	}
 
-	server, err := httpapi.NewServer(db)
+	server, err := httpapi.NewServer(db, httpapi.WithAddress(cfg.API.Address))
 	if err != nil {
 		return nil, errors.Wrap("failed to create http server", err)
 	}
@@ -71,7 +71,9 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", server.Addr), err)
 	}
 	// save the address on the config in case the port number was set to random
-	cfg.API.Address = server.AssignedAddr()
+	cfg.WithCustomValues(func(cfg *config.Config) {
+		cfg.API.Address = server.AssignedAddr()
+	})
 
 	// run the server in a separate goroutine
 	go func(apiAddress string) {
@@ -91,9 +93,13 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 
 func getTestConfig(t *testing.T) *config.Config {
 	cfg := config.DefaultConfig()
-	cfg.Datastore.Store = "memory"
-	cfg.Datastore.Badger.Path = t.TempDir()
-	cfg.Net.P2PDisabled = true
+	cfg.WithCustomValues(func(cfg *config.Config) {
+		cfg.Datastore.Store = "memory"
+		cfg.Net.P2PDisabled = true
+		cfg.Rootdir = t.TempDir()
+		cfg.Net.P2PAddress = "/ip4/127.0.0.1/tcp/0"
+		cfg.API.Address = "127.0.0.1:0"
+	})
 	return cfg
 }
 

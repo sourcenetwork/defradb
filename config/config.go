@@ -113,6 +113,20 @@ func DefaultConfig() *Config {
 	return cfg
 }
 
+// WithCustomValues allows changing values of config and persists them in the viper config.
+func (cfg *Config) WithCustomValues(f func(cfg *Config)) {
+	f(cfg)
+
+	// Load new values in viper.
+	b, err := cfg.toBytes()
+	if err != nil {
+		panic(err)
+	}
+	if err = cfg.v.ReadConfig(bytes.NewReader(b)); err != nil {
+		panic(NewErrReadingConfigFile(err))
+	}
+}
+
 // LoadWithRootdir loads a Config with parameters from defaults, config file, environment variables, and CLI flags.
 // It loads from config file when `fromFile` is true, otherwise it loads directly from a default configuration.
 // Use on a Config struct already loaded with default values from DefaultConfig().
