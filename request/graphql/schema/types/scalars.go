@@ -170,7 +170,7 @@ func coerceBigInt(value any) any {
 }
 
 // BigFloatPattern is a regex for validating big float strings
-var BigFloatPattern = regexp.MustCompile("^[0-9]+(.[0-9]+)?$")
+var BigFloatPattern = regexp.MustCompile(`^\d+(.\d+(e±\d\d)?)?$`)
 
 var BigFloatScalarType = graphql.NewScalar(graphql.ScalarConfig{
 	Name:        "BigFloat",

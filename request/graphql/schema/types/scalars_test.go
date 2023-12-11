@@ -141,6 +141,7 @@ func TestBigIntScalarTypeParseLiteral(t *testing.T) {
 
 func TestBigFloatScalarTypeParseValue(t *testing.T) {
 	stringInput := "123456.123456"
+	exponentInput := "123456.123456e±12"
 	intInput := int(123456)
 	int16Input := int16(12345)
 	int32Input := int32(123456)
@@ -160,6 +161,8 @@ func TestBigFloatScalarTypeParseValue(t *testing.T) {
 	}{
 		{stringInput, "123456.123456"},
 		{&stringInput, "123456.123456"},
+		{exponentInput, "123456.123456e±12"},
+		{&exponentInput, "123456.123456e±12"},
 		{intInput, "123456"},
 		{&intInput, "123456"},
 		{int16Input, "12345"},
@@ -197,6 +200,7 @@ func TestBigFloatScalarTypeParseLiteral(t *testing.T) {
 		expect any
 	}{
 		{&ast.StringValue{Value: "123456.123456"}, "123456.123456"},
+		{&ast.StringValue{Value: "123456.123456e±12"}, "123456.123456e±12"},
 		{&ast.StringValue{Value: "00!@#$%^&*"}, nil},
 		{&ast.StringValue{Value: "!@#$%^&*00"}, nil},
 		{&ast.IntValue{Value: "123456"}, "123456"},
