@@ -21,7 +21,6 @@ import (
 const johnDockey = "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7"
 
 func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
-
 	test := testUtils.TestCase{
 		Description: "If field is not unique, creating of unique index fails",
 		Actions: []any{
