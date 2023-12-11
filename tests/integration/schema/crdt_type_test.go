@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaCreate_PNCounterType_NoError(t *testing.T) {
+func TestSchemaCreate_PNCounterTypeWithInt_NoError(t *testing.T) {
 	schemaVersionID := "bafkreia444xgvvpyyvxn2m56mgsyovhtrbbx6zpmn4ocnkqbbjnytlfvrm"
 
 	test := testUtils.TestCase{
@@ -47,7 +47,47 @@ func TestSchemaCreate_PNCounterType_NoError(t *testing.T) {
 								Name: "points",
 								ID:   1,
 								Kind: client.FieldKind_INT,
-								Typ:  client.PN_COUNTER_REGISTER,
+								Typ:  client.PN_COUNTER,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaCreate_PNCounterTypeWithFloat_NoError(t *testing.T) {
+	schemaVersionID := "bafkreiexc2p3oc6vhywrhmyqqxntlgryjjlywtzz42r2ebyzq7mqu5ow2m"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						points: Float @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.GetSchema{
+				VersionID: immutable.Some(schemaVersionID),
+				ExpectedResults: []client.SchemaDescription{
+					{
+						Name:      "Users",
+						VersionID: schemaVersionID,
+						Root:      schemaVersionID,
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+							},
+							{
+								Name: "points",
+								ID:   1,
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.PN_COUNTER,
 							},
 						},
 					},
@@ -82,10 +122,10 @@ func TestSchemaCreate_InvalidType_Error(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						points: Int @crdt(type: "pn_counter")
+						points: Int @crdt(type: "invalid")
 					}
 				`,
-				ExpectedError: "CRDT type not supported. Name: points, CRDTType: pn_counter",
+				ExpectedError: "CRDT type not supported. Name: points, CRDTType: invalid",
 			},
 		},
 	}

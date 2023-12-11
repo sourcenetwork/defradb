@@ -388,11 +388,11 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 			case "type":
 				cType := arg.Value.GetValue().(string)
 				switch cType {
-				case client.PN_COUNTER_REGISTER.String():
-					if !client.PN_COUNTER_REGISTER.IsCompatibleWith(kind) {
+				case client.PN_COUNTER.String():
+					if !client.PN_COUNTER.IsCompatibleWith(kind) {
 						return 0, client.NewErrCRDTKindMismatch(cType, kind.String())
 					}
-					return client.PN_COUNTER_REGISTER, nil
+					return client.PN_COUNTER, nil
 				case client.LWW_REGISTER.String():
 					return client.LWW_REGISTER, nil
 				default:

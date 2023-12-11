@@ -40,8 +40,11 @@ type CompositeDAGDelta struct {
 	SchemaVersionID string
 	// Status represents the status of the document. By default it is `Active`.
 	// Alternatively, if can be set to `Deleted`.
-	Status  client.DocumentStatus
-	SubDAGs []core.DAGLink `json:"-"` // should not be marshalled
+	Status client.DocumentStatus
+	// SubDAGS should not be marshalled as they are already
+	// stored as links in the DAG blocks. They are needed here to
+	// hold on to them for the block creation.
+	SubDAGs []core.DAGLink `json:"-"`
 }
 
 var _ core.CompositeDelta = (*CompositeDAGDelta)(nil)
@@ -66,6 +69,13 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// Unmarshal decodes the delta from CBOR.
+func (delta *CompositeDAGDelta) Unmarshal(b []byte) error {
+	h := &codec.CborHandle{}
+	dec := codec.NewDecoderBytes(b, h)
+	return dec.Decode(delta)
 }
 
 // Links returns the links for this delta.
@@ -193,15 +203,13 @@ func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKe
 // a CompositeDAGDelta from a ipld.Node
 // for now let's do cbor (quick to implement)
 func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
-	delta := &CompositeDAGDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
 		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
 	}
-	data := pbNode.Data()
-	h := &codec.CborHandle{}
-	dec := codec.NewDecoderBytes(data, h)
-	err := dec.Decode(delta)
+
+	delta := &CompositeDAGDelta{}
+	err := delta.Unmarshal(pbNode.Data())
 	if err != nil {
 		return nil, err
 	}

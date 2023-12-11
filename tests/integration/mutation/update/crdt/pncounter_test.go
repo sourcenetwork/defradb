@@ -11,14 +11,16 @@
 package update
 
 import (
+	"fmt"
+	"math"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationUpdate_PNCounter_NoError(t *testing.T) {
+func TestMutationUpdate_PNCounterInt_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation of a PN Counter",
+		Description: "Simple update mutation of a PN Counter with Int type",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -34,9 +36,15 @@ func TestMutationUpdate_PNCounter_NoError(t *testing.T) {
 					"points": 0
 				}`,
 			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 10
+				}`,
+			},
 			testUtils.Request{
-				Request: `mutation {
-					update_Users(id: "bae-7d3bc1c9-b467-5ad0-979c-2ecfa06f2184", data: "{\"points\": 10}") {
+				Request: `query {
+					Users {
 						name
 						points
 					}
@@ -48,9 +56,15 @@ func TestMutationUpdate_PNCounter_NoError(t *testing.T) {
 					},
 				},
 			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 10
+				}`,
+			},
 			testUtils.Request{
-				Request: `mutation {
-					update_Users(id: "bae-7d3bc1c9-b467-5ad0-979c-2ecfa06f2184", data: "{\"points\": 10}") {
+				Request: `query {
+					Users {
 						name
 						points
 					}
@@ -59,6 +73,163 @@ func TestMutationUpdate_PNCounter_NoError(t *testing.T) {
 					{
 						"name":   "John",
 						"points": int64(20),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test documents what happens when an overflow occurs in a PN Counter with Int type.
+// In this case the value rolls over to the minimum int64 value.
+func TestMutationUpdate_PNCounterIntWithOverflow_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple update mutation of a PN Counter with Int type and overflow",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Int @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: fmt.Sprintf(`{
+					"name": "John",
+					"points": %d
+				}`, math.MaxInt64),
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 1
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": math.MinInt64,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpdate_PNCounterFloat_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple update mutation of a PN Counter with Float type",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 0
+				}`,
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 10.1
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": 10.1,
+					},
+				},
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 10.2
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+						// Note the lack of precision of float types.
+						"points": 20.299999999999997,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test documents what happens when an overflow occurs in a PN Counter with Float type.
+// In this case it is the same as a no-op.
+func TestMutationUpdate_PNCounterFloatWithOverflow_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple update mutation of a PN Counter with Float type and overflow",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: fmt.Sprintf(`{
+					"name": "John",
+					"points": %f
+				}`, math.MaxFloat64),
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 1
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": math.MaxFloat64,
 					},
 				},
 			},

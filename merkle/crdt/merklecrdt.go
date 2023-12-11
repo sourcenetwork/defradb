@@ -71,6 +71,7 @@ func InstanceWithStore(
 	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	ctype client.CType,
+	kind client.FieldKind,
 	key core.DataStoreKey,
 	fieldName string,
 ) (MerkleCRDT, error) {
@@ -82,13 +83,23 @@ func InstanceWithStore(
 			key,
 			fieldName,
 		), nil
-	case client.PN_COUNTER_REGISTER:
-		return NewMerklePNCounterRegister(
-			store,
-			schemaVersionKey,
-			key,
-			fieldName,
-		), nil
+	case client.PN_COUNTER:
+		switch kind {
+		case client.FieldKind_INT:
+			return NewMerklePNCounter[int64](
+				store,
+				schemaVersionKey,
+				key,
+				fieldName,
+			), nil
+		case client.FieldKind_FLOAT:
+			return NewMerklePNCounter[float64](
+				store,
+				schemaVersionKey,
+				key,
+				fieldName,
+			), nil
+		}
 	case client.COMPOSITE:
 		return NewMerkleCompositeDAG(
 			store,

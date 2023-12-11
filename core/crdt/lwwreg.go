@@ -64,6 +64,13 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Unmarshal decodes the delta from CBOR.
+func (delta *LWWRegDelta) Unmarshal(b []byte) error {
+	h := &codec.CborHandle{}
+	dec := codec.NewDecoderBytes(b, h)
+	return dec.Decode(delta)
+}
+
 // LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
 // of an arbitrary data type that ensures convergence.
 type LWWRegister struct {
@@ -158,15 +165,13 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 // a LWWRegDelta from a ipld.Node
 // for now let's do cbor (quick to implement)
 func (reg LWWRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
-	delta := &LWWRegDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
 		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
 	}
-	data := pbNode.Data()
-	h := &codec.CborHandle{}
-	dec := codec.NewDecoderBytes(data, h)
-	err := dec.Decode(delta)
+
+	delta := &LWWRegDelta{}
+	err := delta.Unmarshal(pbNode.Data())
 	if err != nil {
 		return nil, err
 	}

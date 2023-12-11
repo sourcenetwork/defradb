@@ -269,9 +269,9 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounter_NoError(t *testing.T) {
+func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounterInt_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with second last cid and dockey with pncounter",
+		Description: "Simple query with second last cid and dockey with pncounter int type",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -289,7 +289,7 @@ func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounter_NoError(t *testing.T
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
-					"points": 5
+					"points": -5
 				}`,
 			},
 			testUtils.UpdateDoc{
@@ -300,7 +300,7 @@ func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounter_NoError(t *testing.T
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeib3acmixgdwe5wkx7mb2japn2adg3vlsw4q2o34l4e7baqkqcwmqq",
+						cid: "bafybeiemzwrx7jotpqjzajfmu2gi2o7h35yptgehihbdyoxkmzox4coetm",
 						dockey: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
 					) {
 						name
@@ -310,7 +310,59 @@ func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounter_NoError(t *testing.T
 				Results: []map[string]any{
 					{
 						"name":   "John",
-						"points": int64(15),
+						"points": int64(5),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounterFloat_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with second last cid and dockey with pncounter and float type",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10.2
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": -5.3
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 20.6
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+						cid: "bafybeidanfj4emzh4izmij5bwocgnecpvolx2b77il4mtwyrucvmgueyp4",
+						dockey: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
+					) {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+						// Note the lack of precision of float types.
+						"points": 4.8999999999999995,
 					},
 				},
 			},

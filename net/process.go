@@ -162,6 +162,7 @@ func initCRDTForType(
 		txn,
 		core.NewCollectionSchemaVersionKey(col.Schema().VersionID, col.ID()),
 		ctype,
+		fd.Kind,
 		key,
 		field,
 	)

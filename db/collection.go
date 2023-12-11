@@ -950,9 +950,9 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			if fieldDescription.Typ != client.LWW_REGISTER {
-				val.SetType(fieldDescription.Typ)
-			}
+			// by default the type will have been set to LWW_REGISTER. We need to ensure
+			// that it's set to the same as the field description CRDT type.
+			val.SetType(fieldDescription.Typ)
 
 			relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fieldDescription)
 			if isSecondaryRelationID {
@@ -1196,15 +1196,38 @@ func (c *collection) saveFieldToMerkleCRDT(
 		)
 
 		return merkleCRDT.Set(ctx, bytes)
-	case client.PN_COUNTER_REGISTER:
-		merkleCRDT := merklecrdt.NewMerklePNCounterRegister(
-			txn,
-			core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
-			dsKey,
-			field.Name,
-		)
+	case client.PN_COUNTER:
+		switch field.Kind {
+		case client.FieldKind_INT:
+			merkleCRDT := merklecrdt.NewMerklePNCounter[int64](
+				txn,
+				core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
+				dsKey,
+				field.Name,
+			)
 
-		return merkleCRDT.Add(ctx, val)
+			return merkleCRDT.Increment(ctx, val.Value().(int64))
+		case client.FieldKind_FLOAT:
+			merkleCRDT := merklecrdt.NewMerklePNCounter[float64](
+				txn,
+				core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
+				dsKey,
+				field.Name,
+			)
+
+			var value float64
+			switch v := val.Value().(type) {
+			case float64:
+				value = v
+			case int64:
+				value = float64(v)
+			}
+
+			return merkleCRDT.Increment(ctx, value)
+		default:
+			return nil, 0, client.NewErrCRDTKindMismatch(val.Type().String(), field.Kind.String())
+		}
+
 	default:
 		return nil, 0, client.NewErrUnknownCRDT(val.Type())
 	}

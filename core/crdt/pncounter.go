@@ -19,6 +19,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ugorji/go/codec"
+	"golang.org/x/exp/constraints"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -29,12 +30,18 @@ import (
 
 var (
 	// ensure types implements core interfaces
-	_ core.ReplicatedData = (*PNCounterRegister)(nil)
-	_ core.Delta          = (*PNCounterDelta)(nil)
+	_ core.ReplicatedData = (*PNCounter[float64])(nil)
+	_ core.ReplicatedData = (*PNCounter[int64])(nil)
+	_ core.Delta          = (*PNCounterDelta[float64])(nil)
+	_ core.Delta          = (*PNCounterDelta[int64])(nil)
 )
 
-// PNCounterDelta is a single delta operation for an PNCounterRegister
-type PNCounterDelta struct {
+type Incrementable interface {
+	constraints.Integer | constraints.Float
+}
+
+// PNCounterDelta is a single delta operation for an PNCounter
+type PNCounterDelta[T Incrementable] struct {
 	DocKey    []byte
 	FieldName string
 	Priority  uint64
@@ -42,56 +49,56 @@ type PNCounterDelta struct {
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
 	SchemaVersionID string
-	Data            []byte
-	FieldValue      client.FieldValue `json:"-"` // should not be marshalled
+	Data            T
 }
 
 // GetPriority gets the current priority for this delta.
-func (delta *PNCounterDelta) GetPriority() uint64 {
+func (delta *PNCounterDelta[T]) GetPriority() uint64 {
 	return delta.Priority
 }
 
 // SetPriority will set the priority for this delta.
-func (delta *PNCounterDelta) SetPriority(prio uint64) {
+func (delta *PNCounterDelta[T]) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
 // Marshal encodes the delta using CBOR.
-func (delta *PNCounterDelta) Marshal() ([]byte, error) {
-	b, err := delta.FieldValue.Bytes()
-	if err != nil {
-		return nil, err
-	}
-	delta.Data = b
-
+func (delta *PNCounterDelta[T]) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
-	err = enc.Encode(delta)
+	err := enc.Encode(delta)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
 }
 
-// PNCounterRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
-// of an arbitrary data type that ensures convergence.
-type PNCounterRegister struct {
+// Unmarshal decodes the delta from CBOR.
+func (delta *PNCounterDelta[T]) Unmarshal(b []byte) error {
+	h := &codec.CborHandle{}
+	dec := codec.NewDecoderBytes(b, h)
+	return dec.Decode(delta)
+}
+
+// PNCounter, is a simple CRDT type that allows increment/decrement
+// of an Int and Float data types that ensures convergence.
+type PNCounter[T Incrementable] struct {
 	baseCRDT
 }
 
-// NewPNCounterRegister returns a new instance of the PNCounter with the given ID.
-func NewPNCounterRegister(
+// NewPNCounter returns a new instance of the PNCounter with the given ID.
+func NewPNCounter[T Incrementable](
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
 	fieldName string,
-) PNCounterRegister {
-	return PNCounterRegister{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
+) PNCounter[T] {
+	return PNCounter[T]{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
 }
 
 // Value gets the current register value
-func (reg PNCounterRegister) Value(ctx context.Context) ([]byte, error) {
+func (reg PNCounter[T]) Value(ctx context.Context) ([]byte, error) {
 	valueK := reg.key.WithValueFlag()
 	buf, err := reg.store.Get(ctx, valueK.ToDS())
 	if err != nil {
@@ -101,37 +108,27 @@ func (reg PNCounterRegister) Value(ctx context.Context) ([]byte, error) {
 }
 
 // Set generates a new delta with the supplied value
-func (reg PNCounterRegister) Set(value client.FieldValue) *PNCounterDelta {
-	return &PNCounterDelta{
+func (reg PNCounter[T]) Increment(value T) *PNCounterDelta[T] {
+	return &PNCounterDelta[T]{
 		DocKey:          []byte(reg.key.DocKey),
 		FieldName:       reg.fieldName,
-		FieldValue:      value,
+		Data:            value,
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}
 }
 
 // Merge implements ReplicatedData interface.
 // It merges two PNCounterRegisty by adding the values together.
-func (reg PNCounterRegister) Merge(ctx context.Context, delta core.Delta) error {
-	d, ok := delta.(*PNCounterDelta)
+func (reg PNCounter[T]) Merge(ctx context.Context, delta core.Delta) error {
+	d, ok := delta.(*PNCounterDelta[T])
 	if !ok {
 		return ErrMismatchedMergeType
 	}
 
-	return reg.addValue(ctx, d.FieldValue, d.GetPriority())
+	return reg.incrementValue(ctx, d.Data, d.GetPriority())
 }
 
-func (reg PNCounterRegister) addValue(ctx context.Context, value client.FieldValue, priority uint64) error {
-	var number int64
-	switch v := value.Value().(type) {
-	case int64:
-		number = int64(v)
-	case uint64:
-		number = int64(v)
-	default:
-		return errors.New("invalid value type. Must be compatible with int64")
-	}
-
+func (reg PNCounter[T]) incrementValue(ctx context.Context, value T, priority uint64) error {
 	key := reg.key.WithValueFlag()
 	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().ToDS())
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
@@ -146,7 +143,8 @@ func (reg PNCounterRegister) addValue(ctx context.Context, value client.FieldVal
 		return err
 	}
 
-	b, err := cbor.Marshal(curValue + number)
+	newValue := curValue + value
+	b, err := cbor.Marshal(newValue)
 	if err != nil {
 		return err
 	}
@@ -159,7 +157,7 @@ func (reg PNCounterRegister) addValue(ctx context.Context, value client.FieldVal
 	return reg.setPriority(ctx, reg.key, priority)
 }
 
-func (reg PNCounterRegister) getCurrentValue(ctx context.Context, key core.DataStoreKey) (int64, error) {
+func (reg PNCounter[T]) getCurrentValue(ctx context.Context, key core.DataStoreKey) (T, error) {
 	curValue, err := reg.store.Get(ctx, key.ToDS())
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
@@ -168,46 +166,30 @@ func (reg PNCounterRegister) getCurrentValue(ctx context.Context, key core.DataS
 		return 0, err
 	}
 
-	return getInt64FromBytes(curValue)
+	return getNumericFromBytes[T](curValue)
 }
 
 // DeltaDecode is a typed helper to extract a PNCounterDelta from a ipld.Node
-func (reg PNCounterRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
-	delta := &PNCounterDelta{}
+func (reg PNCounter[T]) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
 		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
 	}
-	data := pbNode.Data()
-	h := &codec.CborHandle{}
-	dec := codec.NewDecoderBytes(data, h)
-	err := dec.Decode(delta)
-	if err != nil {
-		return nil, err
-	}
 
-	val, err := getInt64FromBytes(delta.Data)
+	delta := &PNCounterDelta[T]{}
+	err := delta.Unmarshal(pbNode.Data())
 	if err != nil {
 		return nil, err
 	}
-	delta.FieldValue = *(client.NewFieldValue(client.PN_COUNTER_REGISTER, val))
 
 	return delta, nil
 }
 
-func getInt64FromBytes(b []byte) (int64, error) {
-	var val any
+func getNumericFromBytes[T Incrementable](b []byte) (T, error) {
+	var val T
 	err := cbor.Unmarshal(b, &val)
 	if err != nil {
-		return 0, err
+		return val, err
 	}
-
-	switch v := val.(type) {
-	case int64:
-		return int64(v), nil
-	case uint64:
-		return int64(v), nil
-	default:
-		return 0, errors.New("invalid value type. Must be int64 or uint64")
-	}
+	return val, nil
 }
