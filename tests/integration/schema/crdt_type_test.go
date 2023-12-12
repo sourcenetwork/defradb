@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaCreate_PNCounterTypeWithInt_NoError(t *testing.T) {
+func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 	schemaVersionID := "bafkreia444xgvvpyyvxn2m56mgsyovhtrbbx6zpmn4ocnkqbbjnytlfvrm"
 
 	test := testUtils.TestCase{
@@ -59,7 +59,7 @@ func TestSchemaCreate_PNCounterTypeWithInt_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_PNCounterTypeWithFloat_NoError(t *testing.T) {
+func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 	schemaVersionID := "bafkreiexc2p3oc6vhywrhmyqqxntlgryjjlywtzz42r2ebyzq7mqu5ow2m"
 
 	test := testUtils.TestCase{
@@ -99,7 +99,7 @@ func TestSchemaCreate_PNCounterTypeWithFloat_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_PNCounterTypeWithWrongKind_Error(t *testing.T) {
+func TestSchemaCreate_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -116,7 +116,7 @@ func TestSchemaCreate_PNCounterTypeWithWrongKind_Error(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_InvalidType_Error(t *testing.T) {
+func TestSchemaCreate_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{

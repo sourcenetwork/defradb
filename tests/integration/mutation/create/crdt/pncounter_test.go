@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationCreate_PNCounter_NoError(t *testing.T) {
+func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation of a PN Counter",
+		Description: "Document creation with PN Counter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

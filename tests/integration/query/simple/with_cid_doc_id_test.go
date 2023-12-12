@@ -269,7 +269,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounterInt_NoError(t *testing.T) {
+func TestCidAndDocKeyQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with second last cid and dockey with pncounter int type",
 		Actions: []any{
@@ -320,7 +320,7 @@ func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounterInt_NoError(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithUpdateAndCidAndDocKeyWithPNCounterFloat_NoError(t *testing.T) {
+func TestCidAndDocKeyQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with second last cid and dockey with pncounter and float type",
 		Actions: []any{

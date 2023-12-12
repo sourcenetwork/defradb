@@ -18,9 +18,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationUpdate_PNCounterInt_NoError(t *testing.T) {
+func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation of a PN Counter with Int type",
+		Description: "Positive increments of a PN Counter with Int type",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -41,20 +41,6 @@ func TestMutationUpdate_PNCounterInt_NoError(t *testing.T) {
 				Doc: `{
 					"points": 10
 				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						points
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": int64(10),
-					},
-				},
 			},
 			testUtils.UpdateDoc{
 				DocID: 0,
@@ -83,10 +69,12 @@ func TestMutationUpdate_PNCounterInt_NoError(t *testing.T) {
 }
 
 // This test documents what happens when an overflow occurs in a PN Counter with Int type.
-// In this case the value rolls over to the minimum int64 value.
-func TestMutationUpdate_PNCounterIntWithOverflow_NoError(t *testing.T) {
+// Note: This documents a sub optimal behaviour of the system due to json unmarshalling
+// MaxInt64 into a float which loses precision and converting it back to int64 sets it as a negative
+// value.
+func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation of a PN Counter with Int type and overflow",
+		Description: "Positive increments of a PN Counter with Int type causing overflow behaviour",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -118,7 +106,7 @@ func TestMutationUpdate_PNCounterIntWithOverflow_NoError(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name":   "John",
-						"points": math.MinInt64,
+						"points": int64(math.MinInt64),
 					},
 				},
 			},
@@ -128,9 +116,9 @@ func TestMutationUpdate_PNCounterIntWithOverflow_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationUpdate_PNCounterFloat_NoError(t *testing.T) {
+func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation of a PN Counter with Float type",
+		Description: "Positive increments of a PN Counter with Float type. Note the lack of precision",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -151,20 +139,6 @@ func TestMutationUpdate_PNCounterFloat_NoError(t *testing.T) {
 				Doc: `{
 					"points": 10.1
 				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						points
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"name":   "John",
-						"points": 10.1,
-					},
-				},
 			},
 			testUtils.UpdateDoc{
 				DocID: 0,
@@ -195,9 +169,9 @@ func TestMutationUpdate_PNCounterFloat_NoError(t *testing.T) {
 
 // This test documents what happens when an overflow occurs in a PN Counter with Float type.
 // In this case it is the same as a no-op.
-func TestMutationUpdate_PNCounterFloatWithOverflow_NoError(t *testing.T) {
+func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation of a PN Counter with Float type and overflow",
+		Description: "Positive increments of a PN Counter with Float type and overflow causing a no-op",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -210,13 +184,13 @@ func TestMutationUpdate_PNCounterFloatWithOverflow_NoError(t *testing.T) {
 			testUtils.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
-					"points": %f
+					"points": %g
 				}`, math.MaxFloat64),
 			},
 			testUtils.UpdateDoc{
 				DocID: 0,
 				Doc: `{
-					"points": 1
+					"points": 1000
 				}`,
 			},
 			testUtils.Request{
