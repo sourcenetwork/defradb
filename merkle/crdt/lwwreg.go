@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
@@ -46,11 +45,11 @@ func NewMerkleLWWRegister(
 	}
 }
 
-// Set the value of the register.
+// Save the value of the register to the DAG.
 func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
 	value, ok := data.(*client.FieldValue)
 	if !ok {
-		return nil, 0, errors.New("invalid type")
+		return nil, 0, NewErrUnexpectedValueType(client.LWW_REGISTER, &client.FieldValue{}, data)
 	}
 	bytes, err := value.Bytes()
 	if err != nil {

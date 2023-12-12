@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
@@ -46,11 +45,11 @@ func NewMerklePNCounter[T crdt.Incrementable](
 	}
 }
 
-// Increment the value of the register.
+// Save the value of the PN Counter to the DAG.
 func (mPNC *MerklePNCounter[T]) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
 	value, ok := data.(*client.FieldValue)
 	if !ok {
-		return nil, 0, errors.New("invalid type")
+		return nil, 0, NewErrUnexpectedValueType(client.PN_COUNTER, &client.FieldValue{}, data)
 	}
 	delta := mPNC.reg.Increment(value.Value().(T))
 	nd, err := mPNC.clock.AddDAGNode(ctx, delta)
