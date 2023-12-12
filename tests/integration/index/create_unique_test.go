@@ -72,7 +72,7 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCreateUniqueIndex_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
+func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "adding a new doc with existing value for indexed field should fail",
 		Actions: []any{
@@ -131,7 +131,7 @@ func TestCreateUniqueIndex_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCreateUniqueIndex_IfFieldValuesAreUnique_Succeed(t *testing.T) {
+func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "create unique index if all docs have unique field values",
 		Actions: []any{

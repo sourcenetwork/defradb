@@ -424,5 +424,5 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	if err := c.http.requestJson(req, &indexes); err != nil {
 		return nil, err
 	}
-	return c.Description().Indexes, nil
+	return indexes, nil
 }
