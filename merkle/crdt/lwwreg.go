@@ -15,8 +15,10 @@ import (
 
 	ipld "github.com/ipfs/go-ipld-format"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
@@ -45,10 +47,18 @@ func NewMerkleLWWRegister(
 }
 
 // Set the value of the register.
-func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (ipld.Node, uint64, error) {
+func (mlwwreg *MerkleLWWRegister) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
+	value, ok := data.(*client.FieldValue)
+	if !ok {
+		return nil, 0, errors.New("invalid type")
+	}
+	bytes, err := value.Bytes()
+	if err != nil {
+		return nil, 0, err
+	}
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
-	delta := mlwwreg.reg.Set(value)
+	delta := mlwwreg.reg.Set(bytes)
 	nd, err := mlwwreg.clock.AddDAGNode(ctx, delta)
 	return nd, delta.GetPriority(), err
 }

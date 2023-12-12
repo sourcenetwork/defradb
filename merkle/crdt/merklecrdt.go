@@ -40,6 +40,7 @@ type Stores interface {
 type MerkleCRDT interface {
 	core.ReplicatedData
 	Clock() core.MerkleClock
+	Save(ctx context.Context, data any) (ipld.Node, uint64, error)
 }
 
 // baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state

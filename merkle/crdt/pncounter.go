@@ -15,8 +15,10 @@ import (
 
 	ipld "github.com/ipfs/go-ipld-format"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
@@ -45,8 +47,12 @@ func NewMerklePNCounter[T crdt.Incrementable](
 }
 
 // Increment the value of the register.
-func (mPNC *MerklePNCounter[T]) Increment(ctx context.Context, value T) (ipld.Node, uint64, error) {
-	delta := mPNC.reg.Increment(value)
+func (mPNC *MerklePNCounter[T]) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
+	value, ok := data.(*client.FieldValue)
+	if !ok {
+		return nil, 0, errors.New("invalid type")
+	}
+	delta := mPNC.reg.Increment(value.Value().(T))
 	nd, err := mPNC.clock.AddDAGNode(ctx, delta)
 	return nd, delta.GetPriority(), err
 }

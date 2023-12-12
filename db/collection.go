@@ -973,7 +973,19 @@ func (c *collection) save(
 				return cid.Undef, err
 			}
 
-			node, _, err := c.saveFieldToMerkleCRDT(ctx, txn, fieldKey, *val)
+			merkleCRDT, err := merklecrdt.InstanceWithStore(
+				txn,
+				core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+				val.Type(),
+				fieldDescription.Kind,
+				fieldKey,
+				fieldDescription.Name,
+			)
+			if err != nil {
+				return cid.Undef, err
+			}
+
+			node, _, err := merkleCRDT.Save(ctx, val)
 			if err != nil {
 				return cid.Undef, err
 			}
@@ -1163,76 +1175,6 @@ func (c *collection) exists(
 	return true, false, nil
 }
 
-func (c *collection) saveFieldToMerkleCRDT(
-	ctx context.Context,
-	txn datastore.Txn,
-	dsKey core.DataStoreKey,
-	val client.FieldValue,
-) (ipld.Node, uint64, error) {
-	fieldID, err := strconv.Atoi(dsKey.FieldId)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	schema := c.Schema()
-
-	field, ok := c.Description().GetFieldByID(client.FieldID(fieldID), &schema)
-	if !ok {
-		return nil, 0, client.NewErrFieldIndexNotExist(fieldID)
-	}
-
-	switch val.Type() {
-	case client.LWW_REGISTER:
-		bytes, err := val.Bytes()
-		if err != nil {
-			return nil, 0, err
-		}
-
-		merkleCRDT := merklecrdt.NewMerkleLWWRegister(
-			txn,
-			core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
-			dsKey,
-			field.Name,
-		)
-
-		return merkleCRDT.Set(ctx, bytes)
-	case client.PN_COUNTER:
-		switch field.Kind {
-		case client.FieldKind_INT:
-			merkleCRDT := merklecrdt.NewMerklePNCounter[int64](
-				txn,
-				core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
-				dsKey,
-				field.Name,
-			)
-
-			return merkleCRDT.Increment(ctx, val.Value().(int64))
-		case client.FieldKind_FLOAT:
-			merkleCRDT := merklecrdt.NewMerklePNCounter[float64](
-				txn,
-				core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
-				dsKey,
-				field.Name,
-			)
-
-			var value float64
-			switch v := val.Value().(type) {
-			case float64:
-				value = v
-			case int64:
-				value = float64(v)
-			}
-
-			return merkleCRDT.Increment(ctx, value)
-		default:
-			return nil, 0, client.NewErrCRDTKindMismatch(val.Type().String(), field.Kind.String())
-		}
-
-	default:
-		return nil, 0, client.NewErrUnknownCRDT(val.Type())
-	}
-}
-
 func (c *collection) saveCompositeToMerkleCRDT(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -1252,7 +1194,7 @@ func (c *collection) saveCompositeToMerkleCRDT(
 		return merkleCRDT.Delete(ctx, links)
 	}
 
-	return merkleCRDT.Set(ctx, links)
+	return merkleCRDT.Save(ctx, links)
 }
 
 // getTxn gets or creates a new transaction from the underlying db.

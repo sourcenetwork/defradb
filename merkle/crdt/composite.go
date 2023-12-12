@@ -71,14 +71,11 @@ func (m *MerkleCompositeDAG) Delete(
 }
 
 // Set sets the values of CompositeDAG. The value is always the object from the mutation operations.
-func (m *MerkleCompositeDAG) Set(
-	ctx context.Context,
-	links []core.DAGLink,
-) (ipld.Node, uint64, error) {
+func (m *MerkleCompositeDAG) Save(ctx context.Context, data any) (ipld.Node, uint64, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
-	delta := m.reg.Set(links)
+	delta := m.reg.Set(data.([]core.DAGLink))
 	nd, err := m.clock.AddDAGNode(ctx, delta)
 	if err != nil {
 		return nil, 0, err
