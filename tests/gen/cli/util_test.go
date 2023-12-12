@@ -71,9 +71,8 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", server.Addr), err)
 	}
 	// save the address on the config in case the port number was set to random
-	cfg.WithCustomValues(func(cfg *config.Config) {
-		cfg.API.Address = server.AssignedAddr()
-	})
+	cfg.API.Address = server.AssignedAddr()
+	cfg.Persist()
 
 	// run the server in a separate goroutine
 	go func(apiAddress string) {
@@ -93,13 +92,12 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 
 func getTestConfig(t *testing.T) *config.Config {
 	cfg := config.DefaultConfig()
-	cfg.WithCustomValues(func(cfg *config.Config) {
-		cfg.Datastore.Store = "memory"
-		cfg.Net.P2PDisabled = true
-		cfg.Rootdir = t.TempDir()
-		cfg.Net.P2PAddress = "/ip4/127.0.0.1/tcp/0"
-		cfg.API.Address = "127.0.0.1:0"
-	})
+	cfg.Datastore.Store = "memory"
+	cfg.Net.P2PDisabled = true
+	cfg.Rootdir = t.TempDir()
+	cfg.Net.P2PAddress = "/ip4/127.0.0.1/tcp/0"
+	cfg.API.Address = "127.0.0.1:0"
+	cfg.Persist()
 	return cfg
 }
 

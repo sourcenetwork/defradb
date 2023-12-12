@@ -101,22 +101,13 @@ func DefaultConfig() *Config {
 	cfg.v.SetConfigName(DefaultConfigFileName)
 	cfg.v.SetConfigType(configType)
 
-	// Load default values in viper.
-	b, err := cfg.toBytes()
-	if err != nil {
-		panic(err)
-	}
-	if err = cfg.v.ReadConfig(bytes.NewReader(b)); err != nil {
-		panic(NewErrReadingConfigFile(err))
-	}
+	cfg.Persist()
 
 	return cfg
 }
 
-// WithCustomValues allows changing values of config and persists them in the viper config.
-func (cfg *Config) WithCustomValues(f func(cfg *Config)) {
-	f(cfg)
-
+// Persist persists manually set config parameters to the viper config.
+func (cfg *Config) Persist() {
 	// Load new values in viper.
 	b, err := cfg.toBytes()
 	if err != nil {
