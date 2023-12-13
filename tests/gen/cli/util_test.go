@@ -74,14 +74,14 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	cfg.API.Address = server.AssignedAddr()
 
 	// run the server in a separate goroutine
-	go func() {
-		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", cfg.API.AddressToURL()))
+	go func(apiAddress string) {
+		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", apiAddress))
 		if err := server.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			db.Close()
 			os.Exit(1)
 		}
-	}()
+	}(cfg.API.AddressToURL())
 
 	return &defraInstance{
 		db:     db,
