@@ -22,7 +22,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String
 						age: Int
 					}
@@ -45,7 +45,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query  {
-						Users {
+						User {
 							name
 							age
 						}

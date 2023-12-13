@@ -65,7 +65,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String 
 						age: Int
 					}
@@ -88,7 +88,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query  {
-						Users {
+						User {
 							name
 							age
 						}
