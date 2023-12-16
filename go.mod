@@ -3,7 +3,7 @@ module github.com/sourcenetwork/defradb
 go 1.20
 
 require (
-	github.com/bits-and-blooms/bitset v1.11.0
+	github.com/bits-and-blooms/bitset v1.12.0
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/evanphx/json-patch/v5 v5.7.0
 	github.com/fxamacker/cbor/v2 v2.5.0
@@ -13,7 +13,7 @@ require (
 	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/iancoleman/strcase v0.3.0
-	github.com/ipfs/boxo v0.15.0
+	github.com/ipfs/boxo v0.16.0
 	github.com/ipfs/go-block-format v0.2.0
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-datastore v0.6.0
