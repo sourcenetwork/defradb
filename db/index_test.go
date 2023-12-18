@@ -198,19 +198,6 @@ func (f *indexTestFixture) createUserCollectionUniqueIndexOnName() client.IndexD
 	return newDesc
 }
 
-func makeUnique(indexDesc client.IndexDescription) client.IndexDescription {
-	indexDesc.Unique = true
-	return indexDesc
-}
-
-func (f *indexTestFixture) createUserCollectionUniqueIndexOnName() client.IndexDescription {
-	indexDesc := makeUnique(getUsersIndexDescOnName())
-	newDesc, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
-	require.NoError(f.t, err)
-	f.commitTxn()
-	return newDesc
-}
-
 func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
 	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
