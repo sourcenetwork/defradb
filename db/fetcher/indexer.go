@@ -114,9 +114,9 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 	for {
 		f.doc.Reset()
 
-		res := f.indexIter.Next()
-		if res.err != nil {
-			return nil, ExecInfo{}, res.err
+		res, err := f.indexIter.Next()
+		if err != nil {
+			return nil, ExecInfo{}, err
 		}
 
 		if !res.foundKey {
