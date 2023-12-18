@@ -56,7 +56,7 @@ func TestMutationDeletion_WithIDsAndTxn(t *testing.T) {
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `query {
-					User(dockeys: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
+					User(docIDs: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
 						_docID
 					}
 				}`,

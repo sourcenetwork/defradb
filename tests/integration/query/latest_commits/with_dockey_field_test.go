@@ -20,9 +20,9 @@ import (
 // desired behaviour (it looks totally broken to me).
 func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple latest commits query with dockey and field name",
+		Description: "Simple latest commits query with docID and field name",
 		Request: `query {
-					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "age") {
+					latestCommits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "age") {
 						cid
 						links {
 							cid
@@ -48,9 +48,9 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple latest commits query with dockey and field id",
+		Description: "Simple latest commits query with docID and field id",
 		Request: `query {
-					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "1") {
+					latestCommits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "1") {
 						cid
 						links {
 							cid
@@ -81,9 +81,9 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple latest commits query with dockey and composite field id",
+		Description: "Simple latest commits query with docID and composite field id",
 		Request: `query {
-					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "C") {
+					latestCommits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "C") {
 						cid
 						links {
 							cid

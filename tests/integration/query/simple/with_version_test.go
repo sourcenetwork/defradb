@@ -101,16 +101,16 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 }
 
 func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
-	const dockey = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 
 	test := testUtils.RequestTestCase{
-		Description: "Embedded commits query within object query with dockey",
+		Description: "Embedded commits query within object query with document ID",
 		Request: `query {
 					Users {
 						Name
 						_docID
 						_version {
-							dockey
+							docID
 						}
 					}
 				}`,
@@ -125,10 +125,10 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name":   "John",
-				"_docID": dockey,
+				"_docID": docID,
 				"_version": []map[string]any{
 					{
-						"dockey": dockey,
+						"docID": docID,
 					},
 				},
 			},

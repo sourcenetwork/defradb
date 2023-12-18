@@ -18,10 +18,10 @@ import (
 )
 
 var (
-	// 10x dockey will be replaced in the bench runner func
+	// 10x `docID`s will be replaced in the bench runner func
 	userSimpleWithMultiLookupQuery = `
 	query {
-		User(dockeys: ["{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}"]) {
+		User(docIDs: ["{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}", "{{docID}}"]) {
 			_docID
 			Name
 			Age

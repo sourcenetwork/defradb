@@ -18,11 +18,11 @@ import (
 
 func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with invalid cid and invalid dockey",
+		Description: "Simple query with invalid cid and invalid docID",
 		Request: `query {
 					Users (
 							cid: "any non-nil string value - this will be ignored",
-							dockey: "invalid docKey"
+							docID: "invalid docID"
 						) {
 						Name
 					}
@@ -45,11 +45,11 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
 // desired behaviour (should just return empty).
 func TestQuerySimpleWithUnknownCidAndInvalidDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with unknown cid and invalid dockey",
+		Description: "Simple query with unknown cid and invalid docID",
 		Request: `query {
 					Users (
 							cid: "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
-							dockey: "invalid docKey"
+							docID: "invalid docID"
 						) {
 						Name
 					}
@@ -70,11 +70,11 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocKey(t *testing.T) {
 
 func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with cid and dockey",
+		Description: "Simple query with cid and docID",
 		Request: `query {
 					Users (
 							cid: "bafybeieybepwqpy5h2d4sywksgvdqpjd44ciu223vrm7knumychpmucawy",
-							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
 					}
@@ -99,11 +99,11 @@ func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with (first) cid and dockey",
+		Description: "Simple query with (first) cid and docID",
 		Request: `query {
 					Users (
 							cid: "bafybeieybepwqpy5h2d4sywksgvdqpjd44ciu223vrm7knumychpmucawy",
-							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
 						Age
@@ -140,11 +140,11 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with (last) cid and dockey",
+		Description: "Simple query with (last) cid and docID",
 		Request: `query {
 					Users (
 							cid: "bafybeiav54zfepx5n2zcm2g34q5ur5w2dosb2ssxjckq3esy5dg6nftxse"
-							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
 						Age
@@ -181,11 +181,11 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with (middle) cid and dockey",
+		Description: "Simple query with (middle) cid and docID",
 		Request: `query {
 					Users (
 							cid: "bafybeicrati3sbl3esju7eus3dwi53aggd6thhtporh7vj5mv77vvs3mdy",
-							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
 						Age
@@ -222,11 +222,11 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocKeyAndSchemaVersion(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with (first) cid and dockey and yielded schema version",
+		Description: "Simple query with (first) cid and docID and yielded schema version",
 		Request: `query {
 					Users (
 							cid: "bafybeieybepwqpy5h2d4sywksgvdqpjd44ciu223vrm7knumychpmucawy",
-							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
 						Age

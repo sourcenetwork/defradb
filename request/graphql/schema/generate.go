@@ -366,8 +366,8 @@ func (g *Generator) createExpandedFieldList(
 		Description: f.Description,
 		Type:        gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			"dockey":  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
-			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
+			request.DocID:  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
+			request.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
 			"filter": schemaTypes.NewArgConfig(
 				g.manager.schema.TypeMap()[typeName+"FilterArg"],
 				listFieldFilterArgDescription,
@@ -999,10 +999,10 @@ func (g *Generator) genTypeMutationUpdateField(
 		Description: updateDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			schemaTypes.DocID:  schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
-			schemaTypes.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
-			"filter":           schemaTypes.NewArgConfig(filter, updateFilterArgDescription),
-			"data":             schemaTypes.NewArgConfig(gql.String, updateDataArgDescription),
+			request.DocID:  schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
+			request.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
+			"filter":       schemaTypes.NewArgConfig(filter, updateFilterArgDescription),
+			"data":         schemaTypes.NewArgConfig(gql.String, updateDataArgDescription),
 		},
 	}
 	return field, nil
@@ -1017,9 +1017,9 @@ func (g *Generator) genTypeMutationDeleteField(
 		Description: deleteDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			schemaTypes.DocID:  schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
-			schemaTypes.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
-			"filter":           schemaTypes.NewArgConfig(filter, deleteFilterArgDescription),
+			request.DocID:  schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
+			request.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
+			"filter":       schemaTypes.NewArgConfig(filter, deleteFilterArgDescription),
 		},
 	}
 	return field, nil
@@ -1216,10 +1216,10 @@ func (g *Generator) genTypeQueryableFieldList(
 		Description: obj.Description(),
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"dockey":  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
-			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
-			"cid":     schemaTypes.NewArgConfig(gql.String, cidArgDescription),
-			"filter":  schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
+			request.DocID:  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
+			request.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
+			"cid":          schemaTypes.NewArgConfig(gql.String, cidArgDescription),
+			"filter":       schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(config.groupBy)),
 				schemaTypes.GroupByArgDescription,

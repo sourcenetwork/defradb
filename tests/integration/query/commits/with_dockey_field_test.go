@@ -18,7 +18,7 @@ import (
 
 func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and unknown field",
+		Description: "Simple all commits query with docID and unknown field",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -30,7 +30,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "not a field") {
+						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "not a field") {
 							cid
 						}
 					}`,
@@ -44,7 +44,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 
 func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and unknown field id",
+		Description: "Simple all commits query with docID and unknown field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -56,7 +56,7 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "999999") {
+						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "999999") {
 							cid
 						}
 					}`,
@@ -69,10 +69,10 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits for dockey-field).
+// desired behaviour (should return all commits for docID-field).
 func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and field",
+		Description: "Simple all commits query with docID and field",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -84,7 +84,7 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "Age") {
+						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "Age") {
 							cid
 						}
 					}`,
@@ -100,7 +100,7 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and field id",
+		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -112,7 +112,7 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "1") {
+						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "1") {
 							cid
 						}
 					}`,
@@ -132,7 +132,7 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and field id",
+		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -144,7 +144,7 @@ func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "C") {
+						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7", fieldId: "C") {
 							cid
 						}
 					}`,

@@ -19,9 +19,9 @@ import (
 func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
-			Description: "Simple query with basic filter (single key by DocKeys arg)",
+			Description: "Simple query with basic filter (single key by docIDs arg)",
 			Request: `query {
-						Users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
+						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
 							Name
 							Age
 						}
@@ -42,9 +42,9 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (single key by DocKeys arg), no results",
+			Description: "Simple query with basic filter (single key by docIDs arg), no results",
 			Request: `query {
-						Users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
+						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
 							Name
 							Age
 						}
@@ -60,9 +60,9 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Results: []map[string]any{},
 		},
 		{
-			Description: "Simple query with basic filter (duplicate key by DocKeys arg), partial results",
+			Description: "Simple query with basic filter (duplicate key by docIDs arg), partial results",
 			Request: `query {
-						Users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
+						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
 							Name
 							Age
 						}
@@ -87,9 +87,9 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (multiple key by DocKeys arg), partial results",
+			Description: "Simple query with basic filter (multiple key by docIDs arg), partial results",
 			Request: `query {
-						Users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-1378ab62-e064-5af4-9ea6-49941c8d8f94"]) {
+						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-1378ab62-e064-5af4-9ea6-49941c8d8f94"]) {
 							Name
 							Age
 						}
@@ -130,9 +130,9 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 
 func TestQuerySimpleReturnsNothinGivenEmptyDocKeysFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with empty DocKeys arg",
+		Description: "Simple query with empty docIDs arg",
 		Request: `query {
-					Users(dockeys: []) {
+					Users(docIDs: []) {
 						Name
 						Age
 					}

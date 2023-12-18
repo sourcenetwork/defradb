@@ -55,7 +55,7 @@ var (
 				Description: commitCIDFieldDescription,
 				Type:        gql.String,
 			},
-			"dockey": &gql.Field{
+			request.DocID: &gql.Field{
 				Description: commitDockeyFieldDescription,
 				Type:        gql.String,
 			},
@@ -125,7 +125,7 @@ var (
 					Description: commitCIDFieldDescription,
 					Type:        OrderingEnum,
 				},
-				"dockey": &gql.InputObjectFieldConfig{
+				request.DocID: &gql.InputObjectFieldConfig{
 					Description: commitDockeyFieldDescription,
 					Type:        OrderingEnum,
 				},
@@ -150,8 +150,8 @@ var (
 					Value:       "cid",
 					Description: commitCIDFieldDescription,
 				},
-				"dockey": &gql.EnumValueConfig{
-					Value:       "dockey",
+				request.DocID: &gql.EnumValueConfig{
+					Value:       request.DocID,
 					Description: commitDockeyFieldDescription,
 				},
 				"collectionID": &gql.EnumValueConfig{
@@ -175,7 +175,7 @@ var (
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey":            NewArgConfig(gql.ID, commitDockeyArgDescription),
+			request.DocID:       NewArgConfig(gql.ID, commitDockeyArgDescription),
 			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
 			"order":             NewArgConfig(CommitsOrderArg, OrderArgDescription),
 			"cid":               NewArgConfig(gql.ID, commitCIDArgDescription),
@@ -198,7 +198,7 @@ var (
 		Description: latestCommitsQueryDescription,
 		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey":            NewArgConfig(gql.NewNonNull(gql.ID), commitDockeyArgDescription),
+			request.DocID:       NewArgConfig(gql.NewNonNull(gql.ID), commitDockeyArgDescription),
 			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
 		},
 	}

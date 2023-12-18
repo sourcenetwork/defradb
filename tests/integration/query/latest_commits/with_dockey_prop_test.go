@@ -18,7 +18,7 @@ import (
 
 func TestQueryLastCommitsWithDockeyProperty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with dockey property",
+		Description: "Simple latest commits query with docID property",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -30,13 +30,13 @@ func TestQueryLastCommitsWithDockeyProperty(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
-							dockey
+						latestCommits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+							docID
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"dockey": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 					},
 				},
 			},

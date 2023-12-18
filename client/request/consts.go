@@ -21,14 +21,9 @@ const (
 
 	Cid         = "cid"
 	Data        = "data"
-	DocKey      = "dockey"
-	DocKeys     = "dockeys"
 	FieldName   = "field"
 	FieldIDName = "fieldId"
 	ShowDeleted = "showDeleted"
-
-	DocID  = "docID"
-	DocIDs = "docIDs"
 
 	FilterClause  = "filter"
 	GroupByClause = "groupBy"
@@ -36,6 +31,9 @@ const (
 	OffsetClause  = "offset"
 	OrderClause   = "order"
 	DepthClause   = "depth"
+
+	DocID  = "docID"
+	DocIDs = "docIDs"
 
 	AverageFieldName = "_avg"
 	CountFieldName   = "_count"
@@ -58,7 +56,6 @@ const (
 	LinksFieldName           = "links"
 	HeightFieldName          = "height"
 	CidFieldName             = "cid"
-	DockeyFieldName          = "dockey"
 	CollectionIDFieldName    = "collectionID"
 	SchemaVersionIDFieldName = "schemaVersionId"
 	FieldNameFieldName       = "fieldName"
@@ -103,7 +100,7 @@ var (
 	VersionFields = []string{
 		HeightFieldName,
 		CidFieldName,
-		DockeyFieldName,
+		DocID,
 		CollectionIDFieldName,
 		SchemaVersionIDFieldName,
 		FieldNameFieldName,

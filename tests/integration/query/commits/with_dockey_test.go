@@ -18,7 +18,7 @@ import (
 
 func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with unknown dockey",
+		Description: "Simple all commits query with unknown document ID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -30,7 +30,7 @@ func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "unknown dockey") {
+						commits(docID: "unknown document ID") {
 							cid
 						}
 					}`,
@@ -44,7 +44,7 @@ func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 
 func TestQueryCommitsWithDockey(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey",
+		Description: "Simple all commits query with docID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -56,7 +56,7 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							cid
 						}
 					}`,
@@ -80,7 +80,7 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 
 func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey, with links",
+		Description: "Simple all commits query with docID, with links",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -92,7 +92,7 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							cid
 							links {
 								cid
@@ -132,7 +132,7 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 
 func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey, multiple results",
+		Description: "Simple all commits query with docID, multiple results",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -151,7 +151,7 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							cid
 							height
 						}
@@ -190,7 +190,7 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 // includes link._Name).
 func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey, multiple results and links",
+		Description: "Simple all commits query with docID, multiple results and links",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -209,7 +209,7 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+						commits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							cid
 							links {
 								cid

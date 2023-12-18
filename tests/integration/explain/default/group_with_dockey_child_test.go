@@ -20,7 +20,7 @@ import (
 func TestDefaultExplainRequestWithDockeysOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with dockeys on inner _group.",
+		Description: "Explain (default) request with docIDs on inner _group.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -32,7 +32,7 @@ func TestDefaultExplainRequestWithDockeysOnInnerGroupSelection(t *testing.T) {
 						groupBy: [age]
 					) {
 						age
-						_group(dockeys: ["bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"]) {
+						_group(docIDs: ["bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"]) {
 							name
 						}
 					}
@@ -49,7 +49,7 @@ func TestDefaultExplainRequestWithDockeysOnInnerGroupSelection(t *testing.T) {
 							"childSelects": []dataMap{
 								{
 									"collectionName": "Author",
-									"docKeys":        []string{"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"},
+									"docIDs":         []string{"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"},
 									"filter":         nil,
 									"groupBy":        nil,
 									"limit":          nil,

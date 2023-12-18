@@ -356,7 +356,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-		request.DockeyFieldName, string(dockey))
+		request.DocID, string(dockey))
 
 	cols, err := n.planner.db.GetCollectionsByVersionID(n.planner.ctx, schemaVersionId)
 	if err != nil {

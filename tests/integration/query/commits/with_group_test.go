@@ -175,7 +175,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 
 func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, group by dockey",
+		Description: "Simple all commits query, group by document ID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -208,16 +208,16 @@ func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(groupBy: [dockey]) {
-							dockey
+						commits(groupBy: [docID]) {
+							docID
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"dockey": "bae-72f3dc53-1846-55d5-915c-28c4e83cc891",
+						"docID": "bae-72f3dc53-1846-55d5-915c-28c4e83cc891",
 					},
 					{
-						"dockey": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"docID": "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 					},
 				},
 			},

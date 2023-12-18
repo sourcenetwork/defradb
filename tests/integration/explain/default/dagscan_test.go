@@ -38,7 +38,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+					commits (docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
 						links {
 							cid
 						}
@@ -73,7 +73,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) commits query-op with only dockey (no field).",
+		Description: "Explain (default) commits query-op with only docID (no field).",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -81,7 +81,7 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+					commits (docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
 						links {
 							cid
 						}
@@ -124,7 +124,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+					latestCommits(docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
 						cid
 						links {
 							cid
@@ -160,7 +160,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) latestCommits query-op with only dockey (no field).",
+		Description: "Explain (default) latestCommits query-op with only docID (no field).",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -168,7 +168,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+					latestCommits(docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
 						cid
 						links {
 							cid
@@ -204,7 +204,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 func TestDefaultExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) latestCommits query without DocKey.",
+		Description: "Explain (default) latestCommits query without docID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -220,7 +220,7 @@ func TestDefaultExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
 					}
 				}`,
 
-				ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}
@@ -247,7 +247,7 @@ func TestDefaultExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testin
 					}
 				}`,
 
-				ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}

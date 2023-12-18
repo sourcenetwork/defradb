@@ -166,7 +166,7 @@ To get the most recent commit in the MerkleDAG for the document identified as `b
 ```shell
 defradb client query '
   query {
-    latestCommits(dockey: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
+    latestCommits(docID: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
       cid
       delta
       height

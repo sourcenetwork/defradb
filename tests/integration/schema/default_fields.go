@@ -10,7 +10,11 @@
 
 package schema
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/sourcenetwork/defradb/client/request"
+)
 
 type Field = map[string]any
 type fields []Field
@@ -139,14 +143,14 @@ var cidArg = Field{
 	},
 }
 var dockeyArg = Field{
-	"name": "dockey",
+	"name": request.DocID,
 	"type": map[string]any{
 		"name":        "String",
 		"inputFields": nil,
 	},
 }
 var dockeysArg = Field{
-	"name": "dockeys",
+	"name": request.DocIDs,
 	"type": map[string]any{
 		"name":        nil,
 		"inputFields": nil,

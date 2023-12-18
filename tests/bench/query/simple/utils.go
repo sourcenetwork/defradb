@@ -90,7 +90,7 @@ func runQueryBenchGetSync(
 }
 
 func formatQuery(b *testing.B, query string, dockeys [][]client.DocKey) string {
-	numPlaceholders := strings.Count(query, "{{dockey}}")
+	numPlaceholders := strings.Count(query, "{{docID}}")
 	if numPlaceholders == 0 {
 		return query
 	}
@@ -119,7 +119,7 @@ func formatQuery(b *testing.B, query string, dockeys [][]client.DocKey) string {
 		dockeysCopy = append(dockeysCopy[:rIndex], dockeysCopy[rIndex+1:]...)
 
 		// replace
-		query = strings.Replace(query, "{{dockey}}", key.String(), 1)
+		query = strings.Replace(query, "{{docID}}", key.String(), 1)
 	}
 
 	// b.Logf("Query After: %s", query)

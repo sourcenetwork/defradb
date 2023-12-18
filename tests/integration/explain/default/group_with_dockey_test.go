@@ -20,7 +20,7 @@ import (
 func TestDefaultExplainRequestWithDockeyOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with a dockey on parent groupBy.",
+		Description: "Explain (default) request with a docID on parent groupBy.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -30,7 +30,7 @@ func TestDefaultExplainRequestWithDockeyOnParentGroupBy(t *testing.T) {
 				Request: `query @explain {
 					Author(
 						groupBy: [age],
-						dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
+						docID: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
 					) {
 						age
 						_group {
@@ -78,7 +78,7 @@ func TestDefaultExplainRequestWithDockeyOnParentGroupBy(t *testing.T) {
 func TestDefaultExplainRequestWithDockeysAndFilterOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with dockeys and filter on parent groupBy.",
+		Description: "Explain (default) request with docIDs and filter on parent groupBy.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -89,7 +89,7 @@ func TestDefaultExplainRequestWithDockeysAndFilterOnParentGroupBy(t *testing.T) 
 					Author(
 						groupBy: [age],
 						filter: {age: {_eq: 20}},
-						dockeys: [
+						docIDs: [
 							"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
 							"bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
 						]

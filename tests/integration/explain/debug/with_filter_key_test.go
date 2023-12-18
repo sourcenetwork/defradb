@@ -20,7 +20,7 @@ import (
 func TestDebugExplainRequestWithDocKeyFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with dockey filter.",
+		Description: "Explain (debug) request with docID filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -28,7 +28,7 @@ func TestDebugExplainRequestWithDocKeyFilter(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					Author(dockey: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
+					Author(docID: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
 						name
 						age
 					}
@@ -45,7 +45,7 @@ func TestDebugExplainRequestWithDocKeyFilter(t *testing.T) {
 func TestDebugExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with dockeys filter using one key.",
+		Description: "Explain (debug) request with docIDs filter using one key.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -53,7 +53,7 @@ func TestDebugExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					Author(dockeys: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
+					Author(docIDs: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
 						name
 						age
 					}
@@ -70,7 +70,7 @@ func TestDebugExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
 func TestDebugExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with dockeys filter using multiple but duplicate keys.",
+		Description: "Explain (debug) request with docIDs filter using multiple but duplicate keys.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -79,7 +79,7 @@ func TestDebugExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *te
 
 				Request: `query @explain(type: debug) {
 					Author(
-						dockeys: [
+						docIDs: [
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						]
@@ -100,7 +100,7 @@ func TestDebugExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *te
 func TestDebugExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with dockeys filter using multiple unique keys.",
+		Description: "Explain (debug) request with docIDs filter using multiple unique keys.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -109,7 +109,7 @@ func TestDebugExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testing.
 
 				Request: `query @explain(type: debug) {
 					Author(
-						dockeys: [
+						docIDs: [
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
 						]

@@ -18,9 +18,9 @@ import (
 
 func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple latest commits query with dockey",
+		Description: "Simple latest commits query with docID",
 		Request: `query {
-					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+					latestCommits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 						cid
 						links {
 							cid
@@ -58,9 +58,9 @@ func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 
 func TestQueryLatestCommitsWithDocKeyWithSchemaVersionIdField(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple latest commits query with dockey and schema versiion id field",
+		Description: "Simple latest commits query with docID and schema versiion id field",
 		Request: `query {
-					latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+					latestCommits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 						cid
 						schemaVersionId
 					}

@@ -69,7 +69,7 @@ func TestSchemaMigrationQueryByDocKey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (dockey: "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5") {
+					Users (docID: "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5") {
 						name
 						verified
 					}
@@ -88,7 +88,7 @@ func TestSchemaMigrationQueryByDocKey(t *testing.T) {
 }
 
 // This test asserts that lenses are being correctly returned to the pool for reuse after
-// fetch completion. Querying by dockey should mean that the fetcher only scans the dockey
+// fetch completion. Querying by docID should mean that the fetcher only scans the docID
 // prefix, and thus will only migrate a single document per query (unlike filters etc which
 // will migrate all documents at the time of writing). If the return mechanic was very faulty
 // then this test *should* deadlock.
@@ -175,7 +175,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocKey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (dockey: "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5") {
+					Users (docID: "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5") {
 						name
 						verified
 					}
@@ -189,7 +189,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocKey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (dockey: "bae-92393ad0-07b6-5753-8dbb-19c9c41374ed") {
+					Users (docID: "bae-92393ad0-07b6-5753-8dbb-19c9c41374ed") {
 						name
 						verified
 					}
@@ -203,7 +203,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocKey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (dockey: "bae-403d7337-f73e-5c81-8719-e853938c8985") {
+					Users (docID: "bae-403d7337-f73e-5c81-8719-e853938c8985") {
 						name
 						verified
 					}
@@ -217,7 +217,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocKey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (dockey: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad") {
+					Users (docID: "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad") {
 						name
 						verified
 					}
@@ -231,7 +231,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocKey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (dockey: "bae-3f1174ba-d9bc-5a6a-b0bc-8f19581f199d") {
+					Users (docID: "bae-3f1174ba-d9bc-5a6a-b0bc-8f19581f199d") {
 						name
 						verified
 					}
@@ -245,7 +245,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocKey(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (dockey: "bae-0698bda7-2c69-5028-a26a-0a1c491b793b") {
+					Users (docID: "bae-0698bda7-2c69-5028-a26a-0a1c491b793b") {
 						name
 						verified
 					}

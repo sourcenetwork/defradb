@@ -18,11 +18,11 @@ import (
 
 func TestQuerySimpleWithGroupByWithGroupWithDocKeys(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with DocKeys filter on _group",
+		Description: "Simple query with docIDs filter on _group",
 		Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_group(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-9b2e1434-9d61-5eb1-b3b9-82e8e40729a7"]) {
+						_group(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-9b2e1434-9d61-5eb1-b3b9-82e8e40729a7"]) {
 							Name
 						}
 					}

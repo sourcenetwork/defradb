@@ -31,7 +31,7 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
-		if prop == request.DocKey {
+		if prop == request.DocID {
 			raw := argument.Value.(*ast.StringValue)
 			commit.DocKey = immutable.Some(raw.Value)
 		} else if prop == request.Cid {

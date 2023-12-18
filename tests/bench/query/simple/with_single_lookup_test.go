@@ -18,10 +18,10 @@ import (
 )
 
 var (
-	// dockey will be replaced in the bench runner func
+	// The `docID` will be replaced in the bench runner func
 	userSimpleWithSingleLookupQuery = `
 	query {
-		User(dockey: "{{dockey}}") {
+		User(docID: "{{docID}}") {
 			_docID
 			Name
 			Age

@@ -24,9 +24,6 @@ const (
 	ExplainArgExecute  string = "execute"
 	ExplainArgDebug    string = "debug"
 
-	DocID  string = "docID"
-	DocIDs string = "docIDs"
-
 	IndexDirectiveLabel          = "index"
 	IndexDirectivePropName       = "name"
 	IndexDirectivePropUnique     = "unique"

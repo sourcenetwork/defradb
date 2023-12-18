@@ -33,7 +33,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndKeys(t *testing.T) {
 							name: {_eq: "John Grisham"},
 							books: {name: {_eq: "Painted House"}}
 						},
-						dockeys: [
+						docIDs: [
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f8e"
 						]
@@ -120,7 +120,7 @@ func TestDefaultExplainRequestWithManyRelatedFiltersAndKey(t *testing.T) {
 							articles: {name: {_eq: "To my dear readers"}},
 							books: {name: {_eq: "Theif Lord"}}
 						},
-						dockeys: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]
+						docIDs: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]
 					) {
 						name
 						age
