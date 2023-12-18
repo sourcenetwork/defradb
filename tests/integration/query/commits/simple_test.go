@@ -36,13 +36,13 @@ func TestQueryCommits(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeiazsz3twea2uxpen6452qqa7qnzp2xildfxliidhqk632jpvbixkm",
+						"cid": "bafybeiaayywpuodsyqnp6vbnftzpzoke4iwofeyuta3wyfv6xpjenf7le4",
 					},
 					{
-						"cid": "bafybeidzukbs36cwwhab4rkpi6jfhhxse2vjtc5tf767qda5valcinilmy",
+						"cid": "bafybeiam53sbmu6zqvullm53sq2hlrdc4icifbcznmltg5olijyrdnjhtm",
 					},
 					{
-						"cid": "bafybeihbcl2ijavd6vdcj4vgunw4q5qt5itmumxw7iy7fhoqfsuvkpkqeq",
+						"cid": "bafybeib5dcp5ccsm3r3sey6td23r7qgd2xjqnx4gfxss6hd77zhjl44gbq",
 					},
 				},
 			},
@@ -79,22 +79,22 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeiftg4c3aioppm2mn5f7wuqynbezricqdzpvspkd74jm7lq2jrst6m",
+						"cid": "bafybeieeqyzf55hciob763jydnx57vxd76gk2jtrsdk5ebgt5wxsbcywba",
 					},
 					{
-						"cid": "bafybeielma57bnbv5oizjsv7szhu6jq45rxfcdof62opaygyyqp2j7qd5e",
+						"cid": "bafybeigbnfgjnek5bp4ju7yj2qbalfmjkvwlndccjltrbrbaxhvpcif2dy",
 					},
 					{
-						"cid": "bafybeigvf4bcuc53dphwniloxt3kqqoersoghdprxsjkb6xqq7wup34usy",
+						"cid": "bafybeifmpp7azrslaowu5vissk5rellfoq6vbjplyd6ovrdsz6vwe5tm6e",
 					},
 					{
-						"cid": "bafybeiazsz3twea2uxpen6452qqa7qnzp2xildfxliidhqk632jpvbixkm",
+						"cid": "bafybeiaayywpuodsyqnp6vbnftzpzoke4iwofeyuta3wyfv6xpjenf7le4",
 					},
 					{
-						"cid": "bafybeidzukbs36cwwhab4rkpi6jfhhxse2vjtc5tf767qda5valcinilmy",
+						"cid": "bafybeiam53sbmu6zqvullm53sq2hlrdc4icifbcznmltg5olijyrdnjhtm",
 					},
 					{
-						"cid": "bafybeihbcl2ijavd6vdcj4vgunw4q5qt5itmumxw7iy7fhoqfsuvkpkqeq",
+						"cid": "bafybeib5dcp5ccsm3r3sey6td23r7qgd2xjqnx4gfxss6hd77zhjl44gbq",
 					},
 				},
 			},
@@ -125,16 +125,16 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":             "bafybeiazsz3twea2uxpen6452qqa7qnzp2xildfxliidhqk632jpvbixkm",
-						"schemaVersionId": "bafkreictcre4pylafzzoh5lpgbetdodunz4r6pz3ormdzzpsz2lqtp4v34",
+						"cid":             "bafybeiaayywpuodsyqnp6vbnftzpzoke4iwofeyuta3wyfv6xpjenf7le4",
+						"schemaVersionId": "bafkreiayhdsgzhmrz6t5d3x2cgqqbdjt7aqgldtlkmxn5eibg542j3n6ea",
 					},
 					{
-						"cid":             "bafybeidzukbs36cwwhab4rkpi6jfhhxse2vjtc5tf767qda5valcinilmy",
-						"schemaVersionId": "bafkreictcre4pylafzzoh5lpgbetdodunz4r6pz3ormdzzpsz2lqtp4v34",
+						"cid":             "bafybeiam53sbmu6zqvullm53sq2hlrdc4icifbcznmltg5olijyrdnjhtm",
+						"schemaVersionId": "bafkreiayhdsgzhmrz6t5d3x2cgqqbdjt7aqgldtlkmxn5eibg542j3n6ea",
 					},
 					{
-						"cid":             "bafybeihbcl2ijavd6vdcj4vgunw4q5qt5itmumxw7iy7fhoqfsuvkpkqeq",
-						"schemaVersionId": "bafkreictcre4pylafzzoh5lpgbetdodunz4r6pz3ormdzzpsz2lqtp4v34",
+						"cid":             "bafybeib5dcp5ccsm3r3sey6td23r7qgd2xjqnx4gfxss6hd77zhjl44gbq",
+						"schemaVersionId": "bafkreiayhdsgzhmrz6t5d3x2cgqqbdjt7aqgldtlkmxn5eibg542j3n6ea",
 					},
 				},
 			},
@@ -285,6 +285,8 @@ func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
+
+
 						commits {
 							fieldId
 						}

@@ -20,7 +20,7 @@ import (
 )
 
 func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
-	schemaVersionID := "bafkreickgf3nbjaairxkkqawmrv7fafaafyccl4qygqeveagisdn42eohu"
+	schemaVersionID := "bafkreicavrlknsnfqey6nfwthyiguvv4dqcwhvywl5j6socx3vvjt4zqte"
 
 	test := testUtils.TestCase{
 		Actions: []any{

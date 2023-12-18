@@ -46,14 +46,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeieybepwqpy5h2d4sywksgvdqpjd44ciu223vrm7knumychpmucawy",
+						"cid": "bafybeigp3pgwcn6jebw3nmhw2pdsw46wonsxki3eq254iaiuijnkqb4y7m",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeibphw52n3t5nn2xn32sfdsf4hbll3iddsc6or2ebnnrmpz2cbovyy",
+								"cid":  "bafybeibtjnufjbbtbc6i6ix4dw6245xxjwb72seelgr7m3i36hzzyrnbtq",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeifgqmrklbyw3x35zzzao3d7baownrv3z4v7vzfbmk2r5omv5icgu4",
+								"cid":  "bafybeiclha2hvkbgac6stri5iszlkszvis3tuztbv6icknnr7harv5srym",
 								"name": "Name",
 							},
 						},
@@ -90,7 +90,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 				"Name": "John",
 				"_version": []map[string]any{
 					{
-						"schemaVersionId": "bafkreicqyapc7zxw5tt2ymybau5m54lhmm5ahrl22oaktnhidul757a4ba",
+						"schemaVersionId": "bafkreidvd63bawkelxe3wtf7a65klkq4x3dvenqafyasndyal6fvffkeam",
 					},
 				},
 			},
@@ -171,14 +171,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeieybepwqpy5h2d4sywksgvdqpjd44ciu223vrm7knumychpmucawy",
+						"cid": "bafybeigp3pgwcn6jebw3nmhw2pdsw46wonsxki3eq254iaiuijnkqb4y7m",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafybeibphw52n3t5nn2xn32sfdsf4hbll3iddsc6or2ebnnrmpz2cbovyy",
+								"cid":  "bafybeibtjnufjbbtbc6i6ix4dw6245xxjwb72seelgr7m3i36hzzyrnbtq",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeifgqmrklbyw3x35zzzao3d7baownrv3z4v7vzfbmk2r5omv5icgu4",
+								"cid":  "bafybeiclha2hvkbgac6stri5iszlkszvis3tuztbv6icknnr7harv5srym",
 								"name": "Name",
 							},
 						},

@@ -89,10 +89,10 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						"height": int64(2),
 						"_group": []map[string]any{
 							{
-								"cid": "bafybeift3qzwhklfpkgszvrmbfzb6zp3g3cqryhjkuaoz3kp2yrj763jce",
+								"cid": "bafybeifkbeua3tz2oao2dclsphbrszpmt7t5m66y76bxnjssdeuztrsjtm",
 							},
 							{
-								"cid": "bafybeige35bkafoez4cf4v6hgdkm5iaqcuqfq4bkyt7fxeycbdnqtbr7g4",
+								"cid": "bafybeievtwczfax2ncnnoc72bnt4drl5vtz3qaqgl3odwfxzwjkfsa2zey",
 							},
 						},
 					},
@@ -100,13 +100,13 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						"height": int64(1),
 						"_group": []map[string]any{
 							{
-								"cid": "bafybeiazsz3twea2uxpen6452qqa7qnzp2xildfxliidhqk632jpvbixkm",
+								"cid": "bafybeiaayywpuodsyqnp6vbnftzpzoke4iwofeyuta3wyfv6xpjenf7le4",
 							},
 							{
-								"cid": "bafybeidzukbs36cwwhab4rkpi6jfhhxse2vjtc5tf767qda5valcinilmy",
+								"cid": "bafybeiam53sbmu6zqvullm53sq2hlrdc4icifbcznmltg5olijyrdnjhtm",
 							},
 							{
-								"cid": "bafybeihbcl2ijavd6vdcj4vgunw4q5qt5itmumxw7iy7fhoqfsuvkpkqeq",
+								"cid": "bafybeib5dcp5ccsm3r3sey6td23r7qgd2xjqnx4gfxss6hd77zhjl44gbq",
 							},
 						},
 					},
@@ -142,7 +142,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeiazsz3twea2uxpen6452qqa7qnzp2xildfxliidhqk632jpvbixkm",
+						"cid": "bafybeiaayywpuodsyqnp6vbnftzpzoke4iwofeyuta3wyfv6xpjenf7le4",
 						"_group": []map[string]any{
 							{
 								"height": int64(1),
@@ -150,7 +150,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 						},
 					},
 					{
-						"cid": "bafybeidzukbs36cwwhab4rkpi6jfhhxse2vjtc5tf767qda5valcinilmy",
+						"cid": "bafybeiam53sbmu6zqvullm53sq2hlrdc4icifbcznmltg5olijyrdnjhtm",
 						"_group": []map[string]any{
 							{
 								"height": int64(1),
@@ -158,7 +158,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 						},
 					},
 					{
-						"cid": "bafybeihbcl2ijavd6vdcj4vgunw4q5qt5itmumxw7iy7fhoqfsuvkpkqeq",
+						"cid": "bafybeib5dcp5ccsm3r3sey6td23r7qgd2xjqnx4gfxss6hd77zhjl44gbq",
 						"_group": []map[string]any{
 							{
 								"height": int64(1),
