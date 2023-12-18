@@ -44,6 +44,10 @@ const (
 	SumFieldName     = "_sum"
 	VersionFieldName = "_version"
 
+	// New generated document id from a backed up document,
+	// which might have a different _docID originally.
+	NewDocIDFieldName = "_docIDNew"
+
 	ExplainLabel = "explain"
 
 	LatestCommitsName = "latestCommits"

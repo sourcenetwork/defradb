@@ -20,7 +20,7 @@ func TestBackupImport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.BackupImport{
-				ImportContent: `{"User":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
+				ImportContent: `{"User":[{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
 			},
 			testUtils.Request{
 				Request: `
@@ -60,7 +60,7 @@ func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.BackupImport{
-				ImportContent: `{"Invalid":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
+				ImportContent: `{"Invalid":[{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
 				ExpectedError: "failed to get collection: datastore: key not found. Name: Invalid",
 			},
 		},
@@ -77,7 +77,7 @@ func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 				Doc:          `{"name": "John", "age": 30}`,
 			},
 			testUtils.BackupImport{
-				ImportContent: `{"User":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
+				ImportContent: `{"User":[{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
 				ExpectedError: "a document with the given dockey already exists",
 			},
 		},

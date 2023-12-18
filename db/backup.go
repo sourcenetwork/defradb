@@ -74,7 +74,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			for _, field := range col.Schema().Fields {
 				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
 					if val, ok := docMap[field.Name+request.RelatedObjectID]; ok {
-						if docMap["_newKey"] == val {
+						if docMap[request.NewDocIDFieldName] == val {
 							resetMap[field.Name+request.RelatedObjectID] = val
 							delete(docMap, field.Name+request.RelatedObjectID)
 						}
@@ -82,8 +82,8 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				}
 			}
 
-			delete(docMap, "_key")
-			delete(docMap, "_newKey")
+			delete(docMap, request.KeyFieldName)
+			delete(docMap, request.NewDocIDFieldName)
 
 			doc, err := client.NewDocFromMap(docMap)
 			if err != nil {
@@ -250,7 +250,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 									return err
 								}
 
-								delete(oldForeignDoc, "_key")
+								delete(oldForeignDoc, request.KeyFieldName)
 								if foreignDoc.Key().String() == foreignDocKey.String() {
 									delete(oldForeignDoc, field.Name+request.RelatedObjectID)
 								}
@@ -286,7 +286,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				return err
 			}
 
-			delete(docM, "_key")
+			delete(docM, request.KeyFieldName)
 			if isSelfReference {
 				delete(docM, refFieldName)
 			}
@@ -296,9 +296,9 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				return err
 			}
 			// newKey is needed to let the user know what will be the key of the imported document.
-			docM["_newKey"] = newDoc.Key().String()
-			// NewDocFromMap removes the "_key" map item so we add it back.
-			docM["_key"] = doc.Key().String()
+			docM[request.NewDocIDFieldName] = newDoc.Key().String()
+			// NewDocFromMap removes the "_docID" map item so we add it back.
+			docM[request.KeyFieldName] = doc.Key().String()
 
 			if isSelfReference {
 				docM[refFieldName] = newDoc.Key().String()
