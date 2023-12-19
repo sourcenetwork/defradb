@@ -50,6 +50,7 @@ type productDoc struct {
 func (f *indexTestFixture) saveDocToCollection(doc *client.Document, col client.Collection) {
 	err := col.Create(f.ctx, doc)
 	require.NoError(f.t, err)
+	f.commitTxn()
 	f.txn, err = f.db.NewTxn(f.ctx, false)
 	require.NoError(f.t, err)
 }
