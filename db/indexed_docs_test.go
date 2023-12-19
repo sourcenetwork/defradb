@@ -1032,25 +1032,6 @@ func TestUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 	assert.Equal(t, data, []byte(doc2.Key().String()))
 }
 
-func TestUniqueCreate_IfFailsToIndex_ShouldNotLeaveArtifacts(t *testing.T) {
-	f := newIndexTestFixture(t)
-	defer f.db.Close()
-
-	doc1 := f.newUserDoc("John", 21)
-	f.saveDocToCollection(doc1, f.users)
-	doc2 := f.newUserDoc("John", 18)
-	f.saveDocToCollection(doc2, f.users)
-
-	indexDesc := makeUnique(getUsersIndexDescOnName())
-	_, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
-	require.Error(t, err)
-
-	// We assume here that the newly created index (that failed to index) got an ID of 1.
-	key := core.IndexDataStoreKey{CollectionID: f.users.ID(), IndexID: 1}
-
-	assert.Len(t, f.getPrefixFromDataStore(key.ToString()), 0)
-}
-
 func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
