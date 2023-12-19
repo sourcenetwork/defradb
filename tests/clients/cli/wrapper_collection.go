@@ -366,7 +366,12 @@ func (c *Collection) CreateIndex(
 ) (index client.IndexDescription, err error) {
 	args := []string{"client", "index", "create"}
 	args = append(args, "--collection", c.Description().Name)
-	args = append(args, "--name", indexDesc.Name)
+	if indexDesc.Name != "" {
+		args = append(args, "--name", indexDesc.Name)
+	}
+	if indexDesc.Unique {
+		args = append(args, "--unique")
+	}
 
 	fields := make([]string, len(indexDesc.Fields))
 	for i := range indexDesc.Fields {

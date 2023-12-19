@@ -186,6 +186,12 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 			if !IsValidIndexName(desc.Name) {
 				return client.IndexDescription{}, NewErrIndexWithInvalidName(desc.Name)
 			}
+		case types.IndexDirectivePropUnique:
+			boolVal, ok := arg.Value.(*ast.BooleanValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			desc.Unique = boolVal.Value
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
@@ -227,6 +233,12 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
+		case types.IndexDirectivePropUnique:
+			boolVal, ok := arg.Value.(*ast.BooleanValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			desc.Unique = boolVal.Value
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
