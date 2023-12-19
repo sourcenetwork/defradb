@@ -23,9 +23,9 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users @index(name: "age_index", fields: ["Age"]) {
-						Name: String @index(name: "name_index")
-						Age: Int
+					type User @index(name: "age_index", fields: ["age"]) {
+						name: String @index(name: "name_index")
+						age: Int
 					}
 				`,
 			},
@@ -37,7 +37,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 						ID:   1,
 						Fields: []client.IndexedFieldDescription{
 							{
-								Name:      "Name",
+								Name:      "name",
 								Direction: client.Ascending,
 							},
 						},
@@ -47,7 +47,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 						ID:   2,
 						Fields: []client.IndexedFieldDescription{
 							{
-								Name:      "Age",
+								Name:      "age",
 								Direction: client.Ascending,
 							},
 						},

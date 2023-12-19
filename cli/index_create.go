@@ -21,12 +21,14 @@ func MakeIndexCreateCommand() *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var fieldsArg []string
+	var uniqueArg bool
 	var cmd = &cobra.Command{
-		Use:   "create -c --collection <collection> --fields <fields> [-n --name <name>]",
+		Use:   "create -c --collection <collection> --fields <fields> [-n --name <name>] [--unique]",
 		Short: "Creates a secondary index on a collection's field(s)",
 		Long: `Creates a secondary index on a collection's field(s).
 		
 The --name flag is optional. If not provided, a name will be generated automatically.
+The --unique flag is optional. If provided, the index will be unique.
 
 Example: create an index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name
@@ -44,6 +46,7 @@ Example: create a named index for 'Users' collection on 'name' field:
 			desc := client.IndexDescription{
 				Name:   nameArg,
 				Fields: fields,
+				Unique: uniqueArg,
 			}
 			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {
@@ -62,6 +65,7 @@ Example: create a named index for 'Users' collection on 'name' field:
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
 	cmd.Flags().StringSliceVar(&fieldsArg, "fields", []string{}, "Fields to index")
+	cmd.Flags().BoolVarP(&uniqueArg, "unique", "u", false, "Make the index unique")
 
 	return cmd
 }

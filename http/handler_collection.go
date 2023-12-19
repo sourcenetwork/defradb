@@ -312,12 +312,16 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 }
 
 func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
-	col := req.Context().Value(colContextKey).(client.Collection)
+	store := req.Context().Value(storeContextKey).(client.Store)
+	indexesMap, err := store.GetAllIndexes(req.Context())
 
-	indexes, err := col.GetIndexes(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
+	}
+	indexes := make([]client.IndexDescription, 0, len(indexesMap))
+	for _, index := range indexesMap {
+		indexes = append(indexes, index...)
 	}
 	responseJSON(rw, http.StatusOK, indexes)
 }
