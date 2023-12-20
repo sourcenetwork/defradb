@@ -209,7 +209,6 @@ func (f *indexTestFixture) createUserCollectionIndexOnNameAndAge() client.IndexD
 	indexDesc := addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName)
 	newDesc, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
 	require.NoError(f.t, err)
-	f.commitTxn()
 	return newDesc
 }
 
