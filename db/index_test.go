@@ -198,6 +198,21 @@ func (f *indexTestFixture) createUserCollectionUniqueIndexOnName() client.IndexD
 	return newDesc
 }
 
+func addFieldToIndex(indexDesc client.IndexDescription, fieldName string) client.IndexDescription {
+	indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
+		Name: fieldName, Direction: client.Ascending,
+	})
+	return indexDesc
+}
+
+func (f *indexTestFixture) createUserCollectionIndexOnNameAndAge() client.IndexDescription {
+	indexDesc := addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName)
+	newDesc, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
+	require.NoError(f.t, err)
+	f.commitTxn()
+	return newDesc
+}
+
 func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
 	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)

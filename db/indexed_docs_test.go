@@ -1131,3 +1131,138 @@ func TestUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 		require.NoError(t, err)
 	}
 }
+
+func TestCompositeCreate_ShouldIndexExistingDocs(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	doc1 := f.newUserDoc("John", 21)
+	f.saveDocToCollection(doc1, f.users)
+	doc2 := f.newUserDoc("Islam", 18)
+	f.saveDocToCollection(doc2, f.users)
+
+	f.createUserCollectionIndexOnNameAndAge()
+
+	key1 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc1).Build()
+	key2 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc2).Build()
+
+	ds := f.txn.Datastore()
+	data, err := ds.Get(f.ctx, key1.ToDS())
+	require.NoError(t, err, key1.ToString())
+	assert.Len(t, data, 0)
+	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+}
+
+func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+	f.createUserCollectionIndexOnNameAndAge()
+
+	docJSON, err := json.Marshal(struct {
+		Age int `json:"age"`
+	}{Age: 44})
+	require.NoError(f.t, err)
+
+	doc, err := client.NewDocFromJSON(docJSON)
+	require.NoError(f.t, err)
+
+	f.saveDocToCollection(doc, f.users)
+
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc).
+		Values([]byte(nil)).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+}
+
+func TestCompositeDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
+	f := newIndexTestFixtureBare(t)
+	users := f.addUsersCollection()
+	_, err := f.createCollectionIndexFor(users.Name(), addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName))
+	require.NoError(f.t, err)
+	_, err = f.createCollectionIndexFor(users.Name(), addFieldToIndex(getUsersIndexDescOnAge(), usersWeightFieldName))
+	require.NoError(f.t, err)
+	f.commitTxn()
+
+	f.saveDocToCollection(f.newUserDoc("John", 21), users)
+	f.saveDocToCollection(f.newUserDoc("Islam", 23), users)
+
+	userNameAgeKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Build()
+	userAgeWeightKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersAgeFieldName, usersWeightFieldName).Build()
+
+	err = f.dropIndex(usersColName, testUsersColIndexAge)
+	require.NoError(f.t, err)
+
+	assert.Len(t, f.getPrefixFromDataStore(userNameAgeKey.ToString()), 2)
+	assert.Len(t, f.getPrefixFromDataStore(userAgeWeightKey.ToString()), 0)
+}
+
+func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+	f.createUserCollectionIndexOnNameAndAge()
+
+	cases := []struct {
+		Name     string
+		Field    string
+		NewValue any
+		Exec     func(doc *client.Document) error
+	}{
+		{
+			Name:     "update first",
+			NewValue: "Islam",
+			Field:    usersNameFieldName,
+			Exec: func(doc *client.Document) error {
+				return f.users.Update(f.ctx, doc)
+			},
+		},
+		{
+			Name:     "save first",
+			NewValue: "Andy",
+			Field:    usersNameFieldName,
+			Exec: func(doc *client.Document) error {
+				return f.users.Save(f.ctx, doc)
+			},
+		},
+		{
+			Name:     "update second",
+			NewValue: 33,
+			Field:    usersAgeFieldName,
+			Exec: func(doc *client.Document) error {
+				return f.users.Update(f.ctx, doc)
+			},
+		},
+		{
+			Name:     "save second",
+			NewValue: 36,
+			Field:    usersAgeFieldName,
+			Exec: func(doc *client.Document) error {
+				return f.users.Save(f.ctx, doc)
+			},
+		},
+	}
+
+	doc := f.newUserDoc("John", 21)
+	f.saveDocToCollection(doc, f.users)
+
+	for _, tc := range cases {
+		oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc).Build()
+
+		err := doc.Set(tc.Field, tc.NewValue)
+		require.NoError(t, err)
+		err = tc.Exec(doc)
+		require.NoError(t, err)
+		f.commitTxn()
+
+		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc).Build()
+
+		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+		require.Error(t, err)
+		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+		require.NoError(t, err)
+		f.commitTxn()
+	}
+}
