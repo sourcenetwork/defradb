@@ -1319,6 +1319,7 @@ func createIndex(
 				})
 			}
 		}
+		indexDesc.Unique = action.Unique
 		err := withRetry(
 			actionNodes,
 			nodeID,

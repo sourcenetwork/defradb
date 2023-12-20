@@ -32,6 +32,7 @@ type IndexFetcher struct {
 	mapping           *core.DocumentMapping
 	indexedField      client.FieldDescription
 	docFields         []client.FieldDescription
+	indexDesc         client.IndexDescription
 	indexIter         indexIterator
 	indexDataStoreKey core.IndexDataStoreKey
 	execInfo          ExecInfo
@@ -70,6 +71,7 @@ func (f *IndexFetcher) Init(
 
 	for _, index := range col.Description().Indexes {
 		if index.Fields[0].Name == f.indexedField.Name {
+			f.indexDesc = index
 			f.indexDataStoreKey.IndexID = index.ID
 			break
 		}
@@ -84,7 +86,7 @@ func (f *IndexFetcher) Init(
 		}
 	}
 
-	iter, err := createIndexIterator(f.indexDataStoreKey, f.indexFilter, &f.execInfo)
+	iter, err := createIndexIterator(f.indexDataStoreKey, f.indexFilter, &f.execInfo, f.indexDesc.Unique)
 	if err != nil {
 		return err
 	}
@@ -112,28 +114,32 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 	for {
 		f.doc.Reset()
 
-		indexKey, hasValue, err := f.indexIter.Next()
+		res, err := f.indexIter.Next()
 		if err != nil {
 			return nil, ExecInfo{}, err
 		}
 
-		if !hasValue {
+		if !res.foundKey {
 			return nil, f.execInfo, nil
 		}
 
 		property := &encProperty{
 			Desc: f.indexedField,
-			Raw:  indexKey.FieldValues[0],
+			Raw:  res.key.FieldValues[0],
 		}
 
-		f.doc.key = indexKey.FieldValues[1]
+		if f.indexDesc.Unique {
+			f.doc.key = res.value
+		} else {
+			f.doc.key = res.key.FieldValues[1]
+		}
 		f.doc.properties[f.indexedField] = property
 		f.execInfo.FieldsFetched++
 
 		if f.docFetcher != nil && len(f.docFields) > 0 {
 			targetKey := base.MakeDocKey(f.col.Description(), string(f.doc.key))
 			spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
-			err = f.docFetcher.Start(ctx, spans)
+			err := f.docFetcher.Start(ctx, spans)
 			if err != nil {
 				return nil, ExecInfo{}, err
 			}

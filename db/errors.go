@@ -86,6 +86,7 @@ const (
 	errExpectedJSONArray                  string = "expected JSON array"
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 	errIndexDoesNotMatchName              string = "the index used does not match the given name"
+	errCanNotIndexNonUniqueField          string = "can not create doc that violates unique index"
 )
 
 var (
@@ -629,5 +630,14 @@ func NewErrIndexDoesNotMatchName(index, name string) error {
 		errIndexDoesNotMatchName,
 		errors.NewKV("Index", index),
 		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrCanNotIndexNonUniqueField(dockey, fieldName string, value any) error {
+	return errors.New(
+		errCanNotIndexNonUniqueField,
+		errors.NewKV("Dockey", dockey),
+		errors.NewKV("Field name", fieldName),
+		errors.NewKV("Field value", value),
 	)
 }

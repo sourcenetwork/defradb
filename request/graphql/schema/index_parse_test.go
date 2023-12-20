@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func TestStructIndex(t *testing.T) {
+func TestParseIndexOnStruct(t *testing.T) {
 	cases := []indexTestCase{
 		{
 			description: "Index with a single field",
@@ -30,6 +30,7 @@ func TestStructIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
+					Unique: false,
 				},
 			},
 		},
@@ -42,6 +43,30 @@ func TestStructIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
+				},
+			},
+		},
+		{
+			description: "Unique index",
+			sdl:         `type user @index(fields: ["name"], unique: true) {}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+					},
+					Unique: true,
+				},
+			},
+		},
+		{
+			description: "Index explicitly not unique",
+			sdl:         `type user @index(fields: ["name"], unique: false) {}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+					},
+					Unique: false,
 				},
 			},
 		},
@@ -96,11 +121,11 @@ func TestStructIndex(t *testing.T) {
 	}
 }
 
-func TestInvalidStructIndex(t *testing.T) {
+func TestParseInvalidIndexOnStruct(t *testing.T) {
 	cases := []invalidIndexTestCase{
 		{
 			description: "missing 'fields' argument",
-			sdl:         `type user @index(name: "userIndex") {}`,
+			sdl:         `type user @index(name: "userIndex", unique: true) {}`,
 			expectedErr: errIndexMissingFields,
 		},
 		{
@@ -131,6 +156,11 @@ func TestInvalidStructIndex(t *testing.T) {
 		{
 			description: "index name with special symbols",
 			sdl:         `type user @index(name: "user!name", fields: ["name"]) {}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "invalid 'unique' value type",
+			sdl:         `type user @index(fields: ["name"], unique: "true") {}`,
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
@@ -175,7 +205,7 @@ func TestInvalidStructIndex(t *testing.T) {
 	}
 }
 
-func TestFieldIndex(t *testing.T) {
+func TestParseIndexOnField(t *testing.T) {
 	cases := []indexTestCase{
 		{
 			description: "field index",
@@ -188,6 +218,7 @@ func TestFieldIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
+					Unique: false,
 				},
 			},
 		},
@@ -202,6 +233,35 @@ func TestFieldIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Direction: client.Ascending},
 					},
+					Unique: false,
+				},
+			},
+		},
+		{
+			description: "unique field index",
+			sdl: `type user {
+				name: String @index(unique: true)
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+					},
+					Unique: true,
+				},
+			},
+		},
+		{
+			description: "field index explicitly not unique",
+			sdl: `type user {
+				name: String @index(unique: false)
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Direction: client.Ascending},
+					},
+					Unique: false,
 				},
 			},
 		},
@@ -212,7 +272,7 @@ func TestFieldIndex(t *testing.T) {
 	}
 }
 
-func TestInvalidFieldIndex(t *testing.T) {
+func TestParseInvalidIndexOnField(t *testing.T) {
 	cases := []invalidIndexTestCase{
 		{
 			description: "forbidden 'field' argument",
@@ -262,6 +322,13 @@ func TestInvalidFieldIndex(t *testing.T) {
 				name: String @index(name: "user!name") 
 			}`,
 			expectedErr: errIndexInvalidName,
+		},
+		{
+			description: "invalid 'unique' value type",
+			sdl: `type user {
+				name: String @index(unique: "true") 
+			}`,
+			expectedErr: errIndexInvalidArgument,
 		},
 	}
 

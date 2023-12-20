@@ -228,6 +228,9 @@ type CreateIndex struct {
 	// The directions of the 'FieldsNames' to index. Used only for composite indexes.
 	Directions []client.IndexDirection
 
+	// If Unique is true, the index will be created as a unique index.
+	Unique bool
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
