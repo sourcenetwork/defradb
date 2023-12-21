@@ -29,7 +29,7 @@ func TestMutationCreate_ReturnsVersionCID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-							create_Users(data: "{\"name\": \"John\"}") {
+							create_Users(input: {name: "John"}) {
 								_version {
 									cid
 								}

@@ -28,7 +28,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 				r := d.ExecRequest(
 					ctx,
 					`mutation {
-						create_Users(data: "{\"name\": \"John\"}") {
+						create_Users(input: {name: "John"}) {
 							_key
 						}
 					}`,
@@ -43,7 +43,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 				r := d.WithTxn(txn).ExecRequest(
 					ctx,
 					`mutation {
-						create_Users(data: "{\"name\": \"Shahzad\"}") {
+						create_Users(input: {name: "Shahzad"}) {
 							_key
 						}
 					}`,

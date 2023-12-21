@@ -46,7 +46,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 								_eq: true
 							}
 						},
-						data: "{\"age\": 59}"
+						input: {age: 59}
 					) {
 						_key
 						name
@@ -62,7 +62,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"data": dataMap{
-								"age": float64(59),
+								"age": int32(59),
 							},
 							"filter": dataMap{
 								"verified": dataMap{
@@ -115,7 +115,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],
-						data: "{\"age\": 59}"
+						input: {age: 59}
 					) {
 						_key
 						name
@@ -131,7 +131,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"data": dataMap{
-								"age": float64(59),
+								"age": int32(59),
 							},
 							"filter": nil,
 							"ids": []string{
@@ -180,7 +180,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 				Request: `mutation @explain {
 					update_Author(
 						id: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
-						data: "{\"age\": 59}"
+						input: {age: 59}
 					) {
 						_key
 						name
@@ -196,7 +196,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"data": dataMap{
-								"age": float64(59),
+								"age": int32(59),
 							},
 							"filter": nil,
 							"ids": []string{
@@ -248,7 +248,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],
-						data: "{\"age\": 59}"
+						input: {age: 59}
 					) {
 						_key
 						name
@@ -264,7 +264,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"data": dataMap{
-								"age": float64(59),
+								"age": int32(59),
 							},
 							"filter": dataMap{
 								"verified": dataMap{

@@ -43,7 +43,7 @@ func TestMutationUpdate_WithId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					update_Users(id: "bae-cc36febf-4029-52b3-a876-c99c6293f588", data: "{\"points\": 59}") {
+					update_Users(id: "bae-cc36febf-4029-52b3-a876-c99c6293f588", input: {points: 59}) {
 						name
 						points
 					}
@@ -82,7 +82,7 @@ func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					update_Users(id: "bae-does-not-exist", data: "{\"points\": 59}") {
+					update_Users(id: "bae-does-not-exist", input: {points: 59}) {
 						_key
 						name
 						points

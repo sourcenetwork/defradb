@@ -39,7 +39,7 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain {
-					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
+					create_Author(input: {name: "Shahzad Lone", age: 27, verified: true}) {
 						name
 						age
 					}
@@ -53,7 +53,7 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"data": dataMap{
-								"age":      float64(27),
+								"age":      int32(27),
 								"name":     "Shahzad Lone",
 								"verified": true,
 							},
@@ -77,7 +77,7 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain {
-					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
+					create_Author(input: {name: "Shahzad Lone", age: 27}) {
 						name
 						age
 					}
@@ -91,7 +91,7 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"data": dataMap{
-								"age":  float64(27),
+								"age":  int32(27),
 								"name": "Shahzad Lone",
 							},
 						},

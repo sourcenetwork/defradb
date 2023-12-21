@@ -35,7 +35,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 							"bae-c8448e47-6cd1-571f-90bd-364acb80da7b",
 							"bae-f01bf83f-1507-5fb5-a6a3-09ecffa3c692"
 						],
-						data: "{\"country\": \"USA\"}"
+						input: {country: "USA"}
 					) {
 						country
 						city
@@ -93,7 +93,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 								_eq: "Waterloo"
 							}
 						},
-						data: "{\"country\": \"USA\"}"
+						input: {country: "USA"}
 					) {
 						country
 						city

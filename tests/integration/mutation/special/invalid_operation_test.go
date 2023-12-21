@@ -29,7 +29,7 @@ func TestMutationInvalidMutation(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					dostuff_User(data: "") {
+					dostuff_User(input: {}) {
 						_key
 					}
 				}`,
