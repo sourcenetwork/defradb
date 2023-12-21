@@ -136,12 +136,14 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				Request: `query {
-							AuthorView {
-								name
-								numberOfBooks
-							}
-						}`,
+				Request: `
+					query {
+						AuthorView {
+							name
+							numberOfBooks
+						}
+					}
+				`,
 				Results: []map[string]any{
 					{
 						"name":          "Harper Lee",

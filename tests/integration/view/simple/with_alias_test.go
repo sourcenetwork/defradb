@@ -45,11 +45,13 @@ func TestView_SimpleWithAlias(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				Request: `query {
-							UserView {
-								fullname
-							}
-						}`,
+				Request: `
+					query {
+						UserView {
+							fullname
+						}
+					}
+				`,
 				Results: []map[string]any{
 					{
 						"fullname": "John",

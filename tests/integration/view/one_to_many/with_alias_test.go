@@ -141,14 +141,16 @@ func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				Request: `query {
-							AuthorView {
-								name
-								books {
-									fullName
-								}
+				Request: `
+					query {
+						AuthorView {
+							name
+							books {
+								fullName
 							}
-						}`,
+						}
+					}
+				`,
 				Results: []map[string]any{
 					{
 						"name": "Harper Lee",

@@ -146,11 +146,13 @@ func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				Request: `query {
-							UserView {
-								age
-							}
-						}`,
+				Request: `
+					query {
+						UserView {
+							age
+						}
+					}
+				`,
 				ExpectedError: `Cannot query field "age" on type "UserView"`,
 			},
 		},

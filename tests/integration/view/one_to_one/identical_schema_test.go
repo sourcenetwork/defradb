@@ -68,14 +68,16 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				Request: `query {
-							HandView {
+				Request: `
+					query {
+						HandView {
+							name
+							heldBy {
 								name
-								heldBy {
-									name
-								}
 							}
-						}`,
+						}
+					}
+				`,
 				Results: []map[string]any{
 					{
 						"name": "Left hand 1",

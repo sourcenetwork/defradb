@@ -50,11 +50,13 @@ func TestView_SimpleWithFilter(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				Request: `query {
-							UserView {
-								name
-							}
-						}`,
+				Request: `
+					query {
+						UserView {
+							name
+						}
+					}
+				`,
 				Results: []map[string]any{
 					{
 						"name": "John",
@@ -112,11 +114,13 @@ func TestView_SimpleWithFilterOnViewAndQuery(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				Request: `query {
-							UserView(filter: {age: {_eq: 31}}) {
-								name
-							}
-						}`,
+				Request: `
+					query {
+						UserView(filter: {age: {_eq: 31}}) {
+							name
+						}
+					}
+				`,
 				Results: []map[string]any{
 					{
 						"name": "John",
