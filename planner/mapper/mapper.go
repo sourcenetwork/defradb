@@ -747,7 +747,10 @@ func getTopLevelInfo(
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
 			// If the collection is not found, check to see if a schema of that name exists,
-			// if so, this must be an embedded object
+			// if so, this must be an embedded object.
+			//
+			// Note: This is a poor way to check if a collection exists or not, see
+			// https://github.com/sourcenetwork/defradb/issues/2146
 			schemas, err := store.GetSchemasByName(ctx, collectionName)
 			if err != nil {
 				return nil, client.SchemaDescription{}, err
