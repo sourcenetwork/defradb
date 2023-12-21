@@ -263,6 +263,9 @@ func performAction(
 	case SetDefaultSchemaVersion:
 		setDefaultSchemaVersion(s, action)
 
+	case CreateView:
+		createView(s, action)
+
 	case ConfigureMigration:
 		configureMigration(s, action)
 
@@ -1050,6 +1053,18 @@ func setDefaultSchemaVersion(
 
 	refreshCollections(s)
 	refreshIndexes(s)
+}
+
+func createView(
+	s *state,
+	action CreateView,
+) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		_, err := node.AddView(s.ctx, action.Query, action.SDL)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
 }
 
 // createDoc creates a document using the chosen [mutationType] and caches it in the

@@ -27,6 +27,7 @@ var (
 	ErrNoLensConfig             = errors.New("lens config cannot be empty")
 	ErrInvalidLensConfig        = errors.New("invalid lens configuration")
 	ErrSchemaVersionNotOfSchema = errors.New(errSchemaVersionNotOfSchema)
+	ErrViewAddMissingArgs       = errors.New("please provide a base query and output SDL for this view")
 )
 
 func NewErrInvalidLensConfig(inner error) error {

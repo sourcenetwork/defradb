@@ -63,6 +63,11 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 		schema_migrate,
 	)
 
+	view := MakeViewCommand()
+	view.AddCommand(
+		MakeViewAddCommand(),
+	)
+
 	index := MakeIndexCommand()
 	index.AddCommand(
 		MakeIndexCreateCommand(),
@@ -98,6 +103,7 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 		MakeDumpCommand(),
 		MakeRequestCommand(),
 		schema,
+		view,
 		index,
 		p2p,
 		backup,
