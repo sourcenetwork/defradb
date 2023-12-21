@@ -483,7 +483,7 @@ func getRelationshipName(
 }
 
 func finalizeRelations(relationManager *RelationManager, definitions []client.CollectionDefinition) error {
-	embeddedObjNames := map[string]any{}
+	embeddedObjNames := map[string]struct{}{}
 	for _, def := range definitions {
 		if def.Description.Name == "" {
 			embeddedObjNames[def.Schema.Name] = struct{}{}
