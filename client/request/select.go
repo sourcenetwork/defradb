@@ -161,7 +161,7 @@ func (s *Select) UnmarshalJSON(bytes []byte) error {
 		// We detect which concrete type each `Selection` object is by detecting
 		// non-nillable fields, if the key is present it must be of that type.
 		// They must be non-nillable as nil values may have their keys omitted from
-		// the json. This als relies on the fields being unique.  We may wish to change
+		// the json. This also relies on the fields being unique.  We may wish to change
 		// this later to custom-serialize with a `_type` property.
 		if _, ok := field["Root"]; ok {
 			// This must be a Select, as only the `Select` type has a `Root` field
