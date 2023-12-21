@@ -136,7 +136,7 @@ type Store interface {
 	//
 	//
 	// A GQL SDL that matches its output type must also be provided.  There can only be one `type` declaration,
-	// any nested objects must be declared as embedded/schema only types using the `interface` keyword.
+	// any nested objects must be declared as embedded/schema-only types using the `interface` keyword.
 	// Relations must only be specified on the parent side of the relationship.  For example:
 	//
 	// type AuthorView {
