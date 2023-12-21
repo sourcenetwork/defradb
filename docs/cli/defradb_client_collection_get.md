@@ -11,7 +11,7 @@ Example:
 		
 
 ```
-defradb client collection get <docKey> [--show-deleted] [flags]
+defradb client collection get <docID> [--show-deleted] [flags]
 ```
 
 ### Options

@@ -1,25 +1,24 @@
-## defradb client document get
+## defradb client view add
 
-View detailed document info.
+Add new view
 
 ### Synopsis
 
-View detailed document info.
+Add new database view.
 
-Example:
-  defradb client document get --collection User bae-123
-		
+Example: add from an argument string:
+  defradb client view add 'Foo { name, ...}' 'type Foo { ... }'
+
+Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client document get --collection <collection> <docKey> [--show-deleted] [flags]
+defradb client view add [query] [sdl] [flags]
 ```
 
 ### Options
 
 ```
-  -c, --collection string   Collection name
-  -h, --help                help for get
-      --show-deleted        Show deleted documents
+  -h, --help   help for add
 ```
 
 ### Options inherited from parent commands
@@ -38,5 +37,5 @@ defradb client document get --collection <collection> <docKey> [--show-deleted] 
 
 ### SEE ALSO
 
-* [defradb client document](defradb_client_document.md)	 - Create, read, update, and delete documents.
+* [defradb client view](defradb_client_view.md)	 - Manage views within a running DefraDB instance
 

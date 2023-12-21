@@ -1,23 +1,23 @@
-## defradb client collection keys
+## defradb client collection docIDs
 
-List all document keys.
+List all document IDs (docIDs).
 
 ### Synopsis
 
-List all document keys.
+List all document IDs (docIDs).
 		
 Example:
-  defradb client collection keys --name User
+  defradb client collection docIDs --name User
 		
 
 ```
-defradb client collection keys [flags]
+defradb client collection docIDs [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for keys
+  -h, --help   help for docIDs
 ```
 
 ### Options inherited from parent commands

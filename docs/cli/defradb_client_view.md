@@ -1,25 +1,15 @@
-## defradb client document save
+## defradb client view
 
-Create or update a document.
+Manage views within a running DefraDB instance
 
 ### Synopsis
 
-Create or update a document.
-		
-Example:
-  defradb client document save --collection User --key bae-123 '{ "name": "Bob" }'
-		
-
-```
-defradb client document save --collection <collection> --key <docKey> <document> [flags]
-```
+Manage (add) views withing a running DefraDB instance
 
 ### Options
 
 ```
-  -c, --collection string   Collection name
-  -h, --help                help for save
-      --key string          Document key
+  -h, --help   help for view
 ```
 
 ### Options inherited from parent commands
@@ -38,5 +28,6 @@ defradb client document save --collection <collection> --key <docKey> <document>
 
 ### SEE ALSO
 
-* [defradb client document](defradb_client_document.md)	 - Create, read, update, and delete documents.
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client view add](defradb_client_view_add.md)	 - Add new view
 

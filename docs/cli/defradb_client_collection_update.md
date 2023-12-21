@@ -1,33 +1,33 @@
 ## defradb client collection update
 
-Update documents by key or filter.
+Update documents by docID or filter.
 
 ### Synopsis
 
-Update documents by key or filter.
+Update documents by docID or filter.
 		
 Example: update from string
-  defradb client collection update --name User --key bae-123 '{ "name": "Bob" }'
+  defradb client collection update --name User --docID bae-123 '{ "name": "Bob" }'
 
 Example: update by filter
   defradb client collection update --name User \
   --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
-Example: update by keys
+Example: update by docIDs
   defradb client collection update --name User \
-  --key bae-123,bae-456 --updater '{ "verified": true }'
+  --docID bae-123,bae-456 --updater '{ "verified": true }'
 		
 
 ```
-defradb client collection update [--filter <filter> --key <key> --updater <updater>] <document> [flags]
+defradb client collection update [--filter <filter> --docID <docID> --updater <updater>] <document> [flags]
 ```
 
 ### Options
 
 ```
+      --docID strings    Document ID
       --filter string    Document filter
   -h, --help             help for update
-      --key strings      Document key
       --updater string   Document updater
 ```
 
