@@ -126,7 +126,7 @@ func BackfillBenchmarkDB(
 	fixture fixtures.Generator,
 	docCount, opCount int,
 	doSync bool,
-) ([][]client.DocKey, error) {
+) ([][]client.DocID, error) {
 	numTypes := len(fixture.Types())
 
 	// load fixtures
@@ -134,7 +134,7 @@ func BackfillBenchmarkDB(
 	wg.Add(docCount)
 	errCh := make(chan error)
 	waitCh := make(chan struct{})
-	dockeys := make([][]client.DocKey, docCount)
+	dockeys := make([][]client.DocID, docCount)
 
 	go func() {
 		// Cut up the job from into writeBatchGroup size grouped jobs.
@@ -159,7 +159,7 @@ func BackfillBenchmarkDB(
 					}
 
 					// create the documents
-					keys := make([]client.DocKey, numTypes)
+					keys := make([]client.DocID, numTypes)
 					for j := 0; j < numTypes; j++ {
 						doc, err := client.NewDocFromJSON([]byte(docs[j]))
 						if err != nil {
@@ -177,13 +177,13 @@ func BackfillBenchmarkDB(
 								log.Info(
 									ctx,
 									"Failed to commit TX for doc %s, retrying...\n",
-									logging.NewKV("DocKey", doc.Key()),
+									logging.NewKV("DocKey", doc.ID()),
 								)
 								continue
 							} else if err != nil {
 								errCh <- errors.Wrap("failed to create document", err)
 							}
-							keys[j] = doc.Key()
+							keys[j] = doc.ID()
 							break
 						}
 					}

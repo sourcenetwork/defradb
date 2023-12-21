@@ -16,14 +16,14 @@ import (
 	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeCollectionKeysCommand() *cobra.Command {
+func MakeCollectionListDocIDsCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "keys",
-		Short: "List all document keys.",
-		Long: `List all document keys.
+		Use:   "docIDs",
+		Short: "List all document IDs (docIDs).",
+		Long: `List all document IDs (docIDs).
 		
 Example:
-  defradb client collection keys --name User
+  defradb client collection docIDs --name User
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetCollectionContext(cmd)
@@ -31,16 +31,16 @@ Example:
 				return cmd.Usage()
 			}
 
-			docCh, err := col.GetAllDocKeys(cmd.Context())
+			docCh, err := col.GetAllDocIDs(cmd.Context())
 			if err != nil {
 				return err
 			}
-			for docKey := range docCh {
-				results := &http.DocKeyResult{
-					Key: docKey.Key.String(),
+			for docIDResult := range docCh {
+				results := &http.DocIDResult{
+					DocID: docIDResult.ID.String(),
 				}
-				if docKey.Err != nil {
-					results.Error = docKey.Err.Error()
+				if docIDResult.Err != nil {
+					results.Error = docIDResult.Err.Error()
 				}
 				if err := writeJSON(cmd, results); err != nil {
 					return err

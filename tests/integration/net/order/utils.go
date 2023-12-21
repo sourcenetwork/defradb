@@ -69,7 +69,7 @@ type P2PTestCase struct {
 	ReplicatorResult map[int]map[string]map[string]any
 }
 
-func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node, []client.DocKey, error) {
+func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node, []client.DocID, error) {
 	ctx := context.Background()
 
 	log.Info(ctx, "Building new memory store")
@@ -83,7 +83,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 	}
 
 	// seed the database with a set of documents
-	dockeys := []client.DocKey{}
+	dockeys := []client.DocID{}
 	for _, document := range seeds {
 		dockey, err := seedDocument(ctx, db, document)
 		require.NoError(t, err)
@@ -128,23 +128,23 @@ func seedSchema(ctx context.Context, db client.DB) error {
 	return err
 }
 
-func seedDocument(ctx context.Context, db client.DB, document string) (client.DocKey, error) {
+func seedDocument(ctx context.Context, db client.DB, document string) (client.DocID, error) {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
-		return client.DocKey{}, err
+		return client.DocID{}, err
 	}
 
 	doc, err := client.NewDocFromJSON([]byte(document))
 	if err != nil {
-		return client.DocKey{}, err
+		return client.DocID{}, err
 	}
 
 	err = col.Save(ctx, doc)
 	if err != nil {
-		return client.DocKey{}, err
+		return client.DocID{}, err
 	}
 
-	return doc.Key(), nil
+	return doc.ID(), nil
 }
 
 func saveDocument(ctx context.Context, db client.DB, document *client.Document) error {
@@ -156,7 +156,7 @@ func saveDocument(ctx context.Context, db client.DB, document *client.Document) 
 	return col.Save(ctx, document)
 }
 
-func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, update string) error {
+func updateDocument(ctx context.Context, db client.DB, dockey client.DocID, update string) error {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, upd
 	return col.Save(ctx, doc)
 }
 
-func getDocument(ctx context.Context, db client.DB, dockey client.DocKey) (*client.Document, error) {
+func getDocument(ctx context.Context, db client.DB, dockey client.DocID) (*client.Document, error) {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return nil, err
@@ -190,7 +190,7 @@ func getDocument(ctx context.Context, db client.DB, dockey client.DocKey) (*clie
 func executeTestCase(t *testing.T, test P2PTestCase) {
 	ctx := context.Background()
 
-	dockeys := []client.DocKey{}
+	dockeys := []client.DocID{}
 	nodes := []*net.Node{}
 
 	for i, cfg := range test.NodeConfig {
@@ -320,7 +320,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 				for dockey, results := range test.ReplicatorResult[rep] {
 					for field, result := range results {
-						d, err := client.NewDocKeyFromString(dockey)
+						d, err := client.NewDocIDFromString(dockey)
 						require.NoError(t, err)
 
 						doc, err := getDocument(ctx, nodes[rep].DB, d)

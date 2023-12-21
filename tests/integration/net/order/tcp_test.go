@@ -156,7 +156,7 @@ func TestP2FullPReplicator(t *testing.T) {
 		},
 		ReplicatorResult: map[int]map[string]map[string]any{
 			1: {
-				doc.Key().String(): {
+				doc.ID().String(): {
 					"Age": int64(21),
 				},
 			},

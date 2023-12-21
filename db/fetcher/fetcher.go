@@ -127,7 +127,7 @@ type DocumentFetcher struct {
 
 	// Since deleted documents are stored under a different instance type than active documents,
 	// we use a parallel fetcher to be able to return the documents in the expected order.
-	// That being lexicographically ordered dockeys.
+	// That being lexicographically ordered docIDs.
 	deletedDocFetcher *DocumentFetcher
 
 	execInfo ExecInfo
@@ -250,7 +250,7 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 	df.deletedDocs = withDeleted
 
 	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
-		start := base.MakeCollectionKey(df.col.Description())
+		start := base.MakeDSKeyWithCollectionID(df.col.Description())
 		if withDeleted {
 			start = start.WithDeletedFlag()
 		} else {
@@ -334,7 +334,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 
 	if seekNext {
 		curKey := df.kv.Key
-		curKey.FieldId = "" // clear field so prefixEnd applies to dockey
+		curKey.FieldId = "" // clear field so prefixEnd applies to docID
 		seekKey := curKey.PrefixEnd().ToString()
 		spanDone, df.kv, err = df.seekKV(seekKey)
 		// handle any internal errors
@@ -370,7 +370,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context, seekNext bool) (spanDone
 	}
 
 	// check if we've crossed document boundries
-	if (df.doc.key != nil && df.kv.Key.DocKey != string(df.doc.key)) || seekNext {
+	if (df.doc.id != nil && df.kv.Key.DocID != string(df.doc.id)) || seekNext {
 		df.isReadingDocument = false
 		return false, true, nil
 	}
@@ -472,10 +472,10 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 		if df.filterSet != nil {
 			df.doc.filterSet = bitset.New(df.filterSet.Len())
 			if df.filterSet.Test(0) {
-				df.doc.filterSet.Set(0) // mark dockey as set
+				df.doc.filterSet.Set(0) // mark docID as set
 			}
 		}
-		df.doc.key = []byte(kv.Key.DocKey)
+		df.doc.id = []byte(kv.Key.DocID)
 		df.passedFilter = false
 		df.ranFilter = false
 
@@ -534,15 +534,15 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 	var resultExecInfo ExecInfo
 
 	// If the deletedDocFetcher isn't nil, this means that the user requested to include the deleted documents
-	// in the query. To keep the active and deleted docs in lexicographic order of dockeys, we use the two distinct
-	// fetchers and fetch the one that has the next lowest (or highest if requested in reverse order) dockey value.
+	// in the query. To keep the active and deleted docs in lexicographic order of docIDs, we use the two distinct
+	// fetchers and fetch the one that has the next lowest (or highest if requested in reverse order) docID value.
 	ddf := df.deletedDocFetcher
 	if ddf != nil {
 		// If we've reached the end of the deleted docs, we can skip to getting the next active docs.
 		if !ddf.kvEnd {
 			if df.kvEnd ||
-				(df.reverse && ddf.kv.Key.DocKey > df.kv.Key.DocKey) ||
-				(!df.reverse && ddf.kv.Key.DocKey < df.kv.Key.DocKey) {
+				(df.reverse && ddf.kv.Key.DocID > df.kv.Key.DocID) ||
+				(!df.reverse && ddf.kv.Key.DocID < df.kv.Key.DocID) {
 				encdoc, execInfo, err := ddf.FetchNext(ctx)
 				if err != nil {
 					return nil, ExecInfo{}, err
@@ -573,7 +573,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 	if df.kv == nil {
 		return nil, ExecInfo{}, client.NewErrUninitializeProperty("DocumentFetcher", "kv")
 	}
-	// save the DocKey of the current kv pair so we can track when we cross the doc pair boundries
+	// save the DocID of the current kv pair so we can track when we cross the doc pair boundries
 	// keyparts := df.kv.Key.List()
 	// key := keyparts[len(keyparts)-2]
 

@@ -129,15 +129,15 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		}
 
 		if f.indexDesc.Unique {
-			f.doc.key = res.value
+			f.doc.id = res.value
 		} else {
-			f.doc.key = res.key.FieldValues[1]
+			f.doc.id = res.key.FieldValues[1]
 		}
 		f.doc.properties[f.indexedField] = property
 		f.execInfo.FieldsFetched++
 
 		if f.docFetcher != nil && len(f.docFields) > 0 {
-			targetKey := base.MakeDocKey(f.col.Description(), string(f.doc.key))
+			targetKey := base.MakeDSKeyWithCollectionAndDocID(f.col.Description(), string(f.doc.id))
 			spans := core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd()))
 			err := f.docFetcher.Start(ctx, spans)
 			if err != nil {

@@ -32,23 +32,16 @@ const (
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrFieldNotExist        = errors.New(errFieldNotExist)
-	ErrUnexpectedType       = errors.New(errUnexpectedType)
-	ErrParsingFailed        = errors.New(errParsingFailed)
-	ErrUninitializeProperty = errors.New(errUninitializeProperty)
-	ErrFieldNotObject       = errors.New("trying to access field on a non object type")
-	ErrValueTypeMismatch    = errors.New("value does not match indicated type")
-	ErrIndexNotFound        = errors.New("no index found for given ID")
-	ErrDocumentNotFound     = errors.New("no document for the given ID exists")
-	ErrInvalidUpdateTarget  = errors.New("the target document to update is of invalid type")
-	ErrInvalidUpdater       = errors.New("the updater of a document is of invalid type")
-	ErrInvalidDeleteTarget  = errors.New("the target document to delete is of invalid type")
-	ErrMalformedDocKey      = errors.New("malformed DocKey, missing either version or cid")
-	ErrInvalidDocKeyVersion = errors.New("invalid DocKey version")
-	ErrMaxTxnRetries        = errors.New(errMaxTxnRetries)
-	ErrRelationOneSided     = errors.New(errRelationOneSided)
-	ErrCollectionNotFound   = errors.New(errCollectionNotFound)
-	ErrUnknownCRDT          = errors.New(errUnknownCRDT)
+	ErrFieldNotExist       = errors.New(errFieldNotExist)
+	ErrUnexpectedType      = errors.New(errUnexpectedType)
+	ErrFieldNotObject      = errors.New("trying to access field on a non object type")
+	ErrValueTypeMismatch   = errors.New("value does not match indicated type")
+	ErrDocumentNotFound    = errors.New("no document for the given ID exists")
+	ErrInvalidUpdateTarget = errors.New("the target document to update is of invalid type")
+	ErrInvalidUpdater      = errors.New("the updater of a document is of invalid type")
+	ErrInvalidDeleteTarget = errors.New("the target document to delete is of invalid type")
+	ErrMalformedDocID      = errors.New("malformed document ID, missing either version or cid")
+	ErrInvalidDocIDVersion = errors.New("invalid document ID version")
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

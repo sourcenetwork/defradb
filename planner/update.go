@@ -63,11 +63,11 @@ func (n *updateNode) Next() (bool, error) {
 			}
 
 			n.currentValue = n.results.Value()
-			key, err := client.NewDocKeyFromString(n.currentValue.GetKey())
+			docID, err := client.NewDocIDFromString(n.currentValue.GetID())
 			if err != nil {
 				return false, err
 			}
-			_, err = n.collection.UpdateWithKey(n.p.ctx, key, n.patch)
+			_, err = n.collection.UpdateWithDocID(n.p.ctx, docID, n.patch)
 			if err != nil {
 				return false, err
 			}
@@ -158,7 +158,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	update := &updateNode{
 		p:          p,
 		filter:     parsed.Filter,
-		docIDs:     parsed.DocKeys.Value(),
+		docIDs:     parsed.DocIDs.Value(),
 		isUpdating: true,
 		patch:      parsed.Data,
 		docMapper:  docMapper{parsed.DocumentMapping},

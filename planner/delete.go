@@ -49,11 +49,11 @@ func (n *deleteNode) Next() (bool, error) {
 	}
 
 	n.currentValue = n.source.Value()
-	key, err := client.NewDocKeyFromString(n.currentValue.GetKey())
+	docID, err := client.NewDocIDFromString(n.currentValue.GetID())
 	if err != nil {
 		return false, err
 	}
-	_, err = n.collection.DeleteWithKey(n.p.ctx, key)
+	_, err = n.collection.DeleteWithDocID(n.p.ctx, docID)
 	if err != nil {
 		return false, err
 	}
@@ -131,7 +131,7 @@ func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
 	return &deleteNode{
 		p:          p,
 		filter:     parsed.Filter,
-		docIDs:     parsed.DocKeys.Value(),
+		docIDs:     parsed.DocIDs.Value(),
 		collection: col.WithTxn(p.txn),
 		source:     slctNode,
 		docMapper:  docMapper{parsed.DocumentMapping},

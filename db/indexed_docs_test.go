@@ -176,7 +176,7 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 
 		key.FieldValues = [][]byte{fieldBytesVal}
 		if !b.isUnique {
-			key.FieldValues = append(key.FieldValues, []byte(b.doc.Key().String()))
+			key.FieldValues = append(key.FieldValues, []byte(b.doc.ID().String()))
 		}
 	} else if len(b.values) > 0 {
 		key.FieldValues = b.values
@@ -376,13 +376,13 @@ func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t
 	require.NoError(f.t, err)
 	f.commitTxn()
 
-	userDocKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(userDoc).Build()
-	prodDocKey := newIndexKeyBuilder(f).Col(productsColName).Field(productsCategoryFieldName).Doc(prodDoc).Build()
+	userDocID := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(userDoc).Build()
+	prodDocID := newIndexKeyBuilder(f).Col(productsColName).Field(productsCategoryFieldName).Doc(prodDoc).Build()
 
-	data, err := f.txn.Datastore().Get(f.ctx, userDocKey.ToDS())
+	data, err := f.txn.Datastore().Get(f.ctx, userDocID.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
-	data, err = f.txn.Datastore().Get(f.ctx, prodDocKey.ToDS())
+	data, err = f.txn.Datastore().Get(f.ctx, prodDocID.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 }
@@ -619,7 +619,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 
 	fieldKeyString := core.DataStoreKey{
 		CollectionID: f.users.Description().IDString(),
-	}.WithDocKey(doc.Key().String()).
+	}.WithDocID(doc.ID().String()).
 		WithFieldId("1").
 		WithValueFlag().
 		ToString()
@@ -923,7 +923,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		require.NoError(t, err)
 
 		encodedDoc := shimEncodedDocument{
-			key:             []byte(doc.Key().String()),
+			key:             []byte(doc.ID().String()),
 			schemaVersionID: f.users.Schema().VersionID,
 		}
 
@@ -987,7 +987,7 @@ type shimEncodedDocument struct {
 
 var _ fetcher.EncodedDocument = (*shimEncodedDocument)(nil)
 
-func (encdoc *shimEncodedDocument) Key() []byte {
+func (encdoc *shimEncodedDocument) ID() []byte {
 	return encdoc.key
 }
 
@@ -1026,10 +1026,10 @@ func TestUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 
 	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS())
 	require.NoError(t, err, key1.ToString())
-	assert.Equal(t, data, []byte(doc1.Key().String()))
+	assert.Equal(t, data, []byte(doc1.ID().String()))
 	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS())
 	require.NoError(t, err)
-	assert.Equal(t, data, []byte(doc2.Key().String()))
+	assert.Equal(t, data, []byte(doc2.ID().String()))
 }
 
 func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
@@ -1052,7 +1052,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
-	assert.Equal(t, data, []byte(doc.Key().String()))
+	assert.Equal(t, data, []byte(doc.ID().String()))
 }
 
 func TestUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {

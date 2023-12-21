@@ -103,7 +103,7 @@ func collectionFromAstDefinition(
 	fieldDescriptions := []client.FieldDescription{
 		{
 			Name: request.KeyFieldName,
-			Kind: client.FieldKind_DocKey,
+			Kind: client.FieldKind_DocID,
 			Typ:  client.NONE_CRDT,
 		},
 	}
@@ -336,8 +336,8 @@ func fieldsFromAST(field *ast.FieldDefinition,
 			// An _id field is added for every 1-N relationship from this object.
 			fieldDescriptions = append(fieldDescriptions, client.FieldDescription{
 				Name:         fmt.Sprintf("%s_id", field.Name.Value),
-				Kind:         client.FieldKind_DocKey,
-				Typ:          defaultCRDTForFieldKind[client.FieldKind_DocKey],
+				Kind:         client.FieldKind_DocID,
+				Typ:          defaultCRDTForFieldKind[client.FieldKind_DocID],
 				RelationType: client.Relation_Type_INTERNAL_ID,
 			})
 		} else if kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
@@ -422,7 +422,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 	case *ast.Named:
 		switch astTypeVal.Name.Value {
 		case typeID:
-			return client.FieldKind_DocKey, nil
+			return client.FieldKind_DocID, nil
 		case typeBoolean:
 			return client.FieldKind_BOOL, nil
 		case typeInt:

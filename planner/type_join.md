@@ -11,7 +11,7 @@ type User {
 type Friend {
 	name: String
 	friendsDate: DateTime
-	user_id: DocKey
+	user_id: DocID
 }
 
 - >
@@ -142,7 +142,7 @@ type Address: {
 	...
 
 	user: user
-	# user_id: DocKey
+	# user_id: DocID
 }
 
 query {

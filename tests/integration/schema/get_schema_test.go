@@ -104,7 +104,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						Fields: []client.FieldDescription{
 							{
 								Name: "_docID",
-								Kind: client.FieldKind_DocKey,
+								Kind: client.FieldKind_DocID,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
@@ -122,7 +122,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						Fields: []client.FieldDescription{
 							{
 								Name: "_docID",
-								Kind: client.FieldKind_DocKey,
+								Kind: client.FieldKind_DocID,
 							},
 						},
 					},
@@ -133,7 +133,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						Fields: []client.FieldDescription{
 							{
 								Name: "_docID",
-								Kind: client.FieldKind_DocKey,
+								Kind: client.FieldKind_DocID,
 							},
 						},
 					},
@@ -179,7 +179,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 						Fields: []client.FieldDescription{
 							{
 								Name: "_docID",
-								Kind: client.FieldKind_DocKey,
+								Kind: client.FieldKind_DocID,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
@@ -197,7 +197,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 						Fields: []client.FieldDescription{
 							{
 								Name: "_docID",
-								Kind: client.FieldKind_DocKey,
+								Kind: client.FieldKind_DocID,
 							},
 						},
 					},
@@ -243,7 +243,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 						Fields: []client.FieldDescription{
 							{
 								Name: "_docID",
-								Kind: client.FieldKind_DocKey,
+								Kind: client.FieldKind_DocID,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
@@ -261,7 +261,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 						Fields: []client.FieldDescription{
 							{
 								Name: "_docID",
-								Kind: client.FieldKind_DocKey,
+								Kind: client.FieldKind_DocID,
 							},
 						},
 					},

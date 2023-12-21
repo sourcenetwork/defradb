@@ -38,9 +38,9 @@ Commit represents an individual commit to a MerkleCRDT, every mutation to a
  commit composed of the field level commits and, in the case of an update,
  the prior composite commit.
 `
-	commitDockeyArgDescription string = `
-An optional dockey parameter for this commit query. Only commits for a document
- with a matching dockey will be returned.  If no documents match, the result
+	commitDocIDArgDescription string = `
+An optional docID parameter for this commit query. Only commits for a document
+ with a matching docID will be returned.  If no documents match, the result
  set will be empty.
 `
 	commitFieldIDArgDescription string = `
@@ -71,8 +71,8 @@ Height represents the location of the commit in the DAG. All commits (composite,
 The unique CID of this commit, and the primary means through which to safely identify
  a specific commit.
 `
-	commitDockeyFieldDescription string = `
-The dockey of the document that this commit is for.
+	commitDocIDFieldDescription string = `
+The docID of the document that this commit is for.
 `
 	commitCollectionIDFieldDescription string = `
 The ID of the collection that this commit was committed against.

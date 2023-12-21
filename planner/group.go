@@ -230,8 +230,8 @@ func (n *groupNode) simpleExplain() (map[string]any, error) {
 			c := child.Targetable
 
 			// Get targetable attribute(s) of this child.
-			if c.DocKeys.HasValue() {
-				childExplainGraph[request.DocIDs] = c.DocKeys.Value()
+			if c.DocIDs.HasValue() {
+				childExplainGraph[request.DocIDs] = c.DocIDs.Value()
 			} else {
 				childExplainGraph[request.DocIDs] = nil
 			}

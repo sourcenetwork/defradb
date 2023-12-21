@@ -77,13 +77,13 @@ func (p *Peer) sendJobWorker() {
 			return
 
 		case newJob := <-p.sendJobs:
-			jobs, ok := docWorkerQueue[newJob.bp.dsKey.DocKey]
+			jobs, ok := docWorkerQueue[newJob.bp.dsKey.DocID]
 			if !ok {
 				jobs = make(chan *dagJob, numWorkers)
 				for i := 0; i < numWorkers; i++ {
 					go p.dagWorker(jobs)
 				}
-				docWorkerQueue[newJob.bp.dsKey.DocKey] = jobs
+				docWorkerQueue[newJob.bp.dsKey.DocID] = jobs
 			}
 			jobs <- newJob
 

@@ -73,9 +73,10 @@ const (
 	errIndexDescHasNonExistingField       string = "index description has non existing field"
 	errFieldOrAliasToFieldNotExist        string = "The given field or alias to field does not exist"
 	errCreateFile                         string = "failed to create file"
+	errRemoveFile                         string = "failed to remove file"
 	errOpenFile                           string = "failed to open file"
 	errCloseFile                          string = "failed to close file"
-	errRemoveFile                         string = "failed to remove file"
+	errFailedtoCloseQueryReqAllIDs        string = "failed to close query requesting all docIDs"
 	errFailedToReadByte                   string = "failed to read byte"
 	errFailedToWriteString                string = "failed to write string"
 	errJSONDecode                         string = "failed to decode JSON"
@@ -91,82 +92,23 @@ const (
 )
 
 var (
-	ErrFailedToGetHeads              = errors.New(errFailedToGetHeads)
-	ErrFailedToCreateCollectionQuery = errors.New(errFailedToCreateCollectionQuery)
-	ErrFailedToGetCollection         = errors.New(errFailedToGetCollection)
-	ErrFailedToGetAllCollections     = errors.New(errFailedToGetAllCollections)
-	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
-	// call against the supplied Document Key.
-	ErrDocVerification         = errors.New(errDocVerification)
-	ErrSubscriptionsNotAllowed = errors.New("server does not accept subscriptions")
-	ErrDeleteTargetEmpty       = errors.New("the doc delete targeter cannot be empty")
-	ErrDeleteEmpty             = errors.New("the doc delete cannot be empty")
-	ErrUpdateTargetEmpty       = errors.New("the doc update targeter cannot be empty")
-	ErrUpdateEmpty             = errors.New("the doc update cannot be empty")
-	ErrInvalidMergeValueType   = errors.New(
-		"the type of value in the merge patch doesn't match the schema",
-	)
-	ErrMissingDocFieldToUpdate            = errors.New("missing document field to update")
-	ErrDocMissingKey                      = errors.New("document is missing key")
-	ErrInvalidFilter                      = errors.New("invalid filter")
-	ErrInvalidOpPath                      = errors.New("invalid patch op path")
-	ErrDocumentAlreadyExists              = errors.New(errDocumentAlreadyExists)
-	ErrDocumentDeleted                    = errors.New(errDocumentDeleted)
-	ErrUnknownCRDTArgument                = errors.New("invalid CRDT arguments")
-	ErrCollectionAlreadyExists            = errors.New("collection already exists")
-	ErrCollectionNameEmpty                = errors.New("collection name can't be empty")
-	ErrSchemaNameEmpty                    = errors.New("schema name can't be empty")
-	ErrSchemaRootEmpty                    = errors.New("schema root can't be empty")
-	ErrSchemaVersionIDEmpty               = errors.New("schema version ID can't be empty")
-	ErrKeyEmpty                           = errors.New("key cannot be empty")
-	ErrAddingP2PCollection                = errors.New(errAddingP2PCollection)
-	ErrRemovingP2PCollection              = errors.New(errRemovingP2PCollection)
-	ErrAddCollectionWithPatch             = errors.New(errAddCollectionWithPatch)
-	ErrCollectionIDDoesntMatch            = errors.New(errCollectionIDDoesntMatch)
-	ErrSchemaRootDoesntMatch              = errors.New(errSchemaRootDoesntMatch)
-	ErrCannotModifySchemaName             = errors.New(errCannotModifySchemaName)
-	ErrCannotSetVersionID                 = errors.New(errCannotSetVersionID)
-	ErrCannotSetFieldID                   = errors.New(errCannotSetFieldID)
-	ErrRelationalFieldMissingSchema       = errors.New(errRelationalFieldMissingSchema)
-	ErrRelationalFieldInvalidRelationType = errors.New(errRelationalFieldInvalidRelationType)
-	ErrRelationalFieldMissingIDField      = errors.New(errRelationalFieldMissingIDField)
-	ErrRelationalFieldMissingRelationName = errors.New(errRelationalFieldMissingRelationName)
-	ErrPrimarySideNotDefined              = errors.New(errPrimarySideNotDefined)
-	ErrPrimarySideOnMany                  = errors.New(errPrimarySideOnMany)
-	ErrBothSidesPrimary                   = errors.New(errBothSidesPrimary)
-	ErrRelatedFieldKindMismatch           = errors.New(errRelatedFieldKindMismatch)
-	ErrRelatedFieldRelationTypeMismatch   = errors.New(errRelatedFieldRelationTypeMismatch)
-	ErrRelationalFieldIDInvalidType       = errors.New(errRelationalFieldIDInvalidType)
-	ErrDuplicateField                     = errors.New(errDuplicateField)
-	ErrCannotMutateField                  = errors.New(errCannotMutateField)
-	ErrCannotMoveField                    = errors.New(errCannotMoveField)
-	ErrInvalidCRDTType                    = errors.New(errInvalidCRDTType)
-	ErrCannotDeleteField                  = errors.New(errCannotDeleteField)
-	ErrFieldKindNotFound                  = errors.New(errFieldKindNotFound)
-	ErrFieldKindDoesNotMatchFieldSchema   = errors.New(errFieldKindDoesNotMatchFieldSchema)
-	ErrSchemaNotFound                     = errors.New(errSchemaNotFound)
-	ErrIndexMissingFields                 = errors.New(errIndexMissingFields)
-	ErrIndexFieldMissingName              = errors.New(errIndexFieldMissingName)
-	ErrIndexFieldMissingDirection         = errors.New(errIndexFieldMissingDirection)
-	ErrIndexSingleFieldWrongDirection     = errors.New(errIndexSingleFieldWrongDirection)
-	ErrCorruptedIndex                     = errors.New(errCorruptedIndex)
-	ErrCanNotChangeIndexWithPatch         = errors.New(errCanNotChangeIndexWithPatch)
-	ErrFieldOrAliasToFieldNotExist        = errors.New(errFieldOrAliasToFieldNotExist)
-	ErrCreateFile                         = errors.New(errCreateFile)
-	ErrOpenFile                           = errors.New(errOpenFile)
-	ErrCloseFile                          = errors.New(errCloseFile)
-	ErrRemoveFile                         = errors.New(errRemoveFile)
-	ErrFailedToReadByte                   = errors.New(errFailedToReadByte)
-	ErrFailedToWriteString                = errors.New(errFailedToWriteString)
-	ErrJSONDecode                         = errors.New(errJSONDecode)
-	ErrDocFromMap                         = errors.New(errDocFromMap)
-	ErrDocCreate                          = errors.New(errDocCreate)
-	ErrDocUpdate                          = errors.New(errDocUpdate)
-	ErrExpectedJSONObject                 = errors.New(errExpectedJSONObject)
-	ErrExpectedJSONArray                  = errors.New(errExpectedJSONArray)
-	ErrOneOneAlreadyLinked                = errors.New(errOneOneAlreadyLinked)
-	ErrIndexDoesNotMatchName              = errors.New(errIndexDoesNotMatchName)
-	ErrInvalidViewQuery                   = errors.New(errInvalidViewQuery)
+	ErrFailedToGetCollection          = errors.New(errFailedToGetCollection)
+	ErrSubscriptionsNotAllowed        = errors.New("server does not accept subscriptions")
+	ErrInvalidFilter                  = errors.New("invalid filter")
+	ErrCollectionAlreadyExists        = errors.New("collection already exists")
+	ErrCollectionNameEmpty            = errors.New("collection name can't be empty")
+	ErrSchemaNameEmpty                = errors.New("schema name can't be empty")
+	ErrSchemaRootEmpty                = errors.New("schema root can't be empty")
+	ErrSchemaVersionIDEmpty           = errors.New("schema version ID can't be empty")
+	ErrKeyEmpty                       = errors.New("key cannot be empty")
+	ErrCannotSetVersionID             = errors.New(errCannotSetVersionID)
+	ErrIndexMissingFields             = errors.New(errIndexMissingFields)
+	ErrIndexFieldMissingName          = errors.New(errIndexFieldMissingName)
+	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
+	ErrCorruptedIndex                 = errors.New(errCorruptedIndex)
+	ErrExpectedJSONObject             = errors.New(errExpectedJSONObject)
+	ErrExpectedJSONArray              = errors.New(errExpectedJSONArray)
+	ErrInvalidViewQuery               = errors.New(errInvalidViewQuery)
 )
 
 // NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
@@ -245,6 +187,9 @@ func NewErrFailedToGetAllCollections(inner error) error {
 }
 
 // NewErrDocVerification returns a new error indicating that the document verification failed.
+//
+// This occurs when a documents contents fail the verification during a Create()
+// call against the supplied Document ID (docID).
 func NewErrDocVerification(expected string, actual string) error {
 	return errors.New(
 		errDocVerification,
@@ -450,17 +395,17 @@ func NewErrCannotDeleteField(name string, id client.FieldID) error {
 	)
 }
 
-func NewErrDocumentAlreadyExists(dockey string) error {
+func NewErrDocumentAlreadyExists(docID string) error {
 	return errors.New(
 		errDocumentAlreadyExists,
-		errors.NewKV("DocKey", dockey),
+		errors.NewKV("DocID", docID),
 	)
 }
 
-func NewErrDocumentDeleted(dockey string) error {
+func NewErrDocumentDeleted(docID string) error {
 	return errors.New(
 		errDocumentDeleted,
-		errors.NewKV("DocKey", dockey),
+		errors.NewKV("DocID", docID),
 	)
 }
 
@@ -635,10 +580,10 @@ func NewErrIndexDoesNotMatchName(index, name string) error {
 	)
 }
 
-func NewErrCanNotIndexNonUniqueField(dockey, fieldName string, value any) error {
+func NewErrCanNotIndexNonUniqueField(docID, fieldName string, value any) error {
 	return errors.New(
 		errCanNotIndexNonUniqueField,
-		errors.NewKV("Dockey", dockey),
+		errors.NewKV("DocID", docID),
 		errors.NewKV("Field name", fieldName),
 		errors.NewKV("Field value", value),
 	)

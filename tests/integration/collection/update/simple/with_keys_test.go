@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
-func TestUpdateWithKeys(t *testing.T) {
+func TestUpdateWithDocIDs(t *testing.T) {
 	docStr1 := `{
 		"name": "John",
 		"age": 21
@@ -43,7 +43,7 @@ func TestUpdateWithKeys(t *testing.T) {
 
 	tests := []testUtils.TestCase{
 		{
-			Description: "Test update users with keys and invalid JSON",
+			Description: "Test update users with docIDs and invalid JSON",
 			Docs: map[string][]string{
 				"Users": {
 					docStr1,
@@ -54,7 +54,7 @@ func TestUpdateWithKeys(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithKeys(ctx, []client.DocKey{doc1.Key(), doc2.Key()}, `{
+						_, err := c.UpdateWithDocIDs(ctx, []client.DocID{doc1.ID(), doc2.ID()}, `{
 							name: "Eric"
 						}`)
 						return err
@@ -63,7 +63,7 @@ func TestUpdateWithKeys(t *testing.T) {
 			},
 			ExpectedError: "cannot parse JSON: cannot parse object",
 		}, {
-			Description: "Test update users with keys and invalid updator",
+			Description: "Test update users with docIDs and invalid updator",
 			Docs: map[string][]string{
 				"Users": {
 					docStr1,
@@ -74,14 +74,14 @@ func TestUpdateWithKeys(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithKeys(ctx, []client.DocKey{doc1.Key(), doc2.Key()}, `"name: Eric"`)
+						_, err := c.UpdateWithDocIDs(ctx, []client.DocID{doc1.ID(), doc2.ID()}, `"name: Eric"`)
 						return err
 					},
 				},
 			},
 			ExpectedError: "the updater of a document is of invalid type",
 		}, {
-			Description: "Test update users with keys and patch updator (not implemented so no change)",
+			Description: "Test update users with docIDs and patch updator (not implemented so no change)",
 			Docs: map[string][]string{
 				"Users": {
 					docStr1,
@@ -92,7 +92,7 @@ func TestUpdateWithKeys(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithKeys(ctx, []client.DocKey{doc1.Key(), doc2.Key()}, `[
+						_, err := c.UpdateWithDocIDs(ctx, []client.DocID{doc1.ID(), doc2.ID()}, `[
 							{
 								"name": "Eric"
 							}, {
@@ -103,7 +103,7 @@ func TestUpdateWithKeys(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc1.Key(), false)
+						d, err := c.Get(ctx, doc1.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -115,7 +115,7 @@ func TestUpdateWithKeys(t *testing.T) {
 
 						assert.Equal(t, "John", name)
 
-						d2, err := c.Get(ctx, doc2.Key(), false)
+						d2, err := c.Get(ctx, doc2.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -132,7 +132,7 @@ func TestUpdateWithKeys(t *testing.T) {
 				},
 			},
 		}, {
-			Description: "Test update users with keys",
+			Description: "Test update users with docIDs",
 			Docs: map[string][]string{
 				"Users": {
 					docStr1,
@@ -143,14 +143,14 @@ func TestUpdateWithKeys(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithKeys(ctx, []client.DocKey{doc1.Key(), doc2.Key()}, `{
+						_, err := c.UpdateWithDocIDs(ctx, []client.DocID{doc1.ID(), doc2.ID()}, `{
 							"age": 40
 						}`)
 						if err != nil {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc1.Key(), false)
+						d, err := c.Get(ctx, doc1.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -162,7 +162,7 @@ func TestUpdateWithKeys(t *testing.T) {
 
 						assert.Equal(t, int64(40), name)
 
-						d2, err := c.Get(ctx, doc2.Key(), false)
+						d2, err := c.Get(ctx, doc2.ID(), false)
 						if err != nil {
 							return err
 						}

@@ -145,7 +145,7 @@ func (this *docGenerator) generatePrimary(
 					if err != nil {
 						return nil, nil, NewErrFailedToGenerateDoc(err)
 					}
-					docKey := primDoc.Key().String()
+					docKey := primDoc.ID().String()
 					requestedSecondary[secDocField.Name+request.RelatedObjectID] = docKey
 					subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc})
 					result = append(result, subResult...)
@@ -181,7 +181,7 @@ func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName st
 
 	result = append(result, gen.GeneratedDoc{Col: &typeDef, Doc: doc})
 
-	secondaryDocs, err := this.generateSecondaryDocs(docMap, doc.Key().String(), &typeDef, "")
+	secondaryDocs, err := this.generateSecondaryDocs(docMap, doc.ID().String(), &typeDef, "")
 	if err != nil {
 		return nil, err
 	}

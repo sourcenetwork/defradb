@@ -130,7 +130,7 @@ func TestUpdateWithFilter(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.Key(), false)
+						d, err := c.Get(ctx, doc.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -162,7 +162,7 @@ func TestUpdateWithFilter(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.Key(), false)
+						d, err := c.Get(ctx, doc.ID(), false)
 						if err != nil {
 							return err
 						}

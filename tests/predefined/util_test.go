@@ -73,7 +73,7 @@ func mustGetDocKeyFromDocMap(docMap map[string]any) string {
 	if err != nil {
 		panic("can not get doc from map" + err.Error())
 	}
-	return doc.Key().String()
+	return doc.ID().String()
 }
 
 func mustAddKeyToDoc(doc map[string]any) map[string]any {

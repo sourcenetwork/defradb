@@ -96,7 +96,7 @@ func ExecuteRequestTestCase(
 
 				expectedEvent := testCase.ExpectedUpdates[indexOfNextExpectedUpdate]
 				assertIfExpected(t, expectedEvent.Cid, update.Cid.String())
-				assertIfExpected(t, expectedEvent.DocKey, update.DocKey)
+				assertIfExpected(t, expectedEvent.DocKey, update.DocID)
 				assertIfExpected(t, expectedEvent.Priority, update.Priority)
 				assertIfExpected(t, expectedEvent.SchemaRoot, update.SchemaRoot)
 

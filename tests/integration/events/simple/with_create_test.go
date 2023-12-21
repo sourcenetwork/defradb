@@ -30,7 +30,7 @@ func TestEventsSimpleWithCreate(t *testing.T) {
 		),
 	)
 	assert.Nil(t, err)
-	docKey1 := doc1.Key().String()
+	docKey1 := doc1.ID().String()
 
 	doc2, err := client.NewDocFromJSON(
 		[]byte(
@@ -40,7 +40,7 @@ func TestEventsSimpleWithCreate(t *testing.T) {
 		),
 	)
 	assert.Nil(t, err)
-	docKey2 := doc2.Key().String()
+	docKey2 := doc2.ID().String()
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection){

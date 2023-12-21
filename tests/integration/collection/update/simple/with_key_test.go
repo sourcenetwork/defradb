@@ -41,7 +41,7 @@ func TestUpdateWithKey(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithKey(ctx, doc.Key(), `{
+						_, err := c.UpdateWithDocID(ctx, doc.ID(), `{
 							name: "Eric"
 						}`)
 						return err
@@ -58,7 +58,7 @@ func TestUpdateWithKey(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithKey(ctx, doc.Key(), `"name: Eric"`)
+						_, err := c.UpdateWithDocID(ctx, doc.ID(), `"name: Eric"`)
 						return err
 					},
 				},
@@ -73,7 +73,7 @@ func TestUpdateWithKey(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithKey(ctx, doc.Key(), `[
+						_, err := c.UpdateWithDocID(ctx, doc.ID(), `[
 							{
 								"name": "Eric"
 							}, {
@@ -84,7 +84,7 @@ func TestUpdateWithKey(t *testing.T) {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.Key(), false)
+						d, err := c.Get(ctx, doc.ID(), false)
 						if err != nil {
 							return err
 						}
@@ -109,14 +109,14 @@ func TestUpdateWithKey(t *testing.T) {
 				"Users": []func(c client.Collection) error{
 					func(c client.Collection) error {
 						ctx := context.Background()
-						_, err := c.UpdateWithKey(ctx, doc.Key(), `{
+						_, err := c.UpdateWithDocID(ctx, doc.ID(), `{
 							"name": "Eric"
 						}`)
 						if err != nil {
 							return err
 						}
 
-						d, err := c.Get(ctx, doc.Key(), false)
+						d, err := c.Get(ctx, doc.ID(), false)
 						if err != nil {
 							return err
 						}

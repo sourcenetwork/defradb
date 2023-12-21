@@ -65,7 +65,7 @@ func runCollectionBenchGetSync(b *testing.B,
 	collections []client.Collection,
 	fixture fixtures.Generator,
 	docCount, opCount int,
-	dockeys [][]client.DocKey,
+	dockeys [][]client.DocID,
 ) error {
 	numTypes := len(fixture.Types())
 	b.ResetTimer()
@@ -88,7 +88,7 @@ func runCollectionBenchGetAsync(b *testing.B,
 	collections []client.Collection,
 	fixture fixtures.Generator,
 	docCount, opCount int,
-	dockeys [][]client.DocKey,
+	dockeys [][]client.DocID,
 ) error {
 	var wg sync.WaitGroup
 	numTypes := len(fixture.Types())
@@ -97,7 +97,7 @@ func runCollectionBenchGetAsync(b *testing.B,
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
 				wg.Add(1)
-				go func(ctx context.Context, col client.Collection, dockey client.DocKey) {
+				go func(ctx context.Context, col client.Collection, dockey client.DocID) {
 					col.Get(ctx, dockey, false) //nolint:errcheck
 					wg.Done()
 				}(ctx, collections[k], dockeys[j][k])

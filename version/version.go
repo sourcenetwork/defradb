@@ -56,7 +56,7 @@ func NewDefraVersion() (defraVersion, error) {
 		NetProtocol:    string(net.Protocol),
 	}
 	var docKeyVersions []string
-	for k, v := range client.ValidDocKeyVersions {
+	for k, v := range client.ValidDocIDVersions {
 		if v {
 			docKeyVersions = append(docKeyVersions, fmt.Sprintf("%x", k))
 		}

@@ -829,7 +829,7 @@ func refreshDocuments(
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
-			if err := doc.RemapAliasFieldsAndDockey(collection.Schema().Fields); err != nil {
+			if err := doc.RemapAliasFieldsAndDocID(collection.Schema().Fields); err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
 				continue
@@ -837,7 +837,7 @@ func refreshDocuments(
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(s.ctx, doc.Key(), false)
+			doc, err = collection.Get(s.ctx, doc.ID(), false)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -1175,7 +1175,7 @@ func createDocViaGQL(
 	}
 
 	docKeyString := resultantDocs[0]["_docID"].(string)
-	docKey, err := client.NewDocKeyFromString(docKeyString)
+	docKey, err := client.NewDocIDFromString(docKeyString)
 	require.NoError(s.t, err)
 
 	doc, err := collection.Get(s.ctx, docKey, false)
@@ -1199,7 +1199,7 @@ func deleteDoc(
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].DeleteWithKey(s.ctx, doc.Key())
+				_, err := collections[action.CollectionID].DeleteWithDocID(s.ctx, doc.ID())
 				return err
 			},
 		)
@@ -1292,7 +1292,7 @@ func updateDocViaGQL(
 			}
 		}`,
 		collection.Name(),
-		doc.Key().String(),
+		doc.ID().String(),
 		escapedJson,
 	)
 

@@ -266,7 +266,7 @@ func (p *Peer) handleBroadcastLoop() {
 // RegisterNewDocument registers a new document with the peer node.
 func (p *Peer) RegisterNewDocument(
 	ctx context.Context,
-	dockey client.DocKey,
+	dockey client.DocID,
 	c cid.Cid,
 	nd ipld.Node,
 	schemaRoot string,
@@ -309,7 +309,7 @@ func (p *Peer) pushToReplicator(
 	ctx context.Context,
 	txn datastore.Txn,
 	collection client.Collection,
-	keysCh <-chan client.DocKeysResult,
+	keysCh <-chan client.DocIDsResult,
 	pid peer.ID,
 ) {
 	for key := range keysCh {
@@ -317,7 +317,7 @@ func (p *Peer) pushToReplicator(
 			log.ErrorE(ctx, "Key channel error", key.Err)
 			continue
 		}
-		dockey := core.DataStoreKeyFromDocKey(key.Key)
+		dockey := core.DataStoreKeyFromDocID(key.ID)
 		headset := clock.NewHeadSet(
 			txn.Headstore(),
 			dockey.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
@@ -328,7 +328,7 @@ func (p *Peer) pushToReplicator(
 				ctx,
 				"Failed to get heads",
 				err,
-				logging.NewKV("DocKey", key.Key.String()),
+				logging.NewKV("DocKey", key.ID.String()),
 				logging.NewKV("PeerID", pid),
 				logging.NewKV("Collection", collection.Name()))
 			continue
@@ -352,7 +352,7 @@ func (p *Peer) pushToReplicator(
 			}
 
 			evt := events.Update{
-				DocKey:     key.Key.String(),
+				DocID:      key.ID.String(),
 				Cid:        c,
 				SchemaRoot: collection.SchemaRoot(),
 				Block:      nd,
@@ -420,7 +420,7 @@ func (p *Peer) loadP2PCollections(ctx context.Context) (map[string]struct{}, err
 }
 
 func (p *Peer) handleDocCreateLog(evt events.Update) error {
-	dockey, err := client.NewDocKeyFromString(evt.DocKey)
+	dockey, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDockey(err)
 	}
@@ -438,7 +438,7 @@ func (p *Peer) handleDocCreateLog(evt events.Update) error {
 }
 
 func (p *Peer) handleDocUpdateLog(evt events.Update) error {
-	dockey, err := client.NewDocKeyFromString(evt.DocKey)
+	dockey, err := client.NewDocIDFromString(evt.DocID)
 	if err != nil {
 		return NewErrFailedToGetDockey(err)
 	}
@@ -465,8 +465,8 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(p.ctx, evt)
 
-	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
-		return NewErrPublishingToDockeyTopic(err, evt.Cid.String(), evt.DocKey)
+	if err := p.server.publishLog(p.ctx, evt.DocID, req); err != nil {
+		return NewErrPublishingToDockeyTopic(err, evt.Cid.String(), evt.DocID)
 	}
 
 	if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {
@@ -479,7 +479,7 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 	// push to each peer (replicator)
 	peers := make(map[string]struct{})
-	for _, peer := range p.ps.ListPeers(lg.DocKey) {
+	for _, peer := range p.ps.ListPeers(lg.DocID) {
 		peers[peer.String()] = struct{}{}
 	}
 	for _, peer := range p.ps.ListPeers(lg.SchemaRoot) {
@@ -503,7 +503,7 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 						p.ctx,
 						"Failed pushing log",
 						err,
-						logging.NewKV("DocKey", lg.DocKey),
+						logging.NewKV("DocKey", lg.DocID),
 						logging.NewKV("CID", lg.Cid),
 						logging.NewKV("PeerID", peerID))
 				}

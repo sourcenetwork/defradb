@@ -63,7 +63,7 @@ func getBooleanField(t *testing.T, doc *client.Document, fieldName string) bool 
 func getDocKeysFromDocs(docs []*client.Document) []string {
 	result := make([]string, 0, len(docs))
 	for _, doc := range docs {
-		result = append(result, doc.Key().String())
+		result = append(result, doc.ID().String())
 	}
 	return result
 }

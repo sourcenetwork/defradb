@@ -62,7 +62,7 @@ func runQueryBenchGetSync(
 	ctx context.Context,
 	db client.DB,
 	docCount int,
-	dockeys [][]client.DocKey,
+	dockeys [][]client.DocID,
 	query string,
 ) error {
 	// run any preprocessing on the query before execution (mostly just dockey insertion if needed)
@@ -89,7 +89,7 @@ func runQueryBenchGetSync(
 	return nil
 }
 
-func formatQuery(b *testing.B, query string, dockeys [][]client.DocKey) string {
+func formatQuery(b *testing.B, query string, dockeys [][]client.DocID) string {
 	numPlaceholders := strings.Count(query, "{{docID}}")
 	if numPlaceholders == 0 {
 		return query

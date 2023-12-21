@@ -125,7 +125,7 @@ func (c *collection) updateIndexedDoc(
 	oldDoc, err := c.get(
 		ctx,
 		txn,
-		c.getPrimaryKeyFromDocKey(doc.Key()), desc.CollectIndexedFields(&schema),
+		c.getPrimaryKeyFromDocID(doc.ID()), desc.CollectIndexedFields(&schema),
 		false,
 	)
 	if err != nil {
@@ -239,7 +239,7 @@ func (c *collection) iterateAllDocs(
 		_ = df.Close()
 		return err
 	}
-	start := base.MakeCollectionKey(c.Description())
+	start := base.MakeDSKeyWithCollectionID(c.Description())
 	spans := core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 
 	err = df.Start(ctx, spans)

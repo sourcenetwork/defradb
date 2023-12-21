@@ -107,7 +107,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 			if _, ok := colMap[col.SchemaRoot()]; ok {
 				continue
 			}
-			keyChan, err := col.GetAllDocKeys(p.ctx)
+			keyChan, err := col.GetAllDocIDs(p.ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -116,9 +116,9 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 				log.Debug(
 					p.ctx,
 					"Registering existing DocKey pubsub topic",
-					logging.NewKV("DocKey", key.Key.String()),
+					logging.NewKV("DocKey", key.ID.String()),
 				)
-				if err := s.addPubSubTopic(key.Key.String(), true); err != nil {
+				if err := s.addPubSubTopic(key.ID.String(), true); err != nil {
 					return nil, err
 				}
 				i++
@@ -205,7 +205,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-	dockey, err := client.NewDocKeyFromString(string(req.Body.DocKey))
+	dockey, err := client.NewDocIDFromString(string(req.Body.DocKey))
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +247,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 
 	schemaRoot := string(req.Body.SchemaRoot)
-	dsKey := core.DataStoreKeyFromDocKey(dockey)
+	dsKey := core.DataStoreKeyFromDocID(dockey)
 
 	var txnErr error
 	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
@@ -292,7 +292,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 				ctx,
 				"Failed to process remote block",
 				err,
-				logging.NewKV("DocKey", dsKey.DocKey),
+				logging.NewKV("DocKey", dsKey.DocID),
 				logging.NewKV("CID", cid),
 			)
 		}
@@ -302,7 +302,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		// dagWorkers specific to the dockey will have been spawned within handleChildBlocks.
 		// Once we are done with the dag syncing process, we can get rid of those workers.
 		if s.peer.closeJob != nil {
-			s.peer.closeJob <- dsKey.DocKey
+			s.peer.closeJob <- dsKey.DocID
 		}
 
 		if txnErr = txn.Commit(ctx); txnErr != nil {
@@ -315,7 +315,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		// Once processed, subscribe to the dockey topic on the pubsub network unless we already
 		// suscribe to the collection.
 		if !s.hasPubSubTopic(col.SchemaRoot()) {
-			err = s.addPubSubTopic(dsKey.DocKey, true)
+			err = s.addPubSubTopic(dsKey.DocID, true)
 			if err != nil {
 				return nil, err
 			}

@@ -53,7 +53,7 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 						Fields: []client.FieldDescription{
 							{
 								Name: "_docID",
-								Kind: client.FieldKind_DocKey,
+								Kind: client.FieldKind_DocID,
 							},
 						},
 					},

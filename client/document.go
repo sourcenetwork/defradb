@@ -53,7 +53,7 @@ import (
 // @body: A document interface can be implemented by both a TypedDocument and a
 // UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
-	key DocKey
+	id DocID
 	// SchemaVersionID holds the id of the schema version that this document is
 	// currently at.
 	//
@@ -68,10 +68,10 @@ type Document struct {
 	isDirty bool
 }
 
-// NewDocWithKey creates a new Document with a specified key.
-func NewDocWithKey(key DocKey) *Document {
+// NewDocWithID creates a new Document with a specified DocID.
+func NewDocWithID(docID DocID) *Document {
 	doc := newEmptyDoc()
-	doc.key = key
+	doc.id = docID
 	return doc
 }
 
@@ -91,14 +91,14 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 	}
 
 	// check if document contains special _docID field
-	k, hasKey := data[request.KeyFieldName]
-	if hasKey {
-		delete(data, request.KeyFieldName) // remove the key so it isn't parsed further
+	k, hasDocID := data[request.KeyFieldName]
+	if hasDocID {
+		delete(data, request.KeyFieldName) // remove the DocID so it isn't parsed further
 		kstr, ok := k.(string)
 		if !ok {
 			return nil, NewErrUnexpectedType[string]("data["+request.KeyFieldName+"]", k)
 		}
-		if doc.key, err = NewDocKeyFromString(kstr); err != nil {
+		if doc.id, err = NewDocIDFromString(kstr); err != nil {
 			return nil, err
 		}
 	}
@@ -108,9 +108,9 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 		return nil, err
 	}
 
-	// if no key was specified, then we assume it doesn't exist and we generate, and set it.
-	if !hasKey {
-		err = doc.generateAndSetDocKey()
+	// if no DocID was specified, then we assume it doesn't exist and we generate, and set it.
+	if !hasDocID {
+		err = doc.generateAndSetDocID()
 		if err != nil {
 			return nil, err
 		}
@@ -144,10 +144,10 @@ func (doc *Document) SetHead(head cid.Cid) {
 	doc.head = head
 }
 
-// Key returns the generated DocKey for this document.
-func (doc *Document) Key() DocKey {
-	// Reading without a read-lock as we assume the DocKey is immutable
-	return doc.key
+// ID returns the generated DocID for this document.
+func (doc *Document) ID() DocID {
+	// Reading without a read-lock as we assume the DocID is immutable
+	return doc.id
 }
 
 // Get returns the raw value for a given field.
@@ -392,8 +392,7 @@ func (doc *Document) String() (string, error) {
 	return string(j), nil
 }
 
-// ToMap returns the document as a map[string]any
-// object.
+// ToMap returns the document as a map[string]any object.
 func (doc *Document) ToMap() (map[string]any, error) {
 	return doc.toMapWithKey()
 }
@@ -479,42 +478,42 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 
 		docMap[k] = value.Value()
 	}
-	docMap[request.KeyFieldName] = doc.Key().String()
+	docMap[request.KeyFieldName] = doc.ID().String()
 
 	return docMap, nil
 }
 
-// GenerateDocKey generates docKey/docID corresponding to the document.
-func (doc *Document) GenerateDocKey() (DocKey, error) {
+// GenerateDocID generates DocID corresponding to the document.
+func (doc *Document) GenerateDocID() (DocID, error) {
 	bytes, err := doc.Bytes()
 	if err != nil {
-		return DocKey{}, err
+		return DocID{}, err
 	}
 
 	cid, err := ccid.NewSHA256CidV1(bytes)
 	if err != nil {
-		return DocKey{}, err
+		return DocID{}, err
 	}
 
-	return NewDocKeyV0(cid), nil
+	return NewDocIDV0(cid), nil
 }
 
-// setDocKey sets the `doc.key` (should NOT be public).
-func (doc *Document) setDocKey(docID DocKey) {
+// setDocID sets the `doc.id` (should NOT be public).
+func (doc *Document) setDocID(docID DocID) {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 
-	doc.key = docID
+	doc.id = docID
 }
 
-// generateAndSetDocKey generates the docKey/docID and then (re)sets `doc.key`.
-func (doc *Document) generateAndSetDocKey() error {
-	docKey, err := doc.GenerateDocKey()
+// generateAndSetDocID generates the DocID and then (re)sets `doc.id`.
+func (doc *Document) generateAndSetDocID() error {
+	docID, err := doc.GenerateDocID()
 	if err != nil {
 		return err
 	}
 
-	doc.setDocKey(docKey)
+	doc.setDocID(docID)
 	return nil
 }
 
@@ -537,8 +536,8 @@ func (doc *Document) remapAliasFields(fieldDescriptions []FieldDescription) (boo
 	return foundAlias, nil
 }
 
-// RemapAliasFieldsAndDockey remaps the alias fields and fixes (overwrites) the dockey.
-func (doc *Document) RemapAliasFieldsAndDockey(fieldDescriptions []FieldDescription) error {
+// RemapAliasFieldsAndDocID remaps the alias fields and fixes (overwrites) the DocID.
+func (doc *Document) RemapAliasFieldsAndDocID(fieldDescriptions []FieldDescription) error {
 	foundAlias, err := doc.remapAliasFields(fieldDescriptions)
 	if err != nil {
 		return err
@@ -548,8 +547,8 @@ func (doc *Document) RemapAliasFieldsAndDockey(fieldDescriptions []FieldDescript
 		return nil
 	}
 
-	// Update the dockey so dockey isn't based on an aliased name of a field.
-	return doc.generateAndSetDocKey()
+	// Update the DocID so DocID isn't based on an aliased name of a field.
+	return doc.generateAndSetDocID()
 }
 
 // DocumentStatus represent the state of the document in the DAG store.

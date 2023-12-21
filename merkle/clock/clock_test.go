@@ -36,10 +36,9 @@ func newTestMerkleClock() *MerkleClock {
 	return NewMerkleClock(
 		multistore.Headstore(),
 		multistore.DAGstore(),
-		core.HeadStoreKey{DocKey: request.DocID, FieldId: "1"},
+		core.HeadStoreKey{DocID: request.DocID, FieldId: "1"},
 		reg,
 	).(*MerkleClock)
-
 }
 
 func TestNewMerkleClock(t *testing.T) {

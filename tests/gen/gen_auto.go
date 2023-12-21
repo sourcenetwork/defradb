@@ -151,7 +151,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 				return err
 			}
 			g.generatedDocs[typeName] = append(g.generatedDocs[typeName],
-				genDoc{docKey: doc.Key().String(), doc: doc})
+				genDoc{docKey: doc.ID().String(), doc: doc})
 		}
 	}
 	return nil

@@ -391,7 +391,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	col1, err := db.getCollectionByName(ctx, txn, "Address")
 	require.NoError(t, err)
 
-	key1, err := client.NewDocKeyFromString("bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f")
+	key1, err := client.NewDocIDFromString("bae-8096f2c1-ea4c-5226-8ba5-17fc4b68ac1f")
 	require.NoError(t, err)
 	_, err = col1.Get(ctx, key1, false)
 	require.NoError(t, err)
@@ -399,12 +399,12 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	col2, err := db.getCollectionByName(ctx, txn, "User")
 	require.NoError(t, err)
 
-	key2, err := client.NewDocKeyFromString("bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df")
+	key2, err := client.NewDocIDFromString("bae-b94880d1-e6d2-542f-b9e0-5a369fafd0df")
 	require.NoError(t, err)
 	_, err = col2.Get(ctx, key2, false)
 	require.NoError(t, err)
 
-	key3, err := client.NewDocKeyFromString("bae-e933420a-988a-56f8-8952-6c245aebd519")
+	key3, err := client.NewDocIDFromString("bae-e933420a-988a-56f8-8952-6c245aebd519")
 	require.NoError(t, err)
 	_, err = col2.Get(ctx, key3, false)
 	require.NoError(t, err)

@@ -98,7 +98,7 @@ type mockCollection struct {
 func (mCol *mockCollection) SchemaRoot() string {
 	return "mockColID"
 }
-func (mCol *mockCollection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
+func (mCol *mockCollection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDsResult, error) {
 	return nil, mockError
 }
 
@@ -137,7 +137,7 @@ func TestNewServerWithAddTopicError(t *testing.T) {
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.Key().String(), true)
+	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
 	_, err = newServer(n.Peer, db)
@@ -274,7 +274,7 @@ func TestPushLog(t *testing.T) {
 
 	_, err = n.server.PushLog(ctx, &net_pb.PushLogRequest{
 		Body: &net_pb.PushLogRequest_Body{
-			DocKey:     []byte(doc.Key().String()),
+			DocKey:     []byte(doc.ID().String()),
 			Cid:        cid.Bytes(),
 			SchemaRoot: []byte(col.SchemaRoot()),
 			Creator:    n.PeerID().String(),

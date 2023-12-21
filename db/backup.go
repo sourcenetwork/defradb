@@ -189,13 +189,13 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			return err
 		}
 		colTxn := col.WithTxn(txn)
-		keysCh, err := colTxn.GetAllDocKeys(ctx)
+		docIDsCh, err := colTxn.GetAllDocIDs(ctx)
 		if err != nil {
 			return err
 		}
 
 		firstDoc := true
-		for key := range keysCh {
+		for docResultWithID := range docIDsCh {
 			if firstDoc {
 				firstDoc = false
 			} else {
@@ -205,7 +205,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 					return err
 				}
 			}
-			doc, err := colTxn.Get(ctx, key.Key, false)
+			doc, err := colTxn.Get(ctx, docResultWithID.ID, false)
 			if err != nil {
 				return err
 			}
@@ -225,7 +225,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 							if err != nil {
 								return err
 							}
-							if foreignKey.(string) == doc.Key().String() {
+							if foreignKey.(string) == doc.ID().String() {
 								isSelfReference = true
 								refFieldName = field.Name + request.RelatedObjectID
 							}
@@ -234,11 +234,11 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 							if err != nil {
 								return NewErrFailedToGetCollection(field.Schema, err)
 							}
-							foreignDocKey, err := client.NewDocKeyFromString(foreignKey.(string))
+							foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
 							if err != nil {
 								return err
 							}
-							foreignDoc, err := foreignCol.Get(ctx, foreignDocKey, false)
+							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
 							if err != nil {
 								err := doc.Set(field.Name+request.RelatedObjectID, nil)
 								if err != nil {
@@ -251,11 +251,11 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 								}
 
 								delete(oldForeignDoc, request.KeyFieldName)
-								if foreignDoc.Key().String() == foreignDocKey.String() {
+								if foreignDoc.ID().String() == foreignDocID.String() {
 									delete(oldForeignDoc, field.Name+request.RelatedObjectID)
 								}
 
-								if foreignDoc.Key().String() == doc.Key().String() {
+								if foreignDoc.ID().String() == doc.ID().String() {
 									isSelfReference = true
 									refFieldName = field.Name + request.RelatedObjectID
 								}
@@ -265,15 +265,15 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 									return err
 								}
 
-								if foreignDoc.Key().String() != doc.Key().String() {
-									err = doc.Set(field.Name+request.RelatedObjectID, newForeignDoc.Key().String())
+								if foreignDoc.ID().String() != doc.ID().String() {
+									err = doc.Set(field.Name+request.RelatedObjectID, newForeignDoc.ID().String())
 									if err != nil {
 										return err
 									}
 								}
 
-								if newForeignDoc.Key().String() != foreignDoc.Key().String() {
-									keyChangeCache[foreignDoc.Key().String()] = newForeignDoc.Key().String()
+								if newForeignDoc.ID().String() != foreignDoc.ID().String() {
+									keyChangeCache[foreignDoc.ID().String()] = newForeignDoc.ID().String()
 								}
 							}
 						}
@@ -295,17 +295,17 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			if err != nil {
 				return err
 			}
-			// newKey is needed to let the user know what will be the key of the imported document.
-			docM[request.NewDocIDFieldName] = newDoc.Key().String()
+			// a new docID is needed to let the user know what will be the docID of the imported document.
+			docM[request.NewDocIDFieldName] = newDoc.ID().String()
 			// NewDocFromMap removes the "_docID" map item so we add it back.
-			docM[request.KeyFieldName] = doc.Key().String()
+			docM[request.KeyFieldName] = doc.ID().String()
 
 			if isSelfReference {
-				docM[refFieldName] = newDoc.Key().String()
+				docM[refFieldName] = newDoc.ID().String()
 			}
 
-			if newDoc.Key().String() != doc.Key().String() {
-				keyChangeCache[doc.Key().String()] = newDoc.Key().String()
+			if newDoc.ID().String() != doc.ID().String() {
+				keyChangeCache[doc.ID().String()] = newDoc.ID().String()
 			}
 
 			var b []byte

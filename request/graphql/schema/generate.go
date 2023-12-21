@@ -366,8 +366,8 @@ func (g *Generator) createExpandedFieldList(
 		Description: f.Description,
 		Type:        gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			request.DocID:  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
-			request.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
+			request.DocID:  schemaTypes.NewArgConfig(gql.String, docIDArgDescription),
+			request.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
 			"filter": schemaTypes.NewArgConfig(
 				g.manager.schema.TypeMap()[typeName+"FilterArg"],
 				listFieldFilterArgDescription,
@@ -437,7 +437,7 @@ func (g *Generator) buildTypes(
 			if !isEmbeddedObject {
 				// automatically add the _docID: ID field to the type
 				fields[request.KeyFieldName] = &gql.Field{
-					Description: keyFieldDescription,
+					Description: docIDFieldDescription,
 					Type:        gql.ID,
 				}
 			}
@@ -1216,8 +1216,8 @@ func (g *Generator) genTypeQueryableFieldList(
 		Description: obj.Description(),
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			request.DocID:  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
-			request.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
+			request.DocID:  schemaTypes.NewArgConfig(gql.String, docIDArgDescription),
+			request.DocIDs: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
 			"cid":          schemaTypes.NewArgConfig(gql.String, cidArgDescription),
 			"filter":       schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
 			"groupBy": schemaTypes.NewArgConfig(
