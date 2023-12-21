@@ -99,12 +99,9 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
 		// parse each individual arg type seperately
-		if prop == request.Data { // parse data
-			raw := argument.Value.(*ast.StringValue)
-			if raw.Value == "" {
-				return nil, ErrEmptyDataPayload
-			}
-			mut.Data = raw.Value
+		if prop == request.Input { // parse input
+			raw := argument.Value.(*ast.ObjectValue)
+			mut.Input = parseMutationInputObject(raw)
 		} else if prop == request.FilterClause { // parse filter
 			obj := argument.Value.(*ast.ObjectValue)
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
@@ -146,4 +143,45 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 
 	mut.Fields, err = parseSelectFields(schema, request.ObjectSelection, fieldObject, field.SelectionSet)
 	return mut, err
+}
+
+// parseMutationInput parses the correct underlying
+// value type of the given ast.Value
+func parseMutationInput(val ast.Value) any {
+	switch t := val.(type) {
+	case *ast.IntValue:
+		return gql.Int.ParseLiteral(val)
+	case *ast.FloatValue:
+		return gql.Float.ParseLiteral(val)
+	case *ast.BooleanValue:
+		return t.Value
+	case *ast.StringValue:
+		return t.Value
+	case *ast.ObjectValue:
+		return parseMutationInputObject(t)
+	case *ast.ListValue:
+		return parseMutationInputList(t)
+	default:
+		return val.GetValue()
+	}
+}
+
+// parseMutationInputList parses the correct underlying
+// value type for all of the values in the ast.ListValue
+func parseMutationInputList(val *ast.ListValue) []any {
+	var list []any
+	for _, val := range val.Values {
+		list = append(list, parseMutationInput(val))
+	}
+	return list
+}
+
+// parseMutationInputObject parses the correct underlying
+// value type for all of the fields in the ast.ObjectValue
+func parseMutationInputObject(val *ast.ObjectValue) map[string]any {
+	obj := make(map[string]any)
+	for _, field := range val.Fields {
+		obj[field.Name.Value] = parseMutationInput(field.Value)
+	}
+	return obj
 }

@@ -27,9 +27,8 @@ type Mutation struct {
 	// The type of mutation. For example a create request.
 	Type MutationType
 
-	// The data to be used for the mutation.  For example, during a create this
-	// will be the json representation of the object to be inserted.
-	Data string
+	// Input is the map of fields and values used for the mutation.
+	Input map[string]any
 }
 
 func (m *Mutation) CloneTo(index int) Requestable {
@@ -40,6 +39,6 @@ func (m *Mutation) cloneTo(index int) *Mutation {
 	return &Mutation{
 		Select: *m.Select.cloneTo(index),
 		Type:   m.Type,
-		Data:   m.Data,
+		Input:  m.Input,
 	}
 }

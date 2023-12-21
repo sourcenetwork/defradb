@@ -20,7 +20,7 @@ const (
 	RelatedObjectID = "_id"
 
 	Cid         = "cid"
-	Data        = "data"
+	Input       = "input"
 	DocKey      = "dockey"
 	DocKeys     = "dockeys"
 	FieldName   = "field"
