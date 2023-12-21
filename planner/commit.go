@@ -305,18 +305,18 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 		return core.Doc{}, nil, err
 	}
 
-	prio, ok := delta["Priority"].(uint64)
+	prio, ok := delta[request.DeltaArgPriority].(uint64)
 	if !ok {
 		return core.Doc{}, nil, ErrDeltaMissingPriority
 	}
 
-	schemaVersionId, ok := delta["SchemaVersionID"].(string)
+	schemaVersionId, ok := delta[request.DeltaArgSchemaVersionID].(string)
 	if !ok {
 		return core.Doc{}, nil, ErrDeltaMissingSchemaVersionID
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
 
-	fieldName, ok := delta["FieldName"]
+	fieldName, ok := delta[request.DeltaArgFieldName]
 	if !ok {
 		return core.Doc{}, nil, ErrDeltaMissingFieldName
 	}
@@ -346,11 +346,11 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta["Data"])
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, request.DeltaArgData)
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
 
-	docID, ok := delta["DocKey"].([]byte)
+	docID, ok := delta[request.DeltaArgDocID].([]byte)
 	if !ok {
 		return core.Doc{}, nil, ErrDeltaMissingDocID
 	}

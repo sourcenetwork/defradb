@@ -58,7 +58,7 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 		SchemaVersionID string
 		Priority        uint64
 		Data            []byte
-		DocKey          []byte // TODO: Change to DocID
+		DocID           []byte
 		FieldName       string
 	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocID, delta.FieldName})
 	if err != nil {

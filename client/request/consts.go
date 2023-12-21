@@ -62,6 +62,12 @@ const (
 	FieldIDFieldName         = "fieldId"
 	DeltaFieldName           = "delta"
 
+	DeltaArgFieldName       = "FieldName"
+	DeltaArgData            = "Data"
+	DeltaArgSchemaVersionID = "SchemaVersionID"
+	DeltaArgPriority        = "Priority"
+	DeltaArgDocID           = "DocID"
+
 	LinksNameFieldName = "name"
 	LinksCidFieldName  = "cid"
 
