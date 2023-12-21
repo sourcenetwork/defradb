@@ -227,7 +227,7 @@ func (i *inIndexIterator) Close() error {
 }
 
 type errorCheckingFilter struct {
-	matcher indexMatcher
+	matcher valueMatcher
 	err     error
 }
 
@@ -240,7 +240,7 @@ func (f *errorCheckingFilter) Filter(e query.Entry) bool {
 		f.err = err
 		return false
 	}
-	res, err := f.matcher.Match(indexKey)
+	res, err := f.matcher.Match(indexKey.FieldValues[0])
 	if err != nil {
 		f.err = err
 		return false
@@ -251,19 +251,19 @@ func (f *errorCheckingFilter) Filter(e query.Entry) bool {
 // execInfoIndexMatcherDecorator is a decorator for indexMatcher that counts the number
 // of indexes fetched on every call to Match.
 type execInfoIndexMatcherDecorator struct {
-	matcher  indexMatcher
+	matcher  valueMatcher
 	execInfo *ExecInfo
 }
 
-func (d *execInfoIndexMatcherDecorator) Match(key core.IndexDataStoreKey) (bool, error) {
+func (d *execInfoIndexMatcherDecorator) Match(value []byte) (bool, error) {
 	d.execInfo.IndexesFetched++
-	return d.matcher.Match(key)
+	return d.matcher.Match(value)
 }
 
 type scanningIndexIterator struct {
 	queryResultIterator
 	indexKey core.IndexDataStoreKey
-	matcher  indexMatcher
+	matcher  valueMatcher
 	filter   errorCheckingFilter
 	execInfo *ExecInfo
 }
@@ -291,9 +291,9 @@ func (i *scanningIndexIterator) Next() (indexIterResult, error) {
 	return res, err
 }
 
-// checks if the stored index value satisfies the condition
-type indexMatcher interface {
-	Match(core.IndexDataStoreKey) (bool, error)
+// checks if the value satisfies the condition
+type valueMatcher interface {
+	Match([]byte) (bool, error)
 }
 
 // indexByteValuesMatcher is a filter that compares the index value with a given value.
@@ -304,8 +304,8 @@ type indexByteValuesMatcher struct {
 	evalFunc func(int) bool
 }
 
-func (m *indexByteValuesMatcher) Match(key core.IndexDataStoreKey) (bool, error) {
-	res := bytes.Compare(key.FieldValues[0], m.value)
+func (m *indexByteValuesMatcher) Match(value []byte) (bool, error) {
+	res := bytes.Compare(value, m.value)
 	return m.evalFunc(res), nil
 }
 
@@ -314,8 +314,8 @@ type neIndexMatcher struct {
 	value []byte
 }
 
-func (m *neIndexMatcher) Match(key core.IndexDataStoreKey) (bool, error) {
-	return !bytes.Equal(key.FieldValues[0], m.value), nil
+func (m *neIndexMatcher) Match(value []byte) (bool, error) {
+	return !bytes.Equal(value, m.value), nil
 }
 
 // checks if the index value is or is not in the given array
@@ -332,8 +332,8 @@ func newNinIndexCmp(values [][]byte, isIn bool) *indexInArrayMatcher {
 	return &indexInArrayMatcher{values: valuesMap, isIn: isIn}
 }
 
-func (m *indexInArrayMatcher) Match(key core.IndexDataStoreKey) (bool, error) {
-	_, found := m.values[string(key.FieldValues[0])]
+func (m *indexInArrayMatcher) Match(value []byte) (bool, error) {
+	_, found := m.values[string(value)]
 	return found == m.isIn, nil
 }
 
@@ -368,9 +368,9 @@ func newLikeIndexCmp(filterValue string, isLike bool) *indexLikeMatcher {
 	return matcher
 }
 
-func (m *indexLikeMatcher) Match(key core.IndexDataStoreKey) (bool, error) {
+func (m *indexLikeMatcher) Match(value []byte) (bool, error) {
 	var currentVal string
-	err := cbor.Unmarshal(key.FieldValues[0], &currentVal)
+	err := cbor.Unmarshal(value, &currentVal)
 	if err != nil {
 		return false, err
 	}
