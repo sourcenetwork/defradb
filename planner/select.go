@@ -273,7 +273,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 			// if we have a FindByDockey filter, create a span for it
 			// and propagate it to the scanNode
 			// @todo: When running the optimizer, check if the filter object
-			// contains a _key equality condition, and upgrade it to a point lookup
+			// contains a _docID equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			spans := make([]core.Span, len(n.selectReq.DocKeys.Value()))
 			for i, docKey := range n.selectReq.DocKeys.Value() {

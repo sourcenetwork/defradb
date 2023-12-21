@@ -38,7 +38,7 @@ const (
 
 	AverageFieldName = "_avg"
 	CountFieldName   = "_count"
-	KeyFieldName     = "_key"
+	KeyFieldName     = "_docID"
 	GroupFieldName   = "_group"
 	DeletedFieldName = "_deleted"
 	SumFieldName     = "_sum"

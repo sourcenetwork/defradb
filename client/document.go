@@ -90,13 +90,13 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 		values: make(map[Field]Value),
 	}
 
-	// check if document contains special _key field
-	k, hasKey := data["_key"]
+	// check if document contains special _docID field
+	k, hasKey := data[request.KeyFieldName]
 	if hasKey {
-		delete(data, "_key") // remove the key so it isn't parsed further
+		delete(data, request.KeyFieldName) // remove the key so it isn't parsed further
 		kstr, ok := k.(string)
 		if !ok {
-			return nil, NewErrUnexpectedType[string]("data[_key]", k)
+			return nil, NewErrUnexpectedType[string]("data["+request.KeyFieldName+"]", k)
 		}
 		if doc.key, err = NewDocKeyFromString(kstr); err != nil {
 			return nil, err
@@ -479,7 +479,7 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 
 		docMap[k] = value.Value()
 	}
-	docMap["_key"] = doc.Key().String()
+	docMap[request.KeyFieldName] = doc.Key().String()
 
 	return docMap, nil
 }

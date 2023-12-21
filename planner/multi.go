@@ -56,7 +56,7 @@ type appendNode interface {
 // Eg:
 //
 //	user {
-//			_key
+//			_docID
 //			name
 //			friends {
 //				name
@@ -164,7 +164,7 @@ func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
 scan node
 =========
 {
-	_key: bae-ALICE,
+	_docID: bae-ALICE,
 	name: Alice,
 	points: 124,
 	verified: false
@@ -175,7 +175,7 @@ typeJoin node(merge)
 {
 	friends: [
 		{
-			_key: bae-BOB,
+			_docID: bae-BOB,
 			name: bob,
 			points: 99.9,
 			verified: true,
@@ -187,14 +187,14 @@ output
 ======
 
 {
-	_key: bae-ALICE,
+	_docID: bae-ALICE,
 	name: Alice,
 	points: 124,
 	verified: false,
 
 	friends: [
 		{
-			_key: bae-BOB,
+			_docID: bae-BOB,
 			name: bob,
 			points: 99.9,
 			verified: true,
@@ -239,7 +239,7 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 
 query {
 	user {
-		_key
+		_docID
 		name
 		points
 		verified
@@ -253,7 +253,7 @@ query {
 scan node
 =========
 {
-	_key: bae-ALICE,
+	_docID: bae-ALICE,
 	name: Alice,
 	points: 124,
 	verified: false

@@ -170,7 +170,7 @@ func buildDebugExplainGraph(source planNode) (map[string]any, error) {
 //
 //	query @explain {
 //	    user {
-//	      _key
+//	      _docID
 //	      age
 //	      name
 //	    }
