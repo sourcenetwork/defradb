@@ -82,7 +82,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 				}
 			}
 
-			delete(docMap, request.KeyFieldName)
+			delete(docMap, request.DocIDFieldName)
 			delete(docMap, request.NewDocIDFieldName)
 
 			doc, err := client.NewDocFromMap(docMap)
@@ -250,7 +250,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 									return err
 								}
 
-								delete(oldForeignDoc, request.KeyFieldName)
+								delete(oldForeignDoc, request.DocIDFieldName)
 								if foreignDoc.ID().String() == foreignDocID.String() {
 									delete(oldForeignDoc, field.Name+request.RelatedObjectID)
 								}
@@ -286,7 +286,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				return err
 			}
 
-			delete(docM, request.KeyFieldName)
+			delete(docM, request.DocIDFieldName)
 			if isSelfReference {
 				delete(docM, refFieldName)
 			}
@@ -298,7 +298,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 			// a new docID is needed to let the user know what will be the docID of the imported document.
 			docM[request.NewDocIDFieldName] = newDoc.ID().String()
 			// NewDocFromMap removes the "_docID" map item so we add it back.
-			docM[request.KeyFieldName] = doc.ID().String()
+			docM[request.DocIDFieldName] = doc.ID().String()
 
 			if isSelfReference {
 				docM[refFieldName] = newDoc.ID().String()

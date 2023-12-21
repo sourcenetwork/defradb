@@ -192,7 +192,7 @@ func encodedDocToLensDoc(doc fetcher.EncodedDocument) (LensDoc, error) {
 	for field, fieldValue := range properties {
 		docAsMap[field.Name] = fieldValue
 	}
-	docAsMap[request.KeyFieldName] = string(doc.ID())
+	docAsMap[request.DocIDFieldName] = string(doc.ID())
 
 	// Note: client.Document does not have a means of flagging as to whether it is
 	// deleted or not, and, currently the fetcher does not ever returned deleted items
@@ -207,7 +207,7 @@ func (f *lensedFetcher) lensDocToEncodedDoc(docAsMap LensDoc) (fetcher.EncodedDo
 	properties := map[client.FieldDescription]any{}
 
 	for fieldName, fieldByteValue := range docAsMap {
-		if fieldName == request.KeyFieldName {
+		if fieldName == request.DocIDFieldName {
 			key = fieldByteValue.(string)
 			continue
 		}
@@ -277,7 +277,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		}
 	}
 
-	docID, ok := original[request.KeyFieldName].(string)
+	docID, ok := original[request.DocIDFieldName].(string)
 	if !ok {
 		return core.ErrInvalidKey
 	}

@@ -116,7 +116,7 @@ func (n *updateNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the document id(s) that request wants to update.
-	simpleExplainMap[request.DocIDs] = n.docIDs
+	simpleExplainMap[request.DocIDsArgName] = n.docIDs
 
 	// Add the filter attribute if it exists, otherwise have it nil.
 	if n.filter == nil {

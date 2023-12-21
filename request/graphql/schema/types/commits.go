@@ -55,7 +55,7 @@ var (
 				Description: commitCIDFieldDescription,
 				Type:        gql.String,
 			},
-			request.DocID: &gql.Field{
+			request.DocIDArgName: &gql.Field{
 				Description: commitDocIDFieldDescription,
 				Type:        gql.String,
 			},
@@ -125,7 +125,7 @@ var (
 					Description: commitCIDFieldDescription,
 					Type:        OrderingEnum,
 				},
-				request.DocID: &gql.InputObjectFieldConfig{
+				request.DocIDArgName: &gql.InputObjectFieldConfig{
 					Description: commitDocIDFieldDescription,
 					Type:        OrderingEnum,
 				},
@@ -150,8 +150,8 @@ var (
 					Value:       "cid",
 					Description: commitCIDFieldDescription,
 				},
-				request.DocID: &gql.EnumValueConfig{
-					Value:       request.DocID,
+				request.DocIDArgName: &gql.EnumValueConfig{
+					Value:       request.DocIDArgName,
 					Description: commitDocIDFieldDescription,
 				},
 				"collectionID": &gql.EnumValueConfig{
@@ -175,10 +175,10 @@ var (
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocID:       NewArgConfig(gql.ID, commitDocIDArgDescription),
-			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
-			"order":             NewArgConfig(CommitsOrderArg, OrderArgDescription),
-			"cid":               NewArgConfig(gql.ID, commitCIDArgDescription),
+			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
+			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
+			"order":              NewArgConfig(CommitsOrderArg, OrderArgDescription),
+			"cid":                NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
@@ -198,8 +198,8 @@ var (
 		Description: latestCommitsQueryDescription,
 		Type:        gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocID:       NewArgConfig(gql.NewNonNull(gql.ID), commitDocIDArgDescription),
-			request.FieldIDName: NewArgConfig(gql.String, commitFieldIDArgDescription),
+			request.DocIDArgName: NewArgConfig(gql.NewNonNull(gql.ID), commitDocIDArgDescription),
+			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
 		},
 	}
 )

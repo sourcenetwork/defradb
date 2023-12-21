@@ -124,10 +124,10 @@ func parseSelect(
 			}
 
 			slct.Filter = filter
-		case request.DocID: // parse single DocID field
+		case request.DocIDArgName: // parse single DocID field
 			docIDValue := astValue.(*ast.StringValue)
 			slct.DocIDs = immutable.Some([]string{docIDValue.Value})
-		case request.DocIDs:
+		case request.DocIDsArgName:
 			docIDValues := astValue.(*ast.ListValue).Values
 			docIDs := make([]string, len(docIDValues))
 			for i, value := range docIDValues {

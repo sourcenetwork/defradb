@@ -77,7 +77,7 @@ func mustGetDocKeyFromDocMap(docMap map[string]any) string {
 }
 
 func mustAddKeyToDoc(doc map[string]any) map[string]any {
-	doc[request.KeyFieldName] = mustGetDocKeyFromDocMap(doc)
+	doc[request.DocIDFieldName] = mustGetDocKeyFromDocMap(doc)
 	return doc
 }
 

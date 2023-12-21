@@ -134,7 +134,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 		for i := 0; i < totalDemand; i++ {
 			newDoc := make(map[string]any)
 			for _, field := range typeDef.Schema.Fields {
-				if field.Name == request.KeyFieldName {
+				if field.Name == request.DocIDFieldName {
 					continue
 				}
 				if field.IsRelation() {

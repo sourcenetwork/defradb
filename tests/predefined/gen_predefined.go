@@ -110,7 +110,7 @@ type docGenerator struct {
 func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) map[string]any {
 	result := make(map[string]any)
 	for _, field := range typeDef.Schema.Fields {
-		if field.IsRelation() || field.Name == request.KeyFieldName {
+		if field.IsRelation() || field.Name == request.DocIDFieldName {
 			continue
 		}
 		result[field.Name] = doc[field.Name]

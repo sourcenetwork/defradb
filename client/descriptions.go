@@ -280,7 +280,7 @@ type FieldDescription struct {
 
 // IsInternal returns true if this field is internally generated.
 func (f FieldDescription) IsInternal() bool {
-	return (f.Name == request.KeyFieldName) || f.RelationType&Relation_Type_INTERNAL_ID != 0
+	return (f.Name == request.DocIDFieldName) || f.RelationType&Relation_Type_INTERNAL_ID != 0
 }
 
 // IsObject returns true if this field is an object type.

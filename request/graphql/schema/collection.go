@@ -102,7 +102,7 @@ func collectionFromAstDefinition(
 ) (client.CollectionDefinition, error) {
 	fieldDescriptions := []client.FieldDescription{
 		{
-			Name: request.KeyFieldName,
+			Name: request.DocIDFieldName,
 			Kind: client.FieldKind_DocID,
 			Typ:  client.NONE_CRDT,
 		},
@@ -131,9 +131,9 @@ func collectionFromAstDefinition(
 	// sort the fields lexicographically
 	sort.Slice(fieldDescriptions, func(i, j int) bool {
 		// make sure that the _docID is always at the beginning
-		if fieldDescriptions[i].Name == request.KeyFieldName {
+		if fieldDescriptions[i].Name == request.DocIDFieldName {
 			return true
-		} else if fieldDescriptions[j].Name == request.KeyFieldName {
+		} else if fieldDescriptions[j].Name == request.DocIDFieldName {
 			return false
 		}
 		return fieldDescriptions[i].Name < fieldDescriptions[j].Name

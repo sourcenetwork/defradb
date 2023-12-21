@@ -285,7 +285,7 @@ func validateUpdateSchemaFields(
 		var existingField client.FieldDescription
 		var fieldAlreadyExists bool
 		if proposedField.ID != client.FieldID(0) ||
-			proposedField.Name == request.KeyFieldName {
+			proposedField.Name == request.DocIDFieldName {
 			existingField, fieldAlreadyExists = existingFieldsByID[proposedField.ID]
 		}
 
@@ -1059,7 +1059,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 
 	filter := fmt.Sprintf(
 		`{_and: [{%s: {_ne: "%s"}}, {%s: {_eq: "%s"}}]}`,
-		request.KeyFieldName,
+		request.DocIDFieldName,
 		docID,
 		fieldDescription.Name,
 		value,

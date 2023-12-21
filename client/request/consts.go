@@ -32,12 +32,12 @@ const (
 	OrderClause   = "order"
 	DepthClause   = "depth"
 
-	DocID  = "docID"
-	DocIDs = "docIDs"
+	DocIDArgName  = "docID"
+	DocIDsArgName = "docIDs"
 
 	AverageFieldName = "_avg"
 	CountFieldName   = "_count"
-	KeyFieldName     = "_docID"
+	DocIDFieldName   = "_docID"
 	GroupFieldName   = "_group"
 	DeletedFieldName = "_deleted"
 	SumFieldName     = "_sum"
@@ -82,7 +82,7 @@ var (
 		CountFieldName:    true,
 		SumFieldName:      true,
 		AverageFieldName:  true,
-		KeyFieldName:      true,
+		DocIDFieldName:    true,
 		DeletedFieldName:  true,
 	}
 
@@ -100,7 +100,7 @@ var (
 	VersionFields = []string{
 		HeightFieldName,
 		CidFieldName,
-		DocID,
+		DocIDArgName,
 		CollectionIDFieldName,
 		SchemaVersionIDFieldName,
 		FieldNameFieldName,

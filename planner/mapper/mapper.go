@@ -762,7 +762,7 @@ func getTopLevelInfo(
 			// be fine for now
 			schema = schemas[0]
 		} else {
-			mapping.Add(core.DocIDFieldIndex, request.KeyFieldName)
+			mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
 			schema = collection.Schema()
 		}
 
@@ -1141,7 +1141,7 @@ func toFilterMap(
 	sourceClause any,
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, any) {
-	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.KeyFieldName {
+	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocIDFieldName {
 		key := &Operator{
 			Operation: sourceKey,
 		}
