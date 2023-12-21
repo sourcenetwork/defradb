@@ -106,7 +106,7 @@ func (s *storeHandler) SetDefaultSchemaVersion(rw http.ResponseWriter, req *http
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) CreateView(rw http.ResponseWriter, req *http.Request) {
+func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
 	var message addViewRequest
@@ -573,7 +573,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
-	router.AddRoute("/view", http.MethodPost, views, h.CreateView)
+	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
