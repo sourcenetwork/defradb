@@ -32,7 +32,7 @@ type CollectionDescription struct {
 	// The ID of the schema version that this collection is at.
 	SchemaVersionID string
 
-	// BaseQuery contains the base query of this view, if this is collection is a view.
+	// BaseQuery contains the base query of this view, if this collection is a view.
 	//
 	// The query will be saved, and then may be accessed by other actors on demand.  Actor defined
 	// aggregates, filters and other logic (such as LensVM transforms) will execute on top of this
