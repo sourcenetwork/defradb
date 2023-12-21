@@ -103,6 +103,10 @@ func (w *Wrapper) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID s
 	return w.client.SetDefaultSchemaVersion(ctx, schemaVersionID)
 }
 
+func (w *Wrapper) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+	return w.client.AddView(ctx, query, sdl)
+}
+
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
 	return w.client.SetMigration(ctx, config)
 }

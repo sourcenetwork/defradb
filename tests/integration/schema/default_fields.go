@@ -66,6 +66,15 @@ var DefaultFields = concat(
 	aggregateFields,
 )
 
+// DefaultEmbeddedObjFields contains the list of fields every
+// defra embedded-object should have.
+var DefaultEmbeddedObjFields = concat(
+	fields{
+		groupField,
+	},
+	aggregateFields,
+)
+
 var keyField = Field{
 	"name": "_key",
 	"type": map[string]any{

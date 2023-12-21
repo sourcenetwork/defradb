@@ -237,6 +237,9 @@ func (p *Planner) expandPlan(planNode planNode, parentPlan *selectTopNode) error
 	case *deleteNode:
 		return p.expandPlan(n.source, parentPlan)
 
+	case *viewNode:
+		return p.expandPlan(n.source, parentPlan)
+
 	default:
 		return nil
 	}

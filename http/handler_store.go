@@ -106,6 +106,25 @@ func (s *storeHandler) SetDefaultSchemaVersion(rw http.ResponseWriter, req *http
 	rw.WriteHeader(http.StatusOK)
 }
 
+func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
+	store := req.Context().Value(storeContextKey).(client.Store)
+
+	var message addViewRequest
+	err := requestJSON(req, &message)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	defs, err := store.AddView(req.Context(), message.Query, message.SDL)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, defs)
+}
+
 func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
@@ -326,6 +345,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/collection",
 	}
+	collectionDefinitionSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/collection_definition",
+	}
 	schemaSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/schema",
 	}
@@ -337,6 +359,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	}
 	backupConfigSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/backup_config",
+	}
+	addViewSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/add_view_request",
 	}
 	patchSchemaRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/patch_schema_request",
@@ -449,6 +474,33 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionDescribe.AddResponse(200, collectionsResponse)
 	collectionDescribe.Responses["400"] = errorResponse
 
+	collectionDefintionsSchema := openapi3.NewArraySchema()
+	collectionDefintionsSchema.Items = collectionDefinitionSchema
+
+	addViewResponseSchema := openapi3.NewOneOfSchema()
+	addViewResponseSchema.OneOf = openapi3.SchemaRefs{
+		collectionDefinitionSchema,
+		openapi3.NewSchemaRef("", collectionDefintionsSchema),
+	}
+
+	addViewResponse := openapi3.NewResponse().
+		WithDescription("The created collection and embedded schemas for the added view.").
+		WithJSONSchema(addViewResponseSchema)
+
+	addViewRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithJSONSchemaRef(addViewSchema)
+
+	views := openapi3.NewOperation()
+	views.OperationID = "view"
+	views.Description = "Manage database views."
+	views.Tags = []string{"view"}
+	views.RequestBody = &openapi3.RequestBodyRef{
+		Value: addViewRequest,
+	}
+	views.AddResponse(200, addViewResponse)
+	views.Responses["400"] = errorResponse
+
 	schemaNameQueryParam := openapi3.NewQueryParameter("name").
 		WithDescription("Schema name").
 		WithSchema(openapi3.NewStringSchema())
@@ -521,6 +573,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
+	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)

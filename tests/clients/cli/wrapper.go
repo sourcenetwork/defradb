@@ -202,6 +202,22 @@ func (w *Wrapper) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID s
 	return err
 }
 
+func (w *Wrapper) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+	args := []string{"client", "view", "add"}
+	args = append(args, query)
+	args = append(args, sdl)
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var defs []client.CollectionDefinition
+	if err := json.Unmarshal(data, &defs); err != nil {
+		return nil, err
+	}
+	return defs, nil
+}
+
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
 	return w.LensRegistry().SetMigration(ctx, config)
 }

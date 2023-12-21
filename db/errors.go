@@ -87,6 +87,7 @@ const (
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 	errIndexDoesNotMatchName              string = "the index used does not match the given name"
 	errCanNotIndexNonUniqueField          string = "can not create doc that violates unique index"
+	errInvalidViewQuery                   string = "the query provided is not valid as a View"
 )
 
 var (
@@ -165,6 +166,7 @@ var (
 	ErrExpectedJSONArray                  = errors.New(errExpectedJSONArray)
 	ErrOneOneAlreadyLinked                = errors.New(errOneOneAlreadyLinked)
 	ErrIndexDoesNotMatchName              = errors.New(errIndexDoesNotMatchName)
+	ErrInvalidViewQuery                   = errors.New(errInvalidViewQuery)
 )
 
 // NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
@@ -639,5 +641,20 @@ func NewErrCanNotIndexNonUniqueField(dockey, fieldName string, value any) error 
 		errors.NewKV("Dockey", dockey),
 		errors.NewKV("Field name", fieldName),
 		errors.NewKV("Field value", value),
+	)
+}
+
+func NewErrInvalidViewQueryCastFailed(query string) error {
+	return errors.New(
+		errInvalidViewQuery,
+		errors.NewKV("Query", query),
+		errors.NewKV("Reason", "Internal errror, cast failed"),
+	)
+}
+
+func NewErrInvalidViewQueryMissingQuery() error {
+	return errors.New(
+		errInvalidViewQuery,
+		errors.NewKV("Reason", "No query provided"),
 	)
 }

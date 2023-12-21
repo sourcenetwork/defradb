@@ -378,6 +378,30 @@ func (db *explicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig
 	return db.lensRegistry.SetMigration(ctx, cfg)
 }
 
+func (db *implicitTxnDB) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	defs, err := db.addView(ctx, txn, query, sdl)
+	if err != nil {
+		return nil, err
+	}
+
+	err = txn.Commit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return defs, nil
+}
+
+func (db *explicitTxnDB) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+	return db.addView(ctx, db.txn, query, sdl)
+}
+
 // BasicImport imports a json dataset.
 // filepath must be accessible to the node.
 func (db *implicitTxnDB) BasicImport(ctx context.Context, filepath string) error {
