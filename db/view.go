@@ -56,9 +56,8 @@ func (db *db) addView(
 		return nil, NewErrInvalidViewQueryCastFailed(inputQuery)
 	}
 
-	for i, definition := range newDefinitions {
-		definition.Description.BaseQuery = baseQuery
-		newDefinitions[i] = definition
+	for i := range newDefinitions {
+		newDefinitions[i].Description.BaseQuery = baseQuery
 	}
 
 	existingCollections, err := db.getAllCollections(ctx, txn)
