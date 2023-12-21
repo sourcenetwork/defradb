@@ -17,7 +17,7 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestDefaultExplainRequestWithDockeyOnParentGroupBy(t *testing.T) {
+func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with a docID on parent groupBy.",
@@ -75,7 +75,7 @@ func TestDefaultExplainRequestWithDockeyOnParentGroupBy(t *testing.T) {
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDefaultExplainRequestWithDockeysAndFilterOnParentGroupBy(t *testing.T) {
+func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with docIDs and filter on parent groupBy.",

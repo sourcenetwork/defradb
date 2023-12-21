@@ -17,7 +17,7 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestDefaultExplainRequestWithDockeysOnInnerGroupSelection(t *testing.T) {
+func TestDefaultExplainRequestWithDocIDsOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Description: "Explain (default) request with docIDs on inner _group.",

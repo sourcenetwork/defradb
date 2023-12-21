@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
+func TestQuerySimpleWithInvalidCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with invalid cid and invalid docID",
 		Request: `query {
@@ -43,7 +43,7 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
-func TestQuerySimpleWithUnknownCidAndInvalidDocKey(t *testing.T) {
+func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with unknown cid and invalid docID",
 		Request: `query {
@@ -68,7 +68,7 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
+func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with cid and docID",
 		Request: `query {
@@ -97,7 +97,7 @@ func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
+func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with (first) cid and docID",
 		Request: `query {
@@ -138,7 +138,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
+func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with (last) cid and docID",
 		Request: `query {
@@ -179,7 +179,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
+func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with (middle) cid and docID",
 		Request: `query {
@@ -220,7 +220,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithUpdateAndFirstCidAndDocKeyAndSchemaVersion(t *testing.T) {
+func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with (first) cid and docID and yielded schema version",
 		Request: `query {

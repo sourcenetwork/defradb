@@ -17,7 +17,7 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestDebugExplainRequestWithDocKeyFilter(t *testing.T) {
+func TestDebugExplainRequestWithDocIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Description: "Explain (debug) request with docID filter.",
@@ -42,10 +42,10 @@ func TestDebugExplainRequestWithDocKeyFilter(t *testing.T) {
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDebugExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
+func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docIDs filter using one key.",
+		Description: "Explain (debug) request with docIDs filter using one ID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -67,10 +67,10 @@ func TestDebugExplainRequestWithDocKeysFilterUsingOneKey(t *testing.T) {
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDebugExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *testing.T) {
+func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docIDs filter using multiple but duplicate keys.",
+		Description: "Explain (debug) request with docIDs filter using multiple but duplicate IDs.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -97,10 +97,10 @@ func TestDebugExplainRequestWithDocKeysFilterUsingMultipleButDuplicateKeys(t *te
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDebugExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testing.T) {
+func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docIDs filter using multiple unique keys.",
+		Description: "Explain (debug) request with docIDs filter using multiple unique IDs.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -127,10 +127,10 @@ func TestDebugExplainRequestWithDocKeysFilterUsingMultipleUniqueKeys(t *testing.
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDebugExplainRequestWithMatchingKeyFilter(t *testing.T) {
+func TestDebugExplainRequestWithMatchingIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with a filter to match key.",
+		Description: "Explain (debug) request with a filter to match ID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

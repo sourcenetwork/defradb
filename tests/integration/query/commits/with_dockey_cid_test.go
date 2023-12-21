@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
+func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and cid",
 		Actions: []any{
@@ -45,7 +45,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
+func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and cid",
 		Actions: []any{
@@ -81,7 +81,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
+func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and cid",
 		Actions: []any{

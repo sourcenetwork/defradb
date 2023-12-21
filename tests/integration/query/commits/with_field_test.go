@@ -17,7 +17,7 @@ import (
 )
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits for dockey-field).
+// desired behaviour (should return all commits for docID-field).
 func TestQueryCommitsWithField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with field",
@@ -80,7 +80,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and field id",
+		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -112,7 +112,7 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and field id",
+		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

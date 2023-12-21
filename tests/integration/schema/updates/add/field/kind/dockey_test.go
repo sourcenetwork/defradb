@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKindDocKey(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind DocKey (1)",
+		Description: "Test schema update, add field with kind DocID (1)",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -48,9 +48,9 @@ func TestSchemaUpdatesAddFieldKindDocKey(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindDocKeyWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind DocKey (1) and create",
+		Description: "Test schema update, add field with kind DocID (1) and create",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -92,9 +92,9 @@ func TestSchemaUpdatesAddFieldKindDocKeyWithCreate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindDocKeySubstitutionWithCreate(t *testing.T) {
+func TestSchemaUpdatesAddFieldKindDocIDSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind DocKey substitution and create",
+		Description: "Test schema update, add field with kind DocID substitution and create",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

@@ -1174,11 +1174,11 @@ func createDocViaGQL(
 		return nil, nil
 	}
 
-	docKeyString := resultantDocs[0]["_docID"].(string)
-	docKey, err := client.NewDocIDFromString(docKeyString)
+	docIDString := resultantDocs[0]["_docID"].(string)
+	docID, err := client.NewDocIDFromString(docIDString)
 	require.NoError(s.t, err)
 
-	doc, err := collection.Get(s.ctx, docKey, false)
+	doc, err := collection.Get(s.ctx, docID, false)
 	require.NoError(s.t, err)
 
 	return doc, nil

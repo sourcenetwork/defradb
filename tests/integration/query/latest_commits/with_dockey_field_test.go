@@ -18,7 +18,7 @@ import (
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (it looks totally broken to me).
-func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
+func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with docID and field name",
 		Request: `query {
@@ -46,7 +46,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
-func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
+func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with docID and field id",
 		Request: `query {
@@ -79,7 +79,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
-func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
+func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with docID and composite field id",
 		Request: `query {

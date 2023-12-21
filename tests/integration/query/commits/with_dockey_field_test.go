@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
+func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and unknown field",
 		Actions: []any{
@@ -42,7 +42,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
+func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and unknown field id",
 		Actions: []any{
@@ -70,7 +70,7 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (should return all commits for docID-field).
-func TestQueryCommitsWithDockeyAndField(t *testing.T) {
+func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and field",
 		Actions: []any{
@@ -98,7 +98,7 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
-func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
+func TestQueryCommitsWithDocIDAndFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
@@ -130,7 +130,7 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
-func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
+func TestQueryCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and field id",
 		Actions: []any{

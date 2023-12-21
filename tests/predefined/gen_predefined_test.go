@@ -36,7 +36,7 @@ func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
 	docs, err := CreateFromSDL(schema, docsList)
 	assert.NoError(t, err)
 
-	errorMsg := assertDocs(mustAddKeysToDocs(docsList.Docs), docs)
+	errorMsg := assertDocs(mustAddDocIDsToDocs(docsList.Docs), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}
@@ -57,7 +57,7 @@ func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
+	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
 	}), docs)
@@ -96,11 +96,11 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
+	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
-		{"model": "iPhone", "owner_id": mustGetDocKeyFromDocMap(map[string]any{"name": "John"})},
-		{"model": "MacBook", "owner_id": mustGetDocKeyFromDocMap(map[string]any{"name": "Fred"})},
+		{"model": "iPhone", "owner_id": mustGetDocIDFromDocMap(map[string]any{"name": "John"})},
+		{"model": "MacBook", "owner_id": mustGetDocIDFromDocMap(map[string]any{"name": "Fred"})},
 	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
@@ -137,9 +137,9 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
-		{"name": "John", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "iPhone"})},
-		{"name": "Fred", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "MacBook"})},
+	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
+		{"name": "John", "device_id": mustGetDocIDFromDocMap(map[string]any{"model": "iPhone"})},
+		{"name": "Fred", "device_id": mustGetDocIDFromDocMap(map[string]any{"model": "MacBook"})},
 		{"model": "iPhone"},
 		{"model": "MacBook"},
 	}), docs)
@@ -180,9 +180,9 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	specsDoc := mustAddKeyToDoc(map[string]any{"OS": "iOS"})
-	deviceDoc := mustAddKeyToDoc(map[string]any{"model": "iPhone", "specs_id": specsDoc[request.DocIDFieldName]})
-	userDoc := mustAddKeyToDoc(map[string]any{"name": "John", "device_id": deviceDoc[request.DocIDFieldName]})
+	specsDoc := mustAddDocIDToDoc(map[string]any{"OS": "iOS"})
+	deviceDoc := mustAddDocIDToDoc(map[string]any{"model": "iPhone", "specs_id": specsDoc[request.DocIDFieldName]})
+	userDoc := mustAddDocIDToDoc(map[string]any{"name": "John", "device_id": deviceDoc[request.DocIDFieldName]})
 
 	errorMsg := assertDocs([]map[string]any{userDoc, deviceDoc, specsDoc}, docs)
 	if errorMsg != "" {
@@ -222,9 +222,9 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneMiddle(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	specsDoc := mustAddKeyToDoc(map[string]any{"OS": "iOS"})
-	userDoc := mustAddKeyToDoc(map[string]any{"name": "John"})
-	deviceDoc := mustAddKeyToDoc(map[string]any{
+	specsDoc := mustAddDocIDToDoc(map[string]any{"OS": "iOS"})
+	userDoc := mustAddDocIDToDoc(map[string]any{"name": "John"})
+	deviceDoc := mustAddDocIDToDoc(map[string]any{
 		"model":    "iPhone",
 		"specs_id": specsDoc[request.DocIDFieldName],
 		"owner_id": userDoc[request.DocIDFieldName],
@@ -268,9 +268,9 @@ func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	deviceDoc := mustAddKeyToDoc(map[string]any{"model": "iPhone"})
-	specsDoc := mustAddKeyToDoc(map[string]any{"OS": "iOS", "device_id": deviceDoc[request.DocIDFieldName]})
-	userDoc := mustAddKeyToDoc(map[string]any{"name": "John", "device_id": deviceDoc[request.DocIDFieldName]})
+	deviceDoc := mustAddDocIDToDoc(map[string]any{"model": "iPhone"})
+	specsDoc := mustAddDocIDToDoc(map[string]any{"OS": "iOS", "device_id": deviceDoc[request.DocIDFieldName]})
+	userDoc := mustAddDocIDToDoc(map[string]any{"name": "John", "device_id": deviceDoc[request.DocIDFieldName]})
 
 	errorMsg := assertDocs([]map[string]any{userDoc, deviceDoc, specsDoc}, docs)
 	if errorMsg != "" {
@@ -310,9 +310,9 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	deviceDoc := mustAddKeyToDoc(map[string]any{"model": "iPhone"})
-	addressDoc := mustAddKeyToDoc(map[string]any{"street": "Backer"})
-	userDoc := mustAddKeyToDoc(map[string]any{
+	deviceDoc := mustAddDocIDToDoc(map[string]any{"model": "iPhone"})
+	addressDoc := mustAddDocIDToDoc(map[string]any{"street": "Backer"})
+	userDoc := mustAddDocIDToDoc(map[string]any{
 		"name":       "John",
 		"device_id":  deviceDoc[request.DocIDFieldName],
 		"address_id": addressDoc[request.DocIDFieldName],
@@ -356,15 +356,15 @@ func TestGeneratePredefinedFromSchema_OneToMany(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	johnDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "John"})
-	fredDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "Fred"})
-	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
+	johnDocID := mustGetDocIDFromDocMap(map[string]any{"name": "John"})
+	fredDocID := mustGetDocIDFromDocMap(map[string]any{"name": "Fred"})
+	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
-		{"model": "iPhone", "owner_id": johnDocKey},
-		{"model": "PlayStation", "owner_id": johnDocKey},
-		{"model": "Surface", "owner_id": fredDocKey},
-		{"model": "Pixel", "owner_id": fredDocKey},
+		{"model": "iPhone", "owner_id": johnDocID},
+		{"model": "PlayStation", "owner_id": johnDocID},
+		{"model": "Surface", "owner_id": fredDocID},
+		{"model": "Pixel", "owner_id": fredDocID},
 	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
@@ -411,13 +411,13 @@ func TestGeneratePredefinedFromSchema_OneToManyToOne(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	johnDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "John"})
-	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
+	johnDocID := mustGetDocIDFromDocMap(map[string]any{"name": "John"})
+	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
 		{"name": "John"},
-		{"model": "iPhone", "owner_id": johnDocKey},
-		{"model": "MacBook", "owner_id": johnDocKey},
-		{"CPU": "A13", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "iPhone", "owner_id": johnDocKey})},
-		{"CPU": "M2", "device_id": mustGetDocKeyFromDocMap(map[string]any{"model": "MacBook", "owner_id": johnDocKey})},
+		{"model": "iPhone", "owner_id": johnDocID},
+		{"model": "MacBook", "owner_id": johnDocID},
+		{"CPU": "A13", "device_id": mustGetDocIDFromDocMap(map[string]any{"model": "iPhone", "owner_id": johnDocID})},
+		{"CPU": "M2", "device_id": mustGetDocIDFromDocMap(map[string]any{"model": "MacBook", "owner_id": johnDocID})},
 	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
@@ -492,15 +492,15 @@ func TestGeneratePredefined_OneToMany(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	johnDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "John"})
-	fredDocKey := mustGetDocKeyFromDocMap(map[string]any{"name": "Fred"})
-	errorMsg := assertDocs(mustAddKeysToDocs([]map[string]any{
+	johnDocID := mustGetDocIDFromDocMap(map[string]any{"name": "John"})
+	fredDocID := mustGetDocIDFromDocMap(map[string]any{"name": "Fred"})
+	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
-		{"model": "iPhone", "owner_id": johnDocKey},
-		{"model": "PlayStation", "owner_id": johnDocKey},
-		{"model": "Surface", "owner_id": fredDocKey},
-		{"model": "Pixel", "owner_id": fredDocKey},
+		{"model": "iPhone", "owner_id": johnDocID},
+		{"model": "PlayStation", "owner_id": johnDocID},
+		{"model": "Surface", "owner_id": fredDocID},
+		{"model": "Pixel", "owner_id": fredDocID},
 	}), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)

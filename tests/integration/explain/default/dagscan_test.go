@@ -201,7 +201,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDefaultExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
+func TestDefaultExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Description: "Explain (default) latestCommits query without docID.",

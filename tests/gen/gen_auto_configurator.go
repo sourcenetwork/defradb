@@ -83,7 +83,7 @@ func (c *typeUsageCounters) addRelationUsage(
 // getNextTypeIndForField returns the next index to be used for a foreign field.
 func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *client.FieldDescription) int {
 	current := c.m[field.Schema][secondaryType][field.Name]
-	return current.useNextDocKey()
+	return current.useNextDocIDIndex()
 }
 
 type relationUsage struct {
@@ -93,9 +93,9 @@ type relationUsage struct {
 	minSecDocsPerPrimary int
 	// maxSecDocsPerPrimary is the maximum number of primary documents that should be used for the relation.
 	maxSecDocsPerPrimary int
-	// docKeysCounter is a slice of structs that keep track of the number of times
+	// docIDsCounter is a slice of structs that keep track of the number of times
 	// each primary document has been used for the relation.
-	docKeysCounter []struct {
+	docIDsCounter []struct {
 		// ind is the index of the primary document.
 		ind int
 		// count is the number of times the primary document has been used for the relation.
@@ -116,27 +116,27 @@ func newRelationUsage(minSecDocPerPrim, maxSecDocPerPrim, numDocs int, random *r
 	}
 }
 
-// useNextDocKey determines the next primary document to be used for the relation, tracks
+// useNextDocIDIndex determines the next primary document to be used for the relation, tracks
 // it and returns its index.
-func (u *relationUsage) useNextDocKey() int {
-	docKeyCounterInd := 0
+func (u *relationUsage) useNextDocIDIndex() int {
+	docIDCounterInd := 0
 	// if a primary document has a minimum number of secondary documents that should be
 	// generated for it, then it should be used until that minimum is reached.
 	// After that, we can pick a random primary document to use.
 	if u.counter >= u.minSecDocsPerPrimary*u.numAvailablePrimaryDocs {
-		docKeyCounterInd = u.random.Intn(len(u.docKeysCounter))
+		docIDCounterInd = u.random.Intn(len(u.docIDsCounter))
 	} else {
-		docKeyCounterInd = u.counter % len(u.docKeysCounter)
+		docIDCounterInd = u.counter % len(u.docIDsCounter)
 	}
-	currentInd := u.docKeysCounter[docKeyCounterInd].ind
-	docCounter := &u.docKeysCounter[docKeyCounterInd]
+	currentInd := u.docIDsCounter[docIDCounterInd].ind
+	docCounter := &u.docIDsCounter[docIDCounterInd]
 	docCounter.count++
 	// if the primary document reached max number of secondary documents, we can remove it
 	// from the slice of primary documents that are available for the relation.
 	if docCounter.count >= u.maxSecDocsPerPrimary {
-		lastCounterInd := len(u.docKeysCounter) - 1
-		*docCounter = u.docKeysCounter[lastCounterInd]
-		u.docKeysCounter = u.docKeysCounter[:lastCounterInd]
+		lastCounterInd := len(u.docIDsCounter) - 1
+		*docCounter = u.docIDsCounter[lastCounterInd]
+		u.docIDsCounter = u.docIDsCounter[:lastCounterInd]
 	}
 	u.counter++
 
@@ -145,14 +145,14 @@ func (u *relationUsage) useNextDocKey() int {
 
 // allocateIndexes allocates the indexes for the relation usage tracker.
 func (u *relationUsage) allocateIndexes() {
-	docKeysCounter := make([]struct {
+	docIDsCounter := make([]struct {
 		ind   int
 		count int
 	}, u.numAvailablePrimaryDocs)
-	for i := range docKeysCounter {
-		docKeysCounter[i].ind = i
+	for i := range docIDsCounter {
+		docIDsCounter[i].ind = i
 	}
-	u.docKeysCounter = docKeysCounter
+	u.docIDsCounter = docIDsCounter
 }
 
 func newDocGenConfigurator(types map[string]client.CollectionDefinition, config configsMap) docsGenConfigurator {

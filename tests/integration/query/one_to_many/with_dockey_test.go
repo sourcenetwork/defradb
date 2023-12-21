@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryOneToManyWithChildDocKey(t *testing.T) {
+func TestQueryOneToManyWithChildDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with child docID",
 		Request: `query {

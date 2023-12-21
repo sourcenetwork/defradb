@@ -173,7 +173,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
+func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query, group by document ID",
 		Actions: []any{

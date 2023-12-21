@@ -56,7 +56,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 }
 
 func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
-	// cid is for a field commit, see TestQueryCommitsWithDockeyAndFieldId
+	// cid is for a field commit, see TestQueryCommitsWithDocIDAndFieldId
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with cid",
 		Actions: []any{

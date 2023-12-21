@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
+func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID, order height desc",
 		Actions: []any{
@@ -71,7 +71,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
+func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID, order height asc",
 		Actions: []any{
@@ -126,7 +126,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
+func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID, order cid desc",
 		Actions: []any{
@@ -181,7 +181,7 @@ func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
+func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID, order cid asc",
 		Actions: []any{
@@ -236,7 +236,7 @@ func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
+func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID, multiple updates with order cid asc",
 		Actions: []any{

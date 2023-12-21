@@ -16,10 +16,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
+func TestQuerySimpleWithDocIDFilter(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
-			Description: "Simple query with basic filter (key by docID arg)",
+			Description: "Simple query with basic filter (by docID arg)",
 			Request: `query {
 						Users(docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 							Name
@@ -42,7 +42,7 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (key by docID arg), no results",
+			Description: "Simple query with basic filter (by docID arg), no results",
 			Request: `query {
 						Users(docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009g") {
 							Name
@@ -60,7 +60,7 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 			Results: []map[string]any{},
 		},
 		{
-			Description: "Simple query with basic filter (key by docID arg), partial results",
+			Description: "Simple query with basic filter (by docID arg), partial results",
 			Request: `query {
 						Users(docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 							Name

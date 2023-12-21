@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithDockeyAndLinkCount(t *testing.T) {
+func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple latest commits query with docID and link count",
 		Actions: []any{

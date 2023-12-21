@@ -132,8 +132,8 @@ var testFilterForSimpleSchemaArgProps = map[string]any{
 var defaultUserArgsWithoutFilter = trimFields(
 	fields{
 		cidArg,
-		dockeyArg,
-		dockeysArg,
+		docIDArg,
+		docIDsArg,
 		showDeletedArg,
 		groupByArg,
 		limitArg,
@@ -284,8 +284,8 @@ var testFilterForOneToOneSchemaArgProps = map[string]any{
 var defaultBookArgsWithoutFilter = trimFields(
 	fields{
 		cidArg,
-		dockeyArg,
-		dockeysArg,
+		docIDArg,
+		docIDsArg,
 		showDeletedArg,
 		groupByArg,
 		limitArg,

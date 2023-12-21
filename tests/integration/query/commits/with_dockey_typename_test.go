@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
+func TestQueryCommitsWithDocIDWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and typename",
 		Actions: []any{

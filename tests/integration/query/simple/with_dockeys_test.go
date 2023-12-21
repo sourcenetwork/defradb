@@ -16,10 +16,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
+func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
-			Description: "Simple query with basic filter (single key by docIDs arg)",
+			Description: "Simple query with basic filter (single ID by docIDs arg)",
 			Request: `query {
 						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
 							Name
@@ -42,7 +42,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (single key by docIDs arg), no results",
+			Description: "Simple query with basic filter (single ID by docIDs arg), no results",
 			Request: `query {
 						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
 							Name
@@ -60,7 +60,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Results: []map[string]any{},
 		},
 		{
-			Description: "Simple query with basic filter (duplicate key by docIDs arg), partial results",
+			Description: "Simple query with basic filter (duplicate ID by docIDs arg), partial results",
 			Request: `query {
 						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
 							Name
@@ -87,7 +87,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (multiple key by docIDs arg), partial results",
+			Description: "Simple query with basic filter (multiple ID by docIDs arg), partial results",
 			Request: `query {
 						Users(docIDs: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-1378ab62-e064-5af4-9ea6-49941c8d8f94"]) {
 							Name
@@ -128,7 +128,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 	}
 }
 
-func TestQuerySimpleReturnsNothinGivenEmptyDocKeysFilter(t *testing.T) {
+func TestQuerySimpleReturnsNothinGivenEmptyDocIDsFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with empty docIDs arg",
 		Request: `query {

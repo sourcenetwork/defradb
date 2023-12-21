@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsOrderedAndGroupedByDocKey(t *testing.T) {
+func TestQueryCommitsOrderedAndGroupedByDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query, grouped and ordered by docID",
 		Actions: []any{

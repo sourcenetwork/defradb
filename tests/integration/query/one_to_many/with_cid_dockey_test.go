@@ -18,7 +18,7 @@ import (
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
-// func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
+// func TestQueryOneToManyWithUnknownCidAndDocID(t *testing.T) {
 // 	test := testUtils.RequestTestCase{
 // 		Description: "One-to-many relation query from one side with unknown cid and docID",
 // 		Request: `query {
@@ -63,7 +63,7 @@ import (
 // 	testUtils.AssertPanic(t, func() { executeTestCase(t, test) })
 // }
 
-func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
+func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with  cid and docID",
 		Request: `query {
@@ -112,7 +112,7 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 // desired behaviour (no way to get state of child a time of
 // parent creation without explicit child cid, which is also not tied
 // to parent state).
-func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
+func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with child update and parent cid and docID",
 		Request: `query {
@@ -168,7 +168,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
+func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and docID",
 		Request: `query {
@@ -224,7 +224,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
+func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and docID",
 		Request: `query {

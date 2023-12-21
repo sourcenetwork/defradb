@@ -142,14 +142,14 @@ var cidArg = Field{
 		"inputFields": nil,
 	},
 }
-var dockeyArg = Field{
+var docIDArg = Field{
 	"name": request.DocIDArgName,
 	"type": map[string]any{
 		"name":        "String",
 		"inputFields": nil,
 	},
 }
-var dockeysArg = Field{
+var docIDsArg = Field{
 	"name": request.DocIDsArgName,
 	"type": map[string]any{
 		"name":        nil,

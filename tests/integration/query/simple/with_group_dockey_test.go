@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithGroupByWithGroupWithDocKey(t *testing.T) {
+func TestQuerySimpleWithGroupByWithGroupWithDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with docID filter on _group",
 		Request: `query {

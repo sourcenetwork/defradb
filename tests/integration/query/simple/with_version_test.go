@@ -100,7 +100,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
+func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 
 	test := testUtils.RequestTestCase{

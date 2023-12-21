@@ -63,7 +63,7 @@ type P2PTestCase struct {
 	SeedDocuments        []string
 	DocumentsToReplicate []*client.Document
 
-	// node/dockey/values
+	// node/docID/values
 	Updates          map[int]map[int][]string
 	Results          map[int]map[int]map[string]any
 	ReplicatorResult map[int]map[string]map[string]any
@@ -83,11 +83,11 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 	}
 
 	// seed the database with a set of documents
-	dockeys := []client.DocID{}
+	docIDs := []client.DocID{}
 	for _, document := range seeds {
-		dockey, err := seedDocument(ctx, db, document)
+		docID, err := seedDocument(ctx, db, document)
 		require.NoError(t, err)
-		dockeys = append(dockeys, dockey)
+		docIDs = append(docIDs, docID)
 	}
 
 	// init the P2P node
@@ -120,7 +120,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 
 	cfg.Net.P2PAddress = n.ListenAddrs()[0].String()
 
-	return n, dockeys, nil
+	return n, docIDs, nil
 }
 
 func seedSchema(ctx context.Context, db client.DB) error {
@@ -156,13 +156,13 @@ func saveDocument(ctx context.Context, db client.DB, document *client.Document) 
 	return col.Save(ctx, document)
 }
 
-func updateDocument(ctx context.Context, db client.DB, dockey client.DocID, update string) error {
+func updateDocument(ctx context.Context, db client.DB, docID client.DocID, update string) error {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return err
 	}
 
-	doc, err := getDocument(ctx, db, dockey)
+	doc, err := getDocument(ctx, db, docID)
 	if err != nil {
 		return err
 	}
@@ -174,13 +174,13 @@ func updateDocument(ctx context.Context, db client.DB, dockey client.DocID, upda
 	return col.Save(ctx, doc)
 }
 
-func getDocument(ctx context.Context, db client.DB, dockey client.DocID) (*client.Document, error) {
+func getDocument(ctx context.Context, db client.DB, docID client.DocID) (*client.Document, error) {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return nil, err
 	}
 
-	doc, err := col.Get(ctx, dockey, false)
+	doc, err := col.Get(ctx, docID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func getDocument(ctx context.Context, db client.DB, dockey client.DocID) (*clien
 func executeTestCase(t *testing.T, test P2PTestCase) {
 	ctx := context.Background()
 
-	dockeys := []client.DocID{}
+	docIDs := []client.DocID{}
 	nodes := []*net.Node{}
 
 	for i, cfg := range test.NodeConfig {
@@ -215,7 +215,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		require.NoError(t, err)
 
 		if i == 0 {
-			dockeys = d
+			docIDs = d
 		}
 		nodes = append(nodes, n)
 	}
@@ -249,7 +249,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		for d, updates := range updateMap {
 			for _, update := range updates {
 				log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", n, d))
-				err := updateDocument(ctx, nodes[n].DB, dockeys[d], update)
+				err := updateDocument(ctx, nodes[n].DB, docIDs[d], update)
 				require.NoError(t, err)
 
 				// wait for peers to sync
@@ -277,7 +277,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 			for d, results := range resultsMap {
 				for field, result := range results {
-					doc, err := getDocument(ctx, nodes[n2].DB, dockeys[d])
+					doc, err := getDocument(ctx, nodes[n2].DB, docIDs[d])
 					require.NoError(t, err)
 
 					val, err := doc.Get(field)
@@ -318,9 +318,9 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				require.NoError(t, err)
 				log.Info(ctx, fmt.Sprintf("Node %d synced", rep))
 
-				for dockey, results := range test.ReplicatorResult[rep] {
+				for docID, results := range test.ReplicatorResult[rep] {
 					for field, result := range results {
-						d, err := client.NewDocIDFromString(dockey)
+						d, err := client.NewDocIDFromString(docID)
 						require.NoError(t, err)
 
 						doc, err := getDocument(ctx, nodes[rep].DB, d)

@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithDockeyAndLimit(t *testing.T) {
+func TestQueryCommitsWithDocIDAndLimit(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and limit",
 		Actions: []any{

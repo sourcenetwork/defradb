@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithUnknownDockey(t *testing.T) {
+func TestQueryCommitsWithUnknownDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with unknown document ID",
 		Actions: []any{
@@ -42,7 +42,7 @@ func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockey(t *testing.T) {
+func TestQueryCommitsWithDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID",
 		Actions: []any{
@@ -78,7 +78,7 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
+func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID, with links",
 		Actions: []any{
@@ -130,7 +130,7 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
+func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID, multiple results",
 		Actions: []any{
@@ -188,7 +188,7 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (first results includes link._head, second
 // includes link._Name).
-func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
+func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID, multiple results and links",
 		Actions: []any{

@@ -17,7 +17,7 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestDebugExplainRequestWithDockeysOnInnerGroupSelection(t *testing.T) {
+func TestDebugExplainRequestWithDocIDsOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Description: "Explain (debug) request with docIDs on inner _group.",

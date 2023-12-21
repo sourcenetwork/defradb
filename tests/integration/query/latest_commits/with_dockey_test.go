@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryLatestCommitsWithDocKey(t *testing.T) {
+func TestQueryLatestCommitsWithDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with docID",
 		Request: `query {
@@ -56,7 +56,7 @@ func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryLatestCommitsWithDocKeyWithSchemaVersionIdField(t *testing.T) {
+func TestQueryLatestCommitsWithDocIDWithSchemaVersionIdField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with docID and schema versiion id field",
 		Request: `query {

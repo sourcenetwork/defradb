@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithDockeyProperty(t *testing.T) {
+func TestQueryCommitsWithDocIDProperty(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple commits query with docID property",
 		Actions: []any{
