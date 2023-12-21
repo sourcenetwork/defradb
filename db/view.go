@@ -48,12 +48,12 @@ func (db *db) addView(
 	}
 
 	if len(req.Queries) == 0 || len(req.Queries[0].Selections) == 0 {
-		return nil, NewErrInvalidViewQuery(inputQuery)
+		return nil, NewErrInvalidViewQueryMissingQuery()
 	}
 
 	baseQuery, ok := req.Queries[0].Selections[0].(*request.Select)
 	if !ok {
-		return nil, NewErrInvalidViewQuery(inputQuery)
+		return nil, NewErrInvalidViewQueryCastFailed(inputQuery)
 	}
 
 	for i, definition := range newDefinitions {

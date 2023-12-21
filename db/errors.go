@@ -644,9 +644,17 @@ func NewErrCanNotIndexNonUniqueField(dockey, fieldName string, value any) error 
 	)
 }
 
-func NewErrInvalidViewQuery(query string) error {
+func NewErrInvalidViewQueryCastFailed(query string) error {
 	return errors.New(
 		errInvalidViewQuery,
 		errors.NewKV("Query", query),
+		errors.NewKV("Reason", "Internal errror, cast failed"),
+	)
+}
+
+func NewErrInvalidViewQueryMissingQuery() error {
+	return errors.New(
+		errInvalidViewQuery,
+		errors.NewKV("Reason", "No query provided"),
 	)
 }
