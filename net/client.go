@@ -36,12 +36,12 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 	log.Debug(
 		ctx,
 		"Preparing pushLog request",
-		logging.NewKV("DocKey", evt.DocID),
+		logging.NewKV("DocID", evt.DocID),
 		logging.NewKV("CID", evt.Cid),
 		logging.NewKV("SchemaRoot", evt.SchemaRoot))
 
 	body := &pb.PushLogRequest_Body{
-		DocKey:     []byte(evt.DocID),
+		DocID:      []byte(evt.DocID),
 		Cid:        evt.Cid.Bytes(),
 		SchemaRoot: []byte(evt.SchemaRoot),
 		Creator:    s.peer.host.ID().String(),
@@ -55,7 +55,7 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 
 	log.Debug(
 		ctx, "Pushing log",
-		logging.NewKV("DocKey", evt.DocID),
+		logging.NewKV("DocID", evt.DocID),
 		logging.NewKV("CID", evt.Cid),
 		logging.NewKV("PeerID", pid),
 	)
@@ -72,7 +72,7 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 		return NewErrPushLog(
 			err,
 			errors.NewKV("CID", evt.Cid),
-			errors.NewKV("DocKey", evt.DocID),
+			errors.NewKV("DocID", evt.DocID),
 			errors.NewKV("PeerID", pid),
 		)
 	}

@@ -13,7 +13,7 @@
 /*
 Package net provides P2P network functions for the core DefraDB instance.
 
-Notable design descision: all DocKeys (Documents) have their own respective PubSub topics.
+Notable design descision: all DocIDs (Documents) have their own respective PubSub topics.
 
 The Peer object encapsulates an instanciated DB objects, libp2p host object, libp2p DAGService.
 Peer is responsible for storing all network related meta-data, maintaining open connections, pubsub mechanics, etc.

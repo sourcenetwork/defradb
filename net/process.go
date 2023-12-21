@@ -69,7 +69,7 @@ func (bp *blockProcessor) mergeBlocks(ctx context.Context) {
 				ctx,
 				"Failed to process block",
 				err,
-				logging.NewKV("DocKey", bp.dsKey.DocID),
+				logging.NewKV("DocID", bp.dsKey.DocID),
 				logging.NewKV("CID", nd.Cid()),
 			)
 		}
@@ -111,7 +111,7 @@ func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field 
 				ctx,
 				"Failed to process block",
 				err,
-				logging.NewKV("DocKey", bp.dsKey.DocID),
+				logging.NewKV("DocID", bp.dsKey.DocID),
 				logging.NewKV("CID", nd.Cid()),
 			)
 		}

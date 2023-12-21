@@ -6,7 +6,7 @@ option go_package = "/;net_pb";
 // Log represents a thread log.
 message Document {
     // ID of the document.
-    bytes docKey = 1;
+    bytes docID = 1;
     // head of the log.
     bytes head = 4;
 
@@ -33,8 +33,8 @@ message PushLogRequest {
     Body body = 1;
 
     message Body {
-        // docKey is the DocKey of the document that is affected by the log.
-        bytes docKey = 1;
+        // docID is the ID of the document that is affected by the log.
+        bytes docID = 1;
         // cid is the CID of the composite of the document.
         bytes cid = 2;
         // schemaRoot is the SchemaRoot of the collection that the document resides in.

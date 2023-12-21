@@ -87,10 +87,10 @@ func (p *Peer) sendJobWorker() {
 			}
 			jobs <- newJob
 
-		case dockey := <-p.closeJob:
-			if jobs, ok := docWorkerQueue[dockey]; ok {
+		case docID := <-p.closeJob:
+			if jobs, ok := docWorkerQueue[docID]; ok {
 				close(jobs)
-				delete(docWorkerQueue, dockey)
+				delete(docWorkerQueue, docID)
 			}
 		}
 	}

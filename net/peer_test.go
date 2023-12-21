@@ -821,7 +821,7 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestHandleDocCreateLog_WithInvalidDockey_NoError(t *testing.T) {
+func TestHandleDocCreateLog_WithInvalidDocID_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
@@ -829,7 +829,7 @@ func TestHandleDocCreateLog_WithInvalidDockey_NoError(t *testing.T) {
 	err := n.handleDocCreateLog(events.Update{
 		DocID: "some-invalid-key",
 	})
-	require.ErrorContains(t, err, "failed to get DocKey from broadcast message: selected encoding not supported")
+	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
 }
 
 func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
@@ -904,7 +904,7 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestHandleDoUpdateLog_WithInvalidDockey_NoError(t *testing.T) {
+func TestHandleDoUpdateLog_WithInvalidDocID_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
@@ -912,10 +912,10 @@ func TestHandleDoUpdateLog_WithInvalidDockey_NoError(t *testing.T) {
 	err := n.handleDocUpdateLog(events.Update{
 		DocID: "some-invalid-key",
 	})
-	require.ErrorContains(t, err, "failed to get DocKey from broadcast message: selected encoding not supported")
+	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
 }
 
-func TestHandleDocUpdateLog_WithExistingDockeyTopic_TopicExistsError(t *testing.T) {
+func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 	defer n.Close()
