@@ -150,7 +150,7 @@ func (scan *scanNode) initFetcher(
 			typeIndex := scan.documentMapping.FirstIndexOfName(indexedField.Value().Name)
 			field := mapper.Field{Index: typeIndex, Name: indexedField.Value().Name}
 			var indexFilter *mapper.Filter
-			scan.filter, indexFilter = filter.SplitByField(scan.filter, field)
+			scan.filter, indexFilter = filter.SplitByFields(scan.filter, field)
 			if indexFilter != nil {
 				fieldDesc, _ := scan.col.Schema().GetField(indexedField.Value().Name)
 				f = fetcher.NewIndexFetcher(f, fieldDesc, indexFilter)

@@ -13,7 +13,9 @@ import (
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
-// SplitByField splits the provided filter into 2 filters based on field.
+// SplitByFields splits the provided filter into 2 filters based on fields.
+// It extract the conditions that apply to the provided fields and returns them
+// as the second returned filter.
 // It can be used for extracting a supType
 // Eg. (filter: {age: 10, name: "bob", author: {birthday: "June 26, 1990", ...}, ...})
 //
@@ -22,13 +24,23 @@ import (
 //
 // And the subType filter is the conditions that apply to the queried sub type
 // ie: {birthday: "June 26, 1990", ...}.
-func SplitByField(filter *mapper.Filter, field mapper.Field) (*mapper.Filter, *mapper.Filter) {
+func SplitByFields(filter *mapper.Filter, fields ...mapper.Field) (*mapper.Filter, *mapper.Filter) {
 	if filter == nil {
 		return nil, nil
 	}
 
-	splitF := CopyField(filter, field)
-	RemoveField(filter, field)
+	if len(fields) == 0 {
+		return filter, nil
+	}
+
+	splitF := CopyField(filter, fields[0])
+	RemoveField(filter, fields[0])
+
+	for _, field := range fields[1:] {
+		newSplitF := CopyField(filter, field)
+		splitF.Conditions = Merge(splitF.Conditions, newSplitF.Conditions)
+		RemoveField(filter, field)
+	}
 
 	if len(filter.Conditions) == 0 {
 		filter = nil
