@@ -8,7 +8,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.7.0
 	github.com/fxamacker/cbor/v2 v2.5.0
 	github.com/getkin/kin-openapi v0.120.0
-	github.com/go-chi/chi/v5 v5.0.10
+	github.com/go-chi/chi/v5 v5.0.11
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.0.0
@@ -49,8 +49,8 @@ require (
 	golang.org/x/crypto v0.17.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 	golang.org/x/net v0.19.0
-	google.golang.org/grpc v1.60.0
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.32.0
+	google.golang.org/grpc v1.60.1
 )
 
 require (
