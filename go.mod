@@ -3,7 +3,7 @@ module github.com/sourcenetwork/defradb
 go 1.20
 
 require (
-	github.com/bits-and-blooms/bitset v1.12.0
+	github.com/bits-and-blooms/bitset v1.13.0
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/evanphx/json-patch/v5 v5.7.0
 	github.com/fxamacker/cbor/v2 v2.5.0
