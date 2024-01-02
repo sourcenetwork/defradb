@@ -13,7 +13,9 @@ package simple
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/events"
+	"github.com/sourcenetwork/defradb/client"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	testUtilsEvt "github.com/sourcenetwork/defradb/tests/integration/events"
 )
 
 var schema = `
@@ -22,6 +24,16 @@ var schema = `
 	}
 `
 
-func executeTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteRequestTestCase(t, schema, test)
+var colDefMap = make(map[string]client.CollectionDefinition)
+
+func init() {
+	c, err := testUtils.ParseSDL(schema)
+	if err != nil {
+		panic(err)
+	}
+	colDefMap = c
+}
+
+func executeTestCase(t *testing.T, test testUtilsEvt.TestCase) {
+	testUtilsEvt.ExecuteRequestTestCase(t, schema, test)
 }

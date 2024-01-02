@@ -55,6 +55,7 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 					"name": "A Time for Mercy",
 					"author_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 				}`,
+				ExpectedError: "value doesn't contain number; it contains string",
 			},
 			testUtils.Request{
 				Request: `query {
@@ -67,13 +68,6 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 					}
 				}`,
 				Results: []map[string]any{
-					{
-						"name":      "A Time for Mercy",
-						"author_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed",
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-					},
 					{
 						"name":      "Painted House",
 						"author_id": int64(123456),

@@ -52,24 +52,24 @@ func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, count with datetime filter",
 		Request: `query {
-					_count(Users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56.647Z"}}})
+					_count(Users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56-05:00"}}})
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56.647Z"
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
 					"Age": 30,
-					"CreatedAt": "2017-09-23T03:46:56.647Z"
+					"CreatedAt": "2017-09-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Alice",
 					"Age": 32,
-					"CreatedAt": "2017-10-23T03:46:56.647Z"
+					"CreatedAt": "2017-10-23T03:46:56-05:00"
 				}`,
 			},
 		},

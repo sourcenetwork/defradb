@@ -314,7 +314,7 @@ func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 	if err := json.Unmarshal(data, &docMap); err != nil {
 		return nil, err
 	}
-	return client.NewDocFromMap(docMap)
+	return client.NewDocFromMap(docMap, c.Schema())
 }
 
 func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {

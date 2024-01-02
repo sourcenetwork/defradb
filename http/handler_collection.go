@@ -56,7 +56,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 				responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidRequestBody})
 				return
 			}
-			doc, err := client.NewDocFromMap(docMap)
+			doc, err := client.NewDocFromMap(docMap, col.Schema())
 			if err != nil {
 				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 				return
@@ -69,7 +69,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		}
 		rw.WriteHeader(http.StatusOK)
 	case map[string]any:
-		doc, err := client.NewDocFromMap(t)
+		doc, err := client.NewDocFromMap(t, col.Schema())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -202,7 +202,7 @@ func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	if err := doc.SetWithJSON(patch); err != nil {
+	if err := doc.SetWithJSON(patch, col.Schema()); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}

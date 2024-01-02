@@ -107,5 +107,9 @@ func newCBORValue(t CType, val any) WriteableValue {
 }
 
 func (v cborValue) Bytes() ([]byte, error) {
-	return cbor.Marshal(v.value)
+	em, err := cbor.EncOptions{Time: cbor.TimeRFC3339}.EncMode()
+	if err != nil {
+		return nil, err
+	}
+	return em.Marshal(v.value)
 }

@@ -126,7 +126,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
-				// "bae-d3bc0f38-a2e1-5a26-9cc9-5b3fdb41c6db"
+				// "bae-ad4ad79c-278d-55cd-a9e3-85f3bc9a0947"
 				`{
 					"name": "Go Guide for Rust developers",
 					"rating": 5.0
@@ -146,7 +146,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 					"name": "Andrew Lone",
 					"age": 30,
 					"verified": true,
-					"published_id": "bae-d3bc0f38-a2e1-5a26-9cc9-5b3fdb41c6db"
+					"published_id": "bae-ad4ad79c-278d-55cd-a9e3-85f3bc9a0947"
 				}`,
 			},
 		},

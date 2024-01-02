@@ -134,7 +134,7 @@ func seedDocument(ctx context.Context, db client.DB, document string) (client.Do
 		return client.DocID{}, err
 	}
 
-	doc, err := client.NewDocFromJSON([]byte(document))
+	doc, err := client.NewDocFromJSON([]byte(document), col.Schema())
 	if err != nil {
 		return client.DocID{}, err
 	}
@@ -167,7 +167,7 @@ func updateDocument(ctx context.Context, db client.DB, docID client.DocID, updat
 		return err
 	}
 
-	if err := doc.SetWithJSON([]byte(update)); err != nil {
+	if err := doc.SetWithJSON([]byte(update), col.Schema()); err != nil {
 		return err
 	}
 

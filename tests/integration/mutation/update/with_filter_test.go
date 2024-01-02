@@ -95,11 +95,11 @@ func TestMutationUpdate_WithBooleanFilter(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name":   "Fred",
+						"name":   "John",
 						"points": float64(59),
 					},
 					{
-						"name":   "John",
+						"name":   "Fred",
 						"points": float64(59),
 					},
 				},

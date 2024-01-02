@@ -26,7 +26,7 @@ func TestUpdateWithDocID(t *testing.T) {
 		"age": 21
 	}`
 
-	doc, err := client.NewDocFromJSON([]byte(docStr))
+	doc, err := client.NewDocFromJSON([]byte(docStr), colDefMap["Users"].Schema)
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}

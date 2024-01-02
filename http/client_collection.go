@@ -317,7 +317,7 @@ func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 	if err := c.http.requestJson(req, &docMap); err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocFromMap(docMap)
+	doc, err := client.NewDocFromMap(docMap, c.def.Schema)
 	if err != nil {
 		return nil, err
 	}

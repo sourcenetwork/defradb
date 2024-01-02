@@ -12,6 +12,7 @@ package core
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -118,6 +119,11 @@ func DecodeFieldValue(fieldDesc client.FieldDescription, val any) (any, error) {
 				return int64(v), nil
 			case uint:
 				return int64(v), nil
+			}
+		case client.FieldKind_DATETIME:
+			switch v := val.(type) {
+			case string:
+				return time.Parse(time.RFC3339, v)
 			}
 		}
 	}

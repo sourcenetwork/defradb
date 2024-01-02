@@ -65,7 +65,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collectio
 					}`,
 					bookID,
 				),
-				ExpectedError: "The given field does not exist. Name: published",
+				ExpectedError: "The given field or alias to field does not exist. Name: published",
 			},
 		},
 	}

@@ -85,7 +85,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			delete(docMap, request.DocIDFieldName)
 			delete(docMap, request.NewDocIDFieldName)
 
-			doc, err := client.NewDocFromMap(docMap)
+			doc, err := client.NewDocFromMap(docMap, col.Schema())
 			if err != nil {
 				return NewErrDocFromMap(err)
 			}
@@ -97,7 +97,8 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 
 			// add back the self referencing fields and update doc.
 			for k, v := range resetMap {
-				err := doc.Set(k, v)
+				fd, _ := col.Schema().GetField(k)
+				err := doc.SetAs(k, v, fd.Typ)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -221,7 +222,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 					}
 					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
 						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
-							err := doc.Set(field.Name+request.RelatedObjectID, newKey)
+							err := doc.SetAs(field.Name+request.RelatedObjectID, newKey, field.Typ)
 							if err != nil {
 								return err
 							}
@@ -240,7 +241,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 							}
 							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
 							if err != nil {
-								err := doc.Set(field.Name+request.RelatedObjectID, nil)
+								err := doc.SetAs(field.Name+request.RelatedObjectID, nil, field.Typ)
 								if err != nil {
 									return err
 								}
@@ -260,7 +261,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 									refFieldName = field.Name + request.RelatedObjectID
 								}
 
-								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc)
+								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Schema())
 								if err != nil {
 									return err
 								}
@@ -291,7 +292,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				delete(docM, refFieldName)
 			}
 
-			newDoc, err := client.NewDocFromMap(docM)
+			newDoc, err := client.NewDocFromMap(docM, col.Schema())
 			if err != nil {
 				return err
 			}

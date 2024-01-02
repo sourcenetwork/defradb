@@ -1352,7 +1352,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 						Kind: client.FieldKind_STRING,
 					},
 					{
-						Name:   "owner",
+						Name:   "owner_id",
 						Kind:   client.FieldKind_FOREIGN_OBJECT,
 						Schema: "User",
 						RelationType: client.Relation_Type_ONE |

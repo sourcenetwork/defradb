@@ -74,7 +74,7 @@ var (
 		client.FieldKind_STRING_ARRAY:          client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_STRING_ARRAY: client.LWW_REGISTER,
 		client.FieldKind_BLOB:                  client.LWW_REGISTER,
-		client.FieldKind_FOREIGN_OBJECT:        client.NONE_CRDT,
+		client.FieldKind_FOREIGN_OBJECT:        client.LWW_REGISTER,
 		client.FieldKind_FOREIGN_OBJECT_ARRAY:  client.NONE_CRDT,
 	}
 )

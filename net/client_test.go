@@ -27,7 +27,9 @@ func TestPushlogWithDialFailure(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`))
+	doc := client.NewEmptyDoc()
+	doc.SetAs("test", "test", client.LWW_REGISTER)
+	id, err := doc.GenerateDocID()
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)
@@ -40,7 +42,7 @@ func TestPushlogWithDialFailure(t *testing.T) {
 	)
 
 	err = n.server.pushLog(ctx, events.Update{
-		DocID:      doc.ID().String(),
+		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
 		Block:      &EmptyNode{},
@@ -54,14 +56,16 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`))
+	doc := client.NewEmptyDoc()
+	doc.SetAs("test", "test", client.LWW_REGISTER)
+	id, err := doc.GenerateDocID()
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
 	err = n.server.pushLog(ctx, events.Update{
-		DocID:      doc.ID().String(),
+		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
 		Block:      &EmptyNode{},
@@ -92,11 +96,12 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "test"}`))
-	require.NoError(t, err)
-
 	col, err := n1.db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
+
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "test"}`), col.Schema())
+	require.NoError(t, err)
+
 	err = col.Save(ctx, doc)
 	require.NoError(t, err)
 

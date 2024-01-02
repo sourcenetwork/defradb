@@ -52,7 +52,7 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 			// Books
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935", Has 1 Publisher
+				// "bae-080d7580-a791-541e-90bd-49bf69f858e1", Has 1 Publisher
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
@@ -111,7 +111,7 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 					"name": "Only Publisher of The Rooster Bar",
 					"address": "1 Rooster Ave., Waterloo, Ontario",
 					"yearOpened": 2022,
-					"book_id": "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935"
+					"book_id": "bae-080d7580-a791-541e-90bd-49bf69f858e1"
 			    }`,
 			},
 			testUtils.CreateDoc{
@@ -219,10 +219,10 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 						"_docID": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"book": []map[string]any{
 							{
-								"_docID": "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935",
+								"_docID": "bae-080d7580-a791-541e-90bd-49bf69f858e1",
 								"name":   "The Rooster Bar",
 								"publisher": map[string]any{
-									"_docID": "bae-3f0f19eb-b292-5e0b-b885-67e7796375f9",
+									"_docID": "bae-a5836991-96a3-5147-83be-3374a8b62e6c",
 									"name":   "Only Publisher of The Rooster Bar",
 								},
 							},

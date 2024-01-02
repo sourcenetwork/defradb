@@ -83,7 +83,7 @@ Example: update by docIDs
 				if err != nil {
 					return err
 				}
-				if err := doc.SetWithJSON([]byte(args[0])); err != nil {
+				if err := doc.SetWithJSON([]byte(args[0]), col.Schema()); err != nil {
 					return err
 				}
 				return col.Update(cmd.Context(), doc)
