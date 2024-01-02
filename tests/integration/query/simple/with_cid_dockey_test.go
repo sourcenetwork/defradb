@@ -73,7 +73,7 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 		Description: "Simple query with cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeigp3pgwcn6jebw3nmhw2pdsw46wonsxki3eq254iaiuijnkqb4y7m",
+		 					cid: "bafybeiealfslrqsbiwotlducidmesjaemiq2hb7y2bxkcwc7bppuceujui",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -102,7 +102,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 		Description: "Simple query with (first) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeigp3pgwcn6jebw3nmhw2pdsw46wonsxki3eq254iaiuijnkqb4y7m",
+		 					cid: "bafybeiealfslrqsbiwotlducidmesjaemiq2hb7y2bxkcwc7bppuceujui",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -143,7 +143,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 		Description: "Simple query with (last) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeifh2n2vcrti6nyuik4olsmp2gayd6diuearujmwhcfqooeu7aafj4",
+							cid: "bafybeibnj6yitgmynodaxnvtl22rhzclhsrc5asmocwyccsbsamobibpsy",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -184,7 +184,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 		Description: "Simple query with (middle) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeigodjgyyhahan5hiurjx3pmi5etbmv6qgftainlpe2awxw6cdcbeq",
+							cid: "bafybeify36bauenmsov4rijdmency367boy234mjezpvg4dj6r47ay3jwq",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -224,17 +224,18 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with (first) cid and docID and yielded schema version",
 		Request: `query {
-					Users (
-							cid: "bafybeigp3pgwcn6jebw3nmhw2pdsw46wonsxki3eq254iaiuijnkqb4y7m",
-							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
-						) {
-						Name
-						Age
-						_version {
-							schemaVersionId
-						}
-					}
-				}`,
+		 			Users (
+		 					cid: "bafybeiealfslrqsbiwotlducidmesjaemiq2hb7y2bxkcwc7bppuceujui",
+		 					docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+		 				) {
+		 				Name
+		 				Age
+		 				_version {
+		 					schemaVersionId
+		 				}
+		 			}
+		 		}`,
+
 		Docs: map[int][]string{
 			0: {
 				`{
