@@ -606,12 +606,12 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 
 func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	fieldFilter *mapper.Filter,
-	field client.FieldDescription,
+	index client.IndexDescription,
 ) error {
 	subScan := getScanNode(join.subType)
 	subScan.tryAddField(join.rootName + request.RelatedObjectID)
 	subScan.filter = fieldFilter
-	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(field))
+	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(index))
 
 	join.invert()
 

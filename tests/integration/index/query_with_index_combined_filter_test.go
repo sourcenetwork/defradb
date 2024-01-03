@@ -93,3 +93,40 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithIndex_FilterOnNonIndexedField_ShouldIgnoreIndex(t *testing.T) {
+	req := `query {
+		User(filter: {
+			age:  {_eq: 44}
+		}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "If filter does not contain indexed field, index should be ignored",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index
+						age: Int
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"name": "Roy"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
