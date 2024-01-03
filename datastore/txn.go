@@ -14,6 +14,7 @@ import (
 	"context"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
@@ -46,7 +47,7 @@ type Txn interface {
 }
 
 type txn struct {
-	t ds.Txn
+	t corekv.Txn
 	MultiStore
 
 	id uint64

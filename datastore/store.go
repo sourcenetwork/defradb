@@ -12,10 +12,10 @@ package datastore
 
 import (
 	blockstore "github.com/ipfs/boxo/blockstore"
-	ds "github.com/ipfs/go-datastore"
 
-	"github.com/sourcenetwork/defradb/datastore/iterable"
 	"github.com/sourcenetwork/defradb/logging"
+
+	"github.com/sourcenetwork/corekv"
 )
 
 var (
@@ -24,8 +24,8 @@ var (
 
 // RootStore wraps Batching and TxnDatastore requiring datastore to support both batching and transactions.
 type RootStore interface {
-	ds.Batching
-	ds.TxnDatastore
+	corekv.Batchable
+	corekv.TxnStore
 }
 
 // MultiStore is an interface wrapper around the 3 main types of stores needed for MerkleCRDTs.
@@ -63,9 +63,8 @@ type MultiStore interface {
 // Which means we can't swap between the two for Datastores that
 // support TxnDatastore.
 type DSReaderWriter interface {
-	ds.Read
-	ds.Write
-	iterable.Iterable
+	corekv.Reader
+	corekv.Writer
 }
 
 // DAGStore proxies the ipld.DAGService under the /core namespace for future-proofing
@@ -75,5 +74,5 @@ type DAGStore interface {
 
 // DSBatching wraps the Batching interface from go-datastore
 type DSBatching interface {
-	ds.Batching
+	corekv.Batchable
 }

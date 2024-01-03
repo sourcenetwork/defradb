@@ -12,7 +12,7 @@ package datastore
 
 import (
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/namespace"
+	"github.com/sourcenetwork/corekv/namespace"
 )
 
 var (
@@ -41,12 +41,12 @@ var _ MultiStore = (*multistore)(nil)
 func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
 	rootRW := AsDSReaderWriter(rootstore)
 	ms := &multistore{
-		root:   rootRW,
-		data:   prefix(rootRW, dataStoreKey),
-		head:   prefix(rootRW, headStoreKey),
+		root:   rootstore,
+		data:   prefix(rootstore, dataStoreKey),
+		head:   prefix(rootstore, headStoreKey),
 		peer:   namespace.Wrap(rootstore, peerStoreKey),
-		system: prefix(rootRW, systemStoreKey),
-		dag:    NewDAGStore(prefix(rootRW, blockStoreKey)),
+		system: prefix(rootstore, systemStoreKey),
+		dag:    NewDAGStore(prefix(rootstore, blockStoreKey)),
 	}
 
 	return ms

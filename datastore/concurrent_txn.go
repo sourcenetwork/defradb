@@ -15,12 +15,13 @@ import (
 	"sync"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
 type concurrentTxn struct {
-	ds.Txn
+	corekv.Txn
 
 	// Some datastore don't support concurrent operation within a single transaction. `concurrentTxn` with its
 	// mutex enable those concurrent operations. This was implemented for DefraDB's DAG sync process.

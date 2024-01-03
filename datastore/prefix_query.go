@@ -24,7 +24,7 @@ import (
 func DeserializePrefix[T any](
 	ctx context.Context,
 	prefix string,
-	store ds.Read,
+	store DSReaderWriter,
 ) ([]string, []T, error) {
 	q, err := store.Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
