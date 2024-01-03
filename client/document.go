@@ -465,16 +465,12 @@ func (doc *Document) Set(field string, value any) error {
 		return NewErrFieldNotExist(field)
 	}
 	if fd.IsPrimaryRelation() {
-		if strings.HasSuffix(field, request.RelatedObjectID) {
-			fd, exists = doc.schemaDescription.GetField(field)
-			if !exists {
-				return NewErrFieldNotExist(field)
-			}
-		} else {
-			fd, exists = doc.schemaDescription.GetField(field + request.RelatedObjectID)
-			if !exists {
-				return NewErrFieldNotExist(field)
-			}
+		if !strings.HasSuffix(field, request.RelatedObjectID) {
+			field = field + request.RelatedObjectID
+		}
+		fd, exists = doc.schemaDescription.GetField(field)
+		if !exists {
+			return NewErrFieldNotExist(field)
 		}
 	}
 	val, err := validateFieldSchema(value, fd)
