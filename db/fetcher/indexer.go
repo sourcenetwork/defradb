@@ -30,7 +30,7 @@ type IndexFetcher struct {
 	docFilter         *mapper.Filter
 	doc               *encodedDocument
 	mapping           *core.DocumentMapping
-	indexedField      client.FieldDescription
+	indexedFields     []client.FieldDescription
 	docFields         []client.FieldDescription
 	indexDesc         client.IndexDescription
 	indexIter         indexIterator
@@ -43,13 +43,13 @@ var _ Fetcher = (*IndexFetcher)(nil)
 // NewIndexFetcher creates a new IndexFetcher.
 func NewIndexFetcher(
 	docFetcher Fetcher,
-	indexedFieldDesc client.FieldDescription,
+	indexDesc client.IndexDescription,
 	indexFilter *mapper.Filter,
 ) *IndexFetcher {
 	return &IndexFetcher{
-		docFetcher:   docFetcher,
-		indexedField: indexedFieldDesc,
-		indexFilter:  indexFilter,
+		docFetcher:  docFetcher,
+		indexDesc:   indexDesc,
+		indexFilter: indexFilter,
 	}
 }
 
@@ -69,21 +69,27 @@ func (f *IndexFetcher) Init(
 	f.mapping = docMapper
 	f.txn = txn
 
-	for _, index := range col.Description().Indexes {
-		if index.Fields[0].Name == f.indexedField.Name {
-			f.indexDesc = index
-			f.indexDataStoreKey.IndexID = index.ID
-			break
+	f.indexDataStoreKey.IndexID = f.indexDesc.ID
+	f.indexDataStoreKey.CollectionID = f.col.ID()
+
+	for _, indexedField := range f.indexDesc.Fields {
+		for _, field := range f.col.Schema().Fields {
+			if field.Name == indexedField.Name {
+				f.indexedFields = append(f.indexedFields, field)
+				break
+			}
 		}
 	}
 
-	f.indexDataStoreKey.CollectionID = f.col.ID()
-
+	f.docFields = make([]client.FieldDescription, 0, len(fields)-len(f.indexedFields))
+outer:
 	for i := range fields {
-		if fields[i].Name == f.indexedField.Name {
-			f.docFields = append(fields[:i], fields[i+1:]...)
-			break
+		for j := range f.indexedFields {
+			if fields[i].Name == f.indexedFields[j].Name {
+				continue outer
+			}
 		}
+		f.docFields = append(f.docFields, fields[i])
 	}
 
 	iter, err := createIndexIterator(f.indexDataStoreKey, f.indexFilter, &f.execInfo, f.indexDesc.Unique)
@@ -123,17 +129,21 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			return nil, f.execInfo, nil
 		}
 
-		property := &encProperty{
-			Desc: f.indexedField,
-			Raw:  res.key.FieldValues[0],
+		for i, indexedField := range f.indexedFields {
+			property := &encProperty{
+				Desc: indexedField,
+				Raw:  res.key.FieldValues[i],
+			}
+
+			f.doc.properties[indexedField] = property
 		}
 
 		if f.indexDesc.Unique {
 			f.doc.id = res.value
 		} else {
-			f.doc.id = res.key.FieldValues[1]
+			f.doc.id = res.key.FieldValues[len(res.key.FieldValues)-1]
 		}
-		f.doc.properties[f.indexedField] = property
+
 		f.execInfo.FieldsFetched++
 
 		if f.docFetcher != nil && len(f.docFields) > 0 {

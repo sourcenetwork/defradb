@@ -153,8 +153,7 @@ func (scan *scanNode) initFetcher(
 			var indexFilter *mapper.Filter
 			scan.filter, indexFilter = filter.SplitByFields(scan.filter, field)
 			if indexFilter != nil {
-				fieldDesc, _ := scan.col.Schema().GetField(fieldName)
-				f = fetcher.NewIndexFetcher(f, fieldDesc, indexFilter)
+				f = fetcher.NewIndexFetcher(f, index.Value(), indexFilter)
 			}
 		}
 
