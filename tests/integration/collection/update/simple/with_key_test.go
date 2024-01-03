@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
-func TestUpdateWithKey(t *testing.T) {
+func TestUpdateWithDocID(t *testing.T) {
 	docStr := `{
 		"name": "John",
 		"age": 21
@@ -33,7 +33,7 @@ func TestUpdateWithKey(t *testing.T) {
 
 	tests := []testUtils.TestCase{
 		{
-			Description: "Test update users with key and invalid JSON",
+			Description: "Test update users with docID and invalid JSON",
 			Docs: map[string][]string{
 				"Users": {docStr},
 			},
@@ -50,7 +50,7 @@ func TestUpdateWithKey(t *testing.T) {
 			},
 			ExpectedError: "cannot parse JSON: cannot parse object",
 		}, {
-			Description: "Test update users with key and invalid updator",
+			Description: "Test update users with docID and invalid updator",
 			Docs: map[string][]string{
 				"Users": {docStr},
 			},
@@ -65,7 +65,7 @@ func TestUpdateWithKey(t *testing.T) {
 			},
 			ExpectedError: "the updater of a document is of invalid type",
 		}, {
-			Description: "Test update users with key and patch updator (not implemented so no change)",
+			Description: "Test update users with docID and patch updator (not implemented so no change)",
 			Docs: map[string][]string{
 				"Users": {docStr},
 			},
@@ -101,7 +101,7 @@ func TestUpdateWithKey(t *testing.T) {
 				},
 			},
 		}, {
-			Description: "Test update users with key",
+			Description: "Test update users with docID",
 			Docs: map[string][]string{
 				"Users": {docStr},
 			},

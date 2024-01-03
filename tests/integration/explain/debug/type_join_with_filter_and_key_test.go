@@ -17,10 +17,10 @@ import (
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
-func TestDebugExplainRequestWithRelatedAndRegularFilterAndKeys(t *testing.T) {
+func TestDebugExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with related and regular filter + keys.",
+		Description: "Explain (debug) request with related and regular filter + docIDs.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -63,10 +63,10 @@ func TestDebugExplainRequestWithRelatedAndRegularFilterAndKeys(t *testing.T) {
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDebugExplainRequestWithManyRelatedFiltersAndKey(t *testing.T) {
+func TestDebugExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with many related filters + key.",
+		Description: "Explain (debug) request with many related filters + docID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

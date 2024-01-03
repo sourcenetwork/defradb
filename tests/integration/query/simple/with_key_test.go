@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithKeyFilterBlock(t *testing.T) {
+func TestQuerySimpleWithDocIDFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with basic filter (key by filter block)",
+		Description: "Simple query with basic filter (docID by filter block)",
 		Request: `query {
 					Users(filter: {_docID: {_eq: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"}}) {
 						Name
