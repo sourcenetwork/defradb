@@ -135,7 +135,7 @@ func (c *collection) updateWithDocID(
 	if isPatch {
 		// todo
 	} else {
-		err = doc.SetWithJSON([]byte(updater), c.Schema())
+		err = doc.SetWithJSON([]byte(updater))
 	}
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (c *collection) updateWithIDs(
 		if isPatch {
 			// todo
 		} else {
-			err = doc.SetWithJSON([]byte(updater), c.Schema())
+			err = doc.SetWithJSON([]byte(updater))
 		}
 		if err != nil {
 			return nil, err
@@ -271,7 +271,7 @@ func (c *collection) updateWithFilter(
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
-			err := doc.SetWithJSON([]byte(updater), c.Schema())
+			err := doc.SetWithJSON([]byte(updater))
 			if err != nil {
 				return nil, err
 			}

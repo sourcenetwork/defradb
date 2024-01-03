@@ -97,8 +97,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 
 			// add back the self referencing fields and update doc.
 			for k, v := range resetMap {
-				fd, _ := col.Schema().GetField(k)
-				err := doc.SetAs(k, v, fd.Typ)
+				err := doc.Set(k, v)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -222,7 +221,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 					}
 					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
 						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
-							err := doc.SetAs(field.Name+request.RelatedObjectID, newKey, field.Typ)
+							err := doc.Set(field.Name+request.RelatedObjectID, newKey)
 							if err != nil {
 								return err
 							}
@@ -241,7 +240,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 							}
 							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
 							if err != nil {
-								err := doc.SetAs(field.Name+request.RelatedObjectID, nil, field.Typ)
+								err := doc.Set(field.Name+request.RelatedObjectID, nil)
 								if err != nil {
 									return err
 								}

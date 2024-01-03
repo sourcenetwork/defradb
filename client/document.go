@@ -18,6 +18,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
+	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client/request"
@@ -55,43 +56,36 @@ import (
 // @body: A document interface can be implemented by both a TypedDocument and a
 // UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
-	id DocID
-	// SchemaVersionID holds the id of the schema version that this document is
-	// currently at.
-	//
-	// Migrating the document will update this value to the output version of the
-	// migration.
-	SchemaVersionID string
-	fields          map[string]Field
-	values          map[Field]Value
-	head            cid.Cid
-	mu              sync.RWMutex
+	id     DocID
+	fields map[string]Field
+	values map[Field]Value
+	head   cid.Cid
+	mu     sync.RWMutex
 	// marks if document has unsaved changes
 	isDirty bool
+
+	schemaDescription SchemaDescription
 }
 
-// NewDocWithID creates a new Document with a specified DocID.
-func NewDocWithID(docID DocID) *Document {
-	doc := newEmptyDoc()
+func newEmptyDoc(sd SchemaDescription) *Document {
+	return &Document{
+		fields:            make(map[string]Field),
+		values:            make(map[Field]Value),
+		schemaDescription: sd,
+	}
+}
+
+// NewDocWithID creates a new Document with a specified key.
+func NewDocWithID(docID DocID, sd SchemaDescription) *Document {
+	doc := newEmptyDoc(sd)
 	doc.id = docID
 	return doc
-}
-
-func NewEmptyDoc() *Document {
-	return newEmptyDoc()
-}
-
-func newEmptyDoc() *Document {
-	return &Document{
-		fields: make(map[string]Field),
-		values: make(map[Field]Value),
-	}
 }
 
 // NewDocFromMap creates a new Document from a data map.
 func NewDocFromMap(data map[string]any, sd SchemaDescription) (*Document, error) {
 	var err error
-	doc := newEmptyDoc()
+	doc := newEmptyDoc(sd)
 
 	// check if document contains special _docID field
 	k, hasDocID := data[request.DocIDFieldName]
@@ -106,7 +100,7 @@ func NewDocFromMap(data map[string]any, sd SchemaDescription) (*Document, error)
 		}
 	}
 
-	err = doc.setAndParseObjectType(data, sd)
+	err = doc.setAndParseObjectType(data)
 	if err != nil {
 		return nil, err
 	}
@@ -134,12 +128,12 @@ func IsJSONArray(obj []byte) bool {
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
 func NewDocFromJSON(obj []byte, sd SchemaDescription) (*Document, error) {
-	doc := newEmptyDoc()
-	err := doc.SetWithJSON(obj, sd)
+	doc := newEmptyDoc(sd)
+	err := doc.SetWithJSON(obj)
 	if err != nil {
 		return nil, err
 	}
-	err = doc.generateAndSetDocKey()
+	err = doc.generateAndSetDocID()
 	if err != nil {
 		return nil, err
 	}
@@ -163,12 +157,12 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 		if err != nil {
 			return nil, err
 		}
-		doc := newEmptyDoc()
-		err = doc.setWithFastJSONObject(o, sd)
+		doc := newEmptyDoc(sd)
+		err = doc.setWithFastJSONObject(o)
 		if err != nil {
 			return nil, err
 		}
-		err = doc.generateAndSetDocKey()
+		err = doc.generateAndSetDocID()
 		if err != nil {
 			return nil, err
 		}
@@ -184,7 +178,7 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 // the typed value again as an interface.
 func validateFieldSchema(val any, field FieldDescription) (any, error) {
 	switch field.Kind {
-	case FieldKind_DocKey, FieldKind_STRING, FieldKind_BLOB:
+	case FieldKind_DocID, FieldKind_STRING, FieldKind_BLOB:
 		return getString(val)
 
 	case FieldKind_STRING_ARRAY:
@@ -256,17 +250,14 @@ func getFloat64(v any) (float64, error) {
 	switch val := v.(type) {
 	case *fastjson.Value:
 		return val.Float64()
+	case int:
+		return float64(val), nil
+	case int64:
+		return float64(val), nil
+	case float64:
+		return val, nil
 	default:
-		switch v := val.(type) {
-		case int:
-			return float64(v), nil
-		case int64:
-			return float64(v), nil
-		case float64:
-			return v, nil
-		default:
-			return 0, NewErrUnexpectedType[float64]("field", v)
-		}
+		return 0, NewErrUnexpectedType[float64]("field", v)
 	}
 }
 
@@ -274,17 +265,14 @@ func getInt64(v any) (int64, error) {
 	switch val := v.(type) {
 	case *fastjson.Value:
 		return val.Int64()
+	case int:
+		return int64(val), nil
+	case int64:
+		return val, nil
+	case float64:
+		return int64(val), nil
 	default:
-		switch v := val.(type) {
-		case int:
-			return int64(v), nil
-		case int64:
-			return v, nil
-		case float64:
-			return int64(v), nil
-		default:
-			return 0, NewErrUnexpectedType[int64]("field", v)
-		}
+		return 0, NewErrUnexpectedType[int64]("field", v)
 	}
 }
 
@@ -297,6 +285,8 @@ func getDateTime(v any) (time.Time, error) {
 			return time.Time{}, err
 		}
 		s = string(b)
+	case time.Time:
+		return val, nil
 	default:
 		s = val.(string)
 	}
@@ -338,7 +328,7 @@ func getArray[T any](
 func getNillableArray[T any](
 	v any,
 	typeGetter func(any) (T, error),
-) ([]*T, error) {
+) ([]immutable.Option[T], error) {
 	switch val := v.(type) {
 	case *fastjson.Value:
 		if val.Type() == fastjson.TypeNull {
@@ -350,21 +340,22 @@ func getNillableArray[T any](
 			return nil, err
 		}
 
-		arr := make([]*T, len(valArray))
+		arr := make([]immutable.Option[T], len(valArray))
 		for i, arrItem := range valArray {
 			if arrItem.Type() == fastjson.TypeNull {
+				arr[i] = immutable.None[T]()
 				continue
 			}
 			v, err := typeGetter(arrItem)
 			if err != nil {
 				return nil, err
 			}
-			arr[i] = &v
+			arr[i] = immutable.Some(v)
 		}
 
 		return arr, nil
 	default:
-		return val.([]*T), nil
+		return []immutable.Option[T]{}, nil
 	}
 }
 
@@ -439,7 +430,7 @@ func (doc *Document) GetValueWithField(f Field) (Value, error) {
 // JSON Merge Patch object. Note: fields indicated as nil in the Merge
 // Patch are to be deleted
 // @todo: Handle sub documents for SetWithJSON
-func (doc *Document) SetWithJSON(obj []byte, sd SchemaDescription) error {
+func (doc *Document) SetWithJSON(obj []byte) error {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
 		return err
@@ -449,32 +440,14 @@ func (doc *Document) SetWithJSON(obj []byte, sd SchemaDescription) error {
 		return err
 	}
 
-	return doc.setWithFastJSONObject(o, sd)
+	return doc.setWithFastJSONObject(o)
 }
 
-func (doc *Document) setWithFastJSONObject(obj *fastjson.Object, sd SchemaDescription) error {
+func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
 	var visitErr error
 	obj.Visit(func(k []byte, v *fastjson.Value) {
 		fieldName := string(k)
-		fd, exists := sd.GetField(fieldName)
-		if !exists {
-			visitErr = NewErrFieldNotExist(fieldName)
-			return
-		}
-		if fd.IsPrimaryRelation() {
-			fd, exists = sd.GetField(fieldName + request.RelatedObjectID)
-			if !exists {
-				visitErr = NewErrFieldNotExist(fieldName)
-				return
-			}
-		}
-		val, err := validateFieldSchema(v, fd)
-		if err != nil {
-			visitErr = err
-			return
-		}
-
-		err = doc.SetAs(fieldName, val, fd.Typ)
+		err := doc.Set(fieldName, v)
 		if err != nil {
 			visitErr = err
 			return
@@ -483,9 +456,30 @@ func (doc *Document) setWithFastJSONObject(obj *fastjson.Object, sd SchemaDescri
 	return visitErr
 }
 
-// SetAs is the same as set, but you can manually set the CRDT type.
-func (doc *Document) SetAs(field string, value any, t CType) error {
-	return doc.setCBOR(t, field, value)
+// Set the value of a field.
+func (doc *Document) Set(field string, value any) error {
+	fd, exists := doc.schemaDescription.GetField(field)
+	if !exists {
+		return NewErrFieldNotExist(field)
+	}
+	if fd.IsPrimaryRelation() {
+		if strings.HasSuffix(field, request.RelatedObjectID) {
+			fd, exists = doc.schemaDescription.GetField(field)
+			if !exists {
+				return NewErrFieldNotExist(field)
+			}
+		} else {
+			fd, exists = doc.schemaDescription.GetField(field + request.RelatedObjectID)
+			if !exists {
+				return NewErrFieldNotExist(field)
+			}
+		}
+	}
+	val, err := validateFieldSchema(value, fd)
+	if err != nil {
+		return err
+	}
+	return doc.setCBOR(fd.Typ, field, val)
 }
 
 // Delete removes a field, and marks it to be deleted on the following db.Update() call.
@@ -522,21 +516,12 @@ func (doc *Document) setCBOR(t CType, field string, val any) error {
 	return doc.set(t, field, value)
 }
 
-func (doc *Document) setAndParseObjectType(value map[string]any, sd SchemaDescription) error {
+func (doc *Document) setAndParseObjectType(value map[string]any) error {
 	for k, v := range value {
 		if v == nil {
 			continue
 		}
-		fd, exists := sd.GetField(k)
-		if !exists {
-			return NewErrFieldNotExist(k)
-		}
-		val, err := validateFieldSchema(v, fd)
-		if err != nil {
-			return err
-		}
-
-		err = doc.SetAs(k, val, fd.Typ)
+		err := doc.Set(k, v)
 		if err != nil {
 			return err
 		}
@@ -622,7 +607,7 @@ func (doc *Document) Clean() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
 			if val.IsDelete() {
-				doc.SetAs(v.Name(), nil, v.Type()) //nolint:errcheck
+				doc.Set(v.Name(), nil) //nolint:errcheck
 			}
 			val.Clean()
 		}

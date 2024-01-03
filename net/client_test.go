@@ -22,13 +22,24 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
+var sd = client.SchemaDescription{
+	Name: "test",
+	Fields: []client.FieldDescription{
+		{
+			Name: "test",
+			Kind: client.FieldKind_STRING,
+			Typ:  client.LWW_REGISTER,
+		},
+	},
+}
+
 func TestPushlogWithDialFailure(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	doc := client.NewEmptyDoc()
-	doc.SetAs("test", "test", client.LWW_REGISTER)
+	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), sd)
+	require.NoError(t, err)
 	id, err := doc.GenerateDocID()
 	require.NoError(t, err)
 
@@ -56,8 +67,8 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	_, n := newTestNode(ctx, t)
 	defer n.Close()
 
-	doc := client.NewEmptyDoc()
-	doc.SetAs("test", "test", client.LWW_REGISTER)
+	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), sd)
+	require.NoError(t, err)
 	id, err := doc.GenerateDocID()
 	require.NoError(t, err)
 

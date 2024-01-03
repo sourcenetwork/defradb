@@ -699,7 +699,7 @@ func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 	for _, tc := range cases {
 		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
-		err := doc.SetAs(usersNameFieldName, tc.NewValue, client.LWW_REGISTER)
+		err := doc.Set(usersNameFieldName, tc.NewValue)
 		require.NoError(t, err)
 		err = tc.Exec(doc)
 		require.NoError(t, err)
@@ -722,7 +722,7 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 	doc := f.newUserDoc("John", 21, f.users)
 	f.saveDocToCollection(doc, f.users)
 
-	err := doc.SetAs(usersNameFieldName, "Islam", client.LWW_REGISTER)
+	err := doc.Set(usersNameFieldName, "Islam")
 	require.NoError(t, err)
 
 	// retrieve the collection without index cached
@@ -814,7 +814,7 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 		f.users.(*collection).fetcherFactory = tc.PrepareFetcher
 		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
-		err := doc.SetAs(usersNameFieldName, "Islam", client.LWW_REGISTER)
+		err := doc.Set(usersNameFieldName, "Islam")
 		require.NoError(t, err, tc.Name)
 		err = f.users.Update(f.ctx, doc)
 		require.Error(t, err, tc.Name)
@@ -842,7 +842,7 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 	require.NoError(f.t, err)
 	f.commitTxn()
 
-	err = doc.SetAs(usersAgeFieldName, 23, client.LWW_REGISTER)
+	err = doc.Set(usersAgeFieldName, 23)
 	require.NoError(t, err)
 	err = f.users.Update(f.ctx, doc)
 	require.ErrorIs(t, err, ErrCorruptedIndex)
@@ -878,7 +878,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 	doc := f.newUserDoc("John", 21, f.users)
 	f.saveDocToCollection(doc, f.users)
 
-	err := doc.SetAs(usersNameFieldName, "Islam", client.LWW_REGISTER)
+	err := doc.Set(usersNameFieldName, "Islam")
 	require.NoError(t, err)
 	_ = f.users.Update(f.ctx, doc)
 }
@@ -917,7 +917,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 		f.createUserCollectionIndexOnName()
 
 		doc := f.newUserDoc("John", 21, f.users)
-		err := doc.SetAs(usersNameFieldName, "Islam", client.LWW_REGISTER)
+		err := doc.Set(usersNameFieldName, "Islam")
 		require.NoError(t, err)
 
 		encodedDoc := shimEncodedDocument{
@@ -961,7 +961,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
 		Values([]byte(nil)).Build()
 
-	err = doc.SetAs(usersNameFieldName, "John", client.LWW_REGISTER)
+	err = doc.Set(usersNameFieldName, "John")
 	require.NoError(f.t, err)
 
 	err = f.users.Update(f.ctx, doc)
@@ -1107,7 +1107,7 @@ func TestUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 	for _, tc := range cases {
 		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc).Build()
 
-		err := doc.SetAs(usersNameFieldName, tc.NewValue, client.LWW_REGISTER)
+		err := doc.Set(usersNameFieldName, tc.NewValue)
 		require.NoError(t, err)
 		err = tc.Exec(doc)
 		require.NoError(t, err)

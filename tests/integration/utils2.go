@@ -1249,12 +1249,19 @@ func updateDocViaColSave(
 	node client.P2P,
 	collections []client.Collection,
 ) error {
-	doc := s.documents[action.CollectionID][action.DocID]
+	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	err := doc.SetWithJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
+	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.Key(), true)
 	if err != nil {
 		return err
 	}
+
+	err = doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	s.documents[action.CollectionID][action.DocID] = doc
 
 	return collections[action.CollectionID].Save(s.ctx, doc)
 }
@@ -1265,12 +1272,19 @@ func updateDocViaColUpdate(
 	node client.P2P,
 	collections []client.Collection,
 ) error {
-	doc := s.documents[action.CollectionID][action.DocID]
+	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	err := doc.SetWithJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
+	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.Key(), true)
 	if err != nil {
 		return err
 	}
+
+	err = doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	s.documents[action.CollectionID][action.DocID] = doc
 
 	return collections[action.CollectionID].Update(s.ctx, doc)
 }

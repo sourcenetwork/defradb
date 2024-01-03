@@ -202,7 +202,7 @@ func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	if err := doc.SetWithJSON(patch, col.Schema()); err != nil {
+	if err := doc.SetWithJSON(patch); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}

@@ -126,7 +126,7 @@ func TestSetWithJSON(t *testing.T) {
 		"Name": "Alice",
 		"Age": 27
 	}`)
-	err = doc.SetWithJSON(updatePatch, schemaDescriptions[0])
+	err = doc.SetWithJSON(updatePatch)
 	if err != nil {
 		t.Error(err)
 	}

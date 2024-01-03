@@ -167,7 +167,7 @@ func updateDocument(ctx context.Context, db client.DB, docID client.DocID, updat
 		return err
 	}
 
-	if err := doc.SetWithJSON([]byte(update), col.Schema()); err != nil {
+	if err := doc.SetWithJSON([]byte(update)); err != nil {
 		return err
 	}
 

@@ -57,7 +57,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				},
 				func(c client.Collection) {
 					// Update John
-					doc1.SetAs("name", "Johnnnnn", client.LWW_REGISTER)
+					doc1.Set("name", "Johnnnnn")
 					err = c.Save(context.Background(), doc1)
 					assert.Nil(t, err)
 				},

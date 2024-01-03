@@ -253,7 +253,7 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	err = col2.Create(ctx, doc4)
 	require.NoError(t, err)
 
-	err = doc1.SetAs("age", 31, client.LWW_REGISTER)
+	err = doc1.Set("age", 31)
 	require.NoError(t, err)
 
 	err = col1.Update(ctx, doc1)
