@@ -317,7 +317,8 @@ func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocFromJSON(data, c.def.Schema)
+	doc := client.NewDocWithKey(key, c.def.Schema)
+	err = doc.SetWithJSON(data)
 	if err != nil {
 		return nil, err
 	}

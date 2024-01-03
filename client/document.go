@@ -12,6 +12,7 @@ package client
 
 import (
 	"encoding/json"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -116,14 +117,11 @@ func NewDocFromMap(data map[string]any, sd SchemaDescription) (*Document, error)
 	return doc, nil
 }
 
+var jsonArrayPattern = regexp.MustCompile(`^\s*\[.*\]\s*$`)
+
 // IsJSONArray returns true if the given byte array is a JSON Array.
 func IsJSONArray(obj []byte) bool {
-	v, err := fastjson.ParseBytes(obj)
-	if err != nil {
-		return false
-	}
-	_, err = v.Array()
-	return err == nil
+	return jsonArrayPattern.Match(obj)
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
@@ -320,8 +318,10 @@ func getArray[T any](
 		}
 
 		return arr, nil
+	case []T:
+		return val, nil
 	default:
-		return val.([]T), nil
+		return []T{}, nil
 	}
 }
 
@@ -354,6 +354,8 @@ func getNillableArray[T any](
 		}
 
 		return arr, nil
+	case []immutable.Option[T]:
+		return val, nil
 	default:
 		return []immutable.Option[T]{}, nil
 	}
