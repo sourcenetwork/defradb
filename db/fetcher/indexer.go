@@ -23,19 +23,18 @@ import (
 // IndexFetcher is a fetcher that fetches documents by index.
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
 type IndexFetcher struct {
-	docFetcher        Fetcher
-	col               client.Collection
-	txn               datastore.Txn
-	indexFilter       *mapper.Filter
-	docFilter         *mapper.Filter
-	doc               *encodedDocument
-	mapping           *core.DocumentMapping
-	indexedFields     []client.FieldDescription
-	docFields         []client.FieldDescription
-	indexDesc         client.IndexDescription
-	indexIter         indexIterator
-	indexDataStoreKey core.IndexDataStoreKey
-	execInfo          ExecInfo
+	docFetcher    Fetcher
+	col           client.Collection
+	txn           datastore.Txn
+	indexFilter   *mapper.Filter
+	docFilter     *mapper.Filter
+	doc           *encodedDocument
+	mapping       *core.DocumentMapping
+	indexedFields []client.FieldDescription
+	docFields     []client.FieldDescription
+	indexDesc     client.IndexDescription
+	indexIter     indexIterator
+	execInfo      ExecInfo
 }
 
 var _ Fetcher = (*IndexFetcher)(nil)
@@ -69,9 +68,6 @@ func (f *IndexFetcher) Init(
 	f.mapping = docMapper
 	f.txn = txn
 
-	f.indexDataStoreKey.IndexID = f.indexDesc.ID
-	f.indexDataStoreKey.CollectionID = f.col.ID()
-
 	for _, indexedField := range f.indexDesc.Fields {
 		for _, field := range f.col.Schema().Fields {
 			if field.Name == indexedField.Name {
@@ -92,7 +88,7 @@ outer:
 		f.docFields = append(f.docFields, fields[i])
 	}
 
-	iter, err := createIndexIterator(f.indexDataStoreKey, f.indexFilter, &f.execInfo, f.indexDesc.Unique)
+	iter, err := createIndexIterator(f.indexFilter, &f.execInfo, f.indexDesc, f.col.ID())
 	if err != nil {
 		return err
 	}

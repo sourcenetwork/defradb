@@ -396,11 +396,12 @@ func (m *indexLikeMatcher) doesMatch(currentVal string) bool {
 }
 
 func createIndexIterator(
-	indexDataStoreKey core.IndexDataStoreKey,
 	indexFilterConditions *mapper.Filter,
 	execInfo *ExecInfo,
-	isUnique bool,
+	indexDesc client.IndexDescription,
+	colID uint32,
 ) (indexIterator, error) {
+	indexDataStoreKey := core.IndexDataStoreKey{CollectionID: colID, IndexID: indexDesc.ID}
 	var op string
 	var filterVal any
 	for _, indexFilterCond := range indexFilterConditions.Conditions {
@@ -425,7 +426,7 @@ func createIndexIterator(
 
 		switch op {
 		case opEq:
-			if isUnique {
+			if indexDesc.Unique {
 				return &eqSingleIndexIterator{
 					indexKey: indexDataStoreKey,
 					filterValueHolder: filterValueHolder{
@@ -503,7 +504,7 @@ func createIndexIterator(
 		}
 		if op == opIn {
 			var iter filterValueIndexIterator
-			if isUnique {
+			if indexDesc.Unique {
 				iter = &eqSingleIndexIterator{
 					indexKey: indexDataStoreKey,
 					execInfo: execInfo,

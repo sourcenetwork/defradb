@@ -147,11 +147,14 @@ func (scan *scanNode) initFetcher(
 		f = new(fetcher.DocumentFetcher)
 
 		if index.HasValue() {
-			fieldName := index.Value().Fields[0].Name
-			typeIndex := scan.documentMapping.FirstIndexOfName(fieldName)
-			field := mapper.Field{Index: typeIndex, Name: fieldName}
+			fields := make([]mapper.Field, 0, len(index.Value().Fields))
+			for _, field := range index.Value().Fields {
+				fieldName := field.Name
+				typeIndex := scan.documentMapping.FirstIndexOfName(fieldName)
+				fields = append(fields, mapper.Field{Index: typeIndex, Name: fieldName})
+			}
 			var indexFilter *mapper.Filter
-			scan.filter, indexFilter = filter.SplitByFields(scan.filter, field)
+			scan.filter, indexFilter = filter.SplitByFields(scan.filter, fields...)
 			if indexFilter != nil {
 				f = fetcher.NewIndexFetcher(f, index.Value(), indexFilter)
 			}
