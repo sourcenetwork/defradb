@@ -318,6 +318,17 @@ func getArray[T any](
 		}
 
 		return arr, nil
+	case []any:
+		arr := make([]T, len(val))
+		for i, arrItem := range val {
+			var err error
+			arr[i], err = typeGetter(arrItem)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return arr, nil
 	case []T:
 		return val, nil
 	default:
@@ -343,6 +354,21 @@ func getNillableArray[T any](
 		arr := make([]immutable.Option[T], len(valArray))
 		for i, arrItem := range valArray {
 			if arrItem.Type() == fastjson.TypeNull {
+				arr[i] = immutable.None[T]()
+				continue
+			}
+			v, err := typeGetter(arrItem)
+			if err != nil {
+				return nil, err
+			}
+			arr[i] = immutable.Some(v)
+		}
+
+		return arr, nil
+	case []any:
+		arr := make([]immutable.Option[T], len(val))
+		for i, arrItem := range val {
+			if arrItem == nil {
 				arr[i] = immutable.None[T]()
 				continue
 			}

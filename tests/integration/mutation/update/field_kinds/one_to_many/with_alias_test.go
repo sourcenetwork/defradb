@@ -217,10 +217,6 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Coll
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from many side",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
