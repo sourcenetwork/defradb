@@ -43,16 +43,16 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_key
+						_docID
 						name
 						email
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key":  "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
-						"name":  "John",
-						"email": nil,
+						"_docID": "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
+						"name":   "John",
+						"email":  nil,
 					},
 				},
 			},
@@ -98,21 +98,21 @@ func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_key
+						_docID
 						name
 						email
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key":  "bae-1ff978e7-b6ab-5ca7-8344-7fdcff65f94e",
-						"name":  "Shahzad",
-						"email": "sqlizded@yahoo.ca",
+						"_docID": "bae-1ff978e7-b6ab-5ca7-8344-7fdcff65f94e",
+						"name":   "Shahzad",
+						"email":  "sqlizded@yahoo.ca",
 					},
 					{
-						"_key":  "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
-						"name":  "John",
-						"email": nil,
+						"_docID": "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
+						"name":   "John",
+						"email":  nil,
 					},
 				},
 			},

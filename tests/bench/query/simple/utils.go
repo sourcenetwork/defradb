@@ -41,7 +41,7 @@ func RunQueryBenchGet(
 	}
 	defer db.Close()
 
-	dockeys, err := benchutils.BackfillBenchmarkDB(
+	listOfDocIDs, err := benchutils.BackfillBenchmarkDB(
 		b,
 		ctx,
 		collections,
@@ -54,7 +54,7 @@ func RunQueryBenchGet(
 		return err
 	}
 
-	return runQueryBenchGetSync(b, ctx, db, docCount, dockeys, query)
+	return runQueryBenchGetSync(b, ctx, db, docCount, listOfDocIDs, query)
 }
 
 func runQueryBenchGetSync(
@@ -62,11 +62,11 @@ func runQueryBenchGetSync(
 	ctx context.Context,
 	db client.DB,
 	docCount int,
-	dockeys [][]client.DocKey,
+	listOfDocIDs [][]client.DocID,
 	query string,
 ) error {
-	// run any preprocessing on the query before execution (mostly just dockey insertion if needed)
-	query = formatQuery(b, query, dockeys)
+	// run any preprocessing on the query before execution (mostly just docID insertion if needed)
+	query = formatQuery(b, query, listOfDocIDs)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -89,37 +89,37 @@ func runQueryBenchGetSync(
 	return nil
 }
 
-func formatQuery(b *testing.B, query string, dockeys [][]client.DocKey) string {
-	numPlaceholders := strings.Count(query, "{{dockey}}")
+func formatQuery(b *testing.B, query string, listOfDocIDs [][]client.DocID) string {
+	numPlaceholders := strings.Count(query, "{{docID}}")
 	if numPlaceholders == 0 {
 		return query
 	}
-	// create a copy of dockeys since we'll be mutating it
-	dockeysCopy := dockeys[:]
+	// create a copy of docIDs since we'll be mutating it
+	docIDsCopy := listOfDocIDs[:]
 
 	// b.Logf("formatting query, replacing %v instances", numPlaceholders)
 	// b.Logf("Query before: %s", query)
 
-	if len(dockeysCopy) < numPlaceholders {
+	if len(docIDsCopy) < numPlaceholders {
 		b.Fatalf(
 			"Invalid number of query placeholders, max is %v requested is %v",
-			len(dockeys),
+			len(listOfDocIDs),
 			numPlaceholders,
 		)
 	}
 
 	for i := 0; i < numPlaceholders; i++ {
-		// pick a random dockey, needs to be unique accross all
+		// pick a random docID, needs to be unique accross all
 		// loop iterations, so remove the selected one so the next
 		// iteration cant potentially pick it.
-		rIndex := rand.Intn(len(dockeysCopy))
-		key := dockeysCopy[rIndex][0]
+		rIndex := rand.Intn(len(docIDsCopy))
+		docID := docIDsCopy[rIndex][0]
 
-		// remove selected key
-		dockeysCopy = append(dockeysCopy[:rIndex], dockeysCopy[rIndex+1:]...)
+		// remove selected docID
+		docIDsCopy = append(docIDsCopy[:rIndex], docIDsCopy[rIndex+1:]...)
 
 		// replace
-		query = strings.Replace(query, "{{dockey}}", key.String(), 1)
+		query = strings.Replace(query, "{{docID}}", docID.String(), 1)
 	}
 
 	// b.Logf("Query After: %s", query)

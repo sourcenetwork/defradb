@@ -19,7 +19,7 @@ var (
 type CommitSelect struct {
 	Field
 
-	DocKey  immutable.Option[string]
+	DocID   immutable.Option[string]
 	FieldID immutable.Option[string]
 	Cid     immutable.Option[string]
 	Depth   immutable.Option[uint64]

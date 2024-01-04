@@ -21,7 +21,7 @@ var (
 	userSimpleWithSortQuery = `
 	query {
 		User(order: {Age: ASC}) {
-			_key
+			_docID
 			Name
 			Age
 			Points

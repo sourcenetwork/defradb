@@ -21,12 +21,8 @@ const (
 
 	Cid         = "cid"
 	Data        = "data"
-	DocKey      = "dockey"
-	DocKeys     = "dockeys"
 	FieldName   = "field"
 	FieldIDName = "fieldId"
-	Id          = "id"
-	Ids         = "ids"
 	ShowDeleted = "showDeleted"
 
 	FilterClause  = "filter"
@@ -36,13 +32,20 @@ const (
 	OrderClause   = "order"
 	DepthClause   = "depth"
 
+	DocIDArgName  = "docID"
+	DocIDsArgName = "docIDs"
+
 	AverageFieldName = "_avg"
 	CountFieldName   = "_count"
-	KeyFieldName     = "_key"
+	DocIDFieldName   = "_docID"
 	GroupFieldName   = "_group"
 	DeletedFieldName = "_deleted"
 	SumFieldName     = "_sum"
 	VersionFieldName = "_version"
+
+	// New generated document id from a backed up document,
+	// which might have a different _docID originally.
+	NewDocIDFieldName = "_docIDNew"
 
 	ExplainLabel = "explain"
 
@@ -53,12 +56,17 @@ const (
 	LinksFieldName           = "links"
 	HeightFieldName          = "height"
 	CidFieldName             = "cid"
-	DockeyFieldName          = "dockey"
 	CollectionIDFieldName    = "collectionID"
 	SchemaVersionIDFieldName = "schemaVersionId"
 	FieldNameFieldName       = "fieldName"
 	FieldIDFieldName         = "fieldId"
 	DeltaFieldName           = "delta"
+
+	DeltaArgFieldName       = "FieldName"
+	DeltaArgData            = "Data"
+	DeltaArgSchemaVersionID = "SchemaVersionID"
+	DeltaArgPriority        = "Priority"
+	DeltaArgDocID           = "DocID"
 
 	LinksNameFieldName = "name"
 	LinksCidFieldName  = "cid"
@@ -80,7 +88,7 @@ var (
 		CountFieldName:    true,
 		SumFieldName:      true,
 		AverageFieldName:  true,
-		KeyFieldName:      true,
+		DocIDFieldName:    true,
 		DeletedFieldName:  true,
 	}
 
@@ -98,7 +106,7 @@ var (
 	VersionFields = []string{
 		HeightFieldName,
 		CidFieldName,
-		DockeyFieldName,
+		DocIDArgName,
 		CollectionIDFieldName,
 		SchemaVersionIDFieldName,
 		FieldNameFieldName,

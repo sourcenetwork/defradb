@@ -48,7 +48,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 						},
 						data: "{\"age\": 59}"
 					) {
-						_key
+						_docID
 						name
 						age
 					}
@@ -69,7 +69,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 									"_eq": true,
 								},
 							},
-							"ids": []string(nil),
+							"docIDs": []string(nil),
 						},
 					},
 					{
@@ -111,13 +111,13 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 
 				Request: `mutation @explain {
 					update_Author(
-						ids: [
+						docIDs: [
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],
 						data: "{\"age\": 59}"
 					) {
-						_key
+						_docID
 						name
 						age
 					}
@@ -134,7 +134,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 								"age": float64(59),
 							},
 							"filter": nil,
-							"ids": []string{
+							"docIDs": []string{
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
@@ -170,7 +170,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with update using id.",
+		Description: "Explain (default) mutation request with update using document id.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -179,10 +179,10 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 
 				Request: `mutation @explain {
 					update_Author(
-						id: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
+						docID: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 						data: "{\"age\": 59}"
 					) {
-						_key
+						_docID
 						name
 						age
 					}
@@ -199,7 +199,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 								"age": float64(59),
 							},
 							"filter": nil,
-							"ids": []string{
+							"docIDs": []string{
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
 						},
@@ -244,13 +244,13 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 								_eq: true
 							}
 						},
-						ids: [
+						docIDs: [
 							"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 						],
 						data: "{\"age\": 59}"
 					) {
-						_key
+						_docID
 						name
 						age
 					}
@@ -271,7 +271,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 									"_eq": true,
 								},
 							},
-							"ids": []string{
+							"docIDs": []string{
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},

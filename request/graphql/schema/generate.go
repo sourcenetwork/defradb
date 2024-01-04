@@ -366,8 +366,8 @@ func (g *Generator) createExpandedFieldList(
 		Description: f.Description,
 		Type:        gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			"dockey":  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
-			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
+			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.String, docIDArgDescription),
+			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
 			"filter": schemaTypes.NewArgConfig(
 				g.manager.schema.TypeMap()[typeName+"FilterArg"],
 				listFieldFilterArgDescription,
@@ -435,16 +435,16 @@ func (g *Generator) buildTypes(
 			fields := gql.Fields{}
 
 			if !isEmbeddedObject {
-				// automatically add the _key: ID field to the type
-				fields[request.KeyFieldName] = &gql.Field{
-					Description: keyFieldDescription,
+				// automatically add the _docID: ID field to the type
+				fields[request.DocIDFieldName] = &gql.Field{
+					Description: docIDFieldDescription,
 					Type:        gql.ID,
 				}
 			}
 
 			for _, field := range fieldDescriptions {
-				if field.Name == request.KeyFieldName {
-					// The `_key` field is included in the fieldDescriptions,
+				if field.Name == request.DocIDFieldName {
+					// The `_docID` field is included in the fieldDescriptions,
 					// but we do not wish to override the standard definition
 					// with the collection held definition (particularly the
 					// description)
@@ -999,10 +999,10 @@ func (g *Generator) genTypeMutationUpdateField(
 		Description: updateDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
-			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
-			"filter": schemaTypes.NewArgConfig(filter, updateFilterArgDescription),
-			"data":   schemaTypes.NewArgConfig(gql.String, updateDataArgDescription),
+			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
+			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
+			"filter":              schemaTypes.NewArgConfig(filter, updateFilterArgDescription),
+			"data":                schemaTypes.NewArgConfig(gql.String, updateDataArgDescription),
 		},
 	}
 	return field, nil
@@ -1017,9 +1017,9 @@ func (g *Generator) genTypeMutationDeleteField(
 		Description: deleteDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
-			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
-			"filter": schemaTypes.NewArgConfig(filter, deleteFilterArgDescription),
+			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
+			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
+			"filter":              schemaTypes.NewArgConfig(filter, deleteFilterArgDescription),
 		},
 	}
 	return field, nil
@@ -1065,7 +1065,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			// generate basic filter operator blocks
 			// @todo: Extract object field loop into its own utility func
 			for f, field := range obj.Fields() {
-				if _, ok := request.ReservedFields[f]; ok && f != request.KeyFieldName {
+				if _, ok := request.ReservedFields[f]; ok && f != request.DocIDFieldName {
 					continue
 				}
 				// scalars (leafs)
@@ -1169,7 +1169,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			fields := gql.InputObjectConfigFieldMap{}
 
 			for f, field := range obj.Fields() {
-				if _, ok := request.ReservedFields[f]; ok && f != request.KeyFieldName {
+				if _, ok := request.ReservedFields[f]; ok && f != request.DocIDFieldName {
 					continue
 				}
 				typeMap := g.manager.schema.TypeMap()
@@ -1216,10 +1216,10 @@ func (g *Generator) genTypeQueryableFieldList(
 		Description: obj.Description(),
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"dockey":  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
-			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
-			"cid":     schemaTypes.NewArgConfig(gql.String, cidArgDescription),
-			"filter":  schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
+			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.String, docIDArgDescription),
+			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
+			"cid":                 schemaTypes.NewArgConfig(gql.String, cidArgDescription),
+			"filter":              schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(config.groupBy)),
 				schemaTypes.GroupByArgDescription,

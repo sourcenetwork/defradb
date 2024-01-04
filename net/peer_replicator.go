@@ -92,9 +92,9 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 
 	// push all collection documents to the replicator peer
 	for _, col := range added {
-		keysCh, err := col.WithTxn(txn).GetAllDocKeys(ctx)
+		keysCh, err := col.WithTxn(txn).GetAllDocIDs(ctx)
 		if err != nil {
-			return NewErrReplicatorDocKey(err, col.Name(), rep.Info.ID)
+			return NewErrReplicatorDocID(err, col.Name(), rep.Info.ID)
 		}
 		p.pushToReplicator(ctx, txn, col, keysCh, rep.Info.ID)
 	}

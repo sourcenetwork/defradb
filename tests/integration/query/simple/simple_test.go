@@ -21,7 +21,7 @@ func TestQuerySimple(t *testing.T) {
 		Description: "Simple query with no filter",
 		Request: `query {
 					Users {
-						_key
+						_docID
 						Name
 						Age
 					}
@@ -36,9 +36,9 @@ func TestQuerySimple(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"_key": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-				"Name": "John",
-				"Age":  int64(21),
+				"_docID": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+				"Name":   "John",
+				"Age":    int64(21),
 			},
 		},
 	}

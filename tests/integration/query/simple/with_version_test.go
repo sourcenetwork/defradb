@@ -46,14 +46,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeieybepwqpy5h2d4sywksgvdqpjd44ciu223vrm7knumychpmucawy",
+						"cid": "bafybeiealfslrqsbiwotlducidmesjaemiq2hb7y2bxkcwc7bppuceujui",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeibphw52n3t5nn2xn32sfdsf4hbll3iddsc6or2ebnnrmpz2cbovyy",
+								"cid":  "bafybeigpazmunkmlf5p5jw6fl4supfslupgp2kksvqr7quvhfhsddfa44e",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeifgqmrklbyw3x35zzzao3d7baownrv3z4v7vzfbmk2r5omv5icgu4",
+								"cid":  "bafybeibxsjz4krbv3jcbobpdm2igdcvunitu332o6ebsxup53wglkyn6ee",
 								"name": "Name",
 							},
 						},
@@ -90,7 +90,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 				"Name": "John",
 				"_version": []map[string]any{
 					{
-						"schemaVersionId": "bafkreicqyapc7zxw5tt2ymybau5m54lhmm5ahrl22oaktnhidul757a4ba",
+						"schemaVersionId": "bafkreidvd63bawkelxe3wtf7a65klkq4x3dvenqafyasndyal6fvffkeam",
 					},
 				},
 			},
@@ -100,17 +100,17 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
-	const dockey = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
+	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 
 	test := testUtils.RequestTestCase{
-		Description: "Embedded commits query within object query with dockey",
+		Description: "Embedded commits query within object query with document ID",
 		Request: `query {
 					Users {
 						Name
-						_key
+						_docID
 						_version {
-							dockey
+							docID
 						}
 					}
 				}`,
@@ -124,11 +124,11 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name": "John",
-				"_key": dockey,
+				"Name":   "John",
+				"_docID": docID,
 				"_version": []map[string]any{
 					{
-						"dockey": dockey,
+						"docID": docID,
 					},
 				},
 			},
@@ -171,14 +171,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeieybepwqpy5h2d4sywksgvdqpjd44ciu223vrm7knumychpmucawy",
+						"cid": "bafybeiealfslrqsbiwotlducidmesjaemiq2hb7y2bxkcwc7bppuceujui",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafybeibphw52n3t5nn2xn32sfdsf4hbll3iddsc6or2ebnnrmpz2cbovyy",
+								"cid":  "bafybeigpazmunkmlf5p5jw6fl4supfslupgp2kksvqr7quvhfhsddfa44e",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeifgqmrklbyw3x35zzzao3d7baownrv3z4v7vzfbmk2r5omv5icgu4",
+								"cid":  "bafybeibxsjz4krbv3jcbobpdm2igdcvunitu332o6ebsxup53wglkyn6ee",
 								"name": "Name",
 							},
 						},

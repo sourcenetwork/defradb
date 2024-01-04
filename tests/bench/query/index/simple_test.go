@@ -22,7 +22,7 @@ var (
 	userSimpleWithFilterQuery = `
 	query {
 		User(filter: { Age: { _eq: 30 } }) {
-			_key
+			_docID
 			Name
 			Age
 			Points

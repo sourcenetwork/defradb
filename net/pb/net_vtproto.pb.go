@@ -95,10 +95,10 @@ func (m *Document) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.DocKey) > 0 {
-		i -= len(m.DocKey)
-		copy(dAtA[i:], m.DocKey)
-		i = encodeVarint(dAtA, i, uint64(len(m.DocKey)))
+	if len(m.DocID) > 0 {
+		i -= len(m.DocID)
+		copy(dAtA[i:], m.DocID)
+		i = encodeVarint(dAtA, i, uint64(len(m.DocID)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -364,10 +364,10 @@ func (m *PushLogRequest_Body) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.DocKey) > 0 {
-		i -= len(m.DocKey)
-		copy(dAtA[i:], m.DocKey)
-		i = encodeVarint(dAtA, i, uint64(len(m.DocKey)))
+	if len(m.DocID) > 0 {
+		i -= len(m.DocID)
+		copy(dAtA[i:], m.DocID)
+		i = encodeVarint(dAtA, i, uint64(len(m.DocID)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -547,7 +547,7 @@ func (m *Document) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.DocKey)
+	l = len(m.DocID)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -625,7 +625,7 @@ func (m *PushLogRequest_Body) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.DocKey)
+	l = len(m.DocID)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -815,7 +815,7 @@ func (m *Document) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DocKey", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DocID", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -842,9 +842,9 @@ func (m *Document) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.DocKey = append(m.DocKey[:0], dAtA[iNdEx:postIndex]...)
-			if m.DocKey == nil {
-				m.DocKey = []byte{}
+			m.DocID = append(m.DocID[:0], dAtA[iNdEx:postIndex]...)
+			if m.DocID == nil {
+				m.DocID = []byte{}
 			}
 			iNdEx = postIndex
 		case 4:
@@ -1240,7 +1240,7 @@ func (m *PushLogRequest_Body) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DocKey", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DocID", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -1267,9 +1267,9 @@ func (m *PushLogRequest_Body) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.DocKey = append(m.DocKey[:0], dAtA[iNdEx:postIndex]...)
-			if m.DocKey == nil {
-				m.DocKey = []byte{}
+			m.DocID = append(m.DocID[:0], dAtA[iNdEx:postIndex]...)
+			if m.DocID == nil {
+				m.DocID = []byte{}
 			}
 			iNdEx = postIndex
 		case 2:

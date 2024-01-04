@@ -19,16 +19,20 @@ import (
 )
 
 type EncodedDocument interface {
-	// Key returns the key of the document
-	Key() []byte
+	// ID returns the ID of the document
+	ID() []byte
+
 	SchemaVersionID() string
+
 	// Status returns the document status.
 	//
 	// For example, whether it is deleted or active.
 	Status() client.DocumentStatus
+
 	// Properties returns a copy of the decoded property values mapped by their field
 	// description.
 	Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error)
+
 	// Reset re-initializes the EncodedDocument object.
 	Reset()
 }
@@ -61,7 +65,7 @@ func (e encProperty) Decode() (any, error) {
 
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
-	key                  []byte
+	id                   []byte
 	schemaVersionID      string
 	status               client.DocumentStatus
 	properties           map[client.FieldDescription]*encProperty
@@ -78,8 +82,8 @@ type encodedDocument struct {
 
 var _ EncodedDocument = (*encodedDocument)(nil)
 
-func (encdoc *encodedDocument) Key() []byte {
-	return encdoc.key
+func (encdoc *encodedDocument) ID() []byte {
+	return encdoc.id
 }
 
 func (encdoc *encodedDocument) SchemaVersionID() string {
@@ -93,7 +97,7 @@ func (encdoc *encodedDocument) Status() client.DocumentStatus {
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
 	encdoc.properties = make(map[client.FieldDescription]*encProperty, 0)
-	encdoc.key = nil
+	encdoc.id = nil
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
 	encdoc.schemaVersionID = ""
@@ -103,12 +107,12 @@ func (encdoc *encodedDocument) Reset() {
 
 // Decode returns a properly decoded document object
 func Decode(encdoc EncodedDocument) (*client.Document, error) {
-	key, err := client.NewDocKeyFromString(string(encdoc.Key()))
+	docID, err := client.NewDocIDFromString(string(encdoc.ID()))
 	if err != nil {
 		return nil, err
 	}
 
-	doc := client.NewDocWithKey(key)
+	doc := client.NewDocWithID(docID)
 	properties, err := encdoc.Properties(false)
 	if err != nil {
 		return nil, err
@@ -141,8 +145,8 @@ func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
 	for field, prop := range otherEncDoc.properties {
 		encdoc.properties[field] = prop
 	}
-	if other.Key() != nil {
-		encdoc.key = other.Key()
+	if other.ID() != nil {
+		encdoc.id = other.ID()
 	}
 	if other.SchemaVersionID() != "" {
 		encdoc.schemaVersionID = other.SchemaVersionID()
@@ -153,7 +157,7 @@ func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
 // map of field/value pairs
 func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter bool) (core.Doc, error) {
 	doc := mapping.NewDoc()
-	doc.SetKey(string(encdoc.Key()))
+	doc.SetID(string(encdoc.ID()))
 
 	properties, err := encdoc.Properties(filter)
 	if err != nil {

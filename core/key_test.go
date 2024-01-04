@@ -29,14 +29,14 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
 	assert.ErrorIs(t, ErrEmptyKey, err)
 }
 
-func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInstanceType_GivenFourItemsWithType(
+func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocIDAndFieldIdAndInstanceType_GivenFourItemsWithType(
 	t *testing.T,
 ) {
 	instanceType := "anyType"
 	fieldId := "f1"
-	docKey := "docKey"
+	docID := "docID"
 	collectionId := "1"
-	inputString := collectionId + "/" + instanceType + "/" + docKey + "/" + fieldId
+	inputString := collectionId + "/" + instanceType + "/" + docID + "/" + fieldId
 
 	result, err := NewDataStoreKey(inputString)
 	if err != nil {
@@ -48,11 +48,11 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInst
 		t,
 		DataStoreKey{
 			CollectionID: collectionId,
-			DocKey:       docKey,
+			DocID:        docID,
 			FieldId:      fieldId,
 			InstanceType: InstanceType(instanceType)},
 		result)
-	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docKey+"/"+fieldId, resultString)
+	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docID+"/"+fieldId, resultString)
 }
 
 func TestNewDataStoreKey_ReturnsEmptyStruct_GivenAStringWithMissingElements(t *testing.T) {
@@ -65,9 +65,9 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenAStringWithMissingElements(t *t
 
 func TestNewDataStoreKey_GivenAShortObjectMarker(t *testing.T) {
 	instanceType := "anyType"
-	docKey := "docKey"
+	docID := "docID"
 	collectionId := "1"
-	inputString := collectionId + "/" + instanceType + "/" + docKey
+	inputString := collectionId + "/" + instanceType + "/" + docID
 
 	result, err := NewDataStoreKey(inputString)
 	if err != nil {
@@ -79,18 +79,18 @@ func TestNewDataStoreKey_GivenAShortObjectMarker(t *testing.T) {
 		t,
 		DataStoreKey{
 			CollectionID: collectionId,
-			DocKey:       docKey,
+			DocID:        docID,
 			InstanceType: InstanceType(instanceType)},
 		result)
-	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docKey, resultString)
+	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docID, resultString)
 }
 
 func TestNewDataStoreKey_GivenAStringWithExtraPrefixes(t *testing.T) {
 	instanceType := "anyType"
 	fieldId := "f1"
-	docKey := "docKey"
+	docID := "docID"
 	collectionId := "1"
-	inputString := "/db/my_database_name/data/" + collectionId + "/" + instanceType + "/" + docKey + "/" + fieldId
+	inputString := "/db/my_database_name/data/" + collectionId + "/" + instanceType + "/" + docID + "/" + fieldId
 
 	_, err := NewDataStoreKey(inputString)
 
@@ -100,9 +100,9 @@ func TestNewDataStoreKey_GivenAStringWithExtraPrefixes(t *testing.T) {
 func TestNewDataStoreKey_GivenAStringWithExtraSuffix(t *testing.T) {
 	instanceType := "anyType"
 	fieldId := "f1"
-	docKey := "docKey"
+	docID := "docID"
 	collectionId := "1"
-	inputString := "/db/data/" + collectionId + "/" + instanceType + "/" + docKey + "/" + fieldId + "/version_number"
+	inputString := "/db/data/" + collectionId + "/" + instanceType + "/" + docID + "/" + fieldId + "/version_number"
 
 	_, err := NewDataStoreKey(inputString)
 

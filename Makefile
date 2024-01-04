@@ -217,10 +217,25 @@ test\:cli:
 test\:names:
 	gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
+.PHONY: test\:lens
+test\:lens:
+	@$(MAKE) deps:lens
+	gotestsum --format testname -- ./$(LENS_TEST_DIRECTORY)/... $(TEST_FLAGS)
+
+.PHONY: test\:lens-quick
+test\:lens-quick:
+	@$(MAKE) deps:lens
+	gotestsum --format testname -- ./$(LENS_TEST_DIRECTORY)/...
+
 .PHONY: test\:all
 test\:all:
 	@$(MAKE) test:names
 	@$(MAKE) test:lens
+
+.PHONY: test\:all-quick
+test\:all-quick:
+	@$(MAKE) test:quick
+	@$(MAKE) test:lens-quick
 
 .PHONY: test\:verbose
 test\:verbose:
@@ -245,11 +260,6 @@ test\:bench-short:
 .PHONY: test\:scripts
 test\:scripts:
 	@$(MAKE) -C ./tools/scripts/ test
-
-.PHONY: test\:lens
-test\:lens:
-	@$(MAKE) deps:lens
-	gotestsum --format testname -- ./$(LENS_TEST_DIRECTORY)/... $(TEST_FLAGS)
 
 .PHONY: test\:coverage
 test\:coverage:

@@ -20,16 +20,16 @@ import (
 	"github.com/sourcenetwork/defradb/db/fetcher"
 )
 
-func (c *collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
+func (c *collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
 	// create txn
 	txn, err := c.getTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	dsKey := c.getPrimaryKeyFromDocKey(key)
+	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
-	found, isDeleted, err := c.exists(ctx, txn, dsKey)
+	found, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (c *collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 		return nil, client.ErrDocumentNotFound
 	}
 
-	doc, err := c.get(ctx, txn, dsKey, nil, showDeleted)
+	doc, err := c.get(ctx, txn, primaryKey, nil, showDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (c *collection) Get(ctx context.Context, key client.DocKey, showDeleted boo
 func (c *collection) get(
 	ctx context.Context,
 	txn datastore.Txn,
-	key core.PrimaryDataStoreKey,
+	primaryKey core.PrimaryDataStoreKey,
 	fields []client.FieldDescription,
 	showDeleted bool,
 ) (*client.Document, error) {
@@ -60,8 +60,8 @@ func (c *collection) get(
 		return nil, err
 	}
 
-	// construct target key for DocKey
-	targetKey := base.MakeDocKey(c.Description(), key.DocKey)
+	// construct target DS key from DocID.
+	targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(c.Description(), primaryKey.DocID)
 	// run the doc fetcher
 	err = df.Start(ctx, core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd())))
 	if err != nil {
