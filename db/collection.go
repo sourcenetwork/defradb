@@ -1306,7 +1306,7 @@ func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldNa
 func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
 	for _, field := range c.Schema().Fields {
 		if field.Name == fieldName {
-			if field.IsObjectArray() {
+			if field.IsObject() || field.IsObjectArray() {
 				// We do not wish to match navigational properties, only
 				// fields directly on the collection.
 				return uint32(0), false

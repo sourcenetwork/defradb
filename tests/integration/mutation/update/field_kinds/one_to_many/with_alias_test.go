@@ -233,7 +233,6 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Coll
 					}`,
 					invalidAuthorID,
 				),
-				// ExpectedError: "The given field does not exist. Name: author",
 			},
 			testUtils.Request{
 				Request: `query {
