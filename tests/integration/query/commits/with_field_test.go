@@ -17,7 +17,7 @@ import (
 )
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits for dockey-field).
+// desired behaviour (should return all commits for docID-field).
 func TestQueryCommitsWithField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with field",
@@ -66,7 +66,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeiazsz3twea2uxpen6452qqa7qnzp2xildfxliidhqk632jpvbixkm",
+						"cid": "bafybeibcr5lkdvcvtr67rpsnvn57hgrhlg36cnmmf7kywjekjodwxytpi4",
 					},
 				},
 			},
@@ -80,7 +80,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and field id",
+		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -98,7 +98,7 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeihbcl2ijavd6vdcj4vgunw4q5qt5itmumxw7iy7fhoqfsuvkpkqeq",
+						"cid": "bafybeige7qoom3bgjitfisxvhbifou6n4tgguan3ihwbkz5mvbumndeiaa",
 					},
 				},
 			},
@@ -112,7 +112,7 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and field id",
+		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -131,8 +131,8 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":             "bafybeihbcl2ijavd6vdcj4vgunw4q5qt5itmumxw7iy7fhoqfsuvkpkqeq",
-						"schemaVersionId": "bafkreictcre4pylafzzoh5lpgbetdodunz4r6pz3ormdzzpsz2lqtp4v34",
+						"cid":             "bafybeige7qoom3bgjitfisxvhbifou6n4tgguan3ihwbkz5mvbumndeiaa",
+						"schemaVersionId": "bafkreiayhdsgzhmrz6t5d3x2cgqqbdjt7aqgldtlkmxn5eibg542j3n6ea",
 					},
 				},
 			},

@@ -62,9 +62,9 @@ func (c *Collection) Definition() client.CollectionDefinition {
 func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
-	// We must call this here, else the doc key on the given object will not match
+	// We must call this here, else the docID on the given object will not match
 	// that of the document saved in the database
-	err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields)
+	err := doc.RemapAliasFieldsAndDocID(c.Schema().Fields)
 	if err != nil {
 		return err
 	}
@@ -90,9 +90,9 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 
 	var docMapList []json.RawMessage
 	for _, doc := range docs {
-		// We must call this here, else the doc key on the given object will not match
+		// We must call this here, else the docID on the given object will not match
 		// that of the document saved in the database
-		err := doc.RemapAliasFieldsAndDockey(c.Schema().Fields)
+		err := doc.RemapAliasFieldsAndDocID(c.Schema().Fields)
 		if err != nil {
 			return err
 		}
@@ -122,7 +122,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 }
 
 func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, doc.Key().String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, doc.ID().String())
 
 	body, err := doc.ToJSONPatch()
 	if err != nil {
@@ -141,7 +141,7 @@ func (c *Collection) Update(ctx context.Context, doc *client.Document) error {
 }
 
 func (c *Collection) Save(ctx context.Context, doc *client.Document) error {
-	_, err := c.Get(ctx, doc.Key(), true)
+	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
@@ -151,8 +151,8 @@ func (c *Collection) Save(ctx context.Context, doc *client.Document) error {
 	return err
 }
 
-func (c *Collection) Delete(ctx context.Context, docKey client.DocKey) (bool, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, docKey.String())
+func (c *Collection) Delete(ctx context.Context, docID client.DocID) (bool, error) {
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, docID.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
@@ -165,8 +165,8 @@ func (c *Collection) Delete(ctx context.Context, docKey client.DocKey) (bool, er
 	return true, nil
 }
 
-func (c *Collection) Exists(ctx context.Context, docKey client.DocKey) (bool, error) {
-	_, err := c.Get(ctx, docKey, false)
+func (c *Collection) Exists(ctx context.Context, docID client.DocID) (bool, error) {
+	_, err := c.Get(ctx, docID, false)
 	if err != nil {
 		return false, err
 	}
@@ -177,10 +177,10 @@ func (c *Collection) UpdateWith(ctx context.Context, target any, updater string)
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
 		return c.UpdateWithFilter(ctx, t, updater)
-	case client.DocKey:
-		return c.UpdateWithKey(ctx, t, updater)
-	case []client.DocKey:
-		return c.UpdateWithKeys(ctx, t, updater)
+	case client.DocID:
+		return c.UpdateWithDocID(ctx, t, updater)
+	case []client.DocID:
+		return c.UpdateWithDocIDs(ctx, t, updater)
 	default:
 		return nil, client.ErrInvalidUpdateTarget
 	}
@@ -218,28 +218,28 @@ func (c *Collection) UpdateWithFilter(
 	})
 }
 
-func (c *Collection) UpdateWithKey(
+func (c *Collection) UpdateWithDocID(
 	ctx context.Context,
-	key client.DocKey,
+	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
 	return c.updateWith(ctx, CollectionUpdateRequest{
-		Key:     key.String(),
+		DocID:   docID.String(),
 		Updater: updater,
 	})
 }
 
-func (c *Collection) UpdateWithKeys(
+func (c *Collection) UpdateWithDocIDs(
 	ctx context.Context,
-	docKeys []client.DocKey,
+	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
-	var keys []string
-	for _, key := range docKeys {
-		keys = append(keys, key.String())
+	var strDocIDs []string
+	for _, docID := range docIDs {
+		strDocIDs = append(strDocIDs, docID.String())
 	}
 	return c.updateWith(ctx, CollectionUpdateRequest{
-		Keys:    keys,
+		DocIDs:  strDocIDs,
 		Updater: updater,
 	})
 }
@@ -248,10 +248,10 @@ func (c *Collection) DeleteWith(ctx context.Context, target any) (*client.Delete
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
 		return c.DeleteWithFilter(ctx, t)
-	case client.DocKey:
-		return c.DeleteWithKey(ctx, t)
-	case []client.DocKey:
-		return c.DeleteWithKeys(ctx, t)
+	case client.DocID:
+		return c.DeleteWithDocID(ctx, t)
+	case []client.DocID:
+		return c.DeleteWithDocIDs(ctx, t)
 	default:
 		return nil, client.ErrInvalidDeleteTarget
 	}
@@ -284,29 +284,29 @@ func (c *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.
 	})
 }
 
-func (c *Collection) DeleteWithKey(ctx context.Context, docKey client.DocKey) (*client.DeleteResult, error) {
+func (c *Collection) DeleteWithDocID(ctx context.Context, docID client.DocID) (*client.DeleteResult, error) {
 	return c.deleteWith(ctx, CollectionDeleteRequest{
-		Key: docKey.String(),
+		DocID: docID.String(),
 	})
 }
 
-func (c *Collection) DeleteWithKeys(ctx context.Context, docKeys []client.DocKey) (*client.DeleteResult, error) {
-	var keys []string
-	for _, key := range docKeys {
-		keys = append(keys, key.String())
+func (c *Collection) DeleteWithDocIDs(ctx context.Context, docIDs []client.DocID) (*client.DeleteResult, error) {
+	var strDocIDs []string
+	for _, docID := range docIDs {
+		strDocIDs = append(strDocIDs, docID.String())
 	}
 	return c.deleteWith(ctx, CollectionDeleteRequest{
-		Keys: keys,
+		DocIDs: strDocIDs,
 	})
 }
 
-func (c *Collection) Get(ctx context.Context, key client.DocKey, showDeleted bool) (*client.Document, error) {
+func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
 	query := url.Values{}
 	if showDeleted {
 		query.Add("show_deleted", "true")
 	}
 
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, key.String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, docID.String())
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -332,7 +332,7 @@ func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
 	}
 }
 
-func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
+func (c *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -345,7 +345,7 @@ func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 	if err != nil {
 		return nil, err
 	}
-	docKeyCh := make(chan client.DocKeysResult)
+	docIDCh := make(chan client.DocIDResult)
 
 	go func() {
 		eventReader := sse.NewReadCloser(res.Body)
@@ -353,32 +353,32 @@ func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 		// and body of the request are already
 		// checked and it cannot be handled properly
 		defer eventReader.Close() //nolint:errcheck
-		defer close(docKeyCh)
+		defer close(docIDCh)
 
 		for {
 			evt, err := eventReader.Next()
 			if err != nil {
 				return
 			}
-			var res DocKeyResult
+			var res DocIDResult
 			if err := json.Unmarshal(evt.Data, &res); err != nil {
 				return
 			}
-			key, err := client.NewDocKeyFromString(res.Key)
+			docID, err := client.NewDocIDFromString(res.DocID)
 			if err != nil {
 				return
 			}
-			docKey := client.DocKeysResult{
-				Key: key,
+			docIDResult := client.DocIDResult{
+				ID: docID,
 			}
 			if res.Error != "" {
-				docKey.Err = fmt.Errorf(res.Error)
+				docIDResult.Err = fmt.Errorf(res.Error)
 			}
-			docKeyCh <- docKey
+			docIDCh <- docIDResult
 		}
 	}()
 
-	return docKeyCh, nil
+	return docIDCh, nil
 }
 
 func (c *Collection) CreateIndex(

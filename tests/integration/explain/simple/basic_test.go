@@ -29,7 +29,7 @@ func TestSimpleExplainRequest(t *testing.T) {
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: simple) {
 					Author {
-						_key
+						_docID
 						name
 						age
 					}
@@ -40,7 +40,7 @@ func TestSimpleExplainRequest(t *testing.T) {
 						"explain": dataMap{
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
-									"_keys":  nil,
+									"docIDs": nil,
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,

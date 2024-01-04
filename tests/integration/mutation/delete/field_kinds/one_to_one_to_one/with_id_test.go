@@ -53,13 +53,13 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `mutation {
-						delete_Author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
-							_key
+						delete_Author(docID: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+							_docID
 						}
 					}`,
 					Results: []map[string]any{
 						{
-							"_key": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
+							"_docID": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
 						},
 					},
 				},
@@ -67,7 +67,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 		},
 
 		{
-			Description: "Relational delete mutation with an aliased _key name.",
+			Description: "Relational delete mutation with an aliased _docID name.",
 			Actions: []any{
 				testUtils.CreateDoc{
 					// Books
@@ -101,8 +101,8 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `mutation {
-						delete_Author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
-							AliasOfKey: _key
+						delete_Author(docID: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+							AliasOfKey: _docID
 						}
 					}`,
 					Results: []map[string]any{
@@ -115,7 +115,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 		},
 
 		{
-			Description: "Relational Delete of an updated document and an aliased _key name.",
+			Description: "Relational Delete of an updated document and an aliased _docID name.",
 			Actions: []any{
 				testUtils.CreateDoc{
 					// Books
@@ -166,8 +166,8 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `mutation {
-						delete_Author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
-							Key: _key
+						delete_Author(docID: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+							Key: _docID
 						}
 					}`,
 					Results: []map[string]any{

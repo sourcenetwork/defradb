@@ -48,10 +48,10 @@ func TestNewFromJSON(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	objKey := NewDocKeyV0(c)
+	objKey := NewDocIDV0(c)
 
-	if objKey.String() != doc.Key().String() {
-		t.Errorf("Incorrect doc key. Want %v, have %v", objKey.String(), doc.Key().String())
+	if objKey.String() != doc.ID().String() {
+		t.Errorf("Incorrect document ID. Want %v, have %v", objKey.String(), doc.ID().String())
 		return
 	}
 
@@ -101,10 +101,10 @@ func TestSetWithJSON(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	objKey := NewDocKeyV0(c)
+	objKey := NewDocIDV0(c)
 
-	if objKey.String() != doc.Key().String() {
-		t.Errorf("Incorrect doc key. Want %v, have %v", objKey.String(), doc.Key().String())
+	if objKey.String() != doc.ID().String() {
+		t.Errorf("Incorrect document ID. Want %v, have %v", objKey.String(), doc.ID().String())
 		return
 	}
 

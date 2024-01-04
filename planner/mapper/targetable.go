@@ -192,9 +192,9 @@ type Targetable struct {
 	// The basic field information of this property.
 	Field
 
-	// A optional collection of docKeys that can be specified to restrict results
+	// A optional collection of docIDs that can be specified to restrict results
 	// to belonging to this set.
-	DocKeys immutable.Option[[]string]
+	DocIDs immutable.Option[[]string]
 
 	// An optional filter, that can be specified to restrict results to documents
 	// that satisfies all of its conditions.
@@ -218,7 +218,7 @@ type Targetable struct {
 func (t *Targetable) cloneTo(index int) *Targetable {
 	return &Targetable{
 		Field:       *t.Field.cloneTo(index),
-		DocKeys:     t.DocKeys,
+		DocIDs:      t.DocIDs,
 		Filter:      t.Filter,
 		Limit:       t.Limit,
 		GroupBy:     t.GroupBy,

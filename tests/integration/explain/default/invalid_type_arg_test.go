@@ -28,7 +28,7 @@ func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
 
 				Request: `query @explain(type: invalid) {
 					Author {
-						_key
+						_docID
 						name
 						age
 					}

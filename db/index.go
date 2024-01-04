@@ -212,7 +212,7 @@ func (i *collectionSimpleIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	key.FieldValues = append(key.FieldValues, []byte(doc.Key().String()))
+	key.FieldValues = append(key.FieldValues, []byte(doc.ID().String()))
 	return key, nil
 }
 
@@ -280,7 +280,7 @@ func (i *collectionUniqueIndex) Save(
 	if exists {
 		return i.newUniqueIndexError(doc)
 	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte(doc.Key().String()))
+	err = txn.Datastore().Put(ctx, key.ToDS(), []byte(doc.ID().String()))
 	if err != nil {
 		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
 	}
@@ -294,7 +294,7 @@ func (i *collectionUniqueIndex) newUniqueIndexError(
 	if err != nil {
 		return err
 	}
-	return NewErrCanNotIndexNonUniqueField(doc.Key().String(), i.fieldDesc.Name, fieldVal.Value())
+	return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldDesc.Name, fieldVal.Value())
 }
 
 func (i *collectionUniqueIndex) Update(

@@ -30,7 +30,7 @@ func TestEventsSimpleWithCreate(t *testing.T) {
 		),
 	)
 	assert.Nil(t, err)
-	docKey1 := doc1.Key().String()
+	docID1 := doc1.ID().String()
 
 	doc2, err := client.NewDocFromJSON(
 		[]byte(
@@ -40,7 +40,7 @@ func TestEventsSimpleWithCreate(t *testing.T) {
 		),
 	)
 	assert.Nil(t, err)
-	docKey2 := doc2.Key().String()
+	docID2 := doc2.ID().String()
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection){
@@ -57,10 +57,10 @@ func TestEventsSimpleWithCreate(t *testing.T) {
 		},
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
-				DocKey: immutable.Some(docKey1),
+				DocID: immutable.Some(docID1),
 			},
 			{
-				DocKey: immutable.Some(docKey2),
+				DocID: immutable.Some(docID2),
 			},
 		},
 	}

@@ -51,7 +51,7 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 			testUtils.Request{
 				Request: `mutation {
 					update_Users(
-						ids: ["bae-cc36febf-4029-52b3-a876-c99c6293f588", "bae-4a99afc4-a70b-5702-9642-fc1eb9ffe901"],
+						docIDs: ["bae-cc36febf-4029-52b3-a876-c99c6293f588", "bae-4a99afc4-a70b-5702-9642-fc1eb9ffe901"],
 						data: "{\"points\": 59}"
 					) {
 						name

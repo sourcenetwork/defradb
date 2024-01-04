@@ -470,12 +470,12 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `mutation {
 						create_Users(data: "{\"name\": \"John\"}") {
-							_key
+							_docID
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"_key": key1,
+						"_docID": key1,
 					},
 				},
 			},

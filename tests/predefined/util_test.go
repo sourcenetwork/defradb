@@ -68,22 +68,22 @@ outer:
 	return ""
 }
 
-func mustGetDocKeyFromDocMap(docMap map[string]any) string {
+func mustGetDocIDFromDocMap(docMap map[string]any) string {
 	doc, err := client.NewDocFromMap(docMap)
 	if err != nil {
 		panic("can not get doc from map" + err.Error())
 	}
-	return doc.Key().String()
+	return doc.ID().String()
 }
 
-func mustAddKeyToDoc(doc map[string]any) map[string]any {
-	doc[request.KeyFieldName] = mustGetDocKeyFromDocMap(doc)
+func mustAddDocIDToDoc(doc map[string]any) map[string]any {
+	doc[request.DocIDFieldName] = mustGetDocIDFromDocMap(doc)
 	return doc
 }
 
-func mustAddKeysToDocs(docs []map[string]any) []map[string]any {
+func mustAddDocIDsToDocs(docs []map[string]any) []map[string]any {
 	for i := range docs {
-		mustAddKeyToDoc(docs[i])
+		mustAddDocIDToDoc(docs[i])
 	}
 	return docs
 }

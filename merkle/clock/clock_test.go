@@ -17,6 +17,7 @@ import (
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/core/crdt"
@@ -32,7 +33,12 @@ func newTestMerkleClock() *MerkleClock {
 
 	multistore := datastore.MultiStoreFrom(s)
 	reg := crdt.NewLWWRegister(multistore.Rootstore(), core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
-	return NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{DocKey: "dockey", FieldId: "1"}, reg).(*MerkleClock)
+	return NewMerkleClock(
+		multistore.Headstore(),
+		multistore.DAGstore(),
+		core.HeadStoreKey{DocID: request.DocIDArgName, FieldId: "1"},
+		reg,
+	).(*MerkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {

@@ -22,7 +22,7 @@ func TestQueryFromManySideWithEqFilterOnRelatedType(t *testing.T) {
 		Description: "One-to-many query from many side with _eq filter on related field type.",
 
 		Request: `query {
-			Book(filter: {author: {_key: {_eq: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"}}}) {
+			Book(filter: {author: {_docID: {_eq: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"}}}) {
 				name
 			}
 		}`,
@@ -178,7 +178,7 @@ func TestQueryFromManySideWithSameFiltersInDifferentWayOnRelatedType(t *testing.
 		Request: `query {
 			Book(
 				filter: {
-					author: {_key: {_eq: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"}},
+					author: {_docID: {_eq: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"}},
 					author_id: {_eq: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"}
 				}
 			) {
@@ -258,7 +258,7 @@ func TestQueryFromSingleSideWithEqFilterOnRelatedType(t *testing.T) {
 		Description: "One-to-many query from single side with _eq filter on related field type.",
 
 		Request: `query {
-			Author(filter: {published: {_key: {_eq: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"}}}) {
+			Author(filter: {published: {_docID: {_eq: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"}}}) {
 				name
 			}
 		}`,

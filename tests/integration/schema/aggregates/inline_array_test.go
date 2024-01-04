@@ -405,7 +405,7 @@ var aggregateGroupArg = map[string]any{
 							},
 						},
 						map[string]any{
-							"name": "_key",
+							"name": "_docID",
 							"type": map[string]any{
 								"name": "IDOperatorBlock",
 							},

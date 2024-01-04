@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testing.T) {
+func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *testing.T) {
 	jsonString1 := `{
 		"name": "John",
 		"age": 30
@@ -32,7 +32,7 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 		"name": "John and the philosopher are stoned",
 		"rating": 9.9,
 		"author_id": "%s"
-	}`, doc1.Key())
+	}`, doc1.ID())
 	doc2, err := client.NewDocFromJSON([]byte(jsonString2))
 	require.NoError(t, err)
 
@@ -40,12 +40,12 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 		"name": "John has a chamber of secrets",
 		"rating": 9.9,
 		"author_id": "%s"
-	}`, doc1.Key())
+	}`, doc1.ID())
 	// doc3, err := client.NewDocFromJSON([]byte(jsonString1))
 	// require.NoError(t, err)
 
 	test := testUtils.TestCase{
-		Description: "One to many delete document using single key show deleted.",
+		Description: "One to many delete document using single document id, show deleted.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -75,13 +75,13 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 			},
 			testUtils.Request{
 				Request: fmt.Sprintf(`mutation {
-						delete_Book(id: "%s") {
-							_key
+					delete_Book(docID: "%s") {
+							_docID
 						}
-					}`, doc2.Key()),
+					}`, doc2.ID()),
 				Results: []map[string]any{
 					{
-						"_key": doc2.Key().String(),
+						"_docID": doc2.ID().String(),
 					},
 				},
 			},

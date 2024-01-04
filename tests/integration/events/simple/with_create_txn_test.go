@@ -29,7 +29,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 					ctx,
 					`mutation {
 						create_Users(data: "{\"name\": \"John\"}") {
-							_key
+							_docID
 						}
 					}`,
 				)
@@ -44,7 +44,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 					ctx,
 					`mutation {
 						create_Users(data: "{\"name\": \"Shahzad\"}") {
-							_key
+							_docID
 						}
 					}`,
 				)
@@ -56,7 +56,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 		},
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
-				DocKey: immutable.Some("bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"),
+				DocID: immutable.Some("bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"),
 			},
 			// No event should be received for Shahzad, as the transaction was discarded.
 		},

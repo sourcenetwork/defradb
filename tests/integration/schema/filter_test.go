@@ -76,7 +76,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 														},
 													},
 													map[string]any{
-														"name": "_key",
+														"name": "_docID",
 														"type": map[string]any{
 															"name":   "IDOperatorBlock",
 															"ofType": nil,
@@ -132,8 +132,8 @@ var testFilterForSimpleSchemaArgProps = map[string]any{
 var defaultUserArgsWithoutFilter = trimFields(
 	fields{
 		cidArg,
-		dockeyArg,
-		dockeysArg,
+		docIDArg,
+		docIDsArg,
 		showDeletedArg,
 		groupByArg,
 		limitArg,
@@ -214,7 +214,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 														},
 													},
 													map[string]any{
-														"name": "_key",
+														"name": "_docID",
 														"type": map[string]any{
 															"name":   "IDOperatorBlock",
 															"ofType": nil,
@@ -284,8 +284,8 @@ var testFilterForOneToOneSchemaArgProps = map[string]any{
 var defaultBookArgsWithoutFilter = trimFields(
 	fields{
 		cidArg,
-		dockeyArg,
-		dockeysArg,
+		docIDArg,
+		docIDsArg,
 		showDeletedArg,
 		groupByArg,
 		limitArg,

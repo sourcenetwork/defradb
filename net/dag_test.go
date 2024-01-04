@@ -62,7 +62,7 @@ func TestSendJobWorker_WithNewJob_NoError(t *testing.T) {
 
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
 	require.NoError(t, err)
-	dsKey := core.DataStoreKeyFromDocKey(doc.Key())
+	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
@@ -103,7 +103,7 @@ func TestSendJobWorker_WithCloseJob_NoError(t *testing.T) {
 
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
 	require.NoError(t, err)
-	dsKey := core.DataStoreKeyFromDocKey(doc.Key())
+	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestSendJobWorker_WithCloseJob_NoError(t *testing.T) {
 		},
 	}
 
-	n.closeJob <- dsKey.DocKey
+	n.closeJob <- dsKey.DocID
 
 	n.Close()
 	select {
@@ -164,7 +164,7 @@ func TestSendJobWorker_WithPeer_NoError(t *testing.T) {
 
 	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
 	require.NoError(t, err)
-	dsKey := core.DataStoreKeyFromDocKey(doc.Key())
+	dsKey := core.DataStoreKeyFromDocID(doc.ID())
 
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
