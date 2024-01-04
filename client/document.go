@@ -139,6 +139,7 @@ func NewDocFromJSON(obj []byte, sd SchemaDescription) (*Document, error) {
 }
 
 // ManyFromJSON creates a new slice of Documents from a raw JSON array byte array.
+// It will return an error if the given byte array is not a valid JSON array.
 func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {

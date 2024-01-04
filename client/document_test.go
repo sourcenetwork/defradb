@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	ccid "github.com/sourcenetwork/defradb/core/cid"
 )
@@ -159,4 +160,9 @@ func TestSetWithJSON(t *testing.T) {
 	// assert.Equal(t, subDoc.values[subDoc.fields["Street"]].Value(), "Main")
 	// assert.Equal(t, subDoc.values[subDoc.fields["Street"]].IsDocument(), false)
 	// assert.Equal(t, subDoc.values[subDoc.fields["City"]].Value(), "Toronto")
+}
+
+func TestNewDocsFromJSON_WithObjectInsteadOfArray_Error(t *testing.T) {
+	_, err := NewDocsFromJSON(testJSONObj, schemaDescriptions[0])
+	require.ErrorContains(t, err, "value doesn't contain array; it contains object")
 }
