@@ -70,6 +70,25 @@ func TestSplitFilter(t *testing.T) {
 				"verified": m("_eq", false),
 			},
 		},
+		{
+			name: "split by fields that are not present",
+			inputFilter: map[string]any{
+				"name":     m("_eq", "John"),
+				"age":      m("_gt", 55),
+				"verified": m("_eq", false),
+			},
+			inputFields: []mapper.Field{
+				{Index: authorNameInd},
+				{Index: 100},
+				{Index: authorAgeInd},
+				{Index: 200},
+			},
+			expectedFilter1: m("verified", m("_eq", false)),
+			expectedFilter2: map[string]any{
+				"name": m("_eq", "John"),
+				"age":  m("_gt", 55),
+			},
+		},
 	}
 
 	mapping := getDocMapping()

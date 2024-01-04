@@ -38,6 +38,9 @@ func SplitByFields(filter *mapper.Filter, fields ...mapper.Field) (*mapper.Filte
 
 	for _, field := range fields[1:] {
 		newSplitF := CopyField(filter, field)
+		if newSplitF == nil {
+			continue
+		}
 		splitF.Conditions = Merge(splitF.Conditions, newSplitF.Conditions)
 		RemoveField(filter, field)
 	}
