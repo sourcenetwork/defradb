@@ -25,11 +25,6 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testin
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using alias relation id from single side",
-		// This restiction is temporary due to a bug in the collection api, see
-		// https://github.com/sourcenetwork/defradb/issues/1703 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -76,11 +71,6 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide(t *test
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using alias relation id from secondary side",
-		// This restiction is temporary due to a bug in the collection api, see
-		// https://github.com/sourcenetwork/defradb/issues/1703 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -128,11 +118,6 @@ func TestMutationUpdateOneToOne_AliasWithInvalidLengthRelationIDToLink_Error(t *
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using invalid alias relation id",
-		// This restiction is temporary due to a bug in the collection api, see
-		// https://github.com/sourcenetwork/defradb/issues/1703 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -173,11 +158,6 @@ func TestMutationUpdateOneToOne_InvalidAliasRelationNameToLinkFromSecondarySide_
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using alias relation id from secondary side",
-		// This restiction is temporary due to a bug in the collection api, see
-		// https://github.com/sourcenetwork/defradb/issues/1703 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
