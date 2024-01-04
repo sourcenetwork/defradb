@@ -831,12 +831,6 @@ func refreshDocuments(
 				continue
 			}
 
-			if err := doc.RemapAliasFieldsAndDocID(collection.Schema().Fields); err != nil {
-				// If an err has been returned, ignore it - it may be expected and if not
-				// the test will fail later anyway
-				continue
-			}
-
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
 			doc, err = collection.Get(s.ctx, doc.ID(), false)
@@ -1251,7 +1245,7 @@ func updateDocViaColSave(
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.Key(), true)
+	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}
@@ -1274,7 +1268,7 @@ func updateDocViaColUpdate(
 ) error {
 	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.Key(), true)
+	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}

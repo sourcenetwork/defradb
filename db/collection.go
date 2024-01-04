@@ -791,10 +791,6 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 }
 
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
-	// This has to be done before docID verification happens in the next step.
-	if err := doc.RemapAliasFieldsAndDocID(c.Schema().Fields); err != nil {
-		return err
-	}
 
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
@@ -1310,7 +1306,7 @@ func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldNa
 func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
 	for _, field := range c.Schema().Fields {
 		if field.Name == fieldName {
-			if field.IsObject() || field.IsObjectArray() {
+			if field.IsObjectArray() {
 				// We do not wish to match navigational properties, only
 				// fields directly on the collection.
 				return uint32(0), false

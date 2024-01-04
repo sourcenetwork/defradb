@@ -58,12 +58,6 @@ func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Description().Name)
 
-	// We must call this here, else the docID on the given object will not match
-	// that of the document saved in the database
-	err := doc.RemapAliasFieldsAndDocID(c.Schema().Fields)
-	if err != nil {
-		return err
-	}
 	document, err := doc.String()
 	if err != nil {
 		return err
@@ -84,12 +78,6 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 
 	docMapList := make([]map[string]any, len(docs))
 	for i, doc := range docs {
-		// We must call this here, else the docID on the given object will not match
-		// that of the document saved in the database
-		err := doc.RemapAliasFieldsAndDocID(c.Schema().Fields)
-		if err != nil {
-			return err
-		}
 		docMap, err := doc.ToMap()
 		if err != nil {
 			return err

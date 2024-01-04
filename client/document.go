@@ -464,7 +464,7 @@ func (doc *Document) Set(field string, value any) error {
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
-	if fd.IsPrimaryRelation() {
+	if fd.IsRelation() && !fd.IsObjectArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}
@@ -697,40 +697,6 @@ func (doc *Document) generateAndSetDocID() error {
 
 	doc.setDocID(docID)
 	return nil
-}
-
-func (doc *Document) remapAliasFields(fieldDescriptions []FieldDescription) (bool, error) {
-	doc.mu.Lock()
-	defer doc.mu.Unlock()
-
-	foundAlias := false
-	for docField, docFieldValue := range doc.fields {
-		for _, fieldDescription := range fieldDescriptions {
-			maybeAliasField := docField + request.RelatedObjectID
-			if fieldDescription.Name == maybeAliasField {
-				foundAlias = true
-				doc.fields[maybeAliasField] = docFieldValue
-				delete(doc.fields, docField)
-			}
-		}
-	}
-
-	return foundAlias, nil
-}
-
-// RemapAliasFieldsAndDocID remaps the alias fields and fixes (overwrites) the DocID.
-func (doc *Document) RemapAliasFieldsAndDocID(fieldDescriptions []FieldDescription) error {
-	foundAlias, err := doc.remapAliasFields(fieldDescriptions)
-	if err != nil {
-		return err
-	}
-
-	if !foundAlias {
-		return nil
-	}
-
-	// Update the DocID so DocID isn't based on an aliased name of a field.
-	return doc.generateAndSetDocID()
 }
 
 // DocumentStatus represent the state of the document in the DAG store.
