@@ -298,11 +298,13 @@ func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 	if err != nil {
 		return nil, err
 	}
-	var docMap map[string]any
-	if err := json.Unmarshal(data, &docMap); err != nil {
+	doc := client.NewDocWithKey(key, c.Schema())
+	err = doc.SetWithJSON(data)
+	if err != nil {
 		return nil, err
 	}
-	return client.NewDocFromMap(docMap, c.Schema())
+	doc.Clean()
+	return doc, nil
 }
 
 func (c *Collection) WithTxn(tx datastore.Txn) client.Collection {
