@@ -483,7 +483,7 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	return docMap, nil
 }
 
-// GenerateDocID generates DocID corresponding to the document.
+// GenerateDocID generates the DocID corresponding to the document.
 func (doc *Document) GenerateDocID() (DocID, error) {
 	bytes, err := doc.Bytes()
 	if err != nil {

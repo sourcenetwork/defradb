@@ -239,7 +239,7 @@ func (c *collection) iterateAllDocs(
 		_ = df.Close()
 		return err
 	}
-	start := base.MakeDSKeyWithCollectionID(c.Description())
+	start := base.MakeDataStoreKeyWithCollectionDescription(c.Description())
 	spans := core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 
 	err = df.Start(ctx, spans)

@@ -444,7 +444,7 @@ func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
 	if scan == nil {
 		return false, nil
 	}
-	dsKey := base.MakeDSKeyWithCollectionAndDocID(scan.col.Description(), docIDStr)
+	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(scan.col.Description(), docIDStr)
 
 	spans := core.NewSpans(core.NewSpan(dsKey, dsKey.PrefixEnd()))
 

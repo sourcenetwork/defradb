@@ -132,7 +132,7 @@ func initCRDTForType(
 	description := col.Description()
 	if field == "" { // empty field name implies composite type
 		ctype = client.COMPOSITE
-		key = base.MakeDSKeyWithCollectionID(
+		key = base.MakeDataStoreKeyWithCollectionDescription(
 			description,
 		).WithInstanceInfo(
 			dsKey,
@@ -155,7 +155,7 @@ func initCRDTForType(
 	}
 	ctype = fd.Typ
 	fieldID := fd.ID.String()
-	key = base.MakeDSKeyWithCollectionID(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
+	key = base.MakeDataStoreKeyWithCollectionDescription(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
 
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return merklecrdt.NewMerkleLWWRegister(

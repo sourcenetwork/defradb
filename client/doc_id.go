@@ -82,12 +82,12 @@ func NewDocIDFromString(docID string) (DocID, error) {
 	}, nil
 }
 
-// UUID returns the DocID in UUID form.
+// UUID returns the underlying document identifier in UUID form.
 func (docID DocID) UUID() uuid.UUID {
 	return docID.uuid
 }
 
-// String returns the DocID in string form.
+// String returns the underlying document identifier in string form.
 func (docID DocID) String() string {
 	buf := make([]byte, 1)
 	binary.PutUvarint(buf, uint64(docID.version))
@@ -95,7 +95,7 @@ func (docID DocID) String() string {
 	return versionStr + "-" + docID.uuid.String()
 }
 
-// Bytes returns the DocID in Byte format.
+// Bytes returns the underlying document identifier in Byte format.
 func (docID DocID) Bytes() []byte {
 	buf := make([]byte, binary.MaxVarintLen16)
 	binary.PutUvarint(buf, uint64(docID.version))

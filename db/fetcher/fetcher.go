@@ -250,7 +250,7 @@ func (df *DocumentFetcher) start(ctx context.Context, spans core.Spans, withDele
 	df.deletedDocs = withDeleted
 
 	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
-		start := base.MakeDSKeyWithCollectionID(df.col.Description())
+		start := base.MakeDataStoreKeyWithCollectionDescription(df.col.Description())
 		if withDeleted {
 			start = start.WithDeletedFlag()
 		} else {

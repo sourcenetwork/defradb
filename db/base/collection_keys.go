@@ -17,15 +17,18 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
-// MakeDSKeyWithCollectionID generates a key prefix for the given collection/index descriptions
-func MakeDSKeyWithCollectionID(col client.CollectionDescription) core.DataStoreKey {
+// MakeDataStoreKeyWithCollectionDescription returns the datastore key for the given collection description.
+func MakeDataStoreKeyWithCollectionDescription(col client.CollectionDescription) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionID: col.IDString(),
 	}
 }
 
-// MakeDSKeyWithCollectionAndDocID generates a DS key for the target docID, using the collection/index description.
-func MakeDSKeyWithCollectionAndDocID(col client.CollectionDescription, docID string) core.DataStoreKey {
+// MakeDataStoreKeyWithCollectionAndDocID returns the datastore key for the given docID and collection description.
+func MakeDataStoreKeyWithCollectionAndDocID(
+	col client.CollectionDescription,
+	docID string,
+) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionID: col.IDString(),
 		DocID:        docID,
@@ -41,14 +44,14 @@ func MakePrimaryIndexKeyForCRDT(
 ) (core.DataStoreKey, error) {
 	switch ctype {
 	case client.COMPOSITE:
-		return MakeDSKeyWithCollectionID(c).WithInstanceInfo(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
+		return MakeDataStoreKeyWithCollectionDescription(c).WithInstanceInfo(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
 	case client.LWW_REGISTER:
 		field, ok := c.GetFieldByName(fieldName, &schema)
 		if !ok {
 			return core.DataStoreKey{}, client.NewErrFieldNotExist(fieldName)
 		}
 
-		return MakeDSKeyWithCollectionID(c).WithInstanceInfo(key).WithFieldId(fmt.Sprint(field.ID)), nil
+		return MakeDataStoreKeyWithCollectionDescription(c).WithInstanceInfo(key).WithFieldId(fmt.Sprint(field.ID)), nil
 	}
 	return core.DataStoreKey{}, ErrInvalidCrdtType
 }

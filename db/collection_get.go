@@ -27,9 +27,9 @@ func (c *collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	pdsKey := c.getPrimaryKeyFromDocID(docID)
+	primaryKey := c.getPrimaryKeyFromDocID(docID)
 
-	found, isDeleted, err := c.exists(ctx, txn, pdsKey)
+	found, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (c *collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 		return nil, client.ErrDocumentNotFound
 	}
 
-	doc, err := c.get(ctx, txn, pdsKey, nil, showDeleted)
+	doc, err := c.get(ctx, txn, primaryKey, nil, showDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (c *collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 func (c *collection) get(
 	ctx context.Context,
 	txn datastore.Txn,
-	pdsKey core.PrimaryDataStoreKey,
+	primaryKey core.PrimaryDataStoreKey,
 	fields []client.FieldDescription,
 	showDeleted bool,
 ) (*client.Document, error) {
@@ -61,7 +61,7 @@ func (c *collection) get(
 	}
 
 	// construct target DS key from DocID.
-	targetKey := base.MakeDSKeyWithCollectionAndDocID(c.Description(), pdsKey.DocID)
+	targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(c.Description(), primaryKey.DocID)
 	// run the doc fetcher
 	err = df.Start(ctx, core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd())))
 	if err != nil {

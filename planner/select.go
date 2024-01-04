@@ -277,7 +277,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			spans := make([]core.Span, len(n.selectReq.DocIDs.Value()))
 			for i, docID := range n.selectReq.DocIDs.Value() {
-				docIDIndexKey := base.MakeDSKeyWithCollectionAndDocID(sourcePlan.collection.Description(), docID)
+				docIDIndexKey := base.MakeDataStoreKeyWithCollectionAndDocID(sourcePlan.collection.Description(), docID)
 				spans[i] = core.NewSpan(docIDIndexKey, docIDIndexKey.PrefixEnd())
 			}
 			origScan.Spans(core.NewSpans(spans...))

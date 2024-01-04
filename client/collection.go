@@ -179,7 +179,7 @@ type Collection interface {
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.
 type DocIDResult struct {
-	// If a DocID was successfully retrieved, this will be that ID.
+	// If a DocID was successfully retrieved, this will be that DocID.
 	ID DocID
 	// If an error was generated whilst attempting to retrieve the DocID, this will be the error.
 	Err error

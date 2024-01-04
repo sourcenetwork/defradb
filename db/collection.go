@@ -782,12 +782,12 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 		return client.DocID{}, core.PrimaryDataStoreKey{}, err
 	}
 
-	pdsKey := c.getPrimaryKeyFromDocID(docID)
-	if pdsKey.DocID != doc.ID().String() {
+	primaryKey := c.getPrimaryKeyFromDocID(docID)
+	if primaryKey.DocID != doc.ID().String() {
 		return client.DocID{}, core.PrimaryDataStoreKey{},
-			NewErrDocVerification(doc.ID().String(), pdsKey.DocID)
+			NewErrDocVerification(doc.ID().String(), primaryKey.DocID)
 	}
-	return docID, pdsKey, nil
+	return docID, primaryKey, nil
 }
 
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
@@ -796,26 +796,26 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 
-	docID, pdsKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
+	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
 		return err
 	}
 
 	// check if doc already exists
-	exists, isDeleted, err := c.exists(ctx, txn, pdsKey)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
 	if exists {
-		return NewErrDocumentAlreadyExists(pdsKey.DocID)
+		return NewErrDocumentAlreadyExists(primaryKey.DocID)
 	}
 	if isDeleted {
-		return NewErrDocumentDeleted(pdsKey.DocID)
+		return NewErrDocumentDeleted(primaryKey.DocID)
 	}
 
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
-		valueKey := c.getDSKeyFromDocID(docID)
+		valueKey := c.getDataStoreKeyFromDocID(docID)
 		err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
@@ -841,8 +841,8 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	pdsKey := c.getPrimaryKeyFromDocID(doc.ID())
-	exists, isDeleted, err := c.exists(ctx, txn, pdsKey)
+	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -850,7 +850,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 		return client.ErrDocumentNotFound
 	}
 	if isDeleted {
-		return NewErrDocumentDeleted(pdsKey.DocID)
+		return NewErrDocumentDeleted(primaryKey.DocID)
 	}
 
 	err = c.update(ctx, txn, doc)
@@ -884,8 +884,8 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 	defer c.discardImplicitTxn(ctx, txn)
 
 	// Check if document already exists with primary DS key.
-	pdsKey := c.getPrimaryKeyFromDocID(doc.ID())
-	exists, isDeleted, err := c.exists(ctx, txn, pdsKey)
+	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -932,7 +932,7 @@ func (c *collection) save(
 	// Loop through doc values
 	//	=> 		instantiate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
-	pdsKey := c.getPrimaryKeyFromDocID(doc.ID())
+	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
 	links := make([]core.DAGLink, 0)
 	docProperties := make(map[string]any)
 	for k, v := range doc.Fields() {
@@ -942,7 +942,7 @@ func (c *collection) save(
 		}
 
 		if val.IsDirty() {
-			fieldKey, fieldExists := c.tryGetFieldKey(pdsKey, k)
+			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
 
 			if !fieldExists {
 				return cid.Undef, client.NewErrFieldNotExist(k)
@@ -957,7 +957,7 @@ func (c *collection) save(
 			if isSecondaryRelationID {
 				primaryId := val.Value().(string)
 
-				err = c.patchPrimaryDoc(ctx, txn, c.Name(), relationFieldDescription, pdsKey.DocID, primaryId)
+				err = c.patchPrimaryDoc(ctx, txn, c.Name(), relationFieldDescription, primaryKey.DocID, primaryId)
 				if err != nil {
 					return cid.Undef, err
 				}
@@ -1002,7 +1002,7 @@ func (c *collection) save(
 	headNode, priority, err := c.saveCompositeToMerkleCRDT(
 		ctx,
 		txn,
-		pdsKey.ToDataStoreKey(),
+		primaryKey.ToDataStoreKey(),
 		buf,
 		links,
 		client.Active,
@@ -1123,8 +1123,8 @@ func (c *collection) Delete(ctx context.Context, docID client.DocID) (bool, erro
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	pdsKey := c.getPrimaryKeyFromDocID(docID)
-	exists, isDeleted, err := c.exists(ctx, txn, pdsKey)
+	primaryKey := c.getPrimaryKeyFromDocID(docID)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return false, err
 	}
@@ -1132,10 +1132,10 @@ func (c *collection) Delete(ctx context.Context, docID client.DocID) (bool, erro
 		return false, client.ErrDocumentNotFound
 	}
 	if isDeleted {
-		return false, NewErrDocumentDeleted(pdsKey.DocID)
+		return false, NewErrDocumentDeleted(primaryKey.DocID)
 	}
 
-	err = c.applyDelete(ctx, txn, pdsKey)
+	err = c.applyDelete(ctx, txn, primaryKey)
 	if err != nil {
 		return false, err
 	}
@@ -1150,8 +1150,8 @@ func (c *collection) Exists(ctx context.Context, docID client.DocID) (bool, erro
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	pdsKey := c.getPrimaryKeyFromDocID(docID)
-	exists, isDeleted, err := c.exists(ctx, txn, pdsKey)
+	primaryKey := c.getPrimaryKeyFromDocID(docID)
+	exists, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return false, err
 	}
@@ -1162,9 +1162,9 @@ func (c *collection) Exists(ctx context.Context, docID client.DocID) (bool, erro
 func (c *collection) exists(
 	ctx context.Context,
 	txn datastore.Txn,
-	pdsKey core.PrimaryDataStoreKey,
+	primaryKey core.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
-	val, err := txn.Datastore().Get(ctx, pdsKey.ToDS())
+	val, err := txn.Datastore().Get(ctx, primaryKey.ToDS())
 	if err != nil && errors.Is(err, ds.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
@@ -1180,7 +1180,7 @@ func (c *collection) exists(
 func (c *collection) saveFieldToMerkleCRDT(
 	ctx context.Context,
 	txn datastore.Txn,
-	pdsKey core.DataStoreKey,
+	dsKey core.DataStoreKey,
 	val client.Value,
 ) (ipld.Node, uint64, error) {
 	switch val.Type() {
@@ -1200,7 +1200,7 @@ func (c *collection) saveFieldToMerkleCRDT(
 			}
 		}
 
-		fieldID, err := strconv.Atoi(pdsKey.FieldId)
+		fieldID, err := strconv.Atoi(dsKey.FieldId)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -1215,7 +1215,7 @@ func (c *collection) saveFieldToMerkleCRDT(
 		merkleCRDT := merklecrdt.NewMerkleLWWRegister(
 			txn,
 			core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
-			pdsKey,
+			dsKey,
 			field.Name,
 		)
 
@@ -1284,7 +1284,7 @@ func (c *collection) getPrimaryKeyFromDocID(docID client.DocID) core.PrimaryData
 	}
 }
 
-func (c *collection) getDSKeyFromDocID(docID client.DocID) core.DataStoreKey {
+func (c *collection) getDataStoreKeyFromDocID(docID client.DocID) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionID: fmt.Sprint(c.ID()),
 		DocID:        docID.String(),
@@ -1292,15 +1292,15 @@ func (c *collection) getDSKeyFromDocID(docID client.DocID) core.DataStoreKey {
 	}
 }
 
-func (c *collection) tryGetFieldKey(pdsKey core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool) {
+func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool) {
 	fieldId, hasField := c.tryGetSchemaFieldID(fieldName)
 	if !hasField {
 		return core.DataStoreKey{}, false
 	}
 
 	return core.DataStoreKey{
-		CollectionID: pdsKey.CollectionId,
-		DocID:        pdsKey.DocID,
+		CollectionID: primaryKey.CollectionId,
+		DocID:        primaryKey.DocID,
 		FieldId:      strconv.FormatUint(uint64(fieldId), 10),
 	}, true
 }

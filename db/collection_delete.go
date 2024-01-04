@@ -139,10 +139,10 @@ func (c *collection) deleteWithIDs(
 	}
 
 	for _, docID := range docIDs {
-		pdsKey := c.getPrimaryKeyFromDocID(docID)
+		primaryKey := c.getPrimaryKeyFromDocID(docID)
 
 		// Apply the function that will perform the full deletion of this document.
-		err := c.applyDelete(ctx, txn, pdsKey)
+		err := c.applyDelete(ctx, txn, primaryKey)
 		if err != nil {
 			return nil, err
 		}
@@ -206,13 +206,13 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
-		pdsKey := core.PrimaryDataStoreKey{
+		primaryKey := core.PrimaryDataStoreKey{
 			CollectionId: fmt.Sprint(c.ID()),
 			DocID:        docID,
 		}
 
 		// Delete the document that is associated with this DS key we got from the filter.
-		err = c.applyDelete(ctx, txn, pdsKey)
+		err = c.applyDelete(ctx, txn, primaryKey)
 		if err != nil {
 			return nil, err
 		}
@@ -229,9 +229,9 @@ func (c *collection) deleteWithFilter(
 func (c *collection) applyDelete(
 	ctx context.Context,
 	txn datastore.Txn,
-	pdsKey core.PrimaryDataStoreKey,
+	primaryKey core.PrimaryDataStoreKey,
 ) error {
-	found, isDeleted, err := c.exists(ctx, txn, pdsKey)
+	found, isDeleted, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -239,10 +239,10 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFound
 	}
 	if isDeleted {
-		return NewErrDocumentDeleted(pdsKey.DocID)
+		return NewErrDocumentDeleted(primaryKey.DocID)
 	}
 
-	dsKey := pdsKey.ToDataStoreKey()
+	dsKey := primaryKey.ToDataStoreKey()
 
 	headset := clock.NewHeadSet(
 		txn.Headstore(),
@@ -278,7 +278,7 @@ func (c *collection) applyDelete(
 			func() {
 				c.db.events.Updates.Value().Publish(
 					events.Update{
-						DocID:      pdsKey.DocID,
+						DocID:      primaryKey.DocID,
 						Cid:        headNode.Cid(),
 						SchemaRoot: c.Schema().Root,
 						Block:      headNode,
