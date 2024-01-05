@@ -85,7 +85,7 @@ func (db *db) basicImport(ctx context.Context, txn datastore.Txn, filepath strin
 			delete(docMap, request.DocIDFieldName)
 			delete(docMap, request.NewDocIDFieldName)
 
-			doc, err := client.NewDocFromMap(docMap)
+			doc, err := client.NewDocFromMap(docMap, col.Schema())
 			if err != nil {
 				return NewErrDocFromMap(err)
 			}
@@ -260,7 +260,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 									refFieldName = field.Name + request.RelatedObjectID
 								}
 
-								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc)
+								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Schema())
 								if err != nil {
 									return err
 								}
@@ -291,7 +291,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 				delete(docM, refFieldName)
 			}
 
-			newDoc, err := client.NewDocFromMap(docM)
+			newDoc, err := client.NewDocFromMap(docM, col.Schema())
 			if err != nil {
 				return err
 			}

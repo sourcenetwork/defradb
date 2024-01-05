@@ -65,7 +65,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collectio
 					}`,
 					bookID,
 				),
-				ExpectedError: "The given field does not exist. Name: published",
+				ExpectedError: "The given field or alias to field does not exist. Name: published",
 			},
 		},
 	}
@@ -134,12 +134,6 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from many side",
-		// This restiction is temporary due to a bug in the collection api, see
-		// TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Collection
-		// and https://github.com/sourcenetwork/defradb/issues/1703 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -207,20 +201,12 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(
 
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
-//
-// This test also documents a bug in the collection api, see:
-// TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL
-// and https://github.com/sourcenetwork/defradb/issues/1703 for more info.
 func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Collection(t *testing.T) {
 	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from many side",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -247,7 +233,22 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Coll
 					}`,
 					invalidAuthorID,
 				),
-				ExpectedError: "The given field does not exist. Name: author",
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						name
+						author {
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "Painted House",
+						"author": nil,
+					},
+				},
 			},
 		},
 	}
@@ -261,12 +262,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySideWithWrongFie
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from many side, with a wrong field.",
-		// This restiction is temporary due to a bug in the collection api, see
-		// TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Collection
-		// and https://github.com/sourcenetwork/defradb/issues/1703 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -314,12 +309,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.
 
 	test := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from many side",
-		// This restiction is temporary due to a bug in the collection api, see
-		// TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Collection
-		// and https://github.com/sourcenetwork/defradb/issues/1703 for more info.
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
-		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

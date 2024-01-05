@@ -26,7 +26,7 @@ func TestUpdateWithDocIDs(t *testing.T) {
 		"age": 21
 	}`
 
-	doc1, err := client.NewDocFromJSON([]byte(docStr1))
+	doc1, err := client.NewDocFromJSON([]byte(docStr1), colDefMap["Users"].Schema)
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
@@ -36,7 +36,7 @@ func TestUpdateWithDocIDs(t *testing.T) {
 		"age": 32
 	}`
 
-	doc2, err := client.NewDocFromJSON([]byte(docStr2))
+	doc2, err := client.NewDocFromJSON([]byte(docStr2), colDefMap["Users"].Schema)
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}

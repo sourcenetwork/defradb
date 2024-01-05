@@ -52,24 +52,24 @@ func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average with datetime filter",
 		Request: `query {
-					_avg(Users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56.647Z"}}})
+					_avg(Users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56-05:00"}}})
 				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56.647Z"
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
 					"Age": 30,
-					"CreatedAt": "2018-07-23T03:46:56.647Z"
+					"CreatedAt": "2018-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Alice",
 					"Age": 32,
-					"CreatedAt": "2019-07-23T03:46:56.647Z"
+					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
 		},

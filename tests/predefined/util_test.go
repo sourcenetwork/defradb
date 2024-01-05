@@ -68,22 +68,22 @@ outer:
 	return ""
 }
 
-func mustGetDocIDFromDocMap(docMap map[string]any) string {
-	doc, err := client.NewDocFromMap(docMap)
+func mustGetDocIDFromDocMap(docMap map[string]any, sd client.SchemaDescription) string {
+	doc, err := client.NewDocFromMap(docMap, sd)
 	if err != nil {
 		panic("can not get doc from map" + err.Error())
 	}
 	return doc.ID().String()
 }
 
-func mustAddDocIDToDoc(doc map[string]any) map[string]any {
-	doc[request.DocIDFieldName] = mustGetDocIDFromDocMap(doc)
+func mustAddDocIDToDoc(doc map[string]any, sd client.SchemaDescription) map[string]any {
+	doc[request.DocIDFieldName] = mustGetDocIDFromDocMap(doc, sd)
 	return doc
 }
 
-func mustAddDocIDsToDocs(docs []map[string]any) []map[string]any {
+func mustAddDocIDsToDocs(docs []map[string]any, sd client.SchemaDescription) []map[string]any {
 	for i := range docs {
-		mustAddDocIDToDoc(docs[i])
+		mustAddDocIDToDoc(docs[i], sd)
 	}
 	return docs
 }

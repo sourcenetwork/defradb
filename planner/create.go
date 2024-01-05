@@ -59,7 +59,7 @@ func (n *createNode) Kind() string { return "createNode" }
 func (n *createNode) Init() error { return nil }
 
 func (n *createNode) Start() error {
-	doc, err := client.NewDocFromJSON([]byte(n.newDocStr))
+	doc, err := client.NewDocFromJSON([]byte(n.newDocStr), n.collection.Schema())
 	if err != nil {
 		n.err = err
 		return err

@@ -17,14 +17,15 @@ import (
 )
 
 const (
-	errFieldNotExist        string = "The given field does not exist"
-	errUnexpectedType       string = "unexpected type"
-	errParsingFailed        string = "failed to parse argument"
-	errUninitializeProperty string = "invalid state, required property is uninitialized"
-	errMaxTxnRetries        string = "reached maximum transaction reties"
-	errRelationOneSided     string = "relation must be defined on both schemas"
-	errCollectionNotFound   string = "collection not found"
-	errUnknownCRDT          string = "unknown crdt"
+	errFieldNotExist               string = "The given field does not exist"
+	errUnexpectedType              string = "unexpected type"
+	errParsingFailed               string = "failed to parse argument"
+	errUninitializeProperty        string = "invalid state, required property is uninitialized"
+	errMaxTxnRetries               string = "reached maximum transaction reties"
+	errRelationOneSided            string = "relation must be defined on both schemas"
+	errCollectionNotFound          string = "collection not found"
+	errUnknownCRDT                 string = "unknown crdt"
+	errFieldOrAliasToFieldNotExist string = "The given field or alias to field does not exist"
 )
 
 // Errors returnable from this package.
@@ -124,4 +125,9 @@ func NewErrUnknownCRDT(cType CType) error {
 		errUnknownCRDT,
 		errors.NewKV("Type", cType),
 	)
+}
+
+// NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
+func NewErrFieldOrAliasToFieldNotExist(name string) error {
+	return errors.New(errFieldOrAliasToFieldNotExist, errors.NewKV("Name", name))
 }

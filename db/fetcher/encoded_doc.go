@@ -106,26 +106,24 @@ func (encdoc *encodedDocument) Reset() {
 }
 
 // Decode returns a properly decoded document object
-func Decode(encdoc EncodedDocument) (*client.Document, error) {
+func Decode(encdoc EncodedDocument, sd client.SchemaDescription) (*client.Document, error) {
 	docID, err := client.NewDocIDFromString(string(encdoc.ID()))
 	if err != nil {
 		return nil, err
 	}
 
-	doc := client.NewDocWithID(docID)
+	doc := client.NewDocWithID(docID, sd)
 	properties, err := encdoc.Properties(false)
 	if err != nil {
 		return nil, err
 	}
 
 	for desc, val := range properties {
-		err = doc.SetAs(desc.Name, val, desc.Typ)
+		err = doc.Set(desc.Name, val)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	doc.SchemaVersionID = encdoc.SchemaVersionID()
 
 	// client.Document tracks which fields have been set ('dirtied'), here we
 	// are simply decoding a clean document and the dirty flag is an artifact

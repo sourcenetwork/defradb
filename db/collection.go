@@ -791,11 +791,6 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 }
 
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
-	// This has to be done before docID verification happens in the next step.
-	if err := doc.RemapAliasFieldsAndDocID(c.Schema().Fields); err != nil {
-		return err
-	}
-
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
 		return err

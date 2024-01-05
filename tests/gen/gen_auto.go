@@ -12,6 +12,7 @@ package gen
 
 import (
 	"math/rand"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -139,14 +140,18 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 				}
 				if field.IsRelation() {
 					if field.IsPrimaryRelation() {
-						newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocID(typeName, &field)
+						if strings.HasSuffix(field.Name, request.RelatedObjectID) {
+							newDoc[field.Name] = g.getNextPrimaryDocID(typeName, &field)
+						} else {
+							newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocID(typeName, &field)
+						}
 					}
 				} else {
 					fieldConf := g.configurator.config.ForField(typeName, field.Name)
 					newDoc[field.Name] = g.generateRandomValue(typeName, field.Kind, fieldConf)
 				}
 			}
-			doc, err := client.NewDocFromMap(newDoc)
+			doc, err := client.NewDocFromMap(newDoc, typeDef.Schema)
 			if err != nil {
 				return err
 			}
