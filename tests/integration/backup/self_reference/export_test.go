@@ -26,7 +26,7 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc:          `{"name": "Bob", "age": 31, "boss": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
+				Doc:          `{"name": "Bob", "age": 31, "boss_id": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
 			},
 			testUtils.BackupExport{
 				Config: client.BackupConfig{
@@ -49,7 +49,7 @@ func TestBackupExport_MultipleDocsAndDocUpdate_NoError(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				Doc:          `{"name": "Bob", "age": 31, "boss": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
+				Doc:          `{"name": "Bob", "age": 31, "boss_id": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,

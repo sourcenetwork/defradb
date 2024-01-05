@@ -49,7 +49,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc:          `{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
+				Doc:          `{"name": "John and the sourcerers' stone", "author_id": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
@@ -78,11 +78,11 @@ func TestBackupExport_AllCollectionsMultipleDocsAndMultipleDocUpdate_NoError(t *
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc:          `{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
+				Doc:          `{"name": "John and the sourcerers' stone", "author_id": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc:          `{"name": "Game of chains", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
+				Doc:          `{"name": "Game of chains", "author_id": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,

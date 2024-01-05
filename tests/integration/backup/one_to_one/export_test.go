@@ -49,7 +49,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc:          `{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
+				Doc:          `{"name": "John and the sourcerers' stone", "author_id": "bae-e933420a-988a-56f8-8952-6c245aebd519"}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
@@ -93,7 +93,7 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc:          `{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519", "favourite": "bae-0648f44e-74e8-593b-a662-3310ec278927"}`,
+				Doc:          `{"name": "John and the sourcerers' stone", "author_id": "bae-e933420a-988a-56f8-8952-6c245aebd519", "favourite_id": "bae-0648f44e-74e8-593b-a662-3310ec278927"}`,
 			},
 			testUtils.UpdateDoc{
 				CollectionID: 0,
@@ -137,7 +137,7 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				Doc:          `{"name": "John and the sourcerers' stone", "author": "bae-e933420a-988a-56f8-8952-6c245aebd519", "favourite": "bae-0648f44e-74e8-593b-a662-3310ec278927"}`,
+				Doc:          `{"name": "John and the sourcerers' stone", "author_id": "bae-e933420a-988a-56f8-8952-6c245aebd519", "favourite_id": "bae-0648f44e-74e8-593b-a662-3310ec278927"}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
