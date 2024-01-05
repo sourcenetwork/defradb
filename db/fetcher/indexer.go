@@ -88,7 +88,7 @@ outer:
 		f.docFields = append(f.docFields, fields[i])
 	}
 
-	iter, err := createIndexIterator(f.indexFilter, &f.execInfo, f.indexDesc, f.col.ID())
+	iter, err := f.createIndexIterator()
 	if err != nil {
 		return err
 	}
