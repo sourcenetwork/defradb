@@ -573,7 +573,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_SinglePrimaryObjectKindSubs
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo": "%s"
+						"foo_id": "%s"
 					}`,
 					key1,
 				),
@@ -652,7 +652,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_SingleSecondaryObjectKindSu
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo": "%s"
+						"foo_id": "%s"
 					}`,
 					key1,
 				),
@@ -731,7 +731,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_ObjectKindSubstitution(t *t
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo": "%s"
+						"foo_id": "%s"
 					}`,
 					key1,
 				),
@@ -810,7 +810,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_ObjectKindSubstitutionWithA
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo": "%s"
+						"foo_id": "%s"
 					}`,
 					key1,
 				),
@@ -964,7 +964,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_MissingPrimaryIDField(t *te
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo": "%s"
+						"foo_id": "%s"
 					}`,
 					key1,
 				),
