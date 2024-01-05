@@ -31,12 +31,12 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 			testUtils.CreateDoc{
 				Doc: `{
 					"name": "John",
-					"created_at": "2011-07-23T01:11:11.111Z"
+					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
-					"created_at": "2021-07-23T02:22:22.222Z"
+					"created_at": "2021-07-23T02:22:22-05:00"
 				}`,
 			},
 			testUtils.Request{
@@ -49,7 +49,7 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"created_at": "2021-07-23T02:22:22.222Z",
+						"created_at": testUtils.MustParseTime("2021-07-23T02:22:22-05:00"),
 					},
 				},
 			},
@@ -74,30 +74,30 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 			testUtils.CreateDoc{
 				Doc: `{
 					"name": "John",
-					"created_at": "2011-07-23T01:11:11.111Z"
+					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"name": "Fred",
-					"created_at": "2021-07-23T02:22:22.222Z"
+					"created_at": "2021-07-23T02:22:22-05:00"
 				}`,
 			},
 			testUtils.Request{
 				Request: `mutation {
-					update_Users(data: "{\"created_at\": \"2031-07-23T03:23:23.333Z\"}") {
+					update_Users(data: "{\"created_at\": \"2031-07-23T03:23:23Z\"}") {
 						name
 						created_at
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"name":       "John",
-						"created_at": "2031-07-23T03:23:23.333Z",
+						"name":       "Fred",
+						"created_at": testUtils.MustParseTime("2031-07-23T03:23:23Z"),
 					},
 					{
-						"name":       "Fred",
-						"created_at": "2031-07-23T03:23:23.333Z",
+						"name":       "John",
+						"created_at": testUtils.MustParseTime("2031-07-23T03:23:23Z"),
 					},
 				},
 			},

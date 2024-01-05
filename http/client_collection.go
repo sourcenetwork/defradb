@@ -62,13 +62,6 @@ func (c *Collection) Definition() client.CollectionDefinition {
 func (c *Collection) Create(ctx context.Context, doc *client.Document) error {
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
-	// We must call this here, else the docID on the given object will not match
-	// that of the document saved in the database
-	err := doc.RemapAliasFieldsAndDocID(c.Schema().Fields)
-	if err != nil {
-		return err
-	}
-
 	body, err := doc.String()
 	if err != nil {
 		return err
@@ -90,13 +83,6 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*client.Document) er
 
 	var docMapList []json.RawMessage
 	for _, doc := range docs {
-		// We must call this here, else the docID on the given object will not match
-		// that of the document saved in the database
-		err := doc.RemapAliasFieldsAndDocID(c.Schema().Fields)
-		if err != nil {
-			return err
-		}
-
 		docMap, err := doc.ToJSONPatch()
 		if err != nil {
 			return err
@@ -313,11 +299,12 @@ func (c *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bo
 	if err != nil {
 		return nil, err
 	}
-	var docMap map[string]any
-	if err := c.http.requestJson(req, &docMap); err != nil {
+	data, err := c.http.request(req)
+	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocFromMap(docMap)
+	doc := client.NewDocWithID(docID, c.def.Schema)
+	err = doc.SetWithJSON(data)
 	if err != nil {
 		return nil, err
 	}

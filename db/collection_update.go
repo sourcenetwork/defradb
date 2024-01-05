@@ -135,7 +135,7 @@ func (c *collection) updateWithDocID(
 	if isPatch {
 		// todo
 	} else {
-		err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
+		err = doc.SetWithJSON([]byte(updater))
 	}
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (c *collection) updateWithIDs(
 		if isPatch {
 			// todo
 		} else {
-			err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
+			err = doc.SetWithJSON([]byte(updater))
 		}
 		if err != nil {
 			return nil, err
@@ -263,7 +263,7 @@ func (c *collection) updateWithFilter(
 
 		// Get the document, and apply the patch
 		docAsMap := docMap.ToMap(selectionPlan.Value())
-		doc, err := client.NewDocFromMap(docAsMap)
+		doc, err := client.NewDocFromMap(docAsMap, c.Schema())
 		if err != nil {
 			return nil, err
 		}
@@ -271,10 +271,10 @@ func (c *collection) updateWithFilter(
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
-			err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
-		}
-		if err != nil {
-			return nil, err
+			err := doc.SetWithJSON([]byte(updater))
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		_, err = c.save(ctx, txn, doc, false)
@@ -288,45 +288,6 @@ func (c *collection) updateWithFilter(
 	}
 
 	return results, nil
-}
-
-// applyMergeToDoc applies the given json merge to the given Defra doc.
-//
-// It does not save the document.
-func (c *collection) applyMergeToDoc(
-	doc *client.Document,
-	merge *fastjson.Object,
-) error {
-	mergeMap := make(map[string]*fastjson.Value)
-	merge.Visit(func(k []byte, v *fastjson.Value) {
-		mergeMap[string(k)] = v
-	})
-
-	for mfield, mval := range mergeMap {
-		fd, isValidField := c.Schema().GetField(mfield)
-		if !isValidField {
-			return client.NewErrFieldNotExist(mfield)
-		}
-
-		if fd.Kind == client.FieldKind_FOREIGN_OBJECT {
-			fd, isValidField = c.Schema().GetField(mfield + request.RelatedObjectID)
-			if !isValidField {
-				return client.NewErrFieldNotExist(mfield)
-			}
-		}
-
-		cborVal, err := validateFieldSchema(mval, fd)
-		if err != nil {
-			return err
-		}
-
-		err = doc.Set(fd.Name, cborVal)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // isSecondaryIDField returns true if the given field description represents a secondary relation field ID.
@@ -396,6 +357,12 @@ func (c *collection) patchPrimaryDoc(
 		return nil
 	}
 
+	pc := c.db.newCollection(primaryCol.Description(), primarySchema)
+	err = pc.validateOneToOneLinkDoesntAlreadyExist(ctx, txn, primaryDocID.String(), primaryIDField, docID)
+	if err != nil {
+		return err
+	}
+
 	existingVal, err := doc.GetValue(primaryIDField.Name)
 	if err != nil && !errors.Is(err, client.ErrFieldNotExist) {
 		return err
@@ -416,138 +383,6 @@ func (c *collection) patchPrimaryDoc(
 	}
 
 	return nil
-}
-
-// validateFieldSchema takes a given value as an interface,
-// and ensures it matches the supplied field description.
-// It will do any minor parsing, like dates, and return
-// the typed value again as an interface.
-func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (any, error) {
-	switch field.Kind {
-	case client.FieldKind_DocID, client.FieldKind_STRING:
-		return getString(val)
-
-	case client.FieldKind_STRING_ARRAY:
-		return getArray(val, getString)
-
-	case client.FieldKind_NILLABLE_STRING_ARRAY:
-		return getNillableArray(val, getString)
-
-	case client.FieldKind_BOOL:
-		return getBool(val)
-
-	case client.FieldKind_BOOL_ARRAY:
-		return getArray(val, getBool)
-
-	case client.FieldKind_NILLABLE_BOOL_ARRAY:
-		return getNillableArray(val, getBool)
-
-	case client.FieldKind_FLOAT:
-		return getFloat64(val)
-
-	case client.FieldKind_FLOAT_ARRAY:
-		return getArray(val, getFloat64)
-
-	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
-		return getNillableArray(val, getFloat64)
-
-	case client.FieldKind_DATETIME:
-		// @TODO: Requires Typed Document refactor
-		// to handle this correctly.
-		// For now, we will persist DateTime as a
-		// RFC3339 string
-		// see https://github.com/sourcenetwork/defradb/issues/935
-		return getString(val)
-
-	case client.FieldKind_INT:
-		return getInt64(val)
-
-	case client.FieldKind_INT_ARRAY:
-		return getArray(val, getInt64)
-
-	case client.FieldKind_NILLABLE_INT_ARRAY:
-		return getNillableArray(val, getInt64)
-
-	case client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
-		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
-
-	case client.FieldKind_BLOB:
-		return getString(val)
-	}
-
-	return nil, client.NewErrUnhandledType("FieldKind", field.Kind)
-}
-
-func getString(v *fastjson.Value) (string, error) {
-	b, err := v.StringBytes()
-	return string(b), err
-}
-
-func getBool(v *fastjson.Value) (bool, error) {
-	return v.Bool()
-}
-
-func getFloat64(v *fastjson.Value) (float64, error) {
-	return v.Float64()
-}
-
-func getInt64(v *fastjson.Value) (int64, error) {
-	return v.Int64()
-}
-
-func getArray[T any](
-	val *fastjson.Value,
-	typeGetter func(*fastjson.Value) (T, error),
-) ([]T, error) {
-	if val.Type() == fastjson.TypeNull {
-		return nil, nil
-	}
-
-	valArray, err := val.Array()
-	if err != nil {
-		return nil, err
-	}
-
-	arr := make([]T, len(valArray))
-	for i, arrItem := range valArray {
-		if arrItem.Type() == fastjson.TypeNull {
-			continue
-		}
-		arr[i], err = typeGetter(arrItem)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return arr, nil
-}
-
-func getNillableArray[T any](
-	val *fastjson.Value,
-	typeGetter func(*fastjson.Value) (T, error),
-) ([]*T, error) {
-	if val.Type() == fastjson.TypeNull {
-		return nil, nil
-	}
-
-	valArray, err := val.Array()
-	if err != nil {
-		return nil, err
-	}
-
-	arr := make([]*T, len(valArray))
-	for i, arrItem := range valArray {
-		if arrItem.Type() == fastjson.TypeNull {
-			continue
-		}
-		v, err := typeGetter(arrItem)
-		if err != nil {
-			return nil, err
-		}
-		arr[i] = &v
-	}
-
-	return arr, nil
 }
 
 // makeSelectionPlan constructs a simple read-only plan of the collection using the given filter.

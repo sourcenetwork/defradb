@@ -141,7 +141,7 @@ func (this *docGenerator) generatePrimary(
 					if err != nil {
 						return nil, nil, NewErrFailedToGenerateDoc(err)
 					}
-					primDoc, err := client.NewDocFromMap(primDocMap)
+					primDoc, err := client.NewDocFromMap(primDocMap, primType.Schema)
 					if err != nil {
 						return nil, nil, NewErrFailedToGenerateDoc(err)
 					}
@@ -174,7 +174,7 @@ func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName st
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocFromMap(requested)
+	doc, err := client.NewDocFromMap(requested, typeDef.Schema)
 	if err != nil {
 		return nil, NewErrFailedToGenerateDoc(err)
 	}

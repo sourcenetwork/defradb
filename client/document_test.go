@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	ccid "github.com/sourcenetwork/defradb/core/cid"
 )
@@ -21,18 +22,32 @@ import (
 var (
 	testJSONObj = []byte(`{
 		"Name": "John",
-		"Age": 26,
-		"Address": {
-			"Street": "Main",
-			"City": "Toronto"
-		}
+		"Age": 26
 	}`)
 
 	pref = ccid.NewDefaultSHA256PrefixV1()
+
+	schemaDescriptions = []SchemaDescription{
+		{
+			Name: "User",
+			Fields: []FieldDescription{
+				{
+					Name: "Name",
+					Typ:  LWW_REGISTER,
+					Kind: FieldKind_STRING,
+				},
+				{
+					Name: "Age",
+					Typ:  LWW_REGISTER,
+					Kind: FieldKind_INT,
+				},
+			},
+		},
+	}
 )
 
 func TestNewFromJSON(t *testing.T) {
-	doc, err := NewDocFromJSON(testJSONObj)
+	doc, err := NewDocFromJSON(testJSONObj, schemaDescriptions[0])
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
 		return
@@ -61,31 +76,16 @@ func TestNewFromJSON(t *testing.T) {
 	assert.Equal(t, doc.fields["Name"].Type(), LWW_REGISTER)
 	assert.Equal(t, doc.fields["Age"].Name(), "Age")
 	assert.Equal(t, doc.fields["Age"].Type(), LWW_REGISTER)
-	assert.Equal(t, doc.fields["Address"].Name(), "Address")
-	assert.Equal(t, doc.fields["Address"].Type(), OBJECT)
 
 	//values
 	assert.Equal(t, doc.values[doc.fields["Name"]].Value(), "John")
 	assert.Equal(t, doc.values[doc.fields["Name"]].IsDocument(), false)
 	assert.Equal(t, doc.values[doc.fields["Age"]].Value(), int64(26))
 	assert.Equal(t, doc.values[doc.fields["Age"]].IsDocument(), false)
-	assert.Equal(t, doc.values[doc.fields["Address"]].IsDocument(), true)
-
-	//subdoc fields
-	subDoc := doc.values[doc.fields["Address"]].Value().(*Document)
-	assert.Equal(t, subDoc.fields["Street"].Name(), "Street")
-	assert.Equal(t, subDoc.fields["Street"].Type(), LWW_REGISTER)
-	assert.Equal(t, subDoc.fields["City"].Name(), "City")
-	assert.Equal(t, subDoc.fields["City"].Type(), LWW_REGISTER)
-
-	//subdoc values
-	assert.Equal(t, subDoc.values[subDoc.fields["Street"]].Value(), "Main")
-	assert.Equal(t, subDoc.values[subDoc.fields["Street"]].IsDocument(), false)
-	assert.Equal(t, subDoc.values[subDoc.fields["City"]].Value(), "Toronto")
 }
 
 func TestSetWithJSON(t *testing.T) {
-	doc, err := NewDocFromJSON(testJSONObj)
+	doc, err := NewDocFromJSON(testJSONObj, schemaDescriptions[0])
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
 		return
@@ -110,8 +110,7 @@ func TestSetWithJSON(t *testing.T) {
 
 	updatePatch := []byte(`{
 		"Name": "Alice",
-		"Age": 27,
-		"Address": null
+		"Age": 27
 	}`)
 	err = doc.SetWithJSON(updatePatch)
 	if err != nil {
@@ -124,26 +123,15 @@ func TestSetWithJSON(t *testing.T) {
 	assert.Equal(t, doc.fields["Name"].Type(), LWW_REGISTER)
 	assert.Equal(t, doc.fields["Age"].Name(), "Age")
 	assert.Equal(t, doc.fields["Age"].Type(), LWW_REGISTER)
-	assert.Equal(t, doc.fields["Address"].Name(), "Address")
-	assert.Equal(t, doc.fields["Address"].Type(), OBJECT)
 
 	//values
 	assert.Equal(t, doc.values[doc.fields["Name"]].Value(), "Alice")
 	assert.Equal(t, doc.values[doc.fields["Name"]].IsDocument(), false)
 	assert.Equal(t, doc.values[doc.fields["Age"]].Value(), int64(27))
 	assert.Equal(t, doc.values[doc.fields["Age"]].IsDocument(), false)
-	assert.Equal(t, doc.values[doc.fields["Address"]].Value(), nil)
-	assert.Equal(t, doc.values[doc.fields["Address"]].IsDocument(), false)
+}
 
-	//subdoc fields
-	// subDoc := doc.values[doc.fields["Address"]].Value().(*Document)
-	// assert.Equal(t, subDoc.fields["Street"].Name(), "Street")
-	// assert.Equal(t, subDoc.fields["Street"].Type(), client.LWW_REGISTER)
-	// assert.Equal(t, subDoc.fields["City"].Name(), "City")
-	// assert.Equal(t, subDoc.fields["City"].Type(), client.LWW_REGISTER)
-
-	// //subdoc values
-	// assert.Equal(t, subDoc.values[subDoc.fields["Street"]].Value(), "Main")
-	// assert.Equal(t, subDoc.values[subDoc.fields["Street"]].IsDocument(), false)
-	// assert.Equal(t, subDoc.values[subDoc.fields["City"]].Value(), "Toronto")
+func TestNewDocsFromJSON_WithObjectInsteadOfArray_Error(t *testing.T) {
+	_, err := NewDocsFromJSON(testJSONObj, schemaDescriptions[0])
+	require.ErrorContains(t, err, "value doesn't contain array; it contains object")
 }

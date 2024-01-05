@@ -111,11 +111,6 @@ var (
 	ErrInvalidViewQuery               = errors.New(errInvalidViewQuery)
 )
 
-// NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
-func NewErrFieldOrAliasToFieldNotExist(name string) error {
-	return errors.New(errFieldOrAliasToFieldNotExist, errors.NewKV("Name", name))
-}
-
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
 // could not be obtained.
 func NewErrFailedToGetHeads(inner error) error {

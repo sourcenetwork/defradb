@@ -68,7 +68,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 		Description: "One-to-many relation query from one side with  cid and docID",
 		Request: `query {
 					Book (
-							cid: "bafybeieugqrhaeyhlxo2l2b4jxcqq2ut4m3xtrm3qejz4zc4sxx4stoc5q",
+							cid: "bafybeiddywe5odj47ljhyslzey3kbmw3yqdzsstqqjh3ge6cliy2unty64"
 							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 						) {
 						name
@@ -117,7 +117,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 		Description: "One-to-many relation query from one side with child update and parent cid and docID",
 		Request: `query {
 					Book (
-							cid: "bafybeieugqrhaeyhlxo2l2b4jxcqq2ut4m3xtrm3qejz4zc4sxx4stoc5q",
+							cid: "bafybeiddywe5odj47ljhyslzey3kbmw3yqdzsstqqjh3ge6cliy2unty64",
 							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 						) {
 						name
@@ -172,18 +172,13 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and docID",
 		Request: `query {
-				Book (
-						cid: "bafybeieugqrhaeyhlxo2l2b4jxcqq2ut4m3xtrm3qejz4zc4sxx4stoc5q",
-						docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
-					) {
-					name
-					rating
-					author {
+					Book (
+							cid: "bafybeie2okvnf3w3767gspsnln5d6n54hvnmu65wjkadxciopwoi6gxqha",
+							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
+						) {
 						name
 					}
-				}
-			}`,
-
+				}`,
 		Docs: map[int][]string{
 			//books
 			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
@@ -230,7 +225,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 		Description: "One-to-many relation query from one side with parent update and parent cid and docID",
 		Request: `query {
 					Book (
-							cid: "bafybeifnz3yz3rkd2bc2uv6i7ucfdlqji5wevs5anziwpr76ia45ygtbk4",
+							cid: "bafybeie2okvnf3w3767gspsnln5d6n54hvnmu65wjkadxciopwoi6gxqha",
 							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 						) {
 						name

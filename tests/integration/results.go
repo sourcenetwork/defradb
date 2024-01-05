@@ -13,6 +13,7 @@ package tests
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -139,6 +140,8 @@ func areResultsEqual(expected any, actual any) bool {
 		return areResultArraysEqual(expectedVal, actual)
 	case []immutable.Option[string]:
 		return areResultArraysEqual(expectedVal, actual)
+	case time.Time:
+		return areResultsEqual(expectedVal.Format(time.RFC3339), actual)
 	default:
 		return assert.ObjectsAreEqualValues(expected, actual)
 	}

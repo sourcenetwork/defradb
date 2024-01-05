@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,11 +12,15 @@ package client
 
 import (
 	"encoding/json"
+	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
+	"github.com/sourcenetwork/immutable"
+	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client/request"
 	ccid "github.com/sourcenetwork/defradb/core/cid"
@@ -53,42 +57,36 @@ import (
 // @body: A document interface can be implemented by both a TypedDocument and a
 // UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
-	id DocID
-	// SchemaVersionID holds the id of the schema version that this document is
-	// currently at.
-	//
-	// Migrating the document will update this value to the output version of the
-	// migration.
-	SchemaVersionID string
-	fields          map[string]Field
-	values          map[Field]Value
-	head            cid.Cid
-	mu              sync.RWMutex
+	id     DocID
+	fields map[string]Field
+	values map[Field]Value
+	head   cid.Cid
+	mu     sync.RWMutex
 	// marks if document has unsaved changes
 	isDirty bool
+
+	schemaDescription SchemaDescription
 }
 
-// NewDocWithID creates a new Document with a specified DocID.
-func NewDocWithID(docID DocID) *Document {
-	doc := newEmptyDoc()
+func newEmptyDoc(sd SchemaDescription) *Document {
+	return &Document{
+		fields:            make(map[string]Field),
+		values:            make(map[Field]Value),
+		schemaDescription: sd,
+	}
+}
+
+// NewDocWithID creates a new Document with a specified key.
+func NewDocWithID(docID DocID, sd SchemaDescription) *Document {
+	doc := newEmptyDoc(sd)
 	doc.id = docID
 	return doc
 }
 
-func newEmptyDoc() *Document {
-	return &Document{
-		fields: make(map[string]Field),
-		values: make(map[Field]Value),
-	}
-}
-
 // NewDocFromMap creates a new Document from a data map.
-func NewDocFromMap(data map[string]any) (*Document, error) {
+func NewDocFromMap(data map[string]any, sd SchemaDescription) (*Document, error) {
 	var err error
-	doc := &Document{
-		fields: make(map[string]Field),
-		values: make(map[Field]Value),
-	}
+	doc := newEmptyDoc(sd)
 
 	// check if document contains special _docID field
 	k, hasDocID := data[request.DocIDFieldName]
@@ -119,15 +117,275 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 	return doc, nil
 }
 
+var jsonArrayPattern = regexp.MustCompile(`^\s*\[.*\]\s*$`)
+
+// IsJSONArray returns true if the given byte array is a JSON Array.
+func IsJSONArray(obj []byte) bool {
+	return jsonArrayPattern.Match(obj)
+}
+
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
-func NewDocFromJSON(obj []byte) (*Document, error) {
-	data := make(map[string]any)
-	err := json.Unmarshal(obj, &data)
+func NewDocFromJSON(obj []byte, sd SchemaDescription) (*Document, error) {
+	doc := newEmptyDoc(sd)
+	err := doc.SetWithJSON(obj)
+	if err != nil {
+		return nil, err
+	}
+	err = doc.generateAndSetDocID()
+	if err != nil {
+		return nil, err
+	}
+	return doc, nil
+}
+
+// ManyFromJSON creates a new slice of Documents from a raw JSON array byte array.
+// It will return an error if the given byte array is not a valid JSON array.
+func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
+	v, err := fastjson.ParseBytes(obj)
+	if err != nil {
+		return nil, err
+	}
+	a, err := v.Array()
 	if err != nil {
 		return nil, err
 	}
 
-	return NewDocFromMap(data)
+	docs := make([]*Document, len(a))
+	for _, v := range a {
+		o, err := v.Object()
+		if err != nil {
+			return nil, err
+		}
+		doc := newEmptyDoc(sd)
+		err = doc.setWithFastJSONObject(o)
+		if err != nil {
+			return nil, err
+		}
+		err = doc.generateAndSetDocID()
+		if err != nil {
+			return nil, err
+		}
+		docs = append(docs, doc)
+	}
+
+	return docs, nil
+}
+
+// validateFieldSchema takes a given value as an interface,
+// and ensures it matches the supplied field description.
+// It will do any minor parsing, like dates, and return
+// the typed value again as an interface.
+func validateFieldSchema(val any, field FieldDescription) (any, error) {
+	switch field.Kind {
+	case FieldKind_DocID, FieldKind_STRING, FieldKind_BLOB:
+		return getString(val)
+
+	case FieldKind_STRING_ARRAY:
+		return getArray(val, getString)
+
+	case FieldKind_NILLABLE_STRING_ARRAY:
+		return getNillableArray(val, getString)
+
+	case FieldKind_BOOL:
+		return getBool(val)
+
+	case FieldKind_BOOL_ARRAY:
+		return getArray(val, getBool)
+
+	case FieldKind_NILLABLE_BOOL_ARRAY:
+		return getNillableArray(val, getBool)
+
+	case FieldKind_FLOAT:
+		return getFloat64(val)
+
+	case FieldKind_FLOAT_ARRAY:
+		return getArray(val, getFloat64)
+
+	case FieldKind_NILLABLE_FLOAT_ARRAY:
+		return getNillableArray(val, getFloat64)
+
+	case FieldKind_DATETIME:
+		return getDateTime(val)
+
+	case FieldKind_INT:
+		return getInt64(val)
+
+	case FieldKind_INT_ARRAY:
+		return getArray(val, getInt64)
+
+	case FieldKind_NILLABLE_INT_ARRAY:
+		return getNillableArray(val, getInt64)
+
+	case FieldKind_FOREIGN_OBJECT:
+		return getString(val)
+
+	case FieldKind_FOREIGN_OBJECT_ARRAY:
+		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
+	}
+
+	return nil, NewErrUnhandledType("FieldKind", field.Kind)
+}
+
+func getString(v any) (string, error) {
+	switch val := v.(type) {
+	case *fastjson.Value:
+		b, err := val.StringBytes()
+		return string(b), err
+	default:
+		return val.(string), nil
+	}
+}
+
+func getBool(v any) (bool, error) {
+	switch val := v.(type) {
+	case *fastjson.Value:
+		return val.Bool()
+	default:
+		return val.(bool), nil
+	}
+}
+
+func getFloat64(v any) (float64, error) {
+	switch val := v.(type) {
+	case *fastjson.Value:
+		return val.Float64()
+	case int:
+		return float64(val), nil
+	case int64:
+		return float64(val), nil
+	case float64:
+		return val, nil
+	default:
+		return 0, NewErrUnexpectedType[float64]("field", v)
+	}
+}
+
+func getInt64(v any) (int64, error) {
+	switch val := v.(type) {
+	case *fastjson.Value:
+		return val.Int64()
+	case int:
+		return int64(val), nil
+	case int64:
+		return val, nil
+	case float64:
+		return int64(val), nil
+	default:
+		return 0, NewErrUnexpectedType[int64]("field", v)
+	}
+}
+
+func getDateTime(v any) (time.Time, error) {
+	var s string
+	switch val := v.(type) {
+	case *fastjson.Value:
+		b, err := val.StringBytes()
+		if err != nil {
+			return time.Time{}, err
+		}
+		s = string(b)
+	case time.Time:
+		return val, nil
+	default:
+		s = val.(string)
+	}
+	return time.Parse(time.RFC3339, s)
+}
+
+func getArray[T any](
+	v any,
+	typeGetter func(any) (T, error),
+) ([]T, error) {
+	switch val := v.(type) {
+	case *fastjson.Value:
+		if val.Type() == fastjson.TypeNull {
+			return nil, nil
+		}
+
+		valArray, err := val.Array()
+		if err != nil {
+			return nil, err
+		}
+
+		arr := make([]T, len(valArray))
+		for i, arrItem := range valArray {
+			if arrItem.Type() == fastjson.TypeNull {
+				continue
+			}
+			arr[i], err = typeGetter(arrItem)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return arr, nil
+	case []any:
+		arr := make([]T, len(val))
+		for i, arrItem := range val {
+			var err error
+			arr[i], err = typeGetter(arrItem)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return arr, nil
+	case []T:
+		return val, nil
+	default:
+		return []T{}, nil
+	}
+}
+
+func getNillableArray[T any](
+	v any,
+	typeGetter func(any) (T, error),
+) ([]immutable.Option[T], error) {
+	switch val := v.(type) {
+	case *fastjson.Value:
+		if val.Type() == fastjson.TypeNull {
+			return nil, nil
+		}
+
+		valArray, err := val.Array()
+		if err != nil {
+			return nil, err
+		}
+
+		arr := make([]immutable.Option[T], len(valArray))
+		for i, arrItem := range valArray {
+			if arrItem.Type() == fastjson.TypeNull {
+				arr[i] = immutable.None[T]()
+				continue
+			}
+			v, err := typeGetter(arrItem)
+			if err != nil {
+				return nil, err
+			}
+			arr[i] = immutable.Some(v)
+		}
+
+		return arr, nil
+	case []any:
+		arr := make([]immutable.Option[T], len(val))
+		for i, arrItem := range val {
+			if arrItem == nil {
+				arr[i] = immutable.None[T]()
+				continue
+			}
+			v, err := typeGetter(arrItem)
+			if err != nil {
+				return nil, err
+			}
+			arr[i] = immutable.Some(v)
+		}
+
+		return arr, nil
+	case []immutable.Option[T]:
+		return val, nil
+	default:
+		return []immutable.Option[T]{}, nil
+	}
 }
 
 // Head returns the current head CID of the document.
@@ -201,30 +459,52 @@ func (doc *Document) GetValueWithField(f Field) (Value, error) {
 // JSON Merge Patch object. Note: fields indicated as nil in the Merge
 // Patch are to be deleted
 // @todo: Handle sub documents for SetWithJSON
-func (doc *Document) SetWithJSON(patch []byte) error {
-	var patchObj map[string]any
-	err := json.Unmarshal(patch, &patchObj)
+func (doc *Document) SetWithJSON(obj []byte) error {
+	v, err := fastjson.ParseBytes(obj)
+	if err != nil {
+		return err
+	}
+	o, err := v.Object()
 	if err != nil {
 		return err
 	}
 
-	for k, v := range patchObj {
-		err = doc.Set(k, v)
+	return doc.setWithFastJSONObject(o)
+}
+
+func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
+	var visitErr error
+	obj.Visit(func(k []byte, v *fastjson.Value) {
+		fieldName := string(k)
+		err := doc.Set(fieldName, v)
 		if err != nil {
-			return err
+			visitErr = err
+			return
 		}
-	}
-	return nil
+	})
+	return visitErr
 }
 
 // Set the value of a field.
 func (doc *Document) Set(field string, value any) error {
-	return doc.setAndParseType(field, value)
-}
-
-// SetAs is the same as set, but you can manually set the CRDT type.
-func (doc *Document) SetAs(field string, value any, t CType) error {
-	return doc.setCBOR(t, field, value)
+	fd, exists := doc.schemaDescription.GetField(field)
+	if !exists {
+		return NewErrFieldNotExist(field)
+	}
+	if fd.IsRelation() && !fd.IsObjectArray() {
+		if !strings.HasSuffix(field, request.RelatedObjectID) {
+			field = field + request.RelatedObjectID
+		}
+		fd, exists = doc.schemaDescription.GetField(field)
+		if !exists {
+			return NewErrFieldNotExist(field)
+		}
+	}
+	val, err := validateFieldSchema(value, fd)
+	if err != nil {
+		return err
+	}
+	return doc.setCBOR(fd.Typ, field, val)
 }
 
 // Delete removes a field, and marks it to be deleted on the following db.Update() call.
@@ -261,83 +541,12 @@ func (doc *Document) setCBOR(t CType, field string, val any) error {
 	return doc.set(t, field, value)
 }
 
-func (doc *Document) setObject(t CType, field string, val *Document) error {
-	value := newValue(t, val)
-	return doc.set(t, field, &value)
-}
-
-// @todo: Update with document schemas
-func (doc *Document) setAndParseType(field string, value any) error {
-	if value == nil {
-		return doc.setCBOR(LWW_REGISTER, field, value)
-	}
-
-	switch val := value.(type) {
-	// int (any number)
-	case int:
-		err := doc.setCBOR(LWW_REGISTER, field, int64(val))
-		if err != nil {
-			return err
-		}
-	case uint64:
-		err := doc.setCBOR(LWW_REGISTER, field, int64(val))
-		if err != nil {
-			return err
-		}
-
-	case float64:
-		// case int64:
-
-		// Check if its actually a float or just an int
-		if float64(int64(val)) == val { //int
-			err := doc.setCBOR(LWW_REGISTER, field, int64(val))
-			if err != nil {
-				return err
-			}
-		} else { //float
-			err := doc.setCBOR(LWW_REGISTER, field, val)
-			if err != nil {
-				return err
-			}
-		}
-
-	// string, bool, and more
-	case string, bool, int64, []any, []bool, []*bool, []int64, []*int64, []float64, []*float64, []string, []*string:
-		err := doc.setCBOR(LWW_REGISTER, field, val)
-		if err != nil {
-			return err
-		}
-
-	// sub object, recurse down.
-	// @TODO: Object Definitions
-	// You can use an object as a way to override defaults
-	// and types for JSON literals.
-	// Eg.
-	// Instead of { "Timestamp": 123 }
-	//			- which is parsed as an int
-	// Use { "Timestamp" : { "_Type": "uint64", "_Value": 123 } }
-	//			- Which is parsed as an uint64
-	case map[string]any:
-		subDoc := newEmptyDoc()
-		err := subDoc.setAndParseObjectType(val)
-		if err != nil {
-			return err
-		}
-
-		err = doc.setObject(OBJECT, field, subDoc)
-		if err != nil {
-			return err
-		}
-
-	default:
-		return NewErrUnhandledType(field, val)
-	}
-	return nil
-}
-
 func (doc *Document) setAndParseObjectType(value map[string]any) error {
 	for k, v := range value {
-		err := doc.setAndParseType(k, v)
+		if v == nil {
+			continue
+		}
+		err := doc.Set(k, v)
 		if err != nil {
 			return err
 		}
@@ -423,7 +632,7 @@ func (doc *Document) Clean() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
 			if val.IsDelete() {
-				doc.SetAs(v.Name(), nil, v.Type()) //nolint:errcheck
+				doc.Set(v.Name(), nil) //nolint:errcheck
 			}
 			val.Clean()
 		}
@@ -517,40 +726,6 @@ func (doc *Document) generateAndSetDocID() error {
 	return nil
 }
 
-func (doc *Document) remapAliasFields(fieldDescriptions []FieldDescription) (bool, error) {
-	doc.mu.Lock()
-	defer doc.mu.Unlock()
-
-	foundAlias := false
-	for docField, docFieldValue := range doc.fields {
-		for _, fieldDescription := range fieldDescriptions {
-			maybeAliasField := docField + request.RelatedObjectID
-			if fieldDescription.Name == maybeAliasField {
-				foundAlias = true
-				doc.fields[maybeAliasField] = docFieldValue
-				delete(doc.fields, docField)
-			}
-		}
-	}
-
-	return foundAlias, nil
-}
-
-// RemapAliasFieldsAndDocID remaps the alias fields and fixes (overwrites) the DocID.
-func (doc *Document) RemapAliasFieldsAndDocID(fieldDescriptions []FieldDescription) error {
-	foundAlias, err := doc.remapAliasFields(fieldDescriptions)
-	if err != nil {
-		return err
-	}
-
-	if !foundAlias {
-		return nil
-	}
-
-	// Update the DocID so DocID isn't based on an aliased name of a field.
-	return doc.generateAndSetDocID()
-}
-
 // DocumentStatus represent the state of the document in the DAG store.
 // It can either be `Active“ or `Deleted`.
 type DocumentStatus uint8
@@ -576,65 +751,6 @@ func (dStatus DocumentStatus) UInt8() uint8 {
 func (dStatus DocumentStatus) IsDeleted() bool {
 	return dStatus > 1
 }
-
-// loops through an object of the form map[string]any
-// and fills in the Document with each field it finds in the object.
-// Automatically handles sub objects and arrays.
-// Does not allow anonymous fields, error is thrown in this case
-// Eg. The JSON value [1,2,3,4] by itself is a valid JSON Object, but has no
-// field name.
-// func parseJSONObject(doc *Document, data map[string]any) error {
-// 	for k, v := range data {
-// 		switch v.(type) {
-
-// 		// int (any number)
-// 		case float64:
-// 			// case int64:
-
-// 			// Check if its actually a float or just an int
-// 			val := v.(float64)
-// 			if float64(int64(val)) == val { //int
-// 				doc.setCBOR(crdt.LWW_REGISTER, k, int64(val))
-// 			} else { //float
-// 				panic("todo")
-// 			}
-// 			break
-
-// 		// string
-// 		case string:
-// 			doc.setCBOR(crdt.LWW_REGISTER, k, v)
-// 			break
-
-// 		// array
-// 		case []any:
-// 			break
-
-// 		// sub object, recurse down.
-// 		// @TODO: Object Definitions
-// 		// You can use an object as a way to override defaults
-// 		// and types for JSON literals.
-// 		// Eg.
-// 		// Instead of { "Timestamp": 123 }
-// 		//			- which is parsed as an int
-// 		// Use { "Timestamp" : { "_Type": "uint64", "_Value": 123 } }
-// 		//			- Which is parsed as an uint64
-// 		case map[string]any:
-// 			subDoc := newEmptyDoc()
-// 			err := parseJSONObject(subDoc, v.(map[string]any))
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			doc.setObject(crdt.OBJECT, k, subDoc)
-// 			break
-
-// 		default:
-// 			return errors.Wrap("Unhandled type in raw JSON: %v => %T", k, v)
-
-// 		}
-// 	}
-// 	return nil
-// }
 
 // parses a document field path, can have sub elements if we have embedded objects.
 // Returns the first path, the remaining split paths, and a bool indicating if there are sub paths

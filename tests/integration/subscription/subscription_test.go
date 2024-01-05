@@ -288,7 +288,7 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 						"points": float64(55),
 					},
 					{
-						"_docID": "bae-cf723876-5c6a-5dcf-a877-ab288eb30d57",
+						"_docID": "bae-76b0f3f5-964c-57c3-b44b-4a91bea70d40",
 						"age":    int64(31),
 						"name":   "Addo",
 						"points": float64(55),

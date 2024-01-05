@@ -243,7 +243,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						"rating": 4.5,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"price_id": "bae-d64a5165-1e77-5a67-95f2-6b1ff14b2179"
+						"price_id": "bae-b4b58dab-7bc3-5a3a-a26b-63d9d555116d"
 					}`,
 					`{
 						"name": "Theif Lord",
@@ -274,7 +274,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						"currency": "GBP",
 						"value": 12.99
 					}`,
-					// bae-d64a5165-1e77-5a67-95f2-6b1ff14b2179
+					// bae-b4b58dab-7bc3-5a3a-a26b-63d9d555116d
 					`{
 						"currency": "SEK",
 						"value": 129
@@ -362,7 +362,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						"rating": 4.5,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
-						"price_id": "bae-d64a5165-1e77-5a67-95f2-6b1ff14b2179"
+						"price_id": "bae-b4b58dab-7bc3-5a3a-a26b-63d9d555116d"
 					}`,
 					`{
 						"name": "Theif Lord",
@@ -393,7 +393,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						"currency": "GBP",
 						"value": 12.99
 					}`,
-					// bae-d64a5165-1e77-5a67-95f2-6b1ff14b2179
+					// bae-b4b58dab-7bc3-5a3a-a26b-63d9d555116d
 					`{
 						"currency": "SEK",
 						"value": 129

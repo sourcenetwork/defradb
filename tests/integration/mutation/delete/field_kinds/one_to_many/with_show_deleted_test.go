@@ -20,12 +20,28 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+var schemas = `
+type Book {
+	name: String
+	rating: Float
+	author: Author
+}
+type Author {
+	name: String
+	age: Int
+	published: [Book]
+}
+`
+
 func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *testing.T) {
+	colDefMap, err := testUtils.ParseSDL(schemas)
+	require.NoError(t, err)
+
 	jsonString1 := `{
 		"name": "John",
 		"age": 30
 	}`
-	doc1, err := client.NewDocFromJSON([]byte(jsonString1))
+	doc1, err := client.NewDocFromJSON([]byte(jsonString1), colDefMap["Author"].Schema)
 	require.NoError(t, err)
 
 	jsonString2 := fmt.Sprintf(`{
@@ -33,7 +49,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 		"rating": 9.9,
 		"author_id": "%s"
 	}`, doc1.ID())
-	doc2, err := client.NewDocFromJSON([]byte(jsonString2))
+	doc2, err := client.NewDocFromJSON([]byte(jsonString2), colDefMap["Book"].Schema)
 	require.NoError(t, err)
 
 	jsonString3 := fmt.Sprintf(`{
@@ -48,18 +64,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 		Description: "One to many delete document using single document id, show deleted.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: `
-					type Book {
-						name: String
-						rating: Float
-						author: Author
-					}
-					type Author {
-						name: String
-						age: Int
-						published: [Book]
-					}
-				`,
+				Schema: schemas,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
