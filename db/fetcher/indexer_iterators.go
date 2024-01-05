@@ -217,37 +217,34 @@ func (i *inIndexIterator) Close() error {
 }
 
 type errorCheckingFilter struct {
-	matcher valueMatcher
-	err     error
+	matchers []valueMatcher
+	err      error
+	execInfo *ExecInfo
 }
 
 func (f *errorCheckingFilter) Filter(e query.Entry) bool {
 	if f.err != nil {
 		return false
 	}
+	f.execInfo.IndexesFetched++
+
 	indexKey, err := core.NewIndexDataStoreKey(e.Key)
 	if err != nil {
 		f.err = err
 		return false
 	}
-	res, err := f.matcher.Match(indexKey.FieldValues[0])
-	if err != nil {
-		f.err = err
-		return false
+
+	for i := range f.matchers {
+		res, err := f.matchers[i].Match(indexKey.FieldValues[i])
+		if err != nil {
+			f.err = err
+			return false
+		}
+		if !res {
+			return false
+		}
 	}
-	return res
-}
-
-// execInfoIndexMatcherDecorator is a decorator for indexMatcher that counts the number
-// of indexes fetched on every call to Match.
-type execInfoIndexMatcherDecorator struct {
-	matcher  valueMatcher
-	execInfo *ExecInfo
-}
-
-func (d *execInfoIndexMatcherDecorator) Match(value []byte) (bool, error) {
-	d.execInfo.IndexesFetched++
-	return d.matcher.Match(value)
+	return true
 }
 
 type scanningIndexIterator struct {
@@ -259,7 +256,8 @@ type scanningIndexIterator struct {
 }
 
 func (i *scanningIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	i.filter.matcher = &execInfoIndexMatcherDecorator{matcher: i.matcher, execInfo: i.execInfo}
+	i.filter.matchers = []valueMatcher{i.matcher}
+	i.filter.execInfo = i.execInfo
 
 	iter, err := store.Query(ctx, query.Query{
 		Prefix:  i.indexKey.ToString(),
