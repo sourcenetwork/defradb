@@ -21,6 +21,12 @@ import (
 func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with non existant field",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return a different error
+			// when field types do not match
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

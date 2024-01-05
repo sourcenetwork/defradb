@@ -15,11 +15,18 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to many create mutation, with an invalid field.",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return a different error
+			// when field types do not match
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -36,6 +43,12 @@ func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to many create mutation, non-existing id, from the single side, no id relation field.",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return a different error
+			// when field types do not match
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

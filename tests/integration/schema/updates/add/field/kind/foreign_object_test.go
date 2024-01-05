@@ -734,7 +734,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindSubstitution(t *testin
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo": "%s"
+						"foo_id": "%s"
 					}`,
 					key1,
 				),
