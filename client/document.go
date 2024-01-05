@@ -251,6 +251,8 @@ func getFloat64(v any) (float64, error) {
 		return val.Float64()
 	case int:
 		return float64(val), nil
+	case int32:
+		return float64(val), nil
 	case int64:
 		return float64(val), nil
 	case float64:
