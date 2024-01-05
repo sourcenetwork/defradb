@@ -791,7 +791,6 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 }
 
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
-
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
 		return err

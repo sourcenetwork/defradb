@@ -1353,7 +1353,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 					},
 					{
 						Name:         "owner_id",
-						Kind:         client.FieldKind_DocKey,
+						Kind:         client.FieldKind_DocID,
 						RelationType: client.Relation_Type_INTERNAL_ID,
 					},
 				},

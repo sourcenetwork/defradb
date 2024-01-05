@@ -358,7 +358,7 @@ func (c *collection) patchPrimaryDoc(
 	}
 
 	pc := c.db.newCollection(primaryCol.Description(), primarySchema)
-	err = pc.validateOneToOneLinkDoesntAlreadyExist(ctx, txn, primaryDockey.String(), primaryIDField, docKey)
+	err = pc.validateOneToOneLinkDoesntAlreadyExist(ctx, txn, primaryDocID.String(), primaryIDField, docID)
 	if err != nil {
 		return err
 	}

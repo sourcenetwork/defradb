@@ -68,7 +68,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 		Description: "One-to-many relation query from one side with  cid and docID",
 		Request: `query {
 					Book (
-							cid: "bafybeice3ytsbgioxatbiwr7qrdipcpfbaa6kquegahxrdb4o7ex2jqrei"
+							cid: "bafybeiddywe5odj47ljhyslzey3kbmw3yqdzsstqqjh3ge6cliy2unty64"
 							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 						) {
 						name
@@ -117,7 +117,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 		Description: "One-to-many relation query from one side with child update and parent cid and docID",
 		Request: `query {
 					Book (
-							cid: "bafybeice3ytsbgioxatbiwr7qrdipcpfbaa6kquegahxrdb4o7ex2jqrei",
+							cid: "bafybeiddywe5odj47ljhyslzey3kbmw3yqdzsstqqjh3ge6cliy2unty64",
 							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 						) {
 						name
@@ -173,14 +173,12 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 		Description: "One-to-many relation query from one side with parent update and parent cid and docID",
 		Request: `query {
 					Book (
-							cid: "bafybeice3ytsbgioxatbiwr7qrdipcpfbaa6kquegahxrdb4o7ex2jqrei",
+							cid: "bafybeie2okvnf3w3767gspsnln5d6n54hvnmu65wjkadxciopwoi6gxqha",
 							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 						) {
 						name
 					}
-				}
-			}`,
-
+				}`,
 		Docs: map[int][]string{
 			//books
 			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
@@ -227,7 +225,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 		Description: "One-to-many relation query from one side with parent update and parent cid and docID",
 		Request: `query {
 					Book (
-							cid: "bafybeibnwnbpudfbrp3ly76bbqbraskrdfpr2dlym7o3ojdfkdmkvvh2yu",
+							cid: "bafybeie2okvnf3w3767gspsnln5d6n54hvnmu65wjkadxciopwoi6gxqha",
 							docID: "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d"
 						) {
 						name

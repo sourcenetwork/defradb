@@ -416,15 +416,15 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 	colDefMap, err := parseSDL(schema)
 // 	require.NoError(t, err)
 
-// 	johnDocKey := mustGetDocIDFromDocMap(map[string]any{"name": "John"}, colDefMap["User"].Schema)
-// 	fredDocKey := mustGetDocIDFromDocMap(map[string]any{"name": "Fred"}, colDefMap["User"].Schema)
+// 	johnDocID := mustGetDocIDFromDocMap(map[string]any{"name": "John"}, colDefMap["User"].Schema)
+// 	fredDocID := mustGetDocIDFromDocMap(map[string]any{"name": "Fred"}, colDefMap["User"].Schema)
 // 	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
 // 		{"name": "John"},
 // 		{"name": "Fred"},
-// 		{"model": "iPhone", "owner_id": johnDocKey},
-// 		{"model": "PlayStation", "owner_id": johnDocKey},
-// 		{"model": "Surface", "owner_id": fredDocKey},
-// 		{"model": "Pixel", "owner_id": fredDocKey},
+// 		{"model": "iPhone", "owner_id": johnDocID},
+// 		{"model": "PlayStation", "owner_id": johnDocID},
+// 		{"model": "Surface", "owner_id": fredDocID},
+// 		{"model": "Pixel", "owner_id": fredDocID},
 // 	}, col), docs)
 // 	if errorMsg != "" {
 // 		t.Error(errorMsg)
@@ -474,23 +474,23 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 	colDefMap, err := parseSDL(schema)
 // 	require.NoError(t, err)
 
-// 	johnDocKey := mustGetDocIDFromDocMap(map[string]any{"name": "John"}, colDefMap["User"].Schema)
+// 	johnDocID := mustGetDocIDFromDocMap(map[string]any{"name": "John"}, colDefMap["User"].Schema)
 // 	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
 // 		{"name": "John"},
-// 		{"model": "iPhone", "owner_id": johnDocKey},
-// 		{"model": "MacBook", "owner_id": johnDocKey},
+// 		{"model": "iPhone", "owner_id": johnDocID},
+// 		{"model": "MacBook", "owner_id": johnDocID},
 // 		{
 // 			"CPU": "A13",
 // 			"device_id": mustGetDocIDFromDocMap(map[string]any{
 // 				"model":    "iPhone",
-// 				"owner_id": johnDocKey,
+// 				"owner_id": johnDocID,
 // 			}, colDefMap["Device"].Schema),
 // 		},
 // 		{
 // 			"CPU": "M2",
 // 			"device_id": mustGetDocIDFromDocMap(map[string]any{
 // 				"model":    "MacBook",
-// 				"owner_id": johnDocKey,
+// 				"owner_id": johnDocID,
 // 			}, colDefMap["Device"].Schema),
 // 		},
 // 	}), docs)
@@ -567,15 +567,15 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 	})
 // 	assert.NoError(t, err)
 
-// 	johnDocKey := mustGetDocIDFromDocMap(map[string]any{"name": "John"}, defs[0].Schema)
-// 	fredDocKey := mustGetDocIDFromDocMap(map[string]any{"name": "Fred"}, defs[0].Schema)
+// 	johnDocID := mustGetDocIDFromDocMap(map[string]any{"name": "John"}, defs[0].Schema)
+// 	fredDocID := mustGetDocIDFromDocMap(map[string]any{"name": "Fred"}, defs[0].Schema)
 // 	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
 // 		{"name": "John"},
 // 		{"name": "Fred"},
-// 		{"model": "iPhone", "owner_id": johnDocKey},
-// 		{"model": "PlayStation", "owner_id": johnDocKey},
-// 		{"model": "Surface", "owner_id": fredDocKey},
-// 		{"model": "Pixel", "owner_id": fredDocKey},
+// 		{"model": "iPhone", "owner_id": johnDocID},
+// 		{"model": "PlayStation", "owner_id": johnDocID},
+// 		{"model": "Surface", "owner_id": fredDocID},
+// 		{"model": "Pixel", "owner_id": fredDocID},
 // 	}), docs)
 // 	if errorMsg != "" {
 // 		t.Error(errorMsg)
