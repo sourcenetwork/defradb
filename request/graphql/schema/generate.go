@@ -1041,7 +1041,6 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Description: createDocumentDescription,
 		Type:        obj,
 		Args: gql.FieldConfigArgument{
-			"data":  schemaTypes.NewArgConfig(gql.String, createDataArgDescription),
 			"input": schemaTypes.NewArgConfig(mutationInput, "Create field values"),
 		},
 	}
@@ -1054,7 +1053,6 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
 			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
 			"filter":              schemaTypes.NewArgConfig(filterInput, updateFilterArgDescription),
-			"data":                schemaTypes.NewArgConfig(gql.String, updateDataArgDescription),
 			"input":               schemaTypes.NewArgConfig(mutationInput, "Update field values"),
 		},
 	}

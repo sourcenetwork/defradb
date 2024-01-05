@@ -126,9 +126,6 @@ An optional value that specifies as to whether deleted documents may be
 	createDocumentDescription string = `
 Creates a single document of this type using the data provided.
 `
-	createDataArgDescription string = `
-The json representation of the document you wish to create. Required.
-`
 	updateDocumentsDescription string = `
 Updates documents in this collection using the data provided. Only documents
  matching any provided criteria will be updated, if no criteria are provided
@@ -148,10 +145,6 @@ An optional set of docID values that will limit the update to documents
 An optional filter for this update that will limit the update to the documents
  matching the given criteria. If no matching documents are found, the operation
  will succeed, but no documents will be updated.
-`
-	updateDataArgDescription string = `
-The json representation of the fields to update and their new values. Required.
- Fields not explicitly mentioned here will not be updated.
 `
 	deleteDocumentsDescription string = `
 Deletes documents in this collection matching any provided criteria. If no
