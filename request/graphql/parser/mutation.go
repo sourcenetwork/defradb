@@ -169,7 +169,7 @@ func parseMutationInput(val ast.Value) any {
 // parseMutationInputList parses the correct underlying
 // value type for all of the values in the ast.ListValue
 func parseMutationInputList(val *ast.ListValue) []any {
-	var list []any
+	list := make([]any, 0)
 	for _, val := range val.Values {
 		list = append(list, parseMutationInput(val))
 	}
