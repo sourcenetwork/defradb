@@ -58,11 +58,11 @@ func TestQueryCommitsWithDocIDAndOrderAndLimitAndOffset(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafybeihu5onq2trqv25zieyejrnj6kyh2533i3rchvq64kahbjz7uzrquu",
+						"cid":    "bafybeibfwqf5szatmlyl3alru4nq3gnxaiyyb3ggqung2jwb4qnm6mejyu",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeigzqhl3ckoduvhl7slck4mlgqo6lif5w2nedjlwz7rq3pacodc6t4",
+						"cid":    "bafybeihvhr7ke7bjgjixce262544tlo7mdlyuswtgl66zsrxcfc5targjy",
 						"height": int64(3),
 					},
 				},

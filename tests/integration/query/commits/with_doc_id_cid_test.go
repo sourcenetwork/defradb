@@ -103,15 +103,15 @@ func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 			testUtils.Request{
 				Request: ` {
 						commits(
-							dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
-							cid: "bafybeiagew5ervkxkyz6sezgkrcrhv6towawpbirg6ziouah7lj5eg7lwy"
+							docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+							cid: "bafybeibfwqf5szatmlyl3alru4nq3gnxaiyyb3ggqung2jwb4qnm6mejyu"
 						) {
 							cid
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeiagew5ervkxkyz6sezgkrcrhv6towawpbirg6ziouah7lj5eg7lwy",
+						"cid": "bafybeibfwqf5szatmlyl3alru4nq3gnxaiyyb3ggqung2jwb4qnm6mejyu",
 					},
 				},
 			},

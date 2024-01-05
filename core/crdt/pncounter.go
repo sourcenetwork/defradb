@@ -42,7 +42,7 @@ type Incrementable interface {
 
 // PNCounterDelta is a single delta operation for an PNCounter
 type PNCounterDelta[T Incrementable] struct {
-	DocKey    []byte
+	DocID     []byte
 	FieldName string
 	Priority  uint64
 	// SchemaVersionID is the schema version datastore key at the time of commit.
@@ -110,7 +110,7 @@ func (reg PNCounter[T]) Value(ctx context.Context) ([]byte, error) {
 // Set generates a new delta with the supplied value
 func (reg PNCounter[T]) Increment(value T) *PNCounterDelta[T] {
 	return &PNCounterDelta[T]{
-		DocKey:          []byte(reg.key.DocKey),
+		DocID:           []byte(reg.key.DocID),
 		FieldName:       reg.fieldName,
 		Data:            value,
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,

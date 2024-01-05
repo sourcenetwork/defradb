@@ -29,7 +29,7 @@ import (
 // LWWRegDelta is a single delta operation for an LWWRegister
 // @todo: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
-	DocKey    []byte
+	DocID     []byte
 	FieldName string
 	Priority  uint64
 	// SchemaVersionID is the schema version datastore key at the time of commit.
@@ -105,6 +105,7 @@ func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	return &LWWRegDelta{
 		Data:            value,
+		DocID:           []byte(reg.key.DocID),
 		FieldName:       reg.fieldName,
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}

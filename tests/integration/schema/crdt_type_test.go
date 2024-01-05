@@ -20,7 +20,7 @@ import (
 )
 
 func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreia444xgvvpyyvxn2m56mgsyovhtrbbx6zpmn4ocnkqbbjnytlfvrm"
+	schemaVersionID := "bafkreig54q5pw7elljueepsyux4qgdspm3ozct5dqocr5b2kufpjwb2mae"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -40,8 +40,8 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 						Root:      schemaVersionID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
-								Kind: client.FieldKind_DocKey,
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name: "points",
@@ -60,7 +60,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreiexc2p3oc6vhywrhmyqqxntlgryjjlywtzz42r2ebyzq7mqu5ow2m"
+	schemaVersionID := "bafkreibaeypr2i2eg3kozq3mlfsibgtolqlrcozo5ufqfb725dfq3hx43e"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -80,8 +80,8 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 						Root:      schemaVersionID,
 						Fields: []client.FieldDescription{
 							{
-								Name: "_key",
-								Kind: client.FieldKind_DocKey,
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name: "points",

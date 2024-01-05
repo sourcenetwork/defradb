@@ -73,7 +73,7 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 		Description: "Simple query with cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeiebx4gp6ghqksxq56imktbyefze6bezrd42tco2vqcv2hrx2jstam",
+							cid: "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -102,7 +102,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 		Description: "Simple query with (first) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeiebx4gp6ghqksxq56imktbyefze6bezrd42tco2vqcv2hrx2jstam",
+							cid: "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -143,7 +143,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 		Description: "Simple query with (last) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeiawyt67laj4wzigasmbwvglrdlpkba5xiagsseealuacrixitizoa"
+							cid: "bafybeigotwnjltl5y5ou5yqxujdayoqet4axspaclbvzustjhinzqx77ym"
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -184,7 +184,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 		Description: "Simple query with (middle) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeibg345u3ea7fq7hupjtz34w5tq3ffb4j6owygv6j33hfmgnj4tx64",
+							cid: "bafybeib4cdjv4dxmayzgf242hx2r3v5tq5ib5z6oyyrzk3dtddt3wsyyhi",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -224,8 +224,8 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with (first) cid and docID and yielded schema version",
 		Request: `query {
-					Users (
-							cid: "bafybeiebx4gp6ghqksxq56imktbyefze6bezrd42tco2vqcv2hrx2jstam",
+					Users (					
+							cid: "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -269,9 +269,9 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 	executeTestCase(t, test)
 }
 
-func TestCidAndDocKeyQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
+func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with second last cid and dockey with pncounter int type",
+		Description: "Simple query with second last cid and docID with pncounter int type",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -300,8 +300,8 @@ func TestCidAndDocKeyQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeiemzwrx7jotpqjzajfmu2gi2o7h35yptgehihbdyoxkmzox4coetm",
-						dockey: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
+						cid: "bafybeiabh6mqnysyrv5phhjikjyl5zgxnpxzxogpip7s7knyujkh7fx3qu",
+						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
 					) {
 						name
 						points
@@ -320,9 +320,9 @@ func TestCidAndDocKeyQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCidAndDocKeyQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
+func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with second last cid and dockey with pncounter and float type",
+		Description: "Simple query with second last cid and docID with pncounter and float type",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -351,8 +351,8 @@ func TestCidAndDocKeyQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) 
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeidanfj4emzh4izmij5bwocgnecpvolx2b77il4mtwyrucvmgueyp4",
-						dockey: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
+						cid: "bafybeiaqw6oxeshkvd3ilzzagjy3c6h776l3hqvmz5loq4sokr7tlxkm5m",
+						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
 					) {
 						name
 						points

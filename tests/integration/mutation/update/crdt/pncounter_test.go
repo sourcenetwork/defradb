@@ -69,9 +69,6 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 }
 
 // This test documents what happens when an overflow occurs in a PN Counter with Int type.
-// Note: This documents a sub optimal behaviour of the system due to json unmarshalling
-// MaxInt64 into a float which loses precision and converting it back to int64 sets it as a negative
-// value.
 func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Positive increments of a PN Counter with Int type causing overflow behaviour",
