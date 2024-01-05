@@ -11,7 +11,7 @@ type User {
 type Friend {
 	name: String
 	friendsDate: DateTime
-	user_id: DocKey
+	user_id: DocID
 }
 
 - >
@@ -23,7 +23,7 @@ type Friend {
 {
 	query {
 		user { selectTopNode -> (source) selectNode -> (source) scanNode(user) -> filter: NIL
-			[_key]
+			[_docID]
 			name
 
 			// key = bae-KHDFLGHJFLDG
@@ -39,13 +39,13 @@ selectTopNode - > selectNode -> MultiNode.children: []planNode  -> multiScanNode
 										  						-> TypeJoinNode(merge**) -> TypeJoinOneMany -> (one) multiScanNode(scanNode(user)**)	-> } -> scanNode(user).Value() -> doc
 																			 					   -> (many) selectNode - > scanNode(friend)
 
-1. NEXT/VALUES MultiNode.doc = {_key: bae-KHDFLGHJFLDG, name: "BOB"}
-2. NEXT/VALUES TypeJoinOneMany.one {_key: bae-KHDFLGHJFLDG, name: "BOB"}
+1. NEXT/VALUES MultiNode.doc = {_docID: bae-KHDFLGHJFLDG, name: "BOB"}
+2. NEXT/VALUES TypeJoinOneMany.one {_docID: bae-KHDFLGHJFLDG, name: "BOB"}
 3. NEXT/VALUES (many).selectNode.doc = {name: "Eric", date: Oct29}
 LOOP
-4. NEXT/VALUES TypeJoinNode {_key: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{{name: "Eric", date: Oct29}}]}
+4. NEXT/VALUES TypeJoinNode {_docID: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{{name: "Eric", date: Oct29}}]}
 5. NEXT/VALUES (many).selectNode.doc = {name: "Jimmy", date: Oct21}
-6. NEXT/VALUES TypeJoinNode {_key: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{name: "Eric", date: Oct29}, {name: "Jimmy", date: Oct21}]}
+6. NEXT/VALUES TypeJoinNode {_docID: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{name: "Eric", date: Oct29}, {name: "Jimmy", date: Oct21}]}
 GOTO LOOP
 
 // SPLIT FILTER
@@ -65,7 +65,7 @@ query {
 {
 	data: [
 		{
-			_key: bae-ALICE
+			_docID: bae-ALICE
 			age: 22,
 			name: "Alice",
 			points: 45,
@@ -80,7 +80,7 @@ query {
 		},
 
 		{
-			_key: bae-CHARLIE
+			_docID: bae-CHARLIE
 			age: 22,
 			name: "Charlie",
 			points: 45,
@@ -142,7 +142,7 @@ type Address: {
 	...
 
 	user: user
-	# user_id: DocKey
+	# user_id: DocID
 }
 
 query {

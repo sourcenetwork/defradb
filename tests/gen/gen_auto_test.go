@@ -60,10 +60,10 @@ func getBooleanField(t *testing.T, doc *client.Document, fieldName string) bool 
 	return val
 }
 
-func getDocKeysFromDocs(docs []*client.Document) []string {
+func getDocIDsFromDocs(docs []*client.Document) []string {
 	result := make([]string, 0, len(docs))
 	for _, doc := range docs {
-		result = append(result, doc.Key().String())
+		result = append(result, doc.ID().String())
 	}
 	return result
 }
@@ -90,7 +90,7 @@ func removeDuplicateStr(strSlice []string) []string {
 	return list
 }
 
-func assertDocKeysMatch(
+func assertDocIDsMatch(
 	t *testing.T,
 	docs []GeneratedDoc,
 	primaryCol, secondaryCol string,
@@ -100,7 +100,7 @@ func assertDocKeysMatch(
 	primaryDocs := filterByCollection(docs, primaryCol)
 	secondaryDocs := filterByCollection(docs, secondaryCol)
 
-	docKeys := getDocKeysFromDocs(primaryDocs)
+	docIDs := getDocIDsFromDocs(primaryDocs)
 	foreignValues := make([]string, 0, len(secondaryDocs))
 	for _, secDoc := range secondaryDocs {
 		foreignValues = append(foreignValues, getStringField(t, secDoc, foreignField))
@@ -111,7 +111,7 @@ func assertDocKeysMatch(
 		foreignValues = newValues
 	}
 
-	assert.ElementsMatch(t, docKeys, foreignValues)
+	assert.ElementsMatch(t, docIDs, foreignValues)
 }
 
 func assertUniformlyDistributedIntFieldRange(t *testing.T, docs []GeneratedDoc, fieldName string, minVal, maxVal int) {
@@ -211,8 +211,8 @@ func assertUniformRelationDistribution(
 
 	secondaryPerPrimary := make(map[string]int)
 	for _, d := range secondaryCol {
-		docKey := getStringField(t, d, foreignField)
-		secondaryPerPrimary[docKey]++
+		docID := getStringField(t, d, foreignField)
+		secondaryPerPrimary[docID]++
 	}
 	minDocsPerPrimary := math.MaxInt
 	maxDocsPerPrimary := math.MinInt
@@ -347,7 +347,7 @@ func TestAutoGenerateFromSchema_RelationOneToOne(t *testing.T) {
 	assert.Len(t, filterByCollection(docs, "User"), numUsers)
 	assert.Len(t, filterByCollection(docs, "Device"), numUsers)
 
-	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", false)
+	assertDocIDsMatch(t, docs, "User", "Device", "owner_id", false)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToMany(t *testing.T) {
@@ -369,7 +369,7 @@ func TestAutoGenerateFromSchema_RelationOneToMany(t *testing.T) {
 	assert.Len(t, filterByCollection(docs, "User"), numUsers)
 	assert.Len(t, filterByCollection(docs, "Device"), numUsers*2)
 
-	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocIDsMatch(t, docs, "User", "Device", "owner_id", true)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToManyWithConfiguredNumberOfElements(t *testing.T) {
@@ -396,7 +396,7 @@ func TestAutoGenerateFromSchema_RelationOneToManyWithConfiguredNumberOfElements(
 
 	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", minDevicesPerUser, maxDevicesPerUser)
 
-	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocIDsMatch(t, docs, "User", "Device", "owner_id", true)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToManyToOneWithConfiguredNumberOfElements(t *testing.T) {
@@ -430,8 +430,8 @@ func TestAutoGenerateFromSchema_RelationOneToManyToOneWithConfiguredNumberOfElem
 
 	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", devicesPerUser, devicesPerUser)
 
-	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
-	assertDocKeysMatch(t, docs, "Device", "Specs", "device_id", false)
+	assertDocIDsMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocIDsMatch(t, docs, "Device", "Specs", "device_id", false)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToManyToOnePrimaryWithConfiguredNumberOfElements(t *testing.T) {
@@ -465,8 +465,8 @@ func TestAutoGenerateFromSchema_RelationOneToManyToOnePrimaryWithConfiguredNumbe
 
 	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", devicesPerUser, devicesPerUser)
 
-	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
-	assertDocKeysMatch(t, docs, "Specs", "Device", "specs_id", false)
+	assertDocIDsMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocIDsMatch(t, docs, "Specs", "Device", "specs_id", false)
 }
 
 func TestAutoGenerateFromSchema_RelationOneToManyToManyWithNumDocsForSecondaryType(t *testing.T) {
@@ -510,9 +510,9 @@ func TestAutoGenerateFromSchema_RelationOneToManyToManyWithNumDocsForSecondaryTy
 	assertUniformRelationDistribution(t, docs, "Device", "Specs", "device_id", 1, 1)
 	assertUniformRelationDistribution(t, docs, "Device", "Component", "device_id", componentsPerDevice, componentsPerDevice)
 
-	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
-	assertDocKeysMatch(t, docs, "Device", "Specs", "device_id", false)
-	assertDocKeysMatch(t, docs, "Device", "Component", "device_id", true)
+	assertDocIDsMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocIDsMatch(t, docs, "Device", "Specs", "device_id", false)
+	assertDocIDsMatch(t, docs, "Device", "Component", "device_id", true)
 }
 
 func TestAutoGenerateFromSchema_DemandsForDifferentRelationTrees(t *testing.T) {
@@ -549,7 +549,7 @@ func TestAutoGenerateFromSchema_DemandsForDifferentRelationTrees(t *testing.T) {
 
 	assertUniformRelationDistribution(t, docs, "Device", "Component", "device_id", componentsPerDevice, componentsPerDevice)
 
-	assertDocKeysMatch(t, docs, "Device", "Component", "device_id", true)
+	assertDocIDsMatch(t, docs, "Device", "Component", "device_id", true)
 }
 
 func TestAutoGenerateFromSchema_IfTypeDemandedForSameTreeAddsUp_ShouldGenerate(t *testing.T) {
@@ -638,7 +638,7 @@ func TestAutoGenerateFromSchema_IfDemand2TypesWithOptions_ShouldAdjust(t *testin
 	assert.Len(t, filterByCollection(docs, "User"), numUsers)
 	assert.Len(t, filterByCollection(docs, "Device"), numDevices)
 
-	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocIDsMatch(t, docs, "User", "Device", "owner_id", true)
 }
 
 func TestAutoGenerateFromSchema_IfDemand2TypesWithOptionsAndFieldDemand_ShouldAdjust(t *testing.T) {
@@ -668,7 +668,7 @@ func TestAutoGenerateFromSchema_IfDemand2TypesWithOptionsAndFieldDemand_ShouldAd
 
 	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", 1, 5)
 
-	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocIDsMatch(t, docs, "User", "Device", "owner_id", true)
 }
 
 func TestAutoGenerateFromSchema_IfDemand2TypesWithRangeOptions_ShouldAdjust(t *testing.T) {
@@ -699,7 +699,7 @@ func TestAutoGenerateFromSchema_IfDemand2TypesWithRangeOptions_ShouldAdjust(t *t
 
 	assertUniformRelationDistribution(t, docs, "User", "Device", "owner_id", 1, 5)
 
-	assertDocKeysMatch(t, docs, "User", "Device", "owner_id", true)
+	assertDocIDsMatch(t, docs, "User", "Device", "owner_id", true)
 }
 
 func TestAutoGenerateFromSchema_ConfigThatCanNotBySupplied(t *testing.T) {
@@ -1352,12 +1352,9 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 						Kind: client.FieldKind_STRING,
 					},
 					{
-						Name:   "owner",
-						Kind:   client.FieldKind_FOREIGN_OBJECT,
-						Schema: "User",
-						RelationType: client.Relation_Type_ONE |
-							client.Relation_Type_ONEMANY |
-							client.Relation_Type_Primary,
+						Name:         "owner_id",
+						Kind:         client.FieldKind_DocID,
+						RelationType: client.Relation_Type_INTERNAL_ID,
 					},
 				},
 			},

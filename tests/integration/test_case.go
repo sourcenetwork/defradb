@@ -130,6 +130,26 @@ type SetDefaultSchemaVersion struct {
 	ExpectedError   string
 }
 
+// CreateView is an action that will create a new View.
+type CreateView struct {
+	// NodeID may hold the ID (index) of a node to create this View on.
+	//
+	// If a value is not provided the view will be created on all nodes.
+	NodeID immutable.Option[int]
+
+	// The query that this View is to be based off of. Required.
+	Query string
+
+	// The SDL containing all types used by the view output.
+	SDL string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
 // CreateDoc will attempt to create the given document in the given collection
 // using the set [MutationType].
 type CreateDoc struct {
@@ -227,6 +247,9 @@ type CreateIndex struct {
 	FieldsNames []string
 	// The directions of the 'FieldsNames' to index. Used only for composite indexes.
 	Directions []client.IndexDirection
+
+	// If Unique is true, the index will be created as a unique index.
+	Unique bool
 
 	// Any error expected from the action. Optional.
 	//

@@ -12,6 +12,8 @@ package client
 
 import (
 	"fmt"
+
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 // CollectionDescription describes a Collection and all its associated metadata.
@@ -29,6 +31,13 @@ type CollectionDescription struct {
 
 	// The ID of the schema version that this collection is at.
 	SchemaVersionID string
+
+	// BaseQuery contains the base query of this view, if this collection is a view.
+	//
+	// The query will be saved, and then may be accessed by other actors on demand.  Actor defined
+	// aggregates, filters and other logic (such as LensVM transforms) will execute on top of this
+	// base query before the result is returned to the actor.
+	BaseQuery *request.Select
 
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
@@ -118,7 +127,7 @@ type FieldKind uint8
 
 func (f FieldKind) String() string {
 	switch f {
-	case FieldKind_DocKey:
+	case FieldKind_DocID:
 		return "ID"
 	case FieldKind_BOOL:
 		return "Boolean"
@@ -156,7 +165,7 @@ func (f FieldKind) String() string {
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
 	FieldKind_None         FieldKind = 0
-	FieldKind_DocKey       FieldKind = 1
+	FieldKind_DocID        FieldKind = 1
 	FieldKind_BOOL         FieldKind = 2
 	FieldKind_BOOL_ARRAY   FieldKind = 3
 	FieldKind_INT          FieldKind = 4
@@ -192,7 +201,7 @@ const (
 // in the future.  They currently roughly correspond to the GQL field types, but this
 // equality is not guaranteed.
 var FieldKindStringToEnumMapping = map[string]FieldKind{
-	"ID":         FieldKind_DocKey,
+	"ID":         FieldKind_DocID,
 	"Boolean":    FieldKind_BOOL,
 	"[Boolean]":  FieldKind_NILLABLE_BOOL_ARRAY,
 	"[Boolean!]": FieldKind_BOOL_ARRAY,
@@ -271,7 +280,7 @@ type FieldDescription struct {
 
 // IsInternal returns true if this field is internally generated.
 func (f FieldDescription) IsInternal() bool {
-	return (f.Name == "_key") || f.RelationType&Relation_Type_INTERNAL_ID != 0
+	return (f.Name == request.DocIDFieldName) || f.RelationType&Relation_Type_INTERNAL_ID != 0
 }
 
 // IsObject returns true if this field is an object type.

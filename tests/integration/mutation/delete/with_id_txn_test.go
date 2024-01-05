@@ -37,13 +37,13 @@ func TestMutationDeletion_WithIDAndTxn(t *testing.T) {
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					delete_User(ids: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"]) {
-						_key
+					delete_User(docIDs: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"]) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
+						"_docID": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
 					},
 				},
 			},
@@ -51,7 +51,7 @@ func TestMutationDeletion_WithIDAndTxn(t *testing.T) {
 				TransactionID: immutable.Some(0),
 				Request: `query {
 					User {
-						_key
+						_docID
 					}
 				}`,
 				Results: []map[string]any{},

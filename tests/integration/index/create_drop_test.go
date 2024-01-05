@@ -22,9 +22,9 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
-						Name: String @index
-						Age: Int
+					type User {
+						name: String @index
+						age: Int
 					}
 				`,
 			},
@@ -33,8 +33,8 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 				// bae-52b9170d-b77a-5887-b877-cbdbb99b009f
 				Doc: `
 					{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.DropIndex{
@@ -44,15 +44,15 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query  {
-						Users {
-							Name
-							Age
+						User {
+							name
+							age
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Age":  int64(21),
+						"name": "John",
+						"age":  int64(21),
 					},
 				},
 			},

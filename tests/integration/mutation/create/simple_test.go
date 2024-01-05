@@ -75,7 +75,7 @@ func TestMutationCreate(t *testing.T) {
 				Request: `
 					query {
 						Users {
-							_key
+							_docID
 							name
 							age
 						}
@@ -83,9 +83,9 @@ func TestMutationCreate(t *testing.T) {
 				`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
-						"name": "John",
-						"age":  int64(27),
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"name":   "John",
+						"age":    int64(27),
 					},
 				},
 			},
@@ -124,7 +124,7 @@ func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 					"name": "John",
 					"age": 27
 				}`,
-				ExpectedError: "a document with the given dockey already exists.",
+				ExpectedError: "a document with the given ID already exists",
 			},
 		},
 	}
@@ -146,12 +146,12 @@ func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 			testUtils.Request{
 				Request: `mutation {
 					create_Users(input: {}) {
-						_key
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-524bfa06-849c-5daf-b6df-05c2da80844d",
+						"_docID": "bae-524bfa06-849c-5daf-b6df-05c2da80844d",
 					},
 				},
 			},

@@ -124,16 +124,16 @@ func parseSelect(
 			}
 
 			slct.Filter = filter
-		case request.DocKey: // parse single dockey query field
-			val := astValue.(*ast.StringValue)
-			slct.DocKeys = immutable.Some([]string{val.Value})
-		case request.DocKeys:
-			docKeyValues := astValue.(*ast.ListValue).Values
-			docKeys := make([]string, len(docKeyValues))
-			for i, value := range docKeyValues {
-				docKeys[i] = value.(*ast.StringValue).Value
+		case request.DocIDArgName: // parse single DocID field
+			docIDValue := astValue.(*ast.StringValue)
+			slct.DocIDs = immutable.Some([]string{docIDValue.Value})
+		case request.DocIDsArgName:
+			docIDValues := astValue.(*ast.ListValue).Values
+			docIDs := make([]string, len(docIDValues))
+			for i, value := range docIDValues {
+				docIDs[i] = value.(*ast.StringValue).Value
 			}
-			slct.DocKeys = immutable.Some(docKeys)
+			slct.DocIDs = immutable.Some(docIDs)
 		case request.Cid: // parse single CID query field
 			val := astValue.(*ast.StringValue)
 			slct.CID = immutable.Some(val.Value)

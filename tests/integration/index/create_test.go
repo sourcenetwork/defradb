@@ -24,8 +24,8 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String @index
-						Age: Int
+						name: String @index
+						age: Int
 					}
 				`,
 			},
@@ -34,22 +34,22 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 				// bae-52b9170d-b77a-5887-b877-cbdbb99b009f
 				Doc: `
 					{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.Request{
 				Request: `
 					query  {
 						Users {
-							Name
-							Age
+							name
+							age
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Age":  int64(21),
+						"name": "John",
+						"age":  int64(21),
 					},
 				},
 			},
@@ -65,9 +65,9 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
-						Name: String 
-						Age: Int
+					type User {
+						name: String 
+						age: Int
 					}
 				`,
 			},
@@ -76,27 +76,27 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 				// bae-52b9170d-b77a-5887-b877-cbdbb99b009f
 				Doc: `
 					{
-						"Name":	"John",
-						"Age":	21
+						"name":	"John",
+						"age":	21
 					}`,
 			},
 			testUtils.CreateIndex{
 				CollectionID: 0,
 				IndexName:    "some_index",
-				FieldName:    "Name",
+				FieldName:    "name",
 			},
 			testUtils.Request{
 				Request: `
 					query  {
-						Users {
-							Name
-							Age
+						User {
+							name
+							age
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"Name": "John",
-						"Age":  int64(21),
+						"name": "John",
+						"age":  int64(21),
 					},
 				},
 			},

@@ -56,10 +56,8 @@ const (
 	dataLabel           = "data"
 	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"
-	idsLabel            = "ids"
 	joinRootLabel       = "root"
 	joinSubTypeLabel    = "subType"
-	keysLabel           = "_keys"
 	limitLabel          = "limit"
 	offsetLabel         = "offset"
 	sourcesLabel        = "sources"
@@ -170,7 +168,7 @@ func buildDebugExplainGraph(source planNode) (map[string]any, error) {
 //
 //	query @explain {
 //	    user {
-//	      _key
+//	      _docID
 //	      age
 //	      name
 //	    }

@@ -56,12 +56,26 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
-			description, err := fromAstDefinition(ctx, relationManager, defType)
+			description, err := collectionFromAstDefinition(ctx, relationManager, defType)
 			if err != nil {
 				return nil, err
 			}
 
 			definitions = append(definitions, description)
+
+		case *ast.InterfaceDefinition:
+			description, err := schemaFromAstDefinition(ctx, relationManager, defType)
+			if err != nil {
+				return nil, err
+			}
+
+			definitions = append(
+				definitions,
+				client.CollectionDefinition{
+					// `Collection` is left as default, as interfaces are schema-only declarations
+					Schema: description,
+				},
+			)
 
 		default:
 			// Do nothing, ignore it and continue
@@ -80,23 +94,23 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 	return definitions, nil
 }
 
-// fromAstDefinition parses a AST object definition into a set of collection descriptions.
-func fromAstDefinition(
+// collectionFromAstDefinition parses a AST object definition into a set of collection descriptions.
+func collectionFromAstDefinition(
 	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.ObjectDefinition,
 ) (client.CollectionDefinition, error) {
 	fieldDescriptions := []client.FieldDescription{
 		{
-			Name: request.KeyFieldName,
-			Kind: client.FieldKind_DocKey,
+			Name: request.DocIDFieldName,
+			Kind: client.FieldKind_DocID,
 			Typ:  client.NONE_CRDT,
 		},
 	}
 
 	indexDescriptions := []client.IndexDescription{}
 	for _, field := range def.Fields {
-		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def)
+		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def.Name.Value)
 		if err != nil {
 			return client.CollectionDefinition{}, err
 		}
@@ -116,10 +130,10 @@ func fromAstDefinition(
 
 	// sort the fields lexicographically
 	sort.Slice(fieldDescriptions, func(i, j int) bool {
-		// make sure that the _key (KeyFieldName) is always at the beginning
-		if fieldDescriptions[i].Name == request.KeyFieldName {
+		// make sure that the _docID is always at the beginning
+		if fieldDescriptions[i].Name == request.DocIDFieldName {
 			return true
-		} else if fieldDescriptions[j].Name == request.KeyFieldName {
+		} else if fieldDescriptions[j].Name == request.DocIDFieldName {
 			return false
 		}
 		return fieldDescriptions[i].Name < fieldDescriptions[j].Name
@@ -144,6 +158,33 @@ func fromAstDefinition(
 			Name:   def.Name.Value,
 			Fields: fieldDescriptions,
 		},
+	}, nil
+}
+
+func schemaFromAstDefinition(
+	ctx context.Context,
+	relationManager *RelationManager,
+	def *ast.InterfaceDefinition,
+) (client.SchemaDescription, error) {
+	fieldDescriptions := []client.FieldDescription{}
+
+	for _, field := range def.Fields {
+		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def.Name.Value)
+		if err != nil {
+			return client.SchemaDescription{}, err
+		}
+
+		fieldDescriptions = append(fieldDescriptions, tmpFieldsDescriptions...)
+	}
+
+	// sort the fields lexicographically
+	sort.Slice(fieldDescriptions, func(i, j int) bool {
+		return fieldDescriptions[i].Name < fieldDescriptions[j].Name
+	})
+
+	return client.SchemaDescription{
+		Name:   def.Name.Value,
+		Fields: fieldDescriptions,
 	}, nil
 }
 
@@ -186,6 +227,12 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 			if !IsValidIndexName(desc.Name) {
 				return client.IndexDescription{}, NewErrIndexWithInvalidName(desc.Name)
 			}
+		case types.IndexDirectivePropUnique:
+			boolVal, ok := arg.Value.(*ast.BooleanValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			desc.Unique = boolVal.Value
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
@@ -227,6 +274,12 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
+		case types.IndexDirectivePropUnique:
+			boolVal, ok := arg.Value.(*ast.BooleanValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			desc.Unique = boolVal.Value
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
@@ -259,7 +312,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 
 func fieldsFromAST(field *ast.FieldDefinition,
 	relationManager *RelationManager,
-	def *ast.ObjectDefinition,
+	hostObjectName string,
 ) ([]client.FieldDescription, error) {
 	kind, err := astTypeToKind(field.Type)
 	if err != nil {
@@ -283,8 +336,8 @@ func fieldsFromAST(field *ast.FieldDefinition,
 			// An _id field is added for every 1-N relationship from this object.
 			fieldDescriptions = append(fieldDescriptions, client.FieldDescription{
 				Name:         fmt.Sprintf("%s_id", field.Name.Value),
-				Kind:         client.FieldKind_DocKey,
-				Typ:          defaultCRDTForFieldKind[client.FieldKind_DocKey],
+				Kind:         client.FieldKind_DocID,
+				Typ:          defaultCRDTForFieldKind[client.FieldKind_DocID],
 				RelationType: client.Relation_Type_INTERNAL_ID,
 			})
 		} else if kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
@@ -292,7 +345,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 			relationType = client.Relation_Type_MANY
 		}
 
-		relationName, err = getRelationshipName(field, def.Name.Value, schema)
+		relationName, err = getRelationshipName(field, hostObjectName, schema)
 		if err != nil {
 			return nil, err
 		}
@@ -369,7 +422,7 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 	case *ast.Named:
 		switch astTypeVal.Name.Value {
 		case typeID:
-			return client.FieldKind_DocKey, nil
+			return client.FieldKind_DocID, nil
 		case typeBoolean:
 			return client.FieldKind_BOOL, nil
 		case typeInt:
@@ -430,6 +483,13 @@ func getRelationshipName(
 }
 
 func finalizeRelations(relationManager *RelationManager, definitions []client.CollectionDefinition) error {
+	embeddedObjNames := map[string]struct{}{}
+	for _, def := range definitions {
+		if def.Description.Name == "" {
+			embeddedObjNames[def.Schema.Name] = struct{}{}
+		}
+	}
+
 	for _, definition := range definitions {
 		for i, field := range definition.Schema.Fields {
 			if field.RelationType == 0 || field.RelationType&client.Relation_Type_INTERNAL_ID != 0 {
@@ -447,7 +507,8 @@ func finalizeRelations(relationManager *RelationManager, definitions []client.Co
 			}
 
 			// if not finalized then we are missing one side of the relationship
-			if !rel.finalized {
+			// unless this is an embedded object, which only have single-sided relations
+			if _, ok := embeddedObjNames[field.Schema]; !ok && !rel.finalized {
 				return client.NewErrRelationOneSided(field.Name, field.Schema)
 			}
 

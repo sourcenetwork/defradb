@@ -85,7 +85,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
-									"_keys":  nil,
+									"docIDs": nil,
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
@@ -225,7 +225,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
-									"_keys":  nil,
+									"docIDs": nil,
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,

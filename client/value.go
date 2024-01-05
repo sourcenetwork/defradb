@@ -12,6 +12,7 @@ package client
 
 import (
 	"github.com/fxamacker/cbor/v2"
+	"github.com/sourcenetwork/immutable"
 )
 
 // Value is an interface that points to a concrete Value implementation.
@@ -107,5 +108,36 @@ func newCBORValue(t CType, val any) WriteableValue {
 }
 
 func (v cborValue) Bytes() ([]byte, error) {
-	return cbor.Marshal(v.value)
+	em, err := cbor.EncOptions{Time: cbor.TimeRFC3339}.EncMode()
+	if err != nil {
+		return nil, err
+	}
+
+	var val any
+	switch tempVal := v.value.(type) {
+	case []immutable.Option[string]:
+		val = convertImmutable(tempVal)
+	case []immutable.Option[int64]:
+		val = convertImmutable(tempVal)
+	case []immutable.Option[float64]:
+		val = convertImmutable(tempVal)
+	case []immutable.Option[bool]:
+		val = convertImmutable(tempVal)
+	default:
+		val = v.value
+	}
+
+	return em.Marshal(val)
+}
+
+func convertImmutable[T any](vals []immutable.Option[T]) []any {
+	var out []any
+	for _, val := range vals {
+		if !val.HasValue() {
+			out = append(out, nil)
+			continue
+		}
+		out = append(out, val.Value())
+	}
+	return out
 }

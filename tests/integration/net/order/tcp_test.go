@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // TestP2PWithSingleDocumentUpdatePerNode tests document syncing between two nodes with a single update per node
@@ -135,10 +136,12 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 
 // TestP2FullPReplicator tests document syncing between a node and a replicator.
 func TestP2FullPReplicator(t *testing.T) {
+	colDefMap, err := testutils.ParseSDL(userCollectionGQLSchema)
+	require.NoError(t, err)
 	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
-	}`))
+	}`), colDefMap[userCollection].Schema)
 	require.NoError(t, err)
 
 	test := P2PTestCase{
@@ -156,7 +159,7 @@ func TestP2FullPReplicator(t *testing.T) {
 		},
 		ReplicatorResult: map[int]map[string]map[string]any{
 			1: {
-				doc.Key().String(): {
+				doc.ID().String(): {
 					"Age": int64(21),
 				},
 			},

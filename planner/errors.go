@@ -20,9 +20,9 @@ const (
 )
 
 var (
-	ErrDeltaMissingSchemaVersionID         = errors.New("commit Delta missing schema version id")
+	ErrDeltaMissingSchemaVersionID         = errors.New("commit Delta missing schema version ID")
 	ErrDeltaMissingPriority                = errors.New("commit Delta missing priority key")
-	ErrDeltaMissingDockey                  = errors.New("commit Delta missing dockey")
+	ErrDeltaMissingDocID                   = errors.New("commit Delta missing document ID")
 	ErrDeltaMissingFieldName               = errors.New("commit Delta missing field name")
 	ErrFailedToFindScanNode                = errors.New("failed to find original scan node in plan graph")
 	ErrMissingQueryOrMutation              = errors.New("request is missing query or mutation operation statements")
@@ -34,9 +34,6 @@ var (
 	ErrMissingChildValue                   = errors.New("expected child value, however none was yielded")
 	ErrUnknownRelationType                 = errors.New("failed sub selection, unknown relation type")
 	ErrUnknownExplainRequestType           = errors.New("can not explain request of unknown type")
-	ErrSubTypeInit                         = errors.New(errSubTypeInit)
-	ErrFailedToCollectExecExplainInfo      = errors.New(errFailedToCollectExecExplainInfo)
-	ErrUnknownDependency                   = errors.New(errUnknownDependency)
 )
 
 func NewErrUnknownDependency(name string) error {

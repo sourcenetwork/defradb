@@ -69,7 +69,7 @@ func (bp *blockProcessor) mergeBlocks(ctx context.Context) {
 				ctx,
 				"Failed to process block",
 				err,
-				logging.NewKV("DocKey", bp.dsKey.DocKey),
+				logging.NewKV("DocID", bp.dsKey.DocID),
 				logging.NewKV("CID", nd.Cid()),
 			)
 		}
@@ -111,7 +111,7 @@ func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field 
 				ctx,
 				"Failed to process block",
 				err,
-				logging.NewKV("DocKey", bp.dsKey.DocKey),
+				logging.NewKV("DocID", bp.dsKey.DocID),
 				logging.NewKV("CID", nd.Cid()),
 			)
 		}
@@ -132,7 +132,7 @@ func initCRDTForType(
 	description := col.Description()
 	if field == "" { // empty field name implies composite type
 		ctype = client.COMPOSITE
-		key = base.MakeCollectionKey(
+		key = base.MakeDataStoreKeyWithCollectionDescription(
 			description,
 		).WithInstanceInfo(
 			dsKey,
@@ -155,7 +155,7 @@ func initCRDTForType(
 	}
 	ctype = fd.Typ
 	fieldID := fd.ID.String()
-	key = base.MakeCollectionKey(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
+	key = base.MakeDataStoreKeyWithCollectionDescription(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
 
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return merklecrdt.NewMerkleLWWRegister(

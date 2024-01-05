@@ -52,7 +52,7 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 			// Books
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935", Has 1 Publisher
+				// "bae-080d7580-a791-541e-90bd-49bf69f858e1", Has 1 Publisher
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
@@ -111,7 +111,7 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 					"name": "Only Publisher of The Rooster Bar",
 					"address": "1 Rooster Ave., Waterloo, Ontario",
 					"yearOpened": 2022,
-					"book_id": "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935"
+					"book_id": "bae-080d7580-a791-541e-90bd-49bf69f858e1"
 			    }`,
 			},
 			testUtils.CreateDoc{
@@ -153,13 +153,13 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Author {
-						_key
+						_docID
 						name
 						book {
-							_key
+							_docID
 							name
 							publisher {
-								_key
+								_docID
 								name
 							}
 						}
@@ -167,63 +167,63 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "John Grisham",
-						"_key": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+						"name":   "John Grisham",
+						"_docID": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"book": []map[string]any{
 							{
-								"_key":      "bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca",
+								"_docID":    "bae-4fb9e3e9-d1d3-5404-bf15-10e4c995d9ca",
 								"name":      "The Associate",
 								"publisher": nil,
 							},
 							{
-								"_key": "bae-7ba73251-c935-5f44-ac04-d2061149cc14",
-								"name": "Sooley",
+								"_docID": "bae-7ba73251-c935-5f44-ac04-d2061149cc14",
+								"name":   "Sooley",
 								"publisher": map[string]any{
-									"_key": "bae-cd2a319a-e013-559e-aad9-282b48fd3f72",
-									"name": "Only Publisher of Sooley",
+									"_docID": "bae-cd2a319a-e013-559e-aad9-282b48fd3f72",
+									"name":   "Only Publisher of Sooley",
 								},
 							},
 							{
-								"_key": "bae-b8091c4f-7594-5d7a-98e8-272aadcedfdf",
-								"name": "Theif Lord",
+								"_docID": "bae-b8091c4f-7594-5d7a-98e8-272aadcedfdf",
+								"name":   "Theif Lord",
 								"publisher": map[string]any{
-									"_key": "bae-1a3ca715-3f3c-5934-9133-d7b489d57f88",
-									"name": "Only Publisher of Theif Lord",
+									"_docID": "bae-1a3ca715-3f3c-5934-9133-d7b489d57f88",
+									"name":   "Only Publisher of Theif Lord",
 								},
 							},
 							{
-								"_key": "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d",
-								"name": "Painted House",
+								"_docID": "bae-b9b83269-1f28-5c3b-ae75-3fb4c00d559d",
+								"name":   "Painted House",
 								"publisher": map[string]any{
-									"_key": "bae-6412f5ff-a69a-5472-8647-18bf2b247697",
-									"name": "Only Publisher of Painted House",
+									"_docID": "bae-6412f5ff-a69a-5472-8647-18bf2b247697",
+									"name":   "Only Publisher of Painted House",
 								},
 							},
 							{
-								"_key": "bae-c674e3b0-ebb6-5b89-bfa3-d1128288d21a",
-								"name": "A Time for Mercy",
+								"_docID": "bae-c674e3b0-ebb6-5b89-bfa3-d1128288d21a",
+								"name":   "A Time for Mercy",
 								"publisher": map[string]any{
-									"_key": "bae-2f83fa75-241f-517d-9b47-3715feee43c1",
-									"name": "Only Publisher of A Time for Mercy",
+									"_docID": "bae-2f83fa75-241f-517d-9b47-3715feee43c1",
+									"name":   "Only Publisher of A Time for Mercy",
 								},
 							},
 						},
 					},
 					{
-						"_key": "bae-7ba214a4-5ac8-5878-b221-dae6c285ef41",
-						"book": []map[string]any{},
-						"name": "Not a Writer",
+						"_docID": "bae-7ba214a4-5ac8-5878-b221-dae6c285ef41",
+						"book":   []map[string]any{},
+						"name":   "Not a Writer",
 					},
 					{
-						"name": "Cornelia Funke",
-						"_key": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
+						"name":   "Cornelia Funke",
+						"_docID": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"book": []map[string]any{
 							{
-								"_key": "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935",
-								"name": "The Rooster Bar",
+								"_docID": "bae-080d7580-a791-541e-90bd-49bf69f858e1",
+								"name":   "The Rooster Bar",
 								"publisher": map[string]any{
-									"_key": "bae-3f0f19eb-b292-5e0b-b885-67e7796375f9",
-									"name": "Only Publisher of The Rooster Bar",
+									"_docID": "bae-a5836991-96a3-5147-83be-3374a8b62e6c",
+									"name":   "Only Publisher of The Rooster Bar",
 								},
 							},
 						},

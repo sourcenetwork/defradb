@@ -37,7 +37,7 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						latestCommits(dockey: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
+						latestCommits(docID: "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7") {
 							collectionID
 						}
 					}`,
@@ -49,7 +49,7 @@ func TestQueryLastCommitsWithCollectionIdProperty(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						latestCommits(dockey: "bae-de8c99bf-ee0e-5655-8a72-919c2d459a30") {
+						latestCommits(docID: "bae-de8c99bf-ee0e-5655-8a72-919c2d459a30") {
 							collectionID
 						}
 					}`,

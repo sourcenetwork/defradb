@@ -25,7 +25,7 @@ var EmptyUpdateChannel = immutable.None[Channel[Update]]()
 // UpdateEvent represents a new DAG node added to the append-only MerkleCRDT Clock graph
 // of a document or sub-field.
 type Update struct {
-	DocKey     string
+	DocID      string
 	Cid        cid.Cid
 	SchemaRoot string
 	Block      ipld.Node

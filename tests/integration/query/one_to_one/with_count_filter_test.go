@@ -35,7 +35,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-f60d6af6-92f7-5f11-9182-1d7273a5a9e8
+				// bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6
 				Doc: `{
 					"name": "Some Book",
 					"rating": 4.0
@@ -51,7 +51,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-e8642720-08cb-5f5b-a8d6-7187c444a78d
+				// TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation
 				Doc: `{
 					"name": "Yet Another Book",
 					"rating": 3.0
@@ -73,7 +73,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"name": "Some Writer",
 					"age": 45,
 					"verified": false,
-					"published_id": "bae-f60d6af6-92f7-5f11-9182-1d7273a5a9e8"
+					"published_id": "bae-437092f3-7817-555c-bf8a-cc1c5a0a0db6"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -91,7 +91,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"name": "Yet Another Writer",
 					"age": 30,
 					"verified": false,
-					"published_id": "bae-e8642720-08cb-5f5b-a8d6-7187c444a78d"
+					"published_id": "TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation"
 				}`,
 			},
 			testUtils.Request{

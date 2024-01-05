@@ -42,7 +42,7 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-4a99afc4-a70b-5702-9642-fc1eb9ffe901
+				// bae-3ac659d1-521a-5eba-a833-5c58b151ca72
 				Doc: `{
 					"name": "Fred",
 					"points": 33
@@ -51,7 +51,7 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 			testUtils.Request{
 				Request: `mutation {
 					update_Users(
-						ids: ["bae-cc36febf-4029-52b3-a876-c99c6293f588", "bae-4a99afc4-a70b-5702-9642-fc1eb9ffe901"],
+						docIDs: ["bae-cc36febf-4029-52b3-a876-c99c6293f588", "bae-3ac659d1-521a-5eba-a833-5c58b151ca72"],
 						input: {points: 59}
 					) {
 						name

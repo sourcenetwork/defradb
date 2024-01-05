@@ -170,7 +170,7 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if !n.spans.HasValue {
-		start := base.MakeCollectionKey(n.col.Description())
+		start := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
 		n.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 	}
 

@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 4} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 10} }
 					]
 				`,
 			},
@@ -70,7 +70,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "2017-07-23T03:46:56.647Z"
+					"foo": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
 			testUtils.Request{
@@ -83,7 +83,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John",
-						"foo":  "2017-07-23T03:46:56.647Z",
+						"foo":  testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
 					},
 				},
 			},
@@ -114,7 +114,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "2017-07-23T03:46:56.647Z"
+					"foo": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
 			testUtils.Request{
@@ -127,7 +127,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithCreate(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name": "John",
-						"foo":  "2017-07-23T03:46:56.647Z",
+						"foo":  testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
 					},
 				},
 			},

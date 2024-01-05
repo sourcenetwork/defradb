@@ -46,7 +46,7 @@ func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 				Doc: `{
 					"name": "Fred"
 				}`,
-				ExpectedError: "a document with the given dockey has been deleted",
+				ExpectedError: "a document with the given ID has been deleted",
 			},
 		},
 	}

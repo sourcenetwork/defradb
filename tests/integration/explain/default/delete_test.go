@@ -41,7 +41,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 
 				Request: `mutation @explain {
 					delete_Author(filter: {name: {_eq: "Shahzad"}}) {
-						_key
+						_docID
 					}
 				}`,
 
@@ -57,7 +57,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 									"_eq": "Shahzad",
 								},
 							},
-							"ids": []string(nil),
+							"docIDs": []string(nil),
 						},
 					},
 
@@ -100,7 +100,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 
 				Request: `mutation @explain {
 					delete_Author(filter: {}) {
-						DeletedKeyByFilter: _key
+						DeletedKeyByFilter: _docID
 					}
 				}`,
 
@@ -112,7 +112,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"filter": nil,
-							"ids":    []string(nil),
+							"docIDs": []string(nil),
 						},
 					},
 
@@ -142,7 +142,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with delete using id.",
+		Description: "Explain (default) mutation request with delete using document id.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -150,8 +150,8 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain {
-					delete_Author(id: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
-						_key
+					delete_Author(docID: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
+						_docID
 					}
 				}`,
 
@@ -163,7 +163,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"filter": nil,
-							"ids": []string{
+							"docIDs": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 						},
@@ -203,11 +203,11 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain {
-					delete_Author(ids: [
+					delete_Author(docIDs: [
 						"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 						"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
 					]) {
-						AliasKey: _key
+						AliasKey: _docID
 					}
 				}`,
 
@@ -219,7 +219,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"filter": nil,
-							"ids": []string{
+							"docIDs": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
@@ -264,8 +264,8 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain {
-					delete_Author(ids: []) {
-						_key
+					delete_Author(docIDs: []) {
+						_docID
 					}
 				}`,
 
@@ -277,7 +277,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
 							"filter": nil,
-							"ids":    []string{},
+							"docIDs": []string{},
 						},
 					},
 
@@ -311,7 +311,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 
 				Request: `mutation @explain {
 					delete_Author(
-						ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "test"],
+						docIDs: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "test"],
 						filter: {
 							_and: [
 								{age: {_lt: 26}},
@@ -319,7 +319,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 							]
 						}
 					) {
-						_key
+						_docID
 					}
 				}`,
 
@@ -344,7 +344,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 									},
 								},
 							},
-							"ids": []string{
+							"docIDs": []string{
 								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"test",
 							},

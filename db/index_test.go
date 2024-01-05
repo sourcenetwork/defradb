@@ -58,7 +58,7 @@ type indexTestFixture struct {
 	t     *testing.T
 }
 
-func (f *indexTestFixture) getUsersCollectionDesc() client.Collection {
+func (f *indexTestFixture) addUsersCollection() client.Collection {
 	_, err := f.db.AddSchema(
 		f.ctx,
 		fmt.Sprintf(
@@ -129,7 +129,7 @@ func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
 
 func newIndexTestFixture(t *testing.T) *indexTestFixture {
 	f := newIndexTestFixtureBare(t)
-	f.users = f.getUsersCollectionDesc()
+	f.users = f.addUsersCollection()
 	return f
 }
 
@@ -178,14 +178,24 @@ func getProductsIndexDescOnCategory() client.IndexDescription {
 func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
 	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
-	f.commitTxn()
+	return newDesc
+}
+
+func makeUnique(indexDesc client.IndexDescription) client.IndexDescription {
+	indexDesc.Unique = true
+	return indexDesc
+}
+
+func (f *indexTestFixture) createUserCollectionUniqueIndexOnName() client.IndexDescription {
+	indexDesc := makeUnique(getUsersIndexDescOnName())
+	newDesc, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
+	require.NoError(f.t, err)
 	return newDesc
 }
 
 func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
 	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
-	f.commitTxn()
 	return newDesc
 }
 
@@ -226,7 +236,11 @@ func (f *indexTestFixture) createCollectionIndexFor(
 	collectionName string,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	return f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
+	index, err := f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
+	if err == nil {
+		f.commitTxn()
+	}
+	return index, err
 }
 
 func (f *indexTestFixture) getAllIndexes() (map[client.CollectionName][]client.IndexDescription, error) {
@@ -278,6 +292,7 @@ func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
 	assert.Equal(t, desc.Fields, resultDesc.Fields)
+	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
 func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
@@ -414,7 +429,7 @@ func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 
 func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCollection(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.getUsersCollectionDesc()
+	users := f.addUsersCollection()
 	products := f.getProductsCollectionDesc()
 
 	makeIndex := func(fieldName string) client.IndexDescription {
@@ -511,7 +526,6 @@ func TestCreateIndex_IfAttemptToIndexOnUnsupportedType_ReturnError(t *testing.T)
 
 	_, err = f.createCollectionIndexFor(collection.Name(), indexDesc)
 	require.ErrorIs(f.t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
-	f.commitTxn()
 }
 
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
@@ -524,8 +538,6 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	}
 	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
 	assert.NoError(t, err)
-
-	f.commitTxn()
 
 	f.getProductsCollectionDesc()
 	productsIndexDesc := client.IndexDescription{
@@ -650,8 +662,6 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	}
 	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
 	assert.NoError(t, err)
-
-	f.commitTxn()
 
 	f.getProductsCollectionDesc()
 	productsIndexDesc := client.IndexDescription{
@@ -856,7 +866,7 @@ func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
 
 func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	f.getUsersCollectionDesc()
+	f.addUsersCollection()
 
 	const unsupportedKind = client.FieldKind_BOOL_ARRAY
 	_, err := f.db.AddSchema(
@@ -1004,7 +1014,6 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 		_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
 		require.NoError(t, err)
 	}
-	f.commitTxn()
 
 	indexes, err := collection.GetIndexes(f.ctx)
 	require.NoError(t, err)

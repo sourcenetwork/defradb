@@ -23,9 +23,9 @@ func TestIndexGet_IfThereAreNoIndexes_ReturnEmptyList(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
-						Name: String 
-						Age: Int
+					type User {
+						name: String 
+						age: Int
 					}
 				`,
 			},

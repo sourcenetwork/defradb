@@ -20,11 +20,11 @@ import (
 
 const (
 	errPushLog                 = "failed to push log"
-	errFailedToGetDockey       = "failed to get DocKey from broadcast message"
-	errPublishingToDockeyTopic = "can't publish log %s for dockey %s"
+	errFailedToGetDocID        = "failed to get DocID from broadcast message"
+	errPublishingToDocIDTopic  = "can't publish log %s for docID %s"
 	errPublishingToSchemaTopic = "can't publish log %s for schema %s"
 	errReplicatorExists        = "replicator already exists for %s with peerID %s"
-	errReplicatorDocKey        = "failed to get dockey for replicator %s with peerID %s"
+	errReplicatorDocID         = "failed to get docID for replicator %s with peerID %s"
 	errReplicatorCollections   = "failed to get collections for replicator"
 )
 
@@ -41,24 +41,24 @@ func NewErrPushLog(inner error, kv ...errors.KV) error {
 	return errors.Wrap(errPushLog, inner, kv...)
 }
 
-func NewErrFailedToGetDockey(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errFailedToGetDockey, inner, kv...)
+func NewErrFailedToGetDocID(inner error, kv ...errors.KV) error {
+	return errors.Wrap(errFailedToGetDocID, inner, kv...)
 }
 
-func NewErrPublishingToDockeyTopic(inner error, cid, key string, kv ...errors.KV) error {
-	return errors.Wrap(fmt.Sprintf(errPublishingToDockeyTopic, cid, key), inner, kv...)
+func NewErrPublishingToDocIDTopic(inner error, cid, docID string, kv ...errors.KV) error {
+	return errors.Wrap(fmt.Sprintf(errPublishingToDocIDTopic, cid, docID), inner, kv...)
 }
 
-func NewErrPublishingToSchemaTopic(inner error, cid, key string, kv ...errors.KV) error {
-	return errors.Wrap(fmt.Sprintf(errPublishingToSchemaTopic, cid, key), inner, kv...)
+func NewErrPublishingToSchemaTopic(inner error, cid, docID string, kv ...errors.KV) error {
+	return errors.Wrap(fmt.Sprintf(errPublishingToSchemaTopic, cid, docID), inner, kv...)
 }
 
 func NewErrReplicatorExists(collection string, peerID peer.ID, kv ...errors.KV) error {
 	return errors.New(fmt.Sprintf(errReplicatorExists, collection, peerID), kv...)
 }
 
-func NewErrReplicatorDocKey(inner error, collection string, peerID peer.ID, kv ...errors.KV) error {
-	return errors.Wrap(fmt.Sprintf(errReplicatorDocKey, collection, peerID), inner, kv...)
+func NewErrReplicatorDocID(inner error, collection string, peerID peer.ID, kv ...errors.KV) error {
+	return errors.Wrap(fmt.Sprintf(errReplicatorDocID, collection, peerID), inner, kv...)
 }
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {

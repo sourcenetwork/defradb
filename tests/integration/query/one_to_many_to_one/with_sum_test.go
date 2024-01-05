@@ -24,7 +24,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 			// Authors
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-3c4217d2-f879-50b1-b375-acf42b764e5b, Has written 5 books
+				// bae-0c100ad0-1511-5f37-984d-66fa8534b06f, Has written 5 books
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -44,7 +44,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 			// Books
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935", Has 1 Publisher
+				// "bae-080d7580-a791-541e-90bd-49bf69f858e1", Has 1 Publisher
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
@@ -57,7 +57,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3c4217d2-f879-50b1-b375-acf42b764e5b"
+					"author_id": "bae-0c100ad0-1511-5f37-984d-66fa8534b06f"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -66,7 +66,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-3c4217d2-f879-50b1-b375-acf42b764e5b"
+					"author_id": "bae-0c100ad0-1511-5f37-984d-66fa8534b06f"
 				}`,
 			},
 			// Publishers
@@ -76,7 +76,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"name": "Only Publisher of The Rooster Bar",
 					"address": "1 Rooster Ave., Waterloo, Ontario",
 					"yearOpened": 2022,
-					"book_id": "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935"
+					"book_id": "bae-080d7580-a791-541e-90bd-49bf69f858e1"
 			    }`,
 			},
 			testUtils.CreateDoc{

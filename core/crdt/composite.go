@@ -37,7 +37,7 @@ type CompositeDAGDelta struct {
 	SchemaVersionID string
 	Priority        uint64
 	Data            []byte
-	DocKey          []byte
+	DocID           []byte
 	SubDAGs         []core.DAGLink
 	// Status represents the status of the document. By default it is `Active`.
 	// Alternatively, if can be set to `Deleted`.
@@ -67,10 +67,10 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 		SchemaVersionID string
 		Priority        uint64
 		Data            []byte
-		DocKey          []byte
+		DocID           []byte
 		Status          uint8
 		FieldName       string
-	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey, delta.Status.UInt8(), delta.FieldName})
+	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocID, delta.Status.UInt8(), delta.FieldName})
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 	})
 	return &CompositeDAGDelta{
 		Data:            patch,
-		DocKey:          []byte(c.key.DocKey),
+		DocID:           []byte(c.key.DocID),
 		SubDAGs:         links,
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
 		FieldName:       c.fieldName,

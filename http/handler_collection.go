@@ -26,14 +26,14 @@ import (
 type collectionHandler struct{}
 
 type CollectionDeleteRequest struct {
-	Key    string   `json:"key"`
-	Keys   []string `json:"keys"`
+	DocID  string   `json:"docID"`
+	DocIDs []string `json:"docIDs"`
 	Filter any      `json:"filter"`
 }
 
 type CollectionUpdateRequest struct {
-	Key     string   `json:"key"`
-	Keys    []string `json:"keys"`
+	DocID   string   `json:"docID"`
+	DocIDs  []string `json:"docIDs"`
 	Filter  any      `json:"filter"`
 	Updater string   `json:"updater"`
 }
@@ -56,7 +56,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 				responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidRequestBody})
 				return
 			}
-			doc, err := client.NewDocFromMap(docMap)
+			doc, err := client.NewDocFromMap(docMap, col.Schema())
 			if err != nil {
 				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 				return
@@ -69,7 +69,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		}
 		rw.WriteHeader(http.StatusOK)
 	case map[string]any:
-		doc, err := client.NewDocFromMap(t)
+		doc, err := client.NewDocFromMap(t, col.Schema())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -101,29 +101,29 @@ func (s *collectionHandler) DeleteWith(rw http.ResponseWriter, req *http.Request
 			return
 		}
 		responseJSON(rw, http.StatusOK, result)
-	case request.Key != "":
-		docKey, err := client.NewDocKeyFromString(request.Key)
+	case request.DocID != "":
+		docID, err := client.NewDocIDFromString(request.DocID)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		result, err := col.DeleteWith(req.Context(), docKey)
+		result, err := col.DeleteWith(req.Context(), docID)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
 		responseJSON(rw, http.StatusOK, result)
-	case request.Keys != nil:
-		var docKeys []client.DocKey
-		for _, key := range request.Keys {
-			docKey, err := client.NewDocKeyFromString(key)
+	case request.DocIDs != nil:
+		var docIDs []client.DocID
+		for _, docIDStr := range request.DocIDs {
+			docID, err := client.NewDocIDFromString(docIDStr)
 			if err != nil {
 				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 				return
 			}
-			docKeys = append(docKeys, docKey)
+			docIDs = append(docIDs, docID)
 		}
-		result, err := col.DeleteWith(req.Context(), docKeys)
+		result, err := col.DeleteWith(req.Context(), docIDs)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -151,29 +151,29 @@ func (s *collectionHandler) UpdateWith(rw http.ResponseWriter, req *http.Request
 			return
 		}
 		responseJSON(rw, http.StatusOK, result)
-	case request.Key != "":
-		docKey, err := client.NewDocKeyFromString(request.Key)
+	case request.DocID != "":
+		docID, err := client.NewDocIDFromString(request.DocID)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		result, err := col.UpdateWith(req.Context(), docKey, request.Updater)
+		result, err := col.UpdateWith(req.Context(), docID, request.Updater)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
 		responseJSON(rw, http.StatusOK, result)
-	case request.Keys != nil:
-		var docKeys []client.DocKey
-		for _, key := range request.Keys {
-			docKey, err := client.NewDocKeyFromString(key)
+	case request.DocIDs != nil:
+		var docIDs []client.DocID
+		for _, docIDStr := range request.DocIDs {
+			docID, err := client.NewDocIDFromString(docIDStr)
 			if err != nil {
 				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 				return
 			}
-			docKeys = append(docKeys, docKey)
+			docIDs = append(docIDs, docID)
 		}
-		result, err := col.UpdateWith(req.Context(), docKeys, request.Updater)
+		result, err := col.UpdateWith(req.Context(), docIDs, request.Updater)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -187,12 +187,12 @@ func (s *collectionHandler) UpdateWith(rw http.ResponseWriter, req *http.Request
 func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	col := req.Context().Value(colContextKey).(client.Collection)
 
-	docKey, err := client.NewDocKeyFromString(chi.URLParam(req, "key"))
+	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	doc, err := col.Get(req.Context(), docKey, true)
+	doc, err := col.Get(req.Context(), docID, true)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -217,12 +217,12 @@ func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 func (s *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	col := req.Context().Value(colContextKey).(client.Collection)
 
-	docKey, err := client.NewDocKeyFromString(chi.URLParam(req, "key"))
+	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	_, err = col.Delete(req.Context(), docKey)
+	_, err = col.Delete(req.Context(), docID)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -234,12 +234,12 @@ func (s *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 	col := req.Context().Value(colContextKey).(client.Collection)
 	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("show_deleted"))
 
-	docKey, err := client.NewDocKeyFromString(chi.URLParam(req, "key"))
+	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	doc, err := col.Get(req.Context(), docKey, showDeleted)
+	doc, err := col.Get(req.Context(), docID, showDeleted)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -252,12 +252,12 @@ func (s *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, docMap)
 }
 
-type DocKeyResult struct {
-	Key   string `json:"key"`
+type DocIDResult struct {
+	DocID string `json:"docID"`
 	Error string `json:"error"`
 }
 
-func (s *collectionHandler) GetAllDocKeys(rw http.ResponseWriter, req *http.Request) {
+func (s *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Request) {
 	col := req.Context().Value(colContextKey).(client.Collection)
 
 	flusher, ok := rw.(http.Flusher)
@@ -266,7 +266,7 @@ func (s *collectionHandler) GetAllDocKeys(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	docKeyCh, err := col.GetAllDocKeys(req.Context())
+	docIDsResult, err := col.GetAllDocIDs(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -279,12 +279,12 @@ func (s *collectionHandler) GetAllDocKeys(rw http.ResponseWriter, req *http.Requ
 	rw.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
-	for docKey := range docKeyCh {
-		results := &DocKeyResult{
-			Key: docKey.Key.String(),
+	for docID := range docIDsResult {
+		results := &DocIDResult{
+			DocID: docID.ID.String(),
 		}
-		if docKey.Err != nil {
-			results.Error = docKey.Err.Error()
+		if docID.Err != nil {
+			results.Error = docID.Err.Error()
 		}
 		data, err := json.Marshal(results)
 		if err != nil {
@@ -312,12 +312,16 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 }
 
 func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
-	col := req.Context().Value(colContextKey).(client.Collection)
+	store := req.Context().Value(storeContextKey).(client.Store)
+	indexesMap, err := store.GetAllIndexes(req.Context())
 
-	indexes, err := col.GetIndexes(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
+	}
+	indexes := make([]client.IndexDescription, 0, len(indexesMap))
+	for _, index := range indexesMap {
+		indexes = append(indexes, index...)
 	}
 	responseJSON(rw, http.StatusOK, indexes)
 }
@@ -474,7 +478,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	dropIndex.Responses["200"] = successResponse
 	dropIndex.Responses["400"] = errorResponse
 
-	documentKeyPathParam := openapi3.NewPathParameter("key").
+	documentIDPathParam := openapi3.NewPathParameter("docID").
 		WithRequired(true).
 		WithSchema(openapi3.NewStringSchema())
 
@@ -483,51 +487,51 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		WithJSONSchemaRef(documentSchema)
 
 	collectionGet := openapi3.NewOperation()
-	collectionGet.Description = "Get a document by key"
+	collectionGet.Description = "Get a document by docID"
 	collectionGet.OperationID = "collection_get"
 	collectionGet.Tags = []string{"collection"}
 	collectionGet.AddParameter(collectionNamePathParam)
-	collectionGet.AddParameter(documentKeyPathParam)
+	collectionGet.AddParameter(documentIDPathParam)
 	collectionGet.AddResponse(200, collectionGetResponse)
 	collectionGet.Responses["400"] = errorResponse
 
 	collectionUpdate := openapi3.NewOperation()
-	collectionUpdate.Description = "Update a document by key"
+	collectionUpdate.Description = "Update a document by docID"
 	collectionUpdate.OperationID = "collection_update"
 	collectionUpdate.Tags = []string{"collection"}
 	collectionUpdate.AddParameter(collectionNamePathParam)
-	collectionUpdate.AddParameter(documentKeyPathParam)
+	collectionUpdate.AddParameter(documentIDPathParam)
 	collectionUpdate.Responses = make(openapi3.Responses)
 	collectionUpdate.Responses["200"] = successResponse
 	collectionUpdate.Responses["400"] = errorResponse
 
 	collectionDelete := openapi3.NewOperation()
-	collectionDelete.Description = "Delete a document by key"
+	collectionDelete.Description = "Delete a document by docID"
 	collectionDelete.OperationID = "collection_delete"
 	collectionDelete.Tags = []string{"collection"}
 	collectionDelete.AddParameter(collectionNamePathParam)
-	collectionDelete.AddParameter(documentKeyPathParam)
+	collectionDelete.AddParameter(documentIDPathParam)
 	collectionDelete.Responses = make(openapi3.Responses)
 	collectionDelete.Responses["200"] = successResponse
 	collectionDelete.Responses["400"] = errorResponse
 
 	collectionKeys := openapi3.NewOperation()
 	collectionKeys.AddParameter(collectionNamePathParam)
-	collectionKeys.Description = "Get all document keys"
+	collectionKeys.Description = "Get all document IDs"
 	collectionKeys.OperationID = "collection_keys"
 	collectionKeys.Tags = []string{"collection"}
 	collectionKeys.Responses = make(openapi3.Responses)
 	collectionKeys.Responses["200"] = successResponse
 	collectionKeys.Responses["400"] = errorResponse
 
-	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocKeys)
+	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWith)
 	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWith)
 	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.CreateIndex)
 	router.AddRoute("/collections/{name}/indexes", http.MethodGet, getIndexes, h.GetIndexes)
 	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, dropIndex, h.DropIndex)
-	router.AddRoute("/collections/{name}/{key}", http.MethodGet, collectionGet, h.Get)
-	router.AddRoute("/collections/{name}/{key}", http.MethodPatch, collectionUpdate, h.Update)
-	router.AddRoute("/collections/{name}/{key}", http.MethodDelete, collectionDelete, h.Delete)
+	router.AddRoute("/collections/{name}/{docID}", http.MethodGet, collectionGet, h.Get)
+	router.AddRoute("/collections/{name}/{docID}", http.MethodPatch, collectionUpdate, h.Update)
+	router.AddRoute("/collections/{name}/{docID}", http.MethodDelete, collectionDelete, h.Delete)
 }

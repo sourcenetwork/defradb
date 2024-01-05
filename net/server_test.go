@@ -81,11 +81,11 @@ func TestNewServerWithCollectionSubscribed(t *testing.T) {
 	require.NoError(t, err)
 }
 
-type mockDBDockeysError struct {
+type mockDBDocIDsError struct {
 	client.DB
 }
 
-func (mDB *mockDBDockeysError) GetAllCollections(context.Context) ([]client.Collection, error) {
+func (mDB *mockDBDocIDsError) GetAllCollections(context.Context) ([]client.Collection, error) {
 	return []client.Collection{
 		&mockCollection{},
 	}, nil
@@ -98,11 +98,11 @@ type mockCollection struct {
 func (mCol *mockCollection) SchemaRoot() string {
 	return "mockColID"
 }
-func (mCol *mockCollection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
+func (mCol *mockCollection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
 	return nil, mockError
 }
 
-func TestNewServerWithGetAllDockeysError(t *testing.T) {
+func TestNewServerWithGetAllDocIDsError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
 
@@ -112,7 +112,7 @@ func TestNewServerWithGetAllDockeysError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	mDB := mockDBDockeysError{db}
+	mDB := mockDBDocIDsError{db}
 
 	_, err = newServer(n.Peer, &mDB)
 	require.ErrorIs(t, err, mockError)
@@ -131,13 +131,13 @@ func TestNewServerWithAddTopicError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.Key().String(), true)
+	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
 	_, err = newServer(n.Peer, db)
@@ -177,7 +177,7 @@ func TestNewServerWithEmitterError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -226,20 +226,20 @@ func TestDocQueue(t *testing.T) {
 		docs: make(map[string]chan struct{}),
 	}
 
-	testKey := "test"
+	testDocID := "test"
 
-	q.add(testKey)
-	go q.add(testKey)
+	q.add(testDocID)
+	go q.add(testDocID)
 	// give time for the goroutine to block
 	time.Sleep(10 * time.Millisecond)
 	require.Len(t, q.docs, 1)
-	q.done(testKey)
-	// give time for the goroutine to add the key
+	q.done(testDocID)
+	// give time for the goroutine to add the docID
 	time.Sleep(10 * time.Millisecond)
 	q.mu.Lock()
 	require.Len(t, q.docs, 1)
 	q.mu.Unlock()
-	q.done(testKey)
+	q.done(testDocID)
 	q.mu.Lock()
 	require.Len(t, q.docs, 0)
 	q.mu.Unlock()
@@ -260,7 +260,7 @@ func TestPushLog(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)
@@ -274,7 +274,7 @@ func TestPushLog(t *testing.T) {
 
 	_, err = n.server.PushLog(ctx, &net_pb.PushLogRequest{
 		Body: &net_pb.PushLogRequest_Body{
-			DocKey:     []byte(doc.Key().String()),
+			DocID:      []byte(doc.ID().String()),
 			Cid:        cid.Bytes(),
 			SchemaRoot: []byte(col.SchemaRoot()),
 			Creator:    n.PeerID().String(),

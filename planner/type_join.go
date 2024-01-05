@@ -435,7 +435,7 @@ func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
 	subDoc := subNode.Value()
 	ind := subNode.DocumentMap().FirstIndexOfName(parentProp)
 
-	docKeyStr, isStr := subDoc.Fields[ind].(string)
+	docIDStr, isStr := subDoc.Fields[ind].(string)
 	if !isStr {
 		return false, nil
 	}
@@ -444,9 +444,9 @@ func fetchPrimaryDoc(node, subNode planNode, parentProp string) (bool, error) {
 	if scan == nil {
 		return false, nil
 	}
-	rootDocKey := base.MakeDocKey(scan.col.Description(), docKeyStr)
+	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(scan.col.Description(), docIDStr)
 
-	spans := core.NewSpans(core.NewSpan(rootDocKey, rootDocKey.PrefixEnd()))
+	spans := core.NewSpans(core.NewSpan(dsKey, dsKey.PrefixEnd()))
 
 	node.Spans(spans)
 
@@ -543,15 +543,15 @@ func (join *invertibleTypeJoin) processSecondResult(secondDocs []core.Doc) (any,
 	if join.secondaryFetchLimit == 1 {
 		if len(secondDocs) != 0 {
 			secondResult = secondDocs[0]
-			secondIDResult = secondDocs[0].GetKey()
+			secondIDResult = secondDocs[0].GetID()
 		}
 	} else {
 		secondResult = secondDocs
-		secondDocKeys := make([]string, len(secondDocs))
+		secondDocIDs := make([]string, len(secondDocs))
 		for i, doc := range secondDocs {
-			secondDocKeys[i] = doc.GetKey()
+			secondDocIDs[i] = doc.GetID()
 		}
-		secondIDResult = secondDocKeys
+		secondIDResult = secondDocIDs
 	}
 	join.root.Value().Fields[join.subSelect.Index] = secondResult
 	if join.secondaryFieldIndex.HasValue() {
@@ -573,7 +573,7 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 		secondDocs, err := fetchDocsWithFieldValue(
 			join.dir.secondNode,
 			join.dir.secondaryField,
-			firstDoc.GetKey(),
+			firstDoc.GetID(),
 			join.secondaryFetchLimit,
 		)
 		if err != nil {

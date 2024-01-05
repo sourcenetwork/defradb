@@ -54,7 +54,7 @@ type TestCase struct {
 // are `None` the Update event will still be expected and will contribute
 // to the asserted count.
 type ExpectedUpdate struct {
-	DocKey immutable.Option[string]
+	DocID immutable.Option[string]
 	// The expected Cid, as a string (results in much more readable errors)
 	Cid        immutable.Option[string]
 	SchemaRoot immutable.Option[string]
@@ -96,7 +96,7 @@ func ExecuteRequestTestCase(
 
 				expectedEvent := testCase.ExpectedUpdates[indexOfNextExpectedUpdate]
 				assertIfExpected(t, expectedEvent.Cid, update.Cid.String())
-				assertIfExpected(t, expectedEvent.DocKey, update.DocKey)
+				assertIfExpected(t, expectedEvent.DocID, update.DocID)
 				assertIfExpected(t, expectedEvent.Priority, update.Priority)
 				assertIfExpected(t, expectedEvent.SchemaRoot, update.SchemaRoot)
 
@@ -149,7 +149,7 @@ func setupDatabase(
 		require.NoError(t, err)
 
 		for _, docStr := range docs {
-			doc, err := client.NewDocFromJSON([]byte(docStr))
+			doc, err := client.NewDocFromJSON([]byte(docStr), col.Schema())
 			require.NoError(t, err)
 
 			err = col.Save(ctx, doc)

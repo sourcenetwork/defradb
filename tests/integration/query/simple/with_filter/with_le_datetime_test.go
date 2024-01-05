@@ -20,7 +20,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le DateTime filter with equal value",
 		Request: `query {
-					Users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56.647Z"}}) {
+					Users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -29,12 +29,12 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56.647Z"
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2019-07-23T03:46:56.647Z"
+					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
 		},
@@ -52,7 +52,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le DateTime filter with greater value",
 		Request: `query {
-					Users(filter: {CreatedAt: {_le: "2018-07-23T03:46:56.647Z"}}) {
+					Users(filter: {CreatedAt: {_le: "2018-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -61,12 +61,12 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56.647Z"
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2019-07-23T03:46:56.647Z"
+					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
 		},
@@ -93,7 +93,7 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56.647Z"
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",

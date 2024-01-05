@@ -108,7 +108,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameInvalidIDManySide_CreatedDoc
 }
 
 func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testing.T) {
-	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 
 	test := testUtils.TestCase{
 		Description: "One to many create mutation using relation id from many side, with alias.",
@@ -126,7 +126,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 						"name": "Painted House",
 						"author": "%s"
 					}`,
-					authorKey,
+					authorID,
 				),
 			},
 			testUtils.Request{
@@ -174,9 +174,9 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 }
 
 func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDocID(t *testing.T) {
-	// These keys MUST be shared by both tests below.
-	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
+	// These IDs MUST be shared by both tests below.
+	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	nonAliasedTest := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",
@@ -194,18 +194,18 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 						"name": "Painted House",
 						"author_id": "%s"
 					}`,
-					authorKey,
+					authorID,
 				),
 			},
 			testUtils.Request{
 				Request: `query {
 					Book {
-						_key
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": bookKey, // Must be same as below.
+						"_docID": bookID, // Must be same as below.
 					},
 				},
 			},
@@ -213,7 +213,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 	}
 	executeTestCase(t, nonAliasedTest)
 
-	// Check that `bookKey` is same in both above and the alised version below.
+	// Check that `bookID` is same in both above and the alised version below.
 	// Note: Everything should be same, only diff should be the use of alias.
 
 	aliasedTest := testUtils.TestCase{
@@ -232,18 +232,18 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 						"name": "Painted House",
 						"author": "%s"
 					}`,
-					authorKey,
+					authorID,
 				),
 			},
 			testUtils.Request{
 				Request: `query {
 					Book {
-						_key
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": bookKey, // Must be same as above.
+						"_docID": bookID, // Must be same as below.
 					},
 				},
 			},

@@ -65,16 +65,16 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// from the pubsub topics to avoid receiving duplicate events.
 	removedTopics := []string{}
 	for _, col := range storeCollections {
-		keyChan, err := col.GetAllDocKeys(p.ctx)
+		keyChan, err := col.GetAllDocIDs(p.ctx)
 		if err != nil {
 			return err
 		}
 		for key := range keyChan {
-			err := p.server.removePubSubTopic(key.Key.String())
+			err := p.server.removePubSubTopic(key.ID.String())
 			if err != nil {
 				return p.rollbackRemovePubSubTopics(removedTopics, err)
 			}
-			removedTopics = append(removedTopics, key.Key.String())
+			removedTopics = append(removedTopics, key.ID.String())
 		}
 	}
 
@@ -130,16 +130,16 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 	// to the pubsub topics.
 	addedTopics := []string{}
 	for _, col := range storeCollections {
-		keyChan, err := col.GetAllDocKeys(p.ctx)
+		keyChan, err := col.GetAllDocIDs(p.ctx)
 		if err != nil {
 			return err
 		}
 		for key := range keyChan {
-			err := p.server.addPubSubTopic(key.Key.String(), true)
+			err := p.server.addPubSubTopic(key.ID.String(), true)
 			if err != nil {
 				return p.rollbackAddPubSubTopics(addedTopics, err)
 			}
-			addedTopics = append(addedTopics, key.Key.String())
+			addedTopics = append(addedTopics, key.ID.String())
 		}
 	}
 
