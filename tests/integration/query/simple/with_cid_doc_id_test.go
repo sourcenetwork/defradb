@@ -73,7 +73,7 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 		Description: "Simple query with cid and docID",
 		Request: `query {
 					Users (
-		 					cid: "bafybeiealfslrqsbiwotlducidmesjaemiq2hb7y2bxkcwc7bppuceujui",
+							cid: "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -102,7 +102,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 		Description: "Simple query with (first) cid and docID",
 		Request: `query {
 					Users (
-		 					cid: "bafybeiealfslrqsbiwotlducidmesjaemiq2hb7y2bxkcwc7bppuceujui",
+							cid: "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -143,7 +143,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 		Description: "Simple query with (last) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeibnj6yitgmynodaxnvtl22rhzclhsrc5asmocwyccsbsamobibpsy",
+							cid: "bafybeigotwnjltl5y5ou5yqxujdayoqet4axspaclbvzustjhinzqx77ym"
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -184,7 +184,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 		Description: "Simple query with (middle) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeify36bauenmsov4rijdmency367boy234mjezpvg4dj6r47ay3jwq",
+							cid: "bafybeib4cdjv4dxmayzgf242hx2r3v5tq5ib5z6oyyrzk3dtddt3wsyyhi",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -224,18 +224,17 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with (first) cid and docID and yielded schema version",
 		Request: `query {
-		 			Users (
-		 					cid: "bafybeiealfslrqsbiwotlducidmesjaemiq2hb7y2bxkcwc7bppuceujui",
-		 					docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
-		 				) {
-		 				Name
-		 				Age
-		 				_version {
-		 					schemaVersionId
-		 				}
-		 			}
-		 		}`,
-
+					Users (					
+							cid: "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
+							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+						) {
+						Name
+						Age
+						_version {
+							schemaVersionId
+						}
+					}
+				}`,
 		Docs: map[int][]string{
 			0: {
 				`{
@@ -268,4 +267,107 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 	}
 
 	executeTestCase(t, test)
+}
+
+func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with second last cid and docID with pncounter int type",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Int @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": -5
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 20
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+						cid: "bafybeiabh6mqnysyrv5phhjikjyl5zgxnpxzxogpip7s7knyujkh7fx3qu",
+						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
+					) {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name":   "John",
+						"points": int64(5),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with second last cid and docID with pncounter and float type",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10.2
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": -5.3
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 20.6
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+						cid: "bafybeiaqw6oxeshkvd3ilzzagjy3c6h776l3hqvmz5loq4sokr7tlxkm5m",
+						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
+					) {
+						name
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+						// Note the lack of precision of float types.
+						"points": 4.8999999999999995,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
 }

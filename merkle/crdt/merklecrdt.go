@@ -40,9 +40,8 @@ type Stores interface {
 type MerkleCRDT interface {
 	core.ReplicatedData
 	Clock() core.MerkleClock
+	Save(ctx context.Context, data any) (ipld.Node, uint64, error)
 }
-
-var _ core.ReplicatedData = (*baseMerkleCRDT)(nil)
 
 // baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state
 // retrieval functions. It handles creating and publishing the CRDT DAG with the help of the MerkleClock.
@@ -50,6 +49,8 @@ type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
 }
+
+var _ core.ReplicatedData = (*baseMerkleCRDT)(nil)
 
 func (base *baseMerkleCRDT) Clock() core.MerkleClock {
 	return base.clock
@@ -71,6 +72,7 @@ func InstanceWithStore(
 	store Stores,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	ctype client.CType,
+	kind client.FieldKind,
 	key core.DataStoreKey,
 	fieldName string,
 ) (MerkleCRDT, error) {
@@ -82,6 +84,23 @@ func InstanceWithStore(
 			key,
 			fieldName,
 		), nil
+	case client.PN_COUNTER:
+		switch kind {
+		case client.FieldKind_INT:
+			return NewMerklePNCounter[int64](
+				store,
+				schemaVersionKey,
+				key,
+				fieldName,
+			), nil
+		case client.FieldKind_FLOAT:
+			return NewMerklePNCounter[float64](
+				store,
+				schemaVersionKey,
+				key,
+				fieldName,
+			), nil
+		}
 	case client.COMPOSITE:
 		return NewMerkleCompositeDAG(
 			store,

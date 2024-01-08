@@ -122,16 +122,15 @@ func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([]byte, er
 	fieldVal, err := doc.GetValue(indexedFieldName)
 	if err != nil {
 		if errors.Is(err, client.ErrFieldNotExist) {
-			return client.NewCBORValue(client.LWW_REGISTER, nil).Bytes()
+			return client.NewFieldValue(client.LWW_REGISTER, nil).Bytes()
 		} else {
 			return nil, err
 		}
 	}
-	writeableVal, ok := fieldVal.(client.WriteableValue)
-	if !ok || !i.validateFieldFunc(fieldVal.Value()) {
-		return nil, NewErrInvalidFieldValue(i.fieldDesc.Kind, writeableVal)
+	if !i.validateFieldFunc(fieldVal.Value()) {
+		return nil, NewErrInvalidFieldValue(i.fieldDesc.Kind, fieldVal)
 	}
-	return writeableVal.Bytes()
+	return fieldVal.Bytes()
 }
 
 func (i *collectionBaseIndex) getDocumentsIndexKey(

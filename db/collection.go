@@ -17,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
@@ -437,8 +436,12 @@ func validateUpdateSchemaFields(
 			return false, NewErrCannotMoveField(proposedField.Name, proposedIndex, existingIndex)
 		}
 
-		if proposedField.Typ != client.NONE_CRDT && proposedField.Typ != client.LWW_REGISTER {
-			return false, NewErrInvalidCRDTType(proposedField.Name, proposedField.Typ)
+		if !proposedField.Typ.IsSupportedFieldCType() {
+			return false, client.NewErrInvalidCRDTType(proposedField.Name, proposedField.Typ.String())
+		}
+
+		if !proposedField.Typ.IsCompatibleWith(proposedField.Kind) {
+			return false, client.NewErrCRDTKindMismatch(proposedField.Typ.String(), proposedField.Kind.String())
 		}
 
 		newFieldNames[proposedField.Name] = struct{}{}
@@ -929,7 +932,6 @@ func (c *collection) save(
 	//	=> 		Set/Publish new CRDT values
 	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
 	links := make([]core.DAGLink, 0)
-	docProperties := make(map[string]any)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
 		if err != nil {
@@ -947,6 +949,10 @@ func (c *collection) save(
 			if !valid {
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
+
+			// by default the type will have been set to LWW_REGISTER. We need to ensure
+			// that it's set to the same as the field description CRDT type.
+			val.SetType(fieldDescription.Typ)
 
 			relationFieldDescription, isSecondaryRelationID := c.isSecondaryIDField(fieldDescription)
 			if isSecondaryRelationID {
@@ -967,14 +973,21 @@ func (c *collection) save(
 				return cid.Undef, err
 			}
 
-			node, _, err := c.saveFieldToMerkleCRDT(ctx, txn, fieldKey, val)
+			merkleCRDT, err := merklecrdt.InstanceWithStore(
+				txn,
+				core.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+				val.Type(),
+				fieldDescription.Kind,
+				fieldKey,
+				fieldDescription.Name,
+			)
 			if err != nil {
 				return cid.Undef, err
 			}
-			if val.IsDelete() {
-				docProperties[k] = nil
-			} else {
-				docProperties[k] = val.Value()
+
+			node, _, err := merkleCRDT.Save(ctx, val)
+			if err != nil {
+				return cid.Undef, err
 			}
 
 			link := core.DAGLink{
@@ -984,21 +997,11 @@ func (c *collection) save(
 			links = append(links, link)
 		}
 	}
-	// Update CompositeDAG
-	em, err := cbor.CanonicalEncOptions().EncMode()
-	if err != nil {
-		return cid.Undef, err
-	}
-	buf, err := em.Marshal(docProperties)
-	if err != nil {
-		return cid.Undef, nil
-	}
 
 	headNode, priority, err := c.saveCompositeToMerkleCRDT(
 		ctx,
 		txn,
 		primaryKey.ToDataStoreKey(),
-		buf,
 		links,
 		client.Active,
 	)
@@ -1172,59 +1175,10 @@ func (c *collection) exists(
 	return true, false, nil
 }
 
-func (c *collection) saveFieldToMerkleCRDT(
-	ctx context.Context,
-	txn datastore.Txn,
-	dsKey core.DataStoreKey,
-	val client.Value,
-) (ipld.Node, uint64, error) {
-	switch val.Type() {
-	case client.LWW_REGISTER:
-		wval, ok := val.(client.WriteableValue)
-		if !ok {
-			return nil, 0, client.ErrValueTypeMismatch
-		}
-		var bytes []byte
-		var err error
-		if val.IsDelete() { // empty byte array
-			bytes = []byte{}
-		} else {
-			bytes, err = wval.Bytes()
-			if err != nil {
-				return nil, 0, err
-			}
-		}
-
-		fieldID, err := strconv.Atoi(dsKey.FieldId)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		schema := c.Schema()
-
-		field, ok := c.Description().GetFieldByID(client.FieldID(fieldID), &schema)
-		if !ok {
-			return nil, 0, client.NewErrFieldIndexNotExist(fieldID)
-		}
-
-		merkleCRDT := merklecrdt.NewMerkleLWWRegister(
-			txn,
-			core.NewCollectionSchemaVersionKey(schema.VersionID, c.ID()),
-			dsKey,
-			field.Name,
-		)
-
-		return merkleCRDT.Set(ctx, bytes)
-	default:
-		return nil, 0, client.NewErrUnknownCRDT(val.Type())
-	}
-}
-
 func (c *collection) saveCompositeToMerkleCRDT(
 	ctx context.Context,
 	txn datastore.Txn,
 	dsKey core.DataStoreKey,
-	buf []byte,
 	links []core.DAGLink,
 	status client.DocumentStatus,
 ) (ipld.Node, uint64, error) {
@@ -1240,7 +1194,7 @@ func (c *collection) saveCompositeToMerkleCRDT(
 		return merkleCRDT.Delete(ctx, links)
 	}
 
-	return merkleCRDT.Set(ctx, buf, links)
+	return merkleCRDT.Save(ctx, links)
 }
 
 // getTxn gets or creates a new transaction from the underlying db.

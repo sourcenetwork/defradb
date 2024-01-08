@@ -33,7 +33,7 @@ func TestSchemaUpdatesAddFieldCRDTInvalidErrors(t *testing.T) {
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":99} }
 					]
 				`,
-				ExpectedError: "only default or LWW (last writer wins) CRDT types are supported. Name: foo, CRDTType: 99",
+				ExpectedError: "CRDT type not supported. Name: foo, CRDTType: unknown",
 			},
 		},
 	}

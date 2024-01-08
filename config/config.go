@@ -101,7 +101,14 @@ func DefaultConfig() *Config {
 	cfg.v.SetConfigName(DefaultConfigFileName)
 	cfg.v.SetConfigType(configType)
 
-	// Load default values in viper.
+	cfg.Persist()
+
+	return cfg
+}
+
+// Persist persists manually set config parameters to the viper config.
+func (cfg *Config) Persist() {
+	// Load new values in viper.
 	b, err := cfg.toBytes()
 	if err != nil {
 		panic(err)
@@ -109,8 +116,6 @@ func DefaultConfig() *Config {
 	if err = cfg.v.ReadConfig(bytes.NewReader(b)); err != nil {
 		panic(NewErrReadingConfigFile(err))
 	}
-
-	return cfg
 }
 
 // LoadWithRootdir loads a Config with parameters from defaults, config file, environment variables, and CLI flags.

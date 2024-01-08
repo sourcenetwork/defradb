@@ -59,9 +59,8 @@ func TestNewMerkleClock(t *testing.T) {
 func TestMerkleClockPutBlock(t *testing.T) {
 	ctx := context.Background()
 	clk := newTestMerkleClock()
-	delta := &crdt.LWWRegDelta{
-		Data: []byte("test"),
-	}
+	reg := crdt.LWWRegister{}
+	delta := reg.Set([]byte("test"))
 	node, err := clk.putBlock(ctx, nil, delta)
 	if err != nil {
 		t.Errorf("Failed to putBlock, err: %v", err)
@@ -80,9 +79,8 @@ func TestMerkleClockPutBlock(t *testing.T) {
 func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 	ctx := context.Background()
 	clk := newTestMerkleClock()
-	delta := &crdt.LWWRegDelta{
-		Data: []byte("test"),
-	}
+	reg := crdt.LWWRegister{}
+	delta := reg.Set([]byte("test"))
 	c, err := ccid.NewSHA256CidV1([]byte("Hello World!"))
 	if err != nil {
 		t.Error("Failed to create new head CID:", err)
@@ -103,9 +101,8 @@ func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 func TestMerkleClockAddDAGNode(t *testing.T) {
 	ctx := context.Background()
 	clk := newTestMerkleClock()
-	delta := &crdt.LWWRegDelta{
-		Data: []byte("test"),
-	}
+	reg := crdt.LWWRegister{}
+	delta := reg.Set([]byte("test"))
 
 	_, err := clk.AddDAGNode(ctx, delta)
 	if err != nil {
@@ -117,9 +114,8 @@ func TestMerkleClockAddDAGNode(t *testing.T) {
 func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 	ctx := context.Background()
 	clk := newTestMerkleClock()
-	delta := &crdt.LWWRegDelta{
-		Data: []byte("test1"),
-	}
+	reg := crdt.LWWRegister{}
+	delta := reg.Set([]byte("test"))
 
 	_, err := clk.AddDAGNode(ctx, delta)
 	if err != nil {
@@ -127,9 +123,8 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 		return
 	}
 
-	delta2 := &crdt.LWWRegDelta{
-		Data: []byte("test2"),
-	}
+	reg2 := crdt.LWWRegister{}
+	delta2 := reg2.Set([]byte("test2"))
 
 	_, err = clk.AddDAGNode(ctx, delta2)
 	if err != nil {

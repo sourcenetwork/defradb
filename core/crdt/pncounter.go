@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,10 +14,12 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/fxamacker/cbor/v2"
 	dag "github.com/ipfs/boxo/ipld/merkledag"
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ugorji/go/codec"
+	"golang.org/x/exp/constraints"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -26,9 +28,20 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-// LWWRegDelta is a single delta operation for an LWWRegister
-// @todo: Expand delta metadata (investigate if needed)
-type LWWRegDelta struct {
+var (
+	// ensure types implements core interfaces
+	_ core.ReplicatedData = (*PNCounter[float64])(nil)
+	_ core.ReplicatedData = (*PNCounter[int64])(nil)
+	_ core.Delta          = (*PNCounterDelta[float64])(nil)
+	_ core.Delta          = (*PNCounterDelta[int64])(nil)
+)
+
+type Incrementable interface {
+	constraints.Integer | constraints.Float
+}
+
+// PNCounterDelta is a single delta operation for an PNCounter
+type PNCounterDelta[T Incrementable] struct {
 	DocID     []byte
 	FieldName string
 	Priority  uint64
@@ -36,24 +49,21 @@ type LWWRegDelta struct {
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
 	SchemaVersionID string
-	Data            []byte
+	Data            T
 }
 
-var _ core.Delta = (*LWWRegDelta)(nil)
-
 // GetPriority gets the current priority for this delta.
-func (delta *LWWRegDelta) GetPriority() uint64 {
+func (delta *PNCounterDelta[T]) GetPriority() uint64 {
 	return delta.Priority
 }
 
 // SetPriority will set the priority for this delta.
-func (delta *LWWRegDelta) SetPriority(prio uint64) {
+func (delta *PNCounterDelta[T]) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
 // Marshal encodes the delta using CBOR.
-// for now le'ts do cbor (quick to implement)
-func (delta *LWWRegDelta) Marshal() ([]byte, error) {
+func (delta *PNCounterDelta[T]) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
@@ -65,33 +75,30 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 }
 
 // Unmarshal decodes the delta from CBOR.
-func (delta *LWWRegDelta) Unmarshal(b []byte) error {
+func (delta *PNCounterDelta[T]) Unmarshal(b []byte) error {
 	h := &codec.CborHandle{}
 	dec := codec.NewDecoderBytes(b, h)
 	return dec.Decode(delta)
 }
 
-// LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
-// of an arbitrary data type that ensures convergence.
-type LWWRegister struct {
+// PNCounter, is a simple CRDT type that allows increment/decrement
+// of an Int and Float data types that ensures convergence.
+type PNCounter[T Incrementable] struct {
 	baseCRDT
 }
 
-var _ core.ReplicatedData = (*LWWRegister)(nil)
-
-// NewLWWRegister returns a new instance of the LWWReg with the given ID.
-func NewLWWRegister(
+// NewPNCounter returns a new instance of the PNCounter with the given ID.
+func NewPNCounter[T Incrementable](
 	store datastore.DSReaderWriter,
 	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
 	fieldName string,
-) LWWRegister {
-	return LWWRegister{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
+) PNCounter[T] {
+	return PNCounter[T]{newBaseCRDT(store, key, schemaVersionKey, fieldName)}
 }
 
 // Value gets the current register value
-// RETURN STATE
-func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
+func (reg PNCounter[T]) Value(ctx context.Context) ([]byte, error) {
 	valueK := reg.key.WithValueFlag()
 	buf, err := reg.store.Get(ctx, valueK.ToDS())
 	if err != nil {
@@ -101,38 +108,27 @@ func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 }
 
 // Set generates a new delta with the supplied value
-// RETURN DELTA
-func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
-	return &LWWRegDelta{
-		Data:            value,
+func (reg PNCounter[T]) Increment(value T) *PNCounterDelta[T] {
+	return &PNCounterDelta[T]{
 		DocID:           []byte(reg.key.DocID),
 		FieldName:       reg.fieldName,
+		Data:            value,
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}
 }
 
-// Merge implements ReplicatedData interface
-// Merge two LWWRegisty based on the order of the timestamp (ts),
-// if they are equal, compare IDs
-// MUTATE STATE
-func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta) error {
-	d, ok := delta.(*LWWRegDelta)
+// Merge implements ReplicatedData interface.
+// It merges two PNCounterRegisty by adding the values together.
+func (reg PNCounter[T]) Merge(ctx context.Context, delta core.Delta) error {
+	d, ok := delta.(*PNCounterDelta[T])
 	if !ok {
 		return ErrMismatchedMergeType
 	}
 
-	return reg.setValue(ctx, d.Data, d.GetPriority())
+	return reg.incrementValue(ctx, d.Data, d.GetPriority())
 }
 
-func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
-	curPrio, err := reg.getPriority(ctx, reg.key)
-	if err != nil {
-		return NewErrFailedToGetPriority(err)
-	}
-
-	// if the current priority is higher ignore put
-	// else if the current value is lexicographically
-	// greater than the new then ignore
+func (reg PNCounter[T]) incrementValue(ctx context.Context, value T, priority uint64) error {
 	key := reg.key.WithValueFlag()
 	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().ToDS())
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
@@ -141,20 +137,19 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
 		key = key.WithDeletedFlag()
 	}
-	if priority < curPrio {
-		return nil
-	} else if priority == curPrio {
-		curValue, err := reg.store.Get(ctx, key.ToDS())
-		if err != nil {
-			return err
-		}
 
-		if bytes.Compare(curValue, val) >= 0 {
-			return nil
-		}
+	curValue, err := reg.getCurrentValue(ctx, key)
+	if err != nil {
+		return err
 	}
 
-	err = reg.store.Put(ctx, key.ToDS(), val)
+	newValue := curValue + value
+	b, err := cbor.Marshal(newValue)
+	if err != nil {
+		return err
+	}
+
+	err = reg.store.Put(ctx, key.ToDS(), b)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}
@@ -162,19 +157,39 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	return reg.setPriority(ctx, reg.key, priority)
 }
 
-// DeltaDecode is a typed helper to extract
-// a LWWRegDelta from a ipld.Node
-// for now let's do cbor (quick to implement)
-func (reg LWWRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
+func (reg PNCounter[T]) getCurrentValue(ctx context.Context, key core.DataStoreKey) (T, error) {
+	curValue, err := reg.store.Get(ctx, key.ToDS())
+	if err != nil {
+		if errors.Is(err, ds.ErrNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return getNumericFromBytes[T](curValue)
+}
+
+// DeltaDecode is a typed helper to extract a PNCounterDelta from a ipld.Node
+func (reg PNCounter[T]) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
 		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
 	}
 
-	delta := &LWWRegDelta{}
+	delta := &PNCounterDelta[T]{}
 	err := delta.Unmarshal(pbNode.Data())
 	if err != nil {
 		return nil, err
 	}
+
 	return delta, nil
+}
+
+func getNumericFromBytes[T Incrementable](b []byte) (T, error) {
+	var val T
+	err := cbor.Unmarshal(b, &val)
+	if err != nil {
+		return val, err
+	}
+	return val, nil
 }

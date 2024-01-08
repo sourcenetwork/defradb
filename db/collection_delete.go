@@ -265,7 +265,6 @@ func (c *collection) applyDelete(
 		ctx,
 		txn,
 		dsKey,
-		[]byte{},
 		dagLinks,
 		client.Deleted,
 	)

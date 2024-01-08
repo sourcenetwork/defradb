@@ -108,7 +108,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "BookView",
-						// Note: `_key`, `_version`, `_deleted`, etc should not be present,
+						// Note: `_docID`, `_version`, `_deleted`, etc should not be present,
 						// although aggregates and `_group` should be.
 						// There should also be no `Author` field - the relationship field
 						// should only exist on the parent.
