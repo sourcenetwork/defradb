@@ -89,6 +89,22 @@ func TestSplitFilter(t *testing.T) {
 				"age":  m("_gt", 55),
 			},
 		},
+		{
+			name: "filter with two []any slices",
+			inputFilter: map[string]any{
+				"age":  m("_in", []any{10, 20, 30}),
+				"name": m("_in", []any{"John", "Bob"}),
+			},
+			inputFields: []mapper.Field{
+				{Index: authorNameInd},
+				{Index: authorAgeInd},
+			},
+			expectedFilter1: nil,
+			expectedFilter2: map[string]any{
+				"age":  m("_in", []any{10, 20, 30}),
+				"name": m("_in", []any{"John", "Bob"}),
+			},
+		},
 	}
 
 	mapping := getDocMapping()
