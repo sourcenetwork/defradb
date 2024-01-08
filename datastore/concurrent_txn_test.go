@@ -23,7 +23,7 @@ import (
 	badgerkv "github.com/sourcenetwork/corekv/badger"
 )
 
-func getBadgerTxnDB(t *testing.T, ctx context.Context) corekv.TxnStore {
+func getBadgerTxnDB(t *testing.T) corekv.TxnStore {
 	opts := badgerds.DefaultOptions("").WithInMemory(true)
 	rootstore, err := badgerkv.NewDatastore("", opts)
 	require.NoError(t, err)
@@ -39,7 +39,7 @@ func getMemoryTxnDB(t *testing.T, ctx context.Context) corekv.TxnStore {
 
 func TestNewConcurrentTxnFrom(t *testing.T) {
 	ctx := context.Background()
-	rootstore := getBadgerTxnDB(t, ctx)
+	rootstore := getBadgerTxnDB(t)
 
 	txn, err := NewConcurrentTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
@@ -64,7 +64,7 @@ func TestNewConcurrentTxnFrom(t *testing.T) {
 
 func TestConcurrentTxnSync(t *testing.T) {
 	ctx := context.Background()
-	rootstore := getBadgerTxnDB(t, ctx)
+	rootstore := getBadgerTxnDB(t)
 
 	txn := rootstore.NewTxn(false)
 
@@ -75,14 +75,11 @@ func TestConcurrentTxnSync(t *testing.T) {
 
 func TestConcurrentTxnClose(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badgerds.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
+	rootstore := getBadgerTxnDB(t)
 
-	txn, err := rootstore.NewTransaction(ctx, false)
-	require.NoError(t, err)
+	txn := rootstore.NewTxn(false)
 
 	cTxn := &concurrentTxn{Txn: txn}
-	err = cTxn.Close(ctx)
+	err := cTxn.Close(ctx)
 	require.NoError(t, err)
 }

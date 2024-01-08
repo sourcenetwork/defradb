@@ -31,7 +31,7 @@ type MultiStoreTxn struct {
 func prepareDataStore(t *testing.T) *DSReaderWriter {
 	dataStore := NewDSReaderWriter(t)
 	dataStore.EXPECT().Get(mock.Anything, mock.Anything).Return([]byte{}, ds.ErrNotFound).Maybe()
-	dataStore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	dataStore.EXPECT().Set(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	dataStore.EXPECT().Has(mock.Anything, mock.Anything).Return(true, nil).Maybe()
 	return dataStore
 }
@@ -43,11 +43,12 @@ func prepareRootStore(t *testing.T) *DSReaderWriter {
 func prepareHeadStore(t *testing.T) *DSReaderWriter {
 	headStore := NewDSReaderWriter(t)
 
-	headStore.EXPECT().Query(mock.Anything, mock.Anything).
-		Return(NewQueryResultsWithValues(t), nil).Maybe()
+	// TODO: FIX AFTER ITERATOR/QUERY MOCK RESOLVED
+	// headStore.EXPECT().Query(mock.Anything, mock.Anything).
+	// 	Return(NewQueryResultsWithValues(t), nil).Maybe()
 
 	headStore.EXPECT().Get(mock.Anything, mock.Anything).Return([]byte{}, ds.ErrNotFound).Maybe()
-	headStore.EXPECT().Put(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	headStore.EXPECT().Set(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	headStore.EXPECT().Has(mock.Anything, mock.Anything).Return(false, nil).Maybe()
 	return headStore
 }

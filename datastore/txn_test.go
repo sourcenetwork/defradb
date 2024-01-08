@@ -19,7 +19,7 @@ import (
 
 func TestNewTxnFrom(t *testing.T) {
 	ctx := context.Background()
-	rootstore := getBadgerTxnDB(t, ctx)
+	rootstore := getBadgerTxnDB(t)
 
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
@@ -30,7 +30,7 @@ func TestNewTxnFrom(t *testing.T) {
 
 func TestOnSuccess(t *testing.T) {
 	ctx := context.Background()
-	rootstore := getBadgerTxnDB(t, ctx)
+	rootstore := getBadgerTxnDB(t)
 
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
@@ -49,7 +49,7 @@ func TestOnSuccess(t *testing.T) {
 
 func TestOnError(t *testing.T) {
 	ctx := context.Background()
-	rootstore := getBadgerTxnDB(t, ctx)
+	rootstore := getBadgerTxnDB(t)
 
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
