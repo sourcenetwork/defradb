@@ -106,11 +106,21 @@ func (i *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSRead
 }
 
 func (i *eqPrefixIndexIterator) Next() (indexIterResult, error) {
-	res, err := i.queryResultIterator.Next()
-	if res.foundKey {
+	for {
+		res, err := i.queryResultIterator.Next()
+		if err != nil || !res.foundKey {
+			return res, err
+		}
 		i.execInfo.IndexesFetched++
+		doesMatch, err := executeValueMatchers(i.matchers, res.key.FieldValues)
+		if err != nil {
+			return indexIterResult{}, err
+		}
+		if !doesMatch {
+			continue
+		}
+		return res, err
 	}
-	return res, err
 }
 
 type keyFieldIndexIterator interface {
@@ -487,6 +497,11 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	fieldConditions := f.determineFieldFilterConditions()
 	indexDataStoreKey := core.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
 
+	matchers, err := createValueMatchers(fieldConditions)
+	if err != nil {
+		return nil, err
+	}
+
 	switch fieldConditions[0].op {
 	case opEq:
 		writableValue := client.NewCBORValue(client.LWW_REGISTER, fieldConditions[0].val)
@@ -494,6 +509,10 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		keyValueBytes, err := writableValue.Bytes()
 		if err != nil {
 			return nil, err
+		}
+
+		if len(matchers) > 1 {
+			matchers[0] = &anyMatcher{}
 		}
 
 		if f.indexDesc.Unique {
@@ -507,6 +526,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 				indexKey:      indexDataStoreKey,
 				keyFieldValue: keyValueBytes,
 				execInfo:      &f.execInfo,
+				matchers:      matchers,
 			}, nil
 		}
 	case opIn:
@@ -523,6 +543,11 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 			}
 			keyFieldArr = append(keyFieldArr, keyFieldBytes)
 		}
+
+		if len(matchers) > 1 {
+			matchers[0] = &anyMatcher{}
+		}
+
 		var iter keyFieldIndexIterator
 		if f.indexDesc.Unique {
 			iter = &eqSingleIndexIterator{
@@ -533,6 +558,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 			iter = &eqPrefixIndexIterator{
 				indexKey: indexDataStoreKey,
 				execInfo: &f.execInfo,
+				matchers: matchers,
 			}
 		}
 		return &inIndexIterator{
@@ -540,10 +566,6 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 			keyFieldValues:        keyFieldArr,
 		}, nil
 	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike:
-		matchers, err := createValueMatchers(fieldConditions)
-		if err != nil {
-			return nil, err
-		}
 		return &scanningIndexIterator{
 			indexKey: indexDataStoreKey,
 			matchers: matchers,
