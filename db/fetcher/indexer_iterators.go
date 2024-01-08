@@ -412,9 +412,9 @@ func createIndexIterator(
 
 	switch op {
 	case opEq, opGt, opGe, opLt, opLe, opNe:
-		writableValue := client.NewCBORValue(client.LWW_REGISTER, filterVal)
+		fieldValue := client.NewFieldValue(client.LWW_REGISTER, filterVal)
 
-		valueBytes, err := writableValue.Bytes()
+		valueBytes, err := fieldValue.Bytes()
 		if err != nil {
 			return nil, err
 		}
@@ -490,8 +490,8 @@ func createIndexIterator(
 		}
 		valArr := make([][]byte, 0, len(inArr))
 		for _, v := range inArr {
-			writableValue := client.NewCBORValue(client.LWW_REGISTER, v)
-			valueBytes, err := writableValue.Bytes()
+			fieldValue := client.NewFieldValue(client.LWW_REGISTER, v)
+			valueBytes, err := fieldValue.Bytes()
 			if err != nil {
 				return nil, err
 			}

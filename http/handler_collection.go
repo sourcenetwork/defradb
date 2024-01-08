@@ -41,35 +41,27 @@ type CollectionUpdateRequest struct {
 func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	col := req.Context().Value(colContextKey).(client.Collection)
 
-	var body any
-	if err := requestJSON(req, &body); err != nil {
+	data, err := io.ReadAll(req.Body)
+	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	switch t := body.(type) {
-	case []any:
-		var docList []*client.Document
-		for _, v := range t {
-			docMap, ok := v.(map[string]any)
-			if !ok {
-				responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidRequestBody})
-				return
-			}
-			doc, err := client.NewDocFromMap(docMap, col.Schema())
-			if err != nil {
-				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-				return
-			}
-			docList = append(docList, doc)
+	switch {
+	case client.IsJSONArray(data):
+		docList, err := client.NewDocsFromJSON(data, col.Schema())
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
 		}
+
 		if err := col.CreateMany(req.Context(), docList); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
-	case map[string]any:
-		doc, err := client.NewDocFromMap(t, col.Schema())
+	default:
+		doc, err := client.NewDocFromJSON(data, col.Schema())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -79,8 +71,6 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
-	default:
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidRequestBody})
 	}
 }
 

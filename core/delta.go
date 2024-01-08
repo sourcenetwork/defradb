@@ -20,7 +20,7 @@ type Delta interface {
 	GetPriority() uint64
 	SetPriority(uint64)
 	Marshal() ([]byte, error)
-	Value() any
+	Unmarshal(b []byte) error
 }
 
 // CompositeDelta represents a delta-state update to a composite CRDT.

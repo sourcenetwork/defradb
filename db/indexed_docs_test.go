@@ -159,17 +159,15 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 
 	if b.doc != nil {
 		var fieldBytesVal []byte
-		var writeableVal client.WriteableValue
+		var fieldValue *client.FieldValue
+		var err error
 		if len(b.values) == 0 {
-			fieldVal, err := b.doc.GetValue(b.fieldName)
+			fieldValue, err = b.doc.GetValue(b.fieldName)
 			require.NoError(b.f.t, err)
-			var ok bool
-			writeableVal, ok = fieldVal.(client.WriteableValue)
-			require.True(b.f.t, ok)
 		} else {
-			writeableVal = client.NewCBORValue(client.LWW_REGISTER, b.values[0])
+			fieldValue = client.NewFieldValue(client.LWW_REGISTER, b.values[0])
 		}
-		fieldBytesVal, err = writeableVal.Bytes()
+		fieldBytesVal, err = fieldValue.Bytes()
 		require.NoError(b.f.t, err)
 
 		key.FieldValues = [][]byte{fieldBytesVal}

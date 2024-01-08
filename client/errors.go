@@ -24,8 +24,10 @@ const (
 	errMaxTxnRetries               string = "reached maximum transaction reties"
 	errRelationOneSided            string = "relation must be defined on both schemas"
 	errCollectionNotFound          string = "collection not found"
-	errUnknownCRDT                 string = "unknown crdt"
 	errFieldOrAliasToFieldNotExist string = "The given field or alias to field does not exist"
+	errUnknownCRDT                 string = "unknown crdt"
+	errCRDTKindMismatch            string = "CRDT type %s can't be assigned to field kind %s"
+	errInvalidCRDTType             string = "CRDT type not supported"
 )
 
 // Errors returnable from this package.
@@ -130,4 +132,16 @@ func NewErrUnknownCRDT(cType CType) error {
 // NewErrFieldOrAliasToFieldNotExist returns an error indicating that the given field or an alias field does not exist.
 func NewErrFieldOrAliasToFieldNotExist(name string) error {
 	return errors.New(errFieldOrAliasToFieldNotExist, errors.NewKV("Name", name))
+}
+
+func NewErrInvalidCRDTType(name, crdtType string) error {
+	return errors.New(
+		errInvalidCRDTType,
+		errors.NewKV("Name", name),
+		errors.NewKV("CRDTType", crdtType),
+	)
+}
+
+func NewErrCRDTKindMismatch(cType, kind string) error {
+	return errors.New(fmt.Sprintf(errCRDTKindMismatch, cType, kind))
 }
