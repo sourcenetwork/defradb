@@ -21,6 +21,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -67,7 +68,7 @@ func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 		log.Error(ctx, "Undefined CID in blockstore")
 		return nil, ipld.ErrNotFound{Cid: k}
 	}
-	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()))
+	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()).Bytes())
 	if errors.Is(err, ds.ErrNotFound) {
 		return nil, ipld.ErrNotFound{Cid: k}
 	}
@@ -94,23 +95,23 @@ func (bs *bstore) Put(ctx context.Context, block blocks.Block) error {
 	k := dshelp.MultihashToDsKey(block.Cid().Hash())
 
 	// Has is cheaper than Put, so see if we already have it
-	exists, err := bs.store.Has(ctx, k)
+	exists, err := bs.store.Has(ctx, k.Bytes())
 	if err == nil && exists {
 		return nil // already stored.
 	}
-	return bs.store.Put(ctx, k, block.RawData())
+	return bs.store.Set(ctx, k.Bytes(), block.RawData())
 }
 
 // PutMany stores multiple blocks to the blockstore.
 func (bs *bstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, b := range blocks {
 		k := dshelp.MultihashToDsKey(b.Cid().Hash())
-		exists, err := bs.store.Has(ctx, k)
+		exists, err := bs.store.Has(ctx, k.Bytes())
 		if err == nil && exists {
 			continue
 		}
 
-		err = bs.store.Put(ctx, k, b.RawData())
+		err = bs.store.Set(ctx, k.Bytes(), b.RawData())
 		if err != nil {
 			return err
 		}
@@ -120,21 +121,21 @@ func (bs *bstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 
 // Has returns whether a block is stored in the blockstore.
 func (bs *bstore) Has(ctx context.Context, k cid.Cid) (bool, error) {
-	return bs.store.Has(ctx, dshelp.MultihashToDsKey(k.Hash()))
+	return bs.store.Has(ctx, dshelp.MultihashToDsKey(k.Hash()).Bytes())
 }
 
 // GetSize returns the size of a block in the blockstore.
 func (bs *bstore) GetSize(ctx context.Context, k cid.Cid) (int, error) {
-	size, err := bs.store.GetSize(ctx, dshelp.MultihashToDsKey(k.Hash()))
-	if errors.Is(err, ds.ErrNotFound) {
+	buf, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()).Bytes())
+	if errors.Is(err, corekv.ErrNotFound) {
 		return -1, ipld.ErrNotFound{Cid: k}
 	}
-	return size, err
+	return len(buf), err
 }
 
 // DeleteBlock removes a block from the blockstore.
 func (bs *bstore) DeleteBlock(ctx context.Context, k cid.Cid) error {
-	return bs.store.Delete(ctx, dshelp.MultihashToDsKey(k.Hash()))
+	return bs.store.Delete(ctx, dshelp.MultihashToDsKey(k.Hash()).Bytes())
 }
 
 // AllKeysChan runs a query for keys from the blockstore.
@@ -144,31 +145,22 @@ func (bs *bstore) DeleteBlock(ctx context.Context, k cid.Cid) error {
 // TODO this is very simplistic, in the future, take dsq.Query as a param?
 func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 	// KeysOnly, because that would be _a lot_ of data.
-	q := dsq.Query{KeysOnly: true}
-	res, err := bs.store.Query(ctx, q)
-	if err != nil {
-		return nil, err
-	}
+	iter := bs.store.Iterator(ctx, corekv.IterOptions{
+		KeysOnly: true,
+	})
 
 	output := make(chan cid.Cid, dsq.KeysOnlyBufSize)
 	go func() {
 		defer func() {
 			//nolint:errcheck
-			res.Close() // ensure exit (signals early exit, too)
+			iter.Close(ctx) // ensure exit (signals early exit, too)
 			close(output)
 		}()
 
-		for {
-			e, ok := res.NextSync()
-			if !ok {
-				return
-			}
-			if e.Error != nil {
-				log.ErrorE(ctx, "Blockstore.AllKeysChan errored", e.Error)
-				return
-			}
+		for ; iter.Valid(); iter.Next() {
+			key := iter.Key()
 
-			hash, err := dshelp.DsKeyToMultihash(ds.RawKey(e.Key))
+			hash, err := dshelp.DsKeyToMultihash(ds.RawKey(string(key)))
 			if err != nil {
 				log.ErrorE(ctx, "Error parsing key from binary", err)
 				continue

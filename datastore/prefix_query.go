@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/ipfs/go-datastore/query"
 )
@@ -26,29 +27,23 @@ func DeserializePrefix[T any](
 	prefix string,
 	store DSReaderWriter,
 ) ([]string, []T, error) {
-	q, err := store.Query(ctx, query.Query{Prefix: prefix})
-	if err != nil {
-		return nil, nil, err
-	}
+	iter := store.Iterator(ctx, corekv.IterOptions{
+		Prefix: []byte(prefix),
+	})
 
 	keys := make([]string, 0)
 	elements := make([]T, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
-			_ = q.Close()
-			return nil, nil, res.Error
-		}
-
+	for ; iter.Valid(); iter.Next() {
 		var element T
-		err = json.Unmarshal(res.Value, &element)
+		err := json.Unmarshal(iter.Value(), &element)
 		if err != nil {
-			_ = q.Close()
+			_ = iter.Close(ctx)
 			return nil, nil, NewErrInvalidStoredValue(err)
 		}
-		keys = append(keys, res.Key)
+		keys = append(keys, string(iter.Key()))
 		elements = append(elements, element)
 	}
-	if err := q.Close(); err != nil {
+	if err := iter.Close(ctx); err != nil {
 		return nil, nil, err
 	}
 	return keys, elements, nil

@@ -367,15 +367,15 @@ func (_c *Txn_OnSuccess_Call) RunAndReturn(run func(func())) *Txn_OnSuccess_Call
 }
 
 // Peerstore provides a mock function with given fields:
-func (_m *Txn) Peerstore() datastore.DSBatching {
+func (_m *Txn) Peerstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
-	var r0 datastore.DSBatching
-	if rf, ok := ret.Get(0).(func() datastore.DSBatching); ok {
+	var r0 datastore.DSReaderWriter
+	if rf, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSBatching)
+			r0 = ret.Get(0).(datastore.DSReaderWriter)
 		}
 	}
 
@@ -399,12 +399,12 @@ func (_c *Txn_Peerstore_Call) Run(run func()) *Txn_Peerstore_Call {
 	return _c
 }
 
-func (_c *Txn_Peerstore_Call) Return(_a0 datastore.DSBatching) *Txn_Peerstore_Call {
+func (_c *Txn_Peerstore_Call) Return(_a0 datastore.DSReaderWriter) *Txn_Peerstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSBatching) *Txn_Peerstore_Call {
+func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *Txn_Peerstore_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -495,12 +495,13 @@ func (_c *Txn_Systemstore_Call) RunAndReturn(run func() datastore.DSReaderWriter
 	return _c
 }
 
-// NewTxn creates a new instance of Txn. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewTxn(t interface {
+type mockConstructorTestingTNewTxn interface {
 	mock.TestingT
 	Cleanup(func())
-}) *Txn {
+}
+
+// NewTxn creates a new instance of Txn. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+func NewTxn(t mockConstructorTestingTNewTxn) *Txn {
 	mock := &Txn{}
 	mock.Mock.Test(t)
 

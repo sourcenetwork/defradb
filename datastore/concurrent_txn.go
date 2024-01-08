@@ -14,10 +14,7 @@ import (
 	"context"
 	"sync"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/corekv"
-
-	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
 type concurrentTxn struct {
@@ -32,23 +29,8 @@ type concurrentTxn struct {
 }
 
 // NewConcurrentTxnFrom creates a new Txn from rootstore that supports concurrent API calls
-func NewConcurrentTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, readonly bool) (Txn, error) {
-	var rootTxn ds.Txn
-	var err error
-
-	// check if our datastore natively supports iterable transaction, transactions or batching
-	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
-		rootTxn, err = iterableTxnStore.NewIterableTransaction(ctx, readonly)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		rootTxn, err = rootstore.NewTransaction(ctx, readonly)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+func NewConcurrentTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) (Txn, error) {
+	rootTxn := rootstore.NewTxn(readonly)
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
 	multistore := MultiStoreFrom(rootConcurentTxn)
 	return &txn{
@@ -62,40 +44,40 @@ func NewConcurrentTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uin
 }
 
 // Delete implements ds.Delete
-func (t *concurrentTxn) Delete(ctx context.Context, key ds.Key) error {
+func (t *concurrentTxn) Delete(ctx context.Context, key []byte) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.Txn.Delete(ctx, key)
 }
 
 // Get implements ds.Get
-func (t *concurrentTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
+func (t *concurrentTxn) Get(ctx context.Context, key []byte) ([]byte, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.Txn.Get(ctx, key)
 }
 
 // Has implements ds.Has
-func (t *concurrentTxn) Has(ctx context.Context, key ds.Key) (bool, error) {
+func (t *concurrentTxn) Has(ctx context.Context, key []byte) (bool, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.Txn.Has(ctx, key)
 }
 
 // Put implements ds.Put
-func (t *concurrentTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
+func (t *concurrentTxn) Set(ctx context.Context, key []byte, value []byte) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	return t.Txn.Put(ctx, key, value)
+	return t.Txn.Set(ctx, key, value)
 }
 
 // Sync executes the transaction.
-func (t *concurrentTxn) Sync(ctx context.Context, prefix ds.Key) error {
+func (t *concurrentTxn) Sync(ctx context.Context) error {
 	return t.Txn.Commit(ctx)
 }
 
 // Close discards the transaction.
-func (t *concurrentTxn) Close() error {
-	t.Discard(context.TODO())
+func (t *concurrentTxn) Close(ctx context.Context) error {
+	t.Discard(ctx)
 	return nil
 }

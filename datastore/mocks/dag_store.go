@@ -401,12 +401,13 @@ func (_c *DAGStore_PutMany_Call) RunAndReturn(run func(context.Context, []blocks
 	return _c
 }
 
-// NewDAGStore creates a new instance of DAGStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewDAGStore(t interface {
+type mockConstructorTestingTNewDAGStore interface {
 	mock.TestingT
 	Cleanup(func())
-}) *DAGStore {
+}
+
+// NewDAGStore creates a new instance of DAGStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+func NewDAGStore(t mockConstructorTestingTNewDAGStore) *DAGStore {
 	mock := &DAGStore{}
 	mock.Mock.Test(t)
 

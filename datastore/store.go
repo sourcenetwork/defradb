@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/namespace"
 )
 
 var (
@@ -43,7 +44,7 @@ type MultiStore interface {
 	// Peerstore is a wrapped root DSReaderWriter
 	// as a ds.Batching, embedded into a DSBatching
 	// under the /peers namespace
-	Peerstore() DSBatching
+	Peerstore() DSReaderWriter
 
 	// DAGstore is a wrapped root DSReaderWriter
 	// as a Blockstore, embedded into a DAGStore
@@ -75,4 +76,19 @@ type DAGStore interface {
 // DSBatching wraps the Batching interface from go-datastore
 type DSBatching interface {
 	corekv.Batchable
+}
+
+// shim to satisfy the namespace.Wrap method which
+// expects a `corekv.Store` interface which includes
+// a `Close()` method, but our DSReaderWriter doens't
+// have it, so we add this stubbed type to shim it
+type shimDSReadWriteCloser struct {
+	DSReaderWriter
+}
+
+func (shimDSReadWriteCloser) Close() {} // noop
+
+func prefix(root DSReaderWriter, prefix []byte) DSReaderWriter {
+	shimCloser := shimDSReadWriteCloser{root}
+	return namespace.Wrap(shimCloser, prefix)
 }

@@ -14,18 +14,12 @@ import (
 	"context"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
-	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/stretchr/testify/require"
-
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
 
 func TestNewTxnFrom(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
+	rootstore := getBadgerTxnDB(t, ctx)
 
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
@@ -34,24 +28,9 @@ func TestNewTxnFrom(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestNewTxnFromWithStoreClosed(t *testing.T) {
-	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
-
-	err = rootstore.Close()
-	require.NoError(t, err)
-
-	_, err = NewTxnFrom(ctx, rootstore, 0, false)
-	require.ErrorIs(t, err, badgerds.ErrClosed)
-}
-
 func TestOnSuccess(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
+	rootstore := getBadgerTxnDB(t, ctx)
 
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
@@ -70,9 +49,7 @@ func TestOnSuccess(t *testing.T) {
 
 func TestOnError(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
+	rootstore := getBadgerTxnDB(t, ctx)
 
 	txn, err := NewTxnFrom(ctx, rootstore, 0, false)
 	require.NoError(t, err)
@@ -88,35 +65,7 @@ func TestOnError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = txn.Commit(ctx)
-	require.ErrorIs(t, err, badgerds.ErrClosed)
+	require.Error(t, err)
 
 	require.Equal(t, text, "Source Inc")
-}
-
-func TestShimTxnStoreSync(t *testing.T) {
-	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
-
-	txn, err := rootstore.NewTransaction(ctx, false)
-	require.NoError(t, err)
-
-	shimTxn := ShimTxnStore{txn}
-	err = shimTxn.Sync(ctx, ds.Key{})
-	require.NoError(t, err)
-}
-
-func TestShimTxnStoreClose(t *testing.T) {
-	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
-
-	txn, err := rootstore.NewTransaction(ctx, false)
-	require.NoError(t, err)
-
-	shimTxn := ShimTxnStore{txn}
-	err = shimTxn.Close()
-	require.NoError(t, err)
 }

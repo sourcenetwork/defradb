@@ -15,8 +15,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/corekv"
-
-	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
 // Txn is a common interface to the db.Txn struct.
@@ -60,30 +58,10 @@ type txn struct {
 var _ Txn = (*txn)(nil)
 
 // NewTxnFrom returns a new Txn from the rootstore.
-func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, readonly bool) (Txn, error) {
-	// check if our datastore natively supports iterable transaction, transactions or batching
-	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
-		rootTxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
-		if err != nil {
-			return nil, err
-		}
-		multistore := MultiStoreFrom(ShimTxnStore{rootTxn})
-		return &txn{
-			rootTxn,
-			multistore,
-			id,
-			[]func(){},
-			[]func(){},
-			[]func(){},
-		}, nil
-	}
+func NewTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) (Txn, error) {
+	rootTxn := rootstore.NewTxn(readonly)
 
-	rootTxn, err := rootstore.NewTransaction(ctx, readonly)
-	if err != nil {
-		return nil, err
-	}
-
-	multistore := MultiStoreFrom(ShimTxnStore{rootTxn})
+	multistore := MultiStoreFrom(rootTxn)
 	return &txn{
 		rootTxn,
 		multistore,
