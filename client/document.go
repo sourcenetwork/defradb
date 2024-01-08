@@ -151,7 +151,7 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 	}
 
 	docs := make([]*Document, len(a))
-	for _, v := range a {
+	for i, v := range a {
 		o, err := v.Object()
 		if err != nil {
 			return nil, err
@@ -165,7 +165,7 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 		if err != nil {
 			return nil, err
 		}
-		docs = append(docs, doc)
+		docs[i] = doc
 	}
 
 	return docs, nil
