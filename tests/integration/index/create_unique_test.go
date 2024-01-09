@@ -186,3 +186,68 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestUniqueIndexCreate_IfFieldIsNil_ReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If filter does not match any document, return empty result",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Andy"
+					}`,
+			},
+			testUtils.CreateIndex{
+				CollectionID:  0,
+				FieldName:     "age",
+				Unique:        true,
+				ExpectedError: db.NewErrCanNotIndexNilField("bae-2159860f-3cd1-59de-9440-71331e77cbb8", "age").Error(),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestUniqueIndexCreate_UponAddingDocWithNilValue_ReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If filter does not match any document, return empty result",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index(unique: true)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Andy"
+					}`,
+				ExpectedError: db.NewErrCanNotIndexNilField("bae-2159860f-3cd1-59de-9440-71331e77cbb8", "age").Error(),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

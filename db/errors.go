@@ -86,7 +86,8 @@ const (
 	errExpectedJSONArray                  string = "expected JSON array"
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 	errIndexDoesNotMatchName              string = "the index used does not match the given name"
-	errCanNotIndexNonUniqueField          string = "can not create doc that violates unique index"
+	errCanNotIndexNonUniqueField          string = "can not index a doc's field that violates unique index"
+	errCanNotIndexNilField                string = "can not index a doc's field with nil value"
 	errInvalidViewQuery                   string = "the query provided is not valid as a View"
 )
 
@@ -572,6 +573,14 @@ func NewErrCanNotIndexNonUniqueField(docID, fieldName string, value any) error {
 		errors.NewKV("DocID", docID),
 		errors.NewKV("Field name", fieldName),
 		errors.NewKV("Field value", value),
+	)
+}
+
+func NewErrCanNotIndexNilField(docID, fieldName string) error {
+	return errors.New(
+		errCanNotIndexNilField,
+		errors.NewKV("DocID", docID),
+		errors.NewKV("Field name", fieldName),
 	)
 }
 

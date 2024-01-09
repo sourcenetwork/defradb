@@ -102,6 +102,7 @@ func NewCollectionIndex(
 		return nil, err
 	}
 	if desc.Unique {
+		base.rejectNil = true
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
 	} else {
 		return &collectionSimpleIndex{collectionBaseIndex: base}, nil
@@ -113,6 +114,7 @@ type collectionBaseIndex struct {
 	desc              client.IndexDescription
 	validateFieldFunc func(any) bool
 	fieldDesc         client.FieldDescription
+	rejectNil         bool
 }
 
 func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([]byte, error) {
@@ -122,6 +124,9 @@ func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([]byte, er
 	fieldVal, err := doc.GetValue(indexedFieldName)
 	if err != nil {
 		if errors.Is(err, client.ErrFieldNotExist) {
+			if i.rejectNil {
+				return nil, NewErrCanNotIndexNilField(doc.ID().String(), indexedFieldName)
+			}
 			return client.NewFieldValue(client.LWW_REGISTER, nil).Bytes()
 		} else {
 			return nil, err
