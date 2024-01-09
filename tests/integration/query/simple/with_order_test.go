@@ -125,22 +125,22 @@ func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2021-07-23T03:46:56.647Z"
+					"CreatedAt": "2021-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2032-07-23T03:46:56.647Z"
+					"CreatedAt": "2032-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Carlo",
 					"Age": 55,
-					"CreatedAt": "2055-07-23T03:46:56.647Z"
+					"CreatedAt": "2055-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Alice",
 					"Age": 19,
-					"CreatedAt": "2019-07-23T03:46:56.647Z"
+					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
 		},
@@ -233,22 +233,22 @@ func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2021-07-23T03:46:56.647Z"
+					"CreatedAt": "2021-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2032-07-23T03:46:56.647Z"
+					"CreatedAt": "2032-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Carlo",
 					"Age": 55,
-					"CreatedAt": "2055-07-23T03:46:56.647Z"
+					"CreatedAt": "2055-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Alice",
 					"Age": 19,
-					"CreatedAt": "2019-07-23T03:46:56.647Z"
+					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
 		},

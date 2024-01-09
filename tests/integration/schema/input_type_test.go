@@ -77,8 +77,8 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 								"args": append(
 									trimFields(
 										fields{
-											dockeyArg,
-											dockeysArg,
+											docIDArg,
+											docIDsArg,
 											buildFilterArg("group", []argDef{
 												{
 													fieldName: "members",
@@ -98,7 +98,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 											"ofType": nil,
 											"inputFields": []any{
 												map[string]any{
-													"name": "_key",
+													"name": "_docID",
 													"type": map[string]any{
 														"name":   "Ordering",
 														"ofType": nil,
@@ -187,7 +187,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 											"ofType": nil,
 											"inputFields": []any{
 												map[string]any{
-													"name": "_key",
+													"name": "_docID",
 													"type": map[string]any{
 														"name":   "Ordering",
 														"ofType": nil,
@@ -258,8 +258,8 @@ var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any
 
 var defaultGroupArgsWithoutOrder = trimFields(
 	fields{
-		dockeyArg,
-		dockeysArg,
+		docIDArg,
+		docIDsArg,
 		buildFilterArg("author", []argDef{
 			{
 				fieldName: "age",

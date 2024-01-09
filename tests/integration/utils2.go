@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/request/graphql"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -817,19 +818,14 @@ func refreshDocuments(
 	for i := 0; i < startActionIndex; i++ {
 		switch action := s.testCase.Actions[i].(type) {
 		case CreateDoc:
-			// We need to add the existing documents in the order in which the test case lists them
-			// otherwise they cannot be referenced correctly by other actions.
-			doc, err := client.NewDocFromJSON([]byte(action.Doc))
-			if err != nil {
-				// If an err has been returned, ignore it - it may be expected and if not
-				// the test will fail later anyway
-				continue
-			}
-
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
-			if err := doc.RemapAliasFieldsAndDockey(collection.Schema().Fields); err != nil {
+
+			// We need to add the existing documents in the order in which the test case lists them
+			// otherwise they cannot be referenced correctly by other actions.
+			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Schema())
+			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
 				continue
@@ -837,7 +833,7 @@ func refreshDocuments(
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(s.ctx, doc.Key(), false)
+			doc, err = collection.Get(s.ctx, doc.ID(), false)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -1118,7 +1114,7 @@ func createDocViaColSave(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
 	if err != nil {
 		return nil, err
 	}
@@ -1133,7 +1129,7 @@ func createDocViaColCreate(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
 	if err != nil {
 		return nil, err
 	}
@@ -1155,7 +1151,7 @@ func createDocViaGQL(
 	request := fmt.Sprintf(
 		`mutation {
 			create_%s(data: %s) {
-				_key
+				_docID
 			}
 		}`,
 		collection.Name(),
@@ -1174,11 +1170,11 @@ func createDocViaGQL(
 		return nil, nil
 	}
 
-	docKeyString := resultantDocs[0]["_key"].(string)
-	docKey, err := client.NewDocKeyFromString(docKeyString)
+	docIDString := resultantDocs[0]["_docID"].(string)
+	docID, err := client.NewDocIDFromString(docIDString)
 	require.NoError(s.t, err)
 
-	doc, err := collection.Get(s.ctx, docKey, false)
+	doc, err := collection.Get(s.ctx, docID, false)
 	require.NoError(s.t, err)
 
 	return doc, nil
@@ -1199,7 +1195,7 @@ func deleteDoc(
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].DeleteWithKey(s.ctx, doc.Key())
+				_, err := collections[action.CollectionID].DeleteWithDocID(s.ctx, doc.ID())
 				return err
 			},
 		)
@@ -1247,12 +1243,19 @@ func updateDocViaColSave(
 	node client.P2P,
 	collections []client.Collection,
 ) error {
-	doc := s.documents[action.CollectionID][action.DocID]
+	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	err := doc.SetWithJSON([]byte(action.Doc))
+	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}
+
+	err = doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	s.documents[action.CollectionID][action.DocID] = doc
 
 	return collections[action.CollectionID].Save(s.ctx, doc)
 }
@@ -1263,12 +1266,19 @@ func updateDocViaColUpdate(
 	node client.P2P,
 	collections []client.Collection,
 ) error {
-	doc := s.documents[action.CollectionID][action.DocID]
+	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	err := doc.SetWithJSON([]byte(action.Doc))
+	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}
+
+	err = doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	s.documents[action.CollectionID][action.DocID] = doc
 
 	return collections[action.CollectionID].Update(s.ctx, doc)
 }
@@ -1287,12 +1297,12 @@ func updateDocViaGQL(
 
 	request := fmt.Sprintf(
 		`mutation {
-			update_%s(id: "%s", data: %s) {
-				_key
+			update_%s(docID: "%s", data: %s) {
+				_docID
 			}
 		}`,
 		collection.Name(),
-		doc.Key().String(),
+		doc.ID().String(),
 		escapedJson,
 	)
 
@@ -1859,4 +1869,28 @@ func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutabl
 			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
 		}
 	}
+}
+
+func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
+	parser, err := graphql.NewParser()
+	if err != nil {
+		return nil, err
+	}
+	cols, err := parser.ParseSDL(context.Background(), gqlSDL)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]client.CollectionDefinition)
+	for _, col := range cols {
+		result[col.Description.Name] = col
+	}
+	return result, nil
+}
+
+func MustParseTime(timeString string) time.Time {
+	t, err := time.Parse(time.RFC3339, timeString)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }

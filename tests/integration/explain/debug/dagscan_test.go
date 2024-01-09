@@ -38,7 +38,7 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+					commits (docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
 						links {
 							cid
 						}
@@ -56,7 +56,7 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) commits query-op with only dockey (no field).",
+		Description: "Explain (debug) commits query-op with only docID (no field).",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -64,7 +64,7 @@ func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+					commits (docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
 						links {
 							cid
 						}
@@ -90,7 +90,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
+					latestCommits(docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", fieldId: "1") {
 						cid
 						links {
 							cid
@@ -109,7 +109,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 func TestDebugExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) latestCommits query-op with only dockey (no field).",
+		Description: "Explain (debug) latestCommits query-op with only docID (no field).",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -117,7 +117,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+					latestCommits(docID: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
 						cid
 						links {
 							cid
@@ -133,10 +133,10 @@ func TestDebugExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-func TestDebugExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
+func TestDebugExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) latestCommits query without DocKey.",
+		Description: "Explain (debug) latestCommits query without docID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -152,7 +152,7 @@ func TestDebugExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
 					}
 				}`,
 
-				ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}
@@ -179,7 +179,7 @@ func TestDebugExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.
 					}
 				}`,
 
-				ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}

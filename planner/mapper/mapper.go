@@ -762,7 +762,7 @@ func getTopLevelInfo(
 			// be fine for now
 			schema = schemas[0]
 		} else {
-			mapping.Add(core.DocKeyFieldIndex, request.KeyFieldName)
+			mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
 			schema = collection.Schema()
 		}
 
@@ -1035,7 +1035,7 @@ func resolveSecondaryRelationIDs(
 		if !siblingFound {
 			objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
 
-			// We only require the dockey of the related object, so an empty join is all we need.
+			// We only require the docID of the related object, so an empty join is all we need.
 			join, err := constructEmptyJoin(
 				ctx,
 				store,
@@ -1069,7 +1069,7 @@ func ToCommitSelect(
 	}
 	return &CommitSelect{
 		Select:  *underlyingSelect,
-		DocKey:  selectRequest.DocKey,
+		DocID:   selectRequest.DocID,
 		FieldID: selectRequest.FieldID,
 		Depth:   selectRequest.Depth,
 		Cid:     selectRequest.Cid,
@@ -1096,7 +1096,7 @@ func ToMutation(ctx context.Context, store client.Store, mutationRequest *reques
 func toTargetable(index int, selectRequest *request.Select, docMap *core.DocumentMapping) Targetable {
 	return Targetable{
 		Field:       toField(index, selectRequest),
-		DocKeys:     selectRequest.DocKeys,
+		DocIDs:      selectRequest.DocIDs,
 		Filter:      ToFilter(selectRequest.Filter.Value(), docMap),
 		Limit:       toLimit(selectRequest.Limit, selectRequest.Offset),
 		GroupBy:     toGroupBy(selectRequest.GroupBy, docMap),
@@ -1141,7 +1141,7 @@ func toFilterMap(
 	sourceClause any,
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, any) {
-	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.KeyFieldName {
+	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocIDFieldName {
 		key := &Operator{
 			Operation: sourceKey,
 		}

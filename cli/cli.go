@@ -91,7 +91,7 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 	collection := MakeCollectionCommand(cfg)
 	collection.AddCommand(
 		MakeCollectionGetCommand(),
-		MakeCollectionKeysCommand(),
+		MakeCollectionListDocIDsCommand(),
 		MakeCollectionDeleteCommand(),
 		MakeCollectionUpdateCommand(),
 		MakeCollectionCreateCommand(),

@@ -74,7 +74,7 @@ func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testin
 					"name": "Painted House",
 					"author_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`,
-				ExpectedError: "no document for the given key exists",
+				ExpectedError: "no document for the given ID exists",
 			},
 		},
 	}
@@ -82,7 +82,7 @@ func TestMutationCreateOneToOne_NonExistingRelationSecondarySide_Error(t *testin
 }
 
 func TestMutationCreateOneToOne(t *testing.T) {
-	bookKey := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+	bookID := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
 
 	test := testUtils.TestCase{
 		Description: "One to one create mutation",
@@ -100,7 +100,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 						"name": "John Grisham",
 						"published_id": "%s"
 					}`,
-					bookKey,
+					bookID,
 				),
 			},
 			testUtils.Request{
@@ -148,7 +148,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 }
 
 func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
-	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 
 	test := testUtils.TestCase{
 		Description: "One to one create mutation from secondary side",
@@ -166,7 +166,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 						"name": "Painted House",
 						"author_id": "%s"
 					}`,
-					authorKey,
+					authorID,
 				),
 			},
 			testUtils.Request{
@@ -214,7 +214,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 }
 
 func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(t *testing.T) {
-	bookKey := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+	bookID := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
 
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, errors due to link already existing, primary side",
@@ -231,7 +231,7 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 						"name": "John Grisham",
 						"published_id": "%s"
 					}`,
-					bookKey,
+					bookID,
 				),
 			},
 			testUtils.CreateDoc{
@@ -240,7 +240,7 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 						"name": "Saadi Shirazi",
 						"published_id": "%s"
 					}`,
-					bookKey,
+					bookID,
 				),
 				ExpectedError: "target document is already linked to another document.",
 			},
@@ -251,7 +251,7 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 }
 
 func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondary(t *testing.T) {
-	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, errors due to link already existing, secondary side",
@@ -268,7 +268,7 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondar
 						"name": "Painted House",
 						"author_id": "%s"
 					}`,
-					authorKey,
+					authorID,
 				),
 			},
 			testUtils.CreateDoc{
@@ -277,7 +277,7 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaSecondar
 						"name": "Golestan",
 						"author_id": "%s"
 					}`,
-					authorKey,
+					authorID,
 				),
 				ExpectedError: "target document is already linked to another document.",
 			},

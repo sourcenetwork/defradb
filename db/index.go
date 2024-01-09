@@ -122,16 +122,15 @@ func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([]byte, er
 	fieldVal, err := doc.GetValue(indexedFieldName)
 	if err != nil {
 		if errors.Is(err, client.ErrFieldNotExist) {
-			return client.NewCBORValue(client.LWW_REGISTER, nil).Bytes()
+			return client.NewFieldValue(client.LWW_REGISTER, nil).Bytes()
 		} else {
 			return nil, err
 		}
 	}
-	writeableVal, ok := fieldVal.(client.WriteableValue)
-	if !ok || !i.validateFieldFunc(fieldVal.Value()) {
-		return nil, NewErrInvalidFieldValue(i.fieldDesc.Kind, writeableVal)
+	if !i.validateFieldFunc(fieldVal.Value()) {
+		return nil, NewErrInvalidFieldValue(i.fieldDesc.Kind, fieldVal)
 	}
-	return writeableVal.Bytes()
+	return fieldVal.Bytes()
 }
 
 func (i *collectionBaseIndex) getDocumentsIndexKey(
@@ -212,7 +211,7 @@ func (i *collectionSimpleIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	key.FieldValues = append(key.FieldValues, []byte(doc.Key().String()))
+	key.FieldValues = append(key.FieldValues, []byte(doc.ID().String()))
 	return key, nil
 }
 
@@ -280,7 +279,7 @@ func (i *collectionUniqueIndex) Save(
 	if exists {
 		return i.newUniqueIndexError(doc)
 	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte(doc.Key().String()))
+	err = txn.Datastore().Put(ctx, key.ToDS(), []byte(doc.ID().String()))
 	if err != nil {
 		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
 	}
@@ -294,7 +293,7 @@ func (i *collectionUniqueIndex) newUniqueIndexError(
 	if err != nil {
 		return err
 	}
-	return NewErrCanNotIndexNonUniqueField(doc.Key().String(), i.fieldDesc.Name, fieldVal.Value())
+	return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldDesc.Name, fieldVal.Value())
 }
 
 func (i *collectionUniqueIndex) Update(

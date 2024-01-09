@@ -12,6 +12,7 @@ package gen
 
 import (
 	"math/rand"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -71,10 +72,10 @@ func newRandomDocGenerator(types map[string]client.CollectionDefinition, config 
 }
 
 type genDoc struct {
-	// the dockey of the document. Its cached value from doc.Key().String() just to avoid
+	// the docID of the document. Its cached value from doc.ID().String() just to avoid
 	// calculating it multiple times.
-	docKey string
-	doc    *client.Document
+	docID string
+	doc   *client.Document
 }
 
 type randomDocGenerator struct {
@@ -117,10 +118,10 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 	return totalDemand
 }
 
-// getNextPrimaryDocKey returns the key of the next primary document to be used as a relation.
-func (g *randomDocGenerator) getNextPrimaryDocKey(secondaryType string, field *client.FieldDescription) string {
+// getNextPrimaryDocID returns the docID of the next primary document to be used as a relation.
+func (g *randomDocGenerator) getNextPrimaryDocID(secondaryType string, field *client.FieldDescription) string {
 	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
-	return g.generatedDocs[field.Schema][ind].docKey
+	return g.generatedDocs[field.Schema][ind].docID
 }
 
 func (g *randomDocGenerator) generateRandomDocs(order []string) error {
@@ -134,24 +135,28 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 		for i := 0; i < totalDemand; i++ {
 			newDoc := make(map[string]any)
 			for _, field := range typeDef.Schema.Fields {
-				if field.Name == request.KeyFieldName {
+				if field.Name == request.DocIDFieldName {
 					continue
 				}
 				if field.IsRelation() {
 					if field.IsPrimaryRelation() {
-						newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocKey(typeName, &field)
+						if strings.HasSuffix(field.Name, request.RelatedObjectID) {
+							newDoc[field.Name] = g.getNextPrimaryDocID(typeName, &field)
+						} else {
+							newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocID(typeName, &field)
+						}
 					}
 				} else {
 					fieldConf := g.configurator.config.ForField(typeName, field.Name)
 					newDoc[field.Name] = g.generateRandomValue(typeName, field.Kind, fieldConf)
 				}
 			}
-			doc, err := client.NewDocFromMap(newDoc)
+			doc, err := client.NewDocFromMap(newDoc, typeDef.Schema)
 			if err != nil {
 				return err
 			}
 			g.generatedDocs[typeName] = append(g.generatedDocs[typeName],
-				genDoc{docKey: doc.Key().String(), doc: doc})
+				genDoc{docID: doc.ID().String(), doc: doc})
 		}
 	}
 	return nil

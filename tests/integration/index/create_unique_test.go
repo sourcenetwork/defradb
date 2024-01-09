@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-const johnDockey = "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7"
+const johnDocID = "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7"
 
 func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
@@ -60,7 +60,7 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 				CollectionID:  0,
 				FieldName:     "age",
 				Unique:        true,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueField(johnDockey, "age", 21).Error(),
+				ExpectedError: db.NewErrCanNotIndexNonUniqueField(johnDocID, "age", 21).Error(),
 			},
 			testUtils.GetIndexes{
 				CollectionID:    0,
@@ -99,7 +99,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 						"name":	"John",
 						"age":	21
 					}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueField(johnDockey, "age", 21).Error(),
+				ExpectedError: db.NewErrCanNotIndexNonUniqueField(johnDocID, "age", 21).Error(),
 			},
 			testUtils.Request{
 				Request: `query {

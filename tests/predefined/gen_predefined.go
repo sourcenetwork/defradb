@@ -110,7 +110,7 @@ type docGenerator struct {
 func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) map[string]any {
 	result := make(map[string]any)
 	for _, field := range typeDef.Schema.Fields {
-		if field.IsRelation() || field.Name == request.KeyFieldName {
+		if field.IsRelation() || field.Name == request.DocIDFieldName {
 			continue
 		}
 		result[field.Name] = doc[field.Name]
@@ -123,7 +123,7 @@ func toRequestedDoc(doc map[string]any, typeDef *client.CollectionDefinition) ma
 	return result
 }
 
-// generatePrimary generates primary docs for the given secondary doc and adds foreign keys
+// generatePrimary generates primary docs for the given secondary doc and adds foreign docID
 // to the secondary doc to reference the primary docs.
 func (this *docGenerator) generatePrimary(
 	secDocMap map[string]any,
@@ -141,17 +141,17 @@ func (this *docGenerator) generatePrimary(
 					if err != nil {
 						return nil, nil, NewErrFailedToGenerateDoc(err)
 					}
-					primDoc, err := client.NewDocFromMap(primDocMap)
+					primDoc, err := client.NewDocFromMap(primDocMap, primType.Schema)
 					if err != nil {
 						return nil, nil, NewErrFailedToGenerateDoc(err)
 					}
-					docKey := primDoc.Key().String()
-					requestedSecondary[secDocField.Name+request.RelatedObjectID] = docKey
+					docID := primDoc.ID().String()
+					requestedSecondary[secDocField.Name+request.RelatedObjectID] = docID
 					subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc})
 					result = append(result, subResult...)
 
 					secondaryDocs, err := this.generateSecondaryDocs(
-						secDocMapField.(map[string]any), docKey, &primType, secType.Description.Name)
+						secDocMapField.(map[string]any), docID, &primType, secType.Description.Name)
 					if err != nil {
 						return nil, nil, err
 					}
@@ -164,24 +164,24 @@ func (this *docGenerator) generatePrimary(
 }
 
 // generateRelatedDocs generates related docs (primary and secondary) for the given doc and
-// adds foreign keys to the given doc to reference the primary docs.
+// adds foreign docID to the given doc to reference the primary docs.
 func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName string) ([]gen.GeneratedDoc, error) {
 	typeDef := this.types[typeName]
 
 	// create first primary docs and link them to the given doc so that we can define
-	// dockey for the complete document.
+	// docID for the complete document.
 	requested, result, err := this.generatePrimary(docMap, &typeDef)
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocFromMap(requested)
+	doc, err := client.NewDocFromMap(requested, typeDef.Schema)
 	if err != nil {
 		return nil, NewErrFailedToGenerateDoc(err)
 	}
 
 	result = append(result, gen.GeneratedDoc{Col: &typeDef, Doc: doc})
 
-	secondaryDocs, err := this.generateSecondaryDocs(docMap, doc.Key().String(), &typeDef, "")
+	secondaryDocs, err := this.generateSecondaryDocs(docMap, doc.ID().String(), &typeDef, "")
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func (this *docGenerator) generateRelatedDocs(docMap map[string]any, typeName st
 
 func (this *docGenerator) generateSecondaryDocs(
 	primaryDocMap map[string]any,
-	docKey string,
+	docID string,
 	primaryType *client.CollectionDefinition,
 	parentTypeName string,
 ) ([]gen.GeneratedDoc, error) {
@@ -202,7 +202,7 @@ func (this *docGenerator) generateSecondaryDocs(
 				if !field.IsPrimaryRelation() &&
 					(parentTypeName == "" || parentTypeName != field.Schema) {
 					docs, err := this.generateSecondaryDocsForField(
-						primaryDocMap, primaryType.Description.Name, &field, docKey)
+						primaryDocMap, primaryType.Description.Name, &field, docID)
 					if err != nil {
 						return nil, err
 					}
@@ -219,7 +219,7 @@ func (this *docGenerator) generateSecondaryDocsForField(
 	primaryDoc map[string]any,
 	primaryTypeName string,
 	relField *client.FieldDescription,
-	primaryDocKey string,
+	primaryDocID string,
 ) ([]gen.GeneratedDoc, error) {
 	result := []gen.GeneratedDoc{}
 	relTypeDef := this.types[relField.Schema]
@@ -230,7 +230,7 @@ func (this *docGenerator) generateSecondaryDocsForField(
 			switch relVal := primaryDoc[relField.Name].(type) {
 			case []map[string]any:
 				for _, relDoc := range relVal {
-					relDoc[primaryPropName] = primaryDocKey
+					relDoc[primaryPropName] = primaryDocID
 					actions, err := this.generateRelatedDocs(relDoc, relTypeDef.Description.Name)
 					if err != nil {
 						return nil, err
@@ -238,7 +238,7 @@ func (this *docGenerator) generateSecondaryDocsForField(
 					result = append(result, actions...)
 				}
 			case map[string]any:
-				relVal[primaryPropName] = primaryDocKey
+				relVal[primaryPropName] = primaryDocID
 				actions, err := this.generateRelatedDocs(relVal, relTypeDef.Description.Name)
 				if err != nil {
 					return nil, err

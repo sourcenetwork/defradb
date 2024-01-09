@@ -29,11 +29,14 @@ import (
 // LWWRegDelta is a single delta operation for an LWWRegister
 // @todo: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
+	DocID     []byte
+	FieldName string
+	Priority  uint64
+	// SchemaVersionID is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at the time of commit.
 	SchemaVersionID string
-	Priority        uint64
 	Data            []byte
-	DocKey          []byte
-	FieldName       string
 }
 
 var _ core.Delta = (*LWWRegDelta)(nil)
@@ -54,21 +57,18 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
-	err := enc.Encode(struct {
-		SchemaVersionID string
-		Priority        uint64
-		Data            []byte
-		DocKey          []byte
-		FieldName       string
-	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey, delta.FieldName})
+	err := enc.Encode(delta)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
 }
 
-func (delta *LWWRegDelta) Value() any {
-	return delta.Data
+// Unmarshal decodes the delta from CBOR.
+func (delta *LWWRegDelta) Unmarshal(b []byte) error {
+	h := &codec.CborHandle{}
+	dec := codec.NewDecoderBytes(b, h)
+	return dec.Decode(delta)
 }
 
 // LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
@@ -105,7 +105,7 @@ func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	return &LWWRegDelta{
 		Data:            value,
-		DocKey:          []byte(reg.key.DocKey),
+		DocID:           []byte(reg.key.DocID),
 		FieldName:       reg.fieldName,
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}
@@ -166,15 +166,13 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 // a LWWRegDelta from a ipld.Node
 // for now let's do cbor (quick to implement)
 func (reg LWWRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
-	delta := &LWWRegDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
 		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
 	}
-	data := pbNode.Data()
-	h := &codec.CborHandle{}
-	dec := codec.NewDecoderBytes(data, h)
-	err := dec.Decode(delta)
+
+	delta := &LWWRegDelta{}
+	err := delta.Unmarshal(pbNode.Data())
 	if err != nil {
 		return nil, err
 	}

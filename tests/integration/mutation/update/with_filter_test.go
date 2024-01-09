@@ -38,7 +38,7 @@ func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
 				// The update will result in a record that no longer matches the filter
 				Request: `mutation {
 					update_Users(filter: {verified: {_eq: true}}, data: "{\"verified\":false}") {
-						_key
+						_docID
 						name
 						verified
 					}
@@ -95,11 +95,11 @@ func TestMutationUpdate_WithBooleanFilter(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name":   "Fred",
+						"name":   "John",
 						"points": float64(59),
 					},
 					{
-						"name":   "John",
+						"name":   "Fred",
 						"points": float64(59),
 					},
 				},

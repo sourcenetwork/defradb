@@ -461,3 +461,36 @@ func TestQueryWithUniqueIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithUniqueIndex_IfNoMatch_ReturnEmptyResult(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If filter does not match any document, return empty result",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index(unique: true)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: ` {
+						"name":	"Shahzad",
+						"age":	23
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User(filter: {age: {_eq: 20}}) {
+						name
+					}
+				}`,
+				Results: []map[string]any{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

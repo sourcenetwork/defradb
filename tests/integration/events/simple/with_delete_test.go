@@ -28,9 +28,10 @@ func TestEventsSimpleWithDelete(t *testing.T) {
 				"name": "John"
 			}`,
 		),
+		colDefMap["Users"].Schema,
 	)
 	assert.Nil(t, err)
-	docKey1 := doc1.Key().String()
+	docID1 := doc1.ID().String()
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection){
@@ -40,7 +41,7 @@ func TestEventsSimpleWithDelete(t *testing.T) {
 					assert.Nil(t, err)
 				},
 				func(c client.Collection) {
-					wasDeleted, err := c.Delete(context.Background(), doc1.Key())
+					wasDeleted, err := c.Delete(context.Background(), doc1.ID())
 					assert.Nil(t, err)
 					assert.True(t, wasDeleted)
 				},
@@ -48,10 +49,10 @@ func TestEventsSimpleWithDelete(t *testing.T) {
 		},
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
-				DocKey: immutable.Some(docKey1),
+				DocID: immutable.Some(docID1),
 			},
 			{
-				DocKey: immutable.Some(docKey1),
+				DocID: immutable.Some(docID1),
 			},
 		},
 	}

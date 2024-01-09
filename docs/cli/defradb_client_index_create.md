@@ -7,6 +7,7 @@ Creates a secondary index on a collection's field(s)
 Creates a secondary index on a collection's field(s).
 		
 The --name flag is optional. If not provided, a name will be generated automatically.
+The --unique flag is optional. If provided, the index will be unique.
 
 Example: create an index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name
@@ -15,7 +16,7 @@ Example: create a named index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name --name UsersByName
 
 ```
-defradb client index create -c --collection <collection> --fields <fields> [-n --name <name>] [flags]
+defradb client index create -c --collection <collection> --fields <fields> [-n --name <name>] [--unique] [flags]
 ```
 
 ### Options
@@ -25,6 +26,7 @@ defradb client index create -c --collection <collection> --fields <fields> [-n -
       --fields strings      Fields to index
   -h, --help                help for create
   -n, --name string         Index name
+  -u, --unique              Make the index unique
 ```
 
 ### Options inherited from parent commands

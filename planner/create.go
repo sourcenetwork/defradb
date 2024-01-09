@@ -59,7 +59,7 @@ func (n *createNode) Kind() string { return "createNode" }
 func (n *createNode) Init() error { return nil }
 
 func (n *createNode) Start() error {
-	doc, err := client.NewDocFromJSON([]byte(n.newDocStr))
+	doc, err := client.NewDocFromJSON([]byte(n.newDocStr), n.collection.Schema())
 	if err != nil {
 		n.err = err
 		return err
@@ -86,7 +86,7 @@ func (n *createNode) Next() (bool, error) {
 
 	currentValue := n.documentMapping.NewDoc()
 
-	currentValue.SetKey(n.doc.Key().String())
+	currentValue.SetID(n.doc.ID().String())
 	for i, value := range n.doc.Values() {
 		if len(n.documentMapping.IndexesByName[i.Name()]) > 0 {
 			n.documentMapping.SetFirstOfName(&currentValue, i.Name(), value.Value())
@@ -101,8 +101,8 @@ func (n *createNode) Next() (bool, error) {
 	n.currentValue = currentValue
 
 	desc := n.collection.Description()
-	docKey := base.MakeDocKey(desc, currentValue.GetKey())
-	n.results.Spans(core.NewSpans(core.NewSpan(docKey, docKey.PrefixEnd())))
+	docID := base.MakeDataStoreKeyWithCollectionAndDocID(desc, currentValue.GetID())
+	n.results.Spans(core.NewSpans(core.NewSpan(docID, docID.PrefixEnd())))
 
 	err := n.results.Init()
 	if err != nil {

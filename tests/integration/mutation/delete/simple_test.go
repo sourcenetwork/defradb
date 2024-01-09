@@ -18,7 +18,7 @@ import (
 
 func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete multiple documents that exist without sub selection, should give error.",
+		Description: "Delete without sub-selection, should give error.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -41,7 +41,7 @@ func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 
 func TestMutationDeletion_WithoutSubSelectionFields(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete multiple documents that exist without _key sub-selection.",
+		Description: "Delete without sub-selection fields, should give error.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

@@ -30,8 +30,8 @@ const (
 type Select struct {
 	Field
 
-	DocKeys immutable.Option[[]string]
-	CID     immutable.Option[string]
+	DocIDs immutable.Option[[]string]
+	CID    immutable.Option[string]
 
 	// Root is the top level type of parsed request
 	Root SelectionType
@@ -114,7 +114,7 @@ func (s *Select) validateGroupBy() []error {
 // of `Select` objects.
 type selectJson struct {
 	Field
-	DocKeys     immutable.Option[[]string]
+	DocIDs      immutable.Option[[]string]
 	CID         immutable.Option[string]
 	Root        SelectionType
 	Limit       immutable.Option[uint64]
@@ -140,7 +140,7 @@ func (s *Select) UnmarshalJSON(bytes []byte) error {
 	}
 
 	s.Field = selectMap.Field
-	s.DocKeys = selectMap.DocKeys
+	s.DocIDs = selectMap.DocIDs
 	s.CID = selectMap.CID
 	s.Root = selectMap.Root
 	s.Limit = selectMap.Limit

@@ -1,5 +1,5 @@
 mutation {
     create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
-        _key
+        _docID
     }
 }

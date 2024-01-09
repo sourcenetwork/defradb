@@ -47,7 +47,7 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 							"childSelects": []dataMap{
 								{
 									"collectionName": "Author",
-									"docKeys":        nil,
+									"docIDs":         nil,
 									"filter": dataMap{
 										"age": dataMap{
 											"_gt": int32(63),
@@ -116,7 +116,7 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 							"childSelects": []dataMap{
 								{
 									"collectionName": "Author",
-									"docKeys":        nil,
+									"docIDs":         nil,
 									"filter": dataMap{
 										"age": dataMap{
 											"_gt": int32(63),

@@ -20,7 +20,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with equal value",
 		Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-23T03:46:56.647Z"}}) {
+					Users(filter: {CreatedAt: {_ge: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -29,12 +29,12 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56.647Z"
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2010-07-23T03:46:56.647Z"
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
 		},
@@ -52,7 +52,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with equal value",
 		Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-22T03:46:56.647Z"}}) {
+					Users(filter: {CreatedAt: {_ge: "2017-07-22T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -61,12 +61,12 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56.647Z"
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2010-07-23T03:46:56.647Z"
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
 		},
@@ -84,7 +84,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with equal value",
 		Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-25T03:46:56.647Z"}}) {
+					Users(filter: {CreatedAt: {_ge: "2017-07-25T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -93,12 +93,12 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 				`{
 					"Name": "John",
 					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56.647Z"
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2010-07-23T03:46:56.647Z"
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
 		},
@@ -120,7 +120,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 			0: {
 				`{
 					"Name": "John",
-					"CreatedAt": "2010-07-23T03:46:56.647Z"
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob"

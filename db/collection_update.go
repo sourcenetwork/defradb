@@ -26,10 +26,10 @@ import (
 )
 
 // UpdateWith updates a target document using the given updater type. Target
-// can be a Filter statement, a single docKey, a single document,
-// an array of docKeys, or an array of documents.
+// can be a Filter statement, a single DocID, a single document,
+// an array of DocIDs, or an array of documents.
 // If you want more type safety, use the respective typed versions of Update.
-// Eg: UpdateWithFilter or UpdateWithKey
+// Eg: UpdateWithFilter or UpdateWithDocID
 func (c *collection) UpdateWith(
 	ctx context.Context,
 	target any,
@@ -38,10 +38,10 @@ func (c *collection) UpdateWith(
 	switch t := target.(type) {
 	case string, map[string]any, *request.Filter:
 		return c.UpdateWithFilter(ctx, t, updater)
-	case client.DocKey:
-		return c.UpdateWithKey(ctx, t, updater)
-	case []client.DocKey:
-		return c.UpdateWithKeys(ctx, t, updater)
+	case client.DocID:
+		return c.UpdateWithDocID(ctx, t, updater)
+	case []client.DocID:
+		return c.UpdateWithDocIDs(ctx, t, updater)
 	default:
 		return nil, client.ErrInvalidUpdateTarget
 	}
@@ -67,12 +67,12 @@ func (c *collection) UpdateWithFilter(
 	return res, c.commitImplicitTxn(ctx, txn)
 }
 
-// UpdateWithKey updates using a DocKey to target a single document for update.
+// UpdateWithDocID updates using a DocID to target a single document for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithKey(
+func (c *collection) UpdateWithDocID(
 	ctx context.Context,
-	key client.DocKey,
+	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
@@ -80,7 +80,7 @@ func (c *collection) UpdateWithKey(
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithKey(ctx, txn, key, updater)
+	res, err := c.updateWithDocID(ctx, txn, docID, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -88,12 +88,12 @@ func (c *collection) UpdateWithKey(
 	return res, c.commitImplicitTxn(ctx, txn)
 }
 
-// UpdateWithKeys is the same as UpdateWithKey but accepts multiple keys as a slice.
+// UpdateWithDocIDs is the same as UpdateWithDocID but accepts multiple DocIDs as a slice.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithKeys(
+func (c *collection) UpdateWithDocIDs(
 	ctx context.Context,
-	keys []client.DocKey,
+	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
@@ -101,7 +101,7 @@ func (c *collection) UpdateWithKeys(
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithKeys(ctx, txn, keys, updater)
+	res, err := c.updateWithIDs(ctx, txn, docIDs, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -109,10 +109,10 @@ func (c *collection) UpdateWithKeys(
 	return res, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *collection) updateWithKey(
+func (c *collection) updateWithDocID(
 	ctx context.Context,
 	txn datastore.Txn,
-	key client.DocKey,
+	docID client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
 	parsedUpdater, err := fastjson.Parse(updater)
@@ -127,7 +127,7 @@ func (c *collection) updateWithKey(
 		return nil, client.ErrInvalidUpdater
 	}
 
-	doc, err := c.Get(ctx, key, false)
+	doc, err := c.Get(ctx, docID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (c *collection) updateWithKey(
 	if isPatch {
 		// todo
 	} else {
-		err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
+		err = doc.SetWithJSON([]byte(updater))
 	}
 	if err != nil {
 		return nil, err
@@ -147,16 +147,16 @@ func (c *collection) updateWithKey(
 	}
 
 	results := &client.UpdateResult{
-		Count:   1,
-		DocKeys: []string{key.String()},
+		Count:  1,
+		DocIDs: []string{docID.String()},
 	}
 	return results, nil
 }
 
-func (c *collection) updateWithKeys(
+func (c *collection) updateWithIDs(
 	ctx context.Context,
 	txn datastore.Txn,
-	keys []client.DocKey,
+	docIDs []client.DocID,
 	updater string,
 ) (*client.UpdateResult, error) {
 	parsedUpdater, err := fastjson.Parse(updater)
@@ -172,10 +172,10 @@ func (c *collection) updateWithKeys(
 	}
 
 	results := &client.UpdateResult{
-		DocKeys: make([]string, len(keys)),
+		DocIDs: make([]string, len(docIDs)),
 	}
-	for i, key := range keys {
-		doc, err := c.Get(ctx, key, false)
+	for i, docIDs := range docIDs {
+		doc, err := c.Get(ctx, docIDs, false)
 		if err != nil {
 			return nil, err
 		}
@@ -183,7 +183,7 @@ func (c *collection) updateWithKeys(
 		if isPatch {
 			// todo
 		} else {
-			err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
+			err = doc.SetWithJSON([]byte(updater))
 		}
 		if err != nil {
 			return nil, err
@@ -194,7 +194,7 @@ func (c *collection) updateWithKeys(
 			return nil, err
 		}
 
-		results.DocKeys[i] = key.String()
+		results.DocIDs[i] = docIDs.String()
 		results.Count++
 	}
 	return results, nil
@@ -245,7 +245,7 @@ func (c *collection) updateWithFilter(
 	}()
 
 	results := &client.UpdateResult{
-		DocKeys: make([]string, 0),
+		DocIDs: make([]string, 0),
 	}
 
 	docMap := selectionPlan.DocumentMap()
@@ -263,7 +263,7 @@ func (c *collection) updateWithFilter(
 
 		// Get the document, and apply the patch
 		docAsMap := docMap.ToMap(selectionPlan.Value())
-		doc, err := client.NewDocFromMap(docAsMap)
+		doc, err := client.NewDocFromMap(docAsMap, c.Schema())
 		if err != nil {
 			return nil, err
 		}
@@ -271,10 +271,10 @@ func (c *collection) updateWithFilter(
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
-			err = c.applyMergeToDoc(doc, parsedUpdater.GetObject())
-		}
-		if err != nil {
-			return nil, err
+			err := doc.SetWithJSON([]byte(updater))
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		_, err = c.save(ctx, txn, doc, false)
@@ -283,50 +283,11 @@ func (c *collection) updateWithFilter(
 		}
 
 		// add successful updated doc to results
-		results.DocKeys = append(results.DocKeys, doc.Key().String())
+		results.DocIDs = append(results.DocIDs, doc.ID().String())
 		results.Count++
 	}
 
 	return results, nil
-}
-
-// applyMergeToDoc applies the given json merge to the given Defra doc.
-//
-// It does not save the document.
-func (c *collection) applyMergeToDoc(
-	doc *client.Document,
-	merge *fastjson.Object,
-) error {
-	mergeMap := make(map[string]*fastjson.Value)
-	merge.Visit(func(k []byte, v *fastjson.Value) {
-		mergeMap[string(k)] = v
-	})
-
-	for mfield, mval := range mergeMap {
-		fd, isValidField := c.Schema().GetField(mfield)
-		if !isValidField {
-			return client.NewErrFieldNotExist(mfield)
-		}
-
-		if fd.Kind == client.FieldKind_FOREIGN_OBJECT {
-			fd, isValidField = c.Schema().GetField(mfield + request.RelatedObjectID)
-			if !isValidField {
-				return client.NewErrFieldNotExist(mfield)
-			}
-		}
-
-		cborVal, err := validateFieldSchema(mval, fd)
-		if err != nil {
-			return err
-		}
-
-		err = doc.Set(fd.Name, cborVal)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // isSecondaryIDField returns true if the given field description represents a secondary relation field ID.
@@ -341,21 +302,21 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (clie
 	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation()
 }
 
-// patchPrimaryDoc patches the (primary) document linked to from the document of the given dockey via the
+// patchPrimaryDoc patches the (primary) document linked to from the document of the given DocID via the
 // given (secondary) relationship field description (hosted on the collection of the document matching the
-// given dockey).
+// given DocID).
 //
-// The given field value should be the string representation of the dockey of the primary document to be
+// The given field value should be the string representation of the DocID of the primary document to be
 // patched.
 func (c *collection) patchPrimaryDoc(
 	ctx context.Context,
 	txn datastore.Txn,
 	secondaryCollectionName string,
 	relationFieldDescription client.FieldDescription,
-	docKey string,
+	docID string,
 	fieldValue string,
 ) error {
-	primaryDockey, err := client.NewDocKeyFromString(fieldValue)
+	primaryDocID, err := client.NewDocIDFromString(fieldValue)
 	if err != nil {
 		return err
 	}
@@ -384,7 +345,7 @@ func (c *collection) patchPrimaryDoc(
 
 	doc, err := primaryCol.Get(
 		ctx,
-		primaryDockey,
+		primaryDocID,
 		false,
 	)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
@@ -396,16 +357,22 @@ func (c *collection) patchPrimaryDoc(
 		return nil
 	}
 
+	pc := c.db.newCollection(primaryCol.Description(), primarySchema)
+	err = pc.validateOneToOneLinkDoesntAlreadyExist(ctx, txn, primaryDocID.String(), primaryIDField, docID)
+	if err != nil {
+		return err
+	}
+
 	existingVal, err := doc.GetValue(primaryIDField.Name)
 	if err != nil && !errors.Is(err, client.ErrFieldNotExist) {
 		return err
 	}
 
-	if existingVal != nil && existingVal.Value() != "" && existingVal.Value() != docKey {
-		return NewErrOneOneAlreadyLinked(docKey, fieldValue, relationFieldDescription.RelationName)
+	if existingVal != nil && existingVal.Value() != "" && existingVal.Value() != docID {
+		return NewErrOneOneAlreadyLinked(docID, fieldValue, relationFieldDescription.RelationName)
 	}
 
-	err = doc.Set(primaryIDField.Name, docKey)
+	err = doc.Set(primaryIDField.Name, docID)
 	if err != nil {
 		return err
 	}
@@ -416,138 +383,6 @@ func (c *collection) patchPrimaryDoc(
 	}
 
 	return nil
-}
-
-// validateFieldSchema takes a given value as an interface,
-// and ensures it matches the supplied field description.
-// It will do any minor parsing, like dates, and return
-// the typed value again as an interface.
-func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (any, error) {
-	switch field.Kind {
-	case client.FieldKind_DocKey, client.FieldKind_STRING:
-		return getString(val)
-
-	case client.FieldKind_STRING_ARRAY:
-		return getArray(val, getString)
-
-	case client.FieldKind_NILLABLE_STRING_ARRAY:
-		return getNillableArray(val, getString)
-
-	case client.FieldKind_BOOL:
-		return getBool(val)
-
-	case client.FieldKind_BOOL_ARRAY:
-		return getArray(val, getBool)
-
-	case client.FieldKind_NILLABLE_BOOL_ARRAY:
-		return getNillableArray(val, getBool)
-
-	case client.FieldKind_FLOAT:
-		return getFloat64(val)
-
-	case client.FieldKind_FLOAT_ARRAY:
-		return getArray(val, getFloat64)
-
-	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
-		return getNillableArray(val, getFloat64)
-
-	case client.FieldKind_DATETIME:
-		// @TODO: Requires Typed Document refactor
-		// to handle this correctly.
-		// For now, we will persist DateTime as a
-		// RFC3339 string
-		// see https://github.com/sourcenetwork/defradb/issues/935
-		return getString(val)
-
-	case client.FieldKind_INT:
-		return getInt64(val)
-
-	case client.FieldKind_INT_ARRAY:
-		return getArray(val, getInt64)
-
-	case client.FieldKind_NILLABLE_INT_ARRAY:
-		return getNillableArray(val, getInt64)
-
-	case client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
-		return nil, NewErrFieldOrAliasToFieldNotExist(field.Name)
-
-	case client.FieldKind_BLOB:
-		return getString(val)
-	}
-
-	return nil, client.NewErrUnhandledType("FieldKind", field.Kind)
-}
-
-func getString(v *fastjson.Value) (string, error) {
-	b, err := v.StringBytes()
-	return string(b), err
-}
-
-func getBool(v *fastjson.Value) (bool, error) {
-	return v.Bool()
-}
-
-func getFloat64(v *fastjson.Value) (float64, error) {
-	return v.Float64()
-}
-
-func getInt64(v *fastjson.Value) (int64, error) {
-	return v.Int64()
-}
-
-func getArray[T any](
-	val *fastjson.Value,
-	typeGetter func(*fastjson.Value) (T, error),
-) ([]T, error) {
-	if val.Type() == fastjson.TypeNull {
-		return nil, nil
-	}
-
-	valArray, err := val.Array()
-	if err != nil {
-		return nil, err
-	}
-
-	arr := make([]T, len(valArray))
-	for i, arrItem := range valArray {
-		if arrItem.Type() == fastjson.TypeNull {
-			continue
-		}
-		arr[i], err = typeGetter(arrItem)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return arr, nil
-}
-
-func getNillableArray[T any](
-	val *fastjson.Value,
-	typeGetter func(*fastjson.Value) (T, error),
-) ([]*T, error) {
-	if val.Type() == fastjson.TypeNull {
-		return nil, nil
-	}
-
-	valArray, err := val.Array()
-	if err != nil {
-		return nil, err
-	}
-
-	arr := make([]*T, len(valArray))
-	for i, arrItem := range valArray {
-		if arrItem.Type() == fastjson.TypeNull {
-			continue
-		}
-		v, err := typeGetter(arrItem)
-		if err != nil {
-			return nil, err
-		}
-		arr[i] = &v
-	}
-
-	return arr, nil
 }
 
 // makeSelectionPlan constructs a simple read-only plan of the collection using the given filter.

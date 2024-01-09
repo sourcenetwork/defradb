@@ -68,15 +68,15 @@ func (n *dagScanNode) Kind() string {
 
 func (n *dagScanNode) Init() error {
 	if len(n.spans.Value) == 0 {
-		if n.commitSelect.DocKey.HasValue() {
-			key := core.DataStoreKey{}.WithDocKey(n.commitSelect.DocKey.Value())
+		if n.commitSelect.DocID.HasValue() {
+			dsKey := core.DataStoreKey{}.WithDocID(n.commitSelect.DocID.Value())
 
 			if n.commitSelect.FieldID.HasValue() {
 				field := n.commitSelect.FieldID.Value()
-				key = key.WithFieldId(field)
+				dsKey = dsKey.WithFieldId(field)
 			}
 
-			n.spans = core.NewSpans(core.NewSpan(key, key.PrefixEnd()))
+			n.spans = core.NewSpans(core.NewSpan(dsKey, dsKey.PrefixEnd()))
 		}
 	}
 
@@ -89,9 +89,9 @@ func (n *dagScanNode) Start() error {
 
 // Spans needs to parse the given span set. dagScanNode only
 // cares about the first value in the span set. The value is
-// either a CID or a DocKey.
+// either a CID or a DocID.
 // If its a CID, set the node CID val
-// if its a DocKey, set the node Key val (headset)
+// if its a DocID, set the node Key val (headset)
 func (n *dagScanNode) Spans(spans core.Spans) {
 	if len(spans.Value) == 0 {
 		return
@@ -291,7 +291,7 @@ All the dagScanNode endpoints use similar structures
 func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.Link, error) {
 	commit := n.commitSelect.DocumentMapping.NewDoc()
 	cid := block.Cid()
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "cid", cid.String())
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, cid.String())
 
 	// decode the delta, get the priority and payload
 	nd, err := dag.DecodeProtobuf(block.RawData())
@@ -305,18 +305,18 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 		return core.Doc{}, nil, err
 	}
 
-	prio, ok := delta["Priority"].(uint64)
+	prio, ok := delta[request.DeltaArgPriority].(uint64)
 	if !ok {
 		return core.Doc{}, nil, ErrDeltaMissingPriority
 	}
 
-	schemaVersionId, ok := delta["SchemaVersionID"].(string)
+	schemaVersionId, ok := delta[request.DeltaArgSchemaVersionID].(string)
 	if !ok {
 		return core.Doc{}, nil, ErrDeltaMissingSchemaVersionID
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
 
-	fieldName, ok := delta["FieldName"]
+	fieldName, ok := delta[request.DeltaArgFieldName]
 	if !ok {
 		return core.Doc{}, nil, ErrDeltaMissingFieldName
 	}
@@ -346,17 +346,17 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta["Data"])
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, request.DeltaArgData)
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
 
-	dockey, ok := delta["DocKey"].([]byte)
+	docID, ok := delta[request.DeltaArgDocID].([]byte)
 	if !ok {
-		return core.Doc{}, nil, ErrDeltaMissingDockey
+		return core.Doc{}, nil, ErrDeltaMissingDocID
 	}
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-		request.DockeyFieldName, string(dockey))
+		request.DocIDArgName, string(docID))
 
 	cols, err := n.planner.db.GetCollectionsByVersionID(n.planner.ctx, schemaVersionId)
 	if err != nil {
