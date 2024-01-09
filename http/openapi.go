@@ -44,7 +44,7 @@ var openApiSchemas = map[string]any{
 
 func NewOpenAPISpec() (*openapi3.T, error) {
 	schemas := make(openapi3.Schemas)
-	responses := make(openapi3.Responses)
+	responses := make(openapi3.ResponseBodies)
 	parameters := make(openapi3.ParametersMap)
 
 	generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields())
@@ -91,7 +91,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			Title:   "DefraDB API",
 			Version: "0",
 		},
-		Paths: make(openapi3.Paths),
+		Paths: openapi3.NewPaths(),
 		Servers: openapi3.Servers{
 			&openapi3.Server{
 				Description: "Local DefraDB instance",

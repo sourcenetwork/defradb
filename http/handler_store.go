@@ -385,7 +385,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		Value: addSchemaRequest,
 	}
 	addSchema.AddResponse(200, addSchemaResponse)
-	addSchema.Responses["400"] = errorResponse
+	addSchema.Responses.Set("400", errorResponse)
 
 	patchSchemaRequest := openapi3.NewRequestBody().
 		WithJSONSchemaRef(patchSchemaRequestSchema)
@@ -397,9 +397,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchSchema.RequestBody = &openapi3.RequestBodyRef{
 		Value: patchSchemaRequest,
 	}
-	patchSchema.Responses = make(openapi3.Responses)
-	patchSchema.Responses["200"] = successResponse
-	patchSchema.Responses["400"] = errorResponse
+	patchSchema.Responses = openapi3.NewResponses()
+	patchSchema.Responses.Set("200", successResponse)
+	patchSchema.Responses.Set("400", errorResponse)
 
 	setDefaultSchemaVersionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
@@ -411,9 +411,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	setDefaultSchemaVersion.RequestBody = &openapi3.RequestBodyRef{
 		Value: setDefaultSchemaVersionRequest,
 	}
-	setDefaultSchemaVersion.Responses = make(openapi3.Responses)
-	setDefaultSchemaVersion.Responses["200"] = successResponse
-	setDefaultSchemaVersion.Responses["400"] = errorResponse
+	setDefaultSchemaVersion.Responses = openapi3.NewResponses()
+	setDefaultSchemaVersion.Responses.Set("200", successResponse)
+	setDefaultSchemaVersion.Responses.Set("400", errorResponse)
 
 	backupRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -423,9 +423,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	backupExport.OperationID = "backup_export"
 	backupExport.Description = "Export a database backup to file"
 	backupExport.Tags = []string{"backup"}
-	backupExport.Responses = make(openapi3.Responses)
-	backupExport.Responses["200"] = successResponse
-	backupExport.Responses["400"] = errorResponse
+	backupExport.Responses = openapi3.NewResponses()
+	backupExport.Responses.Set("200", successResponse)
+	backupExport.Responses.Set("400", errorResponse)
 	backupExport.RequestBody = &openapi3.RequestBodyRef{
 		Value: backupRequest,
 	}
@@ -434,9 +434,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	backupImport.OperationID = "backup_import"
 	backupImport.Description = "Import a database backup from file"
 	backupImport.Tags = []string{"backup"}
-	backupImport.Responses = make(openapi3.Responses)
-	backupImport.Responses["200"] = successResponse
-	backupImport.Responses["400"] = errorResponse
+	backupImport.Responses = openapi3.NewResponses()
+	backupImport.Responses.Set("200", successResponse)
+	backupImport.Responses.Set("400", errorResponse)
 	backupImport.RequestBody = &openapi3.RequestBodyRef{
 		Value: backupRequest,
 	}
@@ -472,7 +472,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionDescribe.AddParameter(collectionSchemaRootQueryParam)
 	collectionDescribe.AddParameter(collectionVersionIdQueryParam)
 	collectionDescribe.AddResponse(200, collectionsResponse)
-	collectionDescribe.Responses["400"] = errorResponse
+	collectionDescribe.Responses.Set("400", errorResponse)
 
 	collectionDefintionsSchema := openapi3.NewArraySchema()
 	collectionDefintionsSchema.Items = collectionDefinitionSchema
@@ -499,7 +499,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		Value: addViewRequest,
 	}
 	views.AddResponse(200, addViewResponse)
-	views.Responses["400"] = errorResponse
+	views.Responses.Set("400", errorResponse)
 
 	schemaNameQueryParam := openapi3.NewQueryParameter("name").
 		WithDescription("Schema name").
@@ -532,7 +532,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	schemaDescribe.AddParameter(schemaSchemaRootQueryParam)
 	schemaDescribe.AddParameter(schemaVersionIDQueryParam)
 	schemaDescribe.AddResponse(200, schemaResponse)
-	schemaDescribe.Responses["400"] = errorResponse
+	schemaDescribe.Responses.Set("400", errorResponse)
 
 	graphQLRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
@@ -549,7 +549,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		Value: graphQLRequest,
 	}
 	graphQLPost.AddResponse(200, graphQLResponse)
-	graphQLPost.Responses["400"] = errorResponse
+	graphQLPost.Responses.Set("400", errorResponse)
 
 	graphQLQueryParam := openapi3.NewQueryParameter("query").
 		WithSchema(openapi3.NewStringSchema())
@@ -560,15 +560,15 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	graphQLGet.Tags = []string{"graphql"}
 	graphQLGet.AddParameter(graphQLQueryParam)
 	graphQLGet.AddResponse(200, graphQLResponse)
-	graphQLGet.Responses["400"] = errorResponse
+	graphQLGet.Responses.Set("400", errorResponse)
 
 	debugDump := openapi3.NewOperation()
 	debugDump.Description = "Dump database"
 	debugDump.OperationID = "debug_dump"
 	debugDump.Tags = []string{"debug"}
-	debugDump.Responses = make(openapi3.Responses)
-	debugDump.Responses["200"] = successResponse
-	debugDump.Responses["400"] = errorResponse
+	debugDump.Responses = openapi3.NewResponses()
+	debugDump.Responses.Set("200", successResponse)
+	debugDump.Responses.Set("400", errorResponse)
 
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)

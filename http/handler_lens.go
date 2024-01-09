@@ -147,7 +147,7 @@ func (h *lensHandler) bindRoutes(router *Router) {
 	lensConfig.Description = "List lens migrations"
 	lensConfig.Tags = []string{"lens"}
 	lensConfig.AddResponse(200, lensConfigResponse)
-	lensConfig.Responses["400"] = errorResponse
+	lensConfig.Responses.Set("400", errorResponse)
 
 	setMigrationRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -160,17 +160,17 @@ func (h *lensHandler) bindRoutes(router *Router) {
 	setMigration.RequestBody = &openapi3.RequestBodyRef{
 		Value: setMigrationRequest,
 	}
-	setMigration.Responses = make(openapi3.Responses)
-	setMigration.Responses["200"] = successResponse
-	setMigration.Responses["400"] = errorResponse
+	setMigration.Responses = openapi3.NewResponses()
+	setMigration.Responses.Set("200", successResponse)
+	setMigration.Responses.Set("400", errorResponse)
 
 	reloadLenses := openapi3.NewOperation()
 	reloadLenses.OperationID = "lens_reload"
 	reloadLenses.Description = "Reload lens migrations"
 	reloadLenses.Tags = []string{"lens"}
-	reloadLenses.Responses = make(openapi3.Responses)
-	reloadLenses.Responses["200"] = successResponse
-	reloadLenses.Responses["400"] = errorResponse
+	reloadLenses.Responses = openapi3.NewResponses()
+	reloadLenses.Responses.Set("200", successResponse)
+	reloadLenses.Responses.Set("400", errorResponse)
 
 	versionPathParam := openapi3.NewPathParameter("version").
 		WithRequired(true).
@@ -181,9 +181,9 @@ func (h *lensHandler) bindRoutes(router *Router) {
 	hasMigration.Description = "Check if a migration exists"
 	hasMigration.Tags = []string{"lens"}
 	hasMigration.AddParameter(versionPathParam)
-	hasMigration.Responses = make(openapi3.Responses)
-	hasMigration.Responses["200"] = successResponse
-	hasMigration.Responses["400"] = errorResponse
+	hasMigration.Responses = openapi3.NewResponses()
+	hasMigration.Responses.Set("200", successResponse)
+	hasMigration.Responses.Set("400", errorResponse)
 
 	migrateSchema := openapi3.NewArraySchema()
 	migrateSchema.Items = documentSchema
@@ -199,9 +199,9 @@ func (h *lensHandler) bindRoutes(router *Router) {
 		Value: migrateRequest,
 	}
 	migrateUp.AddParameter(versionPathParam)
-	migrateUp.Responses = make(openapi3.Responses)
-	migrateUp.Responses["200"] = successResponse
-	migrateUp.Responses["400"] = errorResponse
+	migrateUp.Responses = openapi3.NewResponses()
+	migrateUp.Responses.Set("200", successResponse)
+	migrateUp.Responses.Set("400", errorResponse)
 
 	migrateDown := openapi3.NewOperation()
 	migrateDown.OperationID = "lens_migrate_down"
@@ -211,9 +211,9 @@ func (h *lensHandler) bindRoutes(router *Router) {
 		Value: migrateRequest,
 	}
 	migrateDown.AddParameter(versionPathParam)
-	migrateDown.Responses = make(openapi3.Responses)
-	migrateDown.Responses["200"] = successResponse
-	migrateDown.Responses["400"] = errorResponse
+	migrateDown.Responses = openapi3.NewResponses()
+	migrateDown.Responses.Set("200", successResponse)
+	migrateDown.Responses.Set("400", errorResponse)
 
 	router.AddRoute("/lens", http.MethodGet, lensConfig, h.Config)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)

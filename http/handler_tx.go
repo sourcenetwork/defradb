@@ -120,7 +120,7 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnCreate.Tags = []string{"transaction"}
 	txnCreate.AddParameter(txnReadOnlyQueryParam)
 	txnCreate.AddResponse(200, txnCreateResponse)
-	txnCreate.Responses["400"] = errorResponse
+	txnCreate.Responses.Set("400", errorResponse)
 
 	txnConcurrent := openapi3.NewOperation()
 	txnConcurrent.OperationID = "new_concurrent_transaction"
@@ -128,7 +128,7 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnConcurrent.Tags = []string{"transaction"}
 	txnConcurrent.AddParameter(txnReadOnlyQueryParam)
 	txnConcurrent.AddResponse(200, txnCreateResponse)
-	txnConcurrent.Responses["400"] = errorResponse
+	txnConcurrent.Responses.Set("400", errorResponse)
 
 	txnIdPathParam := openapi3.NewPathParameter("id").
 		WithRequired(true).
@@ -139,18 +139,18 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnCommit.Description = "Commit a transaction"
 	txnCommit.Tags = []string{"transaction"}
 	txnCommit.AddParameter(txnIdPathParam)
-	txnCommit.Responses = make(openapi3.Responses)
-	txnCommit.Responses["200"] = successResponse
-	txnCommit.Responses["400"] = errorResponse
+	txnCommit.Responses = openapi3.NewResponses()
+	txnCommit.Responses.Set("200", successResponse)
+	txnCommit.Responses.Set("400", errorResponse)
 
 	txnDiscard := openapi3.NewOperation()
 	txnDiscard.OperationID = "transaction_discard"
 	txnDiscard.Description = "Discard a transaction"
 	txnDiscard.Tags = []string{"transaction"}
 	txnDiscard.AddParameter(txnIdPathParam)
-	txnDiscard.Responses = make(openapi3.Responses)
-	txnDiscard.Responses["200"] = successResponse
-	txnDiscard.Responses["400"] = errorResponse
+	txnDiscard.Responses = openapi3.NewResponses()
+	txnDiscard.Responses.Set("200", successResponse)
+	txnDiscard.Responses.Set("400", errorResponse)
 
 	router.AddRoute("/tx", http.MethodPost, txnCreate, h.NewTxn)
 	router.AddRoute("/tx/concurrent", http.MethodPost, txnConcurrent, h.NewConcurrentTxn)

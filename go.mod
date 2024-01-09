@@ -7,7 +7,7 @@ require (
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/evanphx/json-patch/v5 v5.7.0
 	github.com/fxamacker/cbor/v2 v2.5.0
-	github.com/getkin/kin-openapi v0.120.0
+	github.com/getkin/kin-openapi v0.122.0
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
