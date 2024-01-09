@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/fxamacker/cbor/v2"
+	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
@@ -141,6 +142,9 @@ func (i *eqSingleIndexIterator) Next() (indexIterResult, error) {
 	i.indexKey.FieldValues = [][]byte{i.value}
 	val, err := i.store.Get(i.ctx, i.indexKey.ToDS())
 	if err != nil {
+		if errors.Is(err, ds.ErrNotFound) {
+			return indexIterResult{key: i.indexKey}, nil
+		}
 		return indexIterResult{}, err
 	}
 	i.store = nil
