@@ -292,6 +292,8 @@ func (i *collectionUniqueIndex) newUniqueIndexError(
 	fieldVal, err := doc.GetValue(i.fieldDesc.Name)
 	var val any
 	if err != nil {
+		// If the error is ErrFieldNotExist, we leave `val` as is (e.g. nil)
+		// otherwise we return the error
 		if !errors.Is(err, client.ErrFieldNotExist) {
 			return err
 		}
