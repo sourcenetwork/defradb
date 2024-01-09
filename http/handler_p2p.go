@@ -161,7 +161,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	peerInfo.OperationID = "peer_info"
 	peerInfo.Tags = []string{"p2p"}
 	peerInfo.AddResponse(200, peerInfoResponse)
-	peerInfo.Responses["400"] = errorResponse
+	peerInfo.Responses.Set("400", errorResponse)
 
 	getReplicatorsSchema := openapi3.NewArraySchema()
 	getReplicatorsSchema.Items = replicatorSchema
@@ -174,7 +174,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	getReplicators.OperationID = "peer_replicator_list"
 	getReplicators.Tags = []string{"p2p"}
 	getReplicators.AddResponse(200, getReplicatorsResponse)
-	getReplicators.Responses["400"] = errorResponse
+	getReplicators.Responses.Set("400", errorResponse)
 
 	replicatorRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -187,9 +187,9 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	setReplicator.RequestBody = &openapi3.RequestBodyRef{
 		Value: replicatorRequest,
 	}
-	setReplicator.Responses = make(openapi3.Responses)
-	setReplicator.Responses["200"] = successResponse
-	setReplicator.Responses["400"] = errorResponse
+	setReplicator.Responses = openapi3.NewResponses()
+	setReplicator.Responses.Set("200", successResponse)
+	setReplicator.Responses.Set("400", errorResponse)
 
 	deleteReplicator := openapi3.NewOperation()
 	deleteReplicator.Description = "Delete peer replicators"
@@ -198,9 +198,9 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	deleteReplicator.RequestBody = &openapi3.RequestBodyRef{
 		Value: replicatorRequest,
 	}
-	deleteReplicator.Responses = make(openapi3.Responses)
-	deleteReplicator.Responses["200"] = successResponse
-	deleteReplicator.Responses["400"] = errorResponse
+	deleteReplicator.Responses = openapi3.NewResponses()
+	deleteReplicator.Responses.Set("200", successResponse)
+	deleteReplicator.Responses.Set("400", errorResponse)
 
 	peerCollectionsSchema := openapi3.NewArraySchema().
 		WithItems(openapi3.NewStringSchema())
@@ -218,7 +218,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	getPeerCollections.OperationID = "peer_collection_list"
 	getPeerCollections.Tags = []string{"p2p"}
 	getPeerCollections.AddResponse(200, getPeerCollectionsResponse)
-	getPeerCollections.Responses["400"] = errorResponse
+	getPeerCollections.Responses.Set("400", errorResponse)
 
 	addPeerCollections := openapi3.NewOperation()
 	addPeerCollections.Description = "Add peer collections"
@@ -227,9 +227,9 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	addPeerCollections.RequestBody = &openapi3.RequestBodyRef{
 		Value: peerCollectionRequest,
 	}
-	addPeerCollections.Responses = make(openapi3.Responses)
-	addPeerCollections.Responses["200"] = successResponse
-	addPeerCollections.Responses["400"] = errorResponse
+	addPeerCollections.Responses = openapi3.NewResponses()
+	addPeerCollections.Responses.Set("200", successResponse)
+	addPeerCollections.Responses.Set("400", errorResponse)
 
 	removePeerCollections := openapi3.NewOperation()
 	removePeerCollections.Description = "Remove peer collections"
@@ -238,9 +238,9 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	removePeerCollections.RequestBody = &openapi3.RequestBodyRef{
 		Value: peerCollectionRequest,
 	}
-	removePeerCollections.Responses = make(openapi3.Responses)
-	removePeerCollections.Responses["200"] = successResponse
-	removePeerCollections.Responses["400"] = errorResponse
+	removePeerCollections.Responses = openapi3.NewResponses()
+	removePeerCollections.Responses.Set("200", successResponse)
+	removePeerCollections.Responses.Set("400", errorResponse)
 
 	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
 	router.AddRoute("/p2p/replicators", http.MethodGet, getReplicators, h.GetAllReplicators)
