@@ -1028,6 +1028,29 @@ func TestUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 	assert.Equal(t, data, []byte(doc2.ID().String()))
 }
 
+func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+	f.createUserCollectionUniqueIndexOnName()
+
+	docJSON, err := json.Marshal(struct {
+		Age int `json:"age"`
+	}{Age: 44})
+	require.NoError(f.t, err)
+
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	require.NoError(f.t, err)
+
+	f.saveDocToCollection(doc, f.users)
+
+	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc).
+		Values([]byte(nil)).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	require.NoError(t, err)
+	assert.Equal(t, data, []byte(doc.ID().String()))
+}
+
 func TestUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	users := f.addUsersCollection()

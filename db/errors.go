@@ -87,7 +87,6 @@ const (
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 	errIndexDoesNotMatchName              string = "the index used does not match the given name"
 	errCanNotIndexNonUniqueField          string = "can not index a doc's field that violates unique index"
-	errCanNotIndexNilField                string = "can not index a doc's field with nil value"
 	errInvalidViewQuery                   string = "the query provided is not valid as a View"
 )
 
@@ -576,19 +575,11 @@ func NewErrCanNotIndexNonUniqueField(docID, fieldName string, value any) error {
 	)
 }
 
-func NewErrCanNotIndexNilField(docID, fieldName string) error {
-	return errors.New(
-		errCanNotIndexNilField,
-		errors.NewKV("DocID", docID),
-		errors.NewKV("Field name", fieldName),
-	)
-}
-
 func NewErrInvalidViewQueryCastFailed(query string) error {
 	return errors.New(
 		errInvalidViewQuery,
 		errors.NewKV("Query", query),
-		errors.NewKV("Reason", "Internal errror, cast failed"),
+		errors.NewKV("Reason", "Internal error, cast failed"),
 	)
 }
 

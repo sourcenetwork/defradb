@@ -187,7 +187,7 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueIndexCreate_IfFieldIsNil_ReturnError(t *testing.T) {
+func TestUniqueIndexCreate_IfNilFieldsArePresent_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If filter does not match any document, return empty result",
 		Actions: []any{
@@ -214,11 +214,18 @@ func TestUniqueIndexCreate_IfFieldIsNil_ReturnError(t *testing.T) {
 						"name":	"Andy"
 					}`,
 			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Keenan"
+					}`,
+			},
 			testUtils.CreateIndex{
 				CollectionID:  0,
 				FieldName:     "age",
 				Unique:        true,
-				ExpectedError: db.NewErrCanNotIndexNilField("bae-2159860f-3cd1-59de-9440-71331e77cbb8", "age").Error(),
+				ExpectedError: db.NewErrCanNotIndexNonUniqueField("bae-caba9876-89aa-5bcf-bc1c-387a52499b27", "age", nil).Error(),
 			},
 		},
 	}
@@ -226,7 +233,7 @@ func TestUniqueIndexCreate_IfFieldIsNil_ReturnError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueIndexCreate_UponAddingDocWithNilValue_ReturnError(t *testing.T) {
+func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If filter does not match any document, return empty result",
 		Actions: []any{
@@ -242,9 +249,24 @@ func TestUniqueIndexCreate_UponAddingDocWithNilValue_ReturnError(t *testing.T) {
 				CollectionID: 0,
 				Doc: `
 					{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Keenan"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
 						"name":	"Andy"
 					}`,
-				ExpectedError: db.NewErrCanNotIndexNilField("bae-2159860f-3cd1-59de-9440-71331e77cbb8", "age").Error(),
+				ExpectedError: db.NewErrCanNotIndexNonUniqueField("bae-2159860f-3cd1-59de-9440-71331e77cbb8", "age", nil).Error(),
 			},
 		},
 	}
