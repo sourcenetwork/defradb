@@ -186,7 +186,7 @@ func executeTestCase(
 		logging.NewKV("changeDetector.Repository", changeDetector.Repository),
 	)
 
-	startActionIndex, endActionIndex := getActionRange(testCase)
+	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
 	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
 	setStartingNodes(s)
@@ -555,7 +555,7 @@ func flattenActions(testCase *TestCase) {
 //
 // If a SetupComplete action is provided, the actions will be split there, if not
 // they will be split at the first non SchemaUpdate/CreateDoc/UpdateDoc action.
-func getActionRange(testCase TestCase) (int, int) {
+func getActionRange(t *testing.T, testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
 
@@ -598,8 +598,10 @@ ActionLoop:
 			// We must not set this to -1 :)
 			startIndex = firstNonSetupIndex
 		} else {
-			// if we don't have any non-mutation actions, just use the last action
-			startIndex = endIndex
+			// if we don't have any non-mutation actions and the change detector is enabled
+			// skip this test as we will not gain anything from running (change detector would
+			// run an idential profile to a normal test run)
+			t.Skipf("no actions to execute")
 		}
 	}
 
