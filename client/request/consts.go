@@ -20,7 +20,6 @@ const (
 	RelatedObjectID = "_id"
 
 	Cid         = "cid"
-	Data        = "data"
 	Input       = "input"
 	FieldName   = "field"
 	FieldIDName = "fieldId"

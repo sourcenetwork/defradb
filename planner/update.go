@@ -131,7 +131,7 @@ func (n *updateNode) simpleExplain() (map[string]any, error) {
 	}
 
 	// Add the attribute that represents the patch to update with.
-	simpleExplainMap[dataLabel] = n.input
+	simpleExplainMap[inputLabel] = n.input
 
 	return simpleExplainMap, nil
 }

@@ -139,7 +139,7 @@ func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, e
 	switch explainType {
 	case request.SimpleExplain:
 		return map[string]any{
-			dataLabel: n.input,
+			inputLabel: n.input,
 		}, nil
 
 	case request.ExecuteExplain:

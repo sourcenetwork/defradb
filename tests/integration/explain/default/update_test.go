@@ -61,7 +61,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"data": dataMap{
+							"input": dataMap{
 								"age": int32(59),
 							},
 							"filter": dataMap{
@@ -130,7 +130,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"data": dataMap{
+							"input": dataMap{
 								"age": int32(59),
 							},
 							"filter": nil,
@@ -195,7 +195,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"data": dataMap{
+							"input": dataMap{
 								"age": int32(59),
 							},
 							"filter": nil,
@@ -263,7 +263,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
 						ExpectedAttributes: dataMap{
-							"data": dataMap{
+							"input": dataMap{
 								"age": int32(59),
 							},
 							"filter": dataMap{
