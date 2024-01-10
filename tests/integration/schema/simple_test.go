@@ -78,7 +78,7 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 				Schema: `
 					type Users {}
 				`,
-				ExpectedError: "schema type already exists",
+				ExpectedError: "collection already exists",
 			},
 		},
 	}
@@ -94,7 +94,7 @@ func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
 					type Users {}
 					type Users {}
 				`,
-				ExpectedError: "schema type already exists",
+				ExpectedError: "collection already exists",
 			},
 		},
 	}
