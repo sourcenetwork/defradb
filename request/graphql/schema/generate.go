@@ -413,6 +413,7 @@ func (g *Generator) buildTypes(
 	for _, c := range collections {
 		// Copy the loop variable before usage within the loop or it
 		// will be reassigned before the thunk is run
+		// TODO remove when Go 1.22
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
 		isEmbeddedObject := collection.Description.Name == ""
@@ -529,6 +530,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 	for _, c := range collections {
 		// Copy the loop variable before usage within the loop or it
 		// will be reassigned before the thunk is run
+		// TODO remove when Go 1.22
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
 		mutationInputName := collection.Description.Name + "MutationInputArg"
