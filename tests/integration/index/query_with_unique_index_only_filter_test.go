@@ -494,3 +494,41 @@ func TestQueryWithUniqueIndex_IfNoMatch_ReturnEmptyResult(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithUniqueIndex_WithEqualFilterOnNilValue_ShouldFetch(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _eq filter on nil value",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index(unique: true)
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice"
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {age: {_eq: null}}) {
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{"name": "Alice"},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

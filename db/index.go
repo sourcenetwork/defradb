@@ -290,10 +290,18 @@ func (i *collectionUniqueIndex) newUniqueIndexError(
 	doc *client.Document,
 ) error {
 	fieldVal, err := doc.GetValue(i.fieldDesc.Name)
+	var val any
 	if err != nil {
-		return err
+		// If the error is ErrFieldNotExist, we leave `val` as is (e.g. nil)
+		// otherwise we return the error
+		if !errors.Is(err, client.ErrFieldNotExist) {
+			return err
+		}
+	} else {
+		val = fieldVal.Value()
 	}
-	return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldDesc.Name, fieldVal.Value())
+
+	return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldDesc.Name, val)
 }
 
 func (i *collectionUniqueIndex) Update(

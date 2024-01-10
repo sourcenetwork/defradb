@@ -86,7 +86,7 @@ const (
 	errExpectedJSONArray                  string = "expected JSON array"
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 	errIndexDoesNotMatchName              string = "the index used does not match the given name"
-	errCanNotIndexNonUniqueField          string = "can not create doc that violates unique index"
+	errCanNotIndexNonUniqueField          string = "can not index a doc's field that violates unique index"
 	errInvalidViewQuery                   string = "the query provided is not valid as a View"
 )
 
@@ -579,7 +579,7 @@ func NewErrInvalidViewQueryCastFailed(query string) error {
 	return errors.New(
 		errInvalidViewQuery,
 		errors.NewKV("Query", query),
-		errors.NewKV("Reason", "Internal errror, cast failed"),
+		errors.NewKV("Reason", "Internal error, cast failed"),
 	)
 }
 
