@@ -318,7 +318,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"book_id": "bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4"
+					"book": "bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4"
 				}`,
 			},
 			testUtils.UpdateDoc{

@@ -481,7 +481,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: fmt.Sprintf(`mutation {
-						create_Users(input: {name: "Keenan", foo_id: "%s"}) {
+						create_Users(input: {name: "Keenan", foo: "%s"}) {
 							name
 							foo {
 								name
@@ -574,7 +574,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_SinglePrimaryObjectKindSubstitut
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo_id": "%s"
+						"foo": "%s"
 					}`,
 					key1,
 				),
@@ -654,7 +654,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_SingleSecondaryObjectKindSubstit
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo_id": "%s"
+						"foo": "%s"
 					}`,
 					key1,
 				),
@@ -734,7 +734,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindSubstitution(t *testin
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo_id": "%s"
+						"foo": "%s"
 					}`,
 					key1,
 				),
@@ -814,7 +814,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindSubstitutionWithAutoSc
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo_id": "%s"
+						"foo": "%s"
 					}`,
 					key1,
 				),
@@ -933,7 +933,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_MissingPrimaryIDField(t *testing
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo_id": "%s"
+						"foo": "%s"
 					}`,
 					key1,
 				),
@@ -1011,7 +1011,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_MissingSecondaryIDField(t *testi
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo_id": "%s"
+						"foo": "%s"
 					}`,
 					key1,
 				),
