@@ -60,21 +60,6 @@ func (db *db) addView(
 		newDefinitions[i].Description.BaseQuery = baseQuery
 	}
 
-	existingCollections, err := db.getAllCollections(ctx, txn)
-	if err != nil {
-		return nil, err
-	}
-
-	existingDefinitions := make([]client.CollectionDefinition, len(existingCollections))
-	for i := range existingCollections {
-		existingDefinitions[i] = existingCollections[i].Definition()
-	}
-
-	err = db.parser.SetSchema(ctx, txn, append(existingDefinitions, newDefinitions...))
-	if err != nil {
-		return nil, err
-	}
-
 	returnDescriptions := make([]client.CollectionDefinition, len(newDefinitions))
 	for i, definition := range newDefinitions {
 		if definition.Description.Name == "" {
@@ -93,6 +78,11 @@ func (db *db) addView(
 			}
 			returnDescriptions[i] = col.Definition()
 		}
+	}
+
+	err = db.loadSchema(ctx, txn)
+	if err != nil {
+		return nil, err
 	}
 
 	return returnDescriptions, nil
