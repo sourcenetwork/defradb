@@ -233,6 +233,31 @@ func TestUniqueIndexCreate_IfNilFieldsArePresent_ReturnError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestUniqueIndexCreate_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test adding a doc with nil value for indexed field should succeed",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index(unique: true)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John"
+					}`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If filter does not match any document, return empty result",
