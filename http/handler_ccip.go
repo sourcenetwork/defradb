@@ -100,7 +100,7 @@ func (h *ccipHandler) bindRoutes(router *Router) {
 		Value: ccipRequest,
 	}
 	ccipPost.AddResponse(200, ccipResponse)
-	ccipPost.Responses["400"] = errorResponse
+	ccipPost.Responses.Set("400", errorResponse)
 
 	dataPathParam := openapi3.NewPathParameter("data").
 		WithDescription("Hex encoded request data").
@@ -117,7 +117,7 @@ func (h *ccipHandler) bindRoutes(router *Router) {
 	ccipGet.AddParameter(dataPathParam)
 	ccipGet.AddParameter(senderPathParam)
 	ccipGet.AddResponse(200, ccipResponse)
-	ccipGet.Responses["400"] = errorResponse
+	ccipGet.Responses.Set("400", errorResponse)
 
 	router.AddRoute("/ccip/{sender}/{data}", http.MethodGet, ccipGet, h.ExecCCIP)
 	router.AddRoute("/ccip", http.MethodPost, ccipPost, h.ExecCCIP)

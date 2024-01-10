@@ -42,7 +42,6 @@ const (
 	errDuplicateField                     string = "duplicate field"
 	errCannotMutateField                  string = "mutating an existing field is not supported"
 	errCannotMoveField                    string = "moving fields is not currently supported"
-	errInvalidCRDTType                    string = "only default or LWW (last writer wins) CRDT types are supported"
 	errCannotDeleteField                  string = "deleting an existing field is not supported"
 	errFieldKindNotFound                  string = "no type found for given name"
 	errFieldKindDoesNotMatchFieldSchema   string = "field Kind does not match field Schema"
@@ -87,7 +86,7 @@ const (
 	errExpectedJSONArray                  string = "expected JSON array"
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 	errIndexDoesNotMatchName              string = "the index used does not match the given name"
-	errCanNotIndexNonUniqueField          string = "can not create doc that violates unique index"
+	errCanNotIndexNonUniqueField          string = "can not index a doc's field that violates unique index"
 	errInvalidViewQuery                   string = "the query provided is not valid as a View"
 )
 
@@ -374,14 +373,6 @@ func NewErrCannotMoveField(name string, proposedIndex, existingIndex int) error 
 	)
 }
 
-func NewErrInvalidCRDTType(name string, crdtType client.CType) error {
-	return errors.New(
-		errInvalidCRDTType,
-		errors.NewKV("Name", name),
-		errors.NewKV("CRDTType", crdtType),
-	)
-}
-
 func NewErrCannotDeleteField(name string, id client.FieldID) error {
 	return errors.New(
 		errCannotDeleteField,
@@ -588,7 +579,7 @@ func NewErrInvalidViewQueryCastFailed(query string) error {
 	return errors.New(
 		errInvalidViewQuery,
 		errors.NewKV("Query", query),
-		errors.NewKV("Reason", "Internal errror, cast failed"),
+		errors.NewKV("Reason", "Internal error, cast failed"),
 	)
 }
 

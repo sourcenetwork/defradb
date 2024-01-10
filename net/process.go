@@ -158,12 +158,14 @@ func initCRDTForType(
 	key = base.MakeDataStoreKeyWithCollectionDescription(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
 
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
-	return merklecrdt.NewMerkleLWWRegister(
+	return merklecrdt.InstanceWithStore(
 		txn,
 		core.NewCollectionSchemaVersionKey(col.Schema().VersionID, col.ID()),
+		ctype,
+		fd.Kind,
 		key,
 		field,
-	), nil
+	)
 }
 
 func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {

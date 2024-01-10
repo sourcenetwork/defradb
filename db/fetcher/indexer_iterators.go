@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/fxamacker/cbor/v2"
+	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
@@ -141,6 +142,9 @@ func (i *eqSingleIndexIterator) Next() (indexIterResult, error) {
 	i.indexKey.FieldValues = [][]byte{i.value}
 	val, err := i.store.Get(i.ctx, i.indexKey.ToDS())
 	if err != nil {
+		if errors.Is(err, ds.ErrNotFound) {
+			return indexIterResult{key: i.indexKey}, nil
+		}
 		return indexIterResult{}, err
 	}
 	i.store = nil
@@ -412,9 +416,9 @@ func createIndexIterator(
 
 	switch op {
 	case opEq, opGt, opGe, opLt, opLe, opNe:
-		writableValue := client.NewCBORValue(client.LWW_REGISTER, filterVal)
+		fieldValue := client.NewFieldValue(client.LWW_REGISTER, filterVal)
 
-		valueBytes, err := writableValue.Bytes()
+		valueBytes, err := fieldValue.Bytes()
 		if err != nil {
 			return nil, err
 		}
@@ -490,8 +494,8 @@ func createIndexIterator(
 		}
 		valArr := make([][]byte, 0, len(inArr))
 		for _, v := range inArr {
-			writableValue := client.NewCBORValue(client.LWW_REGISTER, v)
-			valueBytes, err := writableValue.Bytes()
+			fieldValue := client.NewFieldValue(client.LWW_REGISTER, v)
+			valueBytes, err := fieldValue.Bytes()
 			if err != nil {
 				return nil, err
 			}

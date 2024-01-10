@@ -45,7 +45,7 @@ func MakePrimaryIndexKeyForCRDT(
 	switch ctype {
 	case client.COMPOSITE:
 		return MakeDataStoreKeyWithCollectionDescription(c).WithInstanceInfo(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
-	case client.LWW_REGISTER:
+	case client.LWW_REGISTER, client.PN_COUNTER:
 		field, ok := c.GetFieldByName(fieldName, &schema)
 		if !ok {
 			return core.DataStoreKey{}, client.NewErrFieldNotExist(fieldName)

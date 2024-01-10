@@ -186,3 +186,115 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestUniqueIndexCreate_IfNilFieldsArePresent_ReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If filter does not match any document, return empty result",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Andy"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Keenan"
+					}`,
+			},
+			testUtils.CreateIndex{
+				CollectionID:  0,
+				FieldName:     "age",
+				Unique:        true,
+				ExpectedError: db.NewErrCanNotIndexNonUniqueField("bae-caba9876-89aa-5bcf-bc1c-387a52499b27", "age", nil).Error(),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestUniqueIndexCreate_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test adding a doc with nil value for indexed field should succeed",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index(unique: true)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John"
+					}`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If filter does not match any document, return empty result",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index(unique: true)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Keenan"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Andy"
+					}`,
+				ExpectedError: db.NewErrCanNotIndexNonUniqueField("bae-2159860f-3cd1-59de-9440-71331e77cbb8", "age", nil).Error(),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

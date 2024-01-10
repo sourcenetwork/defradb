@@ -122,16 +122,15 @@ func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([]byte, er
 	fieldVal, err := doc.GetValue(indexedFieldName)
 	if err != nil {
 		if errors.Is(err, client.ErrFieldNotExist) {
-			return client.NewCBORValue(client.LWW_REGISTER, nil).Bytes()
+			return client.NewFieldValue(client.LWW_REGISTER, nil).Bytes()
 		} else {
 			return nil, err
 		}
 	}
-	writeableVal, ok := fieldVal.(client.WriteableValue)
-	if !ok || !i.validateFieldFunc(fieldVal.Value()) {
-		return nil, NewErrInvalidFieldValue(i.fieldDesc.Kind, writeableVal)
+	if !i.validateFieldFunc(fieldVal.Value()) {
+		return nil, NewErrInvalidFieldValue(i.fieldDesc.Kind, fieldVal)
 	}
-	return writeableVal.Bytes()
+	return fieldVal.Bytes()
 }
 
 func (i *collectionBaseIndex) getDocumentsIndexKey(
@@ -291,10 +290,18 @@ func (i *collectionUniqueIndex) newUniqueIndexError(
 	doc *client.Document,
 ) error {
 	fieldVal, err := doc.GetValue(i.fieldDesc.Name)
+	var val any
 	if err != nil {
-		return err
+		// If the error is ErrFieldNotExist, we leave `val` as is (e.g. nil)
+		// otherwise we return the error
+		if !errors.Is(err, client.ErrFieldNotExist) {
+			return err
+		}
+	} else {
+		val = fieldVal.Value()
 	}
-	return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldDesc.Name, fieldVal.Value())
+
+	return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldDesc.Name, val)
 }
 
 func (i *collectionUniqueIndex) Update(
