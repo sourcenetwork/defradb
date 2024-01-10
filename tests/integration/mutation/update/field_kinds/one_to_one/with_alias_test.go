@@ -236,7 +236,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySideWithWron
 					}`,
 					author2ID,
 				),
-				ExpectedError: "The given field does not exist. Name: notName",
+				ExpectedError: "Unknown field.",
 			},
 		},
 	}
