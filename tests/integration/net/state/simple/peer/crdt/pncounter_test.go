@@ -67,3 +67,58 @@ func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestP2PUpdate_WithPNCounterSimultaneousUpdate_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int @crdt(type: "pncounter")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// Create John on all nodes
+				Doc: `{
+					"Name": "John",
+					"Age": 0
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Age": 45
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Age": 45
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": int64(90),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
