@@ -48,9 +48,9 @@ type PNCounterDelta[T Incrementable] struct {
 	DocID     []byte
 	FieldName string
 	Priority  uint64
-	// Entropy is an added randomly generated number that ensures
+	// Nonce is an added randomly generated number that ensures
 	// that each increment operation is unique.
-	Entropy int64
+	Nonce int64
 	// SchemaVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
@@ -122,13 +122,13 @@ func (reg PNCounter[T]) Increment(ctx context.Context, value T) (*PNCounterDelta
 	if err != nil {
 		return nil, err
 	}
-	var entropy int64
+	var nonce int64
 	if exists {
 		r, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 		if err != nil {
 			return nil, err
 		}
-		entropy = r.Int64()
+		nonce = r.Int64()
 	}
 
 	return &PNCounterDelta[T]{
@@ -136,7 +136,7 @@ func (reg PNCounter[T]) Increment(ctx context.Context, value T) (*PNCounterDelta
 		FieldName:       reg.fieldName,
 		Data:            value,
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
-		Entropy:         entropy,
+		Nonce:           nonce,
 	}, nil
 }
 

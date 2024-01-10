@@ -301,7 +301,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeickgiyku2f22hie7ikr46nsskmccdqufvbaoqjytptmpxb6vk3kfi",
+						cid: "bafybeiepi2gpoyshdj2ekdsydhw5itxqmipsh7f6pd6iyoiu6sqsdlj2se",
 						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
 					) {
 						name
@@ -353,7 +353,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeigm7fohco7l2hvg3zpslu2wu6dtz4azb7ikxczdtw5dvpyix26fr4",
+						cid: "bafybeihjdntxsc75hpnyakog4nnaxakljer7zf7pjybpgntcsg45qmisau",
 						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
 					) {
 						name
