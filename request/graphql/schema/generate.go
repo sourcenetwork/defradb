@@ -557,17 +557,9 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 
 				var ttype gql.Type
 				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
-					var ok bool
-					ttype, ok = g.manager.schema.TypeMap()[field.Schema+"MutationInputArg"]
-					if !ok {
-						return nil, NewErrTypeNotFound(field.Schema + "MutationInputArg")
-					}
+					ttype = gql.ID
 				} else if field.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
-					t, ok := g.manager.schema.TypeMap()[field.Schema+"MutationInputArg"]
-					if !ok {
-						return nil, NewErrTypeNotFound(field.Schema + "MutationInputArg")
-					}
-					ttype = gql.NewList(t)
+					ttype = gql.NewList(gql.ID)
 				} else {
 					var ok bool
 					ttype, ok = fieldKindToGQLType[field.Kind]
