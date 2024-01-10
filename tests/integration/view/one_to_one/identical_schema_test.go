@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package one_to_many
+package one_to_one
 
 import (
 	"testing"
