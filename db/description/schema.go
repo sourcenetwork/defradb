@@ -283,3 +283,45 @@ func GetSchemaVersionIDs(
 
 	return schemaVersions, nil
 }
+
+// GetCollectionlessSchemas returns all schema that are not attached to a collection.
+//
+// Typically this means any schema embedded in a View.
+//
+// WARNING: This function does not currently account for multiple versions of collectionless schema,
+// at the moment such a situation is impossible, but that is likely to change, at which point this
+// function will need to account for that.
+func GetCollectionlessSchemas(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.SchemaDescription, error) {
+	cols, err := GetCollections(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	allSchemas, err := GetAllSchemas(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	schemaRootsByVersionID := map[string]string{}
+	for _, schema := range allSchemas {
+		schemaRootsByVersionID[schema.VersionID] = schema.Root
+	}
+
+	colSchemaRoots := map[string]struct{}{}
+	for _, col := range cols {
+		schemaRoot := schemaRootsByVersionID[col.SchemaVersionID]
+		colSchemaRoots[schemaRoot] = struct{}{}
+	}
+
+	collectionlessSchema := []client.SchemaDescription{}
+	for _, schema := range allSchemas {
+		if _, hasCollection := colSchemaRoots[schema.Root]; !hasCollection {
+			collectionlessSchema = append(collectionlessSchema, schema)
+		}
+	}
+
+	return collectionlessSchema, nil
+}
