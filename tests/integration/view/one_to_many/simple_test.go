@@ -303,3 +303,63 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Multiple one to many views with embedded schemas",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Author {
+						name: String
+						books: [Book]
+					}
+					type Book {
+						name: String
+						author: Author
+					}
+				`,
+			},
+			testUtils.CreateView{
+				Query: `
+					Book {
+						name
+						author {
+							name
+						}
+					}
+				`,
+				SDL: `
+					type BookView {
+						name: String
+						author: AuthorView
+					}
+					interface AuthorView {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateView{
+				Query: `
+					Book {
+						name
+						author {
+							name
+						}
+					}
+				`,
+				SDL: `
+					type BookView2 {
+						name: String
+						author: AuthorView2
+					}
+					interface AuthorView2 {
+						name: String
+					}
+				`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
