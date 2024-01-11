@@ -15,8 +15,9 @@ import (
 	"math"
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
