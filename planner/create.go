@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"encoding/json"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -37,9 +35,9 @@ type createNode struct {
 	// collection name, meta-data, etc.
 	collection client.Collection
 
-	// newDoc is the JSON string of the new document, unparsed
-	newDocStr string
-	doc       *client.Document
+	// input map of fields and values
+	input map[string]any
+	doc   *client.Document
 
 	err error
 
@@ -59,7 +57,7 @@ func (n *createNode) Kind() string { return "createNode" }
 func (n *createNode) Init() error { return nil }
 
 func (n *createNode) Start() error {
-	doc, err := client.NewDocFromJSON([]byte(n.newDocStr), n.collection.Schema())
+	doc, err := client.NewDocFromMap(n.input, n.collection.Schema())
 	if err != nil {
 		n.err = err
 		return err
@@ -135,24 +133,14 @@ func (n *createNode) Close() error {
 
 func (n *createNode) Source() planNode { return n.results }
 
-func (n *createNode) simpleExplain() (map[string]any, error) {
-	data := map[string]any{}
-	err := json.Unmarshal([]byte(n.newDocStr), &data)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]any{
-		dataLabel: data,
-	}, nil
-}
-
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	switch explainType {
 	case request.SimpleExplain:
-		return n.simpleExplain()
+		return map[string]any{
+			inputLabel: n.input,
+		}, nil
 
 	case request.ExecuteExplain:
 		return map[string]any{
@@ -173,7 +161,7 @@ func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
 	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
-		newDocStr: parsed.Data,
+		input:     parsed.Input,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
 	}

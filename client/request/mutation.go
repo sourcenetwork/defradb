@@ -33,7 +33,7 @@ type ObjectMutation struct {
 
 	IDs    immutable.Option[[]string]
 	Filter immutable.Option[Filter]
-	Data   string
+	Input  map[string]any
 
 	Fields []Selection
 }

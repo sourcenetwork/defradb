@@ -14,12 +14,20 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationCreateOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, alias relation, with an invalid field.",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return a different error
+			// when field types do not match
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

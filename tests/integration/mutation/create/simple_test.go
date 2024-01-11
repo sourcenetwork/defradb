@@ -21,6 +21,12 @@ import (
 func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with non existant field",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return a different error
+			// when field types do not match
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -132,9 +138,9 @@ func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreate_GivenEmptyData_Errors(t *testing.T) {
+func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with empty data param.",
+		Description: "Simple create mutation with empty input param.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -145,11 +151,15 @@ func TestMutationCreate_GivenEmptyData_Errors(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					create_Users(data: "") {
+					create_Users(input: {}) {
 						_docID
 					}
 				}`,
-				ExpectedError: "given data payload is empty",
+				Results: []map[string]any{
+					{
+						"_docID": "bae-524bfa06-849c-5daf-b6df-05c2da80844d",
+					},
+				},
 			},
 		},
 	}

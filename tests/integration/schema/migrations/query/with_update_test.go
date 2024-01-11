@@ -62,7 +62,7 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					update_Users(data: "{\"name\":\"Johnnnn\"}") {
+					update_Users(input: {name: "Johnnnn"}) {
 						name
 						verified
 					}

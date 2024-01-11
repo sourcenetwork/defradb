@@ -27,7 +27,7 @@ func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 
 			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
-					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
+					create_Author(input: {name: "Shahzad Lone", age: 27, verified: true}) {
 						name
 					}
 				}`,

@@ -33,7 +33,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_User(data: "{\"name\": \"John\",\"age\": 27}") {
+					create_User(input: {name: "John", age: 27}) {
 						_docID
 					}
 				}`,
@@ -77,7 +77,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_User(data: "{\"name\": \"John\",\"age\": 27}") {
+					create_User(input: {name: "John", age: 27}) {
 						_docID
 					}
 				}`,
@@ -151,7 +151,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					update_User(data: "{\"age\": 28}") {
+					update_User(input: {age: 28}) {
 						_docID
 					}
 				}`,
@@ -205,7 +205,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					update_User(data: "{\"age\": 28}") {
+					update_User(input: {age: 28}) {
 						_docID
 						name
 						age
@@ -264,7 +264,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					update_User(data: "{\"age\": 28}") {
+					update_User(input: {age: 28}) {
 						_docID
 						name
 						age
@@ -281,7 +281,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 			testUtils.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					update_User(data: "{\"age\": 29}") {
+					update_User(input: {age: 29}) {
 						_docID
 						name
 						age
