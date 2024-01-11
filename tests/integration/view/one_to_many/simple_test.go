@@ -239,3 +239,67 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One to many view with relation in query but not SDL",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Author {
+						name: String
+						books: [Book]
+					}
+					type Book {
+						name: String
+						author: Author
+					}
+				`,
+			},
+			testUtils.CreateView{
+				// Query books via author but do not declare relation in SDL
+				Query: `
+					Author {
+						name
+						books {
+							name
+						}
+					}
+				`,
+				SDL: `
+					type AuthorView {
+						name: String
+					}
+				`,
+			},
+			// bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Harper Lee"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name":	"To Kill a Mockingbird",
+					"author_id": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+							AuthorView {
+								name
+							}
+						}`,
+				Results: []map[string]any{
+					{
+						"name": "Harper Lee",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
