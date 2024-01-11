@@ -69,7 +69,10 @@ func (n *viewNode) Value() core.Doc {
 	// will take into account any aliases defined in the base query.
 	doc := n.docMapper.documentMapping.NewDoc()
 	for fieldName, fieldValue := range sourceValue {
-		n.docMapper.documentMapping.SetFirstOfName(&doc, fieldName, fieldValue)
+		// If the field does not exist, ignore it an continue.  It likely means that
+		// the field was declared in the query but not the SDL, and if it is not in the
+		// SDL it cannot be requested/rendered by the user and would be dropped later anyway.
+		_ = n.docMapper.documentMapping.TrySetFirstOfName(&doc, fieldName, fieldValue)
 	}
 
 	return doc
