@@ -242,7 +242,7 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 
 func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view",
+		Description: "One to many view with relation in query but not SDL",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
