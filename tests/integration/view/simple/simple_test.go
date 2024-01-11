@@ -242,11 +242,13 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
-				Request: `query {
-							UserView {
-								name
-							}
-						}`,
+				Request: `
+					query {
+						UserView {
+							name
+						}
+					}
+				`,
 				Results: []map[string]any{
 					{
 						"name": "John",
