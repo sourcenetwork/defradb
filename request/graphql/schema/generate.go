@@ -528,6 +528,13 @@ func (g *Generator) buildTypes(
 // for collection create and update mutation operations.
 func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefinition) error {
 	for _, c := range collections {
+		if c.Description.Name == "" {
+			// If the definition's collection is empty, this must be a collectionless
+			// schema, in which case users cannot mutate documents through it and we
+			// have no need to build mutation input types for it.
+			continue
+		}
+
 		// Copy the loop variable before usage within the loop or it
 		// will be reassigned before the thunk is run
 		// TODO remove when Go 1.22
