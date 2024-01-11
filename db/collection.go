@@ -483,17 +483,7 @@ func (db *db) setDefaultSchemaVersion(
 		}
 	}
 
-	cols, err := db.getAllCollections(ctx, txn)
-	if err != nil {
-		return err
-	}
-
-	definitions := make([]client.CollectionDefinition, len(cols))
-	for i, col := range cols {
-		definitions[i] = col.Definition()
-	}
-
-	return db.parser.SetSchema(ctx, txn, definitions)
+	return db.loadSchema(ctx, txn)
 }
 
 func (db *db) setDefaultSchemaVersionExplicit(
@@ -631,6 +621,47 @@ func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn) ([]clien
 	}
 
 	return collections, nil
+}
+
+// getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
+func (db *db) getAllActiveDefinitions(ctx context.Context, txn datastore.Txn) ([]client.CollectionDefinition, error) {
+	cols, err := description.GetCollections(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	definitions := make([]client.CollectionDefinition, len(cols))
+	for i, col := range cols {
+		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
+		if err != nil {
+			return nil, err
+		}
+
+		collection := db.newCollection(col, schema)
+
+		err = collection.loadIndexes(ctx, txn)
+		if err != nil {
+			return nil, err
+		}
+
+		definitions[i] = collection.Definition()
+	}
+
+	schemas, err := description.GetCollectionlessSchemas(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, schema := range schemas {
+		definitions = append(
+			definitions,
+			client.CollectionDefinition{
+				Schema: schema,
+			},
+		)
+	}
+
+	return definitions, nil
 }
 
 // GetAllDocIDs returns all the document IDs that exist in the collection.
