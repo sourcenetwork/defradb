@@ -12,7 +12,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
@@ -1147,17 +1146,17 @@ func createDocViaGQL(
 ) (*client.Document, error) {
 	collection := collections[action.CollectionID]
 
-	escapedJson, err := json.Marshal(action.Doc)
+	input, err := jsonToGQL(action.Doc)
 	require.NoError(s.t, err)
 
 	request := fmt.Sprintf(
 		`mutation {
-			create_%s(data: %s) {
+			create_%s(input: %s) {
 				_docID
 			}
 		}`,
 		collection.Name(),
-		escapedJson,
+		input,
 	)
 
 	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
@@ -1294,18 +1293,18 @@ func updateDocViaGQL(
 	doc := s.documents[action.CollectionID][action.DocID]
 	collection := collections[action.CollectionID]
 
-	escapedJson, err := json.Marshal(action.Doc)
+	input, err := jsonToGQL(action.Doc)
 	require.NoError(s.t, err)
 
 	request := fmt.Sprintf(
 		`mutation {
-			update_%s(docID: "%s", data: %s) {
+			update_%s(docID: "%s", input: %s) {
 				_docID
 			}
 		}`,
 		collection.Name(),
 		doc.ID().String(),
-		escapedJson,
+		input,
 	)
 
 	db := getStore(s, node, immutable.None[int](), action.ExpectedError)

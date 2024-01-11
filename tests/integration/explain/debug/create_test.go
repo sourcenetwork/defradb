@@ -39,7 +39,7 @@ func TestDebugExplainMutationRequestWithCreate(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
-					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
+					create_Author(input: {name: "Shahzad Lone", age: 27, verified: true}) {
 						name
 						age
 					}
@@ -63,7 +63,7 @@ func TestDebugExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T)
 			testUtils.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
-					create_Author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
+					create_Author(input: {name: "Shahzad Lone", age: 27}) {
 						name
 						age
 					}

@@ -53,7 +53,7 @@ const (
 	childFieldNameLabel = "childFieldName"
 	collectionIDLabel   = "collectionID"
 	collectionNameLabel = "collectionName"
-	dataLabel           = "data"
+	inputLabel          = "input"
 	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"
 	joinRootLabel       = "root"

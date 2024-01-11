@@ -469,7 +469,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-						create_Users(data: "{\"name\": \"John\"}") {
+						create_Users(input: {name: "John"}) {
 							_docID
 						}
 					}`,
@@ -481,7 +481,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: fmt.Sprintf(`mutation {
-						create_Users(data: "{\"name\": \"Keenan\", \"foo\": \"%s\"}") {
+						create_Users(input: {name: "Keenan", foo: "%s"}) {
 							name
 							foo {
 								name

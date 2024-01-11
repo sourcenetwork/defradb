@@ -14,9 +14,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 // Note: This test should probably not pass, as it contains a
@@ -420,7 +420,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_
 					}`,
 					author2ID,
 				),
-				ExpectedError: "The given field does not exist. Name: notName",
+				ExpectedError: "In field \"notName\": Unknown field.",
 			},
 		},
 	}

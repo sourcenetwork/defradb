@@ -85,7 +85,7 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					update_Users(data: "{\"created_at\": \"2031-07-23T03:23:23Z\"}") {
+					update_Users(input: {created_at: "2031-07-23T03:23:23Z"}) {
 						name
 						created_at
 					}

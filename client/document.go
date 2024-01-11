@@ -251,6 +251,8 @@ func getFloat64(v any) (float64, error) {
 		return val.Float64()
 	case int:
 		return float64(val), nil
+	case int32:
+		return float64(val), nil
 	case int64:
 		return float64(val), nil
 	case float64:
@@ -265,6 +267,8 @@ func getInt64(v any) (int64, error) {
 	case *fastjson.Value:
 		return val.Int64()
 	case int:
+		return int64(val), nil
+	case int32:
 		return int64(val), nil
 	case int64:
 		return val, nil
