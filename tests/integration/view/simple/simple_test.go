@@ -209,3 +209,52 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple view with extra field in view query",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateView{
+				// `age` is present in the query but not the SDL
+				Query: `
+					User {
+						name
+						age
+					}
+				`,
+				SDL: `
+					type UserView {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name":	"John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+							UserView {
+								name
+							}
+						}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

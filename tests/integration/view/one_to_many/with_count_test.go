@@ -156,3 +156,58 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One to many view with count in query but not sdl",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Author {
+						name: String
+						books: [Book]
+					}
+					type Book {
+						name: String
+						author: Author
+					}
+				`,
+			},
+			testUtils.CreateView{
+				Query: `
+					Author {
+						name
+						_count(books: {})
+					}
+				`,
+				SDL: `
+					type AuthorView {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Harper Lee"
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						AuthorView {
+							name
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"name": "Harper Lee",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

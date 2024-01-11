@@ -180,6 +180,21 @@ func (mapping *DocumentMapping) SetFirstOfName(d *Doc, name string, value any) {
 	d.Fields[mapping.IndexesByName[name][0]] = value
 }
 
+// TrySetFirstOfName overwrites the first field of this name with the given value.
+//
+// Will return false if the field does not exist, otherwise will return true.
+func (mapping *DocumentMapping) TrySetFirstOfName(d *Doc, name string, value any) bool {
+	if indexes, ok := mapping.IndexesByName[name]; ok && len(indexes) > 0 {
+		index := indexes[0]
+		// Panicing here should be impossible unless there is something very wrong in
+		// the mapper code.
+		d.Fields[index] = value
+		return true
+	}
+
+	return false
+}
+
 // FirstOfName returns the value of the first field of the given name.
 //
 // Will panic if the field does not exist (but not if it's value is default).
