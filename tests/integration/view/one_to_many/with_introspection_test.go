@@ -70,7 +70,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "AuthorView",
-						"fields": schema.DefaultFields.Append(
+						"fields": schema.DefaultViewObjFields.Append(
 							schema.Field{
 								"name": "name",
 								"type": map[string]any{
