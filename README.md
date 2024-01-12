@@ -100,7 +100,7 @@ Submit a `mutation` request to create a document of the `User` type:
 ```shell
 defradb client query '
   mutation {
-      create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+      create_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
           _docID
       }
   }
