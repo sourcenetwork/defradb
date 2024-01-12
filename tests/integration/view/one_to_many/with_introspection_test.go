@@ -112,7 +112,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 						// although aggregates and `_group` should be.
 						// There should also be no `Author` field - the relationship field
 						// should only exist on the parent.
-						"fields": schema.DefaultEmbeddedObjFields.Append(
+						"fields": schema.DefaultViewObjFields.Append(
 							schema.Field{
 								"name": "name",
 								"type": map[string]any{
