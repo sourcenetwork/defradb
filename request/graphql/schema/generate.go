@@ -417,6 +417,7 @@ func (g *Generator) buildTypes(
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
 		isEmbeddedObject := collection.Description.Name == ""
+		isViewObject := isEmbeddedObject || collection.Description.BaseQuery != nil
 
 		var objectName string
 		if isEmbeddedObject {
@@ -441,7 +442,7 @@ func (g *Generator) buildTypes(
 		fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
 			fields := gql.Fields{}
 
-			if !isEmbeddedObject {
+			if !isViewObject {
 				// automatically add the _docID: ID field to the type
 				fields[request.DocIDFieldName] = &gql.Field{
 					Description: docIDFieldDescription,
@@ -495,7 +496,7 @@ func (g *Generator) buildTypes(
 				Type:        gql.NewList(gqlType),
 			}
 
-			if !isEmbeddedObject {
+			if !isViewObject {
 				// add _version field
 				fields[request.VersionFieldName] = &gql.Field{
 					Description: versionFieldDescription,
