@@ -51,7 +51,10 @@ func (mPNC *MerklePNCounter[T]) Save(ctx context.Context, data any) (ipld.Node, 
 	if !ok {
 		return nil, 0, NewErrUnexpectedValueType(client.PN_COUNTER, &client.FieldValue{}, data)
 	}
-	delta := mPNC.reg.Increment(value.Value().(T))
+	delta, err := mPNC.reg.Increment(ctx, value.Value().(T))
+	if err != nil {
+		return nil, 0, err
+	}
 	nd, err := mPNC.clock.AddDAGNode(ctx, delta)
 	return nd, delta.GetPriority(), err
 }
