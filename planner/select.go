@@ -313,6 +313,11 @@ func findFilteredByIndexedField(scanNode *scanNode) immutable.Option[client.Fiel
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
+	var isQuerySource bool
+	if n.collection != nil && len(n.collection.Description().Sources) != 0 {
+		_, isQuerySource = n.collection.Description().Sources[0].(*client.QuerySource)
+	}
+
 	aggregates := []aggregateNode{}
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
@@ -373,7 +378,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 				// commit query link fields are always added and need no special treatment here
 				// WARNING: It is important to check collection name is nil and the parent select name
 				// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
-			} else if n.collection.Description().BaseQuery == nil {
+			} else if !isQuerySource {
 				// Views only contain embedded objects and don't require a traditional join here
 				err := n.addTypeIndexJoin(f)
 				if err != nil {

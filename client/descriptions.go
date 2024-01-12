@@ -11,6 +11,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client/request"
@@ -32,12 +33,11 @@ type CollectionDescription struct {
 	// The ID of the schema version that this collection is at.
 	SchemaVersionID string
 
-	// BaseQuery contains the base query of this view, if this collection is a view.
+	// Sources is the set of sources from which this collection draws data from.
 	//
-	// The query will be saved, and then may be accessed by other actors on demand.  Actor defined
-	// aggregates, filters and other logic (such as LensVM transforms) will execute on top of this
-	// base query before the result is returned to the actor.
-	BaseQuery *request.Select
+	// Currently supported source types are:
+	// - [QuerySource]
+	Sources []any
 
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
@@ -83,6 +83,15 @@ func (col CollectionDescription) GetFieldByRelation(
 		}
 	}
 	return FieldDescription{}, false
+}
+
+// QuerySource represents a collection data source from a query.
+//
+// The query will be executed when data from this source is requested, and the query results
+// yielded to the consumer.
+type QuerySource struct {
+	// Query contains the base query of this data source.
+	Query request.Select
 }
 
 // SchemaDescription describes a Schema and its associated metadata.
@@ -321,4 +330,60 @@ func (f FieldDescription) IsArray() bool {
 // IsSet returns true if the target relation type is set.
 func (m RelationType) IsSet(target RelationType) bool {
 	return m&target > 0
+}
+
+// collectionDescription is a private type used to facilitate the unmarshalling
+// of json to a [CollectionDescription].
+type collectionDescription struct {
+	// These properties are unmarshalled using the default json unmarshaller
+	Name            string
+	ID              uint32
+	SchemaVersionID string
+	Indexes         []IndexDescription
+
+	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
+	Sources []map[string]json.RawMessage
+}
+
+func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
+	var descMap collectionDescription
+	err := json.Unmarshal(bytes, &descMap)
+	if err != nil {
+		return err
+	}
+
+	c.Name = descMap.Name
+	c.ID = descMap.ID
+	c.SchemaVersionID = descMap.SchemaVersionID
+	c.Indexes = descMap.Indexes
+	c.Sources = make([]any, len(descMap.Sources))
+
+	for i, source := range descMap.Sources {
+		sourceJson, err := json.Marshal(source)
+		if err != nil {
+			return err
+		}
+
+		var sourceValue any
+		// We detect which concrete type each `Source` object is by detecting
+		// non-nillable fields, if the key is present it must be of that type.
+		// They must be non-nillable as nil values may have their keys omitted from
+		// the json. This also relies on the fields being unique.  We may wish to change
+		// this later to custom-serialize with a `_type` property.
+		if _, ok := source["Query"]; ok {
+			// This must be a QuerySource, as only the `QuerySource` type has a `Query` field
+			var querySource QuerySource
+			err := json.Unmarshal(sourceJson, &querySource)
+			if err != nil {
+				return err
+			}
+			sourceValue = &querySource
+		} else {
+			return ErrFailedToUnmarshalCollection
+		}
+
+		c.Sources[i] = sourceValue
+	}
+
+	return nil
 }

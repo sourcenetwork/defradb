@@ -195,7 +195,11 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		var collectionFound bool
 		for _, definition := range collections {
 			if t.Name() == definition.Description.Name {
-				isReadOnly = definition.Description.BaseQuery != nil
+				var isQuerySource bool
+				if len(definition.Description.Sources) != 0 {
+					_, isQuerySource = definition.Description.Sources[0].(*client.QuerySource)
+				}
+				isReadOnly = isQuerySource
 				collectionFound = true
 				break
 			}
@@ -417,7 +421,11 @@ func (g *Generator) buildTypes(
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
 		isEmbeddedObject := collection.Description.Name == ""
-		isViewObject := isEmbeddedObject || collection.Description.BaseQuery != nil
+		var isQuerySource bool
+		if len(collection.Description.Sources) != 0 {
+			_, isQuerySource = collection.Description.Sources[0].(*client.QuerySource)
+		}
+		isViewObject := isEmbeddedObject || isQuerySource
 
 		var objectName string
 		if isEmbeddedObject {

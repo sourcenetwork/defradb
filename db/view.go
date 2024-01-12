@@ -57,7 +57,8 @@ func (db *db) addView(
 	}
 
 	for i := range newDefinitions {
-		newDefinitions[i].Description.BaseQuery = baseQuery
+		source := client.QuerySource{Query: *baseQuery}
+		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
 	}
 
 	returnDescriptions := make([]client.CollectionDefinition, len(newDefinitions))

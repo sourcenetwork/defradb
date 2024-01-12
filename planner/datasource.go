@@ -31,8 +31,13 @@ func (p *Planner) getCollectionScanPlan(mapperSelect *mapper.Select) (planSource
 		return planSource{}, err
 	}
 
+	var isQuerySource bool
+	if len(col.Description().Sources) != 0 {
+		_, isQuerySource = col.Description().Sources[0].(*client.QuerySource)
+	}
+
 	var plan planNode
-	if col.Description().BaseQuery != nil {
+	if isQuerySource {
 		var err error
 		plan, err = p.View(mapperSelect, col.Description())
 		if err != nil {
