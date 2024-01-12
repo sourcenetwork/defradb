@@ -13,6 +13,9 @@ package crdt
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"math"
+	"math/big"
 
 	"github.com/fxamacker/cbor/v2"
 	dag "github.com/ipfs/boxo/ipld/merkledag"
@@ -45,6 +48,9 @@ type PNCounterDelta[T Incrementable] struct {
 	DocID     []byte
 	FieldName string
 	Priority  uint64
+	// Nonce is an added randomly generated number that ensures
+	// that each increment operation is unique.
+	Nonce int64
 	// SchemaVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
@@ -108,13 +114,30 @@ func (reg PNCounter[T]) Value(ctx context.Context) ([]byte, error) {
 }
 
 // Set generates a new delta with the supplied value
-func (reg PNCounter[T]) Increment(value T) *PNCounterDelta[T] {
+func (reg PNCounter[T]) Increment(ctx context.Context, value T) (*PNCounterDelta[T], error) {
+	// To ensure that the dag block is unique, we add a random number to the delta.
+	// This is done only on update (if the doc doesn't already exist) to ensure that the
+	// initial dag block of a document can be reproducible.
+	exists, err := reg.store.Has(ctx, reg.key.ToPrimaryDataStoreKey().ToDS())
+	if err != nil {
+		return nil, err
+	}
+	var nonce int64
+	if exists {
+		r, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+		if err != nil {
+			return nil, err
+		}
+		nonce = r.Int64()
+	}
+
 	return &PNCounterDelta[T]{
 		DocID:           []byte(reg.key.DocID),
 		FieldName:       reg.fieldName,
 		Data:            value,
 		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
-	}
+		Nonce:           nonce,
+	}, nil
 }
 
 // Merge implements ReplicatedData interface.

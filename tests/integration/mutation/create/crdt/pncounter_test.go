@@ -37,12 +37,14 @@ func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
+						_docID
 						name
 						points
 					}
 				}`,
 				Results: []map[string]any{
 					{
+						"_docID": "bae-a688789e-d8a6-57a7-be09-22e005ab79e0",
 						"name":   "John",
 						"points": int64(10),
 					},

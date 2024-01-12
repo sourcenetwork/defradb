@@ -269,9 +269,10 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 	executeTestCase(t, test)
 }
 
+// Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with second last cid and docID with pncounter int type",
+		Description: "Simple query with first cid and docID with pncounter int type",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -300,7 +301,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeiabh6mqnysyrv5phhjikjyl5zgxnpxzxogpip7s7knyujkh7fx3qu",
+						cid: "bafybeiepi2gpoyshdj2ekdsydhw5itxqmipsh7f6pd6iyoiu6sqsdlj2se",
 						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
 					) {
 						name
@@ -310,7 +311,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 				Results: []map[string]any{
 					{
 						"name":   "John",
-						"points": int64(5),
+						"points": int64(10),
 					},
 				},
 			},
@@ -320,9 +321,10 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with second last cid and docID with pncounter and float type",
+		Description: "Simple query with first cid and docID with pncounter and float type",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -351,7 +353,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeiaqw6oxeshkvd3ilzzagjy3c6h776l3hqvmz5loq4sokr7tlxkm5m",
+						cid: "bafybeihjdntxsc75hpnyakog4nnaxakljer7zf7pjybpgntcsg45qmisau",
 						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
 					) {
 						name
@@ -360,9 +362,8 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 				}`,
 				Results: []map[string]any{
 					{
-						"name": "John",
-						// Note the lack of precision of float types.
-						"points": 4.8999999999999995,
+						"name":   "John",
+						"points": 10.2,
 					},
 				},
 			},
