@@ -70,9 +70,9 @@ var DefaultFields = concat(
 	aggregateFields,
 )
 
-// DefaultEmbeddedObjFields contains the list of fields every
-// defra embedded-object should have.
-var DefaultEmbeddedObjFields = concat(
+// DefaultViewObjFields contains the list of fields every
+// defra view-object should have.
+var DefaultViewObjFields = concat(
 	fields{
 		groupField,
 	},

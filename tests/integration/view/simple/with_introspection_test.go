@@ -58,7 +58,7 @@ func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "UserView",
-						"fields": schema.DefaultFields.Append(
+						"fields": schema.DefaultViewObjFields.Append(
 							schema.Field{
 								"name": "name",
 								"type": map[string]any{
