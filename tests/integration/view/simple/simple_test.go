@@ -260,3 +260,63 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestView_SimpleViewOfView(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple view of view",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateView{
+				Query: `
+					User {
+						name
+					}
+				`,
+				SDL: `
+					type UserView {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateView{
+				Query: `
+					UserView {
+						name
+					}
+				`,
+				SDL: `
+					type UserViewView {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name":	"John"
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						UserViewView {
+							name
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
