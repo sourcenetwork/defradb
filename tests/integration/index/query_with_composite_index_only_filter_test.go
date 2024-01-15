@@ -617,3 +617,98 @@ func TestQueryWithCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _eq filter on nil value",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: schemaWithNameAgeIndex,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"age":	32
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {name: {_eq: null}}) {
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{"age": 32},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _eq filter on nil value",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: schemaWithNameAgeIndex,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice"
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {name: {_eq: "Alice"}, age: {_eq: null}}) {
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Alice",
+						"age":  nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
