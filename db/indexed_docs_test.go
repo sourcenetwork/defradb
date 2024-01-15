@@ -169,7 +169,7 @@ indexLoop:
 			var fieldBytesVal []byte
 			var fieldValue *client.FieldValue
 			var err error
-			if len(b.values) == 0 {
+			if len(b.values) <= i {
 				fieldValue, err = b.doc.GetValue(fieldName)
 				require.NoError(b.f.t, err)
 			} else {
@@ -1136,9 +1136,9 @@ func TestCompositeCreate_ShouldIndexExistingDocs(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
-	doc1 := f.newUserDoc("John", 21)
+	doc1 := f.newUserDoc("John", 21, f.users)
 	f.saveDocToCollection(doc1, f.users)
-	doc2 := f.newUserDoc("Islam", 18)
+	doc2 := f.newUserDoc("Islam", 18, f.users)
 	f.saveDocToCollection(doc2, f.users)
 
 	f.createUserCollectionIndexOnNameAndAge()
@@ -1165,7 +1165,7 @@ func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	}{Age: 44})
 	require.NoError(f.t, err)
 
-	doc, err := client.NewDocFromJSON(docJSON)
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
 	require.NoError(f.t, err)
 
 	f.saveDocToCollection(doc, f.users)
@@ -1187,8 +1187,8 @@ func TestCompositeDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	require.NoError(f.t, err)
 	f.commitTxn()
 
-	f.saveDocToCollection(f.newUserDoc("John", 21), users)
-	f.saveDocToCollection(f.newUserDoc("Islam", 23), users)
+	f.saveDocToCollection(f.newUserDoc("John", 21, users), users)
+	f.saveDocToCollection(f.newUserDoc("Islam", 23, users), users)
 
 	userNameAgeKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Build()
 	userAgeWeightKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersAgeFieldName, usersWeightFieldName).Build()
@@ -1245,7 +1245,7 @@ func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 		},
 	}
 
-	doc := f.newUserDoc("John", 21)
+	doc := f.newUserDoc("John", 21, f.users)
 	f.saveDocToCollection(doc, f.users)
 
 	for _, tc := range cases {

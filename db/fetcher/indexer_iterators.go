@@ -504,9 +504,9 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 
 	switch fieldConditions[0].op {
 	case opEq:
-		writableValue := client.NewCBORValue(client.LWW_REGISTER, fieldConditions[0].val)
+		fieldVal := client.NewFieldValue(client.LWW_REGISTER, fieldConditions[0].val)
 
-		keyValueBytes, err := writableValue.Bytes()
+		keyValueBytes, err := fieldVal.Bytes()
 		if err != nil {
 			return nil, err
 		}
@@ -536,8 +536,8 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		}
 		keyFieldArr := make([][]byte, 0, len(inArr))
 		for _, v := range inArr {
-			writableValue := client.NewCBORValue(client.LWW_REGISTER, v)
-			keyFieldBytes, err := writableValue.Bytes()
+			fieldVal := client.NewFieldValue(client.LWW_REGISTER, v)
+			keyFieldBytes, err := fieldVal.Bytes()
 			if err != nil {
 				return nil, err
 			}
