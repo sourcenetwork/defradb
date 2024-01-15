@@ -141,7 +141,7 @@ func newIndexTestFixture(t *testing.T) *indexTestFixture {
 func (f *indexTestFixture) createCollectionIndex(
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	return f.createCollectionIndexFor(f.users.Name(), desc)
+	return f.createCollectionIndexFor(f.users.Name().Value(), desc)
 }
 
 func getUsersIndexDescOnName() client.IndexDescription {
@@ -181,7 +181,7 @@ func getProductsIndexDescOnCategory() client.IndexDescription {
 }
 
 func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
-	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
 	return newDesc
 }
@@ -193,13 +193,13 @@ func makeUnique(indexDesc client.IndexDescription) client.IndexDescription {
 
 func (f *indexTestFixture) createUserCollectionUniqueIndexOnName() client.IndexDescription {
 	indexDesc := makeUnique(getUsersIndexDescOnName())
-	newDesc, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
 	require.NoError(f.t, err)
 	return newDesc
 }
 
 func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
-	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnAge())
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
 	return newDesc
 }
@@ -446,7 +446,7 @@ func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCol
 	}
 
 	createIndexAndAssert := func(col client.Collection, fieldName string, expectedID uint32) {
-		desc, err := f.createCollectionIndexFor(col.Name(), makeIndex(fieldName))
+		desc, err := f.createCollectionIndexFor(col.Name().Value(), makeIndex(fieldName))
 		require.NoError(t, err)
 		assert.Equal(t, expectedID, desc.ID)
 		seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, col.ID()))
@@ -529,7 +529,7 @@ func TestCreateIndex_IfAttemptToIndexOnUnsupportedType_ReturnError(t *testing.T)
 	f.txn, err = f.db.NewTxn(f.ctx, false)
 	require.NoError(f.t, err)
 
-	_, err = f.createCollectionIndexFor(collection.Name(), indexDesc)
+	_, err = f.createCollectionIndexFor(collection.Name().Value(), indexDesc)
 	require.ErrorIs(f.t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
 }
 
@@ -1015,7 +1015,7 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 			},
 		}
 
-		_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
+		_, err := f.createCollectionIndexFor(collection.Name().Value(), indexDesc)
 		require.NoError(t, err)
 	}
 

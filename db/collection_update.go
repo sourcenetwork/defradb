@@ -402,7 +402,7 @@ func (c *collection) makeSelectionPlan(
 			return nil, ErrInvalidFilter
 		}
 
-		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
+		f, err = c.db.parser.NewFilterFromString(c.Name().Value(), fval)
 		if err != nil {
 			return nil, err
 		}
@@ -432,7 +432,7 @@ func (c *collection) makeSelectionPlan(
 func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*request.Select, error) {
 	slct := &request.Select{
 		Field: request.Field{
-			Name: c.Name(),
+			Name: c.Name().Value(),
 		},
 		Filter: filter,
 		Fields: make([]request.Selection, 0),

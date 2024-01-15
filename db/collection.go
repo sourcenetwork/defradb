@@ -96,12 +96,14 @@ func (db *db) createCollection(
 	schema := def.Schema
 	desc := def.Description
 
-	exists, err := description.HasCollectionByName(ctx, txn, desc.Name)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, ErrCollectionAlreadyExists
+	if desc.Name.HasValue() {
+		exists, err := description.HasCollectionByName(ctx, txn, desc.Name.Value())
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			return nil, ErrCollectionAlreadyExists
+		}
 	}
 
 	colSeq, err := db.getSequence(ctx, txn, core.COLLECTION)
@@ -132,7 +134,7 @@ func (db *db) createCollection(
 		}
 	}
 
-	return db.getCollectionByName(ctx, txn, desc.Name)
+	return db.getCollectionByID(ctx, txn, desc.ID)
 }
 
 // updateSchema updates the persisted schema description matching the name of the given
@@ -201,6 +203,13 @@ func (db *db) updateSchema(
 		}
 
 		for _, col := range cols {
+			if !col.Name.HasValue() {
+				// Nameless collections cannot be made default as they cannot be queried without a name.
+				// Note: The `setAsDefaultVersion` block will need a re-write when collections become immutable
+				// and the schema version stuff gets tracked by [CollectionDescription.Sources] instead.
+				continue
+			}
+
 			col.SchemaVersionID = schema.VersionID
 
 			col, err = description.SaveCollection(ctx, txn, col)
@@ -208,7 +217,7 @@ func (db *db) updateSchema(
 				return err
 			}
 
-			err = db.setDefaultSchemaVersionExplicit(ctx, txn, col.Name, schema.VersionID)
+			err = db.setDefaultSchemaVersionExplicit(ctx, txn, col.Name.Value(), schema.VersionID)
 			if err != nil {
 				return err
 			}
@@ -538,6 +547,26 @@ func (db *db) getCollectionsByVersionID(
 	return collections, nil
 }
 
+func (db *db) getCollectionByID(ctx context.Context, txn datastore.Txn, id uint32) (client.Collection, error) {
+	col, err := description.GetCollectionByID(ctx, txn, id)
+	if err != nil {
+		return nil, err
+	}
+
+	schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
+	if err != nil {
+		return nil, err
+	}
+
+	collection := db.newCollection(col, schema)
+	err = collection.loadIndexes(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	return collection, nil
+}
+
 // getCollectionByName returns an existing collection within the database.
 func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name string) (client.Collection, error) {
 	if name == "" {
@@ -740,7 +769,7 @@ func (c *collection) Description() client.CollectionDescription {
 }
 
 // Name returns the collection name.
-func (c *collection) Name() string {
+func (c *collection) Name() immutable.Option[string] {
 	return c.Description().Name
 }
 
@@ -989,7 +1018,7 @@ func (c *collection) save(
 			if isSecondaryRelationID {
 				primaryId := val.Value().(string)
 
-				err = c.patchPrimaryDoc(ctx, txn, c.Name(), relationFieldDescription, primaryKey.DocID, primaryId)
+				err = c.patchPrimaryDoc(ctx, txn, c.Name().Value(), relationFieldDescription, primaryKey.DocID, primaryId)
 				if err != nil {
 					return cid.Undef, err
 				}

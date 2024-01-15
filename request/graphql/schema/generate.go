@@ -108,7 +108,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 		var isEmbedded bool
 		for _, definition := range collections {
-			if t.Name() == definition.Schema.Name && definition.Description.Name == "" {
+			if t.Name() == definition.Schema.Name && !definition.Description.Name.HasValue() {
 				isEmbedded = true
 				break
 			}
@@ -194,7 +194,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		var isReadOnly bool
 		var collectionFound bool
 		for _, definition := range collections {
-			if t.Name() == definition.Description.Name {
+			if t.Name() == definition.Description.Name.Value() {
 				var isQuerySource bool
 				if len(definition.Description.Sources) != 0 {
 					_, isQuerySource = definition.Description.Sources[0].(*client.QuerySource)
@@ -420,7 +420,7 @@ func (g *Generator) buildTypes(
 		// TODO remove when Go 1.22
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
-		isEmbeddedObject := collection.Description.Name == ""
+		isEmbeddedObject := !collection.Description.Name.HasValue()
 		var isQuerySource bool
 		if len(collection.Description.Sources) != 0 {
 			_, isQuerySource = collection.Description.Sources[0].(*client.QuerySource)
@@ -432,7 +432,7 @@ func (g *Generator) buildTypes(
 			// If this is an embedded object, take the type name from the Schema
 			objectName = collection.Schema.Name
 		} else {
-			objectName = collection.Description.Name
+			objectName = collection.Description.Name.Value()
 		}
 
 		// check if type exists
@@ -537,7 +537,7 @@ func (g *Generator) buildTypes(
 // for collection create and update mutation operations.
 func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefinition) error {
 	for _, c := range collections {
-		if c.Description.Name == "" {
+		if !c.Description.Name.HasValue() {
 			// If the definition's collection is empty, this must be a collectionless
 			// schema, in which case users cannot mutate documents through it and we
 			// have no need to build mutation input types for it.
@@ -549,7 +549,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 		// TODO remove when Go 1.22
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
-		mutationInputName := collection.Description.Name + "MutationInputArg"
+		mutationInputName := collection.Description.Name.Value() + "MutationInputArg"
 
 		// check if mutation input type exists
 		if _, ok := g.manager.schema.TypeMap()[mutationInputName]; ok {

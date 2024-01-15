@@ -84,8 +84,8 @@ func (db *db) getAllIndexes(
 			return nil, err
 		}
 
-		indexes[col.Name] = append(
-			indexes[col.Name],
+		indexes[col.Name.Value()] = append(
+			indexes[col.Name.Value()],
 			indexDescriptions[i],
 		)
 	}
@@ -486,7 +486,11 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 	// at the moment we support only single field indexes that can be stored only in
 	// ascending order. This will change once we introduce composite indexes.
 	direction := "ASC"
-	sb.WriteString(col.Name())
+	if col.Name().HasValue() {
+		sb.WriteString(col.Name().Value())
+	} else {
+		sb.WriteString(fmt.Sprint(col.ID()))
+	}
 	sb.WriteByte('_')
 	// we can safely assume that there is at least one field in the slice
 	// because we validate it before calling this function

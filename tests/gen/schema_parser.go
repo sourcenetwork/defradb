@@ -31,7 +31,7 @@ func parseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
 	}
 	result := make(map[string]client.CollectionDefinition)
 	for _, col := range cols {
-		result[col.Description.Name] = col
+		result[col.Description.Name.Value()] = col
 	}
 	return result, nil
 }

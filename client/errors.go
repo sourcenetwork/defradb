@@ -17,18 +17,19 @@ import (
 )
 
 const (
-	errFieldNotExist               string = "The given field does not exist"
-	errUnexpectedType              string = "unexpected type"
-	errParsingFailed               string = "failed to parse argument"
-	errUninitializeProperty        string = "invalid state, required property is uninitialized"
-	errMaxTxnRetries               string = "reached maximum transaction reties"
-	errRelationOneSided            string = "relation must be defined on both schemas"
-	errCollectionNotFound          string = "collection not found"
-	errFieldOrAliasToFieldNotExist string = "The given field or alias to field does not exist"
-	errUnknownCRDT                 string = "unknown crdt"
-	errCRDTKindMismatch            string = "CRDT type %s can't be assigned to field kind %s"
-	errInvalidCRDTType             string = "CRDT type not supported"
-	errFailedToUnmarshalCollection string = "failed to unmarshal collection json"
+	errFieldNotExist                       string = "The given field does not exist"
+	errUnexpectedType                      string = "unexpected type"
+	errParsingFailed                       string = "failed to parse argument"
+	errUninitializeProperty                string = "invalid state, required property is uninitialized"
+	errMaxTxnRetries                       string = "reached maximum transaction reties"
+	errRelationOneSided                    string = "relation must be defined on both schemas"
+	errCollectionNotFound                  string = "collection not found"
+	errFieldOrAliasToFieldNotExist         string = "The given field or alias to field does not exist"
+	errUnknownCRDT                         string = "unknown crdt"
+	errCRDTKindMismatch                    string = "CRDT type %s can't be assigned to field kind %s"
+	errInvalidCRDTType                     string = "CRDT type not supported"
+	errFailedToUnmarshalCollection         string = "failed to unmarshal collection json"
+	errOperationNotPermittedOnNamelessCols string = "operation not permitted on nameless collection"
 )
 
 // Errors returnable from this package.
@@ -36,17 +37,18 @@ const (
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrFieldNotExist               = errors.New(errFieldNotExist)
-	ErrUnexpectedType              = errors.New(errUnexpectedType)
-	ErrFailedToUnmarshalCollection = errors.New(errFailedToUnmarshalCollection)
-	ErrFieldNotObject              = errors.New("trying to access field on a non object type")
-	ErrValueTypeMismatch           = errors.New("value does not match indicated type")
-	ErrDocumentNotFound            = errors.New("no document for the given ID exists")
-	ErrInvalidUpdateTarget         = errors.New("the target document to update is of invalid type")
-	ErrInvalidUpdater              = errors.New("the updater of a document is of invalid type")
-	ErrInvalidDeleteTarget         = errors.New("the target document to delete is of invalid type")
-	ErrMalformedDocID              = errors.New("malformed document ID, missing either version or cid")
-	ErrInvalidDocIDVersion         = errors.New("invalid document ID version")
+	ErrFieldNotExist                       = errors.New(errFieldNotExist)
+	ErrUnexpectedType                      = errors.New(errUnexpectedType)
+	ErrFailedToUnmarshalCollection         = errors.New(errFailedToUnmarshalCollection)
+	ErrOperationNotPermittedOnNamelessCols = errors.New(errOperationNotPermittedOnNamelessCols)
+	ErrFieldNotObject                      = errors.New("trying to access field on a non object type")
+	ErrValueTypeMismatch                   = errors.New("value does not match indicated type")
+	ErrDocumentNotFound                    = errors.New("no document for the given ID exists")
+	ErrInvalidUpdateTarget                 = errors.New("the target document to update is of invalid type")
+	ErrInvalidUpdater                      = errors.New("the updater of a document is of invalid type")
+	ErrInvalidDeleteTarget                 = errors.New("the target document to delete is of invalid type")
+	ErrMalformedDocID                      = errors.New("malformed document ID, missing either version or cid")
+	ErrInvalidDocIDVersion                 = errors.New("invalid document ID version")
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

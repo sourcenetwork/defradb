@@ -39,15 +39,17 @@ func SaveCollection(
 		return client.CollectionDescription{}, err
 	}
 
-	idBuf, err := json.Marshal(desc.ID)
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
+	if desc.Name.HasValue() {
+		idBuf, err := json.Marshal(desc.ID)
+		if err != nil {
+			return client.CollectionDescription{}, err
+		}
 
-	nameKey := core.NewCollectionNameKey(desc.Name)
-	err = txn.Systemstore().Put(ctx, nameKey.ToDS(), idBuf)
-	if err != nil {
-		return client.CollectionDescription{}, err
+		nameKey := core.NewCollectionNameKey(desc.Name.Value())
+		err = txn.Systemstore().Put(ctx, nameKey.ToDS(), idBuf)
+		if err != nil {
+			return client.CollectionDescription{}, err
+		}
 	}
 
 	// The need for this key is temporary, we should replace it with the global collection ID

@@ -252,7 +252,7 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 	}
 
 	// Add the collection attributes.
-	simpleExplainMap[collectionNameLabel] = n.col.Name()
+	simpleExplainMap[collectionNameLabel] = n.col.Name().Value()
 	simpleExplainMap[collectionIDLabel] = n.col.Description().IDString()
 
 	// Add the spans attribute.

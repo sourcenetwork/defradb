@@ -135,7 +135,7 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 	require.NoError(b.f.t, err)
 	var collection client.Collection
 	for _, col := range cols {
-		if col.Name() == b.colName {
+		if col.Name().Value() == b.colName {
 			collection = col
 			break
 		}
@@ -361,9 +361,9 @@ func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t
 	users := f.addUsersCollection()
 	products := f.getProductsCollectionDesc()
 
-	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
+	_, err := f.createCollectionIndexFor(users.Name().Value(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
-	_, err = f.createCollectionIndexFor(products.Name(), getProductsIndexDescOnCategory())
+	_, err = f.createCollectionIndexFor(products.Name().Value(), getProductsIndexDescOnCategory())
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -637,11 +637,11 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	users := f.addUsersCollection()
-	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
+	_, err := f.createCollectionIndexFor(users.Name().Value(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
-	_, err = f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnAge())
+	_, err = f.createCollectionIndexFor(users.Name().Value(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
-	_, err = f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnWeight())
+	_, err = f.createCollectionIndexFor(users.Name().Value(), getUsersIndexDescOnWeight())
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -649,7 +649,7 @@ func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f.saveDocToCollection(f.newUserDoc("Islam", 23, users), users)
 
 	products := f.getProductsCollectionDesc()
-	_, err = f.createCollectionIndexFor(products.Name(), getProductsIndexDescOnCategory())
+	_, err = f.createCollectionIndexFor(products.Name().Value(), getProductsIndexDescOnCategory())
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -1058,9 +1058,9 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 func TestUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	users := f.addUsersCollection()
-	_, err := f.createCollectionIndexFor(users.Name(), makeUnique(getUsersIndexDescOnName()))
+	_, err := f.createCollectionIndexFor(users.Name().Value(), makeUnique(getUsersIndexDescOnName()))
 	require.NoError(f.t, err)
-	_, err = f.createCollectionIndexFor(users.Name(), makeUnique(getUsersIndexDescOnAge()))
+	_, err = f.createCollectionIndexFor(users.Name().Value(), makeUnique(getUsersIndexDescOnAge()))
 	require.NoError(f.t, err)
 	f.commitTxn()
 

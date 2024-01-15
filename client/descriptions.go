@@ -14,6 +14,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
@@ -23,7 +25,7 @@ type CollectionDescription struct {
 	//
 	// It is conceptually local to the node hosting the DefraDB instance, but currently there
 	// is no means to update the local value so that it differs from the (global) schema name.
-	Name string
+	Name immutable.Option[string]
 
 	// ID is the local identifier of this collection.
 	//
@@ -78,7 +80,7 @@ func (col CollectionDescription) GetFieldByRelation(
 	schema *SchemaDescription,
 ) (FieldDescription, bool) {
 	for _, field := range schema.Fields {
-		if field.RelationName == relationName && !(col.Name == otherCollectionName && otherFieldName == field.Name) {
+		if field.RelationName == relationName && !(col.Name.Value() == otherCollectionName && otherFieldName == field.Name) {
 			return field, true
 		}
 	}
@@ -336,7 +338,7 @@ func (m RelationType) IsSet(target RelationType) bool {
 // of json to a [CollectionDescription].
 type collectionDescription struct {
 	// These properties are unmarshalled using the default json unmarshaller
-	Name            string
+	Name            immutable.Option[string]
 	ID              uint32
 	SchemaVersionID string
 	Indexes         []IndexDescription

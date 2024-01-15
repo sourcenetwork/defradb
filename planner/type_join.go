@@ -261,7 +261,7 @@ func (p *Planner) makeTypeJoinOne(
 
 	subTypeField, subTypeFieldNameFound := subTypeCol.Description().GetFieldByRelation(
 		subTypeFieldDesc.RelationName,
-		parent.collection.Name(),
+		parent.collection.Name().Value(),
 		subTypeFieldDesc.Name,
 		&subTypeSchema,
 	)
@@ -396,7 +396,7 @@ func (p *Planner) makeTypeJoinMany(
 
 	rootField, rootNameFound := subTypeCol.Description().GetFieldByRelation(
 		subTypeFieldDesc.RelationName,
-		parent.collection.Name(),
+		parent.collection.Name().Value(),
 		subTypeFieldDesc.Name,
 		&subTypeSchema,
 	)

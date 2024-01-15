@@ -63,7 +63,7 @@ func (db *db) addView(
 
 	returnDescriptions := make([]client.CollectionDefinition, len(newDefinitions))
 	for i, definition := range newDefinitions {
-		if definition.Description.Name == "" {
+		if !definition.Description.Name.HasValue() {
 			schema, err := description.CreateSchemaVersion(ctx, txn, definition.Schema)
 			if err != nil {
 				return nil, err
