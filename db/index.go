@@ -131,9 +131,8 @@ func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([][]byte, 
 				}
 				result = append(result, valBytes)
 				continue
-			} else {
-				return nil, err
 			}
+			return nil, err
 		}
 		if !i.validateFieldFuncs[iter](fieldVal.Value()) {
 			return nil, NewErrInvalidFieldValue(i.fieldsDescs[iter].Kind, fieldVal)
