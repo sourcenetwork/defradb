@@ -77,7 +77,7 @@ func (f *IndexFetcher) Init(
 		}
 	}
 
-	f.docFields = make([]client.FieldDescription, 0, len(fields)-len(f.indexedFields))
+	f.docFields = make([]client.FieldDescription, 0, len(fields))
 outer:
 	for i := range fields {
 		for j := range f.indexedFields {

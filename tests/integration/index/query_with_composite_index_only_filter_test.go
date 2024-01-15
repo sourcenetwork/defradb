@@ -620,7 +620,7 @@ func TestQueryWithCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *
 
 func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _eq filter on nil value",
+		Description: "Test index filtering with _eq filter on nil value on first field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: schemaWithNameAgeIndex,
@@ -662,7 +662,7 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t 
 
 func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _eq filter on nil value",
+		Description: "Test index filtering with _eq filter on nil value on second field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: schemaWithNameAgeIndex,
@@ -704,6 +704,64 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t
 					{
 						"name": "Alice",
 						"age":  nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithCompositeIndex_IfMiddleFieldIsNotIfFilter_ShouldIgnoreValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test composite index with filter without middle field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(fields: ["name", "email", "age"]) {
+						name: String
+						email: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"email": "alice@gmail.com",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alan",
+						"email": "alan@gmail.com",
+						"age":	38
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"email": "bob@gmail.com",
+						"age":	51
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {name: {_like: "%l%"}, age: {_gt: 30}}) {
+							name
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Alan",
 					},
 				},
 			},
