@@ -363,3 +363,46 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One to many view",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Author {
+						name: String
+						books: [Book]
+					}
+					type Book {
+						name: String
+						author: Author
+					}
+				`,
+			},
+			testUtils.CreateView{
+				Query: `
+					Author {
+						name
+						books {
+							name
+						}
+					}
+				`,
+				SDL: `
+					type AuthorView {
+						name: String
+						books: [BookView]
+					}
+					interface BookView {
+						name: String
+						author: AuthorView
+					}
+				`,
+				ExpectedError: "relations in views must only be defined on one schema",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

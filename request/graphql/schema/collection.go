@@ -536,7 +536,12 @@ func finalizeRelations(relationManager *RelationManager, definitions []client.Co
 
 			// if not finalized then we are missing one side of the relationship
 			// unless this is an embedded object, which only have single-sided relations
-			if _, ok := embeddedObjNames[field.Schema]; !ok && !rel.finalized {
+			_, shouldBeOneSidedRelation := embeddedObjNames[field.Schema]
+			if shouldBeOneSidedRelation && rel.finalized {
+				return NewErrViewRelationMustBeOneSided(field.Name, field.Schema)
+			}
+
+			if !shouldBeOneSidedRelation && !rel.finalized {
 				return client.NewErrRelationOneSided(field.Name, field.Schema)
 			}
 
