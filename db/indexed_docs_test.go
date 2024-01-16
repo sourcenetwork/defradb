@@ -19,6 +19,7 @@ import (
 
 	ipfsDatastore "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -211,12 +212,15 @@ func (*indexTestFixture) resetSystemStoreStubs(systemStoreOn *mocks.DSReaderWrit
 }
 
 func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_Expecter) {
+	if f.users == nil {
+		f.users = f.addUsersCollection()
+	}
 	desc := getUsersIndexDescOnName()
 	desc.ID = 1
 	indexOnNameDescData, err := json.Marshal(desc)
 	require.NoError(f.t, err)
 
-	colIndexKey := core.NewCollectionIndexKey(usersColName, "")
+	colIndexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), "")
 	matchPrefixFunc := func(q query.Query) bool {
 		return q.Prefix == colIndexKey.ToDS().String()
 	}
@@ -230,7 +234,7 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(f.t), nil)
 
-	colIndexOnNameKey := core.NewCollectionIndexKey(usersColName, testUsersColIndexName)
+	colIndexOnNameKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
 
 	if f.users != nil {

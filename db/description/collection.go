@@ -61,6 +61,26 @@ func SaveCollection(
 	return desc, nil
 }
 
+func GetCollectionByID(
+	ctx context.Context,
+	txn datastore.Txn,
+	id uint32,
+) (client.CollectionDescription, error) {
+	key := core.NewCollectionKey(id)
+	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+	if err != nil {
+		return client.CollectionDescription{}, err
+	}
+
+	var col client.CollectionDescription
+	err = json.Unmarshal(buf, &col)
+	if err != nil {
+		return client.CollectionDescription{}, err
+	}
+
+	return col, nil
+}
+
 // GetCollectionByName returns the collection with the given name.
 //
 // If no collection of that name is found, it will return an error.
@@ -81,19 +101,7 @@ func GetCollectionByName(
 		return client.CollectionDescription{}, err
 	}
 
-	key := core.NewCollectionKey(id)
-	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
-	var col client.CollectionDescription
-	err = json.Unmarshal(buf, &col)
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
-	return col, nil
+	return GetCollectionByID(ctx, txn, id)
 }
 
 // GetCollectionsBySchemaVersionID returns all collections that use the given
