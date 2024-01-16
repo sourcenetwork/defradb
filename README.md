@@ -334,7 +334,7 @@ defradb client schema add '
 Start (or continue running from above) *nodeB*, that will be receiving updates:
 
 ```shell
-defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162
+defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172
 ```
 
 Here we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
