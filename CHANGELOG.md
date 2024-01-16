@@ -1,3 +1,80 @@
+<a name="v0.9.0"></a>
+## [v0.9.0](https://github.com/sourcenetwork/defradb/compare/v0.8.0...v0.9.0)
+
+> 2024-01-18
+
+DefraDB v0.9 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.8.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+
+### Features
+
+* Mutation typed input ([#2167](https://github.com/sourcenetwork/defradb/issues/2167))
+* Add PN Counter CRDT type ([#2119](https://github.com/sourcenetwork/defradb/issues/2119))
+* Allow users to add Views ([#2114](https://github.com/sourcenetwork/defradb/issues/2114))
+* Add unique secondary index ([#2131](https://github.com/sourcenetwork/defradb/issues/2131))
+* New cmd for docs auto generation ([#2096](https://github.com/sourcenetwork/defradb/issues/2096))
+* Add blob scalar type ([#2091](https://github.com/sourcenetwork/defradb/issues/2091))
+
+### Fixes
+
+* Add entropy to counter CRDT type updates ([#2186](https://github.com/sourcenetwork/defradb/issues/2186))
+* Handle multiple nil values on unique indexed fields ([#2178](https://github.com/sourcenetwork/defradb/issues/2178))
+* Filtering on unique index if there is no match ([#2177](https://github.com/sourcenetwork/defradb/issues/2177))
+
+### Performance
+
+* Switch LensVM to wasmtime runtime ([#2030](https://github.com/sourcenetwork/defradb/issues/2030))
+
+### Refactoring
+
+* Add strong typing to document creation ([#2161](https://github.com/sourcenetwork/defradb/issues/2161))
+* Rename key,id,dockey to docID terminology ([#1749](https://github.com/sourcenetwork/defradb/issues/1749))
+* Simplify Merkle CRDT workflow ([#2111](https://github.com/sourcenetwork/defradb/issues/2111))
+
+### Testing
+
+* Add auto-doc generation ([#2051](https://github.com/sourcenetwork/defradb/issues/2051))
+
+### Continuous integration
+
+* Add windows test runner ([#2033](https://github.com/sourcenetwork/defradb/issues/2033))
+
+### Chore
+
+* Update Lens to v0.5 ([#2083](https://github.com/sourcenetwork/defradb/issues/2083))
+
+### Bot
+
+* Bump [@types](https://github.com/types)/react from 18.2.47 to 18.2.48 in /playground ([#2213](https://github.com/sourcenetwork/defradb/issues/2213))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 6.18.0 to 6.18.1 in /playground ([#2215](https://github.com/sourcenetwork/defradb/issues/2215))
+* Update dependencies (bulk dependabot PRs) 15-01-2024 ([#2217](https://github.com/sourcenetwork/defradb/issues/2217))
+* Bump follow-redirects from 1.15.3 to 1.15.4 in /playground ([#2181](https://github.com/sourcenetwork/defradb/issues/2181))
+* Bump github.com/getkin/kin-openapi from 0.120.0 to 0.122.0 ([#2097](https://github.com/sourcenetwork/defradb/issues/2097))
+* Update dependencies (bulk dependabot PRs) 08-01-2024 ([#2173](https://github.com/sourcenetwork/defradb/issues/2173))
+* Bump github.com/bits-and-blooms/bitset from 1.12.0 to 1.13.0 ([#2160](https://github.com/sourcenetwork/defradb/issues/2160))
+* Bump [@types](https://github.com/types)/react from 18.2.45 to 18.2.46 in /playground ([#2159](https://github.com/sourcenetwork/defradb/issues/2159))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 6.15.0 to 6.16.0 in /playground ([#2156](https://github.com/sourcenetwork/defradb/issues/2156))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 6.15.0 to 6.16.0 in /playground ([#2155](https://github.com/sourcenetwork/defradb/issues/2155))
+* Update dependencies (bulk dependabot PRs) 27-12-2023 ([#2154](https://github.com/sourcenetwork/defradb/issues/2154))
+* Bump github.com/spf13/viper from 1.17.0 to 1.18.2 ([#2145](https://github.com/sourcenetwork/defradb/issues/2145))
+* Bump golang.org/x/crypto from 0.16.0 to 0.17.0 ([#2144](https://github.com/sourcenetwork/defradb/issues/2144))
+* Update dependencies (bulk dependabot PRs) 18-12-2023 ([#2142](https://github.com/sourcenetwork/defradb/issues/2142))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 6.13.2 to 6.14.0 in /playground ([#2136](https://github.com/sourcenetwork/defradb/issues/2136))
+* Bump [@types](https://github.com/types)/react from 18.2.43 to 18.2.45 in /playground ([#2134](https://github.com/sourcenetwork/defradb/issues/2134))
+* Bump vite from 5.0.7 to 5.0.10 in /playground ([#2135](https://github.com/sourcenetwork/defradb/issues/2135))
+* Update dependencies (bulk dependabot PRs) 04-12-2023 ([#2133](https://github.com/sourcenetwork/defradb/issues/2133))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 6.13.1 to 6.13.2 in /playground ([#2109](https://github.com/sourcenetwork/defradb/issues/2109))
+* Bump vite from 5.0.2 to 5.0.5 in /playground ([#2112](https://github.com/sourcenetwork/defradb/issues/2112))
+* Bump [@types](https://github.com/types)/react from 18.2.41 to 18.2.42 in /playground ([#2108](https://github.com/sourcenetwork/defradb/issues/2108))
+* Update dependencies (bulk dependabot PRs) 04-12-2023 ([#2107](https://github.com/sourcenetwork/defradb/issues/2107))
+* Bump [@types](https://github.com/types)/react from 18.2.38 to 18.2.39 in /playground ([#2086](https://github.com/sourcenetwork/defradb/issues/2086))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 6.12.0 to 6.13.0 in /playground ([#2085](https://github.com/sourcenetwork/defradb/issues/2085))
+* Update dependencies (bulk dependabot PRs) 27-11-2023 ([#2081](https://github.com/sourcenetwork/defradb/issues/2081))
+* Bump swagger-ui-react from 5.10.0 to 5.10.3 in /playground ([#2067](https://github.com/sourcenetwork/defradb/issues/2067))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 6.11.0 to 6.12.0 in /playground ([#2068](https://github.com/sourcenetwork/defradb/issues/2068))
+* Update dependencies (bulk dependabot PRs) 20-11-2023 ([#2066](https://github.com/sourcenetwork/defradb/issues/2066))
+
 <a name="v0.8.0"></a>
 ## [v0.8.0](https://github.com/sourcenetwork/defradb/compare/v0.7.0...v0.8.0)
 
