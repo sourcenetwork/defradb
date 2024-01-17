@@ -302,19 +302,26 @@ func (i *collectionUniqueIndex) Save(
 func (i *collectionUniqueIndex) newUniqueIndexError(
 	doc *client.Document,
 ) error {
-	fieldVal, err := doc.GetValue(i.fieldsDescs[0].Name)
+	kvs := make([]errors.KV, 0, len(i.fieldsDescs))
 	var val any
-	if err != nil {
-		// If the error is ErrFieldNotExist, we leave `val` as is (e.g. nil)
-		// otherwise we return the error
-		if !errors.Is(err, client.ErrFieldNotExist) {
-			return err
+	for iter := range i.fieldsDescs {
+		fieldVal, err := doc.GetValue(i.fieldsDescs[iter].Name)
+		if err != nil {
+			// If the error is ErrFieldNotExist, we leave `val` as is (e.g. nil)
+			// otherwise we return the error
+			if !errors.Is(err, client.ErrFieldNotExist) {
+				return err
+			}
+		} else {
+			val = fieldVal.Value()
 		}
-	} else {
-		val = fieldVal.Value()
+		kvs = append(kvs, errors.NewKV(i.fieldsDescs[iter].Name, val))
 	}
 
-	return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldsDescs[0].Name, val)
+	if len(kvs) == 1 {
+		return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldsDescs[0].Name, val)
+	}
+	return NewErrCanNotIndexNonUniqueCombination(doc.ID().String(), kvs...)
 }
 
 func (i *collectionUniqueIndex) Update(

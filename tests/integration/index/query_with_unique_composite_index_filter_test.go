@@ -16,21 +16,21 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-const schemaWithNameAgeIndex = `
-	type User @index(fields: ["name", "age"]) {
+const schemaWithNameAgeUniqueIndex = `
+	type User @index(unique: true, fields: ["name", "age"]) {
 		name: String
 		age: Int
 		email: String
 	}`
 
-const schemaWithAgeNameIndex = `
-	type User @index(fields: ["age", "name"]) {
+const schemaWithAgeNameUniqueIndex = `
+	type User @index(unique: true, fields: ["age", "name"]) {
 		name: String
 		age: Int
 		email: String
 	}`
 
-func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 	req1 := `query {
 		User(filter: {name: {_eq: "Islam"}}) {
 			name
@@ -53,20 +53,38 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 		Description: "Test filtering on composite index with _eq filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Islam",
+						"age":	40
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Islam",
+						"age":	50
+					}`,
 			},
 			testUtils.Request{
 				Request: req1,
 				Results: []map[string]any{
 					{"name": "Islam", "age": 32},
+					{"name": "Islam", "age": 40},
+					{"name": "Islam", "age": 50},
 				},
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(3),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -88,7 +106,7 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {name: {_ne: "Keenan"}, age: {_gt: 44}}) {
 			name
@@ -98,7 +116,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithAgeNameIndex,
+				Schema: schemaWithAgeNameUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -119,7 +137,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {name: {_ne: "Keenan"}, age: {_gt: 44}}) {
 			name
@@ -129,7 +147,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -150,7 +168,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {name: {_ne: "Keenan"}, age: {_ge: 44},}) {
 			name
@@ -160,7 +178,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetc
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithAgeNameIndex,
+				Schema: schemaWithAgeNameUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -182,7 +200,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetc
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {age: {_ge: 44}, name: {_ne: "Keenan"}}) {
 			name
@@ -192,7 +210,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -214,7 +232,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {age: {_lt: 24}, name: {_ne: "Shahzad"}}) {
 			name
@@ -224,7 +242,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *t
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithAgeNameIndex,
+				Schema: schemaWithAgeNameUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -245,7 +263,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {age: {_lt: 24}, name: {_ne: "Shahzad"}}) {
 			name
@@ -255,7 +273,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -276,7 +294,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {age: {_le: 28}, name: {_ne: "Bruno"}}) {
 			name
@@ -286,7 +304,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithAgeNameIndex,
+				Schema: schemaWithAgeNameUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -308,7 +326,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {age: {_le: 28}, name: {_ne: "Bruno"}}) {
 			name
@@ -318,7 +336,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -340,7 +358,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {name: {_ne: "Islam"}, age: {_ne: 28}}) {
 			name
@@ -350,7 +368,7 @@ func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _ne filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -378,7 +396,77 @@ func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEfficiently(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_eq: 33}, name: {_in: ["Addo", "Andy", "Fred"]}}) {
+			name
+			age
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _in filter",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: schemaWithNameAgeUniqueIndex,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Addo",
+						"age":	33
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Addo",
+						"age":	88
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Andy",
+						"age":	33
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Andy",
+						"age":	70
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Andy",
+						"age":	51
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"name": "Addo", "age": 33},
+					{"name": "Andy", "age": 33},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {age: {_in: [20, 28, 33]}, name: {_in: ["Addo", "Andy", "Fred"]}}) {
 			name
@@ -388,10 +476,26 @@ func TestQueryWithCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Addo",
+						"age":	10
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Addo",
+						"age":	88
+					}`,
 			},
 			testUtils.Request{
 				Request: req,
@@ -402,7 +506,7 @@ func TestQueryWithCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(5),
 			},
 		},
 	}
@@ -410,7 +514,7 @@ func TestQueryWithCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {age: {_nin: [20, 23, 28, 42]}, name: {_nin: ["John", "Andy", "Chris"]}}) {
 			name
@@ -420,7 +524,7 @@ func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _nin filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -443,7 +547,7 @@ func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 	req1 := `query {
 			User(filter: {email: {_like: "a%"}, name: {_like: "%o"}}) {
 				name
@@ -484,7 +588,7 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(fields: ["name", "email"]) {
+					type User @index(unique: true, fields: ["name", "email"]) {
 						name: String 
 						email: String 
 					}`,
@@ -556,7 +660,7 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {name: {_nlike: "%h%"}, email: {_nlike: "%d%"}}) {
 			name
@@ -567,7 +671,7 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(fields: ["name", "email"]) {
+					type User @index(unique: true, fields: ["name", "email"]) {
 						name: String 
 						email: String 
 					}`,
@@ -594,12 +698,12 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test if index is not used when first field is not in filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -618,12 +722,12 @@ func TestQueryWithCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter on nil value on first field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -658,12 +762,12 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter on nil value on second field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeIndex,
+				Schema: schemaWithNameAgeUniqueIndex,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -708,13 +812,13 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t *testing.T) {
+func TestQueryWithUniqueCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test composite index with filter without middle field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type User @index(fields: ["name", "email", "age"]) {
+					type User @index(unique: true, fields: ["name", "email", "age"]) {
 						name: String
 						email: String
 						age: Int

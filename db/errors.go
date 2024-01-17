@@ -87,6 +87,7 @@ const (
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 	errIndexDoesNotMatchName              string = "the index used does not match the given name"
 	errCanNotIndexNonUniqueField          string = "can not index a doc's field that violates unique index"
+	errCanNotIndexNonUniqueCombination    string = "can not index a doc's fields that violate unique index"
 	errInvalidViewQuery                   string = "the query provided is not valid as a View"
 )
 
@@ -573,6 +574,14 @@ func NewErrCanNotIndexNonUniqueField(docID, fieldName string, value any) error {
 		errors.NewKV("Field name", fieldName),
 		errors.NewKV("Field value", value),
 	)
+}
+
+func NewErrCanNotIndexNonUniqueCombination(docID string, fieldValues ...errors.KV) error {
+	kvPairs := make([]errors.KV, 0, len(fieldValues)+1)
+	kvPairs = append(kvPairs, errors.NewKV("DocID", docID))
+	kvPairs = append(kvPairs, fieldValues...)
+
+	return errors.New(errCanNotIndexNonUniqueCombination, kvPairs...)
 }
 
 func NewErrInvalidViewQueryCastFailed(query string) error {

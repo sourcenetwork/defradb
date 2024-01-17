@@ -89,10 +89,6 @@ type eqPrefixIndexIterator struct {
 	queryResultIterator
 }
 
-func (i *eqPrefixIndexIterator) SetKeyFieldValue(value []byte) {
-	i.keyFieldValue = value
-}
-
 func (i *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	i.indexKey.FieldValues = [][]byte{i.keyFieldValue}
 	resultIter, err := store.Query(ctx, query.Query{
@@ -123,22 +119,17 @@ func (i *eqPrefixIndexIterator) Next() (indexIterResult, error) {
 	}
 }
 
-type keyFieldIndexIterator interface {
-	indexIterator
-	SetKeyFieldValue([]byte)
-}
-
 type eqSingleIndexIterator struct {
-	indexKey      core.IndexDataStoreKey
-	keyFieldValue []byte
-	execInfo      *ExecInfo
+	indexKey       core.IndexDataStoreKey
+	keyFieldValues [][]byte
+	execInfo       *ExecInfo
 
 	ctx   context.Context
 	store datastore.DSReaderWriter
 }
 
 func (i *eqSingleIndexIterator) SetKeyFieldValue(value []byte) {
-	i.keyFieldValue = value
+	i.keyFieldValues = [][]byte{value}
 }
 
 func (i *eqSingleIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
@@ -151,7 +142,7 @@ func (i *eqSingleIndexIterator) Next() (indexIterResult, error) {
 	if i.store == nil {
 		return indexIterResult{}, nil
 	}
-	i.indexKey.FieldValues = [][]byte{i.keyFieldValue}
+	i.indexKey.FieldValues = i.keyFieldValues
 	val, err := i.store.Get(i.ctx, i.indexKey.ToDS())
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
@@ -169,7 +160,7 @@ func (i *eqSingleIndexIterator) Close() error {
 }
 
 type inIndexIterator struct {
-	keyFieldIndexIterator
+	indexIterator
 	keyFieldValues [][]byte
 	nextValIndex   int
 	ctx            context.Context
@@ -179,7 +170,7 @@ type inIndexIterator struct {
 
 func (i *inIndexIterator) nextIterator() (bool, error) {
 	if i.nextValIndex > 0 {
-		err := i.keyFieldIndexIterator.Close()
+		err := i.indexIterator.Close()
 		if err != nil {
 			return false, err
 		}
@@ -189,8 +180,13 @@ func (i *inIndexIterator) nextIterator() (bool, error) {
 		return false, nil
 	}
 
-	i.SetKeyFieldValue(i.keyFieldValues[i.nextValIndex])
-	err := i.keyFieldIndexIterator.Init(i.ctx, i.store)
+	switch fieldIter := i.indexIterator.(type) {
+	case *eqPrefixIndexIterator:
+		fieldIter.keyFieldValue = i.keyFieldValues[i.nextValIndex]
+	case *eqSingleIndexIterator:
+		fieldIter.keyFieldValues[0] = i.keyFieldValues[i.nextValIndex]
+	}
+	err := i.indexIterator.Init(i.ctx, i.store)
 	if err != nil {
 		return false, err
 	}
@@ -208,7 +204,7 @@ func (i *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWrit
 
 func (i *inIndexIterator) Next() (indexIterResult, error) {
 	for i.hasIterator {
-		res, err := i.keyFieldIndexIterator.Next()
+		res, err := i.indexIterator.Next()
 		if err != nil {
 			return indexIterResult{}, err
 		}
@@ -493,6 +489,27 @@ func (f *IndexFetcher) determineFieldFilterConditions() []fieldFilterCond {
 	return result
 }
 
+func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fieldFilterCond) bool {
+	res := indexDesc.Unique && len(conditions) == len(indexDesc.Fields)
+	for i := 1; i < len(conditions); i++ {
+		res = res && conditions[i].op == opEq
+	}
+	return res
+}
+
+func getFieldsBytes(conditions []fieldFilterCond) ([][]byte, error) {
+	result := make([][]byte, 0, len(conditions))
+	for i := range conditions {
+		fieldVal := client.NewFieldValue(client.LWW_REGISTER, conditions[i].val)
+		keyFieldBytes, err := fieldVal.Bytes()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, keyFieldBytes)
+	}
+	return result, nil
+}
+
 func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	fieldConditions := f.determineFieldFilterConditions()
 	indexDataStoreKey := core.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
@@ -504,24 +521,30 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 
 	switch fieldConditions[0].op {
 	case opEq:
-		fieldVal := client.NewFieldValue(client.LWW_REGISTER, fieldConditions[0].val)
-
-		keyValueBytes, err := fieldVal.Bytes()
-		if err != nil {
-			return nil, err
-		}
-
-		if len(matchers) > 1 {
-			matchers[0] = &anyMatcher{}
-		}
-
-		if f.indexDesc.Unique {
+		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
+			keyFieldsBytes, err := getFieldsBytes(fieldConditions)
+			if err != nil {
+				return nil, err
+			}
 			return &eqSingleIndexIterator{
-				indexKey:      indexDataStoreKey,
-				keyFieldValue: keyValueBytes,
-				execInfo:      &f.execInfo,
+				indexKey:       indexDataStoreKey,
+				keyFieldValues: keyFieldsBytes,
+				execInfo:       &f.execInfo,
 			}, nil
 		} else {
+			fieldVal := client.NewFieldValue(client.LWW_REGISTER, fieldConditions[0].val)
+
+			keyValueBytes, err := fieldVal.Bytes()
+			if err != nil {
+				return nil, err
+			}
+
+			// iterators for _eq filter already iterate over keys with first field value
+			// matching the filter value, so we can skip the first matcher
+			if len(matchers) > 1 {
+				matchers[0] = &anyMatcher{}
+			}
+
 			return &eqPrefixIndexIterator{
 				indexKey:      indexDataStoreKey,
 				keyFieldValue: keyValueBytes,
@@ -544,15 +567,23 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 			keyFieldArr = append(keyFieldArr, keyFieldBytes)
 		}
 
+		// iterators for _in filter already iterate over keys with first field value
+		// matching the filter value, so we can skip the first matcher
 		if len(matchers) > 1 {
 			matchers[0] = &anyMatcher{}
 		}
 
-		var iter keyFieldIndexIterator
-		if f.indexDesc.Unique {
+		var iter indexIterator
+		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
+			restFieldsVals, e := getFieldsBytes(fieldConditions[1:])
+			if e != nil {
+				return nil, e
+			}
+			restFieldsVals = append([][]byte{{}}, restFieldsVals...)
 			iter = &eqSingleIndexIterator{
-				indexKey: indexDataStoreKey,
-				execInfo: &f.execInfo,
+				indexKey:       indexDataStoreKey,
+				execInfo:       &f.execInfo,
+				keyFieldValues: restFieldsVals,
 			}
 		} else {
 			iter = &eqPrefixIndexIterator{
@@ -562,8 +593,8 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 			}
 		}
 		return &inIndexIterator{
-			keyFieldIndexIterator: iter,
-			keyFieldValues:        keyFieldArr,
+			indexIterator:  iter,
+			keyFieldValues: keyFieldArr,
 		}, nil
 	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike:
 		return &scanningIndexIterator{
