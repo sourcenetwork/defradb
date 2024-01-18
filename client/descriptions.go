@@ -35,7 +35,7 @@ type CollectionDescription struct {
 	// The ID of the schema version that this collection is at.
 	SchemaVersionID string
 
-	// Sources is the set of sources from which this collection draws data from.
+	// Sources is the set of sources from which this collection draws data.
 	//
 	// Currently supported source types are:
 	// - [QuerySource]
