@@ -8,6 +8,12 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+// todo: The logger(s) appear to leak resources and do not close down promptly on windows,
+// the log files have open readers when the Golang test runner attempts to delete them.
+// See https://github.com/sourcenetwork/defradb/issues/2057 for more info.
+
+//go:build !windows
+
 package logging
 
 import (

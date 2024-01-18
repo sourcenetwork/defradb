@@ -54,11 +54,6 @@ func (db *db) addSchema(
 		return nil, err
 	}
 
-	err = db.parser.SetSchema(ctx, txn, append(existingDefinitions, newDefinitions...))
-	if err != nil {
-		return nil, err
-	}
-
 	returnDescriptions := make([]client.CollectionDescription, len(newDefinitions))
 	for i, definition := range newDefinitions {
 		col, err := db.createCollection(ctx, txn, definition)
@@ -68,18 +63,18 @@ func (db *db) addSchema(
 		returnDescriptions[i] = col.Description()
 	}
 
+	err = db.loadSchema(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
 	return returnDescriptions, nil
 }
 
 func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
-	collections, err := db.getAllCollections(ctx, txn)
+	definitions, err := db.getAllActiveDefinitions(ctx, txn)
 	if err != nil {
 		return err
-	}
-
-	definitions := make([]client.CollectionDefinition, len(collections))
-	for i := range collections {
-		definitions[i] = collections[i].Definition()
 	}
 
 	return db.parser.SetSchema(ctx, txn, definitions)
@@ -150,17 +145,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 		}
 	}
 
-	newCollections, err := db.getAllCollections(ctx, txn)
-	if err != nil {
-		return err
-	}
-
-	definitions := make([]client.CollectionDefinition, len(newCollections))
-	for i, col := range newCollections {
-		definitions[i] = col.Definition()
-	}
-
-	return db.parser.SetSchema(ctx, txn, definitions)
+	return db.loadSchema(ctx, txn)
 }
 
 // substituteSchemaPatch handles any substitution of values that may be required before

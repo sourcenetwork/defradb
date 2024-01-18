@@ -52,6 +52,8 @@ func TestP2PSubscribeAddGetMultiple(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
+				// Note: If a test is failing here in the error trace, you likely need to change the
+				// order of these schema types declared below (some renaming can cause this).
 				Schema: `
 					type Users {
 						name: String

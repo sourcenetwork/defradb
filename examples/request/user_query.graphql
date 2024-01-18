@@ -4,6 +4,6 @@ query {
         age
         verified
         points
-        _key
+        _docID
     }
 }

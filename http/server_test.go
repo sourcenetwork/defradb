@@ -105,7 +105,7 @@ func TestNewServerAndRunWithSelfSignedCertAndNoKeyFiles(t *testing.T) {
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
-		assert.Contains(t, err.Error(), "no such file or directory")
+		assert.Contains(t, err.Error(), "failed to load given keys")
 		defer close(serverDone)
 	}()
 

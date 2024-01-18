@@ -13,41 +13,45 @@ package schema
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errDuplicateField             string = "duplicate field"
-	errFieldMissingRelation       string = "field missing associated relation"
-	errRelationMissingField       string = "relation missing field"
-	errAggregateTargetNotFound    string = "aggregate target not found"
-	errSchemaTypeAlreadyExist     string = "schema type already exists"
-	errObjectNotFoundDuringThunk  string = "object not found whilst executing fields thunk"
-	errTypeNotFound               string = "no type found for given name"
-	errRelationNotFound           string = "no relation found"
-	errNonNullForTypeNotSupported string = "NonNull variants for type are not supported"
-	errIndexMissingFields         string = "index missing fields"
-	errIndexUnknownArgument       string = "index with unknown argument"
-	errIndexInvalidArgument       string = "index with invalid argument"
-	errIndexInvalidName           string = "index with invalid name"
+	errDuplicateField                string = "duplicate field"
+	errFieldMissingRelation          string = "field missing associated relation"
+	errRelationMissingField          string = "relation missing field"
+	errAggregateTargetNotFound       string = "aggregate target not found"
+	errSchemaTypeAlreadyExist        string = "schema type already exists"
+	errMutationInputTypeAlreadyExist string = "mutation input type already exists"
+	errObjectNotFoundDuringThunk     string = "object not found whilst executing fields thunk"
+	errTypeNotFound                  string = "no type found for given name"
+	errRelationNotFound              string = "no relation found"
+	errNonNullForTypeNotSupported    string = "NonNull variants for type are not supported"
+	errIndexMissingFields            string = "index missing fields"
+	errIndexUnknownArgument          string = "index with unknown argument"
+	errIndexInvalidArgument          string = "index with invalid argument"
+	errIndexInvalidName              string = "index with invalid name"
+	errViewRelationMustBeOneSided    string = "relations in views must only be defined on one schema"
 )
 
 var (
-	ErrDuplicateField             = errors.New(errDuplicateField)
-	ErrFieldMissingRelation       = errors.New(errFieldMissingRelation)
-	ErrRelationMissingField       = errors.New(errRelationMissingField)
-	ErrAggregateTargetNotFound    = errors.New(errAggregateTargetNotFound)
-	ErrSchemaTypeAlreadyExist     = errors.New(errSchemaTypeAlreadyExist)
-	ErrObjectNotFoundDuringThunk  = errors.New(errObjectNotFoundDuringThunk)
-	ErrTypeNotFound               = errors.New(errTypeNotFound)
-	ErrRelationNotFound           = errors.New(errRelationNotFound)
-	ErrNonNullForTypeNotSupported = errors.New(errNonNullForTypeNotSupported)
-	ErrRelationMutlipleTypes      = errors.New("relation type can only be either One or Many, not both")
-	ErrRelationMissingTypes       = errors.New("relation is missing its defined types and fields")
-	ErrRelationInvalidType        = errors.New("relation has an invalid type to be finalize")
-	ErrMultipleRelationPrimaries  = errors.New("relation can only have a single field set as primary")
+	ErrDuplicateField                = errors.New(errDuplicateField)
+	ErrFieldMissingRelation          = errors.New(errFieldMissingRelation)
+	ErrRelationMissingField          = errors.New(errRelationMissingField)
+	ErrAggregateTargetNotFound       = errors.New(errAggregateTargetNotFound)
+	ErrSchemaTypeAlreadyExist        = errors.New(errSchemaTypeAlreadyExist)
+	ErrMutationInputTypeAlreadyExist = errors.New(errMutationInputTypeAlreadyExist)
+	ErrObjectNotFoundDuringThunk     = errors.New(errObjectNotFoundDuringThunk)
+	ErrTypeNotFound                  = errors.New(errTypeNotFound)
+	ErrRelationNotFound              = errors.New(errRelationNotFound)
+	ErrNonNullForTypeNotSupported    = errors.New(errNonNullForTypeNotSupported)
+	ErrRelationMutlipleTypes         = errors.New("relation type can only be either One or Many, not both")
+	ErrRelationMissingTypes          = errors.New("relation is missing its defined types and fields")
+	ErrRelationInvalidType           = errors.New("relation has an invalid type to be finalize")
+	ErrMultipleRelationPrimaries     = errors.New("relation can only have a single field set as primary")
 	// NonNull is the literal name of the GQL type, so we have to disable the linter
 	//nolint:revive
-	ErrNonNullNotSupported = errors.New("NonNull fields are not currently supported")
-	ErrIndexMissingFields  = errors.New(errIndexMissingFields)
-	ErrIndexWithUnknownArg = errors.New(errIndexUnknownArgument)
-	ErrIndexWithInvalidArg = errors.New(errIndexInvalidArgument)
+	ErrNonNullNotSupported        = errors.New("NonNull fields are not currently supported")
+	ErrIndexMissingFields         = errors.New(errIndexMissingFields)
+	ErrIndexWithUnknownArg        = errors.New(errIndexUnknownArgument)
+	ErrIndexWithInvalidArg        = errors.New(errIndexInvalidArgument)
+	ErrViewRelationMustBeOneSided = errors.New(errViewRelationMustBeOneSided)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -94,6 +98,13 @@ func NewErrSchemaTypeAlreadyExist(name string) error {
 	)
 }
 
+func NewErrMutationInputTypeAlreadyExist(name string) error {
+	return errors.New(
+		errMutationInputTypeAlreadyExist,
+		errors.NewKV("Name", name),
+	)
+}
+
 func NewErrObjectNotFoundDuringThunk(object string) error {
 	return errors.New(
 		errObjectNotFoundDuringThunk,
@@ -119,5 +130,13 @@ func NewErrRelationNotFound(relationName string) error {
 	return errors.New(
 		errRelationNotFound,
 		errors.NewKV("RelationName", relationName),
+	)
+}
+
+func NewErrViewRelationMustBeOneSided(fieldName string, typeName string) error {
+	return errors.New(
+		errViewRelationMustBeOneSided,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Type", typeName),
 	)
 }

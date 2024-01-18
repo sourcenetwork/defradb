@@ -33,7 +33,7 @@ type ObjectMutation struct {
 
 	IDs    immutable.Option[[]string]
 	Filter immutable.Option[Filter]
-	Data   string
+	Input  map[string]any
 
 	Fields []Selection
 }
@@ -46,8 +46,8 @@ func (m ObjectMutation) ToSelect() *Select {
 			Name:  m.Collection,
 			Alias: m.Alias,
 		},
-		Fields:  m.Fields,
-		DocKeys: m.IDs,
-		Filter:  m.Filter,
+		Fields: m.Fields,
+		DocIDs: m.IDs,
+		Filter: m.Filter,
 	}
 }

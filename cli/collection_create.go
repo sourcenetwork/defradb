@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"io"
 	"os"
 
@@ -66,35 +65,19 @@ Example: create from stdin
 				return ErrNoDocOrFile
 			}
 
-			var docMap any
-			if err := json.Unmarshal(docData, &docMap); err != nil {
-				return err
-			}
-
-			switch t := docMap.(type) {
-			case map[string]any:
-				doc, err := client.NewDocFromMap(t)
+			if client.IsJSONArray(docData) {
+				docs, err := client.NewDocsFromJSON(docData, col.Schema())
 				if err != nil {
 					return err
 				}
-				return col.Create(cmd.Context(), doc)
-			case []any:
-				docs := make([]*client.Document, len(t))
-				for i, v := range t {
-					docMap, ok := v.(map[string]any)
-					if !ok {
-						return ErrInvalidDocument
-					}
-					doc, err := client.NewDocFromMap(docMap)
-					if err != nil {
-						return err
-					}
-					docs[i] = doc
-				}
 				return col.CreateMany(cmd.Context(), docs)
-			default:
-				return ErrInvalidDocument
 			}
+
+			doc, err := client.NewDocFromJSON(docData, col.Schema())
+			if err != nil {
+				return err
+			}
+			return col.Create(cmd.Context(), doc)
 		},
 	}
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")

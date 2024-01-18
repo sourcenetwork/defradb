@@ -28,6 +28,7 @@ jobs:
     name: Run tests matrix job
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         client-type: [go, http, cli]
@@ -45,10 +46,21 @@ jobs:
             database-type: badger-memory
             mutation-type: collection-save
             detect-changes: false
+          - os: windows-latest
+            client-type: go
+            database-type: badger-memory
+            mutation-type: collection-save
+            detect-changes: false
 
     runs-on: ${{ matrix.os }}
 
+    # We run all runners via the bash shell to provide us with a consistent set of env variables and commands
+    defaults:
+      run:
+        shell: bash
+
     env:
+      CGO_ENABLED: 1
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
       DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
       DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
@@ -83,17 +95,22 @@ jobs:
         if: ${{ !matrix.detect-changes }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
+          name: ${{ matrix.os }}_${{ matrix.client-type }}_${{ matrix.database-type }}_${{ matrix.mutation-type }}
           path: coverage.txt
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
 
   upload-coverage:
     name: Upload test code coverage job
 
-    runs-on: ubuntu-latest
-
     needs: run-tests
+
+    # Important to know: 
+    # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
+    # - `if: success()` is always implied unless `always()` or `failure()` is specified.
+    if: success() || failure()
+
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code into the directory

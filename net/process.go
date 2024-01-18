@@ -28,9 +28,8 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
+	merklecrdt "github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
 type blockProcessor struct {
@@ -70,7 +69,7 @@ func (bp *blockProcessor) mergeBlocks(ctx context.Context) {
 				ctx,
 				"Failed to process block",
 				err,
-				logging.NewKV("DocKey", bp.dsKey.DocKey),
+				logging.NewKV("DocID", bp.dsKey.DocID),
 				logging.NewKV("CID", nd.Cid()),
 			)
 		}
@@ -112,7 +111,7 @@ func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field 
 				ctx,
 				"Failed to process block",
 				err,
-				logging.NewKV("DocKey", bp.dsKey.DocKey),
+				logging.NewKV("DocID", bp.dsKey.DocID),
 				logging.NewKV("CID", nd.Cid()),
 			)
 		}
@@ -123,38 +122,47 @@ func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field 
 
 func initCRDTForType(
 	ctx context.Context,
-	txn datastore.MultiStore,
+	txn datastore.Txn,
 	col client.Collection,
 	dsKey core.DataStoreKey,
 	field string,
-) (crdt.MerkleCRDT, error) {
+) (merklecrdt.MerkleCRDT, error) {
 	var key core.DataStoreKey
 	var ctype client.CType
 	description := col.Description()
 	if field == "" { // empty field name implies composite type
 		ctype = client.COMPOSITE
-		key = base.MakeCollectionKey(
+		key = base.MakeDataStoreKeyWithCollectionDescription(
 			description,
 		).WithInstanceInfo(
 			dsKey,
 		).WithFieldId(
 			core.COMPOSITE_NAMESPACE,
 		)
-	} else {
-		fd, ok := col.Schema().GetField(field)
-		if !ok {
-			return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, dsKey))
-		}
-		ctype = fd.Typ
-		fieldID := fd.ID.String()
-		key = base.MakeCollectionKey(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
+
+		log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
+		return merklecrdt.NewMerkleCompositeDAG(
+			txn,
+			core.NewCollectionSchemaVersionKey(col.Schema().VersionID, col.ID()),
+			key,
+			field,
+		), nil
 	}
+
+	fd, ok := col.Schema().GetField(field)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, dsKey))
+	}
+	ctype = fd.Typ
+	fieldID := fd.ID.String()
+	key = base.MakeDataStoreKeyWithCollectionDescription(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
+
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
-	return crdt.DefaultFactory.InstanceWithStores(
+	return merklecrdt.InstanceWithStore(
 		txn,
 		core.NewCollectionSchemaVersionKey(col.Schema().VersionID, col.ID()),
-		events.EmptyUpdateChannel,
 		ctype,
+		fd.Kind,
 		key,
 		field,
 	)

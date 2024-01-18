@@ -20,29 +20,31 @@ import (
 
 // openApiSchemas is a mapping of types to auto generate schemas for.
 var openApiSchemas = map[string]any{
-	"error":                &errorResponse{},
-	"create_tx":            &CreateTxResponse{},
-	"collection_update":    &CollectionUpdateRequest{},
-	"collection_delete":    &CollectionDeleteRequest{},
-	"peer_info":            &peer.AddrInfo{},
-	"graphql_request":      &GraphQLRequest{},
-	"graphql_response":     &GraphQLResponse{},
-	"backup_config":        &client.BackupConfig{},
-	"collection":           &client.CollectionDescription{},
-	"schema":               &client.SchemaDescription{},
-	"index":                &client.IndexDescription{},
-	"delete_result":        &client.DeleteResult{},
-	"update_result":        &client.UpdateResult{},
-	"lens_config":          &client.LensConfig{},
-	"replicator":           &client.Replicator{},
-	"ccip_request":         &CCIPRequest{},
-	"ccip_response":        &CCIPResponse{},
-	"patch_schema_request": &patchSchemaRequest{},
+	"error":                 &errorResponse{},
+	"create_tx":             &CreateTxResponse{},
+	"collection_update":     &CollectionUpdateRequest{},
+	"collection_delete":     &CollectionDeleteRequest{},
+	"peer_info":             &peer.AddrInfo{},
+	"graphql_request":       &GraphQLRequest{},
+	"graphql_response":      &GraphQLResponse{},
+	"backup_config":         &client.BackupConfig{},
+	"collection":            &client.CollectionDescription{},
+	"schema":                &client.SchemaDescription{},
+	"collection_definition": &client.CollectionDefinition{},
+	"index":                 &client.IndexDescription{},
+	"delete_result":         &client.DeleteResult{},
+	"update_result":         &client.UpdateResult{},
+	"lens_config":           &client.LensConfig{},
+	"replicator":            &client.Replicator{},
+	"ccip_request":          &CCIPRequest{},
+	"ccip_response":         &CCIPResponse{},
+	"patch_schema_request":  &patchSchemaRequest{},
+	"add_view_request":      &addViewRequest{},
 }
 
 func NewOpenAPISpec() (*openapi3.T, error) {
 	schemas := make(openapi3.Schemas)
-	responses := make(openapi3.Responses)
+	responses := make(openapi3.ResponseBodies)
 	parameters := make(openapi3.ParametersMap)
 
 	generator := openapi3gen.NewGenerator(openapi3gen.UseAllExportedFields())
@@ -89,7 +91,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			Title:   "DefraDB API",
 			Version: "0",
 		},
-		Paths: make(openapi3.Paths),
+		Paths: openapi3.NewPaths(),
 		Servers: openapi3.Servers{
 			&openapi3.Server{
 				Description: "Local DefraDB instance",
@@ -113,6 +115,10 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			&openapi3.Tag{
 				Name:        "collection",
 				Description: "Add, remove, or update documents",
+			},
+			&openapi3.Tag{
+				Name:        "view",
+				Description: "Add views",
 			},
 			&openapi3.Tag{
 				Name:        "index",

@@ -20,7 +20,7 @@ type CommitSelect struct {
 	Select
 
 	// The key of the target document for which to get commits for.
-	DocKey immutable.Option[string]
+	DocID immutable.Option[string]
 
 	// The field for which commits have been requested.
 	FieldID immutable.Option[string]
@@ -42,7 +42,7 @@ func (s *CommitSelect) CloneTo(index int) Requestable {
 func (s *CommitSelect) cloneTo(index int) *CommitSelect {
 	return &CommitSelect{
 		Select:  *s.Select.cloneTo(index),
-		DocKey:  s.DocKey,
+		DocID:   s.DocID,
 		FieldID: s.FieldID,
 		Cid:     s.Cid,
 	}

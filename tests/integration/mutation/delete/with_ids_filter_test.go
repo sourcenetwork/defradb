@@ -18,7 +18,7 @@ import (
 
 func TestMutationDeletion_WithIDsAndEmptyFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion of using ids and filter, known id and empty filter.",
+		Description: "Deletion of using document ids and filter, known id and empty filter.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -34,13 +34,13 @@ func TestMutationDeletion_WithIDsAndEmptyFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(ids: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"], filter: {}) {
-						_key
+					delete_User(docIDs: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"], filter: {}) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
+						"_docID": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
 					},
 				},
 			},

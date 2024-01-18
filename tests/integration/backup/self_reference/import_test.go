@@ -25,13 +25,13 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 				ImportContent: `{
 					"User":[
 						{
-							"_key":"bae-790e7e49-f2e3-5ad6-83d9-5dfb6d8ba81d",
+							"_docID":"bae-790e7e49-f2e3-5ad6-83d9-5dfb6d8ba81d",
 							"age":31,
 							"boss_id":"bae-e933420a-988a-56f8-8952-6c245aebd519",
 							"name":"Bob"
 						},
 						{
-							"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519",
+							"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519",
 							"age":30,
 							"name":"John"
 						}
@@ -71,8 +71,8 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"User":[` +
 		`{` +
-		`"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
-		`"_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
+		`"_docID":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
+		`"_docIDNew":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
 		`"age":31,` +
 		`"boss_id":"bae-0648f44e-74e8-593b-a662-3310ec278927",` +
 		`"name":"Bob"` +
@@ -269,16 +269,16 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 	expectedExportData := `{` +
 		`"Author":[` +
 		`{` +
-		`"_key":"bae-d760e445-22ef-5956-9947-26de226891f6",` +
-		`"_newKey":"bae-e3a6ff01-33ff-55f4-88f9-d13db26274c8",` +
+		`"_docID":"bae-d760e445-22ef-5956-9947-26de226891f6",` +
+		`"_docIDNew":"bae-e3a6ff01-33ff-55f4-88f9-d13db26274c8",` +
 		`"book_id":"bae-c821a0a9-7afc-583b-accb-dc99a09c1ff8",` +
 		`"name":"John"` +
 		`}` +
 		`],` +
 		`"Book":[` +
 		`{` +
-		`"_key":"bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4",` +
-		`"_newKey":"bae-c821a0a9-7afc-583b-accb-dc99a09c1ff8",` +
+		`"_docID":"bae-4059cb15-2b30-5049-b0df-64cc7ad9b5e4",` +
+		`"_docIDNew":"bae-c821a0a9-7afc-583b-accb-dc99a09c1ff8",` +
 		`"name":"John and the sourcerers' stone",` +
 		`"reviewedBy_id":"bae-e3a6ff01-33ff-55f4-88f9-d13db26274c8"` +
 		`}` +

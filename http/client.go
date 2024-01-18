@@ -163,6 +163,32 @@ func (c *Client) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID st
 	return err
 }
 
+type addViewRequest struct {
+	Query string
+	SDL   string
+}
+
+func (c *Client) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+	methodURL := c.http.baseURL.JoinPath("view")
+
+	body, err := json.Marshal(addViewRequest{query, sdl})
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	var descriptions []client.CollectionDefinition
+	if err := c.http.requestJson(req, &descriptions); err != nil {
+		return nil, err
+	}
+
+	return descriptions, nil
+}
+
 func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
 	return c.LensRegistry().SetMigration(ctx, config)
 }

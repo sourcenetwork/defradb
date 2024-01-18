@@ -33,9 +33,9 @@ Create, read, update, and delete documents within a collection.
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client collection create](defradb_client_collection_create.md)	 - Create a new document.
-* [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete documents by key or filter.
+* [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete documents by docID or filter.
 * [defradb client collection describe](defradb_client_collection_describe.md)	 - View collection description.
+* [defradb client collection docIDs](defradb_client_collection_docIDs.md)	 - List all document IDs (docIDs).
 * [defradb client collection get](defradb_client_collection_get.md)	 - View document fields.
-* [defradb client collection keys](defradb_client_collection_keys.md)	 - List all document keys.
-* [defradb client collection update](defradb_client_collection_update.md)	 - Update documents by key or filter.
+* [defradb client collection update](defradb_client_collection_update.md)	 - Update documents by docID or filter.
 

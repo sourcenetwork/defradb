@@ -29,8 +29,8 @@ func TestMutationInvalidMutation(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					dostuff_User(data: "") {
-						_key
+					dostuff_User(input: {}) {
+						_docID
 					}
 				}`,
 				ExpectedError: "Cannot query field \"dostuff_User\" on type \"Mutation\".",

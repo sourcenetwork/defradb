@@ -49,12 +49,13 @@ func TestNewNode_WithEnableRelay_NoError(t *testing.T) {
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
 	require.NoError(t, err)
-	_, err = NewNode(
+	n, err := NewNode(
 		context.Background(),
 		db,
 		WithEnableRelay(true),
 	)
 	require.NoError(t, err)
+	defer n.Close()
 }
 
 func TestNewNode_WithDBClosed_NoError(t *testing.T) {
@@ -83,6 +84,7 @@ func TestNewNode_NoPubSub_NoError(t *testing.T) {
 		WithPubSub(false),
 	)
 	require.NoError(t, err)
+	defer n.Close()
 	require.Nil(t, n.ps)
 }
 
@@ -99,6 +101,7 @@ func TestNewNode_WithPubSub_NoError(t *testing.T) {
 	)
 
 	require.NoError(t, err)
+	defer n.Close()
 	// overly simple check of validity of pubsub, avoiding the process of creating a PubSub
 	require.NotNil(t, n.ps)
 }
@@ -128,6 +131,7 @@ func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
+	defer n1.Close()
 	n1.Bootstrap([]peer.AddrInfo{})
 }
 
@@ -143,12 +147,14 @@ func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
+	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
+	defer n2.Close()
 	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
 	if err != nil {
 		t.Fatal(err)
@@ -168,12 +174,14 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
+	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
 		db,
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
+	defer n2.Close()
 	addrs, err := netutils.ParsePeers([]string{
 		n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String(),
 		"/ip4/0.0.0.0/tcp/1234/p2p/" + "12D3KooWC8YY6Tx3uAeHsdBmoy7PJPwqXAHE4HkCZ5veankKWci6",
@@ -195,6 +203,7 @@ func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
 		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
 }
@@ -235,6 +244,7 @@ func TestPeerConnectionEventEmitter_MultiEvent_NoError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
 	require.NoError(t, err)
@@ -253,6 +263,7 @@ func TestSubscribeToPubSubEvents_SubscriptionError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	n.Peer.host = &mockHost{n.Peer.host}
 
@@ -266,6 +277,7 @@ func TestPubSubEventEmitter_MultiEvent_NoError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
 	require.NoError(t, err)
@@ -284,6 +296,7 @@ func TestSubscribeToPushLogEvents_SubscriptionError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	n.Peer.host = &mockHost{n.Peer.host}
 
@@ -297,6 +310,7 @@ func TestPushLogEventEmitter_SingleEvent_NoError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	require.NoError(t, err)
@@ -312,6 +326,7 @@ func TestPushLogEventEmitter_MultiEvent_NoError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	require.NoError(t, err)
@@ -330,6 +345,7 @@ func TestWaitForPeerConnectionEvent_WithSamePeer_NoError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
 	require.NoError(t, err)
@@ -354,6 +370,7 @@ func TestWaitForPeerConnectionEvent_WithDifferentPeer_TimeoutError(t *testing.T)
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
 	require.NoError(t, err)
@@ -372,6 +389,7 @@ func TestWaitForPeerConnectionEvent_WithDifferentPeerAndContextClosed_NoError(t 
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(event.EvtPeerConnectednessChanged))
 	require.NoError(t, err)
@@ -392,6 +410,7 @@ func TestWaitForPubSubEvent_WithSamePeer_NoError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
 	require.NoError(t, err)
@@ -416,6 +435,7 @@ func TestWaitForPubSubEvent_WithDifferentPeer_TimeoutError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
 	require.NoError(t, err)
@@ -434,6 +454,7 @@ func TestWaitForPubSubEvent_WithDifferentPeerAndContextClosed_NoError(t *testing
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtPubSub))
 	require.NoError(t, err)
@@ -455,6 +476,7 @@ func TestWaitForPushLogByPeerEvent_WithSamePeer_NoError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	require.NoError(t, err)
@@ -480,6 +502,7 @@ func TestWaitForPushLogByPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T) 
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	require.NoError(t, err)
@@ -499,6 +522,7 @@ func TestWaitForPushLogByPeerEvent_WithDifferentPeerAndContextClosed_NoError(t *
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	require.NoError(t, err)
@@ -520,6 +544,7 @@ func TestWaitForPushLogFromPeerEvent_WithSamePeer_NoError(t *testing.T) {
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	require.NoError(t, err)
@@ -545,6 +570,7 @@ func TestWaitForPushLogFromPeerEvent_WithDifferentPeer_TimeoutError(t *testing.T
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	require.NoError(t, err)
@@ -564,6 +590,7 @@ func TestWaitForPushLogFromPeerEvent_WithDifferentPeerAndContextClosed_NoError(t
 		db,
 	)
 	require.NoError(t, err)
+	defer n.Close()
 
 	emitter, err := n.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	require.NoError(t, err)

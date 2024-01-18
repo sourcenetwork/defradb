@@ -36,6 +36,8 @@ type IndexDescription struct {
 	ID uint32
 	// Fields contains the fields that are being indexed.
 	Fields []IndexedFieldDescription
+	// Unique indicates whether the index is unique.
+	Unique bool
 }
 
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.

@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"encoding/json"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -37,9 +35,9 @@ type createNode struct {
 	// collection name, meta-data, etc.
 	collection client.Collection
 
-	// newDoc is the JSON string of the new document, unparsed
-	newDocStr string
-	doc       *client.Document
+	// input map of fields and values
+	input map[string]any
+	doc   *client.Document
 
 	err error
 
@@ -59,7 +57,7 @@ func (n *createNode) Kind() string { return "createNode" }
 func (n *createNode) Init() error { return nil }
 
 func (n *createNode) Start() error {
-	doc, err := client.NewDocFromJSON([]byte(n.newDocStr))
+	doc, err := client.NewDocFromMap(n.input, n.collection.Schema())
 	if err != nil {
 		n.err = err
 		return err
@@ -86,7 +84,7 @@ func (n *createNode) Next() (bool, error) {
 
 	currentValue := n.documentMapping.NewDoc()
 
-	currentValue.SetKey(n.doc.Key().String())
+	currentValue.SetID(n.doc.ID().String())
 	for i, value := range n.doc.Values() {
 		if len(n.documentMapping.IndexesByName[i.Name()]) > 0 {
 			n.documentMapping.SetFirstOfName(&currentValue, i.Name(), value.Value())
@@ -101,8 +99,8 @@ func (n *createNode) Next() (bool, error) {
 	n.currentValue = currentValue
 
 	desc := n.collection.Description()
-	docKey := base.MakeDocKey(desc, currentValue.GetKey())
-	n.results.Spans(core.NewSpans(core.NewSpan(docKey, docKey.PrefixEnd())))
+	docID := base.MakeDataStoreKeyWithCollectionAndDocID(desc, currentValue.GetID())
+	n.results.Spans(core.NewSpans(core.NewSpan(docID, docID.PrefixEnd())))
 
 	err := n.results.Init()
 	if err != nil {
@@ -135,24 +133,14 @@ func (n *createNode) Close() error {
 
 func (n *createNode) Source() planNode { return n.results }
 
-func (n *createNode) simpleExplain() (map[string]any, error) {
-	data := map[string]any{}
-	err := json.Unmarshal([]byte(n.newDocStr), &data)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]any{
-		dataLabel: data,
-	}, nil
-}
-
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	switch explainType {
 	case request.SimpleExplain:
-		return n.simpleExplain()
+		return map[string]any{
+			inputLabel: n.input,
+		}, nil
 
 	case request.ExecuteExplain:
 		return map[string]any{
@@ -173,7 +161,7 @@ func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
 	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
-		newDocStr: parsed.Data,
+		input:     parsed.Input,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
 	}

@@ -2,5 +2,5 @@ type User {
     name: String
     age: Int
     verified: Boolean
-    points: Float
+    points: Int @crdt(type: "pncounter")
 }

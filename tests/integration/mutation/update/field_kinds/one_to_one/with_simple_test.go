@@ -14,15 +14,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationUpdateOneToOneNoChild(t *testing.T) {
-	unknownKey := "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+	unknownID := "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
@@ -40,7 +40,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 					`{
 						"published_id": "%s"
 					}`,
-					unknownKey,
+					unknownID,
 				),
 			},
 			testUtils.Request{
@@ -61,7 +61,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne(t *testing.T) {
-	bookKey := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+	bookID := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation",
@@ -85,7 +85,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 					`{
 						"published_id": "%s"
 					}`,
-					bookKey,
+					bookID,
 				),
 			},
 			testUtils.Request{
@@ -133,7 +133,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
-	authorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	authorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the secondary side",
@@ -157,7 +157,7 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 					`{
 						"author_id": "%s"
 					}`,
-					authorKey,
+					authorID,
 				),
 			},
 			testUtils.Request{
@@ -204,8 +204,8 @@ func TestMutationUpdateOneToOneSecondarySide(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
-	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	bookKey := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
+	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from single side (wrong)",
@@ -229,7 +229,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 						"name": "Painted House",
 						"author_id": "%s"
 					}`,
-					author1Key,
+					author1ID,
 				),
 			},
 			testUtils.UpdateDoc{
@@ -239,7 +239,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 					`{
 						"published_id": "%s"
 					}`,
-					bookKey,
+					bookID,
 				),
 				ExpectedError: "target document is already linked to another document.",
 			},
@@ -250,8 +250,8 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) {
-	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
+	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	author2ID := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side",
@@ -275,7 +275,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 						"name": "Painted House",
 						"author_id": "%s"
 					}`,
-					author1Key,
+					author1ID,
 				),
 			},
 			testUtils.UpdateDoc{
@@ -285,7 +285,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 					`{
 						"author_id": "%s"
 					}`,
-					author2Key,
+					author2ID,
 				),
 				ExpectedError: "target document is already linked to another document.",
 			},
@@ -296,9 +296,9 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide(t *testing.T) 
 }
 
 func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T) {
-	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	invalidLenSubKey := "35953ca-518d-9e6b-9ce6cd00eff5"
-	invalidAuthorKey := "bae-" + invalidLenSubKey
+	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	invalidLenSubID := "35953ca-518d-9e6b-9ce6cd00eff5"
+	invalidAuthorID := "bae-" + invalidLenSubID
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using invalid relation id",
@@ -316,7 +316,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 						"name": "Painted House",
 						"author_id": "%s"
 					}`,
-					author1Key,
+					author1ID,
 				),
 			},
 			testUtils.UpdateDoc{
@@ -326,9 +326,9 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 					`{
 						"author_id": "%s"
 					}`,
-					invalidAuthorKey,
+					invalidAuthorID,
 				),
-				ExpectedError: "uuid: incorrect UUID length 30 in string \"" + invalidLenSubKey + "\"",
+				ExpectedError: "uuid: incorrect UUID length 30 in string \"" + invalidLenSubID + "\"",
 			},
 		},
 	}
@@ -337,8 +337,8 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 }
 
 func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t *testing.T) {
-	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	invalidAuthorKey := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ee"
+	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	invalidAuthorID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ee"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side",
@@ -356,7 +356,7 @@ func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t
 						"name": "Painted House",
 						"author_id": "%s"
 					}`,
-					author1Key,
+					author1ID,
 				),
 			},
 			testUtils.UpdateDoc{
@@ -366,9 +366,9 @@ func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t
 					`{
 						"author_id": "%s"
 					}`,
-					invalidAuthorKey,
+					invalidAuthorID,
 				),
-				ExpectedError: "no document for the given key exists",
+				ExpectedError: "no document for the given ID exists",
 			},
 		},
 	}
@@ -377,8 +377,8 @@ func TestMutationUpdateOneToOne_InvalidRelationIDToLinkFromSecondarySide_Error(t
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_Error(t *testing.T) {
-	author1Key := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-	author2Key := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
+	author1ID := "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+	author2ID := "bae-35953caf-4898-518d-9e6b-9ce6cd86ebe5"
 
 	test := testUtils.TestCase{
 		Description: "One to one update mutation using relation id from secondary side, with a wrong field.",
@@ -407,7 +407,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_
 						"name": "Painted House",
 						"author_id": "%s"
 					}`,
-					author1Key,
+					author1ID,
 				),
 			},
 			testUtils.UpdateDoc{
@@ -418,9 +418,9 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySideWithWrongField_
 						"notName": "Unpainted Condo",
 						"author_id": "%s"
 					}`,
-					author2Key,
+					author2ID,
 				),
-				ExpectedError: "The given field does not exist. Name: notName",
+				ExpectedError: "In field \"notName\": Unknown field.",
 			},
 		},
 	}

@@ -1,7 +1,7 @@
 ![Tests Workflow](https://github.com/sourcenetwork/defradb/actions/workflows/test-and-upload-coverage.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sourcenetwork/defradb)](https://goreportcard.com/report/github.com/sourcenetwork/defradb)
 [![codecov](https://codecov.io/gh/sourcenetwork/defradb/branch/develop/graph/badge.svg?token=RHAORX13PA)](https://codecov.io/gh/sourcenetwork/defradb)
-[![Discord](https://img.shields.io/discord/427944769851752448.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://discord.source.network/)
+[![Discord](https://img.shields.io/discord/427944769851752448.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://discord.gg/w7jYQVJ)
 [![Twitter Follow](https://img.shields.io/twitter/follow/sourcenetwrk.svg?label=&style=social)](https://twitter.com/sourcenetwrk)
 
 <p align="center">
@@ -100,8 +100,8 @@ Submit a `mutation` request to create a document of the `User` type:
 ```shell
 defradb client query '
   mutation {
-      create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
-          _key
+      create_User(input: {age: 31, verified: true, points: 90, name: "Bob"}) {
+          _docID
       }
   }
 '
@@ -113,13 +113,13 @@ Expected response:
 {
   "data": [
     {
-      "_key": "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab",
+      "_docID": "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab",
     }
   ]
 }
 ```
 
-`_key` is the document's key, a unique identifier of the document, determined by its schema and initial data.
+`_docID` is the document's unique identifier determined by its schema and initial data.
 
 ## Query documents
 
@@ -129,7 +129,7 @@ Once you have populated your node with data, you can query it:
 defradb client query '
   query {
     User {
-      _key
+      _docID
       age
       name
       points
@@ -138,7 +138,7 @@ defradb client query '
 '
 ```
 
-This query obtains *all* users and returns their fields `_key, age, name, points`. GraphQL queries only return the exact fields requested.
+This query obtains *all* users and returns their fields `_docID, age, name, points`. GraphQL queries only return the exact fields requested.
 
 You can further filter results with the `filter` argument.
 
@@ -146,7 +146,7 @@ You can further filter results with the `filter` argument.
 defradb client query '
   query {
     User(filter: {points: {_ge: 50}}) {
-      _key
+      _docID
       age
       name
       points
@@ -166,7 +166,7 @@ To get the most recent commit in the MerkleDAG for the document identified as `b
 ```shell
 defradb client query '
   query {
-    latestCommits(dockey: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
+    latestCommits(docID: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
       cid
       delta
       height
@@ -334,7 +334,7 @@ defradb client schema add '
 Start (or continue running from above) *nodeB*, that will be receiving updates:
 
 ```shell
-defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162
+defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172
 ```
 
 Here we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
@@ -432,7 +432,7 @@ defradb client backup import path/to/backup.json
 
 ## Community
 
-Discuss on [Discord](https://discord.source.network/) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [Twitter](https://twitter.com/sourcenetwrk).
+Discuss on [Discord](https://discord.gg/w7jYQVJ) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [Twitter](https://twitter.com/sourcenetwrk).
 
 
 ## Licensing

@@ -12,100 +12,91 @@ package client
 
 import (
 	"github.com/fxamacker/cbor/v2"
+	"github.com/sourcenetwork/immutable"
 )
 
-// Value is an interface that points to a concrete Value implementation.
-// (TODO May collapse this down without an interface)
-type Value interface {
-	Value() any
-	IsDocument() bool
-	Type() CType
-	IsDirty() bool
-	Clean()
-	IsDelete() bool //todo: Update IsDelete naming
-	Delete()
-}
-
-// WriteableValue defines a simple interface with a Bytes() method
-// which is used to indicate if a Value is writeable type versus
-// a composite type like a Sub-Document.
-// Writeable types include simple Strings/Ints/Floats/Binary
-// that can be loaded into a CRDT Register, Set, Counter, etc.
-type WriteableValue interface {
-	Value
-
-	Bytes() ([]byte, error)
-}
-
-type ReadableValue interface {
-	Value
-
-	Read() (any, error)
-}
-
-type simpleValue struct {
+type FieldValue struct {
 	t       CType
 	value   any
 	isDirty bool
 	delete  bool
 }
 
-func newValue(t CType, val any) simpleValue {
-	return simpleValue{
+func NewFieldValue(t CType, val any) *FieldValue {
+	return &FieldValue{
 		t:       t,
 		value:   val,
 		isDirty: true,
 	}
 }
 
-// func (val simpleValue) Set(val any)
-
-func (val simpleValue) Value() any {
+func (val FieldValue) Value() any {
 	return val.value
 }
 
-func (val simpleValue) Type() CType {
+func (val FieldValue) Type() CType {
 	return val.t
 }
 
-func (val simpleValue) IsDocument() bool {
+func (val FieldValue) IsDocument() bool {
 	_, ok := val.value.(*Document)
 	return ok
 }
 
 // IsDirty returns if the value is marked as dirty (unsaved/changed)
-func (val simpleValue) IsDirty() bool {
+func (val FieldValue) IsDirty() bool {
 	return val.isDirty
 }
 
-func (val *simpleValue) Clean() {
+func (val *FieldValue) Clean() {
 	val.isDirty = false
 	val.delete = false
 }
 
-func (val *simpleValue) Delete() {
+func (val *FieldValue) Delete() {
 	val.delete = true
 	val.isDirty = true
 }
 
-func (val simpleValue) IsDelete() bool {
+func (val FieldValue) IsDelete() bool {
 	return val.delete
 }
 
-type cborValue struct {
-	*simpleValue
+func (val *FieldValue) SetType(t CType) {
+	val.t = t
 }
 
-// NewCBORValue creates a new CBOR value from a CRDT type and a value.
-func NewCBORValue(t CType, val any) WriteableValue {
-	return newCBORValue(t, val)
+func (val FieldValue) Bytes() ([]byte, error) {
+	em, err := cbor.EncOptions{Time: cbor.TimeRFC3339}.EncMode()
+	if err != nil {
+		return nil, err
+	}
+
+	var value any
+	switch tempVal := val.value.(type) {
+	case []immutable.Option[string]:
+		value = convertImmutable(tempVal)
+	case []immutable.Option[int64]:
+		value = convertImmutable(tempVal)
+	case []immutable.Option[float64]:
+		value = convertImmutable(tempVal)
+	case []immutable.Option[bool]:
+		value = convertImmutable(tempVal)
+	default:
+		value = val.value
+	}
+
+	return em.Marshal(value)
 }
 
-func newCBORValue(t CType, val any) WriteableValue {
-	v := newValue(t, val)
-	return cborValue{&v}
-}
-
-func (v cborValue) Bytes() ([]byte, error) {
-	return cbor.Marshal(v.value)
+func convertImmutable[T any](vals []immutable.Option[T]) []any {
+	var out []any
+	for _, val := range vals {
+		if !val.HasValue() {
+			out = append(out, nil)
+			continue
+		}
+		out = append(out, val.Value())
+	}
+	return out
 }

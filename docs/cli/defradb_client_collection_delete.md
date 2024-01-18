@@ -1,28 +1,28 @@
 ## defradb client collection delete
 
-Delete documents by key or filter.
+Delete documents by docID or filter.
 
 ### Synopsis
 
-Delete documents by key or filter and lists the number of documents deleted.
+Delete documents by docID or filter and lists the number of documents deleted.
 		
-Example: delete by key(s)
-  defradb client collection delete --name User --key bae-123,bae-456
+Example: delete by docID(s)
+  defradb client collection delete --name User --docID bae-123,bae-456
 
 Example: delete by filter
   defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
 		
 
 ```
-defradb client collection delete [--filter <filter> --key <key>] [flags]
+defradb client collection delete [--filter <filter> --docID <docID>] [flags]
 ```
 
 ### Options
 
 ```
+      --docID strings   Document ID
       --filter string   Document filter
   -h, --help            help for delete
-      --key strings     Document key
 ```
 
 ### Options inherited from parent commands

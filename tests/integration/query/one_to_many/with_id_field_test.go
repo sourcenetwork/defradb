@@ -14,12 +14,20 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 // This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
 func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-many relation primary direction, id field with name clash on primary side",
+		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+			// GQL mutation will return a different error
+			// when field types do not match
+			testUtils.CollectionNamedMutationType,
+			testUtils.CollectionSaveMutationType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -55,6 +63,7 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 					"name": "A Time for Mercy",
 					"author_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
 				}`,
+				ExpectedError: "value doesn't contain number; it contains string",
 			},
 			testUtils.Request{
 				Request: `query {
@@ -67,13 +76,6 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 					}
 				}`,
 				Results: []map[string]any{
-					{
-						"name":      "A Time for Mercy",
-						"author_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed",
-						"author": map[string]any{
-							"name": "John Grisham",
-						},
-					},
 					{
 						"name":      "Painted House",
 						"author_id": int64(123456),

@@ -52,7 +52,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 			// Books
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935", Has 1 Publisher
+				// "bae-080d7580-a791-541e-90bd-49bf69f858e1", Has 1 Publisher
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
@@ -84,7 +84,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 					"name": "Only Publisher of The Rooster Bar",
 					"address": "1 Rooster Ave., Waterloo, Ontario",
 					"yearOpened": 2022,
-					"book_id": "bae-b6c078f2-3427-5b99-bafd-97dcd7c2e935"
+					"book_id": "bae-080d7580-a791-541e-90bd-49bf69f858e1"
 			    }`,
 			},
 			testUtils.CreateDoc{
@@ -302,7 +302,7 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// bae-0718e995-e7b5-55b1-874a-8f7d956be53c
+				// bae-2c116b72-21f1-5c87-9148-f69f0c0c087e
 				Doc: `{
 					"name": "The Lord of the Rings",
 					"rating": 5.0,
@@ -315,7 +315,7 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 					"name": "Allen & Unwin",
 					"address": "1 Allen Ave., Sydney, Australia",
 					"yearOpened": 1954,
-					"book_id": "bae-0718e995-e7b5-55b1-874a-8f7d956be53c"
+					"book_id": "bae-2c116b72-21f1-5c87-9148-f69f0c0c087e"
 			    }`,
 			},
 			testUtils.Request{
