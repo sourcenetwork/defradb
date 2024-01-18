@@ -87,6 +87,21 @@ func (col CollectionDescription) GetFieldByRelation(
 	return FieldDescription{}, false
 }
 
+// QuerySources returns all the Sources of type [QuerySource]
+func (col CollectionDescription) QuerySources() []*QuerySource {
+	return sourcesOfType[*QuerySource](col)
+}
+
+func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
+	result := []ResultType{}
+	for _, source := range col.Sources {
+		if typedSource, isOfType := source.(ResultType); isOfType {
+			result = append(result, typedSource)
+		}
+	}
+	return result
+}
+
 // QuerySource represents a collection data source from a query.
 //
 // The query will be executed when data from this source is requested, and the query results
