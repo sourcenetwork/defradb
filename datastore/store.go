@@ -25,7 +25,7 @@ var (
 
 // RootStore wraps Batching and TxnDatastore requiring datastore to support both batching and transactions.
 type RootStore interface {
-	corekv.Batchable
+	// corekv.Batchable
 	corekv.TxnStore
 }
 

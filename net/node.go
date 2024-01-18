@@ -85,7 +85,7 @@ func NewNode(
 
 	fin := finalizer.NewFinalizer()
 
-	peerstore, err := pstoreds.NewPeerstore(ctx, db.Peerstore(), pstoreds.DefaultOpts())
+	peerstore, err := pstoreds.NewPeerstore(ctx, ds.NewMapDatastore(), pstoreds.DefaultOpts())
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
@@ -109,6 +109,7 @@ func NewNode(
 		libp2p.ListenAddrs(options.ListenAddrs...),
 		libp2p.Peerstore(peerstore),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
+			// TODO: ATTENTION TO THIS COMMENT!
 			// Delete this line and uncomment the next 6 lines once we remove batchable datastore support.
 			// var store ds.Batching
 			// // If `rootstore` doesn't implement `Batching`, `nil` will be passed
@@ -116,8 +117,8 @@ func NewNode(
 			// if dsb, isBatching := rootstore.(ds.Batching); isBatching {
 			// 	store = dsb
 			// }
-			store := db.Root() // Delete this line once we remove batchable datastore support.
-			ddht, err = newDHT(ctx, h, store)
+
+			ddht, err = newDHT(ctx, h)
 			return ddht, err
 		}),
 	}
@@ -384,15 +385,12 @@ func (n *Node) WaitForPushLogFromPeerEvent(id peer.ID) error {
 	}
 }
 
-func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, error) {
+func newDHT(ctx context.Context, h host.Host) (*dualdht.DHT, error) {
 	dhtOpts := []dualdht.Option{
 		dualdht.DHTOption(dht.NamespacedValidator("pk", record.PublicKeyValidator{})),
 		dualdht.DHTOption(dht.NamespacedValidator("ipns", ipns.Validator{KeyBook: h.Peerstore()})),
 		dualdht.DHTOption(dht.Concurrency(10)),
 		dualdht.DHTOption(dht.Mode(dht.ModeAuto)),
-	}
-	if dsb != nil {
-		dhtOpts = append(dhtOpts, dualdht.DHTOption(dht.Datastore(dsb)))
 	}
 
 	return dualdht.New(ctx, h, dhtOpts...)

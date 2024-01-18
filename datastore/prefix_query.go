@@ -53,7 +53,7 @@ func DeserializePrefix[T any](
 func FetchKeysForPrefix(
 	ctx context.Context,
 	prefix string,
-	store ds.Read,
+	store corekv.Reader,
 ) ([]ds.Key, error) {
 	q, err := store.Query(ctx, query.Query{Prefix: prefix})
 	if err != nil {
