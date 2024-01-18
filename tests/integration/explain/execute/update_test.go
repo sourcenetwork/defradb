@@ -20,7 +20,7 @@ import (
 func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with update using ids.",
+		Description: "Explain (execute) mutation request with update using document IDs.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -31,11 +31,11 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 			testUtils.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					update_ContactAddress(
-						ids: [
+						docIDs: [
 							"bae-c8448e47-6cd1-571f-90bd-364acb80da7b",
 							"bae-f01bf83f-1507-5fb5-a6a3-09ecffa3c692"
 						],
-						data: "{\"country\": \"USA\"}"
+						input: {country: "USA"}
 					) {
 						country
 						city
@@ -93,7 +93,7 @@ func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 								_eq: "Waterloo"
 							}
 						},
-						data: "{\"country\": \"USA\"}"
+						input: {country: "USA"}
 					) {
 						country
 						city

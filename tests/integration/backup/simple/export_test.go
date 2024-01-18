@@ -25,7 +25,7 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 				Doc:          `{"name": "John", "age": 30}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
 			},
 		},
 	}
@@ -41,7 +41,7 @@ func TestBackupExport_Empty_NoError(t *testing.T) {
 				Doc:          `{}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_key":"bae-524bfa06-849c-5daf-b6df-05c2da80844d","_newKey":"bae-524bfa06-849c-5daf-b6df-05c2da80844d"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-524bfa06-849c-5daf-b6df-05c2da80844d","_docIDNew":"bae-524bfa06-849c-5daf-b6df-05c2da80844d"}]}`,
 			},
 		},
 	}
@@ -60,7 +60,7 @@ func TestBackupExport_WithInvalidFilePath_ReturnError(t *testing.T) {
 				Config: client.BackupConfig{
 					Filepath: t.TempDir() + "/some/test.json",
 				},
-				ExpectedError: "no such file or directory",
+				ExpectedError: "failed to create file",
 			},
 		},
 	}
@@ -98,7 +98,7 @@ func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 				Config: client.BackupConfig{
 					Collections: []string{"User"},
 				},
-				ExpectedContent: `{"User":[{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-e933420a-988a-56f8-8952-6c245aebd519","age":30,"name":"John"}]}`,
 			},
 		},
 	}

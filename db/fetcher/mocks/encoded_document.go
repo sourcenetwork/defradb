@@ -21,8 +21,8 @@ func (_m *EncodedDocument) EXPECT() *EncodedDocument_Expecter {
 	return &EncodedDocument_Expecter{mock: &_m.Mock}
 }
 
-// Key provides a mock function with given fields:
-func (_m *EncodedDocument) Key() []byte {
+// ID provides a mock function with given fields:
+func (_m *EncodedDocument) ID() []byte {
 	ret := _m.Called()
 
 	var r0 []byte
@@ -37,29 +37,29 @@ func (_m *EncodedDocument) Key() []byte {
 	return r0
 }
 
-// EncodedDocument_Key_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Key'
-type EncodedDocument_Key_Call struct {
+// EncodedDocument_ID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ID'
+type EncodedDocument_ID_Call struct {
 	*mock.Call
 }
 
-// Key is a helper method to define mock.On call
-func (_e *EncodedDocument_Expecter) Key() *EncodedDocument_Key_Call {
-	return &EncodedDocument_Key_Call{Call: _e.mock.On("Key")}
+// ID is a helper method to define mock.On call
+func (_e *EncodedDocument_Expecter) ID() *EncodedDocument_ID_Call {
+	return &EncodedDocument_ID_Call{Call: _e.mock.On("ID")}
 }
 
-func (_c *EncodedDocument_Key_Call) Run(run func()) *EncodedDocument_Key_Call {
+func (_c *EncodedDocument_ID_Call) Run(run func()) *EncodedDocument_ID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *EncodedDocument_Key_Call) Return(_a0 []byte) *EncodedDocument_Key_Call {
+func (_c *EncodedDocument_ID_Call) Return(_a0 []byte) *EncodedDocument_ID_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *EncodedDocument_Key_Call) RunAndReturn(run func() []byte) *EncodedDocument_Key_Call {
+func (_c *EncodedDocument_ID_Call) RunAndReturn(run func() []byte) *EncodedDocument_ID_Call {
 	_c.Call.Return(run)
 	return _c
 }

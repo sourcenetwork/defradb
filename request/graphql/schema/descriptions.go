@@ -14,6 +14,7 @@ import (
 	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client"
+	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 
 	//nolint:unused
 	gqlTypeToFieldKindReference = map[gql.Type]client.FieldKind{
-		gql.ID:        client.FieldKind_DocKey,
+		gql.ID:        client.FieldKind_DocID,
 		gql.Boolean:   client.FieldKind_BOOL,
 		gql.Int:       client.FieldKind_INT,
 		gql.Float:     client.FieldKind_FLOAT,
@@ -31,14 +32,15 @@ var (
 		gql.String:    client.FieldKind_STRING,
 		&gql.Object{}: client.FieldKind_FOREIGN_OBJECT,
 		&gql.List{}:   client.FieldKind_FOREIGN_OBJECT_ARRAY,
+		// Custom scalars
+		schemaTypes.BlobScalarType: client.FieldKind_BLOB,
 		// More custom ones to come
 		// - JSON
-		// - ByteArray
 		// - Counters
 	}
 
 	fieldKindToGQLType = map[client.FieldKind]gql.Type{
-		client.FieldKind_DocKey:                gql.ID,
+		client.FieldKind_DocID:                 gql.ID,
 		client.FieldKind_BOOL:                  gql.Boolean,
 		client.FieldKind_BOOL_ARRAY:            gql.NewList(gql.NewNonNull(gql.Boolean)),
 		client.FieldKind_NILLABLE_BOOL_ARRAY:   gql.NewList(gql.Boolean),
@@ -52,11 +54,12 @@ var (
 		client.FieldKind_STRING:                gql.String,
 		client.FieldKind_STRING_ARRAY:          gql.NewList(gql.NewNonNull(gql.String)),
 		client.FieldKind_NILLABLE_STRING_ARRAY: gql.NewList(gql.String),
+		client.FieldKind_BLOB:                  schemaTypes.BlobScalarType,
 	}
 
 	// This map is fine to use
 	defaultCRDTForFieldKind = map[client.FieldKind]client.CType{
-		client.FieldKind_DocKey:                client.LWW_REGISTER,
+		client.FieldKind_DocID:                 client.LWW_REGISTER,
 		client.FieldKind_BOOL:                  client.LWW_REGISTER,
 		client.FieldKind_BOOL_ARRAY:            client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_BOOL_ARRAY:   client.LWW_REGISTER,
@@ -70,20 +73,24 @@ var (
 		client.FieldKind_STRING:                client.LWW_REGISTER,
 		client.FieldKind_STRING_ARRAY:          client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_STRING_ARRAY: client.LWW_REGISTER,
-		client.FieldKind_FOREIGN_OBJECT:        client.NONE_CRDT,
+		client.FieldKind_BLOB:                  client.LWW_REGISTER,
+		client.FieldKind_FOREIGN_OBJECT:        client.LWW_REGISTER,
 		client.FieldKind_FOREIGN_OBJECT_ARRAY:  client.NONE_CRDT,
 	}
 )
 
 const (
-	dockeyArgDescription string = `
-An optional dockey parameter for this field. Only documents with
- the given dockey will be returned.  If no documents match, the result
+	docIDFieldDescription string = `
+The immutable identifier/docID (primary key) value for this document.
+`
+	docIDArgDescription string = `
+An optional docID parameter for this field. Only documents with
+ the given docID will be returned.  If no documents match, the result
  will be null/empty.
 `
-	dockeysArgDescription string = `
-An optional set of dockeys for this field. Only documents with a dockey
- matching a dockey in the given set will be returned.  If no documents match,
+	docIDsArgDescription string = `
+An optional set of docIDs for this field. Only documents with a docID
+ matching a docID in the given set will be returned.  If no documents match,
  the result will be null/empty. If an empty set is provided, this argument will
  be ignored.
 `
@@ -119,22 +126,19 @@ An optional value that specifies as to whether deleted documents may be
 	createDocumentDescription string = `
 Creates a single document of this type using the data provided.
 `
-	createDataArgDescription string = `
-The json representation of the document you wish to create. Required.
-`
 	updateDocumentsDescription string = `
 Updates documents in this collection using the data provided. Only documents
  matching any provided criteria will be updated, if no criteria are provided
  the update will be applied to all documents in the collection.
 `
 	updateIDArgDescription string = `
-An optional dockey value that will limit the update to the document with
- a matching dockey. If no matching document is found, the operation will
+An optional docID value that will limit the update to the document with
+ a matching docID. If no matching document is found, the operation will
  succeed, but no documents will be updated.
 `
 	updateIDsArgDescription string = `
-An optional set of dockey values that will limit the update to documents
- with a matching dockey. If no matching documents are found, the operation will
+An optional set of docID values that will limit the update to documents
+ with a matching docID. If no matching documents are found, the operation will
  succeed, but no documents will be updated.
 `
 	updateFilterArgDescription string = `
@@ -142,22 +146,18 @@ An optional filter for this update that will limit the update to the documents
  matching the given criteria. If no matching documents are found, the operation
  will succeed, but no documents will be updated.
 `
-	updateDataArgDescription string = `
-The json representation of the fields to update and their new values. Required.
- Fields not explicitly mentioned here will not be updated.
-`
 	deleteDocumentsDescription string = `
 Deletes documents in this collection matching any provided criteria. If no
  criteria are provided all documents in the collection will be deleted.
 `
 	deleteIDArgDescription string = `
-An optional dockey value that will limit the delete to the document with
- a matching dockey. If no matching document is found, the operation will
+An optional docID value that will limit the delete to the document with
+ a matching docID. If no matching document is found, the operation will
  succeed, but no documents will be deleted.
 `
 	deleteIDsArgDescription string = `
-An optional set of dockey values that will limit the delete to documents with
- a matching dockey. If no matching documents are found, the operation will
+An optional set of docID values that will limit the delete to documents with
+ a matching docID. If no matching documents are found, the operation will
  succeed, but no documents will be deleted. If an empty set is provided, no
  documents will be deleted.
 `
@@ -165,9 +165,6 @@ An optional set of dockey values that will limit the delete to documents with
 An optional filter for this delete that will limit the delete to documents
  matching the given criteria. If no matching documents are found, the operation
  will succeed, but no documents will be deleted.
-`
-	keyFieldDescription string = `
-The immutable primary key (dockey) value for this document.
 `
 	groupFieldDescription string = `
 The group field may be used to return a set of records belonging to the group.

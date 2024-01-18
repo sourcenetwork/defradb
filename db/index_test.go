@@ -58,7 +58,7 @@ type indexTestFixture struct {
 	t     *testing.T
 }
 
-func (f *indexTestFixture) getUsersCollectionDesc() client.Collection {
+func (f *indexTestFixture) addUsersCollection() client.Collection {
 	_, err := f.db.AddSchema(
 		f.ctx,
 		fmt.Sprintf(
@@ -129,7 +129,7 @@ func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
 
 func newIndexTestFixture(t *testing.T) *indexTestFixture {
 	f := newIndexTestFixtureBare(t)
-	f.users = f.getUsersCollectionDesc()
+	f.users = f.addUsersCollection()
 	return f
 }
 
@@ -178,14 +178,24 @@ func getProductsIndexDescOnCategory() client.IndexDescription {
 func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
 	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
-	f.commitTxn()
+	return newDesc
+}
+
+func makeUnique(indexDesc client.IndexDescription) client.IndexDescription {
+	indexDesc.Unique = true
+	return indexDesc
+}
+
+func (f *indexTestFixture) createUserCollectionUniqueIndexOnName() client.IndexDescription {
+	indexDesc := makeUnique(getUsersIndexDescOnName())
+	newDesc, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
+	require.NoError(f.t, err)
 	return newDesc
 }
 
 func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
 	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
-	f.commitTxn()
 	return newDesc
 }
 
@@ -226,7 +236,11 @@ func (f *indexTestFixture) createCollectionIndexFor(
 	collectionName string,
 	desc client.IndexDescription,
 ) (client.IndexDescription, error) {
-	return f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
+	index, err := f.db.createCollectionIndex(f.ctx, f.txn, collectionName, desc)
+	if err == nil {
+		f.commitTxn()
+	}
+	return index, err
 }
 
 func (f *indexTestFixture) getAllIndexes() (map[client.CollectionName][]client.IndexDescription, error) {
@@ -239,6 +253,7 @@ func (f *indexTestFixture) getCollectionIndexes(colName string) ([]client.IndexD
 
 func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	_, err := f.createCollectionIndex(client.IndexDescription{
 		Name: "some_index_name",
@@ -248,6 +263,7 @@ func TestCreateIndex_IfFieldsIsEmpty_ReturnError(t *testing.T) {
 
 func TestCreateIndex_IfIndexDescriptionIDIsNotZero_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	for _, id := range []uint32{1, 20, 999} {
 		desc := client.IndexDescription{
@@ -264,6 +280,7 @@ func TestCreateIndex_IfIndexDescriptionIDIsNotZero_ReturnError(t *testing.T) {
 
 func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	desc := client.IndexDescription{
 		Name: "some_index_name",
@@ -275,10 +292,12 @@ func TestCreateIndex_IfValidInput_CreateIndex(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
 	assert.Equal(t, desc.Fields, resultDesc.Fields)
+	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
 func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	desc := client.IndexDescription{
 		Name: "some_index_name",
@@ -292,6 +311,7 @@ func TestCreateIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
 
 func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	desc := client.IndexDescription{
 		Name:   "some_index_name",
@@ -304,6 +324,7 @@ func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 
 func TestCreateIndex_IfSingleFieldInDescOrder_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	desc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
@@ -316,6 +337,7 @@ func TestCreateIndex_IfSingleFieldInDescOrder_ReturnError(t *testing.T) {
 
 func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	name := "some_index_name"
 	desc1 := client.IndexDescription{
@@ -334,6 +356,7 @@ func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 
 func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	name := usersColName + "_" + usersAgeFieldName + "_ASC"
 	desc1 := client.IndexDescription{
@@ -359,6 +382,7 @@ func TestCreateIndex_IfGeneratedNameMatchesExisting_AddIncrement(t *testing.T) {
 
 func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	name := "users_age_ASC"
 	desc := client.IndexDescription{
@@ -380,6 +404,7 @@ func TestCreateIndex_ShouldSaveToSystemStorage(t *testing.T) {
 
 func TestCreateIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	desc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{{Name: productsPriceFieldName}},
@@ -391,6 +416,7 @@ func TestCreateIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 
 func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	const field = "non_existing_field"
 	desc := client.IndexDescription{
@@ -403,7 +429,7 @@ func TestCreateIndex_IfPropertyDoesntExist_ReturnError(t *testing.T) {
 
 func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCollection(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	users := f.getUsersCollectionDesc()
+	users := f.addUsersCollection()
 	products := f.getProductsCollectionDesc()
 
 	makeIndex := func(fieldName string) client.IndexDescription {
@@ -433,10 +459,13 @@ func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCol
 
 func TestCreateIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	testErr := errors.New("test error")
 
 	mockedRootStore := mocks.NewRootStore(t)
+	mockedRootStore.On("Close").Return(nil)
+
 	mockedRootStore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
 	f.db.rootstore = mockedRootStore
 
@@ -446,6 +475,7 @@ func TestCreateIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
 
 func TestCreateIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	indexDesc := getUsersIndexDescOnName()
 	indexDesc.Name = "!"
@@ -455,6 +485,7 @@ func TestCreateIndex_IfProvideInvalidIndexName_ReturnError(t *testing.T) {
 
 func TestCreateIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	indOnName, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
@@ -495,11 +526,11 @@ func TestCreateIndex_IfAttemptToIndexOnUnsupportedType_ReturnError(t *testing.T)
 
 	_, err = f.createCollectionIndexFor(collection.Name(), indexDesc)
 	require.ErrorIs(f.t, err, NewErrUnsupportedIndexFieldType(unsupportedKind))
-	f.commitTxn()
 }
 
 func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	usersIndexDesc := client.IndexDescription{
 		Name:   "users_name_index",
@@ -507,8 +538,6 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 	}
 	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
 	assert.NoError(t, err)
-
-	f.commitTxn()
 
 	f.getProductsCollectionDesc()
 	productsIndexDesc := client.IndexDescription{
@@ -531,6 +560,7 @@ func TestGetIndexes_ShouldReturnListOfAllExistingIndexes(t *testing.T) {
 
 func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
 	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
@@ -542,6 +572,7 @@ func TestGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 
 func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
 	key := ds.NewKey(indexKey.ToString() + "/invalid")
@@ -561,6 +592,7 @@ func TestGetIndexes_IfInvalidIndexKeyIsStored_ReturnError(t *testing.T) {
 
 func TestGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	testErr := errors.New("test error")
 
@@ -575,6 +607,7 @@ func TestGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 
 func TestGetIndexes_IfSystemStoreFails_ShouldCloseIterator(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	mockedTxn := f.mockTxn()
 	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Unset()
@@ -587,6 +620,7 @@ func TestGetIndexes_IfSystemStoreFails_ShouldCloseIterator(t *testing.T) {
 
 func TestGetIndexes_IfSystemStoreQueryIteratorFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	testErr := errors.New("test error")
 
@@ -604,6 +638,7 @@ func TestGetIndexes_IfSystemStoreQueryIteratorFails_ReturnError(t *testing.T) {
 
 func TestGetIndexes_IfSystemStoreHasInvalidData_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	mockedTxn := f.mockTxn()
 
@@ -619,6 +654,7 @@ func TestGetIndexes_IfSystemStoreHasInvalidData_ReturnError(t *testing.T) {
 
 func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	usersIndexDesc := client.IndexDescription{
 		Name:   "users_name_index",
@@ -626,8 +662,6 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 	}
 	_, err := f.createCollectionIndexFor(usersColName, usersIndexDesc)
 	assert.NoError(t, err)
-
-	f.commitTxn()
 
 	f.getProductsCollectionDesc()
 	productsIndexDesc := client.IndexDescription{
@@ -656,6 +690,7 @@ func TestGetCollectionIndexes_ShouldReturnListOfCollectionIndexes(t *testing.T) 
 
 func TestGetCollectionIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	testErr := errors.New("test error")
 
@@ -671,6 +706,7 @@ func TestGetCollectionIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 
 func TestGetCollectionIndexes_IfSystemStoreFails_ShouldCloseIterator(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	mockedTxn := f.mockTxn()
 	mockedTxn.MockSystemstore = mocks.NewDSReaderWriter(t)
@@ -685,6 +721,7 @@ func TestGetCollectionIndexes_IfSystemStoreFails_ShouldCloseIterator(t *testing.
 
 func TestGetCollectionIndexes_IfSystemStoreQueryIteratorFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	testErr := errors.New("test error")
 
@@ -701,6 +738,7 @@ func TestGetCollectionIndexes_IfSystemStoreQueryIteratorFails_ReturnError(t *tes
 
 func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	indexKey := core.NewCollectionIndexKey(usersColName, "users_name_index")
 	err := f.txn.Systemstore().Put(f.ctx, indexKey.ToDS(), []byte("invalid"))
@@ -712,6 +750,7 @@ func TestGetCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 
 func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 
@@ -724,6 +763,7 @@ func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
 
 func TestCollectionGetIndexes_ShouldCloseQueryIterator(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 
@@ -784,6 +824,7 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 
 	for _, testCase := range testCases {
 		f := newIndexTestFixture(t)
+		defer f.db.Close()
 
 		f.createUserCollectionIndexOnName()
 
@@ -800,6 +841,7 @@ func TestCollectionGetIndexes_IfSystemStoreFails_ReturnError(t *testing.T) {
 
 func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 
@@ -824,7 +866,7 @@ func TestCollectionGetIndexes_IfFailsToCreateTxn_ShouldNotCache(t *testing.T) {
 
 func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
-	f.getUsersCollectionDesc()
+	f.addUsersCollection()
 
 	const unsupportedKind = client.FieldKind_BOOL_ARRAY
 	_, err := f.db.AddSchema(
@@ -861,6 +903,7 @@ func TestCollectionGetIndexes_IfStoredIndexWithUnsupportedType_ReturnError(t *te
 
 func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 	f.createUserCollectionIndexOnAge()
@@ -877,6 +920,7 @@ func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 
 func TestCollectionGetIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 
@@ -894,6 +938,7 @@ func TestCollectionGetIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T)
 
 func TestCollectionGetIndexes_IfIndexIsDropped_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 	f.createUserCollectionIndexOnAge()
@@ -969,7 +1014,6 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 		_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
 		require.NoError(t, err)
 	}
-	f.commitTxn()
 
 	indexes, err := collection.GetIndexes(f.ctx)
 	require.NoError(t, err)
@@ -982,6 +1026,7 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 
 func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	desc := f.createUserCollectionIndexOnName()
 
 	err := f.dropIndex(usersColName, desc.Name)
@@ -994,6 +1039,7 @@ func TestDropIndex_ShouldDeleteIndex(t *testing.T) {
 
 func TestDropIndex_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	desc := f.createUserCollectionIndexOnName()
 	f.db.Close()
 
@@ -1003,6 +1049,7 @@ func TestDropIndex_IfStorageFails_ReturnError(t *testing.T) {
 
 func TestDropIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	err := f.dropIndex(productsColName, "any_name")
 	assert.ErrorIs(t, err, NewErrCanNotReadCollection(usersColName, nil))
@@ -1010,12 +1057,15 @@ func TestDropIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 
 func TestDropIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 
 	testErr := errors.New("test error")
 
 	mockedRootStore := mocks.NewRootStore(t)
+	mockedRootStore.On("Close").Return(nil)
+
 	mockedRootStore.EXPECT().NewTransaction(mock.Anything, mock.Anything).Return(nil, testErr)
 	f.db.rootstore = mockedRootStore
 
@@ -1025,6 +1075,7 @@ func TestDropIndex_IfFailsToCreateTxn_ReturnError(t *testing.T) {
 
 func TestDropIndex_IfFailsToDeleteFromStorage_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 
@@ -1043,6 +1094,7 @@ func TestDropIndex_IfFailsToDeleteFromStorage_ReturnError(t *testing.T) {
 
 func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	col := f.users.WithTxn(f.txn)
 	_, err := col.CreateIndex(f.ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
@@ -1064,6 +1116,7 @@ func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 
 func TestDropIndex_IfIndexWithNameDoesNotExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	const name = "not_existing_index"
 	err := f.users.DropIndex(f.ctx, name)
@@ -1074,6 +1127,7 @@ func TestDropIndex_IfSystemStoreFails_ReturnError(t *testing.T) {
 	testErr := errors.New("test error")
 
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 
@@ -1091,6 +1145,7 @@ func TestDropIndex_IfSystemStoreFails_ReturnError(t *testing.T) {
 
 func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	_, err := f.createCollectionIndexFor(usersColName, client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNameFieldName, Direction: client.Ascending},
@@ -1115,6 +1170,7 @@ func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 
 func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 	f.db.Close()
 
@@ -1165,6 +1221,7 @@ func TestDropAllIndexes_IfSystemStorageFails_ReturnError(t *testing.T) {
 
 	for _, testCase := range testCases {
 		f := newIndexTestFixture(t)
+		defer f.db.Close()
 		f.createUserCollectionIndexOnName()
 
 		mockedTxn := f.mockTxn()
@@ -1180,6 +1237,7 @@ func TestDropAllIndexes_IfSystemStorageFails_ReturnError(t *testing.T) {
 
 func TestDropAllIndexes_ShouldCloseQueryIterator(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	f.createUserCollectionIndexOnName()
 
 	mockedTxn := f.mockTxn()
@@ -1198,6 +1256,7 @@ func TestDropAllIndexes_ShouldCloseQueryIterator(t *testing.T) {
 
 func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	desc := getUsersIndexDescOnName()
 	desc.Fields = nil
 	_, err := NewCollectionIndex(f.users, desc)
@@ -1206,6 +1265,7 @@ func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
 
 func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
+	defer f.db.Close()
 	desc := getUsersIndexDescOnName()
 	desc.Fields[0].Name = "non_existing_field"
 	_, err := NewCollectionIndex(f.users, desc)

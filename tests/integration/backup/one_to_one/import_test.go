@@ -84,22 +84,22 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 				ImportContent: `{
 					"Book":[
 						{
-							"_key":"bae-5cf2fec3-d8ed-50d5-8286-39109853d2da",
-							"_newKey":"bae-edeade01-2d21-5d6d-aadf-efc5a5279de5",
+							"_docID":"bae-5cf2fec3-d8ed-50d5-8286-39109853d2da",
+							"_docIDNew":"bae-edeade01-2d21-5d6d-aadf-efc5a5279de5",
 							"author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162",
 							"name":"John and the sourcerers' stone"
 						}
 					],
 					"User":[
 						{
-							"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927",
-							"_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927",
+							"_docID":"bae-0648f44e-74e8-593b-a662-3310ec278927",
+							"_docIDNew":"bae-0648f44e-74e8-593b-a662-3310ec278927",
 							"age":31,
 							"name":"Bob"
 						},
 						{
-							"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519",
-							"_newKey":"bae-807ea028-6c13-5f86-a72b-46e8b715a162",
+							"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519",
+							"_docIDNew":"bae-807ea028-6c13-5f86-a72b-46e8b715a162",
 							"age":31,
 							"name":"John"
 						}
@@ -131,7 +131,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 						Book {
 							name
 							author {
-								_key
+								_docID
 							}
 						}
 					}`,
@@ -139,7 +139,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 					{
 						"name": "John and the sourcerers' stone",
 						"author": map[string]any{
-							"_key": "bae-807ea028-6c13-5f86-a72b-46e8b715a162",
+							"_docID": "bae-807ea028-6c13-5f86-a72b-46e8b715a162",
 						},
 					},
 				},
@@ -157,28 +157,28 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 				ImportContent: `{
 					"Book":[
 						{
-							"_key":"bae-4399f189-138d-5d49-9e25-82e78463677b",
-							"_newKey":"bae-78a40f28-a4b8-5dca-be44-392b0f96d0ff",
+							"_docID":"bae-4399f189-138d-5d49-9e25-82e78463677b",
+							"_docIDNew":"bae-78a40f28-a4b8-5dca-be44-392b0f96d0ff",
 							"author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162",
 							"name":"Game of chains"
 						},
 						{
-							"_key":"bae-5cf2fec3-d8ed-50d5-8286-39109853d2da",
-							"_newKey":"bae-edeade01-2d21-5d6d-aadf-efc5a5279de5",
+							"_docID":"bae-5cf2fec3-d8ed-50d5-8286-39109853d2da",
+							"_docIDNew":"bae-edeade01-2d21-5d6d-aadf-efc5a5279de5",
 							"author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162",
 							"name":"John and the sourcerers' stone"
 						}
 					],
 					"User":[
 						{
-							"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927",
-							"_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927",
+							"_docID":"bae-0648f44e-74e8-593b-a662-3310ec278927",
+							"_docIDNew":"bae-0648f44e-74e8-593b-a662-3310ec278927",
 							"age":31,
 							"name":"Bob"
 						},
 						{
-							"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519",
-							"_newKey":"bae-807ea028-6c13-5f86-a72b-46e8b715a162",
+							"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519",
+							"_docIDNew":"bae-807ea028-6c13-5f86-a72b-46e8b715a162",
 							"age":31,
 							"name":"John"
 						}
@@ -211,7 +211,7 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 				`,
 			},
 			testUtils.BackupImport{
-				ImportContent: `{"Book":[{"_key":"bae-236c14bd-4621-5d43-bc03-4442f3b8719e","_newKey":"bae-6dbb3738-d3db-5121-acee-6fbdd97ff7a8","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","favourite_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","name":"John and the sourcerers' stone"},{"_key":"bae-da7f2d88-05c4-528a-846a-0d18ab26603b","_newKey":"bae-da7f2d88-05c4-528a-846a-0d18ab26603b","name":"Game of chains"}],"User":[{"_key":"bae-0648f44e-74e8-593b-a662-3310ec278927","_newKey":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_key":"bae-e933420a-988a-56f8-8952-6c245aebd519","_newKey":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","age":31,"name":"John"}]}`,
+				ImportContent: `{"Book":[{"_docID":"bae-236c14bd-4621-5d43-bc03-4442f3b8719e","_docIDNew":"bae-6dbb3738-d3db-5121-acee-6fbdd97ff7a8","author_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","favourite_id":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","name":"John and the sourcerers' stone"},{"_docID":"bae-da7f2d88-05c4-528a-846a-0d18ab26603b","_docIDNew":"bae-da7f2d88-05c4-528a-846a-0d18ab26603b","name":"Game of chains"}],"User":[{"_docID":"bae-0648f44e-74e8-593b-a662-3310ec278927","_docIDNew":"bae-0648f44e-74e8-593b-a662-3310ec278927","age":31,"name":"Bob"},{"_docID":"bae-e933420a-988a-56f8-8952-6c245aebd519","_docIDNew":"bae-807ea028-6c13-5f86-a72b-46e8b715a162","age":31,"name":"John"}]}`,
 			},
 			testUtils.Request{
 				Request: `

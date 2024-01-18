@@ -13,6 +13,7 @@ package schema
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	gql "github.com/sourcenetwork/graphql-go"
 
@@ -85,6 +86,11 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 	if err != nil {
 		return nil, err
 	}
+	// build mutation input types
+	err = g.buildMutationInputTypes(collections)
+	if err != nil {
+		return nil, err
+	}
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -98,8 +104,24 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		if err != nil {
 			return nil, err
 		}
-		queryType.AddFieldConfig(f.Name, f)
 		generatedQueryFields = append(generatedQueryFields, f)
+
+		var isEmbedded bool
+		for _, definition := range collections {
+			if t.Name() == definition.Schema.Name && definition.Description.Name == "" {
+				isEmbedded = true
+				break
+			}
+		}
+
+		// If the object is embedded, it may not be queried directly, so we must not add it
+		// to the `query` object.  We do however need the query-input objects to be generated
+		// (further up in this block), as they are still required for stuff like grouping.
+		if isEmbedded {
+			continue
+		}
+
+		queryType.AddFieldConfig(f.Name, f)
 	}
 
 	// resolve types
@@ -167,6 +189,34 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 	// now let's generate the mutation types.
 	mutationType := g.manager.schema.MutationType()
 	for _, t := range g.typeDefs {
+		// Note: Whilst the `isReadOnly` code is fairly unpleasent, it will hopefully not live for too much longer
+		// as we plan to transition to DQL.
+		var isReadOnly bool
+		var collectionFound bool
+		for _, definition := range collections {
+			if t.Name() == definition.Description.Name {
+				isReadOnly = definition.Description.BaseQuery != nil
+				collectionFound = true
+				break
+			}
+		}
+		if !collectionFound {
+			// If we did not find a collection with this name, check for matching schemas (embedded objects)
+			for _, definition := range collections {
+				if t.Name() == definition.Schema.Name {
+					// All embedded objects are readonly
+					isReadOnly = true
+					collectionFound = true
+					break
+				}
+			}
+		}
+
+		if isReadOnly {
+			// We do not currently allow mutation via views, so don't add them to the mutation object
+			continue
+		}
+
 		fs, err := g.GenerateMutationInputForGQLType(t)
 		if err != nil {
 			return nil, err
@@ -322,8 +372,8 @@ func (g *Generator) createExpandedFieldList(
 		Description: f.Description,
 		Type:        gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			"dockey":  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
-			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
+			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.String, docIDArgDescription),
+			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
 			"filter": schemaTypes.NewArgConfig(
 				g.manager.schema.TypeMap()[typeName+"FilterArg"],
 				listFieldFilterArgDescription,
@@ -363,16 +413,27 @@ func (g *Generator) buildTypes(
 	for _, c := range collections {
 		// Copy the loop variable before usage within the loop or it
 		// will be reassigned before the thunk is run
+		// TODO remove when Go 1.22
 		collection := c
 		fieldDescriptions := collection.Schema.Fields
+		isEmbeddedObject := collection.Description.Name == ""
+		isViewObject := isEmbeddedObject || collection.Description.BaseQuery != nil
+
+		var objectName string
+		if isEmbeddedObject {
+			// If this is an embedded object, take the type name from the Schema
+			objectName = collection.Schema.Name
+		} else {
+			objectName = collection.Description.Name
+		}
 
 		// check if type exists
-		if _, ok := g.manager.schema.TypeMap()[collection.Description.Name]; ok {
-			return nil, NewErrSchemaTypeAlreadyExist(collection.Description.Name)
+		if _, ok := g.manager.schema.TypeMap()[objectName]; ok {
+			return nil, NewErrSchemaTypeAlreadyExist(objectName)
 		}
 
 		objconf := gql.ObjectConfig{
-			Name: collection.Description.Name,
+			Name: objectName,
 		}
 
 		// Wrap field definition in a thunk so we can
@@ -381,15 +442,17 @@ func (g *Generator) buildTypes(
 		fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
 			fields := gql.Fields{}
 
-			// automatically add the _key: ID field to the type
-			fields[request.KeyFieldName] = &gql.Field{
-				Description: keyFieldDescription,
-				Type:        gql.ID,
+			if !isViewObject {
+				// automatically add the _docID: ID field to the type
+				fields[request.DocIDFieldName] = &gql.Field{
+					Description: docIDFieldDescription,
+					Type:        gql.ID,
+				}
 			}
 
 			for _, field := range fieldDescriptions {
-				if field.Name == request.KeyFieldName {
-					// The `_key` field is included in the fieldDescriptions,
+				if field.Name == request.DocIDFieldName {
+					// The `_docID` field is included in the fieldDescriptions,
 					// but we do not wish to override the standard definition
 					// with the collection held definition (particularly the
 					// description)
@@ -423,26 +486,28 @@ func (g *Generator) buildTypes(
 				}
 			}
 
-			// add _version field
-			fields[request.VersionFieldName] = &gql.Field{
-				Description: versionFieldDescription,
-				Type:        gql.NewList(schemaTypes.CommitObject),
-			}
-
-			// add _deleted field
-			fields[request.DeletedFieldName] = &gql.Field{
-				Description: deletedFieldDescription,
-				Type:        gql.Boolean,
-			}
-
-			gqlType, ok := g.manager.schema.TypeMap()[collection.Description.Name]
+			gqlType, ok := g.manager.schema.TypeMap()[objectName]
 			if !ok {
-				return nil, NewErrObjectNotFoundDuringThunk(collection.Description.Name)
+				return nil, NewErrObjectNotFoundDuringThunk(objectName)
 			}
 
 			fields[request.GroupFieldName] = &gql.Field{
 				Description: groupFieldDescription,
 				Type:        gql.NewList(gqlType),
+			}
+
+			if !isViewObject {
+				// add _version field
+				fields[request.VersionFieldName] = &gql.Field{
+					Description: versionFieldDescription,
+					Type:        gql.NewList(schemaTypes.CommitObject),
+				}
+
+				// add _deleted field
+				fields[request.DeletedFieldName] = &gql.Field{
+					Description: deletedFieldDescription,
+					Type:        gql.Boolean,
+				}
 			}
 
 			return fields, nil
@@ -458,6 +523,74 @@ func (g *Generator) buildTypes(
 	}
 
 	return objs, nil
+}
+
+// buildMutationInputTypes creates the input object types
+// for collection create and update mutation operations.
+func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefinition) error {
+	for _, c := range collections {
+		if c.Description.Name == "" {
+			// If the definition's collection is empty, this must be a collectionless
+			// schema, in which case users cannot mutate documents through it and we
+			// have no need to build mutation input types for it.
+			continue
+		}
+
+		// Copy the loop variable before usage within the loop or it
+		// will be reassigned before the thunk is run
+		// TODO remove when Go 1.22
+		collection := c
+		fieldDescriptions := collection.Schema.Fields
+		mutationInputName := collection.Description.Name + "MutationInputArg"
+
+		// check if mutation input type exists
+		if _, ok := g.manager.schema.TypeMap()[mutationInputName]; ok {
+			return NewErrMutationInputTypeAlreadyExist(mutationInputName)
+		}
+
+		mutationObjConf := gql.InputObjectConfig{
+			Name: mutationInputName,
+		}
+
+		// Wrap mutation input object definition in a thunk so we can
+		// handle any embedded object which is defined
+		// at a future point in time.
+		mutationObjConf.Fields = (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
+			fields := make(gql.InputObjectConfigFieldMap)
+
+			for _, field := range fieldDescriptions {
+				if strings.HasPrefix(field.Name, "_") {
+					// ignore system defined args as the
+					// user cannot override their values
+					continue
+				}
+
+				var ttype gql.Type
+				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+					ttype = gql.ID
+				} else if field.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+					ttype = gql.NewList(gql.ID)
+				} else {
+					var ok bool
+					ttype, ok = fieldKindToGQLType[field.Kind]
+					if !ok {
+						return nil, NewErrTypeNotFound(fmt.Sprint(field.Kind))
+					}
+				}
+
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: ttype,
+				}
+			}
+
+			return fields, nil
+		})
+
+		mutationObj := gql.NewInputObject(mutationObjConf)
+		g.manager.schema.TypeMap()[mutationObj.Name()] = mutationObj
+	}
+
+	return nil
 }
 
 func (g *Generator) genAggregateFields(ctx context.Context) error {
@@ -893,79 +1026,51 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		return nil, obj.Error()
 	}
 
-	typeName := obj.Name()
-	filter, ok := g.manager.schema.TypeMap()[typeName+"FilterArg"].(*gql.InputObject)
+	filterInputName := genTypeName(obj, "FilterArg")
+	mutationInputName := genTypeName(obj, "MutationInputArg")
+
+	filterInput, ok := g.manager.schema.TypeMap()[filterInputName].(*gql.InputObject)
 	if !ok {
-		return nil, NewErrTypeNotFound(typeName + "FilterArg")
+		return nil, NewErrTypeNotFound(filterInputName)
+	}
+	mutationInput, ok := g.manager.schema.TypeMap()[mutationInputName]
+	if !ok {
+		return nil, NewErrTypeNotFound(mutationInputName)
 	}
 
-	return g.genTypeMutationFields(obj, filter)
-}
-
-func (g *Generator) genTypeMutationFields(
-	obj *gql.Object,
-	filterInput *gql.InputObject,
-) ([]*gql.Field, error) {
-	create, err := g.genTypeMutationCreateField(obj)
-	if err != nil {
-		return nil, err
-	}
-	update, err := g.genTypeMutationUpdateField(obj, filterInput)
-	if err != nil {
-		return nil, err
-	}
-	delete, err := g.genTypeMutationDeleteField(obj, filterInput)
-	if err != nil {
-		return nil, err
-	}
-	return []*gql.Field{create, update, delete}, nil
-}
-
-func (g *Generator) genTypeMutationCreateField(obj *gql.Object) (*gql.Field, error) {
-	field := &gql.Field{
+	create := &gql.Field{
 		Name:        "create_" + obj.Name(),
 		Description: createDocumentDescription,
 		Type:        obj,
 		Args: gql.FieldConfigArgument{
-			"data": schemaTypes.NewArgConfig(gql.String, createDataArgDescription),
+			"input": schemaTypes.NewArgConfig(mutationInput, "Create field values"),
 		},
 	}
-	return field, nil
-}
 
-func (g *Generator) genTypeMutationUpdateField(
-	obj *gql.Object,
-	filter *gql.InputObject,
-) (*gql.Field, error) {
-	field := &gql.Field{
+	update := &gql.Field{
 		Name:        "update_" + obj.Name(),
 		Description: updateDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
-			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
-			"filter": schemaTypes.NewArgConfig(filter, updateFilterArgDescription),
-			"data":   schemaTypes.NewArgConfig(gql.String, updateDataArgDescription),
+			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.ID, updateIDArgDescription),
+			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
+			"filter":              schemaTypes.NewArgConfig(filterInput, updateFilterArgDescription),
+			"input":               schemaTypes.NewArgConfig(mutationInput, "Update field values"),
 		},
 	}
-	return field, nil
-}
 
-func (g *Generator) genTypeMutationDeleteField(
-	obj *gql.Object,
-	filter *gql.InputObject,
-) (*gql.Field, error) {
-	field := &gql.Field{
+	delete := &gql.Field{
 		Name:        "delete_" + obj.Name(),
 		Description: deleteDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
-			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
-			"filter": schemaTypes.NewArgConfig(filter, deleteFilterArgDescription),
+			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.ID, deleteIDArgDescription),
+			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
+			"filter":              schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
 		},
 	}
-	return field, nil
+
+	return []*gql.Field{create, update, delete}, nil
 }
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
@@ -1008,7 +1113,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			// generate basic filter operator blocks
 			// @todo: Extract object field loop into its own utility func
 			for f, field := range obj.Fields() {
-				if _, ok := request.ReservedFields[f]; ok && f != request.KeyFieldName {
+				if _, ok := request.ReservedFields[f]; ok && f != request.DocIDFieldName {
 					continue
 				}
 				// scalars (leafs)
@@ -1112,7 +1217,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			fields := gql.InputObjectConfigFieldMap{}
 
 			for f, field := range obj.Fields() {
-				if _, ok := request.ReservedFields[f]; ok && f != request.KeyFieldName {
+				if _, ok := request.ReservedFields[f]; ok && f != request.DocIDFieldName {
 					continue
 				}
 				typeMap := g.manager.schema.TypeMap()
@@ -1159,10 +1264,10 @@ func (g *Generator) genTypeQueryableFieldList(
 		Description: obj.Description(),
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"dockey":  schemaTypes.NewArgConfig(gql.String, dockeyArgDescription),
-			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), dockeysArgDescription),
-			"cid":     schemaTypes.NewArgConfig(gql.String, cidArgDescription),
-			"filter":  schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
+			request.DocIDArgName:  schemaTypes.NewArgConfig(gql.String, docIDArgDescription),
+			request.DocIDsArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
+			"cid":                 schemaTypes.NewArgConfig(gql.String, cidArgDescription),
+			"filter":              schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(config.groupBy)),
 				schemaTypes.GroupByArgDescription,

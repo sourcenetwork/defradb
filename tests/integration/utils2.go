@@ -12,7 +12,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
@@ -20,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bxcodec/faker/support/slice"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -31,8 +31,11 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/request/graphql"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
+	"github.com/sourcenetwork/defradb/tests/gen"
+	"github.com/sourcenetwork/defradb/tests/predefined"
 )
 
 const mutationTypeEnvName = "DEFRA_MUTATION_TYPE"
@@ -182,7 +185,7 @@ func executeTestCase(
 		logging.NewKV("changeDetector.Repository", changeDetector.Repository),
 	)
 
-	startActionIndex, endActionIndex := getActionRange(testCase)
+	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
 	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
 	setStartingNodes(s)
@@ -260,6 +263,9 @@ func performAction(
 	case SetDefaultSchemaVersion:
 		setDefaultSchemaVersion(s, action)
 
+	case CreateView:
+		createView(s, action)
+
 	case ConfigureMigration:
 		configureMigration(s, action)
 
@@ -314,12 +320,60 @@ func performAction(
 	case Benchmark:
 		benchmarkAction(s, actionIndex, action)
 
+	case GenerateDocs:
+		generateDocs(s, action)
+
+	case CreatePredefinedDocs:
+		generatePredefinedDocs(s, action)
+
 	case SetupComplete:
 		// no-op, just continue.
 
 	default:
 		s.t.Fatalf("Unknown action type %T", action)
 	}
+}
+
+func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Option[int]) {
+	nameToInd := make(map[string]int)
+	for i, name := range s.collectionNames {
+		nameToInd[name] = i
+	}
+	for _, doc := range docs {
+		docJSON, err := doc.Doc.String()
+		if err != nil {
+			s.t.Fatalf("Failed to generate docs %s", err)
+		}
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name], Doc: docJSON, NodeID: nodeID})
+	}
+}
+
+func generateDocs(s *state, action GenerateDocs) {
+	collections := getNodeCollections(action.NodeID, s.collections)
+	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
+	for _, col := range collections[0] {
+		if len(action.ForCollections) == 0 || slice.Contains(action.ForCollections, col.Name()) {
+			defs = append(defs, col.Definition())
+		}
+	}
+	docs, err := gen.AutoGenerate(defs, action.Options...)
+	if err != nil {
+		s.t.Fatalf("Failed to generate docs %s", err)
+	}
+	createGenerateDocs(s, docs, action.NodeID)
+}
+
+func generatePredefinedDocs(s *state, action CreatePredefinedDocs) {
+	collections := getNodeCollections(action.NodeID, s.collections)
+	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
+	for _, col := range collections[0] {
+		defs = append(defs, col.Definition())
+	}
+	docs, err := predefined.Create(defs, action.Docs)
+	if err != nil {
+		s.t.Fatalf("Failed to generate docs %s", err)
+	}
+	createGenerateDocs(s, docs, action.NodeID)
 }
 
 func benchmarkAction(
@@ -386,27 +440,7 @@ func getCollectionNames(testCase TestCase) []string {
 				continue
 			}
 
-			// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
-			splitByType := strings.Split(action.Schema, "type ")
-			// Skip the first, as that preceeds `type ` if `type ` is present,
-			// else there are no types.
-			for i := 1; i < len(splitByType); i++ {
-				wipSplit := strings.TrimLeft(splitByType[i], " ")
-				indexOfLastChar := strings.IndexAny(wipSplit, " {")
-				if indexOfLastChar <= 0 {
-					// This should never happen
-					continue
-				}
-
-				collectionName := wipSplit[:indexOfLastChar]
-				if _, ok := collectionIndexByName[collectionName]; ok {
-					// Collection name has already been added, possibly via another node
-					continue
-				}
-
-				collectionIndexByName[collectionName] = nextIndex
-				nextIndex++
-			}
+			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 		}
 	}
 
@@ -416,6 +450,31 @@ func getCollectionNames(testCase TestCase) []string {
 	}
 
 	return collectionNames
+}
+
+func getCollectionNamesFromSchema(result map[string]int, schema string, nextIndex int) int {
+	// WARNING: This will not work with schemas ending in `type`, e.g. `user_type`
+	splitByType := strings.Split(schema, "type ")
+	// Skip the first, as that preceeds `type ` if `type ` is present,
+	// else there are no types.
+	for i := 1; i < len(splitByType); i++ {
+		wipSplit := strings.TrimLeft(splitByType[i], " ")
+		indexOfLastChar := strings.IndexAny(wipSplit, " {")
+		if indexOfLastChar <= 0 {
+			// This should never happen
+			continue
+		}
+
+		collectionName := wipSplit[:indexOfLastChar]
+		if _, ok := result[collectionName]; ok {
+			// Collection name has already been added, possibly via another node
+			continue
+		}
+
+		result[collectionName] = nextIndex
+		nextIndex++
+	}
+	return nextIndex
 }
 
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
@@ -495,7 +554,7 @@ func flattenActions(testCase *TestCase) {
 //
 // If a SetupComplete action is provided, the actions will be split there, if not
 // they will be split at the first non SchemaUpdate/CreateDoc/UpdateDoc action.
-func getActionRange(testCase TestCase) (int, int) {
+func getActionRange(t *testing.T, testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
 
@@ -538,8 +597,10 @@ ActionLoop:
 			// We must not set this to -1 :)
 			startIndex = firstNonSetupIndex
 		} else {
-			// if we don't have any non-mutation actions, just use the last action
-			startIndex = endIndex
+			// if we don't have any non-mutation actions and the change detector is enabled
+			// skip this test as we will not gain anything from running (change detector would
+			// run an idential profile to a normal test run)
+			t.Skipf("no actions to execute")
 		}
 	}
 
@@ -758,19 +819,14 @@ func refreshDocuments(
 	for i := 0; i < startActionIndex; i++ {
 		switch action := s.testCase.Actions[i].(type) {
 		case CreateDoc:
-			// We need to add the existing documents in the order in which the test case lists them
-			// otherwise they cannot be referenced correctly by other actions.
-			doc, err := client.NewDocFromJSON([]byte(action.Doc))
-			if err != nil {
-				// If an err has been returned, ignore it - it may be expected and if not
-				// the test will fail later anyway
-				continue
-			}
-
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			collection := getNodeCollections(action.NodeID, s.collections)[0][action.CollectionID]
-			if err := doc.RemapAliasFieldsAndDockey(collection.Schema().Fields); err != nil {
+
+			// We need to add the existing documents in the order in which the test case lists them
+			// otherwise they cannot be referenced correctly by other actions.
+			doc, err := client.NewDocFromJSON([]byte(action.Doc), collection.Schema())
+			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
 				continue
@@ -778,7 +834,7 @@ func refreshDocuments(
 
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
-			doc, err = collection.Get(s.ctx, doc.Key(), false)
+			doc, err = collection.Get(s.ctx, doc.ID(), false)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -996,6 +1052,18 @@ func setDefaultSchemaVersion(
 	refreshIndexes(s)
 }
 
+func createView(
+	s *state,
+	action CreateView,
+) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		_, err := node.AddView(s.ctx, action.Query, action.SDL)
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
+}
+
 // createDoc creates a document using the chosen [mutationType] and caches it in the
 // test state object.
 func createDoc(
@@ -1047,7 +1115,7 @@ func createDocViaColSave(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
 	if err != nil {
 		return nil, err
 	}
@@ -1062,7 +1130,7 @@ func createDocViaColCreate(
 	collections []client.Collection,
 ) (*client.Document, error) {
 	var err error
-	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	doc, err := client.NewDocFromJSON([]byte(action.Doc), collections[action.CollectionID].Schema())
 	if err != nil {
 		return nil, err
 	}
@@ -1078,17 +1146,17 @@ func createDocViaGQL(
 ) (*client.Document, error) {
 	collection := collections[action.CollectionID]
 
-	escapedJson, err := json.Marshal(action.Doc)
+	input, err := jsonToGQL(action.Doc)
 	require.NoError(s.t, err)
 
 	request := fmt.Sprintf(
 		`mutation {
-			create_%s(data: %s) {
-				_key
+			create_%s(input: %s) {
+				_docID
 			}
 		}`,
 		collection.Name(),
-		escapedJson,
+		input,
 	)
 
 	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
@@ -1103,11 +1171,11 @@ func createDocViaGQL(
 		return nil, nil
 	}
 
-	docKeyString := resultantDocs[0]["_key"].(string)
-	docKey, err := client.NewDocKeyFromString(docKeyString)
+	docIDString := resultantDocs[0]["_docID"].(string)
+	docID, err := client.NewDocIDFromString(docIDString)
 	require.NoError(s.t, err)
 
-	doc, err := collection.Get(s.ctx, docKey, false)
+	doc, err := collection.Get(s.ctx, docID, false)
 	require.NoError(s.t, err)
 
 	return doc, nil
@@ -1128,7 +1196,7 @@ func deleteDoc(
 			actionNodes,
 			nodeID,
 			func() error {
-				_, err := collections[action.CollectionID].DeleteWithKey(s.ctx, doc.Key())
+				_, err := collections[action.CollectionID].DeleteWithDocID(s.ctx, doc.ID())
 				return err
 			},
 		)
@@ -1176,12 +1244,19 @@ func updateDocViaColSave(
 	node client.P2P,
 	collections []client.Collection,
 ) error {
-	doc := s.documents[action.CollectionID][action.DocID]
+	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	err := doc.SetWithJSON([]byte(action.Doc))
+	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}
+
+	err = doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	s.documents[action.CollectionID][action.DocID] = doc
 
 	return collections[action.CollectionID].Save(s.ctx, doc)
 }
@@ -1192,12 +1267,19 @@ func updateDocViaColUpdate(
 	node client.P2P,
 	collections []client.Collection,
 ) error {
-	doc := s.documents[action.CollectionID][action.DocID]
+	cachedDoc := s.documents[action.CollectionID][action.DocID]
 
-	err := doc.SetWithJSON([]byte(action.Doc))
+	doc, err := collections[action.CollectionID].Get(s.ctx, cachedDoc.ID(), true)
 	if err != nil {
 		return err
 	}
+
+	err = doc.SetWithJSON([]byte(action.Doc))
+	if err != nil {
+		return err
+	}
+
+	s.documents[action.CollectionID][action.DocID] = doc
 
 	return collections[action.CollectionID].Update(s.ctx, doc)
 }
@@ -1211,18 +1293,18 @@ func updateDocViaGQL(
 	doc := s.documents[action.CollectionID][action.DocID]
 	collection := collections[action.CollectionID]
 
-	escapedJson, err := json.Marshal(action.Doc)
+	input, err := jsonToGQL(action.Doc)
 	require.NoError(s.t, err)
 
 	request := fmt.Sprintf(
 		`mutation {
-			update_%s(id: "%s", data: %s) {
-				_key
+			update_%s(docID: "%s", input: %s) {
+				_docID
 			}
 		}`,
 		collection.Name(),
-		doc.Key().String(),
-		escapedJson,
+		doc.ID().String(),
+		input,
 	)
 
 	db := getStore(s, node, immutable.None[int](), action.ExpectedError)
@@ -1263,6 +1345,7 @@ func createIndex(
 				})
 			}
 		}
+		indexDesc.Unique = action.Unique
 		err := withRetry(
 			actionNodes,
 			nodeID,
@@ -1787,4 +1870,28 @@ func skipIfMutationTypeUnsupported(t *testing.T, supportedMutationTypes immutabl
 			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
 		}
 	}
+}
+
+func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
+	parser, err := graphql.NewParser()
+	if err != nil {
+		return nil, err
+	}
+	cols, err := parser.ParseSDL(context.Background(), gqlSDL)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]client.CollectionDefinition)
+	for _, col := range cols {
+		result[col.Description.Name] = col
+	}
+	return result, nil
+}
+
+func MustParseTime(timeString string) time.Time {
+	t, err := time.Parse(time.RFC3339, timeString)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }

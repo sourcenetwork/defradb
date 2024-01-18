@@ -64,30 +64,6 @@ func TestSchemaUpdatesAddFieldKind9(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKind13(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind deprecated (13)",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 13} }
-					]
-				`,
-				ExpectedError: "no type found for given name. Type: 13",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesAddFieldKind14(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind deprecated (14)",

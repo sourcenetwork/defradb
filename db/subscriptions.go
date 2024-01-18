@@ -74,7 +74,7 @@ func (db *db) handleEvent(
 ) {
 	p := planner.New(ctx, db.WithTxn(txn), txn)
 
-	s := r.ToSelect(evt.DocKey, evt.Cid.String())
+	s := r.ToSelect(evt.DocID, evt.Cid.String())
 
 	result, err := p.RunSubscriptionRequest(ctx, s)
 	if err != nil {

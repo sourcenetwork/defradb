@@ -32,6 +32,7 @@ var (
 	_ planNode = (*typeJoinOne)(nil)
 	_ planNode = (*updateNode)(nil)
 	_ planNode = (*valuesNode)(nil)
+	_ planNode = (*viewNode)(nil)
 
 	_ MultiNode = (*parallelNode)(nil)
 	_ MultiNode = (*topLevelNode)(nil)

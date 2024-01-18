@@ -118,7 +118,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 		Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56.647Z"}}})
+						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56-05:00"}}})
 						_group {
 							Age
 						}
@@ -129,17 +129,17 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 				`{
 					"Name": "John",
 					"Age": 34,
-					"CreatedAt": "2019-07-23T03:46:56.647Z"
+					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "John",
 					"Age": 32,
-					"CreatedAt": "2018-07-23T03:46:56.647Z"
+					"CreatedAt": "2018-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Alice",
 					"Age": 19,
-					"CreatedAt": "2011-07-23T03:46:56.647Z"
+					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 			},
 		},
@@ -226,8 +226,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 		Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2016-07-23T03:46:56.647Z"}}})
-						_group(filter: {CreatedAt: {_gt: "2016-07-23T03:46:56.647Z"}}) {
+						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2016-07-23T03:46:56-05:00"}}})
+						_group(filter: {CreatedAt: {_gt: "2016-07-23T03:46:56-05:00"}}) {
 							Age
 						}
 					}
@@ -237,17 +237,17 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				`{
 					"Name": "John",
 					"Age": 34,
-					"CreatedAt": "2017-07-23T03:46:56.647Z"
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "John",
 					"Age": 32,
-					"CreatedAt": "2011-07-23T03:46:56.647Z"
+					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Alice",
 					"Age": 19,
-					"CreatedAt": "2010-07-23T03:46:56.647Z"
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
 		},

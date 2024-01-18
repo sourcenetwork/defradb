@@ -18,7 +18,7 @@ import (
 
 func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion using id that doesn't exist, where the collection is empty.",
+		Description: "Deletion using document id that doesn't exist, where the collection is empty.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -29,8 +29,8 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(ids: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"]) {
-						_key
+					delete_User(docIDs: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"]) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{},
@@ -43,7 +43,7 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 
 func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion using id that doesn't exist, where the collection is non-empty.",
+		Description: "Deletion using document id that doesn't exist, where the collection is non-empty.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -59,8 +59,8 @@ func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *te
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(ids: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"]) {
-						_key
+					delete_User(docIDs: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5"]) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{},

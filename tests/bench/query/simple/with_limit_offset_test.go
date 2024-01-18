@@ -21,7 +21,7 @@ var (
 	userSimpleWithLimitOffsetQuery = `
 	query {
 		User(limit: 10, offset: 5) {
-			_key
+			_docID
 			Name
 			Age
 			Points

@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package crdt
+package merklecrdt
 
 import (
 	"context"
@@ -16,12 +16,10 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
 
 	"github.com/sourcenetwork/defradb/core"
-	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	crdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
@@ -33,19 +31,18 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, datastore.DSReaderWriter) {
 	s := newDS()
 	multistore := datastore.MultiStoreFrom(s)
 
-	reg := corecrdt.NewLWWRegister(multistore.Datastore(), core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
+	reg := crdt.NewLWWRegister(multistore.Datastore(), core.CollectionSchemaVersionKey{}, core.DataStoreKey{}, "")
 	clk := clock.NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{}, reg)
 	return &baseMerkleCRDT{clock: clk, crdt: reg}, multistore.Rootstore()
 }
 
 func TestMerkleCRDTPublish(t *testing.T) {
 	ctx := context.Background()
-	bCRDT, store := newTestBaseMerkleCRDT()
-	delta := &corecrdt.LWWRegDelta{
-		Data: []byte("test"),
-	}
+	bCRDT, _ := newTestBaseMerkleCRDT()
+	reg := crdt.LWWRegister{}
+	delta := reg.Set([]byte("test"))
 
-	nd, err := bCRDT.Publish(ctx, delta)
+	nd, err := bCRDT.clock.AddDAGNode(ctx, delta)
 	if err != nil {
 		t.Error("Failed to publish delta to MerkleCRDT:", err)
 		return
@@ -54,26 +51,5 @@ func TestMerkleCRDTPublish(t *testing.T) {
 	if nd.Cid() == cid.Undef {
 		t.Error("Published returned invalid CID Undef:", nd.Cid())
 		return
-	}
-
-	printStore(ctx, store)
-}
-
-func printStore(ctx context.Context, store datastore.DSReaderWriter) {
-	q := query.Query{
-		Prefix:   "",
-		KeysOnly: false,
-	}
-
-	results, err := store.Query(ctx, q)
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer results.Close()
-
-	for r := range results.Next() {
-		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
 	}
 }

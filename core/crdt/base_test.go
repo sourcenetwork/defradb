@@ -29,11 +29,11 @@ func newSeededDS() datastore.DSReaderWriter {
 }
 
 func exampleBaseCRDT() baseCRDT {
-	return newBaseCRDT(newSeededDS(), core.DataStoreKey{})
+	return newBaseCRDT(newSeededDS(), core.DataStoreKey{}, core.CollectionSchemaVersionKey{}, "")
 }
 
 func TestBaseCRDTNew(t *testing.T) {
-	base := newBaseCRDT(newDS(), core.DataStoreKey{})
+	base := newBaseCRDT(newDS(), core.DataStoreKey{}, core.CollectionSchemaVersionKey{}, "")
 	if base.store == nil {
 		t.Error("newBaseCRDT needs to init store")
 	}
@@ -41,7 +41,7 @@ func TestBaseCRDTNew(t *testing.T) {
 
 func TestBaseCRDTvalueKey(t *testing.T) {
 	base := exampleBaseCRDT()
-	vk := base.key.WithDocKey("mykey").WithValueFlag()
+	vk := base.key.WithDocID("mykey").WithValueFlag()
 	if vk.ToString() != "/v/mykey" {
 		t.Errorf("Incorrect valueKey. Have %v, want %v", vk.ToString(), "/v/mykey")
 	}
@@ -49,7 +49,7 @@ func TestBaseCRDTvalueKey(t *testing.T) {
 
 func TestBaseCRDTprioryKey(t *testing.T) {
 	base := exampleBaseCRDT()
-	pk := base.key.WithDocKey("mykey").WithPriorityFlag()
+	pk := base.key.WithDocID("mykey").WithPriorityFlag()
 	if pk.ToString() != "/p/mykey" {
 		t.Errorf("Incorrect priorityKey. Have %v, want %v", pk.ToString(), "/p/mykey")
 	}
@@ -58,13 +58,13 @@ func TestBaseCRDTprioryKey(t *testing.T) {
 func TestBaseCRDTSetGetPriority(t *testing.T) {
 	base := exampleBaseCRDT()
 	ctx := context.Background()
-	err := base.setPriority(ctx, base.key.WithDocKey("mykey"), 10)
+	err := base.setPriority(ctx, base.key.WithDocID("mykey"), 10)
 	if err != nil {
 		t.Errorf("baseCRDT failed to set Priority. err: %v", err)
 		return
 	}
 
-	priority, err := base.getPriority(ctx, base.key.WithDocKey("mykey"))
+	priority, err := base.getPriority(ctx, base.key.WithDocID("mykey"))
 	if err != nil {
 		t.Errorf("baseCRDT failed to get priority. err: %v", err)
 		return

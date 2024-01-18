@@ -28,9 +28,10 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				"name": "John"
 			}`,
 		),
+		colDefMap["Users"].Schema,
 	)
 	assert.Nil(t, err)
-	docKey1 := doc1.Key().String()
+	docID1 := doc1.ID().String()
 
 	doc2, err := client.NewDocFromJSON(
 		[]byte(
@@ -38,9 +39,10 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				"name": "Shahzad"
 			}`,
 		),
+		colDefMap["Users"].Schema,
 	)
 	assert.Nil(t, err)
-	docKey2 := doc2.Key().String()
+	docID2 := doc2.ID().String()
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection){
@@ -63,15 +65,15 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 		},
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
-				DocKey: immutable.Some(docKey1),
-				Cid:    immutable.Some("bafybeifwfw3g4q6tagffdwq4orrouoosdlsc5rb67q2uj7oplkq7ax5ysm"),
+				DocID: immutable.Some(docID1),
+				Cid:   immutable.Some("bafybeif5l2a5f2lcsmuml2cji6unq4qk2ta4f3uow4wccdjebsu7jcjrj4"),
 			},
 			{
-				DocKey: immutable.Some(docKey2),
+				DocID: immutable.Some(docID2),
 			},
 			{
-				DocKey: immutable.Some(docKey1),
-				Cid:    immutable.Some("bafybeihdhik6m5o7cxei7f7ie6lnnbwnjsn42ne6cxab6g7dgi7k2uiiu4"),
+				DocID: immutable.Some(docID1),
+				Cid:   immutable.Some("bafybeihchzitl7e7pyhci5bs563dn3seykcleqk56r7vjtslvi3rv3wsne"),
 			},
 		},
 	}

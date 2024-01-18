@@ -111,31 +111,31 @@ func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 			0: {
 				`{
 					"Name": "John",
-					"CreatedAt": "2011-07-23T03:46:56.647Z"
+					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Bob",
-					"CreatedAt": "2011-07-23T03:46:56.647Z"
+					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Carlo",
-					"CreatedAt": "2012-07-23T03:46:56.647Z"
+					"CreatedAt": "2012-07-23T03:46:56-05:00"
 				}`,
 				`{
 					"Name": "Alice",
-					"CreatedAt": "2013-07-23T03:46:56.647Z"
+					"CreatedAt": "2013-07-23T03:46:56-05:00"
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"CreatedAt": "2013-07-23T03:46:56.647Z",
+				"CreatedAt": testUtils.MustParseTime("2013-07-23T03:46:56-05:00"),
 			},
 			{
-				"CreatedAt": "2011-07-23T03:46:56.647Z",
+				"CreatedAt": testUtils.MustParseTime("2012-07-23T03:46:56-05:00"),
 			},
 			{
-				"CreatedAt": "2012-07-23T03:46:56.647Z",
+				"CreatedAt": testUtils.MustParseTime("2011-07-23T03:46:56-05:00"),
 			},
 		},
 	}

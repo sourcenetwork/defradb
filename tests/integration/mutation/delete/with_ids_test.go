@@ -18,7 +18,7 @@ import (
 
 func TestMutationDeletion_WithIDs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete multiple documents that exist, when given multiple keys.",
+		Description: "Delete multiple documents that exist, when given multiple IDs.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -39,16 +39,16 @@ func TestMutationDeletion_WithIDs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(ids: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5", "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"]) {
-						_key
+					delete_User(docIDs: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5", "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"]) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
+						"_docID": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
 					},
 					{
-						"_key": "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
+						"_docID": "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
 					},
 				},
 			},
@@ -81,8 +81,8 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(ids: []) {
-						_key
+					delete_User(docIDs: []) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{},
@@ -122,8 +122,8 @@ func TestMutationDeletion_WithIDsSingleUnknownID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
-						_key
+					delete_User(docIDs: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{},
@@ -147,8 +147,8 @@ func TestMutationDeletion_WithIDsMultipleUnknownID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(ids: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
-						_key
+					delete_User(docIDs: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{},
@@ -177,13 +177,13 @@ func TestMutationDeletion_WithIDsKnownAndUnknown(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(ids: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5", "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"]) {
-						_key
+					delete_User(docIDs: ["bae-d7546ac1-c133-5853-b866-9b9f926fe7e5", "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad"]) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
+						"_docID": "bae-d7546ac1-c133-5853-b866-9b9f926fe7e5",
 					},
 				},
 			},

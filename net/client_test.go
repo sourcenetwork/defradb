@@ -22,11 +22,25 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
+var sd = client.SchemaDescription{
+	Name: "test",
+	Fields: []client.FieldDescription{
+		{
+			Name: "test",
+			Kind: client.FieldKind_STRING,
+			Typ:  client.LWW_REGISTER,
+		},
+	},
+}
+
 func TestPushlogWithDialFailure(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
-	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), sd)
+	require.NoError(t, err)
+	id, err := doc.GenerateDocID()
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)
@@ -39,7 +53,7 @@ func TestPushlogWithDialFailure(t *testing.T) {
 	)
 
 	err = n.server.pushLog(ctx, events.Update{
-		DocKey:     doc.Key().String(),
+		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
 		Block:      &EmptyNode{},
@@ -51,15 +65,18 @@ func TestPushlogWithDialFailure(t *testing.T) {
 func TestPushlogWithInvalidPeerID(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
-	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"test": "test"}`), sd)
+	require.NoError(t, err)
+	id, err := doc.GenerateDocID()
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
 	err = n.server.pushLog(ctx, events.Update{
-		DocKey:     doc.Key().String(),
+		DocID:      id.String(),
 		Cid:        cid,
 		SchemaRoot: "test",
 		Block:      &EmptyNode{},
@@ -71,8 +88,10 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n1 := newTestNode(ctx, t)
+	defer n1.Close()
 	n1.Start()
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 	n2.Start()
 
 	err := n1.host.Connect(ctx, n2.PeerInfo())
@@ -88,11 +107,12 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "test"}`))
-	require.NoError(t, err)
-
 	col, err := n1.db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
+
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "test"}`), col.Schema())
+	require.NoError(t, err)
+
 	err = col.Save(ctx, doc)
 	require.NoError(t, err)
 
@@ -105,7 +125,7 @@ func TestPushlogW_WithValidPeerID_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = n1.server.pushLog(ctx, events.Update{
-		DocKey:     doc.Key().String(),
+		DocID:      doc.ID().String(),
 		Cid:        cid,
 		SchemaRoot: col.SchemaRoot(),
 		Block:      &EmptyNode{},

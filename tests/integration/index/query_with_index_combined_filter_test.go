@@ -28,12 +28,16 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of an indexed field",
 		Actions: []any{
-			createSchemaWithDocs(`
-				type User {
-					name: String @index
-					age: Int
-				} 
-			`),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index
+						age: Int
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
@@ -63,13 +67,17 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 	test := testUtils.TestCase{
 		Description: "Combination of a filter on regular and of 2 indexed fields",
 		Actions: []any{
-			createSchemaWithDocs(`
-				type User {
-					name: String @index
-					age: Int @index
-					email: String 
-				} 
-			`),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index
+						age: Int @index
+						email: String 
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{

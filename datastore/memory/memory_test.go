@@ -475,7 +475,9 @@ func TestClearOldFlightTransactions(t *testing.T) {
 	s.inFlightTxn.Set(dsTxn{
 		dsVersion:  s.getVersion(),
 		txnVersion: s.getVersion() + 1,
-		expiresAt:  time.Now(),
+		// Ensure expiresAt is before the value returned from the later call in `clearOldInFlightTxn`,
+		// in windows in particular it seems that the two `time.Now` calls can return the same value
+		expiresAt: time.Now().Add(-1 * time.Minute),
 	})
 
 	require.Equal(t, 1, s.inFlightTxn.Len())

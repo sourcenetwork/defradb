@@ -19,7 +19,7 @@ import (
 func MakeCollectionGetCommand() *cobra.Command {
 	var showDeleted bool
 	var cmd = &cobra.Command{
-		Use:   "get <docKey> [--show-deleted]",
+		Use:   "get <docID> [--show-deleted]",
 		Short: "View document fields.",
 		Long: `View document fields.
 
@@ -33,11 +33,11 @@ Example:
 				return cmd.Usage()
 			}
 
-			docKey, err := client.NewDocKeyFromString(args[0])
+			docID, err := client.NewDocIDFromString(args[0])
 			if err != nil {
 				return err
 			}
-			doc, err := col.Get(cmd.Context(), docKey, showDeleted)
+			doc, err := col.Get(cmd.Context(), docID, showDeleted)
 			if err != nil {
 				return err
 			}

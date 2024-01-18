@@ -12,6 +12,8 @@ package client
 
 import (
 	"fmt"
+
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 // CollectionDescription describes a Collection and all its associated metadata.
@@ -29,6 +31,13 @@ type CollectionDescription struct {
 
 	// The ID of the schema version that this collection is at.
 	SchemaVersionID string
+
+	// BaseQuery contains the base query of this view, if this collection is a view.
+	//
+	// The query will be saved, and then may be accessed by other actors on demand.  Actor defined
+	// aggregates, filters and other logic (such as LensVM transforms) will execute on top of this
+	// base query before the result is returned to the actor.
+	BaseQuery *request.Select
 
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
@@ -118,7 +127,7 @@ type FieldKind uint8
 
 func (f FieldKind) String() string {
 	switch f {
-	case FieldKind_DocKey:
+	case FieldKind_DocID:
 		return "ID"
 	case FieldKind_BOOL:
 		return "Boolean"
@@ -146,6 +155,8 @@ func (f FieldKind) String() string {
 		return "[String]"
 	case FieldKind_STRING_ARRAY:
 		return "[String!]"
+	case FieldKind_BLOB:
+		return "Blob"
 	default:
 		return fmt.Sprint(uint8(f))
 	}
@@ -154,7 +165,7 @@ func (f FieldKind) String() string {
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
 	FieldKind_None         FieldKind = 0
-	FieldKind_DocKey       FieldKind = 1
+	FieldKind_DocID        FieldKind = 1
 	FieldKind_BOOL         FieldKind = 2
 	FieldKind_BOOL_ARRAY   FieldKind = 3
 	FieldKind_INT          FieldKind = 4
@@ -162,11 +173,11 @@ const (
 	FieldKind_FLOAT        FieldKind = 6
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
 	_                      FieldKind = 8 // safe to repurpose (was never used)
-	_                      FieldKind = 9 // safe to repurpose (previoulsy old field)
+	_                      FieldKind = 9 // safe to repurpose (previously old field)
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
-	_                      FieldKind = 13 // safe to repurpose (was never used)
+	FieldKind_BLOB         FieldKind = 13
 	_                      FieldKind = 14 // safe to repurpose (was never used)
 	_                      FieldKind = 15 // safe to repurpose (was never used)
 
@@ -186,11 +197,11 @@ const (
 // their enum values.
 //
 // It is currently used to by [db.PatchSchema] to allow string representations of
-// [FieldKind] to be provided instead of their raw int values.  This useage may expand
+// [FieldKind] to be provided instead of their raw int values.  This usage may expand
 // in the future.  They currently roughly correspond to the GQL field types, but this
-// equality is not guarenteed.
+// equality is not guaranteed.
 var FieldKindStringToEnumMapping = map[string]FieldKind{
-	"ID":         FieldKind_DocKey,
+	"ID":         FieldKind_DocID,
 	"Boolean":    FieldKind_BOOL,
 	"[Boolean]":  FieldKind_NILLABLE_BOOL_ARRAY,
 	"[Boolean!]": FieldKind_BOOL_ARRAY,
@@ -204,6 +215,7 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"String":     FieldKind_STRING,
 	"[String]":   FieldKind_NILLABLE_STRING_ARRAY,
 	"[String!]":  FieldKind_STRING_ARRAY,
+	"Blob":       FieldKind_BLOB,
 }
 
 // RelationType describes the type of relation between two types.
@@ -238,7 +250,7 @@ type FieldDescription struct {
 	// ID contains the internal ID of this field.
 	//
 	// Whilst this ID will typically match the field's index within the Schema's Fields
-	// slice, there is no guarentee that they will be the same.
+	// slice, there is no guarantee that they will be the same.
 	//
 	// It is immutable.
 	ID FieldID
@@ -268,7 +280,7 @@ type FieldDescription struct {
 
 // IsInternal returns true if this field is internally generated.
 func (f FieldDescription) IsInternal() bool {
-	return (f.Name == "_key") || f.RelationType&Relation_Type_INTERNAL_ID != 0
+	return (f.Name == request.DocIDFieldName) || f.RelationType&Relation_Type_INTERNAL_ID != 0
 }
 
 // IsObject returns true if this field is an object type.
@@ -285,6 +297,25 @@ func (f FieldDescription) IsObjectArray() bool {
 // IsPrimaryRelation returns true if this field is a relation, and is the primary side.
 func (f FieldDescription) IsPrimaryRelation() bool {
 	return f.RelationType > 0 && f.RelationType&Relation_Type_Primary != 0
+}
+
+// IsRelation returns true if this field is a relation.
+func (f FieldDescription) IsRelation() bool {
+	return f.RelationType > 0
+}
+
+// IsArray returns true if this field is an array type which includes inline arrays as well
+// as relation arrays.
+func (f FieldDescription) IsArray() bool {
+	return f.Kind == FieldKind_BOOL_ARRAY ||
+		f.Kind == FieldKind_INT_ARRAY ||
+		f.Kind == FieldKind_FLOAT_ARRAY ||
+		f.Kind == FieldKind_STRING_ARRAY ||
+		f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_BOOL_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_INT_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_FLOAT_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_STRING_ARRAY
 }
 
 // IsSet returns true if the target relation type is set.

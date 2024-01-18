@@ -12,7 +12,12 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
+
+	"github.com/sourcenetwork/defradb/errors"
+)
+
+const (
+	errFailedToLoadKeys string = "failed to load given keys"
 )
 
 // Errors returnable from this package.
@@ -21,18 +26,8 @@ import (
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
 	ErrNoListener            = errors.New("cannot serve with no listener")
-	ErrSchema                = errors.New("base must start with the http or https scheme")
-	ErrDatabaseNotAvailable  = errors.New("no database available")
-	ErrFormNotSupported      = errors.New("content type application/x-www-form-urlencoded not yet supported")
-	ErrBodyEmpty             = errors.New("body cannot be empty")
-	ErrMissingGQLRequest     = errors.New("missing GraphQL request")
-	ErrPeerIdUnavailable     = errors.New("no PeerID available. P2P might be disabled")
-	ErrStreamingUnsupported  = errors.New("streaming unsupported")
 	ErrNoEmail               = errors.New("email address must be specified for tls with autocert")
-	ErrPayloadFormat         = errors.New("invalid payload format")
-	ErrMissingNewKey         = errors.New("missing _newKey for imported doc")
 	ErrInvalidRequestBody    = errors.New("invalid request body")
-	ErrDocKeyDoesNotMatch    = errors.New("document key does not match")
 	ErrStreamingNotSupported = errors.New("streaming not supported")
 	ErrMigrationNotFound     = errors.New("migration not found")
 	ErrMissingRequest        = errors.New("missing request")
@@ -55,4 +50,13 @@ func (e *errorResponse) UnmarshalJSON(data []byte) error {
 	}
 	e.Error = parseError(out["error"])
 	return nil
+}
+
+func NewErrFailedToLoadKeys(inner error, publicKeyPath, privateKeyPath string) error {
+	return errors.Wrap(
+		errFailedToLoadKeys,
+		inner,
+		errors.NewKV("PublicKeyPath", publicKeyPath),
+		errors.NewKV("PrivateKeyPath", privateKeyPath),
+	)
 }

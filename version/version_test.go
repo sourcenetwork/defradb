@@ -23,7 +23,7 @@ func TestNewDefraVersion(t *testing.T) {
 
 	assert.NotEmpty(t, dv.VersionHTTPAPI)
 	assert.NotEmpty(t, dv.NetProtocol)
-	assert.NotEmpty(t, dv.DocKeyVersions)
+	assert.NotEmpty(t, dv.DocIDVersions)
 
 	// These variables are set in the Makefile via BUILD_FLAGS when building defradb.
 	// This test assumes the test suite is not using these BUILD_FLAGS.
@@ -51,14 +51,14 @@ func TestDefraVersionStringFull(t *testing.T) {
 		CommitDate:     "2022-01-01T12:00:00Z",
 		GoInfo:         "1.17.5",
 		VersionHTTPAPI: "v0",
-		DocKeyVersions: "1",
+		DocIDVersions:  "1",
 		NetProtocol:    "/defra/0.0.1",
 	}
 
 	expected := `defradb test-release (abc123de 2022-01-01T12:00:00Z)
 * HTTP API: v0
 * P2P multicodec: /defra/0.0.1
-* DocKey versions: 1
+* DocID versions: 1
 * Go: 1.17.5`
 
 	assert.Equal(t, expected, dv.StringFull())
@@ -71,7 +71,7 @@ func TestDefraVersion_JSON(t *testing.T) {
 		CommitDate:     "2022-01-01T12:00:00Z",
 		GoInfo:         "go1.17.5",
 		VersionHTTPAPI: "1.2.3",
-		DocKeyVersions: "0123456789abcdef",
+		DocIDVersions:  "0123456789abcdef",
 		NetProtocol:    "test-protocol",
 	}
 

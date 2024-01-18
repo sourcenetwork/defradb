@@ -19,7 +19,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine/module"
-	"github.com/lens-vm/lens/host-go/runtimes/wazero"
+	"github.com/lens-vm/lens/host-go/runtimes/wasmtime"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -104,7 +104,7 @@ func NewRegistry(lensPoolSize immutable.Option[int], db TxnSource) client.LensRe
 		db: db,
 		registry: &lensRegistry{
 			poolSize:                       size,
-			runtime:                        wazero.New(),
+			runtime:                        wasmtime.New(),
 			modulesByPath:                  map[string]module.Module{},
 			lensPoolsBySchemaVersionID:     map[string]*lensPool{},
 			reversedPoolsBySchemaVersionID: map[string]*lensPool{},

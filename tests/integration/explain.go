@@ -55,6 +55,7 @@ var (
 		"typeJoinOne":   {},
 		"updateNode":    {},
 		"valuesNode":    {},
+		"viewNode":      {},
 	}
 )
 

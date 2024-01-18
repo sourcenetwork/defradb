@@ -28,9 +28,11 @@ type updateNode struct {
 	collection client.Collection
 
 	filter *mapper.Filter
-	ids    []string
 
-	patch string
+	docIDs []string
+
+	// input map of fields and values
+	input map[string]any
 
 	isUpdating bool
 
@@ -62,11 +64,15 @@ func (n *updateNode) Next() (bool, error) {
 			}
 
 			n.currentValue = n.results.Value()
-			key, err := client.NewDocKeyFromString(n.currentValue.GetKey())
+			docID, err := client.NewDocIDFromString(n.currentValue.GetID())
 			if err != nil {
 				return false, err
 			}
-			_, err = n.collection.UpdateWithKey(n.p.ctx, key, n.patch)
+			patch, err := json.Marshal(n.input)
+			if err != nil {
+				return false, err
+			}
+			_, err = n.collection.UpdateWithDocID(n.p.ctx, docID, string(patch))
 			if err != nil {
 				return false, err
 			}
@@ -115,7 +121,7 @@ func (n *updateNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the document id(s) that request wants to update.
-	simpleExplainMap[idsLabel] = n.ids
+	simpleExplainMap[request.DocIDsArgName] = n.docIDs
 
 	// Add the filter attribute if it exists, otherwise have it nil.
 	if n.filter == nil {
@@ -125,12 +131,7 @@ func (n *updateNode) simpleExplain() (map[string]any, error) {
 	}
 
 	// Add the attribute that represents the patch to update with.
-	data := map[string]any{}
-	err := json.Unmarshal([]byte(n.patch), &data)
-	if err != nil {
-		return nil, err
-	}
-	simpleExplainMap[dataLabel] = data
+	simpleExplainMap[inputLabel] = n.input
 
 	return simpleExplainMap, nil
 }
@@ -157,9 +158,9 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	update := &updateNode{
 		p:          p,
 		filter:     parsed.Filter,
-		ids:        parsed.DocKeys.Value(),
+		docIDs:     parsed.DocIDs.Value(),
 		isUpdating: true,
-		patch:      parsed.Data,
+		input:      parsed.Input,
 		docMapper:  docMapper{parsed.DocumentMapping},
 	}
 

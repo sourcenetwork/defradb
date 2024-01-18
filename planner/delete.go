@@ -27,7 +27,7 @@ type deleteNode struct {
 	source     planNode
 
 	filter *mapper.Filter
-	ids    []string
+	docIDs []string
 
 	execInfo deleteExecInfo
 }
@@ -49,11 +49,11 @@ func (n *deleteNode) Next() (bool, error) {
 	}
 
 	n.currentValue = n.source.Value()
-	key, err := client.NewDocKeyFromString(n.currentValue.GetKey())
+	docID, err := client.NewDocIDFromString(n.currentValue.GetID())
 	if err != nil {
 		return false, err
 	}
-	_, err = n.collection.DeleteWithKey(n.p.ctx, key)
+	_, err = n.collection.DeleteWithDocID(n.p.ctx, docID)
 	if err != nil {
 		return false, err
 	}
@@ -88,7 +88,7 @@ func (n *deleteNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the document id(s) that request wants to delete.
-	simpleExplainMap[idsLabel] = n.ids
+	simpleExplainMap[request.DocIDsArgName] = n.docIDs
 
 	// Add the filter attribute if it exists, otherwise have it nil.
 	if n.filter == nil {
@@ -131,7 +131,7 @@ func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
 	return &deleteNode{
 		p:          p,
 		filter:     parsed.Filter,
-		ids:        parsed.DocKeys.Value(),
+		docIDs:     parsed.DocIDs.Value(),
 		collection: col.WithTxn(p.txn),
 		source:     slctNode,
 		docMapper:  docMapper{parsed.DocumentMapping},

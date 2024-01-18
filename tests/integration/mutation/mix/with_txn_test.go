@@ -33,26 +33,26 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_User(data: "{\"name\": \"John\",\"age\": 27}") {
-						_key
+					create_User(input: {name: "John", age: 27}) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 					},
 				},
 			},
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					delete_User(id: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
-						_key
+					delete_User(docID: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 					},
 				},
 			},
@@ -77,21 +77,21 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_User(data: "{\"name\": \"John\",\"age\": 27}") {
-						_key
+					create_User(input: {name: "John", age: 27}) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 					},
 				},
 			},
 			testUtils.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					delete_User(id: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
-						_key
+					delete_User(docID: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{},
@@ -100,16 +100,16 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 				TransactionID: immutable.Some(0),
 				Request: `query {
 					User {
-						_key
+						_docID
 						name
 						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
-						"name": "John",
-						"age":  int64(27),
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"name":   "John",
+						"age":    int64(27),
 					},
 				},
 			},
@@ -117,7 +117,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 				TransactionID: immutable.Some(1),
 				Request: `query {
 					User {
-						_key
+						_docID
 						name
 						age
 					}
@@ -151,13 +151,13 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					update_User(data: "{\"age\": 28}") {
-						_key
+					update_User(input: {age: 28}) {
+						_docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 					},
 				},
 			},
@@ -165,16 +165,16 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 				TransactionID: immutable.Some(0),
 				Request: `query {
 					User {
-						_key
+						_docID
 						name
 						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
-						"name": "John",
-						"age":  int64(28),
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"name":   "John",
+						"age":    int64(28),
 					},
 				},
 			},
@@ -205,17 +205,17 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					update_User(data: "{\"age\": 28}") {
-						_key
+					update_User(input: {age: 28}) {
+						_docID
 						name
 						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
-						"name": "John",
-						"age":  int64(28),
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"name":   "John",
+						"age":    int64(28),
 					},
 				},
 			},
@@ -223,16 +223,16 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 				TransactionID: immutable.Some(1),
 				Request: `query {
 					User {
-						_key
+						_docID
 						name
 						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
-						"name": "John",
-						"age":  int64(27),
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"name":   "John",
+						"age":    int64(27),
 					},
 				},
 			},
@@ -264,34 +264,34 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					update_User(data: "{\"age\": 28}") {
-						_key
+					update_User(input: {age: 28}) {
+						_docID
 						name
 						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
-						"name": "John",
-						"age":  int64(28),
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"name":   "John",
+						"age":    int64(28),
 					},
 				},
 			},
 			testUtils.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					update_User(data: "{\"age\": 29}") {
-						_key
+					update_User(input: {age: 29}) {
+						_docID
 						name
 						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
-						"name": "John",
-						"age":  int64(29),
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"name":   "John",
+						"age":    int64(29),
 					},
 				},
 			},
@@ -306,16 +306,16 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				// Query after transactions have been commited:
 				Request: `query {
 					User {
-						_key
+						_docID
 						name
 						age
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
-						"name": "John",
-						"age":  int64(28),
+						"_docID": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"name":   "John",
+						"age":    int64(28),
 					},
 				},
 			},

@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -125,7 +126,7 @@ func (c *collection) updateIndexedDoc(
 	oldDoc, err := c.get(
 		ctx,
 		txn,
-		c.getPrimaryKeyFromDocKey(doc.Key()), desc.CollectIndexedFields(&schema),
+		c.getPrimaryKeyFromDocID(doc.ID()), desc.CollectIndexedFields(&schema),
 		false,
 	)
 	if err != nil {
@@ -236,36 +237,33 @@ func (c *collection) iterateAllDocs(
 	df := c.newFetcher()
 	err := df.Init(ctx, txn, c, fields, nil, nil, false, false)
 	if err != nil {
-		_ = df.Close()
-		return err
+		return errors.Join(err, df.Close())
 	}
-	start := base.MakeCollectionKey(c.Description())
+	start := base.MakeDataStoreKeyWithCollectionDescription(c.Description())
 	spans := core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 
 	err = df.Start(ctx, spans)
 	if err != nil {
-		_ = df.Close()
-		return err
+		return errors.Join(err, df.Close())
 	}
 
 	for {
 		encodedDoc, _, err := df.FetchNext(ctx)
 		if err != nil {
-			_ = df.Close()
-			return err
+			return errors.Join(err, df.Close())
 		}
 		if encodedDoc == nil {
 			break
 		}
 
-		doc, err := fetcher.Decode(encodedDoc)
+		doc, err := fetcher.Decode(encodedDoc, c.Schema())
 		if err != nil {
-			return err
+			return errors.Join(err, df.Close())
 		}
 
 		err = exec(doc)
 		if err != nil {
-			return err
+			return errors.Join(err, df.Close())
 		}
 	}
 

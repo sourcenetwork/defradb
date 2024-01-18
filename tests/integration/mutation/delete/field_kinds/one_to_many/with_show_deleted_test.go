@@ -20,46 +20,51 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testing.T) {
+var schemas = `
+type Book {
+	name: String
+	rating: Float
+	author: Author
+}
+type Author {
+	name: String
+	age: Int
+	published: [Book]
+}
+`
+
+func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *testing.T) {
+	colDefMap, err := testUtils.ParseSDL(schemas)
+	require.NoError(t, err)
+
 	jsonString1 := `{
 		"name": "John",
 		"age": 30
 	}`
-	doc1, err := client.NewDocFromJSON([]byte(jsonString1))
+	doc1, err := client.NewDocFromJSON([]byte(jsonString1), colDefMap["Author"].Schema)
 	require.NoError(t, err)
 
 	jsonString2 := fmt.Sprintf(`{
 		"name": "John and the philosopher are stoned",
 		"rating": 9.9,
 		"author_id": "%s"
-	}`, doc1.Key())
-	doc2, err := client.NewDocFromJSON([]byte(jsonString2))
+	}`, doc1.ID())
+	doc2, err := client.NewDocFromJSON([]byte(jsonString2), colDefMap["Book"].Schema)
 	require.NoError(t, err)
 
 	jsonString3 := fmt.Sprintf(`{
 		"name": "John has a chamber of secrets",
 		"rating": 9.9,
 		"author_id": "%s"
-	}`, doc1.Key())
+	}`, doc1.ID())
 	// doc3, err := client.NewDocFromJSON([]byte(jsonString1))
 	// require.NoError(t, err)
 
 	test := testUtils.TestCase{
-		Description: "One to many delete document using single key show deleted.",
+		Description: "One to many delete document using single document id, show deleted.",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: `
-					type Book {
-						name: String
-						rating: Float
-						author: Author
-					}
-					type Author {
-						name: String
-						age: Int
-						published: [Book]
-					}
-				`,
+				Schema: schemas,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -75,13 +80,13 @@ func TestDeletionOfADocumentUsingSingleKeyWithShowDeletedDocumentQuery(t *testin
 			},
 			testUtils.Request{
 				Request: fmt.Sprintf(`mutation {
-						delete_Book(id: "%s") {
-							_key
+					delete_Book(docID: "%s") {
+							_docID
 						}
-					}`, doc2.Key()),
+					}`, doc2.ID()),
 				Results: []map[string]any{
 					{
-						"_key": doc2.Key().String(),
+						"_docID": doc2.ID().String(),
 					},
 				},
 			},

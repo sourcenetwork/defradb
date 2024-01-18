@@ -83,6 +83,62 @@ func (_c *DB_AddSchema_Call) RunAndReturn(run func(context.Context, string) ([]c
 	return _c
 }
 
+// AddView provides a mock function with given fields: ctx, gqlQuery, sdl
+func (_m *DB) AddView(ctx context.Context, gqlQuery string, sdl string) ([]client.CollectionDefinition, error) {
+	ret := _m.Called(ctx, gqlQuery, sdl)
+
+	var r0 []client.CollectionDefinition
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]client.CollectionDefinition, error)); ok {
+		return rf(ctx, gqlQuery, sdl)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []client.CollectionDefinition); ok {
+		r0 = rf(ctx, gqlQuery, sdl)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.CollectionDefinition)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, gqlQuery, sdl)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_AddView_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddView'
+type DB_AddView_Call struct {
+	*mock.Call
+}
+
+// AddView is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gqlQuery string
+//   - sdl string
+func (_e *DB_Expecter) AddView(ctx interface{}, gqlQuery interface{}, sdl interface{}) *DB_AddView_Call {
+	return &DB_AddView_Call{Call: _e.mock.On("AddView", ctx, gqlQuery, sdl)}
+}
+
+func (_c *DB_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, sdl string)) *DB_AddView_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *DB_AddView_Call) Return(_a0 []client.CollectionDefinition, _a1 error) *DB_AddView_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_AddView_Call) RunAndReturn(run func(context.Context, string, string) ([]client.CollectionDefinition, error)) *DB_AddView_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // BasicExport provides a mock function with given fields: ctx, config
 func (_m *DB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
 	ret := _m.Called(ctx, config)
@@ -464,30 +520,30 @@ func (_m *DB) GetAllSchemas(_a0 context.Context) ([]client.SchemaDescription, er
 	return r0, r1
 }
 
-// DB_GetAllSchema_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllSchemas'
-type DB_GetAllSchema_Call struct {
+// DB_GetAllSchemas_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllSchemas'
+type DB_GetAllSchemas_Call struct {
 	*mock.Call
 }
 
 // GetAllSchemas is a helper method to define mock.On call
 //   - _a0 context.Context
-func (_e *DB_Expecter) GetAllSchemas(_a0 interface{}) *DB_GetAllSchema_Call {
-	return &DB_GetAllSchema_Call{Call: _e.mock.On("GetAllSchemas", _a0)}
+func (_e *DB_Expecter) GetAllSchemas(_a0 interface{}) *DB_GetAllSchemas_Call {
+	return &DB_GetAllSchemas_Call{Call: _e.mock.On("GetAllSchemas", _a0)}
 }
 
-func (_c *DB_GetAllSchema_Call) Run(run func(_a0 context.Context)) *DB_GetAllSchema_Call {
+func (_c *DB_GetAllSchemas_Call) Run(run func(_a0 context.Context)) *DB_GetAllSchemas_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *DB_GetAllSchema_Call) Return(_a0 []client.SchemaDescription, _a1 error) *DB_GetAllSchema_Call {
+func (_c *DB_GetAllSchemas_Call) Return(_a0 []client.SchemaDescription, _a1 error) *DB_GetAllSchemas_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_GetAllSchema_Call) RunAndReturn(run func(context.Context) ([]client.SchemaDescription, error)) *DB_GetAllSchema_Call {
+func (_c *DB_GetAllSchemas_Call) RunAndReturn(run func(context.Context) ([]client.SchemaDescription, error)) *DB_GetAllSchemas_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -657,116 +713,6 @@ func (_c *DB_GetCollectionsByVersionID_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// GetSchemasByName provides a mock function with given fields: _a0, _a1
-func (_m *DB) GetSchemasByName(_a0 context.Context, _a1 string) ([]client.SchemaDescription, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 []client.SchemaDescription
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.SchemaDescription, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []client.SchemaDescription); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.SchemaDescription)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DB_GetSchemaByName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSchemasByName'
-type DB_GetSchemaByName_Call struct {
-	*mock.Call
-}
-
-// GetSchemasByName is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 string
-func (_e *DB_Expecter) GetSchemasByName(_a0 interface{}, _a1 interface{}) *DB_GetSchemaByName_Call {
-	return &DB_GetSchemaByName_Call{Call: _e.mock.On("GetSchemasByName", _a0, _a1)}
-}
-
-func (_c *DB_GetSchemaByName_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetSchemaByName_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *DB_GetSchemaByName_Call) Return(_a0 []client.SchemaDescription, _a1 error) *DB_GetSchemaByName_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *DB_GetSchemaByName_Call) RunAndReturn(run func(context.Context, string) ([]client.SchemaDescription, error)) *DB_GetSchemaByName_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetSchemasByRoot provides a mock function with given fields: _a0, _a1
-func (_m *DB) GetSchemasByRoot(_a0 context.Context, _a1 string) ([]client.SchemaDescription, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 []client.SchemaDescription
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.SchemaDescription, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []client.SchemaDescription); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.SchemaDescription)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DB_GetSchemaByRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSchemasByRoot'
-type DB_GetSchemaByRoot_Call struct {
-	*mock.Call
-}
-
-// GetSchemasByRoot is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 string
-func (_e *DB_Expecter) GetSchemasByRoot(_a0 interface{}, _a1 interface{}) *DB_GetSchemaByRoot_Call {
-	return &DB_GetSchemaByRoot_Call{Call: _e.mock.On("GetSchemasByRoot", _a0, _a1)}
-}
-
-func (_c *DB_GetSchemaByRoot_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetSchemaByRoot_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *DB_GetSchemaByRoot_Call) Return(_a0 []client.SchemaDescription, _a1 error) *DB_GetSchemaByRoot_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *DB_GetSchemaByRoot_Call) RunAndReturn(run func(context.Context, string) ([]client.SchemaDescription, error)) *DB_GetSchemaByRoot_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetSchemaByVersionID provides a mock function with given fields: _a0, _a1
 func (_m *DB) GetSchemaByVersionID(_a0 context.Context, _a1 string) (client.SchemaDescription, error) {
 	ret := _m.Called(_a0, _a1)
@@ -816,6 +762,116 @@ func (_c *DB_GetSchemaByVersionID_Call) Return(_a0 client.SchemaDescription, _a1
 }
 
 func (_c *DB_GetSchemaByVersionID_Call) RunAndReturn(run func(context.Context, string) (client.SchemaDescription, error)) *DB_GetSchemaByVersionID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSchemasByName provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetSchemasByName(_a0 context.Context, _a1 string) ([]client.SchemaDescription, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 []client.SchemaDescription
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.SchemaDescription, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []client.SchemaDescription); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.SchemaDescription)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_GetSchemasByName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSchemasByName'
+type DB_GetSchemasByName_Call struct {
+	*mock.Call
+}
+
+// GetSchemasByName is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 string
+func (_e *DB_Expecter) GetSchemasByName(_a0 interface{}, _a1 interface{}) *DB_GetSchemasByName_Call {
+	return &DB_GetSchemasByName_Call{Call: _e.mock.On("GetSchemasByName", _a0, _a1)}
+}
+
+func (_c *DB_GetSchemasByName_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetSchemasByName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_GetSchemasByName_Call) Return(_a0 []client.SchemaDescription, _a1 error) *DB_GetSchemasByName_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetSchemasByName_Call) RunAndReturn(run func(context.Context, string) ([]client.SchemaDescription, error)) *DB_GetSchemasByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSchemasByRoot provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetSchemasByRoot(_a0 context.Context, _a1 string) ([]client.SchemaDescription, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 []client.SchemaDescription
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]client.SchemaDescription, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []client.SchemaDescription); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.SchemaDescription)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_GetSchemasByRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSchemasByRoot'
+type DB_GetSchemasByRoot_Call struct {
+	*mock.Call
+}
+
+// GetSchemasByRoot is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 string
+func (_e *DB_Expecter) GetSchemasByRoot(_a0 interface{}, _a1 interface{}) *DB_GetSchemasByRoot_Call {
+	return &DB_GetSchemasByRoot_Call{Call: _e.mock.On("GetSchemasByRoot", _a0, _a1)}
+}
+
+func (_c *DB_GetSchemasByRoot_Call) Run(run func(_a0 context.Context, _a1 string)) *DB_GetSchemasByRoot_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_GetSchemasByRoot_Call) Return(_a0 []client.SchemaDescription, _a1 error) *DB_GetSchemasByRoot_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetSchemasByRoot_Call) RunAndReturn(run func(context.Context, string) ([]client.SchemaDescription, error)) *DB_GetSchemasByRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }

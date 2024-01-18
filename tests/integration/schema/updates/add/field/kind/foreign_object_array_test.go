@@ -469,19 +469,19 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-						create_Users(data: "{\"name\": \"John\"}") {
-							_key
+						create_Users(input: {name: "John"}) {
+							_docID
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"_key": key1,
+						"_docID": key1,
 					},
 				},
 			},
 			testUtils.Request{
 				Request: fmt.Sprintf(`mutation {
-						create_Users(data: "{\"name\": \"Keenan\", \"foo\": \"%s\"}") {
+						create_Users(input: {name: "Keenan", foo: "%s"}) {
 							name
 							foo {
 								name
@@ -652,7 +652,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_SingleSecondaryObjectKindSu
 				CollectionID: 0,
 				Doc: fmt.Sprintf(`{
 						"name": "Keenan",
-						"foo": "%s"
+						"foo_id": "%s"
 					}`,
 					key1,
 				),

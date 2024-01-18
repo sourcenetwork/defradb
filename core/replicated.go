@@ -20,7 +20,6 @@ import (
 // ReplicatedData is a data type that allows concurrent writers to deterministically merge other
 // replicated data so as to converge on the same state.
 type ReplicatedData interface {
-	ID() string
 	Merge(ctx context.Context, other Delta) error
 	DeltaDecode(node ipld.Node) (Delta, error) // possibly rename to just Decode
 	Value(ctx context.Context) ([]byte, error)
@@ -31,8 +30,3 @@ type PersistedReplicatedData interface {
 	ReplicatedData
 	Publish(Delta) (cid.Cid, error)
 }
-
-// type EmbedableReplicatedData interface {
-// 	ReplicatedData
-// 	Apply(Operation) error
-// }

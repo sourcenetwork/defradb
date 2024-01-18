@@ -170,7 +170,7 @@ func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -187,7 +187,7 @@ func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	_, err = rpc.NewTopic(ctx, ps, h.ID(), doc.Key().String(), true)
+	_, err = rpc.NewTopic(ctx, ps, h.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
 	_, err = NewPeer(ctx, db, h, nil, ps, nil, nil)
@@ -197,6 +197,7 @@ func TestNewPeer_WithExistingTopic_TopicAlreadyExistsError(t *testing.T) {
 func TestStartAndClose_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.Start()
 	require.NoError(t, err)
@@ -323,6 +324,7 @@ func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
 func TestRegisterNewDocument_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -333,19 +335,20 @@ func TestRegisterNewDocument_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.RegisterNewDocument(ctx, doc.Key(), cid, &EmptyNode{}, col.SchemaRoot())
+	err = n.RegisterNewDocument(ctx, doc.ID(), cid, &EmptyNode{}, col.SchemaRoot())
 	require.NoError(t, err)
 }
 
 func TestRegisterNewDocument_RPCTopicAlreadyRegisteredError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -356,22 +359,23 @@ func TestRegisterNewDocument_RPCTopicAlreadyRegisteredError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
-	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.Key().String(), true)
+	_, err = rpc.NewTopic(ctx, n.Peer.ps, n.Peer.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	err = n.RegisterNewDocument(ctx, doc.Key(), cid, &EmptyNode{}, col.SchemaRoot())
+	err = n.RegisterNewDocument(ctx, doc.ID(), cid, &EmptyNode{}, col.SchemaRoot())
 	require.Equal(t, err.Error(), "creating topic: joining topic: topic already exists")
 }
 
 func TestSetReplicator_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -392,6 +396,7 @@ func TestSetReplicator_NoError(t *testing.T) {
 func TestSetReplicator_WithInvalidAddress_EmptyPeerIDError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -409,6 +414,7 @@ func TestSetReplicator_WithInvalidAddress_EmptyPeerIDError(t *testing.T) {
 func TestSetReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	db.Close()
 
@@ -425,6 +431,7 @@ func TestSetReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 func TestSetReplicator_WithUndefinedCollection_KeyNotFoundError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	info, err := peer.AddrInfoFromString("/ip4/0.0.0.0/tcp/0/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N")
 	require.NoError(t, err)
@@ -439,6 +446,7 @@ func TestSetReplicator_WithUndefinedCollection_KeyNotFoundError(t *testing.T) {
 func TestSetReplicator_ForAllCollections_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -458,6 +466,7 @@ func TestSetReplicator_ForAllCollections_NoError(t *testing.T) {
 func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
 		age: Int
@@ -467,13 +476,13 @@ func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *test
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	keysCh, err := col.GetAllDocKeys(ctx)
+	keysCh, err := col.GetAllDocIDs(ctx)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -485,6 +494,7 @@ func TestPushToReplicator_SingleDocumentNoPeer_FailedToReplicateLogError(t *test
 func TestDeleteReplicator_WithDBClosed_DataStoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	info := peer.AddrInfo{
 		ID:    n.PeerID(),
@@ -503,6 +513,7 @@ func TestDeleteReplicator_WithDBClosed_DataStoreClosedError(t *testing.T) {
 func TestDeleteReplicator_WithTargetSelf_SelfTargetForReplicatorError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
 		Info:    n.PeerInfo(),
@@ -514,8 +525,10 @@ func TestDeleteReplicator_WithTargetSelf_SelfTargetForReplicatorError(t *testing
 func TestDeleteReplicator_WithInvalidCollection_KeyNotFoundError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
 		Info:    n2.PeerInfo(),
@@ -527,6 +540,7 @@ func TestDeleteReplicator_WithInvalidCollection_KeyNotFoundError(t *testing.T) {
 func TestDeleteReplicator_WithCollectionAndPreviouslySetReplicator_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -535,6 +549,7 @@ func TestDeleteReplicator_WithCollectionAndPreviouslySetReplicator_NoError(t *te
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.SetReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -550,8 +565,10 @@ func TestDeleteReplicator_WithCollectionAndPreviouslySetReplicator_NoError(t *te
 func TestDeleteReplicator_WithNoCollection_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err := n.Peer.DeleteReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -562,6 +579,7 @@ func TestDeleteReplicator_WithNoCollection_NoError(t *testing.T) {
 func TestDeleteReplicator_WithNotSetReplicator_KeyNotFoundError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -570,6 +588,7 @@ func TestDeleteReplicator_WithNotSetReplicator_KeyNotFoundError(t *testing.T) {
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.DeleteReplicator(ctx, client.Replicator{
 		Info:    n2.PeerInfo(),
@@ -581,6 +600,7 @@ func TestDeleteReplicator_WithNotSetReplicator_KeyNotFoundError(t *testing.T) {
 func TestGetAllReplicator_WithReplicator_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -589,6 +609,7 @@ func TestGetAllReplicator_WithReplicator_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.SetReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -605,6 +626,7 @@ func TestGetAllReplicator_WithReplicator_NoError(t *testing.T) {
 func TestGetAllReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	db.Close()
 
@@ -615,6 +637,7 @@ func TestGetAllReplicator_WithDBClosed_DatastoreClosedError(t *testing.T) {
 func TestLoadReplicators_WithDBClosed_DatastoreClosedError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	db.Close()
 
@@ -625,6 +648,7 @@ func TestLoadReplicators_WithDBClosed_DatastoreClosedError(t *testing.T) {
 func TestLoadReplicator_WithReplicator_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -633,6 +657,7 @@ func TestLoadReplicator_WithReplicator_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.SetReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -646,6 +671,7 @@ func TestLoadReplicator_WithReplicator_NoError(t *testing.T) {
 func TestLoadReplicator_WithReplicatorAndEmptyReplicatorMap_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -654,6 +680,7 @@ func TestLoadReplicator_WithReplicatorAndEmptyReplicatorMap_NoError(t *testing.T
 	require.NoError(t, err)
 
 	_, n2 := newTestNode(ctx, t)
+	defer n2.Close()
 
 	err = n.Peer.SetReplicator(ctx, client.Replicator{
 		Info: n2.PeerInfo(),
@@ -669,6 +696,7 @@ func TestLoadReplicator_WithReplicatorAndEmptyReplicatorMap_NoError(t *testing.T
 func TestAddP2PCollections_WithInvalidCollectionID_NotFoundError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.Peer.AddP2PCollections(ctx, []string{"invalid_collection"})
 	require.Error(t, err, ds.ErrNotFound)
@@ -677,6 +705,7 @@ func TestAddP2PCollections_WithInvalidCollectionID_NotFoundError(t *testing.T) {
 func TestAddP2PCollections_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -694,6 +723,7 @@ func TestAddP2PCollections_NoError(t *testing.T) {
 func TestRemoveP2PCollectionsWithInvalidCollectionID(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.Peer.RemoveP2PCollections(ctx, []string{"invalid_collection"})
 	require.Error(t, err, ds.ErrNotFound)
@@ -702,6 +732,7 @@ func TestRemoveP2PCollectionsWithInvalidCollectionID(t *testing.T) {
 func TestRemoveP2PCollections(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -719,6 +750,7 @@ func TestRemoveP2PCollections(t *testing.T) {
 func TestGetAllP2PCollectionsWithNoCollections(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	cols, err := n.Peer.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
@@ -728,6 +760,7 @@ func TestGetAllP2PCollectionsWithNoCollections(t *testing.T) {
 func TestGetAllP2PCollections(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -749,6 +782,7 @@ func TestGetAllP2PCollections(t *testing.T) {
 func TestHandleDocCreateLog_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -759,7 +793,7 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -771,14 +805,14 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	delta := &crdt.CompositeDAGDelta{
 		SchemaVersionID: col.Schema().VersionID,
 		Priority:        1,
-		DocKey:          doc.Key().Bytes(),
+		DocID:           doc.ID().Bytes(),
 	}
 
 	node, err := makeNode(delta, []cid.Cid{docCid})
 	require.NoError(t, err)
 
 	err = n.handleDocCreateLog(events.Update{
-		DocKey:     doc.Key().String(),
+		DocID:      doc.ID().String(),
 		Cid:        docCid,
 		SchemaRoot: col.SchemaRoot(),
 		Block:      node,
@@ -787,19 +821,21 @@ func TestHandleDocCreateLog_NoError(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestHandleDocCreateLog_WithInvalidDockey_NoError(t *testing.T) {
+func TestHandleDocCreateLog_WithInvalidDocID_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.handleDocCreateLog(events.Update{
-		DocKey: "some-invalid-key",
+		DocID: "some-invalid-key",
 	})
-	require.ErrorContains(t, err, "failed to get DocKey from broadcast message: selected encoding not supported")
+	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
 }
 
 func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -810,17 +846,17 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.Key().String(), true)
+	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
 	err = n.handleDocCreateLog(events.Update{
-		DocKey:     doc.Key().String(),
+		DocID:      doc.ID().String(),
 		SchemaRoot: col.SchemaRoot(),
 	})
 	require.ErrorContains(t, err, "topic already exists")
@@ -829,6 +865,7 @@ func TestHandleDocCreateLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -839,7 +876,7 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -851,14 +888,14 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	delta := &crdt.CompositeDAGDelta{
 		SchemaVersionID: col.Schema().VersionID,
 		Priority:        1,
-		DocKey:          doc.Key().Bytes(),
+		DocID:           doc.ID().Bytes(),
 	}
 
 	node, err := makeNode(delta, []cid.Cid{docCid})
 	require.NoError(t, err)
 
 	err = n.handleDocUpdateLog(events.Update{
-		DocKey:     doc.Key().String(),
+		DocID:      doc.ID().String(),
 		Cid:        docCid,
 		SchemaRoot: col.SchemaRoot(),
 		Block:      node,
@@ -867,19 +904,21 @@ func TestHandleDocUpdateLog_NoError(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestHandleDoUpdateLog_WithInvalidDockey_NoError(t *testing.T) {
+func TestHandleDoUpdateLog_WithInvalidDocID_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	err := n.handleDocUpdateLog(events.Update{
-		DocKey: "some-invalid-key",
+		DocID: "some-invalid-key",
 	})
-	require.ErrorContains(t, err, "failed to get DocKey from broadcast message: selected encoding not supported")
+	require.ErrorContains(t, err, "failed to get DocID from broadcast message: selected encoding not supported")
 }
 
-func TestHandleDocUpdateLog_WithExistingDockeyTopic_TopicExistsError(t *testing.T) {
+func TestHandleDocUpdateLog_WithExistingDocIDTopic_TopicExistsError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -890,7 +929,7 @@ func TestHandleDocUpdateLog_WithExistingDockeyTopic_TopicExistsError(t *testing.
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -902,17 +941,17 @@ func TestHandleDocUpdateLog_WithExistingDockeyTopic_TopicExistsError(t *testing.
 	delta := &crdt.CompositeDAGDelta{
 		SchemaVersionID: col.Schema().VersionID,
 		Priority:        1,
-		DocKey:          doc.Key().Bytes(),
+		DocID:           doc.ID().Bytes(),
 	}
 
 	node, err := makeNode(delta, []cid.Cid{docCid})
 	require.NoError(t, err)
 
-	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.Key().String(), true)
+	_, err = rpc.NewTopic(ctx, n.ps, n.host.ID(), doc.ID().String(), true)
 	require.NoError(t, err)
 
 	err = n.handleDocUpdateLog(events.Update{
-		DocKey:     doc.Key().String(),
+		DocID:      doc.ID().String(),
 		Cid:        docCid,
 		SchemaRoot: col.SchemaRoot(),
 		Block:      node,
@@ -923,6 +962,7 @@ func TestHandleDocUpdateLog_WithExistingDockeyTopic_TopicExistsError(t *testing.
 func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	ctx := context.Background()
 	db, n := newTestNode(ctx, t)
+	defer n.Close()
 
 	_, err := db.AddSchema(ctx, `type User {
 		name: String
@@ -933,7 +973,7 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Schema())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
@@ -945,7 +985,7 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	delta := &crdt.CompositeDAGDelta{
 		SchemaVersionID: col.Schema().VersionID,
 		Priority:        1,
-		DocKey:          doc.Key().Bytes(),
+		DocID:           doc.ID().Bytes(),
 	}
 
 	node, err := makeNode(delta, []cid.Cid{docCid})
@@ -955,7 +995,7 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	require.NoError(t, err)
 
 	err = n.handleDocUpdateLog(events.Update{
-		DocKey:     doc.Key().String(),
+		DocID:      doc.ID().String(),
 		Cid:        docCid,
 		SchemaRoot: col.SchemaRoot(),
 		Block:      node,
@@ -963,55 +1003,10 @@ func TestHandleDocUpdateLog_WithExistingSchemaTopic_TopicExistsError(t *testing.
 	require.ErrorContains(t, err, "topic already exists")
 }
 
-func TestPushLogToReplicator_WithReplicator_FailedPushingLogError(t *testing.T) {
-	ctx := context.Background()
-	db, n := newTestNode(ctx, t)
-
-	_, err := db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	_, n2 := newTestNode(ctx, t)
-
-	err = n.Peer.SetReplicator(ctx, client.Replicator{
-		Info: n2.PeerInfo(),
-	})
-	require.NoError(t, err)
-
-	col, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`))
-	require.NoError(t, err)
-
-	err = col.Create(ctx, doc)
-	require.NoError(t, err)
-
-	docCid, err := createCID(doc)
-	require.NoError(t, err)
-
-	delta := &crdt.CompositeDAGDelta{
-		SchemaVersionID: col.Schema().VersionID,
-		Priority:        1,
-		DocKey:          doc.Key().Bytes(),
-	}
-
-	node, err := makeNode(delta, []cid.Cid{docCid})
-	require.NoError(t, err)
-
-	n.pushLogToReplicators(ctx, events.Update{
-		DocKey:     doc.Key().String(),
-		Cid:        docCid,
-		SchemaRoot: col.SchemaRoot(),
-		Block:      node,
-	})
-}
-
 func TestSession_NoError(t *testing.T) {
 	ctx := context.Background()
 	_, n := newTestNode(ctx, t)
+	defer n.Close()
 	ng := n.Session(ctx)
 	require.Implements(t, (*ipld.NodeGetter)(nil), ng)
 }

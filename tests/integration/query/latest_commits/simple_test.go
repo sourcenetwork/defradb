@@ -38,7 +38,7 @@ func TestQueryLatestCommits(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+		ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 	}
 
 	executeTestCase(t, test)
