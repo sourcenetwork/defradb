@@ -39,7 +39,12 @@ const (
 	opNin   = "_nin"
 	opLike  = "_like"
 	opNlike = "_nlike"
-	opAny   = "_any"
+	// it's just there for composite indexes. We construct a slice of value matchers with
+	// every matcher being responsible for a corresponding field in the index to match.
+	// For some fields there might not be any criteria to match. For examples if you have
+	// composite index of /name/age/email/ and in the filter you specify only "name" and "email".
+	// Then the "_any" matcher will be used for "age".
+	opAny = "_any"
 )
 
 // indexIterator is an iterator over index keys.
