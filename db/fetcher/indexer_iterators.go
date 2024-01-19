@@ -425,7 +425,7 @@ func createValueMatcher(op string, filterVal any) (valueMatcher, error) {
 	case opIn, opNin:
 		inArr, ok := filterVal.([]any)
 		if !ok {
-			return nil, errors.New("invalid _in/_nin value")
+			return nil, ErrInvalidInOperatorValue
 		}
 		valArr := make([][]byte, 0, len(inArr))
 		for _, v := range inArr {
@@ -443,7 +443,7 @@ func createValueMatcher(op string, filterVal any) (valueMatcher, error) {
 		return &anyMatcher{}, nil
 	}
 
-	return nil, errors.New("invalid index filter condition")
+	return nil, ErrInvalidIndexFilterCondition
 }
 
 func createValueMatchers(conditions []fieldFilterCond) ([]valueMatcher, error) {
@@ -468,12 +468,10 @@ func (f *IndexFetcher) determineFieldFilterConditions() []fieldFilterCond {
 	for i := range f.indexedFields {
 		fieldInd := f.mapping.FirstIndexOfName(f.indexedFields[i].Name)
 		found := false
+		// iterate through conditions and find the one that matches the current field
 		for filterKey, indexFilterCond := range f.indexFilter.Conditions {
 			propKey, ok := filterKey.(*mapper.PropertyIndex)
-			if !ok {
-				continue
-			}
-			if fieldInd != propKey.Index {
+			if !ok || fieldInd != propKey.Index {
 				continue
 			}
 
@@ -494,7 +492,14 @@ func (f *IndexFetcher) determineFieldFilterConditions() []fieldFilterCond {
 	return result
 }
 
+// isUniqueFetchByFullKey checks if the only index key can be fetched by the full index key.
+//
+// This method ignores the first condition because it's expected to be called only
+// when the first field is used as a prefix in the index key. So we only check if the
+// rest of the conditions are _eq.
 func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fieldFilterCond) bool {
+	// we need to check length of conditions because full key fetch is only possible
+	// if all fields are specified in the filter
 	res := indexDesc.Unique && len(conditions) == len(indexDesc.Fields)
 	for i := 1; i < len(conditions); i++ {
 		res = res && conditions[i].op == opEq

@@ -95,7 +95,7 @@ func (b *indexKeyBuilder) Col(colName string) *indexKeyBuilder {
 	return b
 }
 
-// Fields sets the fields' names for the index key.
+// Fields sets the fields names for the index key.
 // If the field name is not set, the index key will contain only collection id.
 // When building a key it will it will find the field id to use in the key.
 func (b *indexKeyBuilder) Fields(fieldsNames ...string) *indexKeyBuilder {

@@ -96,7 +96,7 @@ func NewCollectionIndex(
 	for _, fieldDesc := range desc.Fields {
 		field, foundField := collection.Schema().GetField(fieldDesc.Name)
 		if !foundField {
-			return nil, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name)
+			return nil, client.NewErrFieldNotExist(desc.Fields[0].Name)
 		}
 		base.fieldsDescs = append(base.fieldsDescs, field)
 		validateFunc, err := getFieldValidateFunc(field.Kind)

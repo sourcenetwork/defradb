@@ -69,7 +69,6 @@ const (
 	errInvalidFieldValue                  string = "invalid field value"
 	errUnsupportedIndexFieldType          string = "unsupported index field type"
 	errIndexDescriptionHasNoFields        string = "index description has no fields"
-	errIndexDescHasNonExistingField       string = "index description has non existing field"
 	errFieldOrAliasToFieldNotExist        string = "The given field or alias to field does not exist"
 	errCreateFile                         string = "failed to create file"
 	errRemoveFile                         string = "failed to remove file"
@@ -466,16 +465,6 @@ func NewErrIndexDescHasNoFields(desc client.IndexDescription) error {
 	return errors.New(
 		errIndexDescriptionHasNoFields,
 		errors.NewKV("Description", desc),
-	)
-}
-
-// NewErrIndexDescHasNonExistingField returns a new error indicating that the given index
-// description points to a field that does not exist.
-func NewErrIndexDescHasNonExistingField(desc client.IndexDescription, fieldName string) error {
-	return errors.New(
-		errIndexDescHasNonExistingField,
-		errors.NewKV("Description", desc),
-		errors.NewKV("Field name", fieldName),
 	)
 }
 
