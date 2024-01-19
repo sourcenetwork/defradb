@@ -15,6 +15,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
@@ -151,7 +153,7 @@ func collectionFromAstDefinition(
 
 	return client.CollectionDefinition{
 		Description: client.CollectionDescription{
-			Name:    def.Name.Value,
+			Name:    immutable.Some(def.Name.Value),
 			Indexes: indexDescriptions,
 		},
 		Schema: client.SchemaDescription{
@@ -513,7 +515,7 @@ func getRelationshipName(
 func finalizeRelations(relationManager *RelationManager, definitions []client.CollectionDefinition) error {
 	embeddedObjNames := map[string]struct{}{}
 	for _, def := range definitions {
-		if def.Description.Name == "" {
+		if !def.Description.Name.HasValue() {
 			embeddedObjNames[def.Schema.Name] = struct{}{}
 		}
 	}

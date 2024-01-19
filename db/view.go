@@ -57,12 +57,13 @@ func (db *db) addView(
 	}
 
 	for i := range newDefinitions {
-		newDefinitions[i].Description.BaseQuery = baseQuery
+		source := client.QuerySource{Query: *baseQuery}
+		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
 	}
 
 	returnDescriptions := make([]client.CollectionDefinition, len(newDefinitions))
 	for i, definition := range newDefinitions {
-		if definition.Description.Name == "" {
+		if !definition.Description.Name.HasValue() {
 			schema, err := description.CreateSchemaVersion(ctx, txn, definition.Schema)
 			if err != nil {
 				return nil, err

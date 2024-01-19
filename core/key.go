@@ -17,6 +17,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -132,8 +133,8 @@ var _ Key = (*CollectionSchemaVersionKey)(nil)
 
 // CollectionIndexKey to a stored description of an index
 type CollectionIndexKey struct {
-	// CollectionName is the name of the collection that the index is on
-	CollectionName string
+	// CollectionID is the id of the collection that the index is on
+	CollectionID immutable.Option[uint32]
 	// IndexName is the name of the index
 	IndexName string
 }
@@ -291,14 +292,14 @@ func NewCollectionSchemaVersionKeyFromString(key string) (CollectionSchemaVersio
 }
 
 // NewCollectionIndexKey creates a new CollectionIndexKey from a collection name and index name.
-func NewCollectionIndexKey(colID, indexName string) CollectionIndexKey {
-	return CollectionIndexKey{CollectionName: colID, IndexName: indexName}
+func NewCollectionIndexKey(colID immutable.Option[uint32], indexName string) CollectionIndexKey {
+	return CollectionIndexKey{CollectionID: colID, IndexName: indexName}
 }
 
 // NewCollectionIndexKeyFromString creates a new CollectionIndexKey from a string.
 // It expects the input string is in the following format:
 //
-// /collection/index/[CollectionName]/[IndexName]
+// /collection/index/[CollectionID]/[IndexName]
 //
 // Where [IndexName] might be omitted. Anything else will return an error.
 func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
@@ -306,7 +307,13 @@ func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 	if len(keyArr) < 4 || len(keyArr) > 5 || keyArr[1] != "collection" || keyArr[2] != "index" {
 		return CollectionIndexKey{}, ErrInvalidKey
 	}
-	result := CollectionIndexKey{CollectionName: keyArr[3]}
+
+	colID, err := strconv.Atoi(keyArr[3])
+	if err != nil {
+		return CollectionIndexKey{}, err
+	}
+
+	result := CollectionIndexKey{CollectionID: immutable.Some(uint32(colID))}
 	if len(keyArr) == 5 {
 		result.IndexName = keyArr[4]
 	}
@@ -315,13 +322,13 @@ func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 
 // ToString returns the string representation of the key
 // It is in the following format:
-// /collection/index/[CollectionName]/[IndexName]
-// if [CollectionName] is empty, the rest is ignored
+// /collection/index/[CollectionID]/[IndexName]
+// if [CollectionID] is empty, the rest is ignored
 func (k CollectionIndexKey) ToString() string {
 	result := COLLECTION_INDEX
 
-	if k.CollectionName != "" {
-		result = result + "/" + k.CollectionName
+	if k.CollectionID.HasValue() {
+		result = result + "/" + fmt.Sprint(k.CollectionID.Value())
 		if k.IndexName != "" {
 			result = result + "/" + k.IndexName
 		}

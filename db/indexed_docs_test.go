@@ -19,6 +19,7 @@ import (
 
 	ipfsDatastore "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -134,7 +135,7 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 	require.NoError(b.f.t, err)
 	var collection client.Collection
 	for _, col := range cols {
-		if col.Name() == b.colName {
+		if col.Name().Value() == b.colName {
 			collection = col
 			break
 		}
@@ -211,12 +212,15 @@ func (*indexTestFixture) resetSystemStoreStubs(systemStoreOn *mocks.DSReaderWrit
 }
 
 func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_Expecter) {
+	if f.users == nil {
+		f.users = f.addUsersCollection()
+	}
 	desc := getUsersIndexDescOnName()
 	desc.ID = 1
 	indexOnNameDescData, err := json.Marshal(desc)
 	require.NoError(f.t, err)
 
-	colIndexKey := core.NewCollectionIndexKey(usersColName, "")
+	colIndexKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), "")
 	matchPrefixFunc := func(q query.Query) bool {
 		return q.Prefix == colIndexKey.ToDS().String()
 	}
@@ -230,7 +234,7 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
 		Return(mocks.NewQueryResultsWithValues(f.t), nil)
 
-	colIndexOnNameKey := core.NewCollectionIndexKey(usersColName, testUsersColIndexName)
+	colIndexOnNameKey := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
 
 	if f.users != nil {
@@ -357,9 +361,9 @@ func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t
 	users := f.addUsersCollection()
 	products := f.getProductsCollectionDesc()
 
-	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
+	_, err := f.createCollectionIndexFor(users.Name().Value(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
-	_, err = f.createCollectionIndexFor(products.Name(), getProductsIndexDescOnCategory())
+	_, err = f.createCollectionIndexFor(products.Name().Value(), getProductsIndexDescOnCategory())
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -633,11 +637,11 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	users := f.addUsersCollection()
-	_, err := f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnName())
+	_, err := f.createCollectionIndexFor(users.Name().Value(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
-	_, err = f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnAge())
+	_, err = f.createCollectionIndexFor(users.Name().Value(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
-	_, err = f.createCollectionIndexFor(users.Name(), getUsersIndexDescOnWeight())
+	_, err = f.createCollectionIndexFor(users.Name().Value(), getUsersIndexDescOnWeight())
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -645,7 +649,7 @@ func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f.saveDocToCollection(f.newUserDoc("Islam", 23, users), users)
 
 	products := f.getProductsCollectionDesc()
-	_, err = f.createCollectionIndexFor(products.Name(), getProductsIndexDescOnCategory())
+	_, err = f.createCollectionIndexFor(products.Name().Value(), getProductsIndexDescOnCategory())
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -1054,9 +1058,9 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 func TestUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	users := f.addUsersCollection()
-	_, err := f.createCollectionIndexFor(users.Name(), makeUnique(getUsersIndexDescOnName()))
+	_, err := f.createCollectionIndexFor(users.Name().Value(), makeUnique(getUsersIndexDescOnName()))
 	require.NoError(f.t, err)
-	_, err = f.createCollectionIndexFor(users.Name(), makeUnique(getUsersIndexDescOnAge()))
+	_, err = f.createCollectionIndexFor(users.Name().Value(), makeUnique(getUsersIndexDescOnAge()))
 	require.NoError(f.t, err)
 	f.commitTxn()
 

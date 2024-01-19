@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -71,7 +72,7 @@ func getDocIDsFromDocs(docs []*client.Document) []string {
 func filterByCollection(docs []GeneratedDoc, name string) []*client.Document {
 	var result []*client.Document
 	for _, doc := range docs {
-		if doc.Col.Description.Name == name {
+		if doc.Col.Description.Name.Value() == name {
 			result = append(result, doc.Doc)
 		}
 	}
@@ -1200,7 +1201,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 		return []client.CollectionDefinition{
 			{
 				Description: client.CollectionDescription{
-					Name: "User",
+					Name: immutable.Some("User"),
 					ID:   0,
 				},
 				Schema: client.SchemaDescription{
@@ -1221,7 +1222,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 			},
 			{
 				Description: client.CollectionDescription{
-					Name: "Device",
+					Name: immutable.Some("Device"),
 					ID:   1,
 				},
 				Schema: client.SchemaDescription{
@@ -1252,7 +1253,13 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 		{
 			name: "description name is empty",
 			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Description.Name = ""
+				defs[0].Description.Name = immutable.Some("")
+			},
+		},
+		{
+			name: "description name is none",
+			changeDefs: func(defs []client.CollectionDefinition) {
+				defs[0].Description.Name = immutable.None[string]()
 			},
 		},
 		{
@@ -1312,7 +1319,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	defs := []client.CollectionDefinition{
 		{
 			Description: client.CollectionDescription{
-				Name: "User",
+				Name: immutable.Some("User"),
 				ID:   0,
 			},
 			Schema: client.SchemaDescription{
@@ -1341,7 +1348,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 		},
 		{
 			Description: client.CollectionDescription{
-				Name: "Device",
+				Name: immutable.Some("Device"),
 				ID:   1,
 			},
 			Schema: client.SchemaDescription{

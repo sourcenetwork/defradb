@@ -39,15 +39,17 @@ func SaveCollection(
 		return client.CollectionDescription{}, err
 	}
 
-	idBuf, err := json.Marshal(desc.ID)
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
+	if desc.Name.HasValue() {
+		idBuf, err := json.Marshal(desc.ID)
+		if err != nil {
+			return client.CollectionDescription{}, err
+		}
 
-	nameKey := core.NewCollectionNameKey(desc.Name)
-	err = txn.Systemstore().Put(ctx, nameKey.ToDS(), idBuf)
-	if err != nil {
-		return client.CollectionDescription{}, err
+		nameKey := core.NewCollectionNameKey(desc.Name.Value())
+		err = txn.Systemstore().Put(ctx, nameKey.ToDS(), idBuf)
+		if err != nil {
+			return client.CollectionDescription{}, err
+		}
 	}
 
 	// The need for this key is temporary, we should replace it with the global collection ID
@@ -59,6 +61,26 @@ func SaveCollection(
 	}
 
 	return desc, nil
+}
+
+func GetCollectionByID(
+	ctx context.Context,
+	txn datastore.Txn,
+	id uint32,
+) (client.CollectionDescription, error) {
+	key := core.NewCollectionKey(id)
+	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+	if err != nil {
+		return client.CollectionDescription{}, err
+	}
+
+	var col client.CollectionDescription
+	err = json.Unmarshal(buf, &col)
+	if err != nil {
+		return client.CollectionDescription{}, err
+	}
+
+	return col, nil
 }
 
 // GetCollectionByName returns the collection with the given name.
@@ -81,19 +103,7 @@ func GetCollectionByName(
 		return client.CollectionDescription{}, err
 	}
 
-	key := core.NewCollectionKey(id)
-	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
-	var col client.CollectionDescription
-	err = json.Unmarshal(buf, &col)
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
-	return col, nil
+	return GetCollectionByID(ctx, txn, id)
 }
 
 // GetCollectionsBySchemaVersionID returns all collections that use the given
