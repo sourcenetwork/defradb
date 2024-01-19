@@ -18,10 +18,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
@@ -59,7 +62,7 @@ func (db *db) getAllIndexes(
 	ctx context.Context,
 	txn datastore.Txn,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	prefix := core.NewCollectionIndexKey("", "")
+	prefix := core.NewCollectionIndexKey(immutable.None[uint32](), "")
 
 	keys, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
 		prefix.ToString(), txn.Systemstore())
@@ -75,8 +78,14 @@ func (db *db) getAllIndexes(
 		if err != nil {
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
-		indexes[indexKey.CollectionName] = append(
-			indexes[indexKey.CollectionName],
+
+		col, err := description.GetCollectionByID(ctx, txn, indexKey.CollectionID.Value())
+		if err != nil {
+			return nil, err
+		}
+
+		indexes[col.Name.Value()] = append(
+			indexes[col.Name.Value()],
 			indexDescriptions[i],
 		)
 	}
@@ -87,9 +96,9 @@ func (db *db) getAllIndexes(
 func (db *db) fetchCollectionIndexDescriptions(
 	ctx context.Context,
 	txn datastore.Txn,
-	colName string,
+	colID uint32,
 ) ([]client.IndexDescription, error) {
-	prefix := core.NewCollectionIndexKey(colName, "")
+	prefix := core.NewCollectionIndexKey(immutable.Some(colID), "")
 	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
 		prefix.ToString(), txn.Systemstore())
 	if err != nil {
@@ -338,7 +347,7 @@ func (c *collection) dropIndex(ctx context.Context, txn datastore.Txn, indexName
 			break
 		}
 	}
-	key := core.NewCollectionIndexKey(c.Name(), indexName)
+	key := core.NewCollectionIndexKey(immutable.Some(c.ID()), indexName)
 	err = txn.Systemstore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return err
@@ -348,7 +357,7 @@ func (c *collection) dropIndex(ctx context.Context, txn datastore.Txn, indexName
 }
 
 func (c *collection) dropAllIndexes(ctx context.Context, txn datastore.Txn) error {
-	prefix := core.NewCollectionIndexKey(c.Name(), "")
+	prefix := core.NewCollectionIndexKey(immutable.Some(c.ID()), "")
 
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefix.ToString(), txn.Systemstore())
 	if err != nil {
@@ -366,7 +375,7 @@ func (c *collection) dropAllIndexes(ctx context.Context, txn datastore.Txn) erro
 }
 
 func (c *collection) loadIndexes(ctx context.Context, txn datastore.Txn) error {
-	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, txn, c.Name())
+	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, txn, c.ID())
 	if err != nil {
 		return err
 	}
@@ -428,7 +437,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 		nameIncrement := 1
 		for {
 			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
-			indexKey = core.NewCollectionIndexKey(c.Name(), desc.Name)
+			indexKey = core.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
 			exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 			if err != nil {
 				return core.CollectionIndexKey{}, err
@@ -439,7 +448,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 			nameIncrement++
 		}
 	} else {
-		indexKey = core.NewCollectionIndexKey(c.Name(), desc.Name)
+		indexKey = core.NewCollectionIndexKey(immutable.Some(c.ID()), desc.Name)
 		exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
 		if err != nil {
 			return core.CollectionIndexKey{}, err
@@ -477,7 +486,11 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 	// at the moment we support only single field indexes that can be stored only in
 	// ascending order. This will change once we introduce composite indexes.
 	direction := "ASC"
-	sb.WriteString(col.Name())
+	if col.Name().HasValue() {
+		sb.WriteString(col.Name().Value())
+	} else {
+		sb.WriteString(fmt.Sprint(col.ID()))
+	}
 	sb.WriteByte('_')
 	// we can safely assume that there is at least one field in the slice
 	// because we validate it before calling this function

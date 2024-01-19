@@ -81,7 +81,7 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 				fetchedCols := cols
 				cols = nil
 				for _, c := range fetchedCols {
-					if c.Name() == name {
+					if c.Name().Value() == name {
 						cols = append(cols, c)
 						break
 					}

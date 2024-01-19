@@ -26,7 +26,9 @@ type viewNode struct {
 }
 
 func (p *Planner) View(query *mapper.Select, desc client.CollectionDescription) (*viewNode, error) {
-	m, err := mapper.ToSelect(p.ctx, p.db, desc.BaseQuery)
+	baseQuery := (desc.Sources[0].(*client.QuerySource)).Query
+
+	m, err := mapper.ToSelect(p.ctx, p.db, &baseQuery)
 	if err != nil {
 		return nil, err
 	}
