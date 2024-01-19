@@ -24,8 +24,8 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Lint job
+  lint-go:
+    name: Lint GoLang job
 
     runs-on: ubuntu-latest
 
@@ -39,9 +39,8 @@ jobs:
           go-version: "1.21"
           check-latest: true
 
-      - name: Check linting through golangci-lint
+      - name: Run golangci-lint linter
         uses: golangci/golangci-lint-action@v3
-
         with:
           # Required: the version of golangci-lint is required.
           # Note: The version should not pick the patch version as the latest patch
@@ -68,3 +67,15 @@ jobs:
           #  anyways so there shouldn't be any linter errors anyways. The enforces us to
           #  always have a clean lint state.
           only-new-issues: false
+
+  lint-yaml:
+    name: Lint YAML job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Run yamllint linter
+        uses: ibiqlik/action-yamllint@v3
