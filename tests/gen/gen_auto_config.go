@@ -54,7 +54,7 @@ func (m configsMap) AddForField(typeStr, fieldName string, conf genConfig) {
 func validateConfig(types map[string]client.CollectionDefinition, configsMap configsMap) error {
 	for typeName, typeConfigs := range configsMap {
 		typeDef := types[typeName]
-		if typeDef.Description.Name == "" {
+		if typeDef.Description.Name.Value() == "" {
 			return newNotDefinedTypeErr(typeName)
 		}
 		for fieldName, fieldConfig := range typeConfigs {

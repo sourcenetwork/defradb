@@ -13,6 +13,8 @@ package client
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -32,7 +34,7 @@ type CollectionDefinition struct {
 // Many functions on this object will interact with the underlying datastores.
 type Collection interface {
 	// Name returns the name of this collection.
-	Name() string
+	Name() immutable.Option[string]
 
 	// ID returns the ID of this Collection.
 	ID() uint32

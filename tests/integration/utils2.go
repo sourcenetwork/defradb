@@ -344,7 +344,7 @@ func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Opti
 		if err != nil {
 			s.t.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name], Doc: docJSON, NodeID: nodeID})
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name.Value()], Doc: docJSON, NodeID: nodeID})
 	}
 }
 
@@ -352,7 +352,7 @@ func generateDocs(s *state, action GenerateDocs) {
 	collections := getNodeCollections(action.NodeID, s.collections)
 	defs := make([]client.CollectionDefinition, 0, len(collections[0]))
 	for _, col := range collections[0] {
-		if len(action.ForCollections) == 0 || slice.Contains(action.ForCollections, col.Name()) {
+		if len(action.ForCollections) == 0 || slice.Contains(action.ForCollections, col.Name().Value()) {
 			defs = append(defs, col.Definition())
 		}
 	}
@@ -739,7 +739,7 @@ func refreshCollections(
 
 		for i, collectionName := range s.collectionNames {
 			for _, collection := range allCollections {
-				if collection.Name() == collectionName {
+				if collection.Name().Value() == collectionName {
 					s.collections[nodeID][i] = collection
 					break
 				}
@@ -1155,7 +1155,7 @@ func createDocViaGQL(
 				_docID
 			}
 		}`,
-		collection.Name(),
+		collection.Name().Value(),
 		input,
 	)
 
@@ -1302,7 +1302,7 @@ func updateDocViaGQL(
 				_docID
 			}
 		}`,
-		collection.Name(),
+		collection.Name().Value(),
 		doc.ID().String(),
 		input,
 	)
@@ -1883,7 +1883,7 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
 	}
 	result := make(map[string]client.CollectionDefinition)
 	for _, col := range cols {
-		result[col.Description.Name] = col
+		result[col.Description.Name.Value()] = col
 	}
 	return result, nil
 }

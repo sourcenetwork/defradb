@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -33,7 +34,7 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "User",
+						Name:    immutable.Some("User"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -82,7 +83,7 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "User",
+						Name:    immutable.Some("User"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -113,7 +114,7 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -162,7 +163,7 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "Book",
+						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -202,7 +203,7 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -260,7 +261,7 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "User",
+						Name:    immutable.Some("User"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -291,7 +292,7 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -340,7 +341,7 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "Book",
+						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -380,7 +381,7 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -438,7 +439,7 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "Book",
+						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -478,7 +479,7 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -536,7 +537,7 @@ func TestSingleSimpleType(t *testing.T) {
 			targetDescs: []client.CollectionDefinition{
 				{
 					Description: client.CollectionDescription{
-						Name:    "Book",
+						Name:    immutable.Some("Book"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
@@ -576,7 +577,7 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Description: client.CollectionDescription{
-						Name:    "Author",
+						Name:    immutable.Some("Author"),
 						Indexes: []client.IndexDescription{},
 					},
 					Schema: client.SchemaDescription{
