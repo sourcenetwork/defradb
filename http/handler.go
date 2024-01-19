@@ -82,7 +82,7 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 		middleware.Recoverer,
 		CorsMiddleware(opts),
 	)
-	mux.Route("/api"+Version, func(r chi.Router) {
+	mux.Route("/api/"+Version, func(r chi.Router) {
 		r.Use(
 			ApiMiddleware(db, txs, opts),
 			TransactionMiddleware,
