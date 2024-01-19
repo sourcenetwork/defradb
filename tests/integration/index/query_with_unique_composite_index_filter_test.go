@@ -16,20 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-const schemaWithNameAgeUniqueIndex = `
-	type User @index(unique: true, fields: ["name", "age"]) {
-		name: String
-		age: Int
-		email: String
-	}`
-
-const schemaWithAgeNameUniqueIndex = `
-	type User @index(unique: true, fields: ["age", "name"]) {
-		name: String
-		age: Int
-		email: String
-	}`
-
 func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 	req1 := `query {
 		User(filter: {name: {_eq: "Islam"}}) {
@@ -53,7 +39,12 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 		Description: "Test filtering on composite index with _eq filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -116,7 +107,12 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithAgeNameUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["age", "name"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -147,7 +143,12 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_Should
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -178,7 +179,12 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithAgeNameUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["age", "name"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -210,7 +216,12 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -242,7 +253,12 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithAgeNameUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["age", "name"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -273,7 +289,12 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -304,7 +325,12 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithAgeNameUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["age", "name"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -336,7 +362,12 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_Should
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -368,7 +399,12 @@ func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing
 		Description: "Test index filtering with _ne filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -407,7 +443,12 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -476,7 +517,12 @@ func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -524,7 +570,12 @@ func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T)
 		Description: "Test index filtering with _nin filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -703,7 +754,12 @@ func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseInd
 		Description: "Test if index is not used when first field is not in filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
@@ -727,7 +783,12 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFe
 		Description: "Test index filtering with _eq filter on nil value on first field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -767,7 +828,12 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 		Description: "Test index filtering with _eq filter on nil value on second field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
-				Schema: schemaWithNameAgeUniqueIndex,
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
