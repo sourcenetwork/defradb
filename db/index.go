@@ -303,9 +303,9 @@ func (i *collectionUniqueIndex) newUniqueIndexError(
 	doc *client.Document,
 ) error {
 	kvs := make([]errors.KV, 0, len(i.fieldsDescs))
-	var val any
 	for iter := range i.fieldsDescs {
 		fieldVal, err := doc.GetValue(i.fieldsDescs[iter].Name)
+		var val any
 		if err != nil {
 			// If the error is ErrFieldNotExist, we leave `val` as is (e.g. nil)
 			// otherwise we return the error
@@ -318,10 +318,7 @@ func (i *collectionUniqueIndex) newUniqueIndexError(
 		kvs = append(kvs, errors.NewKV(i.fieldsDescs[iter].Name, val))
 	}
 
-	if len(kvs) == 1 {
-		return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldsDescs[0].Name, val)
-	}
-	return NewErrCanNotIndexNonUniqueCombination(doc.ID().String(), kvs...)
+	return NewErrCanNotIndexNonUniqueFields(doc.ID().String(), kvs...)
 }
 
 func (i *collectionUniqueIndex) Update(

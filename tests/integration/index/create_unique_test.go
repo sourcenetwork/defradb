@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/errors"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -57,10 +58,11 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 					}`,
 			},
 			testUtils.CreateIndex{
-				CollectionID:  0,
-				FieldName:     "age",
-				Unique:        true,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueField(johnDocID, "age", 21).Error(),
+				CollectionID: 0,
+				FieldName:    "age",
+				Unique:       true,
+				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
+					johnDocID, errors.NewKV("age", 21)).Error(),
 			},
 			testUtils.GetIndexes{
 				CollectionID:    0,
@@ -99,7 +101,8 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 						"name":	"John",
 						"age":	21
 					}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueField(johnDocID, "age", 21).Error(),
+				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
+					johnDocID, errors.NewKV("age", 21)).Error(),
 			},
 			testUtils.Request{
 				Request: `query {
@@ -222,10 +225,11 @@ func TestUniqueIndexCreate_IfNilFieldsArePresent_ReturnError(t *testing.T) {
 					}`,
 			},
 			testUtils.CreateIndex{
-				CollectionID:  0,
-				FieldName:     "age",
-				Unique:        true,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueField("bae-caba9876-89aa-5bcf-bc1c-387a52499b27", "age", nil).Error(),
+				CollectionID: 0,
+				FieldName:    "age",
+				Unique:       true,
+				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
+					"bae-caba9876-89aa-5bcf-bc1c-387a52499b27", errors.NewKV("age", nil)).Error(),
 			},
 		},
 	}
@@ -291,7 +295,8 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ReturnError(t *test
 					{
 						"name":	"Andy"
 					}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueField("bae-2159860f-3cd1-59de-9440-71331e77cbb8", "age", nil).Error(),
+				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
+					"bae-2159860f-3cd1-59de-9440-71331e77cbb8", errors.NewKV("age", nil)).Error(),
 			},
 		},
 	}

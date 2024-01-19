@@ -54,7 +54,7 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 				CollectionID: 0,
 				FieldsNames:  []string{"name", "age"},
 				Unique:       true,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueCombination(
+				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
 					"bae-cae3deac-d371-5a1f-93b4-ede69042f79b",
 					errors.NewKV("name", "John"), errors.NewKV("age", 21),
 				).Error(),
@@ -99,7 +99,7 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 						"age":	21,
 						"email": "another@gmail.com"
 					}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueCombination(
+				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
 					"bae-13254430-7e9e-52e2-9861-9a7ec7a75c8d",
 					errors.NewKV("name", "John"), errors.NewKV("age", 21)).Error(),
 			},
