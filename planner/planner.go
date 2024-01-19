@@ -343,7 +343,7 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 	slct := node.subType.(*selectTopNode).selectNode
 	desc := slct.collection.Description()
 	for subFieldName, subFieldInd := range filteredSubFields {
-		indexes := desc.CollectIndexesOnField(subFieldName)
+		indexes := desc.GetIndexesOnField(subFieldName)
 		if len(indexes) > 0 {
 			subInd := node.documentMapping.FirstIndexOfName(node.subTypeName)
 			relatedField := mapper.Field{Name: node.subTypeName, Index: subInd}

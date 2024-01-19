@@ -304,7 +304,7 @@ func findFilteredByIndexedField(scanNode *scanNode) immutable.Option[client.Inde
 			if _, isFiltered := scanNode.filter.ExternalConditions[field.Name]; !isFiltered {
 				continue
 			}
-			indexes := colDesc.CollectIndexesOnField(field.Name)
+			indexes := colDesc.GetIndexesOnField(field.Name)
 			if len(indexes) > 0 {
 				return immutable.Some(indexes[0])
 			}
