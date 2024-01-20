@@ -5,6 +5,33 @@ ifndef VERBOSE
 MAKEFLAGS+=--no-print-directory
 endif
 
+# Detect OS (`Linux`, `Darwin`, `Windows`)
+# Note: can use `lsb_release --id --short` for more specfic linux distro information.
+OS_GENERAL := Unknown
+ifeq ($(OS),Windows_NT)
+	OS_GENERAL := Windows
+else
+	OS_GENERAL := $(shell sh -c 'uname 2>/dev/null || echo Unknown')
+endif
+
+# Detect OS specfic package manager if possible (`apt`, `yum`, `pacman`, `brew`, `choco`)
+OS_PACKAGE_MANAGER := Unknown
+ifeq ($(OS_GENERAL),Linux)
+	ifneq ($(shell which apt 2>/dev/null),)
+		OS_PACKAGE_MANAGER := apt
+	else ifneq ($(shell which yum 2>/dev/null),)
+		OS_PACKAGE_MANAGER := yum
+	else ifneq ($(shell which pacman 2>/dev/null),)
+		OS_PACKAGE_MANAGER := pacman
+	else ifneq ($(shell which dnf 2>/dev/null),)
+		OS_PACKAGE_MANAGER := dnf
+	endif
+else ifeq ($(OS_GENERAL),Darwin)
+	OS_PACKAGE_MANAGER := brew
+else ifeq ($(OS_GENERAL),Windows)
+	OS_PACKAGE_MANAGER := choco
+endif
+
 # Provide info from git to the version package using linker flags.
 ifeq (, $(shell which git))
 $(error "No git in $(PATH), version information won't be included")
@@ -17,6 +44,15 @@ VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else
 VERSION_GITRELEASE=$(shell git describe --tags)
 endif
+
+$(info ----------------------------------------);
+$(info OS = $(OS_GENERAL));
+$(info PACKAGE_MANAGER = $(OS_PACKAGE_MANAGER));
+$(info GOINFO = $(VERSION_GOINFO));
+$(info GITCOMMIT = $(VERSION_GITCOMMIT));
+$(info GITCOMMITDATE = $(VERSION_GITCOMMITDATE));
+$(info GITRELEASE = $(VERSION_GITRELEASE));
+$(info ----------------------------------------);
 
 BUILD_FLAGS=-trimpath -ldflags "\
 -X 'github.com/sourcenetwork/defradb/version.GoInfo=$(VERSION_GOINFO)'\
@@ -46,6 +82,15 @@ default:
 .PHONY: install
 install:
 	@go install $(BUILD_FLAGS) ./cmd/defradb
+
+.PHONY: install\:manpages
+install\:manpages:
+ifeq ($(OS_GENERAL),Linux)
+	cp build/man/* /usr/share/man/man1/
+endif
+ifneq ($(OS_GENERAL),Linux)
+	@echo "Direct installation of Defradb's man pages is not supported on your system."
+endif
 
 # Usage:
 # 	- make build
@@ -78,9 +123,52 @@ client\:dump:
 client\:add-schema:
 	./build/defradb client schema add -f examples/schema/bookauthpub.graphql
 
+.PHONY: deps\:lint-go
+deps\:lint-go:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54
+
+.PHONY: deps\:lint-yaml
+deps\:lint-yaml:
+ifneq (, $(shell which yamllint))
+	$(info YAML linter 'yamllint' already installed.)
+else ifneq (, $(shell which pip))
+	-pip install --user yamllint
+else
+	$(info YAML linter 'yamllint' and `pip` both not found.)
+endif
+ifeq (, $(shell which yamllint)) # If yamllint still not installed then try this: 
+	$(warning Try to install YAML linter 'yamllint' using package manager.)
+ifeq ($(OS_PACKAGE_MANAGER),apt)
+	sudo apt -y install yamllint
+else ifeq ($(OS_PACKAGE_MANAGER),yum)
+	sudo yum makecache --refresh
+	sudo yum -y install yamllint
+else ifeq ($(OS_PACKAGE_MANAGER),pacman)
+	sudo pacman -S --noconfirm yamllint
+else ifeq ($(OS_PACKAGE_MANAGER),dnf)
+	sudo dnf -y install yamllint
+else ifeq ($(OS_PACKAGE_MANAGER),brew)
+	brew install yamllint
+else ifeq ($(OS_GENERAL),Linux) # If none of the above but still linux, then try:
+	python -m ensurepip --upgrade
+else ifeq ($(OS_GENERAL),Darwin)
+	python -m ensurepip --upgrade
+else ifeq ($(OS_GENERAL),Windows)
+	py -m ensurepip --upgrade
+else
+	$(error "Could not install yamllint on your system.")
+endif
+endif
+ifneq (, $(shell which yamllint))
+	$(info YAML linter 'yamllint' is installed.)
+else
+	$(error Could not install 'yamllint'.)
+endif
+
 .PHONY: deps\:lint
 deps\:lint:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54
+	@$(MAKE) deps:lint-go && \
+	$(MAKE) deps:lint-yaml
 
 .PHONY: deps\:test
 deps\:test:
@@ -300,6 +388,7 @@ validate\:circleci:
 .PHONY: lint
 lint:
 	golangci-lint run --config tools/configs/golangci.yaml
+	yamllint -c tools/configs/yamllint.yaml .
 
 .PHONY: lint\:fix
 lint\:fix:
@@ -334,13 +423,3 @@ docs\:manpages:
 docs\:godoc:
 	godoc -http=:6060
 	# open http://localhost:6060/pkg/github.com/sourcenetwork/defradb/
-
-detectedOS := $(shell uname)
-.PHONY: install\:manpages
-install\:manpages:
-ifeq ($(detectedOS),Linux)
-	cp build/man/* /usr/share/man/man1/
-endif
-ifneq ($(detectedOS),Linux)
-	@echo "Direct installation of Defradb's man pages is not supported on your system."
-endif
