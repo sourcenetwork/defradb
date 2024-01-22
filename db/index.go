@@ -90,16 +90,20 @@ func NewCollectionIndex(
 	if len(desc.Fields) == 0 {
 		return nil, NewErrIndexDescHasNoFields(desc)
 	}
-	field, foundField := collection.Schema().GetField(desc.Fields[0].Name)
-	if !foundField {
-		return nil, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name)
-	}
 	base := collectionBaseIndex{collection: collection, desc: desc}
-	base.fieldDesc = field
-	var err error
-	base.validateFieldFunc, err = getFieldValidateFunc(field.Kind)
-	if err != nil {
-		return nil, err
+	base.validateFieldFuncs = make([]func(any) bool, 0, len(desc.Fields))
+	base.fieldsDescs = make([]client.FieldDescription, 0, len(desc.Fields))
+	for _, fieldDesc := range desc.Fields {
+		field, foundField := collection.Schema().GetField(fieldDesc.Name)
+		if !foundField {
+			return nil, client.NewErrFieldNotExist(desc.Fields[0].Name)
+		}
+		base.fieldsDescs = append(base.fieldsDescs, field)
+		validateFunc, err := getFieldValidateFunc(field.Kind)
+		if err != nil {
+			return nil, err
+		}
+		base.validateFieldFuncs = append(base.validateFieldFuncs, validateFunc)
 	}
 	if desc.Unique {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
@@ -109,34 +113,43 @@ func NewCollectionIndex(
 }
 
 type collectionBaseIndex struct {
-	collection        client.Collection
-	desc              client.IndexDescription
-	validateFieldFunc func(any) bool
-	fieldDesc         client.FieldDescription
+	collection         client.Collection
+	desc               client.IndexDescription
+	validateFieldFuncs []func(any) bool
+	fieldsDescs        []client.FieldDescription
 }
 
-func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([]byte, error) {
-	// collectionSimpleIndex only supports single field indexes, that's why we
-	// can safely access the first field
-	indexedFieldName := i.desc.Fields[0].Name
-	fieldVal, err := doc.GetValue(indexedFieldName)
-	if err != nil {
-		if errors.Is(err, client.ErrFieldNotExist) {
-			return client.NewFieldValue(client.LWW_REGISTER, nil).Bytes()
-		} else {
+func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([][]byte, error) {
+	result := make([][]byte, 0, len(i.fieldsDescs))
+	for iter := range i.fieldsDescs {
+		fieldVal, err := doc.GetValue(i.fieldsDescs[iter].Name)
+		if err != nil {
+			if errors.Is(err, client.ErrFieldNotExist) {
+				valBytes, err := client.NewFieldValue(client.LWW_REGISTER, nil).Bytes()
+				if err != nil {
+					return nil, err
+				}
+				result = append(result, valBytes)
+				continue
+			}
 			return nil, err
 		}
+		if !i.validateFieldFuncs[iter](fieldVal.Value()) {
+			return nil, NewErrInvalidFieldValue(i.fieldsDescs[iter].Kind, fieldVal)
+		}
+		valBytes, err := fieldVal.Bytes()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, valBytes)
 	}
-	if !i.validateFieldFunc(fieldVal.Value()) {
-		return nil, NewErrInvalidFieldValue(i.fieldDesc.Kind, fieldVal)
-	}
-	return fieldVal.Bytes()
+	return result, nil
 }
 
 func (i *collectionBaseIndex) getDocumentsIndexKey(
 	doc *client.Document,
 ) (core.IndexDataStoreKey, error) {
-	fieldValue, err := i.getDocFieldValue(doc)
+	fieldValues, err := i.getDocFieldValue(doc)
 	if err != nil {
 		return core.IndexDataStoreKey{}, err
 	}
@@ -144,7 +157,7 @@ func (i *collectionBaseIndex) getDocumentsIndexKey(
 	indexDataStoreKey := core.IndexDataStoreKey{}
 	indexDataStoreKey.CollectionID = i.collection.ID()
 	indexDataStoreKey.IndexID = i.desc.ID
-	indexDataStoreKey.FieldValues = [][]byte{fieldValue}
+	indexDataStoreKey.FieldValues = fieldValues
 	return indexDataStoreKey, nil
 }
 
@@ -289,19 +302,23 @@ func (i *collectionUniqueIndex) Save(
 func (i *collectionUniqueIndex) newUniqueIndexError(
 	doc *client.Document,
 ) error {
-	fieldVal, err := doc.GetValue(i.fieldDesc.Name)
-	var val any
-	if err != nil {
-		// If the error is ErrFieldNotExist, we leave `val` as is (e.g. nil)
-		// otherwise we return the error
-		if !errors.Is(err, client.ErrFieldNotExist) {
-			return err
+	kvs := make([]errors.KV, 0, len(i.fieldsDescs))
+	for iter := range i.fieldsDescs {
+		fieldVal, err := doc.GetValue(i.fieldsDescs[iter].Name)
+		var val any
+		if err != nil {
+			// If the error is ErrFieldNotExist, we leave `val` as is (e.g. nil)
+			// otherwise we return the error
+			if !errors.Is(err, client.ErrFieldNotExist) {
+				return err
+			}
+		} else {
+			val = fieldVal.Value()
 		}
-	} else {
-		val = fieldVal.Value()
+		kvs = append(kvs, errors.NewKV(i.fieldsDescs[iter].Name, val))
 	}
 
-	return NewErrCanNotIndexNonUniqueField(doc.ID().String(), i.fieldDesc.Name, val)
+	return NewErrCanNotIndexNonUniqueFields(doc.ID().String(), kvs...)
 }
 
 func (i *collectionUniqueIndex) Update(

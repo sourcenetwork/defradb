@@ -58,3 +58,15 @@ func (d CollectionDescription) CollectIndexedFields(schema *SchemaDescription) [
 	}
 	return fields
 }
+
+// GetIndexesOnField returns all indexes that are indexing the given field.
+// If the field is not the first field of a composite index, the index is not returned.
+func (d CollectionDescription) GetIndexesOnField(fieldName string) []IndexDescription {
+	result := []IndexDescription{}
+	for _, index := range d.Indexes {
+		if index.Fields[0].Name == fieldName {
+			result = append(result, index)
+		}
+	}
+	return result
+}
