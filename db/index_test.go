@@ -207,7 +207,7 @@ func addFieldToIndex(indexDesc client.IndexDescription, fieldName string) client
 
 func (f *indexTestFixture) createUserCollectionIndexOnNameAndAge() client.IndexDescription {
 	indexDesc := addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName)
-	newDesc, err := f.createCollectionIndexFor(f.users.Name(), indexDesc)
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
 	require.NoError(f.t, err)
 	return newDesc
 }

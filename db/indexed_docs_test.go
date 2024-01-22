@@ -1181,9 +1181,9 @@ func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 func TestCompositeDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	users := f.addUsersCollection()
-	_, err := f.createCollectionIndexFor(users.Name(), addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName))
+	_, err := f.createCollectionIndexFor(users.Name().Value(), addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName))
 	require.NoError(f.t, err)
-	_, err = f.createCollectionIndexFor(users.Name(), addFieldToIndex(getUsersIndexDescOnAge(), usersWeightFieldName))
+	_, err = f.createCollectionIndexFor(users.Name().Value(), addFieldToIndex(getUsersIndexDescOnAge(), usersWeightFieldName))
 	require.NoError(f.t, err)
 	f.commitTxn()
 
