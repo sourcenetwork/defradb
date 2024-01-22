@@ -22,10 +22,10 @@ on:
         default: 'dependabot'
 
       mustBeGreen:
-        description: 'Only combine PRs that are green (status is success). Set to false if repo does not run checks'
+        description: 'Only combine PRs that are green (status is success). Keep false if repo does not run checks'
         type: boolean
         required: true
-        default: true
+        default: false
 
       combineBranchName:
         description: 'Name of the branch to combine PRs into'
@@ -35,7 +35,7 @@ on:
       ignoreLabel:
         description: 'Exclude PRs with this label'
         required: true
-        default: 'nocombine'
+        default: 'DO NOT MERGE'
 
 jobs:
   combine-bot-prs:
