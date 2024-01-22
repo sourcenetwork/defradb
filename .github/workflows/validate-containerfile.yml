@@ -54,4 +54,3 @@ jobs:
 
       - name: Test Docker image
         run: docker run --rm ${{ env.TEST_TAG }}
-

@@ -131,5 +131,5 @@ jobs:
         if: steps.terraform-plan.outcome == 'failure'
         run: exit 1
 
-      - name: List workspaces 
+      - name: List workspaces
         run: ls workspaces
