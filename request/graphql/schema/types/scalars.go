@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
+	"github.com/valyala/fastjson"
 )
 
 // BlobPattern is a regex for validating blob hex strings
@@ -57,6 +58,58 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 		switch valueAST := valueAST.(type) {
 		case *ast.StringValue:
 			return coerceBlob(valueAST.Value)
+		default:
+			// return nil if the value cannot be parsed
+			return nil
+		}
+	},
+})
+
+// coerceBlob converts the given value into a valid json string.
+// If the value cannot be converted nil is returned.
+func coerceJSON(value any) any {
+	switch value := value.(type) {
+	case []byte:
+		err := fastjson.ValidateBytes(value)
+		if err != nil {
+			// ignore this error because the value
+			// cannot be converted to a json string
+			return nil
+		}
+		return string(value)
+
+	case *[]byte:
+		return coerceJSON(*value)
+
+	case string:
+		err := fastjson.Validate(value)
+		if err != nil {
+			// ignore this error because the value
+			// cannot be converted to a json string
+			return nil
+		}
+		return value
+
+	case *string:
+		return coerceJSON(*value)
+
+	default:
+		return nil
+	}
+}
+
+var JSONScalarType = graphql.NewScalar(graphql.ScalarConfig{
+	Name:        "JSON",
+	Description: "The `JSON` scalar type represents a JSON string.",
+	// Serialize converts the value to a json string
+	Serialize: coerceJSON,
+	// ParseValue converts the value to a json string
+	ParseValue: coerceJSON,
+	// ParseLiteral converts the ast value to a json string
+	ParseLiteral: func(valueAST ast.Value) any {
+		switch valueAST := valueAST.(type) {
+		case *ast.StringValue:
+			return coerceJSON(valueAST.Value)
 		default:
 			// return nil if the value cannot be parsed
 			return nil
