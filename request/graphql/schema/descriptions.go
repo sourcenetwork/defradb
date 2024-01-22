@@ -34,6 +34,7 @@ var (
 		&gql.List{}:   client.FieldKind_FOREIGN_OBJECT_ARRAY,
 		// Custom scalars
 		schemaTypes.BlobScalarType: client.FieldKind_BLOB,
+		schemaTypes.JSONScalarType: client.FieldKind_JSON,
 		// More custom ones to come
 		// - JSON
 		// - Counters
@@ -55,6 +56,7 @@ var (
 		client.FieldKind_STRING_ARRAY:          gql.NewList(gql.NewNonNull(gql.String)),
 		client.FieldKind_NILLABLE_STRING_ARRAY: gql.NewList(gql.String),
 		client.FieldKind_BLOB:                  schemaTypes.BlobScalarType,
+		client.FieldKind_JSON:                  schemaTypes.JSONScalarType,
 	}
 
 	// This map is fine to use
@@ -74,6 +76,7 @@ var (
 		client.FieldKind_STRING_ARRAY:          client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_STRING_ARRAY: client.LWW_REGISTER,
 		client.FieldKind_BLOB:                  client.LWW_REGISTER,
+		client.FieldKind_JSON:                  client.LWW_REGISTER,
 		client.FieldKind_FOREIGN_OBJECT:        client.LWW_REGISTER,
 		client.FieldKind_FOREIGN_OBJECT_ARRAY:  client.NONE_CRDT,
 	}

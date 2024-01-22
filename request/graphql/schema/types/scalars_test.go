@@ -86,3 +86,86 @@ func TestBlobScalarTypeParseLiteral(t *testing.T) {
 		assert.Equal(t, c.expect, result)
 	}
 }
+
+func TestJSONScalarTypeParseAndSerialize(t *testing.T) {
+	validString := `"hello"`
+	validBytes := []byte(`"hello"`)
+
+	boolString := "true"
+	boolBytes := []byte("true")
+
+	intString := "0"
+	intBytes := []byte("0")
+
+	floatString := "3.14"
+	floatBytes := []byte("3.14")
+
+	objectString := `{"name": "Bob"}`
+	objectBytes := []byte(`{"name": "Bob"}`)
+
+	invalidString := "invalid"
+	invalidBytes := []byte("invalid")
+
+	cases := []struct {
+		input  any
+		expect any
+	}{
+		{validString, `"hello"`},
+		{&validString, `"hello"`},
+		{validBytes, `"hello"`},
+		{&validBytes, `"hello"`},
+		{boolString, "true"},
+		{&boolString, "true"},
+		{boolBytes, "true"},
+		{&boolBytes, "true"},
+		{[]byte("true"), "true"},
+		{[]byte("false"), "false"},
+		{intString, "0"},
+		{&intString, "0"},
+		{intBytes, "0"},
+		{&intBytes, "0"},
+		{floatString, "3.14"},
+		{&floatString, "3.14"},
+		{floatBytes, "3.14"},
+		{&floatBytes, "3.14"},
+		{invalidString, nil},
+		{&invalidString, nil},
+		{invalidBytes, nil},
+		{&invalidBytes, nil},
+		{objectString, `{"name": "Bob"}`},
+		{&objectString, `{"name": "Bob"}`},
+		{objectBytes, `{"name": "Bob"}`},
+		{&objectBytes, `{"name": "Bob"}`},
+		{nil, nil},
+		{0, nil},
+		{false, nil},
+	}
+	for _, c := range cases {
+		parsed := JSONScalarType.ParseValue(c.input)
+		assert.Equal(t, c.expect, parsed)
+
+		serialized := JSONScalarType.Serialize(c.input)
+		assert.Equal(t, c.expect, serialized)
+	}
+}
+
+func TestJSONScalarTypeParseLiteral(t *testing.T) {
+	cases := []struct {
+		input  ast.Value
+		expect any
+	}{
+		{&ast.StringValue{Value: "0"}, "0"},
+		{&ast.StringValue{Value: "invalid"}, nil},
+		{&ast.IntValue{}, nil},
+		{&ast.BooleanValue{}, nil},
+		{&ast.NullValue{}, nil},
+		{&ast.EnumValue{}, nil},
+		{&ast.FloatValue{}, nil},
+		{&ast.ListValue{}, nil},
+		{&ast.ObjectValue{}, nil},
+	}
+	for _, c := range cases {
+		result := JSONScalarType.ParseLiteral(c.input)
+		assert.Equal(t, c.expect, result)
+	}
+}
