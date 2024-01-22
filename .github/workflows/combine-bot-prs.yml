@@ -66,11 +66,7 @@ jobs:
               if (branch.startsWith('${{ github.event.inputs.branchPrefix }}')) {
                 console.log('Branch matched prefix: ' + branch);
                 let statusOK = true;
-                if ($ {
-                    {
-                      github.event.inputs.mustBeGreen
-                    }
-                  }) {
+                if (${{ github.event.inputs.mustBeGreen }}) {
                   console.log('Checking green status: ' + branch);
                   const stateQuery = `query($owner: String!, $repo: String!, $pull_number: Int!) {
                     repository(owner: $owner, name: $repo) {
@@ -93,9 +89,7 @@ jobs:
                     pull_number: pull['number']
                   };
                   const result = await github.graphql(stateQuery, vars);
-                  const [{
-                    commit
-                  }] = result.repository.pullRequest.commits.nodes;
+                  const [{ commit }] = result.repository.pullRequest.commits.nodes;
                   const state = commit.statusCheckRollup.state
                   console.log('Validating status: ' + state);
                   if (state != 'SUCCESS') {
@@ -144,11 +138,7 @@ jobs:
 
             let combinedPRs = [];
             let mergeFailedPRs = [];
-            for (const {
-                branch,
-                prString
-              }
-              of branchesAndPRStrings) {
+            for (const { branch, prString } of branchesAndPRStrings) {
               try {
                 await github.rest.repos.merge({
                   owner: context.repo.owner,

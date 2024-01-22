@@ -129,40 +129,11 @@ deps\:lint-go:
 
 .PHONY: deps\:lint-yaml
 deps\:lint-yaml:
-ifneq (, $(shell which yamllint))
+ifeq (, $(shell which yamllint))
+	$(info YAML linter 'yamllint' not found on the system, please install it.)
+	$(info Can try using your local package manager: $(OS_PACKAGE_MANAGER))
+else
 	$(info YAML linter 'yamllint' already installed.)
-else ifneq (, $(shell which pip))
-	-pip install --user yamllint
-else
-	$(info YAML linter 'yamllint' and `pip` both not found.)
-endif
-ifeq (, $(shell which yamllint)) # If yamllint still not installed then try this: 
-	$(warning Try to install YAML linter 'yamllint' using package manager.)
-ifeq ($(OS_PACKAGE_MANAGER),apt)
-	sudo apt -y install yamllint
-else ifeq ($(OS_PACKAGE_MANAGER),yum)
-	sudo yum makecache --refresh
-	sudo yum -y install yamllint
-else ifeq ($(OS_PACKAGE_MANAGER),pacman)
-	sudo pacman -S --noconfirm yamllint
-else ifeq ($(OS_PACKAGE_MANAGER),dnf)
-	sudo dnf -y install yamllint
-else ifeq ($(OS_PACKAGE_MANAGER),brew)
-	brew install yamllint
-else ifeq ($(OS_GENERAL),Linux) # If none of the above but still linux, then try:
-	python -m ensurepip --upgrade
-else ifeq ($(OS_GENERAL),Darwin)
-	python -m ensurepip --upgrade
-else ifeq ($(OS_GENERAL),Windows)
-	py -m ensurepip --upgrade
-else
-	$(error "Could not install yamllint on your system.")
-endif
-endif
-ifneq (, $(shell which yamllint))
-	$(info YAML linter 'yamllint' is installed.)
-else
-	$(error Could not install 'yamllint'.)
 endif
 
 .PHONY: deps\:lint
