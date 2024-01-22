@@ -183,7 +183,11 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return cols, nil
 }
 
-func (w *Wrapper) PatchSchema(ctx context.Context, patch string, setDefault bool) error {
+func (w *Wrapper) PatchSchema(
+	ctx context.Context,
+	patch string,
+	setDefault bool,
+) error {
 	args := []string{"client", "schema", "patch"}
 	if setDefault {
 		args = append(args, "--set-default")

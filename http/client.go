@@ -136,7 +136,11 @@ type patchSchemaRequest struct {
 	SetAsDefaultVersion bool
 }
 
-func (c *Client) PatchSchema(ctx context.Context, patch string, setAsDefaultVersion bool) error {
+func (c *Client) PatchSchema(
+	ctx context.Context,
+	patch string,
+	setAsDefaultVersion bool,
+) error {
 	methodURL := c.http.baseURL.JoinPath("schema")
 
 	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion})

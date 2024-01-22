@@ -310,7 +310,11 @@ func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) ([]
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string, setAsDefaultVersion bool) error {
+func (db *implicitTxnDB) PatchSchema(
+	ctx context.Context,
+	patchString string,
+	setAsDefaultVersion bool,
+) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -336,7 +340,11 @@ func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string, se
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string, setAsDefaultVersion bool) error {
+func (db *explicitTxnDB) PatchSchema(
+	ctx context.Context,
+	patchString string,
+	setAsDefaultVersion bool,
+) error {
 	return db.patchSchema(ctx, db.txn, patchString, setAsDefaultVersion)
 }
 
