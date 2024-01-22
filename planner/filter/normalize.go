@@ -185,7 +185,12 @@ func normalizeProperties(parentKey connor.FilterKey, conditions []any) []any {
 	// if canMergeAnd is true, all _and groups will be merged
 	props := make(map[int][]any)
 	for _, c := range conditions {
-		for key, val := range c.(map[connor.FilterKey]any) {
+		cMap, ok := c.(map[connor.FilterKey]any)
+		if !ok {
+			result = append(result, c)
+			continue
+		}
+		for key, val := range cMap {
 			op, ok := key.(*mapper.Operator)
 			if canMergeAnd && ok && op.Operation == request.FilterOpAnd {
 				merge = append(merge, val.([]any)...)

@@ -59,15 +59,15 @@ func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
 	require.Len(t, result, 1, "Expected len(result) = 1, got %d", len(result))
 	explainNode, ok := result[0]["explain"].(dataMap)
 	require.True(t, ok, "Expected explain none")
-	assert.Equal(t, explainNode["executionSuccess"], true, "Expected executionSuccess property")
+	assert.Equal(t, true, explainNode["executionSuccess"], "Expected executionSuccess property")
 	if a.sizeOfResults.HasValue() {
 		actual := explainNode["sizeOfResult"]
-		assert.Equal(t, actual, a.sizeOfResults.Value(),
+		assert.Equal(t, a.sizeOfResults.Value(), actual,
 			"Expected %d sizeOfResult, got %d", a.sizeOfResults.Value(), actual)
 	}
 	if a.planExecutions.HasValue() {
 		actual := explainNode["planExecutions"]
-		assert.Equal(t, actual, a.planExecutions.Value(),
+		assert.Equal(t, a.planExecutions.Value(), actual,
 			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
 	}
 	selectTopNode, ok := explainNode["selectTopNode"].(dataMap)
@@ -78,7 +78,7 @@ func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
 	if a.filterMatches.HasValue() {
 		filterMatches, hasFilterMatches := selectNode["filterMatches"]
 		require.True(t, hasFilterMatches, "Expected filterMatches property")
-		assert.Equal(t, filterMatches, uint64(a.filterMatches.Value()),
+		assert.Equal(t, uint64(a.filterMatches.Value()), filterMatches,
 			"Expected %d filterMatches, got %d", a.filterMatches, filterMatches)
 	}
 
@@ -102,22 +102,22 @@ func (a *ExplainResultAsserter) Assert(t *testing.T, result []dataMap) {
 
 	if a.iterations.HasValue() {
 		actual := getScanNodesProp(iterationsProp)
-		assert.Equal(t, actual, uint64(a.iterations.Value()),
+		assert.Equal(t, uint64(a.iterations.Value()), actual,
 			"Expected %d iterations, got %d", a.iterations.Value(), actual)
 	}
 	if a.docFetches.HasValue() {
 		actual := getScanNodesProp(docFetchesProp)
-		assert.Equal(t, actual, uint64(a.docFetches.Value()),
+		assert.Equal(t, uint64(a.docFetches.Value()), actual,
 			"Expected %d docFetches, got %d", a.docFetches.Value(), actual)
 	}
 	if a.fieldFetches.HasValue() {
 		actual := getScanNodesProp(fieldFetchesProp)
-		assert.Equal(t, actual, uint64(a.fieldFetches.Value()),
+		assert.Equal(t, uint64(a.fieldFetches.Value()), actual,
 			"Expected %d fieldFetches, got %d", a.fieldFetches.Value(), actual)
 	}
 	if a.indexFetches.HasValue() {
 		actual := getScanNodesProp(indexFetchesProp)
-		assert.Equal(t, actual, uint64(a.indexFetches.Value()),
+		assert.Equal(t, uint64(a.indexFetches.Value()), actual,
 			"Expected %d indexFetches, got %d", a.indexFetches.Value(), actual)
 	}
 }

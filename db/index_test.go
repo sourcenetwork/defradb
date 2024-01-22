@@ -198,6 +198,20 @@ func (f *indexTestFixture) createUserCollectionUniqueIndexOnName() client.IndexD
 	return newDesc
 }
 
+func addFieldToIndex(indexDesc client.IndexDescription, fieldName string) client.IndexDescription {
+	indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
+		Name: fieldName, Direction: client.Ascending,
+	})
+	return indexDesc
+}
+
+func (f *indexTestFixture) createUserCollectionIndexOnNameAndAge() client.IndexDescription {
+	indexDesc := addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName)
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+	require.NoError(f.t, err)
+	return newDesc
+}
+
 func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
 	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
@@ -1273,5 +1287,5 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 	desc := getUsersIndexDescOnName()
 	desc.Fields[0].Name = "non_existing_field"
 	_, err := NewCollectionIndex(f.users, desc)
-	require.ErrorIs(t, err, NewErrIndexDescHasNonExistingField(desc, desc.Fields[0].Name))
+	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))
 }
