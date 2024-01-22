@@ -79,3 +79,6 @@ jobs:
 
       - name: Run yamllint linter
         uses: ibiqlik/action-yamllint@v3
+        with:
+          config_file: tools/configs/yamllint.yaml
+          file_or_dir: .
