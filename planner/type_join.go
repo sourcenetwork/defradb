@@ -359,7 +359,7 @@ func prepareScanNodeFilterForTypeJoin(
 		filter.RemoveField(scan.filter, subType.Field)
 	} else {
 		var parentFilter *mapper.Filter
-		scan.filter, parentFilter = filter.SplitByField(scan.filter, subType.Field)
+		scan.filter, parentFilter = filter.SplitByFields(scan.filter, subType.Field)
 		if parentFilter != nil {
 			if parent.filter == nil {
 				parent.filter = parentFilter
@@ -606,12 +606,12 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 
 func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	fieldFilter *mapper.Filter,
-	field client.FieldDescription,
+	index client.IndexDescription,
 ) error {
 	subScan := getScanNode(join.subType)
 	subScan.tryAddField(join.rootName + request.RelatedObjectID)
 	subScan.filter = fieldFilter
-	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(field))
+	subScan.initFetcher(immutable.Option[string]{}, immutable.Some(index))
 
 	join.invert()
 

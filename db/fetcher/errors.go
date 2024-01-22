@@ -26,6 +26,8 @@ const (
 	errVFetcherFailedToGetDagLink   string = "(version fetcher) failed to get node link from DAG"
 	errFailedToGetDagNode           string = "failed to get DAG Node"
 	errMissingMapper                string = "missing document mapper"
+	errInvalidInOperatorValue       string = "invalid _in/_nin value"
+	errInvalidIndexFilterCondition  string = "invalid index filter condition"
 )
 
 var (
@@ -41,6 +43,8 @@ var (
 	ErrFailedToGetDagNode           = errors.New(errFailedToGetDagNode)
 	ErrMissingMapper                = errors.New(errMissingMapper)
 	ErrSingleSpanOnly               = errors.New("spans must contain only a single entry")
+	ErrInvalidInOperatorValue       = errors.New(errInvalidInOperatorValue)
+	ErrInvalidIndexFilterCondition  = errors.New(errInvalidIndexFilterCondition)
 )
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.

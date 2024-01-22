@@ -16,6 +16,7 @@ import (
 
 // CopyField copies the given field from the provided filter.
 // Multiple fields can be passed to copy related objects with a certain field.
+// In this case every subsequent field is a sub field of the previous one. Eg. bool.author.name
 // The result filter preserves the structure of the original filter.
 func CopyField(filter *mapper.Filter, fields ...mapper.Field) *mapper.Filter {
 	if filter == nil || len(fields) == 0 {

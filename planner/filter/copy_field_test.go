@@ -120,16 +120,31 @@ func TestCopyField(t *testing.T) {
 	}
 }
 
-func TestCopyFieldOfNullFilter(t *testing.T) {
+func TestCopyField_IfFilterIsNil_NoOp(t *testing.T) {
 	actualFilter := CopyField(nil, mapper.Field{Index: 1})
 	assert.Nil(t, actualFilter)
 }
 
-func TestCopyFieldWithNoFieldGiven(t *testing.T) {
+func TestCopyField_IfNoFieldGiven_NoOp(t *testing.T) {
 	filter := mapper.NewFilter()
 	filter.Conditions = map[connor.FilterKey]any{
 		&mapper.PropertyIndex{Index: 0}: &mapper.Operator{Operation: "_eq"},
 	}
 	actualFilter := CopyField(filter)
+	assert.Nil(t, actualFilter)
+}
+
+func TestCopyField_IfSecondFieldIsNotSubField_NoOp(t *testing.T) {
+	mapping := getDocMapping()
+	inputFilter := mapper.ToFilter(request.Filter{Conditions: map[string]any{
+		"name": m("_eq", "John"),
+		"age":  m("_gt", 55),
+	}}, mapping)
+
+	var actualFilter *mapper.Filter
+	assert.NotPanics(t, func() {
+		actualFilter = CopyField(inputFilter, mapper.Field{Index: authorNameInd}, mapper.Field{Index: 666})
+	})
+
 	assert.Nil(t, actualFilter)
 }

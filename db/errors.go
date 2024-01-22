@@ -69,7 +69,6 @@ const (
 	errInvalidFieldValue                  string = "invalid field value"
 	errUnsupportedIndexFieldType          string = "unsupported index field type"
 	errIndexDescriptionHasNoFields        string = "index description has no fields"
-	errIndexDescHasNonExistingField       string = "index description has non existing field"
 	errFieldOrAliasToFieldNotExist        string = "The given field or alias to field does not exist"
 	errCreateFile                         string = "failed to create file"
 	errRemoveFile                         string = "failed to remove file"
@@ -86,7 +85,7 @@ const (
 	errExpectedJSONArray                  string = "expected JSON array"
 	errOneOneAlreadyLinked                string = "target document is already linked to another document"
 	errIndexDoesNotMatchName              string = "the index used does not match the given name"
-	errCanNotIndexNonUniqueField          string = "can not index a doc's field that violates unique index"
+	errCanNotIndexNonUniqueFields         string = "can not index a doc's field(s) that violates unique index"
 	errInvalidViewQuery                   string = "the query provided is not valid as a View"
 )
 
@@ -108,6 +107,7 @@ var (
 	ErrExpectedJSONObject             = errors.New(errExpectedJSONObject)
 	ErrExpectedJSONArray              = errors.New(errExpectedJSONArray)
 	ErrInvalidViewQuery               = errors.New(errInvalidViewQuery)
+	ErrCanNotIndexNonUniqueFields     = errors.New(errCanNotIndexNonUniqueFields)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -468,16 +468,6 @@ func NewErrIndexDescHasNoFields(desc client.IndexDescription) error {
 	)
 }
 
-// NewErrIndexDescHasNonExistingField returns a new error indicating that the given index
-// description points to a field that does not exist.
-func NewErrIndexDescHasNonExistingField(desc client.IndexDescription, fieldName string) error {
-	return errors.New(
-		errIndexDescHasNonExistingField,
-		errors.NewKV("Description", desc),
-		errors.NewKV("Field name", fieldName),
-	)
-}
-
 // NewErrCreateFile returns a new error indicating there was a failure in creating a file.
 func NewErrCreateFile(inner error, filepath string) error {
 	return errors.Wrap(errCreateFile, inner, errors.NewKV("Filepath", filepath))
@@ -566,13 +556,12 @@ func NewErrIndexDoesNotMatchName(index, name string) error {
 	)
 }
 
-func NewErrCanNotIndexNonUniqueField(docID, fieldName string, value any) error {
-	return errors.New(
-		errCanNotIndexNonUniqueField,
-		errors.NewKV("DocID", docID),
-		errors.NewKV("Field name", fieldName),
-		errors.NewKV("Field value", value),
-	)
+func NewErrCanNotIndexNonUniqueFields(docID string, fieldValues ...errors.KV) error {
+	kvPairs := make([]errors.KV, 0, len(fieldValues)+1)
+	kvPairs = append(kvPairs, errors.NewKV("DocID", docID))
+	kvPairs = append(kvPairs, fieldValues...)
+
+	return errors.New(errCanNotIndexNonUniqueFields, kvPairs...)
 }
 
 func NewErrInvalidViewQueryCastFailed(query string) error {
