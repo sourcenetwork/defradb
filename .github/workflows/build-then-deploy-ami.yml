@@ -109,7 +109,7 @@ jobs:
       - name: Terraform validation
         run: terraform validate -no-color
 
-      - name: List workspaces 
+      - name: List workspaces
         run: ls workspaces
 
       - name: Terraform Apply

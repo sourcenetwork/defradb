@@ -1,0 +1,39 @@
+# This file contains our linter configurations that will be used for all Source Inc. projects.
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - '.yamllint'
+
+rules:
+  # Disabled lint rules
+  comments: disable
+  comments-indentation: disable
+  document-end: disable
+  document-start: disable
+  empty-values: disable
+  float-values: disable
+  key-ordering: disable
+  octal-values: disable
+  quoted-strings: disable
+
+  # Enabled lint rules
+  anchors: enable
+  braces: enable
+  brackets: enable
+  colons: enable
+  commas: enable
+  empty-lines: enable
+  hyphens: enable
+  key-duplicates: enable
+  new-line-at-end-of-file: enable
+  new-lines: enable
+  trailing-spaces: enable
+  truthy: disable
+  line-length:
+    max: 120
+    level: error
+  indentation:
+    indent-sequences: consistent
+    spaces: consistent
+    check-multi-line-strings: false
