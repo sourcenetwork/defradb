@@ -29,15 +29,7 @@ var Version string = "v0"
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
 
-type Handler struct {
-	db  client.DB
-	mux *chi.Mux
-	txs *sync.Map
-}
-
-func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
-	txs := &sync.Map{}
-
+func NewApiRouter() (*Router, error) {
 	tx_handler := &txHandler{}
 	store_handler := &storeHandler{}
 	collection_handler := &collectionHandler{}
@@ -49,12 +41,6 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	router.AddMiddleware(
-		ApiMiddleware(db, txs, opts),
-		TransactionMiddleware,
-		StoreMiddleware,
-	)
 
 	tx_handler.bindRoutes(router)
 	store_handler.bindRoutes(router)
@@ -74,6 +60,21 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 	if err := router.Validate(context.Background()); err != nil {
 		return nil, err
 	}
+	return router, nil
+}
+
+type Handler struct {
+	db  client.DB
+	mux *chi.Mux
+	txs *sync.Map
+}
+
+func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
+	router, err := NewApiRouter()
+	if err != nil {
+		return nil, err
+	}
+	txs := &sync.Map{}
 
 	mux := chi.NewMux()
 	mux.Use(
@@ -81,7 +82,14 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 		middleware.Recoverer,
 		CorsMiddleware(opts),
 	)
-	mux.Mount("/api/"+Version, router)
+	mux.Route("/api/"+Version, func(r chi.Router) {
+		r.Use(
+			ApiMiddleware(db, txs, opts),
+			TransactionMiddleware,
+			StoreMiddleware,
+		)
+		r.Handle("/*", router)
+	})
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())
 	})
