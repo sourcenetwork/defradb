@@ -22,10 +22,10 @@ on:
         default: 'dependabot'
 
       mustBeGreen:
-        description: 'Only combine PRs that are green (status is success). Set to false if repo does not run checks'
+        description: 'Only combine PRs that are green (status is success). Keep false if repo does not run checks'
         type: boolean
         required: true
-        default: true
+        default: false
 
       combineBranchName:
         description: 'Name of the branch to combine PRs into'
@@ -35,7 +35,7 @@ on:
       ignoreLabel:
         description: 'Exclude PRs with this label'
         required: true
-        default: 'nocombine'
+        default: 'DO NOT MERGE'
 
 jobs:
   combine-bot-prs:
@@ -44,12 +44,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/github-script@v6
+      - name: Set current date as env variable
+        run: echo "CURRENT_DATE=$(date +'%d-%m-%Y')" >> ${GITHUB_ENV}
 
+      - name: Create combined pr
         id: create-combined-pr
-
-        name: Create combined pr
-
+        uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -66,7 +66,7 @@ jobs:
               if (branch.startsWith('${{ github.event.inputs.branchPrefix }}')) {
                 console.log('Branch matched prefix: ' + branch);
                 let statusOK = true;
-                if(${{ github.event.inputs.mustBeGreen }}) {
+                if (${{ github.event.inputs.mustBeGreen }}) {
                   console.log('Checking green status: ' + branch);
                   const stateQuery = `query($owner: String!, $repo: String!, $pull_number: Int!) {
                     repository(owner: $owner, name: $repo) {
@@ -92,17 +92,17 @@ jobs:
                   const [{ commit }] = result.repository.pullRequest.commits.nodes;
                   const state = commit.statusCheckRollup.state
                   console.log('Validating status: ' + state);
-                  if(state != 'SUCCESS') {
+                  if (state != 'SUCCESS') {
                     console.log('Discarding ' + branch + ' with status ' + state);
                     statusOK = false;
                   }
                 }
                 console.log('Checking labels: ' + branch);
                 const labels = pull['labels'];
-                for(const label of labels) {
+                for (const label of labels) {
                   const labelName = label['name'];
                   console.log('Checking label: ' + labelName);
-                  if(labelName == '${{ github.event.inputs.ignoreLabel }}') {
+                  if (labelName == '${{ github.event.inputs.ignoreLabel }}') {
                     console.log('Discarding ' + branch + ' with label ' + labelName);
                     statusOK = false;
                   }
@@ -110,7 +110,10 @@ jobs:
                 if (statusOK) {
                   console.log('Adding branch to array: ' + branch);
                   const prString = '#' + pull['number'] + ' ' + pull['title'];
-                  branchesAndPRStrings.push({ branch, prString });
+                  branchesAndPRStrings.push({
+                    branch,
+                    prString
+                  });
                   baseBranch = pull['base']['ref'];
                   baseBranchSHA = pull['base']['sha'];
                 }
@@ -135,7 +138,7 @@ jobs:
 
             let combinedPRs = [];
             let mergeFailedPRs = [];
-            for(const { branch, prString } of branchesAndPRStrings) {
+            for (const { branch, prString } of branchesAndPRStrings) {
               try {
                 await github.rest.repos.merge({
                   owner: context.repo.owner,
@@ -153,15 +156,15 @@ jobs:
 
             console.log('Creating combined PR');
             const combinedPRsString = combinedPRs.join('\n');
-            let body = '✅ This PR was created by the Combine PRs action by combining the following PRs:\n' + combinedPRsString;
-            if(mergeFailedPRs.length > 0) {
+            let body = '✅ This PR was created by combining the following PRs:\n' + combinedPRsString;
+            if (mergeFailedPRs.length > 0) {
               const mergeFailedPRsString = mergeFailedPRs.join('\n');
               body += '\n\n⚠️ The following PRs were left out due to merge conflicts:\n' + mergeFailedPRsString
             }
             await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'bot: Combined PRs',
+              title: 'bot: Update dependencies (bulk dependabot PRs) ${CURRENT_DATE}',
               head: '${{ github.event.inputs.combineBranchName }}',
               base: baseBranch,
               body: body

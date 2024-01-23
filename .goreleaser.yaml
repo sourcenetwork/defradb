@@ -15,7 +15,7 @@ builds:
     goarch:
       - amd64
       - arm64
-  # A build with the playground included. 
+  # A build with the playground included.
   - id: "defradb_playground"
     main: ./cmd/defradb
     flags:
@@ -27,30 +27,44 @@ builds:
     goarch:
       - amd64
       - arm64
-  
+
 partial:
   by: target
 
 archives:
   - id: defradb_playground
-    builds: 
+    builds:
       - defradb_playground
     format: binary
     # this name template makes the OS and Arch compatible with the results of `uname`.
-    name_template: '{{ .Binary }}_playground_{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
+    name_template: >-
+      {{ .Binary }}_playground_{{ .Version }}_{{ .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
   - id: defradb
-    builds: 
+    builds:
       - defradb
     format: binary
     # this name template makes the OS and Arch compatible with the results of `uname`.
-    name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
+    name_template: >-
+      {{ .Binary }}_{{ .Version }}_{{ .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
 
 release:
   target_commitish: '{{ .Commit }}'
-  header: |
-    DefraDB v{{ .Major }}.{{ .Minor }} is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+  header: >
+    DefraDB v{{ .Major }}.{{ .Minor }} is a major pre-production release.
+    Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases,
+    which will give the project freedom to experiment and explore potentially breaking changes.
 
-    To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v{{ .Major }}.{{ .Minor }}.x databases. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.gg/w7jYQVJ/.
+    To get a full outline of the changes, we invite you to review the official changelog below.
+    This release does include a Breaking Change to existing v{{ .Major }}.{{ .Minor }}.x databases.
+    If you need help migrating an existing deployment, reach out at hello@source.network or join
+    our Discord at https://discord.gg/w7jYQVJ/.
+
   name_template: "v{{ .Version }} Release"
 
 changelog:
@@ -85,21 +99,20 @@ milestones:
     name_template: "DefraDB v{{ .Major }}.{{ .Minor }}"
 
 dockers:
-- ids: 
-    - "defradb_playground"
-  image_templates:
-  - "{{ .Env.GITHUB_REPOSITORY }}:latest"
-  - "{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
-  - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
-  use: buildx
-  build_flag_templates:
-  - "--pull"
-  - "--label=org.opencontainers.image.description=DefraDB is a Peer-to-Peer Edge Database."
-  - "--label=org.opencontainers.image.created={{ .Date }}"
-  - "--label=org.opencontainers.image.name={{ .ProjectName }}"
-  - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-  - "--label=org.opencontainers.image.version={{ .Version }}"
-  - "--label=org.opencontainers.image.source={{ .GitURL }}"
-  - "--platform=linux/amd64"
-  dockerfile: ./tools/goreleaser.containerfile
-
+  - ids:
+      - "defradb_playground"
+    image_templates:
+      - "{{ .Env.GITHUB_REPOSITORY }}:latest"
+      - "{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.description=DefraDB is a Peer-to-Peer Edge Database."
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.name={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.source={{ .GitURL }}"
+      - "--platform=linux/amd64"
+    dockerfile: ./tools/goreleaser.containerfile
