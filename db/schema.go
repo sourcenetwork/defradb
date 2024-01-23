@@ -39,16 +39,6 @@ func (db *db) addSchema(
 	txn datastore.Txn,
 	schemaString string,
 ) ([]client.CollectionDescription, error) {
-	existingCollections, err := db.getAllCollections(ctx, txn)
-	if err != nil {
-		return nil, err
-	}
-
-	existingDefinitions := make([]client.CollectionDefinition, len(existingCollections))
-	for i := range existingCollections {
-		existingDefinitions[i] = existingCollections[i].Definition()
-	}
-
 	newDefinitions, err := db.parser.ParseSDL(ctx, schemaString)
 	if err != nil {
 		return nil, err
