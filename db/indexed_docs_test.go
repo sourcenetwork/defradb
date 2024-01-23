@@ -78,12 +78,12 @@ func (f *indexTestFixture) newProdDoc(id int, price float64, cat string, col cli
 // The format of the non-unique index key is: "/<collection_id>/<index_id>/<value>/<doc_id>"
 // Example: "/5/1/12/bae-61cd6879-63ca-5ca9-8731-470a3c1dac69"
 type indexKeyBuilder struct {
-	f         *indexTestFixture
-	colName   string
-	fieldName string
-	doc       *client.Document
-	values    [][]byte
-	isUnique  bool
+	f           *indexTestFixture
+	colName     string
+	fieldsNames []string
+	doc         *client.Document
+	values      [][]byte
+	isUnique    bool
 }
 
 func newIndexKeyBuilder(f *indexTestFixture) *indexKeyBuilder {
@@ -95,11 +95,11 @@ func (b *indexKeyBuilder) Col(colName string) *indexKeyBuilder {
 	return b
 }
 
-// Field sets the field name for the index key.
+// Fields sets the fields names for the index key.
 // If the field name is not set, the index key will contain only collection id.
 // When building a key it will it will find the field id to use in the key.
-func (b *indexKeyBuilder) Field(fieldName string) *indexKeyBuilder {
-	b.fieldName = fieldName
+func (b *indexKeyBuilder) Fields(fieldsNames ...string) *indexKeyBuilder {
+	b.fieldsNames = fieldsNames
 	return b
 }
 
@@ -145,33 +145,41 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 	}
 	key.CollectionID = collection.ID()
 
-	if b.fieldName == "" {
+	if len(b.fieldsNames) == 0 {
 		return key
 	}
 
 	indexes, err := collection.GetIndexes(b.f.ctx)
 	require.NoError(b.f.t, err)
+indexLoop:
 	for _, index := range indexes {
-		if index.Fields[0].Name == b.fieldName {
+		if len(index.Fields) == len(b.fieldsNames) {
+			for i := range index.Fields {
+				if index.Fields[i].Name != b.fieldsNames[i] {
+					continue indexLoop
+				}
+			}
 			key.IndexID = index.ID
-			break
+			break indexLoop
 		}
 	}
 
 	if b.doc != nil {
-		var fieldBytesVal []byte
-		var fieldValue *client.FieldValue
-		var err error
-		if len(b.values) == 0 {
-			fieldValue, err = b.doc.GetValue(b.fieldName)
+		for i, fieldName := range b.fieldsNames {
+			var fieldBytesVal []byte
+			var fieldValue *client.FieldValue
+			var err error
+			if len(b.values) <= i {
+				fieldValue, err = b.doc.GetValue(fieldName)
+				require.NoError(b.f.t, err)
+			} else {
+				fieldValue = client.NewFieldValue(client.LWW_REGISTER, b.values[i])
+			}
+			fieldBytesVal, err = fieldValue.Bytes()
 			require.NoError(b.f.t, err)
-		} else {
-			fieldValue = client.NewFieldValue(client.LWW_REGISTER, b.values[0])
+			key.FieldValues = append(key.FieldValues, fieldBytesVal)
 		}
-		fieldBytesVal, err = fieldValue.Bytes()
-		require.NoError(b.f.t, err)
 
-		key.FieldValues = [][]byte{fieldBytesVal}
 		if !b.isUnique {
 			key.FieldValues = append(key.FieldValues, []byte(b.doc.ID().String()))
 		}
@@ -259,7 +267,7 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	doc := f.newUserDoc("John", 21, f.users)
 	f.saveDocToCollection(doc, f.users)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -272,7 +280,7 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	f.createUserCollectionIndexOnName()
 
 	doc := f.newUserDoc("John", 21, f.users)
-	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 	mockTxn := f.mockTxn()
 
@@ -349,7 +357,7 @@ func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 	doc := f.newUserDoc("John", 21, f.users)
 	f.saveDocToCollection(doc, f.users)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersAgeFieldName).Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -376,8 +384,8 @@ func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t
 	require.NoError(f.t, err)
 	f.commitTxn()
 
-	userDocID := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(userDoc).Build()
-	prodDocID := newIndexKeyBuilder(f).Col(productsColName).Field(productsCategoryFieldName).Doc(prodDoc).Build()
+	userDocID := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(userDoc).Build()
+	prodDocID := newIndexKeyBuilder(f).Col(productsColName).Fields(productsCategoryFieldName).Doc(prodDoc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, userDocID.ToDS())
 	require.NoError(t, err)
@@ -396,8 +404,8 @@ func TestNonUnique_IfMultipleIndexes_StoreIndexWithIndexID(t *testing.T) {
 	doc := f.newUserDoc("John", 21, f.users)
 	f.saveDocToCollection(doc, f.users)
 
-	nameKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
-	ageKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
+	nameKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
+	ageKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersAgeFieldName).Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, nameKey.ToDS())
 	require.NoError(t, err)
@@ -509,7 +517,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).
 		Values([]byte(nil)).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
@@ -528,8 +536,8 @@ func TestNonUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 
 	f.createUserCollectionIndexOnName()
 
-	key1 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc1).Build()
-	key2 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc2).Build()
+	key1 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc1).Build()
+	key2 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc2).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS())
 	require.NoError(t, err, key1.ToString())
@@ -600,7 +608,7 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 		f.saveDocToCollection(doc, f.users)
 
 		f.users.(*collection).fetcherFactory = tc.PrepareFetcher
-		key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+		key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 		_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 		require.ErrorIs(t, err, testError, tc.Name)
@@ -655,10 +663,10 @@ func TestNonUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 
 	f.saveDocToCollection(f.newProdDoc(1, 55, "games", products), products)
 
-	userNameKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Build()
-	userAgeKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Build()
-	userWeightKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersWeightFieldName).Build()
-	prodCatKey := newIndexKeyBuilder(f).Col(productsColName).Field(productsCategoryFieldName).Build()
+	userNameKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Build()
+	userAgeKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersAgeFieldName).Build()
+	userWeightKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersWeightFieldName).Build()
+	prodCatKey := newIndexKeyBuilder(f).Col(productsColName).Fields(productsCategoryFieldName).Build()
 
 	err = f.dropIndex(usersColName, testUsersColIndexAge)
 	require.NoError(f.t, err)
@@ -699,7 +707,7 @@ func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 
 	for _, tc := range cases {
-		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+		oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 		err := doc.Set(usersNameFieldName, tc.NewValue)
 		require.NoError(t, err)
@@ -707,7 +715,7 @@ func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 		require.NoError(t, err)
 		f.commitTxn()
 
-		newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
 		require.Error(t, err)
@@ -814,14 +822,14 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 		f.saveDocToCollection(doc, f.users)
 
 		f.users.(*collection).fetcherFactory = tc.PrepareFetcher
-		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+		oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 		err := doc.Set(usersNameFieldName, "Islam")
 		require.NoError(t, err, tc.Name)
 		err = f.users.Update(f.ctx, doc)
 		require.Error(t, err, tc.Name)
 
-		newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
 		require.NoError(t, err, tc.Name)
@@ -839,7 +847,7 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 	f.commitTxn()
 
-	validKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
+	validKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersAgeFieldName).Doc(doc).Build()
 	err := f.txn.Datastore().Delete(f.ctx, validKey.ToDS())
 	require.NoError(f.t, err)
 	f.commitTxn()
@@ -960,7 +968,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
+	oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).
 		Values([]byte(nil)).Build()
 
 	err = doc.Set(usersNameFieldName, "John")
@@ -970,7 +978,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 	require.NoError(f.t, err)
 	f.commitTxn()
 
-	newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
+	newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 	_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
 	require.NoError(t, err)
@@ -1021,8 +1029,8 @@ func TestUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 
 	f.createUserCollectionUniqueIndexOnName()
 
-	key1 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc1).Build()
-	key2 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc2).Build()
+	key1 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Unique().Doc(doc1).Build()
+	key2 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Unique().Doc(doc2).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS())
 	require.NoError(t, err, key1.ToString())
@@ -1047,7 +1055,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc).
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Unique().Doc(doc).
 		Values([]byte(nil)).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
@@ -1067,8 +1075,8 @@ func TestUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
 	f.saveDocToCollection(f.newUserDoc("John", 21, users), users)
 	f.saveDocToCollection(f.newUserDoc("Islam", 23, users), users)
 
-	userNameKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Build()
-	userAgeKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Build()
+	userNameKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Build()
+	userAgeKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersAgeFieldName).Build()
 
 	err = f.dropIndex(usersColName, testUsersColIndexAge)
 	require.NoError(f.t, err)
@@ -1107,7 +1115,7 @@ func TestUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 
 	for _, tc := range cases {
-		oldKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc).Build()
+		oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Unique().Doc(doc).Build()
 
 		err := doc.Set(usersNameFieldName, tc.NewValue)
 		require.NoError(t, err)
@@ -1115,11 +1123,146 @@ func TestUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 		require.NoError(t, err)
 		f.commitTxn()
 
-		newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc).Build()
+		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Unique().Doc(doc).Build()
 
 		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
 		require.Error(t, err)
 		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
 		require.NoError(t, err)
+	}
+}
+
+func TestCompositeCreate_ShouldIndexExistingDocs(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	doc1 := f.newUserDoc("John", 21, f.users)
+	f.saveDocToCollection(doc1, f.users)
+	doc2 := f.newUserDoc("Islam", 18, f.users)
+	f.saveDocToCollection(doc2, f.users)
+
+	f.createUserCollectionIndexOnNameAndAge()
+
+	key1 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc1).Build()
+	key2 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc2).Build()
+
+	ds := f.txn.Datastore()
+	data, err := ds.Get(f.ctx, key1.ToDS())
+	require.NoError(t, err, key1.ToString())
+	assert.Len(t, data, 0)
+	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+}
+
+func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+	f.createUserCollectionIndexOnNameAndAge()
+
+	docJSON, err := json.Marshal(struct {
+		Age int `json:"age"`
+	}{Age: 44})
+	require.NoError(f.t, err)
+
+	doc, err := client.NewDocFromJSON(docJSON, f.users.Schema())
+	require.NoError(f.t, err)
+
+	f.saveDocToCollection(doc, f.users)
+
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc).
+		Values([]byte(nil)).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+}
+
+func TestCompositeDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
+	f := newIndexTestFixtureBare(t)
+	users := f.addUsersCollection()
+	_, err := f.createCollectionIndexFor(users.Name().Value(), addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName))
+	require.NoError(f.t, err)
+	_, err = f.createCollectionIndexFor(users.Name().Value(), addFieldToIndex(getUsersIndexDescOnAge(), usersWeightFieldName))
+	require.NoError(f.t, err)
+	f.commitTxn()
+
+	f.saveDocToCollection(f.newUserDoc("John", 21, users), users)
+	f.saveDocToCollection(f.newUserDoc("Islam", 23, users), users)
+
+	userNameAgeKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Build()
+	userAgeWeightKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersAgeFieldName, usersWeightFieldName).Build()
+
+	err = f.dropIndex(usersColName, testUsersColIndexAge)
+	require.NoError(f.t, err)
+
+	assert.Len(t, f.getPrefixFromDataStore(userNameAgeKey.ToString()), 2)
+	assert.Len(t, f.getPrefixFromDataStore(userAgeWeightKey.ToString()), 0)
+}
+
+func TestCompositeUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+	f.createUserCollectionIndexOnNameAndAge()
+
+	cases := []struct {
+		Name     string
+		Field    string
+		NewValue any
+		Exec     func(doc *client.Document) error
+	}{
+		{
+			Name:     "update first",
+			NewValue: "Islam",
+			Field:    usersNameFieldName,
+			Exec: func(doc *client.Document) error {
+				return f.users.Update(f.ctx, doc)
+			},
+		},
+		{
+			Name:     "save first",
+			NewValue: "Andy",
+			Field:    usersNameFieldName,
+			Exec: func(doc *client.Document) error {
+				return f.users.Save(f.ctx, doc)
+			},
+		},
+		{
+			Name:     "update second",
+			NewValue: 33,
+			Field:    usersAgeFieldName,
+			Exec: func(doc *client.Document) error {
+				return f.users.Update(f.ctx, doc)
+			},
+		},
+		{
+			Name:     "save second",
+			NewValue: 36,
+			Field:    usersAgeFieldName,
+			Exec: func(doc *client.Document) error {
+				return f.users.Save(f.ctx, doc)
+			},
+		},
+	}
+
+	doc := f.newUserDoc("John", 21, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	for _, tc := range cases {
+		oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc).Build()
+
+		err := doc.Set(tc.Field, tc.NewValue)
+		require.NoError(t, err)
+		err = tc.Exec(doc)
+		require.NoError(t, err)
+		f.commitTxn()
+
+		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc).Build()
+
+		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+		require.Error(t, err)
+		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+		require.NoError(t, err)
+		f.commitTxn()
 	}
 }

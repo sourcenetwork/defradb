@@ -138,7 +138,7 @@ func (n *scanNode) tryAddField(fieldName string) bool {
 
 func (scan *scanNode) initFetcher(
 	cid immutable.Option[string],
-	indexedField immutable.Option[client.FieldDescription],
+	index immutable.Option[client.IndexDescription],
 ) {
 	var f fetcher.Fetcher
 	if cid.HasValue() {
@@ -146,14 +146,17 @@ func (scan *scanNode) initFetcher(
 	} else {
 		f = new(fetcher.DocumentFetcher)
 
-		if indexedField.HasValue() {
-			typeIndex := scan.documentMapping.FirstIndexOfName(indexedField.Value().Name)
-			field := mapper.Field{Index: typeIndex, Name: indexedField.Value().Name}
+		if index.HasValue() {
+			fields := make([]mapper.Field, 0, len(index.Value().Fields))
+			for _, field := range index.Value().Fields {
+				fieldName := field.Name
+				typeIndex := scan.documentMapping.FirstIndexOfName(fieldName)
+				fields = append(fields, mapper.Field{Index: typeIndex, Name: fieldName})
+			}
 			var indexFilter *mapper.Filter
-			scan.filter, indexFilter = filter.SplitByField(scan.filter, field)
+			scan.filter, indexFilter = filter.SplitByFields(scan.filter, fields...)
 			if indexFilter != nil {
-				fieldDesc, _ := scan.col.Schema().GetField(indexedField.Value().Name)
-				f = fetcher.NewIndexFetcher(f, fieldDesc, indexFilter)
+				f = fetcher.NewIndexFetcher(f, index.Value(), indexFilter)
 			}
 		}
 

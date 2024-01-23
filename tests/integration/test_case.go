@@ -246,6 +246,7 @@ type CreateIndex struct {
 	// The names of the fields to index. Used only for composite indexes.
 	FieldsNames []string
 	// The directions of the 'FieldsNames' to index. Used only for composite indexes.
+	// If not provided all fields will be indexed in ascending order.
 	Directions []client.IndexDirection
 
 	// If Unique is true, the index will be created as a unique index.
