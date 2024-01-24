@@ -183,6 +183,8 @@ func (f FieldKind) String() string {
 		return "[String!]"
 	case FieldKind_BLOB:
 		return "Blob"
+	case FieldKind_JSON:
+		return "JSON"
 	default:
 		return fmt.Sprint(uint8(f))
 	}
@@ -204,7 +206,7 @@ const (
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
 	FieldKind_BLOB         FieldKind = 13
-	_                      FieldKind = 14 // safe to repurpose (was never used)
+	FieldKind_JSON         FieldKind = 14
 	_                      FieldKind = 15 // safe to repurpose (was never used)
 
 	// Embedded object, but accessed via foreign keys
@@ -242,6 +244,7 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"[String]":   FieldKind_NILLABLE_STRING_ARRAY,
 	"[String!]":  FieldKind_STRING_ARRAY,
 	"Blob":       FieldKind_BLOB,
+	"JSON":       FieldKind_JSON,
 }
 
 // RelationType describes the type of relation between two types.
