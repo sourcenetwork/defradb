@@ -65,7 +65,7 @@ var BlobScalarType = graphql.NewScalar(graphql.ScalarConfig{
 	},
 })
 
-// coerceBlob converts the given value into a valid json string.
+// coerceJSON converts the given value into a valid json string.
 // If the value cannot be converted nil is returned.
 func coerceJSON(value any) any {
 	switch value := value.(type) {
