@@ -177,7 +177,7 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 // the typed value again as an interface.
 func validateFieldSchema(val any, field FieldDescription) (any, error) {
 	switch field.Kind {
-	case FieldKind_DocID, FieldKind_STRING, FieldKind_BLOB:
+	case FieldKind_DocID, FieldKind_STRING, FieldKind_BLOB, FieldKind_JSON:
 		return getString(val)
 
 	case FieldKind_STRING_ARRAY:
