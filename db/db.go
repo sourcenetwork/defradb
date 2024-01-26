@@ -297,14 +297,14 @@ func (db *db) Close() {
 		db.events.Updates.Value().Close()
 	}
 
-	// TODO: This might be optional so use `immutable.Option` Perhaps.
-	//if err := db.acp.Close(); err != nil {
-	//	log.ErrorE(context.Background(), "Failure closing acp module", err)
-
-	//}
-
 	if err := db.rootstore.Close(); err != nil {
 		log.ErrorE(context.Background(), "Failure closing rootstore", err)
+	}
+
+	if db.acp.HasValue() {
+		if err := db.acp.Value().Close(); err != nil {
+			log.ErrorE(context.Background(), "Failure closing acp module", err)
+		}
 	}
 
 	log.Info(context.Background(), "Successfully closed running process")
