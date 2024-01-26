@@ -270,33 +270,46 @@ func (i *collectionSimpleIndex) deleteDocIndex(
 	return i.deleteIndexKey(ctx, txn, key)
 }
 
+// hasIndexKeyNilField returns true if the index key has a field with nil value
+func hasIndexKeyNilField(key *core.IndexDataStoreKey) bool {
+	const cborNil = 0xf6
+	for i := range key.FieldValues {
+		if len(key.FieldValues[i]) == 1 && key.FieldValues[i][0] == cborNil {
+			return true
+		}
+	}
+	return false
+}
+
 type collectionUniqueIndex struct {
 	collectionBaseIndex
 }
 
 var _ CollectionIndex = (*collectionUniqueIndex)(nil)
 
+func (i *collectionUniqueIndex) saveRecord(
+	ctx context.Context,
+	txn datastore.Txn,
+	key *core.IndexDataStoreKey,
+	val []byte,
+) error {
+	err := txn.Datastore().Put(ctx, key.ToDS(), val)
+	if err != nil {
+		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
+	}
+	return nil
+}
+
 func (i *collectionUniqueIndex) Save(
 	ctx context.Context,
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	key, err := i.getDocumentsIndexKey(doc)
+	key, val, err := i.prepareIndexRecordToStore(ctx, txn, doc)
 	if err != nil {
 		return err
 	}
-	exists, err := txn.Datastore().Has(ctx, key.ToDS())
-	if err != nil {
-		return err
-	}
-	if exists {
-		return i.newUniqueIndexError(doc)
-	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte(doc.ID().String()))
-	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
-	}
-	return nil
+	return i.saveRecord(ctx, txn, &key, val)
 }
 
 func (i *collectionUniqueIndex) newUniqueIndexError(
@@ -321,28 +334,46 @@ func (i *collectionUniqueIndex) newUniqueIndexError(
 	return NewErrCanNotIndexNonUniqueFields(doc.ID().String(), kvs...)
 }
 
+func (i *collectionUniqueIndex) prepareIndexRecordToStore(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc *client.Document,
+) (core.IndexDataStoreKey, []byte, error) {
+	key, err := i.getDocumentsIndexKey(doc)
+	if err != nil {
+		return core.IndexDataStoreKey{}, nil, err
+	}
+	if hasIndexKeyNilField(&key) {
+		key.FieldValues = append(key.FieldValues, []byte(doc.ID().String()))
+		return key, []byte{}, nil
+	} else {
+		var exists bool
+		exists, err = txn.Datastore().Has(ctx, key.ToDS())
+		if err != nil {
+			return core.IndexDataStoreKey{}, nil, err
+		}
+		if exists {
+			return core.IndexDataStoreKey{}, nil, i.newUniqueIndexError(doc)
+		}
+		return key, []byte(doc.ID().String()), nil
+	}
+}
+
 func (i *collectionUniqueIndex) Update(
 	ctx context.Context,
 	txn datastore.Txn,
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
-	newKey, err := i.getDocumentsIndexKey(newDoc)
+	newKey, newVal, err := i.prepareIndexRecordToStore(ctx, txn, newDoc)
 	if err != nil {
 		return err
-	}
-	exists, err := txn.Datastore().Has(ctx, newKey.ToDS())
-	if err != nil {
-		return err
-	}
-	if exists {
-		return i.newUniqueIndexError(newDoc)
 	}
 	err = i.deleteDocIndex(ctx, txn, oldDoc)
 	if err != nil {
 		return err
 	}
-	return i.Save(ctx, txn, newDoc)
+	return i.saveRecord(ctx, txn, &newKey, newVal)
 }
 
 func (i *collectionUniqueIndex) deleteDocIndex(

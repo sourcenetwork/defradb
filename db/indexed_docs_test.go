@@ -165,6 +165,10 @@ indexLoop:
 	}
 
 	if b.doc != nil {
+		// This CBOR-specific value will be gone soon once we implement
+		// our own encryption package
+		const cborNil = 0xf6
+		hasNilValue := false
 		for i, fieldName := range b.fieldsNames {
 			var fieldBytesVal []byte
 			var fieldValue *client.FieldValue
@@ -177,10 +181,13 @@ indexLoop:
 			}
 			fieldBytesVal, err = fieldValue.Bytes()
 			require.NoError(b.f.t, err)
+			if len(fieldBytesVal) == 1 && fieldBytesVal[0] == cborNil {
+				hasNilValue = true
+			}
 			key.FieldValues = append(key.FieldValues, fieldBytesVal)
 		}
 
-		if !b.isUnique {
+		if !b.isUnique || hasNilValue {
 			key.FieldValues = append(key.FieldValues, []byte(b.doc.ID().String()))
 		}
 	} else if len(b.values) > 0 {
@@ -1060,7 +1067,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
-	assert.Equal(t, data, []byte(doc.ID().String()))
+	assert.Len(t, data, 0)
 }
 
 func TestUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {

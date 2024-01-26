@@ -190,7 +190,7 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueIndexCreate_IfNilFieldsArePresent_ReturnError(t *testing.T) {
+func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If filter does not match any document, return empty result",
 		Actions: []any{
@@ -228,8 +228,6 @@ func TestUniqueIndexCreate_IfNilFieldsArePresent_ReturnError(t *testing.T) {
 				CollectionID: 0,
 				FieldName:    "age",
 				Unique:       true,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-caba9876-89aa-5bcf-bc1c-387a52499b27", errors.NewKV("age", nil)).Error(),
 			},
 		},
 	}
@@ -262,7 +260,7 @@ func TestUniqueIndexCreate_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ReturnError(t *testing.T) {
+func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If filter does not match any document, return empty result",
 		Actions: []any{
@@ -295,8 +293,6 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ReturnError(t *test
 					{
 						"name":	"Andy"
 					}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-2159860f-3cd1-59de-9440-71331e77cbb8", errors.NewKV("age", nil)).Error(),
 			},
 		},
 	}

@@ -75,7 +75,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(3),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -85,7 +85,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(1),
 			},
 			testUtils.Request{
 				Request: req3,
@@ -125,7 +125,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -161,7 +161,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_Should
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -198,7 +198,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -235,7 +235,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -271,7 +271,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -307,7 +307,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -344,7 +344,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -381,7 +381,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_Should
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -424,7 +424,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(8).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -499,7 +499,7 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(2),
 			},
 		},
 	}
@@ -552,7 +552,7 @@ func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(5),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(5),
 			},
 		},
 	}
@@ -590,7 +590,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T)
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -655,7 +655,7 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -665,7 +665,7 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req3,
@@ -675,7 +675,7 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req3),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req4,
@@ -685,7 +685,7 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req4),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req5,
@@ -695,7 +695,7 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req5),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req6,
@@ -741,7 +741,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(4).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
 			},
 		},
 	}
@@ -823,6 +823,67 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFe
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_ShouldFetchAll(t *testing.T) {
+	req := `query {
+			User(filter: {name: {_eq: null}}) {
+				name
+				age
+				email
+			}
+		}`
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _eq filter on nil value on first field with multiple matches",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22,
+						"email": "alice@gmail.com"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"age":	32,
+						"email": "bob@gmail.com"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"age":	32,
+						"email": "cate@gmail.com"
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"name": nil, "age": 32, "email": "bob@gmail.com"},
+					{"name": nil, "age": 32, "email": "cate@gmail.com"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter on nil value on second field",
@@ -870,6 +931,171 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 						"name": "Alice",
 						"age":  nil,
 					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter_ShouldFetchAll(t *testing.T) {
+	req := `query {
+			User(filter: {name: {_eq: "Bob"}, age: {_eq: null}}) {
+				name
+				age
+				email
+			}
+		}`
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _eq filter on nil value on second field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						email: String
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	22,
+						"email": "bob_age_22@gmail.com"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	44,
+						"email": "bob_age_44@gmail.com"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"email": "bob1@gmail.com"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"email": "bob2@gmail.com"
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"name": "Bob", "age": nil, "email": "bob2@gmail.com"},
+					{"name": "Bob", "age": nil, "email": "bob1@gmail.com"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_ShouldFetchAll(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _eq filter on nil value on second field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						about: String
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	22,
+						"about": "bob_22"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"about": "bob_nil"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"age":	22,
+						"about": "nil_22"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"about": "nil_nil_1"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"about": "nil_nil_2"
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {name: {_eq: null}, age: {_eq: null}}) {
+							about
+						}
+					}`,
+				Results: []map[string]any{
+					{"about": "nil_nil_2"},
+					{"about": "nil_nil_1"},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {name: {_eq: null}}) {
+							about
+						}
+					}`,
+				Results: []map[string]any{
+					{"about": "nil_22"},
+					{"about": "nil_nil_2"},
+					{"about": "nil_nil_1"},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {age: {_eq: null}}) {
+							about
+						}
+					}`,
+				Results: []map[string]any{
+					{"about": "nil_nil_2"},
+					{"about": "bob_nil"},
+					{"about": "nil_nil_1"},
 				},
 			},
 		},

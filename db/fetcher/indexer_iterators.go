@@ -86,16 +86,14 @@ func (i *queryResultIterator) Close() error {
 }
 
 type eqPrefixIndexIterator struct {
-	indexKey      core.IndexDataStoreKey
-	keyFieldValue []byte
-	execInfo      *ExecInfo
-	matchers      []valueMatcher
+	indexKey core.IndexDataStoreKey
+	execInfo *ExecInfo
+	matchers []valueMatcher
 
 	queryResultIterator
 }
 
 func (i *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	i.indexKey.FieldValues = [][]byte{i.keyFieldValue}
 	resultIter, err := store.Query(ctx, query.Query{
 		Prefix: i.indexKey.ToString(),
 	})
@@ -166,11 +164,11 @@ func (i *eqSingleIndexIterator) Close() error {
 
 type inIndexIterator struct {
 	indexIterator
-	keyFieldValues [][]byte
-	nextValIndex   int
-	ctx            context.Context
-	store          datastore.DSReaderWriter
-	hasIterator    bool
+	inValues     [][]byte
+	nextValIndex int
+	ctx          context.Context
+	store        datastore.DSReaderWriter
+	hasIterator  bool
 }
 
 func (i *inIndexIterator) nextIterator() (bool, error) {
@@ -181,15 +179,15 @@ func (i *inIndexIterator) nextIterator() (bool, error) {
 		}
 	}
 
-	if i.nextValIndex >= len(i.keyFieldValues) {
+	if i.nextValIndex >= len(i.inValues) {
 		return false, nil
 	}
 
 	switch fieldIter := i.indexIterator.(type) {
 	case *eqPrefixIndexIterator:
-		fieldIter.keyFieldValue = i.keyFieldValues[i.nextValIndex]
+		fieldIter.indexKey.FieldValues[0] = i.inValues[i.nextValIndex]
 	case *eqSingleIndexIterator:
-		fieldIter.keyFieldValues[0] = i.keyFieldValues[i.nextValIndex]
+		fieldIter.keyFieldValues[0] = i.inValues[i.nextValIndex]
 	}
 	err := i.indexIterator.Init(i.ctx, i.store)
 	if err != nil {
@@ -443,7 +441,7 @@ func createValueMatcher(op string, filterVal any) (valueMatcher, error) {
 		return &anyMatcher{}, nil
 	}
 
-	return nil, ErrInvalidIndexFilterCondition
+	return nil, NewErrInvalidFilterOperator(op)
 }
 
 func createValueMatchers(conditions []fieldFilterCond) ([]valueMatcher, error) {
@@ -499,10 +497,15 @@ func (f *IndexFetcher) determineFieldFilterConditions() []fieldFilterCond {
 // rest of the conditions are _eq.
 func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fieldFilterCond) bool {
 	// we need to check length of conditions because full key fetch is only possible
-	// if all fields are specified in the filter
+	// if all fields of the index are specified in the filter
 	res := indexDesc.Unique && len(conditions) == len(indexDesc.Fields)
+
+	// if the first is _eq, val should be not nil
+	res = res && (conditions[0].op != opEq || conditions[0].val != nil)
+
+	// for the rest it must be _eq and val must be not nil
 	for i := 1; i < len(conditions); i++ {
-		res = res && conditions[i].op == opEq
+		res = res && (conditions[i].op == opEq && conditions[i].val != nil)
 	}
 	return res
 }
@@ -520,9 +523,98 @@ func getFieldsBytes(conditions []fieldFilterCond) ([][]byte, error) {
 	return result, nil
 }
 
+func (f *IndexFetcher) newPrefixIndexIterator(
+	fieldConditions []fieldFilterCond,
+	matchers []valueMatcher,
+) (*eqPrefixIndexIterator, error) {
+	keyFieldValues := make([][]byte, 0, len(fieldConditions))
+	for i := range fieldConditions {
+		if fieldConditions[i].op != opEq {
+			break
+		}
+
+		fieldVal := client.NewFieldValue(client.LWW_REGISTER, fieldConditions[i].val)
+
+		keyValueBytes, err := fieldVal.Bytes()
+		if err != nil {
+			return nil, err
+		}
+
+		keyFieldValues = append(keyFieldValues, keyValueBytes)
+	}
+
+	// iterators for _eq filter already iterate over keys with first field value
+	// matching the filter value, so we can skip the first matcher
+	if len(matchers) > 1 {
+		matchers[0] = &anyMatcher{}
+	}
+
+	indexKey := f.newIndexDataStoreKey()
+	indexKey.FieldValues = keyFieldValues
+	return &eqPrefixIndexIterator{
+		indexKey: indexKey,
+		execInfo: &f.execInfo,
+		matchers: matchers,
+	}, nil
+}
+
+func (f *IndexFetcher) newInIndexIterator(
+	fieldConditions []fieldFilterCond,
+	matchers []valueMatcher,
+) (*inIndexIterator, error) {
+	inArr, ok := fieldConditions[0].val.([]any)
+	if !ok {
+		return nil, ErrInvalidInOperatorValue
+	}
+	keyFieldArr := make([][]byte, 0, len(inArr))
+	for _, v := range inArr {
+		fieldVal := client.NewFieldValue(client.LWW_REGISTER, v)
+		keyFieldBytes, err := fieldVal.Bytes()
+		if err != nil {
+			return nil, err
+		}
+		keyFieldArr = append(keyFieldArr, keyFieldBytes)
+	}
+
+	// iterators for _in filter already iterate over keys with first field value
+	// matching the filter value, so we can skip the first matcher
+	if len(matchers) > 1 {
+		matchers[0] = &anyMatcher{}
+	}
+
+	var iter indexIterator
+	if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
+		keyFieldValues, e := getFieldsBytes(fieldConditions[1:])
+		if e != nil {
+			return nil, e
+		}
+		keyFieldValues = append([][]byte{{}}, keyFieldValues...)
+		iter = &eqSingleIndexIterator{
+			indexKey:       f.newIndexDataStoreKey(),
+			execInfo:       &f.execInfo,
+			keyFieldValues: keyFieldValues,
+		}
+	} else {
+		indexKey := f.newIndexDataStoreKey()
+		indexKey.FieldValues = [][]byte{{}}
+		iter = &eqPrefixIndexIterator{
+			indexKey: indexKey,
+			execInfo: &f.execInfo,
+			matchers: matchers,
+		}
+	}
+	return &inIndexIterator{
+		indexIterator: iter,
+		inValues:      keyFieldArr,
+	}, nil
+}
+
+func (f *IndexFetcher) newIndexDataStoreKey() core.IndexDataStoreKey {
+	return core.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
+}
+
 func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	fieldConditions := f.determineFieldFilterConditions()
-	indexDataStoreKey := core.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
 
 	matchers, err := createValueMatchers(fieldConditions)
 	if err != nil {
@@ -537,82 +629,22 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 				return nil, err
 			}
 			return &eqSingleIndexIterator{
-				indexKey:       indexDataStoreKey,
+				indexKey:       f.newIndexDataStoreKey(),
 				keyFieldValues: keyFieldsBytes,
 				execInfo:       &f.execInfo,
 			}, nil
 		} else {
-			fieldVal := client.NewFieldValue(client.LWW_REGISTER, fieldConditions[0].val)
-
-			keyValueBytes, err := fieldVal.Bytes()
-			if err != nil {
-				return nil, err
-			}
-
-			// iterators for _eq filter already iterate over keys with first field value
-			// matching the filter value, so we can skip the first matcher
-			if len(matchers) > 1 {
-				matchers[0] = &anyMatcher{}
-			}
-
-			return &eqPrefixIndexIterator{
-				indexKey:      indexDataStoreKey,
-				keyFieldValue: keyValueBytes,
-				execInfo:      &f.execInfo,
-				matchers:      matchers,
-			}, nil
+			return f.newPrefixIndexIterator(fieldConditions, matchers)
 		}
 	case opIn:
-		inArr, ok := fieldConditions[0].val.([]any)
-		if !ok {
-			return nil, errors.New("invalid _in/_nin value")
-		}
-		keyFieldArr := make([][]byte, 0, len(inArr))
-		for _, v := range inArr {
-			fieldVal := client.NewFieldValue(client.LWW_REGISTER, v)
-			keyFieldBytes, err := fieldVal.Bytes()
-			if err != nil {
-				return nil, err
-			}
-			keyFieldArr = append(keyFieldArr, keyFieldBytes)
-		}
-
-		// iterators for _in filter already iterate over keys with first field value
-		// matching the filter value, so we can skip the first matcher
-		if len(matchers) > 1 {
-			matchers[0] = &anyMatcher{}
-		}
-
-		var iter indexIterator
-		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
-			restFieldsVals, e := getFieldsBytes(fieldConditions[1:])
-			if e != nil {
-				return nil, e
-			}
-			restFieldsVals = append([][]byte{{}}, restFieldsVals...)
-			iter = &eqSingleIndexIterator{
-				indexKey:       indexDataStoreKey,
-				execInfo:       &f.execInfo,
-				keyFieldValues: restFieldsVals,
-			}
-		} else {
-			iter = &eqPrefixIndexIterator{
-				indexKey: indexDataStoreKey,
-				execInfo: &f.execInfo,
-				matchers: matchers,
-			}
-		}
-		return &inIndexIterator{
-			indexIterator:  iter,
-			keyFieldValues: keyFieldArr,
-		}, nil
+		return f.newInIndexIterator(fieldConditions, matchers)
 	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike:
 		return &scanningIndexIterator{
-			indexKey: indexDataStoreKey,
+			indexKey: f.newIndexDataStoreKey(),
 			matchers: matchers,
 			execInfo: &f.execInfo,
 		}, nil
 	}
 
-	return nil, errors.New("invalid index filter condition")
+	return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
 }
