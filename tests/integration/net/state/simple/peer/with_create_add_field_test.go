@@ -203,3 +203,92 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) 
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// This test documents unwanted behaviour and should be changed when
+// https://github.com/sourcenetwork/defradb/issues/2255 is fixed.
+func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesNotReturnNewField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SchemaPatch{
+				// Patch the schema on the first node only
+				NodeID: immutable.Some(0),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				// Create the doc with a value in the new field on the first node only, and allow the values to sync
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Email": "imnotyourbuddyguy@source.ca"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.SchemaPatch{
+				// Update the schema on the second node
+				NodeID: immutable.Some(1),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+					]
+				`,
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `
+					query {
+						Users {
+							Name
+							Email
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"Name":  "John",
+						"Email": "imnotyourbuddyguy@source.ca",
+					},
+				},
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `
+					query {
+						Users {
+							Name
+							Email
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"Name": "John",
+						// The email should be returned but it is not
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
