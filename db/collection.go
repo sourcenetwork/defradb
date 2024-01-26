@@ -178,8 +178,6 @@ func (db *db) ValidateCollectionDefinitions(
 	ctx context.Context,
 	definitions []client.CollectionDefinition,
 ) error {
-	// db.ACPModule().Value()
-
 	for _, definition := range definitions {
 		err := db.validateCollectionDefinitionPolicyDesc(ctx, definition.Description.Policy)
 		if err != nil {
