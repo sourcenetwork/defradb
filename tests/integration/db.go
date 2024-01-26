@@ -139,7 +139,7 @@ func setupDatabase(s *state) (impl client.DB, path string, err error) {
 	}
 
 	// TODO-ACP FIX BEFORE PR
-	// s.dbt = badgerFileType
+	s.dbt = badgerFileType
 	// TODO-ACP FIX BEFORE PR
 
 	switch s.dbt {
