@@ -99,8 +99,11 @@ func (db *db) fetchCollectionIndexDescriptions(
 	colID uint32,
 ) ([]client.IndexDescription, error) {
 	prefix := core.NewCollectionIndexKey(immutable.Some(colID), "")
-	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
-		prefix.ToString(), txn.Systemstore())
+	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](
+		ctx,
+		prefix.ToString(),
+		txn.Systemstore(),
+	)
 	if err != nil {
 		return nil, err
 	}
