@@ -17,12 +17,10 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/peer"
-	ma "github.com/multiformats/go-multiaddr"
 	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
@@ -81,14 +79,14 @@ func TestNewNode_NoPubSub_NoError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		WithPubSub(false),
+		WithEnablePubSub(false),
 	)
 	require.NoError(t, err)
 	defer n.Close()
 	require.Nil(t, n.ps)
 }
 
-func TestNewNode_WithPubSub_NoError(t *testing.T) {
+func TestNewNode_WithEnablePubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
@@ -97,7 +95,7 @@ func TestNewNode_WithPubSub_NoError(t *testing.T) {
 	n, err := NewNode(
 		ctx,
 		db,
-		WithPubSub(true),
+		WithEnablePubSub(true),
 	)
 
 	require.NoError(t, err)
@@ -128,7 +126,7 @@ func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
@@ -144,14 +142,14 @@ func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
 		db,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n2.Close()
@@ -171,14 +169,14 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 	n1, err := NewNode(
 		ctx,
 		db,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
 		db,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n2.Close()
@@ -192,7 +190,7 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 	n2.Bootstrap(addrs)
 }
 
-func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
+func TestListenAddrs_WithListenAddress_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
@@ -200,41 +198,12 @@ func TestListenAddrs_WithListenP2PAddrStrings_NoError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n.Close()
 
 	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
-}
-
-func TestNodeConfig_NoError(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/9179"
-	cfg.Net.RelayEnabled = true
-	cfg.Net.PubSubEnabled = true
-
-	configOpt := WithConfig(cfg)
-	options, err := NewMergedOptions(configOpt)
-	require.NoError(t, err)
-
-	// confirming it provides the same config as a manually constructed node.Options
-	p2pAddr, err := ma.NewMultiaddr(cfg.Net.P2PAddress)
-	require.NoError(t, err)
-	connManager, err := NewConnManager(100, 400, time.Second*20)
-	require.NoError(t, err)
-	expectedOptions := Options{
-		ListenAddrs:  []ma.Multiaddr{p2pAddr},
-		EnablePubSub: true,
-		EnableRelay:  true,
-		ConnManager:  connManager,
-	}
-
-	for k, v := range options.ListenAddrs {
-		require.Equal(t, expectedOptions.ListenAddrs[k], v)
-	}
-	require.Equal(t, expectedOptions.EnablePubSub, options.EnablePubSub)
-	require.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
 }
 
 func TestPeerConnectionEventEmitter_MultiEvent_NoError(t *testing.T) {

@@ -220,7 +220,9 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	var node *net.Node
 	if !cfg.Net.P2PDisabled {
 		nodeOpts := []net.NodeOpt{
-			net.WithConfig(cfg),
+			net.WithListenAddress(cfg.Net.P2PAddress),
+			net.WithEnablePubSub(cfg.Net.PubSubEnabled),
+			net.WithEnableRelay(cfg.Net.RelayEnabled),
 		}
 		if cfg.Datastore.Store == badgerDatastoreName {
 			// It would be ideal to not have the key path tied to the datastore.

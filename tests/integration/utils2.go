@@ -671,7 +671,9 @@ func restartNodes(
 		n, err = net.NewNode(
 			s.ctx,
 			db,
-			net.WithConfig(&cfg),
+			net.WithListenAddress(cfg.Net.P2PAddress),
+			net.WithEnablePubSub(cfg.Net.PubSubEnabled),
+			net.WithEnableRelay(cfg.Net.RelayEnabled),
 			net.WithPrivateKey(key),
 		)
 		require.NoError(s.t, err)
@@ -774,7 +776,9 @@ func configureNode(
 	n, err = net.NewNode(
 		s.ctx,
 		db,
-		net.WithConfig(&cfg),
+		net.WithListenAddress(cfg.Net.P2PAddress),
+		net.WithEnablePubSub(cfg.Net.PubSubEnabled),
+		net.WithEnableRelay(cfg.Net.RelayEnabled),
 		net.WithPrivateKey(privateKey),
 	)
 	require.NoError(s.t, err)

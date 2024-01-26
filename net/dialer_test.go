@@ -27,14 +27,14 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db1,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
 		db2,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n2.Close()
@@ -54,14 +54,14 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db1,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
 		db2,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n2.Close()
@@ -84,14 +84,14 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 	n1, err := NewNode(
 		ctx,
 		db1,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
 		db2,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n2.Close()

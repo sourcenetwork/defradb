@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
@@ -119,13 +118,10 @@ func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
 	require.NoError(t, err)
 
-	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = randomMultiaddr
-
 	n, err := NewNode(
 		ctx,
 		db,
-		WithConfig(cfg),
+		WithListenAddress(randomMultiaddr),
 	)
 	require.NoError(t, err)
 
@@ -218,13 +214,13 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db1,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db2,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 
@@ -254,13 +250,13 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db1,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db2,
-		WithListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 
@@ -290,7 +286,7 @@ func TestStart_WithNoUpdateChannel_NilUpdateChannelError(t *testing.T) {
 	n, err := NewNode(
 		ctx,
 		db,
-		WithPubSub(true),
+		WithEnablePubSub(true),
 	)
 	require.NoError(t, err)
 
@@ -309,7 +305,7 @@ func TestStart_WitClosedUpdateChannel_ClosedChannelError(t *testing.T) {
 	n, err := NewNode(
 		ctx,
 		db,
-		WithPubSub(true),
+		WithEnablePubSub(true),
 	)
 	require.NoError(t, err)
 

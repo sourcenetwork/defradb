@@ -96,7 +96,9 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 	n, err = net.NewNode(
 		ctx,
 		db,
-		net.WithConfig(cfg),
+		net.WithListenAddress(cfg.Net.P2PAddress),
+		net.WithEnablePubSub(cfg.Net.PubSubEnabled),
+		net.WithEnableRelay(cfg.Net.RelayEnabled),
 	)
 	if err != nil {
 		return nil, nil, errors.Wrap("failed to start P2P node", err)

@@ -43,6 +43,7 @@ import (
 	// @TODO: https://github.com/sourcenetwork/defradb/issues/1902
 	//nolint:staticcheck
 	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
+	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
@@ -78,7 +79,15 @@ func NewNode(
 	db client.DB,
 	opts ...NodeOpt,
 ) (*Node, error) {
-	options, err := NewMergedOptions(opts...)
+	options := DefaultOptions()
+	for _, opt := range opts {
+		opt(options)
+	}
+	connManager, err := connmgr.NewConnManager(100, 400, connmgr.WithGracePeriod(time.Second*20))
+	if err != nil {
+		return nil, err
+	}
+	listenAddress, err := multiaddr.NewMultiaddr(options.ListenAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -103,10 +112,10 @@ func NewNode(
 	var ddht *dualdht.DHT
 
 	libp2pOpts := []libp2p.Option{
-		libp2p.ConnectionManager(options.ConnManager),
+		libp2p.ConnectionManager(connManager),
 		libp2p.DefaultTransports,
 		libp2p.Identity(options.PrivateKey),
-		libp2p.ListenAddrs(options.ListenAddrs...),
+		libp2p.ListenAddrs(listenAddress),
 		libp2p.Peerstore(peerstore),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
 			// Delete this line and uncomment the next 6 lines once we remove batchable datastore support.
@@ -133,7 +142,7 @@ func NewNode(
 		ctx,
 		"Created LibP2P host",
 		logging.NewKV("PeerId", h.ID()),
-		logging.NewKV("Address", options.ListenAddrs),
+		logging.NewKV("Address", options.ListenAddress),
 	)
 
 	var ps *pubsub.PubSub
