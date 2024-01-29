@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 	"text/template"
 
@@ -25,9 +24,7 @@ import (
 func TestConfigTemplateSerialize(t *testing.T) {
 	var buffer bytes.Buffer
 	cfg := DefaultConfig()
-	tmpl := template.New("configTemplate").Funcs(template.FuncMap{
-		"join": strings.Join,
-	})
+	tmpl := template.New("configTemplate")
 	configTemplate, err := tmpl.Parse(defaultConfigTemplate)
 	assert.NoError(t, err)
 	err = configTemplate.Execute(&buffer, cfg)
@@ -39,9 +36,7 @@ func TestConfigTemplateSerialize(t *testing.T) {
 func TestConfigTemplateExecutes(t *testing.T) {
 	cfg := DefaultConfig()
 	var buffer bytes.Buffer
-	tmpl := template.New("configTemplate").Funcs(template.FuncMap{
-		"join": strings.Join,
-	})
+	tmpl := template.New("configTemplate")
 	configTemplate, err := tmpl.Parse(defaultConfigTemplate)
 	assert.NoError(t, err)
 	err = configTemplate.Execute(&buffer, cfg)

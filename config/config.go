@@ -690,9 +690,7 @@ func (c *Config) String() string {
 }
 
 func (c *Config) toBytes() ([]byte, error) {
-	tmpl := template.New("configTemplate").Funcs(template.FuncMap{
-		"join": strings.Join,
-	})
+	tmpl := template.New("configTemplate")
 	configTemplate, err := tmpl.Parse(defaultConfigTemplate)
 	if err != nil {
 		return nil, NewErrConfigTemplateFailed(err)
