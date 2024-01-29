@@ -99,6 +99,9 @@ func setStoreContext(cmd *cobra.Command, cfg *config.Config) error {
 // loadConfig loads the rootDir containing the configuration file,
 // otherwise warn about it and load a default configuration.
 func loadConfig(cfg *config.Config) error {
+	if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
+		return err
+	}
 	return cfg.LoadWithRootdir(cfg.ConfigFileExists())
 }
 
