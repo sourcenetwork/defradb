@@ -130,10 +130,6 @@ func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
 		return err
 	}
 
-	if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
-		return err
-	}
-
 	if withRootdir {
 		if err := cfg.v.ReadInConfig(); err != nil {
 			return NewErrReadingConfigFile(err)
