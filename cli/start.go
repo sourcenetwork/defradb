@@ -100,7 +100,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 
 	cmd.Flags().StringSlice(
 		"p2paddr", cfg.Net.P2PAddresses,
-		"Listener address for the p2p network (formatted as a libp2p MultiAddr)",
+		"Listen addresses for the p2p network (formatted as a libp2p MultiAddr)",
 	)
 	err = cfg.BindFlag("net.p2paddresses", cmd.Flags().Lookup("p2paddr"))
 	if err != nil {

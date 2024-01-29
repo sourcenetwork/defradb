@@ -363,10 +363,7 @@ type NetConfig struct {
 
 func defaultNetConfig() *NetConfig {
 	return &NetConfig{
-		P2PAddresses: []string{
-			"/ip4/0.0.0.0/tcp/9171",
-			"/ip4/127.0.0.1/tcp/9171",
-		},
+		P2PAddresses:  []string{"/ip4/127.0.0.1/tcp/9171"},
 		P2PDisabled:   false,
 		Peers:         "",
 		PubSubEnabled: true,

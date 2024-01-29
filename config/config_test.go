@@ -172,7 +172,7 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, filepath.Join(cfg.Rootdir, "defra_data"), cfg.Datastore.Badger.Path)
 	assert.Equal(t, "memory", cfg.Datastore.Store)
 	assert.Equal(t, true, cfg.Net.P2PDisabled)
-	assert.Equal(t, []string{"/ip4/0.0.0.0/tcp/9876", "/ip4/127.0.0.1/tcp/9171"}, cfg.Net.P2PAddresses)
+	assert.Equal(t, []string{"/ip4/0.0.0.0/tcp/9876"}, cfg.Net.P2PAddresses)
 	assert.Equal(t, false, cfg.Net.PubSubEnabled)
 	assert.Equal(t, false, cfg.Net.RelayEnabled)
 	assert.Equal(t, "error", cfg.Log.Level)
