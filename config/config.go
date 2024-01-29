@@ -354,7 +354,7 @@ func (apicfg *APIConfig) AddressToURL() string {
 
 // NetConfig configures aspects of network and peer-to-peer.
 type NetConfig struct {
-	P2PAddress    string
+	P2PAddresses  []string
 	P2PDisabled   bool
 	Peers         string
 	PubSubEnabled bool `mapstructure:"pubsub"`
@@ -363,7 +363,10 @@ type NetConfig struct {
 
 func defaultNetConfig() *NetConfig {
 	return &NetConfig{
-		P2PAddress:    "/ip4/0.0.0.0/tcp/9171",
+		P2PAddresses: []string{
+			"/ip4/0.0.0.0/tcp/9171",
+			"/ip4/127.0.0.1/tcp/9171",
+		},
 		P2PDisabled:   false,
 		Peers:         "",
 		PubSubEnabled: true,
@@ -372,9 +375,11 @@ func defaultNetConfig() *NetConfig {
 }
 
 func (netcfg *NetConfig) validate() error {
-	_, err := ma.NewMultiaddr(netcfg.P2PAddress)
-	if err != nil {
-		return NewErrInvalidP2PAddress(err, netcfg.P2PAddress)
+	for _, addr := range netcfg.P2PAddresses {
+		_, err := ma.NewMultiaddr(addr)
+		if err != nil {
+			return NewErrInvalidP2PAddress(err, addr)
+		}
 	}
 	if len(netcfg.Peers) > 0 {
 		peers := strings.Split(netcfg.Peers, ",")
@@ -688,12 +693,14 @@ func (c *Config) String() string {
 }
 
 func (c *Config) toBytes() ([]byte, error) {
-	var buffer bytes.Buffer
-	tmpl := template.New("configTemplate")
+	tmpl := template.New("configTemplate").Funcs(template.FuncMap{
+		"join": strings.Join,
+	})
 	configTemplate, err := tmpl.Parse(defaultConfigTemplate)
 	if err != nil {
 		return nil, NewErrConfigTemplateFailed(err)
 	}
+	var buffer bytes.Buffer
 	if err := configTemplate.Execute(&buffer, c); err != nil {
 		return nil, NewErrConfigTemplateFailed(err)
 	}

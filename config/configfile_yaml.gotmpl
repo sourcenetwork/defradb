@@ -36,7 +36,7 @@ net:
     # Whether the P2P is disabled
     p2pdisabled: {{ .Net.P2PDisabled }}
     # Listening address of the P2P network
-    p2paddress: {{ .Net.P2PAddress }}
+    p2paddresses: [{{ join .Net.P2PAddresses ", " }}]
     # Whether the node has pubsub enabled or not
     pubsub: {{ .Net.PubSubEnabled }}
     # Enable libp2p's Circuit relay transport protocol https://docs.libp2p.io/concepts/circuit-relay/

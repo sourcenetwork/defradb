@@ -83,13 +83,19 @@ func NewNode(
 	for _, opt := range opts {
 		opt(options)
 	}
+
 	connManager, err := connmgr.NewConnManager(100, 400, connmgr.WithGracePeriod(time.Second*20))
 	if err != nil {
 		return nil, err
 	}
-	listenAddress, err := multiaddr.NewMultiaddr(options.ListenAddress)
-	if err != nil {
-		return nil, err
+
+	var listenAddresses []multiaddr.Multiaddr
+	for _, addr := range options.ListenAddresses {
+		listenAddress, err := multiaddr.NewMultiaddr(addr)
+		if err != nil {
+			return nil, err
+		}
+		listenAddresses = append(listenAddresses, listenAddress)
 	}
 
 	fin := finalizer.NewFinalizer()
@@ -115,7 +121,7 @@ func NewNode(
 		libp2p.ConnectionManager(connManager),
 		libp2p.DefaultTransports,
 		libp2p.Identity(options.PrivateKey),
-		libp2p.ListenAddrs(listenAddress),
+		libp2p.ListenAddrs(listenAddresses...),
 		libp2p.Peerstore(peerstore),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
 			// Delete this line and uncomment the next 6 lines once we remove batchable datastore support.
@@ -142,7 +148,7 @@ func NewNode(
 		ctx,
 		"Created LibP2P host",
 		logging.NewKV("PeerId", h.ID()),
-		logging.NewKV("Address", options.ListenAddress),
+		logging.NewKV("Address", options.ListenAddresses),
 	)
 
 	var ps *pubsub.PubSub

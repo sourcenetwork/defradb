@@ -98,11 +98,11 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 		log.FeedbackFatalE(context.Background(), "Could not bind datastore.badger.valuelogfilesize", err)
 	}
 
-	cmd.Flags().String(
-		"p2paddr", cfg.Net.P2PAddress,
+	cmd.Flags().StringSlice(
+		"p2paddr", cfg.Net.P2PAddresses,
 		"Listener address for the p2p network (formatted as a libp2p MultiAddr)",
 	)
-	err = cfg.BindFlag("net.p2paddress", cmd.Flags().Lookup("p2paddr"))
+	err = cfg.BindFlag("net.p2paddresses", cmd.Flags().Lookup("p2paddr"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.p2paddress", err)
 	}
@@ -220,7 +220,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	var node *net.Node
 	if !cfg.Net.P2PDisabled {
 		nodeOpts := []net.NodeOpt{
-			net.WithListenAddress(cfg.Net.P2PAddress),
+			net.WithListenAddresses(cfg.Net.P2PAddresses...),
 			net.WithEnablePubSub(cfg.Net.PubSubEnabled),
 			net.WithEnableRelay(cfg.Net.RelayEnabled),
 		}
@@ -235,7 +235,7 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 			}
 			nodeOpts = append(nodeOpts, net.WithPrivateKey(key))
 		}
-		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P addresses", cfg.Net.P2PAddresses))
 		node, err = net.NewNode(ctx, db, nodeOpts...)
 		if err != nil {
 			db.Close()

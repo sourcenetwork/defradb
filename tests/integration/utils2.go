@@ -665,13 +665,17 @@ func restartNodes(
 		cfg := s.nodeConfigs[i]
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
-		cfg.Net.P2PAddress = s.nodeAddresses[i].Addrs[0].String()
+		var addresses []string
+		for _, addr := range s.nodeAddresses[i].Addrs {
+			addresses = append(addresses, addr.String())
+		}
+		cfg.Net.P2PAddresses = addresses
 
 		var n *net.Node
 		n, err = net.NewNode(
 			s.ctx,
 			db,
-			net.WithListenAddress(cfg.Net.P2PAddress),
+			net.WithListenAddresses(cfg.Net.P2PAddresses...),
 			net.WithEnablePubSub(cfg.Net.PubSubEnabled),
 			net.WithEnableRelay(cfg.Net.RelayEnabled),
 			net.WithPrivateKey(key),
@@ -772,11 +776,11 @@ func configureNode(
 	require.NoError(s.t, err)
 
 	var n *net.Node
-	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddresses))
 	n, err = net.NewNode(
 		s.ctx,
 		db,
-		net.WithListenAddress(cfg.Net.P2PAddress),
+		net.WithListenAddresses(cfg.Net.P2PAddresses...),
 		net.WithEnablePubSub(cfg.Net.PubSubEnabled),
 		net.WithEnableRelay(cfg.Net.RelayEnabled),
 		net.WithPrivateKey(privateKey),

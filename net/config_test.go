@@ -16,10 +16,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWithListenAddress(t *testing.T) {
+func TestWithListenAddresses(t *testing.T) {
 	opts := &Options{}
-	WithListenAddress("/ip4/127.0.0.1/tcp/6666")(opts)
-	assert.Equal(t, "/ip4/127.0.0.1/tcp/6666", opts.ListenAddress)
+	addresses := []string{"/ip4/127.0.0.1/tcp/6666", "/ip4/0.0.0.0/tcp/6666"}
+	WithListenAddresses(addresses...)(opts)
+	assert.Equal(t, addresses, opts.ListenAddresses)
 }
 
 func TestWithEnableRelay(t *testing.T) {

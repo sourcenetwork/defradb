@@ -121,7 +121,7 @@ func newTestNode(ctx context.Context, t *testing.T) (client.DB, *Node) {
 	n, err := NewNode(
 		ctx,
 		db,
-		WithListenAddress(randomMultiaddr),
+		WithListenAddresses(randomMultiaddr),
 	)
 	require.NoError(t, err)
 
@@ -214,13 +214,13 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db1,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db2,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 
@@ -250,13 +250,13 @@ func TestStart_WithOfflineKnownPeer_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db1,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	n2, err := NewNode(
 		ctx,
 		db2,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 

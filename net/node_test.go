@@ -126,7 +126,7 @@ func TestNewNode_BootstrapWithNoPeer_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
@@ -142,14 +142,14 @@ func TestNewNode_BootstrapWithOnePeer_NoError(t *testing.T) {
 	n1, err := NewNode(
 		ctx,
 		db,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
 		db,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n2.Close()
@@ -169,14 +169,14 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 	n1, err := NewNode(
 		ctx,
 		db,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewNode(
 		ctx,
 		db,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n2.Close()
@@ -190,7 +190,7 @@ func TestNewNode_BootstrapWithOneValidPeerAndManyInvalidPeers_NoError(t *testing
 	n2.Bootstrap(addrs)
 }
 
-func TestListenAddrs_WithListenAddress_NoError(t *testing.T) {
+func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, store, db.WithUpdateEvents())
@@ -198,7 +198,7 @@ func TestListenAddrs_WithListenAddress_NoError(t *testing.T) {
 	n, err := NewNode(
 		context.Background(),
 		db,
-		WithListenAddress("/ip4/0.0.0.0/tcp/0"),
+		WithListenAddresses("/ip4/0.0.0.0/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n.Close()

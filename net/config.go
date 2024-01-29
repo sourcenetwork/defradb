@@ -19,7 +19,7 @@ import (
 
 // Options is the node options.
 type Options struct {
-	ListenAddress     string
+	ListenAddresses   []string
 	PrivateKey        crypto.PrivKey
 	EnablePubSub      bool
 	EnableRelay       bool
@@ -30,9 +30,9 @@ type Options struct {
 // DefaultOptions returns the default net options.
 func DefaultOptions() *Options {
 	return &Options{
-		ListenAddress: "/ip4/0.0.0.0/tcp/9171",
-		EnablePubSub:  true,
-		EnableRelay:   false,
+		ListenAddresses: []string{"/ip4/0.0.0.0/tcp/9171"},
+		EnablePubSub:    true,
+		EnableRelay:     false,
 	}
 }
 
@@ -60,8 +60,8 @@ func WithEnableRelay(enable bool) NodeOpt {
 }
 
 // WithListenAddress sets the address to listen on given as a multiaddress string.
-func WithListenAddress(address string) NodeOpt {
+func WithListenAddresses(addresses ...string) NodeOpt {
 	return func(opt *Options) {
-		opt.ListenAddress = address
+		opt.ListenAddresses = addresses
 	}
 }
