@@ -24,7 +24,7 @@ var envVarsDifferent = map[string]string{
 	"DEFRA_DATASTORE_BADGER_PATH": "defra_data",
 	"DEFRA_API_ADDRESS":           "localhost:9999",
 	"DEFRA_NET_P2PDISABLED":       "true",
-	"DEFRA_NET_P2PADDRESS":        "/ip4/0.0.0.0/tcp/9876",
+	"DEFRA_NET_P2PADDRESSES":      "/ip4/0.0.0.0/tcp/9876",
 	"DEFRA_NET_PUBSUB":            "false",
 	"DEFRA_NET_RELAY":             "false",
 	"DEFRA_LOG_LEVEL":             "error",
@@ -37,7 +37,7 @@ var envVarsInvalid = map[string]string{
 	"DEFRA_DATASTORE_BADGER_PATH": "^=+()&**()*(&))",
 	"DEFRA_API_ADDRESS":           "^=+()&**()*(&))",
 	"DEFRA_NET_P2PDISABLED":       "^=+()&**()*(&))",
-	"DEFRA_NET_P2PADDRESS":        "^=+()&**()*(&))",
+	"DEFRA_NET_P2PADDRESSES":      "^=+()&**()*(&))",
 	"DEFRA_NET_PUBSUB":            "^=+()&**()*(&))",
 	"DEFRA_NET_RELAY":             "^=+()&**()*(&))",
 	"DEFRA_LOG_LEVEL":             "^=+()&**()*(&))",
@@ -172,7 +172,7 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, filepath.Join(cfg.Rootdir, "defra_data"), cfg.Datastore.Badger.Path)
 	assert.Equal(t, "memory", cfg.Datastore.Store)
 	assert.Equal(t, true, cfg.Net.P2PDisabled)
-	assert.Equal(t, "/ip4/0.0.0.0/tcp/9876", cfg.Net.P2PAddress)
+	assert.Equal(t, []string{"/ip4/0.0.0.0/tcp/9876"}, cfg.Net.P2PAddresses)
 	assert.Equal(t, false, cfg.Net.PubSubEnabled)
 	assert.Equal(t, false, cfg.Net.RelayEnabled)
 	assert.Equal(t, "error", cfg.Log.Level)

@@ -21,6 +21,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
 - [Install](#install)
 - [Start](#start)
 - [Configuration](#configuration)
+- [External port binding](#external-port-binding)
 - [Add a schema type](#add-a-schema-type)
 - [Create a document instance](#create-a-document-instance)
 - [Query documents](#query-documents)
@@ -71,6 +72,14 @@ In this document, we use the default configuration, which has the following beha
 - The GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql
 
 The GraphQL endpoint can be used with a GraphQL client (e.g., Altair) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
+
+## External port binding
+
+By default the HTTP API and P2P network will use localhost. If you want to expose the ports externally you need to specify the addresses in the config or command line parameters.
+
+```
+defradb start --p2paddr /ip4/0.0.0.0/tcp/9171 --url 0.0.0.0:9181
+```
 
 ## Add a schema type
 
@@ -235,7 +244,6 @@ DQL is compatible with GraphQL but features various extensions.
 
 Read its documentation at [docs.source.network](https://docs.source.network/references/query-specification/query-language-overview) to discover its filtering, ordering, limiting, relationships, variables, aggregate functions, and other useful features.
 
-
 ## Peer-to-peer data synchronization
 
 DefraDB leverages peer-to-peer networking for data exchange, synchronization, and replication of documents and commits.
@@ -280,14 +288,14 @@ In this example, we use `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, 
 For *nodeB*, we provide the following configuration:
 
 ```shell
-defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --peers /ip4/0.0.0.0/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
+defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/127.0.0.1/tcp/9172 --peers /ip4/127.0.0.1/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
 ```
 
 About the flags:
 
 - `--rootdir` specifies the root dir (config and data) to use
 - `--url` is the address to listen on for the client HTTP and GraphQL API
-- `--p2paddr` is the multiaddress for the P2P networking to listen on
+- `--p2paddr` is a comma-separated list of multiaddresses to listen on for p2p networking
 - `--peers` is a comma-separated list of peer multiaddresses
 
 This starts two nodes and connects them via pubsub networking.

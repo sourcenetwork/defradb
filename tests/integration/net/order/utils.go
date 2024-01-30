@@ -92,11 +92,13 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 
 	// init the P2P node
 	var n *net.Node
-	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P addresses", cfg.Net.P2PAddresses))
 	n, err = net.NewNode(
 		ctx,
 		db,
-		net.WithConfig(cfg),
+		net.WithListenAddresses(cfg.Net.P2PAddresses...),
+		net.WithEnablePubSub(cfg.Net.PubSubEnabled),
+		net.WithEnableRelay(cfg.Net.RelayEnabled),
 	)
 	if err != nil {
 		return nil, nil, errors.Wrap("failed to start P2P node", err)
@@ -118,7 +120,11 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 		return nil, nil, errors.Wrap("unable to start P2P listeners", err)
 	}
 
-	cfg.Net.P2PAddress = n.ListenAddrs()[0].String()
+	var addresses []string
+	for _, addr := range n.ListenAddrs() {
+		addresses = append(addresses, addr.String())
+	}
+	cfg.Net.P2PAddresses = addresses
 
 	return n, docIDs, nil
 }
@@ -345,7 +351,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 func randomNetworkingConfig() *config.Config {
 	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = "/ip4/127.0.0.1/tcp/0"
+	cfg.Net.P2PAddresses = []string{"/ip4/127.0.0.1/tcp/0"}
 	cfg.Net.RelayEnabled = false
 	return cfg
 }
