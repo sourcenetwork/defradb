@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/bits-and-blooms/bitset v1.13.0
 	github.com/bxcodec/faker v2.0.1+incompatible
-	github.com/evanphx/json-patch/v5 v5.8.1
+	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/fxamacker/cbor/v2 v2.5.0
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/go-chi/chi/v5 v5.0.11
