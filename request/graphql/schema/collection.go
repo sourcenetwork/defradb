@@ -455,19 +455,19 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 		case typeID:
 			return client.FieldKind_DocID, nil
 		case typeBoolean:
-			return client.FieldKind_BOOL, nil
+			return client.FieldKind_NILLABLE_BOOL, nil
 		case typeInt:
-			return client.FieldKind_INT, nil
+			return client.FieldKind_NILLABLE_INT, nil
 		case typeFloat:
-			return client.FieldKind_FLOAT, nil
+			return client.FieldKind_NILLABLE_FLOAT, nil
 		case typeDateTime:
-			return client.FieldKind_DATETIME, nil
+			return client.FieldKind_NILLABLE_DATETIME, nil
 		case typeString:
-			return client.FieldKind_STRING, nil
+			return client.FieldKind_NILLABLE_STRING, nil
 		case typeBlob:
-			return client.FieldKind_BLOB, nil
+			return client.FieldKind_NILLABLE_BLOB, nil
 		case typeJSON:
-			return client.FieldKind_JSON, nil
+			return client.FieldKind_NILLABLE_JSON, nil
 		default:
 			return client.FieldKind_FOREIGN_OBJECT, nil
 		}

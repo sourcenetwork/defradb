@@ -110,7 +110,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 							{
 								Name: "name",
 								ID:   1,
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -185,7 +185,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 							{
 								Name: "name",
 								ID:   1,
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -249,7 +249,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 							{
 								Name: "name",
 								ID:   1,
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 						},

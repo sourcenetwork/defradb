@@ -87,7 +87,7 @@ func (p *Planner) isValueFloat(
 			return false, client.NewErrFieldNotExist(source.Name)
 		}
 		return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
-			fieldDescription.Kind == client.FieldKind_FLOAT ||
+			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT ||
 			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
 	}
 
@@ -136,7 +136,7 @@ func (p *Planner) isValueFloat(
 	}
 
 	return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
-		fieldDescription.Kind == client.FieldKind_FLOAT ||
+		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT ||
 		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
 }
 

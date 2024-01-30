@@ -155,35 +155,35 @@ func (f FieldKind) String() string {
 	switch f {
 	case FieldKind_DocID:
 		return "ID"
-	case FieldKind_BOOL:
+	case FieldKind_NILLABLE_BOOL:
 		return "Boolean"
 	case FieldKind_NILLABLE_BOOL_ARRAY:
 		return "[Boolean]"
 	case FieldKind_BOOL_ARRAY:
 		return "[Boolean!]"
-	case FieldKind_INT:
+	case FieldKind_NILLABLE_INT:
 		return "Int"
 	case FieldKind_NILLABLE_INT_ARRAY:
 		return "[Int]"
 	case FieldKind_INT_ARRAY:
 		return "[Int!]"
-	case FieldKind_DATETIME:
+	case FieldKind_NILLABLE_DATETIME:
 		return "DateTime"
-	case FieldKind_FLOAT:
+	case FieldKind_NILLABLE_FLOAT:
 		return "Float"
 	case FieldKind_NILLABLE_FLOAT_ARRAY:
 		return "[Float]"
 	case FieldKind_FLOAT_ARRAY:
 		return "[Float!]"
-	case FieldKind_STRING:
+	case FieldKind_NILLABLE_STRING:
 		return "String"
 	case FieldKind_NILLABLE_STRING_ARRAY:
 		return "[String]"
 	case FieldKind_STRING_ARRAY:
 		return "[String!]"
-	case FieldKind_BLOB:
+	case FieldKind_NILLABLE_BLOB:
 		return "Blob"
-	case FieldKind_JSON:
+	case FieldKind_NILLABLE_JSON:
 		return "JSON"
 	default:
 		return fmt.Sprint(uint8(f))
@@ -192,22 +192,22 @@ func (f FieldKind) String() string {
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
-	FieldKind_None         FieldKind = 0
-	FieldKind_DocID        FieldKind = 1
-	FieldKind_BOOL         FieldKind = 2
-	FieldKind_BOOL_ARRAY   FieldKind = 3
-	FieldKind_INT          FieldKind = 4
-	FieldKind_INT_ARRAY    FieldKind = 5
-	FieldKind_FLOAT        FieldKind = 6
-	FieldKind_FLOAT_ARRAY  FieldKind = 7
-	_                      FieldKind = 8 // safe to repurpose (was never used)
-	_                      FieldKind = 9 // safe to repurpose (previously old field)
-	FieldKind_DATETIME     FieldKind = 10
-	FieldKind_STRING       FieldKind = 11
-	FieldKind_STRING_ARRAY FieldKind = 12
-	FieldKind_BLOB         FieldKind = 13
-	FieldKind_JSON         FieldKind = 14
-	_                      FieldKind = 15 // safe to repurpose (was never used)
+	FieldKind_None              FieldKind = 0
+	FieldKind_DocID             FieldKind = 1
+	FieldKind_NILLABLE_BOOL     FieldKind = 2
+	FieldKind_BOOL_ARRAY        FieldKind = 3
+	FieldKind_NILLABLE_INT      FieldKind = 4
+	FieldKind_INT_ARRAY         FieldKind = 5
+	FieldKind_NILLABLE_FLOAT    FieldKind = 6
+	FieldKind_FLOAT_ARRAY       FieldKind = 7
+	_                           FieldKind = 8 // safe to repurpose (was never used)
+	_                           FieldKind = 9 // safe to repurpose (previously old field)
+	FieldKind_NILLABLE_DATETIME FieldKind = 10
+	FieldKind_NILLABLE_STRING   FieldKind = 11
+	FieldKind_STRING_ARRAY      FieldKind = 12
+	FieldKind_NILLABLE_BLOB     FieldKind = 13
+	FieldKind_NILLABLE_JSON     FieldKind = 14
+	_                           FieldKind = 15 // safe to repurpose (was never used)
 
 	// Embedded object, but accessed via foreign keys
 	FieldKind_FOREIGN_OBJECT FieldKind = 16
@@ -230,21 +230,21 @@ const (
 // equality is not guaranteed.
 var FieldKindStringToEnumMapping = map[string]FieldKind{
 	"ID":         FieldKind_DocID,
-	"Boolean":    FieldKind_BOOL,
+	"Boolean":    FieldKind_NILLABLE_BOOL,
 	"[Boolean]":  FieldKind_NILLABLE_BOOL_ARRAY,
 	"[Boolean!]": FieldKind_BOOL_ARRAY,
-	"Int":        FieldKind_INT,
+	"Int":        FieldKind_NILLABLE_INT,
 	"[Int]":      FieldKind_NILLABLE_INT_ARRAY,
 	"[Int!]":     FieldKind_INT_ARRAY,
-	"DateTime":   FieldKind_DATETIME,
-	"Float":      FieldKind_FLOAT,
+	"DateTime":   FieldKind_NILLABLE_DATETIME,
+	"Float":      FieldKind_NILLABLE_FLOAT,
 	"[Float]":    FieldKind_NILLABLE_FLOAT_ARRAY,
 	"[Float!]":   FieldKind_FLOAT_ARRAY,
-	"String":     FieldKind_STRING,
+	"String":     FieldKind_NILLABLE_STRING,
 	"[String]":   FieldKind_NILLABLE_STRING_ARRAY,
 	"[String!]":  FieldKind_STRING_ARRAY,
-	"Blob":       FieldKind_BLOB,
-	"JSON":       FieldKind_JSON,
+	"Blob":       FieldKind_NILLABLE_BLOB,
+	"JSON":       FieldKind_NILLABLE_JSON,
 }
 
 // RelationType describes the type of relation between two types.

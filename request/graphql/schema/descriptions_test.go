@@ -47,17 +47,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "verified",
-								Kind: client.FieldKind_BOOL,
+								Kind: client.FieldKind_NILLABLE_BOOL,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -96,17 +96,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "verified",
-								Kind: client.FieldKind_BOOL,
+								Kind: client.FieldKind_NILLABLE_BOOL,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -127,17 +127,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "publisher",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -190,12 +190,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -216,12 +216,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
@@ -274,17 +274,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "verified",
-								Kind: client.FieldKind_BOOL,
+								Kind: client.FieldKind_NILLABLE_BOOL,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -305,17 +305,17 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "publisher",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -368,12 +368,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -394,12 +394,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
@@ -466,12 +466,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -492,12 +492,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
@@ -564,12 +564,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -590,12 +590,12 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 							{
 								Name: "age",
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{

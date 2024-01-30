@@ -86,14 +86,14 @@ func InstanceWithStore(
 		), nil
 	case client.PN_COUNTER:
 		switch kind {
-		case client.FieldKind_INT:
+		case client.FieldKind_NILLABLE_INT:
 			return NewMerklePNCounter[int64](
 				store,
 				schemaVersionKey,
 				key,
 				fieldName,
 			), nil
-		case client.FieldKind_FLOAT:
+		case client.FieldKind_NILLABLE_FLOAT:
 			return NewMerklePNCounter[float64](
 				store,
 				schemaVersionKey,
