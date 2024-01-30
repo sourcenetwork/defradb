@@ -95,7 +95,7 @@ func getTestConfig(t *testing.T) *config.Config {
 	cfg.Datastore.Store = "memory"
 	cfg.Net.P2PDisabled = true
 	cfg.Rootdir = t.TempDir()
-	cfg.Net.P2PAddress = "/ip4/127.0.0.1/tcp/0"
+	cfg.Net.P2PAddresses = []string{"/ip4/127.0.0.1/tcp/0"}
 	cfg.API.Address = "127.0.0.1:0"
 	cfg.Persist()
 	return cfg

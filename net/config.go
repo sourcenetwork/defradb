@@ -13,113 +13,55 @@
 package net
 
 import (
-	"time"
-
-	cconnmgr "github.com/libp2p/go-libp2p/core/connmgr"
 	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
-	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
-
-	"github.com/sourcenetwork/defradb/config"
 )
 
 // Options is the node options.
 type Options struct {
-	ListenAddrs       []ma.Multiaddr
+	ListenAddresses   []string
 	PrivateKey        crypto.PrivKey
 	EnablePubSub      bool
 	EnableRelay       bool
 	GRPCServerOptions []grpc.ServerOption
 	GRPCDialOptions   []grpc.DialOption
-	ConnManager       cconnmgr.ConnManager
 }
 
-type NodeOpt func(*Options) error
-
-// NewMergedOptions obtains Options by applying given NodeOpts.
-func NewMergedOptions(opts ...NodeOpt) (*Options, error) {
-	var options Options
-	for _, opt := range opts {
-		if opt == nil {
-			continue
-		}
-		if err := opt(&options); err != nil {
-			return nil, err
-		}
-	}
-	return &options, nil
-}
-
-// NewConnManager gives a new ConnManager.
-func NewConnManager(low int, high int, grace time.Duration) (cconnmgr.ConnManager, error) {
-	c, err := connmgr.NewConnManager(low, high, connmgr.WithGracePeriod(grace))
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
-}
-
-// WithConfig provides the Node-specific configuration, from the top-level Net config.
-func WithConfig(cfg *config.Config) NodeOpt {
-	return func(opt *Options) error {
-		var err error
-		err = WithListenP2PAddrStrings(cfg.Net.P2PAddress)(opt)
-		if err != nil {
-			return err
-		}
-		opt.EnableRelay = cfg.Net.RelayEnabled
-		opt.EnablePubSub = cfg.Net.PubSubEnabled
-		opt.ConnManager, err = NewConnManager(100, 400, time.Second*20)
-		if err != nil {
-			return err
-		}
-		return nil
+// DefaultOptions returns the default net options.
+func DefaultOptions() *Options {
+	return &Options{
+		ListenAddresses: []string{"/ip4/0.0.0.0/tcp/9171"},
+		EnablePubSub:    true,
+		EnableRelay:     false,
 	}
 }
+
+type NodeOpt func(*Options)
 
 // WithPrivateKey sets the p2p host private key.
 func WithPrivateKey(priv crypto.PrivKey) NodeOpt {
-	return func(opt *Options) error {
+	return func(opt *Options) {
 		opt.PrivateKey = priv
-		return nil
 	}
 }
 
-// WithPubSub enables the pubsub feature.
-func WithPubSub(enable bool) NodeOpt {
-	return func(opt *Options) error {
+// WithEnablePubSub enables the pubsub feature.
+func WithEnablePubSub(enable bool) NodeOpt {
+	return func(opt *Options) {
 		opt.EnablePubSub = enable
-		return nil
 	}
 }
 
 // WithEnableRelay enables the relay feature.
 func WithEnableRelay(enable bool) NodeOpt {
-	return func(opt *Options) error {
+	return func(opt *Options) {
 		opt.EnableRelay = enable
-		return nil
 	}
 }
 
-// ListenP2PAddrStrings sets the address to listen on given as strings.
-func WithListenP2PAddrStrings(addrs ...string) NodeOpt {
-	return func(opt *Options) error {
-		for _, addrstr := range addrs {
-			a, err := ma.NewMultiaddr(addrstr)
-			if err != nil {
-				return err
-			}
-			opt.ListenAddrs = append(opt.ListenAddrs, a)
-		}
-		return nil
-	}
-}
-
-// ListenAddrs sets the address to listen on given as MultiAddr(s).
-func WithListenAddrs(addrs ...ma.Multiaddr) NodeOpt {
-	return func(opt *Options) error {
-		opt.ListenAddrs = addrs
-		return nil
+// WithListenAddress sets the address to listen on given as a multiaddress string.
+func WithListenAddresses(addresses ...string) NodeOpt {
+	return func(opt *Options) {
+		opt.ListenAddresses = addresses
 	}
 }
