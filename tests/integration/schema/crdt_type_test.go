@@ -46,7 +46,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 							{
 								Name: "points",
 								ID:   1,
-								Kind: client.FieldKind_INT,
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.PN_COUNTER,
 							},
 						},
@@ -86,7 +86,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 							{
 								Name: "points",
 								ID:   1,
-								Kind: client.FieldKind_FLOAT,
+								Kind: client.FieldKind_NILLABLE_FLOAT,
 								Typ:  client.PN_COUNTER,
 							},
 						},

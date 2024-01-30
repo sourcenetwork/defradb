@@ -96,7 +96,7 @@ func DecodeFieldValue(fieldDesc client.FieldDescription, val any) (any, error) {
 		}
 	} else { // CBOR often encodes values typed as floats as ints
 		switch fieldDesc.Kind {
-		case client.FieldKind_FLOAT:
+		case client.FieldKind_NILLABLE_FLOAT:
 			switch v := val.(type) {
 			case int64:
 				return float64(v), nil
@@ -107,7 +107,7 @@ func DecodeFieldValue(fieldDesc client.FieldDescription, val any) (any, error) {
 			case uint:
 				return float64(v), nil
 			}
-		case client.FieldKind_INT:
+		case client.FieldKind_NILLABLE_INT:
 			switch v := val.(type) {
 			case float64:
 				return int64(v), nil
@@ -120,7 +120,7 @@ func DecodeFieldValue(fieldDesc client.FieldDescription, val any) (any, error) {
 			case uint:
 				return int64(v), nil
 			}
-		case client.FieldKind_DATETIME:
+		case client.FieldKind_NILLABLE_DATETIME:
 			switch v := val.(type) {
 			case string:
 				return time.Parse(time.RFC3339, v)

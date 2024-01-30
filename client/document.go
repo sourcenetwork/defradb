@@ -171,13 +171,33 @@ func NewDocsFromJSON(obj []byte, sd SchemaDescription) ([]*Document, error) {
 	return docs, nil
 }
 
+func isNillableKind(kind FieldKind) bool {
+	switch kind {
+	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_NILLABLE_JSON,
+		FieldKind_NILLABLE_BOOL, FieldKind_NILLABLE_FLOAT, FieldKind_NILLABLE_DATETIME,
+		FieldKind_NILLABLE_INT:
+		return true
+	default:
+		return false
+	}
+}
+
 // validateFieldSchema takes a given value as an interface,
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
 func validateFieldSchema(val any, field FieldDescription) (any, error) {
+	if isNillableKind(field.Kind) {
+		if val == nil {
+			return nil, nil
+		}
+		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
+			return nil, nil
+		}
+	}
+
 	switch field.Kind {
-	case FieldKind_DocID, FieldKind_STRING, FieldKind_BLOB, FieldKind_JSON:
+	case FieldKind_DocID, FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_NILLABLE_JSON:
 		return getString(val)
 
 	case FieldKind_STRING_ARRAY:
@@ -186,7 +206,7 @@ func validateFieldSchema(val any, field FieldDescription) (any, error) {
 	case FieldKind_NILLABLE_STRING_ARRAY:
 		return getNillableArray(val, getString)
 
-	case FieldKind_BOOL:
+	case FieldKind_NILLABLE_BOOL:
 		return getBool(val)
 
 	case FieldKind_BOOL_ARRAY:
@@ -195,7 +215,7 @@ func validateFieldSchema(val any, field FieldDescription) (any, error) {
 	case FieldKind_NILLABLE_BOOL_ARRAY:
 		return getNillableArray(val, getBool)
 
-	case FieldKind_FLOAT:
+	case FieldKind_NILLABLE_FLOAT:
 		return getFloat64(val)
 
 	case FieldKind_FLOAT_ARRAY:
@@ -204,10 +224,10 @@ func validateFieldSchema(val any, field FieldDescription) (any, error) {
 	case FieldKind_NILLABLE_FLOAT_ARRAY:
 		return getNillableArray(val, getFloat64)
 
-	case FieldKind_DATETIME:
+	case FieldKind_NILLABLE_DATETIME:
 		return getDateTime(val)
 
-	case FieldKind_INT:
+	case FieldKind_NILLABLE_INT:
 		return getInt64(val)
 
 	case FieldKind_INT_ARRAY:

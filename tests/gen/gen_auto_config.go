@@ -86,7 +86,7 @@ func checkAndValidateMinMax(field *client.FieldDescription, conf *genConfig) err
 	_, hasMin := conf.props["min"]
 	if hasMin {
 		var err error
-		if field.IsArray() || field.Kind == client.FieldKind_INT {
+		if field.IsArray() || field.Kind == client.FieldKind_NILLABLE_INT {
 			err = validateMinConfig[int](conf, field.IsArray())
 		} else {
 			err = validateMinConfig[float64](conf, false)
@@ -103,7 +103,7 @@ func checkAndValidateMinMax(field *client.FieldDescription, conf *genConfig) err
 func checkAndValidateLen(field *client.FieldDescription, conf *genConfig) error {
 	lenConf, hasLen := conf.props["len"]
 	if hasLen {
-		if field.Kind != client.FieldKind_STRING {
+		if field.Kind != client.FieldKind_NILLABLE_STRING {
 			return NewErrInvalidConfiguration("len is used on not String")
 		}
 		len, ok := lenConf.(int)
@@ -120,7 +120,7 @@ func checkAndValidateLen(field *client.FieldDescription, conf *genConfig) error 
 func checkAndValidateRatio(field *client.FieldDescription, conf *genConfig) error {
 	ratioConf, hasRatio := conf.props["ratio"]
 	if hasRatio {
-		if field.Kind != client.FieldKind_BOOL {
+		if field.Kind != client.FieldKind_NILLABLE_BOOL {
 			return NewErrInvalidConfiguration("ratio is used on not Boolean")
 		}
 		len, ok := ratioConf.(float64)

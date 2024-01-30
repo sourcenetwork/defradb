@@ -106,3 +106,44 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple update of date time field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						created_at: DateTime
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"created_at": "2011-07-23T01:11:11-05:00"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"created_at": null
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						Users {
+							created_at
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"created_at": nil,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
