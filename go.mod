@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/bits-and-blooms/bitset v1.13.0
 	github.com/bxcodec/faker v2.0.1+incompatible
-	github.com/evanphx/json-patch/v5 v5.8.1
+	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/fxamacker/cbor/v2 v2.5.0
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/go-chi/chi/v5 v5.0.11
@@ -28,7 +28,7 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.10.0
 	github.com/libp2p/go-libp2p-record v0.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/multiformats/go-multiaddr v0.12.1
+	github.com/multiformats/go-multiaddr v0.12.2
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/multiformats/go-multihash v0.2.3
 	github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276
@@ -49,7 +49,7 @@ require (
 	golang.org/x/crypto v0.18.0
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc
 	golang.org/x/net v0.20.0
-	google.golang.org/grpc v1.60.1
+	google.golang.org/grpc v1.61.0
 	google.golang.org/protobuf v1.32.0
 )
 
