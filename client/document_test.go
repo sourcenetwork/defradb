@@ -34,12 +34,12 @@ var (
 				{
 					Name: "Name",
 					Typ:  LWW_REGISTER,
-					Kind: FieldKind_STRING,
+					Kind: FieldKind_NILLABLE_STRING,
 				},
 				{
 					Name: "Age",
 					Typ:  LWW_REGISTER,
-					Kind: FieldKind_INT,
+					Kind: FieldKind_NILLABLE_INT,
 				},
 			},
 		},

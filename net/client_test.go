@@ -27,7 +27,7 @@ var sd = client.SchemaDescription{
 	Fields: []client.FieldDescription{
 		{
 			Name: "test",
-			Kind: client.FieldKind_STRING,
+			Kind: client.FieldKind_NILLABLE_STRING,
 			Typ:  client.LWW_REGISTER,
 		},
 	},

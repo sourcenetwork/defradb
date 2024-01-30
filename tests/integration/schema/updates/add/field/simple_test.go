@@ -65,13 +65,13 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 							{
 								Name: "name",
 								ID:   1,
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "email",
 								ID:   2,
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -156,13 +156,13 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 							{
 								Name: "name",
 								ID:   1,
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "email",
 								ID:   2,
-								Kind: client.FieldKind_STRING,
+								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 						},

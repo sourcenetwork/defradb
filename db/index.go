@@ -44,15 +44,15 @@ func canConvertIndexFieldValue[T any](val any) bool {
 
 func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
 	switch kind {
-	case client.FieldKind_STRING, client.FieldKind_FOREIGN_OBJECT:
+	case client.FieldKind_NILLABLE_STRING, client.FieldKind_FOREIGN_OBJECT:
 		return canConvertIndexFieldValue[string]
-	case client.FieldKind_INT:
+	case client.FieldKind_NILLABLE_INT:
 		return canConvertIndexFieldValue[int64]
-	case client.FieldKind_FLOAT:
+	case client.FieldKind_NILLABLE_FLOAT:
 		return canConvertIndexFieldValue[float64]
-	case client.FieldKind_BOOL:
+	case client.FieldKind_NILLABLE_BOOL:
 		return canConvertIndexFieldValue[bool]
-	case client.FieldKind_BLOB:
+	case client.FieldKind_NILLABLE_BLOB:
 		return func(val any) bool {
 			blobStrVal, ok := val.(string)
 			if !ok {
@@ -60,7 +60,7 @@ func getValidateIndexFieldFunc(kind client.FieldKind) func(any) bool {
 			}
 			return types.BlobPattern.MatchString(blobStrVal)
 		}
-	case client.FieldKind_DATETIME:
+	case client.FieldKind_NILLABLE_DATETIME:
 		return func(val any) bool {
 			timeStrVal, ok := val.(string)
 			if !ok {

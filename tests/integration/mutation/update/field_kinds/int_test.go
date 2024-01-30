@@ -16,81 +16,38 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationUpdate_WithBlobField(t *testing.T) {
+func TestMutationUpdate_IfIntFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update of blob field",
+		Description: "If int field is set to null, should set to nil",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						name: String
-						data: Blob
+						age: Int
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "John",
-					"data": "00FE"
+					"age": 33
 				}`,
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
-					"data": "00FF"
+					"age": null
 				}`,
 			},
 			testUtils.Request{
 				Request: `
 					query {
 						Users {
-							data
+							age
 						}
 					}
 				`,
 				Results: []map[string]any{
 					{
-						"data": "00FF",
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "If blob field is set to null, should set to nil",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						data: Blob
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"data": "00FE"
-				}`,
-			},
-			testUtils.UpdateDoc{
-				Doc: `{
-					"data": null
-				}`,
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						Users {
-							data
-						}
-					}
-				`,
-				Results: []map[string]any{
-					{
-						"data": nil,
+						"age": nil,
 					},
 				},
 			},

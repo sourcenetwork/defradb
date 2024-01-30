@@ -80,6 +80,8 @@ const (
 	lensPoolSize = 2
 )
 
+const testJSONFile = "/test.json"
+
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	// that don't have the flag defined
@@ -1411,7 +1413,7 @@ func backupExport(
 	action BackupExport,
 ) {
 	if action.Config.Filepath == "" {
-		action.Config.Filepath = s.t.TempDir() + "/test.json"
+		action.Config.Filepath = s.t.TempDir() + testJSONFile
 	}
 
 	var expectedErrorRaised bool
@@ -1437,7 +1439,7 @@ func backupImport(
 	action BackupImport,
 ) {
 	if action.Filepath == "" {
-		action.Filepath = s.t.TempDir() + "/test.json"
+		action.Filepath = s.t.TempDir() + testJSONFile
 	}
 
 	// we can avoid checking the error here as this would mean the filepath is invalid

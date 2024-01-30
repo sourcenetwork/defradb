@@ -1209,7 +1209,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 					Fields: []client.FieldDescription{
 						{
 							Name: "name",
-							Kind: client.FieldKind_INT,
+							Kind: client.FieldKind_NILLABLE_INT,
 						},
 						{
 							Name:         "device",
@@ -1230,7 +1230,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 					Fields: []client.FieldDescription{
 						{
 							Name: "model",
-							Kind: client.FieldKind_STRING,
+							Kind: client.FieldKind_NILLABLE_STRING,
 						},
 						{
 							Name:   "owner",
@@ -1327,15 +1327,15 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 				Fields: []client.FieldDescription{
 					{
 						Name: "name",
-						Kind: client.FieldKind_STRING,
+						Kind: client.FieldKind_NILLABLE_STRING,
 					},
 					{
 						Name: "age",
-						Kind: client.FieldKind_INT,
+						Kind: client.FieldKind_NILLABLE_INT,
 					},
 					{
 						Name: "rating",
-						Kind: client.FieldKind_FLOAT,
+						Kind: client.FieldKind_NILLABLE_FLOAT,
 					},
 					{
 						Name:         "devices",
@@ -1356,7 +1356,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 				Fields: []client.FieldDescription{
 					{
 						Name: "model",
-						Kind: client.FieldKind_STRING,
+						Kind: client.FieldKind_NILLABLE_STRING,
 					},
 					{
 						Name:         "owner_id",
