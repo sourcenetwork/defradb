@@ -17,7 +17,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/config"
 	ds "github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
@@ -25,13 +24,14 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-func MakeServerDumpCmd(cfg *config.Config) *cobra.Command {
+func MakeServerDumpCmd() *cobra.Command {
 	var datastore string
 
 	cmd := &cobra.Command{
 		Use:   "server-dump",
 		Short: "Dumps the state of the entire database",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			cfg := mustGetConfigContext(cmd)
 			log.FeedbackInfo(cmd.Context(), "Starting DefraDB process...")
 
 			// setup signal handlers
@@ -41,16 +41,17 @@ func MakeServerDumpCmd(cfg *config.Config) *cobra.Command {
 			var rootstore ds.RootStore
 			var err error
 			if datastore == badgerDatastoreName {
-				info, err := os.Stat(cfg.Datastore.Badger.Path)
+				badgerPath := cfg.GetString("datastore.badger.path")
+				info, err := os.Stat(badgerPath)
 				exists := (err == nil && info.IsDir())
 				if !exists {
 					return errors.New(fmt.Sprintf(
 						"badger store does not exist at %s. Try with an existing directory",
-						cfg.Datastore.Badger.Path,
+						badgerPath,
 					))
 				}
-				log.FeedbackInfo(cmd.Context(), "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
-				rootstore, err = badgerds.NewDatastore(cfg.Datastore.Badger.Path, cfg.Datastore.Badger.Options)
+				log.FeedbackInfo(cmd.Context(), "Opening badger store", logging.NewKV("Path", badgerPath))
+				rootstore, err = badgerds.NewDatastore(badgerPath, &badgerds.DefaultOptions)
 				if err != nil {
 					return errors.Wrap("could not open badger datastore", err)
 				}
@@ -68,7 +69,7 @@ func MakeServerDumpCmd(cfg *config.Config) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(
-		&datastore, "store", cfg.Datastore.Store,
+		&datastore, "store", "badger",
 		"Datastore to use. Options are badger, memory",
 	)
 	return cmd

@@ -11,18 +11,23 @@ import (
 	"github.com/spf13/viper"
 )
 
-// configName is the config file name
-const configName = "config.yaml"
+const (
+	// configName is the config file name
+	configName = "config.yaml"
+	// DefaultRoot is the name of the default root directory
+	DefaultRoot = "$HOME/.defradb"
+)
 
-//go:embed config.yaml
-var defaultConfig []byte
-
-// relativePathKeys are config keys that will be made relative to the rootdir
-var relativePathKeys = []string{
-	"datastore.badger.path",
-	"api.pubkeypath",
-	"api.privkeypath",
-}
+var (
+	//go:embed config.yaml
+	defaultConfig []byte
+	// relativePathKeys are config keys that will be made relative to the rootdir
+	relativePathKeys = []string{
+		"datastore.badger.path",
+		"api.pubkeypath",
+		"api.privkeypath",
+	}
+)
 
 // WriteDefaultConfig writes the default config file to the given rootdir.
 func WriteDefaultConfig(rootdir string) error {

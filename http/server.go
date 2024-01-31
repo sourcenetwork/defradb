@@ -23,7 +23,6 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 )
@@ -237,7 +236,7 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 	if s.options.Domain.HasValue() && s.options.Domain.Value() != "" {
 		s.Addr = s.options.TLS.Value().Port
 
-		if s.options.TLS.Value().Email == "" || s.options.TLS.Value().Email == config.DefaultAPIEmail {
+		if s.options.TLS.Value().Email == "" || s.options.TLS.Value().Email == "example@example.com" {
 			return ErrNoEmail
 		}
 

@@ -27,7 +27,7 @@ import (
 
 const defaultBatchSize = 1000
 
-func MakeGenDocCommand(cfg *config.Config) *cobra.Command {
+func MakeGenDocCommand() *cobra.Command {
 	var demandJSON string
 
 	var cmd = &cobra.Command{

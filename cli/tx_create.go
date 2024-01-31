@@ -14,11 +14,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func MakeTxCreateCommand(cfg *config.Config) *cobra.Command {
+func MakeTxCreateCommand() *cobra.Command {
 	var concurrent bool
 	var readOnly bool
 	var cmd = &cobra.Command{

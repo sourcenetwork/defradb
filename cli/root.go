@@ -11,14 +11,10 @@
 package cli
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/config"
 )
 
-func MakeRootCommand(cfg *config.Config) *cobra.Command {
+func MakeRootCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		SilenceUsage: true,
 		Use:          "defradb",
@@ -28,81 +24,117 @@ func MakeRootCommand(cfg *config.Config) *cobra.Command {
 Start a DefraDB node, interact with a local or remote node, and much more.
 `,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return loadConfig(cfg)
+			return setConfigContext(cmd)
 		},
 	}
 
 	cmd.PersistentFlags().String(
-		"rootdir", "",
+		"rootdir",
+		"$HOME/.defradb",
 		"Directory for data and configuration to use (default: $HOME/.defradb)",
 	)
-	err := cfg.BindFlag(config.RootdirKey, cmd.PersistentFlags().Lookup("rootdir"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind rootdir", err)
-	}
 
 	cmd.PersistentFlags().String(
-		"loglevel", cfg.Log.Level,
+		"loglevel",
+		"info",
 		"Log level to use. Options are debug, info, error, fatal",
 	)
-	err = cfg.BindFlag("log.level", cmd.PersistentFlags().Lookup("loglevel"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.loglevel", err)
-	}
-
-	cmd.PersistentFlags().StringArray(
-		"logger", []string{},
-		"Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...",
-	)
-	err = cfg.BindFlag("log.logger", cmd.PersistentFlags().Lookup("logger"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.logger", err)
-	}
 
 	cmd.PersistentFlags().String(
-		"logoutput", cfg.Log.Output,
+		"logoutput",
+		"stderr",
 		"Log output path",
 	)
-	err = cfg.BindFlag("log.output", cmd.PersistentFlags().Lookup("logoutput"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.output", err)
-	}
 
 	cmd.PersistentFlags().String(
-		"logformat", cfg.Log.Format,
+		"logformat",
+		"csv",
 		"Log format to use. Options are csv, json",
 	)
-	err = cfg.BindFlag("log.format", cmd.PersistentFlags().Lookup("logformat"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.format", err)
-	}
 
 	cmd.PersistentFlags().Bool(
-		"logtrace", cfg.Log.Stacktrace,
+		"logtrace",
+		false,
 		"Include stacktrace in error and fatal logs",
 	)
-	err = cfg.BindFlag("log.stacktrace", cmd.PersistentFlags().Lookup("logtrace"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.stacktrace", err)
-	}
 
 	cmd.PersistentFlags().Bool(
-		"lognocolor", cfg.Log.NoColor,
+		"lognocolor",
+		false,
 		"Disable colored log output",
 	)
-	err = cfg.BindFlag("log.nocolor", cmd.PersistentFlags().Lookup("lognocolor"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.nocolor", err)
-	}
 
 	cmd.PersistentFlags().String(
-		"url", cfg.API.Address,
+		"url",
+		"localhost:9181",
 		"URL of HTTP endpoint to listen on or connect to",
 	)
-	err = cfg.BindFlag("api.address", cmd.PersistentFlags().Lookup("url"))
-	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.address", err)
-	}
+
+	cmd.PersistentFlags().StringArray(
+		"peers",
+		[]string{},
+		"List of peers to connect to",
+	)
+
+	cmd.PersistentFlags().Int(
+		"max-txn-retries",
+		5,
+		"Specify the maximum number of retries per transaction",
+	)
+
+	cmd.PersistentFlags().String(
+		"store",
+		"badger",
+		"Specify the datastore to use (supported: badger, memory)",
+	)
+
+	cmd.PersistentFlags().Int(
+		"valuelogfilesize",
+		1<<30,
+		"Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize",
+	)
+
+	cmd.PersistentFlags().StringSlice(
+		"p2paddr",
+		[]string{"/ip4/127.0.0.1/tcp/9171"},
+		"Listen addresses for the p2p network (formatted as a libp2p MultiAddr)",
+	)
+
+	cmd.PersistentFlags().Bool(
+		"no-p2p",
+		false,
+		"Disable the peer-to-peer network synchronization system",
+	)
+
+	cmd.PersistentFlags().Bool(
+		"tls",
+		false,
+		"Enable serving the API over https",
+	)
+
+	cmd.PersistentFlags().StringArray(
+		"allowed-origins",
+		[]string{},
+		"List of origins to allow for CORS requests",
+	)
+
+	cmd.PersistentFlags().String(
+		"pubkeypath",
+		"cert.pub",
+		"Path to the public key for tls",
+	)
+
+	cmd.PersistentFlags().String(
+		"privkeypath",
+		"cert.key",
+		"Path to the private key for tls",
+	)
+
+	cmd.PersistentFlags().String(
+		"email",
+		"example@example.com",
+		"Email address used by the CA for notifications",
+	)
 
 	return cmd
 }

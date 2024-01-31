@@ -12,11 +12,9 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/config"
 )
 
-func MakeClientCommand(cfg *config.Config) *cobra.Command {
+func MakeClientCommand() *cobra.Command {
 	var txID uint64
 	var cmd = &cobra.Command{
 		Use:   "client",
@@ -24,13 +22,13 @@ func MakeClientCommand(cfg *config.Config) *cobra.Command {
 		Long: `Interact with a DefraDB node.
 Execute queries, add schema types, obtain node info, etc.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := loadConfig(cfg); err != nil {
+			if err := setConfigContext(cmd); err != nil {
 				return err
 			}
-			if err := setTransactionContext(cmd, cfg, txID); err != nil {
+			if err := setTransactionContext(cmd, txID); err != nil {
 				return err
 			}
-			return setStoreContext(cmd, cfg)
+			return setStoreContext(cmd)
 		},
 	}
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
