@@ -531,20 +531,6 @@ func (doc *Document) Set(field string, value any) error {
 	return doc.setCBOR(fd.Typ, field, val)
 }
 
-// Delete removes a field, and marks it to be deleted on the following db.Update() call.
-func (doc *Document) Delete(fields ...string) error {
-	doc.mu.Lock()
-	defer doc.mu.Unlock()
-	for _, f := range fields {
-		field, exists := doc.fields[f]
-		if !exists {
-			return NewErrFieldNotExist(f)
-		}
-		doc.values[field].Delete()
-	}
-	return nil
-}
-
 func (doc *Document) set(t CType, field string, value *FieldValue) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
@@ -642,9 +628,6 @@ func (doc *Document) ToJSONPatch() ([]byte, error) {
 		if !value.IsDirty() {
 			delete(docMap, field.Name())
 		}
-		if value.IsDelete() {
-			docMap[field.Name()] = nil
-		}
 	}
 
 	return json.Marshal(docMap)
@@ -655,9 +638,6 @@ func (doc *Document) Clean() {
 	for _, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
-			if val.IsDelete() {
-				doc.Set(v.Name(), nil) //nolint:errcheck
-			}
 			val.Clean()
 		}
 	}
