@@ -1011,7 +1011,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 
 func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_ShouldFetchAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _eq filter on nil value on second field",
+		Description: "Test index filtering with _eq filter on nil value on both fields",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -1096,6 +1096,141 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 					{"about": "nil_nil_2"},
 					{"about": "bob_nil"},
 					{"about": "nil_nil_1"},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test index querying on nil values works after values update",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(unique: true, fields: ["name", "age"]) {
+						name: String
+						age: Int
+						about: String
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	22,
+						"about": "bob_22 -> bob_nil"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Bob",
+						"about": "bob_nil -> nil_nil"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"age":	22,
+						"about": "nil_22 -> bob_nil"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"about": "nil_nil -> bob_nil"
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"about": "nil_nil -> nil_22"
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `
+					{
+						"age":	null
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        1,
+				Doc: `
+					{
+						"name": null
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        2,
+				Doc: `
+					{
+						"name": "Bob",
+						"age": null
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        3,
+				Doc: `
+					{
+						"name": "Bob"
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        4,
+				Doc: `
+					{
+						"age": 22
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {name: {_eq: null}, age: {_eq: null}}) {
+							about
+						}
+					}`,
+				Results: []map[string]any{
+					{"about": "bob_nil -> nil_nil"},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {name: {_eq: null}}) {
+							about
+						}
+					}`,
+				Results: []map[string]any{
+					{"about": "nil_nil -> nil_22"},
+					{"about": "bob_nil -> nil_nil"},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {age: {_eq: null}}) {
+							about
+						}
+					}`,
+				Results: []map[string]any{
+					{"about": "bob_nil -> nil_nil"},
+					{"about": "nil_nil -> bob_nil"},
+					{"about": "bob_22 -> bob_nil"},
+					{"about": "nil_22 -> bob_nil"},
 				},
 			},
 		},
