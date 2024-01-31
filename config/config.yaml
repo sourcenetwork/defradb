@@ -1,0 +1,79 @@
+# DefraDB configuration (YAML)
+
+# The default DefraDB directory is "$HOME/.defradb". It can be changed via the --rootdir CLI flag.
+# Relative paths are interpreted as being rooted in the DefraDB directory.
+
+datastore:
+    # Store can be badger | memory
+    # badger: fast pure Go key-value store optimized for SSDs (https://github.com/dgraph-io/badger)
+    # memory: in-memory version of badger
+    store: badger
+    
+    # Maximum number of times to retry failed transactions.
+    maxTxnRetries: 5
+    
+    # badger specific settings
+    badger:
+        # The path to the database data file(s).
+        path: data
+
+        # Maximum file size of the value log files. 
+        # The in-memory file size will be 2*valuelogfilesize.
+        valueLogFileSize: 1073741824
+
+api:
+    # Address of the HTTP API to listen on or connect to
+    address: localhost:9181
+    
+    # The list of origins a cross-domain request can be executed from.
+    # allowed-origins: 
+    #     - localhost
+
+    # Whether the API server should listen over HTTPS
+    tls: false
+
+    # The path to the public key file. Ignored if domains is set.
+    pubKeyPath: cert.pub
+
+    # The path to the private key file. Ignored if domains is set.
+    privKeyPath: cert.key
+    
+    # Email address to let the CA (Let's Encrypt) send notifications via email when there are issues (optional).
+    email: example@example.com
+
+net:
+    # Whether the P2P is disabled
+    p2pDisabled: false
+
+    # Listening address of the P2P network
+    p2pAddresses: 
+        - /ip4/127.0.0.1/tcp/9171
+
+    # Whether the node has pubsub enabled or not
+    pubSubEnabled: true
+    
+    # Enable libp2p's Circuit relay transport protocol https://docs.libp2p.io/concepts/circuit-relay/
+    relay: false
+    
+    # List of peers to boostrap with, specified as multiaddresses (https://docs.libp2p.io/concepts/addressing/)
+    # peers:
+    #     - /ip4/127.0.0.1/tcp/9171/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N
+
+log:
+    # Log level. Options are debug, info, error, fatal
+    level: info
+
+    # Include stack trace in error and fatal logs
+    stackTrace: true
+    
+    # Supported log formats are json, csv
+    format: csv
+    
+    # Where the log output is written to
+    output: stderr
+    
+    # Disable colored log output
+    noColor: false
+    
+    # Caller location in log output
+    caller: false
