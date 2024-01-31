@@ -19,7 +19,6 @@ type FieldValue struct {
 	t       CType
 	value   any
 	isDirty bool
-	delete  bool
 }
 
 func NewFieldValue(t CType, val any) *FieldValue {
@@ -50,16 +49,6 @@ func (val FieldValue) IsDirty() bool {
 
 func (val *FieldValue) Clean() {
 	val.isDirty = false
-	val.delete = false
-}
-
-func (val *FieldValue) Delete() {
-	val.delete = true
-	val.isDirty = true
-}
-
-func (val FieldValue) IsDelete() bool {
-	return val.delete
 }
 
 func (val *FieldValue) SetType(t CType) {
