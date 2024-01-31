@@ -893,7 +893,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 					type User @index(unique: true, fields: ["name", "age"]) {
 						name: String
 						age: Int
-						email: String
+						about: String
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -901,35 +901,38 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 				Doc: `
 					{
 						"name":	"Alice",
-						"age":	22
+						"age":	22,
+						"about": "alice_22"
 					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
-						"name":	"Bob"
+						"name":	"Bob",
+						"about": "bob_nil"
 					}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
-						"name":	"Alice"
+						"name":	"Alice",
+						"about": "alice_nil"
 					}`,
 			},
 			testUtils.Request{
 				Request: `
 					query {
 						User(filter: {name: {_eq: "Alice"}, age: {_eq: null}}) {
-							name
 							age
+							about
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"name": "Alice",
-						"age":  nil,
+						"age":   nil,
+						"about": "alice_nil",
 					},
 				},
 			},
