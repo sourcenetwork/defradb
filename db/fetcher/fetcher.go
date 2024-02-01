@@ -544,24 +544,26 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 				(df.reverse && ddf.kv.Key.DocID > df.kv.Key.DocID) ||
 				(!df.reverse && ddf.kv.Key.DocID < df.kv.Key.DocID) {
 				encdoc, execInfo, err := ddf.FetchNext(ctx)
+
 				if err != nil {
 					return nil, ExecInfo{}, err
 				}
-				if encdoc != nil {
-					return encdoc, execInfo, err
-				}
 
 				resultExecInfo.Add(execInfo)
+				if encdoc != nil {
+					return encdoc, resultExecInfo, nil
+				}
 			}
 		}
 	}
 
 	encdoc, execInfo, err := df.fetchNext(ctx)
+
 	if err != nil {
 		return nil, ExecInfo{}, err
 	}
-	resultExecInfo.Add(execInfo)
 
+	resultExecInfo.Add(execInfo)
 	return encdoc, resultExecInfo, err
 }
 
