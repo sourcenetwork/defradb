@@ -16,6 +16,9 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -58,6 +61,7 @@ func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fe
 func (f *lensedFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
+	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -105,7 +109,17 @@ historyLoop:
 	} else {
 		innerFetcherFields = fields
 	}
-	return f.source.Init(ctx, txn, col, innerFetcherFields, filter, docmapper, reverse, showDeleted)
+	return f.source.Init(
+		ctx,
+		txn,
+		acp,
+		col,
+		innerFetcherFields,
+		filter,
+		docmapper,
+		reverse,
+		showDeleted,
+	)
 }
 
 func (f *lensedFetcher) Start(ctx context.Context, spans core.Spans) error {

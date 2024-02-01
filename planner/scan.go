@@ -65,6 +65,7 @@ func (n *scanNode) Init() error {
 	if err := n.fetcher.Init(
 		n.p.ctx,
 		n.p.txn,
+		n.p.db.ACPModule(),
 		n.col,
 		n.fields,
 		n.filter,
