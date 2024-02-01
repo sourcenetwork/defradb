@@ -12,111 +12,19 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/acme/autocert"
 )
 
-func TestNewServerAndRunWithoutListener(t *testing.T) {
-	ctx := context.Background()
-	s, err := NewServer(nil, WithAddress(":0"))
-	require.NoError(t, err)
-	if ok := assert.NotNil(t, s); ok {
-		assert.Equal(t, ErrNoListener, s.Run(ctx))
-	}
-}
-
-func TestNewServerAndRunWithListenerAndInvalidPort(t *testing.T) {
-	ctx := context.Background()
-	s, err := NewServer(nil, WithAddress(":303000"))
-	require.NoError(t, err)
-	if ok := assert.NotNil(t, s); ok {
-		assert.Error(t, s.Listen(ctx))
-	}
-}
-
-func TestNewServerAndRunWithListenerAndValidPort(t *testing.T) {
-	ctx := context.Background()
-	serverRunning := make(chan struct{})
-	serverDone := make(chan struct{})
-	s, err := NewServer(nil, WithAddress(":0"))
-	require.NoError(t, err)
-	go func() {
-		close(serverRunning)
-		err := s.Listen(ctx)
-		assert.NoError(t, err)
-		err = s.Run(ctx)
-		assert.ErrorIs(t, http.ErrServerClosed, err)
-		defer close(serverDone)
-	}()
-
-	<-serverRunning
-
-	s.Shutdown(context.Background())
-
-	<-serverDone
-}
-
-func TestNewServerAndRunWithAutocertWithoutEmail(t *testing.T) {
-	ctx := context.Background()
-	dir := t.TempDir()
-	s, err := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0))
-	require.NoError(t, err)
-	err = s.Listen(ctx)
-	assert.ErrorIs(t, err, ErrNoEmail)
-
-	s.Shutdown(context.Background())
-}
-
-func TestNewServerAndRunWithAutocert(t *testing.T) {
-	ctx := context.Background()
-	serverRunning := make(chan struct{})
-	serverDone := make(chan struct{})
-	dir := t.TempDir()
-	s, err := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0), WithCAEmail("dev@defradb.net"))
-	require.NoError(t, err)
-	go func() {
-		close(serverRunning)
-		err := s.Listen(ctx)
-		assert.NoError(t, err)
-		err = s.Run(ctx)
-		assert.ErrorIs(t, http.ErrServerClosed, err)
-		defer close(serverDone)
-	}()
-
-	<-serverRunning
-
-	s.Shutdown(context.Background())
-
-	<-serverDone
-}
-
-func TestNewServerAndRunWithSelfSignedCertAndNoKeyFiles(t *testing.T) {
-	ctx := context.Background()
-	serverRunning := make(chan struct{})
-	serverDone := make(chan struct{})
-	dir := t.TempDir()
-	s, err := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
-	require.NoError(t, err)
-	go func() {
-		close(serverRunning)
-		err := s.Listen(ctx)
-		assert.Contains(t, err.Error(), "failed to load given keys")
-		defer close(serverDone)
-	}()
-
-	<-serverRunning
-
-	s.Shutdown(context.Background())
-
-	<-serverDone
-}
-
-const pubKey = `-----BEGIN EC PARAMETERS-----
+// tlsKey is the TLS private key in PEM format
+const tlsKey = `-----BEGIN EC PARAMETERS-----
 BgUrgQQAIg==
 -----END EC PARAMETERS-----
 -----BEGIN EC PRIVATE KEY-----
@@ -126,7 +34,8 @@ pS0gW/SYpAncHhRuz18RQ2ycuXlSN1S/PAryRZ5PK2xORKfwpguEDEMdVwbHorZO
 K44P/h3dhyNyAyf8rcRoqKXcl/K/uew=
 -----END EC PRIVATE KEY-----`
 
-const privKey = `-----BEGIN CERTIFICATE-----
+// tlsKey is the TLS certificate in PEM format
+const tlsCert = `-----BEGIN CERTIFICATE-----
 MIICQDCCAcUCCQDpMnN1gQ4fGTAKBggqhkjOPQQDAjCBiDELMAkGA1UEBhMCY2Ex
 DzANBgNVBAgMBlF1ZWJlYzEQMA4GA1UEBwwHQ2hlbHNlYTEPMA0GA1UECgwGU291
 cmNlMRAwDgYDVQQLDAdEZWZyYURCMQ8wDQYDVQQDDAZzb3VyY2UxIjAgBgkqhkiG
@@ -142,121 +51,123 @@ kgIxAKaEGC+lqp0aaN+yubYLRiTDxOlNpyiHox3nZiL4bG/CCdPDvbX63QcdI2yq
 XPKczg==
 -----END CERTIFICATE-----`
 
-func TestNewServerAndRunWithSelfSignedCertAndInvalidPort(t *testing.T) {
-	ctx := context.Background()
-	serverRunning := make(chan struct{})
-	serverDone := make(chan struct{})
-	dir := t.TempDir()
-	err := os.WriteFile(dir+"/server.key", []byte(privKey), 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = os.WriteFile(dir+"/server.crt", []byte(pubKey), 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-	s, err := NewServer(nil, WithAddress(":303000"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+// insecureClient is an http client that trusts all tls certificates
+var insecureClient = &http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	},
+}
+
+// testHandler returns an empty body and 200 status code
+var testHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+})
+
+func TestServerListenAndServeWithInvalidAddress(t *testing.T) {
+	srv, err := NewServer(testHandler, WithAddress("invalid"))
 	require.NoError(t, err)
+
+	err = srv.ListenAndServe()
+	require.ErrorContains(t, err, "address invalid")
+}
+
+func TestServerListenAndServeWithAddress(t *testing.T) {
+	srv, err := NewServer(testHandler, WithAddress("127.0.0.1:30001"))
+	require.NoError(t, err)
+
 	go func() {
-		close(serverRunning)
-		err := s.Listen(ctx)
-		assert.Contains(t, err.Error(), "invalid port")
-		defer close(serverDone)
+		err := srv.ListenAndServe()
+		require.ErrorIs(t, http.ErrServerClosed, err)
 	}()
 
-	<-serverRunning
+	// wait for server to start
+	<-time.After(time.Second * 1)
 
-	s.Shutdown(context.Background())
+	res, err := http.Get("http://" + srv.AssignedAddr())
+	require.NoError(t, err)
 
-	<-serverDone
+	defer res.Body.Close()
+	assert.Equal(t, 200, res.StatusCode)
+
+	err = srv.Shutdown(context.Background())
+	require.NoError(t, err)
 }
 
-func TestNewServerAndRunWithSelfSignedCert(t *testing.T) {
-	ctx := context.Background()
-	serverRunning := make(chan struct{})
-	serverDone := make(chan struct{})
-	dir := t.TempDir()
-	err := os.WriteFile(dir+"/server.key", []byte(privKey), 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = os.WriteFile(dir+"/server.crt", []byte(pubKey), 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-	s, err := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+func TestServerListenAndServeWithTLS(t *testing.T) {
+	tempDir := t.TempDir()
+	certPath := filepath.Join(tempDir, "cert.pub")
+	keyPath := filepath.Join(tempDir, "cert.key")
+
+	err := os.WriteFile(certPath, []byte(tlsCert), 0644)
 	require.NoError(t, err)
+
+	err = os.WriteFile(keyPath, []byte(tlsKey), 0644)
+	require.NoError(t, err)
+
+	srv, err := NewServer(testHandler, WithAddress("127.0.0.1:8443"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
+	require.NoError(t, err)
+
 	go func() {
-		close(serverRunning)
-		err := s.Listen(ctx)
-		assert.NoError(t, err)
-		err = s.Run(ctx)
-		assert.ErrorIs(t, http.ErrServerClosed, err)
-		defer close(serverDone)
+		err := srv.ListenAndServe()
+		require.ErrorIs(t, http.ErrServerClosed, err)
 	}()
 
-	<-serverRunning
+	// wait for server to start
+	<-time.After(time.Second * 1)
 
-	s.Shutdown(context.Background())
-
-	<-serverDone
-}
-
-func TestNewServerWithoutOptions(t *testing.T) {
-	s, err := NewServer(nil)
+	res, err := insecureClient.Get("https://" + srv.AssignedAddr())
 	require.NoError(t, err)
-	assert.Equal(t, "localhost:9181", s.Addr)
-	assert.Equal(t, []string(nil), s.options.AllowedOrigins)
-}
 
-func TestNewServerWithAddress(t *testing.T) {
-	s, err := NewServer(nil, WithAddress("localhost:9999"))
+	defer res.Body.Close()
+	assert.Equal(t, 200, res.StatusCode)
+
+	err = srv.Shutdown(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "localhost:9999", s.Addr)
 }
 
-func TestNewServerWithDomainAddress(t *testing.T) {
-	s, err := NewServer(nil, WithAddress("example.com"))
+func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
+	srv, err := NewServer(testHandler, WithAllowedOrigins("localhost"))
 	require.NoError(t, err)
-	assert.Equal(t, "example.com", s.options.Domain.Value())
-	assert.NotNil(t, s.options.TLS)
-}
 
-func TestNewServerWithAllowedOrigins(t *testing.T) {
-	s, err := NewServer(nil, WithAllowedOrigins("https://source.network", "https://app.source.network"))
+	go func() {
+		err := srv.ListenAndServe()
+		require.ErrorIs(t, http.ErrServerClosed, err)
+	}()
+
+	// wait for server to start
+	<-time.After(time.Second * 1)
+
+	req, err := http.NewRequest(http.MethodOptions, "http://"+srv.AssignedAddr(), nil)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"https://source.network", "https://app.source.network"}, s.options.AllowedOrigins)
-}
+	req.Header.Add("origin", "localhost")
 
-func TestNewServerWithCAEmail(t *testing.T) {
-	s, err := NewServer(nil, WithCAEmail("me@example.com"))
+	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	assert.Equal(t, "me@example.com", s.options.TLS.Value().Email)
-}
 
-func TestNewServerWithRootDir(t *testing.T) {
-	dir := t.TempDir()
-	s, err := NewServer(nil, WithRootDir(dir))
+	defer res.Body.Close()
+	assert.Equal(t, 200, res.StatusCode)
+	assert.Equal(t, "localhost", res.Header.Get("Access-Control-Allow-Origin"))
+
+	err = srv.Shutdown(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, dir, s.options.RootDir)
 }
 
-func TestNewServerWithTLSPort(t *testing.T) {
-	s, err := NewServer(nil, WithTLSPort(44343))
+func TestServerWithReadTimeout(t *testing.T) {
+	srv, err := NewServer(testHandler, WithReadTimeout(time.Second))
 	require.NoError(t, err)
-	assert.Equal(t, ":44343", s.options.TLS.Value().Port)
+	assert.Equal(t, time.Second, srv.server.ReadTimeout)
 }
 
-func TestNewServerWithSelfSignedCert(t *testing.T) {
-	s, err := NewServer(nil, WithSelfSignedCert("pub.key", "priv.key"))
+func TestServerWithWriteTimeout(t *testing.T) {
+	srv, err := NewServer(testHandler, WithWriteTimeout(time.Second))
 	require.NoError(t, err)
-	assert.Equal(t, "pub.key", s.options.TLS.Value().PublicKey)
-	assert.Equal(t, "priv.key", s.options.TLS.Value().PrivateKey)
-	assert.NotNil(t, s.options.TLS)
+	assert.Equal(t, time.Second, srv.server.WriteTimeout)
 }
 
-func TestNewHTTPRedirServer(t *testing.T) {
-	m := &autocert.Manager{}
-	s := newHTTPRedirServer(m)
-	assert.Equal(t, ":80", s.Addr)
+func TestServerWithIdleTimeout(t *testing.T) {
+	srv, err := NewServer(testHandler, WithIdleTimeout(time.Second))
+	require.NoError(t, err)
+	assert.Equal(t, time.Second, srv.server.IdleTimeout)
 }

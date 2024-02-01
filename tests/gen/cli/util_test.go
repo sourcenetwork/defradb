@@ -12,9 +12,7 @@ package cli
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"os"
+	"net/http/httptest"
 	"testing"
 
 	badger "github.com/sourcenetwork/badger/v4"
@@ -33,21 +31,15 @@ var log = logging.MustNewLogger("cli")
 
 type defraInstance struct {
 	db     client.DB
-	server *httpapi.Server
+	server *httptest.Server
 }
 
 func (di *defraInstance) close(ctx context.Context) {
 	di.db.Close()
-	if err := di.server.Close(); err != nil {
-		log.FeedbackInfo(
-			ctx,
-			"The server could not be closed successfully",
-			logging.NewKV("Error", err.Error()),
-		)
-	}
+	di.server.Close()
 }
 
-func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
+func start(ctx context.Context) (*defraInstance, error) {
 	log.FeedbackInfo(ctx, "Starting DefraDB service...")
 
 	log.FeedbackInfo(ctx, "Building new memory store")
@@ -63,26 +55,11 @@ func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 		return nil, errors.Wrap("failed to create database", err)
 	}
 
-	server, err := httpapi.NewServer(db, httpapi.WithAddress(cfg.API.Address))
+	handler, err := httpapi.NewHandler(db)
 	if err != nil {
-		return nil, errors.Wrap("failed to create http server", err)
+		return nil, errors.Wrap("failed to create http handler", err)
 	}
-	if err := server.Listen(ctx); err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", server.Addr), err)
-	}
-	// save the address on the config in case the port number was set to random
-	cfg.API.Address = server.AssignedAddr()
-	cfg.Persist()
-
-	// run the server in a separate goroutine
-	go func(apiAddress string) {
-		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", apiAddress))
-		if err := server.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
-			db.Close()
-			os.Exit(1)
-		}
-	}(cfg.API.AddressToURL())
+	server := httptest.NewServer(handler)
 
 	return &defraInstance{
 		db:     db,
@@ -101,11 +78,9 @@ func getTestConfig(t *testing.T) *config.Config {
 	return cfg
 }
 
-func startTestNode(t *testing.T) (*config.Config, *defraInstance, func()) {
-	cfg := getTestConfig(t)
-
+func startTestNode(t *testing.T) (*defraInstance, func()) {
 	ctx := context.Background()
-	di, err := start(ctx, cfg)
+	di, err := start(ctx)
 	require.NoError(t, err)
-	return cfg, di, func() { di.close(ctx) }
+	return di, func() { di.close(ctx) }
 }

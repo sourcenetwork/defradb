@@ -12,43 +12,39 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
-func execAddSchemaCmd(t *testing.T, cfg *config.Config, schema string) {
-	rootCmd := cli.NewDefraCommand(cfg)
-	rootCmd.SetArgs([]string{"client", "schema", "add", schema})
-	err := rootCmd.Execute()
-	require.NoError(t, err)
-}
-
 func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
-	cfg, _, close := startTestNode(t)
+	defra, close := startTestNode(t)
 	defer close()
 
-	execAddSchemaCmd(t, cfg, `
-        type User { 
-            name: String 
-            devices: [Device]
-        }
-        type Device {
-            model: String
-            owner: User
-        }`)
+	defra.db.AddSchema(context.Background(), `
+	type User { 
+		name: String 
+		devices: [Device]
+	}
+	type Device {
+		model: String
+		owner: User
+	}`)
 
-	genDocsCmd := MakeGenDocCommand(cfg)
+	genDocsCmd := MakeGenDocCommand(getTestConfig(t))
 	outputBuf := bytes.NewBufferString("")
 	genDocsCmd.SetOut(outputBuf)
 
-	genDocsCmd.SetArgs([]string{"--demand", `{"User": 3, "Device": 12}`})
+	genDocsCmd.SetArgs([]string{
+		"--demand", `{"User": 3, "Device": 12}`,
+		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
+	})
 
 	err := genDocsCmd.Execute()
 	require.NoError(t, err)
@@ -67,33 +63,38 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 }
 
 func TestGendocsCmd_IfInvalidDemandValue_ReturnError(t *testing.T) {
-	cfg, _, close := startTestNode(t)
+	defra, close := startTestNode(t)
 	defer close()
 
-	execAddSchemaCmd(t, cfg, `
+	defra.db.AddSchema(context.Background(), `
         type User { 
             name: String 
         }`)
 
-	genDocsCmd := MakeGenDocCommand(cfg)
-	genDocsCmd.SetArgs([]string{"--demand", `{"User": invalid}`})
+	genDocsCmd := MakeGenDocCommand(getTestConfig(t))
+	genDocsCmd.SetArgs([]string{
+		"--demand", `{"User": invalid}`,
+		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
+	})
 
 	err := genDocsCmd.Execute()
 	require.ErrorContains(t, err, errInvalidDemandValue)
 }
 
 func TestGendocsCmd_IfInvalidConfig_ReturnError(t *testing.T) {
-	cfg, _, close := startTestNode(t)
+	defra, close := startTestNode(t)
 	defer close()
 
-	execAddSchemaCmd(t, cfg, `
+	defra.db.AddSchema(context.Background(), `
         type User { 
             name: String 
         }`)
 
-	genDocsCmd := MakeGenDocCommand(cfg)
-
-	genDocsCmd.SetArgs([]string{"--demand", `{"Unknown": 3}`})
+	genDocsCmd := MakeGenDocCommand(getTestConfig(t))
+	genDocsCmd.SetArgs([]string{
+		"--demand", `{"Unknown": 3}`,
+		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
+	})
 
 	err := genDocsCmd.Execute()
 	require.Error(t, err, gen.NewErrInvalidConfiguration(""))
