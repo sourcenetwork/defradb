@@ -18,6 +18,9 @@ import (
 	"github.com/bits-and-blooms/bitset"
 	dsq "github.com/ipfs/go-datastore/query"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -57,6 +60,7 @@ type Fetcher interface {
 	Init(
 		ctx context.Context,
 		txn datastore.Txn,
+		acp immutable.Option[acp.ACPModule],
 		col client.Collection,
 		fields []client.FieldDefinition,
 		filter *mapper.Filter,
@@ -81,6 +85,7 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
+	acp         immutable.Option[acp.ACPModule]
 	col         client.Collection
 	reverse     bool
 	deletedDocs bool
@@ -90,9 +95,10 @@ type DocumentFetcher struct {
 	order        []dsq.Order
 	curSpanIndex int
 
-	filter       *mapper.Filter
-	ranFilter    bool // did we run the filter
-	passedFilter bool // did we pass the filter
+	filter                *mapper.Filter
+	passedPermissionCheck bool // have valid permission to access
+	ranFilter             bool // did we run the filter
+	passedFilter          bool // did we pass the filter
 
 	filterFields map[uint32]client.FieldDefinition
 	selectFields map[uint32]client.FieldDefinition
@@ -137,6 +143,7 @@ type DocumentFetcher struct {
 func (df *DocumentFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
+	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -146,7 +153,7 @@ func (df *DocumentFetcher) Init(
 ) error {
 	df.txn = txn
 
-	err := df.init(col, fields, filter, docmapper, reverse)
+	err := df.init(acp, col, fields, filter, docmapper, reverse)
 	if err != nil {
 		return err
 	}
@@ -156,19 +163,21 @@ func (df *DocumentFetcher) Init(
 			df.deletedDocFetcher = new(DocumentFetcher)
 			df.deletedDocFetcher.txn = txn
 		}
-		return df.deletedDocFetcher.init(col, fields, filter, docmapper, reverse)
+		return df.deletedDocFetcher.init(acp, col, fields, filter, docmapper, reverse)
 	}
 
 	return nil
 }
 
 func (df *DocumentFetcher) init(
+	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
 	reverse bool,
 ) error {
+	df.acp = acp
 	df.col = col
 	df.reverse = reverse
 	df.initialized = true
@@ -476,6 +485,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 			}
 		}
 		df.doc.id = []byte(kv.Key.DocID)
+		df.passedPermissionCheck = false
 		df.passedFilter = false
 		df.ranFilter = false
 
@@ -575,9 +585,6 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 	if df.kv == nil {
 		return nil, ExecInfo{}, client.NewErrUninitializeProperty("DocumentFetcher", "kv")
 	}
-	// save the DocID of the current kv pair so we can track when we cross the doc pair boundries
-	// keyparts := df.kv.Key.List()
-	// key := keyparts[len(keyparts)-2]
 
 	prevExecInfo := df.execInfo
 	defer func() { df.execInfo.Add(prevExecInfo) }()
@@ -586,8 +593,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 	// we'll know when were done when either
 	// A) Reach the end of the iterator
 	for {
-		err := df.processKV(df.kv)
-		if err != nil {
+		if err := df.processKV(df.kv); err != nil {
 			return nil, ExecInfo{}, err
 		}
 
@@ -608,16 +614,28 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 			}
 		}
 
-		// if we don't pass the filter (ran and pass)
-		// theres no point in collecting other select fields
-		// so we seek to the next doc
-		spansDone, docDone, err := df.nextKey(ctx, !df.passedFilter && df.ranFilter)
+		// Check if can access document with current permissions/signature.
+		if !df.passedPermissionCheck {
+			if err := df.runDocReadPermissionCheck(ctx); err != nil {
+				return nil, ExecInfo{}, err
+			}
+		}
+
+		// if we don't pass the filter (ran and pass) or if we don't have access to document then
+		// there is no point in collecting other select fields, so we seek to the next doc.
+		spansDone, docDone, err := df.nextKey(ctx, !df.passedPermissionCheck || !df.passedFilter && df.ranFilter)
+
 		if err != nil {
 			return nil, ExecInfo{}, err
 		}
 
-		if docDone {
-			df.execInfo.DocsFetched++
+		if !docDone {
+			continue
+		}
+
+		df.execInfo.DocsFetched++
+
+		if df.passedPermissionCheck {
 			if df.filter != nil {
 				// if we passed, return
 				if df.passedFilter {
@@ -638,21 +656,11 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 			} else {
 				return df.doc, df.execInfo, nil
 			}
-
-			if !spansDone {
-				continue
-			}
-
-			return nil, df.execInfo, nil
 		}
 
-		// // crossed document kv boundary?
-		// // if so, return document
-		// newkeyparts := df.kv.Key.List()
-		// newKey := newkeyparts[len(newkeyparts)-2]
-		// if newKey != key {
-		// 	return df.doc, nil
-		// }
+		if spansDone {
+			return nil, df.execInfo, nil
+		}
 	}
 }
 
