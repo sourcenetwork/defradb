@@ -997,6 +997,38 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 	return docID, primaryKey, nil
 }
 
+// tryRegisterDocWithACP handles the registeration of the document with acp module,
+// according to our registration logic based on weather (1) the request is permissioned,
+// (2) the collection is permissioned (has a policy), (3) acp module exists.
+//
+// Note: we only register the document with ACP if all (1) (2) and (3) are true.
+// In all other cases, nothing is registered with ACP.
+//
+// Moreover 8 states, upon document creation:
+// - (SignatureRequest, PermissionedCollection, ModuleExists)    => Register with ACP
+// - (SignatureRequest, PermissionedCollection, !ModuleExists)   => Normal/Public - Don't Register with ACP
+// - (SignatureRequest, !PermissionedCollection, ModuleExists)   => Normal/Public - Don't Register with ACP
+// - (SignatureRequest, !PermissionedCollection, !ModuleExists)  => Normal/Public - Don't Register with ACP
+// - (!SignatureRequest, PermissionedCollection, ModuleExists)   => Normal/Public - Don't Register with ACP
+// - (!SignatureRequest, !PermissionedCollection, ModuleExists)  => Normal/Public - Don't Register with ACP
+// - (!SignatureRequest, PermissionedCollection, !ModuleExists)  => Normal/Public - Don't Register with ACP
+// - (!SignatureRequest, !PermissionedCollection, !ModuleExists) => Normal/Public - Don't Register with ACP
+func (c *collection) tryRegisterDocWithACP(ctx context.Context, doc *client.Document) error {
+	if c.db.ACPModule().HasValue() {
+		if policyID, resourceName, hasPolicy := client.IsPermissioned(c); hasPolicy {
+			return c.db.ACPModule().Value().RegisterDocCreation(
+				ctx,
+				"cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", // TODO-ACP: Replace with signature identity
+				policyID,
+				resourceName,
+				doc.ID().String(),
+			)
+		}
+	}
+
+	return nil
+}
+
 func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
@@ -1035,36 +1067,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 
-	// If this collection has access control enabled, and the acp module is not missing,
-	// then register this document with acp module and give the creator access to it.
-	// Note: if the request was not permissioned then we want to keep this document as
-	// public (can be accessed by all), even if this collection has a policy and resource.
-	// TODO-ACP: Add another condition to check if is a permissioned request (after signatures)
-	// Below should all be under signature identity block because:
-	// Total 8 cases, and 3 outputs
-	//	if (permReq, permCol, acpMod)    => Create with req signature
-	//	if (permReq, permCol, !acpMod)   => Error, no acp available
-	//	if (permReq, !permCol, acpMod)   => Normal no acp
-	//	if (permReq, !permCol, !acpMod)  => Normal no acp, so ignore missing acp, no error
-	//	if (!permReq, permCol, acpMod)   => Public doc, no register with acp, no signature
-	//	if (!permReq, !permCol, acpMod)  => Public doc, no register with acp, no signature
-	//	if (!permReq, permCol, !acpMod)  => Public doc, no register with acp, no signature, we ignore missing acp
-	//	if (!permReq, !permCol, !acpMod) => Public doc, no register with acp, no signature, we ignore missing acp
-	if policyID, resourceName, hasPolicy := client.IsPermissioned(c); hasPolicy {
-		if !c.db.ACPModule().HasValue() {
-			return ErrCanNotCreateDocOnPermColNoACP
-		}
-
-		return c.db.ACPModule().Value().RegisterDocCreation(
-			ctx,
-			"cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", // TODO-ACP: Replace with signature identity
-			policyID,
-			resourceName,
-			doc.ID().String(),
-		)
-	}
-
-	return nil
+	return c.tryRegisterDocWithACP(ctx, doc)
 }
 
 // Update an existing document with the new values.

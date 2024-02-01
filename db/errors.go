@@ -111,7 +111,6 @@ var (
 	ErrExpectedJSONArray                = errors.New(errExpectedJSONArray)
 	ErrInvalidViewQuery                 = errors.New(errInvalidViewQuery)
 	ErrCanNotIndexNonUniqueFields       = errors.New(errCanNotIndexNonUniqueFields)
-	ErrCanNotCreateDocOnPermColNoACP    = errors.New(errCanNotCreateDocOnPermColNoACP)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
