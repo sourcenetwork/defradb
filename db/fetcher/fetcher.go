@@ -18,6 +18,7 @@ import (
 	"github.com/bits-and-blooms/bitset"
 	dsq "github.com/ipfs/go-datastore/query"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -25,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 	"github.com/sourcenetwork/defradb/request/graphql/parser"
+	"github.com/sourcenetwork/immutable"
 )
 
 // ExecInfo contains statistics about the fetcher execution.
@@ -57,6 +59,7 @@ type Fetcher interface {
 	Init(
 		ctx context.Context,
 		txn datastore.Txn,
+		acp immutable.Option[acp.ACPModule],
 		col client.Collection,
 		fields []client.FieldDescription,
 		filter *mapper.Filter,
@@ -81,6 +84,7 @@ var (
 
 // DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
+	acp         immutable.Option[acp.ACPModule]
 	col         client.Collection
 	reverse     bool
 	deletedDocs bool
@@ -90,9 +94,10 @@ type DocumentFetcher struct {
 	order        []dsq.Order
 	curSpanIndex int
 
-	filter       *mapper.Filter
-	ranFilter    bool // did we run the filter
-	passedFilter bool // did we pass the filter
+	filter           *mapper.Filter
+	passedPermission bool // have valid permission to access
+	ranFilter        bool // did we run the filter
+	passedFilter     bool // did we pass the filter
 
 	filterFields map[uint32]client.FieldDescription
 	selectFields map[uint32]client.FieldDescription
@@ -137,6 +142,7 @@ type DocumentFetcher struct {
 func (df *DocumentFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
+	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
@@ -146,7 +152,7 @@ func (df *DocumentFetcher) Init(
 ) error {
 	df.txn = txn
 
-	err := df.init(col, fields, filter, docmapper, reverse)
+	err := df.init(acp, col, fields, filter, docmapper, reverse)
 	if err != nil {
 		return err
 	}
@@ -156,19 +162,21 @@ func (df *DocumentFetcher) Init(
 			df.deletedDocFetcher = new(DocumentFetcher)
 			df.deletedDocFetcher.txn = txn
 		}
-		return df.deletedDocFetcher.init(col, fields, filter, docmapper, reverse)
+		return df.deletedDocFetcher.init(acp, col, fields, filter, docmapper, reverse)
 	}
 
 	return nil
 }
 
 func (df *DocumentFetcher) init(
+	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
 	reverse bool,
 ) error {
+	df.acp = acp
 	df.col = col
 	df.reverse = reverse
 	df.initialized = true
@@ -476,6 +484,7 @@ func (df *DocumentFetcher) processKV(kv *keyValue) error {
 			}
 		}
 		df.doc.id = []byte(kv.Key.DocID)
+		df.passedPermission = false
 		df.passedFilter = false
 		df.ranFilter = false
 

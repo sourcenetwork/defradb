@@ -248,7 +248,7 @@ func (c *collection) iterateAllDocs(
 	exec func(doc *client.Document) error,
 ) error {
 	df := c.newFetcher()
-	err := df.Init(ctx, txn, c, fields, nil, nil, false, false)
+	err := df.Init(ctx, txn, c.db.acp, c, fields, nil, nil, false, false)
 	if err != nil {
 		return errors.Join(err, df.Close())
 	}

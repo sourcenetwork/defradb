@@ -13,17 +13,21 @@ package fetcher
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/mapper"
+	"github.com/sourcenetwork/immutable"
 )
 
 // IndexFetcher is a fetcher that fetches documents by index.
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
 type IndexFetcher struct {
-	docFetcher    Fetcher
+	docFetcher Fetcher
+	// IndexFetcher is not responsible to free the acp resource (nor should it attempt to free the resource).
+	acp           immutable.Option[acp.ACPModule]
 	col           client.Collection
 	txn           datastore.Txn
 	indexFilter   *mapper.Filter
@@ -55,6 +59,7 @@ func NewIndexFetcher(
 func (f *IndexFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
+	acp immutable.Option[acp.ACPModule],
 	col client.Collection,
 	fields []client.FieldDescription,
 	filter *mapper.Filter,
@@ -62,6 +67,7 @@ func (f *IndexFetcher) Init(
 	reverse bool,
 	showDeleted bool,
 ) error {
+	f.acp = acp
 	f.col = col
 	f.docFilter = filter
 	f.doc = &encodedDocument{}
@@ -95,7 +101,17 @@ outer:
 	f.indexIter = iter
 
 	if f.docFetcher != nil && len(f.docFields) > 0 {
-		err = f.docFetcher.Init(ctx, f.txn, f.col, f.docFields, f.docFilter, f.mapping, false, false)
+		err = f.docFetcher.Init(
+			ctx,
+			f.txn,
+			f.acp,
+			f.col,
+			f.docFields,
+			f.docFilter,
+			f.mapping,
+			false,
+			false,
+		)
 	}
 
 	return err
