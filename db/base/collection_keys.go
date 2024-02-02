@@ -20,7 +20,7 @@ import (
 // MakeDataStoreKeyWithCollectionDescription returns the datastore key for the given collection description.
 func MakeDataStoreKeyWithCollectionDescription(col client.CollectionDescription) core.DataStoreKey {
 	return core.DataStoreKey{
-		CollectionID: col.IDString(),
+		CollectionRootID: col.RootID,
 	}
 }
 
@@ -30,8 +30,8 @@ func MakeDataStoreKeyWithCollectionAndDocID(
 	docID string,
 ) core.DataStoreKey {
 	return core.DataStoreKey{
-		CollectionID: col.IDString(),
-		DocID:        docID,
+		CollectionRootID: col.RootID,
+		DocID:            docID,
 	}
 }
 

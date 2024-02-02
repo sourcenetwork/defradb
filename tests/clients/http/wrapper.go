@@ -15,7 +15,9 @@ import (
 	"net/http/httptest"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -98,13 +100,14 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
-	return w.client.PatchSchema(ctx, patch, setAsDefaultVersion)
+	return w.client.PatchSchema(ctx, patch, migration, setAsDefaultVersion)
 }
 
-func (w *Wrapper) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	return w.client.SetDefaultSchemaVersion(ctx, schemaVersionID)
+func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	return w.client.SetActiveSchemaVersion(ctx, schemaVersionID)
 }
 
 func (w *Wrapper) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
@@ -131,8 +134,8 @@ func (w *Wrapper) GetCollectionsByVersionID(ctx context.Context, versionId strin
 	return w.client.GetCollectionsByVersionID(ctx, versionId)
 }
 
-func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	return w.client.GetAllCollections(ctx)
+func (w *Wrapper) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
+	return w.client.GetAllCollections(ctx, getInactive)
 }
 
 func (w *Wrapper) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {

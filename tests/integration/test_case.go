@@ -13,6 +13,7 @@ package tests
 import (
 	"testing"
 
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -90,7 +91,10 @@ type SchemaPatch struct {
 	// If SetAsDefaultVersion has a value, and that value is false then the schema version
 	// resulting from this patch will not be made default.
 	SetAsDefaultVersion immutable.Option[bool]
-	ExpectedError       string
+
+	Lens immutable.Option[model.Lens]
+
+	ExpectedError string
 }
 
 // GetSchema is an action that fetches schema using the provided options.
@@ -146,9 +150,9 @@ type GetCollections struct {
 	ExpectedError string
 }
 
-// SetDefaultSchemaVersion is an action that will set the default schema version to the
+// SetActiveSchemaVersion is an action that will set the active schema version to the
 // given value.
-type SetDefaultSchemaVersion struct {
+type SetActiveSchemaVersion struct {
 	// NodeID may hold the ID (index) of a node to set the default schema version on.
 	//
 	// If a value is not provided the default will be set on all nodes.

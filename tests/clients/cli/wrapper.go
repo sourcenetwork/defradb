@@ -17,10 +17,13 @@ import (
 	"fmt"
 	"io"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
@@ -186,20 +189,29 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 	setDefault bool,
 ) error {
 	args := []string{"client", "schema", "patch"}
 	if setDefault {
-		args = append(args, "--set-default")
+		args = append(args, "--set-active")
 	}
 	args = append(args, patch)
+
+	if migration.HasValue() {
+		lenses, err := json.Marshal(migration.Value())
+		if err != nil {
+			return err
+		}
+		args = append(args, string(lenses))
+	}
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	args := []string{"client", "schema", "set-default"}
+func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	args := []string{"client", "schema", "set-active"}
 	args = append(args, schemaVersionID)
 
 	_, err := w.cmd.execute(ctx, args)
@@ -223,7 +235,18 @@ func (w *Wrapper) AddView(ctx context.Context, query string, sdl string) ([]clie
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
-	return w.LensRegistry().SetMigration(ctx, config)
+	args := []string{"client", "schema", "migration", "set"}
+
+	lenses, err := json.Marshal(config.Lens)
+	if err != nil {
+		return err
+	}
+	args = append(args, config.SourceSchemaVersionID)
+	args = append(args, config.DestinationSchemaVersionID)
+	args = append(args, string(lenses))
+
+	_, err = w.cmd.execute(ctx, args)
+	return err
 }
 
 func (w *Wrapper) LensRegistry() client.LensRegistry {
@@ -283,8 +306,9 @@ func (w *Wrapper) GetCollectionsByVersionID(ctx context.Context, versionId strin
 	return cols, err
 }
 
-func (w *Wrapper) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
+func (w *Wrapper) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
+	args = append(args, "--get-inactive", strconv.FormatBool(getInactive))
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

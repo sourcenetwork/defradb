@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -43,20 +44,32 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetMigrations{
-				ExpectedResults: []client.LensConfig{
+			testUtils.GetCollections{
+				GetInactive: true,
+				ExpectedResults: []client.CollectionDescription{
 					{
-						SourceSchemaVersionID:      "does not exist",
-						DestinationSchemaVersionID: "also does not exist",
-						Lens: model.Lens{
-							Lenses: []model.LensModule{
-								{
-									Path: lenses.SetDefaultModulePath,
-									Arguments: map[string]any{
-										"dst":   "verified",
-										"value": false,
+						ID:              1,
+						SchemaVersionID: "does not exist",
+					},
+					{
+						ID:              2,
+						SchemaVersionID: "also does not exist",
+						Sources: []any{
+							&client.CollectionSource{
+								SourceCollectionID: 1,
+								Transform: immutable.Some(
+									model.Lens{
+										Lenses: []model.LensModule{
+											{
+												Path: lenses.SetDefaultModulePath,
+												Arguments: map[string]any{
+													"dst":   "verified",
+													"value": false,
+												},
+											},
+										},
 									},
-								},
+								),
 							},
 						},
 					},
@@ -106,35 +119,58 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetMigrations{
-				ExpectedResults: []client.LensConfig{
+			testUtils.GetCollections{
+				GetInactive: true,
+				ExpectedResults: []client.CollectionDescription{
 					{
-						SourceSchemaVersionID:      "does not exist",
-						DestinationSchemaVersionID: "also does not exist",
-						Lens: model.Lens{
-							Lenses: []model.LensModule{
-								{
-									Path: lenses.SetDefaultModulePath,
-									Arguments: map[string]any{
-										"dst":   "verified",
-										"value": false,
+						ID:              1,
+						SchemaVersionID: "does not exist",
+					},
+					{
+						ID:              2,
+						SchemaVersionID: "also does not exist",
+						Sources: []any{
+							&client.CollectionSource{
+								SourceCollectionID: 1,
+								Transform: immutable.Some(
+									model.Lens{
+										Lenses: []model.LensModule{
+											{
+												Path: lenses.SetDefaultModulePath,
+												Arguments: map[string]any{
+													"dst":   "verified",
+													"value": false,
+												},
+											},
+										},
 									},
-								},
+								),
 							},
 						},
 					},
 					{
-						SourceSchemaVersionID:      "bafkreibjb4h5nudsei7cq2kkontjinmjpbqls2tmowqp5nxougu4tuus4i",
-						DestinationSchemaVersionID: "bafkreih6o2jyurelxtpbg66gk23pio2tq6o3aed334z6w2u3qwve3at7ku",
-						Lens: model.Lens{
-							Lenses: []model.LensModule{
-								{
-									Path: lenses.SetDefaultModulePath,
-									Arguments: map[string]any{
-										"dst":   "verified",
-										"value": true,
+						ID:              3,
+						SchemaVersionID: "bafkreibjb4h5nudsei7cq2kkontjinmjpbqls2tmowqp5nxougu4tuus4i",
+					},
+					{
+						ID:              4,
+						SchemaVersionID: "bafkreih6o2jyurelxtpbg66gk23pio2tq6o3aed334z6w2u3qwve3at7ku",
+						Sources: []any{
+							&client.CollectionSource{
+								SourceCollectionID: 3,
+								Transform: immutable.Some(
+									model.Lens{
+										Lenses: []model.LensModule{
+											{
+												Path: lenses.SetDefaultModulePath,
+												Arguments: map[string]any{
+													"dst":   "verified",
+													"value": true,
+												},
+											},
+										},
 									},
-								},
+								),
 							},
 						},
 					},
@@ -185,20 +221,54 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetMigrations{
-				ExpectedResults: []client.LensConfig{
+			testUtils.GetCollections{
+				GetInactive: true,
+				ExpectedResults: []client.CollectionDescription{
 					{
-						SourceSchemaVersionID:      "a",
-						DestinationSchemaVersionID: "c",
-						Lens: model.Lens{
-							Lenses: []model.LensModule{
-								{
-									Path: lenses.SetDefaultModulePath,
-									Arguments: map[string]any{
-										"dst":   "age",
-										"value": 123,
+						ID:              1,
+						SchemaVersionID: "a",
+					},
+					{
+						ID:              2,
+						SchemaVersionID: "b",
+						Sources: []any{
+							&client.CollectionSource{
+								SourceCollectionID: 1,
+								Transform: immutable.Some(
+									model.Lens{
+										Lenses: []model.LensModule{
+											{
+												Path: lenses.SetDefaultModulePath,
+												Arguments: map[string]any{
+													"dst":   "verified",
+													"value": false,
+												},
+											},
+										},
 									},
-								},
+								),
+							},
+						},
+					},
+					{
+						ID:              3,
+						SchemaVersionID: "c",
+						Sources: []any{
+							&client.CollectionSource{
+								SourceCollectionID: 1,
+								Transform: immutable.Some(
+									model.Lens{
+										Lenses: []model.LensModule{
+											{
+												Path: lenses.SetDefaultModulePath,
+												Arguments: map[string]any{
+													"dst":   "age",
+													"value": float64(123),
+												},
+											},
+										},
+									},
+								),
 							},
 						},
 					},

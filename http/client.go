@@ -17,9 +17,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -134,16 +137,18 @@ func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.Collect
 type patchSchemaRequest struct {
 	Patch               string
 	SetAsDefaultVersion bool
+	Migration           immutable.Option[model.Lens]
 }
 
 func (c *Client) PatchSchema(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
 	methodURL := c.http.baseURL.JoinPath("schema")
 
-	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion})
+	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion, migration})
 	if err != nil {
 		return err
 	}
@@ -156,7 +161,7 @@ func (c *Client) PatchSchema(
 	return err
 }
 
-func (c *Client) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+func (c *Client) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	methodURL := c.http.baseURL.JoinPath("schema", "default")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
@@ -194,7 +199,20 @@ func (c *Client) AddView(ctx context.Context, query string, sdl string) ([]clien
 }
 
 func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
-	return c.LensRegistry().SetMigration(ctx, config)
+	methodURL := c.http.baseURL.JoinPath("lens")
+
+	body, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
 }
 
 func (c *Client) LensRegistry() client.LensRegistry {
@@ -254,8 +272,9 @@ func (c *Client) GetCollectionsByVersionID(ctx context.Context, versionId string
 	return collections, nil
 }
 
-func (c *Client) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
+func (c *Client) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
+	methodURL.RawQuery = url.Values{"get_inactive": []string{strconv.FormatBool(getInactive)}}.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {

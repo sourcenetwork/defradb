@@ -11,16 +11,21 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 )
 
 func MakeSchemaPatchCommand() *cobra.Command {
 	var patchFile string
-	var setDefault bool
+	var lensFile string
+	var setActive bool
 	var cmd = &cobra.Command{
 		Use:   "patch [schema]",
 		Short: "Patch an existing schema type",
@@ -29,7 +34,7 @@ func MakeSchemaPatchCommand() *cobra.Command {
 Uses JSON Patch to modify schema types.
 
 Example: patch from an argument string:
-  defradb client schema patch '[{ "op": "add", "path": "...", "value": {...} }]'
+  defradb client schema patch '[{ "op": "add", "path": "...", "value": {...} }]' '{"lenses": [...'
 
 Example: patch from file:
   defradb client schema patch -f patch.json
@@ -55,16 +60,42 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 					return err
 				}
 				patch = string(data)
-			case len(args) > 0:
+			case len(args) >= 1:
 				patch = args[0]
 			default:
 				return fmt.Errorf("patch cannot be empty")
 			}
 
-			return store.PatchSchema(cmd.Context(), patch, setDefault)
+			var lensCfgJson string
+			switch {
+			case lensFile != "":
+				data, err := os.ReadFile(lensFile)
+				if err != nil {
+					return err
+				}
+				patch = string(data)
+			case len(args) == 2:
+				lensCfgJson = args[1]
+			}
+
+			decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
+			decoder.DisallowUnknownFields()
+
+			var migration immutable.Option[model.Lens]
+			if lensCfgJson != "" {
+				var lensCfg model.Lens
+				if err := decoder.Decode(&lensCfg); err != nil {
+					return NewErrInvalidLensConfig(err)
+				}
+				migration = immutable.Some(lensCfg)
+			}
+
+			return store.PatchSchema(cmd.Context(), patch, migration, setActive)
 		},
 	}
-	cmd.Flags().BoolVar(&setDefault, "set-default", false, "Set default schema version")
-	cmd.Flags().StringVarP(&patchFile, "file", "f", "", "File to load a patch from")
+	cmd.Flags().BoolVar(&setActive, "set-active", false,
+		"Set the active schema version for all collections using the root schem")
+	cmd.Flags().StringVarP(&patchFile, "patch-file", "p", "", "File to load a patch from")
+	cmd.Flags().StringVarP(&lensFile, "lens-file", "t", "", "File to load a lens config from")
 	return cmd
 }

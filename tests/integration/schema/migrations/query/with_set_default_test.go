@@ -47,25 +47,19 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 					]
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
-			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiadnck34zzbwayjw3aeubw7eg4jmgtwoibu35tkxbjpar5rzxkdpu",
-					DestinationSchemaVersionID: schemaVersionID2,
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.SetDefaultModulePath,
-								Arguments: map[string]any{
-									"dst":   "verified",
-									"value": true,
-								},
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.SetDefaultModulePath,
+							Arguments: map[string]any{
+								"dst":   "verified",
+								"value": true,
 							},
 						},
 					},
-				},
+				}),
 			},
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: schemaVersionID2,
 			},
 			testUtils.Request{
@@ -111,7 +105,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 				`,
 				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: schemaVersionID2,
 			},
 			// Create John using the new schema version
@@ -139,7 +133,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 				},
 			},
 			// Set the schema version back to the original
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: schemaVersionID1,
 			},
 			testUtils.Request{
@@ -211,7 +205,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt
 				},
 			},
 			// Set the schema version back to the original
-			testUtils.SetDefaultSchemaVersion{
+			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: schemaVersionID1,
 			},
 			testUtils.Request{

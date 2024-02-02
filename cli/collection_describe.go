@@ -17,6 +17,7 @@ import (
 )
 
 func MakeCollectionDescribeCommand() *cobra.Command {
+	var getInactive bool
 	var cmd = &cobra.Command{
 		Use:   "describe",
 		Short: "View collection description.",
@@ -42,7 +43,7 @@ Example: view collection by version id
 				return writeJSON(cmd, col.Definition())
 			}
 			// if no collection specified list all collections
-			cols, err := store.GetAllCollections(cmd.Context())
+			cols, err := store.GetAllCollections(cmd.Context(), getInactive)
 			if err != nil {
 				return err
 			}
@@ -53,5 +54,6 @@ Example: view collection by version id
 			return writeJSON(cmd, colDesc)
 		},
 	}
+	cmd.Flags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")
 	return cmd
 }

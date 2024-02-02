@@ -14,24 +14,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeSchemaMigrationGetCommand() *cobra.Command {
+func MakeSchemaSetActiveCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "get",
-		Short: "Gets the schema migrations within DefraDB",
-		Long: `Gets the schema migrations within the local DefraDB node.
-
-Example:
-  defradb client schema migration get'
-
-Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
+		Use:   "set-active [versionID]",
+		Short: "Set the active collection version",
+		Long: `Activates all collection versions with the given schema version, and deactivates all
+those without it (if they share the same schema root).`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetStoreContext(cmd)
-
-			cfgs, err := store.LensRegistry().Config(cmd.Context())
-			if err != nil {
-				return err
-			}
-			return writeJSON(cmd, cfgs)
+			return store.SetActiveSchemaVersion(cmd.Context(), args[0])
 		},
 	}
 	return cmd
