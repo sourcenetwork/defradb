@@ -118,6 +118,34 @@ type GetSchema struct {
 	ExpectedError string
 }
 
+// GetCollections is an action that fetches collections using the provided options.
+//
+// ID, RootID and SchemaVersionID will only be asserted on if an expected value is provided.
+type GetCollections struct {
+	// NodeID may hold the ID (index) of a node to apply this patch to.
+	//
+	// If a value is not provided the patch will be applied to all nodes.
+	NodeID immutable.Option[int]
+
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
+
+	// The expected results.
+	//
+	// Each item will be compared individually, if ID, RootID or SchemaVersionID on the
+	// expected item are default they will not be compared with the actual.
+	//
+	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
+	// to allow their ommission in most cases).
+	ExpectedResults []client.CollectionDescription
+
+	// If true, inactive as well as active collections will be fetched.
+	GetInactive bool
+
+	// Any error expected from the action. Optional.
+	ExpectedError string
+}
+
 // SetDefaultSchemaVersion is an action that will set the default schema version to the
 // given value.
 type SetDefaultSchemaVersion struct {
