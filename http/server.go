@@ -22,20 +22,15 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-// tlsConfig contains the default tls config settings
-var tlsConfig = &tls.Config{
-	ServerName: "DefraDB",
-	MinVersion: tls.VersionTLS12,
-	// We only allow cipher suites that are marked secure
-	// by ssllabs
-	CipherSuites: []uint16{
-		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	},
+// We only allow cipher suites that are marked secure
+// by ssllabs
+var tlsCipherSuites = []uint16{
+	tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+	tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 }
 
 type ServerOptions struct {
@@ -145,7 +140,6 @@ func NewServer(handler http.Handler, opts ...ServerOpt) (*Server, error) {
 		ReadTimeout:  options.ReadTimeout,
 		WriteTimeout: options.WriteTimeout,
 		IdleTimeout:  options.IdleTimeout,
-		TLSConfig:    tlsConfig,
 		Handler:      mux,
 	}
 
@@ -159,19 +153,6 @@ func NewServer(handler http.Handler, opts ...ServerOpt) (*Server, error) {
 	}, nil
 }
 
-// ListenAndServe listens for and serves incoming connections.
-func (s *Server) ListenAndServe() error {
-	listener, err := net.Listen("tcp", s.options.Address)
-	if err != nil {
-		return err
-	}
-	s.address.Store(listener.Addr().String())
-	if s.options.TLSCertPath == "" && s.options.TLSKeyPath == "" {
-		return s.server.Serve(listener)
-	}
-	return s.server.ServeTLS(listener, s.options.TLSCertPath, s.options.TLSKeyPath)
-}
-
 // AssignedAddr returns the address that was assigned to the server on calls to listen.
 func (s *Server) AssignedAddr() string {
 	return s.address.Load().(string)
@@ -180,4 +161,42 @@ func (s *Server) AssignedAddr() string {
 // Shutdown gracefully shuts down the server without interrupting any active connections.
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
+}
+
+// ListenAndServe listens for and serves incoming connections.
+func (s *Server) ListenAndServe() error {
+	if s.options.TLSCertPath == "" && s.options.TLSKeyPath == "" {
+		return s.listenAndServe()
+	}
+	return s.listenAndServeTLS()
+}
+
+// listenAndServe listens for and serves http connections.
+func (s *Server) listenAndServe() error {
+	listener, err := net.Listen("tcp", s.options.Address)
+	if err != nil {
+		return err
+	}
+	s.address.Store(listener.Addr().String())
+	return s.server.Serve(listener)
+}
+
+// listenAndServeTLS listens for and serves https connections.
+func (s *Server) listenAndServeTLS() error {
+	cert, err := tls.LoadX509KeyPair(s.options.TLSCertPath, s.options.TLSKeyPath)
+	if err != nil {
+		return err
+	}
+	config := &tls.Config{
+		ServerName:   "DefraDB",
+		MinVersion:   tls.VersionTLS12,
+		CipherSuites: tlsCipherSuites,
+		Certificates: []tls.Certificate{cert},
+	}
+	listener, err := net.Listen("tcp", s.options.Address)
+	if err != nil {
+		return err
+	}
+	s.address.Store(listener.Addr().String())
+	return s.server.Serve(tls.NewListener(listener, config))
 }

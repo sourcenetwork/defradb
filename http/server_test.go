@@ -73,6 +73,23 @@ func TestServerListenAndServeWithInvalidAddress(t *testing.T) {
 	require.ErrorContains(t, err, "address invalid")
 }
 
+func TestServerListenAndServeWithTLSAndInvalidAddress(t *testing.T) {
+	certPath, keyPath := writeTestCerts(t)
+	srv, err := NewServer(testHandler, WithAddress("invalid"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
+	require.NoError(t, err)
+
+	err = srv.ListenAndServe()
+	require.ErrorContains(t, err, "address invalid")
+}
+
+func TestServerListenAndServeWithTLSAndInvalidCerts(t *testing.T) {
+	srv, err := NewServer(testHandler, WithAddress("invalid"), WithTLSCertPath("invalid.crt"), WithTLSKeyPath("invalid.key"))
+	require.NoError(t, err)
+
+	err = srv.ListenAndServe()
+	require.ErrorContains(t, err, "no such file or directory")
+}
+
 func TestServerListenAndServeWithAddress(t *testing.T) {
 	srv, err := NewServer(testHandler, WithAddress("127.0.0.1:30001"))
 	require.NoError(t, err)
@@ -96,16 +113,7 @@ func TestServerListenAndServeWithAddress(t *testing.T) {
 }
 
 func TestServerListenAndServeWithTLS(t *testing.T) {
-	tempDir := t.TempDir()
-	certPath := filepath.Join(tempDir, "cert.pub")
-	keyPath := filepath.Join(tempDir, "cert.key")
-
-	err := os.WriteFile(certPath, []byte(tlsCert), 0644)
-	require.NoError(t, err)
-
-	err = os.WriteFile(keyPath, []byte(tlsKey), 0644)
-	require.NoError(t, err)
-
+	certPath, keyPath := writeTestCerts(t)
 	srv, err := NewServer(testHandler, WithAddress("127.0.0.1:8443"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
 	require.NoError(t, err)
 
@@ -170,4 +178,18 @@ func TestServerWithIdleTimeout(t *testing.T) {
 	srv, err := NewServer(testHandler, WithIdleTimeout(time.Second))
 	require.NoError(t, err)
 	assert.Equal(t, time.Second, srv.server.IdleTimeout)
+}
+
+func writeTestCerts(t *testing.T) (string, string) {
+	tempDir := t.TempDir()
+	certPath := filepath.Join(tempDir, "cert.pub")
+	keyPath := filepath.Join(tempDir, "cert.key")
+
+	err := os.WriteFile(certPath, []byte(tlsCert), 0644)
+	require.NoError(t, err)
+
+	err = os.WriteFile(keyPath, []byte(tlsKey), 0644)
+	require.NoError(t, err)
+
+	return certPath, keyPath
 }
