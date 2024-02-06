@@ -299,7 +299,7 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (clie
 	relationFieldDescription, valid := c.Schema().GetField(
 		strings.TrimSuffix(fieldDesc.Name, request.RelatedObjectID),
 	)
-	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation()
+	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation
 }
 
 // patchPrimaryDoc patches the (primary) document linked to from the document of the given DocID via the

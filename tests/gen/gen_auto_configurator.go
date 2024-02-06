@@ -339,7 +339,7 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 ) error {
 	typeDef := g.types[typeName]
 	for _, field := range typeDef.Schema.Fields {
-		if field.IsObject() && !field.IsPrimaryRelation() {
+		if field.IsObject() && !field.IsPrimaryRelation {
 			primaryDocDemand := g.docsDemand[typeName]
 			newSecDemand := typeDemand{min: primaryDocDemand.min, max: primaryDocDemand.max}
 			minPerDoc, maxPerDoc := 1, 1
@@ -419,7 +419,7 @@ func getRelationGraph(types map[string]client.CollectionDefinition) map[string][
 	for typeName, typeDef := range types {
 		for _, field := range typeDef.Schema.Fields {
 			if field.IsObject() {
-				if field.IsPrimaryRelation() {
+				if field.IsPrimaryRelation {
 					primaryGraph[typeName] = appendUnique(primaryGraph[typeName], field.Schema)
 				} else {
 					primaryGraph[field.Schema] = appendUnique(primaryGraph[field.Schema], typeName)

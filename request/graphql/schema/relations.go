@@ -17,6 +17,20 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+// relationType describes the type of relation between two types.
+type relationType uint8
+
+const (
+	relation_Type_ONE     relationType = 1   // 0b0000 0001
+	relation_Type_MANY    relationType = 2   // 0b0000 0010
+	relation_Type_Primary relationType = 128 // 0b1000 0000 Primary reference entity on relation
+)
+
+// IsSet returns true if the target relation type is set.
+func (m relationType) isSet(target relationType) bool {
+	return m&target > 0
+}
+
 // RelationManager keeps track of all the relations that exist
 // between schema types
 type RelationManager struct {
@@ -45,29 +59,18 @@ func (rm *RelationManager) RegisterSingle(
 	name string,
 	schemaType string,
 	schemaField string,
-	relType client.RelationType,
+	relType relationType,
 ) (bool, error) {
 	if name == "" {
 		return false, client.NewErrUninitializeProperty("RegisterSingle", "name")
 	}
-
-	// make sure the relation type is ONLY One or Many, not both
-	if relType.IsSet(client.Relation_Type_ONE) == relType.IsSet(client.Relation_Type_MANY) {
-		return false, ErrRelationMutlipleTypes
-	}
-
-	// make a copy of rel type, one goes to the relation.relType, and the other goes into the []types.
-	// We need to clear the Primary bit on the relation.relType so we make a copy
-	rt := relType
-	rt &^= client.Relation_Type_Primary // clear the primary bit
 
 	rel, ok := rm.relations[name]
 	if !ok {
 		// If a relation doesn't exist then make one.
 		rm.relations[name] = &Relation{
 			name:        name,
-			relType:     rt,
-			types:       []client.RelationType{relType},
+			types:       []relationType{relType},
 			schemaTypes: []string{schemaType},
 			fields:      []string{schemaField},
 		}
@@ -76,12 +79,6 @@ func (rm *RelationManager) RegisterSingle(
 
 	if !rel.finalized {
 		// If a  relation exists, and is not finalized, then finalizing it.
-		if rel.relType.IsSet(client.Relation_Type_ONE) {
-			if relType.IsSet(client.Relation_Type_MANY) {
-				rel.relType = client.Relation_Type_MANY
-			}
-		}
-
 		rel.types = append(rel.types, relType)
 		rel.schemaTypes = append(rel.schemaTypes, schemaType)
 		rel.fields = append(rel.fields, schemaField)
@@ -97,8 +94,7 @@ func (rm *RelationManager) RegisterSingle(
 
 type Relation struct {
 	name        string
-	relType     client.RelationType
-	types       []client.RelationType
+	types       []relationType
 	schemaTypes []string
 	fields      []string
 
@@ -113,27 +109,27 @@ func (r *Relation) finalize() error {
 		return ErrRelationMissingTypes
 	}
 
-	if IsOne(r.types[0]) && IsMany(r.types[1]) {
-		r.types[0] |= client.Relation_Type_Primary  // set primary on one
-		r.types[1] &^= client.Relation_Type_Primary // clear primary on many
-	} else if IsOne(r.types[1]) && IsMany(r.types[0]) {
-		r.types[1] |= client.Relation_Type_Primary  // set primary on one
-		r.types[0] &^= client.Relation_Type_Primary // clear primary on many
-	} else if IsOne(r.types[1]) && IsOne(r.types[0]) {
+	if isOne(r.types[0]) && isMany(r.types[1]) {
+		r.types[0] |= relation_Type_Primary  // set primary on one
+		r.types[1] &^= relation_Type_Primary // clear primary on many
+	} else if isOne(r.types[1]) && isMany(r.types[0]) {
+		r.types[1] |= relation_Type_Primary  // set primary on one
+		r.types[0] &^= relation_Type_Primary // clear primary on many
+	} else if isOne(r.types[1]) && isOne(r.types[0]) {
 		t1, t2 := r.types[0], r.types[1]
 		aBit := t1 & t2
 		xBit := t1 ^ t2
 
 		// both types have primary set
-		if aBit.IsSet(client.Relation_Type_Primary) {
+		if aBit.isSet(relation_Type_Primary) {
 			return ErrMultipleRelationPrimaries
-		} else if !xBit.IsSet(client.Relation_Type_Primary) {
+		} else if !xBit.isSet(relation_Type_Primary) {
 			// neither type has primary set, auto add to
 			// lexicographically first one by schema type name
 			if strings.Compare(r.schemaTypes[0], r.schemaTypes[1]) < 1 {
-				r.types[1] = r.types[1] | client.Relation_Type_Primary
+				r.types[1] = r.types[1] | relation_Type_Primary
 			} else {
-				r.types[0] = r.types[0] | client.Relation_Type_Primary
+				r.types[0] = r.types[0] | relation_Type_Primary
 			}
 		}
 	}
@@ -142,18 +138,13 @@ func (r *Relation) finalize() error {
 	return nil
 }
 
-// Kind returns what type of relation it is
-func (r Relation) Kind() client.RelationType {
-	return r.relType
-}
-
-func (r Relation) GetField(schemaType string, field string) (string, client.RelationType, bool) {
+func (r Relation) getField(schemaType string, field string) (string, relationType, bool) {
 	for i, f := range r.fields {
 		if f == field && r.schemaTypes[i] == schemaType {
 			return f, r.types[i], true
 		}
 	}
-	return "", client.RelationType(0), false
+	return "", relationType(0), false
 }
 
 func genRelationName(t1, t2 string) (string, error) {
@@ -169,12 +160,12 @@ func genRelationName(t1, t2 string) (string, error) {
 	return fmt.Sprintf("%s_%s", t2, t1), nil
 }
 
-// IsOne returns true if the Relation_ONE bit is set
-func IsOne(fieldmeta client.RelationType) bool {
-	return fieldmeta.IsSet(client.Relation_Type_ONE)
+// isOne returns true if the Relation_ONE bit is set
+func isOne(fieldmeta relationType) bool {
+	return fieldmeta.isSet(relation_Type_ONE)
 }
 
-// IsOne returns true if the Relation_ONE bit is set
-func IsMany(fieldmeta client.RelationType) bool {
-	return fieldmeta.IsSet(client.Relation_Type_MANY)
+// isMany returns true if the Relation_ONE bit is set
+func isMany(fieldmeta relationType) bool {
+	return fieldmeta.isSet(relation_Type_MANY)
 }

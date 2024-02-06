@@ -323,20 +323,20 @@ func fieldsFromAST(field *ast.FieldDefinition,
 
 	schema := ""
 	relationName := ""
-	relationType := client.RelationType(0)
+	relationType := relationType(0)
 
 	fieldDescriptions := []client.FieldDescription{}
 
 	if kind == client.FieldKind_FOREIGN_OBJECT || kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 		if kind == client.FieldKind_FOREIGN_OBJECT {
 			schema = field.Type.(*ast.Named).Name.Value
-			relationType = client.Relation_Type_ONE
+			relationType = relation_Type_ONE
 			if _, exists := findDirective(field, "primary"); exists {
-				relationType |= client.Relation_Type_Primary
+				relationType |= relation_Type_Primary
 			}
 		} else if kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 			schema = field.Type.(*ast.List).Type.(*ast.Named).Name.Value
-			relationType = client.Relation_Type_MANY
+			relationType = relation_Type_MANY
 		}
 
 		relationName, err = getRelationshipName(field, hostObjectName, schema)
@@ -378,7 +378,6 @@ func fieldsFromAST(field *ast.FieldDefinition,
 		Typ:          cType,
 		Schema:       schema,
 		RelationName: relationName,
-		RelationType: relationType,
 	}
 
 	fieldDescriptions = append(fieldDescriptions, fieldDescription)
@@ -527,7 +526,7 @@ func finalizeRelations(relationManager *RelationManager, definitions []client.Co
 
 	for _, definition := range definitions {
 		for i, field := range definition.Schema.Fields {
-			if field.RelationType == 0 || (field.RelationName != "" && field.Kind == client.FieldKind_DocID) {
+			if field.RelationName == "" || field.Kind == client.FieldKind_DocID {
 				continue
 			}
 
@@ -536,7 +535,7 @@ func finalizeRelations(relationManager *RelationManager, definitions []client.Co
 				return err
 			}
 
-			_, fieldRelationType, ok := rel.GetField(field.Schema, field.Name)
+			_, fieldRelationType, ok := rel.getField(field.Schema, field.Name)
 			if !ok {
 				return NewErrRelationMissingField(field.Schema, field.Name)
 			}
@@ -552,7 +551,7 @@ func finalizeRelations(relationManager *RelationManager, definitions []client.Co
 				return client.NewErrRelationOneSided(field.Name, field.Schema)
 			}
 
-			field.RelationType = rel.Kind() | fieldRelationType
+			field.IsPrimaryRelation = fieldRelationType.isSet(relation_Type_Primary)
 			definition.Schema.Fields[i] = field
 		}
 	}

@@ -169,7 +169,7 @@ func (db *db) updateSchema(
 	}
 
 	for _, field := range schema.Fields {
-		if field.RelationType.IsSet(client.Relation_Type_ONE) {
+		if field.Kind == client.FieldKind_FOREIGN_OBJECT {
 			idFieldName := field.Name + "_id"
 			if _, ok := schema.GetField(idFieldName); !ok {
 				schema.Fields = append(schema.Fields, client.FieldDescription{
@@ -315,35 +315,11 @@ func validateUpdateSchemaFields(
 				return false, NewErrSchemaNotFound(proposedField.Name, proposedField.Schema)
 			}
 
-			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
-				if !proposedField.RelationType.IsSet(client.Relation_Type_ONE) {
-					return false, NewErrRelationalFieldInvalidRelationType(
-						proposedField.Name,
-						fmt.Sprintf(
-							"%v or %v",
-							client.Relation_Type_ONE,
-							client.Relation_Type_Primary,
-						),
-						proposedField.RelationType,
-					)
-				}
-			}
-
-			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
-				if !proposedField.RelationType.IsSet(client.Relation_Type_MANY) {
-					return false, NewErrRelationalFieldInvalidRelationType(
-						proposedField.Name,
-						client.Relation_Type_MANY,
-						proposedField.RelationType,
-					)
-				}
-			}
-
 			if proposedField.RelationName == "" {
 				return false, NewErrRelationalFieldMissingRelationName(proposedField.Name)
 			}
 
-			if proposedField.RelationType.IsSet(client.Relation_Type_Primary) {
+			if proposedField.IsPrimaryRelation {
 				if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 					return false, NewErrPrimarySideOnMany(proposedField.Name)
 				}
@@ -379,13 +355,11 @@ func validateUpdateSchemaFields(
 				return false, client.NewErrRelationOneSided(proposedField.Name, proposedField.Schema)
 			}
 
-			if !(proposedField.RelationType.IsSet(client.Relation_Type_Primary) ||
-				relatedField.RelationType.IsSet(client.Relation_Type_Primary)) {
+			if !(proposedField.IsPrimaryRelation || relatedField.IsPrimaryRelation) {
 				return false, NewErrPrimarySideNotDefined(proposedField.RelationName)
 			}
 
-			if proposedField.RelationType.IsSet(client.Relation_Type_Primary) &&
-				relatedField.RelationType.IsSet(client.Relation_Type_Primary) {
+			if proposedField.IsPrimaryRelation && relatedField.IsPrimaryRelation {
 				return false, NewErrBothSidesPrimary(proposedField.RelationName)
 			}
 		}

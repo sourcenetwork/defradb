@@ -252,13 +252,6 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 // RelationType describes the type of relation between two types.
 type RelationType uint8
 
-// Note: These values are serialized and persisted in the database, avoid modifying existing values
-const (
-	Relation_Type_ONE     RelationType = 1   // 0b0000 0001
-	Relation_Type_MANY    RelationType = 2   // 0b0000 0010
-	Relation_Type_Primary RelationType = 128 // 0b1000 0000 Primary reference entity on relation
-)
-
 // FieldID is a unique identifier for a field in a schema.
 type FieldID uint32
 
@@ -299,9 +292,7 @@ type FieldDescription struct {
 	// It is currently immutable.
 	Typ CType
 
-	// RelationType contains the relationship type if this field is a relation field. Otherwise this
-	// will be empty.
-	RelationType RelationType
+	IsPrimaryRelation bool
 }
 
 // IsObject returns true if this field is an object type.
@@ -313,11 +304,6 @@ func (f FieldDescription) IsObject() bool {
 // IsObjectArray returns true if this field is an object array type.
 func (f FieldDescription) IsObjectArray() bool {
 	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
-}
-
-// IsPrimaryRelation returns true if this field is a relation, and is the primary side.
-func (f FieldDescription) IsPrimaryRelation() bool {
-	return f.RelationType > 0 && f.RelationType&Relation_Type_Primary != 0
 }
 
 // IsRelation returns true if this field is a relation.
