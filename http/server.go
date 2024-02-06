@@ -165,10 +165,6 @@ func (s *Server) ListenAndServe() error {
 	if err != nil {
 		return err
 	}
-	// ignore close errors as they cannot be handled
-	// from the caller of this method
-	defer listener.Close() //nolint:errcheck
-
 	s.address.Store(listener.Addr().String())
 	if s.options.TLSCertPath == "" && s.options.TLSKeyPath == "" {
 		return s.server.Serve(listener)
