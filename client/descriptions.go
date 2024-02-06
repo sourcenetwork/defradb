@@ -256,7 +256,6 @@ const (
 	Relation_Type_MANY        RelationType = 2   // 0b0000 0010
 	Relation_Type_ONEONE      RelationType = 4   // 0b0000 0100
 	Relation_Type_ONEMANY     RelationType = 8   // 0b0000 1000
-	Relation_Type_MANYMANY    RelationType = 16  // 0b0001 0000
 	Relation_Type_INTERNAL_ID RelationType = 64  // 0b0100 0000
 	Relation_Type_Primary     RelationType = 128 // 0b1000 0000 Primary reference entity on relation
 )

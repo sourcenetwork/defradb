@@ -87,8 +87,6 @@ func (rm *RelationManager) RegisterSingle(
 		} else { // many
 			if relType.IsSet(client.Relation_Type_ONE) {
 				rel.relType = client.Relation_Type_ONEMANY
-			} else if relType.IsSet(client.Relation_Type_MANY) {
-				rel.relType = client.Relation_Type_MANYMANY
 			}
 		}
 
@@ -123,15 +121,14 @@ func (r *Relation) finalize() error {
 		return ErrRelationMissingTypes
 	}
 
-	// make sure its one of One-to-One, One-to-Many, Many-to-Many
+	// make sure its one of One-to-One, One-to-Many
 	if !r.relType.IsSet(client.Relation_Type_ONEONE) &&
-		!r.relType.IsSet(client.Relation_Type_ONEMANY) &&
-		!r.relType.IsSet(client.Relation_Type_MANYMANY) {
+		!r.relType.IsSet(client.Relation_Type_ONEMANY) {
 		return ErrRelationInvalidType
 	}
 
-	// make sure we have a primary set if its a one-to-one or many-to-many
-	if IsOneToOne(r.relType) || IsManyToMany(r.relType) {
+	// make sure we have a primary set if its a one-to-one
+	if IsOneToOne(r.relType) {
 		t1, t2 := r.types[0], r.types[1]
 		aBit := t1 & t2
 		xBit := t1 ^ t2
@@ -202,9 +199,4 @@ func IsOneToOne(fieldmeta client.RelationType) bool {
 // IsOneToMany returns true if the Relation_ONEMANY is set
 func IsOneToMany(fieldmeta client.RelationType) bool {
 	return fieldmeta.IsSet(client.Relation_Type_ONEMANY)
-}
-
-// IsManyToMany returns true if the Relation_MANYMANY bit is set
-func IsManyToMany(fieldmeta client.RelationType) bool {
-	return fieldmeta.IsSet(client.Relation_Type_MANYMANY)
 }
