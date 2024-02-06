@@ -89,7 +89,7 @@ func (p *Planner) makeTypeIndexJoin(
 	meta := typeFieldDesc.RelationType
 	if schema.IsOne(meta) { // One-to-One, or One side of One-to-Many
 		joinPlan, err = p.makeTypeJoinOne(parent, source, subType)
-	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
+	} else if schema.IsMany(meta) { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
 		return nil, ErrUnknownRelationType

@@ -1215,7 +1215,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 							Name:         "device",
 							Kind:         client.FieldKind_FOREIGN_OBJECT,
 							Schema:       "Device",
-							RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
+							RelationType: client.Relation_Type_ONE,
 						},
 					},
 				},
@@ -1237,7 +1237,6 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 							Kind:   client.FieldKind_FOREIGN_OBJECT,
 							Schema: "User",
 							RelationType: client.Relation_Type_ONE |
-								client.Relation_Type_ONEONE |
 								client.Relation_Type_Primary,
 						},
 					},

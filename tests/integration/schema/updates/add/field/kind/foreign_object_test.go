@@ -65,30 +65,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_InvalidSchemaJson(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObject_MissingRelationType(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), missing relation type",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 16, "Schema": "Users"} }
-					]
-				`,
-				ExpectedError: "invalid RelationType. Field: foo, Expected: 1 and 4 or 8, with optionally 128, Actual: 0",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object (16), unknown schema",
@@ -312,70 +288,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_BothSidesPrimary(t *testing.T) {
 					]
 				`,
 				ExpectedError: "both sides of a relation cannot be primary. RelationName: foo",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_RelatedKindMismatch(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), related kind mismatch",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 17, "RelationType": 5, "Schema": "Users", "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "invalid Kind of the related field. RelationName: foo, Expected: 16, Actual: 17",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_RelatedRelationTypeMismatch(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), related relation type mismatch",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "RelationType": 9, "Schema": "Users", "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "invalid RelationType of the related field. RelationName: foo, Expected: 4, Actual: 9",
 			},
 		},
 	}

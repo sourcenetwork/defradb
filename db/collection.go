@@ -316,16 +316,12 @@ func validateUpdateSchemaFields(
 			}
 
 			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
-				if !proposedField.RelationType.IsSet(client.Relation_Type_ONE) ||
-					!(proposedField.RelationType.IsSet(client.Relation_Type_ONEONE) ||
-						proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY)) {
+				if !proposedField.RelationType.IsSet(client.Relation_Type_ONE) {
 					return false, NewErrRelationalFieldInvalidRelationType(
 						proposedField.Name,
 						fmt.Sprintf(
-							"%v and %v or %v, with optionally %v",
+							"%v or %v",
 							client.Relation_Type_ONE,
-							client.Relation_Type_ONEONE,
-							client.Relation_Type_ONEMANY,
 							client.Relation_Type_Primary,
 						),
 						proposedField.RelationType,
@@ -394,15 +390,6 @@ func validateUpdateSchemaFields(
 				return false, NewErrBothSidesPrimary(proposedField.RelationName)
 			}
 
-			if proposedField.RelationType.IsSet(client.Relation_Type_ONEONE) &&
-				relatedField.Kind != client.FieldKind_FOREIGN_OBJECT {
-				return false, NewErrRelatedFieldKindMismatch(
-					proposedField.RelationName,
-					client.FieldKind_FOREIGN_OBJECT,
-					relatedField.Kind,
-				)
-			}
-
 			if proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY) &&
 				proposedField.Kind == client.FieldKind_FOREIGN_OBJECT &&
 				relatedField.Kind != client.FieldKind_FOREIGN_OBJECT_ARRAY {
@@ -410,15 +397,6 @@ func validateUpdateSchemaFields(
 					proposedField.RelationName,
 					client.FieldKind_FOREIGN_OBJECT_ARRAY,
 					relatedField.Kind,
-				)
-			}
-
-			if proposedField.RelationType.IsSet(client.Relation_Type_ONEONE) &&
-				!relatedField.RelationType.IsSet(client.Relation_Type_ONEONE) {
-				return false, NewErrRelatedFieldRelationTypeMismatch(
-					proposedField.RelationName,
-					client.Relation_Type_ONEONE,
-					relatedField.RelationType,
 				)
 			}
 		}
@@ -1102,7 +1080,23 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	if !ok {
 		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	}
-	if !objFieldDescription.RelationType.IsSet(client.Relation_Type_ONEONE) {
+	if objFieldDescription.Kind != client.FieldKind_FOREIGN_OBJECT {
+		return nil
+	}
+
+	otherCol, err := c.db.getCollectionByName(ctx, txn, objFieldDescription.Schema)
+	if err != nil {
+		return err
+	}
+	otherSchema := otherCol.Schema()
+	otherObjFieldDescription, _ := otherCol.Description().GetFieldByRelation(
+		fieldDescription.RelationName,
+		c.Name().Value(),
+		objFieldDescription.Name,
+		&otherSchema,
+	)
+	if otherObjFieldDescription.Kind != client.FieldKind_FOREIGN_OBJECT {
+		// If the other field is not an object field then this is not a one to one relation and we can continue
 		return nil
 	}
 

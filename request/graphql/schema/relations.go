@@ -79,9 +79,7 @@ func (rm *RelationManager) RegisterSingle(
 
 		// handle relationType, needs to be either One-to-One, One-to-Many, Many-to-Many.
 		if rel.relType.IsSet(client.Relation_Type_ONE) {
-			if relType.IsSet(client.Relation_Type_ONE) { // One-to-One
-				rel.relType = client.Relation_Type_ONEONE
-			} else if relType.IsSet(client.Relation_Type_MANY) {
+			if relType.IsSet(client.Relation_Type_MANY) {
 				rel.relType = client.Relation_Type_ONEMANY
 			}
 		} else { // many
@@ -121,14 +119,13 @@ func (r *Relation) finalize() error {
 		return ErrRelationMissingTypes
 	}
 
-	// make sure its one of One-to-One, One-to-Many
-	if !r.relType.IsSet(client.Relation_Type_ONEONE) &&
-		!r.relType.IsSet(client.Relation_Type_ONEMANY) {
-		return ErrRelationInvalidType
-	}
-
-	// make sure we have a primary set if its a one-to-one
-	if IsOneToOne(r.relType) {
+	if IsOne(r.types[0]) && IsMany(r.types[1]) {
+		r.types[0] |= client.Relation_Type_Primary  // set primary on one
+		r.types[1] &^= client.Relation_Type_Primary // clear primary on many
+	} else if IsOne(r.types[1]) && IsMany(r.types[0]) {
+		r.types[1] |= client.Relation_Type_Primary  // set primary on one
+		r.types[0] &^= client.Relation_Type_Primary // clear primary on many
+	} else if IsOne(r.types[1]) && IsOne(r.types[0]) {
 		t1, t2 := r.types[0], r.types[1]
 		aBit := t1 & t2
 		xBit := t1 ^ t2
@@ -144,14 +141,6 @@ func (r *Relation) finalize() error {
 			} else {
 				r.types[0] = r.types[0] | client.Relation_Type_Primary
 			}
-		}
-	} else if IsOneToMany(r.relType) { // if its a one-to-many, set the one side as primary
-		if IsOne(r.types[0]) {
-			r.types[0] |= client.Relation_Type_Primary  // set primary on one
-			r.types[1] &^= client.Relation_Type_Primary // clear primary on many
-		} else {
-			r.types[1] |= client.Relation_Type_Primary  // set primary on one
-			r.types[0] &^= client.Relation_Type_Primary // clear primary on many
 		}
 	}
 
@@ -191,12 +180,7 @@ func IsOne(fieldmeta client.RelationType) bool {
 	return fieldmeta.IsSet(client.Relation_Type_ONE)
 }
 
-// IsOneToOne returns true if the Relation_ONEONE bit is set
-func IsOneToOne(fieldmeta client.RelationType) bool {
-	return fieldmeta.IsSet(client.Relation_Type_ONEONE)
-}
-
-// IsOneToMany returns true if the Relation_ONEMANY is set
-func IsOneToMany(fieldmeta client.RelationType) bool {
-	return fieldmeta.IsSet(client.Relation_Type_ONEMANY)
+// IsOne returns true if the Relation_ONE bit is set
+func IsMany(fieldmeta client.RelationType) bool {
+	return fieldmeta.IsSet(client.Relation_Type_MANY)
 }
