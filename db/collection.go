@@ -175,7 +175,6 @@ func (db *db) updateSchema(
 				schema.Fields = append(schema.Fields, client.FieldDescription{
 					Name:         idFieldName,
 					Kind:         client.FieldKind_DocID,
-					RelationType: client.Relation_Type_INTERNAL_ID,
 					RelationName: field.RelationName,
 				})
 			}
@@ -363,14 +362,6 @@ func validateUpdateSchemaFields(
 						return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocID, idField.Kind)
 					}
 
-					if idField.RelationType != client.Relation_Type_INTERNAL_ID {
-						return false, NewErrRelationalFieldInvalidRelationType(
-							idField.Name,
-							client.Relation_Type_INTERNAL_ID,
-							idField.RelationType,
-						)
-					}
-
 					if idField.RelationName == "" {
 						return false, NewErrRelationalFieldMissingRelationName(idField.Name)
 					}
@@ -381,7 +372,7 @@ func validateUpdateSchemaFields(
 			var relatedField client.FieldDescription
 			for _, field := range relatedDesc.Fields {
 				if field.RelationName == proposedField.RelationName &&
-					!field.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) &&
+					field.Kind != client.FieldKind_DocID &&
 					!(relatedDesc.Name == proposedDesc.Name && field.Name == proposedField.Name) {
 					relatedFieldFound = true
 					relatedField = field
@@ -1099,7 +1090,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	fieldDescription client.FieldDescription,
 	value any,
 ) error {
-	if !fieldDescription.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) {
+	if fieldDescription.Kind != client.FieldKind_DocID {
 		return nil
 	}
 

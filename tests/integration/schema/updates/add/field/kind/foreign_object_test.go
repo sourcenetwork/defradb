@@ -195,60 +195,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingRelationType(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), id field missing relation type",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 1} }
-					]
-				`,
-				ExpectedError: "invalid RelationType. Field: foo_id, Expected: 64, Actual: 0",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidRelationType(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), id field invalid RelationType",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 1, "RelationType": 4} }
-					]
-				`,
-				ExpectedError: "invalid RelationType. Field: foo_id, Expected: 64, Actual: 4",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingRelationName(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object (16), id field missing relation name",

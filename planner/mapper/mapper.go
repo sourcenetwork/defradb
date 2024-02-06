@@ -1018,7 +1018,7 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		if !fieldDesc.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) {
+		if fieldDesc.Kind != client.FieldKind_DocID {
 			continue
 		}
 

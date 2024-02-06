@@ -334,14 +334,6 @@ func fieldsFromAST(field *ast.FieldDefinition,
 			if _, exists := findDirective(field, "primary"); exists {
 				relationType |= client.Relation_Type_Primary
 			}
-
-			// An _id field is added for every 1-N relationship from this object.
-			fieldDescriptions = append(fieldDescriptions, client.FieldDescription{
-				Name:         fmt.Sprintf("%s_id", field.Name.Value),
-				Kind:         client.FieldKind_DocID,
-				Typ:          defaultCRDTForFieldKind[client.FieldKind_DocID],
-				RelationType: client.Relation_Type_INTERNAL_ID,
-			})
 		} else if kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 			schema = field.Type.(*ast.List).Type.(*ast.Named).Name.Value
 			relationType = client.Relation_Type_MANY
@@ -350,6 +342,16 @@ func fieldsFromAST(field *ast.FieldDefinition,
 		relationName, err = getRelationshipName(field, hostObjectName, schema)
 		if err != nil {
 			return nil, err
+		}
+
+		if kind == client.FieldKind_FOREIGN_OBJECT {
+			// An _id field is added for every 1-N relationship from this object.
+			fieldDescriptions = append(fieldDescriptions, client.FieldDescription{
+				Name:         fmt.Sprintf("%s_id", field.Name.Value),
+				Kind:         client.FieldKind_DocID,
+				Typ:          defaultCRDTForFieldKind[client.FieldKind_DocID],
+				RelationName: relationName,
+			})
 		}
 
 		// Register the relationship so that the relationship manager can evaluate
@@ -525,7 +527,7 @@ func finalizeRelations(relationManager *RelationManager, definitions []client.Co
 
 	for _, definition := range definitions {
 		for i, field := range definition.Schema.Fields {
-			if field.RelationType == 0 || field.RelationType&client.Relation_Type_INTERNAL_ID != 0 {
+			if field.RelationType == 0 || (field.RelationName != "" && field.Kind == client.FieldKind_DocID) {
 				continue
 			}
 

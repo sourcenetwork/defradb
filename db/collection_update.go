@@ -292,7 +292,7 @@ func (c *collection) updateWithFilter(
 
 // isSecondaryIDField returns true if the given field description represents a secondary relation field ID.
 func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (client.FieldDescription, bool) {
-	if fieldDesc.RelationType != client.Relation_Type_INTERNAL_ID {
+	if fieldDesc.RelationName == "" || fieldDesc.Kind != client.FieldKind_DocID {
 		return client.FieldDescription{}, false
 	}
 
