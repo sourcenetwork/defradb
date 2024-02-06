@@ -178,7 +178,7 @@ func TestSchemaUpdatesRemoveFieldSchemaErrors(t *testing.T) {
 					}
 					type Book {
 						name: String
-						author: [Author]
+						author: Author
 					}
 				`,
 			},
@@ -207,7 +207,7 @@ func TestSchemaUpdatesRemoveFieldRelationNameErrors(t *testing.T) {
 					}
 					type Book {
 						name: String
-						author: [Author]
+						author: Author
 					}
 				`,
 			},
@@ -236,7 +236,7 @@ func TestSchemaUpdatesRemoveFieldRelationTypeErrors(t *testing.T) {
 					}
 					type Book {
 						name: String
-						author: [Author]
+						author: Author
 					}
 				`,
 			},
