@@ -15,7 +15,6 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
-	"sync/atomic"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -111,11 +110,6 @@ func WithTLSKeyPath(path string) ServerOpt {
 
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
-	// address is the assigned listen address for the server.
-	//
-	// The value is atomic to avoid a race condition between
-	// the listener starting and calling AssignedAddr.
-	address atomic.Value
 	options *ServerOptions
 	server  *http.Server
 }
@@ -143,19 +137,10 @@ func NewServer(handler http.Handler, opts ...ServerOpt) (*Server, error) {
 		Handler:      mux,
 	}
 
-	var address atomic.Value
-	address.Store("")
-
 	return &Server{
-		address: address,
 		options: options,
 		server:  server,
 	}, nil
-}
-
-// AssignedAddr returns the address that was assigned to the server on calls to listen.
-func (s *Server) AssignedAddr() string {
-	return s.address.Load().(string)
 }
 
 // Shutdown gracefully shuts down the server without interrupting any active connections.
@@ -177,7 +162,6 @@ func (s *Server) listenAndServe() error {
 	if err != nil {
 		return err
 	}
-	s.address.Store(listener.Addr().String())
 	return s.server.Serve(listener)
 }
 
@@ -197,6 +181,5 @@ func (s *Server) listenAndServeTLS() error {
 	if err != nil {
 		return err
 	}
-	s.address.Store(listener.Addr().String())
 	return s.server.Serve(tls.NewListener(listener, config))
 }

@@ -102,7 +102,7 @@ func TestServerListenAndServeWithAddress(t *testing.T) {
 	// wait for server to start
 	<-time.After(time.Second * 1)
 
-	res, err := http.Get("http://" + srv.AssignedAddr())
+	res, err := http.Get("http://127.0.0.1:30001")
 	require.NoError(t, err)
 
 	defer res.Body.Close()
@@ -125,7 +125,7 @@ func TestServerListenAndServeWithTLS(t *testing.T) {
 	// wait for server to start
 	<-time.After(time.Second * 1)
 
-	res, err := insecureClient.Get("https://" + srv.AssignedAddr())
+	res, err := insecureClient.Get("https://127.0.0.1:8443")
 	require.NoError(t, err)
 
 	defer res.Body.Close()
@@ -136,7 +136,7 @@ func TestServerListenAndServeWithTLS(t *testing.T) {
 }
 
 func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
-	srv, err := NewServer(testHandler, WithAllowedOrigins("localhost"))
+	srv, err := NewServer(testHandler, WithAllowedOrigins("localhost"), WithAddress("127.0.0.1:30001"))
 	require.NoError(t, err)
 
 	go func() {
@@ -147,7 +147,7 @@ func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
 	// wait for server to start
 	<-time.After(time.Second * 1)
 
-	req, err := http.NewRequest(http.MethodOptions, "http://"+srv.AssignedAddr(), nil)
+	req, err := http.NewRequest(http.MethodOptions, "http://127.0.0.1:30001", nil)
 	require.NoError(t, err)
 	req.Header.Add("origin", "localhost")
 
