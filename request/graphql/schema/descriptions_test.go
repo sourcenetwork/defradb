@@ -548,7 +548,7 @@ func TestSingleSimpleType(t *testing.T) {
 								Kind:         client.FieldKind_FOREIGN_OBJECT,
 								Typ:          client.NONE_CRDT,
 								Schema:       "Author",
-								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEMANY | client.Relation_Type_Primary,
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_Primary,
 							},
 							{
 								Name: "author_id",
@@ -597,7 +597,7 @@ func TestSingleSimpleType(t *testing.T) {
 								Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
 								Typ:          client.NONE_CRDT,
 								Schema:       "Book",
-								RelationType: client.Relation_Type_MANY | client.Relation_Type_ONEMANY,
+								RelationType: client.Relation_Type_MANY,
 							},
 						},
 					},

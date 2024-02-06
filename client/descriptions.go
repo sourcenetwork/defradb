@@ -256,7 +256,6 @@ type RelationType uint8
 const (
 	Relation_Type_ONE     RelationType = 1   // 0b0000 0001
 	Relation_Type_MANY    RelationType = 2   // 0b0000 0010
-	Relation_Type_ONEMANY RelationType = 8   // 0b0000 1000
 	Relation_Type_Primary RelationType = 128 // 0b1000 0000 Primary reference entity on relation
 )
 

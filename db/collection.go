@@ -330,11 +330,10 @@ func validateUpdateSchemaFields(
 			}
 
 			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
-				if !proposedField.RelationType.IsSet(client.Relation_Type_MANY) ||
-					!proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY) {
+				if !proposedField.RelationType.IsSet(client.Relation_Type_MANY) {
 					return false, NewErrRelationalFieldInvalidRelationType(
 						proposedField.Name,
-						client.Relation_Type_MANY|client.Relation_Type_ONEMANY,
+						client.Relation_Type_MANY,
 						proposedField.RelationType,
 					)
 				}
@@ -388,16 +387,6 @@ func validateUpdateSchemaFields(
 			if proposedField.RelationType.IsSet(client.Relation_Type_Primary) &&
 				relatedField.RelationType.IsSet(client.Relation_Type_Primary) {
 				return false, NewErrBothSidesPrimary(proposedField.RelationName)
-			}
-
-			if proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY) &&
-				proposedField.Kind == client.FieldKind_FOREIGN_OBJECT &&
-				relatedField.Kind != client.FieldKind_FOREIGN_OBJECT_ARRAY {
-				return false, NewErrRelatedFieldKindMismatch(
-					proposedField.RelationName,
-					client.FieldKind_FOREIGN_OBJECT_ARRAY,
-					relatedField.Kind,
-				)
 			}
 		}
 

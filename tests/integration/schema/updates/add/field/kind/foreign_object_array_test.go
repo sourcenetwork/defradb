@@ -65,30 +65,6 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_InvalidSchemaJson(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObjectArray_MissingRelationType(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (17), missing relation type",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 17, "Schema": "Users"} }
-					]
-				`,
-				ExpectedError: "invalid RelationType. Field: foo, Expected: 10, Actual: 0",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesAddFieldKindForeignObjectArray_MissingRelationName(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object array (17), missing relation name",

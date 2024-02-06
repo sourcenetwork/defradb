@@ -76,15 +76,9 @@ func (rm *RelationManager) RegisterSingle(
 
 	if !rel.finalized {
 		// If a  relation exists, and is not finalized, then finalizing it.
-
-		// handle relationType, needs to be either One-to-One, One-to-Many, Many-to-Many.
 		if rel.relType.IsSet(client.Relation_Type_ONE) {
 			if relType.IsSet(client.Relation_Type_MANY) {
-				rel.relType = client.Relation_Type_ONEMANY
-			}
-		} else { // many
-			if relType.IsSet(client.Relation_Type_ONE) {
-				rel.relType = client.Relation_Type_ONEMANY
+				rel.relType = client.Relation_Type_MANY
 			}
 		}
 

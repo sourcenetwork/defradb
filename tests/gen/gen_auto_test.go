@@ -1340,7 +1340,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 						Name:         "devices",
 						Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
 						Schema:       "Device",
-						RelationType: client.Relation_Type_MANY | client.Relation_Type_ONEMANY,
+						RelationType: client.Relation_Type_MANY,
 						RelationName: "Device_owner",
 					},
 				},
