@@ -116,6 +116,10 @@ func WithTLSKeyPath(path string) ServerOpt {
 
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
+	// address is the assigned listen address for the server.
+	//
+	// The value is atomic to avoid a race condition between
+	// the listener starting and calling AssignedAddr.
 	address atomic.Value
 	options *ServerOptions
 	server  *http.Server
