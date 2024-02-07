@@ -100,6 +100,16 @@ Example: The following command generates 100 User documents and 500 Device docum
 			return nil
 		},
 	}
+
+	cmd.PersistentFlags().String(
+		"url", cfg.API.Address,
+		"URL of HTTP endpoint to listen on or connect to",
+	)
+	err := cfg.BindFlag("api.address", cmd.PersistentFlags().Lookup("url"))
+	if err != nil {
+		panic(err)
+	}
+
 	cmd.Flags().StringVarP(&demandJSON, "demand", "d", "", "Documents' demand in JSON format")
 
 	return cmd

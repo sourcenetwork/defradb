@@ -73,7 +73,7 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 		Description: "Simple query with cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
+							cid: "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -102,7 +102,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 		Description: "Simple query with (first) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
+							cid: "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -143,7 +143,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 		Description: "Simple query with (last) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeigotwnjltl5y5ou5yqxujdayoqet4axspaclbvzustjhinzqx77ym"
+							cid: "bafybeicehye3yrct3yaumy64sucndh2ab7i6ymj72klfm2gphigjx6yw5u"
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -184,7 +184,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 		Description: "Simple query with (middle) cid and docID",
 		Request: `query {
 					Users (
-							cid: "bafybeib4cdjv4dxmayzgf242hx2r3v5tq5ib5z6oyyrzk3dtddt3wsyyhi",
+							cid: "bafybeie23a5xsx4qyoffa3riij3kei5to54bb6gq7m4lftfjujaohkabwu",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -225,7 +225,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 		Description: "Simple query with (first) cid and docID and yielded schema version",
 		Request: `query {
 					Users (					
-							cid: "bafybeigwxfw2nfcwelqxzgjsmm5okrt7dctzvzml4tm7i7q7fsdit3ihz4",
+							cid: "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
 							docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -259,7 +259,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"schemaVersionId": "bafkreidvd63bawkelxe3wtf7a65klkq4x3dvenqafyasndyal6fvffkeam",
+						"schemaVersionId": "bafkreihuvcb7e7vy6ua3yrwbwnul3djqrtbhyuv3c4dqe4y3i2ssudzveu",
 					},
 				},
 			},
@@ -301,7 +301,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeiepi2gpoyshdj2ekdsydhw5itxqmipsh7f6pd6iyoiu6sqsdlj2se",
+						cid: "bafybeia4u3g4r3uolc7slho4thvhqfma5fkfrtho3lgapopatud2fl63lu",
 						docID: "bae-a688789e-d8a6-57a7-be09-22e005ab79e0"
 					) {
 						name
@@ -353,7 +353,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafybeihjdntxsc75hpnyakog4nnaxakljer7zf7pjybpgntcsg45qmisau",
+						cid: "bafybeicldbqzhmhu2hgowp6jazm4xpwh7tdurvc2xynuc54k4j7edn3vem",
 						docID: "bae-fa6a97e9-e0e9-5826-8a8c-57775d35e07c"
 					) {
 						name

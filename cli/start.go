@@ -73,7 +73,7 @@ func (di *defraInstance) close(ctx context.Context) {
 	} else {
 		di.db.Close()
 	}
-	if err := di.server.Close(); err != nil {
+	if err := di.server.Shutdown(ctx); err != nil {
 		log.FeedbackInfo(
 			ctx,
 			"The server could not be closed successfully",
@@ -157,40 +157,31 @@ func start(ctx context.Context, cfg *viper.Viper) (*defraInstance, error) {
 		}
 	}
 
-	sOpt := []func(*httpapi.Server){
+	serverOpts := []httpapi.ServerOpt{
 		httpapi.WithAddress(cfg.API.Address),
-		httpapi.WithRootDir(cfg.Rootdir),
 		httpapi.WithAllowedOrigins(cfg.API.AllowedOrigins...),
+		httpapi.WithTLSCertPath(cfg.API.PubKeyPath),
+		httpapi.WithTLSKeyPath(cfg.API.PrivKeyPath),
 	}
 
-	if cfg.API.TLS {
-		sOpt = append(
-			sOpt,
-			httpapi.WithTLS(),
-			httpapi.WithSelfSignedCert(cfg.API.PubKeyPath, cfg.API.PrivKeyPath),
-			httpapi.WithCAEmail(cfg.API.Email),
-		)
-	}
-
-	var server *httpapi.Server
+	var handler *httpapi.Handler
 	if node != nil {
-		server, err = httpapi.NewServer(node, sOpt...)
+		handler, err = httpapi.NewHandler(node)
 	} else {
-		server, err = httpapi.NewServer(db, sOpt...)
+		handler, err = httpapi.NewHandler(db)
 	}
+	if err != nil {
+		return nil, errors.Wrap("failed to create http handler", err)
+	}
+	server, err := httpapi.NewServer(handler, serverOpts...)
 	if err != nil {
 		return nil, errors.Wrap("failed to create http server", err)
 	}
-	if err := server.Listen(ctx); err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", server.Addr), err)
-	}
-	// save the address on the config in case the port number was set to random
-	cfg.API.Address = server.AssignedAddr()
 
 	// run the server in a separate goroutine
 	go func() {
 		log.FeedbackInfo(ctx, fmt.Sprintf("Providing HTTP API at %s.", cfg.API.AddressToURL()))
-		if err := server.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if node != nil {
 				node.Close()
