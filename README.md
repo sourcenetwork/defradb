@@ -395,16 +395,6 @@ defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-pr
 
 ```
 
-DefraDB also comes with automatic HTTPS for deployments on the public web. To enable HTTPS,
- deploy DefraDB to a server with both port 80 and port 443 open. With your domain's DNS A record
- pointed to the IP of your server, you can run the database using the following command:
-```shell
-sudo defradb start --tls --url=your-domain.net --email=email@example.com
-```
-Note: `sudo` is needed above for the redirection server (to bind port 80).
-
-A valid email address is necessary for the creation of the certificate, and is important to get notifications from the Certificate Authority - in case the certificate is about to expire, etc.
-
 ## Supporting CORS
 
 When accessing DefraDB through a frontend interface, you may be confronted with a CORS error. That is because, by default, DefraDB will not have any allowed origins set. To specify which origins should be allowed to access your DefraDB endpoint, you can specify them when starting the database:
