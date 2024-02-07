@@ -103,7 +103,7 @@ type Store interface {
 	// present in the database.
 	//
 	// If true is provided, the new schema versions will be made active and previous versions deactivated, otherwise
-	// [SetDefaultSchemaVersion] should be called to do so.
+	// [SetActiveSchemaVersion] should be called to do so.
 	//
 	// It will also update the GQL types used by the query system. It will error and not apply any of the
 	// requested, valid updates should the net result of the patch result in an invalid state.  The

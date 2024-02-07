@@ -432,19 +432,19 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchSchema.Responses.Set("200", successResponse)
 	patchSchema.Responses.Set("400", errorResponse)
 
-	setDefaultSchemaVersionRequest := openapi3.NewRequestBody().
+	setActiveSchemaVersionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
 
-	setDefaultSchemaVersion := openapi3.NewOperation()
-	setDefaultSchemaVersion.OperationID = "set_default_schema_version"
-	setDefaultSchemaVersion.Description = "Set the default schema version for a collection"
-	setDefaultSchemaVersion.Tags = []string{"schema"}
-	setDefaultSchemaVersion.RequestBody = &openapi3.RequestBodyRef{
-		Value: setDefaultSchemaVersionRequest,
+	setActiveSchemaVersion := openapi3.NewOperation()
+	setActiveSchemaVersion.OperationID = "set_default_schema_version"
+	setActiveSchemaVersion.Description = "Set the default schema version for a collection"
+	setActiveSchemaVersion.Tags = []string{"schema"}
+	setActiveSchemaVersion.RequestBody = &openapi3.RequestBodyRef{
+		Value: setActiveSchemaVersionRequest,
 	}
-	setDefaultSchemaVersion.Responses = openapi3.NewResponses()
-	setDefaultSchemaVersion.Responses.Set("200", successResponse)
-	setDefaultSchemaVersion.Responses.Set("400", errorResponse)
+	setActiveSchemaVersion.Responses = openapi3.NewResponses()
+	setActiveSchemaVersion.Responses.Set("200", successResponse)
+	setActiveSchemaVersion.Responses.Set("400", errorResponse)
 
 	backupRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -631,6 +631,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
 	router.AddRoute("/schema", http.MethodPatch, patchSchema, h.PatchSchema)
 	router.AddRoute("/schema", http.MethodGet, schemaDescribe, h.GetSchema)
-	router.AddRoute("/schema/default", http.MethodPost, setDefaultSchemaVersion, h.SetActiveSchemaVersion)
+	router.AddRoute("/schema/default", http.MethodPost, setActiveSchemaVersion, h.SetActiveSchemaVersion)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
 }
