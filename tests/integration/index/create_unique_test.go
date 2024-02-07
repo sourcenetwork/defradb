@@ -226,8 +226,25 @@ func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 			},
 			testUtils.CreateIndex{
 				CollectionID: 0,
+				IndexName:    "age_unique_index",
 				FieldName:    "age",
 				Unique:       true,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:   "age_unique_index",
+						ID:     1,
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:      "age",
+								Direction: client.Ascending,
+							},
+						},
+					},
+				},
 			},
 		},
 	}

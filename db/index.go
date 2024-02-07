@@ -122,19 +122,12 @@ type collectionBaseIndex struct {
 func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([][]byte, error) {
 	result := make([][]byte, 0, len(i.fieldsDescs))
 	for iter := range i.fieldsDescs {
-		fieldVal, err := doc.GetValue(i.fieldsDescs[iter].Name)
-		isNil := false
+		fieldVal, err := doc.TryGetValue(i.fieldsDescs[iter].Name)
 		if err != nil {
-			if errors.Is(err, client.ErrFieldNotExist) {
-				isNil = true
-			} else {
-				return nil, err
-			}
+			return nil, err
 		}
-		if fieldVal != nil && fieldVal.Value() == nil {
-			isNil = true
-		}
-		if isNil {
+		if fieldVal == nil || fieldVal.Value() == nil {
+			// this will be gone very soon with new encoding of secondary indexes
 			valBytes, err := client.NewFieldValue(client.LWW_REGISTER, nil).Bytes()
 			if err != nil {
 				return nil, err
@@ -295,7 +288,7 @@ type collectionUniqueIndex struct {
 
 var _ CollectionIndex = (*collectionUniqueIndex)(nil)
 
-func (i *collectionUniqueIndex) saveRecord(
+func (i *collectionUniqueIndex) save(
 	ctx context.Context,
 	txn datastore.Txn,
 	key *core.IndexDataStoreKey,
@@ -317,7 +310,7 @@ func (i *collectionUniqueIndex) Save(
 	if err != nil {
 		return err
 	}
-	return i.saveRecord(ctx, txn, &key, val)
+	return i.save(ctx, txn, &key, val)
 }
 
 func (i *collectionUniqueIndex) newUniqueIndexError(
@@ -325,15 +318,13 @@ func (i *collectionUniqueIndex) newUniqueIndexError(
 ) error {
 	kvs := make([]errors.KV, 0, len(i.fieldsDescs))
 	for iter := range i.fieldsDescs {
-		fieldVal, err := doc.GetValue(i.fieldsDescs[iter].Name)
+		fieldVal, err := doc.TryGetValue(i.fieldsDescs[iter].Name)
 		var val any
 		if err != nil {
-			// If the error is ErrFieldNotExist, we leave `val` as is (e.g. nil)
-			// otherwise we return the error
-			if !errors.Is(err, client.ErrFieldNotExist) {
-				return err
-			}
-		} else {
+			return err
+		}
+		// If fieldVal is nil, we leave `val` as is (e.g. nil)
+		if fieldVal != nil {
 			val = fieldVal.Value()
 		}
 		kvs = append(kvs, errors.NewKV(i.fieldsDescs[iter].Name, val))
@@ -393,7 +384,7 @@ func (i *collectionUniqueIndex) Update(
 	if err != nil {
 		return err
 	}
-	return i.saveRecord(ctx, txn, &newKey, newVal)
+	return i.save(ctx, txn, &newKey, newVal)
 }
 
 func (i *collectionUniqueIndex) deleteDocIndex(

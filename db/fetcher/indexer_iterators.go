@@ -492,7 +492,7 @@ func (f *IndexFetcher) determineFieldFilterConditions() []fieldFilterCond {
 
 // isUniqueFetchByFullKey checks if the only index key can be fetched by the full index key.
 //
-// This method ignores the first condition because it's expected to be called only
+// This method ignores the first condition (unless it's nil) because it's expected to be called only
 // when the first field is used as a prefix in the index key. So we only check if the
 // rest of the conditions are _eq.
 func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fieldFilterCond) bool {
@@ -500,7 +500,7 @@ func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fie
 	// if all fields of the index are specified in the filter
 	res := indexDesc.Unique && len(conditions) == len(indexDesc.Fields)
 
-	// if the first is _eq, val should be not nil
+	// first condition is not required to be _eq, but if is, val must be not nil
 	res = res && (conditions[0].op != opEq || conditions[0].val != nil)
 
 	// for the rest it must be _eq and val must be not nil
@@ -523,6 +523,8 @@ func getFieldsBytes(conditions []fieldFilterCond) ([][]byte, error) {
 	return result, nil
 }
 
+// newPrefixIndexIterator creates a new eqPrefixIndexIterator for fetching indexed data.
+// It can modify the input matchers slice.
 func (f *IndexFetcher) newPrefixIndexIterator(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
@@ -530,6 +532,8 @@ func (f *IndexFetcher) newPrefixIndexIterator(
 	keyFieldValues := make([][]byte, 0, len(fieldConditions))
 	for i := range fieldConditions {
 		if fieldConditions[i].op != opEq {
+			// prefix can be created only for subsequent _eq conditions
+			// if we encounter any other condition, we built the longest prefix we could
 			break
 		}
 
@@ -558,6 +562,8 @@ func (f *IndexFetcher) newPrefixIndexIterator(
 	}, nil
 }
 
+// newInIndexIterator creates a new inIndexIterator for fetching indexed data.
+// It can modify the input matchers slice.
 func (f *IndexFetcher) newInIndexIterator(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
