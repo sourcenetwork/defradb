@@ -12,6 +12,7 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"regexp"
 	"strings"
 	"sync"
@@ -466,6 +467,16 @@ func (doc *Document) GetValue(field string) (*FieldValue, error) {
 	} else {
 		return val.Value().(*Document).GetValue(subPaths)
 	}
+}
+
+// TryGetValue returns the value for a given field, if it exists.
+// If the field does not exist then return nil and an error.
+func (doc *Document) TryGetValue(field string) (*FieldValue, error) {
+	val, err := doc.GetValue(field)
+	if err != nil && errors.Is(err, ErrFieldNotExist) {
+		return nil, nil
+	}
+	return val, err
 }
 
 // GetValueWithField gets the Value type from a given Field type
