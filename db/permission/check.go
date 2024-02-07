@@ -19,9 +19,10 @@ package permission
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/immutable"
 )
 
 // CheckDocPermissionedAccessOnCollection handles the check, which tells us if access to the target

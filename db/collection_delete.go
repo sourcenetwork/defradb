@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -239,6 +240,19 @@ func (c *collection) applyDelete(
 	}
 	if isDeleted {
 		return NewErrDocumentDeleted(primaryKey.DocID)
+	}
+
+	// Stop deletion of document if the correct permissions aren't there.
+	canDelete, err := c.checkDocPermissionedAccess(
+		ctx,
+		acp.WritePermission,
+		primaryKey.DocID,
+	)
+	if err != nil {
+		return err
+	}
+	if !canDelete {
+		return client.ErrInvalidACPPermToDeleteDocument
 	}
 
 	dsKey := primaryKey.ToDataStoreKey()

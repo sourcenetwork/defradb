@@ -24,6 +24,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
@@ -1074,7 +1075,20 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
 func (c *collection) update(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
-	_, err := c.save(ctx, txn, doc, false)
+	// Stop the update if the correct permissions aren't there.
+	canUpdate, err := c.checkDocPermissionedAccess(
+		ctx,
+		acp.WritePermission,
+		doc.ID().String(),
+	)
+	if err != nil {
+		return err
+	}
+	if !canUpdate {
+		return client.ErrInvalidACPPermToDeleteDocument
+	}
+
+	_, err = c.save(ctx, txn, doc, false)
 	if err != nil {
 		return err
 	}
@@ -1113,6 +1127,9 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
+// save saves the document state. save MUST not be called outside the `c.create`
+// and `c.update` methods as we wrap the acp logic within those methods. Calling
+// save elsewhere could cause the omission of acp checks.
 func (c *collection) save(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -1400,6 +1417,10 @@ func (c *collection) exists(
 	return true, false, nil
 }
 
+// saveCompositeToMerkleCRDT saves the composite to the merkle CRDT.
+// saveCompositeToMerkleCRDT MUST not be called outside the `c.save`
+// and `c.applyDelete` methods as we wrap the acp logic around those methods.
+// Calling it elsewhere could cause the omission of acp checks.
 func (c *collection) saveCompositeToMerkleCRDT(
 	ctx context.Context,
 	txn datastore.Txn,
