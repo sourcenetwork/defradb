@@ -139,7 +139,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 					continue
 				}
 				if field.IsRelation() {
-					if field.IsPrimaryRelation() {
+					if field.IsPrimaryRelation {
 						if strings.HasSuffix(field.Name, request.RelatedObjectID) {
 							newDoc[field.Name] = g.getNextPrimaryDocID(typeName, &field)
 						} else {

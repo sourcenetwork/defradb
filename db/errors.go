@@ -253,15 +253,6 @@ func NewErrRelationalFieldMissingSchema(name string, kind client.FieldKind) erro
 	)
 }
 
-func NewErrRelationalFieldInvalidRelationType(name string, expected any, actual client.RelationType) error {
-	return errors.New(
-		errRelationalFieldInvalidRelationType,
-		errors.NewKV("Field", name),
-		errors.NewKV("Expected", expected),
-		errors.NewKV("Actual", actual),
-	)
-}
-
 func NewErrRelationalFieldMissingIDField(name string, expectedName string) error {
 	return errors.New(
 		errRelationalFieldMissingIDField,
@@ -301,19 +292,6 @@ func NewErrBothSidesPrimary(relationName string) error {
 func NewErrRelatedFieldKindMismatch(relationName string, expected client.FieldKind, actual client.FieldKind) error {
 	return errors.New(
 		errRelatedFieldKindMismatch,
-		errors.NewKV("RelationName", relationName),
-		errors.NewKV("Expected", expected),
-		errors.NewKV("Actual", actual),
-	)
-}
-
-func NewErrRelatedFieldRelationTypeMismatch(
-	relationName string,
-	expected client.RelationType,
-	actual client.RelationType,
-) error {
-	return errors.New(
-		errRelatedFieldRelationTypeMismatch,
 		errors.NewKV("RelationName", relationName),
 		errors.NewKV("Expected", expected),
 		errors.NewKV("Actual", actual),

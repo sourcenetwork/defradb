@@ -80,7 +80,9 @@ func (col CollectionDescription) GetFieldByRelation(
 	schema *SchemaDescription,
 ) (FieldDescription, bool) {
 	for _, field := range schema.Fields {
-		if field.RelationName == relationName && !(col.Name.Value() == otherCollectionName && otherFieldName == field.Name) {
+		if field.RelationName == relationName &&
+			!(col.Name.Value() == otherCollectionName && otherFieldName == field.Name) &&
+			field.Kind != FieldKind_DocID {
 			return field, true
 		}
 	}
@@ -250,18 +252,6 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 // RelationType describes the type of relation between two types.
 type RelationType uint8
 
-// Note: These values are serialized and persisted in the database, avoid modifying existing values
-const (
-	Relation_Type_ONE         RelationType = 1   // 0b0000 0001
-	Relation_Type_MANY        RelationType = 2   // 0b0000 0010
-	Relation_Type_ONEONE      RelationType = 4   // 0b0000 0100
-	Relation_Type_ONEMANY     RelationType = 8   // 0b0000 1000
-	Relation_Type_MANYMANY    RelationType = 16  // 0b0001 0000
-	_                         RelationType = 32  // 0b0010 0000
-	Relation_Type_INTERNAL_ID RelationType = 64  // 0b0100 0000
-	Relation_Type_Primary     RelationType = 128 // 0b1000 0000 Primary reference entity on relation
-)
-
 // FieldID is a unique identifier for a field in a schema.
 type FieldID uint32
 
@@ -302,14 +292,7 @@ type FieldDescription struct {
 	// It is currently immutable.
 	Typ CType
 
-	// RelationType contains the relationship type if this field is a relation field. Otherwise this
-	// will be empty.
-	RelationType RelationType
-}
-
-// IsInternal returns true if this field is internally generated.
-func (f FieldDescription) IsInternal() bool {
-	return (f.Name == request.DocIDFieldName) || f.RelationType&Relation_Type_INTERNAL_ID != 0
+	IsPrimaryRelation bool
 }
 
 // IsObject returns true if this field is an object type.
@@ -323,14 +306,9 @@ func (f FieldDescription) IsObjectArray() bool {
 	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
-// IsPrimaryRelation returns true if this field is a relation, and is the primary side.
-func (f FieldDescription) IsPrimaryRelation() bool {
-	return f.RelationType > 0 && f.RelationType&Relation_Type_Primary != 0
-}
-
 // IsRelation returns true if this field is a relation.
 func (f FieldDescription) IsRelation() bool {
-	return f.RelationType > 0
+	return f.RelationName != ""
 }
 
 // IsArray returns true if this field is an array type which includes inline arrays as well

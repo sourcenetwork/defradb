@@ -169,13 +169,12 @@ func (db *db) updateSchema(
 	}
 
 	for _, field := range schema.Fields {
-		if field.RelationType.IsSet(client.Relation_Type_ONE) {
+		if field.Kind == client.FieldKind_FOREIGN_OBJECT {
 			idFieldName := field.Name + "_id"
 			if _, ok := schema.GetField(idFieldName); !ok {
 				schema.Fields = append(schema.Fields, client.FieldDescription{
 					Name:         idFieldName,
 					Kind:         client.FieldKind_DocID,
-					RelationType: client.Relation_Type_INTERNAL_ID,
 					RelationName: field.RelationName,
 				})
 			}
@@ -316,40 +315,11 @@ func validateUpdateSchemaFields(
 				return false, NewErrSchemaNotFound(proposedField.Name, proposedField.Schema)
 			}
 
-			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
-				if !proposedField.RelationType.IsSet(client.Relation_Type_ONE) ||
-					!(proposedField.RelationType.IsSet(client.Relation_Type_ONEONE) ||
-						proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY)) {
-					return false, NewErrRelationalFieldInvalidRelationType(
-						proposedField.Name,
-						fmt.Sprintf(
-							"%v and %v or %v, with optionally %v",
-							client.Relation_Type_ONE,
-							client.Relation_Type_ONEONE,
-							client.Relation_Type_ONEMANY,
-							client.Relation_Type_Primary,
-						),
-						proposedField.RelationType,
-					)
-				}
-			}
-
-			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
-				if !proposedField.RelationType.IsSet(client.Relation_Type_MANY) ||
-					!proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY) {
-					return false, NewErrRelationalFieldInvalidRelationType(
-						proposedField.Name,
-						client.Relation_Type_MANY|client.Relation_Type_ONEMANY,
-						proposedField.RelationType,
-					)
-				}
-			}
-
 			if proposedField.RelationName == "" {
 				return false, NewErrRelationalFieldMissingRelationName(proposedField.Name)
 			}
 
-			if proposedField.RelationType.IsSet(client.Relation_Type_Primary) {
+			if proposedField.IsPrimaryRelation {
 				if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 					return false, NewErrPrimarySideOnMany(proposedField.Name)
 				}
@@ -363,14 +333,6 @@ func validateUpdateSchemaFields(
 						return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocID, idField.Kind)
 					}
 
-					if idField.RelationType != client.Relation_Type_INTERNAL_ID {
-						return false, NewErrRelationalFieldInvalidRelationType(
-							idField.Name,
-							client.Relation_Type_INTERNAL_ID,
-							idField.RelationType,
-						)
-					}
-
 					if idField.RelationName == "" {
 						return false, NewErrRelationalFieldMissingRelationName(idField.Name)
 					}
@@ -381,7 +343,7 @@ func validateUpdateSchemaFields(
 			var relatedField client.FieldDescription
 			for _, field := range relatedDesc.Fields {
 				if field.RelationName == proposedField.RelationName &&
-					!field.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) &&
+					field.Kind != client.FieldKind_DocID &&
 					!(relatedDesc.Name == proposedDesc.Name && field.Name == proposedField.Name) {
 					relatedFieldFound = true
 					relatedField = field
@@ -393,42 +355,12 @@ func validateUpdateSchemaFields(
 				return false, client.NewErrRelationOneSided(proposedField.Name, proposedField.Schema)
 			}
 
-			if !(proposedField.RelationType.IsSet(client.Relation_Type_Primary) ||
-				relatedField.RelationType.IsSet(client.Relation_Type_Primary)) {
+			if !(proposedField.IsPrimaryRelation || relatedField.IsPrimaryRelation) {
 				return false, NewErrPrimarySideNotDefined(proposedField.RelationName)
 			}
 
-			if proposedField.RelationType.IsSet(client.Relation_Type_Primary) &&
-				relatedField.RelationType.IsSet(client.Relation_Type_Primary) {
+			if proposedField.IsPrimaryRelation && relatedField.IsPrimaryRelation {
 				return false, NewErrBothSidesPrimary(proposedField.RelationName)
-			}
-
-			if proposedField.RelationType.IsSet(client.Relation_Type_ONEONE) &&
-				relatedField.Kind != client.FieldKind_FOREIGN_OBJECT {
-				return false, NewErrRelatedFieldKindMismatch(
-					proposedField.RelationName,
-					client.FieldKind_FOREIGN_OBJECT,
-					relatedField.Kind,
-				)
-			}
-
-			if proposedField.RelationType.IsSet(client.Relation_Type_ONEMANY) &&
-				proposedField.Kind == client.FieldKind_FOREIGN_OBJECT &&
-				relatedField.Kind != client.FieldKind_FOREIGN_OBJECT_ARRAY {
-				return false, NewErrRelatedFieldKindMismatch(
-					proposedField.RelationName,
-					client.FieldKind_FOREIGN_OBJECT_ARRAY,
-					relatedField.Kind,
-				)
-			}
-
-			if proposedField.RelationType.IsSet(client.Relation_Type_ONEONE) &&
-				!relatedField.RelationType.IsSet(client.Relation_Type_ONEONE) {
-				return false, NewErrRelatedFieldRelationTypeMismatch(
-					proposedField.RelationName,
-					client.Relation_Type_ONEONE,
-					relatedField.RelationType,
-				)
 			}
 		}
 
@@ -1099,7 +1031,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	fieldDescription client.FieldDescription,
 	value any,
 ) error {
-	if !fieldDescription.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) {
+	if fieldDescription.Kind != client.FieldKind_DocID {
 		return nil
 	}
 
@@ -1111,7 +1043,23 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	if !ok {
 		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	}
-	if !objFieldDescription.RelationType.IsSet(client.Relation_Type_ONEONE) {
+	if objFieldDescription.Kind != client.FieldKind_FOREIGN_OBJECT {
+		return nil
+	}
+
+	otherCol, err := c.db.getCollectionByName(ctx, txn, objFieldDescription.Schema)
+	if err != nil {
+		return err
+	}
+	otherSchema := otherCol.Schema()
+	otherObjFieldDescription, _ := otherCol.Description().GetFieldByRelation(
+		fieldDescription.RelationName,
+		c.Name().Value(),
+		objFieldDescription.Name,
+		&otherSchema,
+	)
+	if otherObjFieldDescription.Kind != client.FieldKind_FOREIGN_OBJECT {
+		// If the other field is not an object field then this is not a one to one relation and we can continue
 		return nil
 	}
 

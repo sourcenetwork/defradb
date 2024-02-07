@@ -717,7 +717,7 @@ func getCollectionName(
 		}
 
 		hostFieldDesc, parentHasField := parentCollection.Schema().GetField(selectRequest.Name)
-		if parentHasField && hostFieldDesc.RelationType != 0 {
+		if parentHasField && hostFieldDesc.RelationName != "" {
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
 			return hostFieldDesc.Schema, nil
@@ -1018,7 +1018,7 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		if !fieldDesc.RelationType.IsSet(client.Relation_Type_INTERNAL_ID) {
+		if fieldDesc.Kind != client.FieldKind_DocID {
 			continue
 		}
 
