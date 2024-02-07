@@ -137,7 +137,7 @@ type QuerySource struct {
 	Query request.Select
 }
 
-// QuerySource represents a collection data source from another collection instance.
+// CollectionSource represents a collection data source from another collection instance.
 //
 // Data against all collection instances in a CollectionSource chain will be returned as-if
 // from the same dataset when queried.  Lens transforms may be applied between instances.
