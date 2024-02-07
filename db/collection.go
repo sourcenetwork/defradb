@@ -222,7 +222,7 @@ func (db *db) updateSchema(
 
 		// The collection version may exist before the schema version was created locally.  This is
 		// because migrations for the globally known schema version may have been registered locally
-		// (typically to handle documentes synced over P2P at higher versions) before the local schema
+		// (typically to handle documents synced over P2P at higher versions) before the local schema
 		// was updated.  We need to check for them now, and update them instead of creating new ones
 		// if they exist.
 		var isExistingCol bool
