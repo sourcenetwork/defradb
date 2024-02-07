@@ -113,6 +113,7 @@ func (col CollectionDescription) QuerySources() []*QuerySource {
 	return sourcesOfType[*QuerySource](col)
 }
 
+// CollectionSources returns all the Sources of type [CollectionSource]
 func (col CollectionDescription) CollectionSources() []*CollectionSource {
 	return sourcesOfType[*CollectionSource](col)
 }
