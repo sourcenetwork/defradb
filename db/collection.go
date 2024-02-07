@@ -198,7 +198,7 @@ func (db *db) updateSchema(
 		return err
 	}
 
-	// After creating the new schema version, we need to new create collection versions for
+	// After creating the new schema version, we need to create new collection versions for
 	// any collection using the previous version.  These will be inactive unless [setAsActiveVersion]
 	// is true.
 
