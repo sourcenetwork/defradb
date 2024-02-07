@@ -1035,7 +1035,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 
-	return c.tryRegisterDocWithACP(ctx, doc)
+	return c.registerDocCreation(ctx, doc.ID().String())
 }
 
 // Update an existing document with the new values.

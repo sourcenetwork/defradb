@@ -185,20 +185,6 @@ type Collection interface {
 	GetIndexes(ctx context.Context) ([]IndexDescription, error)
 }
 
-// IsPermissioned returns true if the collection has a policy, otherwise returns false.
-//
-// This tells us if access control is enabled for this collection or not.
-func IsPermissioned(c Collection) (string, string, bool) {
-	policy := c.Definition().Description.Policy
-	if policy.HasValue() &&
-		policy.Value().ID != "" &&
-		policy.Value().ResourceName != "" {
-		return policy.Value().ID, policy.Value().ResourceName, true
-	}
-
-	return "", "", false
-}
-
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.
 type DocIDResult struct {
 	// If a DocID was successfully retrieved, this will be that DocID.

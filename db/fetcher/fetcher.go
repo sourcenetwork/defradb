@@ -576,78 +576,6 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 	return encdoc, resultExecInfo, err
 }
 
-// runDocumentReadPermissionCheck handles the checking (while fetching) if the document has read access
-// or not, according to our access logic based on weather (1) the request is permissioned,
-// (2) the collection is permissioned (has a policy), (3) acp module exists.
-//
-// Note: we only need to make a call to the acp module if (2) and (3) are true, where if (1) is true
-// we then check passes only if the document has proper access, otherwise if (1) is false then
-// the check passes only if the document is public (is not registered with acp module at all).
-//
-// Moreover 8 states, upon checking access:
-// (SignatureRequest, PermissionedCollection, ModuleExists)    => Must pass ACP check, unless public (not registered)
-// (!SignatureRequest, PermissionedCollection, ModuleExists)   => Only public (No access if registered with ACP)
-// (SignatureRequest, PermissionedCollection, !ModuleExists)   => No check needed
-// (SignatureRequest, !PermissionedCollection, ModuleExists)   => No check needed
-// (SignatureRequest, !PermissionedCollection, !ModuleExists)  => No check needed
-// (!SignatureRequest, !PermissionedCollection, ModuleExists)  => No check needed
-// (!SignatureRequest, PermissionedCollection, !ModuleExists)  => No check needed
-// (!SignatureRequest, !PermissionedCollection, !ModuleExists) => No check needed
-func (df *DocumentFetcher) runDocumentReadPermissionCheck(ctx context.Context) error {
-	// If no acp module, then we have unrestricted access.
-	if !df.acp.HasValue() {
-		df.passedPermissionCheck = true
-		return nil
-	}
-
-	// Even if acp module exists, but there is no policy on the collection (unpermissioned collection)
-	// then we still have unrestricted access.
-	policyID, resourceName, hasPolicy := client.IsPermissioned(df.col)
-	if !hasPolicy {
-		df.passedPermissionCheck = true
-		return nil
-	}
-
-	// TODO-ACP: Implement signatures
-	hasSignature := true
-
-	// Now that we know acp module exists and the collection is permissioned, handle based on signature.
-	if hasSignature {
-		hasAccess, err := df.acp.Value().CheckDocAccess(
-			ctx,
-			acp.ReadPermission,
-			"cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", // TODO-ACP: Replace with signature identity
-			policyID,
-			resourceName,
-			df.kv.Key.DocID,
-		)
-		if err != nil {
-			df.passedPermissionCheck = false
-			return err
-		}
-		df.passedPermissionCheck = hasAccess
-		return nil
-	}
-
-	// If does not have signature, we need to make sure we don't operate on registered documents.
-	// In this case actor only has access to the public (unregistered) documents.
-	isRegistered, err := df.acp.Value().IsDocRegistered(
-		ctx,
-		policyID,
-		resourceName,
-		df.kv.Key.DocID,
-	)
-	if err != nil {
-		df.passedPermissionCheck = false
-		return err
-	}
-
-	// Check passes if document is NOT registered. If it is registered then the
-	// document must not be accessed.
-	df.passedPermissionCheck = !isRegistered
-	return nil
-}
-
 func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, ExecInfo, error) {
 	if df.kvEnd {
 		return nil, ExecInfo{}, nil
@@ -687,7 +615,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 
 		// Check if can access document with current permissions/signature.
 		if !df.passedPermissionCheck {
-			if err := df.runDocumentReadPermissionCheck(ctx); err != nil {
+			if err := df.runDocReadPermissionCheck(ctx); err != nil {
 				return nil, ExecInfo{}, err
 			}
 		}
