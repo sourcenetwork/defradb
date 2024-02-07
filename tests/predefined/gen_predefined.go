@@ -134,7 +134,7 @@ func (this *docGenerator) generatePrimary(
 	for _, secDocField := range secType.Schema.Fields {
 		if secDocField.IsRelation() {
 			if secDocMapField, hasField := secDocMap[secDocField.Name]; hasField {
-				if secDocField.IsPrimaryRelation() {
+				if secDocField.IsPrimaryRelation {
 					primType := this.types[secDocField.Schema]
 					primDocMap, subResult, err := this.generatePrimary(
 						secDocMap[secDocField.Name].(map[string]any), &primType)
@@ -199,7 +199,7 @@ func (this *docGenerator) generateSecondaryDocs(
 	for _, field := range primaryType.Schema.Fields {
 		if field.IsRelation() {
 			if _, hasProp := primaryDocMap[field.Name]; hasProp {
-				if !field.IsPrimaryRelation() &&
+				if !field.IsPrimaryRelation &&
 					(parentTypeName == "" || parentTypeName != field.Schema) {
 					docs, err := this.generateSecondaryDocsForField(
 						primaryDocMap, primaryType.Description.Name.Value(), &field, docID)
@@ -225,7 +225,7 @@ func (this *docGenerator) generateSecondaryDocsForField(
 	relTypeDef := this.types[relField.Schema]
 	primaryPropName := ""
 	for _, relDocField := range relTypeDef.Schema.Fields {
-		if relDocField.Schema == primaryTypeName && relDocField.IsPrimaryRelation() {
+		if relDocField.Schema == primaryTypeName && relDocField.IsPrimaryRelation {
 			primaryPropName = relDocField.Name + request.RelatedObjectID
 			switch relVal := primaryDoc[relField.Name].(type) {
 			case []map[string]any:

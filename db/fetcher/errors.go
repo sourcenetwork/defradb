@@ -27,7 +27,7 @@ const (
 	errFailedToGetDagNode           string = "failed to get DAG Node"
 	errMissingMapper                string = "missing document mapper"
 	errInvalidInOperatorValue       string = "invalid _in/_nin value"
-	errInvalidIndexFilterCondition  string = "invalid index filter condition"
+	errInvalidFilterOperator        string = "invalid filter operator is provided"
 )
 
 var (
@@ -44,7 +44,7 @@ var (
 	ErrMissingMapper                = errors.New(errMissingMapper)
 	ErrSingleSpanOnly               = errors.New("spans must contain only a single entry")
 	ErrInvalidInOperatorValue       = errors.New(errInvalidInOperatorValue)
-	ErrInvalidIndexFilterCondition  = errors.New(errInvalidIndexFilterCondition)
+	ErrInvalidFilterOperator        = errors.New(errInvalidFilterOperator)
 )
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.
@@ -96,4 +96,9 @@ func NewErrVFetcherFailedToGetDagLink(inner error) error {
 // NewErrFailedToGetDagNode returns an error indicating that the given DAG node could not be retrieved.
 func NewErrFailedToGetDagNode(inner error) error {
 	return errors.Wrap(errFailedToGetDagNode, inner)
+}
+
+// NewErrInvalidFilterOperator returns an error indicating that the given filter operator is invalid.
+func NewErrInvalidFilterOperator(operator string) error {
+	return errors.New(errInvalidFilterOperator, errors.NewKV("Operator", operator))
 }

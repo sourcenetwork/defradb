@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/filter"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 /*
@@ -86,10 +85,9 @@ func (p *Planner) makeTypeIndexJoin(
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 
-	meta := typeFieldDesc.RelationType
-	if schema.IsOne(meta) { // One-to-One, or One side of One-to-Many
+	if typeFieldDesc.Kind == client.FieldKind_FOREIGN_OBJECT { // One-to-One, or One side of One-to-Many
 		joinPlan, err = p.makeTypeJoinOne(parent, source, subType)
-	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
+	} else if typeFieldDesc.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
 		return nil, ErrUnknownRelationType
@@ -249,10 +247,6 @@ func (p *Planner) makeTypeJoinOne(
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 
-	// determine relation direction (primary or secondary?)
-	// check if the field we're querying is the primary side of the relation
-	isPrimary := subTypeFieldDesc.RelationType.IsSet(client.Relation_Type_Primary)
-
 	subTypeCol, err := p.db.GetCollectionByName(p.ctx, subType.CollectionName)
 	if err != nil {
 		return nil, err
@@ -270,7 +264,7 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	var secondaryFieldIndex immutable.Option[int]
-	if !isPrimary {
+	if !subTypeFieldDesc.IsPrimaryRelation {
 		idFieldName := subTypeFieldDesc.Name + request.RelatedObjectID
 		secondaryFieldIndex = immutable.Some(
 			parent.documentMapping.FirstIndexOfName(idFieldName),
@@ -292,7 +286,7 @@ func (p *Planner) makeTypeJoinOne(
 			subSelect:           subType,
 			rootName:            subTypeField.Name,
 			subTypeName:         subType.Name,
-			isSecondary:         !isPrimary,
+			isSecondary:         !subTypeFieldDesc.IsPrimaryRelation,
 			secondaryFieldIndex: secondaryFieldIndex,
 			secondaryFetchLimit: 1,
 			dir:                 dir,

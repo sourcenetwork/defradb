@@ -60,7 +60,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(9).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(3),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -70,7 +70,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
 		},
 	}
@@ -122,7 +122,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(9).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(3),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -132,7 +132,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
 		},
 	}
@@ -182,7 +182,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -194,7 +194,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(9).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6).WithIndexFetches(3),
 			},
 		},
 	}
@@ -245,7 +245,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(12).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(11).WithIndexFetches(1),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -257,7 +257,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(18).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(15).WithIndexFetches(3),
 			},
 		},
 	}
@@ -301,7 +301,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(12).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(11).WithIndexFetches(1),
 			},
 		},
 	}
@@ -368,7 +368,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -383,7 +383,7 @@ func TestQueryWithIndexOnOneToTwoRelation_IfFilterOnIndexedRelation_ShouldFilter
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
 		},
 	}

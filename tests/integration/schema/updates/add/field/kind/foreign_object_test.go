@@ -65,30 +65,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_InvalidSchemaJson(t *testing.T) 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesAddFieldKindForeignObject_MissingRelationType(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), missing relation type",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 16, "Schema": "Users"} }
-					]
-				`,
-				ExpectedError: "invalid RelationType. Field: foo, Expected: 1 and 4 or 8, with optionally 128, Actual: 0",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object (16), unknown schema",
@@ -104,7 +80,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 5, "Schema": "Unknown"
+							"Name": "foo", "Kind": 16, "Schema": "Unknown"
 						}}
 					]
 				`,
@@ -130,7 +106,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_MissingRelationName(t *testing.T
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 5, "Schema": "Users"
+							"Name": "foo", "Kind": 16, "Schema": "Users"
 						}}
 					]
 				`,
@@ -156,7 +132,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T)
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": 16,"IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id"} }
 					]
@@ -183,66 +159,12 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 2} }
 					]
 				`,
 				ExpectedError: "relational id field of invalid kind. Field: foo_id, Expected: ID, Actual: Boolean",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingRelationType(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), id field missing relation type",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 1} }
-					]
-				`,
-				ExpectedError: "invalid RelationType. Field: foo_id, Expected: 64, Actual: 0",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidRelationType(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), id field invalid RelationType",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 1, "RelationType": 4} }
-					]
-				`,
-				ExpectedError: "invalid RelationType. Field: foo_id, Expected: 64, Actual: 4",
 			},
 		},
 	}
@@ -264,9 +186,9 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingRelationName(t *te
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 1, "RelationType": 64} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 1} }
 					]
 				`,
 				ExpectedError: "missing relation name. Field: foo_id",
@@ -291,10 +213,10 @@ func TestSchemaUpdatesAddFieldKindForeignObject_OnlyHalfRelationDefined(t *testi
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}}
 					]
 				`,
@@ -320,13 +242,13 @@ func TestSchemaUpdatesAddFieldKindForeignObject_NoPrimaryDefined(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 5, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": 16, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "RelationType": 5, "Schema": "Users", "RelationName": "foo"
+							"Name": "foobar", "Kind": 16, "Schema": "Users", "RelationName": "foo"
 						}}
 					]
 				`,
@@ -352,84 +274,20 @@ func TestSchemaUpdatesAddFieldKindForeignObject_BothSidesPrimary(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foobar", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "Schema": "Users", "RelationName": "foo"
+							"Name": "foobar_id", "Kind": 1, "Schema": "Users", "RelationName": "foo"
 						}}
 					]
 				`,
 				ExpectedError: "both sides of a relation cannot be primary. RelationName: foo",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_RelatedKindMismatch(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), related kind mismatch",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 17, "RelationType": 5, "Schema": "Users", "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "invalid Kind of the related field. RelationName: foo, Expected: 16, Actual: 17",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKindForeignObject_RelatedRelationTypeMismatch(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object (16), related relation type mismatch",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
-						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "RelationType": 9, "Schema": "Users", "RelationName": "foo"
-						}}
-					]
-				`,
-				ExpectedError: "invalid RelationType of the related field. RelationName: foo, Expected: 4, Actual: 9",
 			},
 		},
 	}
@@ -453,16 +311,16 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "RelationType": 5, "Schema": "Users", "RelationName": "foo"
+							"Name": "foobar", "Kind": 16, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
 						}}
 					]
 				`,
@@ -550,16 +408,16 @@ func TestSchemaUpdatesAddFieldKindForeignObject_SinglePrimaryObjectKindSubstitut
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": 16, "RelationType": 5, "Schema": "Users", "RelationName": "foo"
+							"Name": "foobar", "Kind": 16, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
 						}}
 					]
 				`,
@@ -630,16 +488,16 @@ func TestSchemaUpdatesAddFieldKindForeignObject_SingleSecondaryObjectKindSubstit
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": 16, "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": 16, "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationType": 5, "Schema": "Users", "RelationName": "foo"
+							"Name": "foobar", "Kind": "Users", "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
 						}}
 					]
 				`,
@@ -710,16 +568,16 @@ func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindSubstitution(t *testin
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "RelationType": 133, "Schema": "Users", "RelationName": "foo"
+							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationType": 5, "Schema": "Users", "RelationName": "foo"
+							"Name": "foobar", "Kind": "Users", "Schema": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
 						}}
 					]
 				`,
@@ -790,16 +648,16 @@ func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindSubstitutionWithAutoSc
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "RelationType": 133, "RelationName": "foo"
+							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationType": 5, "RelationName": "foo"
+							"Name": "foobar", "Kind": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
 						}}
 					]
 				`,
@@ -875,16 +733,16 @@ func TestSchemaUpdatesAddFieldKindForeignObject_ObjectKindAndSchemaMismatch(t *t
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "RelationType": 133, "Schema": "Dog", "RelationName": "foo"
+							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "Schema": "Dog", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationType": 5, "RelationName": "foo"
+							"Name": "foobar", "Kind": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
 						}}
 					]
 				`,
@@ -912,13 +770,13 @@ func TestSchemaUpdatesAddFieldKindForeignObject_MissingPrimaryIDField(t *testing
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "RelationType": 133, "RelationName": "foo"
+							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationType": 5, "RelationName": "foo"
+							"Name": "foobar", "Kind": "Users", "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foobar_id", "Kind": 1, "RelationName": "foo"
 						}}
 					]
 				`,
@@ -990,13 +848,13 @@ func TestSchemaUpdatesAddFieldKindForeignObject_MissingSecondaryIDField(t *testi
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users", "RelationType": 133, "RelationName": "foo"
+							"Name": "foo", "Kind": "Users", "IsPrimaryRelation": true, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationType": 64, "RelationName": "foo"
+							"Name": "foo_id", "Kind": 1, "RelationName": "foo"
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foobar", "Kind": "Users", "RelationType": 5, "RelationName": "foo"
+							"Name": "foobar", "Kind": "Users", "RelationName": "foo"
 						}}
 					]
 				`,

@@ -22,7 +22,7 @@ import (
 )
 
 func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *testing.T) {
-	schemaVersionID2 := "bafkreidvp3xozpau2zanh7s5or4fhr7kchm6klznsyzd7fpcm3sh2xlgfm"
+	schemaVersionID2 := "bafkreibzqyjmyjs7vyo2q4h2tv5rbdbe4lv7tjbl5esilmobhgclia2juy"
 
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
@@ -50,7 +50,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreibgg4ex7aya4w4x3dnrlyov4juyuffjjokzkjrpoupncfuvsyi6du",
+					SourceSchemaVersionID:      "bafkreiadnck34zzbwayjw3aeubw7eg4jmgtwoibu35tkxbjpar5rzxkdpu",
 					DestinationSchemaVersionID: schemaVersionID2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
@@ -89,8 +89,8 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 }
 
 func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t *testing.T) {
-	schemaVersionID1 := "bafkreibgg4ex7aya4w4x3dnrlyov4juyuffjjokzkjrpoupncfuvsyi6du"
-	schemaVersionID2 := "bafkreidvp3xozpau2zanh7s5or4fhr7kchm6klznsyzd7fpcm3sh2xlgfm"
+	schemaVersionID1 := "bafkreiadnck34zzbwayjw3aeubw7eg4jmgtwoibu35tkxbjpar5rzxkdpu"
+	schemaVersionID2 := "bafkreibzqyjmyjs7vyo2q4h2tv5rbdbe4lv7tjbl5esilmobhgclia2juy"
 
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
@@ -164,8 +164,8 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 }
 
 func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt_ClearsMigrations(t *testing.T) {
-	schemaVersionID1 := "bafkreibgg4ex7aya4w4x3dnrlyov4juyuffjjokzkjrpoupncfuvsyi6du"
-	schemaVersionID2 := "bafkreidvp3xozpau2zanh7s5or4fhr7kchm6klznsyzd7fpcm3sh2xlgfm"
+	schemaVersionID1 := "bafkreiadnck34zzbwayjw3aeubw7eg4jmgtwoibu35tkxbjpar5rzxkdpu"
+	schemaVersionID2 := "bafkreibzqyjmyjs7vyo2q4h2tv5rbdbe4lv7tjbl5esilmobhgclia2juy"
 
 	test := testUtils.TestCase{
 		Description: "Test schema migration",

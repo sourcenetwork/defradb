@@ -165,22 +165,37 @@ indexLoop:
 	}
 
 	if b.doc != nil {
+		// This CBOR-specific value will be gone soon once we implement
+		// our own encryption package
+		const cborNil = 0xf6
+		hasNilValue := false
 		for i, fieldName := range b.fieldsNames {
 			var fieldBytesVal []byte
 			var fieldValue *client.FieldValue
 			var err error
 			if len(b.values) <= i {
 				fieldValue, err = b.doc.GetValue(fieldName)
-				require.NoError(b.f.t, err)
+				if err != nil {
+					if errors.Is(err, client.ErrFieldNotExist) {
+						fieldValue = client.NewFieldValue(client.LWW_REGISTER, nil)
+					} else {
+						require.NoError(b.f.t, err)
+					}
+				} else if fieldValue != nil && fieldValue.Value() == nil {
+					fieldValue = client.NewFieldValue(client.LWW_REGISTER, nil)
+				}
 			} else {
 				fieldValue = client.NewFieldValue(client.LWW_REGISTER, b.values[i])
 			}
 			fieldBytesVal, err = fieldValue.Bytes()
 			require.NoError(b.f.t, err)
+			if len(fieldBytesVal) == 1 && fieldBytesVal[0] == cborNil {
+				hasNilValue = true
+			}
 			key.FieldValues = append(key.FieldValues, fieldBytesVal)
 		}
 
-		if !b.isUnique {
+		if !b.isUnique || hasNilValue {
 			key.FieldValues = append(key.FieldValues, []byte(b.doc.ID().String()))
 		}
 	} else if len(b.values) > 0 {
@@ -1060,7 +1075,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
-	assert.Equal(t, data, []byte(doc.ID().String()))
+	assert.Len(t, data, 0)
 }
 
 func TestUniqueDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
@@ -1170,12 +1185,85 @@ func TestComposite_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).Doc(doc).
-		Values([]byte(nil)).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
+		Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
+}
+
+func TestComposite_IfNilUpdateToValue_ShouldUpdateIndexStored(t *testing.T) {
+	testCases := []struct {
+		Name   string
+		Doc    string
+		Update string
+		Action func(*client.Document) error
+	}{
+		{
+			Name:   "/nil/44/docID -> /John/44",
+			Doc:    `{"age": 44}`,
+			Update: `{"name": "John", "age": 44}`,
+			Action: func(doc *client.Document) error {
+				return doc.Set(usersNameFieldName, "John")
+			},
+		},
+		{
+			Name:   "/Islam/33 -> /Islam/nil/docID",
+			Doc:    `{"name": "Islam", "age": 33}`,
+			Update: `{"name": "Islam", "age": null}`,
+			Action: func(doc *client.Document) error {
+				return doc.Set(usersAgeFieldName, nil)
+			},
+		},
+		{
+			Name:   "/Andy/nil/docID -> /nil/22/docID",
+			Doc:    `{"name": "Andy"}`,
+			Update: `{"name": null, "age": 22}`,
+			Action: func(doc *client.Document) error {
+				return errors.Join(doc.Set(usersNameFieldName, nil), doc.Set(usersAgeFieldName, 22))
+			},
+		},
+		{
+			Name:   "/nil/55/docID -> /nil/nil/docID",
+			Doc:    `{"age": 55}`,
+			Update: `{"name": null, "age": null}`,
+			Action: func(doc *client.Document) error {
+				return doc.Set(usersAgeFieldName, nil)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		f := newIndexTestFixture(t)
+		defer f.db.Close()
+
+		indexDesc := makeUnique(addFieldToIndex(getUsersIndexDescOnName(), usersAgeFieldName))
+		_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+		require.NoError(f.t, err)
+		f.commitTxn()
+
+		doc, err := client.NewDocFromJSON([]byte(tc.Doc), f.users.Schema())
+		require.NoError(f.t, err)
+
+		f.saveDocToCollection(doc, f.users)
+
+		oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
+			Doc(doc).Unique().Build()
+
+		require.NoError(t, doc.SetWithJSON([]byte(tc.Update)))
+
+		newKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName, usersAgeFieldName).
+			Doc(doc).Unique().Build()
+
+		require.NoError(t, f.users.Update(f.ctx, doc), tc.Name)
+		f.commitTxn()
+
+		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+		require.Error(t, err, oldKey.ToString(), oldKey.ToDS(), tc.Name)
+		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+		require.NoError(t, err, newKey.ToString(), newKey.ToDS(), tc.Name)
+	}
 }
 
 func TestCompositeDrop_ShouldDeleteStoredIndexedFields(t *testing.T) {
