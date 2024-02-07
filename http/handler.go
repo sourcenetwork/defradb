@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 // Version is the identifier for the current API version.
@@ -69,7 +68,7 @@ type Handler struct {
 	txs *sync.Map
 }
 
-func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
+func NewHandler(db client.DB) (*Handler, error) {
 	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
@@ -77,14 +76,9 @@ func NewHandler(db client.DB, opts ServerOptions) (*Handler, error) {
 	txs := &sync.Map{}
 
 	mux := chi.NewMux()
-	mux.Use(
-		middleware.RequestLogger(&logFormatter{}),
-		middleware.Recoverer,
-		CorsMiddleware(opts),
-	)
 	mux.Route("/api/"+Version, func(r chi.Router) {
 		r.Use(
-			ApiMiddleware(db, txs, opts),
+			ApiMiddleware(db, txs),
 			TransactionMiddleware,
 			StoreMiddleware,
 		)

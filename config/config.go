@@ -207,11 +207,13 @@ func (cfg *Config) paramsPreprocessing() error {
 	if !filepath.IsAbs(cfg.v.GetString("datastore.badger.path")) {
 		cfg.v.Set("datastore.badger.path", filepath.Join(cfg.Rootdir, cfg.v.GetString("datastore.badger.path")))
 	}
-	if !filepath.IsAbs(cfg.v.GetString("api.privkeypath")) {
-		cfg.v.Set("api.privkeypath", filepath.Join(cfg.Rootdir, cfg.v.GetString("api.privkeypath")))
+	privKeyPath := cfg.v.GetString("api.privkeypath")
+	if privKeyPath != "" && !filepath.IsAbs(privKeyPath) {
+		cfg.v.Set("api.privkeypath", filepath.Join(cfg.Rootdir, privKeyPath))
 	}
-	if !filepath.IsAbs(cfg.v.GetString("api.pubkeypath")) {
-		cfg.v.Set("api.pubkeypath", filepath.Join(cfg.Rootdir, cfg.v.GetString("api.pubkeypath")))
+	pubKeyPath := cfg.v.GetString("api.pubkeypath")
+	if pubKeyPath != "" && !filepath.IsAbs(pubKeyPath) {
+		cfg.v.Set("api.pubkeypath", filepath.Join(cfg.Rootdir, pubKeyPath))
 	}
 
 	// log.logger configuration as a string
@@ -303,8 +305,6 @@ func defaultAPIConfig() *APIConfig {
 		Address:        "localhost:9181",
 		TLS:            false,
 		AllowedOrigins: []string{},
-		PubKeyPath:     "certs/server.key",
-		PrivKeyPath:    "certs/server.crt",
 		Email:          DefaultAPIEmail,
 	}
 }
