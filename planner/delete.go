@@ -57,6 +57,10 @@ func (n *deleteNode) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	n.currentValue.Status = client.Deleted
+	n.documentMapping.TrySetFirstOfName(&n.currentValue, request.DeletedFieldName, true)
+
 	return true, nil
 }
 
