@@ -159,51 +159,6 @@ func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
 	return true, nil
 }
 
-/*
-
-scan node
-=========
-{
-	_docID: bae-ALICE,
-	name: Alice,
-	points: 124,
-	verified: false
-}
-
-typeJoin node(merge)
-=============
-{
-	friends: [
-		{
-			_docID: bae-BOB,
-			name: bob,
-			points: 99.9,
-			verified: true,
-		}
-	]
-}
-
-output
-======
-
-{
-	_docID: bae-ALICE,
-	name: Alice,
-	points: 124,
-	verified: false,
-
-	friends: [
-		{
-			_docID: bae-BOB,
-			name: bob,
-			points: 99.9,
-			verified: true,
-		}
-	]
-}
-
-*/
-
 func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 	key := p.currentValue.GetID()
 	if key == "" {
@@ -235,43 +190,6 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 	return true, nil
 }
 
-/*
-
-query {
-	user {
-		_docID
-		name
-		points
-		verified
-
-		_version {
-			cid
-		}
-	}
-}
-
-scan node
-=========
-{
-	_docID: bae-ALICE,
-	name: Alice,
-	points: 124,
-	verified: false
-}
-
-_version: commitSelectTopNode(append)
-===================
-[
-	{
-		cid: QmABC
-	},
-	{
-		cid: QmDEF
-	}
-	...
-]
-*/
-
 func (p *parallelNode) Source() planNode { return p.multiscan }
 
 func (p *parallelNode) Children() []planNode {
@@ -283,98 +201,6 @@ func (p *parallelNode) addChild(fieldIndex int, node planNode) {
 	p.childIndexes = append(p.childIndexes, fieldIndex)
 }
 
-/*
-user {
-	friends {
-		name
-	}
-
-	addresses {
-		street_name
-	}
-}
-
-Select {
-	source: scanNode(user)
-}
-
-		||||||
-		\/\/\/
-
-Select {
-	source: TypeJoin(friends, user) {
-		joinPlan {
-			typeJoinMany {
-				root: scanNode(user)
-				subType: Select {
-					source: scanNode(friends)
-				}
-			}
-		}
-	},
-}
-
-		||||||
-		\/\/\/
-
-Select {
-	source: MultiNode[
-		{
-			TypeJoin(friends, user) {
-				joinPlan {
-					typeJoinMany {
-						root: multiscan(scanNode(user))
-						subType: Select {
-							source: scanNode(friends)
-						}
-					}
-				}
-			}
-		},
-		{
-			TypeJoin(addresses, user) {
-				joinPlan {
-					typeJoinMany {
-						root: multiscan(scanNode(user))
-						subType: Select {
-							source: scanNode(addresses)
-						}
-					}
-				}
-			}
-		}]
-	}
-}
-
-select addSubPlan {
-	check if source is MultiNode
-	yes =>
-		get multiScan node
-		create new plan with multi scan node
-		append
-	no = >
-		create new multinode
-		get scan node from existing source
-		create multiscan
-		replace existing source scannode with multiScan
-		add existing source to new MultiNode
-		add new plan to multNode
-
-}
-
-Select {
-	source: Parallel {[
-		TypeJoin {
-
-		},
-		commitScan {
-
-		}
-	]}
-}
-*/
-
-// @todo: Document AddSubPlan method
 func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 	src := s.source
 	switch node := src.(type) {
