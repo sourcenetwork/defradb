@@ -185,8 +185,7 @@ func (p *parallelNode) addChild(fieldIndex int, node planNode) {
 }
 
 func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
-	src := s.source
-	switch node := src.(type) {
+	switch node := s.source.(type) {
 	// if its a scan node, we either replace or create a multinode
 	case *scanNode, *pipeNode:
 		switch plan.(type) {
@@ -195,9 +194,9 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 		case *dagScanNode:
 			m := &parallelNode{
 				p:         s.planner,
-				docMapper: docMapper{src.DocumentMap()},
+				docMapper: docMapper{s.source.DocumentMap()},
 			}
-			m.addChild(-1, src)
+			m.addChild(-1, s.source)
 			m.addChild(fieldIndex, plan)
 			s.source = m
 		default:
@@ -212,16 +211,16 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 		// create our new multiscanner
 		multiscan := &multiScanNode{scanNode: origScan}
 		// replace our current source internal scanNode with our new multiscanner
-		if err := s.planner.walkAndReplacePlan(src, origScan, multiscan); err != nil {
+		if err := s.planner.walkAndReplacePlan(s.source, origScan, multiscan); err != nil {
 			return err
 		}
 		// create multinode
 		multinode := &parallelNode{
 			p:         s.planner,
 			multiscan: multiscan,
-			docMapper: docMapper{src.DocumentMap()},
+			docMapper: docMapper{s.source.DocumentMap()},
 		}
-		multinode.addChild(-1, src)
+		multinode.addChild(-1, s.source)
 		multiscan.addReader()
 		// replace our new node internal scanNode with our new multiscanner
 		if err := s.planner.walkAndReplacePlan(plan, origScan, multiscan); err != nil {
