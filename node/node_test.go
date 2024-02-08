@@ -24,12 +24,12 @@ func TestNodeStart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	opts := []Opt{
+	opts := []NodeOpt{
 		WithStoreOpts(WithPath(t.TempDir())),
 		WithDatabaseOpts(db.WithUpdateEvents()),
 	}
 
-	node, err := New(ctx, opts...)
+	node, err := NewNode(ctx, opts...)
 	require.NoError(t, err)
 
 	err = node.Start(ctx)

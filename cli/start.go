@@ -91,7 +91,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 				netOpts = append(netOpts, net.WithPrivateKey(key))
 			}
 
-			opts := []node.Opt{
+			opts := []node.NodeOpt{
 				node.WithPeers(peers...),
 				node.WithStoreOpts(storeOpts...),
 				node.WithDatabaseOpts(dbOpts...),
@@ -100,7 +100,7 @@ func MakeStartCommand(cfg *config.Config) *cobra.Command {
 				node.WithDisableP2P(cfg.Net.P2PDisabled),
 			}
 
-			n, err := node.New(cmd.Context(), opts...)
+			n, err := node.NewNode(cmd.Context(), opts...)
 			if err != nil {
 				return err
 			}

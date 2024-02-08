@@ -17,8 +17,8 @@ import (
 
 // StoreOptions contains store configuration values.
 type StoreOptions struct {
-	inMemory         bool
 	path             string
+	inMemory         bool
 	valueLogFileSize int64
 	encryptionKey    []byte
 }

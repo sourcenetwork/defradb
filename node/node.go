@@ -40,53 +40,53 @@ func DefaultOptions() *Options {
 	return &Options{}
 }
 
-// Opt is a function for setting configuration values.
-type Opt func(*Options)
+// NodeOpt is a function for setting configuration values.
+type NodeOpt func(*Options)
 
 // WithStoreOpts sets the store options.
-func WithStoreOpts(opts ...StoreOpt) Opt {
+func WithStoreOpts(opts ...StoreOpt) NodeOpt {
 	return func(o *Options) {
 		o.storeOpts = opts
 	}
 }
 
 // WithDatabaseOpts sets the database options.
-func WithDatabaseOpts(opts ...db.Option) Opt {
+func WithDatabaseOpts(opts ...db.Option) NodeOpt {
 	return func(o *Options) {
 		o.dbOpts = opts
 	}
 }
 
 // WithNetOpts sets the net / p2p options.
-func WithNetOpts(opts ...net.NodeOpt) Opt {
+func WithNetOpts(opts ...net.NodeOpt) NodeOpt {
 	return func(o *Options) {
 		o.netOpts = opts
 	}
 }
 
 // WithServerOpts sets the api server options.
-func WithServerOpts(opts ...http.ServerOpt) Opt {
+func WithServerOpts(opts ...http.ServerOpt) NodeOpt {
 	return func(o *Options) {
 		o.serverOpts = opts
 	}
 }
 
 // WithDisableP2P sets the disable p2p flag.
-func WithDisableP2P(disable bool) Opt {
+func WithDisableP2P(disable bool) NodeOpt {
 	return func(o *Options) {
 		o.disableP2P = disable
 	}
 }
 
 // WithDisableAPI sets the disable api flag.
-func WithDisableAPI(disable bool) Opt {
+func WithDisableAPI(disable bool) NodeOpt {
 	return func(o *Options) {
 		o.disableAPI = disable
 	}
 }
 
 // WithPeers sets the bootstrap peers.
-func WithPeers(peers ...peer.AddrInfo) Opt {
+func WithPeers(peers ...peer.AddrInfo) NodeOpt {
 	return func(o *Options) {
 		o.peers = peers
 	}
@@ -99,8 +99,8 @@ type Node struct {
 	Server *http.Server
 }
 
-// New returns a new node instance configured with the given options.
-func New(ctx context.Context, opts ...Opt) (*Node, error) {
+// NewNode returns a new node instance configured with the given options.
+func NewNode(ctx context.Context, opts ...NodeOpt) (*Node, error) {
 	options := DefaultOptions()
 	for _, opt := range opts {
 		opt(options)
