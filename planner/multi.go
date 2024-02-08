@@ -32,13 +32,6 @@ type MultiNode interface {
 	Children() []planNode
 }
 
-// appendNode is a special interface for the MultiNode
-// system.
-type appendNode interface {
-	planNode
-	Append() bool
-}
-
 // parallelNode implements the MultiNode interface. It
 // enables parallel execution of planNodes. This is needed
 // if a single request has multiple Select statements at the
@@ -125,7 +118,7 @@ func (p *parallelNode) Next() (bool, error) {
 		case *scanNode, *typeIndexJoin:
 			// isMerge = true
 			next, err = p.nextMerge(i, n)
-		case appendNode:
+		case *dagScanNode:
 			next, err = p.nextAppend(i, n)
 		}
 		if err != nil {
@@ -149,7 +142,7 @@ func (p *parallelNode) nextMerge(index int, plan planNode) (bool, error) {
 	return true, nil
 }
 
-func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
+func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 	key := p.currentValue.GetID()
 	if key == "" {
 		return false, nil
@@ -199,7 +192,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 		switch plan.(type) {
 		case *scanNode, *typeIndexJoin:
 			s.source = plan
-		case appendNode:
+		case *dagScanNode:
 			m := &parallelNode{
 				p:         s.planner,
 				docMapper: docMapper{src.DocumentMap()},
@@ -243,7 +236,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 	case *parallelNode:
 		switch plan.(type) {
 		// easy, just append, since append doest need any internal relaced scannode
-		case appendNode:
+		case *dagScanNode:
 			node.addChild(fieldIndex, plan)
 
 		// We have a internal multiscanNode on our MultiNode
