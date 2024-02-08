@@ -48,7 +48,7 @@ const (
 	COLLECTION_SCHEMA_VERSION      = "/collection/version"
 	COLLECTION_INDEX               = "/collection/index"
 	SCHEMA_VERSION                 = "/schema/version/v"
-	SCHEMA_VERSION_HISTORY         = "/schema/version/h"
+	SCHEMA_VERSION_ROOT            = "/schema/version/r"
 	SEQ                            = "/seq"
 	PRIMARY_KEY                    = "/pk"
 	DATASTORE_DOC_VERSION_FIELD_ID = "v"
@@ -355,7 +355,7 @@ func NewSchemaRootKey(schemaRoot string, schemaVersionID string) SchemaRootKey {
 }
 
 func NewSchemaRootKeyFromString(keyString string) (SchemaRootKey, error) {
-	keyString = strings.TrimPrefix(keyString, SCHEMA_VERSION_HISTORY+"/")
+	keyString = strings.TrimPrefix(keyString, SCHEMA_VERSION_ROOT+"/")
 	elements := strings.Split(keyString, "/")
 	if len(elements) != 2 {
 		return SchemaRootKey{}, ErrInvalidKey
@@ -672,7 +672,7 @@ func (k SchemaVersionKey) ToDS() ds.Key {
 }
 
 func (k SchemaRootKey) ToString() string {
-	result := SCHEMA_VERSION_HISTORY
+	result := SCHEMA_VERSION_ROOT
 
 	if k.SchemaRoot != "" {
 		result = result + "/" + k.SchemaRoot
