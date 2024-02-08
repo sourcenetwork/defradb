@@ -32,16 +32,6 @@ type MultiNode interface {
 	Children() []planNode
 }
 
-// mergeNode is a special interface for the MultiNode
-// system. A mergeNode provides an entire document
-// in its Values() func, with all the specific and
-// necessary fields and subfields already merged
-// into the doc
-type mergeNode interface {
-	planNode
-	Merge() bool
-}
-
 // appendNode is a special interface for the MultiNode
 // system.
 type appendNode interface {
@@ -132,7 +122,7 @@ func (p *parallelNode) Next() (bool, error) {
 		var err error
 		// isMerge := false
 		switch n := plan.(type) {
-		case mergeNode:
+		case *scanNode, *typeIndexJoin:
 			// isMerge = true
 			next, err = p.nextMerge(i, n)
 		case appendNode:
@@ -148,7 +138,7 @@ func (p *parallelNode) Next() (bool, error) {
 	return orNext, nil
 }
 
-func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
+func (p *parallelNode) nextMerge(index int, plan planNode) (bool, error) {
 	if next, err := plan.Next(); !next {
 		return false, err
 	}
@@ -207,7 +197,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 	// if its a scan node, we either replace or create a multinode
 	case *scanNode, *pipeNode:
 		switch plan.(type) {
-		case mergeNode:
+		case *scanNode, *typeIndexJoin:
 			s.source = plan
 		case appendNode:
 			m := &parallelNode{
@@ -221,8 +211,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 			return client.NewErrUnhandledType("sub plan", plan)
 		}
 
-	// source is a mergeNode, like a TypeJoin
-	case mergeNode:
+	case *typeIndexJoin:
 		origScan, _ := walkAndFindPlanType[*scanNode](plan)
 		if origScan == nil {
 			return ErrFailedToFindScanNode
@@ -258,7 +247,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 			node.addChild(fieldIndex, plan)
 
 		// We have a internal multiscanNode on our MultiNode
-		case mergeNode:
+		case *scanNode, *typeIndexJoin:
 			multiscan, sourceIsMultiscan := node.Source().(*multiScanNode)
 			if !sourceIsMultiscan {
 				return client.NewErrUnexpectedType[*multiScanNode]("mergeNode", node.Source())
