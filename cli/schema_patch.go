@@ -27,7 +27,7 @@ func MakeSchemaPatchCommand() *cobra.Command {
 	var lensFile string
 	var setActive bool
 	var cmd = &cobra.Command{
-		Use:   "patch [schema]",
+		Use:   "patch [schema] [migration]",
 		Short: "Patch an existing schema type",
 		Long: `Patch an existing schema.
 
