@@ -438,7 +438,7 @@ func (k DataStoreKey) ToString() string {
 	var result string
 
 	if k.CollectionRootID != 0 {
-		result = result + "/" + fmt.Sprint(k.CollectionRootID)
+		result = result + "/" + strconv.Itoa(int(k.CollectionRootID))
 	}
 	if k.InstanceType != "" {
 		result = result + "/" + string(k.InstanceType)
