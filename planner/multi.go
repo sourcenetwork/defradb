@@ -184,27 +184,27 @@ func (p *parallelNode) addChild(fieldIndex int, node planNode) {
 	p.childIndexes = append(p.childIndexes, fieldIndex)
 }
 
-func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
+func (s *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 	switch sourceNode := s.source.(type) {
 	// if its a scan node, we either replace or create a multinode
 	case *scanNode, *pipeNode:
-		switch plan.(type) {
+		switch newPlan.(type) {
 		case *scanNode, *typeIndexJoin:
-			s.source = plan
+			s.source = newPlan
 		case *dagScanNode:
 			m := &parallelNode{
 				p:         s.planner,
 				docMapper: docMapper{s.source.DocumentMap()},
 			}
 			m.addChild(-1, s.source)
-			m.addChild(fieldIndex, plan)
+			m.addChild(fieldIndex, newPlan)
 			s.source = m
 		default:
-			return client.NewErrUnhandledType("sub plan", plan)
+			return client.NewErrUnhandledType("sub plan", newPlan)
 		}
 
 	case *typeIndexJoin:
-		origScan, _ := walkAndFindPlanType[*scanNode](plan)
+		origScan, _ := walkAndFindPlanType[*scanNode](newPlan)
 		if origScan == nil {
 			return ErrFailedToFindScanNode
 		}
@@ -223,20 +223,20 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 		multinode.addChild(-1, s.source)
 		multiscan.addReader()
 		// replace our new node internal scanNode with our new multiscanner
-		if err := s.planner.walkAndReplacePlan(plan, origScan, multiscan); err != nil {
+		if err := s.planner.walkAndReplacePlan(newPlan, origScan, multiscan); err != nil {
 			return err
 		}
 		// add our newly updated plan to the multinode
-		multinode.addChild(fieldIndex, plan)
+		multinode.addChild(fieldIndex, newPlan)
 		multiscan.addReader()
 		s.source = multinode
 
 	// we already have an existing parallelNode as our source
 	case *parallelNode:
-		switch plan.(type) {
+		switch newPlan.(type) {
 		// easy, just append, since append doest need any internal relaced scannode
 		case *dagScanNode:
-			sourceNode.addChild(fieldIndex, plan)
+			sourceNode.addChild(fieldIndex, newPlan)
 
 		// We have a internal multiscanNode on our MultiNode
 		case *scanNode, *typeIndexJoin:
@@ -246,14 +246,14 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 			}
 
 			// replace our new node internal scanNode with our existing multiscanner
-			if err := s.planner.walkAndReplacePlan(plan, multiscan.Source(), multiscan); err != nil {
+			if err := s.planner.walkAndReplacePlan(newPlan, multiscan.Source(), multiscan); err != nil {
 				return err
 			}
 			multiscan.addReader()
 			// add our newly updated plan to the multinode
-			sourceNode.addChild(fieldIndex, plan)
+			sourceNode.addChild(fieldIndex, newPlan)
 		default:
-			return client.NewErrUnhandledType("sub plan", plan)
+			return client.NewErrUnhandledType("sub plan", newPlan)
 		}
 	}
 	return nil
