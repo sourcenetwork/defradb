@@ -27,7 +27,8 @@ func MakeSchemaMigrationSetCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "set [src] [dst] [cfg]",
 		Short: "Set a schema migration within DefraDB",
-		Long: `Set a migration between collections of the given schema versions within the local DefraDB node.
+		Long: `Set a migration from a source schema version to a destination schema version for
+all collections that are on the given source schema version within the local DefraDB node.
 
 Example: set from an argument string:
   defradb client schema migration set bae123 bae456 '{"lenses": [...'
