@@ -240,16 +240,11 @@ func (s *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 
 		// We have a internal multiscanNode on our MultiNode
 		case *scanNode, *typeIndexJoin:
-			multiscan, sourceIsMultiscan := sourceNode.Source().(*multiScanNode)
-			if !sourceIsMultiscan {
-				return client.NewErrUnexpectedType[*multiScanNode]("mergeNode", sourceNode.Source())
-			}
-
 			// replace our new node internal scanNode with our existing multiscanner
-			if err := s.planner.walkAndReplacePlan(newPlan, multiscan.Source(), multiscan); err != nil {
+			if err := s.planner.walkAndReplacePlan(newPlan, sourceNode.multiscan.Source(), sourceNode.multiscan); err != nil {
 				return err
 			}
-			multiscan.addReader()
+			sourceNode.multiscan.addReader()
 			// add our newly updated plan to the multinode
 			sourceNode.addChild(fieldIndex, newPlan)
 		default:
