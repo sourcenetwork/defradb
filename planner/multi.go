@@ -185,7 +185,7 @@ func (p *parallelNode) addChild(fieldIndex int, node planNode) {
 }
 
 func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
-	switch node := s.source.(type) {
+	switch sourceNode := s.source.(type) {
 	// if its a scan node, we either replace or create a multinode
 	case *scanNode, *pipeNode:
 		switch plan.(type) {
@@ -236,13 +236,13 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 		switch plan.(type) {
 		// easy, just append, since append doest need any internal relaced scannode
 		case *dagScanNode:
-			node.addChild(fieldIndex, plan)
+			sourceNode.addChild(fieldIndex, plan)
 
 		// We have a internal multiscanNode on our MultiNode
 		case *scanNode, *typeIndexJoin:
-			multiscan, sourceIsMultiscan := node.Source().(*multiScanNode)
+			multiscan, sourceIsMultiscan := sourceNode.Source().(*multiScanNode)
 			if !sourceIsMultiscan {
-				return client.NewErrUnexpectedType[*multiScanNode]("mergeNode", node.Source())
+				return client.NewErrUnexpectedType[*multiScanNode]("mergeNode", sourceNode.Source())
 			}
 
 			// replace our new node internal scanNode with our existing multiscanner
@@ -251,7 +251,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 			}
 			multiscan.addReader()
 			// add our newly updated plan to the multinode
-			node.addChild(fieldIndex, plan)
+			sourceNode.addChild(fieldIndex, plan)
 		default:
 			return client.NewErrUnhandledType("sub plan", plan)
 		}
