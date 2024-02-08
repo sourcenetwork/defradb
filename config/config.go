@@ -72,6 +72,7 @@ const (
 	logLevelInfo    = "info"
 	logLevelError   = "error"
 	logLevelFatal   = "fatal"
+	DatastoreMemory = "memory"
 )
 
 // Config is DefraDB's main configuration struct, embedding component-specific config structs.
