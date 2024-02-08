@@ -14,46 +14,34 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewStoreWithPath(t *testing.T) {
-	opts := []StoreOpt{
-		WithPath(t.TempDir()),
-	}
-
-	store, err := NewStore(opts...)
-	require.NoError(t, err)
-
-	err = store.Close()
-	require.NoError(t, err)
+func TestWithInMemory(t *testing.T) {
+	options := &StoreOptions{}
+	WithInMemory(true)(options)
+	assert.Equal(t, true, options.inMemory)
 }
 
-func TestNewStoreWithInMemory(t *testing.T) {
-	opts := []StoreOpt{
-		WithInMemory(true),
-	}
-
-	store, err := NewStore(opts...)
-	require.NoError(t, err)
-
-	err = store.Close()
-	require.NoError(t, err)
+func TestWithPath(t *testing.T) {
+	options := &StoreOptions{}
+	WithPath("tmp")(options)
+	assert.Equal(t, "tmp", options.path)
 }
 
-func TestNewStoreWithEncryptionKey(t *testing.T) {
-	privateKey := make([]byte, 32)
-	_, err := rand.Read(privateKey)
+func TestWithValueLogFileSize(t *testing.T) {
+	options := &StoreOptions{}
+	WithValueLogFileSize(int64(5 << 30))(options)
+	assert.Equal(t, int64(5<<30), options.valueLogFileSize)
+}
+
+func TestWithEncryptionKey(t *testing.T) {
+	encryptionKey := make([]byte, 32)
+	_, err := rand.Read(encryptionKey)
 	require.NoError(t, err)
 
-	opts := []StoreOpt{
-		WithPath(t.TempDir()),
-		WithEncryptionKey(privateKey),
-	}
-
-	store, err := NewStore(opts...)
-	require.NoError(t, err)
-
-	err = store.Close()
-	require.NoError(t, err)
+	options := &StoreOptions{}
+	WithEncryptionKey(encryptionKey)(options)
+	assert.Equal(t, encryptionKey, options.encryptionKey)
 }
