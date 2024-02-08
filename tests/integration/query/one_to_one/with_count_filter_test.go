@@ -16,8 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test documents a bug and should be altered with:
-// https://github.com/sourcenetwork/defradb/issues/1869
 func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation with count with _or filter that includes relation",
@@ -103,17 +101,12 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 				}`,
 				Results: []map[string]any{
 					{
-						"_count": "2",
+						"_count": int(2),
 					},
 				},
 			},
 		},
 	}
 
-	testUtils.AssertPanic(
-		t,
-		func() {
-			testUtils.ExecuteTestCase(t, test)
-		},
-	)
+	testUtils.ExecuteTestCase(t, test)
 }
