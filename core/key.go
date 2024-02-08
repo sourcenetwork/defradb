@@ -149,12 +149,9 @@ type SchemaVersionKey struct {
 
 var _ Key = (*SchemaVersionKey)(nil)
 
-// SchemaRootKey holds the pathway through the schema version history for
-// any given schema.
+// SchemaRootKey indexes schema version ids by their root schema id.
 //
-// The key points to the schema version id of the next version of the schema.
-// If a SchemaHistoryKey does not exist for a given SchemaVersionID it means
-// that that SchemaVersionID is for the latest version.
+// The index is the key, there are no values stored against the key.
 type SchemaRootKey struct {
 	SchemaRoot      string
 	SchemaVersionID string
