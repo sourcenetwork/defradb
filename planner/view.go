@@ -23,13 +23,17 @@ type viewNode struct {
 	p      *Planner
 	desc   client.CollectionDescription
 	source planNode
+
+	// This is cached as a boolean to save rediscovering this in the main Next/Value iteration loop
+	hasTransform bool
 }
 
-func (p *Planner) View(query *mapper.Select, desc client.CollectionDescription) (*viewNode, error) {
+func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, error) {
 	// For now, we assume a single source.  This will need to change if/when we support multiple sources
-	baseQuery := (desc.Sources[0].(*client.QuerySource)).Query
+	querySource := (col.Description().Sources[0].(*client.QuerySource))
+	hasTransform := querySource.Transform.HasValue()
 
-	m, err := mapper.ToSelect(p.ctx, p.db, &baseQuery)
+	m, err := mapper.ToSelect(p.ctx, p.db, &querySource.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -39,12 +43,19 @@ func (p *Planner) View(query *mapper.Select, desc client.CollectionDescription) 
 		return nil, err
 	}
 
-	return &viewNode{
-		p:         p,
-		desc:      desc,
-		source:    source,
-		docMapper: docMapper{query.DocumentMapping},
-	}, nil
+	if hasTransform {
+		source = p.Lens(source, query.DocumentMapping, col)
+	}
+
+	viewNode := &viewNode{
+		p:            p,
+		desc:         col.Description(),
+		source:       source,
+		docMapper:    docMapper{query.DocumentMapping},
+		hasTransform: hasTransform,
+	}
+
+	return viewNode, nil
 }
 
 func (n *viewNode) Init() error {
@@ -64,14 +75,21 @@ func (n *viewNode) Next() (bool, error) {
 }
 
 func (n *viewNode) Value() core.Doc {
-	sourceValue := n.source.DocumentMap().ToMap(n.source.Value())
+	sourceValue := n.source.Value()
+	if n.hasTransform {
+		// If this view has a transform the source document will already have been
+		// converted to the new document mapping.
+		return sourceValue
+	}
+
+	sourceMap := n.source.DocumentMap().ToMap(sourceValue)
 
 	// We must convert the document from the source mapping (which was constructed using the
 	// view's base query) to a document using the output mapping (which was constructed using
 	// the current query and the output schemas).  We do this by source output name, which
 	// will take into account any aliases defined in the base query.
 	doc := n.docMapper.documentMapping.NewDoc()
-	for fieldName, fieldValue := range sourceValue {
+	for fieldName, fieldValue := range sourceMap {
 		// If the field does not exist, ignore it an continue.  It likely means that
 		// the field was declared in the query but not the SDL, and if it is not in the
 		// SDL it cannot be requested/rendered by the user and would be dropped later anyway.
