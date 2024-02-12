@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path/filepath"
 
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/spf13/cobra"
@@ -212,6 +213,10 @@ func generatePrivateKey(path string) (crypto.PrivKey, error) {
 		return nil, err
 	}
 	data, err := crypto.MarshalPrivateKey(key)
+	if err != nil {
+		return nil, err
+	}
+	err = os.MkdirAll(filepath.Dir(path), 0755)
 	if err != nil {
 		return nil, err
 	}

@@ -16,8 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test documents a bug, see:
-// https://github.com/sourcenetwork/defradb/issues/1846
 func TestMutationDeletion_WithDeletedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -43,8 +41,7 @@ func TestMutationDeletion_WithDeletedField(t *testing.T) {
 					}`,
 				Results: []map[string]any{
 					{
-						// This should be true, as it has been deleted.
-						"_deleted": false,
+						"_deleted": true,
 						"_docID":   "bae-decf6467-4c7c-50d7-b09d-0a7097ef6bad",
 					},
 				},
