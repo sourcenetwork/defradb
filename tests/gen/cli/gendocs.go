@@ -54,7 +54,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 				return NewErrInvalidDemandValue(err)
 			}
 
-			collections, err := store.GetAllCollections(cmd.Context())
+			collections, err := store.GetAllCollections(cmd.Context(), false)
 			if err != nil {
 				return err
 			}

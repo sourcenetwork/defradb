@@ -48,7 +48,7 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 	schema_migrate := MakeSchemaMigrationCommand()
 	schema_migrate.AddCommand(
 		MakeSchemaMigrationSetCommand(),
-		MakeSchemaMigrationGetCommand(),
+		MakeSchemaMigrationSetRegistryCommand(),
 		MakeSchemaMigrationReloadCommand(),
 		MakeSchemaMigrationUpCommand(),
 		MakeSchemaMigrationDownCommand(),
@@ -58,7 +58,7 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 	schema.AddCommand(
 		MakeSchemaAddCommand(),
 		MakeSchemaPatchCommand(),
-		MakeSchemaSetDefaultCommand(),
+		MakeSchemaSetActiveCommand(),
 		MakeSchemaDescribeCommand(),
 		schema_migrate,
 	)

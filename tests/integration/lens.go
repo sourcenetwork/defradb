@@ -12,8 +12,6 @@ package tests
 
 import (
 	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -39,19 +37,6 @@ type ConfigureMigration struct {
 	ExpectedError string
 }
 
-// GetMigrations is a test action which will fetch and assert on the results of calling
-// `LensRegistry().Config()`.
-type GetMigrations struct {
-	// NodeID is the node ID (index) of the node in which to configure the migration.
-	NodeID immutable.Option[int]
-
-	// Used to identify the transaction for this to run against. Optional.
-	TransactionID immutable.Option[int]
-
-	// The expected configuration.
-	ExpectedResults []client.LensConfig
-}
-
 func configureMigration(
 	s *state,
 	action ConfigureMigration,
@@ -63,47 +48,5 @@ func configureMigration(
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-	}
-}
-
-func getMigrations(
-	s *state,
-	action GetMigrations,
-) {
-	for _, node := range getNodes(action.NodeID, s.nodes) {
-		db := getStore(s, node, action.TransactionID, "")
-
-		configs, err := db.LensRegistry().Config(s.ctx)
-		require.NoError(s.t, err)
-		require.Equal(s.t, len(configs), len(action.ExpectedResults))
-
-		// The order of the results is not deterministic, so do not assert on the element
-		for _, expected := range action.ExpectedResults {
-			var actual client.LensConfig
-			var actualFound bool
-
-			for _, config := range configs {
-				if config.SourceSchemaVersionID != expected.SourceSchemaVersionID {
-					continue
-				}
-				if config.DestinationSchemaVersionID != expected.DestinationSchemaVersionID {
-					continue
-				}
-				actual = config
-				actualFound = true
-			}
-
-			require.True(s.t, actualFound, "matching lens config not found")
-			require.Equal(s.t, len(expected.Lenses), len(actual.Lenses))
-
-			for j, actualLens := range actual.Lenses {
-				expectedLens := expected.Lenses[j]
-
-				assert.Equal(s.t, expectedLens.Inverse, actualLens.Inverse)
-				assert.Equal(s.t, expectedLens.Path, actualLens.Path)
-
-				assertResultsEqual(s.t, s.clientType, expectedLens.Arguments, actualLens.Arguments)
-			}
-		}
 	}
 }

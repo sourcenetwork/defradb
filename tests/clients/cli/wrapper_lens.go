@@ -13,7 +13,10 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strconv"
 
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -30,16 +33,15 @@ func (w *LensRegistry) WithTxn(tx datastore.Txn) client.LensRegistry {
 	return &LensRegistry{w.cmd.withTxn(tx)}
 }
 
-func (w *LensRegistry) SetMigration(ctx context.Context, config client.LensConfig) error {
-	args := []string{"client", "schema", "migration", "set"}
-	args = append(args, config.SourceSchemaVersionID)
-	args = append(args, config.DestinationSchemaVersionID)
+func (w *LensRegistry) SetMigration(ctx context.Context, collectionID uint32, config model.Lens) error {
+	args := []string{"client", "schema", "migration", "set-registry"}
 
-	lensCfg, err := json.Marshal(config.Lens)
+	lenses, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
-	args = append(args, string(lensCfg))
+	args = append(args, strconv.FormatUint(uint64(collectionID), 10))
+	args = append(args, string(lenses))
 
 	_, err = w.cmd.execute(ctx, args)
 	return err
@@ -55,10 +57,10 @@ func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
 func (w *LensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
 	args := []string{"client", "schema", "migration", "up"}
-	args = append(args, "--version", schemaVersionID)
+	args = append(args, "--collection", fmt.Sprint(collectionID))
 
 	var srcData []map[string]any
 	err := enumerable.ForEach(src, func(item map[string]any) {
@@ -87,10 +89,10 @@ func (w *LensRegistry) MigrateUp(
 func (w *LensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
 	args := []string{"client", "schema", "migration", "down"}
-	args = append(args, "--version", schemaVersionID)
+	args = append(args, "--collection", fmt.Sprint(collectionID))
 
 	var srcData []map[string]any
 	err := enumerable.ForEach(src, func(item map[string]any) {
@@ -114,32 +116,4 @@ func (w *LensRegistry) MigrateDown(
 		return nil, err
 	}
 	return out, nil
-}
-
-func (w *LensRegistry) Config(ctx context.Context) ([]client.LensConfig, error) {
-	args := []string{"client", "schema", "migration", "get"}
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	var cfgs []client.LensConfig
-	if err := json.Unmarshal(data, &cfgs); err != nil {
-		return nil, err
-	}
-	return cfgs, nil
-}
-
-func (w *LensRegistry) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
-	cfgs, err := w.Config(ctx)
-	if err != nil {
-		return false, err
-	}
-	found := false
-	for _, cfg := range cfgs {
-		if cfg.SourceSchemaVersionID == schemaVersionID {
-			found = true
-		}
-	}
-	return found, nil
 }

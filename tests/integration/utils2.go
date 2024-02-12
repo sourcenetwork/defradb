@@ -262,17 +262,17 @@ func performAction(
 	case GetSchema:
 		getSchema(s, action)
 
-	case SetDefaultSchemaVersion:
-		setDefaultSchemaVersion(s, action)
+	case GetCollections:
+		getCollections(s, action)
+
+	case SetActiveSchemaVersion:
+		setActiveSchemaVersion(s, action)
 
 	case CreateView:
 		createView(s, action)
 
 	case ConfigureMigration:
 		configureMigration(s, action)
-
-	case GetMigrations:
-		getMigrations(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)
@@ -742,7 +742,7 @@ func refreshCollections(
 
 	for nodeID, node := range s.nodes {
 		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
-		allCollections, err := node.GetAllCollections(s.ctx)
+		allCollections, err := node.GetAllCollections(s.ctx, false)
 		require.Nil(s.t, err)
 
 		for i, collectionName := range s.collectionNames {
@@ -1007,7 +1007,7 @@ func patchSchema(
 			setAsDefaultVersion = true
 		}
 
-		err := node.PatchSchema(s.ctx, action.Patch, setAsDefaultVersion)
+		err := node.PatchSchema(s.ctx, action.Patch, action.Lens, setAsDefaultVersion)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1047,12 +1047,56 @@ func getSchema(
 	}
 }
 
-func setDefaultSchemaVersion(
+func getCollections(
 	s *state,
-	action SetDefaultSchemaVersion,
+	action GetCollections,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		err := node.SetDefaultSchemaVersion(s.ctx, action.SchemaVersionID)
+		db := getStore(s, node, action.TransactionID, "")
+		results, err := db.GetAllCollections(s.ctx, action.GetInactive)
+
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+		if !expectedErrorRaised {
+			require.Equal(s.t, len(action.ExpectedResults), len(results))
+
+			for i, expected := range action.ExpectedResults {
+				actual := results[i].Description()
+				if expected.ID != 0 {
+					require.Equal(s.t, expected.ID, actual.ID)
+				}
+				if expected.RootID != 0 {
+					require.Equal(s.t, expected.RootID, actual.RootID)
+				}
+				if expected.SchemaVersionID != "" {
+					require.Equal(s.t, expected.SchemaVersionID, actual.SchemaVersionID)
+				}
+
+				require.Equal(s.t, expected.Name, actual.Name)
+
+				if expected.Indexes != nil || len(actual.Indexes) != 0 {
+					// Dont bother asserting this if the expected is nil and the actual is nil/empty.
+					// This is to say each test action from having to bother declaring an empty slice (if there are no indexes)
+					require.Equal(s.t, expected.Indexes, actual.Indexes)
+				}
+
+				if expected.Sources != nil || len(actual.Sources) != 0 {
+					// Dont bother asserting this if the expected is nil and the actual is nil/empty.
+					// This is to say each test action from having to bother declaring an empty slice (if there are no sources)
+					require.Equal(s.t, expected.Sources, actual.Sources)
+				}
+			}
+		}
+	}
+}
+
+func setActiveSchemaVersion(
+	s *state,
+	action SetActiveSchemaVersion,
+) {
+	for _, node := range getNodes(action.NodeID, s.nodes) {
+		err := node.SetActiveSchemaVersion(s.ctx, action.SchemaVersionID)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

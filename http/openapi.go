@@ -40,6 +40,8 @@ var openApiSchemas = map[string]any{
 	"ccip_response":         &CCIPResponse{},
 	"patch_schema_request":  &patchSchemaRequest{},
 	"add_view_request":      &addViewRequest{},
+	"migrate_request":       &migrateRequest{},
+	"set_migration_request": &setMigrationRequest{},
 }
 
 func NewOpenAPISpec() (*openapi3.T, error) {

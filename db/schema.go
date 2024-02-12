@@ -18,6 +18,7 @@ import (
 	"unicode"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
+	"github.com/lens-vm/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -81,7 +82,13 @@ func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString string, setAsDefaultVersion bool) error {
+func (db *db) patchSchema(
+	ctx context.Context,
+	txn datastore.Txn,
+	patchString string,
+	migration immutable.Option[model.Lens],
+	setAsDefaultVersion bool,
+) error {
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
 		return err
@@ -128,6 +135,7 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 			existingSchemaByName,
 			newSchemaByName,
 			schema,
+			migration,
 			setAsDefaultVersion,
 		)
 		if err != nil {

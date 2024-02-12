@@ -47,9 +47,8 @@ const (
 	COLLECTION_NAME                = "/collection/name"
 	COLLECTION_SCHEMA_VERSION      = "/collection/version"
 	COLLECTION_INDEX               = "/collection/index"
-	SCHEMA_MIGRATION               = "/schema/migration"
 	SCHEMA_VERSION                 = "/schema/version/v"
-	SCHEMA_VERSION_HISTORY         = "/schema/version/h"
+	SCHEMA_VERSION_ROOT            = "/schema/version/r"
 	SEQ                            = "/seq"
 	PRIMARY_KEY                    = "/pk"
 	DATASTORE_DOC_VERSION_FIELD_ID = "v"
@@ -66,10 +65,10 @@ type Key interface {
 
 // DataStoreKey is a type that represents a key in the database.
 type DataStoreKey struct {
-	CollectionID string
-	InstanceType InstanceType
-	DocID        string
-	FieldId      string
+	CollectionRootID uint32
+	InstanceType     InstanceType
+	DocID            string
+	FieldId          string
 }
 
 var _ Key = (*DataStoreKey)(nil)
@@ -87,8 +86,8 @@ type IndexDataStoreKey struct {
 var _ Key = (*IndexDataStoreKey)(nil)
 
 type PrimaryDataStoreKey struct {
-	CollectionId string
-	DocID        string
+	CollectionRootID uint32
+	DocID            string
 }
 
 var _ Key = (*PrimaryDataStoreKey)(nil)
@@ -150,26 +149,15 @@ type SchemaVersionKey struct {
 
 var _ Key = (*SchemaVersionKey)(nil)
 
-// SchemaHistoryKey holds the pathway through the schema version history for
-// any given schema.
+// SchemaRootKey indexes schema version ids by their root schema id.
 //
-// The key points to the schema version id of the next version of the schema.
-// If a SchemaHistoryKey does not exist for a given SchemaVersionID it means
-// that that SchemaVersionID is for the latest version.
-type SchemaHistoryKey struct {
-	SchemaRoot              string
-	PreviousSchemaVersionID string
+// The index is the key, there are no values stored against the key.
+type SchemaRootKey struct {
+	SchemaRoot      string
+	SchemaVersionID string
 }
 
-var _ Key = (*SchemaHistoryKey)(nil)
-
-// SchemaVersionMigrationKey points to the jsonified configuration of a lens migration
-// for the given source schema version id.
-type SchemaVersionMigrationKey struct {
-	SourceSchemaVersionID string
-}
-
-var _ Key = (*SchemaVersionMigrationKey)(nil)
+var _ Key = (*SchemaRootKey)(nil)
 
 type P2PCollectionKey struct {
 	CollectionID string
@@ -193,7 +181,7 @@ var _ Key = (*ReplicatorKey)(nil)
 // splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
 //
-// /[CollectionId]/[InstanceType]/[DocID]/[FieldId]
+// /[CollectionRootId]/[InstanceType]/[DocID]/[FieldId]
 //
 // Any properties before the above (assuming a '/' deliminator) are ignored
 func NewDataStoreKey(key string) (DataStoreKey, error) {
@@ -211,7 +199,12 @@ func NewDataStoreKey(key string) (DataStoreKey, error) {
 		return dataStoreKey, ErrInvalidKey
 	}
 
-	dataStoreKey.CollectionID = elements[0]
+	colRootID, err := strconv.Atoi(elements[0])
+	if err != nil {
+		return DataStoreKey{}, err
+	}
+
+	dataStoreKey.CollectionRootID = uint32(colRootID)
 	dataStoreKey.InstanceType = InstanceType(elements[1])
 	dataStoreKey.DocID = elements[2]
 	if numberOfElements == 4 {
@@ -351,27 +344,23 @@ func NewSchemaVersionKey(schemaVersionID string) SchemaVersionKey {
 	return SchemaVersionKey{SchemaVersionID: schemaVersionID}
 }
 
-func NewSchemaHistoryKey(schemaRoot string, previousSchemaVersionID string) SchemaHistoryKey {
-	return SchemaHistoryKey{
-		SchemaRoot:              schemaRoot,
-		PreviousSchemaVersionID: previousSchemaVersionID,
+func NewSchemaRootKey(schemaRoot string, schemaVersionID string) SchemaRootKey {
+	return SchemaRootKey{
+		SchemaRoot:      schemaRoot,
+		SchemaVersionID: schemaVersionID,
 	}
 }
 
-func NewSchemaVersionMigrationKey(schemaVersionID string) SchemaVersionMigrationKey {
-	return SchemaVersionMigrationKey{SourceSchemaVersionID: schemaVersionID}
-}
-
-func NewSchemaHistoryKeyFromString(keyString string) (SchemaHistoryKey, error) {
-	keyString = strings.TrimPrefix(keyString, SCHEMA_VERSION_HISTORY+"/")
+func NewSchemaRootKeyFromString(keyString string) (SchemaRootKey, error) {
+	keyString = strings.TrimPrefix(keyString, SCHEMA_VERSION_ROOT+"/")
 	elements := strings.Split(keyString, "/")
 	if len(elements) != 2 {
-		return SchemaHistoryKey{}, ErrInvalidKey
+		return SchemaRootKey{}, ErrInvalidKey
 	}
 
-	return SchemaHistoryKey{
-		SchemaRoot:              elements[0],
-		PreviousSchemaVersionID: elements[1],
+	return SchemaRootKey{
+		SchemaRoot:      elements[0],
+		SchemaVersionID: elements[1],
 	}, nil
 }
 
@@ -445,8 +434,8 @@ func (k HeadStoreKey) WithFieldId(fieldId string) HeadStoreKey {
 func (k DataStoreKey) ToString() string {
 	var result string
 
-	if k.CollectionID != "" {
-		result = result + "/" + k.CollectionID
+	if k.CollectionRootID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.CollectionRootID))
 	}
 	if k.InstanceType != "" {
 		result = result + "/" + string(k.InstanceType)
@@ -470,7 +459,7 @@ func (k DataStoreKey) ToDS() ds.Key {
 }
 
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
-	return k.CollectionID == other.CollectionID &&
+	return k.CollectionRootID == other.CollectionRootID &&
 		k.DocID == other.DocID &&
 		k.FieldId == other.FieldId &&
 		k.InstanceType == other.InstanceType
@@ -478,8 +467,8 @@ func (k DataStoreKey) Equal(other DataStoreKey) bool {
 
 func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	return PrimaryDataStoreKey{
-		CollectionId: k.CollectionID,
-		DocID:        k.DocID,
+		CollectionRootID: k.CollectionRootID,
+		DocID:            k.DocID,
 	}
 }
 
@@ -588,8 +577,8 @@ func (k IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
-		CollectionID: k.CollectionId,
-		DocID:        k.DocID,
+		CollectionRootID: k.CollectionRootID,
+		DocID:            k.DocID,
 	}
 }
 
@@ -604,8 +593,8 @@ func (k PrimaryDataStoreKey) ToDS() ds.Key {
 func (k PrimaryDataStoreKey) ToString() string {
 	result := ""
 
-	if k.CollectionId != "" {
-		result = result + "/" + k.CollectionId
+	if k.CollectionRootID != 0 {
+		result = result + "/" + fmt.Sprint(k.CollectionRootID)
 	}
 	result = result + PRIMARY_KEY
 	if k.DocID != "" {
@@ -679,43 +668,25 @@ func (k SchemaVersionKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-func (k SchemaHistoryKey) ToString() string {
-	result := SCHEMA_VERSION_HISTORY
+func (k SchemaRootKey) ToString() string {
+	result := SCHEMA_VERSION_ROOT
 
 	if k.SchemaRoot != "" {
 		result = result + "/" + k.SchemaRoot
 	}
 
-	if k.PreviousSchemaVersionID != "" {
-		result = result + "/" + k.PreviousSchemaVersionID
+	if k.SchemaVersionID != "" {
+		result = result + "/" + k.SchemaVersionID
 	}
 
 	return result
 }
 
-func (k SchemaHistoryKey) Bytes() []byte {
+func (k SchemaRootKey) Bytes() []byte {
 	return []byte(k.ToString())
 }
 
-func (k SchemaHistoryKey) ToDS() ds.Key {
-	return ds.NewKey(k.ToString())
-}
-
-func (k SchemaVersionMigrationKey) ToString() string {
-	result := SCHEMA_MIGRATION
-
-	if k.SourceSchemaVersionID != "" {
-		result = result + "/" + k.SourceSchemaVersionID
-	}
-
-	return result
-}
-
-func (k SchemaVersionMigrationKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
-func (k SchemaVersionMigrationKey) ToDS() ds.Key {
+func (k SchemaRootKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
@@ -832,10 +803,11 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 		newKey.InstanceType = InstanceType(bytesPrefixEnd([]byte(k.InstanceType)))
 		return newKey
 	}
-	if k.CollectionID != "" {
-		newKey.CollectionID = string(bytesPrefixEnd([]byte(k.CollectionID)))
+	if k.CollectionRootID != 0 {
+		newKey.CollectionRootID = k.CollectionRootID + 1
 		return newKey
 	}
+
 	return newKey
 }
 

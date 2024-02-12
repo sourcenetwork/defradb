@@ -13,6 +13,9 @@ package db
 import (
 	"context"
 
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 )
@@ -160,19 +163,19 @@ func (db *explicitTxnDB) GetCollectionsByVersionID(
 }
 
 // GetAllCollections gets all the currently defined collections.
-func (db *implicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
+func (db *implicitTxnDB) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	return db.getAllCollections(ctx, txn)
+	return db.getAllCollections(ctx, txn, getInactive)
 }
 
 // GetAllCollections gets all the currently defined collections.
-func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
-	return db.getAllCollections(ctx, db.txn)
+func (db *explicitTxnDB) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
+	return db.getAllCollections(ctx, db.txn, getInactive)
 }
 
 // GetSchemasByName returns the all schema versions with the given name.
@@ -310,14 +313,19 @@ func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) ([]
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string, setAsDefaultVersion bool) error {
+func (db *implicitTxnDB) PatchSchema(
+	ctx context.Context,
+	patchString string,
+	migration immutable.Option[model.Lens],
+	setAsDefaultVersion bool,
+) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = db.patchSchema(ctx, txn, patchString, setAsDefaultVersion)
+	err = db.patchSchema(ctx, txn, patchString, migration, setAsDefaultVersion)
 	if err != nil {
 		return err
 	}
@@ -336,18 +344,23 @@ func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string, se
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string, setAsDefaultVersion bool) error {
-	return db.patchSchema(ctx, db.txn, patchString, setAsDefaultVersion)
+func (db *explicitTxnDB) PatchSchema(
+	ctx context.Context,
+	patchString string,
+	migration immutable.Option[model.Lens],
+	setAsDefaultVersion bool,
+) error {
+	return db.patchSchema(ctx, db.txn, patchString, migration, setAsDefaultVersion)
 }
 
-func (db *implicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
+func (db *implicitTxnDB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard(ctx)
 
-	err = db.setDefaultSchemaVersion(ctx, txn, schemaVersionID)
+	err = db.setActiveSchemaVersion(ctx, txn, schemaVersionID)
 	if err != nil {
 		return err
 	}
@@ -355,8 +368,8 @@ func (db *implicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVers
 	return txn.Commit(ctx)
 }
 
-func (db *explicitTxnDB) SetDefaultSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	return db.setDefaultSchemaVersion(ctx, db.txn, schemaVersionID)
+func (db *explicitTxnDB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	return db.setActiveSchemaVersion(ctx, db.txn, schemaVersionID)
 }
 
 func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
@@ -366,7 +379,7 @@ func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig
 	}
 	defer txn.Discard(ctx)
 
-	err = db.lensRegistry.SetMigration(ctx, cfg)
+	err = db.setMigration(ctx, txn, cfg)
 	if err != nil {
 		return err
 	}
@@ -375,7 +388,7 @@ func (db *implicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig
 }
 
 func (db *explicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
-	return db.lensRegistry.SetMigration(ctx, cfg)
+	return db.setMigration(ctx, db.txn, cfg)
 }
 
 func (db *implicitTxnDB) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {

@@ -131,7 +131,7 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 		return key
 	}
 
-	cols, err := b.f.db.getAllCollections(b.f.ctx, b.f.txn)
+	cols, err := b.f.db.getAllCollections(b.f.ctx, b.f.txn, false)
 	require.NoError(b.f.t, err)
 	var collection client.Collection
 	for _, col := range cols {
@@ -641,7 +641,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	f.saveDocToCollection(doc, f.users)
 
 	fieldKeyString := core.DataStoreKey{
-		CollectionID: f.users.Description().IDString(),
+		CollectionRootID: f.users.Description().RootID,
 	}.WithDocID(doc.ID().String()).
 		WithFieldId("1").
 		WithValueFlag().
