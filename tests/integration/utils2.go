@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/bxcodec/faker/support/slice"
+	"github.com/fxamacker/cbor/v2"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -1952,4 +1953,12 @@ func MustParseTime(timeString string) time.Time {
 		panic(err)
 	}
 	return t
+}
+
+func CBORValue(value any) []byte {
+	enc, err := cbor.Marshal(value)
+	if err != nil {
+		panic(err)
+	}
+	return enc
 }

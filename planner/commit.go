@@ -346,7 +346,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, request.DeltaArgData)
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta[request.DeltaArgData])
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
 
