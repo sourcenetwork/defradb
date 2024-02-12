@@ -43,10 +43,9 @@ require (
 	github.com/ugorji/go/codec v1.2.12
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.0.0
-	go.opentelemetry.io/otel/metric v1.22.0
-	go.opentelemetry.io/otel/sdk/metric v1.22.0
+	go.opentelemetry.io/otel/metric v1.23.1
+	go.opentelemetry.io/otel/sdk/metric v1.23.1
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.18.0
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc
 	golang.org/x/net v0.20.0
 	google.golang.org/grpc v1.61.0
@@ -175,13 +174,14 @@ require (
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/otel v1.22.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.22.0 // indirect
-	go.opentelemetry.io/otel/trace v1.22.0 // indirect
+	go.opentelemetry.io/otel v1.23.1 // indirect
+	go.opentelemetry.io/otel/sdk v1.23.1 // indirect
+	go.opentelemetry.io/otel/trace v1.23.1 // indirect
 	go.uber.org/dig v1.17.1 // indirect
 	go.uber.org/fx v1.20.1 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
