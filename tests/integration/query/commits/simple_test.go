@@ -351,7 +351,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 					{
 						"cid":          "bafybeiddpjl27ulw2yo4ohup6gr2wob3pwagqw2rbeaxxodv4ljelnu7ve",
 						"collectionID": int64(1),
-						"delta":        []uint8([]byte{0x16}),
+						"delta":        testUtils.CBORValue(22),
 						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 						"fieldId":      "1",
 						"fieldName":    "age",
@@ -366,7 +366,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 					{
 						"cid":          "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
 						"collectionID": int64(1),
-						"delta":        []uint8([]byte{0x15}),
+						"delta":        testUtils.CBORValue(21),
 						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 						"fieldId":      "1",
 						"fieldName":    "age",
@@ -376,7 +376,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 					{
 						"cid":          "bafybeiehcr3diremeja2ndk2osux647v5fc7s353h7pbvrnsagw4paugku",
 						"collectionID": int64(1),
-						"delta":        []uint8([]byte{0x64, 0x4a, 0x6f, 0x68, 0x6e}),
+						"delta":        testUtils.CBORValue("John"),
 						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
 						"fieldId":      "2",
 						"fieldName":    "name",
