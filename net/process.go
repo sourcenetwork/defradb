@@ -151,7 +151,7 @@ func initCRDTForType(
 
 	fd, ok := col.Schema().GetField(field)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, dsKey))
+		return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, dsKey.ToString()))
 	}
 	ctype = fd.Typ
 	fieldID := fd.ID.String()

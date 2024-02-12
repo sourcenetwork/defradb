@@ -76,27 +76,21 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[field.Name] = field
 	}
 
-	cfg, err := f.registry.Config(ctx)
-	if err != nil {
-		return err
-	}
-
-	history, err := getTargetedSchemaHistory(ctx, txn, cfg, f.col.Schema().Root, f.col.Schema().VersionID)
+	history, err := getTargetedSchemaHistory(ctx, txn, f.col.Schema().Root, f.col.Schema().VersionID)
 	if err != nil {
 		return err
 	}
 	f.lens = new(ctx, f.registry, f.col.Schema().VersionID, history)
 	f.txn = txn
 
-	for schemaVersionID := range history {
-		hasMigration, err := f.registry.HasMigration(ctx, schemaVersionID)
-		if err != nil {
-			return err
-		}
-
-		if hasMigration {
-			f.hasMigrations = true
-			break
+historyLoop:
+	for _, historyItem := range history {
+		sources := historyItem.collection.CollectionSources()
+		for _, source := range sources {
+			if source.Transform.HasValue() {
+				f.hasMigrations = true
+				break historyLoop
+			}
 		}
 	}
 
@@ -283,9 +277,9 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 	}
 
 	datastoreKeyBase := core.DataStoreKey{
-		CollectionID: f.col.Description().IDString(),
-		DocID:        docID,
-		InstanceType: core.ValueKey,
+		CollectionRootID: f.col.Description().RootID,
+		DocID:            docID,
+		InstanceType:     core.ValueKey,
 	}
 
 	for fieldName, value := range modifiedFieldValuesByName {

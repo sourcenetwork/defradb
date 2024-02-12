@@ -13,11 +13,21 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
+
+// CollectionDescription with no known root will take this ID as their temporary RootID.
+//
+// Orphan CollectionDescriptions are typically created when setting migrations from schema versions
+// that do not yet exist.  The OrphanRootID will be replaced with the actual RootID once a full chain
+// of schema versions leading back to a schema version used by a collection with a non-orphan RootID
+// has been established.
+const OrphanRootID uint32 = math.MaxUint32
 
 // CollectionDescription describes a Collection and all its associated metadata.
 type CollectionDescription struct {
@@ -32,6 +42,14 @@ type CollectionDescription struct {
 	// It is immutable.
 	ID uint32
 
+	// RootID is the local root identifier of this collection, linking together a chain of
+	// collection instances on different schema versions.
+	//
+	// Collections sharing the same RootID will be compatable with each other, with the documents
+	// within them shared and yielded as if they were in the same set, using Lens transforms to
+	// migrate between schema versions when provided.
+	RootID uint32
+
 	// The ID of the schema version that this collection is at.
 	SchemaVersionID string
 
@@ -39,6 +57,7 @@ type CollectionDescription struct {
 	//
 	// Currently supported source types are:
 	// - [QuerySource]
+	// - [CollectionSource]
 	Sources []any
 
 	// Indexes contains the secondary indexes that this Collection has.
@@ -94,6 +113,11 @@ func (col CollectionDescription) QuerySources() []*QuerySource {
 	return sourcesOfType[*QuerySource](col)
 }
 
+// CollectionSources returns all the Sources of type [CollectionSource]
+func (col CollectionDescription) CollectionSources() []*CollectionSource {
+	return sourcesOfType[*CollectionSource](col)
+}
+
 func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
 	result := []ResultType{}
 	for _, source := range col.Sources {
@@ -111,6 +135,28 @@ func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
 type QuerySource struct {
 	// Query contains the base query of this data source.
 	Query request.Select
+}
+
+// CollectionSource represents a collection data source from another collection instance.
+//
+// Data against all collection instances in a CollectionSource chain will be returned as-if
+// from the same dataset when queried.  Lens transforms may be applied between instances.
+//
+// Typically these are used to link together multiple schema versions into the same dataset.
+type CollectionSource struct {
+	// SourceCollectionID is the local identifier of the source [CollectionDescription] from which to
+	// share data.
+	//
+	// This is a bi-directional relationship, and documents in the host collection instance will also
+	// be available to the source collection instance.
+	SourceCollectionID uint32
+
+	// Transform is a optional Lens configuration.  If specified, data drawn from the source will have the
+	// transform applied before being returned by any operation on the host collection instance.
+	//
+	// If the transform supports an inverse operation, that inverse will be applied when the source collection
+	// draws data from this host.
+	Transform immutable.Option[model.Lens]
 }
 
 // SchemaDescription describes a Schema and its associated metadata.
@@ -336,6 +382,7 @@ type collectionDescription struct {
 	// These properties are unmarshalled using the default json unmarshaller
 	Name            immutable.Option[string]
 	ID              uint32
+	RootID          uint32
 	SchemaVersionID string
 	Indexes         []IndexDescription
 
@@ -352,6 +399,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 
 	c.Name = descMap.Name
 	c.ID = descMap.ID
+	c.RootID = descMap.RootID
 	c.SchemaVersionID = descMap.SchemaVersionID
 	c.Indexes = descMap.Indexes
 	c.Sources = make([]any, len(descMap.Sources))
@@ -376,6 +424,14 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 				return err
 			}
 			sourceValue = &querySource
+		} else if _, ok := source["SourceCollectionID"]; ok {
+			// This must be a CollectionSource, as only the `CollectionSource` type has a `SourceCollectionID` field
+			var collectionSource CollectionSource
+			err := json.Unmarshal(sourceJson, &collectionSource)
+			if err != nil {
+				return err
+			}
+			sourceValue = &collectionSource
 		} else {
 			return ErrFailedToUnmarshalCollection
 		}

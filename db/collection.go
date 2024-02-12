@@ -21,6 +21,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -115,6 +116,7 @@ func (db *db) createCollection(
 		return nil, err
 	}
 	desc.ID = uint32(colID)
+	desc.RootID = desc.ID
 
 	schema, err = description.CreateSchemaVersion(ctx, txn, schema)
 	if err != nil {
@@ -151,7 +153,8 @@ func (db *db) updateSchema(
 	existingSchemaByName map[string]client.SchemaDescription,
 	proposedDescriptionsByName map[string]client.SchemaDescription,
 	schema client.SchemaDescription,
-	setAsDefaultVersion bool,
+	migration immutable.Option[model.Lens],
+	setAsActiveVersion bool,
 ) error {
 	hasChanged, err := db.validateUpdateSchema(
 		ctx,
@@ -195,31 +198,92 @@ func (db *db) updateSchema(
 		return err
 	}
 
-	if setAsDefaultVersion {
-		cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, previousVersionID)
+	// After creating the new schema version, we need to create new collection versions for
+	// any collection using the previous version.  These will be inactive unless [setAsActiveVersion]
+	// is true.
+
+	cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, previousVersionID)
+	if err != nil {
+		return err
+	}
+
+	colSeq, err := db.getSequence(ctx, txn, core.COLLECTION)
+	if err != nil {
+		return err
+	}
+
+	for _, col := range cols {
+		previousID := col.ID
+
+		existingCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schema.VersionID)
 		if err != nil {
 			return err
 		}
 
-		for _, col := range cols {
-			if !col.Name.HasValue() {
-				// Nameless collections cannot be made default as they cannot be queried without a name.
-				// Note: The `setAsDefaultVersion` block will need a re-write when collections become immutable
-				// and the schema version stuff gets tracked by [CollectionDescription.Sources] instead.
-				continue
+		// The collection version may exist before the schema version was created locally.  This is
+		// because migrations for the globally known schema version may have been registered locally
+		// (typically to handle documents synced over P2P at higher versions) before the local schema
+		// was updated.  We need to check for them now, and update them instead of creating new ones
+		// if they exist.
+		var isExistingCol bool
+	existingColLoop:
+		for _, existingCol := range existingCols {
+			sources := existingCol.CollectionSources()
+			for _, source := range sources {
+				// Make sure that this collection is the parent of the current [col], and not part of
+				// another collection set that happens to be using the same schema.
+				if source.SourceCollectionID == previousID {
+					if existingCol.RootID == client.OrphanRootID {
+						existingCol.RootID = col.RootID
+						existingCol, err = description.SaveCollection(ctx, txn, existingCol)
+						if err != nil {
+							return err
+						}
+					}
+					isExistingCol = true
+					break existingColLoop
+				}
+			}
+		}
+
+		if !isExistingCol {
+			colID, err := colSeq.next(ctx, txn)
+			if err != nil {
+				return err
 			}
 
+			// Create any new collections without a name (inactive), if [setAsActiveVersion] is true
+			// they will be activated later along with any existing collection versions.
+			col.Name = immutable.None[string]()
+			col.ID = uint32(colID)
 			col.SchemaVersionID = schema.VersionID
+			col.Sources = []any{
+				&client.CollectionSource{
+					SourceCollectionID: previousID,
+					Transform:          migration,
+				},
+			}
 
-			col, err = description.SaveCollection(ctx, txn, col)
+			_, err = description.SaveCollection(ctx, txn, col)
 			if err != nil {
 				return err
 			}
 
-			err = db.setDefaultSchemaVersionExplicit(ctx, txn, col.Name.Value(), schema.VersionID)
-			if err != nil {
-				return err
+			if migration.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, col.ID, migration.Value())
+				if err != nil {
+					return err
+				}
 			}
+		}
+	}
+
+	if setAsActiveVersion {
+		// activate collection versions using the new schema ID.  This call must be made after
+		// all new collection versions have been saved.
+		err = db.setActiveSchemaVersion(ctx, txn, schema.VersionID)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -397,13 +461,25 @@ func validateUpdateSchemaFields(
 	return hasChanged, nil
 }
 
-func (db *db) setDefaultSchemaVersion(
+// SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
+// those without it (if they share the same schema root).
+//
+// This will affect all operations interacting with the schema where a schema version is not explicitly
+// provided.  This includes GQL queries and Collection operations.
+//
+// It will return an error if the provided schema version ID does not exist.
+func (db *db) setActiveSchemaVersion(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaVersionID string,
 ) error {
 	if schemaVersionID == "" {
 		return ErrSchemaVersionIDEmpty
+	}
+
+	cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schemaVersionID)
+	if err != nil {
+		return err
 	}
 
 	schema, err := description.GetSchemaVersion(ctx, txn, schemaVersionID)
@@ -411,41 +487,126 @@ func (db *db) setDefaultSchemaVersion(
 		return err
 	}
 
-	colDescs, err := description.GetCollectionsBySchemaRoot(ctx, txn, schema.Root)
+	colsWithRoot, err := description.GetCollectionsBySchemaRoot(ctx, txn, schema.Root)
 	if err != nil {
 		return err
 	}
 
-	for _, col := range colDescs {
-		col.SchemaVersionID = schemaVersionID
-		col, err = description.SaveCollection(ctx, txn, col)
-		if err != nil {
-			return err
+	colsBySourceID := map[uint32][]client.CollectionDescription{}
+	colsByID := make(map[uint32]client.CollectionDescription, len(colsWithRoot))
+	for _, col := range colsWithRoot {
+		colsByID[col.ID] = col
+
+		sources := col.CollectionSources()
+		if len(sources) > 0 {
+			// For now, we assume that each collection can only have a single source.  This will likely need
+			// to change later.
+			slice := colsBySourceID[sources[0].SourceCollectionID]
+			slice = append(slice, col)
+			colsBySourceID[sources[0].SourceCollectionID] = slice
 		}
 	}
 
+	for _, col := range cols {
+		if col.Name.HasValue() {
+			// The collection is already active, so we can skip it and continue
+			continue
+		}
+		sources := col.CollectionSources()
+
+		var activeCol client.CollectionDescription
+		var rootCol client.CollectionDescription
+		var isActiveFound bool
+		if len(sources) > 0 {
+			// For now, we assume that each collection can only have a single source.  This will likely need
+			// to change later.
+			activeCol, rootCol, isActiveFound = db.getActiveCollectionDown(ctx, txn, colsByID, sources[0].SourceCollectionID)
+		}
+		if !isActiveFound {
+			// We need to look both down and up for the active version - the most recent is not nessecarily the active one.
+			activeCol, isActiveFound = db.getActiveCollectionUp(ctx, txn, colsBySourceID, rootCol.ID)
+		}
+
+		var newName string
+		if isActiveFound {
+			newName = activeCol.Name.Value()
+		} else {
+			// If there are no active versions in the collection set, take the name of the schema to be the name of the
+			// collection.
+			newName = schema.Name
+		}
+		col.Name = immutable.Some(newName)
+
+		_, err = description.SaveCollection(ctx, txn, col)
+		if err != nil {
+			return err
+		}
+
+		if isActiveFound {
+			// Deactivate the currently active collection by setting its name to none.
+			activeCol.Name = immutable.None[string]()
+			_, err = description.SaveCollection(ctx, txn, activeCol)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Load the schema into the clients (e.g. GQL)
 	return db.loadSchema(ctx, txn)
 }
 
-func (db *db) setDefaultSchemaVersionExplicit(
+func (db *db) getActiveCollectionDown(
 	ctx context.Context,
 	txn datastore.Txn,
-	collectionName string,
-	schemaVersionID string,
-) error {
-	if schemaVersionID == "" {
-		return ErrSchemaVersionIDEmpty
+	colsByID map[uint32]client.CollectionDescription,
+	id uint32,
+) (client.CollectionDescription, client.CollectionDescription, bool) {
+	col, ok := colsByID[id]
+	if !ok {
+		return client.CollectionDescription{}, client.CollectionDescription{}, false
 	}
 
-	col, err := description.GetCollectionByName(ctx, txn, collectionName)
-	if err != nil {
-		return err
+	if col.Name.HasValue() {
+		return col, client.CollectionDescription{}, true
 	}
 
-	col.SchemaVersionID = schemaVersionID
+	sources := col.CollectionSources()
+	if len(sources) == 0 {
+		// If a collection has zero sources it is likely the initial collection version, or
+		// this collection set is currently orphaned (can happen when setting migrations that
+		// do not yet link all the way back to a non-orphaned set)
+		return client.CollectionDescription{}, col, false
+	}
 
-	_, err = description.SaveCollection(ctx, txn, col)
-	return err
+	// For now, we assume that each collection can only have a single source.  This will likely need
+	// to change later.
+	return db.getActiveCollectionDown(ctx, txn, colsByID, sources[0].SourceCollectionID)
+}
+
+func (db *db) getActiveCollectionUp(
+	ctx context.Context,
+	txn datastore.Txn,
+	colsBySourceID map[uint32][]client.CollectionDescription,
+	id uint32,
+) (client.CollectionDescription, bool) {
+	cols, ok := colsBySourceID[id]
+	if !ok {
+		// We have reached the top of the set, and have not found an active collection
+		return client.CollectionDescription{}, false
+	}
+
+	for _, col := range cols {
+		if col.Name.HasValue() {
+			return col, true
+		}
+		activeCol, isFound := db.getActiveCollectionUp(ctx, txn, colsBySourceID, col.ID)
+		if isFound {
+			return activeCol, isFound
+		}
+	}
+
+	return client.CollectionDescription{}, false
 }
 
 // getCollectionsByVersionId returns the [*collection]s at the given [schemaVersionId] version.
@@ -543,7 +704,11 @@ func (db *db) getCollectionsBySchemaRoot(
 	for i, col := range cols {
 		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
 		if err != nil {
-			return nil, err
+			// If the schema is not found we leave it as empty and carry on. This can happen when
+			// a migration is registered before the schema is declared locally.
+			if !errors.Is(err, ds.ErrNotFound) {
+				return nil, err
+			}
 		}
 
 		collection := db.newCollection(col, schema)
@@ -558,18 +723,37 @@ func (db *db) getCollectionsBySchemaRoot(
 	return collections, nil
 }
 
-// getAllCollections gets all the currently defined collections.
-func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn) ([]client.Collection, error) {
-	cols, err := description.GetCollections(ctx, txn)
-	if err != nil {
-		return nil, err
+// getAllCollections returns all collections and their descriptions that currently exist within
+// this [Store].
+//
+// If `true` is provided, the results will include inactive collections.  If `false`, only active collections
+// will be returned.
+func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn, getInactive bool) ([]client.Collection, error) {
+	var cols []client.CollectionDescription
+
+	if getInactive {
+		var err error
+		cols, err = description.GetCollections(ctx, txn)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		var err error
+		cols, err = description.GetActiveCollections(ctx, txn)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	collections := make([]client.Collection, len(cols))
 	for i, col := range cols {
 		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
 		if err != nil {
-			return nil, err
+			// If the schema is not found we leave it as empty and carry on. This can happen when
+			// a migration is registered before the schema is declared locally.
+			if !errors.Is(err, ds.ErrNotFound) {
+				return nil, err
+			}
 		}
 
 		collection := db.newCollection(col, schema)
@@ -586,7 +770,7 @@ func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn) ([]clien
 
 // getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
 func (db *db) getAllActiveDefinitions(ctx context.Context, txn datastore.Txn) ([]client.CollectionDefinition, error) {
-	cols, err := description.GetCollections(ctx, txn)
+	cols, err := description.GetActiveCollections(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -643,7 +827,7 @@ func (c *collection) getAllDocIDsChan(
 	txn datastore.Txn,
 ) (<-chan client.DocIDResult, error) {
 	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
-		CollectionId: fmt.Sprint(c.ID()),
+		CollectionRootID: c.Description().RootID,
 	}
 	q, err := txn.Datastore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
@@ -1236,16 +1420,16 @@ func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) e
 
 func (c *collection) getPrimaryKeyFromDocID(docID client.DocID) core.PrimaryDataStoreKey {
 	return core.PrimaryDataStoreKey{
-		CollectionId: fmt.Sprint(c.ID()),
-		DocID:        docID.String(),
+		CollectionRootID: c.Description().RootID,
+		DocID:            docID.String(),
 	}
 }
 
 func (c *collection) getDataStoreKeyFromDocID(docID client.DocID) core.DataStoreKey {
 	return core.DataStoreKey{
-		CollectionID: fmt.Sprint(c.ID()),
-		DocID:        docID.String(),
-		InstanceType: core.ValueKey,
+		CollectionRootID: c.Description().RootID,
+		DocID:            docID.String(),
+		InstanceType:     core.ValueKey,
 	}
 }
 
@@ -1256,9 +1440,9 @@ func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldNa
 	}
 
 	return core.DataStoreKey{
-		CollectionID: primaryKey.CollectionId,
-		DocID:        primaryKey.DocID,
-		FieldId:      strconv.FormatUint(uint64(fieldId), 10),
+		CollectionRootID: c.Description().RootID,
+		DocID:            primaryKey.DocID,
+		FieldId:          strconv.FormatUint(uint64(fieldId), 10),
 	}, true
 }
 

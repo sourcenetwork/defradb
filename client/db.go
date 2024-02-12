@@ -14,6 +14,8 @@ import (
 	"context"
 
 	blockstore "github.com/ipfs/boxo/blockstore"
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
@@ -98,8 +100,10 @@ type Store interface {
 	AddSchema(context.Context, string) ([]CollectionDescription, error)
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
-	// present in the database. If true is provided, the new schema versions will be made default, otherwise
-	// [SetDefaultSchemaVersion] should be called to set them so.
+	// present in the database.
+	//
+	// If true is provided, the new schema versions will be made active and previous versions deactivated, otherwise
+	// [SetActiveSchemaVersion] should be called to do so.
 	//
 	// It will also update the GQL types used by the query system. It will error and not apply any of the
 	// requested, valid updates should the net result of the patch result in an invalid state.  The
@@ -112,16 +116,18 @@ type Store interface {
 	//
 	// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
 	// [FieldKindStringToEnumMapping].
-	PatchSchema(context.Context, string, bool) error
+	//
+	// A lens configuration may also be provided, it will be added to all collections using the schema.
+	PatchSchema(context.Context, string, immutable.Option[model.Lens], bool) error
 
-	// SetDefaultSchemaVersion sets the default schema version to the ID provided.  It will be applied to all
-	// collections using the schema.
+	// SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
+	// those without it (if they share the same schema root).
 	//
 	// This will affect all operations interacting with the schema where a schema version is not explicitly
 	// provided.  This includes GQL queries and Collection operations.
 	//
 	// It will return an error if the provided schema version ID does not exist.
-	SetDefaultSchemaVersion(context.Context, string) error
+	SetActiveSchemaVersion(context.Context, string) error
 
 	// AddView creates a new Defra View.
 	//
@@ -151,10 +157,9 @@ type Store interface {
 	// will be returned.  This function does not execute the given query.
 	AddView(ctx context.Context, gqlQuery string, sdl string) ([]CollectionDefinition, error)
 
-	// SetMigration sets the migration for the given source-destination schema version IDs. Is equivalent to
-	// calling `LensRegistry().SetMigration(ctx, cfg)`.
+	// SetMigration sets the migration for all collections using the given source-destination schema version IDs.
 	//
-	// There may only be one migration per schema version id.  If another migration was registered it will be
+	// There may only be one migration per collection version.  If another migration was registered it will be
 	// overwritten by this migration.
 	//
 	// Neither of the schema version IDs specified in the configuration need to exist at the time of calling.
@@ -185,9 +190,12 @@ type Store interface {
 	// If no matching collections are found an empty set will be returned.
 	GetCollectionsByVersionID(context.Context, string) ([]Collection, error)
 
-	// GetAllCollections returns all the collections and their descriptions that currently exist within
+	// GetAllCollections returns all collections and their descriptions that currently exist within
 	// this [Store].
-	GetAllCollections(context.Context) ([]Collection, error)
+	//
+	// If `true` is provided, the results will include inactive collections.  If `false`, only active collections
+	// will be returned.
+	GetAllCollections(context.Context, bool) ([]Collection, error)
 
 	// GetSchemasByName returns the all schema versions with the given name.
 	GetSchemasByName(context.Context, string) ([]SchemaDescription, error)

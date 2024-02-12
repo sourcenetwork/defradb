@@ -11,6 +11,7 @@
 package core
 
 import (
+	"fmt"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -34,10 +35,10 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocIDAndFieldIdAndInsta
 	t *testing.T,
 ) {
 	instanceType := "anyType"
-	fieldId := "f1"
+	fieldID := "f1"
 	docID := "docID"
-	collectionId := "1"
-	inputString := collectionId + "/" + instanceType + "/" + docID + "/" + fieldId
+	var collectionRootID uint32 = 2
+	inputString := fmt.Sprintf("%v/%s/%s/%s", collectionRootID, instanceType, docID, fieldID)
 
 	result, err := NewDataStoreKey(inputString)
 	if err != nil {
@@ -48,12 +49,12 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocIDAndFieldIdAndInsta
 	assert.Equal(
 		t,
 		DataStoreKey{
-			CollectionID: collectionId,
-			DocID:        docID,
-			FieldId:      fieldId,
-			InstanceType: InstanceType(instanceType)},
+			CollectionRootID: collectionRootID,
+			DocID:            docID,
+			FieldId:          fieldID,
+			InstanceType:     InstanceType(instanceType)},
 		result)
-	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docID+"/"+fieldId, resultString)
+	assert.Equal(t, fmt.Sprintf("/%v/%s/%s/%s", collectionRootID, instanceType, docID, fieldID), resultString)
 }
 
 func TestNewDataStoreKey_ReturnsEmptyStruct_GivenAStringWithMissingElements(t *testing.T) {
@@ -67,8 +68,8 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenAStringWithMissingElements(t *t
 func TestNewDataStoreKey_GivenAShortObjectMarker(t *testing.T) {
 	instanceType := "anyType"
 	docID := "docID"
-	collectionId := "1"
-	inputString := collectionId + "/" + instanceType + "/" + docID
+	var collectionRootID uint32 = 2
+	inputString := fmt.Sprintf("%v/%s/%s", collectionRootID, instanceType, docID)
 
 	result, err := NewDataStoreKey(inputString)
 	if err != nil {
@@ -79,11 +80,11 @@ func TestNewDataStoreKey_GivenAShortObjectMarker(t *testing.T) {
 	assert.Equal(
 		t,
 		DataStoreKey{
-			CollectionID: collectionId,
-			DocID:        docID,
-			InstanceType: InstanceType(instanceType)},
+			CollectionRootID: collectionRootID,
+			DocID:            docID,
+			InstanceType:     InstanceType(instanceType)},
 		result)
-	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docID, resultString)
+	assert.Equal(t, fmt.Sprintf("/%v/%s/%s", collectionRootID, instanceType, docID), resultString)
 }
 
 func TestNewDataStoreKey_GivenAStringWithExtraPrefixes(t *testing.T) {

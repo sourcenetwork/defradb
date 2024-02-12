@@ -14,8 +14,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -34,10 +36,18 @@ func (c *LensRegistry) WithTxn(tx datastore.Txn) client.LensRegistry {
 	return &LensRegistry{http}
 }
 
-func (c *LensRegistry) SetMigration(ctx context.Context, config client.LensConfig) error {
-	methodURL := c.http.baseURL.JoinPath("lens")
+type setMigrationRequest struct {
+	CollectionID uint32
+	Config       model.Lens
+}
 
-	body, err := json.Marshal(config)
+func (c *LensRegistry) SetMigration(ctx context.Context, collectionID uint32, config model.Lens) error {
+	methodURL := c.http.baseURL.JoinPath("lens", "registry")
+
+	body, err := json.Marshal(setMigrationRequest{
+		CollectionID: collectionID,
+		Config:       config,
+	})
 	if err != nil {
 		return err
 	}
@@ -50,7 +60,7 @@ func (c *LensRegistry) SetMigration(ctx context.Context, config client.LensConfi
 }
 
 func (c *LensRegistry) ReloadLenses(ctx context.Context) error {
-	methodURL := c.http.baseURL.JoinPath("lens", "reload")
+	methodURL := c.http.baseURL.JoinPath("lens", "registry", "reload")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
 	if err != nil {
@@ -60,12 +70,17 @@ func (c *LensRegistry) ReloadLenses(ctx context.Context) error {
 	return err
 }
 
+type migrateRequest struct {
+	CollectionID uint32
+	Data         []map[string]any
+}
+
 func (c *LensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
-	methodURL := c.http.baseURL.JoinPath("lens", schemaVersionID, "up")
+	methodURL := c.http.baseURL.JoinPath("lens", "registry", fmt.Sprint(collectionID), "up")
 
 	var data []map[string]any
 	err := enumerable.ForEach(src, func(item map[string]any) {
@@ -74,7 +89,13 @@ func (c *LensRegistry) MigrateUp(
 	if err != nil {
 		return nil, err
 	}
-	body, err := json.Marshal(data)
+
+	request := migrateRequest{
+		CollectionID: collectionID,
+		Data:         data,
+	}
+
+	body, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
@@ -92,9 +113,9 @@ func (c *LensRegistry) MigrateUp(
 func (c *LensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
-	methodURL := c.http.baseURL.JoinPath("lens", schemaVersionID, "down")
+	methodURL := c.http.baseURL.JoinPath("lens", "registry", fmt.Sprint(collectionID), "down")
 
 	var data []map[string]any
 	err := enumerable.ForEach(src, func(item map[string]any) {
@@ -103,7 +124,13 @@ func (c *LensRegistry) MigrateDown(
 	if err != nil {
 		return nil, err
 	}
-	body, err := json.Marshal(data)
+
+	request := migrateRequest{
+		CollectionID: collectionID,
+		Data:         data,
+	}
+
+	body, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
@@ -116,32 +143,4 @@ func (c *LensRegistry) MigrateDown(
 		return nil, err
 	}
 	return enumerable.New(result), nil
-}
-
-func (c *LensRegistry) Config(ctx context.Context) ([]client.LensConfig, error) {
-	methodURL := c.http.baseURL.JoinPath("lens")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var cfgs []client.LensConfig
-	if err := c.http.requestJson(req, &cfgs); err != nil {
-		return nil, err
-	}
-	return cfgs, nil
-}
-
-func (c *LensRegistry) HasMigration(ctx context.Context, schemaVersionID string) (bool, error) {
-	methodURL := c.http.baseURL.JoinPath("lens", schemaVersionID)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return false, err
-	}
-	_, err = c.http.request(req)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
 }

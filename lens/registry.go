@@ -12,10 +12,8 @@ package lens
 
 import (
 	"context"
-	"encoding/json"
 	"sync"
 
-	"github.com/ipfs/go-datastore/query"
 	"github.com/lens-vm/lens/host-go/config"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine/module"
@@ -24,8 +22,8 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/description"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -46,13 +44,9 @@ type lensRegistry struct {
 	modulesByPath map[string]module.Module
 	moduleLock    sync.Mutex
 
-	lensPoolsBySchemaVersionID     map[string]*lensPool
-	reversedPoolsBySchemaVersionID map[string]*lensPool
-	poolLock                       sync.RWMutex
-
-	// lens configurations by source schema version ID
-	configs    map[string]client.LensConfig
-	configLock sync.RWMutex
+	lensPoolsByCollectionID     map[uint32]*lensPool
+	reversedPoolsByCollectionID map[uint32]*lensPool
+	poolLock                    sync.RWMutex
 
 	// Writable transaction contexts by transaction ID.
 	//
@@ -65,18 +59,16 @@ type lensRegistry struct {
 // stuff within here should be accessible from within this transaction but not
 // from outside.
 type txnContext struct {
-	txn                            datastore.Txn
-	lensPoolsBySchemaVersionID     map[string]*lensPool
-	reversedPoolsBySchemaVersionID map[string]*lensPool
-	configs                        map[string]client.LensConfig
+	txn                         datastore.Txn
+	lensPoolsByCollectionID     map[uint32]*lensPool
+	reversedPoolsByCollectionID map[uint32]*lensPool
 }
 
 func newTxnCtx(txn datastore.Txn) *txnContext {
 	return &txnContext{
-		txn:                            txn,
-		lensPoolsBySchemaVersionID:     map[string]*lensPool{},
-		reversedPoolsBySchemaVersionID: map[string]*lensPool{},
-		configs:                        map[string]client.LensConfig{},
+		txn:                         txn,
+		lensPoolsByCollectionID:     map[uint32]*lensPool{},
+		reversedPoolsByCollectionID: map[uint32]*lensPool{},
 	}
 }
 
@@ -103,13 +95,12 @@ func NewRegistry(lensPoolSize immutable.Option[int], db TxnSource) client.LensRe
 	return &implicitTxnLensRegistry{
 		db: db,
 		registry: &lensRegistry{
-			poolSize:                       size,
-			runtime:                        wasmtime.New(),
-			modulesByPath:                  map[string]module.Module{},
-			lensPoolsBySchemaVersionID:     map[string]*lensPool{},
-			reversedPoolsBySchemaVersionID: map[string]*lensPool{},
-			configs:                        map[string]client.LensConfig{},
-			txnCtxs:                        map[uint64]*txnContext{},
+			poolSize:                    size,
+			runtime:                     wasmtime.New(),
+			modulesByPath:               map[string]module.Module{},
+			lensPoolsByCollectionID:     map[uint32]*lensPool{},
+			reversedPoolsByCollectionID: map[uint32]*lensPool{},
+			txnCtxs:                     map[uint64]*txnContext{},
 		},
 	}
 }
@@ -133,19 +124,13 @@ func (r *lensRegistry) getCtx(txn datastore.Txn, readonly bool) *txnContext {
 
 	txnCtx.txn.OnSuccess(func() {
 		r.poolLock.Lock()
-		for schemaVersionID, locker := range txnCtx.lensPoolsBySchemaVersionID {
-			r.lensPoolsBySchemaVersionID[schemaVersionID] = locker
+		for collectionID, locker := range txnCtx.lensPoolsByCollectionID {
+			r.lensPoolsByCollectionID[collectionID] = locker
 		}
-		for schemaVersionID, locker := range txnCtx.reversedPoolsBySchemaVersionID {
-			r.reversedPoolsBySchemaVersionID[schemaVersionID] = locker
+		for collectionID, locker := range txnCtx.reversedPoolsByCollectionID {
+			r.reversedPoolsByCollectionID[collectionID] = locker
 		}
 		r.poolLock.Unlock()
-
-		r.configLock.Lock()
-		for schemaVersionID, cfg := range txnCtx.configs {
-			r.configs[schemaVersionID] = cfg
-		}
-		r.configLock.Unlock()
 
 		r.txnLock.Lock()
 		delete(r.txnCtxs, txn.ID())
@@ -169,28 +154,12 @@ func (r *lensRegistry) getCtx(txn datastore.Txn, readonly bool) *txnContext {
 	return txnCtx
 }
 
-func (r *lensRegistry) setMigration(ctx context.Context, txnCtx *txnContext, cfg client.LensConfig) error {
-	key := core.NewSchemaVersionMigrationKey(cfg.SourceSchemaVersionID)
-
-	json, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-
-	err = txnCtx.txn.Systemstore().Put(ctx, key.ToDS(), json)
-	if err != nil {
-		return err
-	}
-
-	err = r.cacheLens(txnCtx, cfg)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *lensRegistry) cacheLens(txnCtx *txnContext, cfg client.LensConfig) error {
+func (r *lensRegistry) setMigration(
+	ctx context.Context,
+	txnCtx *txnContext,
+	collectionID uint32,
+	cfg model.Lens,
+) error {
 	inversedModuleCfgs := make([]model.LensModule, len(cfg.Lenses))
 	for i, moduleCfg := range cfg.Lenses {
 		// Reverse the order of the lenses for the inverse migration.
@@ -204,19 +173,15 @@ func (r *lensRegistry) cacheLens(txnCtx *txnContext, cfg client.LensConfig) erro
 		}
 	}
 
-	reversedCfg := client.LensConfig{
-		SourceSchemaVersionID:      cfg.SourceSchemaVersionID,
-		DestinationSchemaVersionID: cfg.DestinationSchemaVersionID,
-		Lens: model.Lens{
-			Lenses: inversedModuleCfgs,
-		},
+	reversedCfg := model.Lens{
+		Lenses: inversedModuleCfgs,
 	}
 
-	err := r.cachePool(txnCtx.txn, txnCtx.lensPoolsBySchemaVersionID, cfg)
+	err := r.cachePool(txnCtx.txn, txnCtx.lensPoolsByCollectionID, cfg, collectionID)
 	if err != nil {
 		return err
 	}
-	err = r.cachePool(txnCtx.txn, txnCtx.reversedPoolsBySchemaVersionID, reversedCfg)
+	err = r.cachePool(txnCtx.txn, txnCtx.reversedPoolsByCollectionID, reversedCfg, collectionID)
 	// For now, checking this error is the best way of determining if a migration has an inverse.
 	// Inverses are optional.
 	//nolint:revive
@@ -224,12 +189,15 @@ func (r *lensRegistry) cacheLens(txnCtx *txnContext, cfg client.LensConfig) erro
 		return err
 	}
 
-	txnCtx.configs[cfg.SourceSchemaVersionID] = cfg
-
 	return nil
 }
 
-func (r *lensRegistry) cachePool(txn datastore.Txn, target map[string]*lensPool, cfg client.LensConfig) error {
+func (r *lensRegistry) cachePool(
+	txn datastore.Txn,
+	target map[uint32]*lensPool,
+	cfg model.Lens,
+	collectionID uint32,
+) error {
 	pool := r.newPool(r.poolSize, cfg)
 
 	for i := 0; i < r.poolSize; i++ {
@@ -240,66 +208,36 @@ func (r *lensRegistry) cachePool(txn datastore.Txn, target map[string]*lensPool,
 		pool.returnLens(lensPipe)
 	}
 
-	target[cfg.SourceSchemaVersionID] = pool
+	target[collectionID] = pool
 
 	return nil
 }
 
 func (r *lensRegistry) reloadLenses(ctx context.Context, txnCtx *txnContext) error {
-	prefix := core.NewSchemaVersionMigrationKey("")
-	q, err := txnCtx.txn.Systemstore().Query(ctx, query.Query{
-		Prefix: prefix.ToString(),
-	})
+	cols, err := description.GetCollections(ctx, txnCtx.txn)
 	if err != nil {
 		return err
 	}
 
-	for res := range q.Next() {
-		// check for Done on context first
-		select {
-		case <-ctx.Done():
-			// we've been cancelled! ;)
-			err = q.Close()
-			if err != nil {
-				return err
-			}
+	for _, col := range cols {
+		sources := col.CollectionSources()
 
-			return nil
-		default:
-			// noop, just continue on the with the for loop
+		if len(sources) == 0 {
+			continue
 		}
 
-		if res.Error != nil {
-			err = q.Close()
-			if err != nil {
-				return errors.Wrap(err.Error(), res.Error)
-			}
-			return res.Error
+		// WARNING: Here we are only dealing with the first source in the set, this is fine for now as
+		// currently collections can only have one source, however this code will need to change if/when
+		// collections support multiple sources.
+
+		if !sources[0].Transform.HasValue() {
+			continue
 		}
 
-		var cfg client.LensConfig
-		err = json.Unmarshal(res.Value, &cfg)
+		err = r.setMigration(ctx, txnCtx, col.ID, sources[0].Transform.Value())
 		if err != nil {
-			err = q.Close()
-			if err != nil {
-				return err
-			}
 			return err
 		}
-
-		err = r.cacheLens(txnCtx, cfg)
-		if err != nil {
-			err = q.Close()
-			if err != nil {
-				return errors.Wrap(err.Error(), res.Error)
-			}
-			return err
-		}
-	}
-
-	err = q.Close()
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -308,26 +246,26 @@ func (r *lensRegistry) reloadLenses(ctx context.Context, txnCtx *txnContext) err
 func (r *lensRegistry) migrateUp(
 	txnCtx *txnContext,
 	src enumerable.Enumerable[LensDoc],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[LensDoc], error) {
-	return r.migrate(r.lensPoolsBySchemaVersionID, txnCtx.lensPoolsBySchemaVersionID, src, schemaVersionID)
+	return r.migrate(r.lensPoolsByCollectionID, txnCtx.lensPoolsByCollectionID, src, collectionID)
 }
 
 func (r *lensRegistry) migrateDown(
 	txnCtx *txnContext,
 	src enumerable.Enumerable[LensDoc],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[LensDoc], error) {
-	return r.migrate(r.reversedPoolsBySchemaVersionID, txnCtx.reversedPoolsBySchemaVersionID, src, schemaVersionID)
+	return r.migrate(r.reversedPoolsByCollectionID, txnCtx.reversedPoolsByCollectionID, src, collectionID)
 }
 
 func (r *lensRegistry) migrate(
-	pools map[string]*lensPool,
-	txnPools map[string]*lensPool,
+	pools map[uint32]*lensPool,
+	txnPools map[uint32]*lensPool,
 	src enumerable.Enumerable[LensDoc],
-	schemaVersionID string,
+	collectionID uint32,
 ) (enumerable.Enumerable[LensDoc], error) {
-	lensPool, ok := r.getPool(pools, txnPools, schemaVersionID)
+	lensPool, ok := r.getPool(pools, txnPools, collectionID)
 	if !ok {
 		// If there are no migrations for this schema version, just return the given source.
 		return src, nil
@@ -343,44 +281,17 @@ func (r *lensRegistry) migrate(
 	return lens, nil
 }
 
-func (r *lensRegistry) config(txnCtx *txnContext) []client.LensConfig {
-	configs := map[string]client.LensConfig{}
-	r.configLock.RLock()
-	for schemaVersionID, cfg := range r.configs {
-		configs[schemaVersionID] = cfg
-	}
-	r.configLock.RUnlock()
-
-	// If within a txn actively writing to this registry overwrite
-	// values from the (commited) registry.
-	// Note: Config cannot be removed, only replaced at the moment.
-	for schemaVersionID, cfg := range txnCtx.configs {
-		configs[schemaVersionID] = cfg
-	}
-
-	result := []client.LensConfig{}
-	for _, cfg := range configs {
-		result = append(result, cfg)
-	}
-	return result
-}
-
-func (r *lensRegistry) hasMigration(txnCtx *txnContext, schemaVersionID string) bool {
-	_, hasMigration := r.getPool(r.lensPoolsBySchemaVersionID, txnCtx.lensPoolsBySchemaVersionID, schemaVersionID)
-	return hasMigration
-}
-
 func (r *lensRegistry) getPool(
-	pools map[string]*lensPool,
-	txnPools map[string]*lensPool,
-	schemaVersionID string,
+	pools map[uint32]*lensPool,
+	txnPools map[uint32]*lensPool,
+	collectionID uint32,
 ) (*lensPool, bool) {
-	if pool, ok := txnPools[schemaVersionID]; ok {
+	if pool, ok := txnPools[collectionID]; ok {
 		return pool, true
 	}
 
 	r.poolLock.RLock()
-	pool, ok := pools[schemaVersionID]
+	pool, ok := pools[collectionID]
 	r.poolLock.RUnlock()
 	return pool, ok
 }
@@ -392,7 +303,7 @@ func (r *lensRegistry) getPool(
 // so we need to limit how frequently we do this.
 type lensPool struct {
 	// The config used to create the lenses within this locker.
-	cfg client.LensConfig
+	cfg model.Lens
 
 	registry *lensRegistry
 
@@ -405,7 +316,7 @@ type lensPool struct {
 	pipes chan *lensPipe
 }
 
-func (r *lensRegistry) newPool(lensPoolSize int, cfg client.LensConfig) *lensPool {
+func (r *lensRegistry) newPool(lensPoolSize int, cfg model.Lens) *lensPool {
 	return &lensPool{
 		cfg:      cfg,
 		registry: r,
@@ -472,11 +383,11 @@ type lensPipe struct {
 
 var _ enumerable.Socket[LensDoc] = (*lensPipe)(nil)
 
-func (r *lensRegistry) newLensPipe(cfg client.LensConfig) (*lensPipe, error) {
+func (r *lensRegistry) newLensPipe(cfg model.Lens) (*lensPipe, error) {
 	socket := enumerable.NewSocket[LensDoc]()
 
 	r.moduleLock.Lock()
-	enumerable, err := config.LoadInto[LensDoc, LensDoc](r.runtime, r.modulesByPath, cfg.Lens, socket)
+	enumerable, err := config.LoadInto[LensDoc, LensDoc](r.runtime, r.modulesByPath, cfg, socket)
 	r.moduleLock.Unlock()
 
 	if err != nil {

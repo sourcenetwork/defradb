@@ -111,6 +111,123 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						verified: Boolean
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				// Patch node 1 only
+				NodeID: immutable.Some(1),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+					]
+				`,
+			},
+			testUtils.SchemaPatch{
+				// Patch node 1 only
+				NodeID: immutable.Some(1),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "address", "Kind": "String"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				// Register the migration on both nodes.
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafkreiadnck34zzbwayjw3aeubw7eg4jmgtwoibu35tkxbjpar5rzxkdpu",
+					DestinationSchemaVersionID: "bafkreibzqyjmyjs7vyo2q4h2tv5rbdbe4lv7tjbl5esilmobhgclia2juy",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "verified",
+									"value": true,
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.ConfigureMigration{
+				// Register the migration on both nodes.
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafkreibzqyjmyjs7vyo2q4h2tv5rbdbe4lv7tjbl5esilmobhgclia2juy",
+					DestinationSchemaVersionID: "bafkreicvjzscbtmuff7m7swfmmunnclp66ky4sxhfixacq2yuvion5s5ti",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "name",
+									"value": "Fred",
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				// Create John on the first (source) node only, and allow the value to sync
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// Node 0 should yield results as they were defined, as the newer schema version is
+				// unknown to this node.
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "John",
+					},
+				},
+			},
+			testUtils.Request{
+				// Node 1 should yield results migrated to the new schema version.
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+						verified
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"name": "Fred",
+						// John has been migrated up to the newer schema version on node 1
+						"verified": true,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

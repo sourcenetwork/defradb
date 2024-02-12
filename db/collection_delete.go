@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -207,8 +206,8 @@ func (c *collection) deleteWithFilter(
 		docID := doc.GetID()
 
 		primaryKey := core.PrimaryDataStoreKey{
-			CollectionId: fmt.Sprint(c.ID()),
-			DocID:        docID,
+			CollectionRootID: c.Description().RootID,
+			DocID:            docID,
 		}
 
 		// Delete the document that is associated with this DS key we got from the filter.
