@@ -285,8 +285,6 @@ func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-
-
 						commits {
 							fieldId
 						}
@@ -307,6 +305,121 @@ func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
 					},
 					{
 						"fieldId": "C",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits {
+							cid
+							collectionID
+							delta
+							docID
+							fieldId
+							fieldName
+							height
+							links {
+								cid
+								name
+							}
+						}
+					}
+				`,
+				Results: []map[string]any{
+					{
+						"cid":          "bafybeiddpjl27ulw2yo4ohup6gr2wob3pwagqw2rbeaxxodv4ljelnu7ve",
+						"collectionID": int64(1),
+						"delta":        []uint8([]byte{0x16}),
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "1",
+						"fieldName":    "age",
+						"height":       int64(2),
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
+								"name": "_head",
+							},
+						},
+					},
+					{
+						"cid":          "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
+						"collectionID": int64(1),
+						"delta":        []uint8([]byte{0x15}),
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "1",
+						"fieldName":    "age",
+						"height":       int64(1),
+						"links":        []map[string]any{},
+					},
+					{
+						"cid":          "bafybeiehcr3diremeja2ndk2osux647v5fc7s353h7pbvrnsagw4paugku",
+						"collectionID": int64(1),
+						"delta":        []uint8([]byte{0x64, 0x4a, 0x6f, 0x68, 0x6e}),
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "2",
+						"fieldName":    "name",
+						"height":       int64(1),
+						"links":        []map[string]any{},
+					},
+					{
+						"cid":          "bafybeiekajrgheumrgamrc4mprmm66ulp2qr75sviowfcriuviggokydbm",
+						"collectionID": int64(1),
+						"delta":        nil,
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "C",
+						"fieldName":    nil,
+						"height":       int64(2),
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeiggrv6gyhld2dbkspaxsenjejfhnk52pm4mlpyz2q6x4dlnaff2mu",
+								"name": "_head",
+							},
+							{
+								"cid":  "bafybeiddpjl27ulw2yo4ohup6gr2wob3pwagqw2rbeaxxodv4ljelnu7ve",
+								"name": "age",
+							},
+						},
+					},
+					{
+						"cid":          "bafybeiggrv6gyhld2dbkspaxsenjejfhnk52pm4mlpyz2q6x4dlnaff2mu",
+						"collectionID": int64(1),
+						"delta":        nil,
+						"docID":        "bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7",
+						"fieldId":      "C",
+						"fieldName":    nil,
+						"height":       int64(1),
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeieikx6l2xead2dzsa5wwy5irxced2eddyq23jkp4csf5igoob7diq",
+								"name": "age",
+							},
+							{
+								"cid":  "bafybeiehcr3diremeja2ndk2osux647v5fc7s353h7pbvrnsagw4paugku",
+								"name": "name",
+							},
+						},
 					},
 				},
 			},
