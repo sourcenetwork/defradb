@@ -13,8 +13,9 @@ package one_to_one
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/stretchr/testify/require"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // This test documents unwanted behaviour, see the linked ticket for more info:
