@@ -47,11 +47,11 @@ var (
 		Name:        request.CommitTypeName,
 		Description: commitDescription,
 		Fields: gql.Fields{
-			"height": &gql.Field{
+			request.HeightFieldName: &gql.Field{
 				Description: commitHeightFieldDescription,
 				Type:        gql.Int,
 			},
-			"cid": &gql.Field{
+			request.CidFieldName: &gql.Field{
 				Description: commitCIDFieldDescription,
 				Type:        gql.String,
 			},
@@ -59,35 +59,35 @@ var (
 				Description: commitDocIDFieldDescription,
 				Type:        gql.String,
 			},
-			"collectionID": &gql.Field{
+			request.CollectionIDFieldName: &gql.Field{
 				Description: commitCollectionIDFieldDescription,
 				Type:        gql.Int,
 			},
-			"schemaVersionId": &gql.Field{
+			request.SchemaVersionIDFieldName: &gql.Field{
 				Description: commitSchemaVersionIDFieldDescription,
 				Type:        gql.String,
 			},
-			"fieldName": &gql.Field{
+			request.FieldNameFieldName: &gql.Field{
 				Description: commitFieldNameFieldDescription,
 				Type:        gql.String,
 			},
-			"fieldId": &gql.Field{
+			request.FieldIDFieldName: &gql.Field{
 				Type:        gql.String,
 				Description: commitFieldIDFieldDescription,
 			},
-			"delta": &gql.Field{
+			request.DeltaFieldName: &gql.Field{
 				Description: commitDeltaFieldDescription,
 				Type:        gql.String,
 			},
-			"links": &gql.Field{
+			request.LinksFieldName: &gql.Field{
 				Description: commitLinksDescription,
 				Type:        gql.NewList(CommitLinkObject),
 			},
-			"_count": &gql.Field{
+			request.CountFieldName: &gql.Field{
 				Description: CountFieldDescription,
 				Type:        gql.Int,
 				Args: gql.FieldConfigArgument{
-					"field": &gql.ArgumentConfig{
+					request.FieldName: &gql.ArgumentConfig{
 						Type: commitCountFieldArg,
 					},
 				},

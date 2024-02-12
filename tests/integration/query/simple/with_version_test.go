@@ -198,3 +198,174 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
+	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+
+	test := testUtils.TestCase{
+		Description: "Embedded commits query within object query with document ID",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: userCollectionGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						_docID
+						_version {
+							cid
+							collectionID
+							delta
+							docID
+							fieldId
+							fieldName
+							height
+							links {
+								cid
+								name
+							}
+							schemaVersionId
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name":   "John",
+						"_docID": docID,
+						"_version": []map[string]any{
+							{
+								"cid":          "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
+								"collectionID": int64(1),
+								"delta":        nil,
+								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+								"fieldId":      "C",
+								"fieldName":    nil,
+								"height":       int64(1),
+								"links": []map[string]any{
+									{
+										"cid":  "bafybeihkhgtdogxwqe2lkjqord5bzthfwwthyo3gu6iljfm5l7n7fkhpsq",
+										"name": "Age",
+									},
+									{
+										"cid":  "bafybeico2g2tdkpo4i64ph6b5vgngn5zbxus4jxwav3bi2joieqicplfxi",
+										"name": "Name",
+									},
+								},
+								"schemaVersionId": "bafkreihuvcb7e7vy6ua3yrwbwnul3djqrtbhyuv3c4dqe4y3i2ssudzveu",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
+	const docID = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+
+	test := testUtils.TestCase{
+		Description: "Embedded commits query within object query with document ID",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: userCollectionGQLSchema,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"Age": 22}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+						_docID
+						_version {
+							cid
+							collectionID
+							delta
+							docID
+							fieldId
+							fieldName
+							height
+							links {
+								cid
+								name
+							}
+							schemaVersionId
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name":   "John",
+						"Age":    int64(22),
+						"_docID": docID,
+						"_version": []map[string]any{
+							{
+								"cid":          "bafybeie23a5xsx4qyoffa3riij3kei5to54bb6gq7m4lftfjujaohkabwu",
+								"collectionID": int64(1),
+								"delta":        nil,
+								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+								"fieldId":      "C",
+								"fieldName":    nil,
+								"height":       int64(2),
+								"links": []map[string]any{
+									{
+										"cid":  "bafybeicixwhd4prbj2jfnkkc3a7wr2f5twppyhivg3kajoe7jal5cvrdza",
+										"name": "Age",
+									},
+									{
+										"cid":  "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
+										"name": "_head",
+									},
+								},
+								"schemaVersionId": "bafkreihuvcb7e7vy6ua3yrwbwnul3djqrtbhyuv3c4dqe4y3i2ssudzveu",
+							},
+							{
+								"cid":          "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
+								"collectionID": int64(1),
+								"delta":        nil,
+								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+								"fieldId":      "C",
+								"fieldName":    nil,
+								"height":       int64(1),
+								"links": []map[string]any{
+									{
+										"cid":  "bafybeihkhgtdogxwqe2lkjqord5bzthfwwthyo3gu6iljfm5l7n7fkhpsq",
+										"name": "Age",
+									},
+									{
+										"cid":  "bafybeico2g2tdkpo4i64ph6b5vgngn5zbxus4jxwav3bi2joieqicplfxi",
+										"name": "Name",
+									},
+								},
+								"schemaVersionId": "bafkreihuvcb7e7vy6ua3yrwbwnul3djqrtbhyuv3c4dqe4y3i2ssudzveu",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
