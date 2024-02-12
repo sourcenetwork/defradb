@@ -11,6 +11,7 @@
 package tests
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 	"time"
@@ -116,6 +117,8 @@ func areResultsEqual(expected any, actual any) bool {
 		return areResultOptionsEqual(expectedVal, actual)
 	case immutable.Option[string]:
 		return areResultOptionsEqual(expectedVal, actual)
+	case []uint8:
+		return areResultsEqual(base64.StdEncoding.EncodeToString(expectedVal), actual)
 	case []int64:
 		return areResultArraysEqual(expectedVal, actual)
 	case []uint64:
