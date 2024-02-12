@@ -26,6 +26,7 @@ type viewNode struct {
 }
 
 func (p *Planner) View(query *mapper.Select, desc client.CollectionDescription) (*viewNode, error) {
+	// For now, we assume a single source.  This will need to change if/when we support multiple sources
 	baseQuery := (desc.Sources[0].(*client.QuerySource)).Query
 
 	m, err := mapper.ToSelect(p.ctx, p.db, &baseQuery)
