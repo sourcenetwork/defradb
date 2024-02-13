@@ -24,10 +24,10 @@ func MakeRootCommand() *cobra.Command {
 Start a DefraDB node, interact with a local or remote node, and much more.
 `,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := setRootDirContext(cmd); err != nil {
+			if err := setContextRootDir(cmd); err != nil {
 				return err
 			}
-			return setConfigContext(cmd)
+			return setContextConfig(cmd)
 		},
 	}
 
@@ -85,10 +85,10 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"Specify the maximum number of retries per transaction",
 	)
 
-	cmd.PersistentFlags().Bool(
-		"in-memory",
-		false,
-		"Enables the badger in memory only datastore.",
+	cmd.PersistentFlags().String(
+		"store",
+		"badger",
+		"Specify the datastore to use (supported: badger, memory)",
 	)
 
 	cmd.PersistentFlags().Int(

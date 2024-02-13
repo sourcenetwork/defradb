@@ -25,7 +25,7 @@ Example:
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 
 			cfgs, err := store.LensRegistry().Config(cmd.Context())
 			if err != nil {

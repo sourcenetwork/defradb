@@ -21,7 +21,7 @@ func MakeSchemaSetDefaultCommand() *cobra.Command {
 		Long:  `Set the default schema version`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 			return store.SetDefaultSchemaVersion(cmd.Context(), args[0])
 		},
 	}

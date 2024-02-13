@@ -30,19 +30,19 @@ func MakeCollectionCommand() *cobra.Command {
 		Long:  `Create, read, update, and delete documents within a collection.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// cobra does not chain pre run calls so we have to run them again here
-			if err := setRootDirContext(cmd); err != nil {
+			if err := setContextRootDir(cmd); err != nil {
 				return err
 			}
-			if err := setConfigContext(cmd); err != nil {
+			if err := setContextConfig(cmd); err != nil {
 				return err
 			}
-			if err := setTransactionContext(cmd, txID); err != nil {
+			if err := setContextTransaction(cmd, txID); err != nil {
 				return err
 			}
-			if err := setStoreContext(cmd); err != nil {
+			if err := setContextStore(cmd); err != nil {
 				return err
 			}
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 
 			var col client.Collection
 			var cols []client.Collection

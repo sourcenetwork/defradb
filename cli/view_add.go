@@ -23,7 +23,7 @@ Example: add from an argument string:
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 
 			if len(args) != 2 {
 				return ErrViewAddMissingArgs

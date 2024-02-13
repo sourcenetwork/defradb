@@ -11,7 +11,6 @@
 package cli
 
 import (
-	_ "embed"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +19,11 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/logging"
+)
+
+const (
+	configStoreBadger = "badger"
+	configStoreMemory = "memory"
 )
 
 // configPaths are config keys that will be made relative to the rootdir
@@ -38,7 +42,7 @@ var configFlags = map[string]string{
 	"log.nocolor":                       "lognocolor",
 	"api.address":                       "url",
 	"datastore.maxtxnretries":           "max-txn-retries",
-	"datastore.badger.inMemory":         "in-memory",
+	"datastore.store":                   "store",
 	"datastore.badger.valuelogfilesize": "valuelogfilesize",
 	"net.peers":                         "peers",
 	"net.p2paddresses":                  "p2paddr",
@@ -46,6 +50,17 @@ var configFlags = map[string]string{
 	"api.allowed-origins":               "allowed-origins",
 	"api.pubkeypath":                    "pubkeypath",
 	"api.privkeypath":                   "privkeypath",
+}
+
+// bindConfigFlags binds the set of cli flags to config values.
+func bindConfigFlags(cfg *viper.Viper, flags *pflag.FlagSet) error {
+	for key, flag := range configFlags {
+		err := cfg.BindPFlag(key, flags.Lookup(flag))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // defaultConfig returns a new config with default values.
@@ -59,38 +74,22 @@ func defaultConfig() *viper.Viper {
 	cfg.SetConfigName("config")
 	cfg.SetConfigType("yaml")
 
-	cfg.SetDefault("datastore.maxTxnRetries", 5)
-
 	cfg.SetDefault("datastore.badger.path", "data")
-	cfg.SetDefault("datastore.badger.inMemory", false)
-	cfg.SetDefault("datastore.badger.valueLogFileSize", 1<<30)
-
-	cfg.SetDefault("api.address", "127.0.0.1:9181")
-	cfg.SetDefault("api.pubKeyPath", "")
-	cfg.SetDefault("api.privKeyPath", "")
-	cfg.SetDefault("api.allowed-origins", []string{})
-
-	cfg.SetDefault("net.p2pDisabled", false)
-	cfg.SetDefault("net.p2pAddresses", []any{"/ip4/127.0.0.1/tcp/9171"})
 	cfg.SetDefault("net.pubSubEnabled", true)
 	cfg.SetDefault("net.relay", false)
-	cfg.SetDefault("net.peers", []string{})
-
-	cfg.SetDefault("log.level", "info")
-	cfg.SetDefault("log.stackTrace", true)
-	cfg.SetDefault("log.format", "csv")
-	cfg.SetDefault("log.output", "stderr")
-	cfg.SetDefault("log.noColor", false)
 	cfg.SetDefault("log.caller", false)
 
 	return cfg
 }
 
 // createConfig writes the default config file if one does not exist.
-func createConfig(rootdir string) error {
+func createConfig(rootdir string, flags *pflag.FlagSet) error {
 	cfg := defaultConfig()
 	cfg.AddConfigPath(rootdir)
 
+	if err := bindConfigFlags(cfg, flags); err != nil {
+		return err
+	}
 	// make sure rootdir exists
 	if err := os.MkdirAll(rootdir, 0755); err != nil {
 		return err
@@ -112,13 +111,9 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 	if _, ok := err.(viper.ConfigFileNotFoundError); err != nil && !ok { //nolint:errorlint
 		return nil, err
 	}
-
 	// bind cli flags to config keys
-	for key, flag := range configFlags {
-		err := cfg.BindPFlag(key, flags.Lookup(flag))
-		if err != nil {
-			return nil, err
-		}
+	if err := bindConfigFlags(cfg, flags); err != nil {
+		return nil, err
 	}
 
 	// make paths relative to the rootdir

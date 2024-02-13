@@ -31,7 +31,7 @@ Example: delete by filter
   defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			col, ok := tryGetCollectionContext(cmd)
+			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
 			}

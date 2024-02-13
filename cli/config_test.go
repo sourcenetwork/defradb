@@ -20,11 +20,11 @@ import (
 
 func TestCreateConfig(t *testing.T) {
 	rootdir := t.TempDir()
-	err := createConfig(rootdir)
+	err := createConfig(rootdir, NewDefraCommand().PersistentFlags())
 	require.NoError(t, err)
 
 	// ensure no errors when config already exists
-	err = createConfig(rootdir)
+	err = createConfig(rootdir, NewDefraCommand().PersistentFlags())
 	require.NoError(t, err)
 
 	assert.FileExists(t, filepath.Join(rootdir, "config.yaml"))
@@ -39,7 +39,7 @@ func TestLoadConfigNotExist(t *testing.T) {
 
 	assert.Equal(t, filepath.Join(rootdir, "data"), cfg.GetString("datastore.badger.path"))
 	assert.Equal(t, 1<<30, cfg.GetInt("datastore.badger.valuelogfilesize"))
-	assert.Equal(t, false, cfg.GetBool("datastore.badger.inmemory"))
+	assert.Equal(t, "badger", cfg.GetString("datastore.store"))
 
 	assert.Equal(t, "127.0.0.1:9181", cfg.GetString("api.address"))
 	assert.Equal(t, []string{}, cfg.GetStringSlice("api.allowed-origins"))
@@ -53,7 +53,7 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, []string{}, cfg.GetStringSlice("net.peers"))
 
 	assert.Equal(t, "info", cfg.GetString("log.level"))
-	assert.Equal(t, true, cfg.GetBool("log.stacktrace"))
+	assert.Equal(t, false, cfg.GetBool("log.stacktrace"))
 	assert.Equal(t, "csv", cfg.GetString("log.format"))
 	assert.Equal(t, "stderr", cfg.GetString("log.output"))
 	assert.Equal(t, false, cfg.GetBool("log.nocolor"))

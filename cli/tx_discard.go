@@ -25,7 +25,7 @@ func MakeTxDiscardCommand() *cobra.Command {
 		Long:  `Discard a DefraDB transaction.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			cfg := mustGetConfigContext(cmd)
+			cfg := mustGetContextConfig(cmd)
 
 			id, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {

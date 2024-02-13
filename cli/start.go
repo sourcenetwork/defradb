@@ -35,16 +35,17 @@ func MakeStartCommand() *cobra.Command {
 		Long:  "Start a DefraDB node.",
 		// Load the root config if it exists, otherwise create it.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			if err := setRootDirContext(cmd); err != nil {
+			if err := setContextRootDir(cmd); err != nil {
 				return err
 			}
-			if err := createConfig(mustGetRootDir(cmd)); err != nil {
+			rootdir := mustGetContextRootDir(cmd)
+			if err := createConfig(rootdir, cmd.Root().PersistentFlags()); err != nil {
 				return err
 			}
-			return setConfigContext(cmd)
+			return setContextConfig(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg := mustGetConfigContext(cmd)
+			cfg := mustGetContextConfig(cmd)
 
 			dbOpts := []db.Option{
 				db.WithUpdateEvents(),
@@ -66,7 +67,7 @@ func MakeStartCommand() *cobra.Command {
 
 			storeOpts := []node.StoreOpt{
 				node.WithPath(cfg.GetString("datastore.badger.path")),
-				node.WithInMemory(cfg.GetBool("datastore.badger.inMemory")),
+				node.WithInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 			}
 
 			var peers []peer.AddrInfo
@@ -78,12 +79,12 @@ func MakeStartCommand() *cobra.Command {
 				peers = addrs
 			}
 
-			if !cfg.GetBool("datastore.badger.inMemory") {
+			if cfg.GetString("datastore.store") != configStoreMemory {
 				// It would be ideal to not have the key path tied to the datastore.
 				// Running with memory store mode will always generate a random key.
 				// Adding support for an ephemeral mode and moving the key to the
 				// config would solve both of these issues.
-				rootdir := mustGetRootDir(cmd)
+				rootdir := mustGetContextRootDir(cmd)
 				key, err := loadOrGeneratePrivateKey(filepath.Join(rootdir, "data", "key"))
 				if err != nil {
 					return err

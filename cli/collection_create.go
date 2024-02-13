@@ -40,7 +40,7 @@ Example: create from stdin
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			col, ok := tryGetCollectionContext(cmd)
+			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
 			}
