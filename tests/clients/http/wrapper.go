@@ -17,7 +17,6 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/immutable"
 
