@@ -1014,7 +1014,9 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 // - (!SignatureRequest, PermissionedCollection, !ModuleExists)  => Normal/Public - Don't Register with ACP
 // - (!SignatureRequest, !PermissionedCollection, !ModuleExists) => Normal/Public - Don't Register with ACP
 func (c *collection) tryRegisterDocWithACP(ctx context.Context, doc *client.Document) error {
+	// Check if acp module exists.
 	if c.db.ACPModule().HasValue() {
+		// Check if collection has policy.
 		if policyID, resourceName, hasPolicy := client.IsPermissioned(c); hasPolicy {
 			return c.db.ACPModule().Value().RegisterDocCreation(
 				ctx,

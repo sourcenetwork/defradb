@@ -16,6 +16,8 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -23,7 +25,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-	"github.com/sourcenetwork/immutable"
 )
 
 // todo: The code in here can be significantly simplified with:

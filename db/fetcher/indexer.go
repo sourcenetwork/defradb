@@ -13,13 +13,14 @@ package fetcher
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-	"github.com/sourcenetwork/immutable"
 )
 
 // IndexFetcher is a fetcher that fetches documents by index.

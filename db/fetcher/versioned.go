@@ -19,6 +19,8 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	format "github.com/ipfs/go-ipld-format"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -28,7 +30,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	merklecrdt "github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-	"github.com/sourcenetwork/immutable"
 )
 
 var (
