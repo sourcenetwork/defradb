@@ -14,15 +14,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeSchemaSetDefaultCommand() *cobra.Command {
+func MakeSchemaSetActiveCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "set-default [versionID]",
-		Short: "Set the default schema version",
-		Long:  `Set the default schema version`,
-		Args:  cobra.ExactArgs(1),
+		Use:   "set-active [versionID]",
+		Short: "Set the active collection version",
+		Long: `Activates all collection versions with the given schema version, and deactivates all
+those without it (if they share the same schema root).`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
-			return store.SetDefaultSchemaVersion(cmd.Context(), args[0])
+			return store.SetActiveSchemaVersion(cmd.Context(), args[0])
 		},
 	}
 	return cmd

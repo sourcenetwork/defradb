@@ -96,7 +96,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 
 		// Get all DocIDs across all collections in the DB
 		log.Debug(p.ctx, "Getting all existing DocIDs...")
-		cols, err := s.db.GetAllCollections(s.peer.ctx)
+		cols, err := s.db.GetAllCollections(s.peer.ctx, false)
 		if err != nil {
 			return nil, err
 		}
@@ -269,7 +269,13 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		if len(cols) == 0 {
 			return nil, client.NewErrCollectionNotFoundForSchema(schemaRoot)
 		}
-		col := cols[0]
+		var col client.Collection
+		for _, c := range cols {
+			if col != nil && col.Name().HasValue() && !c.Name().HasValue() {
+				continue
+			}
+			col = c
+		}
 
 		// Create a new DAG service with the current transaction
 		var getter format.NodeGetter = s.peer.newDAGSyncerTxn(txn)

@@ -122,7 +122,7 @@ func (db *db) basicExport(ctx context.Context, txn datastore.Txn, config *client
 
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
-		cols, err = db.getAllCollections(ctx, txn)
+		cols, err = db.getAllCollections(ctx, txn, false)
 		if err != nil {
 			return NewErrFailedToGetAllCollections(err)
 		}

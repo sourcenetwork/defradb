@@ -27,7 +27,8 @@ func MakeSchemaMigrationSetCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "set [src] [dst] [cfg]",
 		Short: "Set a schema migration within DefraDB",
-		Long: `Set a migration between two schema versions within the local DefraDB node.
+		Long: `Set a migration from a source schema version to a destination schema version for
+all collections that are on the given source schema version within the local DefraDB node.
 
 Example: set from an argument string:
   defradb client schema migration set bae123 bae456 '{"lenses": [...'
@@ -80,7 +81,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				Lens:                       lensCfg,
 			}
 
-			return store.LensRegistry().SetMigration(cmd.Context(), migrationCfg)
+			return store.SetMigration(cmd.Context(), migrationCfg)
 		},
 	}
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")

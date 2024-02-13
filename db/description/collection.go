@@ -13,6 +13,7 @@ package description
 import (
 	"context"
 	"encoding/json"
+	"sort"
 
 	"github.com/ipfs/go-datastore/query"
 
@@ -193,6 +194,8 @@ func GetCollectionsBySchemaRoot(
 }
 
 // GetCollections returns all collections in the system.
+//
+// This includes inactive collections.
 func GetCollections(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -224,6 +227,47 @@ func GetCollections(
 
 		cols = append(cols, col)
 	}
+
+	return cols, nil
+}
+
+// GetActiveCollections returns all active collections in the system.
+func GetActiveCollections(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.CollectionDescription, error) {
+	q, err := txn.Systemstore().Query(ctx, query.Query{
+		Prefix: core.NewCollectionNameKey("").ToString(),
+	})
+	if err != nil {
+		return nil, NewErrFailedToCreateCollectionQuery(err)
+	}
+
+	cols := make([]client.CollectionDescription, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			if err := q.Close(); err != nil {
+				return nil, NewErrFailedToCloseCollectionQuery(err)
+			}
+			return nil, err
+		}
+
+		var id uint32
+		err = json.Unmarshal(res.Value, &id)
+		if err != nil {
+			return nil, err
+		}
+
+		col, err := GetCollectionByID(ctx, txn, id)
+		if err != nil {
+			return nil, err
+		}
+
+		cols = append(cols, col)
+	}
+
+	// Sort the results by ID, so that the order matches that of [GetCollections].
+	sort.Slice(cols, func(i, j int) bool { return cols[i].ID < cols[j].ID })
 
 	return cols, nil
 }
