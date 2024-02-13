@@ -48,6 +48,9 @@ func MakeStartCommand() *cobra.Command {
 			cfg := mustGetContextConfig(cmd)
 
 			dbOpts := []db.Option{
+				// Infuture when we add support for the --no-acp flag when admin signatures are in,
+				// we can allow starting of db without acp. Currently that can only be done programmatically.
+				// https://github.com/sourcenetwork/defradb/issues/2271
 				db.WithACPModule(cfg.Rootdir),
 				db.WithUpdateEvents(),
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
