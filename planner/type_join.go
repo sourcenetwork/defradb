@@ -220,9 +220,6 @@ func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any
 	}
 }
 
-// Merge implements mergeNode
-func (n *typeIndexJoin) Merge() bool { return true }
-
 // typeJoinOne is the plan node for a type index join
 // where the root type is the primary in a one-to-one relation request.
 type typeJoinOne struct {
