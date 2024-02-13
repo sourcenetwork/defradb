@@ -52,17 +52,6 @@ var configFlags = map[string]string{
 	"api.privkeypath":                   "privkeypath",
 }
 
-// bindConfigFlags binds the set of cli flags to config values.
-func bindConfigFlags(cfg *viper.Viper, flags *pflag.FlagSet) error {
-	for key, flag := range configFlags {
-		err := cfg.BindPFlag(key, flags.Lookup(flag))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // defaultConfig returns a new config with default values.
 func defaultConfig() *viper.Viper {
 	cfg := viper.New()
@@ -134,6 +123,17 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 	logging.SetConfig(logCfg)
 
 	return cfg, nil
+}
+
+// bindConfigFlags binds the set of cli flags to config values.
+func bindConfigFlags(cfg *viper.Viper, flags *pflag.FlagSet) error {
+	for key, flag := range configFlags {
+		err := cfg.BindPFlag(key, flags.Lookup(flag))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // loggingConfig returns a new logging config from the given config.
