@@ -12,27 +12,26 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/node"
 )
 
-func MakeServerDumpCmd(cfg *viper.Viper) *cobra.Command {
+func MakeServerDumpCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "server-dump",
 		Short: "Dumps the state of the entire database",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			cfg := mustGetConfigContext(cmd)
 			log.FeedbackInfo(cmd.Context(), "Dumping DB state...")
 
-			datastore := cfg.GetString("datastore.store")
-			if datastore == "memory" {
+			if cfg.GetBool("datastore.badger.inMemory") {
 				return errors.New("server-side dump is only supported for the Badger datastore")
 			}
 			storeOpts := []node.StoreOpt{
 				node.WithPath(cfg.GetString("datastore.badger.path")),
-				node.WithInMemory(datastore == "memory"),
+				node.WithInMemory(cfg.GetBool("datastore.badger.inMemory")),
 			}
 			rootstore, err := node.NewStore(storeOpts...)
 			if err != nil {

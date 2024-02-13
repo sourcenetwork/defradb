@@ -14,12 +14,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
@@ -53,14 +52,11 @@ type state struct {
 	// These synchronisation channels allow async actions to track their completion.
 	syncChans []chan struct{}
 
-	// The private keys for any nodes.
-	nodePrivateKeys []crypto.PrivKey
-
 	// The addresses of any nodes configured.
 	nodeAddresses []peer.AddrInfo
 
 	// The configurations for any nodes
-	nodeConfigs []config.Config
+	nodeConfigs [][]net.NodeOpt
 
 	// The nodes active in this test.
 	nodes []clients.Client
@@ -108,9 +104,8 @@ func newState(
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
 		syncChans:                []chan struct{}{},
-		nodePrivateKeys:          []crypto.PrivKey{},
 		nodeAddresses:            []peer.AddrInfo{},
-		nodeConfigs:              []config.Config{},
+		nodeConfigs:              [][]net.NodeOpt{},
 		nodes:                    []clients.Client{},
 		dbPaths:                  []string{},
 		collections:              [][]client.Collection{},

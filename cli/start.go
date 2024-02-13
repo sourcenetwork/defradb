@@ -15,12 +15,10 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
@@ -30,16 +28,18 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-func MakeStartCommand(cfg *viper.Viper) *cobra.Command {
+func MakeStartCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "start",
 		Short: "Start a DefraDB node",
 		Long:  "Start a DefraDB node.",
 		// Load the root config if it exists, otherwise create it.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			return setConfigContext(cmd)
+			return setConfigContext(cmd, true)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg := mustGetConfigContext(cmd)
+
 			dbOpts := []db.Option{
 				db.WithUpdateEvents(),
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
@@ -60,19 +60,19 @@ func MakeStartCommand(cfg *viper.Viper) *cobra.Command {
 
 			storeOpts := []node.StoreOpt{
 				node.WithPath(cfg.GetString("datastore.badger.path")),
-				node.WithInMemory(cfg.GetString("datastore.store") == "memory"),
+				node.WithInMemory(cfg.GetBool("datastore.badger.inMemory")),
 			}
 
 			var peers []peer.AddrInfo
-			if val := cfg.GetString("net.peers"); val != "" {
-				addrs, err := netutils.ParsePeers(strings.Split(val, ","))
+			if val := cfg.GetStringSlice("net.peers"); len(val) > 0 {
+				addrs, err := netutils.ParsePeers(val)
 				if err != nil {
 					return errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %s", val), err)
 				}
 				peers = addrs
 			}
 
-			if cfg.GetString("datastore.store") == "badger" {
+			if cfg.GetBool("datastore.badger.inMemory") {
 				// It would be ideal to not have the key path tied to the datastore.
 				// Running with memory store mode will always generate a random key.
 				// Adding support for an ephemeral mode and moving the key to the

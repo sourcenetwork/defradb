@@ -24,13 +24,13 @@ func MakeRootCommand() *cobra.Command {
 Start a DefraDB node, interact with a local or remote node, and much more.
 `,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return setConfigContext(cmd)
+			return setConfigContext(cmd, false)
 		},
 	}
 
 	cmd.PersistentFlags().String(
 		"rootdir",
-		"$HOME/.defradb",
+		"",
 		"Directory for data and configuration to use (default: $HOME/.defradb)",
 	)
 
@@ -66,7 +66,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 
 	cmd.PersistentFlags().String(
 		"url",
-		"localhost:9181",
+		"127.0.0.1:9181",
 		"URL of HTTP endpoint to listen on or connect to",
 	)
 
@@ -82,10 +82,10 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"Specify the maximum number of retries per transaction",
 	)
 
-	cmd.PersistentFlags().String(
-		"store",
-		"badger",
-		"Specify the datastore to use (supported: badger, memory)",
+	cmd.PersistentFlags().Bool(
+		"in-memory",
+		false,
+		"Enables the badger in memory only datastore.",
 	)
 
 	cmd.PersistentFlags().Int(
@@ -106,12 +106,6 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"Disable the peer-to-peer network synchronization system",
 	)
 
-	cmd.PersistentFlags().Bool(
-		"tls",
-		false,
-		"Enable serving the API over https",
-	)
-
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",
 		[]string{},
@@ -120,20 +114,14 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 
 	cmd.PersistentFlags().String(
 		"pubkeypath",
-		"cert.pub",
+		"",
 		"Path to the public key for tls",
 	)
 
 	cmd.PersistentFlags().String(
 		"privkeypath",
-		"cert.key",
+		"",
 		"Path to the private key for tls",
-	)
-
-	cmd.PersistentFlags().String(
-		"email",
-		"example@example.com",
-		"Email address used by the CA for notifications",
 	)
 
 	return cmd

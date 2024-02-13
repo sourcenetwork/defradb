@@ -21,7 +21,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/http"
 )
@@ -78,80 +77,12 @@ func tryGetCollectionContext(cmd *cobra.Command) (client.Collection, bool) {
 }
 
 // setConfigContext sets teh config for the current command context.
-func setConfigContext(cmd *cobra.Command) error {
-	rootdir, err := cmd.PersistentFlags().GetString("rootdir")
+func setConfigContext(cmd *cobra.Command, create bool) error {
+	rootdir, err := cmd.Root().PersistentFlags().GetString("rootdir")
 	if err != nil {
 		return err
 	}
-	cfg, err := config.LoadConfig(rootdir)
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("log.level", cmd.PersistentFlags().Lookup("loglevel"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("log.output", cmd.PersistentFlags().Lookup("logoutput"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("log.format", cmd.PersistentFlags().Lookup("logformat"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("log.stacktrace", cmd.PersistentFlags().Lookup("logtrace"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("log.nocolor", cmd.PersistentFlags().Lookup("lognocolor"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("api.address", cmd.PersistentFlags().Lookup("url"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("net.peers", cmd.PersistentFlags().Lookup("peers"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("datastore.maxtxnretries", cmd.PersistentFlags().Lookup("max-txn-retries"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("datastore.store", cmd.PersistentFlags().Lookup("store"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("datastore.badger.valuelogfilesize", cmd.PersistentFlags().Lookup("valuelogfilesize"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("net.p2paddresses", cmd.PersistentFlags().Lookup("p2paddr"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("net.p2pdisabled", cmd.PersistentFlags().Lookup("no-p2p"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("api.tls", cmd.PersistentFlags().Lookup("tls"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("api.allowed-origins", cmd.PersistentFlags().Lookup("allowed-origins"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("api.pubkeypath", cmd.PersistentFlags().Lookup("pubkeypath"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("api.privkeypath", cmd.PersistentFlags().Lookup("privkeypath"))
-	if err != nil {
-		return err
-	}
-	err = cfg.BindPFlag("api.email", cmd.PersistentFlags().Lookup("email"))
+	cfg, err := loadConfig(rootdir, cmd, create)
 	if err != nil {
 		return err
 	}
