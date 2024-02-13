@@ -14,10 +14,11 @@ import (
 	"context"
 
 	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.DB = (*implicitTxnDB)(nil)
@@ -374,4 +375,12 @@ func (db *explicitTxnDB) BasicExport(ctx context.Context, config *client.BackupC
 // It exposes several useful thread-safe migration related functions.
 func (db *explicitTxnDB) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
+}
+
+func (db *implicitTxnDB) ACPModule() immutable.Option[acp.ACPModule] {
+	return db.acp
+}
+
+func (db *explicitTxnDB) ACPModule() immutable.Option[acp.ACPModule] {
+	return db.acp
 }

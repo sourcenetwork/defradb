@@ -24,6 +24,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -44,7 +45,8 @@ var (
 )
 
 const (
-	defaultMaxTxnRetries = 5
+	defaultMaxTxnRetries  = 5
+	updateEventBufferSize = 100
 )
 
 // DB is the main interface for interacting with the
@@ -71,12 +73,20 @@ type db struct {
 
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
+
+	// ACP module
+	acp immutable.Option[acp.ACPModule]
 }
 
 // Functional option type.
 type Option func(*db)
 
-const updateEventBufferSize = 100
+// WithACPModule enables access control. If path is empty, then acp module runs in-memory.
+func WithACPModule(path string) Option {
+	return func(db *db) {
+		db.acp = acp.SomeNewLocalACPModule(context.Background(), path)
+	}
+}
 
 // WithUpdateEvents enables the update events channel.
 func WithUpdateEvents() Option {
@@ -104,11 +114,19 @@ func WithLensPoolSize(num int) Option {
 }
 
 // NewDB creates a new instance of the DB using the given options.
-func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (client.DB, error) {
+func NewDB(
+	ctx context.Context,
+	rootstore datastore.RootStore,
+	options ...Option,
+) (client.DB, error) {
 	return newDB(ctx, rootstore, options...)
 }
 
-func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*implicitTxnDB, error) {
+func newDB(
+	ctx context.Context,
+	rootstore datastore.RootStore,
+	options ...Option,
+) (*implicitTxnDB, error) {
 	log.Debug(ctx, "Loading: internal datastores")
 	multistore := datastore.MultiStoreFrom(rootstore)
 
@@ -120,9 +138,9 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 	db := &db{
 		rootstore:  rootstore,
 		multistore: multistore,
-
-		parser:  parser,
-		options: options,
+		acp:        acp.NoACPModule,
+		parser:     parser,
+		options:    options,
 	}
 
 	// apply options
@@ -185,6 +203,10 @@ func (db *db) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
 }
 
+func (db *db) ACPModule() immutable.Option[acp.ACPModule] {
+	return db.acp
+}
+
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters.
 func (db *db) initialize(ctx context.Context) error {
@@ -211,6 +233,11 @@ func (db *db) initialize(ctx context.Context) error {
 			return err
 		}
 
+		//err = db.Acp.Reload(ctx)
+		//if err != nil {
+		//	return err
+		//}
+
 		err = db.lensRegistry.ReloadLenses(ctx)
 		if err != nil {
 			return err
@@ -230,6 +257,10 @@ func (db *db) initialize(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	// err = db.Acp.Initialize(ctx, db)
+	// if err != nil {
+	// return err
+	// }
 
 	err = txn.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
 	if err != nil {
@@ -266,10 +297,16 @@ func (db *db) Close() {
 		db.events.Updates.Value().Close()
 	}
 
-	err := db.rootstore.Close()
-	if err != nil {
-		log.ErrorE(context.Background(), "Failure closing running process", err)
+	// TODO: This might be optional so use `immutable.Option` Perhaps.
+	//if err := db.acp.Close(); err != nil {
+	//	log.ErrorE(context.Background(), "Failure closing acp module", err)
+
+	//}
+
+	if err := db.rootstore.Close(); err != nil {
+		log.ErrorE(context.Background(), "Failure closing rootstore", err)
 	}
+
 	log.Info(context.Background(), "Successfully closed running process")
 }
 

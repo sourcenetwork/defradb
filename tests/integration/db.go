@@ -76,6 +76,8 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 	if err != nil {
 		return nil, err
 	}
+	// TODO-ACP: Enable in-memory acp once supported.
+	// dbopts = append(dbopts, db.WithACPModule(""))
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
 		return nil, err
@@ -84,6 +86,8 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, err
 }
 
 func NewInMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
+	// TODO-ACP: Enable in-memory acp once supported.
+	// dbopts = append(dbopts, db.WithACPModule(""))
 	db, err := db.NewDB(ctx, memory.NewDatastore(ctx), dbopts...)
 	if err != nil {
 		return nil, err
@@ -110,14 +114,18 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB, dbopts ...db.Option) (cl
 	opts := &badgerds.Options{
 		Options: badger.DefaultOptions(dbPath),
 	}
+
 	rootstore, err := badgerds.NewDatastore(dbPath, opts)
 	if err != nil {
 		return nil, "", err
 	}
+
+	dbopts = append(dbopts, db.WithACPModule(dbPath))
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
 		return nil, "", err
 	}
+
 	return db, dbPath, err
 }
 

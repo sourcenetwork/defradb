@@ -37,7 +37,11 @@ func MakeServerDumpCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			db, err := db.NewDB(cmd.Context(), rootstore)
+			db, err := db.NewDB(
+				cmd.Context(),
+				rootstore,
+				db.WithACPModule(cfg.Rootdir),
+			)
 			if err != nil {
 				return errors.Wrap("failed to initialize database", err)
 			}

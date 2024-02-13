@@ -48,6 +48,7 @@ func MakeStartCommand() *cobra.Command {
 			cfg := mustGetContextConfig(cmd)
 
 			dbOpts := []db.Option{
+				db.WithACPModule(cfg.Rootdir),
 				db.WithUpdateEvents(),
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 			}
