@@ -288,9 +288,6 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 	}
 }
 
-// Merge implements mergeNode
-func (n *scanNode) Merge() bool { return true }
-
 func (p *Planner) Scan(
 	mapperSelect *mapper.Select,
 	colDesc client.CollectionDescription,

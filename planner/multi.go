@@ -32,23 +32,6 @@ type MultiNode interface {
 	Children() []planNode
 }
 
-// mergeNode is a special interface for the MultiNode
-// system. A mergeNode provides an entire document
-// in its Values() func, with all the specific and
-// necessary fields and subfields already merged
-// into the doc
-type mergeNode interface {
-	planNode
-	Merge() bool
-}
-
-// appendNode is a special interface for the MultiNode
-// system.
-type appendNode interface {
-	planNode
-	Append() bool
-}
-
 // parallelNode implements the MultiNode interface. It
 // enables parallel execution of planNodes. This is needed
 // if a single request has multiple Select statements at the
@@ -132,10 +115,10 @@ func (p *parallelNode) Next() (bool, error) {
 		var err error
 		// isMerge := false
 		switch n := plan.(type) {
-		case mergeNode:
+		case *scanNode, *typeIndexJoin:
 			// isMerge = true
 			next, err = p.nextMerge(i, n)
-		case appendNode:
+		case *dagScanNode:
 			next, err = p.nextAppend(i, n)
 		}
 		if err != nil {
@@ -148,7 +131,7 @@ func (p *parallelNode) Next() (bool, error) {
 	return orNext, nil
 }
 
-func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
+func (p *parallelNode) nextMerge(index int, plan planNode) (bool, error) {
 	if next, err := plan.Next(); !next {
 		return false, err
 	}
@@ -159,52 +142,7 @@ func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
 	return true, nil
 }
 
-/*
-
-scan node
-=========
-{
-	_docID: bae-ALICE,
-	name: Alice,
-	points: 124,
-	verified: false
-}
-
-typeJoin node(merge)
-=============
-{
-	friends: [
-		{
-			_docID: bae-BOB,
-			name: bob,
-			points: 99.9,
-			verified: true,
-		}
-	]
-}
-
-output
-======
-
-{
-	_docID: bae-ALICE,
-	name: Alice,
-	points: 124,
-	verified: false,
-
-	friends: [
-		{
-			_docID: bae-BOB,
-			name: bob,
-			points: 99.9,
-			verified: true,
-		}
-	]
-}
-
-*/
-
-func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
+func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 	key := p.currentValue.GetID()
 	if key == "" {
 		return false, nil
@@ -235,43 +173,6 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 	return true, nil
 }
 
-/*
-
-query {
-	user {
-		_docID
-		name
-		points
-		verified
-
-		_version {
-			cid
-		}
-	}
-}
-
-scan node
-=========
-{
-	_docID: bae-ALICE,
-	name: Alice,
-	points: 124,
-	verified: false
-}
-
-_version: commitSelectTopNode(append)
-===================
-[
-	{
-		cid: QmABC
-	},
-	{
-		cid: QmDEF
-	}
-	...
-]
-*/
-
 func (p *parallelNode) Source() planNode { return p.multiscan }
 
 func (p *parallelNode) Children() []planNode {
@@ -283,171 +184,66 @@ func (p *parallelNode) addChild(fieldIndex int, node planNode) {
 	p.childIndexes = append(p.childIndexes, fieldIndex)
 }
 
-/*
-user {
-	friends {
-		name
-	}
-
-	addresses {
-		street_name
-	}
-}
-
-Select {
-	source: scanNode(user)
-}
-
-		||||||
-		\/\/\/
-
-Select {
-	source: TypeJoin(friends, user) {
-		joinPlan {
-			typeJoinMany {
-				root: scanNode(user)
-				subType: Select {
-					source: scanNode(friends)
-				}
-			}
-		}
-	},
-}
-
-		||||||
-		\/\/\/
-
-Select {
-	source: MultiNode[
-		{
-			TypeJoin(friends, user) {
-				joinPlan {
-					typeJoinMany {
-						root: multiscan(scanNode(user))
-						subType: Select {
-							source: scanNode(friends)
-						}
-					}
-				}
-			}
-		},
-		{
-			TypeJoin(addresses, user) {
-				joinPlan {
-					typeJoinMany {
-						root: multiscan(scanNode(user))
-						subType: Select {
-							source: scanNode(addresses)
-						}
-					}
-				}
-			}
-		}]
-	}
-}
-
-select addSubPlan {
-	check if source is MultiNode
-	yes =>
-		get multiScan node
-		create new plan with multi scan node
-		append
-	no = >
-		create new multinode
-		get scan node from existing source
-		create multiscan
-		replace existing source scannode with multiScan
-		add existing source to new MultiNode
-		add new plan to multNode
-
-}
-
-Select {
-	source: Parallel {[
-		TypeJoin {
-
-		},
-		commitScan {
-
-		}
-	]}
-}
-*/
-
-// @todo: Document AddSubPlan method
-func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
-	src := s.source
-	switch node := src.(type) {
+func (s *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
+	switch sourceNode := s.source.(type) {
 	// if its a scan node, we either replace or create a multinode
 	case *scanNode, *pipeNode:
-		switch plan.(type) {
-		case mergeNode:
-			s.source = plan
-		case appendNode:
+		switch newPlan.(type) {
+		case *scanNode, *typeIndexJoin:
+			s.source = newPlan
+		case *dagScanNode:
 			m := &parallelNode{
 				p:         s.planner,
-				docMapper: docMapper{src.DocumentMap()},
+				docMapper: docMapper{s.source.DocumentMap()},
 			}
-			m.addChild(-1, src)
-			m.addChild(fieldIndex, plan)
+			m.addChild(-1, s.source)
+			m.addChild(fieldIndex, newPlan)
 			s.source = m
 		default:
-			return client.NewErrUnhandledType("sub plan", plan)
+			return client.NewErrUnhandledType("sub plan", newPlan)
 		}
 
-	// source is a mergeNode, like a TypeJoin
-	case mergeNode:
-		origScan, _ := walkAndFindPlanType[*scanNode](plan)
+	case *typeIndexJoin:
+		origScan, _ := walkAndFindPlanType[*scanNode](newPlan)
 		if origScan == nil {
 			return ErrFailedToFindScanNode
 		}
 		// create our new multiscanner
 		multiscan := &multiScanNode{scanNode: origScan}
 		// replace our current source internal scanNode with our new multiscanner
-		if err := s.planner.walkAndReplacePlan(src, origScan, multiscan); err != nil {
+		if err := s.planner.walkAndReplacePlan(s.source, origScan, multiscan); err != nil {
 			return err
 		}
 		// create multinode
 		multinode := &parallelNode{
 			p:         s.planner,
 			multiscan: multiscan,
-			docMapper: docMapper{src.DocumentMap()},
+			docMapper: docMapper{s.source.DocumentMap()},
 		}
-		multinode.addChild(-1, src)
+		multinode.addChild(-1, s.source)
 		multiscan.addReader()
 		// replace our new node internal scanNode with our new multiscanner
-		if err := s.planner.walkAndReplacePlan(plan, origScan, multiscan); err != nil {
+		if err := s.planner.walkAndReplacePlan(newPlan, origScan, multiscan); err != nil {
 			return err
 		}
 		// add our newly updated plan to the multinode
-		multinode.addChild(fieldIndex, plan)
+		multinode.addChild(fieldIndex, newPlan)
 		multiscan.addReader()
 		s.source = multinode
 
 	// we already have an existing parallelNode as our source
 	case *parallelNode:
-		switch plan.(type) {
-		// easy, just append, since append doest need any internal relaced scannode
-		case appendNode:
-			node.addChild(fieldIndex, plan)
-
+		switch newPlan.(type) {
 		// We have a internal multiscanNode on our MultiNode
-		case mergeNode:
-			multiscan, sourceIsMultiscan := node.Source().(*multiScanNode)
-			if !sourceIsMultiscan {
-				return client.NewErrUnexpectedType[*multiScanNode]("mergeNode", node.Source())
-			}
-
+		case *scanNode, *typeIndexJoin:
 			// replace our new node internal scanNode with our existing multiscanner
-			if err := s.planner.walkAndReplacePlan(plan, multiscan.Source(), multiscan); err != nil {
+			if err := s.planner.walkAndReplacePlan(newPlan, sourceNode.multiscan.Source(), sourceNode.multiscan); err != nil {
 				return err
 			}
-			multiscan.addReader()
-			// add our newly updated plan to the multinode
-			node.addChild(fieldIndex, plan)
-		default:
-			return client.NewErrUnhandledType("sub plan", plan)
+			sourceNode.multiscan.addReader()
 		}
+
+		sourceNode.addChild(fieldIndex, newPlan)
 	}
 	return nil
 }

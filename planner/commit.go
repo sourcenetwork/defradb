@@ -400,5 +400,3 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 	return commit, heads, nil
 }
-
-func (n *dagScanNode) Append() bool { return true }
