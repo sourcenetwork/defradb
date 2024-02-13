@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/immutable"
 )
 
 type CollectionName = string

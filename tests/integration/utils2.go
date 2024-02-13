@@ -197,6 +197,9 @@ func executeTestCase(
 	// as tests run.  This is particularly important for file based datastores.
 	defer closeNodes(s)
 
+	// Initialize policyIDs per node, assuming each node has it's own local acp module.
+	// s.policyIDs = make([][]string, len(s.nodes))
+
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
@@ -274,6 +277,9 @@ func performAction(
 
 	case ConfigureMigration:
 		configureMigration(s, action)
+
+	case AddPolicy:
+		addPolicyACP(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)

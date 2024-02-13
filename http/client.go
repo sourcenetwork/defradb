@@ -25,11 +25,12 @@ import (
 	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.DB = (*Client)(nil)

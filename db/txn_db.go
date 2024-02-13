@@ -15,10 +15,11 @@ import (
 
 	"github.com/lens-vm/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.DB = (*implicitTxnDB)(nil)

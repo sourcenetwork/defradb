@@ -78,6 +78,15 @@ type state struct {
 	// nodes.
 	documents [][]*client.Document
 
+	// PolicyIDs by index, by node's index,
+	// for example: [nodeID][policyID].
+	//
+	// Stored in the order they were added.
+	//
+	// The IDs are order dependent (only for testing) to ensure the policy ID can be accessed
+	// by the desired index, because it will be a random generated string each time.
+	// policyIDs [][]string
+
 	// Indexes, by index, by collection index, by node index.
 	indexes [][][]client.IndexDescription
 
@@ -111,6 +120,8 @@ func newState(
 		collections:              [][]client.Collection{},
 		collectionNames:          collectionNames,
 		documents:                [][]*client.Document{},
-		indexes:                  [][][]client.IndexDescription{},
+		// policyIDs:                [][]string{},
+		indexes: [][][]client.IndexDescription{},
+		isBench: false,
 	}
 }

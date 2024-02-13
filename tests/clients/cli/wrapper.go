@@ -25,6 +25,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
@@ -32,7 +34,6 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/net"
-	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.P2P = (*Wrapper)(nil)

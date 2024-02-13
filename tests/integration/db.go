@@ -138,6 +138,10 @@ func setupDatabase(s *state) (impl client.DB, path string, err error) {
 		db.WithLensPoolSize(lensPoolSize),
 	}
 
+	// TODO-ACP FIX BEFORE PR
+	// s.dbt = badgerFileType
+	// TODO-ACP FIX BEFORE PR
+
 	switch s.dbt {
 	case badgerIMType:
 		impl, err = NewBadgerMemoryDB(s.ctx, dbopts...)
