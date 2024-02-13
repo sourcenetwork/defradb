@@ -35,7 +35,13 @@ func MakeStartCommand() *cobra.Command {
 		Long:  "Start a DefraDB node.",
 		// Load the root config if it exists, otherwise create it.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			return setConfigContext(cmd, true)
+			if err := setRootDirContext(cmd); err != nil {
+				return err
+			}
+			if err := createConfig(mustGetRootDir(cmd)); err != nil {
+				return err
+			}
+			return setConfigContext(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetConfigContext(cmd)
@@ -77,10 +83,7 @@ func MakeStartCommand() *cobra.Command {
 				// Running with memory store mode will always generate a random key.
 				// Adding support for an ephemeral mode and moving the key to the
 				// config would solve both of these issues.
-				rootdir, err := cmd.Root().PersistentFlags().GetString("rootdir")
-				if err != nil {
-					return err
-				}
+				rootdir := mustGetRootDir(cmd)
 				key, err := loadOrGeneratePrivateKey(filepath.Join(rootdir, "data", "key"))
 				if err != nil {
 					return err

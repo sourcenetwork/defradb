@@ -22,7 +22,10 @@ func MakeClientCommand() *cobra.Command {
 		Long: `Interact with a DefraDB node.
 Execute queries, add schema types, obtain node info, etc.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := setConfigContext(cmd, false); err != nil {
+			if err := setRootDirContext(cmd); err != nil {
+				return err
+			}
+			if err := setConfigContext(cmd); err != nil {
 				return err
 			}
 			if err := setTransactionContext(cmd, txID); err != nil {

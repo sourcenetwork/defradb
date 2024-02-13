@@ -30,6 +30,8 @@ type contextKey string
 var (
 	// cfgContextKey is the context key for the config.
 	cfgContextKey = contextKey("cfg")
+	// rootDirContextKey is the context key for the root directory.
+	rootDirContextKey = contextKey("rootDir")
 	// txContextKey is the context key for the datastore.Txn
 	//
 	// This will only be set if a transaction id is specified.
@@ -69,6 +71,13 @@ func mustGetConfigContext(cmd *cobra.Command) *viper.Viper {
 	return cmd.Context().Value(cfgContextKey).(*viper.Viper)
 }
 
+// mustGetRootDir returns the rootdir for the current command context.
+//
+// If a rootdir is not set in the current context this function panics.
+func mustGetRootDir(cmd *cobra.Command) string {
+	return cmd.Context().Value(rootDirContextKey).(string)
+}
+
 // tryGetCollectionContext returns the collection for the current command context
 // and a boolean indicating if the collection was set.
 func tryGetCollectionContext(cmd *cobra.Command) (client.Collection, bool) {
@@ -77,12 +86,10 @@ func tryGetCollectionContext(cmd *cobra.Command) (client.Collection, bool) {
 }
 
 // setConfigContext sets teh config for the current command context.
-func setConfigContext(cmd *cobra.Command, create bool) error {
-	rootdir, err := cmd.Root().PersistentFlags().GetString("rootdir")
-	if err != nil {
-		return err
-	}
-	cfg, err := loadConfig(rootdir, cmd, create)
+func setConfigContext(cmd *cobra.Command) error {
+	rootdir := mustGetRootDir(cmd)
+	flags := cmd.Root().PersistentFlags()
+	cfg, err := loadConfig(rootdir, flags)
 	if err != nil {
 		return err
 	}
@@ -119,6 +126,24 @@ func setStoreContext(cmd *cobra.Command) error {
 	} else {
 		ctx = context.WithValue(ctx, storeContextKey, db)
 	}
+	cmd.SetContext(ctx)
+	return nil
+}
+
+// setRootDirContext sets the rootdir for the current command context.
+func setRootDirContext(cmd *cobra.Command) error {
+	rootdir, err := cmd.Root().PersistentFlags().GetString("rootdir")
+	if err != nil {
+		return err
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	if rootdir == "" {
+		rootdir = filepath.Join(home, ".defradb")
+	}
+	ctx := context.WithValue(cmd.Context(), rootDirContextKey, rootdir)
 	cmd.SetContext(ctx)
 	return nil
 }

@@ -18,16 +18,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLoadConfigAndCreate(t *testing.T) {
+func TestCreateConfig(t *testing.T) {
 	rootdir := t.TempDir()
-	cfg, err := loadConfig(rootdir, NewDefraCommand(), true)
+	err := createConfig(rootdir)
+	require.NoError(t, err)
+
+	// ensure no errors when config already exists
+	err = createConfig(rootdir)
 	require.NoError(t, err)
 
 	assert.FileExists(t, filepath.Join(rootdir, "config.yaml"))
+}
+
+func TestLoadConfigNotExist(t *testing.T) {
+	rootdir := t.TempDir()
+	cfg, err := loadConfig(rootdir, NewDefraCommand().PersistentFlags())
+	require.NoError(t, err)
+
 	assert.Equal(t, 5, cfg.GetInt("datastore.maxtxnretries"))
 
 	assert.Equal(t, filepath.Join(rootdir, "data"), cfg.GetString("datastore.badger.path"))
 	assert.Equal(t, 1<<30, cfg.GetInt("datastore.badger.valuelogfilesize"))
+	assert.Equal(t, false, cfg.GetBool("datastore.badger.inmemory"))
 
 	assert.Equal(t, "127.0.0.1:9181", cfg.GetString("api.address"))
 	assert.Equal(t, []string{}, cfg.GetStringSlice("api.allowed-origins"))

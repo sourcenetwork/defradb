@@ -24,14 +24,17 @@ func MakeRootCommand() *cobra.Command {
 Start a DefraDB node, interact with a local or remote node, and much more.
 `,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return setConfigContext(cmd, false)
+			if err := setRootDirContext(cmd); err != nil {
+				return err
+			}
+			return setConfigContext(cmd)
 		},
 	}
 
 	cmd.PersistentFlags().String(
 		"rootdir",
 		"",
-		"Directory for data and configuration to use (default: $HOME/.defradb)",
+		"Directory for persistent data (default: $HOME/.defradb)",
 	)
 
 	cmd.PersistentFlags().String(

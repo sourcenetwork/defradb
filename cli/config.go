@@ -12,12 +12,11 @@ package cli
 
 import (
 	_ "embed"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/logging"
@@ -87,36 +86,36 @@ func defaultConfig() *viper.Viper {
 	return cfg
 }
 
-// loadConfig returns a new config with values from the config in the given rootdir.
-func loadConfig(rootdir string, cmd *cobra.Command, create bool) (*viper.Viper, error) {
-	// rootdir defaults to $HOME/.defradb
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
-	if rootdir == "" {
-		rootdir = filepath.Join(home, ".defradb")
-	}
-
+// createConfig writes the default config file if one does not exist.
+func createConfig(rootdir string) error {
 	cfg := defaultConfig()
 	cfg.AddConfigPath(rootdir)
 
 	// make sure rootdir exists
 	if err := os.MkdirAll(rootdir, 0755); err != nil {
-		return nil, err
+		return err
 	}
+	err := cfg.SafeWriteConfig()
+	if _, ok := err.(viper.ConfigFileAlreadyExistsError); ok { //nolint:errorlint
+		return nil
+	}
+	return err
+}
+
+// loadConfig returns a new config with values from the config in the given rootdir.
+func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
+	cfg := defaultConfig()
+	cfg.AddConfigPath(rootdir)
+
 	// attempt to read the existing config
-	err = cfg.ReadInConfig()
-	if create && errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		err = cfg.SafeWriteConfig()
-	}
-	if err != nil && !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+	err := cfg.ReadInConfig()
+	if _, ok := err.(viper.ConfigFileNotFoundError); err != nil && !ok { //nolint:errorlint
 		return nil, err
 	}
 
 	// bind cli flags to config keys
 	for key, flag := range configFlags {
-		err := cfg.BindPFlag(key, cmd.Root().PersistentFlags().Lookup(flag))
+		err := cfg.BindPFlag(key, flags.Lookup(flag))
 		if err != nil {
 			return nil, err
 		}
