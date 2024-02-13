@@ -576,8 +576,8 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 	return encdoc, resultExecInfo, err
 }
 
-// runDocumentPermissionCheck handles the checking (while fetching) of the document with acp module,
-// according to our access logic based on weather (1) the request is permissioned,
+// runDocumentReadPermissionCheck handles the checking (while fetching) if the document has read access
+// or not, according to our access logic based on weather (1) the request is permissioned,
 // (2) the collection is permissioned (has a policy), (3) acp module exists.
 //
 // Note: we only need to make a call to the acp module if (2) and (3) are true, where if (1) is true
@@ -586,14 +586,14 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (EncodedDocument, Exec
 //
 // Moreover 8 states, upon checking access:
 // (SignatureRequest, PermissionedCollection, ModuleExists)    => Must pass ACP check, unless public (not registered)
+// (!SignatureRequest, PermissionedCollection, ModuleExists)   => Only public (No access if registered with ACP)
 // (SignatureRequest, PermissionedCollection, !ModuleExists)   => No check needed
 // (SignatureRequest, !PermissionedCollection, ModuleExists)   => No check needed
 // (SignatureRequest, !PermissionedCollection, !ModuleExists)  => No check needed
-// (!SignatureRequest, PermissionedCollection, ModuleExists)   => Only public (No access if registered with ACP)
 // (!SignatureRequest, !PermissionedCollection, ModuleExists)  => No check needed
 // (!SignatureRequest, PermissionedCollection, !ModuleExists)  => No check needed
 // (!SignatureRequest, !PermissionedCollection, !ModuleExists) => No check needed
-func (df *DocumentFetcher) runDocumentPermissionCheck(ctx context.Context) error {
+func (df *DocumentFetcher) runDocumentReadPermissionCheck(ctx context.Context) error {
 	// If no acp module, then we have unrestricted access.
 	if !df.acp.HasValue() {
 		df.passedPermissionCheck = true
@@ -608,15 +608,14 @@ func (df *DocumentFetcher) runDocumentPermissionCheck(ctx context.Context) error
 		return nil
 	}
 
-	// TODO-ACP: Add an additional check to handle without signature identity case once signatures are implemented
+	// TODO-ACP: Implement signatures
 	hasSignature := true
 
 	// Now that we know acp module exists and the collection is permissioned, handle based on signature.
 	if hasSignature {
-		// TODO-ACP: Add an additional check to handle without signature identity case:
 		hasAccess, err := df.acp.Value().CheckDocAccess(
 			ctx,
-			"read", // TODO-ACP: Replace with permission
+			acp.ReadPermission,
 			"cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", // TODO-ACP: Replace with signature identity
 			policyID,
 			resourceName,
@@ -688,7 +687,7 @@ func (df *DocumentFetcher) fetchNext(ctx context.Context) (EncodedDocument, Exec
 
 		// Check if can access document with current permissions/signature.
 		if !df.passedPermissionCheck {
-			if err := df.runDocumentPermissionCheck(ctx); err != nil {
+			if err := df.runDocumentReadPermissionCheck(ctx); err != nil {
 				return nil, ExecInfo{}, err
 			}
 		}
