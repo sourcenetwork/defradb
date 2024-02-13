@@ -45,6 +45,11 @@ func (db *db) addSchema(
 		return nil, err
 	}
 
+	err = db.ValidateCollectionDefinitions(ctx, newDefinitions)
+	if err != nil {
+		return nil, err
+	}
+
 	returnDescriptions := make([]client.CollectionDescription, len(newDefinitions))
 	for i, definition := range newDefinitions {
 		col, err := db.createCollection(ctx, txn, definition)

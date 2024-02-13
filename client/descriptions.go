@@ -62,6 +62,15 @@ type CollectionDescription struct {
 
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
+
+	// Policy contains the policy information on this collection.
+	//
+	// It is possible for a collection to not have a policy.
+	//
+	// Note: The policy information must be validated using the acp module
+	// right after parsing is done, to avoid storing an invalid policyID
+	// or policy resource that may not even exist on acp module.
+	Policy immutable.Option[PolicyDescription]
 }
 
 // IDString returns the collection ID as a string.
@@ -395,6 +404,9 @@ type collectionDescription struct {
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Sources []map[string]json.RawMessage
+
+	// TODO-ACP: Do we need this here?
+	//Policy immutable.Option[PolicyDescription]
 }
 
 func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
@@ -410,6 +422,8 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.SchemaVersionID = descMap.SchemaVersionID
 	c.Indexes = descMap.Indexes
 	c.Sources = make([]any, len(descMap.Sources))
+	// TODO-ACP: Do we need this?
+	// c.Policy = descMap.Policy
 
 	for i, source := range descMap.Sources {
 		sourceJson, err := json.Marshal(source)

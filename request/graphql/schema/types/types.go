@@ -24,6 +24,10 @@ const (
 	ExplainArgExecute  string = "execute"
 	ExplainArgDebug    string = "debug"
 
+	PolicySchemaDirectiveLabel        = "policy"
+	PolicySchemaDirectivePropID       = "id"
+	PolicySchemaDirectivePropResource = "resource"
+
 	IndexDirectiveLabel          = "index"
 	IndexDirectivePropName       = "name"
 	IndexDirectivePropUnique     = "unique"

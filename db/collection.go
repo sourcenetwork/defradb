@@ -139,6 +139,57 @@ func (db *db) createCollection(
 	return db.getCollectionByID(ctx, txn, desc.ID)
 }
 
+func (db *db) validateCollectionDefinitionPolicyDesc(
+	ctx context.Context,
+	policyDesc immutable.Option[client.PolicyDescription],
+) error {
+	if !policyDesc.HasValue() {
+		// No policy validation needed, weather acp module exists or not doesn't matter.
+		return nil
+	}
+
+	// If there is a policy specified, but the database does not have
+	// an acp module return an error, database must have an acp module
+	// to enable access control (inorder to adhere to the policy specified).
+	if !db.acp.HasValue() {
+		return ErrCanNotHavePolicyWithoutACPModule
+	}
+
+	// If we have the policy specified on the collection, and acp module exists,
+	// then using the acp module we need to ensure the policy id specified
+	// is a valid policy in the model, and that the resource specified is
+	// a valid resource that exisits on the target policy.
+	return db.acp.Value().ValidatePolicyAndResourceExist(
+		ctx,
+		policyDesc.Value().ID,
+		policyDesc.Value().ResourceName,
+	)
+}
+
+// ValidateCollectionDefinitions validates that the definitions are valid, beyond syntax.
+//
+// This is not only limited to the syntax, but also if the information
+// within the definition makes sense, this function might also make relevant
+// remote calls, like call the acp module for policy validation, and etc.
+//
+// Note: This should generally be called after parsing, i.e. on the
+// collection definitions gotten from calling `db.parser.ParseSDL`.
+func (db *db) ValidateCollectionDefinitions(
+	ctx context.Context,
+	definitions []client.CollectionDefinition,
+) error {
+	// db.ACPModule().Value()
+
+	for _, definition := range definitions {
+		err := db.validateCollectionDefinitionPolicyDesc(ctx, definition.Description.Policy)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // updateSchema updates the persisted schema description matching the name of the given
 // description, to the values in the given description.
 //

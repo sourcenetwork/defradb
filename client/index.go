@@ -40,6 +40,15 @@ type IndexDescription struct {
 	Unique bool
 }
 
+// PolicyDescription describes an index.
+type PolicyDescription struct {
+	// ID is the policyID that is unique to every policy.
+	ID string
+
+	// ResourceName is the name of the corresponding resource within the policy.
+	ResourceName string
+}
+
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
 func (d CollectionDescription) CollectIndexedFields(schema *SchemaDescription) []FieldDescription {
 	fieldsMap := make(map[string]bool)

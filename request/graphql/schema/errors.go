@@ -27,6 +27,9 @@ const (
 	errIndexUnknownArgument          string = "index with unknown argument"
 	errIndexInvalidArgument          string = "index with invalid argument"
 	errIndexInvalidName              string = "index with invalid name"
+	errPolicyUnknownArgument         string = "policy with unknown argument"
+	errPolicyInvalidIDProp           string = "policy directive with invalid id property"
+	errPolicyInvalidResourceProp     string = "policy directive with invalid resource property"
 	errViewRelationMustBeOneSided    string = "relations in views must only be defined on one schema"
 )
 
@@ -51,6 +54,9 @@ var (
 	ErrIndexMissingFields         = errors.New(errIndexMissingFields)
 	ErrIndexWithUnknownArg        = errors.New(errIndexUnknownArgument)
 	ErrIndexWithInvalidArg        = errors.New(errIndexInvalidArgument)
+	ErrPolicyWithUnknownArg       = errors.New(errPolicyUnknownArgument)
+	ErrPolicyInvalidIDProp        = errors.New(errPolicyInvalidIDProp)
+	ErrPolicyInvalidResourceProp  = errors.New(errPolicyInvalidResourceProp)
 	ErrViewRelationMustBeOneSided = errors.New(errViewRelationMustBeOneSided)
 )
 
