@@ -72,12 +72,12 @@ func MakeStartCommand() *cobra.Command {
 				peers = addrs
 			}
 
-			if cfg.GetBool("datastore.badger.inMemory") {
+			if !cfg.GetBool("datastore.badger.inMemory") {
 				// It would be ideal to not have the key path tied to the datastore.
 				// Running with memory store mode will always generate a random key.
 				// Adding support for an ephemeral mode and moving the key to the
 				// config would solve both of these issues.
-				rootdir, err := cmd.PersistentFlags().GetString("rootdir")
+				rootdir, err := cmd.Root().PersistentFlags().GetString("rootdir")
 				if err != nil {
 					return err
 				}
