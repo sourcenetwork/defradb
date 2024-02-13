@@ -20,6 +20,9 @@ tests/lenses/rust_wasm32_copy/pkg
 tests/lenses/rust_wasm32_prepend/Cargo.lock
 tests/lenses/rust_wasm32_prepend/target
 tests/lenses/rust_wasm32_prepend/pkg
+tests/lenses/rust_wasm32_filter/Cargo.lock
+tests/lenses/rust_wasm32_filter/target
+tests/lenses/rust_wasm32_filter/pkg
 
 # Ignore OS X metadata files.
 .history
