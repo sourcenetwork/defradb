@@ -22,8 +22,14 @@ import (
 )
 
 const (
-	configStoreBadger = "badger"
-	configStoreMemory = "memory"
+	configStoreBadger   = "badger"
+	configStoreMemory   = "memory"
+	configLogFormatJSON = "json"
+	configLogFormatCSV  = "csv"
+	configLogLevelInfo  = "info"
+	configLogLevelDebug = "debug"
+	configLogLevelError = "error"
+	configLogLevelFatal = "fatal"
 )
 
 // configPaths are config keys that will be made relative to the rootdir
@@ -84,7 +90,10 @@ func createConfig(rootdir string, flags *pflag.FlagSet) error {
 		return err
 	}
 	err := cfg.SafeWriteConfig()
-	if _, ok := err.(viper.ConfigFileAlreadyExistsError); ok { //nolint:errorlint
+	// error type is known and shouldn't be wrapped
+	//
+	//nolint:errorlint
+	if _, ok := err.(viper.ConfigFileAlreadyExistsError); ok {
 		return nil
 	}
 	return err
@@ -97,7 +106,10 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 
 	// attempt to read the existing config
 	err := cfg.ReadInConfig()
-	if _, ok := err.(viper.ConfigFileNotFoundError); err != nil && !ok { //nolint:errorlint
+	// error type is known and shouldn't be wrapped
+	//
+	//nolint:errorlint
+	if _, ok := err.(viper.ConfigFileNotFoundError); err != nil && !ok {
 		return nil, err
 	}
 	// bind cli flags to config keys
@@ -140,13 +152,13 @@ func bindConfigFlags(cfg *viper.Viper, flags *pflag.FlagSet) error {
 func loggingConfig(cfg *viper.Viper) logging.Config {
 	var level int8
 	switch value := cfg.GetString("level"); value {
-	case "debug":
+	case configLogLevelDebug:
 		level = logging.Debug
-	case "info":
+	case configLogLevelInfo:
 		level = logging.Info
-	case "error":
+	case configLogLevelError:
 		level = logging.Error
-	case "fatal":
+	case configLogLevelFatal:
 		level = logging.Fatal
 	default:
 		level = logging.Info
@@ -154,9 +166,9 @@ func loggingConfig(cfg *viper.Viper) logging.Config {
 
 	var format logging.EncoderFormat
 	switch value := cfg.GetString("format"); value {
-	case "json": //nolint:goconst
+	case configLogFormatJSON:
 		format = logging.JSON
-	case "csv":
+	case configLogFormatCSV:
 		format = logging.CSV
 	default:
 		format = logging.CSV

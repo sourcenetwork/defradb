@@ -13,7 +13,9 @@ Store can be badger or memory. Defaults to `badger`.
 
 ## `datastore.maxtxnretries`
 
-Maximum number of times to retry a failed transaction. Defaults to `5`.
+The number of retries to make in the event of a transaction conflict. Defaults to `5`.
+
+Currently this is only used within the P2P system and will not affect operations initiated by users.
 
 ## `datastore.badger.path`
 
