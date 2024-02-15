@@ -173,14 +173,20 @@ func (c *Client) SetActiveSchemaVersion(ctx context.Context, schemaVersionID str
 }
 
 type addViewRequest struct {
-	Query string
-	SDL   string
+	Query     string
+	SDL       string
+	Transform immutable.Option[model.Lens]
 }
 
-func (c *Client) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+func (c *Client) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
 	methodURL := c.http.baseURL.JoinPath("view")
 
-	body, err := json.Marshal(addViewRequest{query, sdl})
+	body, err := json.Marshal(addViewRequest{query, sdl, transform})
 	if err != nil {
 		return nil, err
 	}

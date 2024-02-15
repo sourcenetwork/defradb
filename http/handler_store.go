@@ -117,7 +117,7 @@ func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defs, err := store.AddView(req.Context(), message.Query, message.SDL)
+	defs, err := store.AddView(req.Context(), message.Query, message.SDL, message.Transform)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

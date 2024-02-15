@@ -391,14 +391,19 @@ func (db *explicitTxnDB) SetMigration(ctx context.Context, cfg client.LensConfig
 	return db.setMigration(ctx, db.txn, cfg)
 }
 
-func (db *implicitTxnDB) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+func (db *implicitTxnDB) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	defs, err := db.addView(ctx, txn, query, sdl)
+	defs, err := db.addView(ctx, txn, query, sdl, transform)
 	if err != nil {
 		return nil, err
 	}
@@ -411,8 +416,13 @@ func (db *implicitTxnDB) AddView(ctx context.Context, query string, sdl string) 
 	return defs, nil
 }
 
-func (db *explicitTxnDB) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
-	return db.addView(ctx, db.txn, query, sdl)
+func (db *explicitTxnDB) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
+	return db.addView(ctx, db.txn, query, sdl, transform)
 }
 
 // BasicImport imports a json dataset.
