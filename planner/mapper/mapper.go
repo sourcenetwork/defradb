@@ -764,7 +764,12 @@ func getTopLevelInfo(
 			//
 			// Note: This is a poor way to check if a collection exists or not, see
 			// https://github.com/sourcenetwork/defradb/issues/2146
-			schemas, err := store.GetSchemasByName(ctx, collectionName)
+			schemas, err := store.GetSchemas(
+				ctx,
+				client.SchemaFetchOptions{
+					Name: immutable.Some(collectionName),
+				},
+			)
 			if err != nil {
 				return nil, client.SchemaDescription{}, err
 			}

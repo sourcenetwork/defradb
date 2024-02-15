@@ -309,21 +309,6 @@ func (w *Wrapper) GetCollections(
 	return cols, err
 }
 
-func (w *Wrapper) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	args := []string{"client", "schema", "describe"}
-	args = append(args, "--name", name)
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := json.Unmarshal(data, &schema); err != nil {
-		return nil, err
-	}
-	return schema, err
-}
-
 func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
 	args := []string{"client", "schema", "describe"}
 	args = append(args, "--version", versionID)
@@ -346,6 +331,9 @@ func (w *Wrapper) GetSchemas(
 	args := []string{"client", "schema", "describe"}
 	if options.Root.HasValue() {
 		args = append(args, "--root", options.Root.Value())
+	}
+	if options.Name.HasValue() {
+		args = append(args, "--name", options.Name.Value())
 	}
 
 	data, err := w.cmd.execute(ctx, args)

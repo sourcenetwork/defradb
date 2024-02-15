@@ -51,17 +51,13 @@ Example: view a single schema by version id
 				}
 				return writeJSON(cmd, schema)
 
-			case name != "":
-				s, err := store.GetSchemasByName(cmd.Context(), name)
-				if err != nil {
-					return err
-				}
-				schemas = s
-
 			default:
 				options := client.SchemaFetchOptions{}
 				if root != "" {
 					options.Root = immutable.Some(root)
+				}
+				if name != "" {
+					options.Name = immutable.Some(name)
 				}
 
 				s, err := store.GetSchemas(cmd.Context(), options)

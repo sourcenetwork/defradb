@@ -193,9 +193,6 @@ type Store interface {
 	// that currently exist within this [Store].
 	GetCollections(context.Context, CollectionFetchOptions) ([]Collection, error)
 
-	// GetSchemasByName returns the all schema versions with the given name.
-	GetSchemasByName(context.Context, string) ([]SchemaDescription, error)
-
 	// GetSchemaByVersionID returns the schema description for the schema version of the
 	// ID provided.
 	//
@@ -258,4 +255,7 @@ type CollectionFetchOptions struct {
 type SchemaFetchOptions struct {
 	// If provided, only schemas of this root will be returned.
 	Root immutable.Option[string]
+
+	// If provided, only schemas with this name will be returned.
+	Name immutable.Option[string]
 }

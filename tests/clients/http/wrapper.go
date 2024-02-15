@@ -138,10 +138,6 @@ func (w *Wrapper) GetCollections(
 	return w.client.GetCollections(ctx, options)
 }
 
-func (w *Wrapper) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	return w.client.GetSchemasByName(ctx, name)
-}
-
 func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
 	return w.client.GetSchemaByVersionID(ctx, versionID)
 }

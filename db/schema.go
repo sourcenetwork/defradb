@@ -272,14 +272,6 @@ func substituteSchemaPatch(
 	return patch, nil
 }
 
-func (db *db) getSchemasByName(
-	ctx context.Context,
-	txn datastore.Txn,
-	name string,
-) ([]client.SchemaDescription, error) {
-	return description.GetSchemasByName(ctx, txn, name)
-}
-
 func (db *db) getSchemaByVersionID(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -293,12 +285,34 @@ func (db *db) getSchemas(
 	txn datastore.Txn,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
+	schemas := []client.SchemaDescription{}
+
 	switch {
 	case options.Root.HasValue():
-		return description.GetSchemasByRoot(ctx, txn, options.Root.Value())
+		var err error
+		schemas, err = description.GetSchemasByRoot(ctx, txn, options.Root.Value())
+		if err != nil {
+			return nil, err
+		}
+	case options.Name.HasValue():
+		var err error
+		schemas, err = description.GetSchemasByName(ctx, txn, options.Name.Value())
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return description.GetAllSchemas(ctx, txn)
 	}
+
+	result := []client.SchemaDescription{}
+	for _, schema := range schemas {
+		if options.Name.HasValue() && schema.Name != options.Name.Value() {
+			continue
+		}
+		result = append(result, schema)
+	}
+
+	return result, nil
 }
 
 // getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string

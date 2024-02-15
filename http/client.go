@@ -270,21 +270,6 @@ func (c *Client) GetCollections(
 	return collections, nil
 }
 
-func (c *Client) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
-	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return nil, err
-	}
-	return schema, nil
-}
-
 func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
 	methodURL.RawQuery = url.Values{"version_id": []string{versionID}}.Encode()
@@ -308,6 +293,9 @@ func (c *Client) GetSchemas(
 	params := url.Values{}
 	if options.Root.HasValue() {
 		params.Add("root", options.Root.Value())
+	}
+	if options.Name.HasValue() {
+		params.Add("name", options.Name.Value())
 	}
 	methodURL.RawQuery = params.Encode()
 
