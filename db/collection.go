@@ -817,7 +817,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
 		valueKey := c.getDSKeyFromDockey(dockey)
-		err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
+		err = txn.Datastore().Set(ctx, valueKey.ToDS().Bytes(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -1165,7 +1165,7 @@ func (c *collection) exists(
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
-	val, err := txn.Datastore().Get(ctx, key.ToDS())
+	val, err := txn.Datastore().Get(ctx, key.ToDS().Bytes())
 	if err != nil && errors.Is(err, ds.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {

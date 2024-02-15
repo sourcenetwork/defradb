@@ -15,16 +15,19 @@ import (
 	"testing"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
-	badger "github.com/sourcenetwork/badger/v4"
 	"github.com/stretchr/testify/require"
+
+	badgerkv "github.com/sourcenetwork/corekv/badger"
+	"github.com/sourcenetwork/corekv/memory"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/datastore/memory"
+	"github.com/sourcenetwork/defradb/datastore"
+
 	"github.com/sourcenetwork/defradb/db"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
@@ -36,10 +39,10 @@ func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
 	var options []db.Option
 	ctx := context.Background()
 	options = append(options, db.WithUpdateEvents())
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
+	opts := badger.DefaultOptions("").WithInMemory(true)
+	rootstore, err := badgerkv.NewDatastore("", opts)
 	require.NoError(t, err)
-	database, err = db.NewDB(ctx, rootstore, options...)
+	database, err = db.NewDB(ctx, rootstore.(datastore.RootStore), options...)
 	require.NoError(t, err)
 	return database
 }

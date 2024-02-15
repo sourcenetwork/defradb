@@ -23,7 +23,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	ccid "github.com/sourcenetwork/defradb/core/cid"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func newRandomCID() cid.Cid {
@@ -41,10 +40,10 @@ func newRandomCID() cid.Cid {
 }
 
 func newHeadSet() *heads {
-	s := newDS()
+	ds := newDS()
 
 	return NewHeadSet(
-		datastore.AsDSReaderWriter(s),
+		ds,
 		core.HeadStoreKey{}.WithDocKey("mydockey").WithFieldId("1"),
 	)
 }

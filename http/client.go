@@ -442,7 +442,7 @@ func (c *Client) Blockstore() blockstore.Blockstore {
 	panic("client side database")
 }
 
-func (c *Client) Peerstore() datastore.DSBatching {
+func (c *Client) Peerstore() datastore.DSReaderWriter {
 	panic("client side database")
 }
 

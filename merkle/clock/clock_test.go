@@ -15,16 +15,17 @@ import (
 	"testing"
 
 	cid "github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/core"
 	ccid "github.com/sourcenetwork/defradb/core/cid"
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func newDS() ds.Datastore {
-	return ds.NewMapDatastore()
+func newDS() corekv.Store {
+	return memory.NewDatastore(context.TODO())
 }
 
 func newTestMerkleClock() *MerkleClock {

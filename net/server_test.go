@@ -17,12 +17,12 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/sourcenetwork/corekv"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/stretchr/testify/require"
 	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/errors"
 	net_pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -40,7 +40,7 @@ func TestNewServerWithDBClosed(t *testing.T) {
 	db.Close()
 
 	_, err := newServer(n.Peer, db)
-	require.ErrorIs(t, err, memory.ErrClosed)
+	require.ErrorIs(t, err, corekv.ErrClosed)
 }
 
 var mockError = errors.New("mock error")

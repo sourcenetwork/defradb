@@ -34,7 +34,7 @@ func SaveCollection(
 	}
 
 	key := core.NewCollectionKey(desc.ID)
-	err = txn.Systemstore().Put(ctx, key.ToDS(), buf)
+	err = txn.Systemstore().Set(ctx, key.ToDS().Bytes(), buf)
 	if err != nil {
 		return client.CollectionDescription{}, err
 	}
@@ -45,7 +45,7 @@ func SaveCollection(
 	}
 
 	nameKey := core.NewCollectionNameKey(desc.Name)
-	err = txn.Systemstore().Put(ctx, nameKey.ToDS(), idBuf)
+	err = txn.Systemstore().Set(ctx, nameKey.ToDS().Bytes(), idBuf)
 	if err != nil {
 		return client.CollectionDescription{}, err
 	}
@@ -53,7 +53,7 @@ func SaveCollection(
 	// The need for this key is temporary, we should replace it with the global collection ID
 	// https://github.com/sourcenetwork/defradb/issues/1085
 	schemaVersionKey := core.NewCollectionSchemaVersionKey(desc.SchemaVersionID, desc.ID)
-	err = txn.Systemstore().Put(ctx, schemaVersionKey.ToDS(), []byte{})
+	err = txn.Systemstore().Set(ctx, schemaVersionKey.ToDS().Bytes(), []byte{})
 	if err != nil {
 		return client.CollectionDescription{}, err
 	}
@@ -70,7 +70,7 @@ func GetCollectionByName(
 	name string,
 ) (client.CollectionDescription, error) {
 	nameKey := core.NewCollectionNameKey(name)
-	idBuf, err := txn.Systemstore().Get(ctx, nameKey.ToDS())
+	idBuf, err := txn.Systemstore().Get(ctx, nameKey.ToDS().Bytes())
 	if err != nil {
 		return client.CollectionDescription{}, err
 	}
@@ -82,7 +82,7 @@ func GetCollectionByName(
 	}
 
 	key := core.NewCollectionKey(id)
-	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+	buf, err := txn.Systemstore().Get(ctx, key.ToDS().Bytes())
 	if err != nil {
 		return client.CollectionDescription{}, err
 	}
@@ -138,7 +138,7 @@ func GetCollectionsBySchemaVersionID(
 	cols := make([]client.CollectionDescription, len(colIDs))
 	for i, colID := range colIDs {
 		key := core.NewCollectionKey(colID)
-		buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+		buf, err := txn.Systemstore().Get(ctx, key.ToDS().Bytes())
 		if err != nil {
 			return nil, err
 		}
@@ -226,5 +226,5 @@ func HasCollectionByName(
 	name string,
 ) (bool, error) {
 	nameKey := core.NewCollectionNameKey(name)
-	return txn.Systemstore().Has(ctx, nameKey.ToDS())
+	return txn.Systemstore().Has(ctx, nameKey.ToDS().Bytes())
 }

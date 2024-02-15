@@ -190,7 +190,7 @@ func runStorageBenchPut(
 			}
 			key := ds.NewKey(string(keyBuf))
 
-			if err := db.Put(ctx, key, value); err != nil {
+			if err := db.Set(ctx, key, value); err != nil {
 				return err
 			}
 		}
@@ -240,7 +240,7 @@ func runStorageBenchPutMany(
 			}
 			key := ds.NewKey(string(keyBuf))
 
-			if err := batch.Put(ctx, key, value); err != nil {
+			if err := batch.Set(ctx, key, value); err != nil {
 				return err
 			}
 		}
@@ -276,7 +276,7 @@ func backfillBenchmarkStorageDB(
 		key := ds.NewKey(string(keyBuf))
 		keys[i] = key.String()
 
-		if err := batch.Put(ctx, key, value); err != nil {
+		if err := batch.Set(ctx, key, value); err != nil {
 			return nil, err
 		}
 	}
@@ -310,7 +310,7 @@ func backfillBenchmarkTxn(
 		key := ds.NewKey(string(keyBuf))
 		keys[i] = string(keyBuf)
 
-		if err := txn.Rootstore().Put(ctx, key, value); err != nil {
+		if err := txn.Rootstore().Set(ctx, key, value); err != nil {
 			return nil, err
 		}
 	}

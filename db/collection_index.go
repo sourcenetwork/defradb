@@ -210,7 +210,7 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	err = txn.Systemstore().Put(ctx, indexKey.ToDS(), buf)
+	err = txn.Systemstore().Set(ctx, indexKey.ToDS(), buf)
 	if err != nil {
 		return nil, err
 	}

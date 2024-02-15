@@ -22,11 +22,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
 )
 
@@ -192,7 +192,8 @@ func TestCCIPPost_WithInvalidBody(t *testing.T) {
 func setupDatabase(t *testing.T) client.DB {
 	ctx := context.Background()
 
-	cdb, err := db.NewDB(ctx, memory.NewDatastore(ctx), db.WithUpdateEvents())
+	rootstore := memory.NewDatastore(ctx)
+	cdb, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	require.NoError(t, err)
 
 	_, err = cdb.AddSchema(ctx, `type User {

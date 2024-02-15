@@ -45,12 +45,12 @@ func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
 
-	return hh.store.Put(ctx, hh.key(c).ToDS(), buf[0:n])
+	return hh.store.Set(ctx, hh.key(c).ToDS().Bytes(), buf[0:n])
 }
 
 // IsHead returns if a given cid is among the current heads.
 func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
-	return hh.store.Has(ctx, hh.key(c).ToDS())
+	return hh.store.Has(ctx, hh.key(c).ToDS().Bytes())
 }
 
 // Replace replaces a head with a new CID.
@@ -62,7 +62,7 @@ func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height u
 		logging.NewKV("CID", new),
 		logging.NewKV("Height", height))
 
-	err := hh.store.Delete(ctx, hh.key(old).ToDS())
+	err := hh.store.Delete(ctx, hh.key(old).ToDS().Bytes())
 	if err != nil {
 		return err
 	}

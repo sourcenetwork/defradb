@@ -63,7 +63,7 @@ func (base baseCRDT) setPriority(
 		return ErrEncodingPriority
 	}
 
-	return base.store.Put(ctx, prioK.ToDS(), buf[0:n])
+	return base.store.Set(ctx, prioK.ToDS(), buf[0:n])
 }
 
 // get the current priority for given key

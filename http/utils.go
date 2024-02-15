@@ -16,8 +16,9 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
 
 func requestJSON(req *http.Request, out any) error {
@@ -38,8 +39,8 @@ func parseError(msg any) error {
 	switch msg {
 	case client.ErrDocumentNotFound.Error():
 		return client.ErrDocumentNotFound
-	case badger.ErrTxnConflict.Error():
-		return badger.ErrTxnConflict
+	case corekv.ErrConflictTxn.Error():
+		return corekv.ErrConflictTxn
 	default:
 		return fmt.Errorf("%s", msg)
 	}

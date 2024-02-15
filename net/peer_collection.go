@@ -45,7 +45,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := core.NewP2PCollectionKey(col.SchemaRoot())
-		err = txn.Systemstore().Put(ctx, key.ToDS(), []byte{marker})
+		err = txn.Systemstore().Set(ctx, key.ToDS(), []byte{marker})
 		if err != nil {
 			return err
 		}

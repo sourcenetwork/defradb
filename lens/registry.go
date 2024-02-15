@@ -177,7 +177,7 @@ func (r *lensRegistry) setMigration(ctx context.Context, txnCtx *txnContext, cfg
 		return err
 	}
 
-	err = txnCtx.txn.Systemstore().Put(ctx, key.ToDS(), json)
+	err = txnCtx.txn.Systemstore().Set(ctx, key.ToDS().Bytes(), json)
 	if err != nil {
 		return err
 	}

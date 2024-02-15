@@ -63,7 +63,7 @@ func CreateSchemaVersion(
 	}
 
 	key := core.NewSchemaVersionKey(versionID)
-	err = txn.Systemstore().Put(ctx, key.ToDS(), buf)
+	err = txn.Systemstore().Set(ctx, key.ToDS(), buf)
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -71,7 +71,7 @@ func CreateSchemaVersion(
 	if !isNew {
 		// We don't need to add a history key if this is the first version
 		schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Root, previousSchemaVersionID)
-		err = txn.Systemstore().Put(ctx, schemaVersionHistoryKey.ToDS(), []byte(desc.VersionID))
+		err = txn.Systemstore().Set(ctx, schemaVersionHistoryKey.ToDS(), []byte(desc.VersionID))
 		if err != nil {
 			return client.SchemaDescription{}, err
 		}

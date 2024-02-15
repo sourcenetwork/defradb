@@ -85,7 +85,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		return err
 	}
 	key := core.NewReplicatorKey(rep.Info.ID.String())
-	err = txn.Systemstore().Put(ctx, key.ToDS(), repBytes)
+	err = txn.Systemstore().Set(ctx, key.ToDS(), repBytes)
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 	if err != nil {
 		return err
 	}
-	return txn.Systemstore().Put(ctx, key.ToDS(), repBytes)
+	return txn.Systemstore().Set(ctx, key.ToDS(), repBytes)
 }
 
 func (p *Peer) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {

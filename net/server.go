@@ -21,6 +21,7 @@ import (
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/corekv"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -29,7 +30,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -306,7 +306,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 
 		if txnErr = txn.Commit(ctx); txnErr != nil {
-			if errors.Is(txnErr, badger.ErrTxnConflict) {
+			if errors.Is(txnErr, corekv.ErrConflictTxn) {
 				continue
 			}
 			return &pb.PushLogReply{}, txnErr

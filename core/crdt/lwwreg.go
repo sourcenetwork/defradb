@@ -154,7 +154,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 		}
 	}
 
-	err = reg.store.Put(ctx, key.ToDS(), val)
+	err = reg.store.Set(ctx, key.ToDS(), val)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}

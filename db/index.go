@@ -154,14 +154,14 @@ func (i *collectionBaseIndex) deleteIndexKey(
 	txn datastore.Txn,
 	key core.IndexDataStoreKey,
 ) error {
-	exists, err := txn.Datastore().Has(ctx, key.ToDS())
+	exists, err := txn.Datastore().Has(ctx, key.ToDS().Bytes())
 	if err != nil {
 		return err
 	}
 	if !exists {
 		return NewErrCorruptedIndex(i.desc.Name)
 	}
-	return txn.Datastore().Delete(ctx, key.ToDS())
+	return txn.Datastore().Delete(ctx, key.ToDS().Bytes())
 }
 
 // RemoveAll remove all artifacts of the index from the storage, i.e. all index
@@ -177,7 +177,7 @@ func (i *collectionBaseIndex) RemoveAll(ctx context.Context, txn datastore.Txn) 
 	}
 
 	for _, key := range keys {
-		err := txn.Datastore().Delete(ctx, key)
+		err := txn.Datastore().Delete(ctx, key.Bytes())
 		if err != nil {
 			return NewCanNotDeleteIndexedField(err)
 		}
@@ -226,7 +226,7 @@ func (i *collectionSimpleIndex) Save(
 	if err != nil {
 		return err
 	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+	err = txn.Datastore().Set(ctx, key.ToDS().Bytes(), []byte{})
 	if err != nil {
 		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
 	}
@@ -273,14 +273,14 @@ func (i *collectionUniqueIndex) Save(
 	if err != nil {
 		return err
 	}
-	exists, err := txn.Datastore().Has(ctx, key.ToDS())
+	exists, err := txn.Datastore().Has(ctx, key.ToDS().Bytes())
 	if err != nil {
 		return err
 	}
 	if exists {
 		return i.newUniqueIndexError(doc)
 	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte(doc.Key().String()))
+	err = txn.Datastore().Set(ctx, key.ToDS().Bytes(), []byte(doc.Key().String()))
 	if err != nil {
 		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
 	}
@@ -307,7 +307,7 @@ func (i *collectionUniqueIndex) Update(
 	if err != nil {
 		return err
 	}
-	exists, err := txn.Datastore().Has(ctx, newKey.ToDS())
+	exists, err := txn.Datastore().Has(ctx, newKey.ToDS().Bytes())
 	if err != nil {
 		return err
 	}

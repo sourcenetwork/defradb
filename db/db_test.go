@@ -14,30 +14,30 @@ import (
 	"context"
 	"testing"
 
-	badger "github.com/sourcenetwork/badger/v4"
-
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
+	badger "github.com/dgraph-io/badger/v4"
+	badgerkv "github.com/sourcenetwork/corekv/badger"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func newMemoryDB(ctx context.Context) (*implicitTxnDB, error) {
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
+	opts := badger.DefaultOptions("").WithInMemory(true)
+	rootstore, err := badgerkv.NewDatastore("", opts)
 	if err != nil {
 		return nil, err
 	}
-	return newDB(ctx, rootstore)
+	return newDB(ctx, rootstore.(datastore.RootStore))
 }
 
 func TestNewDB(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
+	opts := badger.DefaultOptions("").WithInMemory(true)
+	rootstore, err := badgerkv.NewDatastore("", opts)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	_, err = NewDB(ctx, rootstore)
+	_, err = NewDB(ctx, rootstore.(datastore.RootStore))
 	if err != nil {
 		t.Error(err)
 	}

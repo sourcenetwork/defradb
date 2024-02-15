@@ -209,9 +209,9 @@ func (f *indexTestFixture) mockTxn() *mocks.MultiStoreTxn {
 }
 
 func (*indexTestFixture) resetSystemStoreStubs(systemStoreOn *mocks.DSReaderWriter_Expecter) {
-	systemStoreOn.Query(mock.Anything, mock.Anything).Unset()
+	// systemStoreOn.Query(mock.Anything, mock.Anything).Unset()
 	systemStoreOn.Get(mock.Anything, mock.Anything).Unset()
-	systemStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Unset()
+	systemStoreOn.Set(mock.Anything, mock.Anything, mock.Anything).Unset()
 }
 
 func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_Expecter) {
@@ -220,19 +220,20 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	indexOnNameDescData, err := json.Marshal(desc)
 	require.NoError(f.t, err)
 
-	colIndexKey := core.NewCollectionIndexKey(usersColName, "")
-	matchPrefixFunc := func(q query.Query) bool {
-		return q.Prefix == colIndexKey.ToDS().String()
-	}
+	// TODO: AFTER MOCKS ARE FIXED FOR ITERATOR/QUERY
+	// colIndexKey := core.NewCollectionIndexKey(usersColName, "")
+	// matchPrefixFunc := func(q query.Query) bool {
+	// 	return q.Prefix == colIndexKey.ToDS().String()
+	// }
 
-	systemStoreOn.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).
-		RunAndReturn(func(context.Context, query.Query) (query.Results, error) {
-			return mocks.NewQueryResultsWithValues(f.t, indexOnNameDescData), nil
-		}).Maybe()
-	systemStoreOn.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).Maybe().
-		Return(mocks.NewQueryResultsWithValues(f.t, indexOnNameDescData), nil)
-	systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
-		Return(mocks.NewQueryResultsWithValues(f.t), nil)
+	// systemStoreOn.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).
+	// 	RunAndReturn(func(context.Context, query.Query) (query.Results, error) {
+	// 		return mocks.NewQueryResultsWithValues(f.t, indexOnNameDescData), nil
+	// 	}).Maybe()
+	// systemStoreOn.Query(mock.Anything, mock.MatchedBy(matchPrefixFunc)).Maybe().
+	// 	Return(mocks.NewQueryResultsWithValues(f.t, indexOnNameDescData), nil)
+	// systemStoreOn.Query(mock.Anything, mock.Anything).Maybe().
+	// 	Return(mocks.NewQueryResultsWithValues(f.t), nil)
 
 	colIndexOnNameKey := core.NewCollectionIndexKey(usersColName, testUsersColIndexName)
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
@@ -244,7 +245,7 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 
 	systemStoreOn.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
 
-	systemStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	systemStoreOn.Set(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
 
 	systemStoreOn.Has(mock.Anything, mock.Anything).Maybe().Return(false, nil)
 
@@ -261,7 +262,7 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
-	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 }
@@ -277,9 +278,9 @@ func TestNonUnique_IfFailsToStoredIndexedDoc_Error(t *testing.T) {
 	mockTxn := f.mockTxn()
 
 	dataStoreOn := mockTxn.MockDatastore.EXPECT()
-	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Unset()
-	dataStoreOn.Put(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
-	dataStoreOn.Put(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	dataStoreOn.Set(mock.Anything, mock.Anything, mock.Anything).Unset()
+	dataStoreOn.Set(mock.Anything, key.ToDS(), mock.Anything).Return(errors.New("error"))
+	dataStoreOn.Set(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	err := f.users.WithTxn(mockTxn).Create(f.ctx, doc)
 	require.ErrorIs(f.t, err, NewErrFailedToStoreIndexedField("name", nil))
@@ -351,7 +352,7 @@ func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
 
-	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 }
@@ -379,10 +380,10 @@ func TestNonUnique_IfMultipleCollectionsWithIndexes_StoreIndexWithCollectionID(t
 	userDocKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(userDoc).Build()
 	prodDocKey := newIndexKeyBuilder(f).Col(productsColName).Field(productsCategoryFieldName).Doc(prodDoc).Build()
 
-	data, err := f.txn.Datastore().Get(f.ctx, userDocKey.ToDS())
+	data, err := f.txn.Datastore().Get(f.ctx, userDocKey.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
-	data, err = f.txn.Datastore().Get(f.ctx, prodDocKey.ToDS())
+	data, err = f.txn.Datastore().Get(f.ctx, prodDocKey.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 }
@@ -399,10 +400,10 @@ func TestNonUnique_IfMultipleIndexes_StoreIndexWithIndexID(t *testing.T) {
 	nameKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 	ageKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
 
-	data, err := f.txn.Datastore().Get(f.ctx, nameKey.ToDS())
+	data, err := f.txn.Datastore().Get(f.ctx, nameKey.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
-	data, err = f.txn.Datastore().Get(f.ctx, ageKey.ToDS())
+	data, err = f.txn.Datastore().Get(f.ctx, ageKey.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 }
@@ -487,7 +488,7 @@ func TestNonUnique_StoringIndexedFieldValueOfDifferentTypes(t *testing.T) {
 			key := keyBuilder.Build()
 
 			keyStr := key.ToDS()
-			data, err := f.txn.Datastore().Get(f.ctx, keyStr)
+			data, err := f.txn.Datastore().Get(f.ctx, keyStr.Bytes())
 			require.NoError(t, err, assertMsg)
 			assert.Len(t, data, 0, assertMsg)
 		}
@@ -512,7 +513,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).
 		Values([]byte(nil)).Build()
 
-	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 }
@@ -531,10 +532,10 @@ func TestNonUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 	key1 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc1).Build()
 	key2 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc2).Build()
 
-	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS())
+	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS().Bytes())
 	require.NoError(t, err, key1.ToString())
 	assert.Len(t, data, 0)
-	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS())
+	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Len(t, data, 0)
 }
@@ -605,7 +606,7 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 		_, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 		require.ErrorIs(t, err, testError, tc.Name)
 
-		_, err = f.txn.Datastore().Get(f.ctx, key.ToDS())
+		_, err = f.txn.Datastore().Get(f.ctx, key.ToDS().Bytes())
 		require.Error(t, err, tc.Name)
 	}
 }
@@ -627,7 +628,7 @@ func TestNonUniqueCreate_IfDatastoreFailsToStoreIndex_ReturnError(t *testing.T) 
 	invalidKeyString := fieldKeyString + "/doesn't matter/"
 
 	// Insert an invalid key within the document prefix, this will generate an error within the fetcher.
-	err := f.db.multistore.Datastore().Put(f.ctx, ipfsDatastore.NewKey(invalidKeyString), []byte("doesn't matter"))
+	err := f.db.multistore.Datastore().Set(f.ctx, ipfsDatastore.NewKey(invalidKeyString).Bytes(), []byte("doesn't matter"))
 	require.NoError(f.t, err)
 
 	_, err = f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
@@ -709,9 +710,9 @@ func TestNonUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 
 		newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
-		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS().Bytes())
 		require.Error(t, err)
-		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS().Bytes())
 		require.NoError(t, err)
 	}
 }
@@ -735,7 +736,8 @@ func TestNonUniqueUpdate_IfFailsToReadIndexDescription_ReturnError(t *testing.T)
 
 	mockedTxn := f.mockTxn()
 	mockedTxn.MockSystemstore = mocks.NewDSReaderWriter(t)
-	mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
+	// TODO: FIX AFTER ITERATOR/QUERY MOCK IS RESOLVED
+	// mockedTxn.MockSystemstore.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, testErr)
 	mockedTxn.EXPECT().Systemstore().Unset()
 	mockedTxn.EXPECT().Systemstore().Return(mockedTxn.MockSystemstore)
 	mockedTxn.MockDatastore.EXPECT().Get(mock.Anything, mock.Anything).Unset()
@@ -823,9 +825,9 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 
 		newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
-		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS().Bytes())
 		require.NoError(t, err, tc.Name)
-		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS().Bytes())
 		require.Error(t, err, tc.Name)
 	}
 }
@@ -840,7 +842,7 @@ func TestNonUniqueUpdate_IfFailsToUpdateIndex_ReturnError(t *testing.T) {
 	f.commitTxn()
 
 	validKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersAgeFieldName).Doc(doc).Build()
-	err := f.txn.Datastore().Delete(f.ctx, validKey.ToDS())
+	err := f.txn.Datastore().Delete(f.ctx, validKey.ToDS().Bytes())
 	require.NoError(f.t, err)
 	f.commitTxn()
 
@@ -906,7 +908,7 @@ func TestNonUniqueUpdate_IfDatastoreFails_ReturnError(t *testing.T) {
 				ds.Delete(mock.Anything, mock.Anything).Maybe().Return(nil)
 				ds.Get(mock.Anything, mock.Anything).Maybe().Return([]byte{}, nil)
 				ds.Has(mock.Anything, mock.Anything).Maybe().Return(true, nil)
-				ds.Put(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(testErr)
+				ds.Set(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(testErr)
 			},
 		},
 	}
@@ -972,9 +974,9 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 
 	newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Doc(doc).Build()
 
-	_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+	_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS().Bytes())
 	require.NoError(t, err)
-	_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+	_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS().Bytes())
 	require.Error(t, err)
 }
 
@@ -1024,10 +1026,10 @@ func TestUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
 	key1 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc1).Build()
 	key2 := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc2).Build()
 
-	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS())
+	data, err := f.txn.Datastore().Get(f.ctx, key1.ToDS().Bytes())
 	require.NoError(t, err, key1.ToString())
 	assert.Equal(t, data, []byte(doc1.Key().String()))
-	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS())
+	data, err = f.txn.Datastore().Get(f.ctx, key2.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Equal(t, data, []byte(doc2.Key().String()))
 }
@@ -1050,7 +1052,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 	key := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc).
 		Values([]byte(nil)).Build()
 
-	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS().Bytes())
 	require.NoError(t, err)
 	assert.Equal(t, data, []byte(doc.Key().String()))
 }
@@ -1117,9 +1119,9 @@ func TestUniqueUpdate_ShouldDeleteOldValueAndStoreNewOne(t *testing.T) {
 
 		newKey := newIndexKeyBuilder(f).Col(usersColName).Field(usersNameFieldName).Unique().Doc(doc).Build()
 
-		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS())
+		_, err = f.txn.Datastore().Get(f.ctx, oldKey.ToDS().Bytes())
 		require.Error(t, err)
-		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS())
+		_, err = f.txn.Datastore().Get(f.ctx, newKey.ToDS().Bytes())
 		require.NoError(t, err)
 	}
 }

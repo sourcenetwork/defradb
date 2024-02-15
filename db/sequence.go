@@ -50,7 +50,7 @@ func (db *db) getSequence(ctx context.Context, txn datastore.Txn, key string) (*
 }
 
 func (seq *sequence) get(ctx context.Context, txn datastore.Txn) (uint64, error) {
-	val, err := txn.Systemstore().Get(ctx, seq.key.ToDS())
+	val, err := txn.Systemstore().Get(ctx, seq.key.ToDS().Bytes())
 	if err != nil {
 		return 0, err
 	}
@@ -62,7 +62,7 @@ func (seq *sequence) get(ctx context.Context, txn datastore.Txn) (uint64, error)
 func (seq *sequence) update(ctx context.Context, txn datastore.Txn) error {
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
-	if err := txn.Systemstore().Put(ctx, seq.key.ToDS(), buf[:]); err != nil {
+	if err := txn.Systemstore().Set(ctx, seq.key.ToDS().Bytes(), buf[:]); err != nil {
 		return err
 	}
 

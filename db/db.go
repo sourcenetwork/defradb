@@ -177,7 +177,7 @@ func (db *db) Blockstore() blockstore.Blockstore {
 }
 
 // Peerstore returns the internal DAG store which contains IPLD blocks.
-func (db *db) Peerstore() datastore.DSBatching {
+func (db *db) Peerstore() datastore.DSReaderWriter {
 	return db.multistore.Peerstore()
 }
 
@@ -198,7 +198,7 @@ func (db *db) initialize(ctx context.Context) error {
 	defer txn.Discard(ctx)
 
 	log.Debug(ctx, "Checking if DB has already been initialized...")
-	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
+	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init").Bytes())
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
@@ -231,7 +231,7 @@ func (db *db) initialize(ctx context.Context) error {
 		return err
 	}
 
-	err = txn.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
+	err = txn.Systemstore().Set(ctx, ds.NewKey("init").Bytes(), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -266,10 +266,7 @@ func (db *db) Close() {
 		db.events.Updates.Value().Close()
 	}
 
-	err := db.rootstore.Close()
-	if err != nil {
-		log.ErrorE(context.Background(), "Failure closing running process", err)
-	}
+	db.rootstore.Close()
 	log.Info(context.Background(), "Successfully closed running process")
 }
 
