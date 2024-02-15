@@ -310,18 +310,13 @@ func (w *Wrapper) GetCollections(
 }
 
 func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	args := []string{"client", "schema", "describe"}
-	args = append(args, "--version", versionID)
-
-	data, err := w.cmd.execute(ctx, args)
+	schemas, err := w.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
-	var schema client.SchemaDescription
-	if err := json.Unmarshal(data, &schema); err != nil {
-		return client.SchemaDescription{}, err
-	}
-	return schema, err
+
+	// schemas will always have length == 1 here
+	return schemas[0], nil
 }
 
 func (w *Wrapper) GetSchemas(
@@ -329,6 +324,9 @@ func (w *Wrapper) GetSchemas(
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
 	args := []string{"client", "schema", "describe"}
+	if options.ID.HasValue() {
+		args = append(args, "--version", options.ID.Value())
+	}
 	if options.Root.HasValue() {
 		args = append(args, "--root", options.Root.Value())
 	}

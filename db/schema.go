@@ -277,7 +277,13 @@ func (db *db) getSchemaByVersionID(
 	txn datastore.Txn,
 	versionID string,
 ) (client.SchemaDescription, error) {
-	return description.GetSchemaVersion(ctx, txn, versionID)
+	schemas, err := db.getSchemas(ctx, txn, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+
+	// schemas will always have length == 1 here
+	return schemas[0], nil
 }
 
 func (db *db) getSchemas(
@@ -288,6 +294,13 @@ func (db *db) getSchemas(
 	schemas := []client.SchemaDescription{}
 
 	switch {
+	case options.ID.HasValue():
+		schema, err := description.GetSchemaVersion(ctx, txn, options.ID.Value())
+		if err != nil {
+			return nil, err
+		}
+		schemas = append(schemas, schema)
+
 	case options.Root.HasValue():
 		var err error
 		schemas, err = description.GetSchemasByRoot(ctx, txn, options.Root.Value())
@@ -306,6 +319,9 @@ func (db *db) getSchemas(
 
 	result := []client.SchemaDescription{}
 	for _, schema := range schemas {
+		if options.Root.HasValue() && schema.Root != options.Root.Value() {
+			continue
+		}
 		if options.Name.HasValue() && schema.Name != options.Name.Value() {
 			continue
 		}

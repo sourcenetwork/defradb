@@ -258,4 +258,7 @@ type SchemaFetchOptions struct {
 
 	// If provided, only schemas with this name will be returned.
 	Name immutable.Option[string]
+
+	// If provided, only the schema with this id will be returned.
+	ID immutable.Option[string]
 }

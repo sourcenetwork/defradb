@@ -183,30 +183,23 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
-	switch {
-	case req.URL.Query().Has("version_id"):
-		schema, err := store.GetSchemaByVersionID(req.Context(), req.URL.Query().Get("version_id"))
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, schema)
-	default:
-		options := client.SchemaFetchOptions{}
-		if req.URL.Query().Has("root") {
-			options.Root = immutable.Some(req.URL.Query().Get("root"))
-		}
-		if req.URL.Query().Has("name") {
-			options.Name = immutable.Some(req.URL.Query().Get("name"))
-		}
-
-		schema, err := store.GetSchemas(req.Context(), options)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, schema)
+	options := client.SchemaFetchOptions{}
+	if req.URL.Query().Has("version_id") {
+		options.ID = immutable.Some(req.URL.Query().Get("version_id"))
 	}
+	if req.URL.Query().Has("root") {
+		options.Root = immutable.Some(req.URL.Query().Get("root"))
+	}
+	if req.URL.Query().Has("name") {
+		options.Name = immutable.Some(req.URL.Query().Get("name"))
+	}
+
+	schema, err := store.GetSchemas(req.Context(), options)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, schema)
 }
 
 func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {

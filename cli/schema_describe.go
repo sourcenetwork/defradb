@@ -42,29 +42,20 @@ Example: view a single schema by version id
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
 
-			var schemas []client.SchemaDescription
-			switch {
-			case versionID != "":
-				schema, err := store.GetSchemaByVersionID(cmd.Context(), versionID)
-				if err != nil {
-					return err
-				}
-				return writeJSON(cmd, schema)
+			options := client.SchemaFetchOptions{}
+			if versionID != "" {
+				options.ID = immutable.Some(versionID)
+			}
+			if root != "" {
+				options.Root = immutable.Some(root)
+			}
+			if name != "" {
+				options.Name = immutable.Some(name)
+			}
 
-			default:
-				options := client.SchemaFetchOptions{}
-				if root != "" {
-					options.Root = immutable.Some(root)
-				}
-				if name != "" {
-					options.Name = immutable.Some(name)
-				}
-
-				s, err := store.GetSchemas(cmd.Context(), options)
-				if err != nil {
-					return err
-				}
-				schemas = s
+			schemas, err := store.GetSchemas(cmd.Context(), options)
+			if err != nil {
+				return err
 			}
 
 			return writeJSON(cmd, schemas)

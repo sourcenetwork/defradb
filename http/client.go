@@ -271,18 +271,13 @@ func (c *Client) GetCollections(
 }
 
 func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
-	methodURL.RawQuery = url.Values{"version_id": []string{versionID}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	schemas, err := c.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
-	var schema client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return client.SchemaDescription{}, err
-	}
-	return schema, nil
+
+	// schemas will always have length == 1 here
+	return schemas[0], nil
 }
 
 func (c *Client) GetSchemas(
@@ -291,6 +286,9 @@ func (c *Client) GetSchemas(
 ) ([]client.SchemaDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
 	params := url.Values{}
+	if options.ID.HasValue() {
+		params.Add("version_id", options.ID.Value())
+	}
 	if options.Root.HasValue() {
 		params.Add("root", options.Root.Value())
 	}
