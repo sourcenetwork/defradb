@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -177,17 +178,19 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		}
 		responseJSON(rw, http.StatusOK, colDesc)
 	default:
-		var getInactive bool
+		options := client.CollectionFetchOptions{}
 		if req.URL.Query().Has("get_inactive") {
 			getInactiveStr := req.URL.Query().Get("get_inactive")
 			var err error
-			getInactive, err = strconv.ParseBool(getInactiveStr)
+			getInactive, err := strconv.ParseBool(getInactiveStr)
 			if err != nil {
 				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 				return
 			}
+			options.IncludeInactive = immutable.Some(getInactive)
 		}
-		cols, err := store.GetAllCollections(req.Context(), getInactive)
+
+		cols, err := store.GetCollections(req.Context(), options)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return

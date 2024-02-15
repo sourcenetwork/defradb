@@ -131,7 +131,7 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 		return key
 	}
 
-	cols, err := b.f.db.getAllCollections(b.f.ctx, b.f.txn, false)
+	cols, err := b.f.db.getCollections(b.f.ctx, b.f.txn, client.CollectionFetchOptions{})
 	require.NoError(b.f.t, err)
 	var collection client.Collection
 	for _, col := range cols {

@@ -87,25 +87,25 @@ func (_c *DB_AddSchema_Call) RunAndReturn(run func(context.Context, string) ([]c
 	return _c
 }
 
-// AddView provides a mock function with given fields: ctx, gqlQuery, sdl
-func (_m *DB) AddView(ctx context.Context, gqlQuery string, sdl string) ([]client.CollectionDefinition, error) {
-	ret := _m.Called(ctx, gqlQuery, sdl)
+// AddView provides a mock function with given fields: ctx, gqlQuery, sdl, transform
+func (_m *DB) AddView(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens]) ([]client.CollectionDefinition, error) {
+	ret := _m.Called(ctx, gqlQuery, sdl, transform)
 
 	var r0 []client.CollectionDefinition
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]client.CollectionDefinition, error)); ok {
-		return rf(ctx, gqlQuery, sdl)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[model.Lens]) ([]client.CollectionDefinition, error)); ok {
+		return rf(ctx, gqlQuery, sdl, transform)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) []client.CollectionDefinition); ok {
-		r0 = rf(ctx, gqlQuery, sdl)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[model.Lens]) []client.CollectionDefinition); ok {
+		r0 = rf(ctx, gqlQuery, sdl, transform)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.CollectionDefinition)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, gqlQuery, sdl)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, immutable.Option[model.Lens]) error); ok {
+		r1 = rf(ctx, gqlQuery, sdl, transform)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -122,13 +122,14 @@ type DB_AddView_Call struct {
 //   - ctx context.Context
 //   - gqlQuery string
 //   - sdl string
-func (_e *DB_Expecter) AddView(ctx interface{}, gqlQuery interface{}, sdl interface{}) *DB_AddView_Call {
-	return &DB_AddView_Call{Call: _e.mock.On("AddView", ctx, gqlQuery, sdl)}
+//   - transform immutable.Option[model.Lens]
+func (_e *DB_Expecter) AddView(ctx interface{}, gqlQuery interface{}, sdl interface{}, transform interface{}) *DB_AddView_Call {
+	return &DB_AddView_Call{Call: _e.mock.On("AddView", ctx, gqlQuery, sdl, transform)}
 }
 
-func (_c *DB_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, sdl string)) *DB_AddView_Call {
+func (_c *DB_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens])) *DB_AddView_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(immutable.Option[model.Lens]))
 	})
 	return _c
 }
@@ -138,7 +139,7 @@ func (_c *DB_AddView_Call) Return(_a0 []client.CollectionDefinition, _a1 error) 
 	return _c
 }
 
-func (_c *DB_AddView_Call) RunAndReturn(run func(context.Context, string, string) ([]client.CollectionDefinition, error)) *DB_AddView_Call {
+func (_c *DB_AddView_Call) RunAndReturn(run func(context.Context, string, string, immutable.Option[model.Lens]) ([]client.CollectionDefinition, error)) *DB_AddView_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -390,61 +391,6 @@ func (_c *DB_ExecRequest_Call) RunAndReturn(run func(context.Context, string) *c
 	return _c
 }
 
-// GetAllCollections provides a mock function with given fields: _a0, _a1
-func (_m *DB) GetAllCollections(_a0 context.Context, _a1 bool) ([]client.Collection, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 []client.Collection
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, bool) ([]client.Collection, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, bool) []client.Collection); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.Collection)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, bool) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DB_GetAllCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllCollections'
-type DB_GetAllCollections_Call struct {
-	*mock.Call
-}
-
-// GetAllCollections is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 bool
-func (_e *DB_Expecter) GetAllCollections(_a0 interface{}, _a1 interface{}) *DB_GetAllCollections_Call {
-	return &DB_GetAllCollections_Call{Call: _e.mock.On("GetAllCollections", _a0, _a1)}
-}
-
-func (_c *DB_GetAllCollections_Call) Run(run func(_a0 context.Context, _a1 bool)) *DB_GetAllCollections_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bool))
-	})
-	return _c
-}
-
-func (_c *DB_GetAllCollections_Call) Return(_a0 []client.Collection, _a1 error) *DB_GetAllCollections_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *DB_GetAllCollections_Call) RunAndReturn(run func(context.Context, bool) ([]client.Collection, error)) *DB_GetAllCollections_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetAllIndexes provides a mock function with given fields: _a0
 func (_m *DB) GetAllIndexes(_a0 context.Context) (map[string][]client.IndexDescription, error) {
 	ret := _m.Called(_a0)
@@ -604,6 +550,61 @@ func (_c *DB_GetCollectionByName_Call) Return(_a0 client.Collection, _a1 error) 
 }
 
 func (_c *DB_GetCollectionByName_Call) RunAndReturn(run func(context.Context, string) (client.Collection, error)) *DB_GetCollectionByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCollections provides a mock function with given fields: _a0, _a1
+func (_m *DB) GetCollections(_a0 context.Context, _a1 client.CollectionFetchOptions) ([]client.Collection, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 []client.Collection
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) []client.Collection); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.Collection)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, client.CollectionFetchOptions) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_GetCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCollections'
+type DB_GetCollections_Call struct {
+	*mock.Call
+}
+
+// GetCollections is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 client.CollectionFetchOptions
+func (_e *DB_Expecter) GetCollections(_a0 interface{}, _a1 interface{}) *DB_GetCollections_Call {
+	return &DB_GetCollections_Call{Call: _e.mock.On("GetCollections", _a0, _a1)}
+}
+
+func (_c *DB_GetCollections_Call) Run(run func(_a0 context.Context, _a1 client.CollectionFetchOptions)) *DB_GetCollections_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(client.CollectionFetchOptions))
+	})
+	return _c
+}
+
+func (_c *DB_GetCollections_Call) Return(_a0 []client.Collection, _a1 error) *DB_GetCollections_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetCollections_Call) RunAndReturn(run func(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)) *DB_GetCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }

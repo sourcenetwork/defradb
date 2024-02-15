@@ -723,15 +723,16 @@ func (db *db) getCollectionsBySchemaRoot(
 	return collections, nil
 }
 
-// getAllCollections returns all collections and their descriptions that currently exist within
-// this [Store].
-//
-// If `true` is provided, the results will include inactive collections.  If `false`, only active collections
-// will be returned.
-func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn, getInactive bool) ([]client.Collection, error) {
+// GetCollections returns all collections and their descriptions matching the given options
+// that currently exist within this [Store].
+func (db *db) getCollections(
+	ctx context.Context,
+	txn datastore.Txn,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
 	var cols []client.CollectionDescription
 
-	if getInactive {
+	if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
 		var err error
 		cols, err = description.GetCollections(ctx, txn)
 		if err != nil {

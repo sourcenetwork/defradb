@@ -96,7 +96,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 
 		// Get all DocIDs across all collections in the DB
 		log.Debug(p.ctx, "Getting all existing DocIDs...")
-		cols, err := s.db.GetAllCollections(s.peer.ctx, false)
+		cols, err := s.db.GetCollections(s.peer.ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return nil, err
 		}

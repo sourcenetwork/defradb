@@ -278,9 +278,16 @@ func (c *Client) GetCollectionsByVersionID(ctx context.Context, versionId string
 	return collections, nil
 }
 
-func (c *Client) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
+func (c *Client) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"get_inactive": []string{strconv.FormatBool(getInactive)}}.Encode()
+	params := url.Values{}
+	if options.IncludeInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
+	methodURL.RawQuery = params.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {

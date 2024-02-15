@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -42,8 +43,12 @@ Example: view collection by version id
 			if ok {
 				return writeJSON(cmd, col.Definition())
 			}
-			// if no collection specified list all collections
-			cols, err := store.GetAllCollections(cmd.Context(), getInactive)
+			cols, err := store.GetCollections(
+				cmd.Context(),
+				client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(getInactive),
+				},
+			)
 			if err != nil {
 				return err
 			}

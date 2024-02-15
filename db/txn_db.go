@@ -162,20 +162,26 @@ func (db *explicitTxnDB) GetCollectionsByVersionID(
 	return collections, nil
 }
 
-// GetAllCollections gets all the currently defined collections.
-func (db *implicitTxnDB) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
+// GetCollections gets all the currently defined collections.
+func (db *implicitTxnDB) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	return db.getAllCollections(ctx, txn, getInactive)
+	return db.getCollections(ctx, txn, options)
 }
 
-// GetAllCollections gets all the currently defined collections.
-func (db *explicitTxnDB) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
-	return db.getAllCollections(ctx, db.txn, getInactive)
+// GetCollections gets all the currently defined collections.
+func (db *explicitTxnDB) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
+	return db.getCollections(ctx, db.txn, options)
 }
 
 // GetSchemasByName returns the all schema versions with the given name.

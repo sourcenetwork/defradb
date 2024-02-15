@@ -736,7 +736,7 @@ func refreshCollections(
 
 	for nodeID, node := range s.nodes {
 		s.collections[nodeID] = make([]client.Collection, len(s.collectionNames))
-		allCollections, err := node.GetAllCollections(s.ctx, false)
+		allCollections, err := node.GetCollections(s.ctx, client.CollectionFetchOptions{})
 		require.Nil(s.t, err)
 
 		for i, collectionName := range s.collectionNames {
@@ -1040,7 +1040,7 @@ func getCollections(
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
 		db := getStore(s, node, action.TransactionID, "")
-		results, err := db.GetAllCollections(s.ctx, action.GetInactive)
+		results, err := db.GetCollections(s.ctx, action.FilterOptions)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

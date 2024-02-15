@@ -319,9 +319,14 @@ func (w *Wrapper) GetCollectionsByVersionID(ctx context.Context, versionId strin
 	return cols, err
 }
 
-func (w *Wrapper) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
+func (w *Wrapper) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
-	args = append(args, "--get-inactive", strconv.FormatBool(getInactive))
+	if options.IncludeInactive.HasValue() {
+		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+	}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

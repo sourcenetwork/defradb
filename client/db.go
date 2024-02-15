@@ -199,12 +199,9 @@ type Store interface {
 	// If no matching collections are found an empty set will be returned.
 	GetCollectionsByVersionID(context.Context, string) ([]Collection, error)
 
-	// GetAllCollections returns all collections and their descriptions that currently exist within
-	// this [Store].
-	//
-	// If `true` is provided, the results will include inactive collections.  If `false`, only active collections
-	// will be returned.
-	GetAllCollections(context.Context, bool) ([]Collection, error)
+	// GetCollections returns all collections and their descriptions matching the given options
+	// that currently exist within this [Store].
+	GetCollections(context.Context, CollectionFetchOptions) ([]Collection, error)
 
 	// GetSchemasByName returns the all schema versions with the given name.
 	GetSchemasByName(context.Context, string) ([]SchemaDescription, error)
@@ -253,4 +250,10 @@ type RequestResult struct {
 	// Pub contains a pointer to an event stream which channels any subscription results
 	// if the request was a GQL subscription.
 	Pub *events.Publisher[events.Update]
+}
+
+// CollectionFetchOptions represents a set of options used for fetching collections.
+type CollectionFetchOptions struct {
+	// If IncludeInactive is true, then inactive collections will also be returned.
+	IncludeInactive immutable.Option[bool]
 }
