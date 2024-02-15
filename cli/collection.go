@@ -48,9 +48,6 @@ func MakeCollectionCommand() *cobra.Command {
 			var col client.Collection
 			var cols []client.Collection
 			switch {
-			case schemaRoot != "":
-				cols, err = store.GetCollectionsBySchemaRoot(cmd.Context(), schemaRoot)
-
 			case name != "":
 				col, err = store.GetCollectionByName(cmd.Context(), name)
 				cols = []client.Collection{col}
@@ -59,6 +56,9 @@ func MakeCollectionCommand() *cobra.Command {
 				options := client.CollectionFetchOptions{}
 				if versionID != "" {
 					options.SchemaVersionID = immutable.Some(versionID)
+				}
+				if schemaRoot != "" {
+					options.SchemaRoot = immutable.Some(schemaRoot)
 				}
 
 				cols, err = store.GetCollections(cmd.Context(), options)

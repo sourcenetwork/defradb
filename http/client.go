@@ -240,25 +240,6 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 	return &Collection{c.http, definition}, nil
 }
 
-func (c *Client) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot string) ([]client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"schema_root": []string{schemaRoot}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var descriptions []client.CollectionDefinition
-	if err := c.http.requestJson(req, &descriptions); err != nil {
-		return nil, err
-	}
-	collections := make([]client.Collection, len(descriptions))
-	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
-	}
-	return collections, nil
-}
-
 func (c *Client) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
@@ -267,6 +248,9 @@ func (c *Client) GetCollections(
 	params := url.Values{}
 	if options.SchemaVersionID.HasValue() {
 		params.Add("version_id", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		params.Add("schema_root", options.SchemaRoot.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))

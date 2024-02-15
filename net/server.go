@@ -22,6 +22,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/event"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
@@ -262,7 +263,12 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 		// Currently a schema is the best way we have to link a push log request to a collection,
 		// this will change with https://github.com/sourcenetwork/defradb/issues/1085
-		cols, err := store.GetCollectionsBySchemaRoot(ctx, schemaRoot)
+		cols, err := store.GetCollections(
+			ctx,
+			client.CollectionFetchOptions{
+				SchemaRoot: immutable.Some(schemaRoot),
+			},
+		)
 		if err != nil {
 			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaRoot %s", schemaRoot), err)
 		}

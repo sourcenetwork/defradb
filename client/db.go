@@ -189,11 +189,6 @@ type Store interface {
 	// If no matching collection is found an error will be returned.
 	GetCollectionByName(context.Context, CollectionName) (Collection, error)
 
-	// GetCollectionsBySchemaRoot attempts to retrieve all collections using the given schema ID.
-	//
-	// If no matching collection is found an empty set will be returned.
-	GetCollectionsBySchemaRoot(context.Context, string) ([]Collection, error)
-
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
 	GetCollections(context.Context, CollectionFetchOptions) ([]Collection, error)
@@ -251,6 +246,9 @@ type RequestResult struct {
 type CollectionFetchOptions struct {
 	// If provided, only collections with this schema version id will be returned.
 	SchemaVersionID immutable.Option[string]
+
+	// If provided, only collections with schemas of this root will be returned.
+	SchemaRoot immutable.Option[string]
 
 	// If IncludeInactive is true, then inactive collections will also be returned.
 	IncludeInactive immutable.Option[bool]

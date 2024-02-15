@@ -654,44 +654,6 @@ func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name s
 	return collection, nil
 }
 
-// getCollectionsBySchemaRoot returns all existing collections using the schema root.
-func (db *db) getCollectionsBySchemaRoot(
-	ctx context.Context,
-	txn datastore.Txn,
-	schemaRoot string,
-) ([]client.Collection, error) {
-	if schemaRoot == "" {
-		return nil, ErrSchemaRootEmpty
-	}
-
-	cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, schemaRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
-		if err != nil {
-			// If the schema is not found we leave it as empty and carry on. This can happen when
-			// a migration is registered before the schema is declared locally.
-			if !errors.Is(err, ds.ErrNotFound) {
-				return nil, err
-			}
-		}
-
-		collection := db.newCollection(col, schema)
-		collections[i] = collection
-
-		err = collection.loadIndexes(ctx, txn)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return collections, nil
-}
-
 // GetCollections returns all collections and their descriptions matching the given options
 // that currently exist within this [Store].
 func (db *db) getCollections(
@@ -705,6 +667,13 @@ func (db *db) getCollections(
 	case options.SchemaVersionID.HasValue():
 		var err error
 		cols, err = description.GetCollectionsBySchemaVersionID(ctx, txn, options.SchemaVersionID.Value())
+		if err != nil {
+			return nil, err
+		}
+
+	case options.SchemaRoot.HasValue():
+		var err error
+		cols, err = description.GetCollectionsBySchemaRoot(ctx, txn, options.SchemaRoot.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -742,6 +711,12 @@ func (db *db) getCollections(
 			// a migration is registered before the schema is declared locally.
 			if !errors.Is(err, ds.ErrNotFound) {
 				return nil, err
+			}
+		}
+
+		if options.SchemaRoot.HasValue() {
+			if schema.Root != options.SchemaRoot.Value() {
+				continue
 			}
 		}
 

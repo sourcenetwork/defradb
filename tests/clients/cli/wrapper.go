@@ -281,25 +281,6 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 	return &Collection{w.cmd, definition}, nil
 }
 
-func (w *Wrapper) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot string) ([]client.Collection, error) {
-	args := []string{"client", "collection", "describe"}
-	args = append(args, "--schema", schemaRoot)
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	var colDesc []client.CollectionDefinition
-	if err := json.Unmarshal(data, &colDesc); err != nil {
-		return nil, err
-	}
-	cols := make([]client.Collection, len(colDesc))
-	for i, v := range colDesc {
-		cols[i] = &Collection{w.cmd, v}
-	}
-	return cols, err
-}
-
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
@@ -307,6 +288,9 @@ func (w *Wrapper) GetCollections(
 	args := []string{"client", "collection", "describe"}
 	if options.SchemaVersionID.HasValue() {
 		args = append(args, "--version", options.SchemaVersionID.Value())
+	}
+	if options.SchemaRoot.HasValue() {
+		args = append(args, "--schema", options.SchemaRoot.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))

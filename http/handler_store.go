@@ -155,21 +155,13 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 			return
 		}
 		responseJSON(rw, http.StatusOK, col.Definition())
-	case req.URL.Query().Has("schema_root"):
-		cols, err := store.GetCollectionsBySchemaRoot(req.Context(), req.URL.Query().Get("schema_root"))
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		colDesc := make([]client.CollectionDefinition, len(cols))
-		for i, col := range cols {
-			colDesc[i] = col.Definition()
-		}
-		responseJSON(rw, http.StatusOK, colDesc)
 	default:
 		options := client.CollectionFetchOptions{}
 		if req.URL.Query().Has("version_id") {
 			options.SchemaVersionID = immutable.Some(req.URL.Query().Get("version_id"))
+		}
+		if req.URL.Query().Has("schema_root") {
+			options.SchemaRoot = immutable.Some(req.URL.Query().Get("schema_root"))
 		}
 		if req.URL.Query().Has("get_inactive") {
 			getInactiveStr := req.URL.Query().Get("get_inactive")
