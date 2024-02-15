@@ -609,37 +609,6 @@ func (db *db) getActiveCollectionUp(
 	return client.CollectionDescription{}, false
 }
 
-// getCollectionsByVersionId returns the [*collection]s at the given [schemaVersionId] version.
-//
-// Will return an error if the given key is empty, or if none are found.
-func (db *db) getCollectionsByVersionID(
-	ctx context.Context,
-	txn datastore.Txn,
-	schemaVersionId string,
-) ([]*collection, error) {
-	cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schemaVersionId)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]*collection, len(cols))
-	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
-		if err != nil {
-			return nil, err
-		}
-
-		collections[i] = db.newCollection(col, schema)
-
-		err = collections[i].loadIndexes(ctx, txn)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return collections, nil
-}
-
 func (db *db) getCollectionByID(ctx context.Context, txn datastore.Txn, id uint32) (client.Collection, error) {
 	col, err := description.GetCollectionByID(ctx, txn, id)
 	if err != nil {
@@ -732,22 +701,41 @@ func (db *db) getCollections(
 ) ([]client.Collection, error) {
 	var cols []client.CollectionDescription
 
-	if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
+	switch {
+	case options.SchemaVersionID.HasValue():
 		var err error
-		cols, err = description.GetCollections(ctx, txn)
+		cols, err = description.GetCollectionsBySchemaVersionID(ctx, txn, options.SchemaVersionID.Value())
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		var err error
-		cols, err = description.GetActiveCollections(ctx, txn)
-		if err != nil {
-			return nil, err
+
+	default:
+		if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
+			var err error
+			cols, err = description.GetCollections(ctx, txn)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			var err error
+			cols, err = description.GetActiveCollections(ctx, txn)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
+	collections := []client.Collection{}
+	for _, col := range cols {
+		if options.SchemaVersionID.HasValue() {
+			if col.SchemaVersionID != options.SchemaVersionID.Value() {
+				continue
+			}
+		}
+		if !options.IncludeInactive.Value() && !col.Name.HasValue() {
+			continue
+		}
+
 		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
 		if err != nil {
 			// If the schema is not found we leave it as empty and carry on. This can happen when
@@ -758,7 +746,7 @@ func (db *db) getCollections(
 		}
 
 		collection := db.newCollection(col, schema)
-		collections[i] = collection
+		collections = append(collections, collection)
 
 		err = collection.loadIndexes(ctx, txn)
 		if err != nil {

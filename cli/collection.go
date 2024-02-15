@@ -13,6 +13,7 @@ package cli
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -47,9 +48,6 @@ func MakeCollectionCommand() *cobra.Command {
 			var col client.Collection
 			var cols []client.Collection
 			switch {
-			case versionID != "":
-				cols, err = store.GetCollectionsByVersionID(cmd.Context(), versionID)
-
 			case schemaRoot != "":
 				cols, err = store.GetCollectionsBySchemaRoot(cmd.Context(), schemaRoot)
 
@@ -58,7 +56,12 @@ func MakeCollectionCommand() *cobra.Command {
 				cols = []client.Collection{col}
 
 			default:
-				return nil
+				options := client.CollectionFetchOptions{}
+				if versionID != "" {
+					options.SchemaVersionID = immutable.Some(versionID)
+				}
+
+				cols, err = store.GetCollections(cmd.Context(), options)
 			}
 
 			if err != nil {

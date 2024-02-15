@@ -135,10 +135,6 @@ func (w *Wrapper) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot str
 	return w.client.GetCollectionsBySchemaRoot(ctx, schemaRoot)
 }
 
-func (w *Wrapper) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {
-	return w.client.GetCollectionsByVersionID(ctx, versionId)
-}
-
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,

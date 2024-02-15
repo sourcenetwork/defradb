@@ -118,50 +118,6 @@ func (db *explicitTxnDB) GetCollectionsBySchemaRoot(
 	return cols, nil
 }
 
-// GetCollectionsByVersionID attempts to retrieve all collections using the given schema version ID.
-//
-// If no matching collections are found an empty set will be returned.
-func (db *implicitTxnDB) GetCollectionsByVersionID(
-	ctx context.Context, schemaVersionID string,
-) ([]client.Collection, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	cols, err := db.getCollectionsByVersionID(ctx, txn, schemaVersionID)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
-		collections[i] = col
-	}
-
-	return collections, nil
-}
-
-// GetCollectionsByVersionID attempts to retrieve all collections using the given schema version ID.
-//
-// If no matching collections are found an empty set will be returned.
-func (db *explicitTxnDB) GetCollectionsByVersionID(
-	ctx context.Context, schemaVersionID string,
-) ([]client.Collection, error) {
-	cols, err := db.getCollectionsByVersionID(ctx, db.txn, schemaVersionID)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
-		collections[i] = col
-	}
-
-	return collections, nil
-}
-
 // GetCollections gets all the currently defined collections.
 func (db *implicitTxnDB) GetCollections(
 	ctx context.Context,

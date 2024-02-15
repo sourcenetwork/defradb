@@ -259,31 +259,15 @@ func (c *Client) GetCollectionsBySchemaRoot(ctx context.Context, schemaRoot stri
 	return collections, nil
 }
 
-func (c *Client) GetCollectionsByVersionID(ctx context.Context, versionId string) ([]client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"version_id": []string{versionId}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var descriptions []client.CollectionDefinition
-	if err := c.http.requestJson(req, &descriptions); err != nil {
-		return nil, err
-	}
-	collections := make([]client.Collection, len(descriptions))
-	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
-	}
-	return collections, nil
-}
-
 func (c *Client) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
 	params := url.Values{}
+	if options.SchemaVersionID.HasValue() {
+		params.Add("version_id", options.SchemaVersionID.Value())
+	}
 	if options.IncludeInactive.HasValue() {
 		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
 	}
