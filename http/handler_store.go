@@ -191,13 +191,6 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		responseJSON(rw, http.StatusOK, schema)
-	case req.URL.Query().Has("root"):
-		schema, err := store.GetSchemasByRoot(req.Context(), req.URL.Query().Get("root"))
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, schema)
 	case req.URL.Query().Has("name"):
 		schema, err := store.GetSchemasByName(req.Context(), req.URL.Query().Get("name"))
 		if err != nil {
@@ -206,7 +199,12 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 		}
 		responseJSON(rw, http.StatusOK, schema)
 	default:
-		schema, err := store.GetSchemas(req.Context())
+		options := client.SchemaFetchOptions{}
+		if req.URL.Query().Has("root") {
+			options.Root = immutable.Some(req.URL.Query().Get("root"))
+		}
+
+		schema, err := store.GetSchemas(req.Context(), options)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return

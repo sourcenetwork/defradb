@@ -339,23 +339,14 @@ func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (c
 	return schema, err
 }
 
-func (w *Wrapper) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+func (w *Wrapper) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
 	args := []string{"client", "schema", "describe"}
-	args = append(args, "--root", root)
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
+	if options.Root.HasValue() {
+		args = append(args, "--root", options.Root.Value())
 	}
-	var schema []client.SchemaDescription
-	if err := json.Unmarshal(data, &schema); err != nil {
-		return nil, err
-	}
-	return schema, err
-}
-
-func (w *Wrapper) GetSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	args := []string{"client", "schema", "describe"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

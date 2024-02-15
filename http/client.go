@@ -300,23 +300,16 @@ func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (cl
 	return schema, nil
 }
 
-func (c *Client) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+func (c *Client) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
-	methodURL.RawQuery = url.Values{"root": []string{root}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
+	params := url.Values{}
+	if options.Root.HasValue() {
+		params.Add("root", options.Root.Value())
 	}
-	var schema []client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return nil, err
-	}
-	return schema, nil
-}
-
-func (c *Client) GetSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
+	methodURL.RawQuery = params.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {

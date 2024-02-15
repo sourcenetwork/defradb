@@ -1017,12 +1017,15 @@ func getSchema(
 			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
 			err = e
 			results = []client.SchemaDescription{result}
-		case action.Root.HasValue():
-			results, err = node.GetSchemasByRoot(s.ctx, action.Root.Value())
 		case action.Name.HasValue():
 			results, err = node.GetSchemasByName(s.ctx, action.Name.Value())
 		default:
-			results, err = node.GetSchemas(s.ctx)
+			results, err = node.GetSchemas(
+				s.ctx,
+				client.SchemaFetchOptions{
+					Root: action.Root,
+				},
+			)
 		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)

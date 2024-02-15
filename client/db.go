@@ -202,12 +202,9 @@ type Store interface {
 	// Will return an error if it is not found.
 	GetSchemaByVersionID(context.Context, string) (SchemaDescription, error)
 
-	// GetSchemasByRoot returns the all schema versions for the given root.
-	GetSchemasByRoot(context.Context, string) ([]SchemaDescription, error)
-
 	// GetSchemas returns all schema versions that currently exist within
 	// this [Store].
-	GetSchemas(context.Context) ([]SchemaDescription, error)
+	GetSchemas(context.Context, SchemaFetchOptions) ([]SchemaDescription, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
@@ -255,4 +252,10 @@ type CollectionFetchOptions struct {
 
 	// If IncludeInactive is true, then inactive collections will also be returned.
 	IncludeInactive immutable.Option[bool]
+}
+
+// SchemaFetchOptions represents a set of options used for fetching schemas.
+type SchemaFetchOptions struct {
+	// If provided, only schemas of this root will be returned.
+	Root immutable.Option[string]
 }

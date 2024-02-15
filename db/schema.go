@@ -288,19 +288,17 @@ func (db *db) getSchemaByVersionID(
 	return description.GetSchemaVersion(ctx, txn, versionID)
 }
 
-func (db *db) getSchemasByRoot(
-	ctx context.Context,
-	txn datastore.Txn,
-	root string,
-) ([]client.SchemaDescription, error) {
-	return description.GetSchemasByRoot(ctx, txn, root)
-}
-
 func (db *db) getSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
+	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	return description.GetAllSchemas(ctx, txn)
+	switch {
+	case options.Root.HasValue():
+		return description.GetSchemasByRoot(ctx, txn, options.Root.Value())
+	default:
+		return description.GetAllSchemas(ctx, txn)
+	}
 }
 
 // getSubstituteFieldKind checks and attempts to get the underlying integer value for the given string

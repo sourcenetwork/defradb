@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -50,13 +51,6 @@ Example: view a single schema by version id
 				}
 				return writeJSON(cmd, schema)
 
-			case root != "":
-				s, err := store.GetSchemasByRoot(cmd.Context(), root)
-				if err != nil {
-					return err
-				}
-				schemas = s
-
 			case name != "":
 				s, err := store.GetSchemasByName(cmd.Context(), name)
 				if err != nil {
@@ -65,7 +59,12 @@ Example: view a single schema by version id
 				schemas = s
 
 			default:
-				s, err := store.GetSchemas(cmd.Context())
+				options := client.SchemaFetchOptions{}
+				if root != "" {
+					options.Root = immutable.Some(root)
+				}
+
+				s, err := store.GetSchemas(cmd.Context(), options)
 				if err != nil {
 					return err
 				}
