@@ -635,23 +635,13 @@ func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name s
 		return nil, ErrCollectionNameEmpty
 	}
 
-	col, err := description.GetCollectionByName(ctx, txn, name)
+	cols, err := db.getCollections(ctx, txn, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {
 		return nil, err
 	}
 
-	schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
-	if err != nil {
-		return nil, err
-	}
-
-	collection := db.newCollection(col, schema)
-	err = collection.loadIndexes(ctx, txn)
-	if err != nil {
-		return nil, err
-	}
-
-	return collection, nil
+	// cols will always have length == 1 here
+	return cols[0], nil
 }
 
 // GetCollections returns all collections and their descriptions matching the given options
@@ -664,6 +654,13 @@ func (db *db) getCollections(
 	var cols []client.CollectionDescription
 
 	switch {
+	case options.Name.HasValue():
+		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
+		if err != nil {
+			return nil, err
+		}
+		cols = append(cols, col)
+
 	case options.SchemaVersionID.HasValue():
 		var err error
 		cols, err = description.GetCollectionsBySchemaVersionID(ctx, txn, options.SchemaVersionID.Value())

@@ -267,18 +267,13 @@ func (w *Wrapper) LensRegistry() client.LensRegistry {
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	args := []string{"client", "collection", "describe"}
-	args = append(args, "--name", name)
-
-	data, err := w.cmd.execute(ctx, args)
+	cols, err := w.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {
 		return nil, err
 	}
-	var definition client.CollectionDefinition
-	if err := json.Unmarshal(data, &definition); err != nil {
-		return nil, err
-	}
-	return &Collection{w.cmd, definition}, nil
+
+	// cols will always have length == 1 here
+	return cols[0], nil
 }
 
 func (w *Wrapper) GetCollections(
@@ -286,6 +281,9 @@ func (w *Wrapper) GetCollections(
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
+	if options.Name.HasValue() {
+		args = append(args, "--name", options.Name.Value())
+	}
 	if options.SchemaVersionID.HasValue() {
 		args = append(args, "--version", options.SchemaVersionID.Value())
 	}

@@ -226,18 +226,13 @@ func (c *Client) LensRegistry() client.LensRegistry {
 }
 
 func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
-	methodURL.RawQuery = url.Values{"name": []string{name}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	cols, err := c.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {
 		return nil, err
 	}
-	var definition client.CollectionDefinition
-	if err := c.http.requestJson(req, &definition); err != nil {
-		return nil, err
-	}
-	return &Collection{c.http, definition}, nil
+
+	// cols will always have length == 1 here
+	return cols[0], nil
 }
 
 func (c *Client) GetCollections(
@@ -246,6 +241,9 @@ func (c *Client) GetCollections(
 ) ([]client.Collection, error) {
 	methodURL := c.http.baseURL.JoinPath("collections")
 	params := url.Values{}
+	if options.Name.HasValue() {
+		params.Add("name", options.Name.Value())
+	}
 	if options.SchemaVersionID.HasValue() {
 		params.Add("version_id", options.SchemaVersionID.Value())
 	}

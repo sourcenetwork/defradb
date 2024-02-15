@@ -250,6 +250,9 @@ type CollectionFetchOptions struct {
 	// If provided, only collections with schemas of this root will be returned.
 	SchemaRoot immutable.Option[string]
 
+	// If provided, only collections with this name will be returned.
+	Name immutable.Option[string]
+
 	// If IncludeInactive is true, then inactive collections will also be returned.
 	IncludeInactive immutable.Option[bool]
 }

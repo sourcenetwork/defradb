@@ -45,24 +45,18 @@ func MakeCollectionCommand() *cobra.Command {
 			}
 			store := mustGetContextStore(cmd)
 
-			var col client.Collection
-			var cols []client.Collection
-			switch {
-			case name != "":
-				col, err = store.GetCollectionByName(cmd.Context(), name)
-				cols = []client.Collection{col}
-
-			default:
-				options := client.CollectionFetchOptions{}
-				if versionID != "" {
-					options.SchemaVersionID = immutable.Some(versionID)
-				}
-				if schemaRoot != "" {
-					options.SchemaRoot = immutable.Some(schemaRoot)
-				}
-
-				cols, err = store.GetCollections(cmd.Context(), options)
+			options := client.CollectionFetchOptions{}
+			if versionID != "" {
+				options.SchemaVersionID = immutable.Some(versionID)
 			}
+			if schemaRoot != "" {
+				options.SchemaRoot = immutable.Some(schemaRoot)
+			}
+			if name != "" {
+				options.Name = immutable.Some(name)
+			}
+
+			cols, err := store.GetCollections(cmd.Context(), options)
 
 			if err != nil {
 				return err
@@ -77,27 +71,11 @@ func MakeCollectionCommand() *cobra.Command {
 				}
 			}
 
-			if name != "" {
-				// Multiple params may have been specified, and in some cases both are needed.
-				// For example if a schema version and a collection name have been provided,
-				// we need to ensure that a collection at the requested version is returned.
-				// Likewise we need to ensure that if a collection name and schema id are provided,
-				// but there are none matching both, that nothing is returned.
-				fetchedCols := cols
-				cols = nil
-				for _, c := range fetchedCols {
-					if c.Name().Value() == name {
-						cols = append(cols, c)
-						break
-					}
-				}
-			}
-
 			if len(cols) != 1 {
 				// If more than one collection matches the given criteria we cannot set the context collection
 				return nil
 			}
-			col = cols[0]
+			col := cols[0]
 
 			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
 				col = col.WithTxn(tx)
