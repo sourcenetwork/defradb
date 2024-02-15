@@ -150,8 +150,8 @@ func (w *Wrapper) GetSchemasByRoot(ctx context.Context, root string) ([]client.S
 	return w.client.GetSchemasByRoot(ctx, root)
 }
 
-func (w *Wrapper) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	return w.client.GetAllSchemas(ctx)
+func (w *Wrapper) GetSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
+	return w.client.GetSchemas(ctx)
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {

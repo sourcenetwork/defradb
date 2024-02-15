@@ -205,9 +205,9 @@ type Store interface {
 	// GetSchemasByRoot returns the all schema versions for the given root.
 	GetSchemasByRoot(context.Context, string) ([]SchemaDescription, error)
 
-	// GetAllSchemas returns all schema versions that currently exist within
+	// GetSchemas returns all schema versions that currently exist within
 	// this [Store].
-	GetAllSchemas(context.Context) ([]SchemaDescription, error)
+	GetSchemas(context.Context) ([]SchemaDescription, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)

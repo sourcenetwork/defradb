@@ -1022,7 +1022,7 @@ func getSchema(
 		case action.Name.HasValue():
 			results, err = node.GetSchemasByName(s.ctx, action.Name.Value())
 		default:
-			results, err = node.GetAllSchemas(s.ctx)
+			results, err = node.GetSchemas(s.ctx)
 		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)

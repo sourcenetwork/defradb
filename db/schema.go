@@ -296,7 +296,7 @@ func (db *db) getSchemasByRoot(
 	return description.GetSchemasByRoot(ctx, txn, root)
 }
 
-func (db *db) getAllSchemas(
+func (db *db) getSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {

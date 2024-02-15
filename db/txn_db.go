@@ -158,22 +158,22 @@ func (db *explicitTxnDB) GetSchemasByRoot(ctx context.Context, root string) ([]c
 	return db.getSchemasByRoot(ctx, db.txn, root)
 }
 
-// GetAllSchemas returns all schema versions that currently exist within
+// GetSchemas returns all schema versions that currently exist within
 // this [Store].
-func (db *implicitTxnDB) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
+func (db *implicitTxnDB) GetSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	return db.getAllSchemas(ctx, txn)
+	return db.getSchemas(ctx, txn)
 }
 
-// GetAllSchemas returns all schema versions that currently exist within
+// GetSchemas returns all schema versions that currently exist within
 // this [Store].
-func (db *explicitTxnDB) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	return db.getAllSchemas(ctx, db.txn)
+func (db *explicitTxnDB) GetSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
+	return db.getSchemas(ctx, db.txn)
 }
 
 // GetAllIndexes gets all the indexes in the database.

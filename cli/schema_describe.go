@@ -65,7 +65,7 @@ Example: view a single schema by version id
 				schemas = s
 
 			default:
-				s, err := store.GetAllSchemas(cmd.Context())
+				s, err := store.GetSchemas(cmd.Context())
 				if err != nil {
 					return err
 				}

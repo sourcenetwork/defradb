@@ -315,7 +315,7 @@ func (c *Client) GetSchemasByRoot(ctx context.Context, root string) ([]client.Sc
 	return schema, nil
 }
 
-func (c *Client) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
+func (c *Client) GetSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
