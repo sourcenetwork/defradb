@@ -44,6 +44,25 @@ var CopyModulePath string = getPathRelativeToProjectRoot(
 	"/tests/lenses/rust_wasm32_copy/target/wasm32-unknown-unknown/debug/rust_wasm32_copy.wasm",
 )
 
+// PrependModulePath is the path to the `Prepend` lens module compiled to wasm.
+//
+// The module has one parameter:
+//   - `values` is an array of `map[string]string`s, the module will yield these documents before
+//     any documents fed to it (from Defra).
+var PrependModulePath string = getPathRelativeToProjectRoot(
+	"/tests/lenses/rust_wasm32_prepend/target/wasm32-unknown-unknown/debug/rust_wasm32_prepend.wasm",
+)
+
+// FilterModulePath is the path to the `Filter` lens module compiled to wasm.
+//
+// The module has two parameters:
+//   - `src` is a string and is the name of the property you wish to evaluate
+//   - `value` can be any valid json value and will be compared to the document value at the `src` location
+//     only documents with values that match this given value will be returned.
+var FilterModulePath string = getPathRelativeToProjectRoot(
+	"/tests/lenses/rust_wasm32_filter/target/wasm32-unknown-unknown/debug/rust_wasm32_filter.wasm",
+)
+
 func getPathRelativeToProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(path.Dir(filename)))

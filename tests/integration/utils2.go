@@ -1112,7 +1112,7 @@ func createView(
 	action CreateView,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		_, err := node.AddView(s.ctx, action.Query, action.SDL)
+		_, err := node.AddView(s.ctx, action.Query, action.SDL, action.Transform)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
