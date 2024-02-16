@@ -175,6 +175,9 @@ type CreateView struct {
 	// The SDL containing all types used by the view output.
 	SDL string
 
+	// An optional Lens transform to add to the view.
+	Transform immutable.Option[model.Lens]
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that

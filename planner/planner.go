@@ -240,6 +240,9 @@ func (p *Planner) expandPlan(planNode planNode, parentPlan *selectTopNode) error
 	case *viewNode:
 		return p.expandPlan(n.source, parentPlan)
 
+	case *lensNode:
+		return p.expandPlan(n.source, parentPlan)
+
 	default:
 		return nil
 	}

@@ -155,7 +155,16 @@ type Store interface {
 	//
 	// It will return the collection definitions of the types defined in the SDL if successful, otherwise an error
 	// will be returned.  This function does not execute the given query.
-	AddView(ctx context.Context, gqlQuery string, sdl string) ([]CollectionDefinition, error)
+	//
+	// Optionally, a lens transform configuration may also be provided - it will execute after the query has run.
+	// The transform is not limited to just transforming the input documents, it may also yield new ones, or filter out
+	// those passed in from the underlying query.
+	AddView(
+		ctx context.Context,
+		gqlQuery string,
+		sdl string,
+		transform immutable.Option[model.Lens],
+	) ([]CollectionDefinition, error)
 
 	// SetMigration sets the migration for all collections using the given source-destination schema version IDs.
 	//

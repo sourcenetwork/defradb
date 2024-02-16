@@ -218,10 +218,23 @@ func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID st
 	return err
 }
 
-func (w *Wrapper) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
+func (w *Wrapper) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
 	args := []string{"client", "view", "add"}
 	args = append(args, query)
 	args = append(args, sdl)
+
+	if transform.HasValue() {
+		lenses, err := json.Marshal(transform.Value())
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, string(lenses))
+	}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

@@ -135,6 +135,13 @@ func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
 type QuerySource struct {
 	// Query contains the base query of this data source.
 	Query request.Select
+
+	// Transform is a optional Lens configuration.  If specified, data drawn from the [Query] will have the
+	// transform applied before being returned.
+	//
+	// The transform is not limited to just transforming the input documents, it may also yield new ones, or filter out
+	// those passed in from the underlying query.
+	Transform immutable.Option[model.Lens]
 }
 
 // CollectionSource represents a collection data source from another collection instance.
