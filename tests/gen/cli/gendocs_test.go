@@ -37,7 +37,7 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 		owner: User
 	}`)
 
-	genDocsCmd := MakeGenDocCommand(getTestConfig(t))
+	genDocsCmd := MakeGenDocCommand()
 	outputBuf := bytes.NewBufferString("")
 	genDocsCmd.SetOut(outputBuf)
 
@@ -71,7 +71,7 @@ func TestGendocsCmd_IfInvalidDemandValue_ReturnError(t *testing.T) {
             name: String 
         }`)
 
-	genDocsCmd := MakeGenDocCommand(getTestConfig(t))
+	genDocsCmd := MakeGenDocCommand()
 	genDocsCmd.SetArgs([]string{
 		"--demand", `{"User": invalid}`,
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
@@ -90,7 +90,7 @@ func TestGendocsCmd_IfInvalidConfig_ReturnError(t *testing.T) {
             name: String 
         }`)
 
-	genDocsCmd := MakeGenDocCommand(getTestConfig(t))
+	genDocsCmd := MakeGenDocCommand()
 	genDocsCmd.SetArgs([]string{
 		"--demand", `{"Unknown": 3}`,
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),

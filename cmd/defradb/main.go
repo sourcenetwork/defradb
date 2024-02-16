@@ -15,12 +15,11 @@ import (
 	"os"
 
 	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/config"
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
-	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
+	defraCmd := cli.NewDefraCommand()
 	if err := defraCmd.Execute(); err != nil {
 		// this error is okay to discard because cobra
 		// logs any errors encountered during execution

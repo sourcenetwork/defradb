@@ -37,7 +37,7 @@ Example: create a named index for 'Users' collection on 'name' field:
   defradb client index create --collection Users --fields name --name UsersByName`,
 		ValidArgs: []string{"collection", "fields", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 
 			var fields []client.IndexedFieldDescription
 			for _, name := range fieldsArg {

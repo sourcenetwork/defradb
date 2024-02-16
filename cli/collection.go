@@ -16,11 +16,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
+func MakeCollectionCommand() *cobra.Command {
 	var txID uint64
 	var name string
 	var schemaRoot string
@@ -31,16 +30,19 @@ func MakeCollectionCommand(cfg *config.Config) *cobra.Command {
 		Long:  `Create, read, update, and delete documents within a collection.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// cobra does not chain pre run calls so we have to run them again here
-			if err := loadConfig(cfg); err != nil {
+			if err := setContextRootDir(cmd); err != nil {
 				return err
 			}
-			if err := setTransactionContext(cmd, cfg, txID); err != nil {
+			if err := setContextConfig(cmd); err != nil {
 				return err
 			}
-			if err := setStoreContext(cmd, cfg); err != nil {
+			if err := setContextTransaction(cmd, txID); err != nil {
 				return err
 			}
-			store := mustGetStoreContext(cmd)
+			if err := setContextStore(cmd); err != nil {
+				return err
+			}
+			store := mustGetContextStore(cmd)
 
 			var col client.Collection
 			var cols []client.Collection

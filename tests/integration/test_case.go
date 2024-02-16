@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 )
@@ -55,7 +55,7 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode func() config.Config
+type ConfigureNode func() []net.NodeOpt
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}

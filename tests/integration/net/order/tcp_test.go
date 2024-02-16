@@ -16,16 +16,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/net"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // TestP2PWithSingleDocumentUpdatePerNode tests document syncing between two nodes with a single update per node
 func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 	test := P2PTestCase{
-		NodeConfig: []*config.Config{
-			randomNetworkingConfig(),
-			randomNetworkingConfig(),
+		NodeConfig: [][]net.NodeOpt{
+			testutils.RandomNetworkingConfig()(),
+			testutils.RandomNetworkingConfig()(),
 		},
 		NodePeers: map[int][]int{
 			1: {
@@ -74,9 +74,9 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 // TestP2PWithMultipleDocumentUpdatesPerNode tests document syncing between two nodes with multiple updates per node.
 func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 	test := P2PTestCase{
-		NodeConfig: []*config.Config{
-			randomNetworkingConfig(),
-			randomNetworkingConfig(),
+		NodeConfig: [][]net.NodeOpt{
+			testutils.RandomNetworkingConfig()(),
+			testutils.RandomNetworkingConfig()(),
 		},
 		NodePeers: map[int][]int{
 			1: {
@@ -145,9 +145,9 @@ func TestP2FullPReplicator(t *testing.T) {
 	require.NoError(t, err)
 
 	test := P2PTestCase{
-		NodeConfig: []*config.Config{
-			randomNetworkingConfig(),
-			randomNetworkingConfig(),
+		NodeConfig: [][]net.NodeOpt{
+			testutils.RandomNetworkingConfig()(),
+			testutils.RandomNetworkingConfig()(),
 		},
 		NodeReplicators: map[int][]int{
 			0: {

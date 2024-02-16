@@ -36,9 +36,9 @@ Example: view collection by version id
   defradb client collection describe --version bae123
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 
-			col, ok := tryGetCollectionContext(cmd)
+			col, ok := tryGetContextCollection(cmd)
 			if ok {
 				return writeJSON(cmd, col.Definition())
 			}

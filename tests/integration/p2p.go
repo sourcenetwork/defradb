@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/clients"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -523,10 +523,10 @@ func waitForSync(
 }
 
 func RandomNetworkingConfig() ConfigureNode {
-	return func() config.Config {
-		cfg := config.DefaultConfig()
-		cfg.Net.P2PAddresses = []string{"/ip4/127.0.0.1/tcp/0"}
-		cfg.Net.RelayEnabled = false
-		return *cfg
+	return func() []net.NodeOpt {
+		return []net.NodeOpt{
+			net.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+			net.WithEnableRelay(false),
+		}
 	}
 }

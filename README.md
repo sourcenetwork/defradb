@@ -73,6 +73,8 @@ In this document, we use the default configuration, which has the following beha
 
 The GraphQL endpoint can be used with a GraphQL client (e.g., Altair) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
 
+Read more about the configuration [here](./docs/config.md).
+
 ## External port binding
 
 By default the HTTP API and P2P network will use localhost. If you want to expose the ports externally you need to specify the addresses in the config or command line parameters.

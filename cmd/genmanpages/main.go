@@ -22,7 +22,6 @@ import (
 	"github.com/spf13/cobra/doc"
 
 	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/config"
 )
 
 const defaultPerm os.FileMode = 0o777
@@ -41,7 +40,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	defraCmd := cli.NewDefraCommand(config.DefaultConfig())
+	defraCmd := cli.NewDefraCommand()
 
 	if err := os.MkdirAll(dir, defaultPerm); err != nil {
 		log.Fatal("Failed to create directory", err)
