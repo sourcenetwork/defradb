@@ -61,18 +61,8 @@ func MakeCollectionCommand() *cobra.Command {
 			}
 
 			cols, err := store.GetCollections(cmd.Context(), options)
-
 			if err != nil {
 				return err
-			}
-
-			if schemaRoot != "" && versionID != "" && len(cols) > 0 {
-				if cols[0].SchemaRoot() != schemaRoot {
-					// If the a versionID has been provided that does not pair up with the given schema root
-					// we should error and let the user know they have provided impossible params.
-					// We only need to check the first item - they will all be the same.
-					return NewErrSchemaVersionNotOfSchema(schemaRoot, versionID)
-				}
 			}
 
 			if len(cols) != 1 {
