@@ -31,7 +31,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/lens"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/request/graphql"
 )
 
@@ -287,7 +286,7 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
 	}
 
 	for r := range results.Next() {
-		log.InfoContext(ctx, "", logging.NewKV(r.Key, r.Value))
+		log.InfoContext(ctx, "", r.Key, r.Value)
 	}
 
 	return results.Close()

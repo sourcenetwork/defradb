@@ -24,7 +24,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -40,8 +39,6 @@ var (
 )
 
 func init() {
-	logging.SetConfig(logging.Config{Level: logging.NewLogLevelOption(logging.Error)})
-
 	// assign if not empty
 	if s := os.Getenv(storageEnvName); s != "" {
 		storage = s

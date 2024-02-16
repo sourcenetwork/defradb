@@ -11,6 +11,8 @@
 package cli
 
 import (
+	"github.com/sourcenetwork/corelog"
+
 	"github.com/spf13/cobra"
 )
 
@@ -35,36 +37,6 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"rootdir",
 		"",
 		"Directory for persistent data (default: $HOME/.defradb)",
-	)
-
-	cmd.PersistentFlags().String(
-		"loglevel",
-		"info",
-		"Log level to use. Options are debug, info, error, fatal",
-	)
-
-	cmd.PersistentFlags().String(
-		"logoutput",
-		"stderr",
-		"Log output path",
-	)
-
-	cmd.PersistentFlags().String(
-		"logformat",
-		"csv",
-		"Log format to use. Options are csv, json",
-	)
-
-	cmd.PersistentFlags().Bool(
-		"logtrace",
-		false,
-		"Include stacktrace in error and fatal logs",
-	)
-
-	cmd.PersistentFlags().Bool(
-		"lognocolor",
-		false,
-		"Disable colored log output",
 	)
 
 	cmd.PersistentFlags().String(
@@ -126,6 +98,8 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		"",
 		"Path to the private key for tls",
 	)
+
+	cmd.PersistentFlags().AddFlagSet(corelog.FlagSet)
 
 	return cmd
 }

@@ -51,11 +51,4 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, true, cfg.GetBool("net.pubsubenabled"))
 	assert.Equal(t, false, cfg.GetBool("net.relay"))
 	assert.Equal(t, []string{}, cfg.GetStringSlice("net.peers"))
-
-	assert.Equal(t, "info", cfg.GetString("log.level"))
-	assert.Equal(t, false, cfg.GetBool("log.stacktrace"))
-	assert.Equal(t, "csv", cfg.GetString("log.format"))
-	assert.Equal(t, "stderr", cfg.GetString("log.output"))
-	assert.Equal(t, false, cfg.GetBool("log.nocolor"))
-	assert.Equal(t, false, cfg.GetBool("log.caller"))
 }

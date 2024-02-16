@@ -39,7 +39,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -149,8 +148,8 @@ func (p *Peer) Start() error {
 				log.InfoContext(
 					p.ctx,
 					"Failure while reconnecting to a known peer",
-					logging.NewKV("peer", id),
-					logging.NewKV("error", err),
+					"peer", id,
+					"error", err,
 				)
 			}
 		}(id)
