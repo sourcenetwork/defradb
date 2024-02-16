@@ -25,6 +25,7 @@ func MakeCollectionCommand() *cobra.Command {
 	var name string
 	var schemaRoot string
 	var versionID string
+	var getInactive bool
 	var cmd = &cobra.Command{
 		Use:   "collection [--name <name> --schema <schemaRoot> --version <versionID>]",
 		Short: "Interact with a collection.",
@@ -54,6 +55,9 @@ func MakeCollectionCommand() *cobra.Command {
 			}
 			if name != "" {
 				options.Name = immutable.Some(name)
+			}
+			if getInactive {
+				options.IncludeInactive = immutable.Some(getInactive)
 			}
 
 			cols, err := store.GetCollections(cmd.Context(), options)
@@ -90,5 +94,6 @@ func MakeCollectionCommand() *cobra.Command {
 	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")
 	cmd.PersistentFlags().StringVar(&schemaRoot, "schema", "", "Collection schema Root")
 	cmd.PersistentFlags().StringVar(&versionID, "version", "", "Collection version ID")
+	cmd.PersistentFlags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")
 	return cmd
 }
