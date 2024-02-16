@@ -16,13 +16,11 @@ package main
 import (
 	"os"
 
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/tests/gen/cli"
 )
 
 func main() {
-	conf := config.DefaultConfig()
-	gendocsCmd := cli.MakeGenDocCommand(conf)
+	gendocsCmd := cli.MakeGenDocCommand()
 	if err := gendocsCmd.Execute(); err != nil {
 		// this error is okay to discard because cobra
 		// logs any errors encountered during execution

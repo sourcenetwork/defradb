@@ -16,14 +16,13 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
 var log = logging.MustNewLogger("cli")
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
-func NewDefraCommand(cfg *config.Config) *cobra.Command {
+func NewDefraCommand() *cobra.Command {
 	p2p_collection := MakeP2PCollectionCommand()
 	p2p_collection.AddCommand(
 		MakeP2PCollectionAddCommand(),
@@ -83,12 +82,12 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 
 	tx := MakeTxCommand()
 	tx.AddCommand(
-		MakeTxCreateCommand(cfg),
-		MakeTxCommitCommand(cfg),
-		MakeTxDiscardCommand(cfg),
+		MakeTxCreateCommand(),
+		MakeTxCommitCommand(),
+		MakeTxDiscardCommand(),
 	)
 
-	collection := MakeCollectionCommand(cfg)
+	collection := MakeCollectionCommand()
 	collection.AddCommand(
 		MakeCollectionGetCommand(),
 		MakeCollectionListDocIDsCommand(),
@@ -98,7 +97,7 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 		MakeCollectionDescribeCommand(),
 	)
 
-	client := MakeClientCommand(cfg)
+	client := MakeClientCommand()
 	client.AddCommand(
 		MakeDumpCommand(),
 		MakeRequestCommand(),
@@ -111,13 +110,12 @@ func NewDefraCommand(cfg *config.Config) *cobra.Command {
 		collection,
 	)
 
-	root := MakeRootCommand(cfg)
+	root := MakeRootCommand()
 	root.AddCommand(
 		client,
-		MakeStartCommand(cfg),
-		MakeServerDumpCmd(cfg),
+		MakeStartCommand(),
+		MakeServerDumpCmd(),
 		MakeVersionCommand(),
-		MakeInitCommand(cfg),
 	)
 
 	return root

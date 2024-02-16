@@ -30,7 +30,7 @@ Example: show all index for 'Users' collection:
   defradb client index list --collection Users`,
 		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 
 			switch {
 			case collectionArg != "":

@@ -664,25 +664,18 @@ func restartNodes(
 			continue
 		}
 
-		key := s.nodePrivateKeys[i]
-		cfg := s.nodeConfigs[i]
 		// We need to make sure the node is configured with its old address, otherwise
 		// a new one may be selected and reconnnection to it will fail.
 		var addresses []string
 		for _, addr := range s.nodeAddresses[i].Addrs {
 			addresses = append(addresses, addr.String())
 		}
-		cfg.Net.P2PAddresses = addresses
+
+		nodeOpts := s.nodeConfigs[i]
+		nodeOpts = append(nodeOpts, net.WithListenAddresses(addresses...))
 
 		var n *net.Node
-		n, err = net.NewNode(
-			s.ctx,
-			db,
-			net.WithListenAddresses(cfg.Net.P2PAddresses...),
-			net.WithEnablePubSub(cfg.Net.PubSubEnabled),
-			net.WithEnableRelay(cfg.Net.RelayEnabled),
-			net.WithPrivateKey(key),
-		)
+		n, err = net.NewNode(s.ctx, db, nodeOpts...)
 		require.NoError(s.t, err)
 
 		if err := n.Start(); err != nil {
@@ -771,23 +764,17 @@ func configureNode(
 		return
 	}
 
-	cfg := action()
 	db, path, err := setupDatabase(s) //disable change dector, or allow it?
 	require.NoError(s.t, err)
 
 	privateKey, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
 	require.NoError(s.t, err)
 
+	nodeOpts := action()
+	nodeOpts = append(nodeOpts, net.WithPrivateKey(privateKey))
+
 	var n *net.Node
-	log.InfoContext(s.ctx, "Starting P2P node", "P2P address", cfg.Net.P2PAddresses)
-	n, err = net.NewNode(
-		s.ctx,
-		db,
-		net.WithListenAddresses(cfg.Net.P2PAddresses...),
-		net.WithEnablePubSub(cfg.Net.PubSubEnabled),
-		net.WithEnableRelay(cfg.Net.RelayEnabled),
-		net.WithPrivateKey(privateKey),
-	)
+	n, err = net.NewNode(s.ctx, db, nodeOpts...)
 	require.NoError(s.t, err)
 
 	log.InfoContext(s.ctx, "Starting P2P node", "P2P address", n.PeerInfo())
@@ -797,8 +784,7 @@ func configureNode(
 	}
 
 	s.nodeAddresses = append(s.nodeAddresses, n.PeerInfo())
-	s.nodeConfigs = append(s.nodeConfigs, cfg)
-	s.nodePrivateKeys = append(s.nodePrivateKeys, privateKey)
+	s.nodeConfigs = append(s.nodeConfigs, nodeOpts)
 
 	c, err := setupClient(s, n)
 	require.NoError(s.t, err)
@@ -1112,7 +1098,7 @@ func createView(
 	action CreateView,
 ) {
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		_, err := node.AddView(s.ctx, action.Query, action.SDL)
+		_, err := node.AddView(s.ctx, action.Query, action.SDL, action.Transform)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

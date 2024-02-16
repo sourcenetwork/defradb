@@ -28,7 +28,7 @@ Example:
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			col, ok := tryGetCollectionContext(cmd)
+			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
 			}

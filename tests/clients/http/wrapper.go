@@ -110,8 +110,13 @@ func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID st
 	return w.client.SetActiveSchemaVersion(ctx, schemaVersionID)
 }
 
-func (w *Wrapper) AddView(ctx context.Context, query string, sdl string) ([]client.CollectionDefinition, error) {
-	return w.client.AddView(ctx, query, sdl)
+func (w *Wrapper) AddView(
+	ctx context.Context,
+	query string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
+	return w.client.AddView(ctx, query, sdl, transform)
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
