@@ -41,7 +41,7 @@ Example: migrate from stdin
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 
 			var srcData []byte
 			switch {

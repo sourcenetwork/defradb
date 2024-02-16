@@ -20,16 +20,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/tests/gen"
 )
 
 const defaultBatchSize = 1000
 
-func MakeGenDocCommand(cfg *config.Config) *cobra.Command {
+func MakeGenDocCommand() *cobra.Command {
 	var demandJSON string
-
+	var url string
 	var cmd = &cobra.Command{
 		Use:   "gendocs --demand <demand_json>",
 		Short: "Automatically generates documents for existing collections.",
@@ -39,11 +38,7 @@ Example: The following command generates 100 User documents and 500 Device docum
   gendocs --demand '{"User": 100, "Device": 500 }'`,
 		ValidArgs: []string{"demand"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// cobra does not chain pre run calls so we have to run them again here
-			if err := loadConfig(cfg); err != nil {
-				return err
-			}
-			store, err := http.NewClient(cfg.API.Address)
+			store, err := http.NewClient(url)
 			if err != nil {
 				return err
 			}
@@ -101,15 +96,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 		},
 	}
 
-	cmd.PersistentFlags().String(
-		"url", cfg.API.Address,
-		"URL of HTTP endpoint to listen on or connect to",
-	)
-	err := cfg.BindFlag("api.address", cmd.PersistentFlags().Lookup("url"))
-	if err != nil {
-		panic(err)
-	}
-
+	cmd.Flags().StringVar(&url, "url", "localhost:9181", "URL of HTTP endpoint to listen on or connect to")
 	cmd.Flags().StringVarP(&demandJSON, "demand", "d", "", "Documents' demand in JSON format")
 
 	return cmd
@@ -159,11 +146,4 @@ func colsToDefs(cols []client.Collection) []client.CollectionDefinition {
 		colDefs = append(colDefs, col.Definition())
 	}
 	return colDefs
-}
-
-func loadConfig(cfg *config.Config) error {
-	if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
-		return err
-	}
-	return cfg.LoadWithRootdir(cfg.ConfigFileExists())
 }

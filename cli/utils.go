@@ -18,9 +18,9 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/http"
 )
@@ -28,6 +28,10 @@ import (
 type contextKey string
 
 var (
+	// cfgContextKey is the context key for the config.
+	cfgContextKey = contextKey("cfg")
+	// rootDirContextKey is the context key for the root directory.
+	rootDirContextKey = contextKey("rootDir")
 	// txContextKey is the context key for the datastore.Txn
 	//
 	// This will only be set if a transaction id is specified.
@@ -46,33 +50,61 @@ var (
 	colContextKey = contextKey("col")
 )
 
-// mustGetStoreContext returns the store for the current command context.
+// mustGetContextStore returns the store for the current command context.
 //
 // If a store is not set in the current context this function panics.
-func mustGetStoreContext(cmd *cobra.Command) client.Store {
+func mustGetContextStore(cmd *cobra.Command) client.Store {
 	return cmd.Context().Value(storeContextKey).(client.Store)
 }
 
-// mustGetP2PContext returns the p2p implementation for the current command context.
+// mustGetContextP2P returns the p2p implementation for the current command context.
 //
 // If a p2p implementation is not set in the current context this function panics.
-func mustGetP2PContext(cmd *cobra.Command) client.P2P {
+func mustGetContextP2P(cmd *cobra.Command) client.P2P {
 	return cmd.Context().Value(dbContextKey).(client.P2P)
 }
 
-// tryGetCollectionContext returns the collection for the current command context
+// mustGetContextConfig returns the config for the current command context.
+//
+// If a config is not set in the current context this function panics.
+func mustGetContextConfig(cmd *cobra.Command) *viper.Viper {
+	return cmd.Context().Value(cfgContextKey).(*viper.Viper)
+}
+
+// mustGetContextRootDir returns the rootdir for the current command context.
+//
+// If a rootdir is not set in the current context this function panics.
+func mustGetContextRootDir(cmd *cobra.Command) string {
+	return cmd.Context().Value(rootDirContextKey).(string)
+}
+
+// tryGetContextCollection returns the collection for the current command context
 // and a boolean indicating if the collection was set.
-func tryGetCollectionContext(cmd *cobra.Command) (client.Collection, bool) {
+func tryGetContextCollection(cmd *cobra.Command) (client.Collection, bool) {
 	col, ok := cmd.Context().Value(colContextKey).(client.Collection)
 	return col, ok
 }
 
-// setTransactionContext sets the transaction for the current command context.
-func setTransactionContext(cmd *cobra.Command, cfg *config.Config, txId uint64) error {
+// setContextConfig sets teh config for the current command context.
+func setContextConfig(cmd *cobra.Command) error {
+	rootdir := mustGetContextRootDir(cmd)
+	flags := cmd.Root().PersistentFlags()
+	cfg, err := loadConfig(rootdir, flags)
+	if err != nil {
+		return err
+	}
+	ctx := context.WithValue(cmd.Context(), cfgContextKey, cfg)
+	cmd.SetContext(ctx)
+	return nil
+}
+
+// setContextTransaction sets the transaction for the current command context.
+func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 	if txId == 0 {
 		return nil
 	}
-	tx, err := http.NewTransaction(cfg.API.Address, txId)
+	cfg := mustGetContextConfig(cmd)
+	tx, err := http.NewTransaction(cfg.GetString("api.address"), txId)
 	if err != nil {
 		return err
 	}
@@ -81,9 +113,10 @@ func setTransactionContext(cmd *cobra.Command, cfg *config.Config, txId uint64) 
 	return nil
 }
 
-// setStoreContext sets the store for the current command context.
-func setStoreContext(cmd *cobra.Command, cfg *config.Config) error {
-	db, err := http.NewClient(cfg.API.Address)
+// setContextStore sets the store for the current command context.
+func setContextStore(cmd *cobra.Command) error {
+	cfg := mustGetContextConfig(cmd)
+	db, err := http.NewClient(cfg.GetString("api.address"))
 	if err != nil {
 		return err
 	}
@@ -97,22 +130,22 @@ func setStoreContext(cmd *cobra.Command, cfg *config.Config) error {
 	return nil
 }
 
-// loadConfig loads the rootDir containing the configuration file,
-// otherwise warn about it and load a default configuration.
-func loadConfig(cfg *config.Config) error {
-	if err := cfg.LoadRootDirFromFlagOrDefault(); err != nil {
+// setContextRootDir sets the rootdir for the current command context.
+func setContextRootDir(cmd *cobra.Command) error {
+	rootdir, err := cmd.Root().PersistentFlags().GetString("rootdir")
+	if err != nil {
 		return err
 	}
-	return cfg.LoadWithRootdir(cfg.ConfigFileExists())
-}
-
-// createConfig creates the config directories and writes
-// the current config to a file.
-func createConfig(cfg *config.Config) error {
-	if config.FolderExists(cfg.Rootdir) {
-		return cfg.WriteConfigFile()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
 	}
-	return cfg.CreateRootDirAndConfigFile()
+	if rootdir == "" {
+		rootdir = filepath.Join(home, ".defradb")
+	}
+	ctx := context.WithValue(cmd.Context(), rootDirContextKey, rootdir)
+	cmd.SetContext(ctx)
+	return nil
 }
 
 // loadOrGeneratePrivateKey loads the private key from the given path

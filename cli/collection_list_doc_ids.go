@@ -26,7 +26,7 @@ Example:
   defradb client collection docIDs --name User
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			col, ok := tryGetCollectionContext(cmd)
+			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
 			}

@@ -15,22 +15,23 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeTxDiscardCommand(cfg *config.Config) *cobra.Command {
+func MakeTxDiscardCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "discard [id]",
 		Short: "Discard a DefraDB transaction.",
 		Long:  `Discard a DefraDB transaction.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			cfg := mustGetContextConfig(cmd)
+
 			id, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
-			tx, err := http.NewTransaction(cfg.API.Address, id)
+			tx, err := http.NewTransaction(cfg.GetString("api.address"), id)
 			if err != nil {
 				return err
 			}

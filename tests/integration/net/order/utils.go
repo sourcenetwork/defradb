@@ -13,14 +13,12 @@ package order
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/config"
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
@@ -50,7 +48,7 @@ const (
 type P2PTestCase struct {
 	Query string
 	// Configuration parameters for each peer
-	NodeConfig []*config.Config
+	NodeConfig [][]net.NodeOpt
 
 	// List of peers for each net.
 	// Only peers with lower index than the node can be used in the list of peers.
@@ -69,7 +67,12 @@ type P2PTestCase struct {
 	ReplicatorResult map[int]map[string]map[string]any
 }
 
-func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node, []client.DocID, error) {
+func setupDefraNode(
+	t *testing.T,
+	opts []net.NodeOpt,
+	peers []string,
+	seeds []string,
+) (*net.Node, []client.DocID, error) {
 	ctx := context.Background()
 
 	log.Info(ctx, "Building new memory store")
@@ -92,39 +95,27 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 
 	// init the P2P node
 	var n *net.Node
-	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P addresses", cfg.Net.P2PAddresses))
-	n, err = net.NewNode(
-		ctx,
-		db,
-		net.WithListenAddresses(cfg.Net.P2PAddresses...),
-		net.WithEnablePubSub(cfg.Net.PubSubEnabled),
-		net.WithEnableRelay(cfg.Net.RelayEnabled),
-	)
+	n, err = net.NewNode(ctx, db, opts...)
 	if err != nil {
 		return nil, nil, errors.Wrap("failed to start P2P node", err)
 	}
 
 	// parse peers and bootstrap
-	if len(cfg.Net.Peers) != 0 {
-		log.Info(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
-		addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
+	if len(peers) != 0 {
+		log.Info(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", peers))
+		addrs, err := netutils.ParsePeers(peers)
 		if err != nil {
-			return nil, nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", cfg.Net.Peers), err)
+			return nil, nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", peers), err)
 		}
 		log.Info(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 		n.Bootstrap(addrs)
 	}
 
+	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P addresses", n.PeerInfo().Addrs))
 	if err := n.Start(); err != nil {
 		n.Close()
 		return nil, nil, errors.Wrap("unable to start P2P listeners", err)
 	}
-
-	var addresses []string
-	for _, addr := range n.ListenAddrs() {
-		addresses = append(addresses, addr.String())
-	}
-	cfg.Net.P2PAddresses = addresses
 
 	return n, docIDs, nil
 }
@@ -201,9 +192,8 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 	for i, cfg := range test.NodeConfig {
 		log.Info(ctx, fmt.Sprintf("Setting up node %d", i))
-		cfg.Datastore.Badger.Path = t.TempDir()
+		var peerAddresses []string
 		if peers, ok := test.NodePeers[i]; ok {
-			peerAddresses := []string{}
 			for _, p := range peers {
 				if p >= len(nodes) {
 					log.Info(ctx, "cannot set a peer that hasn't been started. Skipping to next peer")
@@ -215,9 +205,8 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 					fmt.Sprintf("%s/p2p/%s", peerInfo.Addrs[0], peerInfo.ID),
 				)
 			}
-			cfg.Net.Peers = strings.Join(peerAddresses, ",")
 		}
-		n, d, err := setupDefraNode(t, cfg, test.SeedDocuments)
+		n, d, err := setupDefraNode(t, cfg, peerAddresses, test.SeedDocuments)
 		require.NoError(t, err)
 
 		if i == 0 {
@@ -347,11 +336,4 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		n.Close()
 		n.DB.Close()
 	}
-}
-
-func randomNetworkingConfig() *config.Config {
-	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddresses = []string{"/ip4/127.0.0.1/tcp/0"}
-	cfg.Net.RelayEnabled = false
-	return cfg
 }

@@ -32,7 +32,7 @@ Example:
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p2p := mustGetP2PContext(cmd)
+			p2p := mustGetContextP2P(cmd)
 
 			var info peer.AddrInfo
 			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {

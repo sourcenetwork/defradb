@@ -22,7 +22,7 @@ func MakeSchemaSetActiveCommand() *cobra.Command {
 those without it (if they share the same schema root).`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetStoreContext(cmd)
+			store := mustGetContextStore(cmd)
 			return store.SetActiveSchemaVersion(cmd.Context(), args[0])
 		},
 	}
