@@ -12,10 +12,8 @@
 
 package net
 
-import (
-	"github.com/sourcenetwork/defradb/logging"
-)
+import "github.com/sourcenetwork/corelog"
 
 var (
-	log = logging.MustNewLogger("net")
+	log = corelog.NewLogger("net")
 )

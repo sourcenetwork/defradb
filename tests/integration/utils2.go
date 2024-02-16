@@ -22,6 +22,7 @@ import (
 	"github.com/bxcodec/faker/support/slice"
 	"github.com/fxamacker/cbor/v2"
 	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,7 +31,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/request/graphql"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -69,7 +69,7 @@ const (
 )
 
 var (
-	log          = logging.MustNewLogger("tests.integration")
+	log          = corelog.NewLogger("tests.integration")
 	mutationType MutationType
 )
 
@@ -174,18 +174,18 @@ func executeTestCase(
 	dbt DatabaseType,
 	clientType ClientType,
 ) {
-	log.Info(
+	log.InfoContext(
 		ctx,
 		testCase.Description,
-		logging.NewKV("database", dbt),
-		logging.NewKV("client", clientType),
-		logging.NewKV("mutationType", mutationType),
-		logging.NewKV("databaseDir", databaseDir),
-		logging.NewKV("changeDetector.Enabled", changeDetector.Enabled),
-		logging.NewKV("changeDetector.SetupOnly", changeDetector.SetupOnly),
-		logging.NewKV("changeDetector.SourceBranch", changeDetector.SourceBranch),
-		logging.NewKV("changeDetector.TargetBranch", changeDetector.TargetBranch),
-		logging.NewKV("changeDetector.Repository", changeDetector.Repository),
+		"database", dbt,
+		"client", clientType,
+		"mutationType", mutationType,
+		"databaseDir", databaseDir,
+		"changeDetector.Enabled", changeDetector.Enabled,
+		"changeDetector.SetupOnly", changeDetector.SetupOnly,
+		"changeDetector.SourceBranch", changeDetector.SourceBranch,
+		"changeDetector.TargetBranch", changeDetector.TargetBranch,
+		"changeDetector.Repository", changeDetector.Repository,
 	)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
@@ -779,7 +779,7 @@ func configureNode(
 	require.NoError(s.t, err)
 
 	var n *net.Node
-	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddresses))
+	log.InfoContext(s.ctx, "Starting P2P node", "P2P address", cfg.Net.P2PAddresses)
 	n, err = net.NewNode(
 		s.ctx,
 		db,
@@ -790,7 +790,7 @@ func configureNode(
 	)
 	require.NoError(s.t, err)
 
-	log.Info(s.ctx, "Starting P2P node", logging.NewKV("P2P address", n.PeerInfo()))
+	log.InfoContext(s.ctx, "Starting P2P node", "P2P address", n.PeerInfo())
 	if err := n.Start(); err != nil {
 		n.Close()
 		require.NoError(s.t, err)
@@ -1752,7 +1752,7 @@ func assertRequestResults(
 		return true
 	}
 
-	log.Info(s.ctx, "", logging.NewKV("RequestResults", result.Data))
+	log.InfoContext(s.ctx, "", "RequestResults", result.Data)
 
 	// compare results
 	require.Equal(s.t, len(expectedResults), len(resultantData),

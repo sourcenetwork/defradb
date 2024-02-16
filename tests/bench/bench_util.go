@@ -20,6 +20,7 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/badger/v4"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -35,7 +36,7 @@ const (
 
 var (
 	storage string = "memory"
-	log            = logging.MustNewLogger("tests.bench")
+	log            = corelog.NewLogger("tests.bench")
 )
 
 func init() {
@@ -174,10 +175,10 @@ func BackfillBenchmarkDB(
 						for {
 							if err := cols[j].Create(ctx, doc); err != nil &&
 								err.Error() == badger.ErrConflict.Error() {
-								log.Info(
+								log.InfoContext(
 									ctx,
 									"Failed to commit TX for doc %s, retrying...\n",
-									logging.NewKV("DocID", doc.ID()),
+									"DocID", doc.ID(),
 								)
 								continue
 							} else if err != nil {

@@ -841,7 +841,7 @@ func (c *collection) getAllDocIDsChan(
 	go func() {
 		defer func() {
 			if err := q.Close(); err != nil {
-				log.ErrorE(ctx, errFailedtoCloseQueryReqAllIDs, err)
+				log.ErrorContextE(ctx, errFailedtoCloseQueryReqAllIDs, err)
 			}
 			close(resCh)
 			c.discardImplicitTxn(ctx, txn)

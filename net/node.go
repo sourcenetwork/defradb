@@ -46,7 +46,6 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 var evtWaitTimeout = 10 * time.Second
@@ -144,11 +143,11 @@ func NewNode(
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
-	log.Info(
+	log.InfoContext(
 		ctx,
 		"Created LibP2P host",
-		logging.NewKV("PeerId", h.ID()),
-		logging.NewKV("Address", options.ListenAddresses),
+		"PeerId", h.ID(),
+		"Address", options.ListenAddresses,
 	)
 
 	var ps *pubsub.PubSub
@@ -214,10 +213,10 @@ func (n *Node) Bootstrap(addrs []peer.AddrInfo) {
 			defer wg.Done()
 			err := n.host.Connect(n.ctx, pinfo)
 			if err != nil {
-				log.Info(n.ctx, "Cannot connect to peer", logging.NewKV("Error", err))
+				log.InfoContext(n.ctx, "Cannot connect to peer", "Error", err)
 				return
 			}
-			log.Info(n.ctx, "Connected", logging.NewKV("PeerID", pinfo.ID))
+			log.InfoContext(n.ctx, "Connected", "PeerID", pinfo.ID)
 			atomic.AddUint64(&connected, 1)
 		}(pinfo)
 	}
@@ -225,12 +224,12 @@ func (n *Node) Bootstrap(addrs []peer.AddrInfo) {
 	wg.Wait()
 
 	if nPeers := len(addrs); int(connected) < nPeers/2 {
-		log.Info(n.ctx, fmt.Sprintf("Only connected to %d bootstrap peers out of %d", connected, nPeers))
+		log.InfoContext(n.ctx, fmt.Sprintf("Only connected to %d bootstrap peers out of %d", connected, nPeers))
 	}
 
 	err := n.dht.Bootstrap(n.ctx)
 	if err != nil {
-		log.ErrorE(n.ctx, "Problem bootstraping using DHT", err)
+		log.ErrorContextE(n.ctx, "Problem bootstraping using DHT", err)
 		return
 	}
 }
@@ -254,7 +253,7 @@ func (n *Node) PeerInfo() peer.AddrInfo {
 func (n *Node) subscribeToPeerConnectionEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
 	if err != nil {
-		log.Info(
+		log.InfoContext(
 			n.ctx,
 			fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
 		)
@@ -276,7 +275,7 @@ func (n *Node) subscribeToPeerConnectionEvents() {
 func (n *Node) subscribeToPubSubEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(EvtPubSub))
 	if err != nil {
-		log.Info(
+		log.InfoContext(
 			n.ctx,
 			fmt.Sprintf("failed to subscribe to pubsub event: %v", err),
 		)
@@ -298,7 +297,7 @@ func (n *Node) subscribeToPubSubEvents() {
 func (n *Node) subscribeToPushLogEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(EvtReceivedPushLog))
 	if err != nil {
-		log.Info(
+		log.InfoContext(
 			n.ctx,
 			fmt.Sprintf("failed to subscribe to push log event: %v", err),
 		)

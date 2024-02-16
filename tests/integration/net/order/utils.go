@@ -16,6 +16,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,14 +24,13 @@ import (
 	"github.com/sourcenetwork/defradb/config"
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 var (
-	log = logging.MustNewLogger("test.net")
+	log = corelog.NewLogger("test.net")
 )
 
 const (
@@ -72,7 +72,7 @@ type P2PTestCase struct {
 func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node, []client.DocID, error) {
 	ctx := context.Background()
 
-	log.Info(ctx, "Building new memory store")
+	log.InfoContext(ctx, "Building new memory store")
 	db, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithUpdateEvents())
 	if err != nil {
 		return nil, nil, err
@@ -92,7 +92,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 
 	// init the P2P node
 	var n *net.Node
-	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P addresses", cfg.Net.P2PAddresses))
+	log.InfoContext(ctx, "Starting P2P node", "P2P addresses", cfg.Net.P2PAddresses)
 	n, err = net.NewNode(
 		ctx,
 		db,
@@ -106,12 +106,12 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*net.Node
 
 	// parse peers and bootstrap
 	if len(cfg.Net.Peers) != 0 {
-		log.Info(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
+		log.InfoContext(ctx, "Parsing bootstrap peers", "Peers", cfg.Net.Peers)
 		addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
 		if err != nil {
 			return nil, nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", cfg.Net.Peers), err)
 		}
-		log.Info(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
+		log.InfoContext(ctx, "Bootstrapping with peers", "Addresses", addrs)
 		n.Bootstrap(addrs)
 	}
 
@@ -200,13 +200,13 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	nodes := []*net.Node{}
 
 	for i, cfg := range test.NodeConfig {
-		log.Info(ctx, fmt.Sprintf("Setting up node %d", i))
+		log.InfoContext(ctx, fmt.Sprintf("Setting up node %d", i))
 		cfg.Datastore.Badger.Path = t.TempDir()
 		if peers, ok := test.NodePeers[i]; ok {
 			peerAddresses := []string{}
 			for _, p := range peers {
 				if p >= len(nodes) {
-					log.Info(ctx, "cannot set a peer that hasn't been started. Skipping to next peer")
+					log.InfoContext(ctx, "cannot set a peer that hasn't been started. Skipping to next peer")
 					continue
 				}
 				peerInfo := nodes[p].PeerInfo()
@@ -237,10 +237,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				if i == j {
 					continue
 				}
-				log.Info(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
+				log.InfoContext(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
 				err := n.WaitForPubSubEvent(p.PeerID())
 				require.NoError(t, err)
-				log.Info(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
+				log.InfoContext(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
 			}
 		}
 	}
@@ -248,13 +248,13 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	// update and sync peers
 	for n, updateMap := range test.Updates {
 		if n >= len(nodes) {
-			log.Info(ctx, "cannot update a node that hasn't been started. Skipping to next node")
+			log.InfoContext(ctx, "cannot update a node that hasn't been started. Skipping to next node")
 			continue
 		}
 
 		for d, updates := range updateMap {
 			for _, update := range updates {
-				log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", n, d))
+				log.InfoContext(ctx, fmt.Sprintf("Updating node %d with update %d", n, d))
 				err := updateDocument(ctx, nodes[n].DB, docIDs[d], update)
 				require.NoError(t, err)
 
@@ -263,10 +263,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 					if n2 == n {
 						continue
 					}
-					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
+					log.InfoContext(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
 					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerInfo().ID)
 					require.NoError(t, err)
-					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
+					log.InfoContext(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
 			}
 		}
@@ -277,7 +277,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				continue
 			}
 			if n2 >= len(nodes) {
-				log.Info(ctx, "cannot check results of a node that hasn't been started. Skipping to next node")
+				log.InfoContext(ctx, "cannot check results of a node that hasn't been started. Skipping to next node")
 				continue
 			}
 
@@ -319,10 +319,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				require.NoError(t, err)
 			}
 			for _, rep := range reps {
-				log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", rep, n))
+				log.InfoContext(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", rep, n))
 				err := nodes[rep].WaitForPushLogByPeerEvent(nodes[n].PeerID())
 				require.NoError(t, err)
-				log.Info(ctx, fmt.Sprintf("Node %d synced", rep))
+				log.InfoContext(ctx, fmt.Sprintf("Node %d synced", rep))
 
 				for docID, results := range test.ReplicatorResult[rep] {
 					for field, result := range results {

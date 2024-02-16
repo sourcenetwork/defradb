@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/tests/clients"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -149,7 +148,7 @@ func connectPeers(
 	targetNode := s.nodes[cfg.TargetNodeID]
 
 	addrs := []peer.AddrInfo{targetNode.PeerInfo()}
-	log.Info(s.ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
+	log.InfoContext(s.ctx, "Bootstrapping with peers", "Addresses", addrs)
 	sourceNode.Bootstrap(addrs)
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be

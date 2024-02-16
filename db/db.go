@@ -22,6 +22,7 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -35,7 +36,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("db")
+	log = corelog.NewLogger("db")
 )
 
 // make sure we match our client interface
@@ -109,7 +110,7 @@ func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 }
 
 func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*implicitTxnDB, error) {
-	log.Debug(ctx, "Loading: internal datastores")
+	log.DebugContext(ctx, "Loading: internal datastores")
 	multistore := datastore.MultiStoreFrom(rootstore)
 
 	parser, err := graphql.NewParser()
@@ -197,7 +198,7 @@ func (db *db) initialize(ctx context.Context) error {
 	}
 	defer txn.Discard(ctx)
 
-	log.Debug(ctx, "Checking if DB has already been initialized...")
+	log.DebugContext(ctx, "Checking if DB has already been initialized...")
 	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
@@ -205,7 +206,7 @@ func (db *db) initialize(ctx context.Context) error {
 	// if we're loading an existing database, just load the schema
 	// and migrations and finish initialization
 	if exists {
-		log.Debug(ctx, "DB has already been initialized, continuing")
+		log.DebugContext(ctx, "DB has already been initialized, continuing")
 		err = db.loadSchema(ctx, txn)
 		if err != nil {
 			return err
@@ -222,7 +223,7 @@ func (db *db) initialize(ctx context.Context) error {
 		return txn.Commit(ctx)
 	}
 
-	log.Debug(ctx, "Opened a new DB, needs full initialization")
+	log.DebugContext(ctx, "Opened a new DB, needs full initialization")
 
 	// init meta data
 	// collection sequence
@@ -261,16 +262,16 @@ func (db *db) PrintDump(ctx context.Context) error {
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close() {
-	log.Info(context.Background(), "Closing DefraDB process...")
+	log.Info("Closing DefraDB process...")
 	if db.events.Updates.HasValue() {
 		db.events.Updates.Value().Close()
 	}
 
 	err := db.rootstore.Close()
 	if err != nil {
-		log.ErrorE(context.Background(), "Failure closing running process", err)
+		log.ErrorE("Failure closing running process", err)
 	}
-	log.Info(context.Background(), "Successfully closed running process")
+	log.Info("Successfully closed running process")
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
@@ -286,7 +287,7 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
 	}
 
 	for r := range results.Next() {
-		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
+		log.InfoContext(ctx, "", logging.NewKV(r.Key, r.Value))
 	}
 
 	return results.Close()

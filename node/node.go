@@ -14,15 +14,15 @@ import (
 	"context"
 
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 )
 
-var log = logging.MustNewLogger("node")
+var log = corelog.NewLogger("node")
 
 // Options contains start configuration values.
 type Options struct {
@@ -161,7 +161,7 @@ func (n *Node) Start(ctx context.Context) error {
 	if n.Server != nil {
 		go func() {
 			if err := n.Server.ListenAndServe(); err != nil {
-				log.FeedbackErrorE(ctx, "HTTP server stopped", err)
+				log.ErrorContextE(ctx, "HTTP server stopped", err)
 			}
 		}()
 	}

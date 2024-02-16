@@ -28,7 +28,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	merklecrdt "github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
@@ -65,12 +64,12 @@ func (bp *blockProcessor) mergeBlocks(ctx context.Context) {
 		nd := e.Value.(ipld.Node)
 		err := bp.processBlock(ctx, nd, "")
 		if err != nil {
-			log.ErrorE(
+			log.ErrorContextE(
 				ctx,
 				"Failed to process block",
 				err,
-				logging.NewKV("DocID", bp.dsKey.DocID),
-				logging.NewKV("CID", nd.Cid()),
+				"DocID", bp.dsKey.DocID,
+				"CID", nd.Cid(),
 			)
 		}
 	}
@@ -107,12 +106,12 @@ func (bp *blockProcessor) processBlock(ctx context.Context, nd ipld.Node, field 
 		}
 
 		if err := bp.processBlock(ctx, nd, link.Name); err != nil {
-			log.ErrorE(
+			log.ErrorContextE(
 				ctx,
 				"Failed to process block",
 				err,
-				logging.NewKV("DocID", bp.dsKey.DocID),
-				logging.NewKV("CID", nd.Cid()),
+				"DocID", bp.dsKey.DocID,
+				"CID", nd.Cid(),
 			)
 		}
 	}
@@ -140,7 +139,7 @@ func initCRDTForType(
 			core.COMPOSITE_NAMESPACE,
 		)
 
-		log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
+		log.DebugContext(ctx, "Got CRDT Type", "CType", ctype, "Field", field)
 		return merklecrdt.NewMerkleCompositeDAG(
 			txn,
 			core.NewCollectionSchemaVersionKey(col.Schema().VersionID, col.ID()),
@@ -157,7 +156,7 @@ func initCRDTForType(
 	fieldID := fd.ID.String()
 	key = base.MakeDataStoreKeyWithCollectionDescription(description).WithInstanceInfo(dsKey).WithFieldId(fieldID)
 
-	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
+	log.DebugContext(ctx, "Got CRDT Type", "CType", ctype, "Field", field)
 	return merklecrdt.InstanceWithStore(
 		txn,
 		core.NewCollectionSchemaVersionKey(col.Schema().VersionID, col.ID()),
@@ -183,7 +182,7 @@ func (bp *blockProcessor) processRemoteBlock(
 	nd ipld.Node,
 	isComposite bool,
 ) error {
-	log.Debug(ctx, "Running processLog")
+	log.DebugContext(ctx, "Running processLog")
 
 	if err := bp.txn.DAGstore().Put(ctx, nd); err != nil {
 		return err
@@ -218,15 +217,15 @@ func (bp *blockProcessor) handleChildBlocks(
 
 		exist, err := bp.txn.DAGstore().Has(ctx, link.Cid)
 		if err != nil {
-			log.Error(
+			log.ErrorContext(
 				ctx,
 				"Failed to check for existing block",
-				logging.NewKV("CID", link.Cid),
-				logging.NewKV("ERROR", err),
+				"CID", link.Cid,
+				"ERROR", err,
 			)
 		}
 		if exist {
-			log.Debug(ctx, "Already have block locally, skipping.", logging.NewKV("CID", link.Cid))
+			log.DebugContext(ctx, "Already have block locally, skipping.", "CID", link.Cid)
 			continue
 		}
 
