@@ -20,11 +20,17 @@ filename: "{{.InterfaceNameSnake}}.go"
 outpkg: mocks
 
 packages: # Packages and their interfaces to generate mocks for.
-    github.com/ipfs/go-datastore/query:
+    # github.com/ipfs/go-datastore/query:
+    #     config:
+    #         dir: "./datastore/mocks"
+    #     interfaces:
+    #         Results:
+
+    github.com/sourcenetwork/corekv:
         config:
             dir: "./datastore/mocks"
         interfaces:
-            Results:
+            Iterator:
 
     github.com/sourcenetwork/defradb/datastore:
         config:
@@ -35,16 +41,16 @@ packages: # Packages and their interfaces to generate mocks for.
             RootStore:
             Txn:
 
-    github.com/sourcenetwork/defradb/client:
-        config:
-            dir: "./client/mocks"
-        interfaces:
-            DB:
-            Collection:
+    # github.com/sourcenetwork/defradb/client:
+    #     config:
+    #         dir: "./client/mocks"
+    #     interfaces:
+    #         DB:
+    #         Collection:
 
-    github.com/sourcenetwork/defradb/db/fetcher:
-        config:
-            dir: "./db/fetcher/mocks"
-        interfaces:
-            Fetcher:
-            EncodedDocument:
+    # github.com/sourcenetwork/defradb/db/fetcher:
+    #     config:
+    #         dir: "./db/fetcher/mocks"
+    #     interfaces:
+    #         Fetcher:
+    #         EncodedDocument:
