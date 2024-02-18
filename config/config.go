@@ -58,7 +58,8 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/net/idna"
 
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
+	badgerds "github.com/dgraph-io/badger/v4"
+
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -262,7 +263,7 @@ type MemoryConfig struct {
 
 func defaultDatastoreConfig() *DatastoreConfig {
 	// create a copy of the default badger options
-	opts := badgerds.DefaultOptions
+	opts := badgerds.DefaultOptions("data")
 	return &DatastoreConfig{
 		Store: "badger",
 		Badger: BadgerConfig{

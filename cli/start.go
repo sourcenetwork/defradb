@@ -20,13 +20,14 @@ import (
 	"strings"
 	"syscall"
 
-	badger "github.com/sourcenetwork/badger/v4"
+	badger "github.com/dgraph-io/badger/v4"
+	"github.com/sourcenetwork/corekv"
+	badgerkv "github.com/sourcenetwork/corekv/badger"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
-	ds "github.com/sourcenetwork/defradb/datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	httpapi "github.com/sourcenetwork/defradb/http"
@@ -187,24 +188,26 @@ func (di *defraInstance) close(ctx context.Context) {
 func start(ctx context.Context, cfg *config.Config) (*defraInstance, error) {
 	log.FeedbackInfo(ctx, "Starting DefraDB service...")
 
-	var rootstore ds.RootStore
+	var store corekv.Store
 
 	var err error
 	if cfg.Datastore.Store == badgerDatastoreName {
 		log.FeedbackInfo(ctx, "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
-		rootstore, err = badgerds.NewDatastore(
+		store, err = badgerkv.NewDatastore(
 			cfg.Datastore.Badger.Path,
-			cfg.Datastore.Badger.Options,
+			*cfg.Datastore.Badger.Options,
 		)
 	} else if cfg.Datastore.Store == "memory" {
 		log.FeedbackInfo(ctx, "Building new memory store")
-		opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-		rootstore, err = badgerds.NewDatastore("", &opts)
+		opts := badger.DefaultOptions("").WithInMemory(true)
+		store, err = badgerkv.NewDatastore("", opts)
 	}
 
 	if err != nil {
 		return nil, errors.Wrap("failed to open datastore", err)
 	}
+
+	rootstore := store.(datastore.RootStore)
 
 	options := []db.Option{
 		db.WithUpdateEvents(),

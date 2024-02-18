@@ -17,9 +17,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	badgerkv "github.com/sourcenetwork/corekv/badger"
+
 	"github.com/sourcenetwork/defradb/config"
 	ds "github.com/sourcenetwork/defradb/datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
@@ -50,10 +51,11 @@ func MakeServerDumpCmd(cfg *config.Config) *cobra.Command {
 					))
 				}
 				log.FeedbackInfo(cmd.Context(), "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
-				rootstore, err = badgerds.NewDatastore(cfg.Datastore.Badger.Path, cfg.Datastore.Badger.Options)
+				store, err := badgerkv.NewDatastore(cfg.Datastore.Badger.Path, *cfg.Datastore.Badger.Options)
 				if err != nil {
 					return errors.Wrap("could not open badger datastore", err)
 				}
+				rootstore = store.(ds.RootStore)
 			} else {
 				return errors.New("server-side dump is only supported for the Badger datastore")
 			}
