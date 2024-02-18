@@ -14,14 +14,13 @@ import (
 	"context"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
-
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func newDS() datastore.DSReaderWriter {
-	return datastore.AsDSReaderWriter(ds.NewMapDatastore())
+	return memory.NewDatastore(context.TODO())
 }
 
 func newSeededDS() datastore.DSReaderWriter {

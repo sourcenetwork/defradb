@@ -93,7 +93,7 @@ func NewLWWRegister(
 // RETURN STATE
 func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 	valueK := reg.key.WithValueFlag()
-	buf, err := reg.store.Get(ctx, valueK.ToDS())
+	buf, err := reg.store.Get(ctx, valueK.ToDS().Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	// else if the current value is lexicographically
 	// greater than the new then ignore
 	key := reg.key.WithValueFlag()
-	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().ToDS())
+	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().ToDS().Bytes())
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
@@ -144,7 +144,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, err := reg.store.Get(ctx, key.ToDS())
+		curValue, err := reg.store.Get(ctx, key.ToDS().Bytes())
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 		}
 	}
 
-	err = reg.store.Set(ctx, key.ToDS(), val)
+	err = reg.store.Set(ctx, key.ToDS().Bytes(), val)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}

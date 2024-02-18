@@ -63,13 +63,13 @@ func (base baseCRDT) setPriority(
 		return ErrEncodingPriority
 	}
 
-	return base.store.Set(ctx, prioK.ToDS(), buf[0:n])
+	return base.store.Set(ctx, prioK.ToDS().Bytes(), buf[0:n])
 }
 
 // get the current priority for given key
 func (base baseCRDT) getPriority(ctx context.Context, key core.DataStoreKey) (uint64, error) {
 	pKey := key.WithPriorityFlag()
-	pbuf, err := base.store.Get(ctx, pKey.ToDS())
+	pbuf, err := base.store.Get(ctx, pKey.ToDS().Bytes())
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
 			return 0, nil

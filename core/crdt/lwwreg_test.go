@@ -17,21 +17,15 @@ import (
 
 	dag "github.com/ipfs/boxo/ipld/merkledag"
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	mh "github.com/multiformats/go-multihash"
 	"github.com/ugorji/go/codec"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func newMockStore() datastore.DSReaderWriter {
-	return datastore.AsDSReaderWriter(ds.NewMapDatastore())
-}
-
 func setupLWWRegister() LWWRegister {
-	store := newMockStore()
+	store := newDS()
 	key := core.DataStoreKey{DocKey: "AAAA-BBBB"}
 	return NewLWWRegister(store, core.CollectionSchemaVersionKey{}, key, "")
 }

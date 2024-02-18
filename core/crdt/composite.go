@@ -130,7 +130,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 	dagDelta, isDagDelta := delta.(*CompositeDAGDelta)
 
 	if isDagDelta && dagDelta.Status.IsDeleted() {
-		err := c.store.Set(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
+		err := c.store.Set(ctx, c.key.ToPrimaryDataStoreKey().ToDS().Bytes(), []byte{base.DeletedObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -141,7 +141,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
 	// the local reperesentation of the document.
 	versionKey := c.key.WithValueFlag().WithFieldId(core.DATASTORE_DOC_VERSION_FIELD_ID)
-	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
+	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS().Bytes())
 	hasObjectMarker := !errors.Is(err, ds.ErrNotFound)
 	if err != nil && hasObjectMarker {
 		return err
@@ -161,14 +161,14 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 		schemaVersionId = c.schemaVersionKey.SchemaVersionId
 	}
 
-	err = c.store.Set(ctx, versionKey.ToDS(), []byte(schemaVersionId))
+	err = c.store.Set(ctx, versionKey.ToDS().Bytes(), []byte(schemaVersionId))
 	if err != nil {
 		return err
 	}
 
 	if !hasObjectMarker {
 		// ensure object marker exists
-		return c.store.Set(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
+		return c.store.Set(ctx, c.key.ToPrimaryDataStoreKey().ToDS().Bytes(), []byte{base.ObjectMarker})
 	}
 
 	return nil
@@ -189,13 +189,13 @@ func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKe
 		}
 
 		if dsKey.InstanceType == core.ValueKey {
-			err = c.store.Set(ctx, dsKey.WithDeletedFlag().ToDS(), e.Value)
+			err = c.store.Set(ctx, dsKey.WithDeletedFlag().ToDS().Bytes(), e.Value)
 			if err != nil {
 				return err
 			}
 		}
 
-		err = c.store.Delete(ctx, dsKey.ToDS())
+		err = c.store.Delete(ctx, dsKey.ToDS().Bytes())
 		if err != nil {
 			return err
 		}
