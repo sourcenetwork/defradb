@@ -8,7 +8,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/fxamacker/cbor/v2 v2.6.0
 	github.com/getkin/kin-openapi v0.123.0
-	github.com/go-chi/chi/v5 v5.0.11
+	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.0.0
