@@ -14,6 +14,7 @@ import (
 	"context"
 
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -31,7 +32,12 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.WithTxn(txn).GetCollectionsBySchemaRoot(p.ctx, col)
+		storeCol, err := p.db.WithTxn(txn).GetCollections(
+			p.ctx,
+			client.CollectionFetchOptions{
+				SchemaRoot: immutable.Some(col),
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -96,7 +102,12 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.WithTxn(txn).GetCollectionsBySchemaRoot(p.ctx, col)
+		storeCol, err := p.db.WithTxn(txn).GetCollections(
+			p.ctx,
+			client.CollectionFetchOptions{
+				SchemaRoot: immutable.Some(col),
+			},
+		)
 		if err != nil {
 			return err
 		}

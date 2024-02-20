@@ -609,37 +609,6 @@ func (db *db) getActiveCollectionUp(
 	return client.CollectionDescription{}, false
 }
 
-// getCollectionsByVersionId returns the [*collection]s at the given [schemaVersionId] version.
-//
-// Will return an error if the given key is empty, or if none are found.
-func (db *db) getCollectionsByVersionID(
-	ctx context.Context,
-	txn datastore.Txn,
-	schemaVersionId string,
-) ([]*collection, error) {
-	cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schemaVersionId)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]*collection, len(cols))
-	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
-		if err != nil {
-			return nil, err
-		}
-
-		collections[i] = db.newCollection(col, schema)
-
-		err = collections[i].loadIndexes(ctx, txn)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return collections, nil
-}
-
 func (db *db) getCollectionByID(ctx context.Context, txn datastore.Txn, id uint32) (client.Collection, error) {
 	col, err := description.GetCollectionByID(ctx, txn, id)
 	if err != nil {
@@ -666,87 +635,73 @@ func (db *db) getCollectionByName(ctx context.Context, txn datastore.Txn, name s
 		return nil, ErrCollectionNameEmpty
 	}
 
-	col, err := description.GetCollectionByName(ctx, txn, name)
+	cols, err := db.getCollections(ctx, txn, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {
 		return nil, err
 	}
 
-	schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
-	if err != nil {
-		return nil, err
-	}
-
-	collection := db.newCollection(col, schema)
-	err = collection.loadIndexes(ctx, txn)
-	if err != nil {
-		return nil, err
-	}
-
-	return collection, nil
+	// cols will always have length == 1 here
+	return cols[0], nil
 }
 
-// getCollectionsBySchemaRoot returns all existing collections using the schema root.
-func (db *db) getCollectionsBySchemaRoot(
+// GetCollections returns all collections and their descriptions matching the given options
+// that currently exist within this [Store].
+func (db *db) getCollections(
 	ctx context.Context,
 	txn datastore.Txn,
-	schemaRoot string,
+	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	if schemaRoot == "" {
-		return nil, ErrSchemaRootEmpty
-	}
-
-	cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, schemaRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
-		if err != nil {
-			// If the schema is not found we leave it as empty and carry on. This can happen when
-			// a migration is registered before the schema is declared locally.
-			if !errors.Is(err, ds.ErrNotFound) {
-				return nil, err
-			}
-		}
-
-		collection := db.newCollection(col, schema)
-		collections[i] = collection
-
-		err = collection.loadIndexes(ctx, txn)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return collections, nil
-}
-
-// getAllCollections returns all collections and their descriptions that currently exist within
-// this [Store].
-//
-// If `true` is provided, the results will include inactive collections.  If `false`, only active collections
-// will be returned.
-func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn, getInactive bool) ([]client.Collection, error) {
 	var cols []client.CollectionDescription
 
-	if getInactive {
-		var err error
-		cols, err = description.GetCollections(ctx, txn)
+	switch {
+	case options.Name.HasValue():
+		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
 		if err != nil {
 			return nil, err
 		}
-	} else {
+		cols = append(cols, col)
+
+	case options.SchemaVersionID.HasValue():
 		var err error
-		cols, err = description.GetActiveCollections(ctx, txn)
+		cols, err = description.GetCollectionsBySchemaVersionID(ctx, txn, options.SchemaVersionID.Value())
 		if err != nil {
 			return nil, err
+		}
+
+	case options.SchemaRoot.HasValue():
+		var err error
+		cols, err = description.GetCollectionsBySchemaRoot(ctx, txn, options.SchemaRoot.Value())
+		if err != nil {
+			return nil, err
+		}
+
+	default:
+		if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
+			var err error
+			cols, err = description.GetCollections(ctx, txn)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			var err error
+			cols, err = description.GetActiveCollections(ctx, txn)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
+	collections := []client.Collection{}
+	for _, col := range cols {
+		if options.SchemaVersionID.HasValue() {
+			if col.SchemaVersionID != options.SchemaVersionID.Value() {
+				continue
+			}
+		}
+		if !options.IncludeInactive.Value() && !col.Name.HasValue() {
+			continue
+		}
+
 		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
 		if err != nil {
 			// If the schema is not found we leave it as empty and carry on. This can happen when
@@ -756,8 +711,14 @@ func (db *db) getAllCollections(ctx context.Context, txn datastore.Txn, getInact
 			}
 		}
 
+		if options.SchemaRoot.HasValue() {
+			if schema.Root != options.SchemaRoot.Value() {
+				continue
+			}
+		}
+
 		collection := db.newCollection(col, schema)
-		collections[i] = collection
+		collections = append(collections, collection)
 
 		err = collection.loadIndexes(ctx, txn)
 		if err != nil {

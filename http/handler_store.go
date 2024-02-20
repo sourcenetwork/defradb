@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -146,93 +147,59 @@ func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
-	switch {
-	case req.URL.Query().Has("name"):
-		col, err := store.GetCollectionByName(req.Context(), req.URL.Query().Get("name"))
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, col.Definition())
-	case req.URL.Query().Has("schema_root"):
-		cols, err := store.GetCollectionsBySchemaRoot(req.Context(), req.URL.Query().Get("schema_root"))
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		colDesc := make([]client.CollectionDefinition, len(cols))
-		for i, col := range cols {
-			colDesc[i] = col.Definition()
-		}
-		responseJSON(rw, http.StatusOK, colDesc)
-	case req.URL.Query().Has("version_id"):
-		cols, err := store.GetCollectionsByVersionID(req.Context(), req.URL.Query().Get("version_id"))
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		colDesc := make([]client.CollectionDefinition, len(cols))
-		for i, col := range cols {
-			colDesc[i] = col.Definition()
-		}
-		responseJSON(rw, http.StatusOK, colDesc)
-	default:
-		var getInactive bool
-		if req.URL.Query().Has("get_inactive") {
-			getInactiveStr := req.URL.Query().Get("get_inactive")
-			var err error
-			getInactive, err = strconv.ParseBool(getInactiveStr)
-			if err != nil {
-				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-				return
-			}
-		}
-		cols, err := store.GetAllCollections(req.Context(), getInactive)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		colDesc := make([]client.CollectionDefinition, len(cols))
-		for i, col := range cols {
-			colDesc[i] = col.Definition()
-		}
-		responseJSON(rw, http.StatusOK, colDesc)
+	options := client.CollectionFetchOptions{}
+	if req.URL.Query().Has("name") {
+		options.Name = immutable.Some(req.URL.Query().Get("name"))
 	}
+	if req.URL.Query().Has("version_id") {
+		options.SchemaVersionID = immutable.Some(req.URL.Query().Get("version_id"))
+	}
+	if req.URL.Query().Has("schema_root") {
+		options.SchemaRoot = immutable.Some(req.URL.Query().Get("schema_root"))
+	}
+	if req.URL.Query().Has("get_inactive") {
+		getInactiveStr := req.URL.Query().Get("get_inactive")
+		var err error
+		getInactive, err := strconv.ParseBool(getInactiveStr)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		options.IncludeInactive = immutable.Some(getInactive)
+	}
+
+	cols, err := store.GetCollections(req.Context(), options)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	colDesc := make([]client.CollectionDefinition, len(cols))
+	for i, col := range cols {
+		colDesc[i] = col.Definition()
+	}
+	responseJSON(rw, http.StatusOK, colDesc)
 }
 
 func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 	store := req.Context().Value(storeContextKey).(client.Store)
 
-	switch {
-	case req.URL.Query().Has("version_id"):
-		schema, err := store.GetSchemaByVersionID(req.Context(), req.URL.Query().Get("version_id"))
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, schema)
-	case req.URL.Query().Has("root"):
-		schema, err := store.GetSchemasByRoot(req.Context(), req.URL.Query().Get("root"))
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, schema)
-	case req.URL.Query().Has("name"):
-		schema, err := store.GetSchemasByName(req.Context(), req.URL.Query().Get("name"))
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, schema)
-	default:
-		schema, err := store.GetAllSchemas(req.Context())
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-		responseJSON(rw, http.StatusOK, schema)
+	options := client.SchemaFetchOptions{}
+	if req.URL.Query().Has("version_id") {
+		options.ID = immutable.Some(req.URL.Query().Get("version_id"))
 	}
+	if req.URL.Query().Has("root") {
+		options.Root = immutable.Some(req.URL.Query().Get("root"))
+	}
+	if req.URL.Query().Has("name") {
+		options.Name = immutable.Some(req.URL.Query().Get("name"))
+	}
+
+	schema, err := store.GetSchemas(req.Context(), options)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, schema)
 }
 
 func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {

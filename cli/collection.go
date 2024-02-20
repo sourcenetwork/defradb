@@ -13,6 +13,7 @@ package cli
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -24,6 +25,7 @@ func MakeCollectionCommand() *cobra.Command {
 	var name string
 	var schemaRoot string
 	var versionID string
+	var getInactive bool
 	var cmd = &cobra.Command{
 		Use:   "collection [--name <name> --schema <schemaRoot> --version <versionID>]",
 		Short: "Interact with a collection.",
@@ -44,57 +46,30 @@ func MakeCollectionCommand() *cobra.Command {
 			}
 			store := mustGetContextStore(cmd)
 
-			var col client.Collection
-			var cols []client.Collection
-			switch {
-			case versionID != "":
-				cols, err = store.GetCollectionsByVersionID(cmd.Context(), versionID)
-
-			case schemaRoot != "":
-				cols, err = store.GetCollectionsBySchemaRoot(cmd.Context(), schemaRoot)
-
-			case name != "":
-				col, err = store.GetCollectionByName(cmd.Context(), name)
-				cols = []client.Collection{col}
-
-			default:
-				return nil
+			options := client.CollectionFetchOptions{}
+			if versionID != "" {
+				options.SchemaVersionID = immutable.Some(versionID)
+			}
+			if schemaRoot != "" {
+				options.SchemaRoot = immutable.Some(schemaRoot)
+			}
+			if name != "" {
+				options.Name = immutable.Some(name)
+			}
+			if getInactive {
+				options.IncludeInactive = immutable.Some(getInactive)
 			}
 
+			cols, err := store.GetCollections(cmd.Context(), options)
 			if err != nil {
 				return err
-			}
-
-			if schemaRoot != "" && versionID != "" && len(cols) > 0 {
-				if cols[0].SchemaRoot() != schemaRoot {
-					// If the a versionID has been provided that does not pair up with the given schema root
-					// we should error and let the user know they have provided impossible params.
-					// We only need to check the first item - they will all be the same.
-					return NewErrSchemaVersionNotOfSchema(schemaRoot, versionID)
-				}
-			}
-
-			if name != "" {
-				// Multiple params may have been specified, and in some cases both are needed.
-				// For example if a schema version and a collection name have been provided,
-				// we need to ensure that a collection at the requested version is returned.
-				// Likewise we need to ensure that if a collection name and schema id are provided,
-				// but there are none matching both, that nothing is returned.
-				fetchedCols := cols
-				cols = nil
-				for _, c := range fetchedCols {
-					if c.Name().Value() == name {
-						cols = append(cols, c)
-						break
-					}
-				}
 			}
 
 			if len(cols) != 1 {
 				// If more than one collection matches the given criteria we cannot set the context collection
 				return nil
 			}
-			col = cols[0]
+			col := cols[0]
 
 			if tx, ok := cmd.Context().Value(txContextKey).(datastore.Txn); ok {
 				col = col.WithTxn(tx)
@@ -109,5 +84,6 @@ func MakeCollectionCommand() *cobra.Command {
 	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")
 	cmd.PersistentFlags().StringVar(&schemaRoot, "schema", "", "Collection schema Root")
 	cmd.PersistentFlags().StringVar(&versionID, "version", "", "Collection version ID")
+	cmd.PersistentFlags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")
 	return cmd
 }

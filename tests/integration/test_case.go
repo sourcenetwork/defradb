@@ -143,8 +143,8 @@ type GetCollections struct {
 	// to allow their ommission in most cases).
 	ExpectedResults []client.CollectionDescription
 
-	// If true, inactive as well as active collections will be fetched.
-	GetInactive bool
+	// An optional set of fetch options for the collections.
+	FilterOptions client.CollectionFetchOptions
 
 	// Any error expected from the action. Optional.
 	ExpectedError string
