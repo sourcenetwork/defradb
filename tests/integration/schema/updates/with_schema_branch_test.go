@@ -70,7 +70,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						Name:      "Users",
 						VersionID: schemaVersion2ID,
 						Root:      schemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -78,13 +78,11 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "email",
-								ID:   2,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -110,7 +108,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						Name:      "Users",
 						VersionID: schemaVersion3ID,
 						Root:      schemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -118,13 +116,11 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "phone",
-								ID:   2,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -234,7 +230,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						Name:      "Users",
 						VersionID: schemaVersion4ID,
 						Root:      schemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -242,19 +238,16 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "phone",
-								ID:   2,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "discordName",
-								ID:   3,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -475,7 +468,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						Name:      "Users",
 						VersionID: schemaVersion4ID,
 						Root:      schemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -483,19 +476,16 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "email",
-								ID:   2,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "discordName",
-								ID:   3,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},

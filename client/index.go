@@ -46,13 +46,14 @@ func (d CollectionDescription) CollectIndexedFields(schema *SchemaDescription) [
 	fields := make([]FieldDescription, 0, len(d.Indexes))
 	for _, index := range d.Indexes {
 		for _, field := range index.Fields {
-			for i := range schema.Fields {
-				colField := schema.Fields[i]
-				if field.Name == colField.Name && !fieldsMap[field.Name] {
-					fieldsMap[field.Name] = true
-					fields = append(fields, colField)
-					break
-				}
+			if fieldsMap[field.Name] {
+				// If the FieldDescription has already been added to the result do not add it a second time
+				// this can happen if a field if referenced by multiple indexes
+				continue
+			}
+			colField, ok := d.GetFieldByName(field.Name, schema)
+			if ok {
+				fields = append(fields, colField)
 			}
 		}
 	}

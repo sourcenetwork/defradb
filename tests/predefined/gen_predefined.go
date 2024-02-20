@@ -218,7 +218,7 @@ func (this *docGenerator) generateSecondaryDocs(
 func (this *docGenerator) generateSecondaryDocsForField(
 	primaryDoc map[string]any,
 	primaryTypeName string,
-	relField *client.FieldDescription,
+	relField *client.SchemaFieldDescription,
 	primaryDocID string,
 ) ([]gen.GeneratedDoc, error) {
 	result := []gen.GeneratedDoc{}

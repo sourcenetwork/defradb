@@ -119,7 +119,7 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 }
 
 // getNextPrimaryDocID returns the docID of the next primary document to be used as a relation.
-func (g *randomDocGenerator) getNextPrimaryDocID(secondaryType string, field *client.FieldDescription) string {
+func (g *randomDocGenerator) getNextPrimaryDocID(secondaryType string, field *client.SchemaFieldDescription) string {
 	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
 	return g.generatedDocs[field.Schema][ind].docID
 }

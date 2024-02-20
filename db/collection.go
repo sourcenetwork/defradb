@@ -123,6 +123,17 @@ func (db *db) createCollection(
 		return nil, err
 	}
 	desc.SchemaVersionID = schema.VersionID
+	for i, globalField := range schema.Fields {
+		desc.Fields = append(
+			desc.Fields,
+			client.CollectionFieldDescription{
+				Name: globalField.Name,
+				// For now just set the field id to it's index.  This does not work
+				// for branching schema and field deletion.
+				ID: client.FieldID(i),
+			},
+		)
+	}
 
 	desc, err = description.SaveCollection(ctx, txn, desc)
 	if err != nil {
@@ -174,8 +185,8 @@ func (db *db) updateSchema(
 	for _, field := range schema.Fields {
 		if field.Kind == client.FieldKind_FOREIGN_OBJECT {
 			idFieldName := field.Name + "_id"
-			if _, ok := schema.GetField(idFieldName); !ok {
-				schema.Fields = append(schema.Fields, client.FieldDescription{
+			if _, ok := schema.GetFieldByName(idFieldName); !ok {
+				schema.Fields = append(schema.Fields, client.SchemaFieldDescription{
 					Name:         idFieldName,
 					Kind:         client.FieldKind_DocID,
 					RelationName: field.RelationName,
@@ -235,10 +246,21 @@ func (db *db) updateSchema(
 				if source.SourceCollectionID == previousID {
 					if existingCol.RootID == client.OrphanRootID {
 						existingCol.RootID = col.RootID
-						existingCol, err = description.SaveCollection(ctx, txn, existingCol)
-						if err != nil {
-							return err
-						}
+					}
+					for i, globalField := range schema.Fields {
+						existingCol.Fields = append(
+							existingCol.Fields,
+							client.CollectionFieldDescription{
+								Name: globalField.Name,
+								// For now just set the field id to it's index.  This does not work
+								// for branching schema and field deletion.
+								ID: client.FieldID(i),
+							},
+						)
+					}
+					existingCol, err = description.SaveCollection(ctx, txn, existingCol)
+					if err != nil {
+						return err
 					}
 					isExistingCol = true
 					break existingColLoop
@@ -262,6 +284,27 @@ func (db *db) updateSchema(
 					SourceCollectionID: previousID,
 					Transform:          migration,
 				},
+			}
+
+			for i, globalField := range schema.Fields {
+				isNew := true
+				for _, localField := range col.Fields {
+					if localField.Name == globalField.Name {
+						isNew = false
+						break
+					}
+				}
+				if isNew {
+					col.Fields = append(
+						col.Fields,
+						client.CollectionFieldDescription{
+							Name: globalField.Name,
+							// For now just set the field id to it's index.  This does not work
+							// for branching schema and field deletion.
+							ID: client.FieldID(i),
+						},
+					)
+				}
 			}
 
 			_, err = description.SaveCollection(ctx, txn, col)
@@ -343,26 +386,16 @@ func validateUpdateSchemaFields(
 	proposedDesc client.SchemaDescription,
 ) (bool, error) {
 	hasChanged := false
-	existingFieldsByID := map[client.FieldID]client.FieldDescription{}
+	existingFieldsByName := map[string]client.SchemaFieldDescription{}
 	existingFieldIndexesByName := map[string]int{}
 	for i, field := range existingDesc.Fields {
 		existingFieldIndexesByName[field.Name] = i
-		existingFieldsByID[field.ID] = field
+		existingFieldsByName[field.Name] = field
 	}
 
 	newFieldNames := map[string]struct{}{}
-	newFieldIds := map[client.FieldID]struct{}{}
 	for proposedIndex, proposedField := range proposedDesc.Fields {
-		var existingField client.FieldDescription
-		var fieldAlreadyExists bool
-		if proposedField.ID != client.FieldID(0) ||
-			proposedField.Name == request.DocIDFieldName {
-			existingField, fieldAlreadyExists = existingFieldsByID[proposedField.ID]
-		}
-
-		if proposedField.ID != client.FieldID(0) && !fieldAlreadyExists {
-			return false, NewErrCannotSetFieldID(proposedField.Name, proposedField.ID)
-		}
+		existingField, fieldAlreadyExists := existingFieldsByName[proposedField.Name]
 
 		// If the field is new, then the collection has changed
 		hasChanged = hasChanged || !fieldAlreadyExists
@@ -391,7 +424,7 @@ func validateUpdateSchemaFields(
 
 			if proposedField.Kind == client.FieldKind_FOREIGN_OBJECT {
 				idFieldName := proposedField.Name + request.RelatedObjectID
-				idField, idFieldFound := proposedDesc.GetField(idFieldName)
+				idField, idFieldFound := proposedDesc.GetFieldByName(idFieldName)
 				if idFieldFound {
 					if idField.Kind != client.FieldKind_DocID {
 						return false, NewErrRelationalFieldIDInvalidType(idField.Name, client.FieldKind_DocID, idField.Kind)
@@ -404,7 +437,7 @@ func validateUpdateSchemaFields(
 			}
 
 			var relatedFieldFound bool
-			var relatedField client.FieldDescription
+			var relatedField client.SchemaFieldDescription
 			for _, field := range relatedDesc.Fields {
 				if field.RelationName == proposedField.RelationName &&
 					field.Kind != client.FieldKind_DocID &&
@@ -433,7 +466,7 @@ func validateUpdateSchemaFields(
 		}
 
 		if fieldAlreadyExists && proposedField != existingField {
-			return false, NewErrCannotMutateField(proposedField.ID, proposedField.Name)
+			return false, NewErrCannotMutateField(proposedField.Name)
 		}
 
 		if existingIndex := existingFieldIndexesByName[proposedField.Name]; fieldAlreadyExists &&
@@ -450,12 +483,11 @@ func validateUpdateSchemaFields(
 		}
 
 		newFieldNames[proposedField.Name] = struct{}{}
-		newFieldIds[proposedField.ID] = struct{}{}
 	}
 
 	for _, field := range existingDesc.Fields {
-		if _, stillExists := newFieldIds[field.ID]; !stillExists {
-			return false, NewErrCannotDeleteField(field.Name, field.ID)
+		if _, stillExists := newFieldNames[field.Name]; !stillExists {
+			return false, NewErrCannotDeleteField(field.Name)
 		}
 	}
 	return hasChanged, nil
@@ -1082,7 +1114,7 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			fieldDescription, valid := c.Schema().GetField(k)
+			fieldDescription, valid := c.Definition().GetFieldByName(k)
 			if !valid {
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
@@ -1184,7 +1216,9 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	objFieldDescription, ok := c.Schema().GetField(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
+	objFieldDescription, ok := c.Definition().GetFieldByName(
+		strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID),
+	)
 	if !ok {
 		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
 	}
@@ -1410,7 +1444,7 @@ func (c *collection) tryGetFieldKey(primaryKey core.PrimaryDataStoreKey, fieldNa
 // tryGetSchemaFieldID returns the FieldID of the given fieldName.
 // Will return false if the field is not found.
 func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
-	for _, field := range c.Schema().Fields {
+	for _, field := range c.Definition().GetFields() {
 		if field.Name == fieldName {
 			if field.IsObject() || field.IsObjectArray() {
 				// We do not wish to match navigational properties, only

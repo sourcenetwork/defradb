@@ -28,7 +28,6 @@ const (
 	errSchemaRootDoesntMatch              string = "SchemaRoot does not match existing"
 	errCannotModifySchemaName             string = "modifying the schema name is not supported"
 	errCannotSetVersionID                 string = "setting the VersionID is not supported. It is updated automatically"
-	errCannotSetFieldID                   string = "explicitly setting a field ID value is not supported"
 	errRelationalFieldMissingSchema       string = "a `Schema` [name] must be provided when adding a new relation field"
 	errRelationalFieldInvalidRelationType string = "invalid RelationType"
 	errRelationalFieldMissingIDField      string = "missing id field for relation object field"
@@ -237,14 +236,6 @@ func NewErrCannotModifySchemaName(existingName, proposedName string) error {
 	)
 }
 
-func NewErrCannotSetFieldID(name string, id client.FieldID) error {
-	return errors.New(
-		errCannotSetFieldID,
-		errors.NewKV("Field", name),
-		errors.NewKV("ID", id),
-	)
-}
-
 func NewErrRelationalFieldMissingSchema(name string, kind client.FieldKind) error {
 	return errors.New(
 		errRelationalFieldMissingSchema,
@@ -334,10 +325,9 @@ func NewErrDuplicateField(name string) error {
 	return errors.New(errDuplicateField, errors.NewKV("Name", name))
 }
 
-func NewErrCannotMutateField(id client.FieldID, name string) error {
+func NewErrCannotMutateField(name string) error {
 	return errors.New(
 		errCannotMutateField,
-		errors.NewKV("ID", id),
 		errors.NewKV("ProposedName", name),
 	)
 }
@@ -351,11 +341,10 @@ func NewErrCannotMoveField(name string, proposedIndex, existingIndex int) error 
 	)
 }
 
-func NewErrCannotDeleteField(name string, id client.FieldID) error {
+func NewErrCannotDeleteField(name string) error {
 	return errors.New(
 		errCannotDeleteField,
 		errors.NewKV("Name", name),
-		errors.NewKV("ID", id),
 	)
 }
 

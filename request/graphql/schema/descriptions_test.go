@@ -39,7 +39,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "User",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -88,7 +88,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "User",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -119,7 +119,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -168,7 +168,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -206,7 +206,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -263,7 +263,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "User",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -294,7 +294,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -343,7 +343,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -381,7 +381,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -438,7 +438,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -477,7 +477,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -533,7 +533,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Book",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -572,7 +572,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Schema: client.SchemaDescription{
 						Name: "Author",
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,

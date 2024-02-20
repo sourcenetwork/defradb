@@ -287,12 +287,9 @@ func (c *collection) indexExistingDocs(
 ) error {
 	fields := make([]client.FieldDescription, 0, 1)
 	for _, field := range index.Description().Fields {
-		for i := range c.Schema().Fields {
-			colField := c.Schema().Fields[i]
-			if field.Name == colField.Name {
-				fields = append(fields, colField)
-				break
-			}
+		colField, ok := c.Definition().GetFieldByName(field.Name)
+		if ok {
+			fields = append(fields, colField)
 		}
 	}
 

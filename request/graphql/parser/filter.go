@@ -194,34 +194,34 @@ func parseVal(val ast.Value, recurseFn parseFn) (any, error) {
 // from the filter conditions“
 func ParseFilterFieldsForDescription(
 	conditions map[string]any,
-	schema client.SchemaDescription,
+	col client.CollectionDefinition,
 ) ([]client.FieldDescription, error) {
-	return parseFilterFieldsForDescriptionMap(conditions, schema)
+	return parseFilterFieldsForDescriptionMap(conditions, col)
 }
 
 func parseFilterFieldsForDescriptionMap(
 	conditions map[string]any,
-	schema client.SchemaDescription,
+	col client.CollectionDefinition,
 ) ([]client.FieldDescription, error) {
 	fields := make([]client.FieldDescription, 0)
 	for k, v := range conditions {
 		switch k {
 		case "_or", "_and":
 			conds := v.([]any)
-			parsedFileds, err := parseFilterFieldsForDescriptionSlice(conds, schema)
+			parsedFileds, err := parseFilterFieldsForDescriptionSlice(conds, col)
 			if err != nil {
 				return nil, err
 			}
 			fields = append(fields, parsedFileds...)
 		case "_not":
 			conds := v.(map[string]any)
-			parsedFileds, err := parseFilterFieldsForDescriptionMap(conds, schema)
+			parsedFileds, err := parseFilterFieldsForDescriptionMap(conds, col)
 			if err != nil {
 				return nil, err
 			}
 			fields = append(fields, parsedFileds...)
 		default:
-			f, found := schema.GetField(k)
+			f, found := col.GetFieldByName(k)
 			if !found || f.IsObject() {
 				continue
 			}
@@ -233,7 +233,7 @@ func parseFilterFieldsForDescriptionMap(
 
 func parseFilterFieldsForDescriptionSlice(
 	conditions []any,
-	schema client.SchemaDescription,
+	schema client.CollectionDefinition,
 ) ([]client.FieldDescription, error) {
 	fields := make([]client.FieldDescription, 0)
 	for _, v := range conditions {

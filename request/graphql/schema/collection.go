@@ -102,7 +102,7 @@ func collectionFromAstDefinition(
 	relationManager *RelationManager,
 	def *ast.ObjectDefinition,
 ) (client.CollectionDefinition, error) {
-	fieldDescriptions := []client.FieldDescription{
+	fieldDescriptions := []client.SchemaFieldDescription{
 		{
 			Name: request.DocIDFieldName,
 			Kind: client.FieldKind_DocID,
@@ -168,7 +168,7 @@ func schemaFromAstDefinition(
 	relationManager *RelationManager,
 	def *ast.InterfaceDefinition,
 ) (client.SchemaDescription, error) {
-	fieldDescriptions := []client.FieldDescription{}
+	fieldDescriptions := []client.SchemaFieldDescription{}
 
 	for _, field := range def.Fields {
 		tmpFieldsDescriptions, err := fieldsFromAST(field, relationManager, def.Name.Value)
@@ -315,7 +315,7 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 func fieldsFromAST(field *ast.FieldDefinition,
 	relationManager *RelationManager,
 	hostObjectName string,
-) ([]client.FieldDescription, error) {
+) ([]client.SchemaFieldDescription, error) {
 	kind, err := astTypeToKind(field.Type)
 	if err != nil {
 		return nil, err
@@ -325,7 +325,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 	relationName := ""
 	relationType := relationType(0)
 
-	fieldDescriptions := []client.FieldDescription{}
+	fieldDescriptions := []client.SchemaFieldDescription{}
 
 	if kind == client.FieldKind_FOREIGN_OBJECT || kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 		if kind == client.FieldKind_FOREIGN_OBJECT {
@@ -346,7 +346,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 
 		if kind == client.FieldKind_FOREIGN_OBJECT {
 			// An _id field is added for every 1-N relationship from this object.
-			fieldDescriptions = append(fieldDescriptions, client.FieldDescription{
+			fieldDescriptions = append(fieldDescriptions, client.SchemaFieldDescription{
 				Name:         fmt.Sprintf("%s_id", field.Name.Value),
 				Kind:         client.FieldKind_DocID,
 				Typ:          defaultCRDTForFieldKind[client.FieldKind_DocID],
@@ -372,7 +372,7 @@ func fieldsFromAST(field *ast.FieldDefinition,
 		return nil, err
 	}
 
-	fieldDescription := client.FieldDescription{
+	fieldDescription := client.SchemaFieldDescription{
 		Name:         field.Name.Value,
 		Kind:         kind,
 		Typ:          cType,

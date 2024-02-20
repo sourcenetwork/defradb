@@ -65,7 +65,7 @@ func newTypeUsageCounter(random *rand.Rand) typeUsageCounters {
 // addRelationUsage adds a relation usage tracker for a foreign field.
 func (c *typeUsageCounters) addRelationUsage(
 	secondaryType string,
-	field client.FieldDescription,
+	field client.SchemaFieldDescription,
 	minPerDoc, maxPerDoc, numDocs int,
 ) {
 	primaryType := field.Schema
@@ -81,7 +81,7 @@ func (c *typeUsageCounters) addRelationUsage(
 }
 
 // getNextTypeIndForField returns the next index to be used for a foreign field.
-func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *client.FieldDescription) int {
+func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *client.SchemaFieldDescription) int {
 	current := c.m[field.Schema][secondaryType][field.Name]
 	return current.useNextDocIDIndex()
 }

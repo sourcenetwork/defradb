@@ -101,7 +101,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						Name:      "Users",
 						Root:      usersSchemaVersion1ID,
 						VersionID: usersSchemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -112,7 +112,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						Name:      "Users",
 						Root:      usersSchemaVersion1ID,
 						VersionID: usersSchemaVersion2ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -120,7 +120,6 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -130,7 +129,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						Name:      "Books",
 						Root:      booksSchemaVersion1ID,
 						VersionID: booksSchemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -176,7 +175,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 						Name:      "Users",
 						Root:      usersSchemaVersion1ID,
 						VersionID: usersSchemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -187,7 +186,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 						Name:      "Users",
 						Root:      usersSchemaVersion1ID,
 						VersionID: usersSchemaVersion2ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -195,7 +194,6 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
@@ -240,7 +238,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 						Name:      "Users",
 						Root:      usersSchemaVersion1ID,
 						VersionID: usersSchemaVersion1ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -251,7 +249,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 						Name:      "Users",
 						Root:      usersSchemaVersion1ID,
 						VersionID: usersSchemaVersion2ID,
-						Fields: []client.FieldDescription{
+						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -259,7 +257,6 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},

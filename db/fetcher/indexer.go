@@ -69,11 +69,9 @@ func (f *IndexFetcher) Init(
 	f.txn = txn
 
 	for _, indexedField := range f.indexDesc.Fields {
-		for _, field := range f.col.Schema().Fields {
-			if field.Name == indexedField.Name {
-				f.indexedFields = append(f.indexedFields, field)
-				break
-			}
+		field, ok := f.col.Definition().GetFieldByName(indexedField.Name)
+		if ok {
+			f.indexedFields = append(f.indexedFields, field)
 		}
 	}
 

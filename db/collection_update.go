@@ -296,7 +296,7 @@ func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (clie
 		return client.FieldDescription{}, false
 	}
 
-	relationFieldDescription, valid := c.Schema().GetField(
+	relationFieldDescription, valid := c.Definition().GetFieldByName(
 		strings.TrimSuffix(fieldDesc.Name, request.RelatedObjectID),
 	)
 	return relationFieldDescription, valid && !relationFieldDescription.IsPrimaryRelation
@@ -338,7 +338,7 @@ func (c *collection) patchPrimaryDoc(
 		return client.NewErrFieldNotExist(relationFieldDescription.RelationName)
 	}
 
-	primaryIDField, ok := primaryCol.Schema().GetField(primaryField.Name + request.RelatedObjectID)
+	primaryIDField, ok := primaryCol.Definition().GetFieldByName(primaryField.Name + request.RelatedObjectID)
 	if !ok {
 		return client.NewErrFieldNotExist(primaryField.Name + request.RelatedObjectID)
 	}

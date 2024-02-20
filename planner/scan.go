@@ -104,7 +104,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 				if target.Filter != nil {
 					fieldDescs, err := parser.ParseFilterFieldsForDescription(
 						target.Filter.ExternalConditions,
-						n.col.Schema(),
+						n.col.Definition(),
 					)
 					if err != nil {
 						return err
@@ -125,7 +125,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 }
 
 func (n *scanNode) tryAddField(fieldName string) bool {
-	fd, ok := n.col.Schema().GetField(fieldName)
+	fd, ok := n.col.Definition().GetFieldByName(fieldName)
 	if !ok {
 		// skip fields that are not part of the
 		// schema description. The scanner (and fetcher)

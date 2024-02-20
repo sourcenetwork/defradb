@@ -60,6 +60,9 @@ type CollectionDescription struct {
 	// - [CollectionSource]
 	Sources []any
 
+	// Fields contains the fields within this Collection.
+	Fields []CollectionFieldDescription
+
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
 }
@@ -71,13 +74,50 @@ func (col CollectionDescription) IDString() string {
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
 // will return it and true, if it is not found it will return false.
+func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDescription, bool) {
+	return def.Description.GetFieldByName(fieldName, &def.Schema)
+}
+
+// GetFieldByName returns the field for the given field name. If such a field is found it
+// will return it and true, if it is not found it will return false.
 func (col CollectionDescription) GetFieldByName(fieldName string, schema *SchemaDescription) (FieldDescription, bool) {
-	for _, field := range schema.Fields {
+	for _, localField := range col.Fields {
+		if localField.Name == fieldName {
+			globalField, ok := schema.GetFieldByName(fieldName)
+			return NewFieldDescription(
+				localField,
+				globalField,
+			), ok
+		}
+	}
+	return FieldDescription{}, false
+}
+
+// GetFieldByName returns the field for the given field name. If such a field is found it
+// will return it and true, if it is not found it will return false.
+func (s SchemaDescription) GetFieldByName(fieldName string) (SchemaFieldDescription, bool) {
+	for _, field := range s.Fields {
 		if field.Name == fieldName {
 			return field, true
 		}
 	}
-	return FieldDescription{}, false
+	return SchemaFieldDescription{}, false
+}
+
+// GetFields returns the combined local and global field elements on this [CollectionDefinition]
+// as a single set.
+func (def CollectionDefinition) GetFields() []FieldDescription {
+	fields := []FieldDescription{}
+	for _, localField := range def.Description.Fields {
+		globalField, ok := def.Schema.GetFieldByName(localField.Name)
+		if ok {
+			fields = append(
+				fields,
+				NewFieldDescription(localField, globalField),
+			)
+		}
+	}
+	return fields
 }
 
 // GetFieldByRelation returns the field that supports the relation of the given name.
@@ -86,7 +126,7 @@ func (col CollectionDescription) GetFieldByRelation(
 	otherCollectionName string,
 	otherFieldName string,
 	schema *SchemaDescription,
-) (FieldDescription, bool) {
+) (SchemaFieldDescription, bool) {
 	for _, field := range schema.Fields {
 		if field.RelationName == relationName &&
 			!(col.Name.Value() == otherCollectionName && otherFieldName == field.Name) &&
@@ -94,7 +134,7 @@ func (col CollectionDescription) GetFieldByRelation(
 			return field, true
 		}
 	}
-	return FieldDescription{}, false
+	return SchemaFieldDescription{}, false
 }
 
 // QuerySources returns all the Sources of type [QuerySource]
@@ -179,17 +219,7 @@ type SchemaDescription struct {
 	// Fields contains the fields within this Schema.
 	//
 	// Currently new fields may be added after initial declaration, but they cannot be removed.
-	Fields []FieldDescription
-}
-
-// GetField returns the field of the given name.
-func (sd SchemaDescription) GetField(name string) (FieldDescription, bool) {
-	for _, field := range sd.Fields {
-		if field.Name == name {
-			return field, true
-		}
-	}
-	return FieldDescription{}, false
+	Fields []SchemaFieldDescription
 }
 
 // FieldKind describes the type of a field.
@@ -301,19 +331,54 @@ func (f FieldID) String() string {
 	return fmt.Sprint(uint32(f))
 }
 
-// FieldDescription describes a field on a Schema and its associated metadata.
-type FieldDescription struct {
+// SchemaFieldDescription describes a field on a Schema and its associated metadata.
+type SchemaFieldDescription struct {
 	// Name contains the name of this field.
 	//
 	// It is currently immutable.
 	Name string
 
-	// ID contains the internal ID of this field.
+	// The data type that this field holds.
 	//
-	// Whilst this ID will typically match the field's index within the Schema's Fields
-	// slice, there is no guarantee that they will be the same.
+	// Must contain a valid value. It is currently immutable.
+	Kind FieldKind
+
+	// Schema contains the schema name of the type this field contains if this field is
+	// a relation field.  Otherwise this will be empty.
+	Schema string
+
+	// RelationName the name of the relationship that this field represents if this field is
+	// a relation field.  Otherwise this will be empty.
+	RelationName string
+
+	// The CRDT Type of this field. If no type has been provided it will default to [LWW_REGISTER].
 	//
-	// It is immutable.
+	// It is currently immutable.
+	Typ CType
+
+	// If true, this is the primary half of a relation, otherwise is false.
+	IsPrimaryRelation bool
+}
+
+// CollectionFieldDescription describes the local components of a field on a collection.
+type CollectionFieldDescription struct {
+	// Name contains the name of the [SchemaFieldDescription] that this field uses.
+	Name string
+
+	// ID contains the local, internal ID of this field.
+	ID FieldID
+}
+
+// FieldDescription describes the combined local and global set of properties that constitutes
+// a field on a collection.
+//
+// It draws it's information from the [CollectionFieldDescription] on the [CollectionDescription],
+// and the [SchemaFieldDescription] on the [SchemaDescription].
+type FieldDescription struct {
+	// Name contains the name of this field.
+	Name string
+
+	// ID contains the local, internal ID of this field.
 	ID FieldID
 
 	// The data type that this field holds.
@@ -334,7 +399,22 @@ type FieldDescription struct {
 	// It is currently immutable.
 	Typ CType
 
+	// If true, this is the primary half of a relation, otherwise is false.
 	IsPrimaryRelation bool
+}
+
+// NewFieldDescription returns a new [FieldDescription], combining the given local and global elements
+// into a single object.
+func NewFieldDescription(local CollectionFieldDescription, global SchemaFieldDescription) FieldDescription {
+	return FieldDescription{
+		Name:              global.Name,
+		ID:                local.ID,
+		Kind:              global.Kind,
+		Schema:            global.Schema,
+		RelationName:      global.RelationName,
+		Typ:               global.Typ,
+		IsPrimaryRelation: global.IsPrimaryRelation,
+	}
 }
 
 // IsObject returns true if this field is an object type.
@@ -367,6 +447,36 @@ func (f FieldDescription) IsArray() bool {
 		f.Kind == FieldKind_NILLABLE_STRING_ARRAY
 }
 
+// IsObject returns true if this field is an object type.
+func (f SchemaFieldDescription) IsObject() bool {
+	return (f.Kind == FieldKind_FOREIGN_OBJECT) ||
+		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
+}
+
+// IsObjectArray returns true if this field is an object array type.
+func (f SchemaFieldDescription) IsObjectArray() bool {
+	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
+}
+
+// IsRelation returns true if this field is a relation.
+func (f SchemaFieldDescription) IsRelation() bool {
+	return f.RelationName != ""
+}
+
+// IsArray returns true if this field is an array type which includes inline arrays as well
+// as relation arrays.
+func (f SchemaFieldDescription) IsArray() bool {
+	return f.Kind == FieldKind_BOOL_ARRAY ||
+		f.Kind == FieldKind_INT_ARRAY ||
+		f.Kind == FieldKind_FLOAT_ARRAY ||
+		f.Kind == FieldKind_STRING_ARRAY ||
+		f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_BOOL_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_INT_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_FLOAT_ARRAY ||
+		f.Kind == FieldKind_NILLABLE_STRING_ARRAY
+}
+
 // IsSet returns true if the target relation type is set.
 func (m RelationType) IsSet(target RelationType) bool {
 	return m&target > 0
@@ -381,6 +491,7 @@ type collectionDescription struct {
 	RootID          uint32
 	SchemaVersionID string
 	Indexes         []IndexDescription
+	Fields          []CollectionFieldDescription
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Sources []map[string]json.RawMessage
@@ -398,6 +509,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.RootID = descMap.RootID
 	c.SchemaVersionID = descMap.SchemaVersionID
 	c.Indexes = descMap.Indexes
+	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))
 
 	for i, source := range descMap.Sources {

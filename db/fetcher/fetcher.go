@@ -199,7 +199,7 @@ func (df *DocumentFetcher) init(
 	// get them all
 	var targetFields []client.FieldDescription
 	if len(fields) == 0 {
-		targetFields = df.col.Schema().Fields
+		targetFields = df.col.Definition().GetFields()
 	} else {
 		targetFields = fields
 	}
@@ -210,7 +210,7 @@ func (df *DocumentFetcher) init(
 
 	if df.filter != nil {
 		conditions := df.filter.ToMap(df.mapping)
-		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, df.col.Schema())
+		parsedfilterFields, err := parser.ParseFilterFieldsForDescription(conditions, df.col.Definition())
 		if err != nil {
 			return err
 		}

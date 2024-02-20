@@ -71,9 +71,9 @@ func (f *lensedFetcher) Init(
 	// Add cache the field descriptions in reverse, allowing smaller-index fields to overwrite any later
 	// ones.  This should never really happen here, but it ensures the result is consistent with col.GetField
 	// which returns the first one it finds with a matching name.
-	for i := len(col.Schema().Fields) - 1; i >= 0; i-- {
-		field := col.Schema().Fields[i]
-		f.fieldDescriptionsByName[field.Name] = field
+	defFields := col.Definition().GetFields()
+	for i := len(defFields) - 1; i >= 0; i-- {
+		f.fieldDescriptionsByName[defFields[i].Name] = defFields[i]
 	}
 
 	history, err := getTargetedSchemaHistory(ctx, txn, f.col.Schema().Root, f.col.Schema().VersionID)
