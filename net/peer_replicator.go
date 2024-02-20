@@ -53,7 +53,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 
 	default:
 		// default to all collections
-		collections, err = p.db.WithTxn(txn).GetAllCollections(ctx, false)
+		collections, err = p.db.WithTxn(txn).GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
@@ -139,7 +139,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 
 	default:
 		// default to all collections
-		collections, err = p.db.WithTxn(txn).GetAllCollections(ctx, false)
+		collections, err = p.db.WithTxn(txn).GetCollections(ctx, client.CollectionFetchOptions{})
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}

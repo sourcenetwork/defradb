@@ -49,7 +49,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 				return NewErrInvalidDemandValue(err)
 			}
 
-			collections, err := store.GetAllCollections(cmd.Context(), false)
+			collections, err := store.GetCollections(cmd.Context(), client.CollectionFetchOptions{})
 			if err != nil {
 				return err
 			}

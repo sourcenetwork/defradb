@@ -45,7 +45,9 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						ID:              1,
@@ -120,7 +122,9 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						ID:              1,
@@ -222,7 +226,9 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						ID:              1,

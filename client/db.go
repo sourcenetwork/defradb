@@ -189,25 +189,9 @@ type Store interface {
 	// If no matching collection is found an error will be returned.
 	GetCollectionByName(context.Context, CollectionName) (Collection, error)
 
-	// GetCollectionsBySchemaRoot attempts to retrieve all collections using the given schema ID.
-	//
-	// If no matching collection is found an empty set will be returned.
-	GetCollectionsBySchemaRoot(context.Context, string) ([]Collection, error)
-
-	// GetCollectionsByVersionID attempts to retrieve all collections using the given schema version ID.
-	//
-	// If no matching collections are found an empty set will be returned.
-	GetCollectionsByVersionID(context.Context, string) ([]Collection, error)
-
-	// GetAllCollections returns all collections and their descriptions that currently exist within
-	// this [Store].
-	//
-	// If `true` is provided, the results will include inactive collections.  If `false`, only active collections
-	// will be returned.
-	GetAllCollections(context.Context, bool) ([]Collection, error)
-
-	// GetSchemasByName returns the all schema versions with the given name.
-	GetSchemasByName(context.Context, string) ([]SchemaDescription, error)
+	// GetCollections returns all collections and their descriptions matching the given options
+	// that currently exist within this [Store].
+	GetCollections(context.Context, CollectionFetchOptions) ([]Collection, error)
 
 	// GetSchemaByVersionID returns the schema description for the schema version of the
 	// ID provided.
@@ -215,12 +199,9 @@ type Store interface {
 	// Will return an error if it is not found.
 	GetSchemaByVersionID(context.Context, string) (SchemaDescription, error)
 
-	// GetSchemasByRoot returns the all schema versions for the given root.
-	GetSchemasByRoot(context.Context, string) ([]SchemaDescription, error)
-
-	// GetAllSchemas returns all schema versions that currently exist within
+	// GetSchemas returns all schema versions that currently exist within
 	// this [Store].
-	GetAllSchemas(context.Context) ([]SchemaDescription, error)
+	GetSchemas(context.Context, SchemaFetchOptions) ([]SchemaDescription, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
@@ -253,4 +234,31 @@ type RequestResult struct {
 	// Pub contains a pointer to an event stream which channels any subscription results
 	// if the request was a GQL subscription.
 	Pub *events.Publisher[events.Update]
+}
+
+// CollectionFetchOptions represents a set of options used for fetching collections.
+type CollectionFetchOptions struct {
+	// If provided, only collections with this schema version id will be returned.
+	SchemaVersionID immutable.Option[string]
+
+	// If provided, only collections with schemas of this root will be returned.
+	SchemaRoot immutable.Option[string]
+
+	// If provided, only collections with this name will be returned.
+	Name immutable.Option[string]
+
+	// If IncludeInactive is true, then inactive collections will also be returned.
+	IncludeInactive immutable.Option[bool]
+}
+
+// SchemaFetchOptions represents a set of options used for fetching schemas.
+type SchemaFetchOptions struct {
+	// If provided, only schemas of this root will be returned.
+	Root immutable.Option[string]
+
+	// If provided, only schemas with this name will be returned.
+	Name immutable.Option[string]
+
+	// If provided, only the schema with this id will be returned.
+	ID immutable.Option[string]
 }

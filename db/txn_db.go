@@ -82,12 +82,10 @@ func (db *explicitTxnDB) GetCollectionByName(ctx context.Context, name string) (
 	return db.getCollectionByName(ctx, db.txn, name)
 }
 
-// GetCollectionsBySchemaRoot attempts to retrieve all collections using the given schema ID.
-//
-// If no matching collection is found an empty set will be returned.
-func (db *implicitTxnDB) GetCollectionsBySchemaRoot(
+// GetCollections gets all the currently defined collections.
+func (db *implicitTxnDB) GetCollections(
 	ctx context.Context,
-	schemaRoot string,
+	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
@@ -95,103 +93,15 @@ func (db *implicitTxnDB) GetCollectionsBySchemaRoot(
 	}
 	defer txn.Discard(ctx)
 
-	cols, err := db.getCollectionsBySchemaRoot(ctx, txn, schemaRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	return cols, nil
+	return db.getCollections(ctx, txn, options)
 }
 
-// GetCollectionsBySchemaRoot attempts to retrieve all collections using the given schema ID.
-//
-// If no matching collection is found an empty set will be returned.
-func (db *explicitTxnDB) GetCollectionsBySchemaRoot(
+// GetCollections gets all the currently defined collections.
+func (db *explicitTxnDB) GetCollections(
 	ctx context.Context,
-	schemaRoot string,
+	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	cols, err := db.getCollectionsBySchemaRoot(ctx, db.txn, schemaRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	return cols, nil
-}
-
-// GetCollectionsByVersionID attempts to retrieve all collections using the given schema version ID.
-//
-// If no matching collections are found an empty set will be returned.
-func (db *implicitTxnDB) GetCollectionsByVersionID(
-	ctx context.Context, schemaVersionID string,
-) ([]client.Collection, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	cols, err := db.getCollectionsByVersionID(ctx, txn, schemaVersionID)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
-		collections[i] = col
-	}
-
-	return collections, nil
-}
-
-// GetCollectionsByVersionID attempts to retrieve all collections using the given schema version ID.
-//
-// If no matching collections are found an empty set will be returned.
-func (db *explicitTxnDB) GetCollectionsByVersionID(
-	ctx context.Context, schemaVersionID string,
-) ([]client.Collection, error) {
-	cols, err := db.getCollectionsByVersionID(ctx, db.txn, schemaVersionID)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make([]client.Collection, len(cols))
-	for i, col := range cols {
-		collections[i] = col
-	}
-
-	return collections, nil
-}
-
-// GetAllCollections gets all the currently defined collections.
-func (db *implicitTxnDB) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getAllCollections(ctx, txn, getInactive)
-}
-
-// GetAllCollections gets all the currently defined collections.
-func (db *explicitTxnDB) GetAllCollections(ctx context.Context, getInactive bool) ([]client.Collection, error) {
-	return db.getAllCollections(ctx, db.txn, getInactive)
-}
-
-// GetSchemasByName returns the all schema versions with the given name.
-func (db *implicitTxnDB) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getSchemasByName(ctx, txn, name)
-}
-
-// GetSchemasByName returns the all schema versions with the given name.
-func (db *explicitTxnDB) GetSchemasByName(ctx context.Context, name string) ([]client.SchemaDescription, error) {
-	return db.getSchemasByName(ctx, db.txn, name)
+	return db.getCollections(ctx, db.txn, options)
 }
 
 // GetSchemaByVersionID returns the schema description for the schema version of the
@@ -216,38 +126,28 @@ func (db *explicitTxnDB) GetSchemaByVersionID(ctx context.Context, versionID str
 	return db.getSchemaByVersionID(ctx, db.txn, versionID)
 }
 
-// GetSchemasByRoot returns the all schema versions for the given root.
-func (db *implicitTxnDB) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
+// GetSchemas returns all schema versions that currently exist within
+// this [Store].
+func (db *implicitTxnDB) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	return db.getSchemasByRoot(ctx, txn, root)
+	return db.getSchemas(ctx, txn, options)
 }
 
-// GetSchemasByRoot returns the all schema versions for the given root.
-func (db *explicitTxnDB) GetSchemasByRoot(ctx context.Context, root string) ([]client.SchemaDescription, error) {
-	return db.getSchemasByRoot(ctx, db.txn, root)
-}
-
-// GetAllSchemas returns all schema versions that currently exist within
+// GetSchemas returns all schema versions that currently exist within
 // this [Store].
-func (db *implicitTxnDB) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getAllSchemas(ctx, txn)
-}
-
-// GetAllSchemas returns all schema versions that currently exist within
-// this [Store].
-func (db *explicitTxnDB) GetAllSchemas(ctx context.Context) ([]client.SchemaDescription, error) {
-	return db.getAllSchemas(ctx, db.txn)
+func (db *explicitTxnDB) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
+	return db.getSchemas(ctx, db.txn, options)
 }
 
 // GetAllIndexes gets all the indexes in the database.

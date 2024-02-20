@@ -133,7 +133,9 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
@@ -261,7 +263,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
@@ -367,7 +371,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 				ExpectedError: `Cannot query field "phone" on type "Users".`,
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
@@ -498,7 +504,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 				},
 			},
 			testUtils.GetCollections{
-				GetInactive: true,
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
 				ExpectedResults: []client.CollectionDescription{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
