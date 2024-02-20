@@ -250,21 +250,3 @@ func parseFilterFieldsForDescriptionSlice(
 	}
 	return fields, nil
 }
-
-/*
-userCollection := db.getCollection("users")
-doc := userCollection.NewFromJSON("{
-	"title": "Painted House",
-	"description": "...",
-	"genres": ["bae-123", "bae-def", "bae-456"]
-	"author_id": "bae-999",
-}")
-doc.Save()
-
-doc := document.New(schema).FromJSON
-
-------------------------------------
-
-
-
-*/
