@@ -19,7 +19,6 @@ import (
 )
 
 type schemaVersionID = string
-type collectionID = uint32
 
 // LensDoc represents a document that will be sent to/from a Lens.
 type LensDoc = map[string]any
@@ -178,7 +177,7 @@ func (l *lens) Next() (bool, error) {
 				break
 			}
 
-			if historyLocation.targetVector > 0 {
+			if historyLocation.next.HasValue() {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
@@ -188,7 +187,7 @@ func (l *lens) Next() (bool, error) {
 				}
 
 				historyLocation = historyLocation.next.Value()
-			} else {
+			} else if historyLocation.previous.HasValue() {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
