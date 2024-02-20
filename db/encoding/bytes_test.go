@@ -1,4 +1,4 @@
-// Copyright 2014 The Cockroach Authors.
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -21,16 +21,16 @@ func TestEncodeDecodeBytes(t *testing.T) {
 		value   []byte
 		encoded []byte
 	}{
-		{[]byte{0, 1, 'a'}, []byte{0x12, 0x00, 0xff, 1, 'a', 0x00, 0x01}},
-		{[]byte{0, 'a'}, []byte{0x12, 0x00, 0xff, 'a', 0x00, 0x01}},
-		{[]byte{0, 0xff, 'a'}, []byte{0x12, 0x00, 0xff, 0xff, 'a', 0x00, 0x01}},
-		{[]byte{'a'}, []byte{0x12, 'a', 0x00, 0x01}},
-		{[]byte{'b'}, []byte{0x12, 'b', 0x00, 0x01}},
-		{[]byte{'b', 0}, []byte{0x12, 'b', 0x00, 0xff, 0x00, 0x01}},
-		{[]byte{'b', 0, 0}, []byte{0x12, 'b', 0x00, 0xff, 0x00, 0xff, 0x00, 0x01}},
-		{[]byte{'b', 0, 0, 'a'}, []byte{0x12, 'b', 0x00, 0xff, 0x00, 0xff, 'a', 0x00, 0x01}},
-		{[]byte{'b', 0xff}, []byte{0x12, 'b', 0xff, 0x00, 0x01}},
-		{[]byte("hello"), []byte{0x12, 'h', 'e', 'l', 'l', 'o', 0x00, 0x01}},
+		{[]byte{0, 1, 'a'}, []byte{bytesMarker, 0x00, escaped00, 1, 'a', escape, escapedTerm}},
+		{[]byte{0, 'a'}, []byte{bytesMarker, 0x00, escaped00, 'a', escape, escapedTerm}},
+		{[]byte{0, 0xff, 'a'}, []byte{bytesMarker, 0x00, escaped00, 0xff, 'a', escape, escapedTerm}},
+		{[]byte{'a'}, []byte{bytesMarker, 'a', escape, escapedTerm}},
+		{[]byte{'b'}, []byte{bytesMarker, 'b', escape, escapedTerm}},
+		{[]byte{'b', 0}, []byte{bytesMarker, 'b', 0x00, escaped00, escape, escapedTerm}},
+		{[]byte{'b', 0, 0}, []byte{bytesMarker, 'b', 0x00, escaped00, 0x00, escaped00, escape, escapedTerm}},
+		{[]byte{'b', 0, 0, 'a'}, []byte{bytesMarker, 'b', 0x00, escaped00, 0x00, escaped00, 'a', escape, escapedTerm}},
+		{[]byte{'b', 0xff}, []byte{bytesMarker, 'b', 0xff, escape, escapedTerm}},
+		{[]byte("hello"), []byte{bytesMarker, 'h', 'e', 'l', 'l', 'o', escape, escapedTerm}},
 	}
 	for i, c := range testCases {
 		enc := EncodeBytesAscending(nil, c.value)
@@ -73,16 +73,16 @@ func TestEncodeDecodeBytesDescending(t *testing.T) {
 		value   []byte
 		encoded []byte
 	}{
-		{[]byte("hello"), []byte{0x13, ^byte('h'), ^byte('e'), ^byte('l'), ^byte('l'), ^byte('o'), 0xff, 0xfe}},
-		{[]byte{'b', 0xff}, []byte{0x13, ^byte('b'), 0x00, 0xff, 0xfe}},
-		{[]byte{'b', 0, 0, 'a'}, []byte{0x13, ^byte('b'), 0xff, 0x00, 0xff, 0x00, ^byte('a'), 0xff, 0xfe}},
-		{[]byte{'b', 0, 0}, []byte{0x13, ^byte('b'), 0xff, 0x00, 0xff, 0x00, 0xff, 0xfe}},
-		{[]byte{'b', 0}, []byte{0x13, ^byte('b'), 0xff, 0x00, 0xff, 0xfe}},
-		{[]byte{'b'}, []byte{0x13, ^byte('b'), 0xff, 0xfe}},
-		{[]byte{'a'}, []byte{0x13, ^byte('a'), 0xff, 0xfe}},
-		{[]byte{0, 0xff, 'a'}, []byte{0x13, 0xff, 0x00, 0x00, ^byte('a'), 0xff, 0xfe}},
-		{[]byte{0, 'a'}, []byte{0x13, 0xff, 0x00, ^byte('a'), 0xff, 0xfe}},
-		{[]byte{0, 1, 'a'}, []byte{0x13, 0xff, 0x00, 0xfe, ^byte('a'), 0xff, 0xfe}},
+		{[]byte("hello"), []byte{bytesDescMarker, ^byte('h'), ^byte('e'), ^byte('l'), ^byte('l'), ^byte('o'), escapeDesc, escapedTermDesc}},
+		{[]byte{'b', 0xff}, []byte{bytesDescMarker, ^byte('b'), 0x00, escapeDesc, escapedTermDesc}},
+		{[]byte{'b', 0, 0, 'a'}, []byte{bytesDescMarker, ^byte('b'), 0xff, escaped00Desc, 0xff, escaped00Desc, ^byte('a'), escapeDesc, escapedTermDesc}},
+		{[]byte{'b', 0, 0}, []byte{bytesDescMarker, ^byte('b'), 0xff, escaped00Desc, 0xff, escaped00Desc, escapeDesc, escapedTermDesc}},
+		{[]byte{'b', 0}, []byte{bytesDescMarker, ^byte('b'), 0xff, escaped00Desc, escapeDesc, escapedTermDesc}},
+		{[]byte{'b'}, []byte{bytesDescMarker, ^byte('b'), escapeDesc, escapedTermDesc}},
+		{[]byte{'a'}, []byte{bytesDescMarker, ^byte('a'), escapeDesc, escapedTermDesc}},
+		{[]byte{0, 0xff, 'a'}, []byte{bytesDescMarker, 0xff, escaped00Desc, 0x00, ^byte('a'), escapeDesc, escapedTermDesc}},
+		{[]byte{0, 'a'}, []byte{bytesDescMarker, 0xff, escaped00Desc, ^byte('a'), escapeDesc, escapedTermDesc}},
+		{[]byte{0, 1, 'a'}, []byte{bytesDescMarker, 0xff, escaped00Desc, ^byte(1), ^byte('a'), escapeDesc, escapedTermDesc}},
 	}
 	for i, c := range testCases {
 		enc := EncodeBytesDescending(nil, c.value)

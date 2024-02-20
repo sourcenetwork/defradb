@@ -123,18 +123,19 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			return nil, f.execInfo, nil
 		}
 
-		// This CBOR-specific value will be gone soon once we implement
-		// our own encryption package
 		hasNilField := false
-		const cborNil = 0xf6
 		for i, indexedField := range f.indexedFields {
-			property := &encProperty{
-				Desc: indexedField,
-				Raw:  res.key.FieldValues[i],
-			}
-			if len(res.key.FieldValues[i]) == 1 && res.key.FieldValues[i][0] == cborNil {
+			property := &encProperty{Desc: indexedField}
+
+			if res.key.Fields[i].Value.IsNil() {
 				hasNilField = true
 			}
+
+			val, err := res.key.Fields[i].Value.Bytes()
+			if err != nil {
+				return nil, ExecInfo{}, err
+			}
+			property.Raw = val
 
 			f.doc.properties[indexedField] = property
 		}
@@ -142,7 +143,11 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		if f.indexDesc.Unique && !hasNilField {
 			f.doc.id = res.value
 		} else {
-			f.doc.id = res.key.FieldValues[len(res.key.FieldValues)-1]
+			docID, err := res.key.Fields[len(res.key.Fields)-1].Value.String()
+			if err != nil {
+				return nil, ExecInfo{}, err
+			}
+			f.doc.id = []byte(docID)
 		}
 
 		if f.docFetcher != nil && len(f.docFields) > 0 {

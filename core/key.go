@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/db/encoding"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -75,6 +76,15 @@ type DataStoreKey struct {
 
 var _ Key = (*DataStoreKey)(nil)
 
+// IndexedField contains information necessary for storing a single
+// value of a field in an index.
+type IndexedField struct {
+	// ID is the id of the field in the schema
+	ID client.FieldID
+	// Value is the value of the field in the index
+	Value *client.FieldValue
+}
+
 // IndexDataStoreKey is key of an indexed document in the database.
 type IndexDataStoreKey struct {
 	// CollectionID is the id of the collection
@@ -82,7 +92,7 @@ type IndexDataStoreKey struct {
 	// IndexID is the id of the index
 	IndexID uint32
 	// FieldValues is the values of the fields in the index
-	FieldValues [][]byte
+	Fields []IndexedField
 }
 
 var _ Key = (*IndexDataStoreKey)(nil)
@@ -496,52 +506,111 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	}
 }
 
-// NewIndexDataStoreKey creates a new IndexDataStoreKey from a string.
-// It expects the input string is in the following format:
+// DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.
+// It expects the input bytes is in the following format:
 //
-// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)
+// /[CollectionID]/[IndexID]/[FieldID][FieldKind][FieldValue](/[FieldID][FieldKind][FieldValue]...)
 //
-// Where [CollectionID] and [IndexID] are integers
-func NewIndexDataStoreKey(key string) (IndexDataStoreKey, error) {
-	if key == "" {
+// Where [CollectionID], [IndexID], [FieldID] and [FieldKind] are integers
+func DecodeIndexDataStoreKey(b []byte) (IndexDataStoreKey, error) {
+	if len(b) == 0 {
 		return IndexDataStoreKey{}, ErrEmptyKey
 	}
 
-	if !strings.HasPrefix(key, "/") {
+	key := IndexDataStoreKey{}
+
+	if b[0] != '/' {
 		return IndexDataStoreKey{}, ErrInvalidKey
 	}
-
-	elements := strings.Split(key[1:], "/")
-
-	// With less than 3 elements, we know it's an invalid key
-	if len(elements) < 3 {
-		return IndexDataStoreKey{}, ErrInvalidKey
-	}
-
-	colID, err := strconv.Atoi(elements[0])
+	b = b[1:]
+	b, colID, err := encoding.DecodeUvarintAscending(b)
 	if err != nil {
+		return IndexDataStoreKey{}, err
+	}
+	key.CollectionID = uint32(colID)
+
+	if b[0] != '/' {
 		return IndexDataStoreKey{}, ErrInvalidKey
 	}
-
-	indexKey := IndexDataStoreKey{CollectionID: uint32(colID)}
-
-	indID, err := strconv.Atoi(elements[1])
+	b = b[1:]
+	b, indID, err := encoding.DecodeUvarintAscending(b)
 	if err != nil {
-		return IndexDataStoreKey{}, ErrInvalidKey
+		return IndexDataStoreKey{}, err
 	}
-	indexKey.IndexID = uint32(indID)
+	key.IndexID = uint32(indID)
 
-	// first 2 elements are the collection and index IDs, the rest are field values
-	for i := 2; i < len(elements); i++ {
-		indexKey.FieldValues = append(indexKey.FieldValues, []byte(elements[i]))
+	if len(b) == 0 {
+		return key, nil
 	}
 
-	return indexKey, nil
+	for len(b) > 0 {
+		var fieldID, fieldKind uint64
+		if b[0] != '/' {
+			return IndexDataStoreKey{}, ErrInvalidKey
+		}
+		b = b[1:]
+		b, fieldID, err = encoding.DecodeUvarintAscending(b)
+		if err != nil {
+			return IndexDataStoreKey{}, err
+		}
+		b, fieldKind, err = encoding.DecodeUvarintAscending(b)
+		if err != nil {
+			return IndexDataStoreKey{}, err
+		}
+
+		var fieldVal *client.FieldValue
+		b, fieldVal, err = encoding.DecodeFieldValue(b, client.FieldKind(fieldKind))
+		if err != nil {
+			return IndexDataStoreKey{}, err
+		}
+
+		key.Fields = append(key.Fields, IndexedField{
+			ID:    client.FieldID(fieldID),
+			Value: fieldVal,
+		})
+	}
+
+	return key, nil
 }
 
 // Bytes returns the byte representation of the key
 func (k *IndexDataStoreKey) Bytes() []byte {
-	return []byte(k.ToString())
+	b, _ := EncodeIndexDataStoreKey([]byte{}, k)
+	return b
+}
+
+// EncodeIndexDataStoreKey encodes a IndexDataStoreKey to bytes to be stored as a key
+// for secondary indexes.
+func EncodeIndexDataStoreKey(b []byte, key *IndexDataStoreKey) ([]byte, error) {
+	if key.CollectionID == 0 {
+		return b, nil
+	}
+
+	b = append(b, '/')
+	b = encoding.EncodeUvarintAscending(b, uint64(key.CollectionID))
+
+	if key.IndexID == 0 {
+		return b, nil
+	}
+	b = append(b, '/')
+	b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
+
+	var err error
+	for _, field := range key.Fields {
+		b = append(b, '/')
+		b = encoding.EncodeUvarintAscending(b, uint64(field.ID))
+		b = encoding.EncodeUvarintAscending(b, uint64(field.Value.Kind()))
+		b, err = encoding.EncodeFieldValue(b, field.Value)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return b, nil
+}
+
+func EncodeDocID(b []byte, docID string) ([]byte, error) {
+	return encoding.EncodeStringAscending(encoding.EncodeUvarintAscending(b, 0), docID), nil
 }
 
 // ToDS returns the datastore key
@@ -555,48 +624,7 @@ func (k *IndexDataStoreKey) ToDS() ds.Key {
 // If while composing the string from left to right, a component
 // is empty, the string is returned up to that point
 func (k *IndexDataStoreKey) ToString() string {
-	sb := strings.Builder{}
-
-	if k.CollectionID == 0 {
-		return ""
-	}
-	sb.WriteByte('/')
-	sb.WriteString(strconv.Itoa(int(k.CollectionID)))
-
-	if k.IndexID == 0 {
-		return sb.String()
-	}
-	sb.WriteByte('/')
-	sb.WriteString(strconv.Itoa(int(k.IndexID)))
-
-	for _, v := range k.FieldValues {
-		if len(v) == 0 {
-			break
-		}
-		sb.WriteByte('/')
-		sb.WriteString(string(v))
-	}
-
-	return sb.String()
-}
-
-// Equal returns true if the two keys are equal
-func (k IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
-	if k.CollectionID != other.CollectionID {
-		return false
-	}
-	if k.IndexID != other.IndexID {
-		return false
-	}
-	if len(k.FieldValues) != len(other.FieldValues) {
-		return false
-	}
-	for i := range k.FieldValues {
-		if string(k.FieldValues[i]) != string(other.FieldValues[i]) {
-			return false
-		}
-	}
-	return true
+	return string(k.Bytes())
 }
 
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {

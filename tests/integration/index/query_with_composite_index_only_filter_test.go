@@ -211,8 +211,8 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Chris"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{
@@ -394,13 +394,13 @@ func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Addo"},
 					{"name": "Andy"},
-					{"name": "John"},
 					{"name": "Bruno"},
 					{"name": "Chris"},
+					{"name": "John"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 					{"name": "Shahzad"},
 				},
 			},
@@ -474,9 +474,9 @@ func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{
@@ -624,10 +624,10 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			testUtils.Request{
 				Request: req,
 				Results: []map[string]any{
-					{"name": "Roy"},
 					{"name": "Bruno"},
 					{"name": "Islam"},
 					{"name": "Keenan"},
+					{"name": "Roy"},
 				},
 			},
 			testUtils.Request{
@@ -940,6 +940,82 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 			testUtils.Request{
 				Request:  makeExplainQuery(reqWithNameAgeNumChildren),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test composite index with reverted order",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(fields: ["name",  "age"]) {
+						name: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alan",
+						"age":	29
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	38
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {name: {_like: "Al%"}}) {
+							name
+							age
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Alan",
+						"age":  29,
+					},
+					{
+						"name": "Alice",
+						"age":  22,
+					},
+					{
+						"name": "Alice",
+						"age":  24,
+					},
+					{
+						"name": "Alice",
+						"age":  38,
+					},
+				},
 			},
 		},
 	}

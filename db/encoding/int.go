@@ -1,4 +1,4 @@
-// Copyright 2014 The Cockroach Authors.
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -88,7 +88,7 @@ func EncodeVarintDescending(b []byte, v int64) []byte {
 	return EncodeVarintAscending(b, ^v)
 }
 
-// DecodeVarintAscending decodes a value encoded by EncodeVaringAscending.
+// DecodeVarintAscending decodes a value encoded by EncodeVarintAscending.
 func DecodeVarintAscending(b []byte) ([]byte, int64, error) {
 	if len(b) == 0 {
 		return nil, 0, errors.Errorf("insufficient bytes to decode uvarint value")
@@ -120,7 +120,7 @@ func DecodeVarintAscending(b []byte) ([]byte, int64, error) {
 	return remB, int64(v), nil
 }
 
-// DecodeVarintDescending decodes a uint64 value which was encoded
+// DecodeVarintDescending decodes a int64 value which was encoded
 // using EncodeVarintDescending.
 func DecodeVarintDescending(b []byte) ([]byte, int64, error) {
 	leftover, v, err := DecodeVarintAscending(b)
@@ -196,7 +196,7 @@ func EncodeUvarintDescending(b []byte, v uint64) []byte {
 	}
 }
 
-// DecodeUvarintAscending decodes a varint encoded uint64 from the input
+// DecodeUvarintAscending decodes a uvarint encoded uint64 from the input
 // buffer. The remainder of the input buffer and the decoded uint64
 // are returned.
 func DecodeUvarintAscending(b []byte) ([]byte, uint64, error) {

@@ -14,6 +14,7 @@ import (
 	"context"
 	"time"
 
+	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -119,46 +120,38 @@ type collectionBaseIndex struct {
 	fieldsDescs        []client.SchemaFieldDescription
 }
 
-func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([][]byte, error) {
-	result := make([][]byte, 0, len(i.fieldsDescs))
+func (i *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]*client.FieldValue, error) {
+	result := make([]*client.FieldValue, 0, len(i.fieldsDescs))
 	for iter := range i.fieldsDescs {
 		fieldVal, err := doc.TryGetValue(i.fieldsDescs[iter].Name)
 		if err != nil {
 			return nil, err
 		}
 		if fieldVal == nil || fieldVal.Value() == nil {
-			// this will be gone very soon with new encoding of secondary indexes
-			valBytes, err := client.NewFieldValue(client.LWW_REGISTER, nil).Bytes()
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, valBytes)
+			result = append(result, client.NewFieldValue(client.NONE_CRDT, nil, i.fieldsDescs[iter].Kind))
 			continue
 		}
-		if !i.validateFieldFuncs[iter](fieldVal.Value()) {
-			return nil, NewErrInvalidFieldValue(i.fieldsDescs[iter].Kind, fieldVal)
-		}
-		valBytes, err := fieldVal.Bytes()
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, valBytes)
+		result = append(result, fieldVal)
 	}
 	return result, nil
 }
 
-func (i *collectionBaseIndex) getDocumentsIndexKey(
+func (iter *collectionBaseIndex) getDocumentsIndexKey(
 	doc *client.Document,
 ) (core.IndexDataStoreKey, error) {
-	fieldValues, err := i.getDocFieldValue(doc)
+	fieldValues, err := iter.getDocFieldValues(doc)
 	if err != nil {
 		return core.IndexDataStoreKey{}, err
 	}
 
 	indexDataStoreKey := core.IndexDataStoreKey{}
-	indexDataStoreKey.CollectionID = i.collection.ID()
-	indexDataStoreKey.IndexID = i.desc.ID
-	indexDataStoreKey.FieldValues = fieldValues
+	indexDataStoreKey.CollectionID = iter.collection.ID()
+	indexDataStoreKey.IndexID = iter.desc.ID
+	indexDataStoreKey.Fields = make([]core.IndexedField, len(iter.fieldsDescs))
+	for i := range iter.fieldsDescs {
+		indexDataStoreKey.Fields[i].ID = iter.fieldsDescs[i].ID
+		indexDataStoreKey.Fields[i].Value = fieldValues[i]
+	}
 	return indexDataStoreKey, nil
 }
 
@@ -225,7 +218,10 @@ func (i *collectionSimpleIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	key.FieldValues = append(key.FieldValues, []byte(doc.ID().String()))
+	key.Fields = append(key.Fields, core.IndexedField{
+		ID:    client.FieldID(core.DocIDFieldIndex),
+		Value: client.NewFieldValue(client.NONE_CRDT, doc.ID().String(), client.FieldKind_DocID)},
+	)
 	return key, nil
 }
 
@@ -239,9 +235,13 @@ func (i *collectionSimpleIndex) Save(
 	if err != nil {
 		return err
 	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+	keyBytes, err := core.EncodeIndexDataStoreKey(nil, &key)
 	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
+		return err
+	}
+	err = txn.Datastore().Put(ctx, ds.NewKey(string(keyBytes)), []byte{})
+	if err != nil {
+		return NewErrFailedToStoreIndexedField(string(keyBytes), err)
 	}
 	return nil
 }
@@ -273,9 +273,8 @@ func (i *collectionSimpleIndex) deleteDocIndex(
 
 // hasIndexKeyNilField returns true if the index key has a field with nil value
 func hasIndexKeyNilField(key *core.IndexDataStoreKey) bool {
-	const cborNil = 0xf6
-	for i := range key.FieldValues {
-		if len(key.FieldValues[i]) == 1 && key.FieldValues[i][0] == cborNil {
+	for i := range key.Fields {
+		if key.Fields[i].Value.IsNil() {
 			return true
 		}
 	}
@@ -341,7 +340,10 @@ func (i *collectionUniqueIndex) getDocumentsIndexRecord(
 		return core.IndexDataStoreKey{}, nil, err
 	}
 	if hasIndexKeyNilField(&key) {
-		key.FieldValues = append(key.FieldValues, []byte(doc.ID().String()))
+		key.Fields = append(key.Fields, core.IndexedField{
+			ID:    client.FieldID(core.DocIDFieldIndex),
+			Value: client.NewFieldValue(client.NONE_CRDT, doc.ID().String(), client.FieldKind_DocID)},
+		)
 		return key, []byte{}, nil
 	} else {
 		return key, []byte(doc.ID().String()), nil

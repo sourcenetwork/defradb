@@ -1,4 +1,4 @@
-// Copyright 2014 The Cockroach Authors.
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -20,16 +20,16 @@ func TestEncodeDecodeUnsafeString(t *testing.T) {
 		value   string
 		encoded []byte
 	}{
-		{"\x00\x01a", []byte{0x12, 0x00, 0xff, 1, 'a', 0x00, 0x01}},
-		{"\x00a", []byte{0x12, 0x00, 0xff, 'a', 0x00, 0x01}},
-		{"\x00\xffa", []byte{0x12, 0x00, 0xff, 0xff, 'a', 0x00, 0x01}},
-		{"a", []byte{0x12, 'a', 0x00, 0x01}},
-		{"b", []byte{0x12, 'b', 0x00, 0x01}},
-		{"b\x00", []byte{0x12, 'b', 0x00, 0xff, 0x00, 0x01}},
-		{"b\x00\x00", []byte{0x12, 'b', 0x00, 0xff, 0x00, 0xff, 0x00, 0x01}},
-		{"b\x00\x00a", []byte{0x12, 'b', 0x00, 0xff, 0x00, 0xff, 'a', 0x00, 0x01}},
-		{"b\xff", []byte{0x12, 'b', 0xff, 0x00, 0x01}},
-		{"hello", []byte{0x12, 'h', 'e', 'l', 'l', 'o', 0x00, 0x01}},
+		{"\x00\x01a", []byte{bytesMarker, 0x00, escaped00, 1, 'a', escape, escapedTerm}},
+		{"\x00a", []byte{bytesMarker, 0x00, escaped00, 'a', escape, escapedTerm}},
+		{"\x00\xffa", []byte{bytesMarker, 0x00, escaped00, 0xff, 'a', escape, escapedTerm}},
+		{"a", []byte{bytesMarker, 'a', escape, escapedTerm}},
+		{"b", []byte{bytesMarker, 'b', escape, escapedTerm}},
+		{"b\x00", []byte{bytesMarker, 'b', 0x00, escaped00, escape, escapedTerm}},
+		{"b\x00\x00", []byte{bytesMarker, 'b', 0x00, escaped00, 0x00, escaped00, escape, escapedTerm}},
+		{"b\x00\x00a", []byte{bytesMarker, 'b', 0x00, escaped00, 0x00, escaped00, 'a', escape, escapedTerm}},
+		{"b\xff", []byte{bytesMarker, 'b', 0xff, escape, escapedTerm}},
+		{"hello", []byte{bytesMarker, 'h', 'e', 'l', 'l', 'o', escape, escapedTerm}},
 	}
 	for i, c := range testCases {
 		enc := EncodeStringAscending(nil, c.value)
@@ -72,16 +72,16 @@ func TestEncodeDecodeUnsafeStringDescending(t *testing.T) {
 		value   string
 		encoded []byte
 	}{
-		{"hello", []byte{0x13, ^byte('h'), ^byte('e'), ^byte('l'), ^byte('l'), ^byte('o'), 0xff, 0xfe}},
-		{"b\xff", []byte{0x13, ^byte('b'), 0x00, 0xff, 0xfe}},
-		{"b\x00\x00a", []byte{0x13, ^byte('b'), 0xff, 0x00, 0xff, 0x00, ^byte('a'), 0xff, 0xfe}},
-		{"b\x00\x00", []byte{0x13, ^byte('b'), 0xff, 0x00, 0xff, 0x00, 0xff, 0xfe}},
-		{"b\x00", []byte{0x13, ^byte('b'), 0xff, 0x00, 0xff, 0xfe}},
-		{"b", []byte{0x13, ^byte('b'), 0xff, 0xfe}},
-		{"a", []byte{0x13, ^byte('a'), 0xff, 0xfe}},
-		{"\x00\xffa", []byte{0x13, 0xff, 0x00, 0x00, ^byte('a'), 0xff, 0xfe}},
-		{"\x00a", []byte{0x13, 0xff, 0x00, ^byte('a'), 0xff, 0xfe}},
-		{"\x00\x01a", []byte{0x13, 0xff, 0x00, 0xfe, ^byte('a'), 0xff, 0xfe}},
+		{"hello", []byte{bytesDescMarker, ^byte('h'), ^byte('e'), ^byte('l'), ^byte('l'), ^byte('o'), escapeDesc, escapedTermDesc}},
+		{"b\xff", []byte{bytesDescMarker, ^byte('b'), ^byte(0xff), escapeDesc, escapedTermDesc}},
+		{"b\x00\x00a", []byte{bytesDescMarker, ^byte('b'), ^byte(0), escaped00Desc, ^byte(0), escaped00Desc, ^byte('a'), escapeDesc, escapedTermDesc}},
+		{"b\x00\x00", []byte{bytesDescMarker, ^byte('b'), ^byte(0), escaped00Desc, ^byte(0), escaped00Desc, escapeDesc, escapedTermDesc}},
+		{"b\x00", []byte{bytesDescMarker, ^byte('b'), ^byte(0), escaped00Desc, escapeDesc, escapedTermDesc}},
+		{"b", []byte{bytesDescMarker, ^byte('b'), escapeDesc, escapedTermDesc}},
+		{"a", []byte{bytesDescMarker, ^byte('a'), escapeDesc, escapedTermDesc}},
+		{"\x00\xffa", []byte{bytesDescMarker, ^byte(0), escaped00Desc, ^byte(0xff), ^byte('a'), escapeDesc, escapedTermDesc}},
+		{"\x00a", []byte{bytesDescMarker, ^byte(0), escaped00Desc, ^byte('a'), escapeDesc, escapedTermDesc}},
+		{"\x00\x01a", []byte{bytesDescMarker, ^byte(0), escaped00Desc, ^byte(1), ^byte('a'), escapeDesc, escapedTermDesc}},
 	}
 	for i, c := range testCases {
 		enc := EncodeStringDescending(nil, c.value)

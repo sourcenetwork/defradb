@@ -1,4 +1,4 @@
-// Copyright 2014 The Cockroach Authors.
+// Copyright 2024 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,17 +12,21 @@ package encoding
 
 import (
 	"bytes"
+
+	"github.com/pkg/errors"
 )
 
 const (
 	// <term>     -> \x00\x01
 	// \x00       -> \x00\xff
-	escape                   byte = 0x00
-	escapedTerm              byte = 0x01
-	escapedJSONObjectKeyTerm byte = 0x02
-	escapedJSONArray         byte = 0x03
-	escaped00                byte = 0xff
-	escapedFF                byte = 0x00
+	escape          byte = 0x00
+	escapedTerm     byte = 0x01
+	escaped00       byte = 0xff
+	escapedFF       byte = 0x00
+	escapeDesc      byte = ^escape
+	escapedTermDesc byte = ^escapedTerm
+	escaped00Desc   byte = ^escaped00
+	escapedFFDesc   byte = ^escapedFF
 )
 
 type escapes struct {
@@ -35,7 +39,7 @@ type escapes struct {
 
 var (
 	ascendingBytesEscapes  = escapes{escape, escapedTerm, escaped00, escapedFF, bytesMarker}
-	descendingBytesEscapes = escapes{^escape, ^escapedTerm, ^escaped00, ^escapedFF, bytesDescMarker}
+	descendingBytesEscapes = escapes{escapeDesc, escapedTermDesc, escaped00Desc, escapedFFDesc, bytesDescMarker}
 )
 
 // EncodeBytesAscending encodes the []byte value using an escape-based

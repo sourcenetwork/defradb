@@ -18,13 +18,15 @@ import (
 type FieldValue struct {
 	t       CType
 	value   any
+	kind    FieldKind
 	isDirty bool
 }
 
-func NewFieldValue(t CType, val any) *FieldValue {
+func NewFieldValue(t CType, val any, kind FieldKind) *FieldValue {
 	return &FieldValue{
 		t:       t,
 		value:   val,
+		kind:    kind,
 		isDirty: true,
 	}
 }
@@ -88,4 +90,85 @@ func convertImmutable[T any](vals []immutable.Option[T]) []any {
 		out = append(out, val.Value())
 	}
 	return out
+}
+
+func (val *FieldValue) Kind() FieldKind {
+	return val.kind
+}
+
+func valOrNil[T any](value any) (*T, bool) {
+	if v, ok := value.(T); ok {
+		return &v, true
+	}
+	if v, ok := value.(*T); ok {
+		return v, true
+	}
+
+	return nil, false
+}
+
+func (val *FieldValue) IsNil() bool {
+	return val.value == nil
+}
+
+func (val *FieldValue) boolOrNil() (*bool, bool) {
+	return valOrNil[bool](val.value)
+}
+
+func (val *FieldValue) intOrNil() (*int64, bool) {
+	valInt64, ok := valOrNil[int64](val.value)
+	if ok {
+		return valInt64, true
+	}
+	valInt32, ok := valOrNil[int32](val.value)
+	if ok {
+		v := int64(*valInt32)
+		return &v, true
+	}
+	valInt, ok := valOrNil[int](val.value)
+	if ok {
+		v := int64(*valInt)
+		return &v, true
+	}
+	return nil, false
+}
+
+func (val *FieldValue) floatOrNil() (*float64, bool) {
+	return valOrNil[float64](val.value)
+}
+
+func (val *FieldValue) stringOrNil() (*string, bool) {
+	return valOrNil[string](val.value)
+}
+
+func (val *FieldValue) Bool() (bool, error) {
+	v, ok := val.boolOrNil()
+	if !ok || v == nil {
+		return false, NewErrUnexpectedType[bool]("", val.value)
+	}
+	return *v, nil
+}
+
+func (val *FieldValue) Int() (int64, error) {
+	v, ok := val.intOrNil()
+	if !ok || v == nil {
+		return 0, NewErrUnexpectedType[int64]("", val.value)
+	}
+	return *v, nil
+}
+
+func (val *FieldValue) Float() (float64, error) {
+	v, ok := val.floatOrNil()
+	if !ok || v == nil {
+		return 0, NewErrUnexpectedType[float64]("", val.value)
+	}
+	return *v, nil
+}
+
+func (val *FieldValue) String() (string, error) {
+	v, ok := val.stringOrNil()
+	if !ok || v == nil {
+		return "", NewErrUnexpectedType[string]("", val.value)
+	}
+	return *v, nil
 }

@@ -81,7 +81,6 @@ type indexKeyBuilder struct {
 	colName     string
 	fieldsNames []string
 	doc         *client.Document
-	values      [][]byte
 	isUnique    bool
 }
 
@@ -108,13 +107,6 @@ func (b *indexKeyBuilder) Fields(fieldsNames ...string) *indexKeyBuilder {
 // As the last value in the index key, it will use the document id.
 func (b *indexKeyBuilder) Doc(doc *client.Document) *indexKeyBuilder {
 	b.doc = doc
-	return b
-}
-
-// Values sets the values for the index key.
-// It will override the field values stored in the document.
-func (b *indexKeyBuilder) Values(values ...[]byte) *indexKeyBuilder {
-	b.values = values
 	return b
 }
 
@@ -164,41 +156,35 @@ indexLoop:
 	}
 
 	if b.doc != nil {
-		// This CBOR-specific value will be gone soon once we implement
-		// our own encryption package
-		const cborNil = 0xf6
 		hasNilValue := false
-		for i, fieldName := range b.fieldsNames {
-			var fieldBytesVal []byte
+		for _, fieldName := range b.fieldsNames {
 			var fieldValue *client.FieldValue
 			var err error
-			if len(b.values) <= i {
-				fieldValue, err = b.doc.GetValue(fieldName)
-				if err != nil {
-					if errors.Is(err, client.ErrFieldNotExist) {
-						fieldValue = client.NewFieldValue(client.LWW_REGISTER, nil)
-					} else {
-						require.NoError(b.f.t, err)
-					}
-				} else if fieldValue != nil && fieldValue.Value() == nil {
-					fieldValue = client.NewFieldValue(client.LWW_REGISTER, nil)
+			field, ok := collection.Definition().Schema.GetField(fieldName)
+			fieldValue, err = b.doc.GetValue(fieldName)
+			if err != nil {
+				if errors.Is(err, client.ErrFieldNotExist) {
+					fieldValue = client.NewFieldValue(client.LWW_REGISTER, nil, field.Kind)
+				} else {
+					require.NoError(b.f.t, err)
 				}
-			} else {
-				fieldValue = client.NewFieldValue(client.LWW_REGISTER, b.values[i])
+			} else if fieldValue != nil && fieldValue.Value() == nil {
+				fieldValue = client.NewFieldValue(client.NONE_CRDT, nil, field.Kind)
 			}
-			fieldBytesVal, err = fieldValue.Bytes()
-			require.NoError(b.f.t, err)
-			if len(fieldBytesVal) == 1 && fieldBytesVal[0] == cborNil {
+			if fieldValue.IsNil() {
 				hasNilValue = true
 			}
-			key.FieldValues = append(key.FieldValues, fieldBytesVal)
+			require.True(b.f.t, ok, "field not found in the collection schema")
+			key.Fields = append(key.Fields, core.IndexedField{ID: field.ID, Value: fieldValue})
 		}
 
 		if !b.isUnique || hasNilValue {
-			key.FieldValues = append(key.FieldValues, []byte(b.doc.ID().String()))
+			key.Fields = append(key.Fields,
+				core.IndexedField{
+					ID:    client.FieldID(core.DocIDFieldIndex),
+					Value: client.NewFieldValue(client.NONE_CRDT, b.doc.ID().String(), client.FieldKind_DocID),
+				})
 		}
-	} else if len(b.values) > 0 {
-		key.FieldValues = b.values
 	}
 
 	return key
@@ -531,8 +517,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).
-		Values([]byte(nil)).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -982,8 +967,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).
-		Values([]byte(nil)).Build()
+	oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 	err = doc.Set(usersNameFieldName, "John")
 	require.NoError(f.t, err)
@@ -1069,8 +1053,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Unique().Doc(doc).
-		Values([]byte(nil)).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Unique().Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
