@@ -28,6 +28,7 @@ const (
 	IndexDirectivePropName       = "name"
 	IndexDirectivePropUnique     = "unique"
 	IndexDirectivePropFields     = "fields"
+	IndexDirectivePropDirection  = "direction"
 	IndexDirectivePropDirections = "directions"
 )
 
@@ -110,6 +111,12 @@ var (
 		Args: gql.FieldConfigArgument{
 			IndexDirectivePropName: &gql.ArgumentConfig{
 				Type: gql.String,
+			},
+			IndexDirectivePropUnique: &gql.ArgumentConfig{
+				Type: gql.Boolean,
+			},
+			IndexDirectivePropDirection: &gql.ArgumentConfig{
+				Type: OrderingEnum,
 			},
 		},
 		Locations: []string{

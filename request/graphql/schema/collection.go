@@ -213,7 +213,7 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 	desc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
 			{
-				Name:       field.Name.Value,
+				Name: field.Name.Value,
 			},
 		},
 	}
@@ -234,6 +234,14 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
 			desc.Unique = boolVal.Value
+		case types.IndexDirectivePropDirection:
+			dirVal, ok := arg.Value.(*ast.EnumValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			if dirVal.Value == "DESC" {
+				desc.Fields[0].Descending = true
+			}
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}

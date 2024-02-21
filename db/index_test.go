@@ -341,19 +341,6 @@ func TestCreateIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	assert.False(t, newDesc.Fields[0].Descending)
 }
 
-func TestCreateIndex_IfSingleFieldInDescOrder_ReturnError(t *testing.T) {
-	f := newIndexTestFixture(t)
-	defer f.db.Close()
-
-	desc := client.IndexDescription{
-		Fields: []client.IndexedFieldDescription{
-			{Name: usersNameFieldName, Descending: true},
-		},
-	}
-	_, err := f.createCollectionIndex(desc)
-	assert.EqualError(t, err, errIndexSingleFieldWrongDirection)
-}
-
 func TestCreateIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()

@@ -51,7 +51,6 @@ const (
 	errNonZeroIndexIDProvided             string = "non-zero index ID provided"
 	errIndexFieldMissingName              string = "index field missing name"
 	errIndexFieldMissingDirection         string = "index field missing direction"
-	errIndexSingleFieldWrongDirection     string = "wrong direction for index with a single field"
 	errIndexWithNameAlreadyExists         string = "index with name already exists"
 	errInvalidStoredIndex                 string = "invalid stored index"
 	errInvalidStoredIndexKey              string = "invalid stored index key"
@@ -101,7 +100,6 @@ var (
 	ErrCannotSetVersionID             = errors.New(errCannotSetVersionID)
 	ErrIndexMissingFields             = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName          = errors.New(errIndexFieldMissingName)
-	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
 	ErrCorruptedIndex                 = errors.New(errCorruptedIndex)
 	ErrExpectedJSONObject             = errors.New(errExpectedJSONObject)
 	ErrExpectedJSONArray              = errors.New(errExpectedJSONArray)
