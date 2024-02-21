@@ -91,31 +91,6 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveFieldIDErrors(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, remove field id",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						email: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "remove", "path": "/Users/Fields/2/ID" }
-					]
-				`,
-				ExpectedError: "mutating an existing field is not supported. ProposedName: name",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, remove field kind",

@@ -71,9 +71,9 @@ func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsAllSchema(t *testing.T) {
-	usersSchemaVersion1ID := "bafkreiagl4ml2ll45ex6g62bunpfs6o4mr2zstfuegwtxktm52stq6abxi"
-	usersSchemaVersion2ID := "bafkreib7rfcyxx5anpl3ikvi5g63jv6gtgwywtt6usrng2pdg4j5jwjlsa"
-	booksSchemaVersion1ID := "bafkreic3guyvlavrp7pq23s2uftvk5tx2gq2hs5ikbadtaghbafpkfox34"
+	usersSchemaVersion1ID := "bafkreiegrxzoqa3mdgjsfz2vuatbpjbnqxub6yi23dvdumjpt4g3nhiwzq"
+	usersSchemaVersion2ID := "bafkreidic23paxtc5sannovwkpp6kmpg7xufufz4dgxjsiq2exk2wieh4a"
+	booksSchemaVersion1ID := "bafkreiakx6sdz3govsorfppdv2pru4fgjzt2qljgjhpkxnkyr7kl4vhdme"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -98,9 +98,9 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 			testUtils.GetSchema{
 				ExpectedResults: []client.SchemaDescription{
 					{
-						Name:      "Users",
-						Root:      usersSchemaVersion1ID,
-						VersionID: usersSchemaVersion1ID,
+						Name:      "Books",
+						Root:      booksSchemaVersion1ID,
+						VersionID: booksSchemaVersion1ID,
 						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
@@ -126,9 +126,9 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						},
 					},
 					{
-						Name:      "Books",
-						Root:      booksSchemaVersion1ID,
-						VersionID: booksSchemaVersion1ID,
+						Name:      "Users",
+						Root:      usersSchemaVersion1ID,
+						VersionID: usersSchemaVersion1ID,
 						Fields: []client.SchemaFieldDescription{
 							{
 								Name: "_docID",
@@ -145,8 +145,8 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
-	usersSchemaVersion1ID := "bafkreiagl4ml2ll45ex6g62bunpfs6o4mr2zstfuegwtxktm52stq6abxi"
-	usersSchemaVersion2ID := "bafkreib7rfcyxx5anpl3ikvi5g63jv6gtgwywtt6usrng2pdg4j5jwjlsa"
+	usersSchemaVersion1ID := "bafkreiegrxzoqa3mdgjsfz2vuatbpjbnqxub6yi23dvdumjpt4g3nhiwzq"
+	usersSchemaVersion2ID := "bafkreidic23paxtc5sannovwkpp6kmpg7xufufz4dgxjsiq2exk2wieh4a"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -174,17 +174,6 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 					{
 						Name:      "Users",
 						Root:      usersSchemaVersion1ID,
-						VersionID: usersSchemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-							},
-						},
-					},
-					{
-						Name:      "Users",
-						Root:      usersSchemaVersion1ID,
 						VersionID: usersSchemaVersion2ID,
 						Fields: []client.SchemaFieldDescription{
 							{
@@ -199,6 +188,17 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 							},
 						},
 					},
+					{
+						Name:      "Users",
+						Root:      usersSchemaVersion1ID,
+						VersionID: usersSchemaVersion1ID,
+						Fields: []client.SchemaFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -208,8 +208,8 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
-	usersSchemaVersion1ID := "bafkreiagl4ml2ll45ex6g62bunpfs6o4mr2zstfuegwtxktm52stq6abxi"
-	usersSchemaVersion2ID := "bafkreib7rfcyxx5anpl3ikvi5g63jv6gtgwywtt6usrng2pdg4j5jwjlsa"
+	usersSchemaVersion1ID := "bafkreiegrxzoqa3mdgjsfz2vuatbpjbnqxub6yi23dvdumjpt4g3nhiwzq"
+	usersSchemaVersion2ID := "bafkreidic23paxtc5sannovwkpp6kmpg7xufufz4dgxjsiq2exk2wieh4a"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -237,17 +237,6 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 					{
 						Name:      "Users",
 						Root:      usersSchemaVersion1ID,
-						VersionID: usersSchemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-							},
-						},
-					},
-					{
-						Name:      "Users",
-						Root:      usersSchemaVersion1ID,
 						VersionID: usersSchemaVersion2ID,
 						Fields: []client.SchemaFieldDescription{
 							{
@@ -259,6 +248,17 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 								Name: "name",
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					{
+						Name:      "Users",
+						Root:      usersSchemaVersion1ID,
+						VersionID: usersSchemaVersion1ID,
+						Fields: []client.SchemaFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 						},
 					},

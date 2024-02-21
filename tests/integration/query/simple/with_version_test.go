@@ -46,14 +46,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
+						"cid": "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeihkhgtdogxwqe2lkjqord5bzthfwwthyo3gu6iljfm5l7n7fkhpsq",
+								"cid":  "bafybeic45t5rj54wx47fhaqm6dubwt2cf5fkqzwm2nea7ypam3f6s2zbk4",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeico2g2tdkpo4i64ph6b5vgngn5zbxus4jxwav3bi2joieqicplfxi",
+								"cid":  "bafybeifkcrogypyaq5iw7krgi5jd26s7jlfsy5u232e7e7y7dqe3wm2hcu",
 								"name": "Name",
 							},
 						},
@@ -90,7 +90,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 				"Name": "John",
 				"_version": []map[string]any{
 					{
-						"schemaVersionId": "bafkreihuvcb7e7vy6ua3yrwbwnul3djqrtbhyuv3c4dqe4y3i2ssudzveu",
+						"schemaVersionId": "bafkreiekkppcdl573ru624wh3kwkmy2nhqzjsvqpu6jv5dgq2kidpnon4u",
 					},
 				},
 			},
@@ -171,14 +171,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  int64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
+						"cid": "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafybeihkhgtdogxwqe2lkjqord5bzthfwwthyo3gu6iljfm5l7n7fkhpsq",
+								"cid":  "bafybeic45t5rj54wx47fhaqm6dubwt2cf5fkqzwm2nea7ypam3f6s2zbk4",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeico2g2tdkpo4i64ph6b5vgngn5zbxus4jxwav3bi2joieqicplfxi",
+								"cid":  "bafybeifkcrogypyaq5iw7krgi5jd26s7jlfsy5u232e7e7y7dqe3wm2hcu",
 								"name": "Name",
 							},
 						},
@@ -242,7 +242,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 						"_docID": docID,
 						"_version": []map[string]any{
 							{
-								"cid":          "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
+								"cid":          "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
 								"collectionID": int64(1),
 								"delta":        nil,
 								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
@@ -251,15 +251,15 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 								"height":       int64(1),
 								"links": []map[string]any{
 									{
-										"cid":  "bafybeihkhgtdogxwqe2lkjqord5bzthfwwthyo3gu6iljfm5l7n7fkhpsq",
+										"cid":  "bafybeic45t5rj54wx47fhaqm6dubwt2cf5fkqzwm2nea7ypam3f6s2zbk4",
 										"name": "Age",
 									},
 									{
-										"cid":  "bafybeico2g2tdkpo4i64ph6b5vgngn5zbxus4jxwav3bi2joieqicplfxi",
+										"cid":  "bafybeifkcrogypyaq5iw7krgi5jd26s7jlfsy5u232e7e7y7dqe3wm2hcu",
 										"name": "Name",
 									},
 								},
-								"schemaVersionId": "bafkreihuvcb7e7vy6ua3yrwbwnul3djqrtbhyuv3c4dqe4y3i2ssudzveu",
+								"schemaVersionId": "bafkreiekkppcdl573ru624wh3kwkmy2nhqzjsvqpu6jv5dgq2kidpnon4u",
 							},
 						},
 					},
@@ -321,7 +321,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 						"_docID": docID,
 						"_version": []map[string]any{
 							{
-								"cid":          "bafybeie23a5xsx4qyoffa3riij3kei5to54bb6gq7m4lftfjujaohkabwu",
+								"cid":          "bafybeigcjabzlkuj4j35boczgcl4jmars7gz5a7dfvpq3m344bzth7ebqq",
 								"collectionID": int64(1),
 								"delta":        nil,
 								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
@@ -330,18 +330,18 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 								"height":       int64(2),
 								"links": []map[string]any{
 									{
-										"cid":  "bafybeicixwhd4prbj2jfnkkc3a7wr2f5twppyhivg3kajoe7jal5cvrdza",
+										"cid":  "bafybeihzra5nmcai4omdv2hkplrpexjsau62eaa2ndrf2b7ksxvl7hx3qm",
 										"name": "Age",
 									},
 									{
-										"cid":  "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
+										"cid":  "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
 										"name": "_head",
 									},
 								},
-								"schemaVersionId": "bafkreihuvcb7e7vy6ua3yrwbwnul3djqrtbhyuv3c4dqe4y3i2ssudzveu",
+								"schemaVersionId": "bafkreiekkppcdl573ru624wh3kwkmy2nhqzjsvqpu6jv5dgq2kidpnon4u",
 							},
 							{
-								"cid":          "bafybeib26cyuzbnf7uq3js5mykfveplsn4imo2fmf2jnnib6rrtnllv4pe",
+								"cid":          "bafybeicojqe66grk564b2hns3zi6rhquqvugxj6wi4s6xk4e2gg65dzx5e",
 								"collectionID": int64(1),
 								"delta":        nil,
 								"docID":        "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
@@ -350,15 +350,15 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 								"height":       int64(1),
 								"links": []map[string]any{
 									{
-										"cid":  "bafybeihkhgtdogxwqe2lkjqord5bzthfwwthyo3gu6iljfm5l7n7fkhpsq",
+										"cid":  "bafybeic45t5rj54wx47fhaqm6dubwt2cf5fkqzwm2nea7ypam3f6s2zbk4",
 										"name": "Age",
 									},
 									{
-										"cid":  "bafybeico2g2tdkpo4i64ph6b5vgngn5zbxus4jxwav3bi2joieqicplfxi",
+										"cid":  "bafybeifkcrogypyaq5iw7krgi5jd26s7jlfsy5u232e7e7y7dqe3wm2hcu",
 										"name": "Name",
 									},
 								},
-								"schemaVersionId": "bafkreihuvcb7e7vy6ua3yrwbwnul3djqrtbhyuv3c4dqe4y3i2ssudzveu",
+								"schemaVersionId": "bafkreiekkppcdl573ru624wh3kwkmy2nhqzjsvqpu6jv5dgq2kidpnon4u",
 							},
 						},
 					},

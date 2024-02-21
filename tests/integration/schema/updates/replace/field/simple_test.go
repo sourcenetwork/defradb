@@ -56,7 +56,7 @@ func TestSchemaUpdatesReplaceFieldWithIDErrors(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/Users/Fields/2", "value": {"ID":2, "Name": "fax", "Kind": 11} }
+						{ "op": "replace", "path": "/Users/Fields/2", "value": {"Name": "fax", "Kind": 11} }
 					]
 				`,
 				ExpectedError: "deleting an existing field is not supported. Name: name",
