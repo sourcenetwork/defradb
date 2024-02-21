@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	fieldIndexAscValue = "ASC"
+	fieldIndexAscValue  = "ASC"
 	fieldIndexDescValue = "DESC"
 )
 
