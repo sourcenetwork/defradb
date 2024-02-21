@@ -66,23 +66,23 @@ type queryResultIterator struct {
 	indexDesc  client.IndexDescription
 }
 
-func (i *queryResultIterator) Next() (indexIterResult, error) {
-	res, hasVal := i.resultIter.NextSync()
+func (iter *queryResultIterator) Next() (indexIterResult, error) {
+	res, hasVal := iter.resultIter.NextSync()
 	if res.Error != nil {
 		return indexIterResult{}, res.Error
 	}
 	if !hasVal {
 		return indexIterResult{}, nil
 	}
-	key, err := core.DecodeIndexDataStoreKey([]byte(res.Key), &i.indexDesc)
+	key, err := core.DecodeIndexDataStoreKey([]byte(res.Key), &iter.indexDesc)
 	if err != nil {
 		return indexIterResult{}, err
 	}
 	return indexIterResult{key: key, value: res.Value, foundKey: true}, nil
 }
 
-func (i *queryResultIterator) Close() error {
-	return i.resultIter.Close()
+func (iter *queryResultIterator) Close() error {
+	return iter.resultIter.Close()
 }
 
 type eqPrefixIndexIterator struct {
@@ -92,8 +92,8 @@ type eqPrefixIndexIterator struct {
 	matchers []valueMatcher
 }
 
-func (i *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	key, err := core.EncodeIndexDataStoreKey(nil, &i.indexKey)
+func (iter *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	key, err := core.EncodeIndexDataStoreKey(nil, &iter.indexKey)
 	if err != nil {
 		return err
 	}
@@ -103,18 +103,18 @@ func (i *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSRead
 	if err != nil {
 		return err
 	}
-	i.resultIter = resultIter
+	iter.resultIter = resultIter
 	return nil
 }
 
-func (i *eqPrefixIndexIterator) Next() (indexIterResult, error) {
+func (iter *eqPrefixIndexIterator) Next() (indexIterResult, error) {
 	for {
-		res, err := i.queryResultIterator.Next()
+		res, err := iter.queryResultIterator.Next()
 		if err != nil || !res.foundKey {
 			return res, err
 		}
-		i.execInfo.IndexesFetched++
-		doesMatch, err := executeValueMatchers(i.matchers, res.key.Fields)
+		iter.execInfo.IndexesFetched++
+		doesMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
 		if err != nil {
 			return indexIterResult{}, err
 		}
@@ -133,9 +133,9 @@ type eqSingleIndexIterator struct {
 	store datastore.DSReaderWriter
 }
 
-func (i *eqSingleIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	i.ctx = ctx
-	i.store = store
+func (iter *eqSingleIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	iter.ctx = ctx
+	iter.store = store
 	return nil
 }
 
@@ -168,48 +168,48 @@ type inIndexIterator struct {
 	hasIterator  bool
 }
 
-func (i *inIndexIterator) nextIterator() (bool, error) {
-	if i.nextValIndex > 0 {
-		err := i.indexIterator.Close()
+func (iter *inIndexIterator) nextIterator() (bool, error) {
+	if iter.nextValIndex > 0 {
+		err := iter.indexIterator.Close()
 		if err != nil {
 			return false, err
 		}
 	}
 
-	if i.nextValIndex >= len(i.inValues) {
+	if iter.nextValIndex >= len(iter.inValues) {
 		return false, nil
 	}
 
-	switch fieldIter := i.indexIterator.(type) {
+	switch fieldIter := iter.indexIterator.(type) {
 	case *eqPrefixIndexIterator:
-		fieldIter.indexKey.Fields[0].Value = &i.inValues[i.nextValIndex]
+		fieldIter.indexKey.Fields[0].Value = &iter.inValues[iter.nextValIndex]
 	case *eqSingleIndexIterator:
-		fieldIter.indexKey.Fields[0].Value = &i.inValues[i.nextValIndex]
+		fieldIter.indexKey.Fields[0].Value = &iter.inValues[iter.nextValIndex]
 	}
-	err := i.indexIterator.Init(i.ctx, i.store)
+	err := iter.indexIterator.Init(iter.ctx, iter.store)
 	if err != nil {
 		return false, err
 	}
-	i.nextValIndex++
+	iter.nextValIndex++
 	return true, nil
 }
 
-func (i *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	i.ctx = ctx
-	i.store = store
+func (iter *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	iter.ctx = ctx
+	iter.store = store
 	var err error
-	i.hasIterator, err = i.nextIterator()
+	iter.hasIterator, err = iter.nextIterator()
 	return err
 }
 
-func (i *inIndexIterator) Next() (indexIterResult, error) {
-	for i.hasIterator {
-		res, err := i.indexIterator.Next()
+func (iter *inIndexIterator) Next() (indexIterResult, error) {
+	for iter.hasIterator {
+		res, err := iter.indexIterator.Next()
 		if err != nil {
 			return indexIterResult{}, err
 		}
 		if !res.foundKey {
-			i.hasIterator, err = i.nextIterator()
+			iter.hasIterator, err = iter.nextIterator()
 			if err != nil {
 				return indexIterResult{}, err
 			}
@@ -220,7 +220,7 @@ func (i *inIndexIterator) Next() (indexIterResult, error) {
 	return indexIterResult{}, nil
 }
 
-func (i *inIndexIterator) Close() error {
+func (iter *inIndexIterator) Close() error {
 	return nil
 }
 
@@ -244,27 +244,27 @@ type scanningIndexIterator struct {
 	execInfo *ExecInfo
 }
 
-func (i *scanningIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
-	iter, err := store.Query(ctx, query.Query{
-		Prefix: i.indexKey.ToString(),
+func (iter *scanningIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	resultIter, err := store.Query(ctx, query.Query{
+		Prefix: iter.indexKey.ToString(),
 	})
 	if err != nil {
 		return err
 	}
-	i.resultIter = iter
+	iter.resultIter = resultIter
 
 	return nil
 }
 
-func (i *scanningIndexIterator) Next() (indexIterResult, error) {
+func (iter *scanningIndexIterator) Next() (indexIterResult, error) {
 	for {
-		res, err := i.queryResultIterator.Next()
+		res, err := iter.queryResultIterator.Next()
 		if err != nil || !res.foundKey {
 			return indexIterResult{}, err
 		}
-		i.execInfo.IndexesFetched++
+		iter.execInfo.IndexesFetched++
 
-		didMatch, err := executeValueMatchers(i.matchers, res.key.Fields)
+		didMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
 
 		if didMatch {
 			return res, err
