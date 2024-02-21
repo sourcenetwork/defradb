@@ -37,7 +37,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 						ID:   1,
 						Fields: []client.IndexedFieldDescription{
 							{
-								Name:       "name",
+								Name: "name",
 							},
 						},
 					},
@@ -46,7 +46,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 						ID:   2,
 						Fields: []client.IndexedFieldDescription{
 							{
-								Name:       "age",
+								Name: "age",
 							},
 						},
 					},

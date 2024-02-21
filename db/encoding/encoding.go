@@ -20,10 +20,10 @@ const (
 	bytesMarker
 	bytesDescMarker
 
-	// These constants define a range of values and are used to determine how many bytes are 
-	// needed to represent the given uint64 value. The constants IntMin and IntMax define the 
-	// lower and upper bounds of the range, while intMaxWidth is the maximum width (in bytes) 
-	// for encoding an integer. intZero is the starting point for encoding small integers, 
+	// These constants define a range of values and are used to determine how many bytes are
+	// needed to represent the given uint64 value. The constants IntMin and IntMax define the
+	// lower and upper bounds of the range, while intMaxWidth is the maximum width (in bytes)
+	// for encoding an integer. intZero is the starting point for encoding small integers,
 	// and intSmall represents the threshold below which a value can be encoded in a single byte.
 
 	// IntMin is set to 0x80 (128) to avoid overlap with the ASCII range, enhancing testing clarity.
