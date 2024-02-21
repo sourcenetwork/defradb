@@ -1380,15 +1380,11 @@ func createIndex(
 					Name: action.FieldName,
 				},
 			}
-		} else if len(action.FieldsNames) > 0 {
-			for i := range action.FieldsNames {
-				dir := client.Ascending
-				if len(action.Directions) > i {
-					dir = action.Directions[i]
-				}
+		} else if len(action.Fields) > 0 {
+			for i := range action.Fields {
 				indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
-					Name:      action.FieldsNames[i],
-					Direction: dir,
+					Name:       action.Fields[i].Name,
+					Descending: action.Fields[i].Descending,
 				})
 			}
 		}

@@ -168,17 +168,27 @@ func encodePrefix(colID, indexID uint32) []byte {
 
 func encodeKey(colID, indexID uint32, fieldParts ...any) []byte {
 	b := encodePrefix(colID, indexID)
-	if len(fieldParts)%3 != 0 {
-		panic("fieldParts must be a multiple of 3: id, kind, value")
+	const partSize = 4
+	if len(fieldParts)%partSize != 0 {
+		panic(fmt.Sprintf("fieldParts must be a multiple of %d: id, kind, value, descending", partSize))
 	}
-	for i := 0; i < len(fieldParts)/3; i++ {
+	for i := 0; i < len(fieldParts)/partSize; i++ {
 		b = append(b, '/')
-		b = encoding.EncodeUvarintAscending(b, uint64(fieldParts[i*3].(int)))
-		b = encoding.EncodeUvarintAscending(b, uint64(fieldParts[i*3+1].(client.FieldKind)))
-		if fieldParts[i*3+2] == nil {
-			b = encoding.EncodeNullAscending(b)
+		b = encoding.EncodeUvarintAscending(b, uint64(fieldParts[i*partSize].(int)))
+		b = encoding.EncodeUvarintAscending(b, uint64(fieldParts[i*partSize+1].(client.FieldKind)))
+		isDescending := fieldParts[i*partSize+3].(bool)
+		if fieldParts[i*partSize+2] == nil {
+			if isDescending {
+				b = encoding.EncodeNullDescending(b)
+			} else {
+				b = encoding.EncodeNullAscending(b)
+			}
 		} else {
-			b = encoding.EncodeUvarintAscending(b, uint64(fieldParts[i*3+2].(int)))
+			if isDescending {
+				b = encoding.EncodeUvarintDescending(b, uint64(fieldParts[i*partSize+2].(int)))
+			} else {
+				b = encoding.EncodeUvarintAscending(b, uint64(fieldParts[i*partSize+2].(int)))
+			}
 		}
 	}
 	return b
@@ -222,7 +232,7 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 					{ID: 3, Value: client.NewFieldValue(client.NONE_CRDT, 5, intKind)},
 				},
 			},
-			Expected: encodeKey(1, 2, 3, intKind, 5),
+			Expected: encodeKey(1, 2, 3, intKind, 5, false),
 		},
 		{
 			Name: "collection, index and two fields",
@@ -234,7 +244,7 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 					{ID: 6, Value: client.NewFieldValue(client.NONE_CRDT, 7, intKind)},
 				},
 			},
-			Expected: encodeKey(1, 2, 3, intKind, 5, 6, intKind, 7),
+			Expected: encodeKey(1, 2, 3, intKind, 5, false, 6, intKind, 7, false),
 		},
 		{
 			Name: "no index",
@@ -270,15 +280,17 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		actual := c.Key.Bytes()
-		assert.Equal(t, c.Expected, actual, c.Name+": key.Bytes()")
-		encKey, err := EncodeIndexDataStoreKey([]byte{}, &c.Key)
-		if c.ExpectError {
-			assert.Error(t, err, c.Name)
-		} else {
-			assert.NoError(t, err, c.Name)
-		}
-		assert.Equal(t, c.Expected, encKey, c.Name+": EncodeIndexDataStoreKey")
+		t.Run(c.Name, func(t *testing.T) {
+			actual := c.Key.Bytes()
+			assert.Equal(t, c.Expected, actual, c.Name+": key.Bytes()")
+			encKey, err := EncodeIndexDataStoreKey([]byte{}, &c.Key)
+			if c.ExpectError {
+				assert.Error(t, err, c.Name)
+			} else {
+				assert.NoError(t, err, c.Name)
+			}
+			assert.Equal(t, c.Expected, encKey, c.Name+": EncodeIndexDataStoreKey")
+		})
 	}
 }
 
@@ -290,7 +302,7 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 			{ID: 3, Value: client.NewFieldValue(client.NONE_CRDT, 5, intKind)},
 		},
 	}
-	assert.Equal(t, key.ToString(), string(encodeKey(1, 2, 3, intKind, 5)))
+	assert.Equal(t, key.ToString(), string(encodeKey(1, 2, 3, intKind, 5, false)))
 }
 
 func TestIndexDatastoreKey_ToDS(t *testing.T) {
@@ -301,7 +313,7 @@ func TestIndexDatastoreKey_ToDS(t *testing.T) {
 			{ID: 3, Value: client.NewFieldValue(client.NONE_CRDT, 5, intKind)},
 		},
 	}
-	assert.Equal(t, key.ToDS(), ds.NewKey(string(encodeKey(1, 2, 3, intKind, 5))))
+	assert.Equal(t, key.ToDS(), ds.NewKey(string(encodeKey(1, 2, 3, intKind, 5, false))))
 }
 
 func TestCollectionIndexKey_Bytes(t *testing.T) {
@@ -313,7 +325,8 @@ func TestCollectionIndexKey_Bytes(t *testing.T) {
 }
 
 func TestDecodeIndexDataStoreKey_ValidKey(t *testing.T) {
-	key, err := DecodeIndexDataStoreKey(encodeKey(1, 2, 3, intKind, 5))
+	indexDesc := client.IndexDescription{ID: 2, Fields: []client.IndexedFieldDescription{{}}}
+	key, err := DecodeIndexDataStoreKey(encodeKey(1, 2, 3, intKind, 5, false), &indexDesc)
 	assert.NoError(t, err)
 	assert.Equal(t, IndexDataStoreKey{
 		CollectionID: 1,
@@ -323,7 +336,8 @@ func TestDecodeIndexDataStoreKey_ValidKey(t *testing.T) {
 		},
 	}, key)
 
-	key, err = DecodeIndexDataStoreKey(encodeKey(1, 2, 3, intKind, 5, 6, intKind, 7))
+	indexDesc = client.IndexDescription{ID: 2, Fields: []client.IndexedFieldDescription{{}, {}}}
+	key, err = DecodeIndexDataStoreKey(encodeKey(1, 2, 3, intKind, 5, false, 6, intKind, 7, false), &indexDesc)
 	assert.NoError(t, err)
 	assert.Equal(t, IndexDataStoreKey{
 		CollectionID: 1,
@@ -352,16 +366,19 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 		{name: "empty", val: []byte{}},
 		{name: "only slash", val: []byte{'/'}},
 		{name: "slash after collection", val: append(encoding.EncodeUvarintAscending([]byte{'/'}, 1), '/')},
-		{name: "wrong prefix", val: replace(encodeKey(1, 2, 3, intKind, 5), 0, ' ')},
-		{name: "no slash before collection", val: encodeKey(1, 2, 3, intKind, 5)[1:]},
-		{name: "no slash before index", val: replace(encodeKey(1, 2, 3, intKind, 5), 2, ' ')},
-		{name: "no slash before field", val: replace(encodeKey(1, 2, 3, intKind, 5), 4, ' ')},
+		{name: "wrong prefix", val: replace(encodeKey(1, 2, 3, intKind, 5, false), 0, ' ')},
+		{name: "no slash before collection", val: encodeKey(1, 2, 3, intKind, 5, false)[1:]},
+		{name: "no slash before index", val: replace(encodeKey(1, 2, 3, intKind, 5, false), 2, ' ')},
+		{name: "no slash before field", val: replace(encodeKey(1, 2, 3, intKind, 5, false), 4, ' ')},
 		{name: "no field id", val: append(encodePrefix(1, 2), '/')},
 		{name: "no field kind", val: append(encodePrefix(1, 2), '/', encoding.EncodeUvarintAscending(nil, 3)[0])},
-		{name: "no field value", val: cutEnd(encodeKey(1, 2, 3, intKind, 5), 1)},
+		{name: "no field value", val: cutEnd(encodeKey(1, 2, 3, intKind, 5, false), 1)},
 	}
+	indexDesc := client.IndexDescription{ID: 2, Fields: []client.IndexedFieldDescription{{}}}
 	for _, c := range cases {
-		_, err := DecodeIndexDataStoreKey(c.val)
-		assert.Error(t, err, c.name)
+		t.Run(c.name, func(t *testing.T) {
+			_, err := DecodeIndexDataStoreKey(c.val, &indexDesc)
+			assert.Error(t, err, c.name)
+		})
 	}
 }

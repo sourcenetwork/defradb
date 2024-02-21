@@ -28,7 +28,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 				{
 					Name: "",
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
+						{Name: "name"},
 					},
 					Unique: false,
 				},
@@ -41,7 +41,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 				{
 					Name: "userIndex",
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
+						{Name: "name"},
 					},
 				},
 			},
@@ -52,7 +52,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
+						{Name: "name"},
 					},
 					Unique: true,
 				},
@@ -64,7 +64,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
+						{Name: "name"},
 					},
 					Unique: false,
 				},
@@ -76,7 +76,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending}},
+						{Name: "name"}},
 				},
 			},
 		},
@@ -86,7 +86,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Descending}},
+						{Name: "name", Descending: true}},
 				},
 			},
 		},
@@ -96,8 +96,8 @@ func TestParseIndexOnStruct(t *testing.T) {
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
-						{Name: "age", Direction: client.Ascending},
+						{Name: "name"},
+						{Name: "age"},
 					},
 				},
 			},
@@ -108,8 +108,8 @@ func TestParseIndexOnStruct(t *testing.T) {
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
-						{Name: "age", Direction: client.Descending},
+						{Name: "name"},
+						{Name: "age", Descending: true},
 					},
 				},
 			},
@@ -216,7 +216,7 @@ func TestParseIndexOnField(t *testing.T) {
 				{
 					Name: "",
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
+						{Name: "name"},
 					},
 					Unique: false,
 				},
@@ -231,7 +231,7 @@ func TestParseIndexOnField(t *testing.T) {
 				{
 					Name: "nameIndex",
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
+						{Name: "name"},
 					},
 					Unique: false,
 				},
@@ -245,7 +245,7 @@ func TestParseIndexOnField(t *testing.T) {
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
+						{Name: "name"},
 					},
 					Unique: true,
 				},
@@ -259,7 +259,7 @@ func TestParseIndexOnField(t *testing.T) {
 			targetDescriptions: []client.IndexDescription{
 				{
 					Fields: []client.IndexedFieldDescription{
-						{Name: "name", Direction: client.Ascending},
+						{Name: "name"},
 					},
 					Unique: false,
 				},

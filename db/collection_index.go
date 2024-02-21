@@ -467,15 +467,12 @@ func validateIndexDescription(desc client.IndexDescription) error {
 	if len(desc.Fields) == 0 {
 		return ErrIndexMissingFields
 	}
-	if len(desc.Fields) == 1 && desc.Fields[0].Direction == client.Descending {
+	if len(desc.Fields) == 1 && desc.Fields[0].Descending {
 		return ErrIndexSingleFieldWrongDirection
 	}
 	for i := range desc.Fields {
 		if desc.Fields[i].Name == "" {
 			return ErrIndexFieldMissingName
-		}
-		if desc.Fields[i].Direction == "" {
-			desc.Fields[i].Direction = client.Ascending
 		}
 	}
 	return nil

@@ -261,6 +261,14 @@ type UpdateDoc struct {
 	DontSync bool
 }
 
+// IndexField describes a field to be indexed.
+type IndexedField struct {
+	// Name contains the name of the field.
+	Name string
+	// Descending indicates whether the field is indexed in descending order.
+	Descending bool
+}
+
 // CreateIndex will attempt to create the given secondary index for the given collection
 // using the collection api.
 type CreateIndex struct {
@@ -278,11 +286,8 @@ type CreateIndex struct {
 	// The name of the field to index. Used only for single field indexes.
 	FieldName string
 
-	// The names of the fields to index. Used only for composite indexes.
-	FieldsNames []string
-	// The directions of the 'FieldsNames' to index. Used only for composite indexes.
-	// If not provided all fields will be indexed in ascending order.
-	Directions []client.IndexDirection
+	// The fields to index. Used only for composite indexes.
+	Fields []IndexedField
 
 	// If Unique is true, the index will be created as a unique index.
 	Unique bool

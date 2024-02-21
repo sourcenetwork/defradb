@@ -213,8 +213,7 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 	desc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
 			{
-				Name:      field.Name.Value,
-				Direction: client.Ascending,
+				Name:       field.Name.Value,
 			},
 		},
 	}
@@ -298,15 +297,11 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			if dirVal.Value == string(client.Ascending) {
-				desc.Fields[i].Direction = client.Ascending
-			} else if dirVal.Value == string(client.Descending) {
-				desc.Fields[i].Direction = client.Descending
+			if dirVal.Value == "ASC" {
+				desc.Fields[i].Descending = false
+			} else if dirVal.Value == "DESC" {
+				desc.Fields[i].Descending = true
 			}
-		}
-	} else {
-		for i := range desc.Fields {
-			desc.Fields[i].Direction = client.Ascending
 		}
 	}
 	return desc, nil

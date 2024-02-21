@@ -92,19 +92,19 @@ func NewCollectionIndex(
 		return nil, NewErrIndexDescHasNoFields(desc)
 	}
 	base := collectionBaseIndex{collection: collection, desc: desc}
-	base.validateFieldFuncs = make([]func(any) bool, 0, len(desc.Fields))
-	base.fieldsDescs = make([]client.SchemaFieldDescription, 0, len(desc.Fields))
-	for _, fieldDesc := range desc.Fields {
-		field, foundField := collection.Schema().GetFieldByName(fieldDesc.Name)
+	base.validateFieldFuncs = make([]func(any) bool, len(desc.Fields))
+	base.fieldsDescs = make([]client.SchemaFieldDescription, len(desc.Fields))
+	for i := range desc.Fields {
+		field, foundField := collection.Schema().GetFieldByName(desc.Fields[i].Name)
 		if !foundField {
-			return nil, client.NewErrFieldNotExist(desc.Fields[0].Name)
+			return nil, client.NewErrFieldNotExist(desc.Fields[i].Name)
 		}
-		base.fieldsDescs = append(base.fieldsDescs, field)
+		base.fieldsDescs[i] = field
 		validateFunc, err := getFieldValidateFunc(field.Kind)
 		if err != nil {
 			return nil, err
 		}
-		base.validateFieldFuncs = append(base.validateFieldFuncs, validateFunc)
+		base.validateFieldFuncs[i] = validateFunc
 	}
 	if desc.Unique {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
@@ -151,6 +151,7 @@ func (iter *collectionBaseIndex) getDocumentsIndexKey(
 	for i := range iter.fieldsDescs {
 		indexDataStoreKey.Fields[i].ID = iter.fieldsDescs[i].ID
 		indexDataStoreKey.Fields[i].Value = fieldValues[i]
+		indexDataStoreKey.Fields[i].Descending = iter.desc.Fields[i].Descending
 	}
 	return indexDataStoreKey, nil
 }

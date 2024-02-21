@@ -48,7 +48,7 @@ func TestCompositeIndexCreate_WhenCreated_CanRetrieve(t *testing.T) {
 			testUtils.CreateIndex{
 				CollectionID: 0,
 				IndexName:    "name_age_index",
-				FieldsNames:  []string{"name", "age"},
+				Fields:       []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
 			},
 			testUtils.GetIndexes{
 				CollectionID: 0,
@@ -58,12 +58,10 @@ func TestCompositeIndexCreate_WhenCreated_CanRetrieve(t *testing.T) {
 						ID:   1,
 						Fields: []client.IndexedFieldDescription{
 							{
-								Name:      "name",
-								Direction: client.Ascending,
+								Name: "name",
 							},
 							{
-								Name:      "age",
-								Direction: client.Ascending,
+								Name: "age",
 							},
 						},
 					},

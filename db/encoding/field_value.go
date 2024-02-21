@@ -18,12 +18,18 @@ import (
 
 // EncodeFieldValue encodes a FieldValue into a byte slice.
 // The encoded value is appended to the supplied buffer and the resulting buffer is returned.
-func EncodeFieldValue(b []byte, val *client.FieldValue) ([]byte, error) {
+func EncodeFieldValue(b []byte, val *client.FieldValue, descending bool) ([]byte, error) {
+	if client.IsNillableKind(val.Kind()) {
+		if val.IsNil() {
+			if descending {
+				return EncodeNullDescending(b), nil
+			} else {
+				return EncodeNullAscending(b), nil
+			}
+		}
+	}
 	switch val.Kind() {
 	case client.FieldKind_NILLABLE_BOOL:
-		if val.IsNil() {
-			return EncodeNullAscending(b), nil
-		}
 		v, err := val.Bool()
 		if err != nil {
 			return nil, err
@@ -32,38 +38,44 @@ func EncodeFieldValue(b []byte, val *client.FieldValue) ([]byte, error) {
 		if v {
 			boolInt = 1
 		}
+		if descending {
+			return EncodeVarintDescending(b, boolInt), nil
+		}
 		return EncodeVarintAscending(b, boolInt), nil
 	case client.FieldKind_NILLABLE_INT:
-		if val.IsNil() {
-			return EncodeNullAscending(b), nil
-		}
 		v, err := val.Int()
 		if err != nil {
 			return nil, err
 		}
+		if descending {
+			return EncodeVarintDescending(b, int64(v)), nil
+		}
 		return EncodeVarintAscending(b, int64(v)), nil
 	case client.FieldKind_NILLABLE_FLOAT:
-		if val.IsNil() {
-			return EncodeNullAscending(b), nil
-		}
 		v, err := val.Float()
 		if err != nil {
 			return nil, err
 		}
+		if descending {
+			return EncodeFloatDescending(b, v), nil
+		}
 		return EncodeFloatAscending(b, v), nil
 	case client.FieldKind_NILLABLE_STRING:
-		if val.IsNil() {
-			return EncodeNullAscending(b), nil
-		}
 		v, err := val.String()
 		if err != nil {
 			return nil, err
+		}
+		if descending {
+			return EncodeStringDescending(b, v), nil
 		}
 		return EncodeStringAscending(b, v), nil
 	case client.FieldKind_DocID:
 		v, err := val.String()
 		if err != nil {
 			return nil, err
+		}
+		if descending {
+			return EncodeStringDescending(b, v), nil
 		}
 		return EncodeStringAscending(b, v), nil
 	}
@@ -73,7 +85,7 @@ func EncodeFieldValue(b []byte, val *client.FieldValue) ([]byte, error) {
 
 // DecodeFieldValue decodes a FieldValue from a byte slice.
 // The decoded value is returned along with the remaining byte slice.
-func DecodeFieldValue(b []byte, kind client.FieldKind) ([]byte, *client.FieldValue, error) {
+func DecodeFieldValue(b []byte, kind client.FieldKind, descending bool) ([]byte, *client.FieldValue, error) {
 	typ := PeekType(b)
 	switch typ {
 	case Null:
@@ -83,7 +95,13 @@ func DecodeFieldValue(b []byte, kind client.FieldKind) ([]byte, *client.FieldVal
 		b, _ = DecodeIfNull(b)
 		return b, client.NewFieldValue(client.NONE_CRDT, nil, kind), nil
 	case Int:
-		b, v, err := DecodeVarintAscending(b)
+		var v int64
+		var err error
+		if descending {
+			b, v, err = DecodeVarintDescending(b)
+		} else {
+			b, v, err = DecodeVarintAscending(b)
+		}
 		if err != nil {
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
@@ -102,21 +120,33 @@ func DecodeFieldValue(b []byte, kind client.FieldKind) ([]byte, *client.FieldVal
 		if kind != client.FieldKind_NILLABLE_FLOAT {
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind)
 		}
-		b, v, err := DecodeFloatAscending(b)
+		var v float64
+		var err error
+		if descending {
+			b, v, err = DecodeFloatDescending(b)
+		} else {
+			b, v, err = DecodeFloatAscending(b)
+		}
 		if err != nil {
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewFieldValue(client.NONE_CRDT, v, kind), nil
-	case Bytes:
+	case Bytes, BytesDesc:
 		if kind != client.FieldKind_DocID && kind != client.FieldKind_NILLABLE_STRING {
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind)
 		}
-		b, v, err := DecodeBytesAscending(b, []byte{})
+		var v []byte
+		var err error
+		if descending {
+			b, v, err = DecodeBytesDescending(b, []byte{})
+		} else {
+			b, v, err = DecodeBytesAscending(b, []byte{})
+		}
 		if err != nil {
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewFieldValue(client.NONE_CRDT, string(v), kind), nil
 	}
 
-	return nil, nil, NewErrCanNotDecode(b)
+	return nil, nil, NewErrCanNotDecodeFieldValue(b, kind)
 }

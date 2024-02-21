@@ -83,6 +83,8 @@ type IndexedField struct {
 	ID client.FieldID
 	// Value is the value of the field in the index
 	Value *client.FieldValue
+	// Descending is true if the field is sorted in descending order
+	Descending bool
 }
 
 // IndexDataStoreKey is key of an indexed document in the database.
@@ -512,7 +514,7 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 // /[CollectionID]/[IndexID]/[FieldID][FieldKind][FieldValue](/[FieldID][FieldKind][FieldValue]...)
 //
 // Where [CollectionID], [IndexID], [FieldID] and [FieldKind] are integers
-func DecodeIndexDataStoreKey(b []byte) (IndexDataStoreKey, error) {
+func DecodeIndexDataStoreKey(b []byte, indexDesc *client.IndexDescription) (IndexDataStoreKey, error) {
 	if len(b) == 0 {
 		return IndexDataStoreKey{}, ErrEmptyKey
 	}
@@ -559,7 +561,12 @@ func DecodeIndexDataStoreKey(b []byte) (IndexDataStoreKey, error) {
 		}
 
 		var fieldVal *client.FieldValue
-		b, fieldVal, err = encoding.DecodeFieldValue(b, client.FieldKind(fieldKind))
+		i := len(key.Fields)
+		descending := false
+		if i < len(indexDesc.Fields) { // TOTEST
+			descending = indexDesc.Fields[i].Descending
+		}
+		b, fieldVal, err = encoding.DecodeFieldValue(b, client.FieldKind(fieldKind), descending)
 		if err != nil {
 			return IndexDataStoreKey{}, err
 		}
@@ -600,7 +607,7 @@ func EncodeIndexDataStoreKey(b []byte, key *IndexDataStoreKey) ([]byte, error) {
 		b = append(b, '/')
 		b = encoding.EncodeUvarintAscending(b, uint64(field.ID))
 		b = encoding.EncodeUvarintAscending(b, uint64(field.Value.Kind()))
-		b, err = encoding.EncodeFieldValue(b, field.Value)
+		b, err = encoding.EncodeFieldValue(b, field.Value, field.Descending)
 		if err != nil {
 			return nil, err
 		}

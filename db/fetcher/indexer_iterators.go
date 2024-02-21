@@ -63,6 +63,7 @@ type indexIterResult struct {
 
 type queryResultIterator struct {
 	resultIter query.Results
+	indexDesc  client.IndexDescription
 }
 
 func (i *queryResultIterator) Next() (indexIterResult, error) {
@@ -73,7 +74,7 @@ func (i *queryResultIterator) Next() (indexIterResult, error) {
 	if !hasVal {
 		return indexIterResult{}, nil
 	}
-	key, err := core.DecodeIndexDataStoreKey([]byte(res.Key))
+	key, err := core.DecodeIndexDataStoreKey([]byte(res.Key), &i.indexDesc)
 	if err != nil {
 		return indexIterResult{}, err
 	}
@@ -85,11 +86,10 @@ func (i *queryResultIterator) Close() error {
 }
 
 type eqPrefixIndexIterator struct {
+	queryResultIterator
 	indexKey core.IndexDataStoreKey
 	execInfo *ExecInfo
 	matchers []valueMatcher
-
-	queryResultIterator
 }
 
 func (i *eqPrefixIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
@@ -473,9 +473,10 @@ func (f *IndexFetcher) newPrefixIndexIterator(
 	}
 
 	return &eqPrefixIndexIterator{
-		indexKey: f.newIndexDataStoreKeyWithValues(keyFieldValues),
-		execInfo: &f.execInfo,
-		matchers: matchers,
+		queryResultIterator: queryResultIterator{indexDesc: f.indexDesc},
+		indexKey:            f.newIndexDataStoreKeyWithValues(keyFieldValues),
+		execInfo:            &f.execInfo,
+		matchers:            matchers,
 	}, nil
 }
 
@@ -514,12 +515,14 @@ func (f *IndexFetcher) newInIndexIterator(
 		}
 	} else {
 		indexKey := f.newIndexDataStoreKey()
-		indexKey.Fields = []core.IndexedField{{ID: f.indexedFields[0].ID}}
+		indexKey.Fields = []core.IndexedField{
+			{ID: f.indexedFields[0].ID, Descending: f.indexDesc.Fields[0].Descending}}
 
 		iter = &eqPrefixIndexIterator{
-			indexKey: indexKey,
-			execInfo: &f.execInfo,
-			matchers: matchers,
+			queryResultIterator: queryResultIterator{indexDesc: f.indexDesc},
+			indexKey:            indexKey,
+			execInfo:            &f.execInfo,
+			matchers:            matchers,
 		}
 	}
 	return &inIndexIterator{
@@ -539,6 +542,7 @@ func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []*client.FieldValu
 	for i := range values {
 		key.Fields[i].ID = f.indexedFields[i].ID
 		key.Fields[i].Value = values[i]
+		key.Fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
 	return key
 }
@@ -570,9 +574,10 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return f.newInIndexIterator(fieldConditions, matchers)
 	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike:
 		return &scanningIndexIterator{
-			indexKey: f.newIndexDataStoreKey(),
-			matchers: matchers,
-			execInfo: &f.execInfo,
+			queryResultIterator: queryResultIterator{indexDesc: f.indexDesc},
+			indexKey:            f.newIndexDataStoreKey(),
+			matchers:            matchers,
+			execInfo:            &f.execInfo,
 		}, nil
 	}
 
