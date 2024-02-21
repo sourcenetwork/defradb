@@ -265,6 +265,34 @@ func TestParseIndexOnField(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "field index in ASC order",
+			sdl: `type user {
+				name: String @index(direction: ASC)
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name"},
+					},
+					Unique: false,
+				},
+			},
+		},
+		{
+			description: "field index in DESC order",
+			sdl: `type user {
+				name: String @index(direction: DESC)
+			}`,
+			targetDescriptions: []client.IndexDescription{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Descending: true},
+					},
+					Unique: false,
+				},
+			},
+		},
 	}
 
 	for _, test := range cases {
@@ -278,13 +306,6 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 			description: "forbidden 'field' argument",
 			sdl: `type user {
 				name: String @index(field: "name") 
-			}`,
-			expectedErr: errIndexUnknownArgument,
-		},
-		{
-			description: "forbidden 'direction' argument",
-			sdl: `type user {
-				name: String @index(direction: ASC) 
 			}`,
 			expectedErr: errIndexUnknownArgument,
 		},
