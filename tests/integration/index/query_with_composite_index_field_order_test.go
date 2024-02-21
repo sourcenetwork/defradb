@@ -18,7 +18,7 @@ import (
 
 func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test composite index with reverted order",
+		Description: "Test composite index in default order",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -94,7 +94,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *t
 
 func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInRevertedOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test composite index with reverted order",
+		Description: "Test composite index with reverted order on first field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -182,7 +182,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 
 func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondField_ShouldFetchInRevertedOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test composite index with reverted order",
+		Description: "Test composite index with reverted order on second field",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -258,7 +258,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondField_ShouldFetchInRev
 
 func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnFirstField_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test composite index with reverted order",
+		Description: "Test composite index with reverted order on first field and filter with exact match",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -314,7 +314,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnFirstField_Shoul
 
 func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnSecondField_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test composite index with reverted order",
+		Description: "Test composite index with reverted order on second field and filter with exact match",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -370,7 +370,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnSecondField_Shou
 
 func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _in filter",
+		Description: "Test composite index with reverted order on first field and filtering with _in filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -403,7 +403,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_Shoul
 
 func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _in filter",
+		Description: "Test composite index with reverted order on second field and filtering with _in filter",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
