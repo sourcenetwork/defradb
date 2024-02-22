@@ -21,7 +21,7 @@ import (
 
 	blockstore "github.com/ipfs/boxo/blockstore"
 	ds "github.com/ipfs/go-datastore"
-	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -271,20 +271,11 @@ func (db *db) Close() {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
-	q := dsq.Query{
-		Prefix:   "",
-		KeysOnly: false,
-		Orders:   []dsq.Order{dsq.OrderByKey{}},
+	iter := store.Iterator(ctx, corekv.DefaultIterOptions)
+
+	for ; iter.Valid(); iter.Next() {
+		log.Info(ctx, "", logging.NewKV(string(iter.Key()), iter.Value()))
 	}
 
-	results, err := store.Query(ctx, q)
-	if err != nil {
-		return err
-	}
-
-	for r := range results.Next() {
-		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
-	}
-
-	return results.Close()
+	return iter.Close(ctx)
 }

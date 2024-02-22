@@ -13,7 +13,7 @@ package lens
 import (
 	"context"
 
-	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -201,55 +201,45 @@ func getSchemaHistory(
 	}
 
 	prefix := core.NewSchemaHistoryKey(schemaRoot, "")
-	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: prefix.ToString(),
+	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: prefix.Bytes(),
 	})
-	if err != nil {
-		return nil, err
-	}
 
-	for res := range q.Next() {
+	for ; iter.Valid(); iter.Next() {
 		// check for Done on context first
 		select {
 		case <-ctx.Done():
 			// we've been cancelled! ;)
-			return nil, q.Close()
+			return nil, iter.Close(ctx)
 		default:
 			// noop, just continue on the with the for loop
 		}
 
-		if res.Error != nil {
-			err = q.Close()
-			if err != nil {
-				return nil, err
-			}
-			return nil, res.Error
-		}
-
-		key, err := core.NewSchemaHistoryKeyFromString(res.Key)
+		key, err := core.NewSchemaHistoryKeyFromString(string(iter.Key()))
 		if err != nil {
-			err = q.Close()
+			err = iter.Close(ctx)
 			if err != nil {
 				return nil, err
 			}
 			return nil, err
 		}
 
+		value := iter.Value()
 		// The local schema version history takes priority over and migration-defined history
 		// and overwrites whatever already exists in the pairings (if any)
 		pairings[key.PreviousSchemaVersionID] = &schemaHistoryPairing{
 			schemaVersionID:     key.PreviousSchemaVersionID,
-			nextSchemaVersionID: string(res.Value),
+			nextSchemaVersionID: string(value),
 		}
 
-		if _, ok := pairings[string(res.Value)]; !ok {
-			pairings[string(res.Value)] = &schemaHistoryPairing{
-				schemaVersionID: string(res.Value),
+		if _, ok := pairings[string(value)]; !ok {
+			pairings[string(value)] = &schemaHistoryPairing{
+				schemaVersionID: string(value),
 			}
 		}
 	}
 
-	err = q.Close()
+	err := iter.Close(ctx)
 	if err != nil {
 		return nil, err
 	}

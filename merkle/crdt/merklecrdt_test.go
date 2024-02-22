@@ -15,8 +15,8 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
-	"github.com/ipfs/go-datastore/query"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
@@ -60,20 +60,10 @@ func TestMerkleCRDTPublish(t *testing.T) {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) {
-	q := query.Query{
-		Prefix:   "",
-		KeysOnly: false,
-	}
+	iter := store.Iterator(ctx, corekv.DefaultIterOptions)
+	defer iter.Close(ctx)
 
-	results, err := store.Query(ctx, q)
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer results.Close()
-
-	for r := range results.Next() {
-		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
+	for ; iter.Valid(); iter.Next() {
+		log.Info(ctx, "", logging.NewKV(string(iter.Key()), iter.Value()))
 	}
 }

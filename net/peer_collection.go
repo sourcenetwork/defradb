@@ -13,8 +13,7 @@ package net
 import (
 	"context"
 
-	dsq "github.com/ipfs/go-datastore/query"
-
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -45,7 +44,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := core.NewP2PCollectionKey(col.SchemaRoot())
-		err = txn.Systemstore().Set(ctx, key.ToDS(), []byte{marker})
+		err = txn.Systemstore().Set(ctx, key.ToDS().Bytes(), []byte{marker})
 		if err != nil {
 			return err
 		}
@@ -110,7 +109,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string)
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := core.NewP2PCollectionKey(col.SchemaRoot())
-		err = txn.Systemstore().Delete(ctx, key.ToDS())
+		err = txn.Systemstore().Delete(ctx, key.ToDS().Bytes())
 		if err != nil {
 			return err
 		}
@@ -158,17 +157,14 @@ func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	}
 	defer txn.Discard(p.ctx)
 
-	query := dsq.Query{
-		Prefix: core.NewP2PCollectionKey("").ToString(),
+	opts := corekv.IterOptions{
+		Prefix: core.NewP2PCollectionKey("").Bytes(),
 	}
-	results, err := txn.Systemstore().Query(ctx, query)
-	if err != nil {
-		return nil, err
-	}
+	iter := txn.Systemstore().Iterator(ctx, opts)
 
 	collectionIDs := []string{}
-	for result := range results.Next() {
-		key, err := core.NewP2PCollectionKeyFromString(result.Key)
+	for ; iter.Valid(); iter.Next() {
+		key, err := core.NewP2PCollectionKeyFromString(string(iter.Key()))
 		if err != nil {
 			return nil, err
 		}

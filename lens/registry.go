@@ -15,11 +15,11 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/ipfs/go-datastore/query"
 	"github.com/lens-vm/lens/host-go/config"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/runtimes/wasmtime"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -247,19 +247,16 @@ func (r *lensRegistry) cachePool(txn datastore.Txn, target map[string]*lensPool,
 
 func (r *lensRegistry) reloadLenses(ctx context.Context, txnCtx *txnContext) error {
 	prefix := core.NewSchemaVersionMigrationKey("")
-	q, err := txnCtx.txn.Systemstore().Query(ctx, query.Query{
-		Prefix: prefix.ToString(),
+	iter := txnCtx.txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: prefix.Bytes(),
 	})
-	if err != nil {
-		return err
-	}
 
-	for res := range q.Next() {
+	for ; iter.Valid(); iter.Next() {
 		// check for Done on context first
 		select {
 		case <-ctx.Done():
 			// we've been cancelled! ;)
-			err = q.Close()
+			err := iter.Close(ctx)
 			if err != nil {
 				return err
 			}
@@ -269,18 +266,10 @@ func (r *lensRegistry) reloadLenses(ctx context.Context, txnCtx *txnContext) err
 			// noop, just continue on the with the for loop
 		}
 
-		if res.Error != nil {
-			err = q.Close()
-			if err != nil {
-				return errors.Wrap(err.Error(), res.Error)
-			}
-			return res.Error
-		}
-
 		var cfg client.LensConfig
-		err = json.Unmarshal(res.Value, &cfg)
+		err := json.Unmarshal(iter.Value(), &cfg)
 		if err != nil {
-			err = q.Close()
+			err = iter.Close(ctx)
 			if err != nil {
 				return err
 			}
@@ -289,15 +278,17 @@ func (r *lensRegistry) reloadLenses(ctx context.Context, txnCtx *txnContext) err
 
 		err = r.cacheLens(txnCtx, cfg)
 		if err != nil {
-			err = q.Close()
-			if err != nil {
-				return errors.Wrap(err.Error(), res.Error)
+			errInner := iter.Close(ctx)
+			if errInner != nil {
+				// NOTE: This might be backwards, there was some
+				// error shadowing before
+				return errors.Wrap(err.Error(), errInner)
 			}
 			return err
 		}
 	}
 
-	err = q.Close()
+	err := iter.Close(ctx)
 	if err != nil {
 		return err
 	}

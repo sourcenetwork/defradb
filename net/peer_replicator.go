@@ -14,10 +14,10 @@ import (
 	"context"
 	"encoding/json"
 
-	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -85,7 +85,7 @@ func (p *Peer) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		return err
 	}
 	key := core.NewReplicatorKey(rep.Info.ID.String())
-	err = txn.Systemstore().Set(ctx, key.ToDS(), repBytes)
+	err = txn.Systemstore().Set(ctx, key.ToDS().Bytes(), repBytes)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 		}
 		// make sure the replicator exists in the datastore
 		key := core.NewReplicatorKey(rep.Info.ID.String())
-		_, err = txn.Systemstore().Get(ctx, key.ToDS())
+		_, err = txn.Systemstore().Get(ctx, key.ToDS().Bytes())
 		if err != nil {
 			return err
 		}
@@ -170,13 +170,13 @@ func (p *Peer) DeleteReplicator(ctx context.Context, rep client.Replicator) erro
 	// persist the replicator to the store, deleting it if no schemas remain
 	key := core.NewReplicatorKey(rep.Info.ID.String())
 	if len(rep.Schemas) == 0 {
-		return txn.Systemstore().Delete(ctx, key.ToDS())
+		return txn.Systemstore().Delete(ctx, key.ToDS().Bytes())
 	}
 	repBytes, err := json.Marshal(rep)
 	if err != nil {
 		return err
 	}
-	return txn.Systemstore().Set(ctx, key.ToDS(), repBytes)
+	return txn.Systemstore().Set(ctx, key.ToDS().Bytes(), repBytes)
 }
 
 func (p *Peer) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
@@ -187,21 +187,19 @@ func (p *Peer) GetAllReplicators(ctx context.Context) ([]client.Replicator, erro
 	defer txn.Discard(ctx)
 
 	// create collection system prefix query
-	query := dsq.Query{
-		Prefix: core.NewReplicatorKey("").ToString(),
+	opts := corekv.IterOptions{
+		Prefix: core.NewReplicatorKey("").Bytes(),
 	}
-	results, err := txn.Systemstore().Query(ctx, query)
-	if err != nil {
-		return nil, err
-	}
+	iter := txn.Systemstore().Iterator(ctx, opts)
 
 	var reps []client.Replicator
-	for result := range results.Next() {
+	for ; iter.Valid(); iter.Next() {
 		var rep client.Replicator
-		if err = json.Unmarshal(result.Value, &rep); err != nil {
+		if err = json.Unmarshal(iter.Value(), &rep); err != nil {
 			return nil, err
 		}
 		reps = append(reps, rep)
 	}
-	return reps, nil
+	// ATTENTION: ADDING CLOSE CALL
+	return reps, iter.Close(ctx)
 }

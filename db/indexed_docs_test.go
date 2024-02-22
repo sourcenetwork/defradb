@@ -20,11 +20,11 @@ import (
 	"time"
 
 	ipfsDatastore "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -186,13 +186,16 @@ func (b *indexKeyBuilder) Build() core.IndexDataStoreKey {
 }
 
 func (f *indexTestFixture) getPrefixFromDataStore(prefix string) [][]byte {
-	q := query.Query{Prefix: prefix}
-	res, err := f.txn.Datastore().Query(f.ctx, q)
-	require.NoError(f.t, err)
+	iter := f.txn.Datastore().Iterator(f.ctx, corekv.IterOptions{
+		Prefix: []byte(prefix),
+	})
 
 	var keys [][]byte
-	for r := range res.Next() {
-		keys = append(keys, r.Entry.Value)
+	for ; iter.Valid(); iter.Next() {
+		// NOTE: THIS MIGHT BE WRONG
+		// BUT ITS JUST COPIED FROM BEFORE
+		// variable is `keys` but append is using `Value`
+		keys = append(keys, iter.Value())
 	}
 	return keys
 }

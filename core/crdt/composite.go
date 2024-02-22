@@ -18,10 +18,10 @@ import (
 
 	dag "github.com/ipfs/boxo/ipld/merkledag"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ugorji/go/codec"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -175,21 +175,15 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 }
 
 func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key core.DataStoreKey) error {
-	q := query.Query{
-		Prefix: key.ToString(),
-	}
-	res, err := c.store.Query(ctx, q)
-	for e := range res.Next() {
-		if e.Error != nil {
-			return err
-		}
-		dsKey, err := core.NewDataStoreKey(e.Key)
+	iter := c.store.Iterator(ctx, corekv.IterOptions{Prefix: key.Bytes()})
+	for ; iter.Valid(); iter.Next() {
+		dsKey, err := core.NewDataStoreKey(string(iter.Key()))
 		if err != nil {
 			return err
 		}
 
 		if dsKey.InstanceType == core.ValueKey {
-			err = c.store.Set(ctx, dsKey.WithDeletedFlag().ToDS().Bytes(), e.Value)
+			err = c.store.Set(ctx, dsKey.WithDeletedFlag().ToDS().Bytes(), iter.Value())
 			if err != nil {
 				return err
 			}

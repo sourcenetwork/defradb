@@ -16,8 +16,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/corekv"
-
-	"github.com/ipfs/go-datastore/query"
 )
 
 // DeserializePrefix deserializes all elements with the given prefix from the given storage.
@@ -55,20 +53,12 @@ func FetchKeysForPrefix(
 	prefix string,
 	store corekv.Reader,
 ) ([]ds.Key, error) {
-	q, err := store.Query(ctx, query.Query{Prefix: prefix})
-	if err != nil {
-		return nil, err
-	}
-
+	iter := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
 	keys := make([]ds.Key, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
-			_ = q.Close()
-			return nil, res.Error
-		}
-		keys = append(keys, ds.NewKey(res.Key))
+	for ; iter.Valid(); iter.Valid() {
+		keys = append(keys, ds.NewKey(string(iter.Key())))
 	}
-	if err = q.Close(); err != nil {
+	if err := iter.Close(ctx); err != nil {
 		return nil, err
 	}
 

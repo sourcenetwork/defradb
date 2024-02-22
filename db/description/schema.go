@@ -14,8 +14,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/ipfs/go-datastore/query"
-
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/cid"
@@ -63,7 +62,7 @@ func CreateSchemaVersion(
 	}
 
 	key := core.NewSchemaVersionKey(versionID)
-	err = txn.Systemstore().Set(ctx, key.ToDS(), buf)
+	err = txn.Systemstore().Set(ctx, key.ToDS().Bytes(), buf)
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -71,7 +70,7 @@ func CreateSchemaVersion(
 	if !isNew {
 		// We don't need to add a history key if this is the first version
 		schemaVersionHistoryKey := core.NewSchemaHistoryKey(desc.Root, previousSchemaVersionID)
-		err = txn.Systemstore().Set(ctx, schemaVersionHistoryKey.ToDS(), []byte(desc.VersionID))
+		err = txn.Systemstore().Set(ctx, schemaVersionHistoryKey.ToDS().Bytes(), []byte(desc.VersionID))
 		if err != nil {
 			return client.SchemaDescription{}, err
 		}
@@ -91,7 +90,7 @@ func GetSchemaVersion(
 ) (client.SchemaDescription, error) {
 	key := core.NewSchemaVersionKey(versionID)
 
-	buf, err := txn.Systemstore().Get(ctx, key.ToDS())
+	buf, err := txn.Systemstore().Get(ctx, key.ToDS().Bytes())
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -163,26 +162,16 @@ func GetSchemas(
 	}
 
 	schemaVersionPrefix := core.NewSchemaVersionKey("")
-	schemaVersionQuery, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: schemaVersionPrefix.ToString(),
+	versionIter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: schemaVersionPrefix.Bytes(),
 	})
-	if err != nil {
-		return nil, NewErrFailedToCreateSchemaQuery(err)
-	}
 
 	descriptions := make([]client.SchemaDescription, 0)
-	for res := range schemaVersionQuery.Next() {
-		if res.Error != nil {
-			if err := schemaVersionQuery.Close(); err != nil {
-				return nil, NewErrFailedToCloseSchemaQuery(err)
-			}
-			return nil, err
-		}
-
+	for ; versionIter.Valid(); versionIter.Next() {
 		var desc client.SchemaDescription
-		err = json.Unmarshal(res.Value, &desc)
+		err = json.Unmarshal(versionIter.Value(), &desc)
 		if err != nil {
-			if err := schemaVersionQuery.Close(); err != nil {
+			if err := versionIter.Close(ctx); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
 			return nil, err
@@ -196,7 +185,7 @@ func GetSchemas(
 		}
 	}
 
-	if err := schemaVersionQuery.Close(); err != nil {
+	if err := versionIter.Close(ctx); err != nil {
 		return nil, NewErrFailedToCloseSchemaQuery(err)
 	}
 
@@ -209,26 +198,16 @@ func GetAllSchemas(
 	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {
 	prefix := core.NewSchemaVersionKey("")
-	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: prefix.ToString(),
+	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: prefix.Bytes(),
 	})
-	if err != nil {
-		return nil, NewErrFailedToCreateSchemaQuery(err)
-	}
 
 	schemas := make([]client.SchemaDescription, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
-			if err := q.Close(); err != nil {
-				return nil, NewErrFailedToCloseSchemaQuery(err)
-			}
-			return nil, err
-		}
-
+	for ; iter.Valid(); iter.Next() {
 		var desc client.SchemaDescription
-		err = json.Unmarshal(res.Value, &desc)
+		err := json.Unmarshal(iter.Value(), &desc)
 		if err != nil {
-			if err := q.Close(); err != nil {
+			if err := iter.Close(ctx); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
 			return nil, err
@@ -237,7 +216,7 @@ func GetAllSchemas(
 		schemas = append(schemas, desc)
 	}
 
-	if err := q.Close(); err != nil {
+	if err := iter.Close(ctx); err != nil {
 		return nil, NewErrFailedToCloseSchemaQuery(err)
 	}
 
@@ -254,31 +233,25 @@ func GetSchemaVersionIDs(
 	schemaVersions := []string{schemaRoot}
 
 	prefix := core.NewSchemaHistoryKey(schemaRoot, "")
-	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix:   prefix.ToString(),
+	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefix.Bytes(),
 		KeysOnly: true,
 	})
-	if err != nil {
-		return nil, NewErrFailedToCreateSchemaQuery(err)
-	}
 
-	for res := range q.Next() {
-		if res.Error != nil {
-			if err := q.Close(); err != nil {
-				return nil, NewErrFailedToCloseSchemaQuery(err)
-			}
-			return nil, err
-		}
-
-		key, err := core.NewSchemaHistoryKeyFromString(res.Key)
+	for ; iter.Valid(); iter.Next() {
+		key, err := core.NewSchemaHistoryKeyFromString(string(iter.Key()))
 		if err != nil {
-			if err := q.Close(); err != nil {
+			if err := iter.Close(ctx); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
 			return nil, err
 		}
 
 		schemaVersions = append(schemaVersions, key.PreviousSchemaVersionID)
+	}
+	err := iter.Close(ctx)
+	if err != nil {
+		return nil, NewErrFailedToCloseSchemaQuery(err)
 	}
 
 	return schemaVersions, nil

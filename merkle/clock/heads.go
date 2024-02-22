@@ -17,8 +17,8 @@ import (
 	"sort"
 
 	cid "github.com/ipfs/go-cid"
-	"github.com/ipfs/go-datastore/query"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
@@ -78,18 +78,12 @@ func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height u
 // List returns the list of current heads plus the max height.
 // @todo Document Heads.List function
 func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
-	q := query.Query{
-		Prefix:   hh.namespace.ToString(),
-		KeysOnly: false,
-	}
-
-	results, err := hh.store.Query(ctx, q)
-	if err != nil {
-		return nil, 0, err
-	}
+	iter := hh.store.Iterator(ctx, corekv.IterOptions{
+		Prefix: hh.namespace.Bytes(),
+	})
 
 	defer func() {
-		err := results.Close()
+		err := iter.Close(ctx)
 		if err != nil {
 			log.ErrorE(ctx, "Error closing results", err)
 		}
@@ -97,17 +91,14 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 
 	heads := make([]cid.Cid, 0)
 	var maxHeight uint64
-	for r := range results.Next() {
-		if r.Error != nil {
-			return nil, 0, NewErrFailedToGetNextQResult(r.Error)
-		}
+	for ; iter.Valid(); iter.Next() {
 
-		headKey, err := core.NewHeadStoreKey(r.Key)
+		headKey, err := core.NewHeadStoreKey(string(iter.Key()))
 		if err != nil {
 			return nil, 0, err
 		}
 
-		height, n := binary.Uvarint(r.Value)
+		height, n := binary.Uvarint(iter.Value())
 		if n <= 0 {
 			return nil, 0, ErrDecodingHeight
 		}

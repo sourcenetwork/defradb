@@ -20,8 +20,8 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -650,24 +650,21 @@ func (c *collection) getAllDocKeysChan(
 	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionId: fmt.Sprint(c.ID()),
 	}
-	q, err := txn.Datastore().Query(ctx, query.Query{
-		Prefix:   prefix.ToString(),
+	iter := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefix.Bytes(),
 		KeysOnly: true,
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	resCh := make(chan client.DocKeysResult)
 	go func() {
 		defer func() {
-			if err := q.Close(); err != nil {
-				log.ErrorE(ctx, "Failed to close AllDocKeys query", err)
+			if err := iter.Close(ctx); err != nil {
+				log.ErrorE(ctx, "Failed to close AllDocKeys iter", err)
 			}
 			close(resCh)
 			c.discardImplicitTxn(ctx, txn)
 		}()
-		for res := range q.Next() {
+		for ; iter.Valid(); iter.Next() {
 			// check for Done on context first
 			select {
 			case <-ctx.Done():
@@ -676,19 +673,13 @@ func (c *collection) getAllDocKeysChan(
 			default:
 				// noop, just continue on the with the for loop
 			}
-			if res.Error != nil {
-				resCh <- client.DocKeysResult{
-					Err: res.Error,
-				}
-				return
-			}
 
 			// now we have a doc key
-			rawDocKey := ds.NewKey(res.Key).BaseNamespace()
+			rawDocKey := ds.NewKey(string(iter.Key())).BaseNamespace()
 			key, err := client.NewDocKeyFromString(rawDocKey)
 			if err != nil {
 				resCh <- client.DocKeysResult{
-					Err: res.Error,
+					Err: err, // ATTENTION: I believe this was wrong before
 				}
 				return
 			}

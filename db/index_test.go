@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -205,20 +206,16 @@ func (f *indexTestFixture) dropIndex(colName, indexName string) error {
 
 func (f *indexTestFixture) countIndexPrefixes(colName, indexName string) int {
 	prefix := core.NewCollectionIndexKey(usersColName, indexName)
-	q, err := f.txn.Systemstore().Query(f.ctx, query.Query{
-		Prefix: prefix.ToString(),
+	iter := f.txn.Systemstore().Iterator(f.ctx, corekv.IterOptions{
+		Prefix: prefix.Bytes(),
 	})
-	assert.NoError(f.t, err)
 	defer func() {
-		err := q.Close()
+		err := iter.Close(f.ctx)
 		assert.NoError(f.t, err)
 	}()
 
 	count := 0
-	for res := range q.Next() {
-		if res.Error != nil {
-			assert.NoError(f.t, err)
-		}
+	for ; iter.Valid(); iter.Next() {
 		count++
 	}
 	return count

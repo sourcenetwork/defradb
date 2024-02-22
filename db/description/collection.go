@@ -14,8 +14,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/ipfs/go-datastore/query"
-
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -106,33 +105,27 @@ func GetCollectionsBySchemaVersionID(
 	schemaVersionID string,
 ) ([]client.CollectionDescription, error) {
 	schemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID, 0)
-
-	schemaVersionQuery, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix:   schemaVersionKey.ToString(),
+	schemaVersionIter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   schemaVersionKey.Bytes(),
 		KeysOnly: true,
 	})
-	if err != nil {
-		return nil, NewErrFailedToCreateCollectionQuery(err)
-	}
 
 	colIDs := make([]uint32, 0)
-	for res := range schemaVersionQuery.Next() {
-		if res.Error != nil {
-			if err := schemaVersionQuery.Close(); err != nil {
-				return nil, NewErrFailedToCloseSchemaQuery(err)
-			}
-			return nil, err
-		}
-
-		colSchemaVersionKey, err := core.NewCollectionSchemaVersionKeyFromString(string(res.Key))
+	for ; schemaVersionIter.Valid(); schemaVersionIter.Next() {
+		keyBuf := string(schemaVersionIter.Key())
+		colSchemaVersionKey, err := core.NewCollectionSchemaVersionKeyFromString(keyBuf)
 		if err != nil {
-			if err := schemaVersionQuery.Close(); err != nil {
+			if err := schemaVersionIter.Close(ctx); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
 			return nil, err
 		}
 
 		colIDs = append(colIDs, colSchemaVersionKey.CollectionID)
+	}
+	err := schemaVersionIter.Close(ctx)
+	if err != nil {
+		return nil, NewErrFailedToCloseSchemaQuery(err)
 	}
 
 	cols := make([]client.CollectionDescription, len(colIDs))
@@ -187,26 +180,16 @@ func GetCollections(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.CollectionDescription, error) {
-	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: core.COLLECTION,
+	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: []byte(core.COLLECTION),
 	})
-	if err != nil {
-		return nil, NewErrFailedToCreateCollectionQuery(err)
-	}
 
 	cols := make([]client.CollectionDescription, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
-			if err := q.Close(); err != nil {
-				return nil, NewErrFailedToCloseCollectionQuery(err)
-			}
-			return nil, err
-		}
-
+	for ; iter.Valid(); iter.Next() {
 		var col client.CollectionDescription
-		err = json.Unmarshal(res.Value, &col)
+		err := json.Unmarshal(iter.Value(), &col)
 		if err != nil {
-			if err := q.Close(); err != nil {
+			if err := iter.Close(ctx); err != nil {
 				return nil, NewErrFailedToCloseCollectionQuery(err)
 			}
 			return nil, err
