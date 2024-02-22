@@ -515,8 +515,7 @@ func (f *IndexFetcher) newInIndexIterator(
 		}
 	} else {
 		indexKey := f.newIndexDataStoreKey()
-		indexKey.Fields = []core.IndexedField{
-			{ID: f.indexedFields[0].ID, Descending: f.indexDesc.Fields[0].Descending}}
+		indexKey.Fields = []core.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
 		iter = &eqPrefixIndexIterator{
 			queryResultIterator: queryResultIterator{indexDesc: f.indexDesc},
@@ -540,7 +539,6 @@ func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []*client.FieldValu
 	key := core.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
 	key.Fields = make([]core.IndexedField, len(values))
 	for i := range values {
-		key.Fields[i].ID = f.indexedFields[i].ID
 		key.Fields[i].Value = values[i]
 		key.Fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}

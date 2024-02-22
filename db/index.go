@@ -150,7 +150,6 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	indexDataStoreKey.IndexID = index.desc.ID
 	indexDataStoreKey.Fields = make([]core.IndexedField, len(index.fieldsDescs))
 	for i := range index.fieldsDescs {
-		indexDataStoreKey.Fields[i].ID = index.fieldsDescs[i].ID
 		indexDataStoreKey.Fields[i].Value = fieldValues[i]
 		indexDataStoreKey.Fields[i].Descending = index.desc.Fields[i].Descending
 	}
@@ -221,7 +220,6 @@ func (index *collectionSimpleIndex) getDocumentsIndexKey(
 	}
 
 	key.Fields = append(key.Fields, core.IndexedField{
-		ID:    client.FieldID(core.DocIDFieldIndex),
 		Value: client.NewFieldValue(client.NONE_CRDT, doc.ID().String(), client.FieldKind_DocID)},
 	)
 	return key, nil
@@ -343,7 +341,6 @@ func (index *collectionUniqueIndex) getDocumentsIndexRecord(
 	}
 	if hasIndexKeyNilField(&key) {
 		key.Fields = append(key.Fields, core.IndexedField{
-			ID:    client.FieldID(core.DocIDFieldIndex),
 			Value: client.NewFieldValue(client.NONE_CRDT, doc.ID().String(), client.FieldKind_DocID)},
 		)
 		return key, []byte{}, nil

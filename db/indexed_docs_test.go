@@ -175,13 +175,12 @@ indexLoop:
 				hasNilValue = true
 			}
 			require.True(b.f.t, ok, "field not found in the collection schema")
-			key.Fields = append(key.Fields, core.IndexedField{ID: field.ID, Value: fieldValue})
+			key.Fields = append(key.Fields, core.IndexedField{Value: fieldValue})
 		}
 
 		if !b.isUnique || hasNilValue {
 			key.Fields = append(key.Fields,
 				core.IndexedField{
-					ID:    client.FieldID(core.DocIDFieldIndex),
 					Value: client.NewFieldValue(client.NONE_CRDT, b.doc.ID().String(), client.FieldKind_DocID),
 				})
 		}

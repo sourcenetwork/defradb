@@ -79,8 +79,6 @@ var _ Key = (*DataStoreKey)(nil)
 // IndexedField contains information necessary for storing a single
 // value of a field in an index.
 type IndexedField struct {
-	// ID is the id of the field in the schema
-	ID client.FieldID
 	// Value is the value of the field in the index
 	Value *client.FieldValue
 	// Descending is true if the field is sorted in descending order
@@ -546,15 +544,11 @@ func DecodeIndexDataStoreKey(b []byte, indexDesc *client.IndexDescription) (Inde
 	}
 
 	for len(b) > 0 {
-		var fieldID, fieldKind uint64
 		if b[0] != '/' {
 			return IndexDataStoreKey{}, ErrInvalidKey
 		}
 		b = b[1:]
-		b, fieldID, err = encoding.DecodeUvarintAscending(b)
-		if err != nil {
-			return IndexDataStoreKey{}, err
-		}
+		var fieldKind uint64
 		b, fieldKind, err = encoding.DecodeUvarintAscending(b)
 		if err != nil {
 			return IndexDataStoreKey{}, err
@@ -572,7 +566,6 @@ func DecodeIndexDataStoreKey(b []byte, indexDesc *client.IndexDescription) (Inde
 		}
 
 		key.Fields = append(key.Fields, IndexedField{
-			ID:    client.FieldID(fieldID),
 			Value: fieldVal,
 		})
 	}
@@ -605,7 +598,6 @@ func EncodeIndexDataStoreKey(b []byte, key *IndexDataStoreKey) ([]byte, error) {
 	var err error
 	for _, field := range key.Fields {
 		b = append(b, '/')
-		b = encoding.EncodeUvarintAscending(b, uint64(field.ID))
 		b = encoding.EncodeUvarintAscending(b, uint64(field.Value.Kind()))
 		b, err = encoding.EncodeFieldValue(b, field.Value, field.Descending)
 		if err != nil {
