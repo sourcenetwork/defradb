@@ -20,8 +20,6 @@ import (
 // modified if the input string is expected to be used again - doing so could
 // violate Go semantics.
 func unsafeConvertStringToBytes(s string) []byte {
-	// unsafe.StringData output is unspecified for empty string input so always
-	// return nil.
 	if len(s) == 0 {
 		return nil
 	}
@@ -56,6 +54,6 @@ func encodeStringAscendingWithTerminatorAndPrefix(
 
 // EncodeStringDescending is the descending version of EncodeStringAscending.
 func EncodeStringDescending(b []byte, s string) []byte {
-	arg := unsafeConvertStringToBytes(s)
-	return EncodeBytesDescending(b, arg)
+	unsafeString := unsafeConvertStringToBytes(s)
+	return EncodeBytesDescending(b, unsafeString)
 }

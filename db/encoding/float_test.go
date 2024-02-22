@@ -105,7 +105,7 @@ func TestEncodeFloatOrdered(t *testing.T) {
 			} else if dec != c.Value {
 				t.Errorf("unexpected mismatch for %v. got %v", c.Value, dec)
 			}
-			lastEncoded = enc
+						lastEncoded = enc
 		}
 
 		// Test that appending the float to an existing buffer works.
