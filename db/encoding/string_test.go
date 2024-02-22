@@ -43,20 +43,20 @@ func TestEncodeDecodeUnsafeString(t *testing.T) {
 					c.value, testCases[i-1].encoded, enc)
 			}
 		}
-		remainder, dec, err := DecodeUnsafeStringAscending(enc, nil)
+		remainder, dec, err := DecodeBytesAscending(enc, nil)
 		if err != nil {
 			t.Error(err)
 			continue
 		}
-		if c.value != dec {
-			t.Errorf("unexpected decoding mismatch for %v. got %v", c.value, dec)
+		if c.value != string(dec) {
+			t.Errorf("unexpected decoding mismatch for %v. got %v", c.value, string(dec))
 		}
 		if len(remainder) != 0 {
 			t.Errorf("unexpected remaining bytes: %v", remainder)
 		}
 
 		enc = append(enc, "remainder"...)
-		remainder, _, err = DecodeUnsafeStringAscending(enc, nil)
+		remainder, _, err = DecodeBytesAscending(enc, nil)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -95,20 +95,20 @@ func TestEncodeDecodeUnsafeStringDescending(t *testing.T) {
 					c.value, testCases[i-1].encoded, enc)
 			}
 		}
-		remainder, dec, err := DecodeUnsafeStringDescending(enc, nil)
+		remainder, dec, err := DecodeBytesDescending(enc, nil)
 		if err != nil {
 			t.Error(err)
 			continue
 		}
-		if c.value != dec {
-			t.Errorf("unexpected decoding mismatch for %v. got [% x]", c.value, dec)
+		if c.value != string(dec) {
+			t.Errorf("unexpected decoding mismatch for %v. got [% x]", c.value, string(dec))
 		}
 		if len(remainder) != 0 {
 			t.Errorf("unexpected remaining bytes: %v", remainder)
 		}
 
 		enc = append(enc, "remainder"...)
-		remainder, _, err = DecodeUnsafeStringDescending(enc, nil)
+		remainder, _, err = DecodeBytesDescending(enc, nil)
 		if err != nil {
 			t.Error(err)
 			continue

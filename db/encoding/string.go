@@ -15,11 +15,13 @@ import (
 	"unsafe"
 )
 
-// UnsafeConvertStringToBytes converts a string to a byte array to be used with
+// unsafeConvertStringToBytes converts a string to a byte array to be used with
 // string encoding functions. Note that the output byte array should not be
 // modified if the input string is expected to be used again - doing so could
 // violate Go semantics.
-func UnsafeConvertStringToBytes(s string) []byte {
+func unsafeConvertStringToBytes(s string) []byte {
+	// unsafe.StringData output is unspecified for empty string input so always
+	// return nil.
 	if len(s) == 0 {
 		return nil
 	}
@@ -48,23 +50,12 @@ func EncodeStringAscending(b []byte, s string) []byte {
 func encodeStringAscendingWithTerminatorAndPrefix(
 	b []byte, s string, terminator byte, prefix byte,
 ) []byte {
-	unsafeString := UnsafeConvertStringToBytes(s)
+	unsafeString := unsafeConvertStringToBytes(s)
 	return encodeBytesAscendingWithTerminatorAndPrefix(b, unsafeString, terminator, prefix)
 }
 
 // EncodeStringDescending is the descending version of EncodeStringAscending.
 func EncodeStringDescending(b []byte, s string) []byte {
-	if len(s) == 0 {
-		return EncodeBytesDescending(b, nil)
-	}
-	// We unsafely convert the string to a []byte to avoid the
-	// usual allocation when converting to a []byte. This is
-	// kosher because we know that EncodeBytes{,Descending} does
-	// not keep a reference to the value it encodes. The first
-	// step is getting access to the string internals.
-	hdr := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	// Next we treat the string data as a maximally sized array which we
-	// slice. This usage is safe because the pointer value remains in the string.
-	arg := (*[0x7fffffff]byte)(unsafe.Pointer(hdr.Data))[:len(s):len(s)]
+	arg := unsafeConvertStringToBytes(s)
 	return EncodeBytesDescending(b, arg)
 }

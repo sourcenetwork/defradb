@@ -12,13 +12,11 @@ package encoding
 
 import (
 	"bytes"
-
-	"github.com/pkg/errors"
 )
 
 const (
-	// <term>     -> \x00\x01
-	// \x00       -> \x00\xff
+	// All terminators are encoded as \x00\x01 sequence.
+	// In order to distinguish \x00 byte it is escaped as \x00\xff
 	escape          byte = 0x00
 	escapedTerm     byte = 0x01
 	escaped00       byte = 0xff
@@ -128,7 +126,7 @@ func DecodeBytesDescending(b []byte, r []byte) ([]byte, []byte, error) {
 func decodeBytesInternal(b []byte, r []byte, e escapes, expectMarker bool) ([]byte, []byte, error) {
 	if expectMarker {
 		if len(b) == 0 || b[0] != e.marker {
-			return nil, nil, errors.Errorf("did not find marker %#x in buffer %#x", e.marker, b)
+			return nil, nil, NewErrMarkersNotFound(b, e.marker)
 		}
 		b = b[1:]
 	}
@@ -136,10 +134,10 @@ func decodeBytesInternal(b []byte, r []byte, e escapes, expectMarker bool) ([]by
 	for {
 		i := bytes.IndexByte(b, e.escape)
 		if i == -1 {
-			return nil, nil, errors.Errorf("did not find terminator %#x in buffer %#x", e.escape, b)
+			return nil, nil, NewErrTerminatorNotFound(b, e.escape)
 		}
 		if i+1 >= len(b) {
-			return nil, nil, errors.Errorf("malformed escape in buffer %#x", b)
+			return nil, nil, NewErrMalformedEscape(b)
 		}
 		v := b[i+1]
 		if v == e.escapedTerm {
@@ -152,7 +150,7 @@ func decodeBytesInternal(b []byte, r []byte, e escapes, expectMarker bool) ([]by
 		}
 
 		if v != e.escaped00 {
-			return nil, nil, errors.Errorf("unknown escape sequence: %#x %#x", e.escape, v)
+			return nil, nil, NewErrUnknownEscapeSequence(b[i:i+2], e.escape)
 		}
 
 		r = append(r, b[:i]...)

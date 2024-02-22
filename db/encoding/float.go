@@ -63,7 +63,7 @@ func EncodeFloatDescending(b []byte, f float64) []byte {
 // float64 from buf.
 func DecodeFloatAscending(buf []byte) ([]byte, float64, error) {
 	if PeekType(buf) != Float {
-		return buf, 0, errors.Errorf("did not find marker")
+		return buf, 0, NewErrMarkersNotFound(buf, floatNaN, floatNeg, floatZero, floatPos, floatNaNDesc)
 	}
 	switch buf[0] {
 	case floatNaN, floatNaNDesc:

@@ -509,47 +509,47 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 // DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.
 // It expects the input bytes is in the following format:
 //
-// /[CollectionID]/[IndexID]/[FieldID][FieldKind][FieldValue](/[FieldID][FieldKind][FieldValue]...)
+// /[CollectionID]/[IndexID]/[FieldKind][FieldValue](/[FieldKind][FieldValue]...)
 //
-// Where [CollectionID], [IndexID], [FieldID] and [FieldKind] are integers
-func DecodeIndexDataStoreKey(b []byte, indexDesc *client.IndexDescription) (IndexDataStoreKey, error) {
-	if len(b) == 0 {
+// Where [CollectionID], [IndexID] and [FieldKind] are integers
+func DecodeIndexDataStoreKey(data []byte, indexDesc *client.IndexDescription) (IndexDataStoreKey, error) {
+	if len(data) == 0 {
 		return IndexDataStoreKey{}, ErrEmptyKey
 	}
 
 	key := IndexDataStoreKey{}
 
-	if b[0] != '/' {
+	if data[0] != '/' {
 		return IndexDataStoreKey{}, ErrInvalidKey
 	}
-	b = b[1:]
-	b, colID, err := encoding.DecodeUvarintAscending(b)
+	data = data[1:]
+	data, colID, err := encoding.DecodeUvarintAscending(data)
 	if err != nil {
 		return IndexDataStoreKey{}, err
 	}
 	key.CollectionID = uint32(colID)
 
-	if b[0] != '/' {
+	if data[0] != '/' {
 		return IndexDataStoreKey{}, ErrInvalidKey
 	}
-	b = b[1:]
-	b, indID, err := encoding.DecodeUvarintAscending(b)
+	data = data[1:]
+	data, indID, err := encoding.DecodeUvarintAscending(data)
 	if err != nil {
 		return IndexDataStoreKey{}, err
 	}
 	key.IndexID = uint32(indID)
 
-	if len(b) == 0 {
+	if len(data) == 0 {
 		return key, nil
 	}
 
-	for len(b) > 0 {
-		if b[0] != '/' {
+	for len(data) > 0 {
+		if data[0] != '/' {
 			return IndexDataStoreKey{}, ErrInvalidKey
 		}
-		b = b[1:]
+		data = data[1:]
 		var fieldKind uint64
-		b, fieldKind, err = encoding.DecodeUvarintAscending(b)
+		data, fieldKind, err = encoding.DecodeUvarintAscending(data)
 		if err != nil {
 			return IndexDataStoreKey{}, err
 		}
@@ -560,7 +560,7 @@ func DecodeIndexDataStoreKey(b []byte, indexDesc *client.IndexDescription) (Inde
 		if i < len(indexDesc.Fields) { // TOTEST
 			descending = indexDesc.Fields[i].Descending
 		}
-		b, fieldVal, err = encoding.DecodeFieldValue(b, client.FieldKind(fieldKind), descending)
+		data, fieldVal, err = encoding.DecodeFieldValue(data, client.FieldKind(fieldKind), descending)
 		if err != nil {
 			return IndexDataStoreKey{}, err
 		}
@@ -606,10 +606,6 @@ func EncodeIndexDataStoreKey(b []byte, key *IndexDataStoreKey) ([]byte, error) {
 	}
 
 	return b, nil
-}
-
-func EncodeDocID(b []byte, docID string) ([]byte, error) {
-	return encoding.EncodeStringAscending(encoding.EncodeUvarintAscending(b, 0), docID), nil
 }
 
 // ToDS returns the datastore key
