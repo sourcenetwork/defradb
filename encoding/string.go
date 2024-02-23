@@ -13,7 +13,6 @@
 package encoding
 
 import (
-	"reflect"
 	"unsafe"
 )
 
@@ -25,15 +24,7 @@ func unsafeConvertStringToBytes(s string) []byte {
 	if len(s) == 0 {
 		return nil
 	}
-	// We unsafely convert the string to a []byte to avoid the
-	// usual allocation when converting to a []byte. This is
-	// kosher because we know that EncodeBytes{,Descending} does
-	// not keep a reference to the value it encodes. The first
-	// step is getting access to the string internals.
-	hdr := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	// Next we treat the string data as a maximally sized array which we
-	// slice. This usage is safe because the pointer value remains in the string.
-	return (*[0x7fffffff]byte)(unsafe.Pointer(hdr.Data))[:len(s):len(s)]
+	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
 // EncodeStringAscending encodes the string value using an escape-based encoding. See
