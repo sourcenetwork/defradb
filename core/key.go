@@ -43,7 +43,8 @@ const (
 )
 
 const (
-	COLLECTION                     = "/collection/id"
+	COLLECTION                     = "collection"
+	COLLECTION_ID                  = "/collection/id"
 	COLLECTION_NAME                = "/collection/name"
 	COLLECTION_SCHEMA_VERSION      = "/collection/version"
 	COLLECTION_INDEX               = "/collection/index"
@@ -310,7 +311,7 @@ func NewCollectionPolicyKey(
 // Where [CollectionID] must not be omitted.
 func NewCollectionPolicyKeyFromString(key string) (CollectionPolicyKey, error) {
 	keyElements := strings.Split(key, "/")
-	if len(keyElements) != 4 || keyElements[1] != "collection" || keyElements[2] != "policy" {
+	if len(keyElements) != 4 || keyElements[1] != COLLECTION || keyElements[2] != "policy" {
 		return CollectionPolicyKey{}, ErrInvalidKey
 	}
 
@@ -352,7 +353,7 @@ func NewCollectionIndexKey(colID immutable.Option[uint32], indexName string) Col
 // Where [IndexName] might be omitted. Anything else will return an error.
 func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 	keyArr := strings.Split(key, "/")
-	if len(keyArr) < 4 || len(keyArr) > 5 || keyArr[1] != "collection" || keyArr[2] != "index" {
+	if len(keyArr) < 4 || len(keyArr) > 5 || keyArr[1] != COLLECTION || keyArr[2] != "index" {
 		return CollectionIndexKey{}, ErrInvalidKey
 	}
 
@@ -660,7 +661,7 @@ func (k PrimaryDataStoreKey) ToString() string {
 }
 
 func (k CollectionKey) ToString() string {
-	return fmt.Sprintf("%s/%s", COLLECTION, strconv.Itoa(int(k.CollectionID)))
+	return fmt.Sprintf("%s/%s", COLLECTION_ID, strconv.Itoa(int(k.CollectionID)))
 }
 
 func (k CollectionKey) Bytes() []byte {

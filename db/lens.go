@@ -34,7 +34,7 @@ func (db *db) setMigration(ctx context.Context, txn datastore.Txn, cfg client.Le
 		return err
 	}
 
-	colSeq, err := db.getSequence(ctx, txn, core.COLLECTION)
+	colSeq, err := db.getSequence(ctx, txn, core.COLLECTION_ID)
 	if err != nil {
 		return err
 	}

@@ -216,7 +216,7 @@ func GetCollections(
 	txn datastore.Txn,
 ) ([]client.CollectionDescription, error) {
 	q, err := txn.Systemstore().Query(ctx, query.Query{
-		Prefix: core.COLLECTION,
+		Prefix: core.COLLECTION_ID,
 	})
 	if err != nil {
 		return nil, NewErrFailedToCreateCollectionQuery(err)

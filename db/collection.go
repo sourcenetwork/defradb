@@ -107,7 +107,7 @@ func (db *db) createCollection(
 		}
 	}
 
-	colSeq, err := db.getSequence(ctx, txn, core.COLLECTION)
+	colSeq, err := db.getSequence(ctx, txn, core.COLLECTION_ID)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +257,7 @@ func (db *db) updateSchema(
 		return err
 	}
 
-	colSeq, err := db.getSequence(ctx, txn, core.COLLECTION)
+	colSeq, err := db.getSequence(ctx, txn, core.COLLECTION_ID)
 	if err != nil {
 		return err
 	}
