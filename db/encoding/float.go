@@ -84,7 +84,7 @@ func DecodeFloatAscending(buf []byte) ([]byte, float64, error) {
 		}
 		return b, math.Float64frombits(u), nil
 	default:
-		return nil, 0, errors.Errorf("unknown prefix of the encoded byte slice: %q", buf)
+		return nil, 0, NewErrMarkersNotFound(buf, floatNaN, floatNeg, floatZero, floatPos, floatNaNDesc)
 	}
 }
 

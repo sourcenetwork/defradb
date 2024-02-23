@@ -12,13 +12,11 @@ package encoding
 
 import (
 	"bytes"
-	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEncodeDecodeBytes(t *testing.T) {
 func TestEncodeDecodeBytes(t *testing.T) {
 	testCases := []struct {
 		value   []byte
@@ -62,12 +60,8 @@ func TestEncodeDecodeBytes(t *testing.T) {
 		enc = append(enc, []byte("remainder")...)
 		remainder, _, err = DecodeBytesAscending(enc, nil)
 		if err != nil {
-		remainder, _, err = DecodeBytesAscending(enc, nil)
-		if err != nil {
 			t.Error(err)
 			continue
-		}
-		if string(remainder) != "remainder" {
 		}
 		if string(remainder) != "remainder" {
 			t.Errorf("unexpected remaining bytes: %v", remainder)

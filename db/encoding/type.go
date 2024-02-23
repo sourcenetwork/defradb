@@ -12,8 +12,6 @@ package encoding
 
 // Type represents the type of a value encoded by
 // Encode{Null,Varint,Uvarint,Float,Bytes}.
-//
-//go:generate stringer -type=Type
 type Type int
 
 const (
