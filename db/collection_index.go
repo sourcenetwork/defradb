@@ -206,7 +206,7 @@ func (c *collection) createIndex(
 	colSeq, err := c.db.getSequence(
 		ctx,
 		txn,
-		core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, c.ID())),
+		core.NewIndexIDSequenceKey(c.ID()),
 	)
 	if err != nil {
 		return nil, err

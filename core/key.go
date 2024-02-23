@@ -165,16 +165,19 @@ type P2PCollectionKey struct {
 
 var _ Key = (*P2PCollectionKey)(nil)
 
-type SequenceKey struct {
-	SequenceName string
-}
-
-var _ Key = (*SequenceKey)(nil)
-
 // CollectionIDSequenceKey is used to key the sequence used to generate collection ids.
 type CollectionIDSequenceKey struct{}
 
 var _ Key = (*CollectionIDSequenceKey)(nil)
+
+// IndexIDSequenceKey is used to key the sequence used to generate index ids.
+//
+// The sequence is specific to each collection version.
+type IndexIDSequenceKey struct {
+	CollectionID uint32
+}
+
+var _ Key = (*IndexIDSequenceKey)(nil)
 
 type ReplicatorKey struct {
 	ReplicatorID string
@@ -369,8 +372,8 @@ func NewSchemaRootKeyFromString(keyString string) (SchemaRootKey, error) {
 	}, nil
 }
 
-func NewSequenceKey(name string) SequenceKey {
-	return SequenceKey{SequenceName: name}
+func NewIndexIDSequenceKey(collectionID uint32) IndexIDSequenceKey {
+	return IndexIDSequenceKey{CollectionID: collectionID}
 }
 
 func (k DataStoreKey) WithValueFlag() DataStoreKey {
@@ -695,24 +698,6 @@ func (k SchemaRootKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-func (k SequenceKey) ToString() string {
-	result := SEQ
-
-	if k.SequenceName != "" {
-		result = result + "/" + k.SequenceName
-	}
-
-	return result
-}
-
-func (k SequenceKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
-func (k SequenceKey) ToDS() ds.Key {
-	return ds.NewKey(k.ToString())
-}
-
 func (k CollectionIDSequenceKey) ToString() string {
 	return SEQ + "/" + COLLECTION
 }
@@ -722,6 +707,18 @@ func (k CollectionIDSequenceKey) Bytes() []byte {
 }
 
 func (k CollectionIDSequenceKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k IndexIDSequenceKey) ToString() string {
+	return SEQ + "/" + COLLECTION_INDEX + "/" + strconv.Itoa(int(k.CollectionID))
+}
+
+func (k IndexIDSequenceKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k IndexIDSequenceKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 

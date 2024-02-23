@@ -463,7 +463,7 @@ func TestCreateIndex_WithMultipleCollectionsAndIndexes_AssignIncrementedIDPerCol
 		desc, err := f.createCollectionIndexFor(col.Name().Value(), makeIndex(fieldName))
 		require.NoError(t, err)
 		assert.Equal(t, expectedID, desc.ID)
-		seqKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, col.ID()))
+		seqKey := core.NewIndexIDSequenceKey(col.ID())
 		storedSeqKey, err := f.txn.Systemstore().Get(f.ctx, seqKey.ToDS())
 		assert.NoError(t, err)
 		storedSeqVal := binary.BigEndian.Uint64(storedSeqKey)

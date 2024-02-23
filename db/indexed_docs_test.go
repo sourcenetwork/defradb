@@ -14,7 +14,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"testing"
 
 	ipfsDatastore "github.com/ipfs/go-datastore"
@@ -261,7 +260,7 @@ func (f *indexTestFixture) stubSystemStore(systemStoreOn *mocks.DSReaderWriter_E
 	systemStoreOn.Get(mock.Anything, colIndexOnNameKey.ToDS()).Maybe().Return(indexOnNameDescData, nil)
 
 	if f.users != nil {
-		sequenceKey := core.NewSequenceKey(fmt.Sprintf("%s/%d", core.COLLECTION_INDEX, f.users.ID()))
+		sequenceKey := core.NewIndexIDSequenceKey(f.users.ID())
 		systemStoreOn.Get(mock.Anything, sequenceKey.ToDS()).Maybe().Return([]byte{0, 0, 0, 0, 0, 0, 0, 1}, nil)
 	}
 
