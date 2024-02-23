@@ -50,6 +50,7 @@ const (
 	SCHEMA_VERSION                 = "/schema/version/v"
 	SCHEMA_VERSION_ROOT            = "/schema/version/r"
 	SEQ                            = "/seq"
+	INDEX_ID_SEQ                   = "/seq/index"
 	PRIMARY_KEY                    = "/pk"
 	DATASTORE_DOC_VERSION_FIELD_ID = "v"
 	REPLICATOR                     = "/replicator/id"
@@ -711,7 +712,7 @@ func (k CollectionIDSequenceKey) ToDS() ds.Key {
 }
 
 func (k IndexIDSequenceKey) ToString() string {
-	return SEQ + "/" + COLLECTION_INDEX + "/" + strconv.Itoa(int(k.CollectionID))
+	return INDEX_ID_SEQ + "/" + strconv.Itoa(int(k.CollectionID))
 }
 
 func (k IndexIDSequenceKey) Bytes() []byte {
