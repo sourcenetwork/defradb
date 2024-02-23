@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db/encoding"
+	"github.com/sourcenetwork/defradb/encoding"
 	"github.com/sourcenetwork/defradb/errors"
 )
 

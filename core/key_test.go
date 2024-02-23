@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db/encoding"
+	"github.com/sourcenetwork/defradb/encoding"
 )
 
 func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
