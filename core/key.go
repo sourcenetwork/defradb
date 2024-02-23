@@ -171,6 +171,11 @@ type SequenceKey struct {
 
 var _ Key = (*SequenceKey)(nil)
 
+// CollectionIDSequenceKey is used to key the sequence used to generate collection ids.
+type CollectionIDSequenceKey struct{}
+
+var _ Key = (*CollectionIDSequenceKey)(nil)
+
 type ReplicatorKey struct {
 	ReplicatorID string
 }
@@ -705,6 +710,18 @@ func (k SequenceKey) Bytes() []byte {
 }
 
 func (k SequenceKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k CollectionIDSequenceKey) ToString() string {
+	return SEQ + "/" + COLLECTION
+}
+
+func (k CollectionIDSequenceKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k CollectionIDSequenceKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
