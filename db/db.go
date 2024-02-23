@@ -226,7 +226,7 @@ func (db *db) initialize(ctx context.Context) error {
 
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence(ctx, txn, core.COLLECTION)
+	_, err = db.getSequence(ctx, txn, core.NewSequenceKey(core.COLLECTION))
 	if err != nil {
 		return err
 	}
