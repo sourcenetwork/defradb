@@ -287,14 +287,8 @@ func (db *db) updateSchema(
 			}
 
 			for i, globalField := range schema.Fields {
-				isNew := true
-				for _, localField := range col.Fields {
-					if localField.Name == globalField.Name {
-						isNew = false
-						break
-					}
-				}
-				if isNew {
+				_, exists := col.GetFieldByName(globalField.Name)
+				if !exists {
 					col.Fields = append(
 						col.Fields,
 						client.CollectionFieldDescription{
