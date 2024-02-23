@@ -1691,7 +1691,8 @@ func AssertError(t *testing.T, description string, err error, expectedError stri
 		return false
 	} else {
 		if !strings.Contains(err.Error(), expectedError) {
-			assert.ErrorIs(t, err, errors.New(expectedError))
+			// Must be require instead of assert, otherwise will show a fake "error not raised".
+			require.ErrorIs(t, err, errors.New(expectedError))
 			return false
 		}
 		return true
