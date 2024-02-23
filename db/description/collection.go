@@ -53,6 +53,21 @@ func SaveCollection(
 		}
 	}
 
+	desc.Policy.HasValue()
+	if desc.Policy.HasValue() {
+		policy := desc.Policy.Value()
+		policyBuf, err := json.Marshal(policy)
+		if err != nil {
+			return client.CollectionDescription{}, err
+		}
+
+		policyKey := core.NewCollectionPolicyKey(desc.ID)
+		err = txn.Systemstore().Put(ctx, policyKey.ToDS(), policyBuf)
+		if err != nil {
+			return client.CollectionDescription{}, err
+		}
+	}
+
 	// The need for this key is temporary, we should replace it with the global collection ID
 	// https://github.com/sourcenetwork/defradb/issues/1085
 	schemaVersionKey := core.NewCollectionSchemaVersionKey(desc.SchemaVersionID, desc.ID)

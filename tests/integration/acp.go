@@ -63,8 +63,8 @@ func addPolicyACP(
 
 		policyID, err := node.ACPModule().Value().AddPolicy(
 			s.ctx,
-			action.Policy,
 			action.Creator,
+			action.Policy,
 			action.IsYAML,
 		)
 

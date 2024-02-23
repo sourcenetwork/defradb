@@ -165,6 +165,12 @@ type Collection interface {
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
 	GetAllDocIDs(ctx context.Context) (<-chan DocIDResult, error)
 
+	// AddPolicy adds a policy on the collection.
+	// `PolicyDescription` contains the description of the policy that is added.
+	// `PolicyDescription.ID` is a policyID that must be a valid policy on the acp module.
+	// `PolicyDescription.ResourceName` is a valid resource on the target (policyID) policy.
+	// AddPolicy(context.Context, PolicyDescription) (PolicyDescription, error)
+
 	// CreateIndex creates a new index on the collection.
 	// `IndexDescription` contains the description of the index to be created.
 	// `IndexDescription.Name` must start with a letter or an underscore and can
@@ -177,6 +183,20 @@ type Collection interface {
 
 	// GetIndexes returns all the indexes that exist on the collection.
 	GetIndexes(ctx context.Context) ([]IndexDescription, error)
+}
+
+// IsPermissioned returns true if the collection has a policy, otherwise returns false.
+//
+// This tells us if access control is enabled for this collection or not.
+func IsPermissioned(c Collection) (string, string, bool) {
+	policy := c.Definition().Description.Policy
+	if policy.HasValue() &&
+		policy.Value().ID != "" &&
+		policy.Value().ResourceName != "" {
+		return policy.Value().ID, policy.Value().ResourceName, true
+	}
+
+	return "", "", false
 }
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.

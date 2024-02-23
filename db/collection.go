@@ -130,6 +130,7 @@ func (db *db) createCollection(
 	}
 
 	col := db.newCollection(desc, schema)
+
 	for _, index := range desc.Indexes {
 		if _, err := col.createIndex(ctx, txn, index); err != nil {
 			return nil, err
@@ -670,7 +671,13 @@ func (db *db) getCollectionByID(ctx context.Context, txn datastore.Txn, id uint3
 	}
 
 	collection := db.newCollection(col, schema)
+
 	err = collection.loadIndexes(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = collection.loadPolicy(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -773,6 +780,11 @@ func (db *db) getCollections(
 		if err != nil {
 			return nil, err
 		}
+
+		err = collection.loadPolicy(ctx, txn)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return collections, nil
@@ -795,6 +807,11 @@ func (db *db) getAllActiveDefinitions(ctx context.Context, txn datastore.Txn) ([
 		collection := db.newCollection(col, schema)
 
 		err = collection.loadIndexes(ctx, txn)
+		if err != nil {
+			return nil, err
+		}
+
+		err = collection.loadPolicy(ctx, txn)
 		if err != nil {
 			return nil, err
 		}
@@ -942,24 +959,8 @@ func (c *collection) Create(ctx context.Context, doc *client.Document) error {
 	if err != nil {
 		return err
 	}
-	err = c.commitImplicitTxn(ctx, txn)
-	if err != nil {
-		return err
-	}
 
-	//fmt.Println("333333333333333333333333333333333333")
-	//spew.Dump(c.)
-	//fmt.Println("333333333333333333333333333333333333")
-
-	//c.db.ACPModule().RegisterDocCreation(
-	//	ctx,
-	//	policyID "123",
-	//	collection string,
-	//	creator string,
-	//	docID string,
-	//)
-
-	return nil
+	return c.commitImplicitTxn(ctx, txn)
 }
 
 // CreateMany creates a collection of documents at once.
@@ -1029,7 +1030,41 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 
-	return c.indexNewDoc(ctx, txn, doc)
+	err = c.indexNewDoc(ctx, txn, doc)
+	if err != nil {
+		return err
+	}
+
+	// If this collection has access control enabled, and the acp module is not missing,
+	// then register this document with acp module and give the creator access to it.
+	// Note: if the request was not permissioned then we want to keep this document as
+	// public (can be accessed by all), even if this collection has a policy and resource.
+	// TODO-ACP: Add another condition to check if is a permissioned request (after signatures)
+	// Below should all be under signature identity block because:
+	// Total 8 cases, and 3 outputs
+	//	if (permReq, permCol, acpMod)    => Create with req signature
+	//	if (permReq, permCol, !acpMod)   => Error, no acp available
+	//	if (permReq, !permCol, acpMod)   => Normal no acp
+	//	if (permReq, !permCol, !acpMod)  => Normal no acp, so ignore missing acp, no error
+	//	if (!permReq, permCol, acpMod)   => Public doc, no register with acp, no signature
+	//	if (!permReq, !permCol, acpMod)  => Public doc, no register with acp, no signature
+	//	if (!permReq, permCol, !acpMod)  => Public doc, no register with acp, no signature, we ignore missing acp
+	//	if (!permReq, !permCol, !acpMod) => Public doc, no register with acp, no signature, we ignore missing acp
+	if policyID, resourceName, hasPolicy := client.IsPermissioned(c); hasPolicy {
+		if !c.db.ACPModule().HasValue() {
+			return ErrCanNotCreateDocOnPermColNoACP
+		}
+
+		return c.db.ACPModule().Value().RegisterDocCreation(
+			ctx,
+			"cosmos1zzg43wdrhmmk89z3pmejwete2kkd4a3vn7w969", // TODO-ACP: Replace with signature identity
+			policyID,
+			resourceName,
+			doc.ID().String(),
+		)
+	}
+
+	return nil
 }
 
 // Update an existing document with the new values.
