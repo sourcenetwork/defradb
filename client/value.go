@@ -96,79 +96,42 @@ func (val *FieldValue) Kind() FieldKind {
 	return val.kind
 }
 
-func valOrNil[T any](value any) (*T, bool) {
-	if v, ok := value.(T); ok {
-		return &v, true
-	}
-	if v, ok := value.(*T); ok {
-		return v, true
-	}
-
-	return nil, false
-}
-
 func (val *FieldValue) IsNil() bool {
 	return val.value == nil
 }
 
-func (val *FieldValue) boolOrNil() (*bool, bool) {
-	return valOrNil[bool](val.value)
-}
-
-func (val *FieldValue) intOrNil() (*int64, bool) {
-	valInt64, ok := valOrNil[int64](val.value)
-	if ok {
-		return valInt64, true
-	}
-	valInt32, ok := valOrNil[int32](val.value)
-	if ok {
-		v := int64(*valInt32)
-		return &v, true
-	}
-	valInt, ok := valOrNil[int](val.value)
-	if ok {
-		v := int64(*valInt)
-		return &v, true
-	}
-	return nil, false
-}
-
-func (val *FieldValue) floatOrNil() (*float64, bool) {
-	return valOrNil[float64](val.value)
-}
-
-func (val *FieldValue) stringOrNil() (*string, bool) {
-	return valOrNil[string](val.value)
-}
-
 func (val *FieldValue) Bool() (bool, error) {
-	v, ok := val.boolOrNil()
-	if !ok || v == nil {
+	v, ok := val.value.(bool)
+	if !ok {
 		return false, NewErrUnexpectedType[bool]("", val.value)
 	}
-	return *v, nil
+	return v, nil
 }
 
 func (val *FieldValue) Int() (int64, error) {
-	v, ok := val.intOrNil()
-	if !ok || v == nil {
-		return 0, NewErrUnexpectedType[int64]("", val.value)
+	switch v := val.value.(type) {
+	case int64:
+		return v, nil
+	case int32:
+		return int64(v), nil
+	case int:
+		return int64(v), nil
 	}
-	return *v, nil
+	return 0, NewErrUnexpectedType[int64]("", val.value)
 }
 
 func (val *FieldValue) Float() (float64, error) {
-	v, ok := val.floatOrNil()
-	if !ok || v == nil {
+	v, ok := val.value.(float64)
+	if !ok {
 		return 0, NewErrUnexpectedType[float64]("", val.value)
 	}
-	return *v, nil
+	return v, nil
 }
 
 func (val *FieldValue) String() (string, error) {
-	v, ok := val.stringOrNil()
-	if !ok || v == nil {
+	v, ok := val.value.(string)
+	if !ok {
 		return "", NewErrUnexpectedType[string]("", val.value)
 	}
-	return *v, nil
+	return v, nil
 }
