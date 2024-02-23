@@ -49,7 +49,7 @@ const (
 	COLLECTION_INDEX               = "/collection/index"
 	SCHEMA_VERSION                 = "/schema/version/v"
 	SCHEMA_VERSION_ROOT            = "/schema/version/r"
-	SEQ                            = "/seq"
+	COLLECTION_SEQ                 = "/seq/collection"
 	INDEX_ID_SEQ                   = "/seq/index"
 	PRIMARY_KEY                    = "/pk"
 	DATASTORE_DOC_VERSION_FIELD_ID = "v"
@@ -700,7 +700,7 @@ func (k SchemaRootKey) ToDS() ds.Key {
 }
 
 func (k CollectionIDSequenceKey) ToString() string {
-	return SEQ + "/" + COLLECTION
+	return COLLECTION_SEQ
 }
 
 func (k CollectionIDSequenceKey) Bytes() []byte {
