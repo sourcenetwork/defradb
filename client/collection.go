@@ -18,14 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-// CollectionDefinition contains the metadata defining what a Collection is.
-type CollectionDefinition struct {
-	// Description returns the CollectionDescription of this Collection.
-	Description CollectionDescription `json:"description"`
-	// Schema returns the SchemaDescription used to define this Collection.
-	Schema SchemaDescription `json:"schema"`
-}
-
 // Collection represents a defradb collection.
 //
 // A Collection is mostly analogous to a SQL table, however a collection is specific to its
