@@ -51,6 +51,7 @@ const (
 	SCHEMA_VERSION_ROOT            = "/schema/version/r"
 	COLLECTION_SEQ                 = "/seq/collection"
 	INDEX_ID_SEQ                   = "/seq/index"
+	FIELD_ID_SEQ                   = "/seq/field"
 	PRIMARY_KEY                    = "/pk"
 	DATASTORE_DOC_VERSION_FIELD_ID = "v"
 	REPLICATOR                     = "/replicator/id"
@@ -179,6 +180,16 @@ type IndexIDSequenceKey struct {
 }
 
 var _ Key = (*IndexIDSequenceKey)(nil)
+
+// FieldIDSequenceKey is used to key the sequence used to generate field ids.
+//
+// The sequence is specific to each collection root.  Multiple collection of the same root
+// must maintain consistent field ids.
+type FieldIDSequenceKey struct {
+	CollectionRoot uint32
+}
+
+var _ Key = (*FieldIDSequenceKey)(nil)
 
 type ReplicatorKey struct {
 	ReplicatorID string
@@ -375,6 +386,10 @@ func NewSchemaRootKeyFromString(keyString string) (SchemaRootKey, error) {
 
 func NewIndexIDSequenceKey(collectionID uint32) IndexIDSequenceKey {
 	return IndexIDSequenceKey{CollectionID: collectionID}
+}
+
+func NewFieldIDSequenceKey(collectionRoot uint32) FieldIDSequenceKey {
+	return FieldIDSequenceKey{CollectionRoot: collectionRoot}
 }
 
 func (k DataStoreKey) WithValueFlag() DataStoreKey {
@@ -720,6 +735,18 @@ func (k IndexIDSequenceKey) Bytes() []byte {
 }
 
 func (k IndexIDSequenceKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k FieldIDSequenceKey) ToString() string {
+	return FIELD_ID_SEQ + "/" + strconv.Itoa(int(k.CollectionRoot))
+}
+
+func (k FieldIDSequenceKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k FieldIDSequenceKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
