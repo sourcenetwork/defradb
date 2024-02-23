@@ -30,8 +30,8 @@ type IndexFetcher struct {
 	docFilter     *mapper.Filter
 	doc           *encodedDocument
 	mapping       *core.DocumentMapping
-	indexedFields []client.FieldDescription
-	docFields     []client.FieldDescription
+	indexedFields []client.FieldDefinition
+	docFields     []client.FieldDefinition
 	indexDesc     client.IndexDescription
 	indexIter     indexIterator
 	execInfo      ExecInfo
@@ -56,7 +56,7 @@ func (f *IndexFetcher) Init(
 	ctx context.Context,
 	txn datastore.Txn,
 	col client.Collection,
-	fields []client.FieldDescription,
+	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docMapper *core.DocumentMapping,
 	reverse bool,
@@ -75,7 +75,7 @@ func (f *IndexFetcher) Init(
 		}
 	}
 
-	f.docFields = make([]client.FieldDescription, 0, len(fields))
+	f.docFields = make([]client.FieldDefinition, 0, len(fields))
 outer:
 	for i := range fields {
 		for j := range f.indexedFields {

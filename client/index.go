@@ -41,17 +41,17 @@ type IndexDescription struct {
 }
 
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
-func (d CollectionDescription) CollectIndexedFields(schema *SchemaDescription) []FieldDescription {
+func (d CollectionDefinition) CollectIndexedFields() []FieldDefinition {
 	fieldsMap := make(map[string]bool)
-	fields := make([]FieldDescription, 0, len(d.Indexes))
-	for _, index := range d.Indexes {
+	fields := make([]FieldDefinition, 0, len(d.Description.Indexes))
+	for _, index := range d.Description.Indexes {
 		for _, field := range index.Fields {
 			if fieldsMap[field.Name] {
 				// If the FieldDescription has already been added to the result do not add it a second time
 				// this can happen if a field if referenced by multiple indexes
 				continue
 			}
-			colField, ok := d.GetFieldByName(field.Name, schema)
+			colField, ok := d.GetFieldByName(field.Name)
 			if ok {
 				fields = append(fields, colField)
 			}

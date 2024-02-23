@@ -21,7 +21,7 @@ import (
 
 // DecodeFieldValue takes a field value and description and converts it to the
 // standardized Defra Go type.
-func DecodeFieldValue(fieldDesc client.FieldDescription, val any) (any, error) {
+func DecodeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error) {
 	if val == nil {
 		return nil, nil
 	}

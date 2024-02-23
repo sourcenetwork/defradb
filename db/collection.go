@@ -1205,7 +1205,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	ctx context.Context,
 	txn datastore.Txn,
 	docID string,
-	fieldDescription client.FieldDescription,
+	fieldDescription client.FieldDefinition,
 	value any,
 ) error {
 	if fieldDescription.Kind != client.FieldKind_DocID {

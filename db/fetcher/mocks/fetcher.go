@@ -134,11 +134,11 @@ func (_c *Fetcher_FetchNext_Call) RunAndReturn(run func(context.Context) (fetche
 }
 
 // Init provides a mock function with given fields: ctx, txn, col, fields, filter, docmapper, reverse, showDeleted
-func (_m *Fetcher) Init(ctx context.Context, txn datastore.Txn, col client.Collection, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error {
+func (_m *Fetcher) Init(ctx context.Context, txn datastore.Txn, col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool) error {
 	ret := _m.Called(ctx, txn, col, fields, filter, docmapper, reverse, showDeleted)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, datastore.Txn, client.Collection, []client.FieldDescription, *mapper.Filter, *core.DocumentMapping, bool, bool) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, datastore.Txn, client.Collection, []client.FieldDefinition, *mapper.Filter, *core.DocumentMapping, bool, bool) error); ok {
 		r0 = rf(ctx, txn, col, fields, filter, docmapper, reverse, showDeleted)
 	} else {
 		r0 = ret.Error(0)
@@ -156,7 +156,7 @@ type Fetcher_Init_Call struct {
 //   - ctx context.Context
 //   - txn datastore.Txn
 //   - col client.Collection
-//   - fields []client.FieldDescription
+//   - fields []client.FieldDefinition
 //   - filter *mapper.Filter
 //   - docmapper *core.DocumentMapping
 //   - reverse bool
@@ -165,9 +165,9 @@ func (_e *Fetcher_Expecter) Init(ctx interface{}, txn interface{}, col interface
 	return &Fetcher_Init_Call{Call: _e.mock.On("Init", ctx, txn, col, fields, filter, docmapper, reverse, showDeleted)}
 }
 
-func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, txn datastore.Txn, col client.Collection, fields []client.FieldDescription, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool)) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, txn datastore.Txn, col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, docmapper *core.DocumentMapping, reverse bool, showDeleted bool)) *Fetcher_Init_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(datastore.Txn), args[2].(client.Collection), args[3].([]client.FieldDescription), args[4].(*mapper.Filter), args[5].(*core.DocumentMapping), args[6].(bool), args[7].(bool))
+		run(args[0].(context.Context), args[1].(datastore.Txn), args[2].(client.Collection), args[3].([]client.FieldDefinition), args[4].(*mapper.Filter), args[5].(*core.DocumentMapping), args[6].(bool), args[7].(bool))
 	})
 	return _c
 }
@@ -177,7 +177,7 @@ func (_c *Fetcher_Init_Call) Return(_a0 error) *Fetcher_Init_Call {
 	return _c
 }
 
-func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, datastore.Txn, client.Collection, []client.FieldDescription, *mapper.Filter, *core.DocumentMapping, bool, bool) error) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, datastore.Txn, client.Collection, []client.FieldDefinition, *mapper.Filter, *core.DocumentMapping, bool, bool) error) *Fetcher_Init_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -291,9 +291,9 @@ func (c *collection) updateWithFilter(
 }
 
 // isSecondaryIDField returns true if the given field description represents a secondary relation field ID.
-func (c *collection) isSecondaryIDField(fieldDesc client.FieldDescription) (client.FieldDescription, bool) {
+func (c *collection) isSecondaryIDField(fieldDesc client.FieldDefinition) (client.FieldDefinition, bool) {
 	if fieldDesc.RelationName == "" || fieldDesc.Kind != client.FieldKind_DocID {
-		return client.FieldDescription{}, false
+		return client.FieldDefinition{}, false
 	}
 
 	relationFieldDescription, valid := c.Definition().GetFieldByName(
@@ -312,7 +312,7 @@ func (c *collection) patchPrimaryDoc(
 	ctx context.Context,
 	txn datastore.Txn,
 	secondaryCollectionName string,
-	relationFieldDescription client.FieldDescription,
+	relationFieldDescription client.FieldDefinition,
 	docID string,
 	fieldValue string,
 ) error {

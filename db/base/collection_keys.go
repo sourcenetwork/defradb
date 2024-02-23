@@ -36,22 +36,27 @@ func MakeDataStoreKeyWithCollectionAndDocID(
 }
 
 func MakePrimaryIndexKeyForCRDT(
-	c client.CollectionDescription,
-	schema client.SchemaDescription,
+	c client.CollectionDefinition,
 	ctype client.CType,
 	key core.DataStoreKey,
 	fieldName string,
 ) (core.DataStoreKey, error) {
 	switch ctype {
 	case client.COMPOSITE:
-		return MakeDataStoreKeyWithCollectionDescription(c).WithInstanceInfo(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
+		return MakeDataStoreKeyWithCollectionDescription(c.Description).
+				WithInstanceInfo(key).
+				WithFieldId(core.COMPOSITE_NAMESPACE),
+			nil
 	case client.LWW_REGISTER, client.PN_COUNTER:
-		field, ok := c.GetFieldByName(fieldName, &schema)
+		field, ok := c.GetFieldByName(fieldName)
 		if !ok {
 			return core.DataStoreKey{}, client.NewErrFieldNotExist(fieldName)
 		}
 
-		return MakeDataStoreKeyWithCollectionDescription(c).WithInstanceInfo(key).WithFieldId(fmt.Sprint(field.ID)), nil
+		return MakeDataStoreKeyWithCollectionDescription(c.Description).
+				WithInstanceInfo(key).
+				WithFieldId(fmt.Sprint(field.ID)),
+			nil
 	}
 	return core.DataStoreKey{}, ErrInvalidCrdtType
 }

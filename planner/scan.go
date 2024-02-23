@@ -41,7 +41,7 @@ type scanNode struct {
 	p   *Planner
 	col client.Collection
 
-	fields []client.FieldDescription
+	fields []client.FieldDefinition
 
 	showDeleted bool
 

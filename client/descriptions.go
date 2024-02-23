@@ -74,23 +74,29 @@ func (col CollectionDescription) IDString() string {
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
 // will return it and true, if it is not found it will return false.
-func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDescription, bool) {
-	return def.Description.GetFieldByName(fieldName, &def.Schema)
+func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDefinition, bool) {
+	collectionField, ok := def.Description.GetFieldByName(fieldName)
+	if ok {
+		schemaField, ok := def.Schema.GetFieldByName(fieldName)
+		if ok {
+			return NewFieldDefinition(
+				collectionField,
+				schemaField,
+			), true
+		}
+	}
+	return FieldDefinition{}, false
 }
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
 // will return it and true, if it is not found it will return false.
-func (col CollectionDescription) GetFieldByName(fieldName string, schema *SchemaDescription) (FieldDescription, bool) {
-	for _, localField := range col.Fields {
-		if localField.Name == fieldName {
-			globalField, ok := schema.GetFieldByName(fieldName)
-			return NewFieldDescription(
-				localField,
-				globalField,
-			), ok
+func (col CollectionDescription) GetFieldByName(fieldName string) (CollectionFieldDescription, bool) {
+	for _, field := range col.Fields {
+		if field.Name == fieldName {
+			return field, true
 		}
 	}
-	return FieldDescription{}, false
+	return CollectionFieldDescription{}, false
 }
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
@@ -106,14 +112,14 @@ func (s SchemaDescription) GetFieldByName(fieldName string) (SchemaFieldDescript
 
 // GetFields returns the combined local and global field elements on this [CollectionDefinition]
 // as a single set.
-func (def CollectionDefinition) GetFields() []FieldDescription {
-	fields := []FieldDescription{}
+func (def CollectionDefinition) GetFields() []FieldDefinition {
+	fields := []FieldDefinition{}
 	for _, localField := range def.Description.Fields {
 		globalField, ok := def.Schema.GetFieldByName(localField.Name)
 		if ok {
 			fields = append(
 				fields,
-				NewFieldDescription(localField, globalField),
+				NewFieldDefinition(localField, globalField),
 			)
 		}
 	}
@@ -369,12 +375,15 @@ type CollectionFieldDescription struct {
 	ID FieldID
 }
 
-// FieldDescription describes the combined local and global set of properties that constitutes
+// FieldDefinition describes the combined local and global set of properties that constitutes
 // a field on a collection.
 //
 // It draws it's information from the [CollectionFieldDescription] on the [CollectionDescription],
 // and the [SchemaFieldDescription] on the [SchemaDescription].
-type FieldDescription struct {
+//
+// It is to [CollectionFieldDescription] and [SchemaFieldDescription] what [CollectionDefinition]
+// is to [CollectionDescription] and [SchemaDescription].
+type FieldDefinition struct {
 	// Name contains the name of this field.
 	Name string
 
@@ -403,10 +412,10 @@ type FieldDescription struct {
 	IsPrimaryRelation bool
 }
 
-// NewFieldDescription returns a new [FieldDescription], combining the given local and global elements
+// NewFieldDefinition returns a new [FieldDefinition], combining the given local and global elements
 // into a single object.
-func NewFieldDescription(local CollectionFieldDescription, global SchemaFieldDescription) FieldDescription {
-	return FieldDescription{
+func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDescription) FieldDefinition {
+	return FieldDefinition{
 		Name:              global.Name,
 		ID:                local.ID,
 		Kind:              global.Kind,
@@ -418,24 +427,24 @@ func NewFieldDescription(local CollectionFieldDescription, global SchemaFieldDes
 }
 
 // IsObject returns true if this field is an object type.
-func (f FieldDescription) IsObject() bool {
+func (f FieldDefinition) IsObject() bool {
 	return (f.Kind == FieldKind_FOREIGN_OBJECT) ||
 		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
 // IsObjectArray returns true if this field is an object array type.
-func (f FieldDescription) IsObjectArray() bool {
+func (f FieldDefinition) IsObjectArray() bool {
 	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
 // IsRelation returns true if this field is a relation.
-func (f FieldDescription) IsRelation() bool {
+func (f FieldDefinition) IsRelation() bool {
 	return f.RelationName != ""
 }
 
 // IsArray returns true if this field is an array type which includes inline arrays as well
 // as relation arrays.
-func (f FieldDescription) IsArray() bool {
+func (f FieldDefinition) IsArray() bool {
 	return f.Kind == FieldKind_BOOL_ARRAY ||
 		f.Kind == FieldKind_INT_ARRAY ||
 		f.Kind == FieldKind_FLOAT_ARRAY ||

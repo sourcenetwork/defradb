@@ -195,15 +195,15 @@ func parseVal(val ast.Value, recurseFn parseFn) (any, error) {
 func ParseFilterFieldsForDescription(
 	conditions map[string]any,
 	col client.CollectionDefinition,
-) ([]client.FieldDescription, error) {
+) ([]client.FieldDefinition, error) {
 	return parseFilterFieldsForDescriptionMap(conditions, col)
 }
 
 func parseFilterFieldsForDescriptionMap(
 	conditions map[string]any,
 	col client.CollectionDefinition,
-) ([]client.FieldDescription, error) {
-	fields := make([]client.FieldDescription, 0)
+) ([]client.FieldDefinition, error) {
+	fields := make([]client.FieldDefinition, 0)
 	for k, v := range conditions {
 		switch k {
 		case "_or", "_and":
@@ -234,8 +234,8 @@ func parseFilterFieldsForDescriptionMap(
 func parseFilterFieldsForDescriptionSlice(
 	conditions []any,
 	schema client.CollectionDefinition,
-) ([]client.FieldDescription, error) {
-	fields := make([]client.FieldDescription, 0)
+) ([]client.FieldDefinition, error) {
+	fields := make([]client.FieldDefinition, 0)
 	for _, v := range conditions {
 		switch cond := v.(type) {
 		case map[string]any:
