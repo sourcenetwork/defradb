@@ -104,6 +104,7 @@ dockers:
     image_templates:
       - "{{ .Env.GITHUB_REPOSITORY }}:latest"
       - "{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest"
       - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Version }}"
     use: buildx
     build_flag_templates:
