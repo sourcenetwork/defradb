@@ -44,7 +44,7 @@ require (
 	github.com/vito/go-sse v1.0.0
 	go.opentelemetry.io/otel/metric v1.23.1
 	go.opentelemetry.io/otel/sdk/metric v1.23.1
-	go.uber.org/zap v1.26.0
+	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc
 	google.golang.org/grpc v1.61.1
 	google.golang.org/protobuf v1.32.0
