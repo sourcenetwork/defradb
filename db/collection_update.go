@@ -141,7 +141,7 @@ func (c *collection) updateWithDocID(
 		return nil, err
 	}
 
-	_, err = c.save(ctx, txn, doc, false)
+	err = c.update(ctx, txn, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (c *collection) updateWithIDs(
 			return nil, err
 		}
 
-		_, err = c.save(ctx, txn, doc, false)
+		err = c.update(ctx, txn, doc)
 		if err != nil {
 			return nil, err
 		}
@@ -277,7 +277,7 @@ func (c *collection) updateWithFilter(
 			}
 		}
 
-		_, err = c.save(ctx, txn, doc, false)
+		err = c.update(ctx, txn, doc)
 		if err != nil {
 			return nil, err
 		}
