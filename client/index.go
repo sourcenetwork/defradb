@@ -48,7 +48,7 @@ func (d CollectionDefinition) CollectIndexedFields() []FieldDefinition {
 		for _, field := range index.Fields {
 			if fieldsMap[field.Name] {
 				// If the FieldDescription has already been added to the result do not add it a second time
-				// this can happen if a field if referenced by multiple indexes
+				// this can happen if a field is referenced by multiple indexes
 				continue
 			}
 			colField, ok := d.GetFieldByName(field.Name)
