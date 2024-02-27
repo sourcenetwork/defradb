@@ -35,11 +35,12 @@ defradb client query [query request] [flags]
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
-      --logformat string              Log format to use. Options are csv, json (default "csv")
-      --loglevel string               Log level to use. Options are debug, info, error, fatal (default "info")
-      --lognocolor                    Disable colored log output
-      --logoutput string              Log output path (default "stderr")
-      --logtrace                      Include stacktrace in error and fatal logs
+      --log-format string             Log format to use. Options are text or json (default "text")
+      --log-level string              Log level to use. Options are debug, info, error, fatal (default "info")
+      --log-output string             Log output path. Options are stderr or stdout. (default "stderr")
+      --log-overrides string          Logger config overrides. Format <name>,<key>=<val>,...;<name>,...
+      --log-source                    Include source location in logs
+      --log-stacktrace                Include stacktrace in error and fatal logs
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --no-p2p                        Disable the peer-to-peer network synchronization system
       --p2paddr strings               Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
