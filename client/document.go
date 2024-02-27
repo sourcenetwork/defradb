@@ -526,7 +526,7 @@ func (doc *Document) Set(field string, value any) error {
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
-	if fd.IsRelation() && !fd.IsObjectArray() {
+	if fd.IsRelation() && !fd.Kind.IsObjectArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}

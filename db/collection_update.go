@@ -439,7 +439,7 @@ func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*
 	}
 
 	for _, fd := range c.Schema().Fields {
-		if fd.IsObject() {
+		if fd.Kind.IsObject() {
 			continue
 		}
 		slct.Fields = append(slct.Fields, &request.Field{

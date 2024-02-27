@@ -222,7 +222,7 @@ func parseFilterFieldsForDescriptionMap(
 			fields = append(fields, parsedFileds...)
 		default:
 			f, found := col.GetFieldByName(k)
-			if !found || f.IsObject() {
+			if !found || f.Kind.IsObject() {
 				continue
 			}
 			fields = append(fields, f)

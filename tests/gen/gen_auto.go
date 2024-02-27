@@ -225,7 +225,7 @@ func validateDefinitions(definitions []client.CollectionDefinition) error {
 			if field.Name == "" {
 				return NewErrIncompleteColDefinition("field name is empty")
 			}
-			if field.IsObject() {
+			if field.Kind.IsObject() {
 				if field.Schema == "" {
 					return NewErrIncompleteColDefinition("field schema is empty")
 				}

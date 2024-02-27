@@ -86,8 +86,8 @@ func checkAndValidateMinMax(field *client.SchemaFieldDescription, conf *genConfi
 	_, hasMin := conf.props["min"]
 	if hasMin {
 		var err error
-		if field.IsArray() || field.Kind == client.FieldKind_NILLABLE_INT {
-			err = validateMinConfig[int](conf, field.IsArray())
+		if field.Kind.IsArray() || field.Kind == client.FieldKind_NILLABLE_INT {
+			err = validateMinConfig[int](conf, field.Kind.IsArray())
 		} else {
 			err = validateMinConfig[float64](conf, false)
 		}

@@ -238,6 +238,31 @@ func (f FieldKind) String() string {
 	}
 }
 
+// IsObject returns true if this FieldKind is an object type.
+func (f FieldKind) IsObject() bool {
+	return (f == FieldKind_FOREIGN_OBJECT) ||
+		(f == FieldKind_FOREIGN_OBJECT_ARRAY)
+}
+
+// IsObjectArray returns true if this FieldKind is an object array type.
+func (f FieldKind) IsObjectArray() bool {
+	return (f == FieldKind_FOREIGN_OBJECT_ARRAY)
+}
+
+// IsArray returns true if this FieldKind is an array type which includes inline arrays as well
+// as relation arrays.
+func (f FieldKind) IsArray() bool {
+	return f == FieldKind_BOOL_ARRAY ||
+		f == FieldKind_INT_ARRAY ||
+		f == FieldKind_FLOAT_ARRAY ||
+		f == FieldKind_STRING_ARRAY ||
+		f == FieldKind_FOREIGN_OBJECT_ARRAY ||
+		f == FieldKind_NILLABLE_BOOL_ARRAY ||
+		f == FieldKind_NILLABLE_INT_ARRAY ||
+		f == FieldKind_NILLABLE_FLOAT_ARRAY ||
+		f == FieldKind_NILLABLE_STRING_ARRAY
+}
+
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
 	FieldKind_None              FieldKind = 0
@@ -343,34 +368,9 @@ type CollectionFieldDescription struct {
 	ID FieldID
 }
 
-// IsObject returns true if this field is an object type.
-func (f SchemaFieldDescription) IsObject() bool {
-	return (f.Kind == FieldKind_FOREIGN_OBJECT) ||
-		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
-}
-
-// IsObjectArray returns true if this field is an object array type.
-func (f SchemaFieldDescription) IsObjectArray() bool {
-	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
-}
-
 // IsRelation returns true if this field is a relation.
 func (f SchemaFieldDescription) IsRelation() bool {
 	return f.RelationName != ""
-}
-
-// IsArray returns true if this field is an array type which includes inline arrays as well
-// as relation arrays.
-func (f SchemaFieldDescription) IsArray() bool {
-	return f.Kind == FieldKind_BOOL_ARRAY ||
-		f.Kind == FieldKind_INT_ARRAY ||
-		f.Kind == FieldKind_FLOAT_ARRAY ||
-		f.Kind == FieldKind_STRING_ARRAY ||
-		f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_BOOL_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_INT_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_FLOAT_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_STRING_ARRAY
 }
 
 // IsSet returns true if the target relation type is set.

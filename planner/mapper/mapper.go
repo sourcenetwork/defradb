@@ -112,9 +112,9 @@ func toSelect(
 		// Remap all alias field names to use their internal field name mappings.
 		for index, groupByField := range groupByFields {
 			fieldDesc, ok := definition.GetFieldByName(groupByField)
-			if ok && fieldDesc.IsObject() && !fieldDesc.IsObjectArray() {
+			if ok && fieldDesc.Kind.IsObject() && !fieldDesc.Kind.IsObjectArray() {
 				groupByFields[index] = groupByField + request.RelatedObjectID
-			} else if ok && fieldDesc.IsObjectArray() {
+			} else if ok && fieldDesc.Kind.IsObjectArray() {
 				return nil, NewErrInvalidFieldToGroupBy(groupByField)
 			}
 		}
@@ -289,7 +289,7 @@ func resolveAggregates(
 			if childIsMapped {
 				fieldDesc, isField := def.GetFieldByName(target.hostExternalName)
 
-				if isField && !fieldDesc.IsObject() {
+				if isField && !fieldDesc.Kind.IsObject() {
 					var order *OrderBy
 					if target.order.HasValue() && len(target.order.Value().Conditions) > 0 {
 						// For inline arrays the order element will consist of just a direction
@@ -792,7 +792,7 @@ func getTopLevelInfo(
 			definition = collection.Definition()
 			// Map all fields from schema into the map as they are fetched automatically
 			for _, f := range definition.GetFields() {
-				if f.IsObject() {
+				if f.Kind.IsObject() {
 					// Objects are skipped, as they are not fetched by default and
 					// have to be requested via selects.
 					continue

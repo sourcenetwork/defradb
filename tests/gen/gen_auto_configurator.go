@@ -273,11 +273,11 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 ) (typeDemand, error) {
 	primaryTypeDef := g.types[primaryType]
 	for _, field := range primaryTypeDef.Schema.Fields {
-		if field.IsObject() && field.Schema == secondaryType {
+		if field.Kind.IsObject() && field.Schema == secondaryType {
 			primaryDemand := typeDemand{min: secondaryDemand.min, max: secondaryDemand.max}
 			minPerDoc, maxPerDoc := 1, 1
 
-			if field.IsArray() {
+			if field.Kind.IsArray() {
 				fieldConf := g.config.ForField(primaryType, field.Name)
 				minPerDoc, maxPerDoc = getMinMaxOrDefault(fieldConf, 0, secondaryDemand.max)
 				// if we request min 100 of secondary docs and there can be max 5 per primary doc,
@@ -339,14 +339,14 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 ) error {
 	typeDef := g.types[typeName]
 	for _, field := range typeDef.Schema.Fields {
-		if field.IsObject() && !field.IsPrimaryRelation {
+		if field.Kind.IsObject() && !field.IsPrimaryRelation {
 			primaryDocDemand := g.docsDemand[typeName]
 			newSecDemand := typeDemand{min: primaryDocDemand.min, max: primaryDocDemand.max}
 			minPerDoc, maxPerDoc := 1, 1
 
 			curSecDemand, hasSecDemand := g.docsDemand[field.Schema]
 
-			if field.IsArray() {
+			if field.Kind.IsArray() {
 				fieldConf := g.config.ForField(typeName, field.Name)
 				if prop, ok := fieldConf.props["min"]; ok {
 					minPerDoc = prop.(int)
@@ -418,7 +418,7 @@ func getRelationGraph(types map[string]client.CollectionDefinition) map[string][
 
 	for typeName, typeDef := range types {
 		for _, field := range typeDef.Schema.Fields {
-			if field.IsObject() {
+			if field.Kind.IsObject() {
 				if field.IsPrimaryRelation {
 					primaryGraph[typeName] = appendUnique(primaryGraph[typeName], field.Schema)
 				} else {

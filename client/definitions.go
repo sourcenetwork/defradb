@@ -109,32 +109,7 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 	}
 }
 
-// IsObject returns true if this field is an object type.
-func (f FieldDefinition) IsObject() bool {
-	return (f.Kind == FieldKind_FOREIGN_OBJECT) ||
-		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
-}
-
-// IsObjectArray returns true if this field is an object array type.
-func (f FieldDefinition) IsObjectArray() bool {
-	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
-}
-
 // IsRelation returns true if this field is a relation.
 func (f FieldDefinition) IsRelation() bool {
 	return f.RelationName != ""
-}
-
-// IsArray returns true if this field is an array type which includes inline arrays as well
-// as relation arrays.
-func (f FieldDefinition) IsArray() bool {
-	return f.Kind == FieldKind_BOOL_ARRAY ||
-		f.Kind == FieldKind_INT_ARRAY ||
-		f.Kind == FieldKind_FLOAT_ARRAY ||
-		f.Kind == FieldKind_STRING_ARRAY ||
-		f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_BOOL_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_INT_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_FLOAT_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_STRING_ARRAY
 }
