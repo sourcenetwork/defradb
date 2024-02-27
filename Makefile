@@ -72,9 +72,8 @@ COVERAGE_FILE=coverage.txt
 COVERAGE_FLAGS=-covermode=atomic -coverpkg=./... -args -test.gocoverdir=$(COVERAGE_DIRECTORY)
 
 PLAYGROUND_DIRECTORY=playground
-LENS_TEST_DIRECTORY=tests/integration/schema/migrations
 CHANGE_DETECTOR_TEST_DIRECTORY=tests/change_detector
-DEFAULT_TEST_DIRECTORIES=$$(go list ./... | grep -v -e $(LENS_TEST_DIRECTORY))
+DEFAULT_TEST_DIRECTORIES=./...
 
 default:
 	@go run $(BUILD_FLAGS) cmd/defradb/main.go
@@ -144,9 +143,6 @@ deps\:lint:
 .PHONY: deps\:test
 deps\:test:
 	go install gotest.tools/gotestsum@latest
-
-.PHONY: deps\:lens
-deps\:lens:
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
 
@@ -276,25 +272,10 @@ test\:cli:
 test\:names:
 	gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
-.PHONY: test\:lens
-test\:lens:
-	@$(MAKE) deps:lens
-	gotestsum --format testname -- ./$(LENS_TEST_DIRECTORY)/... $(TEST_FLAGS)
-
-.PHONY: test\:lens-quick
-test\:lens-quick:
-	@$(MAKE) deps:lens
-	gotestsum --format testname -- ./$(LENS_TEST_DIRECTORY)/...
-
 .PHONY: test\:all
 test\:all:
 	@$(MAKE) test:names
 	@$(MAKE) test:lens
-
-.PHONY: test\:all-quick
-test\:all-quick:
-	@$(MAKE) test:quick
-	@$(MAKE) test:lens-quick
 
 .PHONY: test\:verbose
 test\:verbose:
@@ -322,7 +303,6 @@ test\:scripts:
 
 .PHONY: test\:coverage
 test\:coverage:
-	@$(MAKE) deps:lens
 	@$(MAKE) clean:coverage
 	mkdir $(COVERAGE_DIRECTORY)
 ifeq ($(path),)
