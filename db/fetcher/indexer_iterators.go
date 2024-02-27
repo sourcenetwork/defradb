@@ -62,8 +62,9 @@ type indexIterResult struct {
 }
 
 type queryResultIterator struct {
-	resultIter query.Results
-	indexDesc  client.IndexDescription
+	resultIter    query.Results
+	indexDesc     client.IndexDescription
+	indexedFields []client.FieldDescription
 }
 
 func (iter *queryResultIterator) Next() (indexIterResult, error) {
@@ -78,6 +79,9 @@ func (iter *queryResultIterator) Next() (indexIterResult, error) {
 	if err != nil {
 		return indexIterResult{}, err
 	}
+
+	core.NormalizeIndexDataStoreKeyValues(&key, iter.indexedFields)
+
 	return indexIterResult{key: key, value: res.Value, foundKey: true}, nil
 }
 
@@ -143,7 +147,11 @@ func (iter *eqSingleIndexIterator) Next() (indexIterResult, error) {
 	if iter.store == nil {
 		return indexIterResult{}, nil
 	}
-	val, err := iter.store.Get(iter.ctx, iter.indexKey.ToDS())
+	keyBytes, err := core.EncodeIndexDataStoreKey(nil, &iter.indexKey)
+	if err != nil {
+		return indexIterResult{}, err
+	}
+	val, err := iter.store.Get(iter.ctx, ds.NewKey(string(keyBytes)))
 	if err != nil {
 		if errors.Is(err, ds.ErrNotFound) {
 			return indexIterResult{key: iter.indexKey}, nil
@@ -161,7 +169,7 @@ func (i *eqSingleIndexIterator) Close() error {
 
 type inIndexIterator struct {
 	indexIterator
-	inValues     []client.FieldValue
+	inValues     []any
 	nextValIndex int
 	ctx          context.Context
 	store        datastore.DSReaderWriter
@@ -182,9 +190,9 @@ func (iter *inIndexIterator) nextIterator() (bool, error) {
 
 	switch fieldIter := iter.indexIterator.(type) {
 	case *eqPrefixIndexIterator:
-		fieldIter.indexKey.Fields[0].Value = &iter.inValues[iter.nextValIndex]
+		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
 	case *eqSingleIndexIterator:
-		fieldIter.indexKey.Fields[0].Value = &iter.inValues[iter.nextValIndex]
+		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
 	}
 	err := iter.indexIterator.Init(iter.ctx, iter.store)
 	if err != nil {
@@ -245,8 +253,12 @@ type scanningIndexIterator struct {
 }
 
 func (iter *scanningIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+	keyBytes, err := core.EncodeIndexDataStoreKey(nil, &iter.indexKey)
+	if err != nil {
+		return err
+	}
 	resultIter, err := store.Query(ctx, query.Query{
-		Prefix: iter.indexKey.ToString(),
+		Prefix: string(keyBytes),
 	})
 	if err != nil {
 		return err
@@ -274,8 +286,7 @@ func (iter *scanningIndexIterator) Next() (indexIterResult, error) {
 
 // checks if the value satisfies the condition
 type valueMatcher interface {
-	//Match([]byte) (bool, error)
-	Match(*client.FieldValue) (bool, error)
+	Match(any) (bool, error)
 }
 
 type intMatcher struct {
@@ -283,10 +294,10 @@ type intMatcher struct {
 	evalFunc func(int64, int64) bool
 }
 
-func (m *intMatcher) Match(value *client.FieldValue) (bool, error) {
-	intVal, err := value.Int()
-	if err != nil {
-		return false, err
+func (m *intMatcher) Match(value any) (bool, error) {
+	intVal, ok := value.(int64)
+	if !ok {
+		return false, NewErrUnexpectedTypeValue[int64](value)
 	}
 	return m.evalFunc(intVal, m.value), nil
 }
@@ -296,10 +307,10 @@ type floatMatcher struct {
 	evalFunc func(float64, float64) bool
 }
 
-func (m *floatMatcher) Match(value *client.FieldValue) (bool, error) {
-	floatVal, err := value.Float()
-	if err != nil {
-		return false, err
+func (m *floatMatcher) Match(value any) (bool, error) {
+	floatVal, ok := value.(float64)
+	if !ok {
+		return false, NewErrUnexpectedTypeValue[float64](value)
 	}
 	return m.evalFunc(m.value, floatVal), nil
 }
@@ -309,18 +320,18 @@ type stringMatcher struct {
 	evalFunc func(string, string) bool
 }
 
-func (m *stringMatcher) Match(value *client.FieldValue) (bool, error) {
-	stringVal, err := value.String()
-	if err != nil {
-		return false, err
+func (m *stringMatcher) Match(value any) (bool, error) {
+	stringVal, ok := value.(string)
+	if !ok {
+		return false, NewErrUnexpectedTypeValue[string](value)
 	}
 	return m.evalFunc(m.value, stringVal), nil
 }
 
 type nilMatcher struct{}
 
-func (m *nilMatcher) Match(value *client.FieldValue) (bool, error) {
-	return value.IsNil(), nil
+func (m *nilMatcher) Match(value any) (bool, error) {
+	return value == nil, nil
 }
 
 // checks if the index value is or is not in the given array
@@ -374,10 +385,9 @@ func getNormalizeValueFunc(kind client.FieldKind) func(any) (any, error) {
 	return nil
 }
 
-func (m *indexInArrayMatcher) Match(value *client.FieldValue) (bool, error) {
-	v := value.Value()
+func (m *indexInArrayMatcher) Match(value any) (bool, error) {
 	for _, inVal := range m.inValues {
-		if inVal == v {
+		if inVal == value {
 			return m.isIn, nil
 		}
 	}
@@ -393,13 +403,9 @@ type indexLikeMatcher struct {
 	value       string
 }
 
-func newLikeIndexCmp(fieldValue *client.FieldValue, isLike bool) (*indexLikeMatcher, error) {
+func newLikeIndexCmp(filterValue string, isLike bool) (*indexLikeMatcher, error) {
 	matcher := &indexLikeMatcher{
 		isLike: isLike,
-	}
-	filterValue, err := fieldValue.String()
-	if err != nil {
-		return nil, err
 	}
 	if len(filterValue) >= 2 {
 		if filterValue[0] == '%' {
@@ -419,10 +425,10 @@ func newLikeIndexCmp(fieldValue *client.FieldValue, isLike bool) (*indexLikeMatc
 	return matcher, nil
 }
 
-func (m *indexLikeMatcher) Match(value *client.FieldValue) (bool, error) {
-	currentVal, err := value.String()
-	if err != nil {
-		return false, err
+func (m *indexLikeMatcher) Match(value any) (bool, error) {
+	currentVal, ok := value.(string)
+	if !ok {
+		return false, NewErrUnexpectedTypeValue[string](currentVal)
 	}
 
 	return m.doesMatch(currentVal) == m.isLike, nil
@@ -447,7 +453,7 @@ func (m *indexLikeMatcher) doesMatch(currentVal string) bool {
 
 type anyMatcher struct{}
 
-func (m *anyMatcher) Match(*client.FieldValue) (bool, error) { return true, nil }
+func (m *anyMatcher) Match(any) (bool, error) { return true, nil }
 
 // newPrefixIndexIterator creates a new eqPrefixIndexIterator for fetching indexed data.
 // It can modify the input matchers slice.
@@ -455,7 +461,7 @@ func (f *IndexFetcher) newPrefixIndexIterator(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*eqPrefixIndexIterator, error) {
-	keyFieldValues := make([]*client.FieldValue, 0, len(fieldConditions))
+	keyFieldValues := make([]any, 0, len(fieldConditions))
 	for i := range fieldConditions {
 		if fieldConditions[i].op != opEq {
 			// prefix can be created only for subsequent _eq conditions
@@ -473,11 +479,15 @@ func (f *IndexFetcher) newPrefixIndexIterator(
 	}
 
 	return &eqPrefixIndexIterator{
-		queryResultIterator: queryResultIterator{indexDesc: f.indexDesc},
+		queryResultIterator: f.newQueryResultIterator(),
 		indexKey:            f.newIndexDataStoreKeyWithValues(keyFieldValues),
 		execInfo:            &f.execInfo,
 		matchers:            matchers,
 	}, nil
+}
+
+func (f *IndexFetcher) newQueryResultIterator() queryResultIterator {
+	return queryResultIterator{indexDesc: f.indexDesc, indexedFields: f.indexedFields}
 }
 
 // newInIndexIterator creates a new inIndexIterator for fetching indexed data.
@@ -486,14 +496,14 @@ func (f *IndexFetcher) newInIndexIterator(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*inIndexIterator, error) {
-	inArr, ok := fieldConditions[0].val.Value().([]any)
+	inArr, ok := fieldConditions[0].val.([]any)
 	if !ok {
 		return nil, ErrInvalidInOperatorValue
 	}
-	inValues := make([]client.FieldValue, 0, len(inArr))
+	inValues := make([]any, 0, len(inArr))
 	for _, v := range inArr {
 		fieldVal := client.NewFieldValue(client.NONE_CRDT, v, f.indexedFields[0].Kind)
-		inValues = append(inValues, *fieldVal)
+		inValues = append(inValues, fieldVal.Value())
 	}
 
 	// iterators for _in filter already iterate over keys with first field value
@@ -504,7 +514,7 @@ func (f *IndexFetcher) newInIndexIterator(
 
 	var iter indexIterator
 	if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
-		keyFieldValues := make([]*client.FieldValue, len(fieldConditions))
+		keyFieldValues := make([]any, len(fieldConditions))
 		for i := range fieldConditions {
 			keyFieldValues[i] = fieldConditions[i].val
 		}
@@ -518,7 +528,7 @@ func (f *IndexFetcher) newInIndexIterator(
 		indexKey.Fields = []core.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
 		iter = &eqPrefixIndexIterator{
-			queryResultIterator: queryResultIterator{indexDesc: f.indexDesc},
+			queryResultIterator: f.newQueryResultIterator(),
 			indexKey:            indexKey,
 			execInfo:            &f.execInfo,
 			matchers:            matchers,
@@ -535,7 +545,7 @@ func (f *IndexFetcher) newIndexDataStoreKey() core.IndexDataStoreKey {
 	return key
 }
 
-func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []*client.FieldValue) core.IndexDataStoreKey {
+func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []any) core.IndexDataStoreKey {
 	key := core.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
 	key.Fields = make([]core.IndexedField, len(values))
 	for i := range values {
@@ -556,7 +566,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	switch fieldConditions[0].op {
 	case opEq:
 		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
-			keyFieldValues := make([]*client.FieldValue, len(fieldConditions))
+			keyFieldValues := make([]any, len(fieldConditions))
 			for i := range fieldConditions {
 				keyFieldValues[i] = fieldConditions[i].val
 			}
@@ -572,7 +582,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return f.newInIndexIterator(fieldConditions, matchers)
 	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike:
 		return &scanningIndexIterator{
-			queryResultIterator: queryResultIterator{indexDesc: f.indexDesc},
+			queryResultIterator: f.newQueryResultIterator(),
 			indexKey:            f.newIndexDataStoreKey(),
 			matchers:            matchers,
 			execInfo:            &f.execInfo,
@@ -582,56 +592,67 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
 }
 
-func createValueMatcher(op string, filterVal *client.FieldValue) (valueMatcher, error) {
-	if filterVal == nil {
+func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
+	if condition.op == "" {
 		return &anyMatcher{}, nil
 	}
 
-	if client.IsNillableKind(filterVal.Kind()) && filterVal.IsNil() {
+	if client.IsNillableKind(condition.kind) && condition.val == nil {
 		return &nilMatcher{}, nil
 	}
 
-	switch op {
+	switch condition.op {
 	case opEq, opGt, opGe, opLt, opLe, opNe:
-		switch filterVal.Kind() {
+		switch condition.kind {
 		case client.FieldKind_NILLABLE_INT:
-			intVal, err := filterVal.Int()
-			if err != nil {
-				return nil, err
+			var intVal int64
+			switch v := condition.val.(type) {
+			case int64:
+				intVal = v
+			case int32:
+				intVal = int64(v)
+			case int:
+				intVal = int64(v)
+			default:
+				return nil, NewErrUnexpectedTypeValue[int64](condition.val)
 			}
-			return &intMatcher{value: intVal, evalFunc: getCompareValsFunc[int64](op)}, nil
+			return &intMatcher{value: intVal, evalFunc: getCompareValsFunc[int64](condition.op)}, nil
 		case client.FieldKind_NILLABLE_FLOAT:
-			floatVal, err := filterVal.Float()
-			if err != nil {
-				return nil, err
+			floatVal, ok := condition.val.(float64)
+			if !ok {
+				return nil, NewErrUnexpectedTypeValue[float64](condition.val)
 			}
-			return &floatMatcher{value: floatVal, evalFunc: getCompareValsFunc[float64](op)}, nil
+			return &floatMatcher{value: floatVal, evalFunc: getCompareValsFunc[float64](condition.op)}, nil
 		case client.FieldKind_DocID, client.FieldKind_NILLABLE_STRING:
-			stringVal, err := filterVal.String()
-			if err != nil {
-				return nil, err
+			strVal, ok := condition.val.(string)
+			if !ok {
+				return nil, NewErrUnexpectedTypeValue[string](condition.val)
 			}
-			return &stringMatcher{value: stringVal, evalFunc: getCompareValsFunc[string](op)}, nil
+			return &stringMatcher{value: strVal, evalFunc: getCompareValsFunc[string](condition.op)}, nil
 		}
 	case opIn, opNin:
-		inArr, ok := filterVal.Value().([]any)
+		inArr, ok := condition.val.([]any)
 		if !ok {
 			return nil, ErrInvalidInOperatorValue
 		}
-		return newNinIndexCmp(inArr, filterVal.Kind(), op == opIn)
+		return newNinIndexCmp(inArr, condition.kind, condition.op == opIn)
 	case opLike, opNlike:
-		return newLikeIndexCmp(filterVal, op == opLike)
+		strVal, ok := condition.val.(string)
+		if !ok {
+			return nil, NewErrUnexpectedTypeValue[string](condition.val)
+		}
+		return newLikeIndexCmp(strVal, condition.op == opLike)
 	case opAny:
 		return &anyMatcher{}, nil
 	}
 
-	return nil, NewErrInvalidFilterOperator(op)
+	return nil, NewErrInvalidFilterOperator(condition.op)
 }
 
 func createValueMatchers(conditions []fieldFilterCond) ([]valueMatcher, error) {
 	matchers := make([]valueMatcher, 0, len(conditions))
 	for i := range conditions {
-		m, err := createValueMatcher(conditions[i].op, conditions[i].val)
+		m, err := createValueMatcher(&conditions[i])
 		if err != nil {
 			return nil, err
 		}
@@ -641,8 +662,9 @@ func createValueMatchers(conditions []fieldFilterCond) ([]valueMatcher, error) {
 }
 
 type fieldFilterCond struct {
-	op  string
-	val *client.FieldValue
+	op   string
+	val  any
+	kind client.FieldKind
 }
 
 // determineFieldFilterConditions determines the conditions and their corresponding operation
@@ -666,8 +688,9 @@ func (f *IndexFetcher) determineFieldFilterConditions() []fieldFilterCond {
 			for key, filterVal := range condMap {
 				opKey := key.(*mapper.Operator)
 				result = append(result, fieldFilterCond{
-					op:  opKey.Operation,
-					val: client.NewFieldValue(client.NONE_CRDT, filterVal, f.indexedFields[i].Kind),
+					op:   opKey.Operation,
+					val:  filterVal,
+					kind: f.indexedFields[i].Kind,
 				})
 				break
 			}
@@ -691,11 +714,11 @@ func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fie
 	res := indexDesc.Unique && len(conditions) == len(indexDesc.Fields)
 
 	// first condition is not required to be _eq, but if is, val must be not nil
-	res = res && (conditions[0].op != opEq || !conditions[0].val.IsNil())
+	res = res && (conditions[0].op != opEq || conditions[0].val != nil)
 
 	// for the rest it must be _eq and val must be not nil
 	for i := 1; i < len(conditions); i++ {
-		res = res && (conditions[i].op == opEq && !conditions[i].val.IsNil())
+		res = res && (conditions[i].op == opEq && conditions[i].val != nil)
 	}
 	return res
 }

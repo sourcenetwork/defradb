@@ -22,7 +22,7 @@ import (
 func TestEncodeDecodeFieldValue(t *testing.T) {
 	tests := []struct {
 		name              string
-		inputVal          *client.FieldValue
+		inputVal          any
 		expectedBytes     []byte
 		expectedBytesDesc []byte
 		expectErr         bool
@@ -136,7 +136,7 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 					t.Errorf("EncodeFieldValue() = %v, want %v", encoded, expectedBytes)
 				}
 
-				_, decodedFieldVal, err := DecodeFieldValue(encoded, tt.inputVal.Kind(), descending)
+				_, decodedFieldVal, err := DecodeFieldValue(encoded, descending)
 				if (err != nil) != tt.expectErr {
 					t.Errorf("DecodeFieldValue() error = %v, wantErr %v", err, tt.expectErr)
 				}
@@ -151,63 +151,28 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 func TestDecodeInvalidFieldValue(t *testing.T) {
 	tests := []struct {
 		name           string
-		kind           client.FieldKind
 		inputBytes     []byte
 		inputBytesDesc []byte
 	}{
 		{
-			name:           "bool > 1",
-			inputBytes:     EncodeUvarintAscending(nil, 2),
-			inputBytesDesc: EncodeUvarintDescending(nil, 2),
-			kind:           client.FieldKind_NILLABLE_BOOL,
-		},
-		{
-			name:           "bool < 0",
-			inputBytes:     EncodeVarintAscending(nil, -1),
-			inputBytesDesc: EncodeVarintDescending(nil, -1),
-			kind:           client.FieldKind_NILLABLE_BOOL,
-		},
-		{
-			name:           "wrong kind for bytes value",
-			inputBytes:     EncodeBytesAscending(nil, []byte{1, 2, 3}),
-			inputBytesDesc: EncodeBytesDescending(nil, []byte{1, 2, 3}),
-			kind:           client.FieldKind_NILLABLE_INT,
-		},
-		{
-			name:           "wrong kind for int value",
-			inputBytes:     EncodeUvarintAscending(nil, 3),
-			inputBytesDesc: EncodeUvarintDescending(nil, 3),
-			kind:           client.FieldKind_NILLABLE_FLOAT,
-		},
-		{
-			name:           "wrong kind for float value",
-			inputBytes:     EncodeFloatAscending(nil, 0.2),
-			inputBytesDesc: EncodeFloatDescending(nil, 0.2),
-			kind:           client.FieldKind_NILLABLE_INT,
-		},
-		{
 			name:           "invalid int value",
 			inputBytes:     []byte{IntMax, 2},
-			inputBytesDesc: []byte{IntMax, 2},
-			kind:           client.FieldKind_NILLABLE_INT,
+			inputBytesDesc: []byte{^byte(IntMax), 2},
 		},
 		{
 			name:           "invalid float value",
 			inputBytes:     []byte{floatPos, 2},
 			inputBytesDesc: []byte{floatPos, 2},
-			kind:           client.FieldKind_NILLABLE_FLOAT,
 		},
 		{
 			name:           "invalid bytes value",
 			inputBytes:     []byte{bytesMarker, 2},
 			inputBytesDesc: []byte{bytesMarker, 2},
-			kind:           client.FieldKind_NILLABLE_STRING,
 		},
 		{
-			name:           "nil value for not-nillable kind",
-			inputBytes:     EncodeNullAscending(nil),
-			inputBytesDesc: EncodeNullDescending(nil),
-			kind:           client.FieldKind_DocID,
+			name:           "invalid data",
+			inputBytes:     []byte{IntMin - 1, 2},
+			inputBytesDesc: []byte{^byte(IntMin - 1), 2},
 		},
 	}
 
@@ -222,7 +187,7 @@ func TestDecodeInvalidFieldValue(t *testing.T) {
 				if descending {
 					inputBytes = tt.inputBytesDesc
 				}
-				_, _, err := DecodeFieldValue(inputBytes, tt.kind, descending)
+				_, _, err := DecodeFieldValue(inputBytes, descending)
 				assert.ErrorIs(t, err, ErrCanNotDecodeFieldValue)
 			})
 		}

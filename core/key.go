@@ -80,7 +80,7 @@ var _ Key = (*DataStoreKey)(nil)
 // value of a field in an index.
 type IndexedField struct {
 	// Value is the value of the field in the index
-	Value *client.FieldValue
+	Value any
 	// Descending is true if the field is sorted in descending order
 	Descending bool
 }
@@ -509,9 +509,9 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 // DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.
 // It expects the input bytes is in the following format:
 //
-// /[CollectionID]/[IndexID]/[FieldKind][FieldValue](/[FieldKind][FieldValue]...)
+// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)
 //
-// Where [CollectionID], [IndexID] and [FieldKind] are integers
+// Where [CollectionID] and [IndexID] are integers
 func DecodeIndexDataStoreKey(data []byte, indexDesc *client.IndexDescription) (IndexDataStoreKey, error) {
 	if len(data) == 0 {
 		return IndexDataStoreKey{}, ErrEmptyKey
@@ -548,29 +548,58 @@ func DecodeIndexDataStoreKey(data []byte, indexDesc *client.IndexDescription) (I
 			return IndexDataStoreKey{}, ErrInvalidKey
 		}
 		data = data[1:]
-		var fieldKind uint64
-		data, fieldKind, err = encoding.DecodeUvarintAscending(data)
-		if err != nil {
-			return IndexDataStoreKey{}, err
-		}
-
-		var fieldVal *client.FieldValue
 		i := len(key.Fields)
 		descending := false
-		if i < len(indexDesc.Fields) { // TOTEST
+		if i < len(indexDesc.Fields) {
 			descending = indexDesc.Fields[i].Descending
+		} else if i > len(indexDesc.Fields) {
+			return IndexDataStoreKey{}, ErrInvalidKey
 		}
-		data, fieldVal, err = encoding.DecodeFieldValue(data, client.FieldKind(fieldKind), descending)
+		var val any
+		data, val, err = encoding.DecodeFieldValue(data, descending)
 		if err != nil {
 			return IndexDataStoreKey{}, err
 		}
 
-		key.Fields = append(key.Fields, IndexedField{
-			Value: fieldVal,
-		})
+		key.Fields = append(key.Fields, IndexedField{Value: val, Descending: descending})
 	}
 
 	return key, nil
+}
+
+func NormalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.FieldDescription) {
+	convertIfBool := func(field client.FieldKind, value int64) any {
+		if field == client.FieldKind_NILLABLE_BOOL {
+			return value != 0
+		}
+		return value
+	}
+	convertIfString := func(field client.FieldKind, value []byte) any {
+		if field == client.FieldKind_NILLABLE_STRING || field == client.FieldKind_DocID {
+			return string(value)
+		}
+		return value
+	}
+
+	for i := range key.Fields {
+		if key.Fields[i].Value == nil {
+			continue
+		}
+		switch v := key.Fields[i].Value.(type) {
+		case int:
+			key.Fields[i].Value = convertIfBool(fields[i].Kind, int64(v))
+		case int32:
+			key.Fields[i].Value = convertIfBool(fields[i].Kind, int64(v))
+		case int64:
+			key.Fields[i].Value = convertIfBool(fields[i].Kind, v)
+		case []byte:
+			if i == len(key.Fields)-1 && len(key.Fields)-len(fields) == 1 {
+				key.Fields[i].Value = string(v)
+			} else {
+				key.Fields[i].Value = convertIfString(fields[i].Kind, v)
+			}
+		}
+	}
 }
 
 // Bytes returns the byte representation of the key
@@ -598,7 +627,6 @@ func EncodeIndexDataStoreKey(b []byte, key *IndexDataStoreKey) ([]byte, error) {
 	var err error
 	for _, field := range key.Fields {
 		b = append(b, '/')
-		b = encoding.EncodeUvarintAscending(b, uint64(field.Value.Kind()))
 		b, err = encoding.EncodeFieldValue(b, field.Value, field.Descending)
 		if err != nil {
 			return nil, err

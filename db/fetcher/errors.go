@@ -11,6 +11,8 @@
 package fetcher
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -28,6 +30,7 @@ const (
 	errMissingMapper                string = "missing document mapper"
 	errInvalidInOperatorValue       string = "invalid _in/_nin value"
 	errInvalidFilterOperator        string = "invalid filter operator is provided"
+	errUnexpectedTypeValue          string = "unexpected type value"
 )
 
 var (
@@ -45,6 +48,7 @@ var (
 	ErrSingleSpanOnly               = errors.New("spans must contain only a single entry")
 	ErrInvalidInOperatorValue       = errors.New(errInvalidInOperatorValue)
 	ErrInvalidFilterOperator        = errors.New(errInvalidFilterOperator)
+	ErrUnexpectedTypeValue          = errors.New(errUnexpectedTypeValue)
 )
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.
@@ -101,4 +105,10 @@ func NewErrFailedToGetDagNode(inner error) error {
 // NewErrInvalidFilterOperator returns an error indicating that the given filter operator is invalid.
 func NewErrInvalidFilterOperator(operator string) error {
 	return errors.New(errInvalidFilterOperator, errors.NewKV("Operator", operator))
+}
+
+// NewErrUnexpectedTypeValue returns an error indicating that the given value is of an unexpected type.
+func NewErrUnexpectedTypeValue[T any](value any) error {
+	var t T
+	return errors.New(errUnexpectedTypeValue, errors.NewKV("Value", value), errors.NewKV("Type", fmt.Sprintf("%T", t)))
 }
