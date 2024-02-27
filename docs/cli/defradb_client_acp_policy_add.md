@@ -1,17 +1,64 @@
-## defradb client
+## defradb client acp policy add
 
-Interact with a DefraDB node
+Add new policy
 
 ### Synopsis
 
-Interact with a DefraDB node.
-Execute queries, add schema types, obtain node info, etc.
+Add new policy
+
+Notes:
+  - Can not add a policy without specifying an identity.
+  - ACP must be available (i.e. ACP can not be disabled).
+  - A non-DPI policy will be accepted (will be registered with acp system).
+  - But only a valid DPI policyID & resource can be specified on a schema.
+  - DPI validation happens when attempting to add a schema with '@policy'.
+  - Learn more about [ACP & DPI Rules](/acp/README.md)
+
+Example: add from an argument string:
+  defradb client acp policy add -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j '
+description: A Valid DefraDB Policy Interface
+
+actor:
+  name: actor
+
+resources:
+  users:
+    permissions:
+      read:
+        expr: owner + reader
+      write:
+        expr: owner
+
+    relations:
+      owner:
+        types:
+          - actor
+      reader:
+        types:
+          - actor
+'
+
+Example: add from file:
+  defradb client acp policy add -i cosmos17r39df0hdcrgnmmw4mvu7qgk5nu888c7uvv37y -f policy.yml
+
+Example: add from file, verbose flags:
+  defradb client acp policy add --identity cosmos1kpw734v54g0t0d8tcye8ee5jc3gld0tcr2q473 --file policy.yml
+
+Example: add from stdin:
+  cat policy.yml | defradb client acp policy add -
+
+
+
+```
+defradb client acp policy add [-i --identity] [policy] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help      help for client
-      --tx uint   Transaction ID
+  -f, --file string       File to load a policy from
+  -h, --help              help for add
+  -i, --identity string   [Required] Identity of the creator
 ```
 
 ### Options inherited from parent commands
@@ -32,21 +79,12 @@ Execute queries, add schema types, obtain node info, etc.
       --pubkeypath string             Path to the public key for tls
       --rootdir string                Directory for persistent data (default: $HOME/.defradb)
       --store string                  Specify the datastore to use (supported: badger, memory) (default "badger")
+      --tx uint                       Transaction ID
       --url string                    URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
       --valuelogfilesize int          Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
 ```
 
 ### SEE ALSO
 
-* [defradb](defradb.md)	 - DefraDB Edge Database
-* [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system of a DefraDB node
-* [defradb client backup](defradb_client_backup.md)	 - Interact with the backup utility
-* [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
-* [defradb client dump](defradb_client_dump.md)	 - Dump the contents of DefraDB node-side
-* [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance
-* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
-* [defradb client query](defradb_client_query.md)	 - Send a DefraDB GraphQL query request
-* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
-* [defradb client tx](defradb_client_tx.md)	 - Create, commit, and discard DefraDB transactions
-* [defradb client view](defradb_client_view.md)	 - Manage views within a running DefraDB instance
+* [defradb client acp policy](defradb_client_acp_policy.md)	 - Interact with the acp policy features of DefraDB instance
 

@@ -6,29 +6,34 @@ Update documents by docID or filter.
 
 Update documents by docID or filter.
 		
-Example: update from string
+Example: update from string:
   defradb client collection update --name User --docID bae-123 '{ "name": "Bob" }'
 
-Example: update by filter
+Example: update by filter:
   defradb client collection update --name User \
   --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
 
-Example: update by docIDs
+Example: update by docIDs:
   defradb client collection update --name User \
+  --docID bae-123,bae-456 --updater '{ "verified": true }'
+
+Example: update private docIDs, with identity:
+  defradb client collection update -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User \
   --docID bae-123,bae-456 --updater '{ "verified": true }'
 		
 
 ```
-defradb client collection update [--filter <filter> --docID <docID> --updater <updater>] <document> [flags]
+defradb client collection update [-i --identity] [--filter <filter> --docID <docID> --updater <updater>] <document> [flags]
 ```
 
 ### Options
 
 ```
-      --docID strings    Document ID
-      --filter string    Document filter
-  -h, --help             help for update
-      --updater string   Document updater
+      --docID strings     Document ID
+      --filter string     Document filter
+  -h, --help              help for update
+  -i, --identity string   Identity of the actor
+      --updater string    Document updater
 ```
 
 ### Options inherited from parent commands

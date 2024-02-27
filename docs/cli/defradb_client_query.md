@@ -12,6 +12,9 @@ A query request can be sent as a single argument. Example command:
 Do a query request from a file by using the '-f' flag. Example command:
   defradb client query -f request.graphql
 
+Do a query request from a file and with an identity. Example command:
+  defradb client query -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j -f request.graphql
+
 Or it can be sent via stdin by using the '-' special syntax. Example command:
   cat request.graphql | defradb client query -
 
@@ -21,14 +24,15 @@ with the database more conveniently.
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.
 
 ```
-defradb client query [query request] [flags]
+defradb client query [-i --identity] [request] [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   File containing the query request
-  -h, --help          help for query
+  -f, --file string       File containing the query request
+  -h, --help              help for query
+  -i, --identity string   Identity of the actor
 ```
 
 ### Options inherited from parent commands

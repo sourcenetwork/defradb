@@ -6,28 +6,32 @@ Create a new document.
 
 Create a new document.
 
-Example: create from string
+Example: create from string:
   defradb client collection create --name User '{ "name": "Bob" }'
 
-Example: create multiple from string
+Example: create from string, with identity:
+  defradb client collection create -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User '{ "name": "Bob" }'
+
+Example: create multiple from string:
   defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
 
-Example: create from file
+Example: create from file:
   defradb client collection create --name User -f document.json
 
-Example: create from stdin
+Example: create from stdin:
   cat document.json | defradb client collection create --name User -
 		
 
 ```
-defradb client collection create <document> [flags]
+defradb client collection create [-i --identity] <document> [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   File containing document(s)
-  -h, --help          help for create
+  -f, --file string       File containing document(s)
+  -h, --help              help for create
+  -i, --identity string   Identity of the actor
 ```
 
 ### Options inherited from parent commands

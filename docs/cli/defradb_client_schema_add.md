@@ -6,6 +6,11 @@ Add new schema
 
 Add new schema.
 
+Schema Object with a '@policy(id:".." resource: "..")' linked will only be accepted if:
+  - ACP is available (i.e. ACP is not disabled).
+  - The specified resource adheres to the Document Access Control DPI Rules.
+  - Learn more about [ACP & DPI Rules](/acp/README.md)
+
 Example: add from an argument string:
   defradb client schema add 'type Foo { ... }'
 
