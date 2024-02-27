@@ -50,6 +50,8 @@ var (
 	ErrValueTypeMismatch                   = errors.New("value does not match indicated type")
 	ErrDocumentNotFound                    = errors.New("no document for the given ID exists")
 	ErrPolicyAddFailedACPModuleNotFound    = errors.New("failed to add policy because ACP module was not found")
+	ErrInvalidACPPermToDeleteDocument      = errors.New("invalid acp permission to delete the document")
+	ErrInvalidACPPermToUpdateDocument      = errors.New("invalid acp permission to update the document")
 	ErrInvalidUpdateTarget                 = errors.New("the target document to update is of invalid type")
 	ErrInvalidUpdater                      = errors.New("the updater of a document is of invalid type")
 	ErrInvalidDeleteTarget                 = errors.New("the target document to delete is of invalid type")
