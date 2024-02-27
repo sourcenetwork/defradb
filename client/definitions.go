@@ -11,6 +11,10 @@
 package client
 
 // CollectionDefinition contains the metadata defining what a Collection is.
+//
+// The definition types ([CollectionDefinition], [FieldDefinition]) are read-only types returned
+// from various functions as a convienient means to access the computated convergence of schema
+// and collection descriptions.
 type CollectionDefinition struct {
 	// Description returns the CollectionDescription of this Collection.
 	Description CollectionDescription `json:"description"`
@@ -58,6 +62,10 @@ func (def CollectionDefinition) GetFields() []FieldDefinition {
 //
 // It is to [CollectionFieldDescription] and [SchemaFieldDescription] what [CollectionDefinition]
 // is to [CollectionDescription] and [SchemaDescription].
+//
+// The definition types ([CollectionDefinition], [FieldDefinition]) are read-only types returned
+// from various functions as a convienient means to access the computated convergence of schema
+// and collection descriptions.
 type FieldDefinition struct {
 	// Name contains the name of this field.
 	Name string
