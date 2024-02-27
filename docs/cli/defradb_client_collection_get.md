@@ -8,17 +8,21 @@ View document fields.
 
 Example:
   defradb client collection get --name User bae-123
+
+Example to get a private document we must use an identity:
+  defradb client collection get -i cosmos1f2djr7dl9vhrk3twt3xwqp09nhtzec9mdkf70j --name User bae-123
 		
 
 ```
-defradb client collection get <docID> [--show-deleted] [flags]
+defradb client collection get [-i --identity] [--show-deleted] <docID>  [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help           help for get
-      --show-deleted   Show deleted documents
+  -h, --help              help for get
+  -i, --identity string   Identity of the actor
+      --show-deleted      Show deleted documents
 ```
 
 ### Options inherited from parent commands
