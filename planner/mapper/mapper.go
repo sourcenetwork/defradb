@@ -267,7 +267,7 @@ func resolveAggregates(
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
 	collectionName string,
-	schema client.CollectionDefinition,
+	def client.CollectionDefinition,
 	store client.Store,
 ) ([]Requestable, error) {
 	fields := inputFields
@@ -287,7 +287,7 @@ func resolveAggregates(
 			var hasHost bool
 			var convertedFilter *Filter
 			if childIsMapped {
-				fieldDesc, isField := schema.GetFieldByName(target.hostExternalName)
+				fieldDesc, isField := def.GetFieldByName(target.hostExternalName)
 
 				if isField && !fieldDesc.IsObject() {
 					var order *OrderBy
