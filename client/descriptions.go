@@ -60,6 +60,9 @@ type CollectionDescription struct {
 	// - [CollectionSource]
 	Sources []any
 
+	// Fields contains the fields within this Collection.
+	Fields []CollectionFieldDescription
+
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
 }
@@ -69,26 +72,26 @@ func (col CollectionDescription) IDString() string {
 	return fmt.Sprint(col.ID)
 }
 
-// GetFieldByID searches for a field with the given ID. If such a field is found it
-// will return it and true, if it is not found it will return false.
-func (col CollectionDescription) GetFieldByID(id FieldID, schema *SchemaDescription) (FieldDescription, bool) {
-	for _, field := range schema.Fields {
-		if field.ID == id {
-			return field, true
-		}
-	}
-	return FieldDescription{}, false
-}
-
 // GetFieldByName returns the field for the given field name. If such a field is found it
 // will return it and true, if it is not found it will return false.
-func (col CollectionDescription) GetFieldByName(fieldName string, schema *SchemaDescription) (FieldDescription, bool) {
-	for _, field := range schema.Fields {
+func (col CollectionDescription) GetFieldByName(fieldName string) (CollectionFieldDescription, bool) {
+	for _, field := range col.Fields {
 		if field.Name == fieldName {
 			return field, true
 		}
 	}
-	return FieldDescription{}, false
+	return CollectionFieldDescription{}, false
+}
+
+// GetFieldByName returns the field for the given field name. If such a field is found it
+// will return it and true, if it is not found it will return false.
+func (s SchemaDescription) GetFieldByName(fieldName string) (SchemaFieldDescription, bool) {
+	for _, field := range s.Fields {
+		if field.Name == fieldName {
+			return field, true
+		}
+	}
+	return SchemaFieldDescription{}, false
 }
 
 // GetFieldByRelation returns the field that supports the relation of the given name.
@@ -97,7 +100,7 @@ func (col CollectionDescription) GetFieldByRelation(
 	otherCollectionName string,
 	otherFieldName string,
 	schema *SchemaDescription,
-) (FieldDescription, bool) {
+) (SchemaFieldDescription, bool) {
 	for _, field := range schema.Fields {
 		if field.RelationName == relationName &&
 			!(col.Name.Value() == otherCollectionName && otherFieldName == field.Name) &&
@@ -105,7 +108,7 @@ func (col CollectionDescription) GetFieldByRelation(
 			return field, true
 		}
 	}
-	return FieldDescription{}, false
+	return SchemaFieldDescription{}, false
 }
 
 // QuerySources returns all the Sources of type [QuerySource]
@@ -190,17 +193,7 @@ type SchemaDescription struct {
 	// Fields contains the fields within this Schema.
 	//
 	// Currently new fields may be added after initial declaration, but they cannot be removed.
-	Fields []FieldDescription
-}
-
-// GetField returns the field of the given name.
-func (sd SchemaDescription) GetField(name string) (FieldDescription, bool) {
-	for _, field := range sd.Fields {
-		if field.Name == name {
-			return field, true
-		}
-	}
-	return FieldDescription{}, false
+	Fields []SchemaFieldDescription
 }
 
 // FieldKind describes the type of a field.
@@ -243,6 +236,31 @@ func (f FieldKind) String() string {
 	default:
 		return fmt.Sprint(uint8(f))
 	}
+}
+
+// IsObject returns true if this FieldKind is an object type.
+func (f FieldKind) IsObject() bool {
+	return f == FieldKind_FOREIGN_OBJECT ||
+		f == FieldKind_FOREIGN_OBJECT_ARRAY
+}
+
+// IsObjectArray returns true if this FieldKind is an object array type.
+func (f FieldKind) IsObjectArray() bool {
+	return f == FieldKind_FOREIGN_OBJECT_ARRAY
+}
+
+// IsArray returns true if this FieldKind is an array type which includes inline arrays as well
+// as relation arrays.
+func (f FieldKind) IsArray() bool {
+	return f == FieldKind_BOOL_ARRAY ||
+		f == FieldKind_INT_ARRAY ||
+		f == FieldKind_FLOAT_ARRAY ||
+		f == FieldKind_STRING_ARRAY ||
+		f == FieldKind_FOREIGN_OBJECT_ARRAY ||
+		f == FieldKind_NILLABLE_BOOL_ARRAY ||
+		f == FieldKind_NILLABLE_INT_ARRAY ||
+		f == FieldKind_NILLABLE_FLOAT_ARRAY ||
+		f == FieldKind_NILLABLE_STRING_ARRAY
 }
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
@@ -312,20 +330,12 @@ func (f FieldID) String() string {
 	return fmt.Sprint(uint32(f))
 }
 
-// FieldDescription describes a field on a Schema and its associated metadata.
-type FieldDescription struct {
+// SchemaFieldDescription describes a field on a Schema and its associated metadata.
+type SchemaFieldDescription struct {
 	// Name contains the name of this field.
 	//
 	// It is currently immutable.
 	Name string
-
-	// ID contains the internal ID of this field.
-	//
-	// Whilst this ID will typically match the field's index within the Schema's Fields
-	// slice, there is no guarantee that they will be the same.
-	//
-	// It is immutable.
-	ID FieldID
 
 	// The data type that this field holds.
 	//
@@ -345,37 +355,22 @@ type FieldDescription struct {
 	// It is currently immutable.
 	Typ CType
 
+	// If true, this is the primary half of a relation, otherwise is false.
 	IsPrimaryRelation bool
 }
 
-// IsObject returns true if this field is an object type.
-func (f FieldDescription) IsObject() bool {
-	return (f.Kind == FieldKind_FOREIGN_OBJECT) ||
-		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
-}
+// CollectionFieldDescription describes the local components of a field on a collection.
+type CollectionFieldDescription struct {
+	// Name contains the name of the [SchemaFieldDescription] that this field uses.
+	Name string
 
-// IsObjectArray returns true if this field is an object array type.
-func (f FieldDescription) IsObjectArray() bool {
-	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
+	// ID contains the local, internal ID of this field.
+	ID FieldID
 }
 
 // IsRelation returns true if this field is a relation.
-func (f FieldDescription) IsRelation() bool {
+func (f SchemaFieldDescription) IsRelation() bool {
 	return f.RelationName != ""
-}
-
-// IsArray returns true if this field is an array type which includes inline arrays as well
-// as relation arrays.
-func (f FieldDescription) IsArray() bool {
-	return f.Kind == FieldKind_BOOL_ARRAY ||
-		f.Kind == FieldKind_INT_ARRAY ||
-		f.Kind == FieldKind_FLOAT_ARRAY ||
-		f.Kind == FieldKind_STRING_ARRAY ||
-		f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_BOOL_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_INT_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_FLOAT_ARRAY ||
-		f.Kind == FieldKind_NILLABLE_STRING_ARRAY
 }
 
 // IsSet returns true if the target relation type is set.
@@ -392,6 +387,7 @@ type collectionDescription struct {
 	RootID          uint32
 	SchemaVersionID string
 	Indexes         []IndexDescription
+	Fields          []CollectionFieldDescription
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Sources []map[string]json.RawMessage
@@ -409,6 +405,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.RootID = descMap.RootID
 	c.SchemaVersionID = descMap.SchemaVersionID
 	c.Indexes = descMap.Indexes
+	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))
 
 	for i, source := range descMap.Sources {

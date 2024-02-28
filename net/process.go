@@ -149,7 +149,7 @@ func initCRDTForType(
 		), nil
 	}
 
-	fd, ok := col.Schema().GetField(field)
+	fd, ok := col.Definition().GetFieldByName(field)
 	if !ok {
 		return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, dsKey.ToString()))
 	}

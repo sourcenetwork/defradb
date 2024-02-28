@@ -1206,7 +1206,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 				},
 				Schema: client.SchemaDescription{
 					Name: "User",
-					Fields: []client.FieldDescription{
+					Fields: []client.SchemaFieldDescription{
 						{
 							Name: "name",
 							Kind: client.FieldKind_NILLABLE_INT,
@@ -1226,7 +1226,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 				},
 				Schema: client.SchemaDescription{
 					Name: "Device",
-					Fields: []client.FieldDescription{
+					Fields: []client.SchemaFieldDescription{
 						{
 							Name: "model",
 							Kind: client.FieldKind_NILLABLE_STRING,
@@ -1321,7 +1321,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 			},
 			Schema: client.SchemaDescription{
 				Name: "User",
-				Fields: []client.FieldDescription{
+				Fields: []client.SchemaFieldDescription{
 					{
 						Name: "name",
 						Kind: client.FieldKind_NILLABLE_STRING,
@@ -1350,7 +1350,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 			},
 			Schema: client.SchemaDescription{
 				Name: "Device",
-				Fields: []client.FieldDescription{
+				Fields: []client.SchemaFieldDescription{
 					{
 						Name: "model",
 						Kind: client.FieldKind_NILLABLE_STRING,

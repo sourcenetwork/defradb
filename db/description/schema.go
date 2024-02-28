@@ -30,13 +30,6 @@ func CreateSchemaVersion(
 	txn datastore.Txn,
 	desc client.SchemaDescription,
 ) (client.SchemaDescription, error) {
-	for i := range desc.Fields {
-		// This is not wonderful and will probably break when we add the ability
-		// to delete fields, however it is good enough for now and matches the
-		// create behaviour.
-		desc.Fields[i].ID = client.FieldID(i)
-	}
-
 	buf, err := json.Marshal(desc)
 	if err != nil {
 		return client.SchemaDescription{}, err

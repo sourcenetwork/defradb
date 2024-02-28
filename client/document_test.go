@@ -30,7 +30,7 @@ var (
 	schemaDescriptions = []SchemaDescription{
 		{
 			Name: "User",
-			Fields: []FieldDescription{
+			Fields: []SchemaFieldDescription{
 				{
 					Name: "Name",
 					Typ:  LWW_REGISTER,

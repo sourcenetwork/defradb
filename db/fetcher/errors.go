@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	errFieldIdNotFound              string = "unable to find FieldDescription for given FieldId"
+	errFieldIdNotFound              string = "unable to find SchemaFieldDescription for given FieldId"
 	errFailedToDecodeCIDForVFetcher string = "failed to decode CID for VersionedFetcher"
 	errFailedToSeek                 string = "seek failed"
 	errFailedToMergeState           string = "failed merging state"

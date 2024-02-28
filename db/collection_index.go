@@ -130,12 +130,10 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
-	desc := c.Description()
-	schema := c.Schema()
 	oldDoc, err := c.get(
 		ctx,
 		txn,
-		c.getPrimaryKeyFromDocID(doc.ID()), desc.CollectIndexedFields(&schema),
+		c.getPrimaryKeyFromDocID(doc.ID()), c.Definition().CollectIndexedFields(),
 		false,
 	)
 	if err != nil {
@@ -241,7 +239,7 @@ func (c *collection) createIndex(
 func (c *collection) iterateAllDocs(
 	ctx context.Context,
 	txn datastore.Txn,
-	fields []client.FieldDescription,
+	fields []client.FieldDefinition,
 	exec func(doc *client.Document) error,
 ) error {
 	df := c.newFetcher()
@@ -285,14 +283,11 @@ func (c *collection) indexExistingDocs(
 	txn datastore.Txn,
 	index CollectionIndex,
 ) error {
-	fields := make([]client.FieldDescription, 0, 1)
+	fields := make([]client.FieldDefinition, 0, 1)
 	for _, field := range index.Description().Fields {
-		for i := range c.Schema().Fields {
-			colField := c.Schema().Fields[i]
-			if field.Name == colField.Name {
-				fields = append(fields, colField)
-				break
-			}
+		colField, ok := c.Definition().GetFieldByName(field.Name)
+		if ok {
+			fields = append(fields, colField)
 		}
 	}
 

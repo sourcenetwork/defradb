@@ -48,7 +48,7 @@ func (c *collection) get(
 	ctx context.Context,
 	txn datastore.Txn,
 	primaryKey core.PrimaryDataStoreKey,
-	fields []client.FieldDescription,
+	fields []client.FieldDefinition,
 	showDeleted bool,
 ) (*client.Document, error) {
 	// create a new document fetcher

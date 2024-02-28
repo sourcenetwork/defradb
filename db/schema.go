@@ -361,18 +361,18 @@ func getSubstituteFieldKind(
 	}
 }
 
-// isFieldOrInner returns true if the given path points to a FieldDescription or a property within it.
+// isFieldOrInner returns true if the given path points to a SchemaFieldDescription or a property within it.
 func isFieldOrInner(path []string) bool {
 	//nolint:goconst
 	return len(path) >= 3 && path[fieldsPathIndex] == "Fields"
 }
 
-// isField returns true if the given path points to a FieldDescription.
+// isField returns true if the given path points to a SchemaFieldDescription.
 func isField(path []string) bool {
 	return len(path) == 3 && path[fieldsPathIndex] == "Fields"
 }
 
-// isField returns true if the given path points to a FieldDescription.Kind property.
+// isField returns true if the given path points to a SchemaFieldDescription.Kind property.
 func isFieldKind(path []string) bool {
 	return len(path) == 4 &&
 		path[fieldIndexPathIndex+1] == "Kind" &&

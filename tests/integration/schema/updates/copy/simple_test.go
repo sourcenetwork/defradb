@@ -28,14 +28,13 @@ func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 				`,
 			},
 			testUtils.SchemaPatch{
-				// Here we esentially use Users as a template, copying it, clearing the IDs, and renaming the
+				// Here we esentially use Users as a template, copying it and renaming the
 				// clone. It is deliberately blocked for now, but should function at somepoint.
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users", "path": "/Book" },
 						{ "op": "remove", "path": "/Book/Root" },
 						{ "op": "remove", "path": "/Book/VersionID" },
-						{ "op": "remove", "path": "/Book/Fields/1/ID" },
 						{ "op": "replace", "path": "/Book/Name", "value": "Book" }
 					]
 				`,

@@ -92,9 +92,9 @@ func NewCollectionIndex(
 	}
 	base := collectionBaseIndex{collection: collection, desc: desc}
 	base.validateFieldFuncs = make([]func(any) bool, 0, len(desc.Fields))
-	base.fieldsDescs = make([]client.FieldDescription, 0, len(desc.Fields))
+	base.fieldsDescs = make([]client.SchemaFieldDescription, 0, len(desc.Fields))
 	for _, fieldDesc := range desc.Fields {
-		field, foundField := collection.Schema().GetField(fieldDesc.Name)
+		field, foundField := collection.Schema().GetFieldByName(fieldDesc.Name)
 		if !foundField {
 			return nil, client.NewErrFieldNotExist(desc.Fields[0].Name)
 		}
@@ -116,7 +116,7 @@ type collectionBaseIndex struct {
 	collection         client.Collection
 	desc               client.IndexDescription
 	validateFieldFuncs []func(any) bool
-	fieldsDescs        []client.FieldDescription
+	fieldsDescs        []client.SchemaFieldDescription
 }
 
 func (i *collectionBaseIndex) getDocFieldValue(doc *client.Document) ([][]byte, error) {

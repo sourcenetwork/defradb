@@ -187,7 +187,7 @@ func isNillableKind(kind FieldKind) bool {
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field FieldDescription) (any, error) {
+func validateFieldSchema(val any, field SchemaFieldDescription) (any, error) {
 	if isNillableKind(field.Kind) {
 		if val == nil {
 			return nil, nil
@@ -522,15 +522,15 @@ func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
 
 // Set the value of a field.
 func (doc *Document) Set(field string, value any) error {
-	fd, exists := doc.schemaDescription.GetField(field)
+	fd, exists := doc.schemaDescription.GetFieldByName(field)
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
-	if fd.IsRelation() && !fd.IsObjectArray() {
+	if fd.IsRelation() && !fd.Kind.IsObjectArray() {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}
-		fd, exists = doc.schemaDescription.GetField(field)
+		fd, exists = doc.schemaDescription.GetFieldByName(field)
 		if !exists {
 			return NewErrFieldNotExist(field)
 		}

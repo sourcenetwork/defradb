@@ -887,7 +887,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 				ctx context.Context,
 				txn datastore.Txn,
 				col client.Collection,
-				fields []client.FieldDescription,
+				fields []client.FieldDefinition,
 				filter *mapper.Filter,
 				mapping *core.DocumentMapping,
 				reverse, showDeleted bool,
@@ -1005,7 +1005,7 @@ type shimEncodedDocument struct {
 	key             []byte
 	schemaVersionID string
 	status          client.DocumentStatus
-	properties      map[client.FieldDescription]any
+	properties      map[client.FieldDefinition]any
 }
 
 var _ fetcher.EncodedDocument = (*shimEncodedDocument)(nil)
@@ -1022,7 +1022,7 @@ func (encdoc *shimEncodedDocument) Status() client.DocumentStatus {
 	return encdoc.status
 }
 
-func (encdoc *shimEncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDescription]any, error) {
+func (encdoc *shimEncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error) {
 	return encdoc.properties, nil
 }
 
@@ -1030,7 +1030,7 @@ func (encdoc *shimEncodedDocument) Reset() {
 	encdoc.key = nil
 	encdoc.schemaVersionID = ""
 	encdoc.status = 0
-	encdoc.properties = map[client.FieldDescription]any{}
+	encdoc.properties = map[client.FieldDefinition]any{}
 }
 
 func TestUniqueCreate_ShouldIndexExistingDocs(t *testing.T) {
