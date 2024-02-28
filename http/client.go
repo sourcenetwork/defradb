@@ -448,7 +448,7 @@ func (c *Client) Peerstore() datastore.DSBatching {
 	panic("client side database")
 }
 
-func (c *Client) ACPModule() immutable.Option[acp.ACPModule] {
+func (c *Client) ACPModule(ctx context.Context) (immutable.Option[acp.ACPModule], error) {
 	panic("client side database")
 }
 

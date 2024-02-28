@@ -22,3 +22,10 @@ type PolicyDescription struct {
 	// ResourceName is the name of the corresponding resource within the policy.
 	ResourceName string
 }
+
+// AddPolicyResult wraps the result of successfully adding/registering a Policy.
+type AddPolicyResult struct {
+	// PolicyID is the unique identifier returned by the acp module,
+	// upon successful creation of a policy.
+	PolicyID string
+}
