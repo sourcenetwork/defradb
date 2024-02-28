@@ -240,13 +240,13 @@ func (f FieldKind) String() string {
 
 // IsObject returns true if this FieldKind is an object type.
 func (f FieldKind) IsObject() bool {
-	return (f == FieldKind_FOREIGN_OBJECT) ||
-		(f == FieldKind_FOREIGN_OBJECT_ARRAY)
+	return f == FieldKind_FOREIGN_OBJECT ||
+		f == FieldKind_FOREIGN_OBJECT_ARRAY
 }
 
 // IsObjectArray returns true if this FieldKind is an object array type.
 func (f FieldKind) IsObjectArray() bool {
-	return (f == FieldKind_FOREIGN_OBJECT_ARRAY)
+	return f == FieldKind_FOREIGN_OBJECT_ARRAY
 }
 
 // IsArray returns true if this FieldKind is an array type which includes inline arrays as well
