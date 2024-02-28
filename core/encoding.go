@@ -19,9 +19,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// DecodeFieldValue takes a field value and description and converts it to the
+// NormalizeFieldValue takes a field value and description and converts it to the
 // standardized Defra Go type.
-func DecodeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error) {
+func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error) {
 	if val == nil {
 		return nil, nil
 	}
@@ -124,6 +124,16 @@ func DecodeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error) {
 			switch v := val.(type) {
 			case string:
 				return time.Parse(time.RFC3339, v)
+			}
+		case client.FieldKind_NILLABLE_BOOL:
+			switch v := val.(type) {
+			case int64:
+				return v != 0, nil
+			}
+		case client.FieldKind_NILLABLE_STRING:
+			switch v := val.(type) {
+			case []byte:
+				return string(v), nil
 			}
 		}
 	}

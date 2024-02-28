@@ -523,7 +523,14 @@ func NewIndexDataStoreKey(collectionID, indexID uint32, fields []IndexedField) (
 // /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)
 //
 // Where [CollectionID] and [IndexID] are integers
-func DecodeIndexDataStoreKey(data []byte, indexDesc *client.IndexDescription) (IndexDataStoreKey, error) {
+//
+// All values of the fields are converted to standardized Defra Go type
+// according to fields description.
+func DecodeIndexDataStoreKey(
+	data []byte,
+	indexDesc *client.IndexDescription,
+	fields []client.FieldDescription,
+) (IndexDataStoreKey, error) {
 	if len(data) == 0 {
 		return IndexDataStoreKey{}, ErrEmptyKey
 	}
@@ -575,42 +582,32 @@ func DecodeIndexDataStoreKey(data []byte, indexDesc *client.IndexDescription) (I
 		key.fields = append(key.fields, IndexedField{Value: val, Descending: descending})
 	}
 
-	return key, nil
+	err = normalizeIndexDataStoreKeyValues(&key, fields)
+	return key, err
 }
 
-func NormalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.FieldDescription) {
-	convertIfBool := func(field client.FieldKind, value int64) any {
-		if field == client.FieldKind_NILLABLE_BOOL {
-			return value != 0
-		}
-		return value
-	}
-	convertIfString := func(field client.FieldKind, value []byte) any {
-		if field == client.FieldKind_NILLABLE_STRING || field == client.FieldKind_DocID {
-			return string(value)
-		}
-		return value
-	}
-
+// normalizeIndexDataStoreKeyValues converts all field values  to standardized
+// Defra Go type according to fields description.
+func normalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.FieldDescription) error {
 	for i := range key.fields {
 		if key.fields[i].Value == nil {
 			continue
 		}
-		switch v := key.fields[i].Value.(type) {
-		case int:
-			key.fields[i].Value = convertIfBool(fields[i].Kind, int64(v))
-		case int32:
-			key.fields[i].Value = convertIfBool(fields[i].Kind, int64(v))
-		case int64:
-			key.fields[i].Value = convertIfBool(fields[i].Kind, v)
-		case []byte:
-			if i == len(key.fields)-1 && len(key.fields)-len(fields) == 1 {
-				key.fields[i].Value = string(v)
-			} else {
-				key.fields[i].Value = convertIfString(fields[i].Kind, v)
-			}
+		var err error
+		var val any
+		if i == len(key.fields)-1 && len(key.fields)-len(fields) == 1 {
+			bytes, ok := key.fields[i].Value.([]byte)
+			ok = ok
+			val = string(bytes)
+		} else {
+			val, err = NormalizeFieldValue(fields[i], key.fields[i].Value)
 		}
+		if err != nil {
+			return err
+		}
+		key.fields[i].Value = val
 	}
+	return nil
 }
 
 // Bytes returns the byte representation of the key

@@ -75,12 +75,10 @@ func (iter *queryResultIterator) Next() (indexIterResult, error) {
 	if !hasVal {
 		return indexIterResult{}, nil
 	}
-	key, err := core.DecodeIndexDataStoreKey([]byte(res.Key), &iter.indexDesc)
+	key, err := core.DecodeIndexDataStoreKey([]byte(res.Key), &iter.indexDesc, iter.indexedFields)
 	if err != nil {
 		return indexIterResult{}, err
 	}
-
-	core.NormalizeIndexDataStoreKeyValues(&key, iter.indexedFields)
 
 	return indexIterResult{key: key, value: res.Value, foundKey: true}, nil
 }
