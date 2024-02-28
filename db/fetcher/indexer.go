@@ -127,15 +127,15 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		for i, indexedField := range f.indexedFields {
 			property := &encProperty{Desc: indexedField}
 
-			if res.key.Fields[i].Value == nil {
+			field := res.key.Field(i)
+			if field.Value == nil {
 				hasNilField = true
 			}
 
-			val := res.key.Fields[i].Value
 			// We need to convert it to cbor bytes as this is what it will be encoded from on value retrieval.
 			// In the future we have to either get rid of CBOR or properly handle different encoding
 			// for properties in a single document.
-			fieldBytes, err := client.NewFieldValue(client.NONE_CRDT, val, indexedField.Kind).Bytes()
+			fieldBytes, err := client.NewFieldValue(client.NONE_CRDT, field.Value, indexedField.Kind).Bytes()
 			if err != nil {
 				return nil, ExecInfo{}, err
 			}
@@ -147,7 +147,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		if f.indexDesc.Unique && !hasNilField {
 			f.doc.id = res.value
 		} else {
-			docID, ok := res.key.Fields[len(res.key.Fields)-1].Value.(string)
+			docID, ok := res.key.Field(res.key.FieldsLen() - 1).Value.(string)
 			if !ok {
 				return nil, ExecInfo{}, err
 			}

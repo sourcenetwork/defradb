@@ -16,15 +16,22 @@ import (
 
 const (
 	errFailedToGetFieldIdOfKey string = "failed to get FieldID of Key"
+	errInvalidFieldIndex              = "invalid field index"
 )
 
 var (
 	ErrFailedToGetFieldIdOfKey = errors.New(errFailedToGetFieldIdOfKey)
 	ErrEmptyKey                = errors.New("received empty key string")
 	ErrInvalidKey              = errors.New("invalid key string")
+	ErrInvalidFieldIndex       = errors.New(errInvalidFieldIndex)
 )
 
 // NewErrFailedToGetFieldIdOfKey returns the error indicating failure to get FieldID of Key.
 func NewErrFailedToGetFieldIdOfKey(inner error) error {
 	return errors.Wrap(errFailedToGetFieldIdOfKey, inner)
+}
+
+// NewErrInvalidFieldIndex returns the error indicating invalid field index.
+func NewErrInvalidFieldIndex(i int) error {
+	return errors.New(errInvalidFieldIndex, errors.NewKV("index", i))
 }

@@ -14,8 +14,6 @@ import (
 	"context"
 	"time"
 
-	ds "github.com/ipfs/go-datastore"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -145,15 +143,12 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	indexDataStoreKey := core.IndexDataStoreKey{}
-	indexDataStoreKey.CollectionID = index.collection.ID()
-	indexDataStoreKey.IndexID = index.desc.ID
-	indexDataStoreKey.Fields = make([]core.IndexedField, len(index.fieldsDescs))
+	fields := make([]core.IndexedField, len(index.fieldsDescs))
 	for i := range index.fieldsDescs {
-		indexDataStoreKey.Fields[i].Value = fieldValues[i].Value()
-		indexDataStoreKey.Fields[i].Descending = index.desc.Fields[i].Descending
+		fields[i].Value = fieldValues[i].Value()
+		fields[i].Descending = index.desc.Fields[i].Descending
 	}
-	return indexDataStoreKey, nil
+	return core.NewIndexDataStoreKey(index.collection.ID(), index.desc.ID, fields)
 }
 
 func (index *collectionBaseIndex) deleteIndexKey(
@@ -219,7 +214,7 @@ func (index *collectionSimpleIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	key.Fields = append(key.Fields, core.IndexedField{Value: doc.ID().String()})
+	key.AppendField(core.IndexedField{Value: doc.ID().String()})
 	return key, nil
 }
 
@@ -233,13 +228,9 @@ func (index *collectionSimpleIndex) Save(
 	if err != nil {
 		return err
 	}
-	keyBytes, err := core.EncodeIndexDataStoreKey(nil, &key)
+	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{})
 	if err != nil {
-		return err
-	}
-	err = txn.Datastore().Put(ctx, ds.NewKey(string(keyBytes)), []byte{})
-	if err != nil {
-		return NewErrFailedToStoreIndexedField(string(keyBytes), err)
+		return NewErrFailedToStoreIndexedField(key.ToString(), err)
 	}
 	return nil
 }
@@ -271,8 +262,8 @@ func (index *collectionSimpleIndex) deleteDocIndex(
 
 // hasIndexKeyNilField returns true if the index key has a field with nil value
 func hasIndexKeyNilField(key *core.IndexDataStoreKey) bool {
-	for i := range key.Fields {
-		if key.Fields[i].Value == nil {
+	for i := 0; i < key.FieldsLen(); i++ {
+		if key.Field(i).Value == nil {
 			return true
 		}
 	}
@@ -291,11 +282,7 @@ func (index *collectionUniqueIndex) save(
 	key *core.IndexDataStoreKey,
 	val []byte,
 ) error {
-	keyBytes, err := core.EncodeIndexDataStoreKey(nil, key)
-	if err != nil {
-		return err
-	}
-	err = txn.Datastore().Put(ctx, ds.NewKey(string(keyBytes)), val)
+	err := txn.Datastore().Put(ctx, key.ToDS(), val)
 	if err != nil {
 		return NewErrFailedToStoreIndexedField(key.ToDS().String(), err)
 	}
@@ -342,7 +329,7 @@ func (index *collectionUniqueIndex) getDocumentsIndexRecord(
 		return core.IndexDataStoreKey{}, nil, err
 	}
 	if hasIndexKeyNilField(&key) {
-		key.Fields = append(key.Fields, core.IndexedField{Value: doc.ID().String()})
+		key.AppendField(core.IndexedField{Value: doc.ID().String()})
 		return key, []byte{}, nil
 	} else {
 		return key, []byte(doc.ID().String()), nil
@@ -360,11 +347,7 @@ func (index *collectionUniqueIndex) prepareIndexRecordToStore(
 	}
 	if len(val) != 0 {
 		var exists bool
-		keyBytes, err := core.EncodeIndexDataStoreKey(nil, &key)
-		if err != nil {
-			return core.IndexDataStoreKey{}, nil, err
-		}
-		exists, err = txn.Datastore().Has(ctx, ds.NewKey(string(keyBytes)))
+		exists, err = txn.Datastore().Has(ctx, key.ToDS())
 		if err != nil {
 			return core.IndexDataStoreKey{}, nil, err
 		}

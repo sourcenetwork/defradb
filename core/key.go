@@ -91,8 +91,8 @@ type IndexDataStoreKey struct {
 	CollectionID uint32
 	// IndexID is the id of the index
 	IndexID uint32
-	// FieldValues is the values of the fields in the index
-	Fields []IndexedField
+	// fields is the values of the fields in the index
+	fields []IndexedField
 }
 
 var _ Key = (*IndexDataStoreKey)(nil)
@@ -506,6 +506,17 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	}
 }
 
+// NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, index ID and fields.
+// It also validates values of the fields.
+func NewIndexDataStoreKey(collectionID, indexID uint32, fields []IndexedField) (IndexDataStoreKey, error) {
+	key := IndexDataStoreKey{
+		CollectionID: collectionID,
+		IndexID:      indexID,
+		fields:       fields,
+	}
+	return key, nil
+}
+
 // DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.
 // It expects the input bytes is in the following format:
 //
@@ -548,7 +559,7 @@ func DecodeIndexDataStoreKey(data []byte, indexDesc *client.IndexDescription) (I
 			return IndexDataStoreKey{}, ErrInvalidKey
 		}
 		data = data[1:]
-		i := len(key.Fields)
+		i := len(key.fields)
 		descending := false
 		if i < len(indexDesc.Fields) {
 			descending = indexDesc.Fields[i].Descending
@@ -561,7 +572,7 @@ func DecodeIndexDataStoreKey(data []byte, indexDesc *client.IndexDescription) (I
 			return IndexDataStoreKey{}, err
 		}
 
-		key.Fields = append(key.Fields, IndexedField{Value: val, Descending: descending})
+		key.fields = append(key.fields, IndexedField{Value: val, Descending: descending})
 	}
 
 	return key, nil
@@ -581,22 +592,22 @@ func NormalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.Fi
 		return value
 	}
 
-	for i := range key.Fields {
-		if key.Fields[i].Value == nil {
+	for i := range key.fields {
+		if key.fields[i].Value == nil {
 			continue
 		}
-		switch v := key.Fields[i].Value.(type) {
+		switch v := key.fields[i].Value.(type) {
 		case int:
-			key.Fields[i].Value = convertIfBool(fields[i].Kind, int64(v))
+			key.fields[i].Value = convertIfBool(fields[i].Kind, int64(v))
 		case int32:
-			key.Fields[i].Value = convertIfBool(fields[i].Kind, int64(v))
+			key.fields[i].Value = convertIfBool(fields[i].Kind, int64(v))
 		case int64:
-			key.Fields[i].Value = convertIfBool(fields[i].Kind, v)
+			key.fields[i].Value = convertIfBool(fields[i].Kind, v)
 		case []byte:
-			if i == len(key.Fields)-1 && len(key.Fields)-len(fields) == 1 {
-				key.Fields[i].Value = string(v)
+			if i == len(key.fields)-1 && len(key.fields)-len(fields) == 1 {
+				key.fields[i].Value = string(v)
 			} else {
-				key.Fields[i].Value = convertIfString(fields[i].Kind, v)
+				key.fields[i].Value = convertIfString(fields[i].Kind, v)
 			}
 		}
 	}
@@ -604,36 +615,76 @@ func NormalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.Fi
 
 // Bytes returns the byte representation of the key
 func (k *IndexDataStoreKey) Bytes() []byte {
-	b, _ := EncodeIndexDataStoreKey([]byte{}, k)
-	return b
+	return EncodeIndexDataStoreKey(k)
+}
+
+// Fields returns the fields of the index key
+func (k *IndexDataStoreKey) Fields() []IndexedField {
+	result := make([]IndexedField, len(k.fields))
+	copy(result, k.fields)
+	return result
+}
+
+// FieldsLen returns the number of fields in the index key
+func (k *IndexDataStoreKey) FieldsLen() int {
+	return len(k.fields)
+}
+
+// Field returns the field at the given index
+func (k *IndexDataStoreKey) Field(i int) IndexedField {
+	return k.fields[i]
+}
+
+// AppendField appends a field to the index key.
+// The value of the field is validated.
+func (k *IndexDataStoreKey) AppendField(field IndexedField) error {
+	k.fields = append(k.fields, field)
+	return nil
+}
+
+// SetField sets the field at the given index.
+// The value of the field is validated.
+func (k *IndexDataStoreKey) SetField(i int, field IndexedField) error {
+	if len(k.fields) <= i {
+		return NewErrInvalidFieldIndex(i)
+	}
+	k.fields[i] = field
+	return nil
+}
+
+// SetFields sets the fields of the index key.
+// The values of the fields are validated.
+func (k *IndexDataStoreKey) SetFields(fields []IndexedField) error {
+	k.fields = make([]IndexedField, len(fields))
+	copy(k.fields, fields)
+	return nil
 }
 
 // EncodeIndexDataStoreKey encodes a IndexDataStoreKey to bytes to be stored as a key
 // for secondary indexes.
-func EncodeIndexDataStoreKey(b []byte, key *IndexDataStoreKey) ([]byte, error) {
+func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 	if key.CollectionID == 0 {
-		return b, nil
+		return nil
 	}
 
-	b = append(b, '/')
-	b = encoding.EncodeUvarintAscending(b, uint64(key.CollectionID))
+	b := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionID))
 
 	if key.IndexID == 0 {
-		return b, nil
+		return b
 	}
 	b = append(b, '/')
 	b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
 
 	var err error
-	for _, field := range key.Fields {
+	for _, field := range key.fields {
 		b = append(b, '/')
 		b, err = encoding.EncodeFieldValue(b, field.Value, field.Descending)
 		if err != nil {
-			return nil, err
+			return nil
 		}
 	}
 
-	return b, nil
+	return b
 }
 
 // ToDS returns the datastore key
