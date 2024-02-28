@@ -49,7 +49,9 @@ const (
 	COLLECTION_INDEX               = "/collection/index"
 	SCHEMA_VERSION                 = "/schema/version/v"
 	SCHEMA_VERSION_ROOT            = "/schema/version/r"
-	SEQ                            = "/seq"
+	COLLECTION_SEQ                 = "/seq/collection"
+	INDEX_ID_SEQ                   = "/seq/index"
+	FIELD_ID_SEQ                   = "/seq/field"
 	PRIMARY_KEY                    = "/pk"
 	DATASTORE_DOC_VERSION_FIELD_ID = "v"
 	REPLICATOR                     = "/replicator/id"
@@ -165,11 +167,29 @@ type P2PCollectionKey struct {
 
 var _ Key = (*P2PCollectionKey)(nil)
 
-type SequenceKey struct {
-	SequenceName string
+// CollectionIDSequenceKey is used to key the sequence used to generate collection ids.
+type CollectionIDSequenceKey struct{}
+
+var _ Key = (*CollectionIDSequenceKey)(nil)
+
+// IndexIDSequenceKey is used to key the sequence used to generate index ids.
+//
+// The sequence is specific to each collection version.
+type IndexIDSequenceKey struct {
+	CollectionID uint32
 }
 
-var _ Key = (*SequenceKey)(nil)
+var _ Key = (*IndexIDSequenceKey)(nil)
+
+// FieldIDSequenceKey is used to key the sequence used to generate field ids.
+//
+// The sequence is specific to each collection root.  Multiple collection of the same root
+// must maintain consistent field ids.
+type FieldIDSequenceKey struct {
+	CollectionRoot uint32
+}
+
+var _ Key = (*FieldIDSequenceKey)(nil)
 
 type ReplicatorKey struct {
 	ReplicatorID string
@@ -364,8 +384,12 @@ func NewSchemaRootKeyFromString(keyString string) (SchemaRootKey, error) {
 	}, nil
 }
 
-func NewSequenceKey(name string) SequenceKey {
-	return SequenceKey{SequenceName: name}
+func NewIndexIDSequenceKey(collectionID uint32) IndexIDSequenceKey {
+	return IndexIDSequenceKey{CollectionID: collectionID}
+}
+
+func NewFieldIDSequenceKey(collectionRoot uint32) FieldIDSequenceKey {
+	return FieldIDSequenceKey{CollectionRoot: collectionRoot}
 }
 
 func (k DataStoreKey) WithValueFlag() DataStoreKey {
@@ -690,21 +714,39 @@ func (k SchemaRootKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-func (k SequenceKey) ToString() string {
-	result := SEQ
-
-	if k.SequenceName != "" {
-		result = result + "/" + k.SequenceName
-	}
-
-	return result
+func (k CollectionIDSequenceKey) ToString() string {
+	return COLLECTION_SEQ
 }
 
-func (k SequenceKey) Bytes() []byte {
+func (k CollectionIDSequenceKey) Bytes() []byte {
 	return []byte(k.ToString())
 }
 
-func (k SequenceKey) ToDS() ds.Key {
+func (k CollectionIDSequenceKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k IndexIDSequenceKey) ToString() string {
+	return INDEX_ID_SEQ + "/" + strconv.Itoa(int(k.CollectionID))
+}
+
+func (k IndexIDSequenceKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k IndexIDSequenceKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k FieldIDSequenceKey) ToString() string {
+	return FIELD_ID_SEQ + "/" + strconv.Itoa(int(k.CollectionRoot))
+}
+
+func (k FieldIDSequenceKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k FieldIDSequenceKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
