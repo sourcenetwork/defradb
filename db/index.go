@@ -127,7 +127,7 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]*cl
 			return nil, err
 		}
 		if fieldVal == nil || fieldVal.Value() == nil {
-			result = append(result, client.NewFieldValue(client.NONE_CRDT, nil, index.fieldsDescs[iter].Kind))
+			result = append(result, client.NewFieldValue(client.NONE_CRDT, nil))
 			continue
 		}
 		result = append(result, fieldVal)

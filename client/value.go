@@ -18,15 +18,13 @@ import (
 type FieldValue struct {
 	t       CType
 	value   any
-	kind    FieldKind
 	isDirty bool
 }
 
-func NewFieldValue(t CType, val any, kind FieldKind) *FieldValue {
+func NewFieldValue(t CType, val any) *FieldValue {
 	return &FieldValue{
 		t:       t,
 		value:   val,
-		kind:    kind,
 		isDirty: true,
 	}
 }
@@ -90,48 +88,4 @@ func convertImmutable[T any](vals []immutable.Option[T]) []any {
 		out = append(out, val.Value())
 	}
 	return out
-}
-
-func (val *FieldValue) Kind() FieldKind {
-	return val.kind
-}
-
-func (val *FieldValue) IsNil() bool {
-	return val.value == nil
-}
-
-func (val *FieldValue) Bool() (bool, error) {
-	v, ok := val.value.(bool)
-	if !ok {
-		return false, NewErrUnexpectedType[bool]("", val.value)
-	}
-	return v, nil
-}
-
-func (val *FieldValue) Int() (int64, error) {
-	switch v := val.value.(type) {
-	case int64:
-		return v, nil
-	case int32:
-		return int64(v), nil
-	case int:
-		return int64(v), nil
-	}
-	return 0, NewErrUnexpectedType[int64]("", val.value)
-}
-
-func (val *FieldValue) Float() (float64, error) {
-	v, ok := val.value.(float64)
-	if !ok {
-		return 0, NewErrUnexpectedType[float64]("", val.value)
-	}
-	return v, nil
-}
-
-func (val *FieldValue) String() (string, error) {
-	v, ok := val.value.(string)
-	if !ok {
-		return "", NewErrUnexpectedType[string]("", val.value)
-	}
-	return v, nil
 }

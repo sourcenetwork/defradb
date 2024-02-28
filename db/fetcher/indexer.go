@@ -135,7 +135,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			// We need to convert it to cbor bytes as this is what it will be encoded from on value retrieval.
 			// In the future we have to either get rid of CBOR or properly handle different encoding
 			// for properties in a single document.
-			fieldBytes, err := client.NewFieldValue(client.NONE_CRDT, field.Value, indexedField.Kind).Bytes()
+			fieldBytes, err := client.NewFieldValue(client.NONE_CRDT, field.Value).Bytes()
 			if err != nil {
 				return nil, ExecInfo{}, err
 			}

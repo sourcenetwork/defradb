@@ -503,7 +503,7 @@ func (f *IndexFetcher) newInIndexIterator(
 	}
 	inValues := make([]any, 0, len(inArr))
 	for _, v := range inArr {
-		fieldVal := client.NewFieldValue(client.NONE_CRDT, v, f.indexedFields[0].Kind)
+		fieldVal := client.NewFieldValue(client.NONE_CRDT, v)
 		inValues = append(inValues, fieldVal.Value())
 	}
 
