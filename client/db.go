@@ -230,8 +230,12 @@ type Store interface {
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(context.Context, string) *RequestResult
 
-	// TODO-ACP Document
-	ACPModule() immutable.Option[acp.ACPModule]
+	// ACPModule returns the underlying acp module (optional). Incase the access control
+	// is turned off, then the returned acp module will have no value (will be empty).
+	ACPModule(context.Context) (immutable.Option[acp.ACPModule], error)
+
+	// AddPolicy attempts to add policy if the acp module exists, otherwise returns an error.
+	AddPolicy(context.Context, string, string) (AddPolicyResult, error)
 }
 
 // GQLResult represents the immediate results of a GQL request.

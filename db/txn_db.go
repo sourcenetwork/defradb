@@ -417,10 +417,76 @@ func (db *explicitTxnDB) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
 }
 
-func (db *implicitTxnDB) ACPModule() immutable.Option[acp.ACPModule] {
-	return db.acp
+func (db *implicitTxnDB) ACPModule(ctx context.Context) (immutable.Option[acp.ACPModule], error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return acp.NoACPModule, err
+	}
+	defer txn.Discard(ctx)
+
+	return db.acp, txn.Commit(ctx)
 }
 
-func (db *explicitTxnDB) ACPModule() immutable.Option[acp.ACPModule] {
-	return db.acp
+func (db *explicitTxnDB) ACPModule(ctx context.Context) (immutable.Option[acp.ACPModule], error) {
+	return db.acp, nil
+}
+
+func (db *implicitTxnDB) AddPolicy(
+	ctx context.Context,
+	creator string,
+	policy string,
+) (client.AddPolicyResult, error) {
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+	defer txn.Discard(ctx)
+
+	acpModule, err := db.ACPModule(ctx)
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	if !acpModule.HasValue() {
+		return client.AddPolicyResult{}, client.ErrPolicyAddFailureACPModuleNotFound
+	}
+
+	policyID, err := acpModule.Value().AddPolicy(
+		ctx,
+		creator,
+		policy,
+	)
+
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	return client.AddPolicyResult{PolicyID: policyID}, txn.Commit(ctx)
+}
+
+func (db *explicitTxnDB) AddPolicy(
+	ctx context.Context,
+	creator string,
+	policy string,
+) (client.AddPolicyResult, error) {
+	acpModule, err := db.ACPModule(ctx)
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	if !acpModule.HasValue() {
+		return client.AddPolicyResult{}, client.ErrPolicyAddFailureACPModuleNotFound
+	}
+
+	policyID, err := acpModule.Value().AddPolicy(
+		ctx,
+		creator,
+		policy,
+	)
+
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	return client.AddPolicyResult{PolicyID: policyID}, nil
 }

@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 )
@@ -50,11 +49,7 @@ func addPolicyACP(
 	}
 
 	for _, node := range getNodes(action.NodeID, s.nodes) {
-		if !node.ACPModule().HasValue() {
-			require.Fail(s.t, client.ErrPolicyAddFailedACPModuleNotFound.Error(), s.testCase.Description)
-		}
-
-		policyID, err := node.ACPModule().Value().AddPolicy(
+		policyResult, err := node.AddPolicy(
 			s.ctx,
 			action.Creator,
 			action.Policy,
@@ -62,7 +57,7 @@ func addPolicyACP(
 
 		if err == nil {
 			require.Equal(s.t, action.ExpectedError, "")
-			require.Equal(s.t, action.ExpectedPolicyID, policyID)
+			require.Equal(s.t, action.ExpectedPolicyID, policyResult.PolicyID)
 		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)

@@ -206,8 +206,16 @@ func (w *Wrapper) Peerstore() datastore.DSBatching {
 	return w.node.Peerstore()
 }
 
-func (w *Wrapper) ACPModule() immutable.Option[acp.ACPModule] {
-	return w.node.ACPModule()
+func (w *Wrapper) ACPModule(ctx context.Context) (immutable.Option[acp.ACPModule], error) {
+	return w.node.ACPModule(ctx)
+}
+
+func (w *Wrapper) AddPolicy(
+	ctx context.Context,
+	creator string,
+	policy string,
+) (client.AddPolicyResult, error) {
+	return w.node.AddPolicy(ctx, creator, policy)
 }
 
 func (w *Wrapper) Close() {
