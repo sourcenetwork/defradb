@@ -272,11 +272,6 @@ test\:cli:
 test\:names:
 	gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
-.PHONY: test\:all
-test\:all:
-	@$(MAKE) test:names
-	@$(MAKE) test:lens
-
 .PHONY: test\:verbose
 test\:verbose:
 	gotestsum --format standard-verbose -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
