@@ -411,3 +411,66 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 		})
 	}
 }
+
+func TestDecodeIndexDataStoreKey_Fields(t *testing.T) {
+	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{
+		{Value: "test1"},
+		{Value: "test2", Descending: true},
+	})
+	assert.NoError(t, err)
+
+	fields := key.Fields()
+	assert.Equal(t, 2, len(fields))
+	assert.Equal(t, "test1", fields[0].Value)
+	assert.False(t, fields[0].Descending)
+	assert.Equal(t, "test2", fields[1].Value)
+	assert.True(t, fields[1].Descending)
+}
+
+func TestDecodeIndexDataStoreKey_FieldsLen(t *testing.T) {
+	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: 1}, {Value: 2}})
+	assert.NoError(t, err)
+
+	assert.Equal(t, 2, key.FieldsLen())
+}
+
+func TestDecodeIndexDataStoreKey_Field(t *testing.T) {
+	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: "test1"}, {Value: "test2"}})
+	assert.NoError(t, err)
+
+	field := key.Field(0)
+	assert.Equal(t, "test1", field.Value)
+}
+
+func TestDecodeIndexDataStoreKey_AppendField(t *testing.T) {
+	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: "test2"}})
+	assert.NoError(t, err)
+
+	err = key.AppendField(IndexedField{Value: "test1"})
+	assert.NoError(t, err)
+
+	assert.Equal(t, 2, key.FieldsLen())
+}
+
+func TestDecodeIndexDataStoreKey_SetFields(t *testing.T) {
+	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: 1}})
+	assert.NoError(t, err)
+
+	err = key.SetFields([]IndexedField{{Value: "test1"}, {Value: "test2"}})
+	assert.NoError(t, err)
+
+	assert.Equal(t, 2, key.FieldsLen())
+	assert.Equal(t, "test1", key.Field(0).Value)
+}
+
+func TestDecodeIndexDataStoreKey_SetField(t *testing.T) {
+	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: 1}, {Value: 2}})
+	assert.NoError(t, err)
+
+	err = key.SetField(0, IndexedField{Value: 3})
+	assert.NoError(t, err)
+
+	field := key.Field(0)
+	assert.Equal(t, 3, field.Value)
+	assert.Equal(t, 2, key.FieldsLen())
+}
