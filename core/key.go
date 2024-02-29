@@ -661,7 +661,7 @@ func (k *IndexDataStoreKey) SetFields(fields []IndexedField) error {
 // for secondary indexes.
 func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 	if key.CollectionID == 0 {
-		return nil
+		return []byte{}
 	}
 
 	b := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionID))

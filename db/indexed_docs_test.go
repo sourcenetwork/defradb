@@ -158,31 +158,25 @@ indexLoop:
 	if b.doc != nil {
 		hasNilValue := false
 		for _, fieldName := range b.fieldsNames {
-			var fieldValue *client.FieldValue
-			var err error
-			field, ok := collection.Definition().Schema.GetField(fieldName)
-			fieldValue, err = b.doc.GetValue(fieldName)
+			fieldValue, err := b.doc.GetValue(fieldName)
+			var val any
 			if err != nil {
-				if errors.Is(err, client.ErrFieldNotExist) {
-					fieldValue = client.NewFieldValue(client.LWW_REGISTER, nil, field.Kind)
-				} else {
+				if !errors.Is(err, client.ErrFieldNotExist) {
 					require.NoError(b.f.t, err)
 				}
-			} else if fieldValue != nil && fieldValue.Value() == nil {
-				fieldValue = client.NewFieldValue(client.NONE_CRDT, nil, field.Kind)
+			} else if fieldValue != nil {
+				val = fieldValue.Value()
 			}
-			if fieldValue.IsNil() {
+			if val == nil {
 				hasNilValue = true
 			}
-			require.True(b.f.t, ok, "field not found in the collection schema")
-			key.Fields = append(key.Fields, core.IndexedField{Value: fieldValue})
+			err = key.AppendField(core.IndexedField{Value: val})
+			require.NoError(b.f.t, err, "failed to append a field")
 		}
 
 		if !b.isUnique || hasNilValue {
-			key.Fields = append(key.Fields,
-				core.IndexedField{
-					Value: client.NewFieldValue(client.NONE_CRDT, b.doc.ID().String(), client.FieldKind_DocID),
-				})
+			err = key.AppendField(core.IndexedField{Value: b.doc.ID().String()})
+			require.NoError(b.f.t, err, "failed to append a docID field")
 		}
 	}
 
