@@ -91,7 +91,7 @@ type IndexDataStoreKey struct {
 	// IndexID is the id of the index
 	IndexID uint32
 	// fields is the values of the fields in the index
-	fields []IndexedField
+	Fields []IndexedField
 }
 
 var _ Key = (*IndexDataStoreKey)(nil)
@@ -507,60 +507,17 @@ func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 
 // NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, index ID and fields.
 // It also validates values of the fields.
-func NewIndexDataStoreKey(collectionID, indexID uint32, fields []IndexedField) (IndexDataStoreKey, error) {
-	key := IndexDataStoreKey{
+func NewIndexDataStoreKey(collectionID, indexID uint32, fields []IndexedField) IndexDataStoreKey {
+	return IndexDataStoreKey{
 		CollectionID: collectionID,
 		IndexID:      indexID,
-		fields:       fields,
+		Fields:       fields,
 	}
-	return key, nil
 }
 
 // Bytes returns the byte representation of the key
 func (k *IndexDataStoreKey) Bytes() []byte {
 	return EncodeIndexDataStoreKey(k)
-}
-
-// Fields returns the fields of the index key
-func (k *IndexDataStoreKey) Fields() []IndexedField {
-	result := make([]IndexedField, len(k.fields))
-	copy(result, k.fields)
-	return result
-}
-
-// FieldsLen returns the number of fields in the index key
-func (k *IndexDataStoreKey) FieldsLen() int {
-	return len(k.fields)
-}
-
-// Field returns the field at the given index
-func (k *IndexDataStoreKey) Field(i int) IndexedField {
-	return k.fields[i]
-}
-
-// AppendField appends a field to the index key.
-// The value of the field is validated.
-func (k *IndexDataStoreKey) AppendField(field IndexedField) error {
-	k.fields = append(k.fields, field)
-	return nil
-}
-
-// SetField sets the field at the given index.
-// The value of the field is validated.
-func (k *IndexDataStoreKey) SetField(i int, field IndexedField) error {
-	if len(k.fields) <= i {
-		return NewErrInvalidFieldIndex(i)
-	}
-	k.fields[i] = field
-	return nil
-}
-
-// SetFields sets the fields of the index key.
-// The values of the fields are validated.
-func (k *IndexDataStoreKey) SetFields(fields []IndexedField) error {
-	k.fields = make([]IndexedField, len(fields))
-	copy(k.fields, fields)
-	return nil
 }
 
 // ToDS returns the datastore key

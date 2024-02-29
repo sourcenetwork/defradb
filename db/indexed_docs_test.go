@@ -170,13 +170,11 @@ indexLoop:
 			if val == nil {
 				hasNilValue = true
 			}
-			err = key.AppendField(core.IndexedField{Value: val})
-			require.NoError(b.f.t, err, "failed to append a field")
+			key.Fields = append(key.Fields, core.IndexedField{Value: val})
 		}
 
 		if !b.isUnique || hasNilValue {
-			err = key.AppendField(core.IndexedField{Value: b.doc.ID().String()})
-			require.NoError(b.f.t, err, "failed to append a docID field")
+			key.Fields = append(key.Fields, core.IndexedField{Value: b.doc.ID().String()})
 		}
 	}
 

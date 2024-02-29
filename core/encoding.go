@@ -243,7 +243,7 @@ func DecodeIndexDataStoreKey(
 		}
 		data = data[1:]
 
-		i := len(key.fields)
+		i := len(key.Fields)
 		descending := false
 		if i < len(indexDesc.Fields) {
 			descending = indexDesc.Fields[i].Descending
@@ -257,7 +257,7 @@ func DecodeIndexDataStoreKey(
 			return IndexDataStoreKey{}, err
 		}
 
-		key.fields = append(key.fields, IndexedField{Value: val, Descending: descending})
+		key.Fields = append(key.Fields, IndexedField{Value: val, Descending: descending})
 	}
 
 	err = normalizeIndexDataStoreKeyValues(&key, fields)
@@ -267,25 +267,25 @@ func DecodeIndexDataStoreKey(
 // normalizeIndexDataStoreKeyValues converts all field values  to standardized
 // Defra Go type according to fields description.
 func normalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.FieldDefinition) error {
-	for i := range key.fields {
-		if key.fields[i].Value == nil {
+	for i := range key.Fields {
+		if key.Fields[i].Value == nil {
 			continue
 		}
 		var err error
 		var val any
-		if i == len(key.fields)-1 && len(key.fields)-len(fields) == 1 {
-			bytes, ok := key.fields[i].Value.([]byte)
+		if i == len(key.Fields)-1 && len(key.Fields)-len(fields) == 1 {
+			bytes, ok := key.Fields[i].Value.([]byte)
 			if !ok {
-				return client.NewErrUnexpectedType[[]byte](request.DocIDArgName, key.fields[i].Value)
+				return client.NewErrUnexpectedType[[]byte](request.DocIDArgName, key.Fields[i].Value)
 			}
 			val = string(bytes)
 		} else {
-			val, err = NormalizeFieldValue(fields[i], key.fields[i].Value)
+			val, err = NormalizeFieldValue(fields[i], key.Fields[i].Value)
 		}
 		if err != nil {
 			return err
 		}
-		key.fields[i].Value = val
+		key.Fields[i].Value = val
 	}
 	return nil
 }
@@ -305,7 +305,7 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 	b = append(b, '/')
 	b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
 
-	for _, field := range key.fields {
+	for _, field := range key.Fields {
 		b = append(b, '/')
 		b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
 	}

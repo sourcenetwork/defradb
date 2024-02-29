@@ -127,7 +127,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		for i, indexedField := range f.indexedFields {
 			property := &encProperty{Desc: indexedField}
 
-			field := res.key.Field(i)
+			field := res.key.Fields[i]
 			if field.Value == nil {
 				hasNilField = true
 			}
@@ -147,7 +147,7 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		if f.indexDesc.Unique && !hasNilField {
 			f.doc.id = res.value
 		} else {
-			docID, ok := res.key.Field(res.key.FieldsLen() - 1).Value.(string)
+			docID, ok := res.key.Fields[len(res.key.Fields)-1].Value.(string)
 			if !ok {
 				return nil, ExecInfo{}, err
 			}

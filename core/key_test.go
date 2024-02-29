@@ -200,7 +200,6 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 		IndexID      uint32
 		Fields       []IndexedField
 		Expected     []byte
-		ExpectError  bool
 	}{
 		{
 			Name:     "empty",
@@ -246,12 +245,7 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
-			key, err := NewIndexDataStoreKey(c.CollectionID, c.IndexID, c.Fields)
-			if c.ExpectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
+			key := NewIndexDataStoreKey(c.CollectionID, c.IndexID, c.Fields)
 			actual := key.Bytes()
 			assert.Equal(t, c.Expected, actual, "upon calling key.Bytes()")
 			encKey := EncodeIndexDataStoreKey(&key)
@@ -261,14 +255,12 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 }
 
 func TestIndexDatastoreKey_ToString(t *testing.T) {
-	key, err := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: 5}})
-	assert.NoError(t, err)
+	key := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: 5}})
 	assert.Equal(t, key.ToString(), string(encodeKey(1, 2, 5, false)))
 }
 
 func TestIndexDatastoreKey_ToDS(t *testing.T) {
-	key, err := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: 5}})
-	assert.NoError(t, err)
+	key := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: 5}})
 	assert.Equal(t, key.ToDS(), ds.NewKey(string(encodeKey(1, 2, 5, false))))
 }
 
@@ -321,8 +313,7 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			expectedKey, err := NewIndexDataStoreKey(colID, indexID, tc.expectedFields)
-			assert.NoError(t, err)
+			expectedKey := NewIndexDataStoreKey(colID, indexID, tc.expectedFields)
 			fieldDescs := make([]client.FieldDefinition, len(tc.desc.Fields))
 			for i := range tc.fieldKinds {
 				fieldDescs[i] = client.FieldDefinition{Kind: tc.fieldKinds[i]}
@@ -410,67 +401,4 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 			assert.Error(t, err, c.name)
 		})
 	}
-}
-
-func TestDecodeIndexDataStoreKey_Fields(t *testing.T) {
-	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{
-		{Value: "test1"},
-		{Value: "test2", Descending: true},
-	})
-	assert.NoError(t, err)
-
-	fields := key.Fields()
-	assert.Equal(t, 2, len(fields))
-	assert.Equal(t, "test1", fields[0].Value)
-	assert.False(t, fields[0].Descending)
-	assert.Equal(t, "test2", fields[1].Value)
-	assert.True(t, fields[1].Descending)
-}
-
-func TestDecodeIndexDataStoreKey_FieldsLen(t *testing.T) {
-	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: 1}, {Value: 2}})
-	assert.NoError(t, err)
-
-	assert.Equal(t, 2, key.FieldsLen())
-}
-
-func TestDecodeIndexDataStoreKey_Field(t *testing.T) {
-	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: "test1"}, {Value: "test2"}})
-	assert.NoError(t, err)
-
-	field := key.Field(0)
-	assert.Equal(t, "test1", field.Value)
-}
-
-func TestDecodeIndexDataStoreKey_AppendField(t *testing.T) {
-	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: "test2"}})
-	assert.NoError(t, err)
-
-	err = key.AppendField(IndexedField{Value: "test1"})
-	assert.NoError(t, err)
-
-	assert.Equal(t, 2, key.FieldsLen())
-}
-
-func TestDecodeIndexDataStoreKey_SetFields(t *testing.T) {
-	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: 1}})
-	assert.NoError(t, err)
-
-	err = key.SetFields([]IndexedField{{Value: "test1"}, {Value: "test2"}})
-	assert.NoError(t, err)
-
-	assert.Equal(t, 2, key.FieldsLen())
-	assert.Equal(t, "test1", key.Field(0).Value)
-}
-
-func TestDecodeIndexDataStoreKey_SetField(t *testing.T) {
-	key, err := NewIndexDataStoreKey(1, 1, []IndexedField{{Value: 1}, {Value: 2}})
-	assert.NoError(t, err)
-
-	err = key.SetField(0, IndexedField{Value: 3})
-	assert.NoError(t, err)
-
-	field := key.Field(0)
-	assert.Equal(t, 3, field.Value)
-	assert.Equal(t, 2, key.FieldsLen())
 }

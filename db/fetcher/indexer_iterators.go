@@ -112,7 +112,7 @@ func (iter *eqPrefixIndexIterator) Next() (indexIterResult, error) {
 			return res, err
 		}
 		iter.execInfo.IndexesFetched++
-		doesMatch, err := executeValueMatchers(iter.matchers, res.key.Fields())
+		doesMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
 		if err != nil {
 			return indexIterResult{}, err
 		}
@@ -178,23 +178,13 @@ func (iter *inIndexIterator) nextIterator() (bool, error) {
 		return false, nil
 	}
 
-	var err error
 	switch fieldIter := iter.indexIterator.(type) {
 	case *eqPrefixIndexIterator:
-		err = fieldIter.indexKey.SetField(0, core.IndexedField{
-			Value:      iter.inValues[iter.nextValIndex],
-			Descending: fieldIter.indexKey.Field(0).Descending,
-		})
+		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
 	case *eqSingleIndexIterator:
-		err = fieldIter.indexKey.SetField(0, core.IndexedField{
-			Value:      iter.inValues[iter.nextValIndex],
-			Descending: fieldIter.indexKey.Field(0).Descending,
-		})
+		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
 	}
-	if err != nil {
-		return false, err
-	}
-	err = iter.indexIterator.Init(iter.ctx, iter.store)
+	err := iter.indexIterator.Init(iter.ctx, iter.store)
 	if err != nil {
 		return false, err
 	}
@@ -272,7 +262,7 @@ func (iter *scanningIndexIterator) Next() (indexIterResult, error) {
 		}
 		iter.execInfo.IndexesFetched++
 
-		didMatch, err := executeValueMatchers(iter.matchers, res.key.Fields())
+		didMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
 
 		if didMatch {
 			return res, err
@@ -474,10 +464,7 @@ func (f *IndexFetcher) newPrefixIndexIterator(
 		matchers[0] = &anyMatcher{}
 	}
 
-	key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-	if err != nil {
-		return nil, err
-	}
+	key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
 
 	return &eqPrefixIndexIterator{
 		queryResultIterator: f.newQueryResultIterator(),
@@ -520,10 +507,7 @@ func (f *IndexFetcher) newInIndexIterator(
 			keyFieldValues[i] = fieldConditions[i].val
 		}
 
-		key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-		if err != nil {
-			return nil, err
-		}
+		key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
 
 		iter = &eqSingleIndexIterator{
 			indexKey: key,
@@ -531,10 +515,7 @@ func (f *IndexFetcher) newInIndexIterator(
 		}
 	} else {
 		indexKey := f.newIndexDataStoreKey()
-		err := indexKey.SetFields([]core.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}})
-		if err != nil {
-			return nil, err
-		}
+		indexKey.Fields = []core.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
 		iter = &eqPrefixIndexIterator{
 			queryResultIterator: f.newQueryResultIterator(),
@@ -554,14 +535,13 @@ func (f *IndexFetcher) newIndexDataStoreKey() core.IndexDataStoreKey {
 	return key
 }
 
-func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []any) (core.IndexDataStoreKey, error) {
+func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []any) core.IndexDataStoreKey {
 	fields := make([]core.IndexedField, len(values))
 	for i := range values {
 		fields[i].Value = values[i]
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
-	key, err := core.NewIndexDataStoreKey(f.col.ID(), f.indexDesc.ID, fields)
-	return key, err
+	return core.NewIndexDataStoreKey(f.col.ID(), f.indexDesc.ID, fields)
 }
 
 func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
@@ -580,10 +560,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 				keyFieldValues[i] = fieldConditions[i].val
 			}
 
-			key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-			if err != nil {
-				return nil, err
-			}
+			key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
 
 			return &eqSingleIndexIterator{
 				indexKey: key,

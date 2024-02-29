@@ -148,7 +148,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		fields[i].Value = fieldValues[i].Value()
 		fields[i].Descending = index.desc.Fields[i].Descending
 	}
-	return core.NewIndexDataStoreKey(index.collection.ID(), index.desc.ID, fields)
+	return core.NewIndexDataStoreKey(index.collection.ID(), index.desc.ID, fields), nil
 }
 
 func (index *collectionBaseIndex) deleteIndexKey(
@@ -214,8 +214,8 @@ func (index *collectionSimpleIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	err = key.AppendField(core.IndexedField{Value: doc.ID().String()})
-	return key, err
+	key.Fields = append(key.Fields, core.IndexedField{Value: doc.ID().String()})
+	return key, nil
 }
 
 // Save indexes a document by storing the indexed field value.
@@ -262,8 +262,8 @@ func (index *collectionSimpleIndex) deleteDocIndex(
 
 // hasIndexKeyNilField returns true if the index key has a field with nil value
 func hasIndexKeyNilField(key *core.IndexDataStoreKey) bool {
-	for i := 0; i < key.FieldsLen(); i++ {
-		if key.Field(i).Value == nil {
+	for i := range key.Fields {
+		if key.Fields[i].Value == nil {
 			return true
 		}
 	}
@@ -329,8 +329,8 @@ func (index *collectionUniqueIndex) getDocumentsIndexRecord(
 		return core.IndexDataStoreKey{}, nil, err
 	}
 	if hasIndexKeyNilField(&key) {
-		err = key.AppendField(core.IndexedField{Value: doc.ID().String()})
-		return key, []byte{}, err
+		key.Fields = append(key.Fields, core.IndexedField{Value: doc.ID().String()})
+		return key, []byte{}, nil
 	} else {
 		return key, []byte(doc.ID().String()), nil
 	}
