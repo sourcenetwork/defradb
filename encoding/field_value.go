@@ -11,8 +11,9 @@
 package encoding
 
 import (
-	"github.com/sourcenetwork/defradb/client"
 	"golang.org/x/exp/constraints"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func encodeIntFieldValue[T constraints.Integer](b []byte, val T, descending bool) []byte {

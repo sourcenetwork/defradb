@@ -16,7 +16,7 @@ import (
 
 const (
 	errFailedToGetFieldIdOfKey string = "failed to get FieldID of Key"
-	errInvalidFieldIndex              = "invalid field index"
+	errInvalidFieldIndex       string = "invalid field index"
 )
 
 var (
