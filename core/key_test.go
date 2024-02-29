@@ -393,6 +393,11 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 			val:       encodeKey(colID, indexID, 5, false, 7, false, 9, false),
 			numFields: 2,
 		},
+		{
+			name:      "invalid docID value",
+			val:       encoding.EncodeUvarintAscending(append(encodeKey(colID, indexID, 5, false), '/'), 5),
+			numFields: 1,
+		},
 	}
 	indexDesc := client.IndexDescription{ID: indexID, Fields: []client.IndexedFieldDescription{{}}}
 	for _, c := range cases {

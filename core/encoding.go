@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/encoding"
 )
 
@@ -274,7 +275,9 @@ func normalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.Fi
 		var val any
 		if i == len(key.fields)-1 && len(key.fields)-len(fields) == 1 {
 			bytes, ok := key.fields[i].Value.([]byte)
-			ok = ok
+			if !ok {
+				return client.NewErrUnexpectedType[[]byte](request.DocIDArgName, key.fields[i].Value)
+			}
 			val = string(bytes)
 		} else {
 			val, err = NormalizeFieldValue(fields[i], key.fields[i].Value)
