@@ -64,7 +64,7 @@ type collection struct {
 // to be auto generated based on a more controllable and user friendly
 // CollectionOptions object.
 
-// NewCollection returns a pointer to a newly instantiated DB Collection
+// newCollection returns a pointer to a newly instantiated DB Collection
 func (db *db) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
 	return &collection{
 		db:  db,

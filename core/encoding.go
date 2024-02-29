@@ -245,6 +245,8 @@ func DecodeIndexDataStoreKey(
 
 		i := len(key.Fields)
 		descending := false
+		// If the index has more fields than the key, we need to check if the last field is a docID
+		// and if so, we need to treat it as a string
 		if i < len(indexDesc.Fields) {
 			descending = indexDesc.Fields[i].Descending
 		} else if i > len(indexDesc.Fields) {
