@@ -45,7 +45,7 @@ func TestEncodeDecodeUnsafeString(t *testing.T) {
 					c.value, testCases[i-1].encoded, enc)
 			}
 		}
-		remainder, dec, err := DecodeBytesAscending(enc, nil)
+		remainder, dec, err := DecodeBytesAscending(enc)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -58,7 +58,7 @@ func TestEncodeDecodeUnsafeString(t *testing.T) {
 		}
 
 		enc = append(enc, "remainder"...)
-		remainder, _, err = DecodeBytesAscending(enc, nil)
+		remainder, _, err = DecodeBytesAscending(enc)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -97,7 +97,7 @@ func TestEncodeDecodeUnsafeStringDescending(t *testing.T) {
 					c.value, testCases[i-1].encoded, enc)
 			}
 		}
-		remainder, dec, err := DecodeBytesDescending(enc, nil)
+		remainder, dec, err := DecodeBytesDescending(enc)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -110,7 +110,7 @@ func TestEncodeDecodeUnsafeStringDescending(t *testing.T) {
 		}
 
 		enc = append(enc, "remainder"...)
-		remainder, _, err = DecodeBytesDescending(enc, nil)
+		remainder, _, err = DecodeBytesDescending(enc)
 		if err != nil {
 			t.Error(err)
 			continue

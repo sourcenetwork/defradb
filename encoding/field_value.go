@@ -24,12 +24,12 @@ func encodeIntFieldValue[T constraints.Integer](b []byte, val T, descending bool
 
 // EncodeFieldValue encodes a FieldValue into a byte slice.
 // The encoded value is appended to the supplied buffer and the resulting buffer is returned.
-func EncodeFieldValue(b []byte, val any, descending bool) ([]byte, error) {
+func EncodeFieldValue(b []byte, val any, descending bool) []byte {
 	if val == nil {
 		if descending {
-			return EncodeNullDescending(b), nil
+			return EncodeNullDescending(b)
 		} else {
-			return EncodeNullAscending(b), nil
+			return EncodeNullAscending(b)
 		}
 	}
 	switch v := val.(type) {
@@ -39,28 +39,28 @@ func EncodeFieldValue(b []byte, val any, descending bool) ([]byte, error) {
 			boolInt = 1
 		}
 		if descending {
-			return EncodeVarintDescending(b, boolInt), nil
+			return EncodeVarintDescending(b, boolInt)
 		}
-		return EncodeVarintAscending(b, boolInt), nil
+		return EncodeVarintAscending(b, boolInt)
 	case int:
-		return encodeIntFieldValue(b, v, descending), nil
+		return encodeIntFieldValue(b, v, descending)
 	case int32:
-		return encodeIntFieldValue(b, v, descending), nil
+		return encodeIntFieldValue(b, v, descending)
 	case int64:
-		return encodeIntFieldValue(b, v, descending), nil
+		return encodeIntFieldValue(b, v, descending)
 	case float64:
 		if descending {
-			return EncodeFloatDescending(b, v), nil
+			return EncodeFloatDescending(b, v)
 		}
-		return EncodeFloatAscending(b, v), nil
+		return EncodeFloatAscending(b, v)
 	case string:
 		if descending {
-			return EncodeStringDescending(b, v), nil
+			return EncodeStringDescending(b, v)
 		}
-		return EncodeStringAscending(b, v), nil
+		return EncodeStringAscending(b, v)
 	}
 
-	return nil, nil
+	return b
 }
 
 // DecodeFieldValue decodes a FieldValue from a byte slice.
@@ -99,9 +99,9 @@ func DecodeFieldValue(b []byte, descending bool) ([]byte, any, error) {
 		var v []byte
 		var err error
 		if descending {
-			b, v, err = DecodeBytesDescending(b, []byte{})
+			b, v, err = DecodeBytesDescending(b)
 		} else {
-			b, v, err = DecodeBytesAscending(b, []byte{})
+			b, v, err = DecodeBytesAscending(b)
 		}
 		if err != nil {
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, client.FieldKind_NILLABLE_STRING, err)

@@ -106,26 +106,21 @@ func EncodeBytesDescending(b []byte, data []byte) []byte {
 // which was encoded using EncodeBytesAscending. The decoded bytes
 // are appended to r. The remainder of the input buffer and the
 // decoded []byte are returned.
-func DecodeBytesAscending(b []byte, r []byte) ([]byte, []byte, error) {
-	return decodeBytesInternal(b, r, ascendingBytesEscapes, true /* expectMarker */)
+func DecodeBytesAscending(b []byte) ([]byte, []byte, error) {
+	return decodeBytesInternal(b, ascendingBytesEscapes, true /* expectMarker */)
 }
 
 // DecodeBytesDescending decodes a []byte value from the input buffer
 // which was encoded using EncodeBytesDescending. The decoded bytes
 // are appended to r. The remainder of the input buffer and the
 // decoded []byte are returned.
-func DecodeBytesDescending(b []byte, r []byte) ([]byte, []byte, error) {
-	// Always pass an `r` to make sure we never get back a sub-slice of `b`,
-	// since we're going to modify the contents of the slice.
-	if r == nil {
-		r = []byte{}
-	}
-	b, r, err := decodeBytesInternal(b, r, descendingBytesEscapes, true /* expectMarker */)
+func DecodeBytesDescending(b []byte) ([]byte, []byte, error) {
+	b, r, err := decodeBytesInternal(b, descendingBytesEscapes, true /* expectMarker */)
 	onesComplement(r)
 	return b, r, err
 }
 
-func decodeBytesInternal(b []byte, r []byte, e escapes, expectMarker bool) ([]byte, []byte, error) {
+func decodeBytesInternal(b []byte, e escapes, expectMarker bool) ([]byte, []byte, error) {
 	if expectMarker {
 		if len(b) == 0 || b[0] != e.marker {
 			return nil, nil, NewErrMarkersNotFound(b, e.marker)
@@ -133,6 +128,7 @@ func decodeBytesInternal(b []byte, r []byte, e escapes, expectMarker bool) ([]by
 		b = b[1:]
 	}
 
+	var r []byte
 	for {
 		i := bytes.IndexByte(b, e.escape)
 		if i == -1 {
