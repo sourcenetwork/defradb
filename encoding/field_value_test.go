@@ -15,102 +15,57 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestEncodeDecodeFieldValue(t *testing.T) {
 	tests := []struct {
-		name              string
-		inputVal          any
-		expectedBytes     []byte
-		expectedBytesDesc []byte
-		expectErr         bool
+		name               string
+		inputVal           any
+		expectedBytes      []byte
+		expectedBytesDesc  []byte
+		expectedDecodedVal any
 	}{
 		{
-			name:              "nil bool",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, nil, client.FieldKind_NILLABLE_BOOL),
-			expectedBytes:     EncodeNullAscending(nil),
-			expectedBytesDesc: EncodeNullDescending(nil),
+			name:               "nil",
+			inputVal:           nil,
+			expectedBytes:      EncodeNullAscending(nil),
+			expectedBytesDesc:  EncodeNullDescending(nil),
+			expectedDecodedVal: nil,
 		},
 		{
-			name:              "nil int",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, nil, client.FieldKind_NILLABLE_INT),
-			expectedBytes:     EncodeNullAscending(nil),
-			expectedBytesDesc: EncodeNullDescending(nil),
+			name:               "bool true",
+			inputVal:           true,
+			expectedBytes:      EncodeVarintAscending(nil, 1),
+			expectedBytesDesc:  EncodeVarintDescending(nil, 1),
+			expectedDecodedVal: int64(1),
 		},
 		{
-			name:              "nil float",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, nil, client.FieldKind_NILLABLE_FLOAT),
-			expectedBytes:     EncodeNullAscending(nil),
-			expectedBytesDesc: EncodeNullDescending(nil),
+			name:               "bool false",
+			inputVal:           false,
+			expectedBytes:      EncodeVarintAscending(nil, 0),
+			expectedBytesDesc:  EncodeVarintDescending(nil, 0),
+			expectedDecodedVal: int64(0),
 		},
 		{
-			name:              "nil string",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, nil, client.FieldKind_NILLABLE_STRING),
-			expectedBytes:     EncodeNullAscending(nil),
-			expectedBytesDesc: EncodeNullDescending(nil),
+			name:               "int",
+			inputVal:           int64(55),
+			expectedBytes:      EncodeVarintAscending(nil, 55),
+			expectedBytesDesc:  EncodeVarintDescending(nil, 55),
+			expectedDecodedVal: int64(55),
 		},
 		{
-			name:      "invalid bool",
-			inputVal:  client.NewFieldValue(client.NONE_CRDT, "str", client.FieldKind_NILLABLE_BOOL),
-			expectErr: true,
+			name:               "float",
+			inputVal:           0.2,
+			expectedBytes:      EncodeFloatAscending(nil, 0.2),
+			expectedBytesDesc:  EncodeFloatDescending(nil, 0.2),
+			expectedDecodedVal: 0.2,
 		},
 		{
-			name:      "invalid int",
-			inputVal:  client.NewFieldValue(client.NONE_CRDT, "str", client.FieldKind_NILLABLE_INT),
-			expectErr: true,
-		},
-		{
-			name:      "invalid float",
-			inputVal:  client.NewFieldValue(client.NONE_CRDT, "str", client.FieldKind_NILLABLE_FLOAT),
-			expectErr: true,
-		},
-		{
-			name:      "invalid string",
-			inputVal:  client.NewFieldValue(client.NONE_CRDT, 666, client.FieldKind_NILLABLE_STRING),
-			expectErr: true,
-		},
-		{
-			name:      "invalid docID",
-			inputVal:  client.NewFieldValue(client.NONE_CRDT, 666, client.FieldKind_DocID),
-			expectErr: true,
-		},
-		{
-			name:              "bool true",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, true, client.FieldKind_NILLABLE_BOOL),
-			expectedBytes:     EncodeVarintAscending(nil, 1),
-			expectedBytesDesc: EncodeVarintDescending(nil, 1),
-		},
-		{
-			name:              "bool false",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, false, client.FieldKind_NILLABLE_BOOL),
-			expectedBytes:     EncodeVarintAscending(nil, 0),
-			expectedBytesDesc: EncodeVarintDescending(nil, 0),
-		},
-		{
-			name:              "int",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, int64(55), client.FieldKind_NILLABLE_INT),
-			expectedBytes:     EncodeVarintAscending(nil, 55),
-			expectedBytesDesc: EncodeVarintDescending(nil, 55),
-		},
-		{
-			name:              "float",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, 0.2, client.FieldKind_NILLABLE_FLOAT),
-			expectedBytes:     EncodeFloatAscending(nil, 0.2),
-			expectedBytesDesc: EncodeFloatDescending(nil, 0.2),
-		},
-		{
-			name:              "string",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, "str", client.FieldKind_NILLABLE_STRING),
-			expectedBytes:     EncodeBytesAscending(nil, []byte("str")),
-			expectedBytesDesc: EncodeBytesDescending(nil, []byte("str")),
-		},
-		{
-			name:              "docID",
-			inputVal:          client.NewFieldValue(client.NONE_CRDT, "str", client.FieldKind_DocID),
-			expectedBytes:     EncodeBytesAscending(nil, []byte("str")),
-			expectedBytesDesc: EncodeBytesDescending(nil, []byte("str")),
+			name:               "string",
+			inputVal:           "str",
+			expectedBytes:      EncodeBytesAscending(nil, []byte("str")),
+			expectedBytesDesc:  EncodeBytesDescending(nil, []byte("str")),
+			expectedDecodedVal: []byte("str"),
 		},
 	}
 
@@ -121,13 +76,7 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 				label = " (descending)"
 			}
 			t.Run(tt.name+label, func(t *testing.T) {
-				encoded, err := EncodeFieldValue(nil, tt.inputVal, descending)
-				if tt.expectErr {
-					if err == nil {
-						t.Errorf("EncodeFieldValue() error = %v, wantErr %v", err, tt.expectErr)
-					}
-					return
-				}
+				encoded := EncodeFieldValue(nil, tt.inputVal, descending)
 				expectedBytes := tt.expectedBytes
 				if descending {
 					expectedBytes = tt.expectedBytesDesc
@@ -137,11 +86,9 @@ func TestEncodeDecodeFieldValue(t *testing.T) {
 				}
 
 				_, decodedFieldVal, err := DecodeFieldValue(encoded, descending)
-				if (err != nil) != tt.expectErr {
-					t.Errorf("DecodeFieldValue() error = %v, wantErr %v", err, tt.expectErr)
-				}
-				if !reflect.DeepEqual(decodedFieldVal, tt.inputVal) {
-					t.Errorf("DecodeFieldValue() = %v, want %v", decodedFieldVal, tt.inputVal)
+				assert.NoError(t, err)
+				if !reflect.DeepEqual(decodedFieldVal, tt.expectedDecodedVal) {
+					t.Errorf("DecodeFieldValue() = %v, want %v", decodedFieldVal, tt.expectedDecodedVal)
 				}
 			})
 		}
