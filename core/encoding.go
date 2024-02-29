@@ -203,7 +203,7 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 func DecodeIndexDataStoreKey(
 	data []byte,
 	indexDesc *client.IndexDescription,
-	fields []client.FieldDescription,
+	fields []client.FieldDefinition,
 ) (IndexDataStoreKey, error) {
 	if len(data) == 0 {
 		return IndexDataStoreKey{}, ErrEmptyKey
@@ -265,7 +265,7 @@ func DecodeIndexDataStoreKey(
 
 // normalizeIndexDataStoreKeyValues converts all field values  to standardized
 // Defra Go type according to fields description.
-func normalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.FieldDescription) error {
+func normalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.FieldDefinition) error {
 	for i := range key.fields {
 		if key.fields[i].Value == nil {
 			continue

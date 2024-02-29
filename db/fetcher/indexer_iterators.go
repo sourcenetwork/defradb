@@ -64,7 +64,7 @@ type indexIterResult struct {
 type queryResultIterator struct {
 	resultIter    query.Results
 	indexDesc     client.IndexDescription
-	indexedFields []client.FieldDescription
+	indexedFields []client.FieldDefinition
 }
 
 func (iter *queryResultIterator) Next() (indexIterResult, error) {
