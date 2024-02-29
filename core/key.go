@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/encoding"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -517,99 +516,6 @@ func NewIndexDataStoreKey(collectionID, indexID uint32, fields []IndexedField) (
 	return key, nil
 }
 
-// DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.
-// It expects the input bytes is in the following format:
-//
-// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)
-//
-// Where [CollectionID] and [IndexID] are integers
-//
-// All values of the fields are converted to standardized Defra Go type
-// according to fields description.
-func DecodeIndexDataStoreKey(
-	data []byte,
-	indexDesc *client.IndexDescription,
-	fields []client.FieldDescription,
-) (IndexDataStoreKey, error) {
-	if len(data) == 0 {
-		return IndexDataStoreKey{}, ErrEmptyKey
-	}
-
-	key := IndexDataStoreKey{}
-
-	if data[0] != '/' {
-		return IndexDataStoreKey{}, ErrInvalidKey
-	}
-	data = data[1:]
-	data, colID, err := encoding.DecodeUvarintAscending(data)
-	if err != nil {
-		return IndexDataStoreKey{}, err
-	}
-	key.CollectionID = uint32(colID)
-
-	if data[0] != '/' {
-		return IndexDataStoreKey{}, ErrInvalidKey
-	}
-	data = data[1:]
-	data, indID, err := encoding.DecodeUvarintAscending(data)
-	if err != nil {
-		return IndexDataStoreKey{}, err
-	}
-	key.IndexID = uint32(indID)
-
-	if len(data) == 0 {
-		return key, nil
-	}
-
-	for len(data) > 0 {
-		if data[0] != '/' {
-			return IndexDataStoreKey{}, ErrInvalidKey
-		}
-		data = data[1:]
-		i := len(key.fields)
-		descending := false
-		if i < len(indexDesc.Fields) {
-			descending = indexDesc.Fields[i].Descending
-		} else if i > len(indexDesc.Fields) {
-			return IndexDataStoreKey{}, ErrInvalidKey
-		}
-		var val any
-		data, val, err = encoding.DecodeFieldValue(data, descending)
-		if err != nil {
-			return IndexDataStoreKey{}, err
-		}
-
-		key.fields = append(key.fields, IndexedField{Value: val, Descending: descending})
-	}
-
-	err = normalizeIndexDataStoreKeyValues(&key, fields)
-	return key, err
-}
-
-// normalizeIndexDataStoreKeyValues converts all field values  to standardized
-// Defra Go type according to fields description.
-func normalizeIndexDataStoreKeyValues(key *IndexDataStoreKey, fields []client.FieldDescription) error {
-	for i := range key.fields {
-		if key.fields[i].Value == nil {
-			continue
-		}
-		var err error
-		var val any
-		if i == len(key.fields)-1 && len(key.fields)-len(fields) == 1 {
-			bytes, ok := key.fields[i].Value.([]byte)
-			ok = ok
-			val = string(bytes)
-		} else {
-			val, err = NormalizeFieldValue(fields[i], key.fields[i].Value)
-		}
-		if err != nil {
-			return err
-		}
-		key.fields[i].Value = val
-	}
-	return nil
-}
-
 // Bytes returns the byte representation of the key
 func (k *IndexDataStoreKey) Bytes() []byte {
 	return EncodeIndexDataStoreKey(k)
@@ -655,33 +561,6 @@ func (k *IndexDataStoreKey) SetFields(fields []IndexedField) error {
 	k.fields = make([]IndexedField, len(fields))
 	copy(k.fields, fields)
 	return nil
-}
-
-// EncodeIndexDataStoreKey encodes a IndexDataStoreKey to bytes to be stored as a key
-// for secondary indexes.
-func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
-	if key.CollectionID == 0 {
-		return []byte{}
-	}
-
-	b := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionID))
-
-	if key.IndexID == 0 {
-		return b
-	}
-	b = append(b, '/')
-	b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
-
-	var err error
-	for _, field := range key.fields {
-		b = append(b, '/')
-		b, err = encoding.EncodeFieldValue(b, field.Value, field.Descending)
-		if err != nil {
-			return nil
-		}
-	}
-
-	return b
 }
 
 // ToDS returns the datastore key
