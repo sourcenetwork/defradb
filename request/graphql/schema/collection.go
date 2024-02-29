@@ -26,11 +26,6 @@ import (
 	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
-const (
-	fieldIndexAscValue  = "ASC"
-	fieldIndexDescValue = "DESC"
-)
-
 // FromString parses a GQL SDL string into a set of collection descriptions.
 func FromString(ctx context.Context, schemaString string) (
 	[]client.CollectionDefinition,
@@ -244,7 +239,7 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			if dirVal.Value == fieldIndexDescValue {
+			if dirVal.Value == types.FieldOrderDESC {
 				desc.Fields[0].Descending = true
 			}
 		default:
@@ -310,9 +305,9 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			if dirVal.Value == fieldIndexAscValue {
+			if dirVal.Value == types.FieldOrderASC {
 				desc.Fields[i].Descending = false
-			} else if dirVal.Value == fieldIndexDescValue {
+			} else if dirVal.Value == types.FieldOrderDESC {
 				desc.Fields[i].Descending = true
 			}
 		}

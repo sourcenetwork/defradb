@@ -30,6 +30,9 @@ const (
 	IndexDirectivePropFields     = "fields"
 	IndexDirectivePropDirection  = "direction"
 	IndexDirectivePropDirections = "directions"
+
+	FieldOrderASC  = "ASC"
+	FieldOrderDESC = "DESC"
 )
 
 var (
