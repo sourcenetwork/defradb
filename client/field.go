@@ -14,20 +14,17 @@ package client
 type Field interface {
 	Name() string
 	Type() CType //TODO Abstract into a Field Type interface
-	Kind() FieldKind
 }
 
 type simpleField struct {
 	name     string
 	crdtType CType
-	kind     FieldKind
 }
 
-func (doc *Document) newField(t CType, name string, kind FieldKind) Field {
+func (doc *Document) newField(t CType, name string) Field {
 	f := simpleField{
 		name:     name,
 		crdtType: t,
-		kind:     kind,
 	}
 	return f
 }
@@ -40,9 +37,4 @@ func (field simpleField) Name() string {
 // Type returns the type of the field.
 func (field simpleField) Type() CType {
 	return field.crdtType
-}
-
-// Kind returns the kind of the field.
-func (field simpleField) Kind() FieldKind {
-	return field.kind
 }

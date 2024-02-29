@@ -540,17 +540,17 @@ func (doc *Document) Set(field string, value any) error {
 	if err != nil {
 		return err
 	}
-	return doc.setCBOR(fd.Typ, field, val, fd.Kind)
+	return doc.setCBOR(fd.Typ, field, val)
 }
 
-func (doc *Document) set(t CType, field string, value *FieldValue, kind FieldKind) error {
+func (doc *Document) set(t CType, field string, value *FieldValue) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 	var f Field
 	if v, exists := doc.fields[field]; exists {
 		f = v
 	} else {
-		f = doc.newField(t, field, kind)
+		f = doc.newField(t, field)
 		doc.fields[field] = f
 	}
 	doc.values[f] = value
@@ -558,9 +558,9 @@ func (doc *Document) set(t CType, field string, value *FieldValue, kind FieldKin
 	return nil
 }
 
-func (doc *Document) setCBOR(t CType, field string, val any, kind FieldKind) error {
+func (doc *Document) setCBOR(t CType, field string, val any) error {
 	value := NewFieldValue(t, val)
-	return doc.set(t, field, value, kind)
+	return doc.set(t, field, value)
 }
 
 func (doc *Document) setAndParseObjectType(value map[string]any) error {
