@@ -214,8 +214,8 @@ func (index *collectionSimpleIndex) getDocumentsIndexKey(
 		return core.IndexDataStoreKey{}, err
 	}
 
-	key.AppendField(core.IndexedField{Value: doc.ID().String()})
-	return key, nil
+	err = key.AppendField(core.IndexedField{Value: doc.ID().String()})
+	return key, err
 }
 
 // Save indexes a document by storing the indexed field value.
@@ -329,8 +329,8 @@ func (index *collectionUniqueIndex) getDocumentsIndexRecord(
 		return core.IndexDataStoreKey{}, nil, err
 	}
 	if hasIndexKeyNilField(&key) {
-		key.AppendField(core.IndexedField{Value: doc.ID().String()})
-		return key, []byte{}, nil
+		err = key.AppendField(core.IndexedField{Value: doc.ID().String()})
+		return key, []byte{}, err
 	} else {
 		return key, []byte(doc.ID().String()), nil
 	}

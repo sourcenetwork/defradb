@@ -531,7 +531,10 @@ func (f *IndexFetcher) newInIndexIterator(
 		}
 	} else {
 		indexKey := f.newIndexDataStoreKey()
-		indexKey.SetFields([]core.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}})
+		err := indexKey.SetFields([]core.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}})
+		if err != nil {
+			return nil, err
+		}
 
 		iter = &eqPrefixIndexIterator{
 			queryResultIterator: f.newQueryResultIterator(),
