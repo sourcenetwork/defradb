@@ -185,8 +185,6 @@ func (db *db) updateSchema(
 	setAsActiveVersion bool,
 ) error {
 	hasChanged, err := db.validateUpdateSchema(
-		ctx,
-		txn,
 		existingSchemaByName,
 		proposedDescriptionsByName,
 		schema,
@@ -375,8 +373,6 @@ func (db *db) updateSchema(
 // Will return true if the given description differs from the current persisted state of the
 // schema. Will return an error if it fails validation.
 func (db *db) validateUpdateSchema(
-	ctx context.Context,
-	txn datastore.Txn,
 	existingDescriptionsByName map[string]client.SchemaDescription,
 	proposedDescriptionsByName map[string]client.SchemaDescription,
 	proposedDesc client.SchemaDescription,

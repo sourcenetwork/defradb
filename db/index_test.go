@@ -222,7 +222,7 @@ func (f *indexTestFixture) dropIndex(colName, indexName string) error {
 	return f.db.dropCollectionIndex(f.ctx, f.txn, colName, indexName)
 }
 
-func (f *indexTestFixture) countIndexPrefixes(colName, indexName string) int {
+func (f *indexTestFixture) countIndexPrefixes(indexName string) int {
 	prefix := core.NewCollectionIndexKey(immutable.Some(f.users.ID()), indexName)
 	q, err := f.txn.Systemstore().Query(f.ctx, query.Query{
 		Prefix: prefix.ToString(),
@@ -1165,12 +1165,12 @@ func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 	})
 	assert.NoError(f.t, err)
 
-	assert.Equal(t, 2, f.countIndexPrefixes(usersColName, ""))
+	assert.Equal(t, 2, f.countIndexPrefixes(""))
 
 	err = f.users.(*collection).dropAllIndexes(f.ctx, f.txn)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 0, f.countIndexPrefixes(usersColName, ""))
+	assert.Equal(t, 0, f.countIndexPrefixes(""))
 }
 
 func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {

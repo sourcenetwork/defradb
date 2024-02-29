@@ -408,7 +408,7 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 }
 
 func (c *collection) checkExistingFields(
-	ctx context.Context,
+	_ context.Context,
 	fields []client.IndexedFieldDescription,
 ) error {
 	collectionFields := c.Schema().Fields
