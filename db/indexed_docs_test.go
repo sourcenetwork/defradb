@@ -77,11 +77,12 @@ func (f *indexTestFixture) newProdDoc(id int, price float64, cat string, col cli
 // The format of the non-unique index key is: "/<collection_id>/<index_id>/<value>/<doc_id>"
 // Example: "/5/1/12/bae-61cd6879-63ca-5ca9-8731-470a3c1dac69"
 type indexKeyBuilder struct {
-	f           *indexTestFixture
-	colName     string
-	fieldsNames []string
-	doc         *client.Document
-	isUnique    bool
+	f                *indexTestFixture
+	colName          string
+	fieldsNames      []string
+	descendingFields []bool
+	doc              *client.Document
+	isUnique         bool
 }
 
 func newIndexKeyBuilder(f *indexTestFixture) *indexKeyBuilder {
@@ -98,6 +99,12 @@ func (b *indexKeyBuilder) Col(colName string) *indexKeyBuilder {
 // When building a key it will it will find the field id to use in the key.
 func (b *indexKeyBuilder) Fields(fieldsNames ...string) *indexKeyBuilder {
 	b.fieldsNames = fieldsNames
+	return b
+}
+
+// Fields sets the fields names for the index key.
+func (b *indexKeyBuilder) DescendingFields(descending ...bool) *indexKeyBuilder {
+	b.descendingFields = descending
 	return b
 }
 
@@ -157,7 +164,7 @@ indexLoop:
 
 	if b.doc != nil {
 		hasNilValue := false
-		for _, fieldName := range b.fieldsNames {
+		for i, fieldName := range b.fieldsNames {
 			fieldValue, err := b.doc.GetValue(fieldName)
 			var val any
 			if err != nil {
@@ -170,7 +177,11 @@ indexLoop:
 			if val == nil {
 				hasNilValue = true
 			}
-			key.Fields = append(key.Fields, core.IndexedField{Value: val})
+			descending := false
+			if i < len(b.descendingFields) {
+				descending = b.descendingFields[i]
+			}
+			key.Fields = append(key.Fields, core.IndexedField{Value: val, Descending: descending})
 		}
 
 		if !b.isUnique || hasNilValue {
@@ -259,6 +270,25 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+}
+
+func TestNonUnique_IfDocWithDescendingOrderIsAdded_ShouldBeIndexed(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	indexDesc := getUsersIndexDescOnName()
+	indexDesc.Fields[0].Descending = true
+	_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+	require.NoError(f.t, err)
+
+	doc := f.newUserDoc("John", 21, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).DescendingFields(true).Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)

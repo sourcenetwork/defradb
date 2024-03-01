@@ -90,7 +90,7 @@ type IndexDataStoreKey struct {
 	CollectionID uint32
 	// IndexID is the id of the index
 	IndexID uint32
-	// fields is the values of the fields in the index
+	// Fields is the values of the fields in the index
 	Fields []IndexedField
 }
 

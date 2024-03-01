@@ -66,7 +66,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 					{
 						Name: "index2",
 						Fields: []IndexedFieldDescription{
-							{Name: "test"},
+							{Name: "test", Descending: true},
 						},
 					},
 				},
@@ -82,7 +82,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 				{
 					Name: "index2",
 					Fields: []IndexedFieldDescription{
-						{Name: "test"},
+						{Name: "test", Descending: true},
 					},
 				},
 			},

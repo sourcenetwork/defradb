@@ -57,7 +57,7 @@ func (c *collection) DeleteWithDocID(
 	defer c.discardImplicitTxn(ctx, txn)
 
 	dsKey := c.getPrimaryKeyFromDocID(docID)
-	res, err := c.deleteWithKey(ctx, txn, dsKey, client.Deleted)
+	res, err := c.deleteWithKey(ctx, txn, dsKey)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,6 @@ func (c *collection) deleteWithKey(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
-	_ client.DocumentStatus,
 ) (*client.DeleteResult, error) {
 	// Check the key we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).

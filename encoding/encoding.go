@@ -10,6 +10,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+// Portions of this code are adapted from basic functionality found in the CockroachDB project,
+// specifically within the encoding package at:
+// https://github.com/cockroachdb/cockroach/tree/v20.2.19/pkg/util/encoding
+//
+// Our use of this code is in compliance with the Apache License 2.0, under which it is shared.
+
 package encoding
 
 const (
