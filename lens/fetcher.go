@@ -222,7 +222,7 @@ func (f *lensedFetcher) lensDocToEncodedDoc(docAsMap LensDoc) (fetcher.EncodedDo
 			continue
 		}
 
-		fieldValue, err := core.DecodeFieldValue(fieldDesc, fieldByteValue)
+		fieldValue, err := core.NormalizeFieldValue(fieldDesc, fieldByteValue)
 		if err != nil {
 			return nil, err
 		}

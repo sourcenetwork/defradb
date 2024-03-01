@@ -44,11 +44,11 @@ func FromString(ctx context.Context, schemaString string) (
 		return nil, err
 	}
 
-	return fromAst(ctx, doc)
+	return fromAst(doc)
 }
 
 // fromAst parses a GQL AST into a set of collection descriptions.
-func fromAst(ctx context.Context, doc *ast.Document) (
+func fromAst(doc *ast.Document) (
 	[]client.CollectionDefinition,
 	error,
 ) {
@@ -58,7 +58,7 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
-			description, err := collectionFromAstDefinition(ctx, relationManager, defType)
+			description, err := collectionFromAstDefinition(relationManager, defType)
 			if err != nil {
 				return nil, err
 			}
@@ -66,7 +66,7 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 			definitions = append(definitions, description)
 
 		case *ast.InterfaceDefinition:
-			description, err := schemaFromAstDefinition(ctx, relationManager, defType)
+			description, err := schemaFromAstDefinition(relationManager, defType)
 			if err != nil {
 				return nil, err
 			}
@@ -98,7 +98,6 @@ func fromAst(ctx context.Context, doc *ast.Document) (
 
 // collectionFromAstDefinition parses a AST object definition into a set of collection descriptions.
 func collectionFromAstDefinition(
-	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.ObjectDefinition,
 ) (client.CollectionDefinition, error) {
@@ -164,7 +163,6 @@ func collectionFromAstDefinition(
 }
 
 func schemaFromAstDefinition(
-	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.InterfaceDefinition,
 ) (client.SchemaDescription, error) {
@@ -213,8 +211,7 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 	desc := client.IndexDescription{
 		Fields: []client.IndexedFieldDescription{
 			{
-				Name:      field.Name.Value,
-				Direction: client.Ascending,
+				Name: field.Name.Value,
 			},
 		},
 	}
@@ -235,6 +232,14 @@ func fieldIndexFromAST(field *ast.FieldDefinition, directive *ast.Directive) (cl
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
 			desc.Unique = boolVal.Value
+		case types.IndexDirectivePropDirection:
+			dirVal, ok := arg.Value.(*ast.EnumValue)
+			if !ok {
+				return client.IndexDescription{}, ErrIndexWithInvalidArg
+			}
+			if dirVal.Value == types.FieldOrderDESC {
+				desc.Fields[0].Descending = true
+			}
 		default:
 			return client.IndexDescription{}, ErrIndexWithUnknownArg
 		}
@@ -298,15 +303,11 @@ func indexFromAST(directive *ast.Directive) (client.IndexDescription, error) {
 			if !ok {
 				return client.IndexDescription{}, ErrIndexWithInvalidArg
 			}
-			if dirVal.Value == string(client.Ascending) {
-				desc.Fields[i].Direction = client.Ascending
-			} else if dirVal.Value == string(client.Descending) {
-				desc.Fields[i].Direction = client.Descending
+			if dirVal.Value == types.FieldOrderASC {
+				desc.Fields[i].Descending = false
+			} else if dirVal.Value == types.FieldOrderDESC {
+				desc.Fields[i].Descending = true
 			}
-		}
-	} else {
-		for i := range desc.Fields {
-			desc.Fields[i].Direction = client.Ascending
 		}
 	}
 	return desc, nil

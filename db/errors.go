@@ -51,7 +51,6 @@ const (
 	errNonZeroIndexIDProvided             string = "non-zero index ID provided"
 	errIndexFieldMissingName              string = "index field missing name"
 	errIndexFieldMissingDirection         string = "index field missing direction"
-	errIndexSingleFieldWrongDirection     string = "wrong direction for index with a single field"
 	errIndexWithNameAlreadyExists         string = "index with name already exists"
 	errInvalidStoredIndex                 string = "invalid stored index"
 	errInvalidStoredIndexKey              string = "invalid stored index key"
@@ -89,24 +88,23 @@ const (
 )
 
 var (
-	ErrFailedToGetCollection          = errors.New(errFailedToGetCollection)
-	ErrSubscriptionsNotAllowed        = errors.New("server does not accept subscriptions")
-	ErrInvalidFilter                  = errors.New("invalid filter")
-	ErrCollectionAlreadyExists        = errors.New("collection already exists")
-	ErrCollectionNameEmpty            = errors.New("collection name can't be empty")
-	ErrSchemaNameEmpty                = errors.New("schema name can't be empty")
-	ErrSchemaRootEmpty                = errors.New("schema root can't be empty")
-	ErrSchemaVersionIDEmpty           = errors.New("schema version ID can't be empty")
-	ErrKeyEmpty                       = errors.New("key cannot be empty")
-	ErrCannotSetVersionID             = errors.New(errCannotSetVersionID)
-	ErrIndexMissingFields             = errors.New(errIndexMissingFields)
-	ErrIndexFieldMissingName          = errors.New(errIndexFieldMissingName)
-	ErrIndexSingleFieldWrongDirection = errors.New(errIndexSingleFieldWrongDirection)
-	ErrCorruptedIndex                 = errors.New(errCorruptedIndex)
-	ErrExpectedJSONObject             = errors.New(errExpectedJSONObject)
-	ErrExpectedJSONArray              = errors.New(errExpectedJSONArray)
-	ErrInvalidViewQuery               = errors.New(errInvalidViewQuery)
-	ErrCanNotIndexNonUniqueFields     = errors.New(errCanNotIndexNonUniqueFields)
+	ErrFailedToGetCollection      = errors.New(errFailedToGetCollection)
+	ErrSubscriptionsNotAllowed    = errors.New("server does not accept subscriptions")
+	ErrInvalidFilter              = errors.New("invalid filter")
+	ErrCollectionAlreadyExists    = errors.New("collection already exists")
+	ErrCollectionNameEmpty        = errors.New("collection name can't be empty")
+	ErrSchemaNameEmpty            = errors.New("schema name can't be empty")
+	ErrSchemaRootEmpty            = errors.New("schema root can't be empty")
+	ErrSchemaVersionIDEmpty       = errors.New("schema version ID can't be empty")
+	ErrKeyEmpty                   = errors.New("key cannot be empty")
+	ErrCannotSetVersionID         = errors.New(errCannotSetVersionID)
+	ErrIndexMissingFields         = errors.New(errIndexMissingFields)
+	ErrIndexFieldMissingName      = errors.New(errIndexFieldMissingName)
+	ErrCorruptedIndex             = errors.New(errCorruptedIndex)
+	ErrExpectedJSONObject         = errors.New(errExpectedJSONObject)
+	ErrExpectedJSONArray          = errors.New(errExpectedJSONArray)
+	ErrInvalidViewQuery           = errors.New(errInvalidViewQuery)
+	ErrCanNotIndexNonUniqueFields = errors.New(errCanNotIndexNonUniqueFields)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document

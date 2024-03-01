@@ -121,8 +121,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
 							{
-								Name:      "age",
-								Direction: client.Ascending,
+								Name: "age",
 							},
 						},
 					},
@@ -177,8 +176,7 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
 							{
-								Name:      "age",
-								Direction: client.Ascending,
+								Name: "age",
 							},
 						},
 					},
@@ -239,8 +237,7 @@ func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
 							{
-								Name:      "age",
-								Direction: client.Ascending,
+								Name: "age",
 							},
 						},
 					},

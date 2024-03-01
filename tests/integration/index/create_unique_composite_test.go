@@ -52,7 +52,7 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 			},
 			testUtils.CreateIndex{
 				CollectionID: 0,
-				FieldsNames:  []string{"name", "age"},
+				Fields:       []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
 				Unique:       true,
 				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
 					"bae-cae3deac-d371-5a1f-93b4-ede69042f79b",
@@ -151,7 +151,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 			},
 			testUtils.CreateIndex{
 				CollectionID: 0,
-				FieldsNames:  []string{"name", "age"},
+				Fields:       []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
 				IndexName:    "name_age_unique_index",
 				Unique:       true,
 			},
@@ -164,12 +164,10 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
 							{
-								Name:      "name",
-								Direction: client.Ascending,
+								Name: "name",
 							},
 							{
-								Name:      "age",
-								Direction: client.Ascending,
+								Name: "age",
 							},
 						},
 					},

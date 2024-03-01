@@ -123,18 +123,23 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 			return nil, f.execInfo, nil
 		}
 
-		// This CBOR-specific value will be gone soon once we implement
-		// our own encryption package
 		hasNilField := false
-		const cborNil = 0xf6
 		for i, indexedField := range f.indexedFields {
-			property := &encProperty{
-				Desc: indexedField,
-				Raw:  res.key.FieldValues[i],
-			}
-			if len(res.key.FieldValues[i]) == 1 && res.key.FieldValues[i][0] == cborNil {
+			property := &encProperty{Desc: indexedField}
+
+			field := res.key.Fields[i]
+			if field.Value == nil {
 				hasNilField = true
 			}
+
+			// We need to convert it to cbor bytes as this is what it will be encoded from on value retrieval.
+			// In the future we have to either get rid of CBOR or properly handle different encoding
+			// for properties in a single document.
+			fieldBytes, err := client.NewFieldValue(client.NONE_CRDT, field.Value).Bytes()
+			if err != nil {
+				return nil, ExecInfo{}, err
+			}
+			property.Raw = fieldBytes
 
 			f.doc.properties[indexedField] = property
 		}
@@ -142,7 +147,11 @@ func (f *IndexFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecInfo
 		if f.indexDesc.Unique && !hasNilField {
 			f.doc.id = res.value
 		} else {
-			f.doc.id = res.key.FieldValues[len(res.key.FieldValues)-1]
+			docID, ok := res.key.Fields[len(res.key.Fields)-1].Value.(string)
+			if !ok {
+				return nil, ExecInfo{}, err
+			}
+			f.doc.id = []byte(docID)
 		}
 
 		if f.docFetcher != nil && len(f.docFields) > 0 {

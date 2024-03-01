@@ -77,12 +77,12 @@ func (f *indexTestFixture) newProdDoc(id int, price float64, cat string, col cli
 // The format of the non-unique index key is: "/<collection_id>/<index_id>/<value>/<doc_id>"
 // Example: "/5/1/12/bae-61cd6879-63ca-5ca9-8731-470a3c1dac69"
 type indexKeyBuilder struct {
-	f           *indexTestFixture
-	colName     string
-	fieldsNames []string
-	doc         *client.Document
-	values      [][]byte
-	isUnique    bool
+	f                *indexTestFixture
+	colName          string
+	fieldsNames      []string
+	descendingFields []bool
+	doc              *client.Document
+	isUnique         bool
 }
 
 func newIndexKeyBuilder(f *indexTestFixture) *indexKeyBuilder {
@@ -102,19 +102,18 @@ func (b *indexKeyBuilder) Fields(fieldsNames ...string) *indexKeyBuilder {
 	return b
 }
 
+// Fields sets the fields names for the index key.
+func (b *indexKeyBuilder) DescendingFields(descending ...bool) *indexKeyBuilder {
+	b.descendingFields = descending
+	return b
+}
+
 // Doc sets the document for the index key.
 // For non-unique index keys, it will try to find the field value in the document
 // corresponding to the field name set in the builder.
 // As the last value in the index key, it will use the document id.
 func (b *indexKeyBuilder) Doc(doc *client.Document) *indexKeyBuilder {
 	b.doc = doc
-	return b
-}
-
-// Values sets the values for the index key.
-// It will override the field values stored in the document.
-func (b *indexKeyBuilder) Values(values ...[]byte) *indexKeyBuilder {
-	b.values = values
 	return b
 }
 
@@ -164,41 +163,30 @@ indexLoop:
 	}
 
 	if b.doc != nil {
-		// This CBOR-specific value will be gone soon once we implement
-		// our own encryption package
-		const cborNil = 0xf6
 		hasNilValue := false
 		for i, fieldName := range b.fieldsNames {
-			var fieldBytesVal []byte
-			var fieldValue *client.FieldValue
-			var err error
-			if len(b.values) <= i {
-				fieldValue, err = b.doc.GetValue(fieldName)
-				if err != nil {
-					if errors.Is(err, client.ErrFieldNotExist) {
-						fieldValue = client.NewFieldValue(client.LWW_REGISTER, nil)
-					} else {
-						require.NoError(b.f.t, err)
-					}
-				} else if fieldValue != nil && fieldValue.Value() == nil {
-					fieldValue = client.NewFieldValue(client.LWW_REGISTER, nil)
+			fieldValue, err := b.doc.GetValue(fieldName)
+			var val any
+			if err != nil {
+				if !errors.Is(err, client.ErrFieldNotExist) {
+					require.NoError(b.f.t, err)
 				}
-			} else {
-				fieldValue = client.NewFieldValue(client.LWW_REGISTER, b.values[i])
+			} else if fieldValue != nil {
+				val = fieldValue.Value()
 			}
-			fieldBytesVal, err = fieldValue.Bytes()
-			require.NoError(b.f.t, err)
-			if len(fieldBytesVal) == 1 && fieldBytesVal[0] == cborNil {
+			if val == nil {
 				hasNilValue = true
 			}
-			key.FieldValues = append(key.FieldValues, fieldBytesVal)
+			descending := false
+			if i < len(b.descendingFields) {
+				descending = b.descendingFields[i]
+			}
+			key.Fields = append(key.Fields, core.IndexedField{Value: val, Descending: descending})
 		}
 
 		if !b.isUnique || hasNilValue {
-			key.FieldValues = append(key.FieldValues, []byte(b.doc.ID().String()))
+			key.Fields = append(key.Fields, core.IndexedField{Value: b.doc.ID().String()})
 		}
-	} else if len(b.values) > 0 {
-		key.FieldValues = b.values
 	}
 
 	return key
@@ -282,6 +270,25 @@ func TestNonUnique_IfDocIsAdded_ShouldBeIndexed(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 
 	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+	require.NoError(t, err)
+	assert.Len(t, data, 0)
+}
+
+func TestNonUnique_IfDocWithDescendingOrderIsAdded_ShouldBeIndexed(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	indexDesc := getUsersIndexDescOnName()
+	indexDesc.Fields[0].Descending = true
+	_, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+	require.NoError(f.t, err)
+
+	doc := f.newUserDoc("John", 21, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).DescendingFields(true).Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -531,8 +538,7 @@ func TestNonUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).
-		Values([]byte(nil)).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)
@@ -982,8 +988,7 @@ func TestNonUpdate_IfIndexedFieldWasNil_ShouldDeleteIt(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).
-		Values([]byte(nil)).Build()
+	oldKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Doc(doc).Build()
 
 	err = doc.Set(usersNameFieldName, "John")
 	require.NoError(f.t, err)
@@ -1069,8 +1074,7 @@ func TestUnique_IfIndexedFieldIsNil_StoreItAsNil(t *testing.T) {
 
 	f.saveDocToCollection(doc, f.users)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Unique().Doc(doc).
-		Values([]byte(nil)).Build()
+	key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Unique().Doc(doc).Build()
 
 	data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
 	require.NoError(t, err)

@@ -193,7 +193,7 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	err = c.checkExistingFields(ctx, desc.Fields)
+	err = c.checkExistingFields(desc.Fields)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +408,6 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 }
 
 func (c *collection) checkExistingFields(
-	ctx context.Context,
 	fields []client.IndexedFieldDescription,
 ) error {
 	collectionFields := c.Schema().Fields
@@ -467,15 +466,9 @@ func validateIndexDescription(desc client.IndexDescription) error {
 	if len(desc.Fields) == 0 {
 		return ErrIndexMissingFields
 	}
-	if len(desc.Fields) == 1 && desc.Fields[0].Direction == client.Descending {
-		return ErrIndexSingleFieldWrongDirection
-	}
 	for i := range desc.Fields {
 		if desc.Fields[i].Name == "" {
 			return ErrIndexFieldMissingName
-		}
-		if desc.Fields[i].Direction == "" {
-			desc.Fields[i].Direction = client.Ascending
 		}
 	}
 	return nil
