@@ -139,11 +139,7 @@ func decodeBytesInternal(b []byte, e escapes, expectMarker bool) ([]byte, []byte
 		}
 		v := b[i+1]
 		if v == e.escapedTerm {
-			if r == nil {
-				r = b[:i]
-			} else {
-				r = append(r, b[:i]...)
-			}
+			r = append(r, b[:i]...)
 			return b[i+2:], r, nil
 		}
 
