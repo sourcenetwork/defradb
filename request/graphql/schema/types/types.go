@@ -11,6 +11,7 @@
 package types
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	gql "github.com/sourcenetwork/graphql-go"
 )
 
@@ -130,13 +131,28 @@ var (
 		},
 	})
 
+	CRDTEnum = gql.NewEnum(gql.EnumConfig{
+		Name:        "CRDTType",
+		Description: "One of the possible CRDT Types.",
+		Values: gql.EnumValueConfigMap{
+			client.LWW_REGISTER.String(): &gql.EnumValueConfig{
+				Value:       client.LWW_REGISTER,
+				Description: "Last Write Wins register",
+			},
+			client.PN_COUNTER.String(): &gql.EnumValueConfig{
+				Value:       client.PN_COUNTER,
+				Description: "Positive-Negative Counter",
+			},
+		},
+	})
+
 	// CRDTFieldDirective @crdt is used to define the CRDT type of a field
 	CRDTFieldDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
 		Name:        CRDTDirectiveLabel,
 		Description: crdtDirectiveDescription,
 		Args: gql.FieldConfigArgument{
 			CRDTDirectivePropType: &gql.ArgumentConfig{
-				Type: gql.String,
+				Type: CRDTEnum,
 			},
 		},
 		Locations: []string{
