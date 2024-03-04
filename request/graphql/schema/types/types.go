@@ -24,6 +24,9 @@ const (
 	ExplainArgExecute  string = "execute"
 	ExplainArgDebug    string = "debug"
 
+	CRDTDirectiveLabel    = "crdt"
+	CRDTDirectivePropType = "type"
+
 	IndexDirectiveLabel          = "index"
 	IndexDirectivePropName       = "name"
 	IndexDirectivePropUnique     = "unique"
@@ -120,6 +123,20 @@ var (
 			},
 			IndexDirectivePropDirection: &gql.ArgumentConfig{
 				Type: OrderingEnum,
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationField,
+		},
+	})
+
+	// CRDTFieldDirective @crdt is used to define the CRDT type of a field
+	CRDTFieldDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
+		Name:        CRDTDirectiveLabel,
+		Description: crdtDirectiveDescription,
+		Args: gql.FieldConfigArgument{
+			CRDTDirectivePropType: &gql.ArgumentConfig{
+				Type: gql.String,
 			},
 		},
 		Locations: []string{
