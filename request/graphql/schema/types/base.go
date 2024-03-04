@@ -291,6 +291,14 @@ var StringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 			Description: nlikeStringOperatorDescription,
 			Type:        gql.String,
 		},
+		"_ilike": &gql.InputObjectFieldConfig{
+			Description: ilikeStringOperatorDescription,
+			Type:        gql.String,
+		},
+		"_nilike": &gql.InputObjectFieldConfig{
+			Description: nilikeStringOperatorDescription,
+			Type:        gql.String,
+		},
 	},
 })
 
@@ -321,6 +329,14 @@ var NotNullstringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 		},
 		"_nlike": &gql.InputObjectFieldConfig{
 			Description: nlikeStringOperatorDescription,
+			Type:        gql.String,
+		},
+		"_ilike": &gql.InputObjectFieldConfig{
+			Description: ilikeStringOperatorDescription,
+			Type:        gql.String,
+		},
+		"_nilike": &gql.InputObjectFieldConfig{
+			Description: nilikeStringOperatorDescription,
 			Type:        gql.String,
 		},
 	},

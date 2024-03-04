@@ -462,6 +462,48 @@ func TestQueryWithUniqueIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithUniqueIndex_WithNotCaseInsensitiveLikeFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {name: {_nilike: "a%"}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _nilike filter",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index(unique: true)
+						age: Int 
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"name": "Bruno"},
+					{"name": "Chris"},
+					{"name": "Fred"},
+					{"name": "Islam"},
+					{"name": "John"},
+					{"name": "Keenan"},
+					{"name": "Roy"},
+					{"name": "Shahzad"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithUniqueIndex_IfNoMatch_ReturnEmptyResult(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If filter does not match any document, return empty result",

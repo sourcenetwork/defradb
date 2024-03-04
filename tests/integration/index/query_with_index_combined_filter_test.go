@@ -94,6 +94,46 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithIndex_IfMultipleIndexFiltersWithRegularCaseInsensitive_ShouldFilter(t *testing.T) {
+	req := `query {
+		User(filter: {
+			name: {_ilike: "a%"}, 
+			age:  {_gt: 30},
+		}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Combination of a filter on regular and of 2 indexed fields and case insensitive operator",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index
+						age: Int @index
+						email: String 
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"name": "Andy"},
+					{"name": "Addo"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(6),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithIndex_FilterOnNonIndexedField_ShouldIgnoreIndex(t *testing.T) {
 	req := `query {
 		User(filter: {
