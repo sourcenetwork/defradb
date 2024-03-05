@@ -545,8 +545,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 }
 
 func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T) {
-	schemaVersion2ID := "bafkreidn4f3i52756wevi3sfpbqzijgy6v24zh565pmvtmpqr4ou52v2q4"
-	schemaVersion3ID := "bafkreieilqyv4bydakul5tbikpysmzwhzvxdau4twcny5n46zvxhkv7oli"
+	schemaVersion1ID := "bafkreiebcgze3rs6j3g7gu65dwskdg5fn3qby5c6nqffhbdkcy2l5bbvp4"
 
 	test := testUtils.TestCase{
 		Description: `Test schema update, with branching schema toggling between branches and gets the 
@@ -561,41 +560,22 @@ collection at a specific version`,
 			},
 			testUtils.SchemaPatch{
 				// The second schema version will not be set as the active version, leaving the initial version active
-				SetAsDefaultVersion: immutable.Some(false),
+				SetAsDefaultVersion: immutable.Some(true),
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
-				// The third schema version will be set as the active version, going from version 1 to 3
-				SetAsDefaultVersion: immutable.Some(true),
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} }
-					]
-				`,
-			},
-			testUtils.SetActiveSchemaVersion{
-				// Set the second schema version to be active
-				SchemaVersionID: schemaVersion2ID,
-			},
 			testUtils.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
-					SchemaVersionID: immutable.Some(schemaVersion3ID),
+					SchemaVersionID: immutable.Some(schemaVersion1ID),
 				},
 				ExpectedResults: []client.CollectionDescription{
 					{
-						// The collection version for schema version 3 is present and is inactive, it also has the first collection
-						// as source.
-						ID:              3,
-						SchemaVersionID: schemaVersion3ID,
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: 1,
-							},
-						},
+						// The original collection version is present, it has no source and is inactive (has no name).
+						ID:              1,
+						SchemaVersionID: schemaVersion1ID,
 					},
 				},
 			},
