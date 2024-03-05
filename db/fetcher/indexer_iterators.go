@@ -28,16 +28,18 @@ import (
 )
 
 const (
-	opEq    = "_eq"
-	opGt    = "_gt"
-	opGe    = "_ge"
-	opLt    = "_lt"
-	opLe    = "_le"
-	opNe    = "_ne"
-	opIn    = "_in"
-	opNin   = "_nin"
-	opLike  = "_like"
-	opNlike = "_nlike"
+	opEq     = "_eq"
+	opGt     = "_gt"
+	opGe     = "_ge"
+	opLt     = "_lt"
+	opLe     = "_le"
+	opNe     = "_ne"
+	opIn     = "_in"
+	opNin    = "_nin"
+	opLike   = "_like"
+	opNlike  = "_nlike"
+	opILike  = "_ilike"
+	opNILike = "_nilike"
 	// it's just there for composite indexes. We construct a slice of value matchers with
 	// every matcher being responsible for a corresponding field in the index to match.
 	// For some fields there might not be any criteria to match. For examples if you have
@@ -382,16 +384,18 @@ func (m *indexInArrayMatcher) Match(value any) (bool, error) {
 
 // checks if the index value satisfies the LIKE condition
 type indexLikeMatcher struct {
-	hasPrefix   bool
-	hasSuffix   bool
-	startAndEnd []string
-	isLike      bool
-	value       string
+	hasPrefix         bool
+	hasSuffix         bool
+	startAndEnd       []string
+	isLike            bool
+	isCaseInsensitive bool
+	value             string
 }
 
-func newLikeIndexCmp(filterValue string, isLike bool) (*indexLikeMatcher, error) {
+func newLikeIndexCmp(filterValue string, isLike bool, isCaseInsensitive bool) (*indexLikeMatcher, error) {
 	matcher := &indexLikeMatcher{
-		isLike: isLike,
+		isLike:            isLike,
+		isCaseInsensitive: isCaseInsensitive,
 	}
 	if len(filterValue) >= 2 {
 		if filterValue[0] == '%' {
@@ -406,7 +410,11 @@ func newLikeIndexCmp(filterValue string, isLike bool) (*indexLikeMatcher, error)
 			matcher.startAndEnd = strings.Split(filterValue, "%")
 		}
 	}
-	matcher.value = filterValue
+	if isCaseInsensitive {
+		matcher.value = strings.ToLower(filterValue)
+	} else {
+		matcher.value = filterValue
+	}
 
 	return matcher, nil
 }
@@ -415,6 +423,10 @@ func (m *indexLikeMatcher) Match(value any) (bool, error) {
 	currentVal, ok := value.(string)
 	if !ok {
 		return false, NewErrUnexpectedTypeValue[string](currentVal)
+	}
+
+	if m.isCaseInsensitive {
+		currentVal = strings.ToLower(currentVal)
 	}
 
 	return m.doesMatch(currentVal) == m.isLike, nil
@@ -571,7 +583,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		}
 	case opIn:
 		return f.newInIndexIterator(fieldConditions, matchers)
-	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike:
+	case opGt, opGe, opLt, opLe, opNe, opNin, opLike, opNlike, opILike, opNILike:
 		return &scanningIndexIterator{
 			queryResultIterator: f.newQueryResultIterator(),
 			indexKey:            f.newIndexDataStoreKey(),
@@ -627,12 +639,14 @@ func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
 			return nil, ErrInvalidInOperatorValue
 		}
 		return newNinIndexCmp(inArr, condition.kind, condition.op == opIn)
-	case opLike, opNlike:
+	case opLike, opNlike, opILike, opNILike:
 		strVal, ok := condition.val.(string)
 		if !ok {
 			return nil, NewErrUnexpectedTypeValue[string](condition.val)
 		}
-		return newLikeIndexCmp(strVal, condition.op == opLike)
+		isLike := condition.op == opLike || condition.op == opILike
+		isCaseInsensitive := condition.op == opILike || condition.op == opNILike
+		return newLikeIndexCmp(strVal, isLike, isCaseInsensitive)
 	case opAny:
 		return &anyMatcher{}, nil
 	}

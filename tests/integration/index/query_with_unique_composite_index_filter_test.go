@@ -749,6 +749,45 @@ func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithUniqueCompositeIndex_WithNotCaseInsensitiveLikeFilter_ShouldFetch(t *testing.T) {
+	req := `query {
+		User(filter: {name: {_nilike: "j%"}, email: {_nlike: "%d%"}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Description: "Test index filtering with _nilike and _nlike filter",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(unique: true, fields: ["name", "email"]) {
+						name: String 
+						email: String 
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: []map[string]any{
+					{"name": "Bruno"},
+					{"name": "Chris"},
+					{"name": "Islam"},
+					{"name": "Keenan"},
+					{"name": "Roy"},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test if index is not used when first field is not in filter",
