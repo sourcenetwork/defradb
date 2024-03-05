@@ -763,7 +763,8 @@ func (db *db) getCollections(
 				continue
 			}
 		}
-		if !options.IncludeInactive.Value() && !col.Name.HasValue() {
+		// By default, we don't return inactive collections unless a specific version is requested.
+		if !options.IncludeInactive.Value() && !col.Name.HasValue() && !options.SchemaVersionID.HasValue() {
 			continue
 		}
 
