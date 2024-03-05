@@ -15,15 +15,14 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/sourcenetwork/graphql-go/language/ast"
+	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
+	"github.com/sourcenetwork/graphql-go/language/source"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
-
-	"github.com/sourcenetwork/graphql-go/language/ast"
-	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
-	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
@@ -390,18 +389,15 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 		for _, arg := range directive.Arguments {
 			switch arg.Name.Value {
 			case "type":
-				cType := arg.Value.GetValue().(string)
-				switch cType {
-				case client.PN_COUNTER.String():
-					if !client.PN_COUNTER.IsCompatibleWith(kind) {
-						return 0, client.NewErrCRDTKindMismatch(cType, kind.String())
-					}
-					return client.PN_COUNTER, nil
-				case client.LWW_REGISTER.String():
-					return client.LWW_REGISTER, nil
-				default:
-					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cType)
+				cTypeString := arg.Value.GetValue().(string)
+				cType, validCRDTEnum := types.CRDTEnum.ParseValue(cTypeString).(client.CType)
+				if !validCRDTEnum {
+					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cTypeString)
 				}
+				if !cType.IsCompatibleWith(kind) {
+					return 0, client.NewErrCRDTKindMismatch(cType.String(), kind.String())
+				}
+				return cType, nil
 			}
 		}
 	}

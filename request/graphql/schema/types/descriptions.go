@@ -218,6 +218,9 @@ Sort the results in ascending order, e.g. null,1,2,3,a,b,c.
 	descOrderDescription string = `
 Sort the results in descending order, e.g. c,b,a,3,2,1,null.
 `
+	crdtDirectiveDescription string = `
+Allows the explicit definition of a field's CRDT type. By default it is defined as LWWRegister.
+`
 	primaryDirectiveDescription string = `
 Indicate the primary side of a one-to-one relationship.
 `
