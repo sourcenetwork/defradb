@@ -30,6 +30,7 @@ const (
 	errInvalidCRDTType                     string = "CRDT type not supported"
 	errFailedToUnmarshalCollection         string = "failed to unmarshal collection json"
 	errOperationNotPermittedOnNamelessCols string = "operation not permitted on nameless collection"
+	errInvalidJSONPayload                  string = "invalid JSON payload"
 )
 
 // Errors returnable from this package.
@@ -49,6 +50,7 @@ var (
 	ErrInvalidDeleteTarget                 = errors.New("the target document to delete is of invalid type")
 	ErrMalformedDocID                      = errors.New("malformed document ID, missing either version or cid")
 	ErrInvalidDocIDVersion                 = errors.New("invalid document ID version")
+	ErrInvalidJSONPayload                  = errors.New(errInvalidJSONPayload)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -148,4 +150,8 @@ func NewErrInvalidCRDTType(name, crdtType string) error {
 
 func NewErrCRDTKindMismatch(cType, kind string) error {
 	return errors.New(fmt.Sprintf(errCRDTKindMismatch, cType, kind))
+}
+
+func NewErrInvalidJSONPaylaod(payload string) error {
+	return errors.New(errInvalidJSONPayload, errors.NewKV("Payload", payload))
 }
