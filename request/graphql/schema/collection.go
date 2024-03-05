@@ -15,14 +15,14 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/sourcenetwork/graphql-go/language/ast"
+	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
+	"github.com/sourcenetwork/graphql-go/language/source"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/request/graphql/schema/types"
-	"github.com/sourcenetwork/graphql-go/language/ast"
-	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
-	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
